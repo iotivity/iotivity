@@ -1,4 +1,3 @@
-
 package org.iotivity.base.examples.provisioningclient;
 
 import android.app.Activity;
@@ -15,15 +14,9 @@ import android.util.Log;
 import android.view.Gravity;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
-
 import org.iotivity.base.ModeType;
-
 import org.iotivity.base.OcException;
-
 import org.iotivity.base.OcPlatform;
-
-
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
@@ -35,7 +28,6 @@ import org.iotivity.base.OicSecAcl;
 import org.iotivity.base.CredType;
 import org.iotivity.base.KeySize;
 import org.iotivity.base.DeviceStatus;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -44,48 +36,73 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.EnumSet;
-
-
 import java.util.List;
 
-
 public class ProvisioningClient extends Activity implements
-        OcSecureResource.DoOwnershipTransferListener,
-        OcSecureResource.ProvisionPairwiseDevicesListener {
+    OcSecureResource.DoOwnershipTransferListener,OcSecureResource.ProvisionPairwiseDevicesListener {
+
     private static final String TAG = "Provisioning Client: ";
+    private static final int BUFFER_SIZE = 1024;
+    int unownedDevCount = StringConstants.NUMBER_ZERO;
+    private String filePath = "";
+    private OcSecureResource newSecureResource;
+    private List<OcSecureResource> deviceList;
+    private List<OcSecureResource> ownedDeviceList;
+    private TextView mEventsTextView;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_secure_provision_client);
+        mEventsTextView = new TextView(this);
+        mEventsTextView.setGravity(Gravity.BOTTOM);
+        mEventsTextView.setMovementMethod(new ScrollingMovementMethod());
+        LinearLayout layout = (LinearLayout) findViewById(R.id.linearLayout);
+        layout.addView(mEventsTextView, new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
+        );
+        filePath = getFilesDir().getPath() + "/"; //  data/data/<package>/files/
+        //copy json when application runs first time
+        SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isFirstRun = wmbPreference.getBoolean("FIRSTRUN", true);
+        if (isFirstRun) {
+            copyJsonFromAsset();
+            SharedPreferences.Editor editor = wmbPreference.edit();
+            editor.putBoolean("FIRSTRUN", false);
+            editor.commit();
+        }
+        initOICStack();
+    }
+
     OcProvisioning.PinCallbackListener pinCallbackListener =
             new OcProvisioning.PinCallbackListener() {
                 @Override
                 public String pinCallbackListener() {
-
                     Log.d(TAG, "Inside Pin Callback ");
                     return "";
-
                 }
             };
+
     OcSecureResource.ProvisionAclListener provisionAclListener =
             new OcSecureResource.ProvisionAclListener() {
                 @Override
                 public void provisionAclListener(List<ProvisionResult> provisionResults,
                                                  int hasError) {
-
                     Log.d(TAG, "Inside ProvisionAclListener ");
-
                     if (hasError == StringConstants.ERROR_CODE) {
                         logMessage("Error: ACL Provision failed !!");
                     } else {
                         logMessage("ACL Provision Done !!");
                         new DeviceRevocationAsyncTask().execute();
                     }
-
                 }
             };
+
     OcSecureResource.ProvisionCredentialsListener provisionCredentialsListener =
             new OcSecureResource.ProvisionCredentialsListener() {
                 @Override
                 public void provisionCredentialsListener(List<ProvisionResult> provisionResults,
                                                          int hasError) {
-
                     Log.d(TAG, "Inside ProvisionCredentialsListener ");
                     if (hasError == StringConstants.ERROR_CODE) {
                         logMessage("Error: Provision Credentials failed !!");
@@ -93,24 +110,21 @@ public class ProvisioningClient extends Activity implements
                         logMessage("Provision Credentials Done !!");
                         new ProvisionACLAsyncTask().execute();
                     }
-
-
                 }
             };
+
     OcSecureResource.UnlinkDevicesListener unlinkDevicesListener =
             new OcSecureResource.UnlinkDevicesListener() {
                 @Override
                 public void unlinkDevicesListener(List<ProvisionResult> provisionResults,
                                                   int hasError) {
                     Log.d(TAG, "Inside unlinkDevicesListener ");
-
                     if (hasError == StringConstants.ERROR_CODE) {
                         logMessage("Error: UnLinking device !!");
                     } else {
                         logMessage("Unlink Done !!");
                         new ProvisionCredentialAsyncTask().execute();
                     }
-
                 }
             };
 
@@ -126,20 +140,11 @@ public class ProvisioningClient extends Activity implements
                     }
                 }
             };
-    private static final int BUFFER_SIZE = 1024;
-    int unownedDevCount = StringConstants.NUMBER_ZERO;
-    private String filePath = "";
-    private OcSecureResource newSecureResource;
-    private List<OcSecureResource> deviceList;
-    private List<OcSecureResource> ownedDeviceList;
-    //for display
-    private TextView mEventsTextView;
 
     /**
      * configure OIC platform and call findResource
      */
     private void initOICStack() {
-
         //create platform config
         PlatformConfig cfg = new PlatformConfig(
                 this,
@@ -149,15 +154,12 @@ public class ProvisioningClient extends Activity implements
                 0,
                 QualityOfService.LOW, filePath + StringConstants.OIC_CLIENT_JSON_DB_FILE);
         OcPlatform.Configure(cfg);
-
         try {
             /*
              * Initialize DataBase
              */
-
             String sqlDbPath = getFilesDir().getAbsolutePath().replace("files", "databases") +
                     File.separator;
-
             File file = new File(sqlDbPath);
             //check files directory exists
             if (!(file.isDirectory())) {
@@ -165,20 +167,17 @@ public class ProvisioningClient extends Activity implements
                 Log.d(TAG, "Sql db directory created at " + sqlDbPath);
             }
             Log.d(TAG, "Sql db directory exists at " + sqlDbPath);
-
             OcProvisioning.provisionInit(sqlDbPath + StringConstants.OIC_SQL_DB_FILE);
         } catch (OcException e) {
             logMessage(TAG + "provisionInit error: " + e.getMessage());
             Log.e(TAG, e.getMessage());
         }
-
         new DiscoveryOTTransferAsyncTask().execute();
     }
 
     @Override
     synchronized public void doOwnershipTransferListener(List<ProvisionResult> ProvisionResultList,
                                                          int hasError) {
-
         ProvisionResult pResult = ProvisionResultList.get(0);
         if (hasError == StringConstants.ERROR_CODE) {
             logMessage(TAG + "Ownership Transfer Failed for " + pResult.getDevId());
@@ -187,7 +186,6 @@ public class ProvisioningClient extends Activity implements
                     + pResult.getDevId());
             unownedDevCount--;
         }
-
         if (unownedDevCount == 0) { //When done with Ownership Transfer
             new OwnedDiscoveryAsyncTask().execute();
         }
@@ -213,7 +211,6 @@ public class ProvisioningClient extends Activity implements
                     31, resources, owners);
             newSecureResource.provisionPairwiseDevices(EnumSet.of(CredType.SYMMETRIC_PAIR_WISE_KEY),
                     KeySize.OWNER_PSK_LENGTH_128, acl1, newSecureResource2, acl2, this);
-
         } catch (Exception e) {
             logMessage(TAG + "Pairwise Provisioning  error: " + e.getMessage());
             Log.e(TAG, e.getMessage());
@@ -235,31 +232,6 @@ public class ProvisioningClient extends Activity implements
         }
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_secure_provision_client);
-        mEventsTextView = new TextView(this);
-        mEventsTextView.setGravity(Gravity.BOTTOM);
-        mEventsTextView.setMovementMethod(new ScrollingMovementMethod());
-        LinearLayout layout = (LinearLayout) findViewById(R.id.linearLayout);
-        layout.addView(mEventsTextView, new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f)
-        );
-
-        filePath = getFilesDir().getPath() + "/"; //  data/data/<package>/files/
-        //copy json when application runs first time
-        SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean isFirstRun = wmbPreference.getBoolean("FIRSTRUN", true);
-        if (isFirstRun) {
-            copyJsonFromAsset();
-            SharedPreferences.Editor editor = wmbPreference.edit();
-            editor.putBoolean("FIRSTRUN", false);
-            editor.commit();
-        }
-        initOICStack();
-    }
-
     /**
      * Copy svr db json file from assets folder to app data files dir
      */
@@ -268,7 +240,6 @@ public class ProvisioningClient extends Activity implements
         OutputStream outputStream = null;
         int length;
         byte[] buffer = new byte[BUFFER_SIZE];
-
         try {
             inputStream = getAssets().open(StringConstants.OIC_CLIENT_JSON_DB_FILE);
             File file = new File(filePath);
@@ -277,12 +248,9 @@ public class ProvisioningClient extends Activity implements
                 file.mkdirs();
             }
             outputStream = new FileOutputStream(filePath + StringConstants.OIC_CLIENT_JSON_DB_FILE);
-
             while ((length = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, length);
             }
-
-
         } catch (NullPointerException e) {
             logMessage(TAG + "Null pointer exception " + e.getMessage());
             Log.e(TAG, e.getMessage());
@@ -324,7 +292,6 @@ public class ProvisioningClient extends Activity implements
             }
         });
         Log.i(TAG, text);
-
         Intent intent = new Intent(getPackageName());
         intent.putExtra(StringConstants.MESSAGE, text);
         sendBroadcast(intent);
@@ -343,25 +310,18 @@ public class ProvisioningClient extends Activity implements
                 /**
                  * Discover Un-owned devices
                  */
-
                 publishProgress(TAG + "Discovering Unowned Devices");
-                deviceList = new ArrayList<OcSecureResource>();
-                deviceList = OcProvisioning.discoverUnownedDevices(5);
-
-
+                deviceList = new ArrayList<OcSecureResource>(OcProvisioning.discoverUnownedDevices
+                        (StringConstants.DISCOVERY_TIMEOUT_10));
                 if (deviceList.size() > 0) {
                     unownedDevCount = deviceList.size();
                     for (int i = 0; i < deviceList.size(); i++) {
                         publishProgress(TAG + "Un-owned Discovered Device " + (i + 1) + "= " +
                                 deviceList.get(i).getDeviceID());
                     }
-
-
                     try {
-
                         OcProvisioning.SetownershipTransferCBdata(OxmType.OIC_JUST_WORKS,
                                 pinCallbackListener);
-
                         for (int i = 0; i < deviceList.size(); i++) {
                             publishProgress(TAG + "Doing Ownership Transfer for " +
                                     deviceList.get(i).getDeviceID());
@@ -372,16 +332,13 @@ public class ProvisioningClient extends Activity implements
                         return "Ownership Transfer error: " + e.getMessage();
 
                     }
-
-
                 } else {
                     publishProgress(TAG + "No un-owned devices present");
+                    new OwnedDiscoveryAsyncTask().execute();
                 }
-
             } catch (OcException e) {
                 publishProgress(TAG + "Un-owned discovery error: " + e.getMessage());
                 return "Un-owned discovery error:  " + e.getMessage();
-
             }
             return "success";
         }
@@ -407,15 +364,10 @@ public class ProvisioningClient extends Activity implements
         @Override
         protected Void doInBackground(Void... params) {
             try {
-
-
                 if (ownedDeviceList.size() > 1) {
                     OcSecureResource ocSecureResource = ownedDeviceList.get(0);
-
                     OcSecureResource ocSecureResourceDest = ownedDeviceList.get(1);
-
                     publishProgress(TAG + "ACL Provision for " + ocSecureResource.getDeviceID());
-
                     List<String> resources = new ArrayList<String>();
                     List<String> owners = new ArrayList<String>();
                     List<String> periods = new ArrayList<String>();
@@ -424,21 +376,14 @@ public class ProvisioningClient extends Activity implements
                     resources.add("*");
                     owners.add("adminDeviceUUID0");
                     periods.add("01-01-15");
-
                     OicSecAcl aclObject = new OicSecAcl(ocSecureResourceDest.getDeviceID(),
                             recurrences, periods, 31, resources, owners);
-
-
                     ocSecureResource.provisionACL(aclObject, provisionAclListener);
-
                 } else {
                     publishProgress(TAG + "No Owned devices present");
                 }
-
             } catch (Exception e) {
                 publishProgress(TAG + "ProvisionACL error: " + e.getMessage());
-
-
             }
             return null;
         }
@@ -447,8 +392,6 @@ public class ProvisioningClient extends Activity implements
         protected void onProgressUpdate(String... values) {
             logMessage(values[0]);
         }
-
-
     }
 
     private class ProvisionCredentialAsyncTask extends AsyncTask<Void, String, Void> {
@@ -461,32 +404,20 @@ public class ProvisioningClient extends Activity implements
         @Override
         protected Void doInBackground(Void... params) {
             try {
-
                 if (ownedDeviceList.size() > 1) {
-
                     OcSecureResource ocSecureResource = ownedDeviceList.get(0);
                     OcSecureResource ocSecureResourceDest = ownedDeviceList.get(1);
                     publishProgress(TAG + "ProvisionCredential for " +
                             ocSecureResource.getDeviceID() + " with " +
                             ocSecureResourceDest.getDeviceID());
-
-
-                    int credential_type = StringConstants.CREDENTIAL_TYPE; //symmetrical
-                    int psk_length = StringConstants.OWNER_PSK_LENGTH_128;
-
                     ocSecureResource.provisionCredentials(EnumSet.of(CredType.SYMMETRIC_PAIR_WISE_KEY),
                             KeySize.OWNER_PSK_LENGTH_128,
                             ocSecureResourceDest, provisionCredentialsListener);
-
-
                 } else {
                     publishProgress(TAG + "Cannot perform credentials between devices");
                 }
-
             } catch (Exception e) {
-                publishProgress(TAG + "ProvisionACL error: " + e.getMessage());
-
-
+                publishProgress(TAG + "Provision credentials error: " + e.getMessage());
             }
             return null;
         }
@@ -495,8 +426,6 @@ public class ProvisioningClient extends Activity implements
         protected void onProgressUpdate(String... values) {
             logMessage(values[0]);
         }
-
-
     }
 
     private class GetLinkedDevicesAsyncTask extends AsyncTask<Void, String, String> {
@@ -509,35 +438,24 @@ public class ProvisioningClient extends Activity implements
         @Override
         protected String doInBackground(Void... params) {
             try {
-
                 if (ownedDeviceList.size() > 1) {
-
                     OcSecureResource ocSecureResource = ownedDeviceList.get(0);
                     publishProgress(TAG + "Get linked devices of " + ocSecureResource.getDeviceID());
-
-
-                    List<String> linkedDevices= ocSecureResource.getLinkedDevices();
-                    if(linkedDevices.size() >0 )
-                    {
+                    List<String> linkedDevices = ocSecureResource.getLinkedDevices();
+                    if (linkedDevices.size() > 0) {
                         for (int i = 0; i < linkedDevices.size(); i++) {
                             publishProgress(TAG + "Linked Devices "+
-                                            + (i + 1) + "= " + linkedDevices.get(i)
-                            );
+                                    (i + 1) + "= " + linkedDevices.get(i));
                         }
-                    }
-                    else
-                    {
+                    } else {
                         publishProgress(TAG + "No linked Devices found");
                     }
                 } else {
                     publishProgress(TAG + "Cannot perform linked devices");
                 }
-
             } catch (Exception e) {
                 publishProgress(TAG + "getLinked device error: " + e.getMessage());
                 return "failed";
-
-
             }
             return "success";
         }
@@ -547,20 +465,13 @@ public class ProvisioningClient extends Activity implements
             logMessage(values[0]);
         }
 
-
         @Override
         protected void onPostExecute(String s) {
-
             if ("success".equals(s)) {
                 new ProvisionUnlinkAsyncTask().execute();
-
             }
-
-
         }
-
     }
-
 
     private class ProvisionUnlinkAsyncTask extends AsyncTask<Void, String, Void> {
 
@@ -572,25 +483,17 @@ public class ProvisioningClient extends Activity implements
         @Override
         protected Void doInBackground(Void... params) {
             try {
-
                 if (ownedDeviceList.size() > 1) {
-
                     OcSecureResource ocSecureResource = ownedDeviceList.get(0);
                     OcSecureResource ocSecureResourceDest = ownedDeviceList.get(1);
                     publishProgress(TAG + "Un linking  " + ocSecureResource.getDeviceID() +
                             " with " + ocSecureResourceDest.getDeviceID());
-
                     ocSecureResource.unlinkDevices(ocSecureResourceDest, unlinkDevicesListener);
-
-
                 } else {
                     publishProgress(TAG + "Cannot perform unlink devices");
                 }
-
             } catch (Exception e) {
                 publishProgress(TAG + "Unlink error: " + e.getMessage());
-
-
             }
             return null;
         }
@@ -599,10 +502,7 @@ public class ProvisioningClient extends Activity implements
         protected void onProgressUpdate(String... values) {
             logMessage(values[0]);
         }
-
-
     }
-
 
     private class DeviceRevocationAsyncTask extends AsyncTask<Void, String, Void> {
 
@@ -614,24 +514,16 @@ public class ProvisioningClient extends Activity implements
         @Override
         protected Void doInBackground(Void... params) {
             try {
-
                 if (ownedDeviceList.size() > 0) {
-
                     OcSecureResource ocSecureResource = ownedDeviceList.get(0);
-
                     publishProgress(TAG + "Removing " + ocSecureResource.getDeviceID());
-
-                    ocSecureResource.removeDevice(20, removeDeviceListener);
-
-
+                    ocSecureResource.removeDevice(StringConstants.DISCOVERY_TIMEOUT_20,
+                            removeDeviceListener);
                 } else {
                     publishProgress(TAG + "Cannot remove");
                 }
-
             } catch (Exception e) {
                 publishProgress(TAG + "Remove Device error: " + e.getMessage());
-
-
             }
             return null;
         }
@@ -640,8 +532,6 @@ public class ProvisioningClient extends Activity implements
         protected void onProgressUpdate(String... values) {
             logMessage(values[0]);
         }
-
-
     }
 
     private class OwnedDiscoveryAsyncTask extends AsyncTask<Void, String, String> {
@@ -655,9 +545,8 @@ public class ProvisioningClient extends Activity implements
         protected String doInBackground(Void... params) {
             try {
                 publishProgress(TAG + "Initiate Owned device Discovery");
-
-                ownedDeviceList = OcProvisioning.discoverOwnedDevices(10);
-
+                ownedDeviceList = OcProvisioning.discoverOwnedDevices
+                    (StringConstants.DISCOVERY_TIMEOUT_10);
                 if (ownedDeviceList.size() > 0) {
                     for (int i = 0; i < ownedDeviceList.size(); i++) {
                         publishProgress(TAG + "Owned Discovered Device " + (i + 1) + "= " +
@@ -671,11 +560,9 @@ public class ProvisioningClient extends Activity implements
                 } else {
                     publishProgress(TAG + "No Owned devices present");
                 }
-
             } catch (OcException e) {
                 publishProgress(TAG + "Owned device Discovery error: " + e.getMessage());
                 return "Owned device Discovery error: " + e.getMessage();
-
             }
             return "success";
         }
@@ -687,15 +574,10 @@ public class ProvisioningClient extends Activity implements
 
         @Override
         protected void onPostExecute(String s) {
-
             if (ownedDeviceList.size() > 1 && "success".equals(s)) {
                 doPairwiseProvisioning();
-
             }
-
-
         }
-
     }
 
     /**

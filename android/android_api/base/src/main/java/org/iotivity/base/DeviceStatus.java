@@ -23,8 +23,8 @@
 package org.iotivity.base;
 
 public enum DeviceStatus {
-    ON(0),
-    OFF(1),
+    ON(1),
+    OFF(2),
     INVALID(-1);
 
     private int value;
@@ -39,11 +39,11 @@ public enum DeviceStatus {
 
     public static DeviceStatus convertDeviceStatus(int value) {
 
-        if (0 == value)
+        if (1 == value)
         {
             return DeviceStatus.ON;
         }
-        else if (1 == value)
+        else if (2 == value)
         {
             return DeviceStatus.OFF;
         }

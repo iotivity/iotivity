@@ -35,7 +35,7 @@ JniPinCheckListener::~JniPinCheckListener()
         jint ret;
         JNIEnv *env = GetJNIEnv(ret);
         if (NULL == env) return;
-        env->DeleteWeakGlobalRef(m_jListener);
+        env->DeleteGlobalRef(m_jListener);
         if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
     }
 }

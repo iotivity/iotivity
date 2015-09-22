@@ -8,10 +8,10 @@
                 "/oic/p",
                 "/oic/res/types/d",
                 "/oic/ad",
-                "/oic/sec/acl"
+                "/oic/sec/amacl"
 			],
 			"perms": 2,
-			"ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+			"ownrs" : ["YWRtaW5EZXZpY2VVVUlEMA=="]
 		},
         {
             "sub": "Kg==",
@@ -20,12 +20,12 @@
                 "/oic/sec/pstat"
              ],
              "perms": 2,
-             "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+             "ownrs" : ["YWRtaW5EZXZpY2VVVUlEMA=="]
         }
 	],
 	"pstat":	{
 		"isop":	true,
-		"deviceid":	"ZGV2aWNlaWQAAAAAABhanw==",
+		"deviceid":	"YWRtaW5EZXZpY2VVVUlEMA==",
 		"ch": 0,
 		"cm":	0,
 		"tm":	0,
@@ -35,15 +35,9 @@
 	"doxm":	{
 		"oxm":	[0],
 		"oxmsel": 0,
+		"sct": 1,
 		"owned": true,
-		"deviceid":	"MjIyMjIyMjIyMjIyMjIyMg==",
-		"ownr":	"MjIyMjIyMjIyMjIyMjIyMg=="
-	},
-    "cred":	[{
-		"credid": 1,
-		"sub": "MTExMTExMTExMTExMTExMQ==",
-		"credtyp": 1,
-		"pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
-        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
-	}]
+		"deviceid":	"YWRtaW5EZXZpY2VVVUlEMA==",
+		"ownr":	"YWRtaW5EZXZpY2VVVUlEMA=="
+	}
 }

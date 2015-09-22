@@ -391,9 +391,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_unlinkDevices
 (JNIEnv *env, jobject thiz, jobject device2, jobject jListener)
 {
     LOGD("OcSecureResource_unlinkDevices");
-    if (!jListener)
+    if (!jListener || !device2)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener cannot be null");
+        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener or device2 cannot be null");
         return;
     }
 
@@ -428,9 +428,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionCredenti
 (JNIEnv *env, jobject thiz, jint type, jint keySize, jobject device2, jobject jListener)
 {
     LOGD("OcSecureResource_provisionCredentials");
-    if (!jListener)
+    if (!jListener || !device2)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener cannot be null");
+        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener or device2 cannot be null");
         return;
     }
 
@@ -466,9 +466,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionACL
 (JNIEnv *env, jobject thiz, jobject acl, jobject jListener)
 {
     LOGD("OcSecureResource_provisionACL");
-    if (!jListener)
+    if (!jListener || !acl)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener cannot be null");
+        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener or acl cannot be null");
         return;
     }
 
@@ -504,9 +504,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionPairwise
         jobject acl2, jobject jListener)
 {
     LOGD("OcSecureResource_provisionPairwiseDevices");
-    if (!jListener)
+    if (!jListener || !device2)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener cannot be null");
+        ThrowOcException(OC_STACK_INVALID_PARAM, "Invalid Parameters");
         return;
     }
 
