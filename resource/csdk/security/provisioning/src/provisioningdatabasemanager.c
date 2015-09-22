@@ -680,3 +680,50 @@ void PDMDestoryStaleLinkList(OCPairList_t* ptr)
         }
     }
 }
+
+OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* uuidOfDevice2,
+                               bool* result)
+{
+    CHECK_PDM_INIT(TAG);
+    if (NULL == uuidOfDevice1 || NULL == uuidOfDevice2 || NULL == result)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    int id1 = 0;
+    int id2 = 0;
+    if (OC_STACK_OK != getIdForUUID(uuidOfDevice1, &id1))
+    {
+        OC_LOG(ERROR, TAG, "Requested value not found");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (OC_STACK_OK != getIdForUUID(uuidOfDevice2, &id2))
+    {
+        OC_LOG(ERROR, TAG, "Requested value not found");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    ASCENDING_ORDER(id1, id2);
+
+    sqlite3_stmt *stmt = 0;
+    int res = 0;
+    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_LINKED_DEVICES,
+                              strlen(PDM_SQLITE_GET_LINKED_DEVICES) + 1, &stmt, NULL);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
+    res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id1);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
+    res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_SECOND, id2);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
+    bool ret = false;
+    while(SQLITE_ROW == sqlite3_step(stmt))
+    {
+        OC_LOG(INFO, TAG, "Link already exists between devices");
+        ret = true;
+    }
+    sqlite3_finalize(stmt);
+    *result = ret;
+    return OC_STACK_OK;
+}
