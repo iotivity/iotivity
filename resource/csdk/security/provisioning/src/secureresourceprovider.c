@@ -618,10 +618,14 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
                                       OCProvisionResultCB resultCallback)
 {
     VERIFY_NON_NULL(TAG, pDev1, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(TAG, pDev2, ERROR,  OC_STACK_INVALID_PARAM);
+    if (SYMMETRIC_PAIR_WISE_KEY == type)
+    {
+        VERIFY_NON_NULL(TAG, pDev2, ERROR,  OC_STACK_INVALID_PARAM);
+    }
     VERIFY_NON_NULL(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
 
-    if (!(keySize == OWNER_PSK_LENGTH_128 || keySize == OWNER_PSK_LENGTH_256))
+    if (SYMMETRIC_PAIR_WISE_KEY == type &&
+       !(OWNER_PSK_LENGTH_128 == keySize || OWNER_PSK_LENGTH_256 == keySize))
     {
         OC_LOG(INFO, TAG, "Invalid key size");
         return OC_STACK_INVALID_PARAM;
