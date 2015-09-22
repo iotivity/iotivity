@@ -69,9 +69,7 @@ public:
      ATTR_VALUE(0)
     { }
     ~ResourceEncapsulationTestSimulator()
-    {
-        std::cout << "~ResourceEncapsulationTestSimulator()" << std::endl;
-    }
+    { }
 
 private:
     void onDiscoveryResource_Impl(RCSRemoteResourceObject::Ptr resourceObject)
@@ -98,10 +96,6 @@ private:
         {
             ptr->onDiscoveryResource_Impl(resourceObject);
         }
-        else
-        {
-            std::cout << "Aleady delete simulator\n";
-        }
     }
     void waitForDiscovery()
     {
@@ -127,9 +121,8 @@ private:
 public:
     void destroy()
     {
-        server.reset();
-        remoteResource.reset();
-        std::cout << "waitforptrbeingunique" << std::endl;
+        if(server.use_count()) server.reset();
+        if(remoteResource.use_count()) remoteResource.reset();
         WaitForPtrBeingUnique();
     }
     void defaultRunSimulator()

@@ -62,12 +62,10 @@ public:
     {
         std::unique_lock< std::mutex > lock{ mutexForCondition };
         responseCon.wait_for(lock, std::chrono::milliseconds{ waitingTime });
-        std::cout << "condition return back" << std::endl;
     }
 
     void notifyCondition()
     {
-        std::cout << "notify condition to all" << std::endl;
         responseCon.notify_all();
     }
 
@@ -89,15 +87,12 @@ TEST_F(ResourceHostingTest, HostingFoundBeforeMakeOriginServer)
 
     std::string uri = "";
     mocks.OnCallFunc(onDiscoveryResource).Do(
-            [this, &uri, &testObject](RCSRemoteResourceObject::Ptr ptr)
+            [this, &uri, &testObject, &discoveryTask](RCSRemoteResourceObject::Ptr ptr)
             {
-                if(testObject.use_count() <= 0)
-                {
-                    return;
-                }
-                if(ptr->getUri() == testObject->getServerUri())
+                if(ptr->getUri() == testObject->getHostedServerUri())
                 {
                     uri = ptr->getUri();
+                    discoveryTask->cancel();
                     notifyCondition();
                 }
             });
@@ -106,7 +101,7 @@ TEST_F(ResourceHostingTest, HostingFoundBeforeMakeOriginServer)
             RCSAddress::multicast(), "resource.hosting", onDiscoveryResource);
     waitForCondition(2000);
 
-    std::string mirroredUri = { testObject->getServerUri() };
+    std::string mirroredUri = { testObject->getHostedServerUri() };
 
     testObject->destroy();
 
@@ -133,7 +128,7 @@ TEST_F(ResourceHostingTest, stopHosting)
 
     ResourceHosting::getInstance()->startHosting();
     std::this_thread::sleep_for(std::chrono::milliseconds{1000});
-    
+
     testObject->destroy();
 
     ResourceHosting::getInstance()->stopHosting();

@@ -51,24 +51,24 @@ protected:
 
         testObject = std::make_shared<ResourceEncapsulationTestSimulator>();
         testObject->defaultRunSimulator();
-        server = testObject->getResourceServer();
         remoteObject = testObject->getRemoteResource();
     }
 
     void TearDown()
     {
         TestWithMock::TearDown();
-        if(remoteObject){
-          if(remoteObject->isCaching())
-          {
-              remoteObject->stopCaching();
-          }
-          if(remoteObject->isMonitoring())
-          {
-              remoteObject->stopMonitoring();
-          }
+        if(remoteObject)
+        {
+            if(remoteObject->isCaching())
+            {
+                remoteObject->stopCaching();
+            }
+            if(remoteObject->isMonitoring())
+            {
+                remoteObject->stopMonitoring();
+            }
         }
-         testObject->destroy();
+        testObject->destroy();
     }
 
 public:
