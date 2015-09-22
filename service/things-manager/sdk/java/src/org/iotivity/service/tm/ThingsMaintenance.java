@@ -129,6 +129,8 @@ public class ThingsMaintenance {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
+     *
+     * @throws OcException {@link OcException}
      */
     public OCStackResult reboot(OcResource resource) throws OcException {
 
@@ -158,6 +160,8 @@ public class ThingsMaintenance {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
+     *
+     * @throws OcException {@link OcException}
      */
     public OCStackResult factoryReset(OcResource resource) throws OcException {
 

@@ -172,6 +172,8 @@ public class ThingsConfiguration {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
+     *
+     * @throws OcException {@link OcException}
      */
     public OCStackResult updateConfigurations(OcResource resource,
             Map<String, String> configurations) throws OcException {
@@ -199,6 +201,8 @@ public class ThingsConfiguration {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
+     *
+     * @throws OcException {@link OcException}
      */
     public OCStackResult getConfigurations(OcResource resource,
             Vector<String> configurations) throws OcException {
