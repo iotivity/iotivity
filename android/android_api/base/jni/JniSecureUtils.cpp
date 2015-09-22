@@ -34,10 +34,15 @@ jobject JniSecureUtils::convertProvisionresultVectorToJavaList(JNIEnv *env, cons
 
     for (size_t i = 0; i < result->size(); ++i)
     {
+        jstring jStr = env->NewStringUTF((convertUUIDtoStr(result->at(i).deviceId).c_str()));
+        if (!jStr)
+        {
+            return nullptr;
+        }
         jobject jresult = env->NewObject(
                 g_cls_OcProvisionResult,
                 g_mid_OcProvisionResult_ctor,
-                env->NewStringUTF((char*)result->at(i).deviceId.id),
+                jStr,
                 static_cast<jint>(result->at(i).res)
                 );
         if (!jresult)
@@ -51,6 +56,7 @@ jobject JniSecureUtils::convertProvisionresultVectorToJavaList(JNIEnv *env, cons
             return nullptr;
         }
         env->DeleteLocalRef(jresult);
+        env->DeleteLocalRef(jStr);
     }
     return jResultList;
 }
