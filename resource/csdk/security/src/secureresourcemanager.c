@@ -384,7 +384,8 @@ bool SRMIsSecurityResourceURI(const char* uri)
     if (strcmp(uri, OIC_RSRC_AMACL_URI) == 0 || strcmp(uri, OIC_RSRC_ACL_URI) == 0
             || strcmp(uri, OIC_RSRC_PSTAT_URI) == 0
             || strncmp(OIC_RSRC_DOXM_URI, uri, strlen(OIC_RSRC_DOXM_URI)) == 0
-            || strcmp(uri, OIC_RSRC_CRED_URI) == 0 || strcmp(uri, OIC_RSRC_SVC_URI) == 0)
+            || strcmp(uri, OIC_RSRC_CRED_URI) == 0 || strcmp(uri, OIC_RSRC_SVC_URI) == 0
+            || strcmp(uri, OIC_RSRC_CRL_URI) == 0)
     {
         result = true;
     }
