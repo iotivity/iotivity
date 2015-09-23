@@ -99,6 +99,12 @@ namespace OIC
     typedef std::string MaintenanceName;
     typedef std::string MaintenanceValue;
 
+    /**
+     * @class ThingsMaintenance
+     * @brief
+     * There are two functionalities in Things Maintenance; (1) FactoryReset to restore all
+     * configuration parameters to default one, and (2) Reboot to request a system rebooting.
+     */
     class ThingsMaintenance
     {
     public:

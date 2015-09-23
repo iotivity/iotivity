@@ -47,6 +47,13 @@ typedef std::function< void(const HeaderOptions&, const OCRepresentation&, const
 typedef std::function< void(const HeaderOptions&, const OCRepresentation&, const int) > PostCallback;
 typedef std::function< void(const HeaderOptions&, const OCRepresentation&, const int) > PutCallback;
 
+/**
+ * @class GroupManager
+ * @brief
+ * This APIs provide functions for application to find appropriate devices (i.e. things) in network,
+ * create a group of the devices, check a presence of member devices in the group, and actuate a
+ * group action in a more convenient way.
+ */
 class GroupManager
 {
 public:
@@ -109,7 +116,7 @@ public:
      * @param newActionSet pointer of ActionSet class instance
      *
      * @return std::string return value of this API.
-     *					     It returns an action set String.
+     *                     It returns an action set String.
      * @note OCStackResult is defined in ocstack.h.
      */
     std::string getStringFromActionSet(const ActionSet *newActionSet);
