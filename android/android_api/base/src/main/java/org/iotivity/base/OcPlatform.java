@@ -489,15 +489,6 @@ public final class OcPlatform {
                 resProperty |= prop.getValue();
         }
 
-        if (null == entityHandler) {
-            entityHandler = new EntityHandler() {
-                @Override
-                public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest) {
-                    return EntityHandlerResult.OK;
-                }
-            };
-        }
-
         return OcPlatform.registerResource1(resourceUri,
                 resourceTypeName,
                 resourceInterface,
