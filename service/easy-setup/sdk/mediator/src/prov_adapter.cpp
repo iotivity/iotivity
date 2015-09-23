@@ -30,9 +30,9 @@
 //Use ipv4addr for both InitDiscovery and InitDeviceDiscovery
 char ipv4addr[IPV4_ADDR_SIZE] = {0};
 
-static OCProvisioningStatusCB cbData = NULL;
+volatile static OCProvisioningStatusCB cbData = NULL;
 
-OCStackResult InitEasySetupManager() {
+OCStackResult InitProvProcess() {
 
 
     OCStackResult result = OC_STACK_ERROR;
@@ -49,11 +49,11 @@ OCStackResult InitEasySetupManager() {
     return result;
 }
 
-OCStackResult TerminateEasySetupManager() {
+OCStackResult ResetProvProcess() {
     return TerminateProvisioningHandler();
 }
 
-OCStackResult RegisterProvisioningStausCallback(
+OCStackResult RegisterCallback(
         OCProvisioningStatusCB provisioningStatusCallback) {
     OCStackResult result = OC_STACK_OK;
 
@@ -68,20 +68,31 @@ OCStackResult RegisterProvisioningStausCallback(
     return result;
 }
 
-void UnRegisterProvisioningStausCallback() {
+void UnRegisterCallback() {
     if (cbData) {
         cbData = NULL;
     }
 }
 
-OCStackResult ProvisionEnrollee(const EnrolleeNWProvInfo_t *netInfo) {
-    return StartProvisioningProcess(netInfo, cbData);
+OCStackResult StartProvisioning(const EnrolleeNWProvInfo_t *netInfo) {
+
+    char findQuery[64] = {0};
+
+    if (netInfo->connType == CT_IP_USE_V4) {
+        snprintf(findQuery, sizeof(findQuery), UNICAST_PROVISIONING_QUERY,
+                 netInfo->netAddressInfo.WIFI.ipAddress, IP_PORT);
+    } else {
+
+        snprintf(findQuery, sizeof(findQuery),
+                 MULTICAST_PROVISIONING_QUERY_BLE);
+    }
+
+    return StartProvisioningProcess(netInfo, cbData, findQuery);
 }
 
-OCStackResult StopEnrolleeProvisioning(OCConnectivityType connectivityType) {
+OCStackResult StopProvisioning(OCConnectivityType connectivityType) {
     OCStackResult result = OC_STACK_OK;
 
-    //TODO: Have to handle the transport specific easy setup termination
     StopProvisioningProcess();
 
     return result;

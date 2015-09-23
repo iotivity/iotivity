@@ -37,18 +37,19 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-OCStackResult InitEasySetupManager();
 
-OCStackResult TerminateEasySetupManager();
+OCStackResult InitProvProcess();
 
-OCStackResult RegisterProvisioningStausCallback(
+OCStackResult ResetProvProcess();
+
+OCStackResult RegisterCallback(
         OCProvisioningStatusCB provisioningStatusCallback);
 
-void UnRegisterProvisioningStausCallback();
+void UnRegisterCallback();
 
-OCStackResult ProvisionEnrollee(const EnrolleeNWProvInfo_t *netInfo);
+OCStackResult StartProvisioning(const EnrolleeNWProvInfo_t *netInfo);
 
-OCStackResult StopEnrolleeProvisioning(OCConnectivityType connectivityType);
+OCStackResult StopProvisioning(OCConnectivityType connectivityType);
 
 #ifdef __cplusplus
 }

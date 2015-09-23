@@ -1,22 +1,22 @@
 /**
  * ***************************************************************
- * <p>
+ * <p/>
  * Copyright 2015 Samsung Electronics All Rights Reserved.
- * <p>
- * <p>
- * <p>
+ * <p/>
+ * <p/>
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * <p>
+ * <p/>
  * ****************************************************************
  */
 
@@ -79,7 +79,7 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
                         conn.setHardwareAddress(enrolleStatus.getHWAddr());
                         conn.setDeviceName(enrolleStatus.getDevice());
 
-                        Log.d("ESSoftAPOnBoarding", "Entered"+finalResult);
+                        Log.d("ESSoftAPOnBoarding", "Entered" + finalResult);
                         mOnBoardingCallback.onFinished(conn);
                         return;
 
@@ -89,9 +89,7 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
                 IpOnBoardingConnection conn = new IpOnBoardingConnection();
                 conn.setConnectivity(false);
                 mOnBoardingCallback.onFinished(conn);
-            }
-            else
-            {
+            } else {
                 Log.e("ESSoftAPOnBoarding", "Device NOT in OnBoarding State. Ignoring the event");
             }
         }
@@ -138,6 +136,14 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
     @Override
     protected void startProvisioningProcess(OnBoardingConnection conn) {
         mState = EnrolleeState.DEVICE_PROVISIONING_STATE;
+
+        try {
+            Log.i(TAG, "waiting for 15 seconds to start provisioning");
+            Thread.sleep(15000);//Sleep for allowing thin device to start the services
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
 
         if (mProvConfig.getConnType() == ProvisioningConfig.ConnType.WiFi) {
 

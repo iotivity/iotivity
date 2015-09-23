@@ -31,11 +31,8 @@
 //-----------------------------------------------------------------------------
 // Defines
 //-----------------------------------------------------------------------------
-#define TAG "provisioninghandler"
-#define DEFAULT_CONTEXT_VALUE 0x99
-#ifndef MAX_LENGTH_IPv4_ADDR
-#define MAX_LENGTH_IPv4_ADDR 16
-#endif
+#define EASY_SETUP_DEFAULT_CONTEXT_VALUE 0x99
+#define TAG "EASY_SETUP_PROVISIONING"
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -54,7 +51,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void *ctx, OCDoHandle handle,
                                                    OCClientResponse *clientResponse);
 
 OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char *query, const char *resUri,
-                                OCDevAddr *destination);
+                                OCDevAddr *destination, int pauseBeforeStart);
 
 OCStackApplicationResult GetProvisioningStatusResponse(void *ctx, OCDoHandle handle,
                                                        OCClientResponse *clientResponse);
@@ -68,14 +65,10 @@ OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char *query,
                                     const OCDevAddr *destination);
 
 OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo_t *netInfo,
-                                       OCProvisioningStatusCB provisioningStatusCallback);
+                                       OCProvisioningStatusCB provisioningStatusCallback,
+                                       char *findResQuery);
 
 void StopProvisioningProcess();
-
-OCStackApplicationResult SubscribeProvPresenceCallback(void *ctx, OCDoHandle handle,
-                                                       OCClientResponse *clientResponse);
-
-OCStackResult SubscribeProvPresence(OCQualityOfService qos, const char *requestURI);
 
 OCStackApplicationResult FindProvisioningResourceResponse(void *ctx, OCDoHandle handle,
                                                           OCClientResponse *clientResponse);
@@ -116,6 +109,8 @@ bool InProgress();
 
 bool ValidateEasySetupParams(const EnrolleeNWProvInfo_t *netInfo,
                              OCProvisioningStatusCB provisioningStatusCallback);
+
+bool IsSetupStopped();
 
 
 #endif

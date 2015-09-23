@@ -111,17 +111,20 @@ if target_os == 'android':
 	if 'BLE' in transport:
 		es_sdk_shared = easy_setup_env.StaticLibrary('libESSDK',
 						['sdk/mediator/src/prov_adapter.cpp',
-						'sdk/mediator/src/ble_provisioning.cpp'])
+						'sdk/mediator/src/ble_provisioning.cpp',
+						'sdk/mediator/src/provisioning.cpp'])
 	else :
 		es_sdk_shared = easy_setup_env.StaticLibrary('libESSDK',
 						['sdk/mediator/src/prov_adapter.cpp',
-						'sdk/mediator/src/wifi_provisioning.cpp'])
+						'sdk/mediator/src/wifi_provisioning.cpp',
+                                                'sdk/mediator/src/provisioning.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 if target_os == 'linux':
 	es_sdk_shared = easy_setup_env.SharedLibrary('ESSDKLibrary',
 					['sdk/mediator/src/prov_adapter.cpp',
-					'sdk/mediator/src/wifi_provisioning.cpp'])
+					'sdk/mediator/src/wifi_provisioning.cpp',
+                                        'sdk/mediator/src/provisioning.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 #Go to build sample apps

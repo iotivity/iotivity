@@ -66,9 +66,10 @@ int main(int argc, char **argv) {
     int opt;
     EnrolleeNWProvInfo_t netInfo;
     PrintUsage();
-    InitEasySetupManager();
+    InitProvProcess();
 
-    RegisterProvisioningStausCallback(ProvisioningStatusCallback);
+
+    RegisterCallback(ProvisioningStatusCallback);
 
     while ((opt = getopt(argc, argv, "d:s:p:")) != -1) {
         switch (opt) {
@@ -93,14 +94,14 @@ int main(int argc, char **argv) {
     OIC_LOG_V(INFO, TAG, "SSID of the Enroller is =%s\n", netInfo.netAddressInfo.WIFI.ssid);
     OIC_LOG_V(INFO, TAG, "Password of the Enroller is =%s\n", netInfo.netAddressInfo.WIFI.pwd);
 
-    ProvisionEnrollee(&netInfo);
+    StartProvisioning(&netInfo);
 
     signal(SIGINT, handleSigInt);
     while (!quitFlag) {
         sleep(1);
     }
 
-    TerminateEasySetupManager();
+    ResetProvProcess();
     OIC_LOG(INFO, TAG, "Exiting occlient main loop...");
 
     return 0;
