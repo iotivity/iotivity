@@ -18,6 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+* @file
+*
+* This file contains the resource container Bundle APIs provided
+*     to the resource bundle developers.
+*/
+
 #ifndef RESOURCECONTAINERBUNDLEAPI_H_
 #define RESOURCECONTAINERBUNDLEAPI_H_
 
@@ -31,6 +38,13 @@ namespace OIC
 {
     namespace Service
     {
+
+        /**
+        * @class   ResourceContainerBundleAPI
+        * @brief   This class provides APIs for retrieving bundle and resource configuration
+        *              and registering/unregistering resources.
+        *
+        */
         class ResourceContainerBundleAPI: public NotificationReceiver
         {
             public:
@@ -38,7 +52,7 @@ namespace OIC
                 * Register bundle resource in the container
                 *   and register resource server for bundle resource
                 *
-                * @param resource - bundle resource to register
+                * @param resource bundle resource to register
                 *
                 * @return void
                 */
@@ -48,7 +62,7 @@ namespace OIC
                 * Unregister bundle resource from the container
                 *   and unregister resource server
                 *
-                * @param resource - bundle resource to unregister
+                * @param resource Bundle resource to unregister
                 *
                 * @return void
                 */
@@ -57,9 +71,9 @@ namespace OIC
                 /**
                 * Get Configuration data of certain bundle
                 *
-                * @param [in] bundleId - bundle id to get configuration data
+                * @param [in] bundleId Bundle id to get configuration data
                 *
-                * @param [out] configOutput - returned configuration data
+                * @param [out] configOutput Returned configuration data of bundle
                 *
                 * @return void
                 */
@@ -68,9 +82,9 @@ namespace OIC
                 /**
                 * Get the list of Configuration data of resources that certain bundle has
                 *
-                * @param [in] bundleId - bundle id to get configuration data
+                * @param [in] bundleId Bundle id to get configuration data
                 *
-                * @param [out] configOutput - returned resource configuration data vector
+                * @param [out] configOutput Returned vector of resource configuration data
                 *
                 * @return void
                 */
@@ -80,7 +94,7 @@ namespace OIC
                 /**
                 * API for getting an instance of ResourceContainerBundleAPI
                 *
-                * @return ResourceContainerBundleAPI * - return the object pointer of ResourceContainerBundleAPI
+                * @return ResourceContainerBundleAPI * Return the object pointer of ResourceContainerBundleAPI
                 */
                 static ResourceContainerBundleAPI *getInstance();
 

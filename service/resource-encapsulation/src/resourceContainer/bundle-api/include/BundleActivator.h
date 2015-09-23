@@ -53,9 +53,9 @@ namespace OIC
                 /**
                 * Activate the Bundle to make bundle work and create bundle resources
                 *
-                * @param resourceContainer - resourceContainer which registered the bundle
+                * @param resourceContainer ResourceContainer which registers the bundle
                 *
-                * @param bundleId - assigned id for the bundle
+                * @param bundleId Assigned id for the bundle
                 *
                 * @return void
                 */
@@ -72,7 +72,7 @@ namespace OIC
                 /**
                 * Create Bundle Resource instance and register the resource in the container
                 *
-                * @param resourceInfo - information to create bundle resource
+                * @param resourceInfo Information of the bundle resource to be created
                 *
                 * @return void
                 */
@@ -81,7 +81,7 @@ namespace OIC
                 /**
                 * Destroy Bundle Resource instance and register the resource in the container
                 *
-                * @param pBundleResource - bundle resource to be destroyed
+                * @param pBundleResource Bundle resource to be destroyed
                 *
                 * @return void
                 */
