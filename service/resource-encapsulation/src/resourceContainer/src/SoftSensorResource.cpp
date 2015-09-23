@@ -52,28 +52,6 @@ namespace OIC
                  itor != m_mapResourceProperty[SS_RESOURCE_OUTPUT].end(); itor++)
                 BundleResource::setAttribute((*itor)[SS_RESOURCE_OUTPUTNAME], nullptr);
         }
-
-        RCSResourceAttributes &SoftSensorResource::getAttributes()
-        {
-            // execute implemented logic to get attribute, and update bundle resource attribute data
-            RCSResourceAttributes attr;
-            for (std::string attrName : getAttributeNames())
-            {
-                attr[attrName] = getAttribute(attrName);
-            }
-            BundleResource::setAttributes(attr);
-
-            return BundleResource::getAttributes();
-        }
-
-        void SoftSensorResource::setAttributes(RCSResourceAttributes &attrs)
-        {
-            // execute implemented logic to set attribute
-            for (RCSResourceAttributes::iterator it = attrs.begin(); it != attrs.end(); ++it)
-            {
-                setAttribute(it->key(), std::move(it->value()));
-            }
-        }
     }
 }
 

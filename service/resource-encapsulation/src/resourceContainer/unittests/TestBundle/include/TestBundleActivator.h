@@ -51,6 +51,29 @@ class TestBundleResource : public BundleResource
 {
     public:
         void initAttributes() { };
+
+        RCSResourceAttributes::Value handleGetAttributeRequest(
+                const std::string &key)
+        {
+            return BundleResource::getAttribute(key);
+        }
+
+        void handleSetAttributeRequest(const std::string &key,
+                                             RCSResourceAttributes::Value &&value)
+        {
+            BundleResource::setAttribute(key, std::move(value));
+        }
+
+        RCSResourceAttributes& handleGetAttributesRequest()
+        {
+            return BundleResource::getAttributes();
+        }
+
+        void handleSetAttributesRequest(
+                                             RCSResourceAttributes &value)
+        {
+            BundleResource::setAttributes(value);
+        }
 };
 
 #endif /* TESTBUNDLE_H_ */

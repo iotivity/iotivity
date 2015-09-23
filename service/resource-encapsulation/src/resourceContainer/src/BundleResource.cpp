@@ -68,15 +68,20 @@ namespace OIC
             }
         }
 
-        void BundleResource::setAttribute(std::string key, RCSResourceAttributes::Value &&value)
+        void BundleResource::setAttribute(const std::string &key,
+                RCSResourceAttributes::Value &&value, bool notify)
         {
             OC_LOG_V(INFO, CONTAINER_TAG, "set attribute \(%s)'", std::string(key + "\', with " +
                      value.toString()).c_str());
 
             m_resourceAttributes[key] = value;
 
-            if (m_pNotiReceiver)
+            if (notify && m_pNotiReceiver)
                 m_pNotiReceiver->onNotificationReceived(m_uri);
+        }
+
+        void BundleResource::setAttribute(const std::string &key, RCSResourceAttributes::Value &&value){
+            setAttribute(key, std::move(value), true);
         }
 
         RCSResourceAttributes::Value BundleResource::getAttribute(const std::string &key)
@@ -84,6 +89,26 @@ namespace OIC
             OC_LOG_V(INFO, CONTAINER_TAG, "get attribute \'(%s)" , std::string(key + "\'").c_str());
 
             return m_resourceAttributes.at(key);
+        }
+
+        RCSResourceAttributes::Value BundleResource::handleGetAttributeRequest(const std::string &key)
+        {
+            return BundleResource::getAttribute(key);
+        }
+
+        void BundleResource::handleSetAttributeRequest(const std::string &key, RCSResourceAttributes::Value &&value)
+        {
+            BundleResource::setAttribute(key, std::move(value));
+        }
+
+        RCSResourceAttributes& BundleResource::handleGetAttributesRequest()
+        {
+            return BundleResource::getAttributes();
+        }
+
+        void BundleResource::handleSetAttributesRequest(RCSResourceAttributes &value)
+        {
+            BundleResource::setAttributes(value);
         }
     }
 }
