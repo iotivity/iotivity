@@ -104,6 +104,7 @@ public class EasySetupService {
 
         mEnrolleeDeviceList.add(enrolledevice);
 
+
         // Starts the provisioning directly if the device is already on boarded on the network.
         if (enrolledevice.onBoarded()) {
             enrolledevice.startProvisioning(mProvisioningCallback);
@@ -177,10 +178,12 @@ public class EasySetupService {
 
         @Override
         public void onFinished(EnrolleeDevice enrolledevice) {
-            if (mEnrolleeDeviceList.contains(enrolledevice)) {
-                Log.i(TAG, "onFinished() is received " + enrolledevice.isSetupSuccessful());
-                mCallback.onFinished(enrolledevice);
-                mEnrolleeDeviceList.remove(enrolledevice);
+            synchronized (EasySetupService.this) {
+                if (mEnrolleeDeviceList.contains(enrolledevice)) {
+                    Log.i(TAG, "onFinished() is received " + enrolledevice.isSetupSuccessful());
+                    mCallback.onFinished(enrolledevice);
+                    mEnrolleeDeviceList.remove(enrolledevice);
+                }
             }
         }
 

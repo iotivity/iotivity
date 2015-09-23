@@ -34,7 +34,6 @@ import java.util.UUID;
 
 public class BLEManager {
     private BluetoothAdapter mBluetoothAdapter;
-    private boolean is_scanning;
     private Context mcontext;
     private Handler mHandler;
     private static final long SCAN_PERIOD = 10000;
@@ -67,13 +66,11 @@ public class BLEManager {
         mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                is_scanning = false;
                 mBluetoothAdapter.stopLeScan(mLeScanCallback);
 
             }
         }, SCAN_PERIOD);
 
-        is_scanning = true;
         UUID[] uuids = {bleOnBoardingConfig.getUuid()};
         mBluetoothAdapter.startLeScan(uuids, mLeScanCallback);
         finishlistener = listener;

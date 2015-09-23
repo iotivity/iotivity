@@ -210,8 +210,10 @@ public class WiFiSoftAPManager {
             Method method = mWifiManager.getClass().getMethod("getWifiApState");
 
             int currentWiFiState = ((Integer) method.invoke(mWifiManager));
-
-            return WIFI_AP_STATE.class.getEnumConstants()[currentWiFiState];
+            WIFI_AP_STATE wifi_ap_state_enum[] = WIFI_AP_STATE.class.getEnumConstants();
+            if (wifi_ap_state_enum != null)
+                return wifi_ap_state_enum[currentWiFiState];
+            else return WIFI_AP_STATE.WIFI_AP_STATE_FAILED;
         } catch (Exception e) {
             Log.e(this.getClass().toString(), "", e);
             return WIFI_AP_STATE.WIFI_AP_STATE_FAILED;
