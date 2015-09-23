@@ -33,8 +33,14 @@ class BMISensorResource : public SoftSensorResource
         BMISensorResource();
         ~BMISensorResource();
 
-        virtual RCSResourceAttributes::Value getAttribute(const std::string &key);
-        virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&value);
+        virtual RCSResourceAttributes::Value handleGetAttributeRequest(const std::string &key);
+
+        virtual void handleSetAttributeRequest(const std::string &key,
+                RCSResourceAttributes::Value &&value);
+
+        virtual RCSResourceAttributes& handleGetAttributesRequest();
+
+        virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs);
 
         virtual void executeLogic();
 

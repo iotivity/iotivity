@@ -50,13 +50,21 @@ void HueLight::initAttributes()
     BundleResource::setAttribute("color", 0);
 }
 
-RCSResourceAttributes::Value HueLight::getAttribute(const std::string &key)
+RCSResourceAttributes::Value HueLight::handleGetAttributeRequest(const std::string &key)
 {
     cout << "HueLight::getAttribute called for " << key <<  " called" << endl;
+    // TODO read from HueLight and update attribute data
     return BundleResource::getAttribute(key);
 }
 
-void HueLight::setAttribute(std::string attributeName, RCSResourceAttributes::Value &&value)
+RCSResourceAttributes& HueLight::handleGetAttributesRequest()
+{
+    cout << "HueLight::getAttributes" << endl;
+    // TODO read from HueLight and update attribute data
+    return BundleResource::getAttributes();
+}
+
+void HueLight::handleSetAttributeRequest(const std::string &attributeName, RCSResourceAttributes::Value &&value)
 {
     cout << "HueLight::setAttribute setting " << attributeName << " to " << value.toString() <<
          std::endl;
@@ -79,5 +87,14 @@ void HueLight::setAttribute(std::string attributeName, RCSResourceAttributes::Va
     }
 
     BundleResource::setAttribute(attributeName, std::move(value));
+}
+
+void HueLight::handleSetAttributesRequest(RCSResourceAttributes &value)
+{
+    cout << "HueLight::setAttributes "<< std::endl;
+
+    // TODO construct single write
+
+    BundleResource::setAttributes(value);
 }
 

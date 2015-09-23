@@ -395,7 +395,7 @@ namespace OIC
                             }
                         }
 
-                        m_mapResources[strResourceUri]->setAttributes(attr);
+                        m_mapResources[strResourceUri]->handleSetAttributesRequest(attr);
                     };
                     boost::thread setThread(setFunction);
                     setThread.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));

@@ -40,8 +40,15 @@ namespace OIC
 
                 virtual void initAttributes();
 
-                virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&);
-                virtual RCSResourceAttributes::Value getAttribute(const std::string &key);
+                virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs);
+
+                virtual void handleSetAttributeRequest(const std::string &key,
+                        RCSResourceAttributes::Value &&value);
+
+                virtual RCSResourceAttributes::Value handleGetAttributeRequest(
+                        const std::string &key);
+
+                virtual RCSResourceAttributes& handleGetAttributesRequest();
 
             private:
                 std::string m_address;
