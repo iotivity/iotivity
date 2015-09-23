@@ -21,6 +21,7 @@ BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth)
 BuildRequires:  pkgconfig(capi-appfw-app-common)
+BuildRequires:  pkgconfig(glib-2.0)
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
 

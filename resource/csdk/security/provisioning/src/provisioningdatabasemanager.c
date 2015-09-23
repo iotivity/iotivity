@@ -20,10 +20,10 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include <sqlite3.h>
 #include <string.h>
 #include <stdlib.h>
 
+#include "sqlite3.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "provisioningdatabasemanager.h"
@@ -56,7 +56,7 @@
  * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR,OC_STACK_ERROR);
  */
 #define PDM_VERIFY_SQLITE_OK(tag, arg, logLevel, retValue) do{ if (SQLITE_OK != (arg)) \
-            { OC_LOG_V((logLevel), tag, ("Error in " #arg ", Error Message: %s"), \
+            { OC_LOG_V((logLevel), tag, "Error in " #arg ", Error Message: %s", \
                sqlite3_errmsg(g_db)); return retValue; }}while(0)
 
 #define PDM_SQLITE_TRANSACTION_BEGIN "BEGIN TRANSACTION;"
