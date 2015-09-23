@@ -84,6 +84,11 @@ bool UuidCmp(OicUuid_t *firstId, OicUuid_t *secondId)
  */
 void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
 {
+    if(NULL == context)
+    {
+        return;
+    }
+
     // Clear stateful context variables.
     memset(&context->subject, 0, sizeof(context->subject));
     memset(&context->resource, 0, sizeof(context->resource));
@@ -107,6 +112,11 @@ bool IsRequestFromDevOwner(PEContext_t *context)
     bool retVal = false;
     OicUuid_t owner;
 
+    if(NULL == context)
+    {
+        return OC_STACK_ERROR;
+    }
+
     if(OC_STACK_OK == GetDoxmDevOwnerId(&owner))
     {
         retVal = UuidCmp(&context->subject, &owner);
@@ -119,6 +129,12 @@ bool IsRequestFromDevOwner(PEContext_t *context)
 inline static bool IsRequestSubjectEmpty(PEContext_t *context)
 {
     OicUuid_t emptySubject = {.id={}};
+
+    if(NULL == context)
+    {
+        return false;
+    }
+
     return (memcmp(&context->subject, &emptySubject, sizeof(OicUuid_t)) == 0) ?
             true : false;
 }
@@ -149,6 +165,11 @@ static inline bool IsPermissionAllowingRequest(const uint16_t permission,
  */
 static inline bool IsWildCardSubject(OicUuid_t *subject)
 {
+    if(NULL == subject)
+    {
+        return false;
+    }
+
     // Because always comparing to string literal, use strcmp()
     if(0 == memcmp(subject, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)))
     {
@@ -171,7 +192,12 @@ void CopyParamsToContext(
 {
     size_t length = 0;
 
-     memcpy(&context->subject, subjectId, sizeof(OicUuid_t));
+    if(NULL == context || NULL == subjectId || NULL == resource)
+    {
+        return;
+    }
+
+    memcpy(&context->subject, subjectId, sizeof(OicUuid_t));
 
     // Copy the resource string into context.
     length = strlen(resource) + 1;
@@ -233,6 +259,11 @@ static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
  */
  bool IsResourceInAcl(const char *resource, const OicSecAcl_t *acl)
 {
+    if(NULL== acl || NULL == resource)
+    {
+        return false;
+    }
+
      for(size_t n = 0; n < acl->resourcesLen; n++)
      {
          if(0 == strcmp(resource, acl->resources[n]) || // TODO null terms?
@@ -435,11 +466,13 @@ exit:
  */
 OCStackResult InitPolicyEngine(PEContext_t *context)
 {
-    if(NULL != context)
+    if(NULL== context)
     {
-        context->amsMgrContext = (AmsMgrContext_t *)OICMalloc(sizeof(AmsMgrContext_t));
-        SetPolicyEngineState(context, AWAITING_REQUEST);
+        return OC_STACK_ERROR;
     }
+
+    context->amsMgrContext = (AmsMgrContext_t *)OICMalloc(sizeof(AmsMgrContext_t));
+    SetPolicyEngineState(context, AWAITING_REQUEST);
 
     return OC_STACK_OK;
 }
