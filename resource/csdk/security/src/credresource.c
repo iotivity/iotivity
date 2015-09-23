@@ -35,6 +35,7 @@
 #include "cainterface.h"
 #include "pbkdf2.h"
 #include <stdlib.h>
+#include "iotvticalendar.h"
 #ifdef WITH_ARDUINO
 #include <string.h>
 #else
@@ -906,6 +907,20 @@ int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
                     if ((desc_len == sizeof(cred->subject.id)) &&
                         (memcmp(desc, cred->subject.id, sizeof(cred->subject.id)) == 0))
                     {
+                        /*
+                         * If the credentials are valid for limited time,
+                         * check their expiry.
+                         */
+                        if (cred->period)
+                        {
+                            if(IOTVTICAL_VALID_ACCESS != IsRequestWithinValidTime(cred->period, NULL))
+                            {
+                                OC_LOG (INFO, TAG, "Credentials are expired.");
+                                ret = -1;
+                                return ret;
+                            }
+                        }
+
                         // Convert PSK from Base64 encoding to binary before copying
                         uint32_t outLen = 0;
                         B64Result b64Ret = b64Decode(cred->privateData.data,
