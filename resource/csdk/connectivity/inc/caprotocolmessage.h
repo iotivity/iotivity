@@ -48,6 +48,8 @@ typedef uint32_t code_t;
 #define HAVE_TIME_H 1
 #endif
 
+static const uint8_t PAYLOAD_MARKER = 1;
+
 /**
  * generates pdu structure from the given information.
  * @param[in]   code                 code of the pdu packet.
