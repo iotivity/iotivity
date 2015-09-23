@@ -421,6 +421,53 @@ unsigned int coap_get_tcp_header_length_for_transport(coap_transport_type transp
     return length;
 }
 
+size_t coap_get_opt_header_length(unsigned short key, size_t length)
+{
+    size_t headerLength = 0;
+
+    unsigned short optDeltaLength = 0;
+    if (COAP_OPTION_FIELD_8_BIT >= key)
+    {
+        optDeltaLength = 0;
+    }
+    else if (COAP_OPTION_FIELD_8_BIT < key && COAP_OPTION_FIELD_16_BIT >= key)
+    {
+        optDeltaLength = 1;
+    }
+    else if (COAP_OPTION_FIELD_16_BIT < key && COAP_OPTION_FIELD_32_BIT >= key)
+    {
+        optDeltaLength = 2;
+    }
+    else
+    {
+        printf("Error : Reserved for the Payload marker for Delta");
+        return 0;
+    }
+
+    size_t optLength = 0;
+    if (COAP_OPTION_FIELD_8_BIT >= length)
+    {
+        optLength = 0;
+    }
+    else if (COAP_OPTION_FIELD_8_BIT < length && COAP_OPTION_FIELD_16_BIT >= length)
+    {
+        optLength = 1;
+    }
+    else if (COAP_OPTION_FIELD_16_BIT < length && COAP_OPTION_FIELD_32_BIT >= length)
+    {
+        optLength = 2;
+    }
+    else
+    {
+        printf("Error : Reserved for the Payload marker for length");
+        return 0;
+    }
+
+    headerLength = length + optDeltaLength + optLength + 1;
+
+    return headerLength;
+}
+
 #endif
 
 void coap_add_code(const coap_pdu_t *pdu, coap_transport_type transport, unsigned int code)

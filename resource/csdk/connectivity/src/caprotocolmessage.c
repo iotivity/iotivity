@@ -295,23 +295,42 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
     coap_transport_type transport;
     unsigned int length = COAP_MAX_PDU_SIZE;
 #ifdef TCP_ADAPTER
-    unsigned int headerLength = 0;
+    unsigned int msgLength = 0;
     if (CA_ADAPTER_TCP == endpoint->adapter)
     {
         if (options)
         {
+            unsigned short prevOptNumber = 0;
             for (coap_list_t *opt = options; opt; opt = opt->next)
             {
-                headerLength += COAP_OPTION_LENGTH(*(coap_option *) opt->data) + 1;
+                unsigned short curOptNumber = COAP_OPTION_KEY(*(coap_option *) opt->data);
+                if (prevOptNumber > curOptNumber)
+                {
+                    OIC_LOG(ERROR, TAG, "option list is wrong");
+                    return NULL;
+                }
+
+                size_t optValueLen = COAP_OPTION_LENGTH(*(coap_option *) opt->data);
+                size_t optLength = coap_get_opt_header_length(curOptNumber - prevOptNumber, optValueLen);
+                if (0 == optLength)
+                {
+                    OIC_LOG(ERROR, TAG, "Reserved for the Payload marker for the option");
+                    return NULL;
+                }
+                msgLength += optLength;
+                prevOptNumber = curOptNumber;
+                OIC_LOG_V(DEBUG, TAG, "curOptNumber[%d], prevOptNumber[%d], optValueLen[%d], "
+                        "optLength[%d], msgLength[%d]",
+                          curOptNumber, prevOptNumber, optValueLen, optLength, msgLength);
             }
         }
 
         if (info->payloadSize > 0)
         {
-            headerLength = headerLength + info->payloadSize + 1;
+            msgLength = msgLength + info->payloadSize + PAYLOAD_MARKER;
         }
-        transport = coap_get_tcp_header_type_from_size(headerLength);
-        length = headerLength + coap_get_tcp_header_length_for_transport(transport)
+        transport = coap_get_tcp_header_type_from_size(msgLength);
+        length = msgLength + coap_get_tcp_header_length_for_transport(transport)
                 + info->tokenLength;
     }
     else
@@ -334,7 +353,7 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
 #ifdef TCP_ADAPTER
     if (CA_ADAPTER_TCP == endpoint->adapter)
     {
-        coap_add_length(pdu, transport, headerLength);
+        coap_add_length(pdu, transport, msgLength);
     }
     else
 #endif

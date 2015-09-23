@@ -178,6 +178,10 @@ typedef int coap_tid_t;
 #define COAP_TCP_LENGTH_FIELD_NUM_16_BIT     14
 #define COAP_TCP_LENGTH_FIELD_NUM_32_BIT     15
 
+#define COAP_OPTION_FIELD_8_BIT      12
+#define COAP_OPTION_FIELD_16_BIT     256
+#define COAP_OPTION_FIELD_32_BIT     65536
+
 typedef enum
 {
     coap_udp = 0,
@@ -462,6 +466,15 @@ unsigned int coap_get_tcp_header_length(unsigned char *data);
  * @return header length.
  */
 unsigned int coap_get_tcp_header_length_for_transport(coap_transport_type transport);
+
+/**
+ * Get option length.
+ *
+ * @param key      delta of option
+ * @param length   length of option
+ * @return total option length
+ */
+size_t coap_get_opt_header_length(unsigned short key, size_t length);
 #endif
 
 /**
