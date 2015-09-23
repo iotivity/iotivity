@@ -817,8 +817,8 @@ namespace OIC
 
         void ResourceContainerImpl::registerJavaBundle(RCSBundleInfo *bundleInfo)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, "Registering Java bundle (%s)", std::string(+
-                     bundleInfo->getID()).c_str());
+            OC_LOG_V(INFO, CONTAINER_TAG, "Registering Java bundle (%s)",
+                     std::string(bundleInfo->getID()).c_str());
 
             JavaVM *jvm;
             JNIEnv *env;
