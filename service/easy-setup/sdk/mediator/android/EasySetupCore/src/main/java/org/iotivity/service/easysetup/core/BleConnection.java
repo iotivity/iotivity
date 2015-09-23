@@ -24,6 +24,7 @@ public class BleConnection implements OnBoardingConnection {
     private boolean mIsConnected;
     private String mServiceUUID;
     private String macaddress;
+    private String mDeviceName;
 
     public void setConnectivity(boolean connected) {
         mIsConnected = connected;
@@ -60,4 +61,11 @@ public class BleConnection implements OnBoardingConnection {
         return this;
     }
 
+    public String getmDeviceName() {
+        return mDeviceName;
+    }
+
+    public void setmDeviceName(String mDeviceName) {
+        this.mDeviceName = mDeviceName;
+    }
 }

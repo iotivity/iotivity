@@ -184,8 +184,8 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void *ctx, OCDoHandle handle,
 
 OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char *query, const char *resUri,
                                 OCDevAddr *destination) {
-    OIC_LOG_V(INFO, TAG, "Sleeping for 2 seconds");
-    sleep(2);
+    OIC_LOG_V(INFO, TAG, "Sleeping for 6 seconds");
+    sleep(6);//sleep added to avoid BLE packet drop
     OIC_LOG_V(INFO, TAG, "\n\nExecuting ProvisionEnrollee%s", __func__);
 
     OCRepPayload *payload = OCRepPayloadCreate();

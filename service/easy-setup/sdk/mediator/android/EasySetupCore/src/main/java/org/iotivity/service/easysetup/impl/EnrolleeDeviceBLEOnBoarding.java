@@ -67,6 +67,8 @@ public class EnrolleeDeviceBLEOnBoarding extends EnrolleeDevice {
                     BleConnection conn = new BleConnection();
                     conn.setMacaddress(connectedDevice.getHWAddr());
                     conn.setConnectivity(true);
+                    conn.setmServiceUUID(connectedDevice.getIpAddr());
+                    conn.setmDeviceName(connectedDevice.getDevice());
                     Log.d("ESBLEOnBoarding", "Entered" + ":" + finalResult);
                     mOnBoardingCallback.onFinished(conn);
                     return;
@@ -94,7 +96,7 @@ public class EnrolleeDeviceBLEOnBoarding extends EnrolleeDevice {
         Log.i(TAG, "Starging on boarding process");
 
         boolean status = bleManager.setupBluetooth();
-
+        mState = EnrolleeState.DEVICE_ON_BOARDING_STATE;
         Log.i(TAG, "Bluetooth started with status " + status);
         if (status) {
             Log.i(TAG, "Scanning available BLE devices");
@@ -107,7 +109,8 @@ public class EnrolleeDeviceBLEOnBoarding extends EnrolleeDevice {
     @Override
     protected void stopOnBoardingProcess() {
 
-        bleManager.stopscan();
+        if (bleManager != null)
+            bleManager.stopscan();
 
     }
 
@@ -116,7 +119,7 @@ public class EnrolleeDeviceBLEOnBoarding extends EnrolleeDevice {
 
         Log.i("start provisioning BLE", mProvConfig.getConnType() + "");
 
-
+        mState = EnrolleeState.DEVICE_PROVISIONING_STATE;
         provisionEnrolleInstance = new ProvisionEnrollee(mContext);
         provisionEnrolleInstance.registerProvisioningHandler(new IProvisioningListener() {
             @Override

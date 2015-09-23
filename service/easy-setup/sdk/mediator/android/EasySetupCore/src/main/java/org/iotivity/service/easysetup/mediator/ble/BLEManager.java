@@ -90,15 +90,16 @@ public class BLEManager {
 
                 @Override
                 public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
-                    Log.d("device found", device.getAddress());
+                    Log.d("device found", device.getName() + device.getAddress());
                     bleOnBoardingConfig.setMacaddress(device.getAddress());
                     {
                         stopscan();
                         EnrolleeInfo result = new EnrolleeInfo();
                         result.setReachable(true);
+                        result.setDevice(device.getName());
+                        result.setIpAddr(bleOnBoardingConfig.getUuid().toString());
                         result.setHWAddr(bleOnBoardingConfig.getMacaddress());
                         NotifyApplication(result);
-
                     }
                 }
             };

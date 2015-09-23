@@ -23,16 +23,19 @@
 #include "jni_easy_setup_jvm.h"
 #include "prov_adapter.h"
 
-void JNIProvisioningStatusCallback(ProvisioningInfo * provInfo) {
+void JNIProvisioningStatusCallback(ProvisioningInfo * provInfo)
+{
     JNIEnv *env = EasySetupJVM::getEnv();
-    if (env == NULL) {
+    if (env == NULL)
+    {
         LOGE("JNIProvisioningStatusCallback : Getting JNIEnv failed");
         return;
     }
 
     // Get EasySetupHandler class reference
     jclass easysetupCallbacks = GetJClass(EASY_SETUP_SERVICE_CALLBACK_NATIVE_API_CLASS_PATH);
-    if (NULL == easysetupCallbacks) {
+    if (NULL == easysetupCallbacks)
+    {
         LOGE("JNIProvisioningStatusCallback : GetJClass easysetupCallbacks failed");
         EasySetupJVM::releaseEnv();
         return;
@@ -40,7 +43,8 @@ void JNIProvisioningStatusCallback(ProvisioningInfo * provInfo) {
 
     // Get the easysetupCallback class instance
     jobject jobjectCallback = GetJObjectInstance(EASY_SETUP_SERVICE_CALLBACK_NATIVE_API_CLASS_PATH);
-    if (NULL == jobjectCallback) {
+    if (NULL == jobjectCallback)
+    {
         LOGE("getInstance( %s) failed!", EASY_SETUP_SERVICE_CALLBACK_NATIVE_API_CLASS_PATH);
         EasySetupJVM::releaseEnv();
         return;
@@ -48,30 +52,36 @@ void JNIProvisioningStatusCallback(ProvisioningInfo * provInfo) {
 
     // Get onResourceCallback method reference
     jmethodID method_id = env->GetMethodID(easysetupCallbacks, "ProvisioningStatusCallBack",
-                                           METHOD_PROVISIONING_STATUS_INTEGER_CALLBACK);
-    if (NULL == method_id) {
+            METHOD_PROVISIONING_STATUS_INTEGER_CALLBACK);
+    if (NULL == method_id)
+    {
         LOGE("JNIProvisioningStatusCallback: onResourceCallback : GetMethodID failed");
         EasySetupJVM::releaseEnv();
         return;
     }
 
-    if ((env)->ExceptionCheck()) {
+    if ((env)->ExceptionCheck())
+    {
         LOGE("JNIProvisioningStatusCallback : ExceptionCheck failed");
         EasySetupJVM::releaseEnv();
         return;
     }
 
-    if (NULL == method_id) {
+    if (NULL == method_id)
+    {
         LOGI("JNI method_id is NULL");
     }
-    else {
+    else
+    {
         LOGI("JNI method_id is VALID");
 
         jint result;
-        if (provInfo->provStatus == DEVICE_PROVISIONED) {
+        if (provInfo->provStatus == DEVICE_PROVISIONED)
+        {
             result = 0;
         }
-        else {
+        else
+        {
             result = -1;
         }
 
@@ -83,119 +93,121 @@ void JNIProvisioningStatusCallback(ProvisioningInfo * provInfo) {
 
 JNIEXPORT void JNICALL
 JNIInitEasySetup(JNIEnv
-*env,
-jobject thisObj
+        *env,
+        jobject thisObj
 )
 {
-LOGI("JNI JNIInitEasySetup: Enter");
+    LOGI("JNI JNIInitEasySetup: Enter");
 
-InitEasySetupManager();
+    InitEasySetupManager();
 
-RegisterProvisioningStausCallback(JNIProvisioningStatusCallback);
+    RegisterProvisioningStausCallback(JNIProvisioningStatusCallback);
 }
 
 JNIEXPORT void JNICALL
 JNITerminateEasySetup(JNIEnv
-*env,
-jobject thisObj
+        *env,
+        jobject thisObj
 )
 {
-LOGI("JNI JNITerminateEasySetup: Enter");
+    LOGI("JNI JNITerminateEasySetup: Enter");
 
-TerminateEasySetupManager();
+    TerminateEasySetupManager();
 
 }
 
 JNIEXPORT void JNICALL
 JNIProvisionEnrollee(JNIEnv
-*env,
-jobject thisObj,
+        *env,
+        jobject thisObj,
         jstring
-jIPAddress,
-jstring jNetSSID,
+        jIPAddress,
+        jstring jNetSSID,
         jstring
-jNetPWD,
-jint jConnectivityType
+        jNetPWD,
+        jint jConnectivityType
 )
 {
-LOGI("JNI JNIProvisionEnrollee: Enter");
+    LOGI("JNI JNIProvisionEnrollee: Enter");
 
-if (!jIPAddress)
-{
-LOGE("JNI JNIProvisionEnrollee : jIPAddress is NULL!");
-return;
-}
+    if (!jIPAddress)
+    {
+        LOGE("JNI JNIProvisionEnrollee : jIPAddress is NULL!");
+        return;
+    }
 
-const char *ipAddress = env->GetStringUTFChars(jIPAddress, NULL);
-if (NULL == ipAddress)
-{
-LOGE("JNI JNIProvisionEnrollee : Failed to convert jstring to char string!");
-}
+    const char *ipAddress = env->GetStringUTFChars(jIPAddress, NULL);
+    if (NULL == ipAddress)
+    {
+        LOGE("JNI JNIProvisionEnrollee : Failed to convert jstring to char string!");
+    }
 
-LOGI("JNI JNIProvisionEnrollee : ipAddress is : %s",ipAddress);
+    LOGI("JNI JNIProvisionEnrollee : ipAddress is : %s",ipAddress);
 
-const char *netSSID = env->GetStringUTFChars(jNetSSID, NULL);
-if (NULL == netSSID)
-{
-LOGE("JNI JNIProvisionEnrollee : Failed to convert jstring to char string!");
-}
+    const char *netSSID = env->GetStringUTFChars(jNetSSID, NULL);
+    if (NULL == netSSID)
+    {
+        LOGE("JNI JNIProvisionEnrollee : Failed to convert jstring to char string!");
+    }
 
-LOGI("JNI JNIProvisionEnrollee : netSSID is : %s",netSSID);
+    LOGI("JNI JNIProvisionEnrollee : netSSID is : %s",netSSID);
 
-const char *netPWD = env->GetStringUTFChars(jNetPWD, NULL);
-if (NULL == netPWD)
-{
-LOGE("JNI JNIProvisionEnrollee : Failed to convert jstring to char string!");
-}
+    const char *netPWD = env->GetStringUTFChars(jNetPWD, NULL);
+    if (NULL == netPWD)
+    {
+        LOGE("JNI JNIProvisionEnrollee : Failed to convert jstring to char string!");
+    }
 
-LOGI("JNI JNIProvisionEnrollee : netPWD is : %s",netPWD);
+    LOGI("JNI JNIProvisionEnrollee : netPWD is : %s",netPWD);
 
-OCConnectivityType connecitivityType;
-EnrolleeNWProvInfo_t netInfo =
-        {0};
-strncpy(netInfo
-.netAddressInfo.WIFI.ipAddress, ipAddress, IPV4_ADDR_SIZE-1);
-strncpy(netInfo
-.netAddressInfo.WIFI.ssid, netSSID, NET_WIFI_SSID_SIZE-1);
-strncpy(netInfo
-.netAddressInfo.WIFI.pwd, netPWD, NET_WIFI_PWD_SIZE-1);
-netInfo.
-connType = (OCConnectivityType) jConnectivityType;
+    OCConnectivityType connecitivityType;
+    EnrolleeNWProvInfo_t netInfo =
+    {   0};
 
-if(netInfo.connType==CT_ADAPTER_GATT_BTLE)
-{
+    netInfo.
+    connType = (OCConnectivityType) jConnectivityType;
 
-strncpy(netInfo
-.netAddressInfo.LE.leMacAddress,ipAddress,NET_MACADDR_SIZE-1);
-LOGI("MAC set=%s",netInfo.netAddressInfo.LE.leMacAddress);
+    if(netInfo.connType==CT_ADAPTER_GATT_BTLE)
+    {
 
-}
-netInfo.
-isSecured = true;
+        strncpy(netInfo
+                .netAddressInfo.LE.leMacAddress,ipAddress,NET_MACADDR_SIZE-1);
+        LOGI("MAC set=%s",netInfo.netAddressInfo.LE.leMacAddress);
 
-ProvisionEnrollee(&netInfo);
+    }
+    else strncpy(netInfo.netAddressInfo.WIFI.ipAddress, ipAddress, IPV4_ADDR_SIZE-1);
 
-return;
+    strncpy(netInfo
+            .netAddressInfo.WIFI.ssid, netSSID, NET_WIFI_SSID_SIZE-1);
+    strncpy(netInfo
+            .netAddressInfo.WIFI.pwd, netPWD, NET_WIFI_PWD_SIZE-1);
+
+    netInfo.
+    isSecured = true;
+
+    ProvisionEnrollee(&netInfo);
+
+    return;
 }
 
 JNIEXPORT void JNICALL
 JNIStopEnrolleeProvisioning(JNIEnv
-*env,
-jobject thisObj,
+        *env,
+        jobject thisObj,
         jint
-jConnectivityType)
+        jConnectivityType)
 {
-LOGI("JNI Stop Easy Setup: Entering");
+    LOGI("JNI Stop Easy Setup: Entering");
 
-OCConnectivityType connecitivityType = OCConnectivityType::CT_DEFAULT;
+    OCConnectivityType connecitivityType = OCConnectivityType::CT_DEFAULT;
 
-if(jConnectivityType == 0)
-{
-connecitivityType = OCConnectivityType::CT_ADAPTER_IP;
-}
+    if(jConnectivityType == 0)
+    {
+        connecitivityType = OCConnectivityType::CT_ADAPTER_IP;
+    }
 
-StopEnrolleeProvisioning(connecitivityType);
+    StopEnrolleeProvisioning(connecitivityType);
 
-return;
+    return;
 }
 
