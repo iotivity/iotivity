@@ -18,15 +18,15 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+
 /**
  * @file
  *
- * This file contains the classes for creating Get & Set response for the Get & Set request.
+ * This file contains the declaration of classes and its members related to RCSResponse
  */
 #ifndef SERVERBUILDER_RCSRESPONSE_H
 #define SERVERBUILDER_RCSRESPONSE_H
 
-#include <cstdint>
 #include <memory>
 
 namespace OIC
@@ -40,7 +40,7 @@ namespace OIC
 
         /**
          * This class provides factory methods to create the response for a received get request.
-         * The response consists of a result code, an error code and result attributes.
+         * The response consists of an error code and result attributes.
          *
          * @see RCSResourceObject
          */
@@ -49,14 +49,14 @@ namespace OIC
         public:
             /**
              * Creates a default RCSGetResponse.
-             * The response will have OC_EH_OK for the result and 200 for the errorCode.
-             * The attributes of RCSResourceObject will be set as the result attributes.
+             * The response will have 200 for the errorCode and the attributes of RCSResourceObject
+             * will be set as the result attributes.
              *
              */
             static RCSGetResponse defaultAction();
 
             /**
-             * Creates a RCSGetResponse with a result and error code passed.
+             * Creates a RCSGetResponse with error code passed.
              * The attributes of the RCSResourceObject will be set as the result attributes.
              *
              * @param errorCode The error code to set in response.
@@ -82,7 +82,7 @@ namespace OIC
             static RCSGetResponse create(RCSResourceAttributes&& attrs);
 
             /**
-             * Creates a RCSGetResponse with a result and error code passed.
+             * Creates a RCSGetResponse with error code passed.
              * This sends the passed attributes as the result attributes
              * instead of the one the RCSResourceObject holds.
              *
@@ -112,9 +112,9 @@ namespace OIC
 
         /**
          * This class provides factory methods to create the response for a received set request.
-         * The response consists of a result code, an error code and result attributes.
+         * The response consists of an error code and result attributes.
          *
-         * AcceptanceMethod provides ways how to handle attributes from a request.
+         * AcceptanceMethod provides ways how the request will be handled.
          *
          * @see RCSResourceObject
          */
@@ -149,7 +149,7 @@ namespace OIC
 
             /**
              * Creates a default RCSSetResponse that has AcceptanceMethod::DEFAULT.
-             * The response will have OC_EH_OK for the result and 200 for the errorCode.
+             * The response will have 200 for the errorCode.
              * The attributes of RCSResourceObject will be set as the result attributes.
              *
              */
@@ -157,15 +157,14 @@ namespace OIC
 
             /**
              * Creates a default RCSSetResponse that has AcceptanceMethod::ACCEPT.
-             * The response will have OC_EH_OK for the result and 200 for the errorCode.
+             * The response will have 200 for the errorCode.
              * The attributes of RCSResourceObject will be set as the result attributes.
              *
              */
             static RCSSetResponse accept();
 
             /**
-             * Creates a RCSSetResponse that has AcceptanceMethod::ACCEPT
-             * with a result and error code passed.
+             * Creates a RCSSetResponse that has AcceptanceMethod::ACCEPT and error code passed.
              * The attributes of the RCSResourceObject will be set as the result attributes.
              *
              * @param errorCode The error code to set in response.
@@ -175,15 +174,14 @@ namespace OIC
 
             /**
              * Creates a default RCSSetResponse that has AcceptanceMethod::IGNORE.
-             * The response will have OC_EH_OK for the result and 200 for the errorCode.
+             * The response will have 200 for the errorCode.
              * The attributes of RCSResourceObject will be set as the result attributes.
              *
              */
             static RCSSetResponse ignore();
 
             /**
-             * Creates a RCSSetResponse that has AcceptanceMethod::IGNORE
-             * with a result and error code passed.
+             * Creates a RCSSetResponse that has AcceptanceMethod::IGNORE and error code passed.
              * The attributes of the RCSResourceObject will be set as the result attributes.
              *
              * @param errorCode The error code to set in response.
@@ -192,8 +190,7 @@ namespace OIC
             static RCSSetResponse ignore(int errorCode);
 
             /**
-             * Creates a RCSSetResponse that has AcceptanceMethod::DEFAULT
-             * with a result and error code passed.
+             * Creates a RCSSetResponse that has AcceptanceMethod::DEFAULT and error code passed.
              * The attributes of the RCSResourceObject will be set as the result attributes.
              *
              * @param errorCode The error code to set in response.
@@ -219,12 +216,11 @@ namespace OIC
             static RCSSetResponse create(RCSResourceAttributes&& attrs);
 
             /**
-             * Creates a RCSSetResponse with a result and error code passed.
+             * Creates a RCSSetResponse with error code passed.
              * This sends the passed attributes as the result attributes
              * instead of the one the RCSResourceObject holds.
              *
              * @param attrs The attributes to set.
-             * @param result The response result.
              * @param errorCode The error code for response.
              *
              * @see RCSResourceAttributes
@@ -238,7 +234,7 @@ namespace OIC
             static RCSSetResponse create(RCSResourceAttributes&& attrs, int errorCode);
 
 
-            //! @cond/
+            //! @cond
             SetRequestHandler* getHandler() const;
             //! @endcond
 

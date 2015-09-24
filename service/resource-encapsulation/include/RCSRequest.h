@@ -21,7 +21,7 @@
 /**
  * @file
  *
- * This file cotains RCSRequest class, which provide API to get resource URI from the request.
+ * This file contains the declaration of classes and its members related to RCSRequest
  */
 #ifndef SERVERBUILDER_PRIMITIVEREQUEST_H
 #define SERVERBUILDER_PRIMITIVEREQUEST_H

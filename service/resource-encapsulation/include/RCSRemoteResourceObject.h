@@ -21,7 +21,7 @@
 /**
  * @file
  *
- * This file contains the Resource Client APIs provided to the developers.
+ * This file contains the declaration of classes and its members related to RCSRemoteResourceObject
  */
 
 #ifndef RCSREMOTERESOURCEOBJECT_H
@@ -85,31 +85,40 @@ namespace OIC
             typedef std::shared_ptr< RCSRemoteResourceObject > Ptr;
 
             /**
-             * Typedef for callback of startMonitoring API
+             * Callback definition to be invoked when monitoring state is changed.
              *
+             * @see startMonitioring
              * @see ResourceState
              */
             typedef std::function< void(ResourceState) > StateChangedCallback;
 
             /**
-             * Typedef for callback of startCaching API
+             * Callback definition to be invoked when cache is updated.
              *
-             * @see RCSResourceAttributes
+             * @param attrs the updated attributes
              */
-            typedef std::function< void(const RCSResourceAttributes&) > CacheUpdatedCallback;
+            typedef std::function< void(const RCSResourceAttributes& attrs) > CacheUpdatedCallback;
 
             /**
-             * Typedef for callback of getRemoteAttributes API
+             * Callback definition to be invoked when the response of getRemoteAttributes is
+             * received.
              *
-             * @see RCSResourceAttributes
+             * @param attrs the result attributes
+             * @param eCode the error code received from the resource
+             *
+             * @see getRemoteAttributes
              */
-            typedef std::function< void(const RCSResourceAttributes&, int) >
+            typedef std::function< void(const RCSResourceAttributes& attrs, int eCode) >
                 RemoteAttributesGetCallback;
 
             /**
-             * Typedef for callback of setRemoteAttributes API
+             * Callback definition to be invoked when the response of setRemoteAttributes is
+             * received.
              *
-             * @see RCSResourceAttributes
+             * @param attrs the result attributes
+             * @param eCode the error code received from the resource
+             *
+             * @see setRemoteAttributes
              */
             typedef std::function< void(const RCSResourceAttributes&, int) >
                 RemoteAttributesSetCallback;

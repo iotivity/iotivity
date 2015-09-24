@@ -18,6 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to RCSAddress
+ */
 #ifndef OIC_SERVICE_RCSADDRESS_H
 #define OIC_SERVICE_RCSADDRESS_H
 

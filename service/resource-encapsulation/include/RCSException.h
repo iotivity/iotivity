@@ -21,9 +21,8 @@
 /**
  * @file
  *
- * This file defines a class to handle exception thrown for resource encapsulation.
+ * This file contains the declaration of exception classes for resource-encapsulation
  */
-
 #ifndef RES_ENCAPSULATION_RCSEXCEPTION_H
 #define RES_ENCAPSULATION_RCSEXCEPTION_H
 
