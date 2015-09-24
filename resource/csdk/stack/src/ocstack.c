@@ -2528,7 +2528,6 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
      */
     OCStackResult ret = OC_STACK_OK;
     CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
-    CAInfo_t requestData = {.type = CA_MSG_CONFIRM};
     CARequestInfo_t requestInfo = {.method = CA_GET};
 
     if(!handle)
@@ -2539,14 +2538,15 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
     ClientCB *clientCB = GetClientCB(NULL, 0, handle, NULL);
     if (!clientCB)
     {
-        OC_LOG(ERROR, TAG, "Client callback not found. Called OCCancel twice?");
-        goto Error;
+        OC_LOG(ERROR, TAG, "Callback not found. Called OCCancel on same resource twice?");
+        return OC_STACK_ERROR;
     }
 
     switch (clientCB->method)
     {
         case OC_REST_OBSERVE:
         case OC_REST_OBSERVE_ALL:
+
             OC_LOG_V(INFO, TAG, "Canceling observation for resource %s",
                                         clientCB->requestUri);
             if (qos != OC_HIGH_QOS)
@@ -2554,29 +2554,34 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 FindAndDeleteClientCB(clientCB);
                 break;
             }
-            else
-            {
-                OC_LOG(INFO, TAG, "Cancelling observation as CONFIRMABLE");
-            }
 
-            requestData.type = qualityOfServiceToMessageType(qos);
-            requestData.token = clientCB->token;
-            requestData.tokenLength = clientCB->tokenLength;
-            if (CreateObserveHeaderOption (&(requestData.options),
+            OC_LOG(INFO, TAG, "Cancelling observation as CONFIRMABLE");
+
+            requestInfo.info.type = qualityOfServiceToMessageType(qos);
+            requestInfo.info.token = clientCB->token;
+            requestInfo.info.tokenLength = clientCB->tokenLength;
+
+            if (CreateObserveHeaderOption (&(requestInfo.info.options),
                     options, numOptions, OC_OBSERVE_DEREGISTER) != OC_STACK_OK)
             {
                 return OC_STACK_ERROR;
             }
-            requestData.numOptions = numOptions + 1;
-            requestData.resourceUri = OICStrdup (clientCB->requestUri);
-
-            requestInfo.method = CA_GET;
-            requestInfo.info = requestData;
+            requestInfo.info.numOptions = numOptions + 1;
+            requestInfo.info.resourceUri = OICStrdup (clientCB->requestUri);
 
             CopyDevAddrToEndpoint(clientCB->devAddr, &endpoint);
 
-            // send request
             ret = OCSendRequest(&endpoint, &requestInfo);
+
+            if (requestInfo.info.options)
+            {
+                OICFree (requestInfo.info.options);
+            }
+            if (requestInfo.info.resourceUri)
+            {
+                OICFree (requestInfo.info.resourceUri);
+            }
+
             break;
 
 #ifdef WITH_PRESENCE
@@ -2590,15 +2595,6 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
             break;
     }
 
-Error:
-    if (requestData.numOptions > 0)
-    {
-        OICFree(requestData.options);
-    }
-    if (requestData.resourceUri)
-    {
-        OICFree (requestData.resourceUri);
-    }
     return ret;
 }
 
