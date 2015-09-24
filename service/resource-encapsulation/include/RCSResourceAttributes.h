@@ -21,7 +21,7 @@
 /**
  * @file
  *
- * This file contains the "RCSResourceAttributes" class & its helper classes
+ * This file contains the declaration of classes and its members related to RCSResourceAttributes
  */
 #ifndef RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
 #define RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
@@ -51,17 +51,12 @@ namespace OIC
     {
 
         /**
-        * RCSResourceAttributes represents the attributes for a resource.
+        * This represents the attributes for a resource.
         *
         * It provides similar usage to c++ standard containers. (iterator,
         * operators and accessors)<br/>
         * An attribute value can be one of various types. <br/>
         *
-        * @note If client developer wants to get the RCSResourceAttributes for the resource of
-        *            interest following are the steps:
-        *            - first call the discover API of DiscoveryManager class.
-        *            - After getting the RemoteResourceObject, call getRemoteAttributes() API
-        *               of RemoteResourceObject class
         *
         * @see Value
         * @see Type
@@ -254,6 +249,36 @@ namespace OIC
              * Value holds a value among various types at a time.
              *
              * Type helps identify type information of Value.
+             *
+             * Supported types are below
+             * @code
+                int
+                double
+                bool
+                std::string
+                RCSResourceAttributes
+
+                std::vector< int >
+                std::vector< double >
+                std::vector< bool >
+                std::vector< std::string >
+                std::vector< RCSResourceAttributes >
+
+                std::vector< std::vector< int > >
+                std::vector< std::vector< std::vector< int > > >
+
+                std::vector< std::vector< double > >
+                std::vector< std::vector< std::vector< double > > >
+
+                std::vector< std::vector< bool > >
+                std::vector< std::vector< std::vector< bool > > >
+
+                std::vector< std::vector< std::string > >
+                std::vector< std::vector< std::vector< std::string > > >
+
+                std::vector< std::vector< RCSResourceAttributes > >
+                std::vector< std::vector< std::vector< RCSResourceAttributes > > >
+             * @endcode
              *
              * @see RCSResourceAttributes
              * @see Type
