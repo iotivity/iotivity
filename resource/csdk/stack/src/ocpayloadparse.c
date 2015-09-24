@@ -377,18 +377,30 @@ static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* arr
 
             CborValue repVal;
             // Device ID
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DEVICE_ID, &repVal);
-             err = err || cbor_value_dup_byte_string(&repVal, &sid, &len, NULL);
+            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DEVICE_ID, &repVal);
+            if(cbor_value_is_valid(&repVal))
+            {
+                err = err || cbor_value_dup_byte_string(&repVal, &sid, &len, NULL);
+            }
             // Device Name
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DEVICE_NAME, &repVal);
-             err = err || cbor_value_dup_text_string(&repVal, &dname, &len, NULL);
+            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DEVICE_NAME, &repVal);
+            if(cbor_value_is_valid(&repVal))
+            {
+                err = err || cbor_value_dup_text_string(&repVal, &dname, &len, NULL);
+            }
             // Device Spec Version
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_SPEC_VERSION, &repVal);
-             err = err || cbor_value_dup_text_string(&repVal, &specVer, &len, NULL);
-            // Data Model Version
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DATA_MODEL_VERSION, &repVal);
-             err = err || cbor_value_dup_text_string(&repVal, &dmVer, &len, NULL);
+            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_SPEC_VERSION, &repVal);
+            if(cbor_value_is_valid(&repVal))
+            {
+                err = err || cbor_value_dup_text_string(&repVal, &specVer, &len, NULL);
+            }
 
+            // Data Model Version
+            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DATA_MODEL_VERSION, &repVal);
+            if (cbor_value_is_valid(&repVal))
+            {
+                err = err || cbor_value_dup_text_string(&repVal, &dmVer, &len, NULL);
+            }
         }
 
          err = err || cbor_value_advance(arrayVal);
@@ -451,11 +463,17 @@ static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* a
             CborValue repVal;
             // Platform ID
              err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_PLATFORM_ID, &repVal);
-             err = err || cbor_value_dup_text_string(&repVal, &(info.platformID), &len, NULL);
+             if(cbor_value_is_valid(&repVal))
+             {
+                 err = err || cbor_value_dup_text_string(&repVal, &(info.platformID), &len, NULL);
+             }
 
             // MFG Name
              err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_MFG_NAME, &repVal);
-             err = err || cbor_value_dup_text_string(&repVal, &(info.manufacturerName), &len, NULL);
+             if(cbor_value_is_valid(&repVal))
+             {
+                 err = err || cbor_value_dup_text_string(&repVal, &(info.manufacturerName), &len, NULL);
+             }
 
             // MFG URL
              err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_MFG_URL, &repVal);
