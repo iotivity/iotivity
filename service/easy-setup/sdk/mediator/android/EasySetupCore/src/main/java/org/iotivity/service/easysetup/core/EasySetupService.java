@@ -41,7 +41,7 @@ import java.util.ArrayList;
  */
 public class EasySetupService {
 
-    public static String TAG = EasySetupService.class.getName();
+    public static final String TAG = EasySetupService.class.getName();
 
     private static EasySetupService sInstance;
 
