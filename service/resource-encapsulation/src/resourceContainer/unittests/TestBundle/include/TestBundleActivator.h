@@ -39,11 +39,11 @@ class TestBundleActivator : public BundleActivator
         void deactivateBundle();
 
         void createResource(resourceInfo resourceInfo);
-        void destroyResource(BundleResource *pBundleResource);
+        void destroyResource(BundleResource::Ptr pBundleResource);
 
         ResourceContainerBundleAPI *m_pResourceContainer;
         std::string m_bundleId;
-        BundleResource *m_pTestResource;
+        BundleResource::Ptr m_pTestResource;
 };
 
 /*Fake bundle resource class for testing*/
@@ -52,25 +52,13 @@ class TestBundleResource : public BundleResource
     public:
         void initAttributes() { };
 
-        RCSResourceAttributes::Value handleGetAttributeRequest(
-                const std::string &key)
-        {
-            return BundleResource::getAttribute(key);
-        }
-
-        void handleSetAttributeRequest(const std::string &key,
-                                             RCSResourceAttributes::Value &&value)
-        {
-            BundleResource::setAttribute(key, std::move(value));
-        }
-
-        RCSResourceAttributes& handleGetAttributesRequest()
+        RCSResourceAttributes &handleGetAttributesRequest()
         {
             return BundleResource::getAttributes();
         }
 
         void handleSetAttributesRequest(
-                                             RCSResourceAttributes &value)
+            RCSResourceAttributes &value)
         {
             BundleResource::setAttributes(value);
         }

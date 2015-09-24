@@ -76,23 +76,17 @@ void getCurrentPath(std::string *pPath)
 class TestBundleResource: public BundleResource
 {
     public:
-        string getAttribute(string attributeName)
+        virtual void initAttributes() { }
+
+        virtual void handleSetAttributesRequest(RCSResourceAttributes &attr)
         {
-            (void)attributeName;
-            return "test";
+            BundleResource::setAttributes(attr);
         }
-        ;
-        void setAttribute(string attributeName, string value)
+
+        virtual RCSResourceAttributes &handleGetAttributesRequest()
         {
-            (void)attributeName;
-            (void)value;
+            return BundleResource::getAttributes();
         }
-        ;
-        void initAttributes()
-        {
-            BundleResource::setAttribute("attri", "test");
-        }
-        ;
 };
 
 class ResourceContainerTest: public TestWithMock
@@ -269,7 +263,7 @@ class ResourceContainerBundleAPITest: public TestWithMock
     public:
         RCSResourceObject *m_pResourceObject;
         ResourceContainerBundleAPI *m_pResourceContainer;
-        TestBundleResource *m_pBundleResource;
+        BundleResource::Ptr m_pBundleResource;
         std::string m_strConfigPath;
 
     protected:
@@ -283,7 +277,7 @@ class ResourceContainerBundleAPITest: public TestWithMock
             m_strConfigPath.append("/");
             m_strConfigPath.append(CONFIG_FILE);
 
-            m_pBundleResource = new TestBundleResource();
+            m_pBundleResource = std::make_shared< TestBundleResource >();
             m_pBundleResource->m_bundleId = "oic.bundle.test";
             m_pBundleResource->m_uri = "/test_resource";
             m_pBundleResource->m_resourceType = "container.test";
@@ -292,7 +286,7 @@ class ResourceContainerBundleAPITest: public TestWithMock
 
 TEST_F(ResourceContainerBundleAPITest, ResourceServerCreatedWhenRegisterResourceCalled)
 {
-    m_pBundleResource = new TestBundleResource();
+    m_pBundleResource = std::make_shared< TestBundleResource >();
     m_pBundleResource->m_bundleId = "oic.bundle.test";
     m_pBundleResource->m_uri = "/test_resource/test";
     m_pBundleResource->m_resourceType = "container.test";

@@ -44,57 +44,46 @@ HueLight::~HueLight()
 
 void HueLight::initAttributes()
 {
-
     BundleResource::setAttribute("on-off", false);
     BundleResource::setAttribute("dim", 0);
     BundleResource::setAttribute("color", 0);
 }
 
-RCSResourceAttributes::Value HueLight::handleGetAttributeRequest(const std::string &key)
+RCSResourceAttributes &HueLight::handleGetAttributesRequest()
 {
-    cout << "HueLight::getAttribute called for " << key <<  " called" << endl;
-    // TODO read from HueLight and update attribute data
-    return BundleResource::getAttribute(key);
-}
-
-RCSResourceAttributes& HueLight::handleGetAttributesRequest()
-{
-    cout << "HueLight::getAttributes" << endl;
+    cout << "HueLight::handleGetAttributesRequest" << endl;
     // TODO read from HueLight and update attribute data
     return BundleResource::getAttributes();
 }
 
-void HueLight::handleSetAttributeRequest(const std::string &attributeName, RCSResourceAttributes::Value &&value)
-{
-    cout << "HueLight::setAttribute setting " << attributeName << " to " << value.toString() <<
-         std::endl;
-
-    if (attributeName == "on-off")
-    {
-        m_connector->transmit(this->m_address + "/state", "{\"on\":" + value.toString() + "}");
-    }
-
-    if (attributeName == "dim")
-    {
-        // needs conversion * 2.5
-        m_connector->transmit(this->m_address + "/state", "{\"bri\":" + value.toString() + "}");
-    }
-
-    if (attributeName == "color")
-    {
-        // needs conversion *650
-        m_connector->transmit(this->m_address + "/state", "{\"hue\":" + value.toString()   + "}");
-    }
-
-    BundleResource::setAttribute(attributeName, std::move(value));
-}
-
 void HueLight::handleSetAttributesRequest(RCSResourceAttributes &value)
 {
-    cout << "HueLight::setAttributes "<< std::endl;
+    cout << "HueLight::handleSetAttributesRequest" << std::endl;
 
     // TODO construct single write
 
+    for (RCSResourceAttributes::iterator it = value.begin(); it != value.end(); it++)
+    {
+        std::string attributeName = it->key();
+        RCSResourceAttributes::Value attrValue = it->value();
+
+        if (attributeName == "on-off")
+        {
+            m_connector->transmit(this->m_address + "/state", "{\"on\":" + attrValue.toString() + "}");
+        }
+
+        if (attributeName == "dim")
+        {
+            // needs conversion * 2.5
+            m_connector->transmit(this->m_address + "/state", "{\"bri\":" + attrValue.toString() + "}");
+        }
+
+        if (attributeName == "color")
+        {
+            // needs conversion *650
+            m_connector->transmit(this->m_address + "/state", "{\"hue\":" + attrValue.toString() + "}");
+        }
+    }
+
     BundleResource::setAttributes(value);
 }
-

@@ -25,6 +25,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <memory>
 
 #include "NotificationReceiver.h"
 #include "RCSResourceAttributes.h"
@@ -43,6 +44,7 @@ namespace OIC
         class BundleResource
         {
             public:
+                typedef std::shared_ptr< BundleResource > Ptr;
 
                 /**
                 * Constructor for BundleResource
@@ -70,7 +72,7 @@ namespace OIC
 
                 /**
                 * Register notification receiver(resource container) to notify for the
-                * changes of attributes
+                *     changes of attributes
                 *
                 * @param pNotiReceiver Notification Receiver to get notification from
                 * bundle resource
@@ -96,7 +98,7 @@ namespace OIC
                 void setAttributes(RCSResourceAttributes &attrs);
 
                 /**
-                * Execute the logic of bundle to get the value of attribute
+                * Return the value of an attribute
                 *
                 * @param key Key of attribute to get
                 *
@@ -116,91 +118,54 @@ namespace OIC
                 * @return void
                 */
                 void setAttribute(const std::string &key, RCSResourceAttributes::Value &&value,
-                        bool notify);
+                                  bool notify);
 
                 /**
-                   * Sets the value of an attribute
-                   *
-                   * @param key Name of attribute to set
-                   *
-                   * @param value Value of attribute to set
-                   *
-                   * @return void
-                   */
+                * Sets the value of an attribute
+                *
+                * @param key Name of attribute to set
+                *
+                * @param value Value of attribute to set
+                *
+                * @return void
+                */
                 void setAttribute(const std::string &key, RCSResourceAttributes::Value &&value);
 
                 /**
-                  * This function should be implemented by the according bundle resource
-                  * and execute the according business logic (e.g., light switch or sensor resource)
-                  * and write either on soft sensor values or external bridged devices.
-                  *
-                  * The call of this method could for example trigger a HTTP PUT request on
-                  * an external APIs. This method is responsible to update the resource internal
-                  * data and call the setAttribute method.
-                  *
-                  * The implementor of the function can decide weather to notify OIC clients
-                  * about the changed state or not.
-                  *
-                  * @param key Name of attribute to set
-                  *
-                  * @param attrs Attributes to set
-                  *
-                  * @return void
-                  */
-                virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs);
+                * This function should be implemented by the according bundle resource
+                * and execute the according business logic (e.g., light switch or sensor resource)
+                * to retrieve a sensor value. If a new sensor value is retrieved, the
+                * setAttribute data should be called to update the value.
+                * The implementor of the function can decide weather to notify OIC clients
+                * about the changed state or not.
+                *
+                * @param key Name of attribute to get
+                *
+                *
+                * @return All attributes
+                */
+                virtual RCSResourceAttributes &handleGetAttributesRequest() = 0;
 
                 /**
-                  * This function should be implemented by the according bundle resource
-                  * and execute the according business logic (e.g., light switch or sensor resource)
-                  * and write either on soft sensor values or external bridged devices.
-                  *
-                  * The call of this method could for example trigger a HTTP PUT request on
-                  * an external APIs. This method is responsible to update the resource internal
-                  * data and call the setAttribute method.
-                  *
-                  * The implementor of the function can decide weather to notify OIC clients
-                  * about the changed state or not.
-                  *
-                  * @param key Name of attribute to set
-                  *
-                  * @param value Value of attribute to set
-                  *
-                  * @return void
-                  */
-                virtual void handleSetAttributeRequest(const std::string &key,
-                        RCSResourceAttributes::Value &&value);
+                * This function should be implemented by the according bundle resource
+                * and execute the according business logic (e.g., light switch or sensor resource)
+                * and write either on soft sensor values or external bridged devices.
+                *
+                * The call of this method could for example trigger a HTTP PUT request on
+                * an external APIs. This method is responsible to update the resource internal
+                * data and call the setAttribute method.
+                *
+                * The implementor of the function can decide weather to notify OIC clients
+                * about the changed state or not.
+                *
+                * @param key Name of attribute to set
+                *
+                * @param attrs Attributes to set
+                *
+                * @return void
+                */
+                virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs) = 0;
 
-                /**
-                  * This function should be implemented by the according bundle resource
-                  * and execute the according business logic (e.g., light switch or sensor resource)
-                  * to retrieve a sensor value. If a new sensor value is retrieved, the
-                  * setAttribute data should be called to update the value.
-                  * The implementor of the function can decide weather to notify OIC clients
-                  * about the changed state or not.
-                  *
-                  * @param key Name of attribute to get
-                  *
-                  *
-                  * @return Value of the attribute
-                  */
-                virtual RCSResourceAttributes::Value handleGetAttributeRequest(
-                        const std::string &key);
-
-
-                /**
-                  * This function should be implemented by the according bundle resource
-                  * and execute the according business logic (e.g., light switch or sensor resource)
-                  * to retrieve a sensor value. If a new sensor value is retrieved, the
-                  * setAttribute data should be called to update the value.
-                  * The implementor of the function can decide weather to notify OIC clients
-                  * about the changed state or not.
-                  *
-                  * @param key Name of attribute to get
-                  *
-                  *
-                  * @return All attributes
-                  */
-                virtual RCSResourceAttributes& handleGetAttributesRequest();
 
             public:
                 std::string m_bundleId;

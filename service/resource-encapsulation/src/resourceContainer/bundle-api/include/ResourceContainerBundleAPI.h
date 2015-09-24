@@ -56,7 +56,7 @@ namespace OIC
                 *
                 * @return void
                 */
-                virtual void registerResource(BundleResource *resource) = 0;
+                virtual void registerResource(BundleResource::Ptr resource) = 0;
 
                 /**
                 * Unregister bundle resource from the container
@@ -66,7 +66,7 @@ namespace OIC
                 *
                 * @return void
                 */
-                virtual void unregisterResource(BundleResource *resource) = 0;
+                virtual void unregisterResource(BundleResource::Ptr resource) = 0;
 
                 /**
                 * Get Configuration data of certain bundle

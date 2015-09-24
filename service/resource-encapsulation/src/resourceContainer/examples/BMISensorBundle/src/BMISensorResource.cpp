@@ -31,28 +31,16 @@ BMISensorResource::~BMISensorResource()
     delete m_pBMISensor;
 }
 
-RCSResourceAttributes::Value BMISensorResource::handleGetAttributeRequest(const std::string &key)
-{
-    return BundleResource::getAttribute(key);
-}
-
-void BMISensorResource::handleSetAttributeRequest(const std::string &key,
-                                     RCSResourceAttributes::Value &&value)
-{
-    BundleResource::setAttribute(key, std::move(value));
-}
-
-RCSResourceAttributes& BMISensorResource::handleGetAttributesRequest()
-{
-    return BundleResource::getAttributes();
-}
-
 void BMISensorResource::handleSetAttributesRequest(
-                                     RCSResourceAttributes &value)
+    RCSResourceAttributes &value)
 {
     BundleResource::setAttributes(value);
 }
 
+RCSResourceAttributes &BMISensorResource::handleGetAttributesRequest()
+{
+    return BundleResource::getAttributes();
+}
 
 void BMISensorResource::executeLogic()
 {
