@@ -852,11 +852,23 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         if (0 == block.m &&
                 (CA_REQUEST_ENTITY_INCOMPLETE != code && CA_REQUEST_ENTITY_TOO_LARGE != code))
         {
-            OIC_LOG(INFO, TAG, "Data has sent");
-            // initialize block number for response message
-            data->block1.num = 0;
-            CADestroyBlockID(blockDataID);
-            return CA_STATUS_OK;
+            int isBlock2 = coap_get_block(pdu, COAP_OPTION_BLOCK2, &block);
+            if (isBlock2)
+            {
+                OIC_LOG(INFO, TAG, "received data is combining block1 and block2");
+                // initialize block number for response message
+                data->block1.num = 0;
+                CADestroyBlockID(blockDataID);
+                return CA_STATUS_OK;
+            }
+            else
+            {
+                OIC_LOG(INFO, TAG, "received data is not bulk data");
+                CAReceiveLastBlock(blockDataID, receivedData);
+                CARemoveBlockDataFromList(blockDataID);
+                CADestroyBlockID(blockDataID);
+                return CA_STATUS_OK;
+            }
         }
 
         blockWiseStatus = CA_OPTION1_ACK;
@@ -1636,6 +1648,12 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
             OIC_LOG(ERROR, TAG, "add has failed");
             CARemoveBlockDataFromList(blockID);
             return res;
+        }
+
+        if (!coap_add_data(*pdu, dataLength, (const unsigned char *) info->payload))
+        {
+            OIC_LOG(ERROR, TAG, "failed to add payload");
+            return CA_STATUS_FAILED;
         }
 
         // reset block-list after write block
