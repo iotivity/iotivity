@@ -407,6 +407,16 @@ OCStackResult OCResource::cancelObserve(QualityOfService QoS)
     return result;
 }
 
+void OCResource::setHeaderOptions(const HeaderOptions& headerOptions)
+{
+    m_headerOptions = headerOptions;
+}
+
+void OCResource::unsetHeaderOptions()
+{
+    m_headerOptions.clear();
+}
+
 std::string OCResource::host() const
 {
     std::ostringstream ss;
@@ -453,6 +463,16 @@ OCConnectivityType OCResource::connectivityType() const
 bool OCResource::isObservable() const
 {
     return m_isObservable;
+}
+
+std::vector<std::string> OCResource::getResourceTypes() const
+{
+    return m_resourceTypes;
+}
+
+std::vector<std::string> OCResource::getResourceInterfaces(void) const
+{
+    return m_interfaces;
 }
 
 OCResourceIdentifier OCResource::uniqueIdentifier() const
