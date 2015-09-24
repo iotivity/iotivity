@@ -128,6 +128,10 @@ with_ra = env.get('WITH_RA')
 if with_ra:
 	SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'raxmpp', 'SConscript'))
 
+with_ra_ibb = env.get('WITH_RA_IBB')
+if with_ra_ibb:
+	SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'wksxmppxep', 'SConscript'))
+
 
 env.AddMethod(__prepare_lib, "PrepareLib")
 env.AddMethod(__configure, "Configure")

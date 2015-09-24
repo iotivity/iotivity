@@ -49,13 +49,13 @@ function build_linux_unsecured_with_ra()
 {
 
 	echo "*********** Build for linux With Remote Access *************"
-	scons RELEASE=$1 WITH_RA=1 $2
+	scons RELEASE=$1 WITH_RA=1 WITH_RA_IBB=1 $2
 }
 
 function build_linux_secured_with_ra()
 {
 	echo "*********** Build for linux With Remote Access & Security ************"
-	scons RELEASE=$1 WITH_RA=1 SECURED=1 $2
+	scons RELEASE=$1 WITH_RA=1 WITH_RA_IBB=1 SECURED=1 $2
 }
 
 function build_android()

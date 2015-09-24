@@ -27,6 +27,7 @@
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
+#include "cainterface.h"
 #include "cathreadpool.h"
 
 #ifdef __cplusplus
