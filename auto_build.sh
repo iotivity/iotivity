@@ -99,6 +99,9 @@ function build_arduino()
 
 function build_tizen()
 {
+	echo "*********** Build for Tizen *************"
+	./gbsbuild.sh
+
 	echo "*********** Build for Tizen CA lib and sample *************"
 	scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true RELEASE=$1 $2
 
