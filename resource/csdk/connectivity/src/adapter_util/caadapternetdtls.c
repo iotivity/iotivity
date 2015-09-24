@@ -1057,10 +1057,6 @@ CAResult_t CAAdapterNetDtlsInit()
     g_caDtlsContext->callbacks.write = CASendSecureData;
     g_caDtlsContext->callbacks.read  = CAReadDecryptedPayload;
     g_caDtlsContext->callbacks.event = CAHandleSecureEvent;
-
-#ifdef __WITH_X509__
-    if (0 == CAInitX509())
-#endif //__WITH_X509__
     g_caDtlsContext->callbacks.get_psk_info = CAGetPskCredentials;
 #ifdef __WITH_X509__
     g_caDtlsContext->callbacks.get_x509_key = CAGetDeviceKey;
