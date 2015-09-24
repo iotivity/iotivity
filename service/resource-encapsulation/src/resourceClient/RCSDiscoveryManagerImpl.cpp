@@ -60,7 +60,7 @@ namespace OIC
         void RCSDiscoveryManagerImpl::findCallback(std::shared_ptr< PrimitiveResource > resource,
             RCSDiscoveryManagerImpl::ID discoverID)
         {
-            std::unique_lock<std::mutex> lock(m_mutex);
+            std::lock_guard<std::mutex> lock(m_mutex);
 
            if(!isDuplicatedCallback(resource,discoverID))
             {
@@ -142,7 +142,7 @@ namespace OIC
 
         void RCSDiscoveryManagerImpl::pollingCallback(unsigned int /*msg*/)
         {
-            std::unique_lock<std::mutex> lock(m_mutex);
+            std::lock_guard<std::mutex> lock(m_mutex);
             for(auto it = m_discoveryMap.begin(); it != m_discoveryMap.end(); ++it)
             {
                 OIC::Service::discoverResource(it->second.m_address,it->second.m_relativeUri+ "?rt="
@@ -156,7 +156,7 @@ namespace OIC
         {
             if(ret == OC_STACK_OK || ret == OC_STACK_RESOURCE_CREATED || ret == OC_STACK_RESOURCE_DELETED)
             {
-                std::unique_lock<std::mutex> lock(m_mutex);
+                std::lock_guard<std::mutex> lock(m_mutex);
                 for(auto it = m_discoveryMap.begin(); it != m_discoveryMap.end(); ++it)
                 {
                     if(!it->second.m_isReceivedFindCallback)
@@ -170,7 +170,7 @@ namespace OIC
 
         RCSDiscoveryManagerImpl::ID RCSDiscoveryManagerImpl::createId()
         {
-            std::unique_lock<std::mutex> lock(m_mutex);
+            std::lock_guard<std::mutex> lock(m_mutex);
             if(s_uniqueId<LIMITNUMBER)
             {
                  s_uniqueId++;
@@ -189,6 +189,12 @@ namespace OIC
             }
 
             return RESETNUMBER;
+        }
+
+        void RCSDiscoveryManagerImpl::cancel(ID id)
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_discoveryMap.erase(id);
         }
     }
 }

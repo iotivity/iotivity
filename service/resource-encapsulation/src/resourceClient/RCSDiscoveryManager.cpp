@@ -68,7 +68,7 @@ namespace OIC {
         }
 
         void RCSDiscoveryManager::DiscoveryTask::cancel(){
-            RCSDiscoveryManagerImpl::getInstance()->m_discoveryMap.erase(m_id);
+            RCSDiscoveryManagerImpl::getInstance()->cancel(m_id);
         }
     }
 }

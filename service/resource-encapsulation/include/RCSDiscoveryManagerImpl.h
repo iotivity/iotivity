@@ -141,7 +141,7 @@ namespace OIC
                 std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> startDiscovery(const RCSAddress& address,
                         const std::string& relativeURI,const std::string& resourceType,
                         RCSDiscoveryManager::ResourceDiscoveredCallback cb);
-
+                void cancel(ID);
             private:
 
                 /**
