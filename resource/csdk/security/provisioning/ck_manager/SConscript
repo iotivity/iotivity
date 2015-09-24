@@ -45,3 +45,6 @@ x509_env.InstallTarget(ckmStaticLib, 'libCKManager')
 x509_env.AppendUnique(LIBS = ['asn1'])
 x509_env.AppendUnique(LIBS = ['Base64'])
 x509_env.AppendUnique(LIBS = ['Json'])
+
+SConscript('tools/SConscript')
+SConscript('sample/SConscript')
