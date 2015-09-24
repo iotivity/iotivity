@@ -43,11 +43,11 @@ namespace OIC
                 void deactivateBundle();
 
                 void createResource(resourceInfo resourceInfo);
-                void destroyResource(BundleResource *pBundleResource);
+                void destroyResource(BundleResource::Ptr pBundleResource);
 
                 std::string m_bundleId;
                 ResourceContainerBundleAPI *m_pResourceContainer;
-                std::vector< BundleResource * > m_vecResources;
+                std::vector< BundleResource::Ptr > m_vecResources;
             private:
                 HueConnector *m_connector;
         };

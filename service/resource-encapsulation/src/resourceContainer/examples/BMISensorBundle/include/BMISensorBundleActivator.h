@@ -37,11 +37,11 @@ class BMISensorBundleActivator : public BundleActivator
         void deactivateBundle();
 
         void createResource(resourceInfo resourceInfo);
-        void destroyResource(BundleResource *pBundleResource);
+        void destroyResource(BundleResource::Ptr pBundleResource);
 
         std::string m_bundleId;
         ResourceContainerBundleAPI *m_pResourceContainer;
-        std::vector<BundleResource *> m_vecResources;
+        std::vector< BundleResource::Ptr > m_vecResources;
 };
 
 #endif /* BMISENSOR_BUNDLE_ACTIVATOR_H_ */

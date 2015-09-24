@@ -85,7 +85,7 @@ namespace OIC
                 *
                 * @return void
                 */
-                virtual void destroyResource(BundleResource *pBundleResource) = 0;
+                virtual void destroyResource(BundleResource::Ptr pBundleResource) = 0;
         };
     }
 }

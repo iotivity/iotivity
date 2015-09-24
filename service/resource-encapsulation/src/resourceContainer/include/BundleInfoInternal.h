@@ -26,7 +26,7 @@
 #include "ResourceContainerBundleAPI.h"
 
 #if (JAVA_SUPPORT)
-    #include "jni.h"
+#include "jni.h"
 #endif
 
 using namespace std;
@@ -39,7 +39,7 @@ namespace OIC
         typedef void activator_t(ResourceContainerBundleAPI *, std::string bundleId);
         typedef void deactivator_t(void);
         typedef void resourceCreator_t(resourceInfo resourceInfo);
-        typedef void resourceDestroyer_t(BundleResource *pBundleResource);
+        typedef void resourceDestroyer_t(BundleResource::Ptr pBundleResource);
 
         class BundleInfoInternal: public RCSBundleInfo
         {

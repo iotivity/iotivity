@@ -34,28 +34,17 @@ DiscomfortIndexSensorResource::~DiscomfortIndexSensorResource()
     delete m_pDiscomfortIndexSensor;
 }
 
-RCSResourceAttributes::Value DiscomfortIndexSensorResource::handleGetAttributeRequest(
-        const std::string &key)
+void DiscomfortIndexSensorResource::handleSetAttributesRequest(
+    RCSResourceAttributes &value)
 {
-    return BundleResource::getAttribute(key);
+    BundleResource::setAttributes(value);
 }
 
-void DiscomfortIndexSensorResource::handleSetAttributeRequest(const std::string &key,
-                                     RCSResourceAttributes::Value &&value)
-{
-    BundleResource::setAttribute(key, std::move(value));
-}
-
-RCSResourceAttributes& DiscomfortIndexSensorResource::handleGetAttributesRequest()
+RCSResourceAttributes &DiscomfortIndexSensorResource::handleGetAttributesRequest()
 {
     return BundleResource::getAttributes();
 }
 
-void DiscomfortIndexSensorResource::handleSetAttributesRequest(
-                                     RCSResourceAttributes &value)
-{
-    BundleResource::setAttributes(value);
-}
 void DiscomfortIndexSensorResource::executeLogic()
 {
     std::string strDiscomfortIndex;

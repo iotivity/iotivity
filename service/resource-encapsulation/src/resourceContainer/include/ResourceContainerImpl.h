@@ -65,8 +65,8 @@ namespace OIC
                 void unregisterBundleSo(const std::string &id);
 
                 // methods from ResourceContainerBundleAPI
-                void registerResource(BundleResource *resource);
-                void unregisterResource(BundleResource *resource);
+                void registerResource(BundleResource::Ptr resource);
+                void unregisterResource(BundleResource::Ptr resource);
 
                 void getBundleConfiguration(const std::string &bundleId, configInfo *configOutput);
                 void getResourceConfiguration(const std::string &bundleId,
@@ -107,7 +107,7 @@ namespace OIC
             private:
                 map< std::string, BundleInfoInternal * > m_bundles; // <bundleID, bundleInfo>
                 map< std::string, RCSResourceObject::Ptr > m_mapServers; //<uri, serverPtr>
-                map< std::string, BundleResource * > m_mapResources; //<uri, resourcePtr>
+                map< std::string, BundleResource::Ptr > m_mapResources; //<uri, resourcePtr>
                 map< std::string, list< string > > m_mapBundleResources; //<bundleID, vector<uri>>
                 map< std::string, list< DiscoverResourceUnit::Ptr > > m_mapDiscoverResourceUnits;
                 //<uri, DiscoverUnit>

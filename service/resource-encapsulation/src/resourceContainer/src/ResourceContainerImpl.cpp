@@ -256,14 +256,14 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::registerResource(BundleResource *resource)
+        void ResourceContainerImpl::registerResource(BundleResource::Ptr resource)
         {
             string strUri = resource->m_uri;
             string strResourceType = resource->m_resourceType;
             RCSResourceObject::Ptr server = nullptr;
 
-            OC_LOG_V(INFO, CONTAINER_TAG, "Registration of resource (%s)" , std::string(strUri + ", " +
-                     strResourceType).c_str());
+            OC_LOG_V(INFO, CONTAINER_TAG, "Registration of resource (%s)" ,
+                     std::string(strUri + ", " + strResourceType).c_str());
 
             registrationLock.lock();
             if (m_mapResources.find(strUri) == m_mapResources.end())
@@ -304,7 +304,7 @@ namespace OIC
             registrationLock.unlock();
         }
 
-        void ResourceContainerImpl::unregisterResource(BundleResource *resource)
+        void ResourceContainerImpl::unregisterResource(BundleResource::Ptr resource)
         {
             string strUri = resource->m_uri;
             string strResourceType = resource->m_resourceType;
@@ -358,7 +358,7 @@ namespace OIC
                 {
                     auto getFunction = [this, &attr, &strResourceUri]()
                     {
-                        attr = m_mapResources[strResourceUri]->getAttributes();
+                        attr = m_mapResources[strResourceUri]->handleGetAttributesRequest();
                     };
                     boost::thread getThread(getFunction);
                     getThread.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
@@ -713,7 +713,7 @@ namespace OIC
                             DiscoverResourceUnit::DiscoverResourceInfo(uri, type,
                                     attributeName),
                             std::bind(&SoftSensorResource::onUpdatedInputResource,
-                                      (SoftSensorResource *) foundOutputResource->second,
+                                      std::static_pointer_cast< SoftSensorResource > (foundOutputResource->second),
                                       std::placeholders::_1, std::placeholders::_2));
 
                         auto foundDiscoverResource = m_mapDiscoverResourceUnits.find(

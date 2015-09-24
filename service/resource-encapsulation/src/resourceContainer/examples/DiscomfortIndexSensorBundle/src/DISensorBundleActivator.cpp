@@ -55,7 +55,7 @@ void DISensorBundleActivator::activateBundle(ResourceContainerBundleAPI *resourc
 
 void DISensorBundleActivator::deactivateBundle()
 {
-    std::vector<BundleResource *>::iterator itor;
+    std::vector< BundleResource::Ptr >::iterator itor;
     for (itor = m_vecResources.begin(); itor != m_vecResources.end();)
     {
         destroyResource(*itor);
@@ -69,7 +69,7 @@ void DISensorBundleActivator::createResource(resourceInfo resourceInfo)
         static int discomfortIndexSensorCount = 1;
 
         // create DISensor resource
-        DiscomfortIndexSensorResource *newResource = new DiscomfortIndexSensorResource();
+        BundleResource::Ptr newResource = std::make_shared< DiscomfortIndexSensorResource >();
 
         newResource->m_bundleId = m_bundleId;
 
@@ -90,9 +90,9 @@ void DISensorBundleActivator::createResource(resourceInfo resourceInfo)
     }
 }
 
-void DISensorBundleActivator::destroyResource(BundleResource *resource)
+void DISensorBundleActivator::destroyResource(BundleResource::Ptr resource)
 {
-    std::vector <BundleResource *>::iterator itor;
+    std::vector< BundleResource::Ptr >::iterator itor;
 
     itor = std::find(m_vecResources.begin(), m_vecResources.end(), resource);
 
@@ -121,7 +121,7 @@ extern "C" void disensor_externalCreateResource(resourceInfo resourceInfo)
     bundle->createResource(resourceInfo);
 }
 
-extern "C" void disensor_externalDestroyResource(BundleResource *pBundleResource)
+extern "C" void disensor_externalDestroyResource(BundleResource::Ptr pBundleResource)
 {
     bundle->destroyResource(pBundleResource);
 }

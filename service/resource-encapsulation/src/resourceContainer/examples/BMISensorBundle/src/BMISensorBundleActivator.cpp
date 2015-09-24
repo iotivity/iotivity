@@ -56,7 +56,7 @@ void BMISensorBundleActivator::activateBundle(ResourceContainerBundleAPI *resour
 
 void BMISensorBundleActivator::deactivateBundle()
 {
-    std::vector<BundleResource *>::iterator itor;
+    std::vector< BundleResource::Ptr >::iterator itor;
     for (itor = m_vecResources.begin(); itor != m_vecResources.end();)
     {
         destroyResource(*itor);
@@ -70,7 +70,7 @@ void BMISensorBundleActivator::createResource(resourceInfo resourceInfo)
         static int BMISensorCount = 1;
 
         // create BMISensor resource
-        BMISensorResource *newResource = new BMISensorResource();
+        BundleResource::Ptr newResource = std::make_shared< BMISensorResource >();
 
         newResource->m_bundleId = m_bundleId;
         std::string indexCount;//string which will contain the indexCount
@@ -89,9 +89,9 @@ void BMISensorBundleActivator::createResource(resourceInfo resourceInfo)
     }
 }
 
-void BMISensorBundleActivator::destroyResource(BundleResource *resource)
+void BMISensorBundleActivator::destroyResource(BundleResource::Ptr resource)
 {
-    std::vector <BundleResource *>::iterator itor;
+    std::vector< BundleResource::Ptr >::iterator itor;
 
     itor = std::find(m_vecResources.begin(), m_vecResources.end(), resource);
 
@@ -120,7 +120,7 @@ extern "C" void bmisensor_externalCreateResource(resourceInfo resourceInfo)
     bundle->createResource(resourceInfo);
 }
 
-extern "C" void bmisensor_externalDestroyResource(BundleResource *pBundleResource)
+extern "C" void bmisensor_externalDestroyResource(BundleResource::Ptr pBundleResource)
 {
     bundle->destroyResource(pBundleResource);
 }
