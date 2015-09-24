@@ -87,7 +87,7 @@ TEST_F(ResourceHostingTest, HostingFoundBeforeMakeOriginServer)
 
     std::string uri = "";
     mocks.OnCallFunc(onDiscoveryResource).Do(
-            [this, &uri, &testObject, &discoveryTask](RCSRemoteResourceObject::Ptr ptr)
+            [this, &uri, &testObject](RCSRemoteResourceObject::Ptr ptr)
             {
                 if(ptr->getUri() == testObject->getHostedServerUri())
                 {
@@ -105,7 +105,7 @@ TEST_F(ResourceHostingTest, HostingFoundBeforeMakeOriginServer)
 
     testObject->destroy();
 
-    ASSERT_EQ(uri, mirroredUri);
+    ASSERT_EQ(mirroredUri, uri);
 }
 
 TEST_F(ResourceHostingTest, startHosting)
