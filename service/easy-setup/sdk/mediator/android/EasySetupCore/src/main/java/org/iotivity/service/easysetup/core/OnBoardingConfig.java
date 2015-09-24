@@ -22,6 +22,8 @@
 
 package org.iotivity.service.easysetup.core;
 
+import org.iotivity.base.OcConnectivityType;
+
 /**
  * It contains configuration details about the connectivity type between the Enrollee device &
  * Mediator device in order to perform on-boarding.
@@ -34,8 +36,8 @@ public interface OnBoardingConfig {
      */
     public static enum ConnType {
         // Note : Enum Ids should matched with Native Ids
-        WiFi(0),
-        BLE(1);
+        WiFi(OcConnectivityType.CT_DEFAULT.getValue()),
+        BLE(OcConnectivityType.CT_ADAPTER_GATT_BTLE.getValue());
 
         private int mConnType;
 

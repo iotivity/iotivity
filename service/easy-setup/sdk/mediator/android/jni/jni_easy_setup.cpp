@@ -187,14 +187,7 @@ jConnectivityType)
 {
 LOGI("JNI Stop Easy Setup: Entering");
 
-OCConnectivityType connecitivityType = OCConnectivityType::CT_DEFAULT;
-
-if(jConnectivityType == 0)
-{
-connecitivityType = OCConnectivityType::CT_ADAPTER_IP;
-}
-
-StopProvisioning(connecitivityType);
+StopProvisioning((OCConnectivityType) jConnectivityType);
 
 return;
 }

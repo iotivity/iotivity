@@ -136,11 +136,11 @@ public class EnrolleeDeviceBLEOnBoarding extends EnrolleeDevice {
         easySetupManagerNativeInstance.setApplicationContext(mContext);
         easySetupManagerNativeInstance.initEasySetup();
         Log.d("init", "successful");
-        OcConnectivityType ocConnectivityType = OcConnectivityType.CT_ADAPTER_GATT_BTLE;
+
         easySetupManagerNativeInstance.provisionEnrollee(connection.getMacaddress(),
                 wifiProvConfig.getSsId(),
                 wifiProvConfig.getPassword(),
-                ocConnectivityType.getValue());
+                mOnBoardingConfig.getConnType().getValue());
 
 
     }
