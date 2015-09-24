@@ -54,6 +54,23 @@ typedef struct
 } CertificateX509;
 
 /**
+ *
+ *
+ * Initializes of certificate structure.
+ *
+ */
+#define CERTIFICATE_X509_INITIALIZER {\
+    BYTE_ARRAY_INITIALIZER,                                            \
+    BYTE_ARRAY_INITIALIZER,                                            \
+    BYTE_ARRAY_INITIALIZER,                                            \
+    BYTE_ARRAY_INITIALIZER,                                            \
+    BYTE_ARRAY_INITIALIZER,                                            \
+    BYTE_ARRAY_INITIALIZER,                                            \
+    BYTE_ARRAY_INITIALIZER,                                            \
+    BYTE_ARRAY_INITIALIZER,                                            \
+    BYTE_ARRAY_INITIALIZER}
+
+/**
  * Reads certificate from byte array and write it into certificate structure.
  *
  * @param[in] code  Byte array with DER encoded certificate
