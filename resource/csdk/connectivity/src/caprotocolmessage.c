@@ -146,16 +146,9 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
     {
         coap_list_t *optlist = NULL;
 
-        if (CA_MSG_ACKNOWLEDGE != info->type)
+        if (CA_MSG_ACKNOWLEDGE != info->type && info->resourceUri)
         {
-            const char *uri = info->resourceUri;
-            if (NULL == uri)
-            {
-                OIC_LOG(ERROR, TAG, "uri NULL");
-                return NULL;
-            }
-
-            uint32_t length = strlen(uri);
+            uint32_t length = strlen(info->resourceUri);
             if (CA_MAX_URI_LENGTH < length)
             {
                 OIC_LOG(ERROR, TAG, "URI len err");
@@ -170,7 +163,7 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
                 return NULL;
             }
             OICStrcat(coapUri, uriLength, COAP_URI_HEADER);
-            OICStrcat(coapUri, uriLength, uri);
+            OICStrcat(coapUri, uriLength, info->resourceUri);
 
             // parsing options in URI
             CAResult_t res = CAParseURI(coapUri, &optlist);
