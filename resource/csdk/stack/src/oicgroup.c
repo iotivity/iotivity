@@ -1342,8 +1342,6 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                             {
                                 stackRet = OC_STACK_ERROR;
                             }
-
-                            OICFree(schedule);
                         }
                     }
                 }
