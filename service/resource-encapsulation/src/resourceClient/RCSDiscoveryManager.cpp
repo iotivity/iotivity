@@ -25,6 +25,26 @@
 namespace OIC {
     namespace Service {
 
+        RCSDiscoveryManager::DiscoveryTask::DiscoveryTask(unsigned int id) :
+                m_id{ id }
+        {
+        }
+
+        RCSDiscoveryManager::DiscoveryTask::~DiscoveryTask()
+        {
+            cancel();
+        }
+
+        bool RCSDiscoveryManager::DiscoveryTask::isCanceled()
+        {
+            return false;
+        }
+
+        void RCSDiscoveryManager::DiscoveryTask::cancel()
+        {
+            RCSDiscoveryManagerImpl::getInstance()->cancel(m_id);
+        }
+
         RCSDiscoveryManager* RCSDiscoveryManager::getInstance() {
             static RCSDiscoveryManager instance;
             return &instance;
@@ -53,22 +73,6 @@ namespace OIC {
            return RCSDiscoveryManagerImpl::getInstance()->startDiscovery(address,
                    relativeURI.empty() ? OC_RSRVD_WELL_KNOWN_URI : relativeURI,
                    resourceType, std::move(cb));
-        }
-        RCSDiscoveryManager::DiscoveryTask::~DiscoveryTask(){
-            cancel();
-        }
-        bool RCSDiscoveryManager::DiscoveryTask::isCanceled() {
-            auto it = RCSDiscoveryManagerImpl::getInstance();
-
-            if(it->m_discoveryMap.find(m_id) == it->m_discoveryMap.end())
-            {
-                    return true;
-            }
-            return false;
-        }
-
-        void RCSDiscoveryManager::DiscoveryTask::cancel(){
-            RCSDiscoveryManagerImpl::getInstance()->cancel(m_id);
         }
     }
 }

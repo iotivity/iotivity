@@ -17,153 +17,104 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include <limits>
+
 #include "RCSDiscoveryManagerImpl.h"
 
 #include "OCPlatform.h"
-
 #include "PresenceSubscriber.h"
 #include "RCSAddressDetail.h"
 #include "RCSAddress.h"
 
-constexpr unsigned int RESETNUMBER = 0;
-constexpr unsigned int LIMITNUMBER = 1000;
-constexpr unsigned int INTERVALTIME = 60000;
+namespace
+{
+    constexpr unsigned int LIMITNUMBER = std::numeric_limits<unsigned int>::max();;
+    constexpr unsigned int INTERVALTIME = 60000;
+}
 
 namespace OIC
 {
     namespace Service
     {
-        unsigned int RCSDiscoveryManagerImpl::s_uniqueId = RESETNUMBER;
-        RCSDiscoveryManagerImpl * RCSDiscoveryManagerImpl::s_instance(nullptr);
-        std::mutex RCSDiscoveryManagerImpl::s_mutexForCreation;
-
-        RCSDiscoveryManagerImpl::RCSDiscoveryManagerImpl() : m_timerHandle(0){}
+        RCSDiscoveryManagerImpl::RCSDiscoveryManagerImpl()
+        {
+            srand(time(NULL));
+            requestMulticastPresence();
+            m_timer.post(INTERVALTIME, std::bind(&RCSDiscoveryManagerImpl::onPolling, this));
+        }
 
         RCSDiscoveryManagerImpl* RCSDiscoveryManagerImpl::getInstance()
         {
-            if (!s_instance)
-            {
-                s_mutexForCreation.lock();
-                if (!s_instance)
-                {
-                    s_instance = new RCSDiscoveryManagerImpl();
-                    srand(time(NULL));
-                    s_instance->initializedDiscoveryEnvironment();
-                    s_instance->requestMulticastPresence();
-                    s_instance->m_timerHandle = s_instance->m_timer.post(INTERVALTIME, s_instance->m_pollingCB);
-                }
-                s_mutexForCreation.unlock();
-            }
-            return s_instance;
+            static RCSDiscoveryManagerImpl instance;
+            return &instance;
         }
 
-        void RCSDiscoveryManagerImpl::findCallback(std::shared_ptr< PrimitiveResource > resource,
-            RCSDiscoveryManagerImpl::ID discoverID)
+        void RCSDiscoveryManagerImpl::onResourceFound(std::shared_ptr< PrimitiveResource > resource,
+                    RCSDiscoveryManagerImpl::ID discoveryId, const RCSDiscoveryManager::ResourceDiscoveredCallback& discoverCB)
         {
-            std::lock_guard<std::mutex> lock(m_mutex);
-
-           if(!isDuplicatedCallback(resource,discoverID))
             {
-               for(auto it = m_discoveryMap.begin(); it != m_discoveryMap.end(); ++it)
-               {
-                   if(it->first == discoverID)
-                   {
-                        it->second.m_isReceivedFindCallback = true;
-                        it->second.m_discoverCB(std::make_shared<RCSRemoteResourceObject>(resource));
-                   }
-                }
+                std::lock_guard<std::mutex> lock(m_mutex);
+                auto it = m_discoveryMap.find(discoveryId);
+
+                if(it == m_discoveryMap.end()) return;
+                if(it->second.isKnownResource(resource)) return;
             }
+            discoverCB(std::make_shared<RCSRemoteResourceObject>(resource));
         }
 
-        std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> RCSDiscoveryManagerImpl::startDiscovery
-        (const RCSAddress& address, const std::string& relativeURI, const std::string& resourceType,
-                RCSDiscoveryManager::ResourceDiscoveredCallback cb)
+        RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManagerImpl::startDiscovery
+                (const RCSAddress& address, const std::string& relativeUri, const std::string& resourceType,
+                        RCSDiscoveryManager::ResourceDiscoveredCallback cb)
         {
             if (!cb)
             {
-                throw RCSInvalidParameterException { "input Parameter(callback) is NULL" };
+                throw RCSInvalidParameterException { "Callback is empty" };
             }
 
-            DiscoverRequestInfo discoveryItem;
-            discoveryItem.m_address = RCSAddressDetail::getDetail(address)->getAddress();
-            discoveryItem.m_relativeUri = relativeURI;
-            discoveryItem.m_resourceType = resourceType;
-            discoveryItem.m_discoverCB = std::move(cb);
-            discoveryItem.m_isReceivedFindCallback = false;
+            ID discoveryId = createId();
+            auto discoverCb = std::bind(&RCSDiscoveryManagerImpl::onResourceFound, this,
+                    std::placeholders::_1, discoveryId, std::move(cb));
+            DiscoverRequestInfo discoveryItem(RCSAddressDetail::getDetail(address)->getAddress(), relativeUri,
+                    resourceType, std::move(discoverCb));
+            discoveryItem.discoverRequest();
 
-            ID discoverID = createId();
-            discoveryItem.m_findCB = std::bind(&RCSDiscoveryManagerImpl::findCallback, this,
-                    std::placeholders::_1, discoverID);
-            m_discoveryMap.insert(std::make_pair(discoverID, discoveryItem));
-
-            OIC::Service::discoverResource(RCSAddressDetail::getDetail(RCSAddress::multicast())->getAddress(),
-                    discoveryItem.m_relativeUri + "?rt=" +discoveryItem.m_resourceType,
-                    OCConnectivityType::CT_DEFAULT, discoveryItem.m_findCB);
+            m_discoveryMap.insert(std::make_pair(discoveryId, std::move(discoveryItem)));
 
             return std::unique_ptr<RCSDiscoveryManager::DiscoveryTask>(
-                    new RCSDiscoveryManager::DiscoveryTask(discoverID));
-        }
-
-        void RCSDiscoveryManagerImpl::initializedDiscoveryEnvironment()
-        {
-            m_presenceCB = std::bind(&RCSDiscoveryManagerImpl::presenceCallback, this,
-                    std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
-            m_pollingCB = std::bind(&RCSDiscoveryManagerImpl::pollingCallback, this,
-                std::placeholders::_1);
+                    new RCSDiscoveryManager::DiscoveryTask(discoveryId));
         }
 
         void RCSDiscoveryManagerImpl::requestMulticastPresence()
         {
             static constexpr char MULTICAST_PRESENCE_ADDRESS[] = "coap://" OC_MULTICAST_PREFIX;
             OCDoHandle presenceHandle;
-            subscribePresence(presenceHandle, MULTICAST_PRESENCE_ADDRESS,
-                            OCConnectivityType::CT_DEFAULT, std::move(m_presenceCB));
+            subscribePresence(presenceHandle, MULTICAST_PRESENCE_ADDRESS, OCConnectivityType::CT_DEFAULT,
+                    std::move(std::bind(&RCSDiscoveryManagerImpl::onPresence, this,
+                            std::placeholders::_1, std::placeholders::_2,std::placeholders::_3)));
         }
 
-        bool RCSDiscoveryManagerImpl::isDuplicatedCallback(std::shared_ptr< PrimitiveResource > resource,
-                ID discoverID)
-        {
-            std::string retID = resource->getSid()+resource->getUri();
-            auto it = m_discoveryMap.find(discoverID);
-            std::list<std::string>::iterator itor;
-            if(it==m_discoveryMap.end())
-            {
-                return false;
-            }
-            itor = std::find(it->second.m_receivedIds.begin(),it->second.m_receivedIds.end(),retID);
-            if(itor != it->second.m_receivedIds.end())
-            {
-              return true;
-            }
-            it->second.m_receivedIds.push_back(retID);
-
-            return false;
-        }
-
-        void RCSDiscoveryManagerImpl::pollingCallback(unsigned int /*msg*/)
+        void RCSDiscoveryManagerImpl::onPolling()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            for(auto it = m_discoveryMap.begin(); it != m_discoveryMap.end(); ++it)
+
+            for(const auto& it : m_discoveryMap)
             {
-                OIC::Service::discoverResource(it->second.m_address,it->second.m_relativeUri+ "?rt="
-                        +it->second.m_resourceType, OCConnectivityType::CT_DEFAULT, it->second.m_findCB);
+                it.second.discoverRequest();
             }
-            m_timerHandle = m_timer.post(INTERVALTIME, m_pollingCB);
+            m_timer.post(INTERVALTIME, std::bind(&RCSDiscoveryManagerImpl::onPolling, this));
         }
 
-        void RCSDiscoveryManagerImpl::presenceCallback(OCStackResult ret,
-                const unsigned int /*seq*/, const std::string& /*address*/)
+        void RCSDiscoveryManagerImpl::onPresence(OCStackResult ret,
+                const unsigned int /*seq*/, const std::string& address)
         {
-            if(ret == OC_STACK_OK || ret == OC_STACK_RESOURCE_CREATED || ret == OC_STACK_RESOURCE_DELETED)
+            if(ret != OC_STACK_OK && ret != OC_STACK_RESOURCE_CREATED) return;
+
+            std::lock_guard<std::mutex> lock(m_mutex);
+            for(const auto& it : m_discoveryMap)
             {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                for(auto it = m_discoveryMap.begin(); it != m_discoveryMap.end(); ++it)
+                if(it.second.isMatchingAddress(address))
                 {
-                    if(!it->second.m_isReceivedFindCallback)
-                    {
-                        OIC::Service::discoverResource(it->second.m_address, it->second.m_relativeUri+ "?rt=" +
-                            it->second.m_resourceType, OCConnectivityType::CT_DEFAULT, it->second.m_findCB);
-                    }
+                    it.second.discoverRequest();
                 }
             }
         }
@@ -171,30 +122,51 @@ namespace OIC
         RCSDiscoveryManagerImpl::ID RCSDiscoveryManagerImpl::createId()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            if(s_uniqueId<LIMITNUMBER)
+            static unsigned int s_uniqueId;
+
+            if(m_discoveryMap.size() >= LIMITNUMBER)
             {
-                 s_uniqueId++;
+                throw RCSException { "Discovery request is full!" };
             }
-            else
+
+            while(m_discoveryMap.find(s_uniqueId) != m_discoveryMap.end())
             {
-                s_uniqueId = RESETNUMBER;
-            }
-            while(m_discoveryMap.size() != LIMITNUMBER)
-            {
-                if(m_discoveryMap.find(s_uniqueId) == m_discoveryMap.end())
-                {
-                    return s_uniqueId;
-                }
                 s_uniqueId++;
             }
-
-            return RESETNUMBER;
+            return s_uniqueId;
         }
 
-        void RCSDiscoveryManagerImpl::cancel(ID id)
+        void RCSDiscoveryManagerImpl::cancel(unsigned int id)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             m_discoveryMap.erase(id);
+        }
+
+        DiscoverRequestInfo::DiscoverRequestInfo(const std::string &address, const std::string &relativeUri,
+                const std::string &resourceType, DiscoverCallback cb) : m_address(address),
+                        m_relativeUri(relativeUri), m_resourceType(resourceType), m_discoverCB(cb) {}
+
+        void DiscoverRequestInfo::discoverRequest() const
+        {
+            OIC::Service::discoverResource(m_address, m_relativeUri + "?rt=" + m_resourceType,
+                    OCConnectivityType::CT_DEFAULT, m_discoverCB);
+        }
+
+        bool DiscoverRequestInfo::isKnownResource(const std::shared_ptr<PrimitiveResource>& resource)
+        {
+            std::string resourceId = resource->getSid() + resource->getUri();
+
+            auto it = std::find(m_receivedIds.begin(), m_receivedIds.end(), resourceId);
+
+            if(it != m_receivedIds.end()) return true;
+            m_receivedIds.push_back(resourceId);
+            return false;
+        }
+
+        bool DiscoverRequestInfo::isMatchingAddress(const std::string& address) const
+        {
+            return m_address == RCSAddressDetail::getDetail(RCSAddress::multicast())->getAddress()
+                    || m_address == address;
         }
     }
 }

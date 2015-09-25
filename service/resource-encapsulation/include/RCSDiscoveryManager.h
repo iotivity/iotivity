@@ -32,8 +32,6 @@
 #include <memory>
 #include <functional>
 
-#include "octypes.h"
-
 namespace OIC
 {
     namespace Service
@@ -58,6 +56,14 @@ namespace OIC
                 class DiscoveryTask
                 {
                     public:
+                        typedef std::unique_ptr<DiscoveryTask> Ptr;
+
+                        ~DiscoveryTask();
+
+                        DiscoveryTask(const DiscoveryTask&) = delete;
+                        DiscoveryTask(DiscoveryTask&&) = delete;
+                        DiscoveryTask& operator = (const DiscoveryTask&) const = delete;
+                        DiscoveryTask& operator = (DiscoveryTask&&) const = delete;
 
                         /**
                          * Cancel the task for discovery request. If cancel is called in duplicate, the request is ignored.
@@ -69,23 +75,14 @@ namespace OIC
                          */
                         bool isCanceled();
 
-                        ~DiscoveryTask();
-
-                    public:
-
-                        DiscoveryTask(const DiscoveryTask&) = delete;
-                        DiscoveryTask(DiscoveryTask&&) = delete;
-                        DiscoveryTask& operator = (const DiscoveryTask&) const = delete;
-                        DiscoveryTask& operator = (DiscoveryTask&&) const = delete;
+                    private:
+                        explicit DiscoveryTask(unsigned int);
 
                     private:
-
-                        explicit DiscoveryTask(unsigned int id) : m_id{ id } {};
-                    private:
-
                         unsigned int m_id;
                         friend class RCSDiscoveryManagerImpl;
                 };
+
             public:
 
                 /**
@@ -116,7 +113,7 @@ namespace OIC
                  * @note The callback will be invoked in an internal thread.
                  *
                  */
-                std::unique_ptr<DiscoveryTask> discoverResource(const RCSAddress& address,
+                DiscoveryTask::Ptr discoverResource(const RCSAddress& address,
                         ResourceDiscoveredCallback cb);
 
                 /**
@@ -136,7 +133,7 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                std::unique_ptr<DiscoveryTask> discoverResource(const RCSAddress& address,
+                DiscoveryTask::Ptr discoverResource(const RCSAddress& address,
                         const std::string& relativeURI, ResourceDiscoveredCallback cb);
 
                 /**
@@ -156,7 +153,7 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                std::unique_ptr<DiscoveryTask> discoverResourceByType(const RCSAddress& address,
+                DiscoveryTask::Ptr discoverResourceByType(const RCSAddress& address,
                         const std::string& resourceType, ResourceDiscoveredCallback cb);
 
                 /**
@@ -177,12 +174,11 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                std::unique_ptr<DiscoveryTask>  discoverResourceByType(const RCSAddress& address,
+                DiscoveryTask::Ptr discoverResourceByType(const RCSAddress& address,
                         const std::string& relativeURI, const std::string& resourceType,
                         ResourceDiscoveredCallback cb);
 
             private:
-
                 RCSDiscoveryManager() = default;
                 ~RCSDiscoveryManager()= default;;
 

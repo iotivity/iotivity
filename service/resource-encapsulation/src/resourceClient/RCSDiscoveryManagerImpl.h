@@ -34,12 +34,10 @@
 #include <list>
 #include <mutex>
 #include <unordered_map>
-#include <algorithm>
 
 #include "octypes.h"
 
 #include "RCSDiscoveryManager.h"
-#include "RCSAddress.h"
 #include "ExpiryTimer.h"
 #include "PrimitiveResource.h"
 #include "RCSRemoteResourceObject.h"
@@ -60,15 +58,21 @@ namespace OIC
         class DiscoverRequestInfo
         {
             public:
+                DiscoverRequestInfo(const std::string &, const std::string &,
+                        const std::string &, DiscoverCallback);
 
+            private:
                 std::string m_address;
                 std::string m_relativeUri;
                 std::string m_resourceType;
                 std::list<std::string> m_receivedIds;
-                bool m_isReceivedFindCallback;
-                DiscoverCallback m_findCB;
-                RCSDiscoveryManager::ResourceDiscoveredCallback m_discoverCB;
+                DiscoverCallback m_discoverCB;
+            public:
+                void discoverRequest() const;
+                bool isKnownResource(const std::shared_ptr<PrimitiveResource>&);
+                bool isMatchingAddress(const std::string&) const;
         };
+
 
         /**
          * The class contains the resource discovery and management requests methods.
@@ -94,31 +98,12 @@ namespace OIC
                  */
                 typedef unsigned int ID;
 
-                /*
-                 * Typedef for callback of discoverResource API
-                 */
-                typedef std::function<void(std::shared_ptr< PrimitiveResource >, ID)> FindCallback;
-
             public:
 
                 /*
                  * @return Returns RCSDiscoveryManagerImpl instance.
                  */
                 static RCSDiscoveryManagerImpl* getInstance();
-
-                DiscoverRequestInfo m_discoveryItem;
-                std::unordered_map<ID,DiscoverRequestInfo> m_discoveryMap;
-                PresenceCallback m_presenceCB;
-                ExpiryTimer::Callback m_pollingCB;
-                ExpiryTimer m_timer;
-                ID m_timerHandle;
-
-            private:
-                static RCSDiscoveryManagerImpl * s_instance;
-                static std::mutex s_mutexForCreation;
-                std::mutex m_mutex;
-
-            public:
 
                 /**
                  * Starting discovery of resource
@@ -141,8 +126,12 @@ namespace OIC
                 std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> startDiscovery(const RCSAddress& address,
                         const std::string& relativeURI,const std::string& resourceType,
                         RCSDiscoveryManager::ResourceDiscoveredCallback cb);
+
                 void cancel(ID);
+
             private:
+                RCSDiscoveryManagerImpl();
+                ~RCSDiscoveryManagerImpl() = default;
 
                 /**
                  * Requesting presence by multicast
@@ -150,24 +139,21 @@ namespace OIC
                 void requestMulticastPresence();
 
                 /**
-                 * Initializing callback of presence and polling
-                 */
-                void initializedDiscoveryEnvironment();
-
-                /**
                  * Checking duplicated callback and invoking callback when resource is discovered
                  *
                  * @param resource     A pointer of discovered resource
                  * @param discoverID   The ID of discovery request
+                 * @param cb           Callback
                  *
                  * @see PrimitiveResource
                  */
-                void findCallback(std::shared_ptr< PrimitiveResource > resource, ID discoverID);
+                void onResourceFound(std::shared_ptr<PrimitiveResource> resource, ID discoveryId,
+                        const RCSDiscoveryManager::ResourceDiscoveredCallback& cb);
 
                 /**
                  * Discovering resource on all requests and posting timer when timer is expired
                  */
-                void pollingCallback(unsigned int /*msg*/);
+                void onPolling();
 
                 /**
                  * Discovering resource on all requests when supporting presence function resource enter into network
@@ -176,19 +162,7 @@ namespace OIC
                  * @param seq          Not used in this class
                  * @param address      A address of supporting presence function resource
                  */
-                void presenceCallback(OCStackResult, const unsigned int,const std::string&);
-
-                /**
-                 * Checking duplicated callback
-                 *
-                 * @return The callback is duplicated or not
-                 *
-                 * @param resource A pointer of discovered resource
-                 * @param discoverID The ID of discovery request
-                 *
-                 * @see PrimitiveResource
-                 */
-                bool isDuplicatedCallback(std::shared_ptr<PrimitiveResource> resource, ID discoverID);
+                void onPresence(OCStackResult ret, const unsigned int seq, const std::string& address);
 
                 /**
                  * Creating unique id
@@ -197,9 +171,12 @@ namespace OIC
                  */
                 ID createId();
 
+            public:
+                ExpiryTimer m_timer;
+
             private:
-                RCSDiscoveryManagerImpl();
-                ~RCSDiscoveryManagerImpl() = default;
+                std::unordered_map<ID,DiscoverRequestInfo> m_discoveryMap;
+                std::mutex m_mutex;
         };
     }
 }
