@@ -498,6 +498,7 @@ void CAIPStopServer()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
+    caglobals.ip.started = false;
     caglobals.ip.terminate = true;
 
     if (caglobals.ip.shutdownFds[1] != -1)

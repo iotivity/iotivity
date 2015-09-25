@@ -173,7 +173,7 @@ static void CATCPDisconnectAll()
         }
     }
     u_arraylist_destroy(caglobals.tcp.svrlist);
-
+    caglobals.tcp.svrlist = NULL;
     ca_mutex_unlock(g_mutexObjectList);
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -575,6 +575,8 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
 
     caglobals.tcp.started = true;
 
+    g_threadCounts = CA_TCP_DEFAULT_THREAD_COUNTS;
+
     return CA_STATUS_OK;
 }
 
@@ -587,6 +589,7 @@ void CATCPStopServer()
 
     // set terminate flag
     caglobals.tcp.terminate = true;
+    caglobals.tcp.started = false;
 
     ca_cond_wait(g_condObjectList, g_mutexObjectList);
 
