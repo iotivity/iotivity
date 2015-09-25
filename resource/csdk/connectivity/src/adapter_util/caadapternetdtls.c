@@ -62,7 +62,7 @@ static ca_mutex g_dtlsContextMutex = NULL;
  * @var g_getCredentialsCallback
  * @brief callback to get DTLS credentials
  */
-static CAGetDTLSCredentialsHandler g_getCredentialsCallback = NULL;
+static CAGetDTLSPskCredentialsHandler g_getCredentialsCallback = NULL;
 
 #ifdef __WITH_X509__
 /**
@@ -540,65 +540,26 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
     }
 
     VERIFY_NON_NULL_RET(g_getCredentialsCallback, NET_DTLS_TAG, "GetCredential callback", -1);
-    VERIFY_NON_NULL_RET(result, NET_DTLS_TAG, "result", -1);
-
-    CADtlsPskCredsBlob_t *credInfo = NULL;
 
     // Retrieve the credentials blob from security module
-    g_getCredentialsCallback(&credInfo);
+    ret =  g_getCredentialsCallback(type, desc, descLen, result, resultLen);
 
-    VERIFY_NON_NULL_RET(credInfo, NET_DTLS_TAG, "credInfo is NULL", -1);
-    if(NULL == credInfo->creds)
+    if (ret > 0)
     {
-        OIC_LOG(DEBUG, NET_DTLS_TAG, "credentials are NULL");
-        memset(credInfo, 0, sizeof(CADtlsPskCredsBlob_t));
-        OICFree(credInfo);
-        return -1;
-    }
+        // TODO SRM needs identity of the remote end-point with every data packet to
+        // perform access control management. tinyDTLS 'frees' the handshake parameters
+        // data structure when handshake completes. Therefore, currently this is a
+        // workaround to cache remote end-point identity when tinyDTLS asks for PSK.
+        stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
+        char peerAddr[MAX_ADDR_STR_SIZE_CA] = { 0 };
+        uint16_t port = 0;
+        CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, &port);
 
-    if ((type == DTLS_PSK_HINT) || (type == DTLS_PSK_IDENTITY))
-    {
-        if (DTLS_PSK_ID_LEN <= resultLen)
+        if(CA_STATUS_OK != CAAddIdToPeerInfoList(peerAddr, port, desc, descLen) )
         {
-            memcpy(result, credInfo->identity, DTLS_PSK_ID_LEN);
-            ret = DTLS_PSK_ID_LEN;
+            OIC_LOG(ERROR, NET_DTLS_TAG, "Fail to add peer id to gDtlsPeerInfoList");
         }
     }
-
-    if ((type == DTLS_PSK_KEY) && (desc) && (descLen == DTLS_PSK_PSK_LEN))
-    {
-        // Check if we have the credentials for the device with which we
-        // are trying to perform a handshake
-        for (uint32_t index = 0; index < credInfo->num; index++)
-        {
-            if (memcmp(desc, credInfo->creds[index].id, DTLS_PSK_ID_LEN) == 0)
-            {
-                // TODO SRM needs identity of the remote end-point with every data packet to
-                // perform access control management. tinyDTLS 'frees' the handshake parameters
-                // data structure when handshake completes. Therefore, currently this is a
-                // workaround to cache remote end-point identity when tinyDTLS asks for PSK.
-                stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
-                char peerAddr[MAX_ADDR_STR_SIZE_CA] = { 0 };
-                uint16_t port = 0;
-                CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, &port);
-
-                if(CA_STATUS_OK != CAAddIdToPeerInfoList(peerAddr, port, desc, descLen) )
-                {
-                    OIC_LOG(ERROR, NET_DTLS_TAG, "Fail to add peer id to gDtlsPeerInfoList");
-                }
-                memcpy(result, credInfo->creds[index].psk, DTLS_PSK_PSK_LEN);
-                ret = DTLS_PSK_PSK_LEN;
-            }
-        }
-    }
-
-    // Erase sensitive data before freeing.
-    memset(credInfo->creds, 0, sizeof(OCDtlsPskCreds) * (credInfo->num));
-    OICFree(credInfo->creds);
-
-    memset(credInfo, 0, sizeof(CADtlsPskCredsBlob_t));
-    OICFree(credInfo);
-    credInfo = NULL;
 
     return ret;
 }
@@ -628,7 +589,7 @@ void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
 }
 
-void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback)
+void CADTLSSetCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback)
 {
     // TODO Does this method needs protection of DtlsContextMutex ?
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");

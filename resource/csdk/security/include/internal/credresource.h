@@ -21,7 +21,6 @@
 #ifndef IOTVT_SRM_CREDR_H
 #define IOTVT_SRM_CREDR_H
 
-#include "ocsecurityconfig.h"
 #include "cainterface.h"
 #include "securevirtualresourcetypes.h"
 #include "octypes.h"
@@ -116,15 +115,18 @@ OCStackResult RemoveCredential(const OicUuid_t* credId);
  * This internal callback is used by lower stack (i.e. CA layer) to
  * retrieve PSK credentials from RI security layer.
  *
- * Note: When finished, caller should initialize memory to zeroes and
- * invoke OCFree to delete @p credInfo.
+ * @param[in]  type type of PSK data required by CA layer during DTLS handshake.
+ * @param[in]  desc Additional request information.
+ * @param[in]  desc_len The actual length of desc.
+ * @param[out] result  Must be filled with the requested information.
+ * @param[in]  result_length  Maximum size of @p result.
  *
- * @param credInfo
- *     binary blob containing PSK credentials
- *
- * @retval none
+ * @return The number of bytes written to @p result or a value
+ *         less than zero on error.
  */
-void GetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
+int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
+              const unsigned char *desc, size_t desc_len,
+              unsigned char *result, size_t result_length);
 
 /**
  * Add temporal PSK to PIN based OxM

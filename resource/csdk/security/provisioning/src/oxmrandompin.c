@@ -21,7 +21,6 @@
 #include <memory.h>
 
 #include "ocstack.h"
-#include "ocsecurityconfig.h"
 #include "securevirtualresourcetypes.h"
 #include "doxmresource.h"
 #include "credresource.h"

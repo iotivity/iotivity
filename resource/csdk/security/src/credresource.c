@@ -850,79 +850,88 @@ const OicSecCred_t* GetCredResourceData(const OicUuid_t* subject)
  * This internal callback is used by lower stack (i.e. CA layer) to
  * retrieve PSK credentials from RI security layer.
  *
- * Note: When finished, caller should initialize memory to zeros and
- * invoke OICFree to delete @p credInfo.
+ * @param[in]  type type of PSK data required by tinyDTLS layer during DTLS handshake.
+ * @param[in]  desc Additional request information.
+ * @param[in]  desc_len The actual length of desc.
+ * @param[out] result  Must be filled with the requested information.
+ * @param[in]  result_length  Maximum size of @p result.
  *
- * @param credInfo
- *     binary blob containing PSK credentials
- *
- * @retval none
+ * @return The number of bytes written to @p result or a value
+ *         less than zero on error.
  */
-void GetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
+int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
+              const unsigned char *desc, size_t desc_len,
+              unsigned char *result, size_t result_length)
 {
-    CADtlsPskCredsBlob_t * caBlob = NULL;
-    if(credInfo)
+    int32_t ret = -1;
+
+    if (NULL == result)
     {
-        caBlob = (CADtlsPskCredsBlob_t *)OICCalloc(sizeof(CADtlsPskCredsBlob_t), 1);
-        if (caBlob)
-        {
-            OicUuid_t deviceID = {.id={}};
+        return ret;
+    }
 
-            // Retrieve Device ID from doxm resource and copy in PSK creds blob
-            VERIFY_SUCCESS(TAG, GetDoxmDeviceID(&deviceID) == OC_STACK_OK, ERROR);
-            memcpy(caBlob->identity, deviceID.id, sizeof(caBlob->identity));
-
-            OicSecCred_t *cred = NULL;
-            size_t count = 0;
-            LL_FOREACH(gCred, cred)
+    switch (type)
+    {
+        case CA_DTLS_PSK_HINT:
+        case CA_DTLS_PSK_IDENTITY:
             {
-                // Currently, Iotivity supports only symmetric pair wise key credentials
-                if (cred->credType == SYMMETRIC_PAIR_WISE_KEY)
+                OicUuid_t deviceID = {.id={}};
+                // Retrieve Device ID from doxm resource
+                if ( OC_STACK_OK != GetDoxmDeviceID(&deviceID) )
                 {
-                    ++count;
+                    OC_LOG (ERROR, TAG, "Unable to retrieve doxm Device ID");
+                    return ret;
                 }
-            }
-            caBlob->num = count;
-            if (caBlob->num)
-            {
-                caBlob->creds =
-                    (OCDtlsPskCreds*) OICMalloc(caBlob->num * sizeof(OCDtlsPskCreds));
-                VERIFY_NON_NULL(TAG, caBlob->creds, ERROR);
 
-                unsigned int i = 0;
+                if (result_length < sizeof(deviceID.id))
+                {
+                    OC_LOG (ERROR, TAG, "Wrong value for result_length");
+                    return ret;
+                }
+                memcpy(result, deviceID.id, sizeof(deviceID.id));
+                return (sizeof(deviceID.id));
+            }
+            break;
+
+        case CA_DTLS_PSK_KEY:
+            {
+                OicSecCred_t *cred = NULL;
                 LL_FOREACH(gCred, cred)
                 {
-                    if ((cred->credType == SYMMETRIC_PAIR_WISE_KEY) &&
-                            (i < count))
-
+                    if (cred->credType != SYMMETRIC_PAIR_WISE_KEY)
                     {
-                        // Copy subject ID
-                        memcpy(caBlob->creds[i].id, cred->subject.id,
-                                sizeof(caBlob->creds[i].id));
+                        continue;
+                    }
 
-                        // Convert PSK from JSON to binary before copying
+                    if ((desc_len == sizeof(cred->subject.id)) &&
+                        (memcmp(desc, cred->subject.id, sizeof(cred->subject.id)) == 0))
+                    {
+                        // Convert PSK from Base64 encoding to binary before copying
                         uint32_t outLen = 0;
                         B64Result b64Ret = b64Decode(cred->privateData.data,
-                                strlen(cred->privateData.data), caBlob->creds[i].psk,
-                                sizeof(caBlob->creds[i].psk), &outLen);
-                        VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-                        i++;
+                                strlen(cred->privateData.data), result,
+                                result_length, &outLen);
+                        if (B64_OK != b64Ret)
+                        {
+                            OC_LOG (ERROR, TAG, "Base64 decoding failed.");
+                            ret = -1;
+                            return ret;
+                        }
+                        return outLen;
                     }
                 }
             }
-        }
-        *credInfo = caBlob;
-        // Return from here after making the credential list
-        return;
+            break;
+
+        default:
+            {
+                OC_LOG (ERROR, TAG, "Wrong value passed for CADtlsPskCredType_t.");
+                ret = -1;
+            }
+            break;
     }
 
-exit:
-    if (caBlob)
-    {
-        memset(caBlob->creds, 0, caBlob->num * sizeof(OCDtlsPskCreds));
-        OICFree(caBlob->creds);
-    }
-    OICFree(caBlob);
+    return ret;
 }
 
 /**
