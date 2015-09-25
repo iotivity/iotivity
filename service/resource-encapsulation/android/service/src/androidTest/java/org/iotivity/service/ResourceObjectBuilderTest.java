@@ -1,12 +1,12 @@
 package org.iotivity.service;
 
-import android.test.InstrumentationTestCase;
-
 import org.iotivity.service.server.RcsResourceObject;
 
+import android.test.InstrumentationTestCase;
+
 public class ResourceObjectBuilderTest extends InstrumentationTestCase {
-    private static final String RESOURCEURI = "/a/TemperatureSensor";
-    private static final String RESOURCETYPE = "Resource.Hosting";
+    private static final String RESOURCEURI       = "/a/TemperatureSensor";
+    private static final String RESOURCETYPE      = "oic.r.type";
     private static final String RESOURCEINTERFACE = "oic.if.baseline";
 
     private RcsResourceObject mObject;
@@ -19,9 +19,11 @@ public class ResourceObjectBuilderTest extends InstrumentationTestCase {
         mObject = null;
     }
 
-    public void testResourceServerHasPropertiesSetByBuilder() throws RcsException {
+    public void testResourceServerHasPropertiesSetByBuilder()
+            throws RcsException {
         mObject = new RcsResourceObject.Builder(RESOURCEURI, RESOURCETYPE,
-                RESOURCEINTERFACE).setDiscoverable(false).setObservable(true).build();
+                RESOURCEINTERFACE).setDiscoverable(false).setObservable(true)
+                        .build();
 
         assertTrue(mObject.isObservable());
     }
