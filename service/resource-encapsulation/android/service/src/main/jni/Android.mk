@@ -19,11 +19,6 @@ LOCAL_SRC_FILES := $(IOTIVITY_LIB_PATH)/librcs_server.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := rcs_container
-LOCAL_SRC_FILES := $(IOTIVITY_LIB_PATH)/librcs_container.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-include $(CLEAR_VARS)
 OIC_SRC_DIR := ../../../../../..
 LOCAL_MODULE := rcs_jni
 
@@ -44,6 +39,5 @@ LOCAL_LDLIBS := -llog
 LOCAL_SHARED_LIBRARIES += rcs_common
 LOCAL_SHARED_LIBRARIES += rcs_client
 LOCAL_SHARED_LIBRARIES += rcs_server
-LOCAL_SHARED_LIBRARIES += rcs_container
 
 include $(BUILD_SHARED_LIBRARY)
