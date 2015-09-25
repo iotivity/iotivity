@@ -50,7 +50,7 @@ constexpr int QUIT = 3;
 
 
 std::string resourceUri = "/a/TempSensor";
-std::string resourceType = "core.TemperatureSensor";
+std::string resourceType = "oic.r.temperaturesensor";
 std::string resourceInterface = "oic.if.";
 std::string attributeKey = "Temperature";
 int isPresenceOn = PRESENCE_ON;
@@ -145,7 +145,7 @@ void initServer()
     {
     case REQUEST_TEMP:
         resourceUri = "/a/TempSensor";
-        resourceType = "core.TemperatureSensor";
+        resourceType = "oic.r.temperaturesensor";
         break;
     case REQUEST_LIGHT:
         resourceUri = "/a/light";
@@ -301,7 +301,7 @@ void process()
 
     while(true)
     {
-        if(resourceType == "core.TemperatureSensor")
+        if(resourceType == "oic.r.temperaturesensor")
         {
             displayControlTemperatureMenu();
             if (selectControlTemperatureMenu() == QUIT) return;
@@ -320,15 +320,15 @@ int main(void)
     {
         process();
         server = NULL;
+
+        if(isPresenceOn == PRESENCE_ON)
+        {
+            stopPresence();
+        }
     }
     catch (const std::exception& e)
     {
         std::cout << "main exception  : " << e.what() << std::endl;
-    }
-
-    if(isPresenceOn == PRESENCE_ON)
-    {
-        stopPresence();
     }
     std::cout << "Stopping the Server" << std::endl;
 }
