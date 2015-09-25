@@ -19,36 +19,18 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <iostream>
-#include <functional>
-
-#include "mutex"
-#include "condition_variable"
 
 #include "RCSDiscoveryManager.h"
 #include "RCSRemoteResourceObject.h"
 #include "RCSResourceAttributes.h"
 #include "RCSAddress.h"
+
 #include "OCPlatform.h"
 
 using namespace OC;
 using namespace OIC::Service;
 
-constexpr int CORRECT_INPUT = 1;
-constexpr int INCORRECT_INPUT = 2;
-constexpr int QUIT_INPUT = 3;
-
-constexpr int REQUEST_TEMP = 1;
-constexpr int REQUEST_LIGHT = 2;
-
-std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask = nullptr;
-std::shared_ptr<RCSRemoteResourceObject>  resource;
-
-std::string defaultKey = "Temperature";
-const std::string relativeUri = OC_RSRVD_WELL_KNOWN_URI;
-const std::string multicastAdd = "multi";
-
-std::mutex mtx;
-std::condition_variable cond;
+#define DECLARE_MENU(FUNC, ...) { #FUNC, FUNC, __VA_ARGS__ }
 
 void startMonitoring();
 void startMonitoring();
@@ -64,62 +46,134 @@ void stopCaching();
 void discoverResource();
 void cancelDiscovery();
 int processUserInput();
+void selectResource();
+void printAttributes(const RCSResourceAttributes& attributes);
 
-enum Menu
+class MenuList;
+
+class MenuItem
 {
-    START_MONITORING = 1,
-    STOP_MONITORING,
-    GET_ATTRIBUTE,
-    SET_ATTRIBUTE,
-    START_CACHING_NO_UPDATE,
-    START_CACHING_UPDATE,
-    GET_RESOURCE_CACHE_STATE,
-    GET_CACHED_ATTRIBUTES,
-    GET_CACHED_ATTRIBUTE,
-    STOP_CACHING,
-    DISCOVERY_RESOURCE,
-    CANCEL_DISCOVERY,
-    QUIT,
-    END_OF_MENU
+private:
+    typedef void(*MenuHandler)();
+
+public:
+    MenuItem(const char* funcName, MenuHandler handler = nullptr,
+            MenuHandler optionHandler = nullptr, MenuList* state = nullptr)
+        : m_name(funcName), m_handler(handler), m_optionHandler(optionHandler),
+          m_nextState(state)
+    {
+    }
+
+    MenuList* command() const
+    {
+        std::cout << m_name << " start.." << std::endl;
+        if(m_handler) m_handler();
+
+        if(m_optionHandler != nullptr) m_optionHandler();
+
+        return m_nextState;
+    }
+
+    const char* getTitle() const
+    {
+        return m_name.c_str();
+    }
+
+private:
+    const std::string m_name;
+    const MenuHandler m_handler;
+    const MenuHandler m_optionHandler;
+    MenuList* const m_nextState ;
 };
 
-typedef void(*ClientMenuHandler)();
-typedef int ReturnValue;
-
-struct ClientMenu
+class MenuList
 {
-    Menu m_menu;
-    ClientMenuHandler m_handler;
-    ReturnValue m_result;
+public:
+    MenuList(std::initializer_list<MenuItem> il)
+        :m_menuItemList(std::move(il))
+    {
+    }
+
+    void display() const
+    {
+        std::cout << std::endl;
+        int menuNum = 1;
+
+        for(const auto& menuItem : m_menuItemList)
+        {
+            std::cout.width(2);
+            std::cout << std::right << menuNum++ <<  ". ";
+            std::cout << menuItem.getTitle() << std::endl;
+        }
+    }
+
+    MenuList* select()
+    {
+        int input = processUserInput();
+
+        if(input == static_cast<int>(m_menuItemList.size())) return nullptr;
+
+        if(input > static_cast<int>(m_menuItemList.size()) || input <= 0)
+        {
+            std::cout << "Invalid input, please try again" << std::endl;
+            return this;
+        }
+        auto nextMenuList = m_menuItemList[input-1].command();
+
+        return nextMenuList == nullptr ? this : nextMenuList;
+    }
+
+private:
+    const std::vector<MenuItem> m_menuItemList;
 };
 
-ClientMenu clientMenu[] = {
-        {Menu::START_MONITORING, startMonitoring, CORRECT_INPUT},
-        {Menu::STOP_MONITORING, stopMonitoring, CORRECT_INPUT},
-        {Menu::GET_ATTRIBUTE, getAttributeFromRemoteServer, CORRECT_INPUT},
-        {Menu::SET_ATTRIBUTE, setAttributeToRemoteServer, CORRECT_INPUT},
-        {Menu::START_CACHING_NO_UPDATE, startCachingWithoutCallback, CORRECT_INPUT},
-        {Menu::START_CACHING_UPDATE, startCachingWithCallback, CORRECT_INPUT},
-        {Menu::GET_RESOURCE_CACHE_STATE, getResourceCacheState, CORRECT_INPUT},
-        {Menu::GET_CACHED_ATTRIBUTES, getCachedAttributes, CORRECT_INPUT},
-        {Menu::GET_CACHED_ATTRIBUTE, getCachedAttribute, CORRECT_INPUT},
-        {Menu::STOP_CACHING, stopCaching, CORRECT_INPUT},
-        {Menu::DISCOVERY_RESOURCE, discoverResource, CORRECT_INPUT},
-        {Menu::CANCEL_DISCOVERY, cancelDiscovery, CORRECT_INPUT},
-        {Menu::QUIT, [](){}, QUIT_INPUT},
-        {Menu::END_OF_MENU, nullptr, INCORRECT_INPUT}
-    };
+constexpr int REQUEST_TEMP = 1;
+constexpr int REQUEST_LIGHT = 2;
+
+const std::string TEMP = "oic.r.temperaturesensor";
+const std::string LIGHT = "oic.r.light";
+
+std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
+
+std::vector<RCSRemoteResourceObject::Ptr> resourceList;
+RCSRemoteResourceObject::Ptr selectedResource;
+
+std::string defaultKey;
+
+MenuList* currentMenuList;
+
+MenuList resourceMenu = {
+    DECLARE_MENU(startMonitoring),
+    DECLARE_MENU(stopMonitoring),
+    DECLARE_MENU(getAttributeFromRemoteServer),
+    DECLARE_MENU(setAttributeToRemoteServer),
+    DECLARE_MENU(startCachingWithoutCallback),
+    DECLARE_MENU(startCachingWithCallback),
+    DECLARE_MENU(getResourceCacheState),
+    DECLARE_MENU(getCachedAttributes),
+    DECLARE_MENU(getCachedAttribute),
+    DECLARE_MENU(stopCaching),
+    { "quit" }
+};
+
+MenuList cancelDiscoveryMenu = {
+    DECLARE_MENU(cancelDiscovery, selectResource, &resourceMenu),
+    { "quit" }
+};
+
+MenuList discoveryMenu = {
+    DECLARE_MENU(discoverResource, nullptr, &cancelDiscoveryMenu),
+    { "quit" }
+};
 
 void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> discoveredResource)
 {
     std::cout << "onResourceDiscovered callback :: " << std::endl;
-    std::string resourceURI = discoveredResource->getUri();
-    std::string hostAddress = discoveredResource->getAddress();
 
-    std::cout << resourceURI << std::endl;
-    std::cout << hostAddress << std::endl;
+    std::cout << "resourceURI : " << discoveredResource->getUri() << std::endl;
+    std::cout << "hostAddress : " << discoveredResource->getAddress() << std::endl;
 
-    resource = discoveredResource;
+    resourceList.push_back(discoveredResource);
 }
 
 void onResourceStateChanged(const ResourceState& resourceState)
@@ -142,7 +196,6 @@ void onResourceStateChanged(const ResourceState& resourceState)
 
         case ResourceState::LOST_SIGNAL:
             std::cout << "\tState changed to : LOST_SIGNAL" << std::endl;
-            resource = nullptr;
             break;
 
         case ResourceState::DESTROYED:
@@ -155,72 +208,21 @@ void onCacheUpdated(const RCSResourceAttributes& attributes)
 {
     std::cout << "onCacheUpdated callback" << std::endl;
 
-    if (attributes.empty())
-    {
-        std::cout << "\tAttribute is Empty" << std::endl;
-        return;
-    }
-
-    for(const auto& attr : attributes)
-    {
-        std::cout << "\tkey : " << attr.key() << std::endl
-                  << "\tvalue : " << attr.value().toString() << std::endl;
-    }
+    printAttributes(attributes);
 }
 
-void onRemoteAttributesReceivedCallback(const RCSResourceAttributes& attributes, int)
+void onRemoteAttributesReceived(const RCSResourceAttributes& attributes, int)
 {
-    std::cout << "onRemoteAttributesReceivedCallback callback" << std::endl;
+    std::cout << "onRemoteAttributesReceived callback" << std::endl;
 
-    if (attributes.empty())
-    {
-        std::cout << "\tAttribute is Empty" << std::endl;
-        return;
-    }
-
-    for(const auto& attr : attributes)
-    {
-        std::cout << "\tkey : " << attr.key() << std::endl
-                  << "\tvalue : " << attr.value().toString() << std::endl;
-    }
-}
-
-void displayMenu()
-{
-    std::cout << std::endl;
-    std::cout << "1 :: Start Monitoring" << std::endl;
-    std::cout << "2 :: Stop Monitoring" << std::endl;
-    std::cout << "3 :: Get Attribute" << std::endl;
-    std::cout << "4 :: Set Attribute" << std::endl;
-    std::cout << "5 :: Start Caching (No update to Application)" << std::endl;
-    std::cout << "6 :: Start Caching (Update the application when data change)"<< std::endl;
-    std::cout << "7 :: Get Resource cache State" << std::endl;
-    std::cout << "8 :: Get Cached Attributes" << std::endl;
-    std::cout << "9 :: Get Cached Attribute"  << std::endl;
-    std::cout << "10 :: Stop Caching" << std::endl;
-    std::cout << "11 :: Discover Resource" << std::endl;
-    std::cout << "12 :: Cancel Discovery" << std::endl;
-    std::cout << "13 :: Stop Server" << std::endl;
-}
-
-int processUserInput()
-{
-    int userInput;
-    std::cin >> userInput;
-    if (std::cin.fail())
-    {
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        return -1;
-    }
-    return userInput;
+    printAttributes(attributes);
 }
 
 void startMonitoring()
 {
-    if (!resource->isMonitoring())
+    if (!selectedResource->isMonitoring())
     {
-        resource->startMonitoring(&onResourceStateChanged);
+        selectedResource->startMonitoring(&onResourceStateChanged);
         std::cout << "\tHosting Started..." << std::endl;
     }
     else
@@ -231,9 +233,9 @@ void startMonitoring()
 
 void stopMonitoring()
 {
-    if (resource->isMonitoring())
+    if (selectedResource->isMonitoring())
     {
-        resource->stopMonitoring();
+        selectedResource->stopMonitoring();
         std::cout << "\tHosting stopped..." << std::endl;
     }
     else
@@ -244,34 +246,28 @@ void stopMonitoring()
 
 void getAttributeFromRemoteServer()
 {
-    resource->getRemoteAttributes(&onRemoteAttributesReceivedCallback);
+    selectedResource->getRemoteAttributes(&onRemoteAttributesReceived);
 }
 
 void setAttributeToRemoteServer()
 {
     std::string key;
-    int value;
-
     RCSResourceAttributes setAttribute;
 
     std::cout << "\tEnter the Key you want to set : ";
     std::cin >> key;
-    std::cout << "\tEnter the value you want to set :";
-    std::cin >> value;
+    std::cout << "\tEnter the value(INT) you want to set :";
 
-    setAttribute[key] = value;
-    resource->setRemoteAttributes(setAttribute,
-                                  &onRemoteAttributesReceivedCallback);
+    setAttribute[key] = processUserInput();
+    selectedResource->setRemoteAttributes(setAttribute,
+                                  &onRemoteAttributesReceived);
 }
 
-void startCaching(std::function <void (const RCSResourceAttributes&)>cb)
+void startCaching(RCSRemoteResourceObject::CacheUpdatedCallback cb)
 {
-    if (!resource->isCaching())
+    if (!selectedResource->isCaching())
     {
-        if(cb) resource->startCaching(&onCacheUpdated);
-
-        else resource->startCaching();
-
+        selectedResource->startCaching(std::move(cb));
         std::cout << "\tCaching Started..." << std::endl;
     }
     else
@@ -292,25 +288,22 @@ void startCachingWithCallback()
 
 void getResourceCacheState()
 {
-    switch(resource->getCacheState())
+    switch(selectedResource->getCacheState())
     {
         case CacheState::READY:
-            std::cout << "\tCurrent Cache State : " << "CACHE_STATE ::READY" << std::endl;
+            std::cout << "\tCurrent Cache State : CACHE_STATE::READY" << std::endl;
             break;
 
         case CacheState::UNREADY:
-            std::cout << "\tCurrent Cache State : " << "CACHE_STATE ::UNREADY" << std::endl;
+            std::cout << "\tCurrent Cache State : CACHE_STATE::UNREADY" << std::endl;
             break;
 
         case CacheState::LOST_SIGNAL:
-            std::cout << "\tCurrent Cache State : " << "CACHE_STATE ::LOST_SIGNAL" << std::endl;
+            std::cout << "\tCurrent Cache State : CACHE_STATE::LOST_SIGNAL" << std::endl;
             break;
 
         case CacheState::NONE:
-            std::cout << "\tCurrent Cache State : " << "CACHE_STATE ::NONE" << std::endl;
-            break;
-
-        default:
+            std::cout << "\tCurrent Cache State : CACHE_STATE::NONE" << std::endl;
             break;
     }
 }
@@ -319,18 +312,7 @@ void getCachedAttributes()
 {
     try
     {
-        if (resource->getCachedAttributes().empty())
-        {
-            std::cout << "\tReceived cached attribute is empty" << std::endl;
-        }
-        else
-        {
-            for(const auto& attr : resource->getCachedAttributes())
-            {
-                std::cout << "\tkey : " << attr.key() << std::endl
-                          << "\tvalue : " << attr.value().toString() << std::endl;
-            }
-        }
+        printAttributes(selectedResource->getCachedAttributes());
     }
     catch (const RCSBadRequestException& e)
     {
@@ -343,7 +325,7 @@ void getCachedAttribute()
     try
     {
         std::cout << "\tkey : " << defaultKey << std::endl
-                  << "\tvalue : " << resource->getCachedAttribute(defaultKey).get< int >()
+                  << "\tvalue : " << selectedResource->getCachedAttribute(defaultKey).get< int >()
                   << std::endl;
     }
     catch (const RCSBadRequestException& e)
@@ -358,40 +340,14 @@ void getCachedAttribute()
 
 void stopCaching()
 {
-    if(resource->isCaching())
+    if(selectedResource->isCaching())
     {
-        resource->stopCaching();
+        selectedResource->stopCaching();
         std::cout << "\tCaching stopped..." << std::endl;
     }
     else
     {
         std::cout << "\tCaching not started..." << std::endl;
-    }
-}
-
-int selectClientMenu(int selectedMenu)
-{
-    for(int i = 0; clientMenu[i].m_menu != Menu::END_OF_MENU; i++)
-    {
-        if(clientMenu[i].m_menu == selectedMenu)
-        {
-            clientMenu[i].m_handler();
-            return clientMenu[i].m_result;
-        }
-    }
-
-    std::cout << "Invalid input, please try again" << std::endl;
-
-    return INCORRECT_INPUT;
-}
-
-void process()
-{
-    while(true)
-    {
-        displayMenu();
-
-        if(selectClientMenu(processUserInput()) == QUIT_INPUT) break;
     }
 }
 
@@ -404,10 +360,26 @@ void platFormConfigure()
     OCPlatform::Configure(config);
 }
 
-void discoverResource()
+int processUserInput()
 {
-    std::string resourceType;
+    int userInput;
 
+    while(true)
+    {
+        std::cin >> userInput;
+        if (std::cin.fail())
+        {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Invalid Input, please try again" << std::endl;
+        }
+        else break;
+    }
+    return userInput;
+}
+
+bool selectResourceType(std::string& resourceType)
+{
     std::cout << "========================================================" << std::endl;
     std::cout << "1. Temperature Resource Discovery" << std::endl;
     std::cout << "2. Light Resource Discovery" << std::endl;
@@ -416,61 +388,116 @@ void discoverResource()
     switch (processUserInput())
     {
     case REQUEST_TEMP:
-        resourceType = "oic.r.temperaturesensor";
-        break;
+        resourceType = TEMP;
+        defaultKey = "Temperature";
+        return true;
     case REQUEST_LIGHT:
-        resourceType = "core.light";
+        resourceType = LIGHT;
         defaultKey = "Light";
-        break;
+        return true;
     default :
         std::cout << "Invalid input, please try again" << std::endl;
-        return;
+        return false;
     }
+}
 
-    std::string addressInput;
+RCSAddress inputAddress()
+{
     std::cout << "========================================================" << std::endl;
     std::cout << "Please input address" << std::endl;
-    std::cout << "(want to use multicast -> please input 'multi')" << std::endl;
+    std::cout << "(default is multicast. when you want to use unicast, input address" << std::endl;
     std::cout << "========================================================" << std::endl;
 
-    std::cin >> addressInput;
+    std::string address;
 
-    if(addressInput == multicastAdd)
+    if(std::cin.peek() != '\n') std::cin >> address;
+
+    return address.empty() ? RCSAddress::multicast() : RCSAddress::unicast(address);
+}
+
+void discoverResource()
+{
+    std::string resourceType = "";
+
+    while(!selectResourceType(resourceType)) {}
+
+    while(!discoveryTask)
     {
         try
         {
-        discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
-                relativeUri, resourceType, &onResourceDiscovered);
+            discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
+                    inputAddress(), resourceType, &onResourceDiscovered);
         }
         catch (const RCSPlatformException& e)
         {
             std::cout << e.what() << std::endl;
         }
     }
-    else
+}
+
+void displayResourceList()
+{
+    int cnt = 1;
+    for(const auto& resource : resourceList)
     {
-        discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::unicast
-                (addressInput), relativeUri, resourceType, &onResourceDiscovered);
+        std::cout << cnt++ << ".\tresourceURI : " << resource->getUri() << std::endl <<
+                              "\thostAddress : " << resource->getAddress() << std::endl;
     }
+}
+
+void selectResource()
+{
+    displayResourceList();
+
+    std::cout << "select Resource..." << std::endl;
+
+    selectedResource = resourceList[processUserInput()-1];
+
+    resourceList.clear();
 }
 
 void cancelDiscovery()
 {
     if(!discoveryTask)
     {
-        std::cout << "There isn't discovery request..." << std::endl;
+        std::cout << "There is no discovery request..." << std::endl;
         return;
     }
     discoveryTask->cancel();
+}
+
+void printAttribute(const std::string key, const RCSResourceAttributes::Value& value)
+{
+    std::cout << "\tkey : " << key << std::endl
+              << "\tvalue : " << value.toString() << std::endl;
+}
+
+void printAttributes(const RCSResourceAttributes& attributes)
+{
+    if (attributes.empty())
+    {
+       std::cout << "\tattributes is empty" << std::endl;
+    }
+    for(const auto& attr : attributes)
+    {
+        printAttribute(attr.key(), attr.value());
+    }
 }
 
 int main()
 {
     platFormConfigure();
 
+    currentMenuList = &discoveryMenu;
+
     try
     {
-        process();
+        while(currentMenuList)
+        {
+            currentMenuList->display();
+
+            currentMenuList = currentMenuList->select();
+        }
     }
     catch (const std::exception& e)
     {
