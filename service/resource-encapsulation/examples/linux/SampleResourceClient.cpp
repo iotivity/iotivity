@@ -416,7 +416,7 @@ void discoverResource()
     switch (processUserInput())
     {
     case REQUEST_TEMP:
-        resourceType = "core.TemperatureSensor";
+        resourceType = "oic.r.temperaturesensor";
         break;
     case REQUEST_LIGHT:
         resourceType = "core.light";
