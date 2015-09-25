@@ -57,15 +57,15 @@ JavaBundleResource::JavaBundleResource(JNIEnv *env, jobject obj, jobject bundleR
 
     m_bundleId = bundleId;
 
-    this->bundleResource = env->NewGlobalRef(bundleResource);
+    this->m_bundleResource = env->NewGlobalRef(bundleResource);
 
-    bundleResourceClass = env->GetObjectClass(bundleResource);
+    m_bundleResourceClass = env->GetObjectClass(bundleResource);
 
-    attributeSetter = env->GetMethodID(bundleResourceClass, "setAttribute",
-                                       "(Ljava/lang/String;Ljava/lang/String;)V");
+    m_attributeSetRequestHandler = env->GetMethodID(m_bundleResourceClass,
+            "handleSetAttributeRequest", "(Ljava/lang/String;Ljava/lang/String;)V");
 
-    attributeGetter = env->GetMethodID(bundleResourceClass, "getAttribute",
-                                       "(Ljava/lang/String;)Ljava/lang/String;");
+    m_attributeGetRequestHandler = env->GetMethodID(m_bundleResourceClass,
+            "handleGetAttributeRequest", "(Ljava/lang/String;)Ljava/lang/String;");
 
 }
 
@@ -74,12 +74,8 @@ JavaBundleResource::~JavaBundleResource()
 
 }
 
-RCSResourceAttributes &JavaBundleResource::getAttributes()
-{
-    return BundleResource::getAttributes();
-}
-
-RCSResourceAttributes::Value JavaBundleResource::getAttribute(const std::string &attributeName)
+RCSResourceAttributes::Value JavaBundleResource::handleGetAttributeRequest(
+        const std::string &attributeName)
 {
     JavaVM *vm = ResourceContainerImpl::getImplInstance()->getJavaVM(m_bundleId);
 
@@ -90,18 +86,20 @@ RCSResourceAttributes::Value JavaBundleResource::getAttribute(const std::string 
     {
         if (vm->AttachCurrentThread((void **) &env, NULL) != 0)
         {
-            OC_LOG_V(ERROR, CONTAINER_TAG, "[JavaBundleResource::getAttribute] Failed to attach ");
+            OC_LOG_V(ERROR, CONTAINER_TAG,
+                    "[JavaBundleResource::handleGetAttributeRequest] Failed to attach ");
         }
     }
     else if (envStat == JNI_EVERSION)
     {
-        OC_LOG_V(ERROR, CONTAINER_TAG, "[JavaBundleResource::getAttribute] Env: version not supported");
+        OC_LOG_V(ERROR, CONTAINER_TAG,
+                "[JavaBundleResource::handleGetAttributeRequest] Env: version not supported");
     }
 
     jstring attrName = env->NewStringUTF(attributeName.c_str());
 
-    jstring returnString = (jstring) env->CallObjectMethod(bundleResource, attributeGetter,
-                           attrName);
+    jstring returnString = (jstring) env->CallObjectMethod(m_bundleResource,
+            m_attributeGetRequestHandler, attrName);
 
     const char *js = env->GetStringUTFChars(returnString, NULL);
     std::string val(js);
@@ -111,7 +109,7 @@ RCSResourceAttributes::Value JavaBundleResource::getAttribute(const std::string 
     return BundleResource::getAttribute(attributeName);
 }
 
-void JavaBundleResource::setAttribute(std::string attributeName,
+void JavaBundleResource::handleSetAttributeRequest(const std::string &attributeName,
                                       RCSResourceAttributes::Value &&value)
 {
     JavaVM *vm = ResourceContainerImpl::getImplInstance()->getJavaVM(m_bundleId);
@@ -123,19 +121,39 @@ void JavaBundleResource::setAttribute(std::string attributeName,
     {
         if (vm->AttachCurrentThread((void **) &env, NULL) != 0)
         {
-            OC_LOG_V(ERROR, CONTAINER_TAG, "[JavaBundleResource::setAttribute] Failed to attach ");
+            OC_LOG_V(ERROR, CONTAINER_TAG,
+                    "[JavaBundleResource::handleSetAttributeRequest] Failed to attach ");
         }
     }
     else if (envStat == JNI_EVERSION)
     {
-        OC_LOG_V(ERROR, CONTAINER_TAG, "[JavaBundleResource::setAttribute] Env: version not supported ");
+        OC_LOG_V(ERROR, CONTAINER_TAG,
+                "[JavaBundleResource::handleSetAttributeRequest] Env: version not supported ");
     }
 
     jstring attrName = env->NewStringUTF(attributeName.c_str());
     jstring val = env->NewStringUTF(value.toString().c_str());
 
 
-    env->CallObjectMethod(bundleResource, attributeSetter, attrName, val);
+    env->CallObjectMethod(m_bundleResource, m_attributeSetRequestHandler, attrName, val);
     BundleResource::setAttribute(attributeName, std::move(value));
+}
+
+
+void JavaBundleResource::handleSetAttributesRequest(RCSResourceAttributes &attrs){
+    for (RCSResourceAttributes::iterator it = attrs.begin(); it != attrs.end(); ++it)
+    {
+        handleSetAttributeRequest(it->key(),std::move(it->value()));
+    }
+}
+
+RCSResourceAttributes & JavaBundleResource::handleGetAttributesRequest(){
+    RCSResourceAttributes ret;
+    std::list<string> attrsNames = getAttributeNames();
+    for(std::list<string>::iterator iterator = attrsNames.begin();
+            iterator != attrsNames.end(); ++iterator ){
+        ret[*iterator] = handleGetAttributeRequest(*iterator);
+    }
+    return ret;
 }
 #endif

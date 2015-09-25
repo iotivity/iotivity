@@ -24,107 +24,149 @@ import java.util.HashMap;
 import java.util.Set;
 
 /**
- * Basic BundleResource that should be used as a base class
- * by a bundle resources. A concrete technology has 
- * to override the setAttribute and getAttribute method
- * and map the according reads and writes to the technology specific 
- * messages.
+ * Basic BundleResource that should be used as a base class by a bundle
+ * resources. A concrete technology has to override the setAttribute and
+ * getAttribute method and map the according reads and writes to the technology
+ * specific messages.
  */
 public abstract class BundleResource {
-    protected String m_name, m_uri, m_resourceType, m_address;
+	protected String m_name, m_uri, m_resourceType, m_address;
 
-    protected HashMap<String, String> m_attributes;
+	protected HashMap<String, String> m_attributes = new HashMap<String, String>();
 
-    /**
-     * Initialize the internal attribute structure.
-     */
-    protected abstract void initAttributes();
+	/**
+	 * Initialize the internal attribute structure.
+	 */
+	protected abstract void initAttributes();
 
-    /**
-     * Set the attribute (map to a send command for the according protocol)
-     * @param key name of the attribute to be set
-     * @param value new value of the attribute
-     */
-    public abstract void setAttribute(String key, String value);
+	/**
+	 * Set the attribute (map to a send command for the according protocol)
+	 * 
+	 * @param key
+	 *            name of the attribute to be set
+	 * @param value
+	 *            new value of the attribute
+	 */
+	protected final void setAttribute(String key, String value) {
+		m_attributes.put(key, value);
+	}
 
-    /**
-     * Retrieve the attribute (map to read command for the according protocol)
-     * @param key name of the attribute to be read
-     * @return Value of the attribute
-     */
-    public abstract String getAttribute(String key);     
+	/**
+	 * Set the attribute (map to a send command for the according protocol)
+	 * 
+	 * @param key
+	 *            name of the attribute to be set
+	 * @param value
+	 *            new value of the attribute
+	 */
+	public abstract void handleSetAttributeRequest(String key, String value);
 
-    /**
-     * Attribute keys provided through by the bundle resource.
-     * @return Name of attribute keys as string array
-     */
-    public String[] getAttributeKeys() {
-        Set<String> keys = m_attributes.keySet();
-        return keys.toArray(new String[keys.size()]);
-    }
+	/**
+	 * Retrieve the attribute (only data)
+	 * 
+	 * @param key
+	 *            name of the attribute to be read
+	 * @return Value of the attribute
+	 */
+	protected final String getAttribute(String key) {
+		return m_attributes.get(key);
+	}
 
-    /**
-     * Setter for the uri property
-     * @param uri URI of the resource
-     */
-    public void setURI(String uri) {
-        this.m_uri = uri;
-    }
+	/**
+	 * Retrieve the attribute (map to read command)
+	 * 
+	 * @param key
+	 *            name of the attribute to be set
+	 * @param value
+	 *            new value of the attribute
+	 */
+	public abstract String handleGetAttributeRequest(String key);
 
-    /**
-     * Returns the URI of the resource
-     * @return Resource URI
-     */
-    public String getURI() {
-        return m_uri;
-    }
+	/**
+	 * Attribute keys provided through by the bundle resource.
+	 * 
+	 * @return Name of attribute keys as string array
+	 */
+	public String[] getAttributeKeys() {
+		Set<String> keys = m_attributes.keySet();
+		return keys.toArray(new String[keys.size()]);
+	}
 
-    /**
-     * Sets the resource type property
-     * @param resourceType OIC resource type
-     */
-    public void setResourceType(String resourceType) {
-        this.m_resourceType = resourceType;
-    }
+	/**
+	 * Setter for the uri property
+	 * 
+	 * @param uri
+	 *            URI of the resource
+	 */
+	public void setURI(String uri) {
+		this.m_uri = uri;
+	}
 
-    /**
-     * Getter for the resource type
-     * @return OIC resource type
-     */
-    public String getResourceType() {
-        return m_resourceType;
-    }
+	/**
+	 * Returns the URI of the resource
+	 * 
+	 * @return Resource URI
+	 */
+	public String getURI() {
+		return m_uri;
+	}
 
-    /**
-     * Sets the technology specific address information (e.g., ZigBee short or long identifier)    
-     * @param address Resource address
-     */
-    public void setAddress(String address) {
-        this.m_address = address;
-    }
+	/**
+	 * Sets the resource type property
+	 * 
+	 * @param resourceType
+	 *            OIC resource type
+	 */
+	public void setResourceType(String resourceType) {
+		this.m_resourceType = resourceType;
+	}
 
-    /**
-     * Returns the technology specific address information
-     * @return Resource address
-     */
-    public String getAddress() {
-        return m_address;
-    }
+	/**
+	 * Getter for the resource type
+	 * 
+	 * @return OIC resource type
+	 */
+	public String getResourceType() {
+		return m_resourceType;
+	}
 
-    /**
-     * Sets the name property of the resource
-     * @param name Resource name
-     */
-    public void setName(String name) {
-        this.m_name = name;
-    }
+	/**
+	 * Sets the technology specific address information (e.g., ZigBee short or
+	 * long identifier)
+	 * 
+	 * @param address
+	 *            Resource address
+	 */
+	public void setAddress(String address) {
+		this.m_address = address;
+	}
 
-    /**
-     * Returns the name property of the resource
-     * @return Resource name
-     */
-    public String getName() {
-        return m_name;
-    }
+	/**
+	 * Returns the technology specific address information
+	 * 
+	 * @return Resource address
+	 */
+	public String getAddress() {
+		return m_address;
+	}
+
+	/**
+	 * Sets the name property of the resource
+	 * 
+	 * @param name
+	 *            Resource name
+	 */
+	public void setName(String name) {
+		this.m_name = name;
+	}
+
+	/**
+	 * Returns the name property of the resource
+	 * 
+	 * @return Resource name
+	 */
+	public String getName() {
+		return m_name;
+	}
 
 }
