@@ -85,7 +85,7 @@
             </resourceInfo>       
         </resources>
     </bundle>
-    <!--
+
     <bundle>
         <id>oic.bundle.hueJavaSample</id>       
         <path>../../../../../../../../service/resource-encapsulation/src/resourceContainer/examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar</path>
@@ -96,11 +96,11 @@
         <resources>
             <resourceInfo>
                 <name>light</name>
-                <uri>light/1</uri>
+                <resourceUri>/hueJava/light/1</resourceUri>
                 <resourceType>oic.r.light</resourceType>
                 <address>http://192.168.0.2/api/newdeveloper/lights/1</address>
             </resourceInfo>       
         </resources>
     </bundle>
-    -->
+
 </container>

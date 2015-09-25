@@ -92,8 +92,10 @@ namespace OIC
                                 bundles[i][BUNDLE_LIBRARY_PATH]);
                         }
 
-                        OC_LOG_V(INFO, CONTAINER_TAG, "Init Bundle:(%s)", std::string(bundles[i][BUNDLE_ID] + ";" +
-                                 bundles[i][BUNDLE_PATH]).c_str());
+                        OC_LOG_V(INFO, CONTAINER_TAG, "Init Bundle:(%s)",
+                                 std::string(bundles[i][BUNDLE_ID] + ";" +
+                                             bundles[i][BUNDLE_PATH]).c_str());
+
                         registerBundle(bundleInfo);
                         activateBundle(bundleInfo);
                     }
@@ -284,8 +286,9 @@ namespace OIC
                         std::bind(&ResourceContainerImpl::setRequestHandler, this,
                                   std::placeholders::_1, std::placeholders::_2));
 
-                    OC_LOG_V(INFO, CONTAINER_TAG, "Registration finished (%s)", std::string(strUri + ", " +
-                             strResourceType).c_str());
+                    OC_LOG_V(INFO, CONTAINER_TAG, "Registration finished (%s)",
+                             std::string(strUri + ", " +
+                                         strResourceType).c_str());
 
                     if (m_config->isHasInput(resource->m_bundleId))
                     {
@@ -407,7 +410,8 @@ namespace OIC
 
         void ResourceContainerImpl::onNotificationReceived(const std::string &strResourceUri)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, "notification from (%s)", std::string(strResourceUri + ".").c_str());
+            OC_LOG_V(INFO, CONTAINER_TAG,
+                     "notification from (%s)", std::string(strResourceUri + ".").c_str());
 
             if (m_mapServers.find(strResourceUri) != m_mapServers.end())
             {
@@ -424,7 +428,8 @@ namespace OIC
         RCSResourceObject::Ptr ResourceContainerImpl::buildResourceObject(const std::string &strUri,
                 const std::string &strResourceType)
         {
-            return RCSResourceObject::Builder(strUri, strResourceType, "oic.if.baseline").setObservable(
+            return RCSResourceObject::Builder(strUri, strResourceType,
+                                              "oic.if.baseline").setObservable(
                        true).setDiscoverable(true).build();
         }
 
@@ -487,8 +492,9 @@ namespace OIC
                     ((BundleInfoInternal *)bundleInfo)->setLibraryPath(params[BUNDLE_LIBRARY_PATH]);
                 }
 
-                OC_LOG_V(INFO, CONTAINER_TAG, "Add Bundle: (%s)", std::string(bundleInfo->getID() + "; " +
-                         bundleInfo->getPath()).c_str());
+                OC_LOG_V(INFO, CONTAINER_TAG, "Add Bundle: (%s)",
+                         std::string(bundleInfo->getID() + "; " +
+                                     bundleInfo->getPath()).c_str());
 
                 registerBundle(bundleInfo);
             }
@@ -819,7 +825,6 @@ namespace OIC
         {
             OC_LOG_V(INFO, CONTAINER_TAG, "Registering Java bundle (%s)",
                      std::string(bundleInfo->getID()).c_str());
-
             JavaVM *jvm;
             JNIEnv *env;
             JavaVMInitArgs vm_args;
@@ -831,8 +836,9 @@ namespace OIC
             {
                 fclose(file);
 
-                OC_LOG_V(INFO, CONTAINER_TAG, "Resource bundle (%s)", std::string(bundleInfo->getPath() +
-                         " available.").c_str());
+                OC_LOG_V(INFO, CONTAINER_TAG, "Resource bundle (%s)",
+                         std::string(bundleInfo->getPath() +
+                                     " available.").c_str());
             }
             else
             {
@@ -848,7 +854,8 @@ namespace OIC
             strcpy(classpath, "-Djava.class.path=");
             strcat(classpath, bundleInfo->getPath().c_str());
 
-            OC_LOG(INFO, CONTAINER_TAG, std::string("Configured classpath: ").append(classpath).c_str());
+            OC_LOG(INFO, CONTAINER_TAG,
+                   std::string("Configured classpath: ").append(classpath).c_str());
 
             options[1].optionString = classpath;
 
@@ -857,7 +864,8 @@ namespace OIC
             strcat(libraryPath, bundleInfo->getLibraryPath().c_str());
             options[2].optionString = libraryPath;
 
-            OC_LOG(INFO, CONTAINER_TAG, std::string("Configured library path: ").append(libraryPath).c_str());
+            OC_LOG(INFO, CONTAINER_TAG,
+                   std::string("Configured library path: ").append(libraryPath).c_str());
 
             vm_args.version = JNI_VERSION_1_4;
             vm_args.options = options;
@@ -903,7 +911,6 @@ namespace OIC
                 OC_LOG_V(ERROR, CONTAINER_TAG, "Cannot register bundle (%s)",
                          std::string( bundleInfoInternal->getID()
                                       + " activate bundle method not found ").c_str());
-
                 return;
             }
             bundleInfoInternal->setJavaBundleActivatorMethod(activateMethod);
@@ -916,7 +923,6 @@ namespace OIC
                 OC_LOG_V(ERROR, CONTAINER_TAG, "Cannot register bundle (%s)",
                          std::string( bundleInfoInternal->getID()
                                       + " deactivate bundle method not found ").c_str());
-
                 return;
             }
 
@@ -935,6 +941,7 @@ namespace OIC
             bundleInfoInternal->setLoaded(true);
 
             m_bundles[bundleInfo->getID()] = ((BundleInfoInternal *)bundleInfo);
+
 
             OC_LOG(INFO, CONTAINER_TAG, "Bundle registered");
         }

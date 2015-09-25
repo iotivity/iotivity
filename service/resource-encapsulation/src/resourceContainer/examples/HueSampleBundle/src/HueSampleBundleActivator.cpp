@@ -80,7 +80,6 @@ void HueSampleBundleActivator::createResource(resourceInfo resourceInfo)
         static int lightCount = 1;
         BundleResource::Ptr hueLight = std::make_shared< HueLight >(m_connector, resourceInfo.address);
         resourceInfo.uri = "/hue/light/" + std::to_string(lightCount++);
-        std::cout << "Registering resource " << resourceInfo.uri << std::endl;
         hueLight->m_bundleId = m_bundleId;
         hueLight->m_uri = resourceInfo.uri;
         hueLight->m_resourceType = resourceInfo.resourceType;

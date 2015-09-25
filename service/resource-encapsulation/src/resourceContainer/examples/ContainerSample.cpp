@@ -149,11 +149,11 @@ int main()
     getchar();
     bundleParams["libraryPath"] = ".";
     std::string activator = "org.iotivity.bundle.hue.HueBundleActivator";
-    container->addBundle("oic.bundle.hueJavaSample", "/hueJava",
-                         "../../../../../../../../service/resource-encapsulation/src/resourceContainer/" \
-                         "examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar",
-                         activator,
-                         bundleParams);
+    container->addBundle("oic.bundle.hueJavaSample2", "/hueJava",
+                 "../../../../../../../../service/resource-encapsulation/src/resourceContainer/" \
+                 "examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar",
+                 activator,
+                 bundleParams);
 
     bundles = container->listBundles();
     cout << "\t>>> bundle list size : " << bundles.size() << endl;
@@ -164,15 +164,15 @@ int main()
 
     cout << "\nPress enter to start java bundle " << endl;
     getchar();
-    container->startBundle("oic.bundle.hueJavaSample");
+    container->startBundle("oic.bundle.hueJavaSample2");
 
     cout << "Press enter to stop java Bundle " << endl;
     getchar();
-    container->stopBundle("oic.bundle.hueJavaSample");
+    container->stopBundle("oic.bundle.hueJavaSample2");
 
     cout << "Press enter to test remove java Bundle " << endl;
     getchar();
-    container->removeBundle("oic.bundle.hueJavaSample");
+    container->removeBundle("oic.bundle.hueJavaSample2");
 
     bundles = container->listBundles();
     cout << "\t>>> bundle list size : " << bundles.size() << endl;
