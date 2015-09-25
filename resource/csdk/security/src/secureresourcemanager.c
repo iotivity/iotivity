@@ -375,19 +375,39 @@ void SRMDeInitPolicyEngine()
  */
 bool SRMIsSecurityResourceURI(const char* uri)
 {
-    bool result = false;
     if (!uri)
     {
-        return result;
+        return false;
     }
 
-    if (strcmp(uri, OIC_RSRC_AMACL_URI) == 0 || strcmp(uri, OIC_RSRC_ACL_URI) == 0
-            || strcmp(uri, OIC_RSRC_PSTAT_URI) == 0
-            || strncmp(OIC_RSRC_DOXM_URI, uri, strlen(OIC_RSRC_DOXM_URI)) == 0
-            || strcmp(uri, OIC_RSRC_CRED_URI) == 0 || strcmp(uri, OIC_RSRC_SVC_URI) == 0
-            || strcmp(uri, OIC_RSRC_CRL_URI) == 0)
+    const char *rsrcs[] = {
+        OIC_RSRC_SVC_URI,
+        OIC_RSRC_AMACL_URI,
+        OIC_RSRC_CRL_URI,
+        OIC_RSRC_CRED_URI,
+        OIC_RSRC_ACL_URI,
+        OIC_RSRC_DOXM_URI,
+        OIC_RSRC_PSTAT_URI,
+    };
+
+    // Remove query from Uri for resource string comparison
+    size_t uriLen = strlen(uri);
+    char *query = strchr (uri, '?');
+    if (query)
     {
-        result = true;
+        uriLen = query - uri;
     }
-    return result;
+
+    for (size_t i = 0; i < sizeof(rsrcs)/sizeof(rsrcs[0]); i++)
+    {
+        size_t svrLen = strlen(rsrcs[i]);
+
+        if ((uriLen == svrLen) &&
+            (strncmp(uri, rsrcs[i], svrLen) == 0))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
