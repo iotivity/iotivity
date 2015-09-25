@@ -788,6 +788,24 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     {
         OC_LOG(INFO, TAG, "Observation registration requested");
 
+        ResourceObserver *obs = GetObserverUsingToken (request->requestToken,
+                                    request->tokenLength);
+
+        if (obs)
+        {
+            OC_LOG (INFO, TAG, "Observer with this token already present");
+            OC_LOG (INFO, TAG, "Possibly re-transmitted CON OBS request");
+            OC_LOG (INFO, TAG, "Not adding observer. Not responding to client");
+            OC_LOG (INFO, TAG, "The first request for this token is already ACKED.");
+
+            // server requests are usually free'd when the response is sent out
+            // for the request in ocserverrequest.c : HandleSingleResponse()
+            // Since we are making an early return and not responding, the server request
+            // needs to be deleted.
+            FindAndDeleteServerRequest (request);
+            return OC_STACK_OK;
+        }
+
         result = GenerateObserverId(&ehRequest.obsInfo.obsId);
         VERIFY_SUCCESS(result, OC_STACK_OK);
 
