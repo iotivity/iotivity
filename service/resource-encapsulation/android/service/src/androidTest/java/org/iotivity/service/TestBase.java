@@ -1,31 +1,33 @@
 package org.iotivity.service;
 
-import android.test.InstrumentationTestCase;
-
 import org.iotivity.service.client.RcsAddress;
 import org.iotivity.service.client.RcsDiscoveryManager;
 import org.iotivity.service.client.RcsDiscoveryManager.OnResourceDiscoveredListener;
 import org.iotivity.service.client.RcsRemoteResourceObject;
 import org.iotivity.service.server.RcsResourceObject;
 
+import android.test.InstrumentationTestCase;
+
 public abstract class TestBase extends InstrumentationTestCase {
-    protected static final String RESOURCEURI = "/a/TemperatureSensor";
-    protected static final String RESOURCETYPE = "Resource.Hosting";
+    protected static final String RESOURCEURI       = "/a/TemperatureSensor";
+    protected static final String RESOURCETYPE      = "oic.r.type";
     protected static final String RESOURCEINTERFACE = "oic.if.baseline";
 
-    protected static final String KEY = "key";
-    protected static final RcsValue VALUE = new RcsValue(100);
-    protected static final int RAW_VALUE = 100;
+    protected static final String   KEY       = "key";
+    protected static final RcsValue VALUE     = new RcsValue(100);
+    protected static final int      RAW_VALUE = 100;
 
     private final Object mCond = new Object();
 
-    protected RcsResourceObject mServer;
+    protected RcsResourceObject       mServer;
     protected RcsRemoteResourceObject mClient;
 
     private OnResourceDiscoveredListener mOnResourceDiscoveredListener = new OnResourceDiscoveredListener() {
         @Override
-        public void onResourceDiscovered(RcsRemoteResourceObject RcsRemoteResourceObject) {
-            if (mClient != null) return;
+        public void onResourceDiscovered(
+                RcsRemoteResourceObject RcsRemoteResourceObject) {
+            if (mClient != null)
+                return;
 
             mClient = RcsRemoteResourceObject;
             synchronized (mCond) {
@@ -50,9 +52,10 @@ public abstract class TestBase extends InstrumentationTestCase {
     private void WaitUntilDiscovered() throws RcsException {
         while (mClient == null) {
             try {
-                RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager.getInstance().
-                        discoverResourceByType(RcsAddress.multicast(),
-                                "/oic/res", RESOURCETYPE, mOnResourceDiscoveredListener);
+                RcsDiscoveryManager.DiscoveryTask discoveryTask = RcsDiscoveryManager
+                        .getInstance().discoverResourceByType(
+                                RcsAddress.multicast(), "/oic/res",
+                                RESOURCETYPE, mOnResourceDiscoveredListener);
 
                 synchronized (mCond) {
                     mCond.wait(100);
@@ -65,7 +68,8 @@ public abstract class TestBase extends InstrumentationTestCase {
         }
     }
 
-    protected void setServerAttrbutes(RcsResourceAttributes attrs) throws RcsException {
+    protected void setServerAttrbutes(RcsResourceAttributes attrs)
+            throws RcsException {
         RcsResourceObject.AttributesLock lock = mServer.getAttributesLock();
         lock.lock().putAll(attrs);
         lock.apply();

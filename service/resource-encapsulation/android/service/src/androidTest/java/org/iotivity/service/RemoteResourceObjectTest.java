@@ -1,7 +1,5 @@
 package org.iotivity.service;
 
-import org.mockito.Mockito;
-
 import static org.iotivity.service.client.RcsRemoteResourceObject.CacheState;
 import static org.iotivity.service.client.RcsRemoteResourceObject.OnCacheUpdatedListener;
 import static org.iotivity.service.client.RcsRemoteResourceObject.OnRemoteAttributesReceivedListener;
@@ -12,6 +10,8 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+
+import org.mockito.Mockito;
 
 public class RemoteResourceObjectTest extends TestBase {
 
@@ -24,20 +24,23 @@ public class RemoteResourceObjectTest extends TestBase {
         return attrs;
     }
 
-    public void testGetRemoteAttributesGetsAttributesOfServer() throws RcsException {
-        OnRemoteAttributesReceivedListener listener =
-                Mockito.mock(OnRemoteAttributesReceivedListener.class);
+    public void testGetRemoteAttributesGetsAttributesOfServer()
+            throws RcsException {
+        OnRemoteAttributesReceivedListener listener = Mockito
+                .mock(OnRemoteAttributesReceivedListener.class);
 
         setServerAttrbutes(createAttrs());
 
         mClient.getRemoteAttributes(listener);
 
-        verify(listener, timeout(1000)).onAttributesReceived(eq(createAttrs()), anyInt());
+        verify(listener, timeout(1000)).onAttributesReceived(eq(createAttrs()),
+                anyInt());
     }
 
-    public void testGetRemoteAttributesSetsAttributesOfServer() throws RcsException {
-        OnRemoteAttributesReceivedListener listener =
-                Mockito.mock(OnRemoteAttributesReceivedListener.class);
+    public void testGetRemoteAttributesSetsAttributesOfServer()
+            throws RcsException {
+        OnRemoteAttributesReceivedListener listener = Mockito
+                .mock(OnRemoteAttributesReceivedListener.class);
 
         mServer.setAttribute("key", new RcsValue(0));
 
@@ -46,8 +49,8 @@ public class RemoteResourceObjectTest extends TestBase {
 
         mClient.setRemoteAttributes(attrs, listener);
 
-        verify(listener, timeout(1000)).onAttributesReceived(any(RcsResourceAttributes.class),
-                anyInt());
+        verify(listener, timeout(1000)).onAttributesReceived(
+                any(RcsResourceAttributes.class), anyInt());
 
         assertEquals(3, mServer.getAttributeValue("key").asInt());
     }
@@ -56,15 +59,19 @@ public class RemoteResourceObjectTest extends TestBase {
         assertFalse(mClient.isMonitoring());
     }
 
-    public void testIsMonitoringReturnsTrueAfterStartMonitoring() throws RcsException {
-        OnStateChangedListener listener = Mockito.mock(OnStateChangedListener.class);
+    public void testIsMonitoringReturnsTrueAfterStartMonitoring()
+            throws RcsException {
+        OnStateChangedListener listener = Mockito
+                .mock(OnStateChangedListener.class);
         mClient.startMonitoring(listener);
 
         assertTrue(mClient.isMonitoring());
     }
 
-    public void testStartMonitoringThrowsIfTryingToStartAgain() throws RcsException {
-        OnStateChangedListener listener = Mockito.mock(OnStateChangedListener.class);
+    public void testStartMonitoringThrowsIfTryingToStartAgain()
+            throws RcsException {
+        OnStateChangedListener listener = Mockito
+                .mock(OnStateChangedListener.class);
         mClient.startMonitoring(listener);
 
         try {
@@ -82,13 +89,15 @@ public class RemoteResourceObjectTest extends TestBase {
         assertFalse(mClient.isCaching());
     }
 
-    public void testIsCachingReturnsTrueAfterStartCaching() throws RcsException {
+    public void testIsCachingReturnsTrueAfterStartCaching()
+            throws RcsException {
         mClient.startCaching();
 
         assertTrue(mClient.isCaching());
     }
 
-    public void testStartCachingThrowsIfTryingToStartAgain() throws RcsException {
+    public void testStartCachingThrowsIfTryingToStartAgain()
+            throws RcsException {
         mClient.startCaching();
 
         try {
@@ -109,24 +118,30 @@ public class RemoteResourceObjectTest extends TestBase {
     }
 
     public void testCacheStateIsReadyAfterCacheUpdated() throws RcsException {
-        OnCacheUpdatedListener listener = Mockito.mock(OnCacheUpdatedListener.class);
+        OnCacheUpdatedListener listener = Mockito
+                .mock(OnCacheUpdatedListener.class);
         mClient.startCaching(listener);
 
-        verify(listener, timeout(1000)).onCacheUpdated(any(RcsResourceAttributes.class));
+        verify(listener, timeout(1000))
+                .onCacheUpdated(any(RcsResourceAttributes.class));
 
         assertEquals(CacheState.READY, mClient.getCacheState());
     }
 
-    public void testIsCachedAvailableReturnsTrueWhenCacheIsReady() throws RcsException {
-        OnCacheUpdatedListener listener = Mockito.mock(OnCacheUpdatedListener.class);
+    public void testIsCachedAvailableReturnsTrueWhenCacheIsReady()
+            throws RcsException {
+        OnCacheUpdatedListener listener = Mockito
+                .mock(OnCacheUpdatedListener.class);
         mClient.startCaching(listener);
 
-        verify(listener, timeout(1000)).onCacheUpdated(any(RcsResourceAttributes.class));
+        verify(listener, timeout(1000))
+                .onCacheUpdated(any(RcsResourceAttributes.class));
 
         assertTrue(mClient.isCachedAvailable());
     }
 
-    public void testGetCachedAttributesThrowsIfCachingIsNotStarted() throws RcsException {
+    public void testGetCachedAttributesThrowsIfCachingIsNotStarted()
+            throws RcsException {
         try {
             mClient.getCachedAttributes();
             fail("No exception thrown");
@@ -134,18 +149,22 @@ public class RemoteResourceObjectTest extends TestBase {
         }
     }
 
-    public void testCachedAttributesHasSameAttributesWithServer() throws RcsException {
+    public void testCachedAttributesHasSameAttributesWithServer()
+            throws RcsException {
         setServerAttrbutes(createAttrs());
 
-        OnCacheUpdatedListener listener = Mockito.mock(OnCacheUpdatedListener.class);
+        OnCacheUpdatedListener listener = Mockito
+                .mock(OnCacheUpdatedListener.class);
         mClient.startCaching(listener);
 
-        verify(listener, timeout(1000)).onCacheUpdated(any(RcsResourceAttributes.class));
+        verify(listener, timeout(1000))
+                .onCacheUpdated(any(RcsResourceAttributes.class));
 
         assertEquals(createAttrs(), mClient.getCachedAttributes());
     }
 
-    public void testGetCachedAttributeThrowsIfCachingIsNotStarted() throws RcsException {
+    public void testGetCachedAttributeThrowsIfCachingIsNotStarted()
+            throws RcsException {
         try {
             mClient.getCachedAttribute("some_key");
             fail("No exception thrown");
@@ -153,11 +172,14 @@ public class RemoteResourceObjectTest extends TestBase {
         }
     }
 
-    public void testGetCachedAttributeReturnsNullIfKeyIsInvalid() throws RcsException {
-        OnCacheUpdatedListener listener = Mockito.mock(OnCacheUpdatedListener.class);
+    public void testGetCachedAttributeReturnsNullIfKeyIsInvalid()
+            throws RcsException {
+        OnCacheUpdatedListener listener = Mockito
+                .mock(OnCacheUpdatedListener.class);
         mClient.startCaching(listener);
 
-        verify(listener, timeout(1000)).onCacheUpdated(any(RcsResourceAttributes.class));
+        verify(listener, timeout(1000))
+                .onCacheUpdated(any(RcsResourceAttributes.class));
 
         assertNull(mClient.getCachedAttribute("some_key"));
     }
