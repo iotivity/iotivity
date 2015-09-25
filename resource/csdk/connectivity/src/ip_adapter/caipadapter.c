@@ -273,6 +273,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     CAConnectivityHandler_t ipHandler;
     ipHandler.startAdapter = CAStartIP;
     ipHandler.startListenServer = CAStartIPListeningServer;
+    ipHandler.stopListenServer = CAStopIPListeningServer;
     ipHandler.startDiscoveryServer = CAStartIPDiscoveryServer;
     ipHandler.sendData = CASendIPUnicastData;
     ipHandler.sendDataToAll = CASendIPMulticastData;
@@ -331,7 +332,25 @@ CAResult_t CAStartIP()
 CAResult_t CAStartIPListeningServer()
 {
     OIC_LOG(DEBUG, TAG, "IN");
+    CAResult_t ret = CAIPStartListenServer();
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to start listening server![%d]", ret);
+        return ret;
+    }
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
 
+CAResult_t CAStopIPListeningServer()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    CAResult_t ret = CAIPStopListenServer();
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to stop listening server![%d]", ret);
+        return ret;
+    }
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }

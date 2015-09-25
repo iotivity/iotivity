@@ -1447,6 +1447,16 @@ static CAResult_t CAStartLE();
 static CAResult_t CAStartLEListeningServer();
 
 /**
+ * Stops listening server from receiving multicast search requests.
+ *
+ * Transport Specific Behavior:
+ *   LE  Starts GATT Server with prefixed UUID and Characteristics
+ *   per OIC Specification.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ */
+static CAResult_t CAStopLEListeningServer();
+
+/**
  * Sarting discovery of servers for receiving multicast
  * advertisements.
  *
@@ -1661,6 +1671,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
             .startAdapter = CAStartLE,
             .stopAdapter = CAStopLE,
             .startListenServer = CAStartLEListeningServer,
+            .stopListenServer = CAStopLEListeningServer,
             .startDiscoveryServer = CAStartLEDiscoveryServer,
             .sendData = CASendLEUnicastData,
             .sendDataToAll = CASendLEMulticastData,
@@ -1776,6 +1787,12 @@ static CAResult_t CAStartLEListeningServer()
     OIC_LOG(ERROR, CALEADAPTER_TAG, "LE server not supported in Routing Gateway");
     return CA_NOT_SUPPORTED;
 #endif
+}
+
+static CAResult_t CAStopLEListeningServer()
+{
+    OIC_LOG(ERROR, CALEADAPTER_TAG, "Listen server stop not supported.");
+    return CA_NOT_SUPPORTED;
 }
 
 static CAResult_t CAStartLEDiscoveryServer()

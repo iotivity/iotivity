@@ -1986,6 +1986,33 @@ OCStackResult OCStop()
     return OC_STACK_OK;
 }
 
+OCStackResult OCStartMulticastServer()
+{
+    if(stackState != OC_STACK_INITIALIZED)
+    {
+        OC_LOG(ERROR, TAG, "OCStack is not initalized. Cannot start multicast server.");
+        return OC_STACK_ERROR;
+    }
+    CAResult_t ret = CAStartListeningServer();
+    if (CA_STATUS_OK != ret)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed starting listening server: %d", ret);
+        return OC_STACK_ERROR;
+    }
+    return OC_STACK_OK;
+}
+
+OCStackResult OCStopMulticastServer()
+{
+    CAResult_t ret = CAStopListeningServer();
+    if (CA_STATUS_OK != ret)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed stopping listening server: %d", ret);
+        return OC_STACK_ERROR;
+    }
+    return OC_STACK_OK;
+}
+
 CAMessageType_t qualityOfServiceToMessageType(OCQualityOfService qos)
 {
     switch (qos)

@@ -111,6 +111,13 @@ void CATerminate();
 CAResult_t CAStartListeningServer();
 
 /**
+ * Stops the server from receiving the multicast traffic. This is used by sleeping
+ * device to not receives the multicast traffic.
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED
+ */
+CAResult_t CAStopListeningServer();
+
+/**
  * Starts discovery servers.
  * This API is used by resource required clients for listening multicast requests.
  * Based on the adapters configurations, different kinds of servers are started.

@@ -97,6 +97,7 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CATransportAdapt
 
     if(handler.startAdapter == NULL ||
         handler.startListenServer == NULL ||
+        handler.stopListenServer == NULL ||
         handler.startDiscoveryServer == NULL ||
         handler.sendData == NULL ||
         handler.sendDataToAll == NULL ||
@@ -496,6 +497,44 @@ CAResult_t CAStartListeningServerAdapters()
         if (g_adapterHandler[index].startListenServer != NULL)
         {
             g_adapterHandler[index].startListenServer();
+        }
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAStopListeningServerAdapters()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    u_arraylist_t *list = CAGetSelectedNetworkList();
+    if (!list)
+    {
+        OIC_LOG(ERROR, TAG, "No selected network");
+        return CA_STATUS_FAILED;
+    }
+
+    for (uint32_t i = 0; i < u_arraylist_length(list); i++)
+    {
+        void* ptrType = u_arraylist_get(list, i);
+        if(ptrType == NULL)
+        {
+            continue;
+        }
+
+        CATransportAdapter_t connType = *(CATransportAdapter_t *)ptrType;
+
+        int index = CAGetAdapterIndex(connType);
+        if (index == -1)
+        {
+            OIC_LOG(ERROR, TAG, "unknown connectivity type!");
+            continue;
+        }
+
+        if (g_adapterHandler[index].stopListenServer != NULL)
+        {
+            g_adapterHandler[index].stopListenServer();
         }
     }
 

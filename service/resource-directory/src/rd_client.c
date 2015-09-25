@@ -69,7 +69,14 @@ static OCStackApplicationResult handlePublishCB(__attribute__((unused))void *ctx
     OCStackApplicationResult ret = OC_STACK_DELETE_TRANSACTION;
     OC_LOG(DEBUG, TAG, "Successfully published resources.");
 
-    // TOOO: Stop multicast traffic on the client.
+    if (OC_STACK_OK == OCStopMulticastServer())
+    {
+        OC_LOG_V(DEBUG, TAG, "Stopped receiving the multicast traffic.");
+    }
+    else
+    {
+        OC_LOG_V(DEBUG, TAG, "Failed stopping the multicast traffic.");
+    }
 
     return ret;
 }
