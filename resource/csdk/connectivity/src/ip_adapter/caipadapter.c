@@ -439,6 +439,8 @@ CAResult_t CAStopIP()
 
     CAIPStopNetworkMonitor();
     CAIPStopServer();
+    //Re-initializing the Globals to start them again
+    CAInitializeIPGlobals();
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
