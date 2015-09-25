@@ -202,6 +202,12 @@ static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
         return true;
     }
 
+    //periods & recurrences rules are paired.
+    if(NULL == acl->recurrences)
+    {
+        return false;
+    }
+
     for(size_t i = 0; i < acl->prdRecrLen; i++)
     {
         if(IOTVTICAL_VALID_ACCESS ==  IsRequestWithinValidTime(acl->periods[i],

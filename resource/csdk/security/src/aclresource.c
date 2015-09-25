@@ -65,14 +65,25 @@ static void FreeACE(OicSecAcl_t *ace)
     }
     OICFree(ace->resources);
 
-    //Clean Period & Recurrence
-    for(i = 0; i < ace->prdRecrLen; i++)
+    //Clean Period
+    if(ace->periods)
     {
-        OICFree(ace->periods[i]);
-        OICFree(ace->recurrences[i]);
+        for(i = 0; i < ace->prdRecrLen; i++)
+        {
+            OICFree(ace->periods[i]);
+        }
+        OICFree(ace->periods);
     }
-    OICFree(ace->periods);
-    OICFree(ace->recurrences);
+
+    //Clean Recurrence
+    if(ace->recurrences)
+    {
+        for(i = 0; i < ace->prdRecrLen; i++)
+        {
+            OICFree(ace->recurrences[i]);
+        }
+        OICFree(ace->recurrences);
+    }
 
     // Clean Owners
     OICFree(ace->owners);
@@ -331,6 +342,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
             {
                 VERIFY_SUCCESS(TAG, cJSON_Array == jsonRecurObj->type,
                                ERROR);
+
                 if(acl->prdRecrLen > 0)
                 {
                     acl->recurrences = (char**)OICCalloc(acl->prdRecrLen,
@@ -341,11 +353,12 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
                     for(size_t i = 0; i < acl->prdRecrLen; i++)
                     {
                         jsonRecur = cJSON_GetArrayItem(jsonRecurObj, i);
+                        VERIFY_NON_NULL(TAG, jsonRecur, ERROR);
                         jsonObjLen = strlen(jsonRecur->valuestring) + 1;
                         acl->recurrences[i] = (char*)OICMalloc(jsonObjLen);
                         VERIFY_NON_NULL(TAG, acl->recurrences[i], ERROR);
                         OICStrcpy(acl->recurrences[i], jsonObjLen,
-                                  jsonRecur->valuestring);
+                              jsonRecur->valuestring);
                     }
                 }
             }
