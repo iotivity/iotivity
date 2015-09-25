@@ -46,7 +46,60 @@ if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exi
 def ensure_libs(target, source, env):
     return target, [source, env.get('BUILD_DIR') + 'liboc.so', env.get('BUILD_DIR') + 'liboc_logger.so']
 
+# build android_api
 jdk_env = Environment(ENV=os.environ)
-jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + os.getcwd()+'/build.gradle -PSECURED=%s -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace' %(ANDROID_SECURED, ANDROID_TARGET_ARCH, ANDROID_RELEASE), emitter = ensure_libs)
+jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + os.getcwd()+'/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED), emitter = ensure_libs)
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
-jdk_env.Gradle(target="base/objs", source="base/src/main/java/org/iotivity/base/OcResource.java")
+cmdBuildApi=jdk_env.Gradle(target="base/objs", source="base/src/main/java/org/iotivity/base/OcResource.java")
+
+# build examples only once - this is to reduce build time on the Jenkins server
+if not os.path.exists(os.getcwd()+'../examples/devicediscoveryserver/build/outputs/apk'):
+    jdk_env1 = Environment(ENV=os.environ)
+    jdk_env1['BUILD_DIR'] = env.get('BUILD_DIR')
+
+    jdk_env1['BUILDERS']['Gradle1'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/devicediscoveryclient/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED),
+    emitter = ensure_libs)
+    cmd1=jdk_env1.Gradle1(target="../examples/devicediscoveryclient/apk", source="../examples/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java")
+
+    jdk_env1['BUILDERS']['Gradle1'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/devicediscoveryserver/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED),
+    emitter = ensure_libs)
+    cmd2=jdk_env1.Gradle1(target="../examples/devicediscoveryserver/apk", source="../examples/devicediscoveryserver/src/main/java/org/iotivity/base/examples/DeviceDiscoveryServer.java")
+
+    jdk_env1['BUILDERS']['Gradle1'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/presenceclient/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED),
+    emitter = ensure_libs)
+    cmd3=jdk_env1.Gradle1(target="../examples/presenceclient/apk", source="../examples/presenceclient/src/main/java/org/iotivity/base/examples/PresenceClient.java")
+
+    jdk_env1['BUILDERS']['Gradle1'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/presenceserver/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED),
+    emitter = ensure_libs)
+    cmd4=jdk_env1.Gradle1(target="../examples/presenceserver/apk", source="../examples/presenceserver/src/main/java/org/iotivity/base/examples/PresenceServer.java")
+
+    jdk_env1['BUILDERS']['Gradle1'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/provisioningclient/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED),
+    emitter = ensure_libs)
+    cmd5=jdk_env1.Gradle1(target="../examples/provisioningclient/apk", source="../examples/provisioningclient/src/main/java/org/iotivity/base/examples/provisioningclient/ProvisioningClient.java")
+
+    jdk_env1['BUILDERS']['Gradle1'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/groupclient/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED),
+    emitter = ensure_libs)
+    cmd6=jdk_env1.Gradle1(target="../examples/groupclient/apk", source="../examples/groupclient/src/main/java/org/iotivity/base/examples/GroupClient.java")
+
+    jdk_env1['BUILDERS']['Gradle1'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/groupserver/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED),
+    emitter = ensure_libs)
+    cmd7=jdk_env1.Gradle1(target="../examples/groupserver/apk", source="../examples/groupserver/src/main/java/org/iotivity/base/examples/GroupServer.java")
+
+    jdk_env1['BUILDERS']['Gradle1'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/simpleclient/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED),
+    emitter = ensure_libs)
+    cmd8=jdk_env1.Gradle1(target="../examples/simpleclient/apk", source="../examples/simpleclient/src/main/java/org/iotivity/base/examples/SimpleClient.java")
+
+    jdk_env1['BUILDERS']['Gradle1'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/simpleserver/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED),
+    emitter = ensure_libs)
+    cmd9=jdk_env1.Gradle1(target="../examples/simpleserver/apk", source="../examples/simpleserver/src/main/java/org/iotivity/base/examples/SimpleServer.java")
+
+    # android examples require android api to be built before being invoked
+    Depends(cmd1, cmdBuildApi)
+    Depends(cmd2, cmdBuildApi)
+    Depends(cmd3, cmdBuildApi)
+    Depends(cmd4, cmdBuildApi)
+    Depends(cmd5, cmdBuildApi)
+    Depends(cmd6, cmdBuildApi)
+    Depends(cmd7, cmdBuildApi)
+    Depends(cmd8, cmdBuildApi)
+    Depends(cmd9, cmdBuildApi)
