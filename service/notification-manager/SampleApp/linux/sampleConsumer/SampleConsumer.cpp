@@ -329,7 +329,6 @@ void PRINT()
     std::cout << "*  method Type : 1 - Observe               *" << std::endl;
     std::cout << "*  method Type : 2 - Get                   *" << std::endl;
     std::cout << "*  method Type : 3 - Put                   *" << std::endl;
-    std::cout << "*  method Type : 4 - Delete                *" << std::endl;
     std::cout << "********************************************" << std::endl;
     std::cout << std::endl;
 }
@@ -380,9 +379,6 @@ int main()
                     break;
                 case PUT:
                     startPut(g_curResource);
-                    break;
-                case DELETE:
-                    startDelete(g_curResource);
                     break;
                 default:
                     std::cout << "Invalid input, please try again" << std::endl;
