@@ -25,15 +25,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import org.iotivity.base.EntityHandlerResult;
 import org.iotivity.base.ObserveType;
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
-import org.iotivity.base.OcResourceRequest;
-import org.iotivity.base.OcStackConfig;
 import org.iotivity.base.ResourceProperty;
 import org.iotivity.base.OcResource.OnObserveListener;
 import org.iotivity.base.OcResourceHandle;

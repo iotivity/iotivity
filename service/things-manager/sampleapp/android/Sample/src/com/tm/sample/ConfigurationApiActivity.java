@@ -75,10 +75,13 @@ public class ConfigurationApiActivity extends Activity {
 
     private final String                     CONFIGURATION_COLLECTION_RESOURCE_URI  = "/core/configuration/resourceset";
     private final String                     CONFIGURATION_COLLECTION_RESOURCE_TYPE = "core.configuration.resourceset";
+    private final String                     CONFIGURATION_RESOURCE_TYPE            = "oic.wk.con";
     private final String                     MAINTENANCE_COLLECTION_RESOURCE_URI    = "/core/maintenance/resourceset";
     private final String                     MAINTENANCE_COLLECTION_RESOURCE_TYPE   = "core.maintenance.resourceset";
+    private final String                     MAINTENANCE_RESOURCE_TYPE              = "oic.wk.mnt";
     private final String                     FACTORYSET_COLLECTION_RESOURCE_URI     = "/core/factoryset/resourceset";
     private final String                     FACTORYSET_COLLECTION_RESOURCE_TYPE    = "core.factoryset.resourceset";
+    private final String                     FACTORYSET_RESOURCE_TYPE               = "factoryset";
 
     private final String                     CONFIGURATION_RESOURCE_URI             = "/oic/con";
     private final String                     MAINTENANCE_RESOURCE_URI               = "/oic/mnt";
@@ -121,7 +124,7 @@ public class ConfigurationApiActivity extends Activity {
         // set the listeners
         setResourceListener();
         setConfigurationListener();
-        setDiagnosticsListener();
+        setMaintenanceListener();
 
         // Create API menu list
         configurationApisList = new ArrayList<String>();
@@ -150,7 +153,7 @@ public class ConfigurationApiActivity extends Activity {
                 // Find All Groups
                 if (position == 0) {
                     Vector<String> resourceTypes = new Vector<String>();
-                    resourceTypes.add("core.configuration.resourceset");
+                    resourceTypes.add(CONFIGURATION_COLLECTION_RESOURCE_TYPE);
                     findCandidateResources(resourceTypes);
 
                     logMessage = "";
@@ -158,13 +161,13 @@ public class ConfigurationApiActivity extends Activity {
                     messageCount++;
 
                     resourceTypes.clear();
-                    resourceTypes.add("core.diagnostics.resourceset");
+                    resourceTypes.add(MAINTENANCE_COLLECTION_RESOURCE_TYPE);
                     findCandidateResources(resourceTypes);
 
                     messageCount++;
 
                     resourceTypes.clear();
-                    resourceTypes.add("core.factoryset.resourceset");
+                    resourceTypes.add(FACTORYSET_COLLECTION_RESOURCE_TYPE);
                     findCandidateResources(resourceTypes);
 
                     messageCount++;
@@ -174,7 +177,7 @@ public class ConfigurationApiActivity extends Activity {
                         displayToastMessage("Configuration collection resource does not exist!");
                     } else {
                         Vector<String> resourceTypes = new Vector<String>();
-                        resourceTypes.add("oic.wk.con");
+                        resourceTypes.add(CONFIGURATION_RESOURCE_TYPE);
                         findCandidateResources(resourceTypes);
 
                         logMessage = "";
@@ -182,13 +185,13 @@ public class ConfigurationApiActivity extends Activity {
                         messageCount++;
 
                         resourceTypes.clear();
-                        resourceTypes.add("oic.wk.mnt");
+                        resourceTypes.add(MAINTENANCE_RESOURCE_TYPE);
                         findCandidateResources(resourceTypes);
 
                         messageCount++;
 
                         resourceTypes.clear();
-                        resourceTypes.add("factoryset");
+                        resourceTypes.add(FACTORYSET_RESOURCE_TYPE);
                         findCandidateResources(resourceTypes);
 
                         messageCount++;
@@ -431,7 +434,7 @@ public class ConfigurationApiActivity extends Activity {
                 });
     }
 
-    private void setDiagnosticsListener() {
+    private void setMaintenanceListener() {
         thingsMaintenance
                 .setThingsMaintenanceListener(new IThingsMaintenanceListener() {
 
@@ -554,16 +557,16 @@ public class ConfigurationApiActivity extends Activity {
      * to default.
      */
     private void factoryReset() {
-        ResourceInformation diagnosticsCollection = collectionList
+        ResourceInformation MaintenanceCollection = collectionList
                 .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
-        if (null == diagnosticsCollection
-                || null == diagnosticsCollection.resource) {
-            displayToastMessage("Diagnostic collection does not exist!");
+        if (null == MaintenanceCollection
+                || null == MaintenanceCollection.resource) {
+            displayToastMessage("Maintenance collection does not exist!");
             return;
         }
 
         if (false == maintenanceResourceFlag) {
-            displayToastMessage("Diagnostic resource does not exist!");
+            displayToastMessage("Maintenance resource does not exist!");
             return;
         }
 
@@ -571,7 +574,7 @@ public class ConfigurationApiActivity extends Activity {
 
         try {
             result = thingsMaintenance
-                    .factoryReset(diagnosticsCollection.resource);
+                    .factoryReset(MaintenanceCollection.resource);
         } catch (OcException e) {
             e.printStackTrace();
         }
@@ -593,21 +596,21 @@ public class ConfigurationApiActivity extends Activity {
      * This method send request to reboot server.
      */
     private void reboot() {
-        ResourceInformation diagnosticsCollection = collectionList
+        ResourceInformation MaintenanceCollection = collectionList
                 .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
-        if (null == diagnosticsCollection
-                || null == diagnosticsCollection.resource) {
-            displayToastMessage("Diagnostic collection does not exist!");
+        if (null == MaintenanceCollection
+                || null == MaintenanceCollection.resource) {
+            displayToastMessage("Maintenance collection does not exist!");
             return;
         }
         if (false == maintenanceResourceFlag) {
-            displayToastMessage("Diagnostic resource does not exist!");
+            displayToastMessage("Maintenance resource does not exist!");
             return;
         }
 
         OCStackResult result = OCStackResult.OC_STACK_ERROR;
         try {
-            result = thingsMaintenance.reboot(diagnosticsCollection.resource);
+            result = thingsMaintenance.reboot(MaintenanceCollection.resource);
         } catch (OcException e) {
             e.printStackTrace();
         }
@@ -695,10 +698,10 @@ public class ConfigurationApiActivity extends Activity {
             resourceList.put(uri + host, resourceInfo);
             configurationResourceFlag = true;
         } else if (uri.equalsIgnoreCase("/oic/mnt")) {
-            ResourceInformation diagnosticResource = collectionList
+            ResourceInformation maintenanceResource = collectionList
                     .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
-            if (null == diagnosticResource
-                    || null == diagnosticResource.resourceHandle) {
+            if (null == maintenanceResource
+                    || null == maintenanceResource.resourceHandle) {
                 Log.e(LOG_TAG, "Invalid Configuration collection!");
                 return;
             }
@@ -755,23 +758,23 @@ public class ConfigurationApiActivity extends Activity {
         OcResourceHandle resourceHandle = null;
 
         try {
-            resourceHandle = OcPlatform.registerResource(
-                    uri,
-                    typename,
-                    OcPlatform.BATCH_INTERFACE, null, EnumSet.of(
-                            ResourceProperty.DISCOVERABLE));
+            resourceHandle = OcPlatform.registerResource(uri, typename,
+                    OcPlatform.BATCH_INTERFACE, null,
+                    EnumSet.of(ResourceProperty.DISCOVERABLE));
         } catch (OcException e) {
             Log.e(LOG_TAG, "go exception");
             Log.e(LOG_TAG, "RegisterResource error. " + e.getMessage());
         }
         try {
-            OcPlatform.bindInterfaceToResource(resourceHandle, OcPlatform.GROUP_INTERFACE);
+            OcPlatform.bindInterfaceToResource(resourceHandle,
+                    OcPlatform.GROUP_INTERFACE);
         } catch (OcException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
         try {
-            OcPlatform.bindInterfaceToResource(resourceHandle, OcPlatform.DEFAULT_INTERFACE);
+            OcPlatform.bindInterfaceToResource(resourceHandle,
+                    OcPlatform.DEFAULT_INTERFACE);
         } catch (OcException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -808,10 +811,10 @@ public class ConfigurationApiActivity extends Activity {
                         }
                     } else if (resource.resource.getUri().equalsIgnoreCase(
                             MAINTENANCE_RESOURCE_URI)) {
-                        ResourceInformation diagnosticResource = collectionList
+                        ResourceInformation maintenanceResource = collectionList
                                 .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
-                        if (null != diagnosticResource
-                                && null != diagnosticResource.resourceHandle) {
+                        if (null != maintenanceResource
+                                && null != maintenanceResource.resourceHandle) {
                             OcPlatform
                                     .unregisterResource(resource.resourceHandle);
                             Log.i(LOG_TAG, "unregistered resource"

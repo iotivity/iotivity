@@ -236,7 +236,7 @@ public class GroupManager {
             int waitTime) {
         OCStackResult result;
         if (null == s_resourceListener) {
-            result = OCStackResult.OC_STACK_ERROR;
+            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
         } else {
             int ordinal = nativeFindCandidateResource(resourceTypes, waitTime);
             result = OCStackResult.conversion(ordinal);
@@ -266,7 +266,7 @@ public class GroupManager {
 
         OCStackResult result;
         if (null == s_presenceListener) {
-            result = OCStackResult.OC_STACK_ERROR;
+            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
         } else {
 
             int ordinal = nativeSubscribeCollectionPresence(resource);

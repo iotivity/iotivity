@@ -179,7 +179,7 @@ public class ThingsConfiguration {
             Map<String, String> configurations) throws OcException {
         OCStackResult result;
         if (null == configurationListener) {
-            result = OCStackResult.OC_STACK_ERROR;
+            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
         } else {
             int ordinal = nativeUpdateConfigurations(resource, configurations);
             result = OCStackResult.conversion(ordinal);
@@ -208,7 +208,7 @@ public class ThingsConfiguration {
             Vector<String> configurations) throws OcException {
         OCStackResult result;
         if (null == configurationListener) {
-            result = OCStackResult.OC_STACK_ERROR;
+            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
         } else {
             int ordinal = nativeGetConfigurations(resource, configurations);
             result = OCStackResult.conversion(ordinal);
