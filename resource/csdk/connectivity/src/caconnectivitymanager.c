@@ -47,7 +47,7 @@ static bool g_isInitialized = false;
 #ifdef __WITH_DTLS__
 // CAAdapterNetDTLS will register the callback.
 // Taking callback all the way through adapters not the right approach, hence calling here.
-extern void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
+extern void CADTLSSetCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback);
 #endif
 
 #ifdef __WITH_X509__
@@ -126,7 +126,7 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 }
 
 #ifdef __WITH_DTLS__
-CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSCredentialsHandler)
+CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentialsHandler)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSCredentialsHandler");
 

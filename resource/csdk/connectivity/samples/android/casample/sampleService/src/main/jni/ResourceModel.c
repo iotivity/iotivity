@@ -17,15 +17,11 @@
 #define  LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define  LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
-/**
- * @def RS_IDENTITY
- * @brief
- */
-#define IDENTITY     ("1111111111111111")
-/* @def RS_CLIENT_PSK
- * @brief
- */
-#define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
+// Iotivity Device Identity.
+const unsigned char IDENTITY[] = ("1111111111111111");
+
+// PSK between this device and peer device.
+const unsigned char RS_CLIENT_PSK[] = ("AAAAAAAAAAAAAAAA");
 
 #define PORT_LENGTH 5
 #define SECURE_DEFAULT_PORT 5684
@@ -104,80 +100,61 @@ Java_org_iotivity_ca_service_RMInterface_setNativeResponseListener(JNIEnv *env, 
 }
 
 #ifdef __WITH_DTLS__
-static CADtlsPskCredsBlob_t *pskCredsBlob = NULL;
-
-void clearDtlsCredentialInfo()
-{
-    LOGI("clearDtlsCredentialInfo IN");
-    if (pskCredsBlob)
-    {
-        // Initialize sensitive data to zeroes before freeing.
-        if (NULL != pskCredsBlob->creds)
-        {
-            memset(pskCredsBlob->creds, 0, sizeof(OCDtlsPskCreds)*(pskCredsBlob->num));
-            free(pskCredsBlob->creds);
-        }
-
-        memset(pskCredsBlob, 0, sizeof(CADtlsPskCredsBlob_t));
-        free(pskCredsBlob);
-        pskCredsBlob = NULL;
-    }
-    LOGI("clearDtlsCredentialInfo OUT");
-}
-
 // Internal API. Invoked by OC stack to retrieve credentials from this module
-void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
+int32_t CAGetDtlsPskCredentials( CADtlsPskCredType_t type,
+              const unsigned char *desc, size_t desc_len,
+              unsigned char *result, size_t result_length)
 {
     LOGI("CAGetDtlsPskCredentials IN");
-    *credInfo = (CADtlsPskCredsBlob_t *) malloc(sizeof(CADtlsPskCredsBlob_t));
-    if (NULL == *credInfo)
+
+    int32_t ret = -1;
+
+    if (NULL == result)
     {
-        LOGE("Failed to allocate credential blob.");
-        return;
+        return ret;
     }
 
-    int16_t credLen = sizeof(OCDtlsPskCreds) * (pskCredsBlob->num);
-    (*credInfo)->creds = (OCDtlsPskCreds *) malloc(credLen);
-    if (NULL == (*credInfo)->creds)
+    switch (type)
     {
-        LOGE("Failed to allocate crentials.");
-        free(*credInfo);
-        *credInfo = NULL;
-        return;
+        case CA_DTLS_PSK_HINT:
+        case CA_DTLS_PSK_IDENTITY:
+
+            if (result_length < sizeof(IDENTITY))
+            {
+                LOGE("ERROR : Wrong value for result for storing IDENTITY");
+                return ret;
+            }
+
+            memcpy(result, IDENTITY, sizeof(IDENTITY));
+            ret = sizeof(IDENTITY);
+            break;
+
+        case CA_DTLS_PSK_KEY:
+
+            if ((desc_len == sizeof(IDENTITY)) &&
+                memcmp(desc, IDENTITY, sizeof(IDENTITY)) == 0)
+            {
+                if (result_length < sizeof(RS_CLIENT_PSK))
+                {
+                    LOGE("ERROR : Wrong value for result for storing RS_CLIENT_PSK");
+                    return ret;
+                }
+
+                memcpy(result, RS_CLIENT_PSK, sizeof(RS_CLIENT_PSK));
+                ret = sizeof(RS_CLIENT_PSK);
+            }
+            break;
+
+        default:
+
+            LOGE("Wrong value passed for PSK_CRED_TYPE.");
+            ret = -1;
     }
 
-    memcpy((*credInfo)->identity, pskCredsBlob->identity, DTLS_PSK_ID_LEN);
-    (*credInfo)->num = pskCredsBlob->num;
-    memcpy((*credInfo)->creds, pskCredsBlob->creds, credLen);
-
-    LOGI("CAGetDtlsPskCredentials OUT");
+    LOGI("CAGetDtlsPskCredentials OUT\n");
+    return ret;
 }
 
-CAResult_t SetCredentials()
-{
-    LOGI("SetCredentials IN");
-    pskCredsBlob = (CADtlsPskCredsBlob_t *)malloc(sizeof(CADtlsPskCredsBlob_t));
-    if (NULL == pskCredsBlob)
-    {
-        LOGE("Memory allocation failed!");
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-    memcpy(pskCredsBlob->identity, IDENTITY, DTLS_PSK_ID_LEN);
-
-    pskCredsBlob->num = 1;
-
-    pskCredsBlob->creds = (OCDtlsPskCreds *)malloc(sizeof(OCDtlsPskCreds) *(pskCredsBlob->num));
-    if (NULL == pskCredsBlob->creds)
-    {
-        LOGE("Memory allocation failed!");
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-    memcpy(pskCredsBlob->creds[0].id, IDENTITY, DTLS_PSK_ID_LEN);
-    memcpy(pskCredsBlob->creds[0].psk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
-
-    LOGI("SetCredentials OUT");
-    return CA_STATUS_OK;
-}
 #endif
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
@@ -232,12 +209,6 @@ Java_org_iotivity_ca_service_RMInterface_RMInitialize(JNIEnv *env, jobject obj, 
     }
 
 #ifdef __WITH_DTLS__
-    if (CA_STATUS_OK != SetCredentials())
-    {
-        LOGE("SetCredentials failed");
-        return;
-    }
-
     res = CARegisterDTLSCredentialsHandler(CAGetDtlsPskCredentials);
     if(CA_STATUS_OK != res)
     {
