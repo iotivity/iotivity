@@ -23,7 +23,6 @@
 #include "JniRcsRemoteResourceObject.h"
 #include "JniRcsResourceAttributes.h"
 #include "JniRcsResourceObject.h"
-#include "JniRcsResourceContainer.h"
 #include "JniRcsValue.h"
 #include "JavaClasses.h"
 #include "JavaExceptions.h"
@@ -60,7 +59,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
         initRCSRemoteResourceObject(&envWrapper);
         initRCSObject(&envWrapper);
         initRCSResourceObject(&envWrapper);
-        initRCSResourceContainer(&envWrapper);
     }
     catch (const JavaException&)
     {
@@ -86,7 +84,6 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
 
     try
     {
-        clearRCSResourceContainer(&envWrapper);
         clearRCSResourceObject(&envWrapper);
         clearRCSObject(&envWrapper);
         clearRCSRemoteResourceObject(&envWrapper);
