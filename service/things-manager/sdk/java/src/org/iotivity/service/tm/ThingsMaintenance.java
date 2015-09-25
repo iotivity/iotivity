@@ -135,9 +135,12 @@ public class ThingsMaintenance {
     public OCStackResult reboot(OcResource resource) throws OcException {
 
         OCStackResult result;
-        int ordinal = nativeReboot(resource);
-        result = OCStackResult.conversion(ordinal);
-
+        if (null == thingsMaintenanceListener) {
+            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
+        } else {
+            int ordinal = nativeReboot(resource);
+            result = OCStackResult.conversion(ordinal);
+        }
         return result;
     }
 
@@ -166,9 +169,12 @@ public class ThingsMaintenance {
     public OCStackResult factoryReset(OcResource resource) throws OcException {
 
         OCStackResult result;
-        int ordinal = nativeFactoryReset(resource);
-        result = OCStackResult.conversion(ordinal);
-
+        if (null == thingsMaintenanceListener) {
+            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
+        } else {
+            int ordinal = nativeFactoryReset(resource);
+            result = OCStackResult.conversion(ordinal);
+        }
         return result;
     }
 
