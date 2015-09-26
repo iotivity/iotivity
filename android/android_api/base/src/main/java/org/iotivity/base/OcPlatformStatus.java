@@ -22,7 +22,6 @@
 
 package org.iotivity.base;
 
-
 public enum OcPlatformStatus {
     UP(0),
     DOWN(1),;

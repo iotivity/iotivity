@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef __RECLIENTMAIN_H__
-#define __RECLIENTMAIN_H__
+#ifndef RECLIENTMAIN_H__
+#define RECLIENTMAIN_H__
 
 #include <app.h>
 #include <Elementary.h>
@@ -45,4 +45,6 @@ using namespace OC;
 
 void group_cb(void *data, Evas_Object *obj, void *event_info);
 
-#endif // __RECLIENTMAIN_H__
+void containerCreateUI(void *data, Evas_Object *obj, void *event_info);
+
+#endif // RECLIENTMAIN_H__

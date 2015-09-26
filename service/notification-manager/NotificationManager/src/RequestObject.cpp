@@ -25,6 +25,14 @@ namespace OIC
 namespace Service
 {
 
+RequestObject::RequestObject() : pSetRequestCB(nullptr){ }
+RequestObject::RequestObject(SetRequestCallback cb) : pSetRequestCB(cb){ };
+
+RequestObject::~RequestObject()
+{
+    pSetRequestCB = {};
+}
+
 void RequestObject::invokeRequest(RemoteObjectPtr remoteObject, RequestMethod method,
         RCSResourceAttributes & resourceAttibutes)
 {
@@ -33,9 +41,20 @@ void RequestObject::invokeRequest(RemoteObjectPtr remoteObject, RequestMethod me
         switch (method)
         {
         case RequestMethod::Setter:
-            remoteObject->setRemoteAttributes(resourceAttibutes,
-                    std::bind(&RequestObject::setRequestCB, this,
-                            std::placeholders::_1, resourceAttibutes));
+        {
+            if(pSetRequestCB == nullptr)
+            {
+                remoteObject->setRemoteAttributes(resourceAttibutes,
+                        std::bind(&RequestObject::setRequestCB, this,
+                                std::placeholders::_1, resourceAttibutes));
+            }
+            else
+            {
+                remoteObject->setRemoteAttributes(resourceAttibutes,
+                        std::bind(pSetRequestCB,
+                                std::placeholders::_1, resourceAttibutes));
+            }
+        }
             break;
         case RequestMethod::Getter:
         case RequestMethod::Delete:

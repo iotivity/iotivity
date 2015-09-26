@@ -30,6 +30,7 @@ liboctbstack_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
 with_ra = env.get('WITH_RA')
+with_ra_ibb = env.get('WITH_RA_IBB')
 # As in the source code, it includes arduino Time library (C++)
 # It requires compile the .c with g++
 if target_os == 'arduino':
@@ -73,8 +74,12 @@ liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 if target_os in ['android', 'linux', 'tizen']:
 	liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
-	if with_ra:
-		liboctbstack_env.AppendUnique(LIBS = ['ra_xmpp'])
+
+	if with_ra_ibb:
+		liboctbstack_env.AppendUnique(LIBS = liboctbstack_env['RALIBS'], LIBPATH = liboctbstack_env['RALIBPATH'], RPATH = liboctbstack_env['RARPATH'])
+	else :
+		if with_ra:
+			liboctbstack_env.AppendUnique(LIBS = ['ra_xmpp'])
 
 liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
 
@@ -100,6 +105,9 @@ if env.get('SECURED') == '1':
 
 if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if env.get('DTLS_WITH_X509') == '1':
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['__WITH_X509__'])
 
 liboctbstack_env.Append(LIBS = ['c_common'])
 

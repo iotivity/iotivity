@@ -83,14 +83,14 @@ namespace OIC
                 if (actual == r) return;
             }
 
-            throw PlatformException(actual);
+            throw RCSPlatformException(actual);
         }
 
         inline void expectOCStackResult(OCStackResult actual, OCStackResult expected)
         {
             if (actual != expected)
             {
-                throw PlatformException(actual);
+                throw RCSPlatformException(actual);
             }
         }
 
@@ -111,7 +111,7 @@ namespace OIC
             }
             catch (const OC::OCException& e)
             {
-                throw PlatformException(e.code());
+                throw RCSPlatformException(e.code());
             }
         }
 
@@ -127,7 +127,7 @@ namespace OIC
             }
             catch (const OC::OCException& e)
             {
-                throw PlatformException(e.code());
+                throw RCSPlatformException(e.code());
             }
         }
 
@@ -142,7 +142,7 @@ namespace OIC
             }
             catch (const OC::OCException& e)
             {
-                throw PlatformException(e.code());
+                throw RCSPlatformException(e.code());
             }
         }
 
@@ -159,7 +159,7 @@ namespace OIC
             }
             catch (const OC::OCException& e)
             {
-                throw PlatformException(e.code());
+                throw RCSPlatformException(e.code());
             }
         }
 
@@ -177,7 +177,7 @@ namespace OIC
             }
             catch (const OC::OCException& e)
             {
-                throw PlatformException(e.code());
+                throw RCSPlatformException(e.code());
             }
         }
 
@@ -194,7 +194,7 @@ namespace OIC
             }
             catch (const OC::OCException& e)
             {
-                throw PlatformException(e.code());
+                throw RCSPlatformException(e.code());
             }
         }
 
@@ -212,7 +212,7 @@ namespace OIC
             }
             catch (const OC::OCException& e)
             {
-                throw PlatformException(e.code());
+                throw RCSPlatformException(e.code());
             }
         }
 

@@ -48,17 +48,19 @@ OCStackResult InitAmaclResource();
 void DeInitAmaclResource();
 
 /**
- * This method is used by PolicyEngine to retrieve Amacl for a Subject.
+ * This method is used by PolicyEngine to retrieve amsId for the resource.
+ * If the Amacl is found for the given resource then populate the parameter
+ * amsId with Amacl resource amss id.
  *
- * @param subjectId ID of the subject for which Amacl is required.
- * @param savePtr is used internally by @ref GetAmaclResourceData to maintain index between
- *                successive calls for same subjectId.
+ * @param resource  resource for which AMS service is required.
+ * @param amsId     ID of the ams service for the given resource
  *
- * @retval  reference to @ref OicSecAmacl_t if Amacl is found, else NULL
+ * @retval
+ *  OC_STACK_OK     If Amacl found for the resource
+ *  OC_STACK_ERROR  If no Amacl found for the resource
  *
- * @note On the first call to @ref GetAmaclResourceData, savePtr should point to NULL
  */
-const OicSecAmacl_t* GetAmaclResourceData(const OicUuid_t* subjectId, OicSecAmacl_t **savePtr);
+OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsId);
 
 /**
  * This function converts Amacl data into JSON format.

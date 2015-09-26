@@ -110,7 +110,7 @@ TEST_F(DevicePresenceTest,initializeDevicePresence_ErrorHandlingIfAbnormalResour
     MockingFunc();
     mocks.OnCallFuncOverload(static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence)).Return(OC_STACK_ERROR);
 
-    ASSERT_THROW(instance->initializeDevicePresence(pResource),PlatformException);
+    ASSERT_THROW(instance->initializeDevicePresence(pResource),RCSPlatformException);
 
 }
 

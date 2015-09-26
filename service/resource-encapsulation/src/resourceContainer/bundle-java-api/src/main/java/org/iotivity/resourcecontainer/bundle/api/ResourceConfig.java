@@ -55,7 +55,7 @@ public class ResourceConfig {
 
     /**
      * Sets the name
-     * @param m_name
+     * @param m_name Resource name
      */
     public void setName(String m_name) {
         this.m_name = m_name;
@@ -79,7 +79,7 @@ public class ResourceConfig {
 
     /**
      * Returns the configured resource type
-     * @param m_uri configured resource type
+     * @return configured resource type
      */
     public String getResourceType() {
         return m_resourceType;

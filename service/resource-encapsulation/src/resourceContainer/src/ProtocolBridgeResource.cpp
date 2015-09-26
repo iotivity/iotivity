@@ -22,8 +22,10 @@
 
 using namespace OIC::Service;
 
-namespace OIC{
-    namespace Service{
+namespace OIC
+{
+    namespace Service
+    {
         ProtocolBridgeResource::ProtocolBridgeResource()
         {
 

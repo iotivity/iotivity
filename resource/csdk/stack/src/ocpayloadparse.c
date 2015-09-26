@@ -18,6 +18,15 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+// Defining _POSIX_C_SOURCE macro with 200112L (or greater) as value
+// causes header files to expose definitions
+// corresponding to the POSIX.1-2001 base
+// specification (excluding the XSI extension).
+// For POSIX.1-2001 base specification,
+// Refer http://pubs.opengroup.org/onlinepubs/009695399/
+// Required for strok_r
+#define _POSIX_C_SOURCE 200112L
+#include <string.h>
 #include "ocpayloadcbor.h"
 #include <stdlib.h>
 #include "logger.h"
@@ -25,6 +34,7 @@
 #include "ocstackinternal.h"
 #include "ocpayload.h"
 #include "cbor.h"
+#include "oic_string.h"
 
 #define TAG "OCPayloadParse"
 
@@ -154,6 +164,24 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* a
 
 }
 
+static char* InPlaceStringTrim(char* str)
+{
+    while (str[0] == ' ')
+    {
+        ++str;
+    }
+
+    size_t lastchar = strlen(str);
+
+    while (str[lastchar] == ' ')
+    {
+        str[lastchar] = '\0';
+        --lastchar;
+    }
+
+    return str;
+}
+
 static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal)
 {
     if (!outPayload)
@@ -194,118 +222,76 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* 
 
         // Prop Tag
         {
-             err = err || cbor_value_map_find_value(arrayVal, OC_RSRVD_PROPERTY, &curVal);
+            err = err || cbor_value_map_find_value(arrayVal, OC_RSRVD_PROPERTY, &curVal);
             // ResourceTypes
-            CborValue rtArray;
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_RESOURCE_TYPE, &rtArray);
-
             CborValue rtVal;
-             err = err || cbor_value_enter_container(&rtArray, &rtVal);
+            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_RESOURCE_TYPE, &rtVal);
 
-            OCStringLL* llPtr = NULL;
-            while(!err && cbor_value_is_text_string(&rtVal))
+            if (!err && cbor_value_is_text_string(&rtVal))
             {
-                if(resource->types == NULL)
-                {
-                    resource->types = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-                    llPtr = resource->types;
-                    if(!llPtr)
-                    {
-                        OC_LOG(ERROR, TAG, "Memory allocation failed");
-                        OICFree(resource->uri);
-                        OICFree(resource->sid);
-                        OICFree(resource);
-                        OCDiscoveryPayloadDestroy(out);
-                        return OC_STACK_NO_MEMORY;
-                    }
-                }
-                else if(llPtr)
-                {
-                    llPtr->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-                    llPtr = llPtr->next;
-                    if(!llPtr)
-                    {
-                        OC_LOG(ERROR, TAG, "Memory allocation failed");
-                        OICFree(resource->uri);
-                        OICFree(resource->sid);
-                        OCFreeOCStringLL(resource->types);
-                        OICFree(resource);
-                        OCDiscoveryPayloadDestroy(out);
-                        return OC_STACK_NO_MEMORY;
-                    }
-                }
-                else
-                {
-                        OC_LOG(ERROR, TAG, "Unknown state in resource type copying");
-                        OICFree(resource->uri);
-                        OICFree(resource->sid);
-                        OCFreeOCStringLL(resource->types);
-                        OICFree(resource);
-                        OCDiscoveryPayloadDestroy(out);
-                        return OC_STACK_NO_MEMORY;
-                }
+                char* input = NULL;
+                char* savePtr;
+                err = err || cbor_value_dup_text_string(&rtVal, &input, &len, NULL);
 
-                 err = err || cbor_value_dup_text_string(&rtVal, &(llPtr->value), &len, NULL);
-                 err = err || cbor_value_advance(&rtVal);
+                if (input)
+                {
+                    char* curPtr = strtok_r(input, " ", &savePtr);
+
+                    while (curPtr)
+                    {
+                        char* trimmed = InPlaceStringTrim(curPtr);
+                        if (trimmed[0] !='\0')
+                        {
+                            if (!OCResourcePayloadAddResourceType(resource, trimmed))
+                            {
+                                OICFree(resource->uri);
+                                OICFree(resource->sid);
+                                OCFreeOCStringLL(resource->types);
+                                OICFree(resource);
+                                OCDiscoveryPayloadDestroy(out);
+                                return OC_STACK_NO_MEMORY;
+                            }
+                        }
+                        curPtr = strtok_r(NULL, " ", &savePtr);
+                    }
+                    OICFree(input);
+                }
             }
 
-             err = err || cbor_value_leave_container(&rtArray, &rtVal);
-            //
             // Interface Types
-            CborValue ifArray;
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_INTERFACE, &ifArray);
             CborValue ifVal;
-             err = err || cbor_value_enter_container(&ifArray, &ifVal);
+            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_INTERFACE, &ifVal);
 
-            llPtr = NULL;
-            while(!err && cbor_value_is_text_string(&ifVal))
+            if (!err && cbor_value_is_text_string(&ifVal))
             {
-                if(resource->interfaces == NULL)
-                {
-                    resource->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-                    llPtr = resource->interfaces;
-                    if(!llPtr)
-                    {
-                        OC_LOG(ERROR, TAG, "Memory allocation failed");
-                        OICFree(resource->uri);
-                        OICFree(resource->sid);
-                        OCFreeOCStringLL(resource->types);
-                        OICFree(resource);
-                        OCDiscoveryPayloadDestroy(out);
-                        return OC_STACK_NO_MEMORY;
-                    }
-                }
-                else if (llPtr)
-                {
-                    llPtr->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-                    llPtr = llPtr->next;
-                    if(!llPtr)
-                    {
-                        OC_LOG(ERROR, TAG, "Memory allocation failed");
-                        OICFree(resource->uri);
-                        OICFree(resource->sid);
-                        OCFreeOCStringLL(resource->types);
-                        OCFreeOCStringLL(resource->interfaces);
-                        OICFree(resource);
-                        OCDiscoveryPayloadDestroy(out);
-                        return OC_STACK_NO_MEMORY;
-                    }
-                }
-                else
-                {
-                        OC_LOG(ERROR, TAG, "Unknown state in resource interfaces copying");
-                        OICFree(resource->uri);
-                        OICFree(resource->sid);
-                        OCFreeOCStringLL(resource->types);
-                        OICFree(resource);
-                        OCDiscoveryPayloadDestroy(out);
-                        return OC_STACK_NO_MEMORY;
-                }
+                char* input = NULL;
+                char* savePtr;
+                err = err || cbor_value_dup_text_string(&ifVal, &input, &len, NULL);
 
-                 err = err || cbor_value_dup_text_string(&ifVal, &(llPtr->value), &len, NULL);
-                 err = err || cbor_value_advance(&ifVal);
+                if (input)
+                {
+                    char* curPtr = strtok_r(input, " ", &savePtr);
+
+                    while (curPtr)
+                    {
+                        char* trimmed = InPlaceStringTrim(curPtr);
+                        if (trimmed[0] !='\0')
+                        {
+                            if (!OCResourcePayloadAddInterface(resource, trimmed))
+                            {
+                                OICFree(resource->uri);
+                                OICFree(resource->sid);
+                                OCFreeOCStringLL(resource->types);
+                                OICFree(resource);
+                                OCDiscoveryPayloadDestroy(out);
+                                return OC_STACK_NO_MEMORY;
+                            }
+                        }
+                        curPtr = strtok_r(NULL, " ", &savePtr);
+                    }
+                    OICFree(input);
+                }
             }
-             err = err || cbor_value_leave_container(&ifArray, &ifVal);
 
             // Policy
             {
@@ -391,18 +377,30 @@ static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* arr
 
             CborValue repVal;
             // Device ID
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DEVICE_ID, &repVal);
-             err = err || cbor_value_dup_byte_string(&repVal, &sid, &len, NULL);
+            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DEVICE_ID, &repVal);
+            if(cbor_value_is_valid(&repVal))
+            {
+                err = err || cbor_value_dup_byte_string(&repVal, &sid, &len, NULL);
+            }
             // Device Name
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DEVICE_NAME, &repVal);
-             err = err || cbor_value_dup_text_string(&repVal, &dname, &len, NULL);
+            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DEVICE_NAME, &repVal);
+            if(cbor_value_is_valid(&repVal))
+            {
+                err = err || cbor_value_dup_text_string(&repVal, &dname, &len, NULL);
+            }
             // Device Spec Version
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_SPEC_VERSION, &repVal);
-             err = err || cbor_value_dup_text_string(&repVal, &specVer, &len, NULL);
-            // Data Model Version
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DATA_MODEL_VERSION, &repVal);
-             err = err || cbor_value_dup_text_string(&repVal, &dmVer, &len, NULL);
+            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_SPEC_VERSION, &repVal);
+            if(cbor_value_is_valid(&repVal))
+            {
+                err = err || cbor_value_dup_text_string(&repVal, &specVer, &len, NULL);
+            }
 
+            // Data Model Version
+            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DATA_MODEL_VERSION, &repVal);
+            if (cbor_value_is_valid(&repVal))
+            {
+                err = err || cbor_value_dup_text_string(&repVal, &dmVer, &len, NULL);
+            }
         }
 
          err = err || cbor_value_advance(arrayVal);
@@ -465,11 +463,17 @@ static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* a
             CborValue repVal;
             // Platform ID
              err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_PLATFORM_ID, &repVal);
-             err = err || cbor_value_dup_text_string(&repVal, &(info.platformID), &len, NULL);
+             if(cbor_value_is_valid(&repVal))
+             {
+                 err = err || cbor_value_dup_text_string(&repVal, &(info.platformID), &len, NULL);
+             }
 
             // MFG Name
              err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_MFG_NAME, &repVal);
-             err = err || cbor_value_dup_text_string(&repVal, &(info.manufacturerName), &len, NULL);
+             if(cbor_value_is_valid(&repVal))
+             {
+                 err = err || cbor_value_dup_text_string(&repVal, &(info.manufacturerName), &len, NULL);
+             }
 
             // MFG URL
              err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_MFG_URL, &repVal);
@@ -906,42 +910,58 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
     err = err || cbor_value_map_find_value(repParent, OC_RSRVD_PROPERTY, &curVal);
     if(cbor_value_is_valid(&curVal))
     {
-        CborValue insidePropArray = {0};
+        CborValue insidePropValue = {0};
         err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_RESOURCE_TYPE,
-                &insidePropArray);
+                &insidePropValue);
 
-        if(cbor_value_is_array(&insidePropArray))
+        if(cbor_value_is_text_string(&insidePropValue))
         {
-            CborValue rtArray;
-            err = err || cbor_value_enter_container(&insidePropArray, &rtArray);
+            char* allRt = NULL;
+            err = err || cbor_value_dup_text_string(&insidePropValue, &allRt, &len, NULL);
 
-            while(!err && cbor_value_is_valid(&rtArray))
+            char* savePtr;
+
+            if (allRt)
             {
-                char* curRt;
-                err = err || cbor_value_dup_text_string(&rtArray, &curRt, &len, NULL);
-                err = err || cbor_value_advance(&rtArray);
-                OCRepPayloadAddResourceTypeAsOwner(curPayload, curRt);
-            }
+                char* curPtr = strtok_r(allRt, " ", &savePtr);
 
-            err = err || cbor_value_leave_container(&insidePropArray, &rtArray);
+                while (curPtr)
+                {
+                    char* trimmed = InPlaceStringTrim(curPtr);
+                    if (trimmed[0] != '\0')
+                    {
+                        OCRepPayloadAddResourceType(curPayload, curPtr);
+                    }
+                    curPtr = strtok_r(NULL, " ", &savePtr);
+                }
+            }
+            OICFree(allRt);
         }
 
-        err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_INTERFACE, &insidePropArray);
+        err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_INTERFACE, &insidePropValue);
 
-        if(cbor_value_is_array(&insidePropArray))
+        if(cbor_value_is_text_string(&insidePropValue))
         {
-            CborValue ifArray;
-            err = err || cbor_value_enter_container(&insidePropArray, &ifArray);
+            char* allIf = NULL;
+            err = err || cbor_value_dup_text_string(&insidePropValue, &allIf, &len, NULL);
 
-            while(!err && cbor_value_is_valid(&ifArray))
+            char* savePtr;
+
+            if (allIf)
             {
-                char* curIf;
-                err = err || cbor_value_dup_text_string(&ifArray, &curIf, &len, NULL);
-                err = err || cbor_value_advance(&ifArray);
-                OCRepPayloadAddInterfaceAsOwner(curPayload, curIf);
-            }
+                char* curPtr = strtok_r(allIf, " ", &savePtr);
 
-            err = err || cbor_value_leave_container(&insidePropArray, &ifArray);
+                while (curPtr)
+                {
+                    char* trimmed = InPlaceStringTrim(curPtr);
+                    if (trimmed[0] != '\0')
+                    {
+                        OCRepPayloadAddInterface(curPayload, curPtr);
+                    }
+                    curPtr = strtok_r(NULL, " ", &savePtr);
+                }
+            }
+            OICFree(allIf);
         }
     }
 

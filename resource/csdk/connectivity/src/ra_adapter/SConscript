@@ -25,7 +25,11 @@ print "Reading RA adapter script"
 
 target_os = env.get('TARGET_OS')
 inc_files = env.get('CPPPATH')
+with_ra_ibb = env.get('WITH_RA_IBB')
 src_dir = './ra_adapter'
 
 #Source files to build in Linux platform
 env.AppendUnique(CA_SRC=[os.path.join(src_dir, 'caraadapter.c')])
+
+if with_ra_ibb:
+	env.AppendUnique(CPPDEFINES = ['RA_ADAPTER_IBB'])

@@ -20,140 +20,122 @@
 
 
 #if(JAVA_SUPPORT)
-    #include "JavaBundleResource.h"
-    #include <jni.h>
-    #include <string.h>
+#include "JavaBundleResource.h"
 
-    #include <iostream>
+#include <jni.h>
+#include <string.h>
+#include <iostream>
+#include "InternalTypes.h"
 
-    using namespace OIC::Service;
-    using namespace std;
+using namespace OIC::Service;
+using namespace std;
 
-    #include "oc_logger.hpp"
 
-    using OC::oc_log_stream;
-    using namespace OIC::Service;
+JavaBundleResource::JavaBundleResource()
+{
 
-    auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
+}
+
+void JavaBundleResource::initAttributes()
+{
+
+}
+
+JavaBundleResource::JavaBundleResource(JNIEnv *env, jobject obj, jobject bundleResource,
+                                       string bundleId, jobjectArray attributes)
+{
+    (void) obj;
+    int stringCount = env->GetArrayLength(attributes);
+
+    for (int i = 0; i < stringCount; i++)
     {
-        static OC::oc_log_stream ols(oc_make_ostream_logger);
-        static boost::iostreams::stream<OC::oc_log_stream> os(ols);
-        os->set_level(OC_LOG_INFO);
-        os->set_module("JavaBundleResource");
-        return os;
-    };
-
-    auto error_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
-    {
-        static OC::oc_log_stream ols(oc_make_ostream_logger);
-        static boost::iostreams::stream<OC::oc_log_stream> os(ols);
-        os->set_level(OC_LOG_ERROR);
-        os->set_module("JavaBundleResource");
-        return os;
-    };
-
-    JavaBundleResource::JavaBundleResource()
-    {
-
+        jstring str = (jstring) env->GetObjectArrayElement(attributes, i);
+        const char *rawString = env->GetStringUTFChars(str, 0);
+        string s(rawString, strlen(rawString));
+        BundleResource::setAttribute(s, "");
     }
 
-    void JavaBundleResource::initAttributes()
+    m_bundleId = bundleId;
+
+    this->bundleResource = env->NewGlobalRef(bundleResource);
+
+    bundleResourceClass = env->GetObjectClass(bundleResource);
+
+    attributeSetter = env->GetMethodID(bundleResourceClass, "setAttribute",
+                                       "(Ljava/lang/String;Ljava/lang/String;)V");
+
+    attributeGetter = env->GetMethodID(bundleResourceClass, "getAttribute",
+                                       "(Ljava/lang/String;)Ljava/lang/String;");
+
+}
+
+JavaBundleResource::~JavaBundleResource()
+{
+
+}
+
+RCSResourceAttributes &JavaBundleResource::getAttributes()
+{
+    return BundleResource::getAttributes();
+}
+
+RCSResourceAttributes::Value JavaBundleResource::getAttribute(const std::string &attributeName)
+{
+    JavaVM *vm = ResourceContainerImpl::getImplInstance()->getJavaVM(m_bundleId);
+
+    JNIEnv *env;
+    int envStat = vm->GetEnv((void **) &env, JNI_VERSION_1_4);
+
+    if (envStat == JNI_EDETACHED)
     {
-
-    }
-
-    JavaBundleResource::JavaBundleResource(JNIEnv *env, jobject obj, jobject bundleResource,
-            string bundleId, jobjectArray attributes)
-    {
-        int stringCount = env->GetArrayLength(attributes);
-
-        for (int i = 0; i < stringCount; i++)
+        if (vm->AttachCurrentThread((void **) &env, NULL) != 0)
         {
-            jstring str = (jstring) env->GetObjectArrayElement(attributes, i);
-            const char *rawString = env->GetStringUTFChars(str, 0);
-            string s(rawString, strlen(rawString));
-            BundleResource::setAttribute(s, "");
+            OC_LOG_V(ERROR, CONTAINER_TAG, "[JavaBundleResource::getAttribute] Failed to attach ");
         }
-
-        m_bundleId = bundleId;
-
-        this->bundleResource = env->NewGlobalRef(bundleResource);
-
-        bundleResourceClass = env->GetObjectClass(bundleResource);
-
-        attributeSetter = env->GetMethodID(bundleResourceClass, "setAttribute",
-                "(Ljava/lang/String;Ljava/lang/String;)V");
-
-        attributeGetter = env->GetMethodID(bundleResourceClass, "getAttribute",
-                "(Ljava/lang/String;)Ljava/lang/String;");
-
     }
-
-    JavaBundleResource::~JavaBundleResource()
+    else if (envStat == JNI_EVERSION)
     {
-
+        OC_LOG_V(ERROR, CONTAINER_TAG, "[JavaBundleResource::getAttribute] Env: version not supported");
     }
 
-    RCSResourceAttributes& JavaBundleResource::getAttributes(){
-        return BundleResource::getAttributes();
-    }
+    jstring attrName = env->NewStringUTF(attributeName.c_str());
 
-    RCSResourceAttributes::Value JavaBundleResource::getAttribute(const std::string& attributeName)
+    jstring returnString = (jstring) env->CallObjectMethod(bundleResource, attributeGetter,
+                           attrName);
+
+    const char *js = env->GetStringUTFChars(returnString, NULL);
+    std::string val(js);
+    RCSResourceAttributes::Value newVal = val;
+    env->ReleaseStringUTFChars(returnString, js);
+    BundleResource::setAttribute(attributeName, newVal.toString());
+    return BundleResource::getAttribute(attributeName);
+}
+
+void JavaBundleResource::setAttribute(std::string attributeName,
+                                      RCSResourceAttributes::Value &&value)
+{
+    JavaVM *vm = ResourceContainerImpl::getImplInstance()->getJavaVM(m_bundleId);
+
+    JNIEnv *env;
+    int envStat = vm->GetEnv((void **) &env, JNI_VERSION_1_4);
+
+    if (envStat == JNI_EDETACHED)
     {
-        JavaVM* vm = ResourceContainerImpl::getImplInstance()->getJavaVM(m_bundleId);
-
-        JNIEnv * env;
-        int envStat = vm->GetEnv((void **) &env, JNI_VERSION_1_4);
-
-        if (envStat == JNI_EDETACHED)
+        if (vm->AttachCurrentThread((void **) &env, NULL) != 0)
         {
-            if (vm->AttachCurrentThread((void**) &env, NULL) != 0)
-            {
-                error_logger() << "Failed to attach " << endl;
-            }
+            OC_LOG_V(ERROR, CONTAINER_TAG, "[JavaBundleResource::setAttribute] Failed to attach ");
         }
-        else if (envStat == JNI_EVERSION)
-        {
-            error_logger() << "Env: version not supported " << endl;
-        }
-
-        jstring attrName = env->NewStringUTF(attributeName.c_str());
-
-        jstring returnString = (jstring) env->CallObjectMethod(bundleResource, attributeGetter,
-                attrName);
-
-        const char *js = env->GetStringUTFChars(returnString, NULL);
-        std::string val(js);
-        RCSResourceAttributes::Value newVal = val;
-        env->ReleaseStringUTFChars(returnString, js);
-        BundleResource::setAttribute(attributeName, newVal.toString());
-        return BundleResource::getAttribute(attributeName);
     }
-
-    void JavaBundleResource::setAttribute(std::string attributeName, RCSResourceAttributes::Value&& value)
+    else if (envStat == JNI_EVERSION)
     {
-        JavaVM* vm = ResourceContainerImpl::getImplInstance()->getJavaVM(m_bundleId);
-
-        JNIEnv * env;
-        int envStat = vm->GetEnv((void **) &env, JNI_VERSION_1_4);
-
-        if (envStat == JNI_EDETACHED)
-        {
-            if (vm->AttachCurrentThread((void**) &env, NULL) != 0)
-            {
-                error_logger() << "Failed to attach " << endl;
-            }
-        }
-        else if (envStat == JNI_EVERSION)
-        {
-            error_logger() << "Env: version not supported " << endl;
-        }
-
-        jstring attrName = env->NewStringUTF(attributeName.c_str());
-        jstring val = env->NewStringUTF(value.toString().c_str());
-
-
-        env->CallObjectMethod(bundleResource, attributeSetter, attrName, val);
-        BundleResource::setAttribute(attributeName, std::move(value));
+        OC_LOG_V(ERROR, CONTAINER_TAG, "[JavaBundleResource::setAttribute] Env: version not supported ");
     }
+
+    jstring attrName = env->NewStringUTF(attributeName.c_str());
+    jstring val = env->NewStringUTF(value.toString().c_str());
+
+
+    env->CallObjectMethod(bundleResource, attributeSetter, attrName, val);
+    BundleResource::setAttribute(attributeName, std::move(value));
+}
 #endif

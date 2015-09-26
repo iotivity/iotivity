@@ -40,7 +40,8 @@ namespace OIC
         void BundleActivator::activateBundle(ResourceContainerBundleAPI *resourceContainer,
                 std::string bundleId)
         {
-
+            (void)(resourceContainer);
+            (void)(bundleId);
         }
 
         void BundleActivator::deactivateBundle()

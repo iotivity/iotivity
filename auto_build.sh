@@ -49,13 +49,13 @@ function build_linux_unsecured_with_ra()
 {
 
 	echo "*********** Build for linux With Remote Access *************"
-	scons RELEASE=$1 WITH_RA=1 $2
+	scons RELEASE=$1 WITH_RA=1 WITH_RA_IBB=1 $2
 }
 
 function build_linux_secured_with_ra()
 {
 	echo "*********** Build for linux With Remote Access & Security ************"
-	scons RELEASE=$1 WITH_RA=1 SECURED=1 $2
+	scons RELEASE=$1 WITH_RA=1 WITH_RA_IBB=1 SECURED=1 $2
 }
 
 function build_android()
@@ -99,6 +99,9 @@ function build_arduino()
 
 function build_tizen()
 {
+	echo "*********** Build for Tizen *************"
+	./gbsbuild.sh
+
 	echo "*********** Build for Tizen CA lib and sample *************"
 	scons -f resource/csdk/connectivity/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true RELEASE=$1 $2
 

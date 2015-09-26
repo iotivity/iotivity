@@ -56,7 +56,8 @@ namespace OIC
                 Configuration(string configFile);
                 ~Configuration();
 
-                bool isLoaded();
+                bool isLoaded() const;
+                bool isHasInput(std::string & bundleId) const;
                 void getConfiguredBundles(configInfo *configOutput);
                 void getBundleConfiguration(string bundleId, configInfo *configOutput);
                 void getResourceConfiguration(string bundleId, vector< resourceInfo > *configOutput);
@@ -68,6 +69,7 @@ namespace OIC
                 string m_pathConfigFile;
                 string m_strConfigData;
                 rapidxml::xml_document< char > m_xmlDoc;
+                std::map<std::string, bool> m_mapisHasInput; // bundleId, isHasInput
         };
     }
 }

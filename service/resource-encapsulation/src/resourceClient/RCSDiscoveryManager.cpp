@@ -17,79 +17,58 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
 #include "RCSDiscoveryManager.h"
-
-#include "RCSRemoteResourceObject.h"
-#include "PrimitiveResource.h"
-
-#include "ScopeLogger.h"
+#include "RCSDiscoveryManagerImpl.h"
 
 #define TAG "RCSDiscoveryManager"
 
-using namespace OIC::Service;
+namespace OIC {
+    namespace Service {
 
-namespace
-{
-    void findCallback(std::shared_ptr< PrimitiveResource > primitiveResource,
-            RCSDiscoveryManager::ResourceDiscoveredCallback cb)
-    {
-        SCOPE_LOG_F(DEBUG, TAG);
-
-        if (!primitiveResource)
-        {
-            OC_LOG(ERROR, TAG, "findCallback : primitiveResource is null.");
-            return;
-        }
-
-        cb(std::make_shared< RCSRemoteResourceObject >(primitiveResource));
-    }
-}
-
-namespace OIC
-{
-    namespace Service
-    {
-        RCSDiscoveryManager* RCSDiscoveryManager::getInstance()
-        {
+        RCSDiscoveryManager* RCSDiscoveryManager::getInstance() {
             static RCSDiscoveryManager instance;
             return &instance;
         }
 
-        void RCSDiscoveryManager::discoverResource(const RCSAddress& address,
-                ResourceDiscoveredCallback cb)
-        {
-            discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI, "", std::move(cb));
+        std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> RCSDiscoveryManager::discoverResource
+        (const RCSAddress& address, ResourceDiscoveredCallback cb) {
+            return discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI, "",
+                    std::move(cb));
         }
 
-        void RCSDiscoveryManager::discoverResource(const RCSAddress& address,
-                const std::string& relativeURI, ResourceDiscoveredCallback cb)
-        {
-            discoverResourceByType(address, relativeURI, "", std::move(cb));
+        std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> RCSDiscoveryManager::discoverResource
+        (const RCSAddress& address, const std::string& relativeURI, ResourceDiscoveredCallback cb) {
+            return discoverResourceByType(address, relativeURI, "", std::move(cb));
         }
 
-        void RCSDiscoveryManager::discoverResourceByType(const RCSAddress& address,
-                const std::string& resourceType,
-                ResourceDiscoveredCallback cb)
-        {
-            discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI, resourceType, std::move(cb));
+        std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> RCSDiscoveryManager::discoverResourceByType(
+                const RCSAddress& address, const std::string& resourceType, ResourceDiscoveredCallback cb) {
+            return discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI,
+                    resourceType, std::move(cb));
         }
 
-        void RCSDiscoveryManager::discoverResourceByType(const RCSAddress& address,
-                const std::string& relativeURI, const std::string& resourceType,
-                ResourceDiscoveredCallback cb)
-        {
-            if (!cb)
+        std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> RCSDiscoveryManager::discoverResourceByType(
+                const RCSAddress& address, const std::string& relativeURI,
+                const std::string& resourceType, ResourceDiscoveredCallback cb) {
+           return RCSDiscoveryManagerImpl::getInstance()->startDiscovery(address,
+                   relativeURI.empty() ? OC_RSRVD_WELL_KNOWN_URI : relativeURI,
+                   resourceType, std::move(cb));
+        }
+        RCSDiscoveryManager::DiscoveryTask::~DiscoveryTask(){
+            cancel();
+        }
+        bool RCSDiscoveryManager::DiscoveryTask::isCanceled() {
+            auto it = RCSDiscoveryManagerImpl::getInstance();
+
+            if(it->m_discoveryMap.find(m_id) == it->m_discoveryMap.end())
             {
-                OC_LOG(ERROR, TAG, "discoverResourceByType NULL Callback");
-                throw InvalidParameterException { "discoverResourceByType NULL Callback'" };
+                    return true;
             }
-            else
-            {
-                std::string resourceURI = relativeURI + "?rt=" + resourceType;
-                OIC::Service::discoverResource(address, resourceURI,
-                    std::bind(findCallback, std::placeholders::_1, std::move(cb)));
-            }
+            return false;
+        }
+
+        void RCSDiscoveryManager::DiscoveryTask::cancel(){
+            RCSDiscoveryManagerImpl::getInstance()->cancel(m_id);
         }
     }
 }

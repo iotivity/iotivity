@@ -36,7 +36,12 @@ void OIC_HOSTING_LOG(LogLevel level, const char * format, ...)
     va_start(args, format);
     vsnprintf(buffer, sizeof buffer - 1, format, args);
     va_end(args);
-    OCLog(level, "Hosting", buffer);
+    OCLog(level, PCF("Hosting"), buffer);
+}
+
+namespace
+{
+    std::mutex mutexForCB;
 }
 
 HostingObject::HostingObject()
@@ -47,6 +52,19 @@ HostingObject::HostingObject()
 {
 }
 
+HostingObject::~HostingObject()
+{
+	// shared_ptr release
+    pStateChangedCB = {};
+    pDataUpdateCB = {};
+
+    if (remoteObject)
+    {
+        remoteObject->stopMonitoring();
+        remoteObject->stopCaching();
+    }
+}
+
 HostingObject::RemoteObjectPtr HostingObject::getRemoteResource() const
 {
     return remoteObject;
@@ -54,7 +72,6 @@ HostingObject::RemoteObjectPtr HostingObject::getRemoteResource() const
 
 void HostingObject::initializeHostingObject(RemoteObjectPtr rResource, DestroyedCallback destroyCB)
 {
-
     remoteObject = rResource;
 
     pStateChangedCB = std::bind(&HostingObject::stateChangedCB, this,
@@ -94,7 +111,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
             try
             {
                 rObject->startCaching(pDataUpdateCB);
-            }catch(InvalidParameterException &e)
+            }catch(const RCSInvalidParameterException &e)
             {
                 OIC_HOSTING_LOG(DEBUG,
                         "[HostingObject::stateChangedCB]startCaching InvalidParameterException:%s",
@@ -111,7 +128,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
             try
             {
                 rObject->stopCaching();
-            }catch(InvalidParameterException &e)
+            }catch(const RCSInvalidParameterException &e)
             {
                 OIC_HOSTING_LOG(DEBUG,
                         "[HostingObject::stateChangedCB]stopCaching InvalidParameterException:%s",
@@ -123,7 +140,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
             try
             {
                 rObject->stopMonitoring();
-            }catch(InvalidParameterException &e)
+            }catch(const RCSInvalidParameterException &e)
             {
                 OIC_HOSTING_LOG(DEBUG,
                         "[HostingObject::stateChangedCB]stopWatching InvalidParameterException:%s",
@@ -142,6 +159,7 @@ void HostingObject::stateChangedCB(ResourceState state, RemoteObjectPtr rObject)
 
 void HostingObject::dataChangedCB(const RCSResourceAttributes & attributes, RemoteObjectPtr rObject)
 {
+    std::unique_lock<std::mutex> lock(mutexForCB);
     if(attributes.empty())
     {
         return;
@@ -152,7 +170,7 @@ void HostingObject::dataChangedCB(const RCSResourceAttributes & attributes, Remo
         try
         {
             mirroredServer = createMirroredServer(rObject);
-        }catch(PlatformException &e)
+        }catch(const RCSPlatformException &e)
         {
             OIC_HOSTING_LOG(DEBUG,
                         "[HostingObject::dataChangedCB]createMirroredServer PlatformException:%s",
@@ -219,7 +237,7 @@ HostingObject::ResourceObjectPtr HostingObject::createMirroredServer(RemoteObjec
     }
     else
     {
-        throw PlatformException(OC_STACK_ERROR);
+        throw RCSPlatformException(OC_STACK_ERROR);
     }
 
     return retResource;
@@ -228,12 +246,13 @@ HostingObject::ResourceObjectPtr HostingObject::createMirroredServer(RemoteObjec
 RCSSetResponse HostingObject::setRequestHandler(const RCSRequest & primitiveRequest,
             RCSResourceAttributes & resourceAttibutes)
 {
+    (void)primitiveRequest;
     try
     {
         RequestObject newRequest = { };
         newRequest.invokeRequest(remoteObject, RequestObject::RequestMethod::Setter,
                 resourceAttibutes);
-    }catch(PlatformException &e)
+    }catch(const RCSPlatformException &e)
     {
         OIC_HOSTING_LOG(DEBUG,
                 "[HostingObject::setRequestHandler] PlatformException:%s",

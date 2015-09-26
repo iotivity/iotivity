@@ -18,12 +18,12 @@
  *
  ******************************************************************/
 
-#include "reservermain.h"
+#include "remain.h"
 
 #include "RCSResourceObject.h"
 
-#ifndef __RESERVER_H__
-#define __RESERVER_H__
+#ifndef RESERVER_H__
+#define RESERVER_H__
 
 using namespace std;
 using namespace OIC::Service;
@@ -46,8 +46,10 @@ enum class Control
 
 void printAttribute(const RCSResourceAttributes &attrs);
 
+void start_server(void *data, Evas_Object *obj, void *event_info);
+
+void start_server_cb(void *data, Evas_Object *obj, void *event_info);
+
 void *showGroupAPIs(void *data);
 
-void serverCreateUI(void *data);
-
-#endif // __RESERVER_H__
+#endif // RESERVER_H__

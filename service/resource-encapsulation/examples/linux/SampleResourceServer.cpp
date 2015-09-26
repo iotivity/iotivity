@@ -29,24 +29,35 @@ using namespace OIC::Service;
 
 constexpr int DEFALUT_VALUE = 0;
 
+constexpr int REQUEST_TEMP = 1;
+constexpr int REQUEST_LIGHT = 2;
+
+constexpr int PRESENCE_ON = 1;
+constexpr int PRESENCE_OFF = 2;
+
 constexpr int DEFALUT_SERVER = 1;
 constexpr int CUSTOM_SERVER = 2;
 constexpr int STOP = 3;
 
 constexpr int INCREASE_TEMPERATURE = 1;
 constexpr int DECREASE_TEMPERATURE = 2;
-constexpr int STOP_SENSOR = 3;
+constexpr int STOP_TEMPERATURE_SENSOR = 3;
+constexpr int STOP_LIGHT_SENSOR = 1;
 
 constexpr int CORRECT_INPUT = 1;
 constexpr int INCORRECT_INPUT = 2;
 constexpr int QUIT = 3;
 
+
 std::string resourceUri = "/a/TempSensor";
-std::string resourceType = "core.TemperatureSensor";
+std::string resourceType = "oic.r.temperaturesensor";
 std::string resourceInterface = "oic.if.";
 std::string attributeKey = "Temperature";
+int isPresenceOn = PRESENCE_ON;
 
 RCSResourceObject::Ptr server;
+
+int processUserInput();
 
 enum class Control{
     INCREASE,
@@ -74,6 +85,13 @@ void displayControlTemperatureMenu()
     std::cout << "========================================================" << std::endl;
 }
 
+void displayControlLightMenu()
+{
+    std::cout << "========================================================" << std::endl;
+    std::cout << "1. Stop the Sensor" << std::endl;
+    std::cout << "========================================================" << std::endl;
+}
+
 void printAttribute(const RCSResourceAttributes& attrs)
 {
     for(const auto& attr : attrs)
@@ -88,7 +106,6 @@ RCSGetResponse requestHandlerForGet(const RCSRequest& request,
         RCSResourceAttributes& attrs)
 {
     std::cout << "Recieved a Get request from Client" << std::endl;
-
     RCSResourceObject::LockGuard lock(*server);
     RCSResourceAttributes attributes = server->getAttributes();
 
@@ -112,17 +129,38 @@ RCSSetResponse requestHandlerForSet(const RCSRequest& request,
 
 void createResource()
 {
-    server = RCSResourceObject::Builder(resourceUri, resourceType,
-                             resourceInterface).setDiscoverable(true).setObservable(true).build();
+    server = RCSResourceObject::Builder(resourceUri, resourceType,resourceInterface).
+            setDiscoverable(true).setObservable(true).build();
 }
 
 void initServer()
 {
+    std::cout << "========================================================" << std::endl;
+    std::cout << "Select Resource Type" << std::endl;
+    std::cout << "1. Temperature" << std::endl;
+    std::cout << "2. Light" << std::endl;
+    std::cout << "========================================================" << std::endl;
+
+    switch(processUserInput())
+    {
+    case REQUEST_TEMP:
+        resourceUri = "/a/TempSensor";
+        resourceType = "oic.r.temperaturesensor";
+        break;
+    case REQUEST_LIGHT:
+        resourceUri = "/a/light";
+        resourceType = "core.light";
+        break;
+    default :
+        std::cout << "Invalid input, please try again" << std::endl;
+        return;
+    }
+
     try
     {
         createResource();
     }
-    catch (const PlatformException& e)
+    catch (const RCSPlatformException& e)
     {
         std::cout << "Exception in initServer : " << e.what() << std::endl;
     }
@@ -164,6 +202,27 @@ int processUserInput()
     return userInput;
 }
 
+int selectPresenceMenu()
+{
+    std::cout << "========================================================" << std::endl;
+    std::cout << "1. Presence On" << std::endl;
+    std::cout << "2. Presence Off" << std::endl;
+    std::cout << "========================================================" << std::endl;
+
+    switch(processUserInput())
+        {
+        case PRESENCE_ON:
+            isPresenceOn = PRESENCE_ON;
+            startPresence(3);
+            return CORRECT_INPUT;
+        case PRESENCE_OFF:
+            isPresenceOn = PRESENCE_OFF;
+            return CORRECT_INPUT;
+        default :
+            std::cout << "Invalid input, please try again" << std::endl;
+            return INCORRECT_INPUT;
+        }
+}
 int selectServerMenu()
 {
     switch (processUserInput())
@@ -201,7 +260,20 @@ int selectControlTemperatureMenu()
            changeTemperature(Control::DECREASE);
            return CORRECT_INPUT;
 
-       case STOP_SENSOR:
+       case STOP_TEMPERATURE_SENSOR:
+           return QUIT;
+
+       default:
+           std::cout << "Invalid input. Please try again." << std::endl;
+           return INCORRECT_INPUT;
+   }
+}
+
+int selectControlLightMenu()
+{
+   switch (processUserInput())
+   {
+       case STOP_LIGHT_SENSOR:
            return QUIT;
 
        default:
@@ -214,8 +286,13 @@ void process()
 {
     while(true)
     {
-        displayMenu();
+        int ret = selectPresenceMenu();
+        if(ret == CORRECT_INPUT) break;
+    }
 
+    while(true)
+    {
+        displayMenu();
         int ret = selectServerMenu();
 
         if(ret == QUIT) return;
@@ -224,27 +301,34 @@ void process()
 
     while(true)
     {
-        displayControlTemperatureMenu();
-
-        if (selectControlTemperatureMenu() == QUIT) return;
+        if(resourceType == "oic.r.temperaturesensor")
+        {
+            displayControlTemperatureMenu();
+            if (selectControlTemperatureMenu() == QUIT) return;
+        }
+        else if(resourceType == "core.light")
+        {
+            displayControlLightMenu();
+            if (selectControlLightMenu() == QUIT) return;
+        }
     }
 }
 
 int main(void)
 {
-    startPresence(3);
-
     try
     {
         process();
         server = NULL;
+
+        if(isPresenceOn == PRESENCE_ON)
+        {
+            stopPresence();
+        }
     }
     catch (const std::exception& e)
     {
         std::cout << "main exception  : " << e.what() << std::endl;
     }
-
     std::cout << "Stopping the Server" << std::endl;
 }
-
-

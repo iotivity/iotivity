@@ -121,7 +121,11 @@ void OICLog(LogLevel level, const char *tag, const char *logStr);
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OICLogv(LogLevel level, const char *tag, const char *format, ...);
+void OICLogv(LogLevel level, const char *tag, const char *format, ...)
+#if defined(__GNUC__)
+    __attribute__ ((format(printf, 3, 4)))
+#endif
+;
 
 /**
  * Output the contents of the specified buffer (in hex) with the specified priority level.
@@ -168,7 +172,11 @@ void OICLogBuffer(LogLevel level, const char *tag, const uint8_t *buffer, uint16
  * @param format - variadic log string
  */
 void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
-               PROGMEM const char *format, ...);
+               PROGMEM const char *format, ...)
+#if defined(__GNUC__)
+    __attribute__ ((format(printf, 4, 5)))
+#endif
+;
 #endif
 
 #ifdef TB_LOG

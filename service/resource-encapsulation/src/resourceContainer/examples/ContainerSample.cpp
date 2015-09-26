@@ -83,7 +83,7 @@ int main()
     cout << "Press enter to add SO bundle " << endl;
     getchar();
     std::map<string, string> bundleParams;
-    container->addBundle("oic.bundle.hueSample", "", "libHueBundle.so", bundleParams);
+    container->addBundle("oic.bundle.hueSample", "", "libHueBundle.so", "huesample", bundleParams);
 
     std::list<RCSBundleInfo *> bundles = container->listBundles();
     std::list<RCSBundleInfo *>::iterator bundleIt;
@@ -101,7 +101,7 @@ int main()
     std::map<string, string> resourceParams;
     cout << "Press enter to add SO bundle resource " << endl;
     getchar();
-    resourceParams["resourceType"] = "oic.light.control";
+    resourceParams["resourceType"] = "oic.r.light";
     resourceParams["address"] = "http://192.168.0.2/api/newdeveloper/lights/1";
     container->addResourceConfig("oic.bundle.hueSample", "", resourceParams);
     container->addResourceConfig("oic.bundle.hueSample", "", resourceParams);
@@ -148,9 +148,11 @@ int main()
     cout << "Press enter to add java bundle " << endl;
     getchar();
     bundleParams["libraryPath"] = ".";
-    bundleParams["activator"] = "org.iotivity.bundle.hue.HueBundleActivator";
+    std::string activator = "org.iotivity.bundle.hue.HueBundleActivator";
     container->addBundle("oic.bundle.hueJavaSample", "/hueJava",
-                         "../../../../../../../../service/resource-encapsulation/src/resourceContainer/examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar",
+                         "../../../../../../../../service/resource-encapsulation/src/resourceContainer/" \
+                         "examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar",
+                         activator,
                          bundleParams);
 
     bundles = container->listBundles();

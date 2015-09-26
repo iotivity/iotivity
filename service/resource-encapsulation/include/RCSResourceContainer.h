@@ -27,7 +27,6 @@
 #ifndef RCSRESOURCECONTAINER_H_
 #define RCSRESOURCECONTAINER_H_
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <map>
@@ -41,23 +40,13 @@ namespace OIC
     {
 
         /**
-         * @class   ResourceContainer
-         * @brief    This class provides APIs for managing the container and bundles in the container.
+         * @class   RCSResourceContainer
+         * @brief   This class provides APIs for managing the container and bundles in the container.
          *
          */
         class RCSResourceContainer
         {
             public:
-                /**
-                * Constructor
-                */
-                RCSResourceContainer();
-
-                /**
-                *virtual Destructor
-                */
-                virtual ~RCSResourceContainer();
-
                 /**
                  * API for starting the Container
                  *
@@ -102,10 +91,12 @@ namespace OIC
                  * @param bundleId Id of the Bundle
                  * @param bundleUri Uri of the bundle
                  * @param bundlePath Path of the bundle
+                 * @param activator Activation prefix for .so bundles, or activator class name for .jar bundles
                  * @param params  key-value pairs in string form for other Bundle parameters
                  *
                  */
-                virtual void addBundle(const std::string &bundleId, const std::string &bundleUri, const std::string &bundlePath,
+                virtual void addBundle(const std::string &bundleId, const std::string &bundleUri,
+                                       const std::string &bundlePath, const std::string &activator,
                                        std::map<std::string, std::string> params) = 0;
                 /**
                  * API for removing the bundle from the container
@@ -149,6 +140,15 @@ namespace OIC
                  *
                  */
                 static RCSResourceContainer *getInstance();
+
+            protected:
+                RCSResourceContainer();
+                virtual ~RCSResourceContainer();
+
+                RCSResourceContainer(const RCSResourceContainer &) = delete;
+                RCSResourceContainer(RCSResourceContainer &&) = delete;
+                RCSResourceContainer &operator=(const RCSResourceContainer &) const = delete;
+                RCSResourceContainer &operator=(RCSResourceContainer &&) const = delete;
         };
     }
 }

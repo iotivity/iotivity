@@ -21,7 +21,8 @@
 /**
  * @file
  *
- * This file contains the RCSDiscoveryManager class which provide APIs to discover the Resource in the network
+ * This file contains the RCSDiscoveryManager class which provides APIs to discover the
+ * Resource in the network
  *
  */
 
@@ -30,6 +31,8 @@
 
 #include <memory>
 #include <functional>
+
+#include "octypes.h"
 
 namespace OIC
 {
@@ -47,6 +50,44 @@ namespace OIC
         {
             public:
 
+            /**
+             * This class represents a discovery task.
+             *
+             * @note A discovery task will be automatically canceled when destroyed.
+             */
+                class DiscoveryTask
+                {
+                    public:
+
+                        /**
+                         * Cancel the task for discovery request. If cancel is called in duplicate, the request is ignored.
+                         */
+                        void cancel();
+
+                        /**
+                         * Return a boolean value whether the discovery request is canceled or not.
+                         */
+                        bool isCanceled();
+
+                        ~DiscoveryTask();
+
+                    public:
+
+                        DiscoveryTask(const DiscoveryTask&) = delete;
+                        DiscoveryTask(DiscoveryTask&&) = delete;
+                        DiscoveryTask& operator = (const DiscoveryTask&) const = delete;
+                        DiscoveryTask& operator = (DiscoveryTask&&) const = delete;
+
+                    private:
+
+                        explicit DiscoveryTask(unsigned int id) : m_id{ id } {};
+                    private:
+
+                        unsigned int m_id;
+                        friend class RCSDiscoveryManagerImpl;
+                };
+            public:
+
                 /**
                  * Typedef for callback of discoverResource APIs
                  *
@@ -56,32 +97,37 @@ namespace OIC
                                        ResourceDiscoveredCallback;
 
                 /**
-                 * @return Returns RCSDiscoveryManager instance.
+                 * @return RCSDiscoveryManager instance.
                  *
                  */
                 static RCSDiscoveryManager* getInstance();
 
                 /**
-                 * API for discovering the resource of Interest, regardless of URI and resource type
+                 * Discovering the resource of interest, regardless of uri and resource type.
+                 * Find resource matching request periodically until returned resource is disappeared or destroyed.
                  *
-                 * @param address A RCSAddress object
-                 * @param cb A callback to obtain discovered resource
+                 * @return Returned object must be received.
+                 *
+                 * @param address         A RCSAddress object
+                 * @param cb              A callback to obtain discovered resource
                  *
                  * @throws InvalidParameterException If cb is empty.
                  *
                  * @note The callback will be invoked in an internal thread.
                  *
-                 * @see RCSAddress
-                 *
                  */
-                void discoverResource(const RCSAddress& address, ResourceDiscoveredCallback cb);
+                std::unique_ptr<DiscoveryTask> discoverResource(const RCSAddress& address,
+                        ResourceDiscoveredCallback cb);
 
                 /**
-                 * API for discovering the resource of Interest, regardless of resource type
+                 * Discovering the resource of Interest, regardless of resource type.
+                 * Find resource matching request periodically until returned resource is disappeared or destroyed.
                  *
-                 * @param address A RCSAddress object
-                 * @param relativeURI The relative uri of resource to be searched
-                 * @param cb A callback to obtain discovered resource
+                 * @return Returned object must be received.
+                 *
+                 * @param address          A RCSAddress object
+                 * @param relativeURI      The relative uri of resource to be searched
+                 * @param cb               A callback to obtain discovered resource
                  *
                  * @throws InvalidParameterException If cb is empty.
                  *
@@ -90,15 +136,18 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                void discoverResource(const RCSAddress& address, const std::string& relativeURI,
-                                      ResourceDiscoveredCallback cb);
+                std::unique_ptr<DiscoveryTask> discoverResource(const RCSAddress& address,
+                        const std::string& relativeURI, ResourceDiscoveredCallback cb);
 
                 /**
-                 * API for discovering the resource of Interest by Resource type.
+                 * Discovering the resource of Interest by Resource type.
+                 * Find resource matching request periodically until returned resource is disappeared or destroyed.
                  *
-                 * @param address A RCSAddress object
-                 * @param resourceType Ressource Type
-                 * @param cb A callback to obtain discovered resource
+                 * @return Returned object must be received.
+                 *
+                 * @param address          A RCSAddress object
+                 * @param resourceType     Resource Type
+                 * @param cb               A callback to obtain discovered resource
                  *
                  * @throws InvalidParameterException If cb is empty.
                  *
@@ -107,16 +156,19 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                void discoverResourceByType(const RCSAddress& address, const std::string& resourceType,
-                                            ResourceDiscoveredCallback cb);
+                std::unique_ptr<DiscoveryTask> discoverResourceByType(const RCSAddress& address,
+                        const std::string& resourceType, ResourceDiscoveredCallback cb);
 
                 /**
-                 * API for discovering the resource of Interest by Resource type with provided relativeURI
+                 * Discovering the resource of Interest by Resource type with provided relativeURI.
+                 * Find resource matching request periodically until returned resource is disappeared or destroyed.
                  *
-                 * @param address A RCSAddress object
-                 * @param relativeURI The relative uri of resource to be searched
-                 * @param resourceType Ressource Type
-                 * @param cb A callback to obtain discovered resource
+                 * @return Returned object must be received.
+                 *
+                 * @param address          A RCSAddress object
+                 * @param relativeURI      The relative uri of resource to be searched
+                 * @param resourceType     Resource Type
+                 * @param cb               A callback to obtain discovered resource
                  *
                  * @throws InvalidParameterException If cb is empty.
                  *
@@ -125,14 +177,16 @@ namespace OIC
                  * @see RCSAddress
                  *
                  */
-                void discoverResourceByType(const RCSAddress& address, const std::string& relativeURI,
-                                            const std::string& resourceType,
-                                            ResourceDiscoveredCallback cb);
+                std::unique_ptr<DiscoveryTask>  discoverResourceByType(const RCSAddress& address,
+                        const std::string& relativeURI, const std::string& resourceType,
+                        ResourceDiscoveredCallback cb);
 
             private:
 
                 RCSDiscoveryManager() = default;
-                ~RCSDiscoveryManager() = default;
+                ~RCSDiscoveryManager()= default;;
+
+                friend class DiscoveryTask;
         };
     }
 }

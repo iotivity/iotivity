@@ -1260,6 +1260,104 @@ void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource
     OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, port));
 }
 
+bool OCResourcePayloadAddResourceType(OCResourcePayload* payload, const char* resourceType)
+{
+    if (!resourceType)
+    {
+        return false;
+    }
+
+    char* dup = OICStrdup(resourceType);
+
+    if (!dup)
+    {
+        return false;
+    }
+
+    if (!payload->types)
+    {
+        payload->types = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+
+        if (!payload->types)
+        {
+            OICFree(dup);
+            return false;
+        }
+
+        payload->types->value = dup;
+        return true;
+    }
+
+    else
+    {
+        OCStringLL* temp = payload->types;
+
+        while(temp->next)
+        {
+            temp = temp->next;
+        }
+
+        temp->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+        if (!temp->next)
+        {
+            OICFree(dup);
+            return false;
+        }
+
+        temp->next->value = dup;
+        return true;
+    }
+}
+
+bool OCResourcePayloadAddInterface(OCResourcePayload* payload, const char* interface)
+{
+    if (!interface)
+    {
+        return false;
+    }
+
+    char* dup = OICStrdup(interface);
+
+    if (!dup)
+    {
+        return false;
+    }
+
+    if (!payload->interfaces)
+    {
+        payload->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+
+        if (!payload->interfaces)
+        {
+            OICFree(dup);
+            return false;
+        }
+
+        payload->interfaces->value = dup;
+        return true;
+    }
+
+    else
+    {
+        OCStringLL* temp = payload->interfaces;
+
+        while(temp->next)
+        {
+            temp = temp->next;
+        }
+
+        temp->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+        if (!temp->next)
+        {
+            OICFree(dup);
+            return false;
+        }
+
+        temp->next->value = dup;
+        return true;
+    }
+}
+
 void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res)
 {
     if(!payload->resources)

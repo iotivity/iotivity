@@ -53,6 +53,6 @@ sampleconsumer = notimgr_sample_env.Program('sampleconsumer', 'sampleConsumer/Sa
 
 notificationmanager = notimgr_env.Program('notificationmanager', 'notificationManager/main.cpp')
 
-notimgr_sample_env.InstallTarget(sampleprovider, 'sampleprovider')
-notimgr_sample_env.InstallTarget(sampleconsumer, 'sampleconsumer')
-notimgr_env.InstallTarget(notificationmanager, 'notificationmanager')
+#notimgr_sample_env.InstallTarget(sampleprovider, 'sampleprovider')
+#notimgr_sample_env.InstallTarget(sampleconsumer, 'sampleconsumer')
+#notimgr_env.InstallTarget(notificationmanager, 'notificationmanager')

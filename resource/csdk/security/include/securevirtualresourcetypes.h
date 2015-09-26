@@ -43,6 +43,9 @@
 
 #include <stdint.h> // for uint8_t typedef
 #include <stdbool.h>
+#ifdef __WITH_X509__
+#include "byte_array.h"
+#endif /* __WITH_X509__ */
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,6 +62,8 @@ extern "C" {
 #define RESOURCE_NOT_FOUND_DEF        (1 << 4)
 #define POLICY_ENGINE_ERROR_DEF       (1 << 5)
 #define INVALID_PERIOD_DEF            (1 << 6)
+#define ACCESS_WAITING_DEF            (1 << 7)
+#define AMS_SERVICE_DEF               (1 << 8)
 #define REASON_MASK_DEF               (INSUFFICIENT_PERMISSION_DEF | \
                                        INVALID_PERIOD_DEF | \
                                        SUBJECT_NOT_FOUND_DEF | \
@@ -114,6 +119,10 @@ typedef enum
         | RESOURCE_NOT_FOUND_DEF,
     ACCESS_DENIED_POLICY_ENGINE_ERROR = ACCESS_DENIED_DEF
         | POLICY_ENGINE_ERROR_DEF,
+    ACCESS_WAITING_FOR_AMS = ACCESS_WAITING_DEF
+        | AMS_SERVICE_DEF,
+    ACCESS_DENIED_AMS_SERVICE_ERROR = ACCESS_DENIED
+        | AMS_SERVICE_DEF
 } SRMAccessResponse_t;
 
 /**
@@ -252,6 +261,10 @@ typedef char *OicUrn_t; //TODO is URN type defined elsewhere?
 
 typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
 
+
+#ifdef __WITH_X509__
+typedef struct OicSecCrl OicSecCrl_t;
+#endif /* __WITH_X509__ */
 
 /**
  * @brief   /oic/uuid (Universal Unique Identifier) data type.
@@ -430,6 +443,15 @@ struct OicSecSvc
     OicUuid_t               *owners;                //3:R:M:Y:oic.uuid
     OicSecSvc_t             *next;
 };
+
+#ifdef __WITH_X509__
+struct OicSecCrl
+{
+    uint16_t CrlId;
+    ByteArray ThisUpdate;   
+    ByteArray CrlData;      
+};
+#endif /* __WITH_X509__ */
 
 #ifdef __cplusplus
 }

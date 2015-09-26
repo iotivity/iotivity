@@ -21,6 +21,7 @@ BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth)
 BuildRequires:  pkgconfig(capi-appfw-app-common)
+BuildRequires:  pkgconfig(glib-2.0)
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
 
@@ -123,8 +124,6 @@ cp out/tizen/*/%{build_mode}/resource/examples/simpleserverHQ %{buildroot}%{_bin
 cp out/tizen/*/%{build_mode}/resource/examples/threadingsample %{buildroot}%{_bindir}
 
 cp out/tizen/*/%{build_mode}/lib*.so %{buildroot}%{_libdir}
-cp out/tizen/*/%{build_mode}/libSSMSDK.a %{buildroot}%{_libdir}
-cp out/tizen/*/%{build_mode}/libppm.a %{buildroot}%{_libdir}
 
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
@@ -133,9 +132,6 @@ cp -r resource/oc_logger/include/* %{buildroot}%{_includedir}
 cp resource/include/*.h %{buildroot}%{_includedir}
 
 cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
-cp service/soft-sensor-manager/SDK/cpp/include/*.h %{buildroot}%{_includedir}
-cp service/protocol-plugin/plugin-manager/src/*.h %{buildroot}%{_includedir}
-
 
 %post -p /sbin/ldconfig
 
@@ -153,12 +149,10 @@ cp service/protocol-plugin/plugin-manager/src/*.h %{buildroot}%{_includedir}
 %files service
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
-%{_libdir}/libBMISensor.so
-%{_libdir}/libDiscomfortIndexSensor.so
-%{_libdir}/libmosquittopp.so
-%{_libdir}/libpmimpl.so
-%{_libdir}/libSSMCore.so
+%{_libdir}/libBMISensorBundle.so
+%{_libdir}/libDISensorBundle.so
 %{_libdir}/libNotificationManager.so
+%{_libdir}/libTGMSDKLibrary.so
 %{_libdir}/libHueBundle.so
 %{_libdir}/librcs_client.so
 %{_libdir}/librcs_common.so
@@ -190,5 +184,4 @@ cp service/protocol-plugin/plugin-manager/src/*.h %{buildroot}%{_includedir}
 
 %files devel
 %defattr(-,root,root,-)
-%{_libdir}/lib*.a
 %{_includedir}/*

@@ -16,9 +16,34 @@
 #include <netdb.h>
 #include <signal.h>
 
-#include "global.h" 
-#include "debug.h" 
-#include "dtls.h" 
+#include "global.h"
+#include "debug.h"
+#include "dtls.h"
+
+/**
+ * @struct byte_array
+ *
+ * General purpose byte array structure.
+ *
+ * Contains pointer to array of bytes and it's length.
+ */
+
+typedef struct
+{
+    uint8_t *data;    /**< Pointer to the byte array */
+    size_t len;      /**< Data size */
+} byte_array;
+
+
+/**@def BYTE_ARRAY_INITIALIZER
+ *
+ * Initializes of existing byte array pointer to \a NULL.
+ */
+#undef BYTE_ARRAY_INITIALIZER
+#define BYTE_ARRAY_INITIALIZER {NULL, 0}
+
+#define DTLS_PRIVATE_KEY_SIZE        (32)
+#define DTLS_PUBLIC_KEY_SIZE         (64)
 
 #define DEFAULT_PORT 20220
 
@@ -26,6 +51,7 @@
 #define PSK_SERVER_IDENTITY  "Server_identity"
 #define PSK_DEFAULT_KEY      "secretPSK"
 #define PSK_OPTIONS          "i:s:k:"
+#define X509_OPTIONS         "x:r:u:"
 
 #ifdef __GNUC__
 #define UNUSED_PARAM __attribute__((unused))
@@ -46,7 +72,105 @@ static dtls_str output_file = { 0, NULL }; /* output file name */
 static dtls_context_t *dtls_context = NULL;
 static dtls_context_t *orig_dtls_context = NULL;
 
+#ifdef DTLS_X509
+#define CLIENT_CRT_LEN 293
+static const unsigned char g_client_certificate[CLIENT_CRT_LEN] = {
+        0x00, 0x01, 0x22,
+        0x30, 0x82, 0x01, 0x1e, 0x30, 0x81, 0xc4, 0xa0,
+        0x03, 0x02, 0x01, 0x01, 0x02, 0x02, 0x02, 0x38,
+        0x30, 0x0c, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce,
+        0x3d, 0x04, 0x03, 0x02, 0x05, 0x00, 0x30, 0x17,
+        0x31, 0x15, 0x30, 0x13, 0x06, 0x03, 0x55, 0x04,
+        0x03, 0x0c, 0x0c, 0x4c, 0x6f, 0x63, 0x61, 0x6c,
+        0x20, 0x49, 0x53, 0x53, 0x55, 0x45, 0x52, 0x30,
+        0x1e, 0x17, 0x0d, 0x31, 0x33, 0x30, 0x31, 0x30,
+        0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a,
+        0x17, 0x0d, 0x34, 0x39, 0x30, 0x31, 0x30, 0x31,
+        0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30,
+        0x17, 0x31, 0x15, 0x30, 0x13, 0x06, 0x03, 0x55,
+        0x04, 0x03, 0x0c, 0x0c, 0x4c, 0x6f, 0x63, 0x61,
+        0x6c, 0x20, 0x43, 0x4c, 0x49, 0x45, 0x4e, 0x54,
+        0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86,
+        0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a,
+        0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03,
+        0x42, 0x00, 0x04, 0xe3, 0xd1, 0x67, 0x1e, 0xdc,
+        0x46, 0xf4, 0x19, 0x50, 0x15, 0x2e, 0x3a, 0x2f,
+        0xd8, 0x68, 0x6b, 0x37, 0x32, 0x84, 0x9e, 0x83,
+        0x81, 0xbf, 0x25, 0x5d, 0xbb, 0x18, 0x07, 0x3c,
+        0xbd, 0xf3, 0xab, 0xd3, 0xbf, 0x53, 0x59, 0xc9,
+        0x1e, 0xce, 0x5b, 0x39, 0x6a, 0xe5, 0x60, 0xf3,
+        0x70, 0xdb, 0x66, 0xb6, 0x80, 0xcb, 0x65, 0x0b,
+        0x35, 0x2a, 0x62, 0x44, 0x89, 0x63, 0x64, 0x6f,
+        0x6f, 0xbd, 0xf0, 0x30, 0x0c, 0x06, 0x08, 0x2a,
+        0x86, 0x48, 0xce, 0x3d, 0x04, 0x03, 0x02, 0x05,
+        0x00, 0x03, 0x47, 0x00, 0x30, 0x44, 0x02, 0x20,
+        0x60, 0xdc, 0x45, 0x77, 0x7d, 0xcb, 0xc3, 0xb4,
+        0xba, 0x60, 0x5a, 0x2e, 0xe5, 0x4e, 0x19, 0x8b,
+        0x48, 0x8a, 0x87, 0xd4, 0x66, 0xb4, 0x1a, 0x86,
+        0x23, 0x67, 0xb8, 0xb6, 0x50, 0xfe, 0x4d, 0xde,
+        0x02, 0x20, 0x60, 0x68, 0x46, 0xff, 0x74, 0x11,
+        0xfb, 0x36, 0x13, 0xf4, 0xa7, 0x3d, 0xb7, 0x35,
+        0x79, 0x23, 0x29, 0x14, 0x6a, 0x28, 0x09, 0xff,
+        0x8c, 0x19, 0x26, 0xe3, 0x41, 0xc8, 0xe4, 0x13,
+        0xbc, 0x8e};
+//default client's key pair
+static const unsigned char x509_priv_key[] = {
+        0xf9, 0x42, 0xb4, 0x16, 0x89, 0x10, 0xf4, 0x07,
+        0x99, 0xb2, 0xe2, 0x9a, 0xed, 0xd4, 0x39, 0xb8,
+        0xca, 0xd4, 0x9d, 0x76, 0x11, 0x43, 0x3a, 0xac,
+        0x14, 0xba, 0x17, 0x9d, 0x3e, 0xbb, 0xbf, 0xbc};
 
+static const unsigned char x509_pub_key_x[] = {
+        0xe3, 0xd1, 0x67, 0x1e, 0xdc, 0x46, 0xf4, 0x19,
+        0x50, 0x15, 0x2e, 0x3a, 0x2f, 0xd8, 0x68, 0x6b,
+        0x37, 0x32, 0x84, 0x9e, 0x83, 0x81, 0xbf, 0x25,
+        0x5d, 0xbb, 0x18, 0x07, 0x3c, 0xbd, 0xf3, 0xab};
+
+static const unsigned char x509_pub_key_y[] = {
+        0xd3, 0xbf, 0x53, 0x59, 0xc9, 0x1e, 0xce, 0x5b,
+        0x39, 0x6a, 0xe5, 0x60, 0xf3, 0x70, 0xdb, 0x66,
+        0xb6, 0x80, 0xcb, 0x65, 0x0b, 0x35, 0x2a, 0x62,
+        0x44, 0x89, 0x63, 0x64, 0x6f, 0x6f, 0xbd, 0xf0};
+
+//default CA pub key
+static const unsigned char x509_ca_pub_x[] = {
+        0x57, 0x94, 0x7f, 0x98, 0x7a, 0x02, 0x67, 0x09,
+        0x25, 0xc1, 0xcb, 0x5a, 0xf5, 0x46, 0xfb, 0xad,
+        0xf7, 0x68, 0x94, 0x8c, 0xa7, 0xe3, 0xf0, 0x5b,
+        0xc3, 0x6b, 0x5c, 0x9b, 0xd3, 0x7d, 0x74, 0x12
+};
+
+static const unsigned char x509_ca_pub_y[] = {
+        0xce, 0x68, 0xbc, 0x55, 0xf5, 0xf8, 0x1b, 0x3d,
+        0xef, 0xed, 0x1f, 0x2b, 0xd2, 0x69, 0x5d, 0xcf,
+        0x79, 0x16, 0xa6, 0xbd, 0x97, 0x96, 0x27, 0x60,
+        0x5d, 0xd1, 0xb7, 0x93, 0xa2, 0x4a, 0x62, 0x4d
+};
+
+//default server's key pair
+static const unsigned char serv_pub_key_x[] = {
+        0x07, 0x88, 0x10, 0xdc, 0x62, 0xd7, 0xe6, 0x9b,
+        0x7c, 0xad, 0x6e, 0x78, 0xb0, 0x5f, 0x9a, 0x00,
+        0x11, 0x74, 0x2c, 0x8b, 0xaf, 0x09, 0x65, 0x7c,
+        0x86, 0x8e, 0x55, 0xcb, 0x39, 0x55, 0x72, 0xc6};
+
+static const unsigned char serv_pub_key_y[] = {
+        0x65, 0x71, 0xcd, 0x03, 0xdc, 0x2a, 0x4f, 0x46,
+        0x5b, 0x14, 0xc8, 0x27, 0x74, 0xab, 0xf4, 0x1f,
+        0xc1, 0x35, 0x0d, 0x42, 0xbc, 0xc2, 0x9f, 0xb5,
+        0xc1, 0x79, 0xb6, 0x8b, 0xca, 0xdb, 0xff, 0x82};
+
+
+static unsigned char x509_client_cert[DTLS_MAX_CERT_SIZE];
+static size_t x509_client_cert_len = 0;
+static unsigned char x509_client_priv[DTLS_PRIVATE_KEY_SIZE+1];
+static size_t x509_client_priv_is_set = 0;
+static unsigned char x509_ca_pub[DTLS_PUBLIC_KEY_SIZE+1];
+static size_t x509_ca_pub_is_set = 0;
+
+static int x509_info_from_file = 0;
+#endif /*DTLS_X509*/
+#ifdef DTLS_ECC
 static const unsigned char ecdsa_priv_key[] = {
 			0x41, 0xC1, 0xCB, 0x6B, 0x51, 0x24, 0x7A, 0x14,
 			0x43, 0x21, 0x43, 0x5B, 0x7A, 0x80, 0xE7, 0x14,
@@ -65,7 +189,8 @@ static const unsigned char ecdsa_pub_key_y[] = {
 			0xE9, 0x3F, 0x98, 0x72, 0x09, 0xDA, 0xED, 0x0B,
 			0x4F, 0xAB, 0xC3, 0x6F, 0xC7, 0x72, 0xF8, 0x29};
 
-#ifdef DTLS_PSK
+#endif /*DTLS_ECC*/
+#if defined(DTLS_PSK) || defined(DTLS_X509)
 ssize_t
 read_from_file(char *arg, unsigned char *buf, size_t max_buf_len) {
   FILE *f;
@@ -87,11 +212,11 @@ read_from_file(char *arg, unsigned char *buf, size_t max_buf_len) {
     result += bytes_read;
     max_buf_len -= bytes_read;
   }
-
   fclose(f);
   return result;
 }
-
+#endif /*DTLS_PSK||DTLS_X509*/
+#ifdef DTLS_PSK
 /* The PSK information for DTLS */
 #define PSK_ID_MAXLEN 256
 #define PSK_MAXLEN 256
@@ -149,13 +274,14 @@ static int
 get_ecdsa_key(struct dtls_context_t *ctx,
 	      const session_t *session,
 	      const dtls_ecc_key_t **result) {
+    (void)ctx;
+    (void)session;
   static const dtls_ecc_key_t ecdsa_key = {
     .curve = DTLS_ECDH_CURVE_SECP256R1,
     .priv_key = ecdsa_priv_key,
     .pub_key_x = ecdsa_pub_key_x,
     .pub_key_y = ecdsa_pub_key_y
   };
-
   *result = &ecdsa_key;
   return 0;
 }
@@ -166,9 +292,114 @@ verify_ecdsa_key(struct dtls_context_t *ctx,
 		 const unsigned char *other_pub_x,
 		 const unsigned char *other_pub_y,
 		 size_t key_size) {
+  (void)ctx;
+  (void)session;
+  (void)other_pub_x;
+  (void)other_pub_y;
+  (void)key_size;
   return 0;
 }
+
 #endif /* DTLS_ECC */
+
+#ifdef DTLS_X509
+static int
+get_x509_key(struct dtls_context_t *ctx,
+          const session_t *session,
+          const dtls_ecc_key_t **result) {
+    (void)ctx;
+    (void)session;
+  static dtls_ecc_key_t ecdsa_key = {
+    .curve = DTLS_ECDH_CURVE_SECP256R1,
+    .priv_key = x509_priv_key,
+    .pub_key_x = x509_pub_key_x,
+    .pub_key_y = x509_pub_key_y
+  };
+  if (x509_info_from_file)
+      ecdsa_key.priv_key = x509_client_priv;
+  *result = &ecdsa_key;
+  return 0;
+}
+
+static int
+get_x509_cert(struct dtls_context_t *ctx,
+        const session_t *session,
+        const unsigned char **cert,
+        size_t *cert_size)
+{
+    (void)ctx;
+    (void)session;
+    if (x509_info_from_file)
+    {
+        *cert = x509_client_cert;
+        *cert_size = x509_client_cert_len;
+    }
+    else
+    {
+        *cert = g_client_certificate;
+        *cert_size = CLIENT_CRT_LEN;
+    }
+
+    return 0;
+}
+
+int check_certificate(byte_array cert_der_code, byte_array ca_public_key)
+{
+    (void)cert_der_code;
+    (void)ca_public_key;
+    return 0;
+}
+
+static int verify_x509_cert(struct dtls_context_t *ctx, const session_t *session,
+                                  const unsigned char *cert, size_t cert_size,
+                                  unsigned char *x,
+                                  size_t x_size,
+                                  unsigned char *y,
+                                  size_t y_size)
+{
+    int ret;
+    const unsigned char *ca_pub_x;
+    const unsigned char *ca_pub_y;
+    byte_array cert_der_code = BYTE_ARRAY_INITIALIZER;
+    byte_array ca_public_key = BYTE_ARRAY_INITIALIZER;
+    unsigned char ca_pub_key[DTLS_PUBLIC_KEY_SIZE];
+    (void)ctx;
+    (void)session;
+
+    if (x509_info_from_file)
+    {
+        ca_pub_x = x509_ca_pub;
+        ca_pub_y = x509_ca_pub + DTLS_PUBLIC_KEY_SIZE/2;
+    }
+    else
+    {
+        ca_pub_x = x509_ca_pub_x;
+        ca_pub_y = x509_ca_pub_y;
+    }
+
+    cert_der_code.data = (uint8_t *)cert;
+    cert_der_code.len = cert_size;
+
+    ca_public_key.len = DTLS_PUBLIC_KEY_SIZE;
+    ca_public_key.data = ca_pub_key;
+    memcpy(ca_public_key.data, ca_pub_x, DTLS_PUBLIC_KEY_SIZE/2);
+    memcpy(ca_public_key.data + DTLS_PUBLIC_KEY_SIZE/2, ca_pub_y, DTLS_PUBLIC_KEY_SIZE/2);
+
+    memcpy(x, serv_pub_key_x, x_size);
+    memcpy(y, serv_pub_key_y, y_size);
+
+    ret = (int) check_certificate(cert_der_code, ca_public_key);
+
+    return -ret;
+}
+
+static int is_x509_active(struct dtls_context_t *ctx)
+{
+    (void)ctx;
+    return 0;
+}
+
+#endif /* DTLS_X509 */
 
 static void
 try_send(struct dtls_context_t *ctx, session_t *dst) {
@@ -190,6 +421,8 @@ static int
 read_from_peer(struct dtls_context_t *ctx, 
 	       session_t *session, uint8 *data, size_t len) {
   size_t i;
+  (void)ctx;
+  (void)session;
   for (i = 0; i < len; i++)
     printf("%c", data[i]);
   return 0;
@@ -295,16 +528,24 @@ usage( const char *program, const char *version) {
 
   fprintf(stderr, "%s v%s -- DTLS client implementation\n"
 	  "(c) 2011-2014 Olaf Bergmann <bergmann@tzi.org>\n\n"
+	  "usage: %s"
 #ifdef DTLS_PSK
-	  "usage: %s [-i file] [-s file] [-k file] [-o file] [-p port] [-v num] [-c num] addr [port]\n"
-#else /*  DTLS_PSK */
-	  "usage: %s [-o file] [-p port] [-v num] [-c num] addr [port]\n"
+          " [-i file] [-s file] [-k file]"
 #endif /* DTLS_PSK */
+#ifdef DTLS_X509
+          " [-x file] [-r file] [-u file]"
+#endif /* DTLS_X509 */
+          " [-o file] [-p port] [-v num] [-c num] addr [port]\n"
 #ifdef DTLS_PSK
 	  "\t-i file\t\tread PSK Client identity from file\n"
 	  "\t-s file\t\tread PSK Server identity from file\n"
 	  "\t-k file\t\tread pre-shared key from file\n"
 #endif /* DTLS_PSK */
+#ifdef DTLS_X509
+          "\t-x file\tread Client certificate from file\n"
+          "\t-r file\tread Client private key from file\n"
+          "\t-u file\tread CA public key from file\n"
+#endif /* DTLS_X509 */
 	  "\t-o file\t\toutput received data to this file (use '-' for STDOUT)\n"
 	  "\t-p port\t\tlisten on specified port (default is %d)\n"
 	  "\t-v num\t\tverbosity level (default: 3)\n"
@@ -325,8 +566,15 @@ static dtls_handler_t cb = {
 #endif /* DTLS_PSK */
 #ifdef DTLS_ECC
   .get_ecdsa_key = get_ecdsa_key,
-  .verify_ecdsa_key = verify_ecdsa_key
+  .verify_ecdsa_key = verify_ecdsa_key,
 #endif /* DTLS_ECC */
+#ifdef DTLS_X509
+  .get_x509_key = get_x509_key,
+  .verify_x509_cert = verify_x509_cert,
+  .get_x509_cert = get_x509_cert,
+  .is_x509_active = is_x509_active,
+#endif /* DTLS_X509 */
+
 };
 
 #define DTLS_CLIENT_CMD_CLOSE "client:close"
@@ -365,7 +613,7 @@ main(int argc, char **argv) {
   memcpy(psk_key, PSK_DEFAULT_KEY, psk_key_length);
 #endif /* DTLS_PSK */
 
-  while ((opt = getopt(argc, argv, "p:o:v:c:" PSK_OPTIONS)) != -1) {
+  while ((opt = getopt(argc, argv, "p:o:v:c:" PSK_OPTIONS X509_OPTIONS)) != -1) {
     switch (opt) {
 #ifdef DTLS_PSK
     case 'i' : {
@@ -396,6 +644,47 @@ main(int argc, char **argv) {
       break;
     }
 #endif /* DTLS_PSK */
+#ifdef DTLS_X509
+    case 'x' :
+    {
+      ssize_t result = read_from_file(optarg, x509_client_cert, DTLS_MAX_CERT_SIZE);
+      if (result < 0)
+      {
+          dtls_warn("Cannot read Client certificate. Using default\n");
+      }
+      else
+      {
+          x509_client_cert_len = result;
+      }
+      break;
+    }
+    case 'r' :
+    {
+      ssize_t result = read_from_file(optarg, x509_client_priv, DTLS_PRIVATE_KEY_SIZE+1);
+      if (result < 0)
+      {
+          dtls_warn("Cannot read Client private key. Using default\n");
+      }
+      else
+      {
+          x509_client_priv_is_set = result;
+      }
+      break;
+    }
+    case 'u' :
+    {
+      ssize_t result = read_from_file(optarg, x509_ca_pub, DTLS_PUBLIC_KEY_SIZE+1);
+      if (result < 0)
+      {
+          dtls_warn("Cannot read CA public key. Using default\n");
+      }
+      else
+      {
+          x509_ca_pub_is_set = result;
+      }
+      break;
+    }
+#endif /* DTLS_X509 */
     case 'p' :
       strncpy(port_str, optarg, NI_MAXSERV-1);
       port_str[NI_MAXSERV - 1] = '\0';
@@ -403,7 +692,7 @@ main(int argc, char **argv) {
     case 'o' :
       output_file.length = strlen(optarg);
       output_file.s = (unsigned char *)malloc(output_file.length + 1);
-      
+
       if (!output_file.s) {
 	dtls_crit("cannot set output file: insufficient memory\n");
 	exit(-1);
@@ -444,12 +733,29 @@ main(int argc, char **argv) {
   }
 
   dtls_set_log_level(log_level);
-  
+
   if (argc <= optind) {
     usage(argv[0], dtls_package_version());
     exit(1);
   }
-  
+
+#ifdef DTLS_X509
+  if (x509_client_cert_len && x509_client_priv_is_set && x509_ca_pub_is_set)
+  {
+      x509_info_from_file = 1;
+  }
+  else if(!(x509_client_cert_len || x509_client_priv_is_set || x509_ca_pub_is_set))
+  {
+      x509_info_from_file = 0;
+  }
+  else
+  {
+      fprintf(stderr,"please set -x, -r, -u options simultaneously");
+      usage(argv[0], dtls_package_version());
+      exit(1);
+  }
+#endif /* DTLS_X509 */
+
   memset(&dst, 0, sizeof(session_t));
   /* resolve destination address where server should be sent */
   res = resolve_address(argv[optind++], &dst.addr.sa);

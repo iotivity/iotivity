@@ -21,12 +21,11 @@
 #ifndef RH_HOSTINGOBJECT_H_
 #define RH_HOSTINGOBJECT_H_
 
+#include "logger.h"
+
 #include "RCSRemoteResourceObject.h"
 #include "RCSResourceObject.h"
 #include "RequestObject.h"
-#include "ResourceBroker.h"
-#include "ResourceCacheManager.h"
-#include "PrimitiveResource.h"
 
 namespace OIC
 {
@@ -43,6 +42,8 @@ private:
     typedef std::shared_ptr<RequestObject> RequestObjectPtr;
     typedef std::shared_ptr<PrimitiveResource> PrimiteveResourcePtr;
 
+public:
+    typedef std::shared_ptr<HostingObject> Ptr;
     typedef std::function<void(ResourceState)> BrokerCallback;
     typedef std::function<void(const RCSResourceAttributes &)> CacheCallback;
     typedef std::function<void()> DestroyedCallback;
@@ -52,7 +53,7 @@ private:
 
 public:
     HostingObject();
-    ~HostingObject() = default;
+    ~HostingObject();
 
     void initializeHostingObject(RemoteObjectPtr rResource, DestroyedCallback destroyCB);
 

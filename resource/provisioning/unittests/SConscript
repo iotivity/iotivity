@@ -47,7 +47,7 @@ provisiontests_env.PrependUnique(CPPPATH = [
 		])
 
 provisiontests_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-provisiontests_env.AppendUnique(LIBS = ['-lpthread'])
+provisiontests_env.AppendUnique(LIBS = ['-lpthread', '-ldl'])
 provisiontests_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 provisiontests_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
 provisiontests_env.PrependUnique(LIBS = [
@@ -64,6 +64,10 @@ provisiontests_env.PrependUnique(LIBS = [
 
 if env.get('SECURED') == '1':
     provisiontests_env.AppendUnique(LIBS = ['tinydtls'])
+if env.get('DTLS_WITH_X509') == '1':
+	provisiontests_env.AppendUnique(LIBS = ['CKManager'])
+	provisiontests_env.AppendUnique(LIBS = ['asn1'])
+
 
 if env.get('LOGGING'):
 	provisiontests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

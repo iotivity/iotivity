@@ -63,7 +63,7 @@ void HueSampleBundleActivator::deactivateBundle()
 {
     std::cout << "HueSampleBundle::deactivateBundle called" << std::endl;
 
-    std::vector<BundleResource *>::iterator itor;
+    std::vector< BundleResource::Ptr >::iterator itor;
     for (itor = m_vecResources.begin(); itor != m_vecResources.end();)
     {
         destroyResource(*itor);
@@ -75,10 +75,10 @@ void HueSampleBundleActivator::deactivateBundle()
 void HueSampleBundleActivator::createResource(resourceInfo resourceInfo)
 {
 
-    if (resourceInfo.resourceType == "oic.light.control")
+    if (resourceInfo.resourceType == "oic.r.light")
     {
         static int lightCount = 1;
-        HueLight *hueLight = new HueLight(m_connector, resourceInfo.address);
+        BundleResource::Ptr hueLight = std::make_shared< HueLight >(m_connector, resourceInfo.address);
         resourceInfo.uri = "/hue/light/" + std::to_string(lightCount++);
         std::cout << "Registering resource " << resourceInfo.uri << std::endl;
         hueLight->m_bundleId = m_bundleId;
@@ -91,11 +91,11 @@ void HueSampleBundleActivator::createResource(resourceInfo resourceInfo)
     }
 }
 
-void HueSampleBundleActivator::destroyResource(BundleResource *pBundleResource)
+void HueSampleBundleActivator::destroyResource(BundleResource::Ptr pBundleResource)
 {
     std::cout << "HueSampleBundle::destroyResource called" << pBundleResource->m_uri << std::endl;
 
-    std::vector< BundleResource * >::iterator itor;
+    std::vector< BundleResource::Ptr >::iterator itor;
 
     itor = std::find(m_vecResources.begin(), m_vecResources.end(), pBundleResource);
 
@@ -106,25 +106,25 @@ void HueSampleBundleActivator::destroyResource(BundleResource *pBundleResource)
     }
 }
 
-extern "C" void externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
-                                       std::string bundleId)
+extern "C" void huesample_externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
+        std::string bundleId)
 {
     bundle = new HueSampleBundleActivator();
     bundle->activateBundle(resourceContainer, bundleId);
 }
 
-extern "C" void externalDeactivateBundle()
+extern "C" void huesample_externalDeactivateBundle()
 {
     bundle->deactivateBundle();
     delete bundle;
 }
 
-extern "C" void externalCreateResource(resourceInfo resourceInfo)
+extern "C" void huesample_externalCreateResource(resourceInfo resourceInfo)
 {
     bundle->createResource(resourceInfo);
 }
 
-extern "C" void externalDestroyResource(BundleResource *pBundleResource)
+extern "C" void huesample_externalDestroyResource(BundleResource::Ptr pBundleResource)
 {
     bundle->destroyResource(pBundleResource);
 }

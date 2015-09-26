@@ -118,6 +118,9 @@ void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
         uint16_t port);
 void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res);
+bool OCResourcePayloadAddResourceType(OCResourcePayload* payload, const char* resourceType);
+bool OCResourcePayloadAddInterface(OCResourcePayload* payload, const char* interface);
+
 size_t OCDiscoveryPayloadGetResourceCount(OCDiscoveryPayload* payload);
 OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, size_t index);
 

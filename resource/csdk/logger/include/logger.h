@@ -105,7 +105,11 @@ typedef enum {
      * @param tag    - Module name
      * @param format - variadic log string
      */
-    void OCLogv(LogLevel level, const char * tag, const char * format, ...);
+    void OCLogv(LogLevel level, const char * tag, const char * format, ...)
+#if defined(__GNUC__)
+    __attribute__ ((format(printf, 3, 4)))
+#endif
+    ;
 
     /**
      * Output a log string with the specified priority level.
@@ -160,7 +164,11 @@ typedef enum {
      * @param tag    - Module name
      * @param format - variadic log string
      */
-    void OCLogv(LogLevel level, const char * tag, const char * format, ...);
+    void OCLogv(LogLevel level, const char * tag, const char * format, ...)
+#if defined(__GNUC__)
+    __attribute__ ((format(printf, 3, 4)))
+#endif
+    ;
 #endif
 
 #ifdef TB_LOG

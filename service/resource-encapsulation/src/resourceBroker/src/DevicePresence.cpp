@@ -60,7 +60,7 @@ namespace OIC
                 OC_LOG_V(DEBUG, BROKER_TAG, "subscribe Presence");
                 presenceSubscriber
                 = PresenceSubscriber(address, BROKER_TRANSPORT, pSubscribeRequestCB);
-            } catch(PlatformException &e)
+            } catch(RCSPlatformException &e)
             {
                 OC_LOG_V(DEBUG, BROKER_TAG,
                         "exception in subscribe Presence %s", e.getReason().c_str());

@@ -518,12 +518,27 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
         OC_LOG(INFO, TAG, "OCProvisionPairwiseDevices : Invalid key size");
         return OC_STACK_INVALID_PARAM;
     }
+
+    OC_LOG(DEBUG, TAG, "Checking link in DB");
+    bool linkExists = true;
+    OCStackResult res = PDMIsLinkExists(&pDev1->doxm->deviceID, &pDev2->doxm->deviceID, &linkExists);
+    if(res != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "Internal Error Occured");
+        return res;
+    }
+    if (linkExists)
+    {
+        OC_LOG(ERROR, TAG, "Link already exists");
+        return OC_STACK_INVALID_PARAM;
+    }
+
     int noOfResults = 2; // Initial Value
-    if (NULL!=pDev1Acl)
+    if (NULL != pDev1Acl)
     {
         ++noOfResults;
     }
-    if (NULL!=pDev2Acl)
+    if (NULL != pDev2Acl)
     {
        ++noOfResults;
     }
@@ -546,7 +561,7 @@ OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_
     link->resultCallback = resultCallback;
     link->currentCountResults = 0;
     link->resArr = (OCProvisionResult_t*) OICMalloc(sizeof(OCProvisionResult_t)*noOfResults);
-    OCStackResult res = SRPProvisionCredentials(link, type, keySize,
+    res = SRPProvisionCredentials(link, type, keySize,
                                      pDev1, pDev2, &ProvisionCredsCB);
     if (res != OC_STACK_OK)
     {
@@ -673,3 +688,23 @@ void OCDeleteACLList(OicSecAcl_t* pAcl)
 {
     DeleteACLList(pAcl);
 }
+
+
+#ifdef __WITH_X509__
+/**
+ * this function sends CRL information to resource.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] crl CRL to provision.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionCRL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecCrl_t *crl,
+                             OCProvisionResultCB resultCallback)
+{
+    return SRPProvisionCRL(ctx, selectedDeviceInfo, crl, resultCallback);
+}
+#endif // __WITH_X509__
+

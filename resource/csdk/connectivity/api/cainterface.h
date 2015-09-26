@@ -35,6 +35,9 @@
 #ifdef __WITH_DTLS__
 #include "ocsecurityconfig.h"
 #endif
+#ifdef __WITH_X509__
+#include "pki.h"
+#endif //__WITH_X509__
 
 #ifdef __cplusplus
 extern "C"
@@ -64,6 +67,31 @@ typedef void (*CAResponseCallback)(const CAEndpoint_t *object,
  */
 typedef void (*CAErrorCallback)(const CAEndpoint_t *object,
                                 const CAErrorInfo_t *errorInfo);
+#ifdef RA_ADAPTER
+
+/**
+ * Callback for bound JID
+ * @param[out]   jid           Boud Jabber Identifier.
+ */
+typedef void (*CAJidBoundCallback)(char *jid);
+
+/**
+ * CA Remote Access information for XMPP Client
+ *
+ */
+typedef struct
+{
+    char *hostName;     /**< XMPP server hostname */
+    uint16_t port;      /**< XMPP server serivce port */
+    char *xmppDomain;  /**< XMPP login domain */
+    char *userName;     /**< login username */
+    char *password;     /**< login password */
+    char *resource;     /**< specific resource for login */
+    char *userJid;     /**< specific JID for login */
+    CAJidBoundCallback jidBoundCallback;  /**< callback when JID bound */
+} CARAInfo_t;
+
+#endif //RA_ADAPTER
 
 #ifdef __WITH_DTLS__
 
@@ -86,6 +114,44 @@ typedef struct
  */
 typedef void (*CAGetDTLSCredentialsHandler)(CADtlsPskCredsBlob_t **credInfo);
 #endif //__WITH_DTLS__
+
+#ifdef __WITH_X509__
+/**
+ * Binary structure containing certificate chain and certificate credentials
+ * for this device.
+ */
+typedef struct
+{
+    // certificate message  for DTLS
+    unsigned char certificateChain[MAX_CERT_MESSAGE_LEN];
+    // length of the certificate message
+    uint32_t  certificateChainLen;
+    // number of certificates in  certificate message
+    uint8_t   chainLen;
+    // x component of EC public key
+    uint8_t   rootPublicKeyX[PUBLIC_KEY_SIZE / 2];
+    // y component of EC public key
+    uint8_t   rootPublicKeyY[PUBLIC_KEY_SIZE / 2];
+    // EC private key
+    uint8_t   devicePrivateKey[PRIVATE_KEY_SIZE];
+
+} CADtlsX509Creds_t;
+
+/**
+ * @brief   Callback function type for getting certificate credentials.
+ * @param   credInfo          [OUT] Certificate credentials info. Handler has to allocate new memory for
+ *                                  credInfo which is then freed by CA
+ * @return  NONE
+ */
+typedef int (*CAGetDTLSX509CredentialsHandler)(CADtlsX509Creds_t *credInfo);
+/**
+ * @brief   Callback function type for getting CRL.
+ * @param   crlInfo          [OUT] Certificate credentials info. Handler has to allocate new memory for
+ *                                  credInfo which is then freed by CA
+ * @return  NONE
+ */
+typedef void (*CAGetDTLSCrlHandler)(ByteArray crlInfo);
+#endif //__WITH_X509__
 
 /**
  * Initialize the connectivity abstraction module.
@@ -138,6 +204,21 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
  */
 CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSCredentials);
 #endif //__WITH_DTLS__
+
+#ifdef __WITH_X509__
+/**
+ * @brief   Register callback to get DTLS Cert credentials.
+ * @param   GetCertCredentials   [IN] GetCert Credetials callback
+ * @return  #CA_STATUS_OK
+ */
+CAResult_t CARegisterDTLSX509CredentialsHandler(CAGetDTLSX509CredentialsHandler GetX509Credentials);
+/**
+ * @brief   Register callback to get CRL.
+ * @param   GetCrl   [IN] GetCrl callback
+ * @return  #CA_STATUS_OK
+ */
+CAResult_t CARegisterDTLSCrlHandler(CAGetDTLSCrlHandler GetCrl);
+#endif //__WITH_X509__
 
 /**
  * Create an endpoint description.

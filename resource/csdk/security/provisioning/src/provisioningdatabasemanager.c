@@ -20,10 +20,10 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include <sqlite3.h>
 #include <string.h>
 #include <stdlib.h>
 
+#include "sqlite3.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "provisioningdatabasemanager.h"
@@ -56,7 +56,7 @@
  * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR,OC_STACK_ERROR);
  */
 #define PDM_VERIFY_SQLITE_OK(tag, arg, logLevel, retValue) do{ if (SQLITE_OK != (arg)) \
-            { OC_LOG_V((logLevel), tag, ("Error in " #arg ", Error Message: %s"), \
+            { OC_LOG_V((logLevel), tag, "Error in " #arg ", Error Message: %s", \
                sqlite3_errmsg(g_db)); return retValue; }}while(0)
 
 #define PDM_SQLITE_TRANSACTION_BEGIN "BEGIN TRANSACTION;"
@@ -243,37 +243,34 @@ static OCStackResult getIdForUUID(const OicUuid_t *UUID , int *id)
 /**
  * Function to check duplication of device's Device ID.
  */
-bool PDMIsDuplicateDevice(const OicUuid_t* UUID)
+OCStackResult PDMIsDuplicateDevice(const OicUuid_t* UUID, bool *result)
 {
-    if(gInit)
+
+    CHECK_PDM_INIT(TAG);
+    if (NULL == UUID || NULL == result)
     {
-        if (NULL == UUID)
-        {
-            OC_LOG(ERROR, TAG, "UUID is NULL");
-            return true;
-        }
-
-        sqlite3_stmt *stmt = 0;
-        int res = 0;
-        res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_ID, strlen(PDM_SQLITE_GET_ID) + 1, &stmt, NULL);
-        PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
-
-        res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, UUID, UUID_LENGTH, SQLITE_STATIC);
-        PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
-
-        OC_LOG(DEBUG, TAG, "Binding Done");
-
-        while (SQLITE_ROW == sqlite3_step(stmt))
-        {
-            OC_LOG(ERROR, TAG, "UUID is duplicated");
-            sqlite3_finalize(stmt);
-            return true;
-        }
-        sqlite3_finalize(stmt);
-        return false;
+        OC_LOG(ERROR, TAG, "UUID or result is NULL");
+        return OC_STACK_INVALID_PARAM;
     }
-    OC_LOG(ERROR, TAG, "PDB is not initialized");
-    return true; // return true will stop futher process.
+    sqlite3_stmt *stmt = 0;
+    int res = 0;
+    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_ID, strlen(PDM_SQLITE_GET_ID) + 1, &stmt, NULL);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
+    res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, UUID, UUID_LENGTH, SQLITE_STATIC);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
+    OC_LOG(DEBUG, TAG, "Binding Done");
+    bool retValue = false;
+    while(SQLITE_ROW == sqlite3_step(stmt))
+    {
+        OC_LOG(INFO, TAG, "Duplicated UUID");
+        retValue = true;
+    }
+
+    sqlite3_finalize(stmt);
+    *result = retValue;
+    return OC_STACK_OK;
 }
 
 /**
@@ -679,4 +676,51 @@ void PDMDestoryStaleLinkList(OCPairList_t* ptr)
             OICFree(tmp1);
         }
     }
+}
+
+OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* uuidOfDevice2,
+                               bool* result)
+{
+    CHECK_PDM_INIT(TAG);
+    if (NULL == uuidOfDevice1 || NULL == uuidOfDevice2 || NULL == result)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    int id1 = 0;
+    int id2 = 0;
+    if (OC_STACK_OK != getIdForUUID(uuidOfDevice1, &id1))
+    {
+        OC_LOG(ERROR, TAG, "Requested value not found");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (OC_STACK_OK != getIdForUUID(uuidOfDevice2, &id2))
+    {
+        OC_LOG(ERROR, TAG, "Requested value not found");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    ASCENDING_ORDER(id1, id2);
+
+    sqlite3_stmt *stmt = 0;
+    int res = 0;
+    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_LINKED_DEVICES,
+                              strlen(PDM_SQLITE_GET_LINKED_DEVICES) + 1, &stmt, NULL);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
+    res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id1);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
+    res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_SECOND, id2);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
+    bool ret = false;
+    while(SQLITE_ROW == sqlite3_step(stmt))
+    {
+        OC_LOG(INFO, TAG, "Link already exists between devices");
+        ret = true;
+    }
+    sqlite3_finalize(stmt);
+    *result = ret;
+    return OC_STACK_OK;
 }

@@ -37,8 +37,12 @@
 #include "RCSResourceContainer.h"
 #include "ResourceContainerBundleAPI.h"
 #include "ResourceContainerImpl.h"
+#include "RemoteResourceUnit.h"
 
 #include "RCSResourceObject.h"
+#include "RCSRemoteResourceObject.h"
+
+#include "ResourceContainerTestSimulator.h"
 
 using namespace std;
 using namespace testing;
@@ -72,20 +76,17 @@ void getCurrentPath(std::string *pPath)
 class TestBundleResource: public BundleResource
 {
     public:
-        string getAttribute(string attributeName)
+        virtual void initAttributes() { }
+
+        virtual void handleSetAttributesRequest(RCSResourceAttributes &attr)
         {
-            return "test";
+            BundleResource::setAttributes(attr);
         }
-        ;
-        void setAttribute(string attributeName, string value)
+
+        virtual RCSResourceAttributes &handleGetAttributesRequest()
         {
+            return BundleResource::getAttributes();
         }
-        ;
-        void initAttributes()
-        {
-            BundleResource::setAttribute("attri", "test");
-        }
-        ;
 };
 
 class ResourceContainerTest: public TestWithMock
@@ -109,14 +110,15 @@ class ResourceContainerTest: public TestWithMock
 TEST_F(ResourceContainerTest, BundleRegisteredWhenContainerStartedWithValidConfigFile)
 {
     m_pResourceContainer->startContainer(m_strConfigPath);
-
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
+    cout << "now checking for bunlde ids " << endl;
     EXPECT_STREQ("oic.bundle.test",
                  (*m_pResourceContainer->listBundles().begin())->getID().c_str());
     EXPECT_STREQ("libTestBundle.so",
                  (*m_pResourceContainer->listBundles().begin())->getPath().c_str());
     EXPECT_STREQ("1.0.0", (*m_pResourceContainer->listBundles().begin())->getVersion().c_str());
 
+    cout << "Now stopping container." << endl;
     m_pResourceContainer->stopContainer();
 }
 
@@ -196,7 +198,7 @@ TEST_F(ResourceContainerTest, AddNewSoBundleToContainer)
     std::list<RCSBundleInfo *> bundles;
 
     bundles = m_pResourceContainer->listBundles();
-    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", bundleParams);
+    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", "test", bundleParams);
 
     EXPECT_EQ(bundles.size() + 1, m_pResourceContainer->listBundles().size());
     EXPECT_TRUE(((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isLoaded());
@@ -218,9 +220,9 @@ TEST_F(ResourceContainerTest, AddBundleAlreadyRegistered)
     std::map<string, string> bundleParams;
     std::list<RCSBundleInfo *> bundles;
 
-    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", bundleParams);
+    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", "test", bundleParams);
     bundles = m_pResourceContainer->listBundles();
-    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", bundleParams);
+    m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", "test",  bundleParams);
 
     EXPECT_EQ(bundles.size(), m_pResourceContainer->listBundles().size());
 }
@@ -229,7 +231,7 @@ TEST_F(ResourceContainerTest, AddAndRemoveSoBundleResource)
 {
     std::list<string> resources;
     std::map<string, string> resourceParams;
-    resourceParams["resourceType"] = "oic.test";
+    resourceParams["resourceType"] = "container.test";
 
     m_pResourceContainer->startContainer(m_strConfigPath);
     resources = m_pResourceContainer->listBundleResources("oic.bundle.test");
@@ -261,7 +263,7 @@ class ResourceContainerBundleAPITest: public TestWithMock
     public:
         RCSResourceObject *m_pResourceObject;
         ResourceContainerBundleAPI *m_pResourceContainer;
-        TestBundleResource *m_pBundleResource;
+        BundleResource::Ptr m_pBundleResource;
         std::string m_strConfigPath;
 
     protected:
@@ -275,19 +277,19 @@ class ResourceContainerBundleAPITest: public TestWithMock
             m_strConfigPath.append("/");
             m_strConfigPath.append(CONFIG_FILE);
 
-            m_pBundleResource = new TestBundleResource();
+            m_pBundleResource = std::make_shared< TestBundleResource >();
             m_pBundleResource->m_bundleId = "oic.bundle.test";
             m_pBundleResource->m_uri = "/test_resource";
-            m_pBundleResource->m_resourceType = "oic.test";
+            m_pBundleResource->m_resourceType = "container.test";
         }
 };
 
 TEST_F(ResourceContainerBundleAPITest, ResourceServerCreatedWhenRegisterResourceCalled)
 {
-    m_pBundleResource = new TestBundleResource();
+    m_pBundleResource = std::make_shared< TestBundleResource >();
     m_pBundleResource->m_bundleId = "oic.bundle.test";
     m_pBundleResource->m_uri = "/test_resource/test";
-    m_pBundleResource->m_resourceType = "oic.test";
+    m_pBundleResource->m_resourceType = "container.test";
 
     mocks.ExpectCallFunc(ResourceContainerImpl::buildResourceObject).With(m_pBundleResource->m_uri,
             m_pBundleResource->m_resourceType).Return(nullptr);
@@ -373,7 +375,7 @@ TEST_F(ResourceContainerBundleAPITest, BundleResourceConfigurationListParsed)
     result = *resourceConfig.begin();
 
     EXPECT_STREQ("test_resource", result.name.c_str());
-    EXPECT_STREQ("oic.test", result.resourceType.c_str());
+    EXPECT_STREQ("container.test", result.resourceType.c_str());
 
     ((ResourceContainerImpl *)m_pResourceContainer)->stopContainer();
 }
@@ -383,20 +385,26 @@ class ResourceContainerImplTest: public TestWithMock
 
     public:
         ResourceContainerImpl *m_pResourceContainer;
-        RCSBundleInfo *m_pBundleInfo;
+        BundleInfoInternal *m_pBundleInfo;
 
     protected:
         void SetUp()
         {
             TestWithMock::SetUp();
             m_pResourceContainer = ResourceContainerImpl::getImplInstance();
-            m_pBundleInfo = RCSBundleInfo::build();
+            m_pBundleInfo = new BundleInfoInternal();
+        }
+
+        void TearDown()
+        {
+            delete m_pBundleInfo;
         }
 };
 
 TEST_F(ResourceContainerImplTest, SoBundleLoadedWhenRegisteredWithRegisterBundleAPI)
 {
     m_pBundleInfo->setPath("libTestBundle.so");
+    m_pBundleInfo->setActivatorName("test");
     m_pBundleInfo->setVersion("1.0");
     m_pBundleInfo->setLibraryPath(".");
     m_pBundleInfo->setID("oic.bundle.test");
@@ -455,6 +463,7 @@ TEST_F(ResourceContainerImplTest, SoBundleActivatedWithValidBundleInfo)
 {
     m_pBundleInfo->setPath("libTestBundle.so");
     m_pBundleInfo->setVersion("1.0");
+    m_pBundleInfo->setActivatorName("test");
     m_pBundleInfo->setLibraryPath("../.");
     m_pBundleInfo->setID("oic.bundle.test");
 
@@ -467,6 +476,7 @@ TEST_F(ResourceContainerImplTest, SoBundleActivatedWithValidBundleInfo)
 TEST_F(ResourceContainerImplTest, BundleNotActivatedWhenNotRegistered)
 {
     m_pBundleInfo->setPath("libTestBundle.so");
+    m_pBundleInfo->setActivatorName("test");
     m_pBundleInfo->setVersion("1.0");
     m_pBundleInfo->setLibraryPath("../.");
     m_pBundleInfo->setID("oic.bundle.test");
@@ -481,6 +491,7 @@ TEST_F(ResourceContainerImplTest, SoBundleActivatedWithBundleID)
     m_pBundleInfo->setPath("libTestBundle.so");
     m_pBundleInfo->setVersion("1.0");
     m_pBundleInfo->setLibraryPath("../.");
+    m_pBundleInfo->setActivatorName("test");
     m_pBundleInfo->setID("oic.bundle.test");
 
     m_pResourceContainer->registerBundle(m_pBundleInfo);
@@ -495,6 +506,7 @@ TEST_F(ResourceContainerImplTest, BundleDeactivatedWithBundleInfo)
     m_pBundleInfo->setPath("libTestBundle.so");
     m_pBundleInfo->setVersion("1.0");
     m_pBundleInfo->setLibraryPath("../.");
+    m_pBundleInfo->setActivatorName("test");
     m_pBundleInfo->setID("oic.bundle.test");
 
     m_pResourceContainer->registerBundle(m_pBundleInfo);
@@ -524,6 +536,7 @@ TEST_F(ResourceContainerImplTest, SoBundleDeactivatedWithBundleID)
     m_pBundleInfo->setPath("libTestBundle.so");
     m_pBundleInfo->setVersion("1.0");
     m_pBundleInfo->setLibraryPath("../.");
+    m_pBundleInfo->setActivatorName("test");
     m_pBundleInfo->setID("oic.bundle.test");
 
     m_pResourceContainer->registerBundle(m_pBundleInfo);
@@ -533,6 +546,7 @@ TEST_F(ResourceContainerImplTest, SoBundleDeactivatedWithBundleID)
 
     EXPECT_FALSE(((BundleInfoInternal *)m_pBundleInfo)->isActivated());
 }
+
 
 /* Test for Configuration */
 TEST(ConfigurationTest, ConfigFileLoadedWithValidPath)
@@ -545,6 +559,8 @@ TEST(ConfigurationTest, ConfigFileLoadedWithValidPath)
     Configuration *config = new Configuration(strConfigPath);
 
     EXPECT_TRUE(config->isLoaded());
+
+    delete config;
 }
 
 TEST(ConfigurationTest, ConfigFileNotLoadedWithInvalidPath)
@@ -552,6 +568,8 @@ TEST(ConfigurationTest, ConfigFileNotLoadedWithInvalidPath)
     Configuration *config = new Configuration("InvalidPath");
 
     EXPECT_FALSE(config->isLoaded());
+
+    delete config;
 }
 
 TEST(ConfigurationTest, BundleConfigurationListParsed)
@@ -573,6 +591,8 @@ TEST(ConfigurationTest, BundleConfigurationListParsed)
     EXPECT_STREQ("oic.bundle.test", results["id"].c_str());
     EXPECT_STREQ("libTestBundle.so", results["path"].c_str());
     EXPECT_STREQ("1.0.0", results["version"].c_str());
+
+    delete config;
 }
 
 TEST(ConfigurationTest, BundleConfigurationParsedWithValidBundleId)
@@ -594,6 +614,8 @@ TEST(ConfigurationTest, BundleConfigurationParsedWithValidBundleId)
     EXPECT_STREQ("oic.bundle.test", results["id"].c_str());
     EXPECT_STREQ("libTestBundle.so", results["path"].c_str());
     EXPECT_STREQ("1.0.0", results["version"].c_str());
+
+    delete config;
 }
 
 TEST(ConfigurationTest, BundleConfigurationNotParsedWithInvalidBundleId)
@@ -609,6 +631,8 @@ TEST(ConfigurationTest, BundleConfigurationNotParsedWithInvalidBundleId)
     config->getBundleConfiguration("test", &bundles);
 
     EXPECT_TRUE(bundles.empty());
+
+    delete config;
 }
 
 TEST(ConfigurationTest, BundleResourceConfigurationListParsed)
@@ -628,7 +652,9 @@ TEST(ConfigurationTest, BundleResourceConfigurationListParsed)
     result = *resourceConfig.begin();
 
     EXPECT_STREQ("test_resource", result.name.c_str());
-    EXPECT_STREQ("oic.test", result.resourceType.c_str());
+    EXPECT_STREQ("container.test", result.resourceType.c_str());
+
+    delete config;
 }
 
 TEST(ConfigurationTest, BundleResourceConfigurationNotParsedWithInvalidBundleId)
@@ -645,4 +671,157 @@ TEST(ConfigurationTest, BundleResourceConfigurationNotParsedWithInvalidBundleId)
     config->getResourceConfiguration("test", &resourceConfig);
 
     EXPECT_TRUE(bundles.empty());
+
+    delete config;
+}
+
+namespace
+{
+    void discoverdCB(RCSRemoteResourceObject::Ptr);
+    void onUpdate(RemoteResourceUnit::UPDATE_MSG, RCSRemoteResourceObject::Ptr);
+}
+
+class DiscoverResourceUnitTest: public TestWithMock
+{
+    private:
+        typedef std::function<void(const std::string attributeName,
+                                   std::vector<RCSResourceAttributes::Value> values)>
+        UpdatedCB;
+    public:
+        ResourceContainerTestSimulator::Ptr testObject;
+        DiscoverResourceUnit::Ptr m_pDiscoverResourceUnit;
+        std::string m_bundleId;
+        UpdatedCB m_updatedCB;
+
+    protected:
+        void SetUp()
+        {
+            TestWithMock::SetUp();
+
+            testObject = std::make_shared<ResourceContainerTestSimulator>();
+            testObject->createResource();
+            m_bundleId = "/a/TempHumSensor/Container";
+            m_pDiscoverResourceUnit = std::make_shared< DiscoverResourceUnit >( m_bundleId );
+            m_updatedCB = ([](const std::string, std::vector< RCSResourceAttributes::Value >) { });
+        }
+
+        void TearDown()
+        {
+            m_pDiscoverResourceUnit.reset();
+            testObject.reset();
+            TestWithMock::TearDown();
+        }
+};
+
+TEST_F(DiscoverResourceUnitTest, startDiscover)
+{
+    std::string type = "Resource.Container";
+    std::string attributeName = "TestResourceContainer";
+
+    m_pDiscoverResourceUnit->startDiscover(
+        DiscoverResourceUnit::DiscoverResourceInfo("", type, attributeName), m_updatedCB);
+
+    std::chrono::milliseconds interval(400);
+    std::this_thread::sleep_for(interval);
+}
+
+TEST_F(DiscoverResourceUnitTest, onUpdateCalled)
+{
+    std::string type = "Resource.Container";
+    std::string attributeName = "TestResourceContainer";
+
+    m_pDiscoverResourceUnit->startDiscover(
+        DiscoverResourceUnit::DiscoverResourceInfo("", type, attributeName), m_updatedCB);
+
+    std::chrono::milliseconds interval(400);
+    std::this_thread::sleep_for(interval);
+
+    testObject->ChangeAttributeValue();
+
+}
+
+namespace
+{
+    void onStateCB(ResourceState) { }
+    void onCacheCB(const RCSResourceAttributes &) { }
+}
+
+class RemoteResourceUnitTest: public TestWithMock
+{
+    private:
+        typedef std::function<void(RemoteResourceUnit::UPDATE_MSG, RCSRemoteResourceObject::Ptr)>
+        UpdatedCBFromServer;
+
+    public:
+        ResourceContainerTestSimulator::Ptr testObject;
+        RemoteResourceUnit::Ptr m_pRemoteResourceUnit;
+        RCSRemoteResourceObject::Ptr m_pRCSRemoteResourceObject;
+        UpdatedCBFromServer m_updatedCBFromServer;
+
+    protected:
+        void SetUp()
+        {
+            TestWithMock::SetUp();
+
+            testObject = std::make_shared<ResourceContainerTestSimulator>();
+            testObject->defaultRunSimulator();
+            m_pRCSRemoteResourceObject = testObject->getRemoteResource();
+            m_updatedCBFromServer = ([](RemoteResourceUnit::UPDATE_MSG, RCSRemoteResourceObject::Ptr) {});
+        }
+
+        void TearDown()
+        {
+            m_pRCSRemoteResourceObject.reset();
+            testObject.reset();
+            TestWithMock::TearDown();
+        }
+};
+
+TEST_F(RemoteResourceUnitTest, createRemoteResourceInfo)
+{
+    EXPECT_NE(nullptr, m_pRemoteResourceUnit->createRemoteResourceInfo(m_pRCSRemoteResourceObject,
+              m_updatedCBFromServer));
+}
+
+TEST_F(RemoteResourceUnitTest, getRemoteResourceObject)
+{
+    RemoteResourceUnit::Ptr ptr = m_pRemoteResourceUnit->createRemoteResourceInfo(
+                                      m_pRCSRemoteResourceObject, m_updatedCBFromServer);
+    EXPECT_EQ(m_pRCSRemoteResourceObject, ptr->getRemoteResourceObject());
+}
+
+TEST_F(RemoteResourceUnitTest, getRemoteResourceUri)
+{
+    RemoteResourceUnit::Ptr ptr = m_pRemoteResourceUnit->createRemoteResourceInfo(
+                                      m_pRCSRemoteResourceObject, m_updatedCBFromServer);
+    EXPECT_NE("", ptr->getRemoteResourceUri());
+}
+
+TEST_F(RemoteResourceUnitTest, startCaching)
+{
+    RemoteResourceUnit::Ptr ptr = m_pRemoteResourceUnit->createRemoteResourceInfo(
+                                      m_pRCSRemoteResourceObject, m_updatedCBFromServer);
+    ptr->startCaching();
+}
+
+TEST_F(RemoteResourceUnitTest, startMonitoring)
+{
+    RemoteResourceUnit::Ptr ptr = m_pRemoteResourceUnit->createRemoteResourceInfo(
+                                      m_pRCSRemoteResourceObject, m_updatedCBFromServer);
+    ptr->startMonitoring();
+}
+
+TEST_F(RemoteResourceUnitTest, onCacheCBCalled)
+{
+    bool isCalled = false;
+    mocks.ExpectCallFunc(onCacheCB).Do(
+        [this, &isCalled](const RCSResourceAttributes &)
+    {
+        isCalled = true;
+    });
+    RemoteResourceUnit::Ptr ptr = m_pRemoteResourceUnit->createRemoteResourceInfoWithCacheCB(
+                                      m_pRCSRemoteResourceObject, m_updatedCBFromServer, onCacheCB);
+    ptr->startCaching();
+    testObject->ChangeAttributeValue();
+    EXPECT_TRUE(isCalled);
 }

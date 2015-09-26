@@ -36,7 +36,7 @@
 extern "C" {
 #endif // __cplusplus
 
-#define HOSTING_TAG  "Hosting"
+#define HOSTING_TAG  PCF("Hosting")
 
 /**
  * Start resource hosting.

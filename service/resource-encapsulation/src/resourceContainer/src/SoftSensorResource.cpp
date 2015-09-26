@@ -22,6 +22,13 @@
 #include <algorithm>
 
 using namespace OIC::Service;
+
+namespace
+{
+    const std::string SS_RESOURCE_OUTPUT = std::string("output");
+    const std::string SS_RESOURCE_OUTPUTNAME = std::string("name");
+}
+
 namespace OIC
 {
     namespace Service
@@ -40,36 +47,10 @@ namespace OIC
         {
             std::vector< std::map< std::string, std::string > >::iterator itor;
 
-            // initialize input attributes
-            for (itor = m_mapResourceProperty["input"].begin(); itor != m_mapResourceProperty["input"].end();
-                 itor++)
-            {
-                m_inputList.push_back((*itor)["name"]);
-                BundleResource::setAttribute((*itor)["name"], nullptr);
-            }
-
             // initialize output attributes
-            for (itor = m_mapResourceProperty["output"].begin(); itor != m_mapResourceProperty["output"].end();
-                 itor++)
-                BundleResource::setAttribute((*itor)["name"], nullptr);
-        }
-
-        RCSResourceAttributes &SoftSensorResource::getAttributes()
-        {
-            return BundleResource::getAttributes();
-        }
-
-        void SoftSensorResource::setAttribute(std::string key, RCSResourceAttributes::Value &&value)
-        {
-            BundleResource::setAttribute(key, value.toString());
-
-            if (std::find(m_inputList.begin(), m_inputList.end(), key) != m_inputList.end())
-                executeLogic();
-        }
-
-        RCSResourceAttributes::Value SoftSensorResource::getAttribute(const std::string &key)
-        {
-            return BundleResource::getAttribute(key);
+            for (itor = m_mapResourceProperty[SS_RESOURCE_OUTPUT].begin();
+                 itor != m_mapResourceProperty[SS_RESOURCE_OUTPUT].end(); itor++)
+                BundleResource::setAttribute((*itor)[SS_RESOURCE_OUTPUTNAME], nullptr);
         }
     }
 }

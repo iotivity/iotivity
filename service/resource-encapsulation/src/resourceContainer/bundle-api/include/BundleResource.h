@@ -25,6 +25,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <memory>
 
 #include "NotificationReceiver.h"
 #include "RCSResourceAttributes.h"
@@ -43,6 +44,7 @@ namespace OIC
         class BundleResource
         {
             public:
+                typedef std::shared_ptr< BundleResource > Ptr;
 
                 /**
                 * Constructor for BundleResource
@@ -57,7 +59,7 @@ namespace OIC
                 /**
                 * Return the list of attribute names of the resource
                 *
-                * @return std::list - return list of the attribute names
+                * @return List of the attribute names
                 */
                 std::list<std::string> getAttributeNames();
 
@@ -69,9 +71,11 @@ namespace OIC
                 virtual void initAttributes() = 0;
 
                 /**
-                * Register notification receiver(resource container) to notify for the changes of attributes
+                * Register notification receiver(resource container) to notify for the
+                *     changes of attributes
                 *
-                * @param pNotiReceiver - Notification Receiver to get notification from bundle resource
+                * @param pNotiReceiver Notification Receiver to get notification from
+                * bundle resource
                 *
                 * @return void
                 */
@@ -80,40 +84,98 @@ namespace OIC
                 /**
                 * Return all attributes of the resource
                 *
-                * @return RCSResourceAttributes - attributes of the resource
+                * @return Attributes of the resource
                 */
-                virtual RCSResourceAttributes &getAttributes();
+                RCSResourceAttributes &getAttributes();
 
                 /**
-                * Execute the logic of bundle to set the value of attribute
+                * Set attributes of the resource
                 *
-                * @param key - name of attribute to set
-                *
-                * @param value - value of attribute to set
+                * @param attrs Attributes to set
                 *
                 * @return void
                 */
-                virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&value);
+                void setAttributes(RCSResourceAttributes &attrs);
 
                 /**
-                * Execute the logic of bundle to get the value of attribute
+                * Return the value of an attribute
                 *
-                * @param key - key of attribute to get
+                * @param key Key of attribute to get
                 *
-                * @return RCSResourceAttributes::Value - return value of the attribute
+                * @return Value of the attribute
                 */
-                virtual RCSResourceAttributes::Value getAttribute(const std::string &key);
+                RCSResourceAttributes::Value getAttribute(const std::string &key);
+
+                /**
+                * Sets the value of an attribute
+                *
+                * @param key Name of attribute to set
+                *
+                * @param value Value of attribute to set
+                *
+                * @param notify Flag to indicate if OIC clients should be notified about an update
+                *
+                * @return void
+                */
+                void setAttribute(const std::string &key, RCSResourceAttributes::Value &&value,
+                                  bool notify);
+
+                /**
+                * Sets the value of an attribute
+                *
+                * @param key Name of attribute to set
+                *
+                * @param value Value of attribute to set
+                *
+                * @return void
+                */
+                void setAttribute(const std::string &key, RCSResourceAttributes::Value &&value);
+
+                /**
+                * This function should be implemented by the according bundle resource
+                * and execute the according business logic (e.g., light switch or sensor resource)
+                * to retrieve a sensor value. If a new sensor value is retrieved, the
+                * setAttribute data should be called to update the value.
+                * The implementor of the function can decide weather to notify OIC clients
+                * about the changed state or not.
+                *
+                * @param key Name of attribute to get
+                *
+                *
+                * @return All attributes
+                */
+                virtual RCSResourceAttributes &handleGetAttributesRequest() = 0;
+
+                /**
+                * This function should be implemented by the according bundle resource
+                * and execute the according business logic (e.g., light switch or sensor resource)
+                * and write either on soft sensor values or external bridged devices.
+                *
+                * The call of this method could for example trigger a HTTP PUT request on
+                * an external APIs. This method is responsible to update the resource internal
+                * data and call the setAttribute method.
+                *
+                * The implementor of the function can decide weather to notify OIC clients
+                * about the changed state or not.
+                *
+                * @param key Name of attribute to set
+                *
+                * @param attrs Attributes to set
+                *
+                * @return void
+                */
+                virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs) = 0;
 
 
             public:
                 std::string m_bundleId;
                 std::string m_name, m_uri, m_resourceType, m_address;
-                std::map< std::string, std::vector< std::map< std::string, std::string > > > m_mapResourceProperty;
+                std::map< std::string,
+                    std::vector< std::map< std::string, std::string > > > m_mapResourceProperty;
 
             private:
                 NotificationReceiver *m_pNotiReceiver;
                 RCSResourceAttributes m_resourceAttributes;
-
         };
     }
 }

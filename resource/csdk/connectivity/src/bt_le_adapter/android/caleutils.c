@@ -40,8 +40,6 @@ jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid)
     VERIFY_NON_NULL_RET(uuid, TAG, "uuid is null", NULL);
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
 
-    OIC_LOG(DEBUG, TAG, "CALEGetUuidFromString");
-
     jclass jni_cid_UUID = (*env)->FindClass(env, "java/util/UUID");
     if (!jni_cid_UUID)
     {
@@ -78,7 +76,6 @@ jobject CALEGetUuidFromString(JNIEnv *env, const char* uuid)
 
 jobject CALEGetParcelUuid(JNIEnv *env, jobject uuid)
 {
-    OIC_LOG(DEBUG, TAG, "CALEGetParcelUuid");
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
     VERIFY_NON_NULL_RET(uuid, TAG, "uuid is null", NULL);
 
@@ -343,7 +340,6 @@ jboolean CALEIsEnableBTAdapter(JNIEnv *env)
 
 jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CALEGetAddressFromBTDevice");
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
     VERIFY_NON_NULL_RET(bluetoothDevice, TAG, "bluetoothDevice is null", NULL);
 
@@ -370,6 +366,5 @@ jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
         return NULL;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT - CALEGetAddressFromBTDevice");
     return jni_address;
 }

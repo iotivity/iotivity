@@ -1982,8 +1982,8 @@ CAResult_t CALEClientSetUUIDToDescriptor(JNIEnv *env, jobject bluetoothGatt,
                                                           jni_mid_getDescriptor, jni_obj_cc_uuid);
     if (!jni_obj_descriptor)
     {
-        OIC_LOG(ERROR, TAG, "jni_obj_descriptor is null");
-        return CA_STATUS_FAILED;
+        OIC_LOG(INFO, TAG, "jni_obj_descriptor is null");
+        return CA_NOT_SUPPORTED;
     }
 
     OIC_LOG(DEBUG, TAG, "set value in descriptor");
@@ -2076,7 +2076,6 @@ void CALEClientCreateScanDeviceList(JNIEnv *env)
 
 CAResult_t CALEClientAddScanDeviceToList(JNIEnv *env, jobject device)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CALEClientAddScanDeviceToList");
     VERIFY_NON_NULL(device, TAG, "device is null");
     VERIFY_NON_NULL(env, TAG, "env is null");
 
@@ -2110,19 +2109,17 @@ CAResult_t CALEClientAddScanDeviceToList(JNIEnv *env, jobject device)
         jobject gdevice = (*env)->NewGlobalRef(env, device);
         u_arraylist_add(g_deviceList, gdevice);
         ca_cond_signal(g_deviceDescCond);
-        OIC_LOG(DEBUG, TAG, "Set Object to Array as Element");
+        OIC_LOG_V(DEBUG, TAG, "Added this Device[%d] in the List", remoteAddress);
     }
     (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
 
     ca_mutex_unlock(g_deviceListMutex);
 
-    OIC_LOG(DEBUG, TAG, "OUT - CALEClientAddScanDeviceToList");
     return CA_STATUS_OK;
 }
 
 bool CALEClientIsDeviceInScanDeviceList(JNIEnv *env, const char* remoteAddress)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CALEClientIsDeviceInScanDeviceList");
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
     VERIFY_NON_NULL_RET(remoteAddress, TAG, "remoteAddress is null", true);
 
@@ -2166,7 +2163,6 @@ bool CALEClientIsDeviceInScanDeviceList(JNIEnv *env, const char* remoteAddress)
         (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT - CALEClientIsDeviceInScanDeviceList");
     OIC_LOG(DEBUG, TAG, "there are no the device in list. we can add");
 
     return false;
@@ -2965,8 +2961,6 @@ void CALEClientUpdateSendCnt(JNIEnv *env)
 
 CAResult_t CALEClientInitGattMutexVaraibles()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     if (NULL == g_bleReqRespClientCbMutex)
     {
         g_bleReqRespClientCbMutex = ca_mutex_new();
@@ -3057,14 +3051,11 @@ CAResult_t CALEClientInitGattMutexVaraibles()
         }
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CALEClientTerminateGattMutexVariables()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     ca_mutex_free(g_bleReqRespClientCbMutex);
     g_bleReqRespClientCbMutex = NULL;
 
@@ -3085,8 +3076,6 @@ void CALEClientTerminateGattMutexVariables()
 
     ca_mutex_free(g_scanMutex);
     g_scanMutex = NULL;
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CALEClientSetSendFinishFlag(bool flag)
@@ -3197,22 +3186,14 @@ CAResult_t CAUpdateCharacteristicsToAllGattServers(const uint8_t *data, uint32_t
 
 void CASetLEReqRespClientCallback(CABLEDataReceivedCallback callback)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     ca_mutex_lock(g_bleReqRespClientCbMutex);
     g_CABLEClientDataReceivedCallback = callback;
     ca_mutex_unlock(g_bleReqRespClientCbMutex);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     CALEClientInitialize(handle);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CAResult_t CAGetLEAddress(char **local_address)
@@ -3430,7 +3411,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
         res = CALEClientSetUUIDToDescriptor(env, gatt, jni_obj_GattCharacteristic);
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG(INFO, TAG, "Descriptor of the uuid is not found");
+            OIC_LOG_V(INFO, TAG, "Descriptor is not found : %d", res);
             CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
             if (CA_STATUS_OK != res)
             {

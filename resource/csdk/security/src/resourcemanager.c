@@ -34,6 +34,10 @@
 
 #define TAG "SRM-RM"
 
+#ifdef __WITH_X509__
+#include "crlresource.h"
+#endif // __WITH_X509__
+
 /**
  * This method is used by all secure resource modules to send responses to REST queries.
  *
@@ -46,7 +50,7 @@
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, const char *rspPayload)
 {
-    OC_LOG (INFO, TAG, "SRM sending SRM response");
+    OC_LOG (DEBUG, TAG, "SRM sending SRM response");
     OCEntityHandlerResponse response = {.requestHandle = NULL};
     if (ehRequest)
     {
@@ -93,6 +97,12 @@ OCStackResult InitSecureResources( )
     {
         ret = InitCredResource();
     }
+#ifdef __WITH_X509__
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitCRLResource();
+    }
+#endif // __WITH_X509__
     if(OC_STACK_OK == ret)
     {
         ret = InitSVCResource();
@@ -120,6 +130,11 @@ OCStackResult DestroySecureResources( )
     DeInitCredResource();
     DeInitDoxmResource();
     DeInitPstatResource();
+#ifdef __WITH_X509__
+    DeInitCRLResource();
+#endif // __WITH_X509__
+    DeInitSVCResource();
+    DeInitAmaclResource();
 
     return OC_STACK_OK;
 }

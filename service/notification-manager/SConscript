@@ -44,13 +44,7 @@ target_os = env.get('TARGET_OS')
 notimgr_env.AppendUnique(CPPPATH = ['NotificationManager/include'])
 notimgr_env.AppendUnique(CPPPATH = ['../resource-encapsulation/include'])
 notimgr_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/common/primitiveResource/include'])
-notimgr_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/serverBuilder/include'])
-notimgr_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/resourceBroker/include'])
-notimgr_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/resourceCache/include'])
-notimgr_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/common/expiryTimer/include'])
-notimgr_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/common/expiryTimer/src'])
-#notimgr_env.AppendUnique(CPPPATH = ['../../extlibs/cjson'])
-#notimgr_env.AppendUnique(CPPPATH = ['../../resource/csdk/logger/include'])
+
 notimgr_env.PrependUnique(LIBS = [
 	'rcs_client',
 	'rcs_server',
@@ -95,7 +89,13 @@ else :
     notificationsdk = notimgr_env.StaticLibrary('NotificationManager', notimgr_src)
 
 notimgr_env.InstallTarget(notificationsdk, 'libResouceHosting')
-notimgr_env.UserInstallTargetHeader('NotificationManager/include/hosting.h', 'service/notification-manager', 'hosting.h')
+notimgr_env.UserInstallTargetLib(notificationsdk, 'libResouceHosting')
+notimgr_env.UserInstallTargetHeader('NotificationManager/include/hosting.h',\
+	'service/notification-manager', 'hosting.h')
+
+# Go to build Unit test
+if target_os == 'linux':
+	SConscript('NotificationManager/src/unittest/SConscript')
 
 # Go to build sample apps
 SConscript('SampleApp/SConscript')

@@ -34,11 +34,5 @@ namespace OIC
         {
 
         }
-
-        RCSBundleInfo *RCSBundleInfo::build()
-        {
-            BundleInfoInternal *newBundleInfo = new BundleInfoInternal();
-            return newBundleInfo;
-        }
     }
 }

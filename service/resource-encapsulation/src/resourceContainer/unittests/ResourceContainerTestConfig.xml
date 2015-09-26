@@ -3,12 +3,13 @@
     <bundle>
         <id>oic.bundle.test</id>
         <path>libTestBundle.so</path>
+        <activator>test</activator>
         <libraryPath>.</libraryPath>
         <version>1.0.0</version>
 		<resources>
 			<resourceInfo>
 				<name>test_resource</name>
-				<resourceType>oic.test</resourceType>
+				<resourceType>container.test</resourceType>
 			</resourceInfo>   
 		</resources>
     </bundle>

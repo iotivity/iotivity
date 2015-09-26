@@ -21,9 +21,8 @@
 /**
  * @file
  *
- * This file defines a class to handle exception thrown for resource encapsulation.
+ * This file contains the declaration of exception classes for resource-encapsulation
  */
-
 #ifndef RES_ENCAPSULATION_RCSEXCEPTION_H
 #define RES_ENCAPSULATION_RCSEXCEPTION_H
 
@@ -80,10 +79,10 @@ namespace OIC
          * Thrown when OC layer returns an error.
          *
          */
-        class PlatformException: public RCSException
+        class RCSPlatformException: public RCSException
         {
         public:
-            explicit PlatformException(OCStackResult reason);
+            explicit RCSPlatformException(OCStackResult reason);
 
             /**
              * Returns the reason.
@@ -105,43 +104,43 @@ namespace OIC
          * Thrown when a request is not acceptable.
          *
          */
-        class BadRequestException: public RCSException
+        class RCSBadRequestException: public RCSException
         {
         public:
-            explicit BadRequestException(const std::string& what);
-            explicit BadRequestException(std::string&& what);
+            explicit RCSBadRequestException(const std::string& what);
+            explicit RCSBadRequestException(std::string&& what);
         };
 
         /**
          * Thrown when a parameter is not valid.
          *
          */
-        class InvalidParameterException: public RCSException
+        class RCSInvalidParameterException: public RCSException
         {
         public:
-            explicit InvalidParameterException(const std::string& what);
-            explicit InvalidParameterException(std::string&& what);
+            explicit RCSInvalidParameterException(const std::string& what);
+            explicit RCSInvalidParameterException(std::string&& what);
         };
 
         /**
          * Thrown when getting value with wrong template parameter.
          */
-        class BadGetException: public RCSException
+        class RCSBadGetException: public RCSException
         {
         public:
-            explicit BadGetException(const std::string& what);
-            explicit BadGetException(std::string&& what);
+            explicit RCSBadGetException(const std::string& what);
+            explicit RCSBadGetException(std::string&& what);
         };
 
         /**
          * Thrown when a key is invalid.
          *
          */
-        class InvalidKeyException: public RCSException
+        class RCSInvalidKeyException: public RCSException
         {
         public:
-            explicit InvalidKeyException(const std::string& what);
-            explicit InvalidKeyException(std::string&& what);
+            explicit RCSInvalidKeyException(const std::string& what);
+            explicit RCSInvalidKeyException(std::string&& what);
         };
 
     }

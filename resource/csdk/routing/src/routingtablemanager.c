@@ -919,15 +919,21 @@ void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
     RM_NULL_CHECK_VOID(obsList, TAG, "obsList");
 
     *obsList = (OCObservationId *) OICCalloc(MAX_OBSERVER_LIST_LENGTH, sizeof(OCObservationId));
+    if (!(*obsList))
+    {
+        OC_LOG(ERROR, TAG, "out of memory");
+        return;
+    }
+
     u_linklist_iterator_t *iterTable = NULL;
     u_linklist_init_iterator(gatewayTable, &iterTable);
     uint8_t len = 0;
     while (NULL != iterTable)
     {
         RTMGatewayEntry_t *entry = u_linklist_get_data(iterTable);
-        for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
+        if (0 < u_arraylist_length(entry->destination->destIntfAddr))
         {
-            RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, i);
+            RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, 0);
             if (NULL == destCheck)
             {
                 OC_LOG(ERROR, TAG, "destCheck is null");
@@ -944,7 +950,6 @@ void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
                 *obsList = (OCObservationId *) OICRealloc((void *)*obsList,
                            (sizeof(OCObservationId) * (len + 1)));
             }
-            break;
         }
         u_linklist_get_next(&iterTable);
     }

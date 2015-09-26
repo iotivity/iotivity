@@ -646,7 +646,6 @@ bool CAEDRNativeIsDeviceSocketInList(JNIEnv *env, const char* remoteAddress)
         }
 
         jstring jni_setAddress = CAEDRNativeGetAddressFromDeviceSocket(env, jarrayObj);
-        (*env)->DeleteLocalRef(env, jarrayObj);
         if (!jni_setAddress)
         {
             OIC_LOG(DEBUG, TAG, "[EDR][Native] jni_setAddress is null");

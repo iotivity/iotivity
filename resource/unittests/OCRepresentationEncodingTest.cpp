@@ -25,6 +25,7 @@
 #include <ocpayload.h>
 #include <ocpayloadcbor.h>
 #include <oic_malloc.h>
+#include <oic_string.h>
 
 namespace OC
 {
@@ -625,6 +626,520 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(barr, barr2);
         EXPECT_EQ(strarr, strarr2);
         EXPECT_EQ(objarr, objarr2);
+        OCPayloadDestroy(cparsed);
+    }
+
+    TEST(DiscoveryRTandIF, SingleItemNormal)
+    {
+        OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
+        payload->resources = resource;
+
+        OCResourcePayloadAddResourceType(resource, "rt.singleitem");
+        OCResourcePayloadAddInterface(resource, "if.singleitem");
+        resource->uri = OICStrdup("/uri/thing");
+        resource->sid = (uint8_t*)OICMalloc(16);
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+                    cborData, cborSize));
+
+        EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
+        OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
+
+        EXPECT_EQ(NULL, parsedResource->next);
+
+        EXPECT_EQ(NULL, parsedResource->types->next);
+        EXPECT_STREQ("rt.singleitem", parsedResource->types->value);
+        EXPECT_EQ(NULL, parsedResource->interfaces->next);
+        EXPECT_STREQ("if.singleitem", parsedResource->interfaces->value);
+
+        OICFree(cborData);
+        OCPayloadDestroy(cparsed);
+        OCDiscoveryPayloadDestroy(payload);
+    }
+
+    TEST(DiscoveryRTandIF, SingleItemFrontTrim)
+    {
+        OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
+        payload->resources = resource;
+
+        OCResourcePayloadAddResourceType(resource, "    rt.singleitem");
+        OCResourcePayloadAddInterface(resource, "    if.singleitem");
+        resource->uri = OICStrdup("/uri/thing");
+        resource->sid = (uint8_t*)OICMalloc(16);
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+                    cborData, cborSize));
+
+        EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
+        OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
+
+        EXPECT_EQ(NULL, parsedResource->next);
+
+        EXPECT_EQ(NULL, parsedResource->types->next);
+        EXPECT_STREQ("rt.singleitem", parsedResource->types->value);
+        EXPECT_EQ(NULL, parsedResource->interfaces->next);
+        EXPECT_STREQ("if.singleitem", parsedResource->interfaces->value);
+
+        OICFree(cborData);
+        OCPayloadDestroy(cparsed);
+        OCDiscoveryPayloadDestroy(payload);
+    }
+    TEST(DiscoveryRTandIF, SingleItemBackTrim)
+    {
+        OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
+        payload->resources = resource;
+
+        OCResourcePayloadAddResourceType(resource, "rt.singleitem    ");
+        OCResourcePayloadAddInterface(resource, "if.singleitem    ");
+        resource->uri = OICStrdup("/uri/thing");
+        resource->sid = (uint8_t*)OICMalloc(16);
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+                    cborData, cborSize));
+
+        EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
+        OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
+
+        EXPECT_EQ(NULL, parsedResource->next);
+
+        EXPECT_EQ(NULL, parsedResource->types->next);
+        EXPECT_STREQ("rt.singleitem", parsedResource->types->value);
+        EXPECT_EQ(NULL, parsedResource->interfaces->next);
+        EXPECT_STREQ("if.singleitem", parsedResource->interfaces->value);
+
+        OICFree(cborData);
+        OCPayloadDestroy(cparsed);
+        OCDiscoveryPayloadDestroy(payload);
+    }
+    TEST(DiscoveryRTandIF, SingleItemBothTrim)
+    {
+        OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
+        payload->resources = resource;
+
+        OCResourcePayloadAddResourceType(resource, "    rt.singleitem    ");
+        OCResourcePayloadAddInterface(resource, "    if.singleitem     ");
+        resource->uri = OICStrdup("/uri/thing");
+        resource->sid = (uint8_t*)OICMalloc(16);
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+                    cborData, cborSize));
+
+        EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
+        OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
+
+        EXPECT_EQ(NULL, parsedResource->next);
+
+        EXPECT_EQ(NULL, parsedResource->types->next);
+        EXPECT_STREQ("rt.singleitem", parsedResource->types->value);
+        EXPECT_EQ(NULL, parsedResource->interfaces->next);
+        EXPECT_STREQ("if.singleitem", parsedResource->interfaces->value);
+
+        OICFree(cborData);
+        OCPayloadDestroy(cparsed);
+        OCDiscoveryPayloadDestroy(payload);
+    }
+    TEST(DiscoveryRTandIF, MultiItemsNormal)
+    {
+        OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
+        payload->resources = resource;
+
+        OCResourcePayloadAddResourceType(resource, "rt.firstitem");
+        OCResourcePayloadAddResourceType(resource, "rt.seconditem");
+        OCResourcePayloadAddInterface(resource, "if.firstitem");
+        OCResourcePayloadAddInterface(resource, "if.seconditem");
+        resource->uri = OICStrdup("/uri/thing");
+        resource->sid = (uint8_t*)OICMalloc(16);
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+                    cborData, cborSize));
+
+        EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
+        OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
+
+        EXPECT_EQ(NULL, parsedResource->next);
+
+        EXPECT_EQ(NULL, parsedResource->types->next->next);
+        EXPECT_STREQ("rt.firstitem", parsedResource->types->value);
+        EXPECT_STREQ("rt.seconditem", parsedResource->types->next->value);
+        EXPECT_EQ(NULL, parsedResource->interfaces->next->next);
+        EXPECT_STREQ("if.firstitem", parsedResource->interfaces->value);
+        EXPECT_STREQ("if.seconditem", parsedResource->interfaces->next->value);
+
+        OICFree(cborData);
+        OCPayloadDestroy(cparsed);
+        OCDiscoveryPayloadDestroy(payload);
+    }
+    TEST(DiscoveryRTandIF, MultiItemExtraLeadSpaces)
+    {
+        OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
+        payload->resources = resource;
+
+        OCResourcePayloadAddResourceType(resource, "  rt.firstitem");
+        OCResourcePayloadAddResourceType(resource, "  rt.seconditem");
+        OCResourcePayloadAddInterface(resource, "  if.firstitem");
+        OCResourcePayloadAddInterface(resource, "  if.seconditem");
+        resource->uri = OICStrdup("/uri/thing");
+        resource->sid = (uint8_t*)OICMalloc(16);
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+                    cborData, cborSize));
+
+        EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
+        OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
+
+        EXPECT_EQ(NULL, parsedResource->next);
+
+        EXPECT_EQ(NULL, parsedResource->types->next->next);
+        EXPECT_STREQ("rt.firstitem", parsedResource->types->value);
+        EXPECT_STREQ("rt.seconditem", parsedResource->types->next->value);
+        EXPECT_EQ(NULL, parsedResource->interfaces->next->next);
+        EXPECT_STREQ("if.firstitem", parsedResource->interfaces->value);
+        EXPECT_STREQ("if.seconditem", parsedResource->interfaces->next->value);
+
+        OICFree(cborData);
+        OCPayloadDestroy(cparsed);
+        OCDiscoveryPayloadDestroy(payload);
+    }
+    TEST(DiscoveryRTandIF, MultiItemExtraTrailSpaces)
+    {
+        OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
+        payload->resources = resource;
+
+        OCResourcePayloadAddResourceType(resource, "rt.firstitem  ");
+        OCResourcePayloadAddResourceType(resource, "rt.seconditem  ");
+        OCResourcePayloadAddInterface(resource, "if.firstitem  ");
+        OCResourcePayloadAddInterface(resource, "if.seconditem  ");
+        resource->uri = OICStrdup("/uri/thing");
+        resource->sid = (uint8_t*)OICMalloc(16);
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+                    cborData, cborSize));
+
+        EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
+        OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
+
+        EXPECT_EQ(NULL, parsedResource->next);
+
+        EXPECT_EQ(NULL, parsedResource->types->next->next);
+        EXPECT_STREQ("rt.firstitem", parsedResource->types->value);
+        EXPECT_STREQ("rt.seconditem", parsedResource->types->next->value);
+        EXPECT_EQ(NULL, parsedResource->interfaces->next->next);
+        EXPECT_STREQ("if.firstitem", parsedResource->interfaces->value);
+        EXPECT_STREQ("if.seconditem", parsedResource->interfaces->next->value);
+
+        OICFree(cborData);
+        OCPayloadDestroy(cparsed);
+        OCDiscoveryPayloadDestroy(payload);
+    }
+    TEST(DiscoveryRTandIF, MultiItemBothSpaces)
+    {
+        OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
+        payload->resources = resource;
+
+        OCResourcePayloadAddResourceType(resource, "  rt.firstitem  ");
+        OCResourcePayloadAddResourceType(resource, "  rt.seconditem  ");
+        OCResourcePayloadAddInterface(resource, "  if.firstitem  ");
+        OCResourcePayloadAddInterface(resource, "  if.seconditem  ");
+        resource->uri = OICStrdup("/uri/thing");
+        resource->sid = (uint8_t*)OICMalloc(16);
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_DISCOVERY,
+                    cborData, cborSize));
+
+        EXPECT_EQ(1u, OCDiscoveryPayloadGetResourceCount((OCDiscoveryPayload*)cparsed));
+        OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
+
+        EXPECT_EQ(NULL, parsedResource->next);
+
+        EXPECT_EQ(NULL, parsedResource->types->next->next);
+        EXPECT_STREQ("rt.firstitem", parsedResource->types->value);
+        EXPECT_STREQ("rt.seconditem", parsedResource->types->next->value);
+        EXPECT_EQ(NULL, parsedResource->interfaces->next->next);
+        EXPECT_STREQ("if.firstitem", parsedResource->interfaces->value);
+        EXPECT_STREQ("if.seconditem", parsedResource->interfaces->next->value);
+
+        OICFree(cborData);
+        OCPayloadDestroy(cparsed);
+        OCDiscoveryPayloadDestroy(payload);
+    }
+    TEST(RepresentationEncodingRTandIF, SingleItemNormal)
+    {
+        OCRepPayload* payload = OCRepPayloadCreate();
+        OCRepPayloadSetUri(payload, "/this/uri");
+        OCRepPayloadAddResourceType(payload, "rt.firstitem");
+        OCRepPayloadAddInterface(payload, "if.firstitem");
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+                    cborData, cborSize));
+
+        OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
+
+        EXPECT_STREQ("rt.firstitem", parsedPayload->types->value);
+        EXPECT_EQ(NULL, parsedPayload->types->next);
+        EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
+        EXPECT_EQ(NULL, parsedPayload->interfaces->next);
+
+
+        OICFree(cborData);
+        OCRepPayloadDestroy(payload);
+        OCPayloadDestroy(cparsed);
+    }
+    TEST(RepresentationEncodingRTandIF, SingleItemFrontTrim)
+    {
+        OCRepPayload* payload = OCRepPayloadCreate();
+        OCRepPayloadSetUri(payload, "/this/uri");
+        OCRepPayloadAddResourceType(payload, "  rt.firstitem");
+        OCRepPayloadAddInterface(payload, "  if.firstitem");
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+                    cborData, cborSize));
+
+        OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
+
+        EXPECT_STREQ("rt.firstitem", parsedPayload->types->value);
+        EXPECT_EQ(NULL, parsedPayload->types->next);
+        EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
+        EXPECT_EQ(NULL, parsedPayload->interfaces->next);
+
+
+        OICFree(cborData);
+        OCRepPayloadDestroy(payload);
+        OCPayloadDestroy(cparsed);
+    }
+    TEST(RepresentationEncodingRTandIF, SingleItemBackTrim)
+    {
+        OCRepPayload* payload = OCRepPayloadCreate();
+        OCRepPayloadSetUri(payload, "/this/uri");
+        OCRepPayloadAddResourceType(payload, "rt.firstitem  ");
+        OCRepPayloadAddInterface(payload, "if.firstitem  ");
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+                    cborData, cborSize));
+
+        OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
+
+        EXPECT_STREQ("rt.firstitem", parsedPayload->types->value);
+        EXPECT_EQ(NULL, parsedPayload->types->next);
+        EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
+        EXPECT_EQ(NULL, parsedPayload->interfaces->next);
+
+
+        OICFree(cborData);
+        OCRepPayloadDestroy(payload);
+        OCPayloadDestroy(cparsed);
+    }
+    TEST(RepresentationEncodingRTandIF, SingleItemBothTrim)
+    {
+        OCRepPayload* payload = OCRepPayloadCreate();
+        OCRepPayloadSetUri(payload, "/this/uri");
+        OCRepPayloadAddResourceType(payload, "  rt.firstitem  ");
+        OCRepPayloadAddInterface(payload, "  if.firstitem  ");
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+                    cborData, cborSize));
+
+        OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
+
+        EXPECT_STREQ("rt.firstitem", parsedPayload->types->value);
+        EXPECT_EQ(NULL, parsedPayload->types->next);
+        EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
+        EXPECT_EQ(NULL, parsedPayload->interfaces->next);
+
+
+        OICFree(cborData);
+        OCRepPayloadDestroy(payload);
+        OCPayloadDestroy(cparsed);
+    }
+    TEST(RepresentationEncodingRTandIF, MultiItemsNormal)
+    {
+        OCRepPayload* payload = OCRepPayloadCreate();
+        OCRepPayloadSetUri(payload, "/this/uri");
+        OCRepPayloadAddResourceType(payload, "rt.firstitem");
+        OCRepPayloadAddResourceType(payload, "rt.seconditem");
+        OCRepPayloadAddInterface(payload, "if.firstitem");
+        OCRepPayloadAddInterface(payload, "if.seconditem");
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+                    cborData, cborSize));
+
+        OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
+
+        EXPECT_STREQ("rt.firstitem", parsedPayload->types->value);
+        EXPECT_STREQ("rt.seconditem", parsedPayload->types->next->value);
+        EXPECT_EQ(NULL, parsedPayload->types->next->next);
+        EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
+        EXPECT_STREQ("if.seconditem", parsedPayload->interfaces->next->value);
+        EXPECT_EQ(NULL, parsedPayload->interfaces->next->next);
+
+
+        OICFree(cborData);
+        OCRepPayloadDestroy(payload);
+        OCPayloadDestroy(cparsed);
+    }
+    TEST(RepresentationEncodingRTandIF, MultiItemExtraLeadSpaces)
+    {
+        OCRepPayload* payload = OCRepPayloadCreate();
+        OCRepPayloadSetUri(payload, "/this/uri");
+        OCRepPayloadAddResourceType(payload, "  rt.firstitem");
+        OCRepPayloadAddResourceType(payload, "  rt.seconditem");
+        OCRepPayloadAddInterface(payload, "  if.firstitem");
+        OCRepPayloadAddInterface(payload, "  if.seconditem");
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+                    cborData, cborSize));
+
+        OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
+
+        EXPECT_STREQ("rt.firstitem", parsedPayload->types->value);
+        EXPECT_STREQ("rt.seconditem", parsedPayload->types->next->value);
+        EXPECT_EQ(NULL, parsedPayload->types->next->next);
+        EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
+        EXPECT_STREQ("if.seconditem", parsedPayload->interfaces->next->value);
+        EXPECT_EQ(NULL, parsedPayload->interfaces->next->next);
+
+
+        OICFree(cborData);
+        OCRepPayloadDestroy(payload);
+        OCPayloadDestroy(cparsed);
+    }
+    TEST(RepresentationEncodingRTandIF, MultiItemExtraTrailSpaces)
+    {
+        OCRepPayload* payload = OCRepPayloadCreate();
+        OCRepPayloadSetUri(payload, "/this/uri");
+        OCRepPayloadAddResourceType(payload, "rt.firstitem  ");
+        OCRepPayloadAddResourceType(payload, "rt.seconditem  ");
+        OCRepPayloadAddInterface(payload, "if.firstitem  ");
+        OCRepPayloadAddInterface(payload, "if.seconditem  ");
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+                    cborData, cborSize));
+
+        OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
+
+        EXPECT_STREQ("rt.firstitem", parsedPayload->types->value);
+        EXPECT_STREQ("rt.seconditem", parsedPayload->types->next->value);
+        EXPECT_EQ(NULL, parsedPayload->types->next->next);
+        EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
+        EXPECT_STREQ("if.seconditem", parsedPayload->interfaces->next->value);
+        EXPECT_EQ(NULL, parsedPayload->interfaces->next->next);
+
+
+        OICFree(cborData);
+        OCRepPayloadDestroy(payload);
+        OCPayloadDestroy(cparsed);
+    }
+    TEST(RepresentationEncodingRTandIF, MultiItemExtraMiddleSpaces)
+    {
+        OCRepPayload* payload = OCRepPayloadCreate();
+        OCRepPayloadSetUri(payload, "/this/uri");
+        OCRepPayloadAddResourceType(payload, "  rt.firstitem  ");
+        OCRepPayloadAddResourceType(payload, "  rt.seconditem  ");
+        OCRepPayloadAddInterface(payload, "  if.firstitem  ");
+        OCRepPayloadAddInterface(payload, "  if.seconditem  ");
+
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)payload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+                    cborData, cborSize));
+
+        OCRepPayload* parsedPayload = (OCRepPayload*)cparsed;
+
+        EXPECT_STREQ("rt.firstitem", parsedPayload->types->value);
+        EXPECT_STREQ("rt.seconditem", parsedPayload->types->next->value);
+        EXPECT_EQ(NULL, parsedPayload->types->next->next);
+        EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
+        EXPECT_STREQ("if.seconditem", parsedPayload->interfaces->next->value);
+        EXPECT_EQ(NULL, parsedPayload->interfaces->next->next);
+
+
+        OICFree(cborData);
+        OCRepPayloadDestroy(payload);
         OCPayloadDestroy(cparsed);
     }
 }

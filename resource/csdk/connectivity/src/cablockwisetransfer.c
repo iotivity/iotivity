@@ -166,7 +166,15 @@ CAResult_t CASendBlockWiseData(const CAData_t *sendData)
     VERIFY_NON_NULL(sendData, TAG, "sendData");
 
     // check if message type is CA_MSG_RESET
-    if (sendData->responseInfo)
+    if (sendData->requestInfo)
+    {
+        if (CA_MSG_RESET == sendData->requestInfo->info.type)
+        {
+            OIC_LOG(DEBUG, TAG, "reset message can't be sent to the block");
+            return CA_NOT_SUPPORTED;
+        }
+    }
+    else if (sendData->responseInfo)
     {
         if (CA_MSG_RESET == sendData->responseInfo->info.type)
         {
@@ -844,11 +852,23 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         if (0 == block.m &&
                 (CA_REQUEST_ENTITY_INCOMPLETE != code && CA_REQUEST_ENTITY_TOO_LARGE != code))
         {
-            OIC_LOG(INFO, TAG, "Data has sent");
-            // initialize block number for response message
-            data->block1.num = 0;
-            CADestroyBlockID(blockDataID);
-            return CA_STATUS_OK;
+            int isBlock2 = coap_get_block(pdu, COAP_OPTION_BLOCK2, &block);
+            if (isBlock2)
+            {
+                OIC_LOG(INFO, TAG, "received data is combining block1 and block2");
+                // initialize block number for response message
+                data->block1.num = 0;
+                CADestroyBlockID(blockDataID);
+                return CA_STATUS_OK;
+            }
+            else
+            {
+                OIC_LOG(INFO, TAG, "received data is not bulk data");
+                CAReceiveLastBlock(blockDataID, receivedData);
+                CARemoveBlockDataFromList(blockDataID);
+                CADestroyBlockID(blockDataID);
+                return CA_STATUS_OK;
+            }
         }
 
         blockWiseStatus = CA_OPTION1_ACK;
@@ -1396,11 +1416,12 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
 
     OIC_LOG_V(DEBUG, TAG, "previous payload - %s", (*pdu)->data);
 
+    CAResult_t res = CA_STATUS_OK;
     uint32_t code = CA_RESPONSE_CODE((*pdu)->hdr->coap_hdr_udp_t.code);
     if (CA_REQUEST_ENTITY_INCOMPLETE == code)
     {
         OIC_LOG(INFO, TAG, "don't use option");
-        return CA_STATUS_OK;
+        return res;
     }
 
     CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
@@ -1411,31 +1432,27 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
     if(NULL == blockDataID || NULL == blockDataID->id || blockDataID->idLength < 1)
     {
         OIC_LOG(ERROR, TAG, "blockId is null");
-        CADestroyBlockID(blockDataID);
-        return CA_STATUS_FAILED;
+        res = CA_STATUS_FAILED;
+        goto exit;
     }
 
     uint8_t blockType = CAGetBlockOptionType(blockDataID);
     if (COAP_OPTION_BLOCK2 == blockType)
     {
-        CAResult_t res = CAAddBlockOption2(pdu, info, dataLength,
-                                           blockDataID);
+        res = CAAddBlockOption2(pdu, info, dataLength, blockDataID);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "add has failed");
-            CADestroyBlockID(blockDataID);
-            return res;
+            goto exit;
         }
     }
     else if (COAP_OPTION_BLOCK1 == blockType)
     {
-        CAResult_t res = CAAddBlockOption1(pdu, info, dataLength,
-                                           blockDataID);
+        res = CAAddBlockOption1(pdu, info, dataLength, blockDataID);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "add has failed");
-            CADestroyBlockID(blockDataID);
-            return res;
+            goto exit;
         }
     }
     else
@@ -1449,22 +1466,27 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
         else
         {
             OIC_LOG(INFO, TAG, "not Blockwise Transfer");
-            CADestroyBlockID(blockDataID);
-            return CA_STATUS_OK;
+            goto exit;
         }
     }
 
-    CAResult_t res = CAUpdateMessageId(*pdu, blockDataID);
+    // if received message type is RESET from remote device,
+    // we have to use the updated message id to find token.
+    res = CAUpdateMessageId(*pdu, blockDataID);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "fail to update CON message id ");
-        CADestroyBlockID(blockDataID);
-        return res;
+        goto exit;
     }
 
+exit:
+    if (0 == endpoint->port)
+    {
+        CARemoveBlockDataFromList(blockDataID);
+    }
     CADestroyBlockID(blockDataID);
     OIC_LOG(DEBUG, TAG, "OUT-AddBlockOption");
-    return CA_STATUS_OK;
+    return res;
 }
 
 CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t *info, size_t dataLength,
@@ -1626,6 +1648,12 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
             OIC_LOG(ERROR, TAG, "add has failed");
             CARemoveBlockDataFromList(blockID);
             return res;
+        }
+
+        if (!coap_add_data(*pdu, dataLength, (const unsigned char *) info->payload))
+        {
+            OIC_LOG(ERROR, TAG, "failed to add payload");
+            return CA_STATUS_FAILED;
         }
 
         // reset block-list after write block
@@ -2032,8 +2060,7 @@ CAData_t *CACloneCAData(const CAData_t *data)
     {
         clone->requestInfo = CACloneRequestInfo(data->requestInfo);
     }
-
-    if (data->responseInfo)
+    else if (data->responseInfo)
     {
         clone->responseInfo = CACloneResponseInfo(data->responseInfo);
     }
@@ -2058,6 +2085,11 @@ CAResult_t CAUpdatePayloadToCAData(CAData_t *data, const CAPayload_t payload,
     switch (data->dataType)
     {
         case CA_REQUEST_DATA:
+            if (!data->requestInfo)
+            {
+                OIC_LOG(ERROR, TAG, "request info is null");
+                return CA_STATUS_FAILED;
+            }
             // allocate payload field
             newPayload = OICRealloc(data->requestInfo->info.payload, payloadLen);
             if (!newPayload)
@@ -2071,6 +2103,11 @@ CAResult_t CAUpdatePayloadToCAData(CAData_t *data, const CAPayload_t payload,
             break;
 
         case CA_RESPONSE_DATA:
+            if (!data->responseInfo)
+            {
+                OIC_LOG(ERROR, TAG, "response info is null");
+                return CA_STATUS_FAILED;
+            }
             // allocate payload field
             newPayload = OICRealloc(data->responseInfo->info.payload, payloadLen);
             if (!newPayload)

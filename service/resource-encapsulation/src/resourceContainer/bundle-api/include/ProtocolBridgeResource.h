@@ -51,31 +51,46 @@ namespace OIC
                 virtual ~ProtocolBridgeResource();
 
                 /**
-                * Return all attributes of the resource
-                *
-                * @return RCSResourceAttributes - attributes of the resource
-                */
-                virtual RCSResourceAttributes &getAttributes() = 0;
-
-                /**
-                * Execute the logic of bundle to set the value of attribute
-                *
-                * @param key - name of attribute to set
-                *
-                * @param value - value of attribute to set
+                * Initialize attributes of the resource
                 *
                 * @return void
                 */
-                virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&value) = 0;
+                virtual void initAttributes() = 0;
 
                 /**
-                * Execute the logic of bundle to get the value of attribute
+                * This function should be implemented by the according bundle resource
+                * and execute the according business logic (e.g., light switch or sensor resource)
+                * to retrieve a sensor value. If a new sensor value is retrieved, the
+                * setAttribute data should be called to update the value.
+                * The implementor of the function can decide weather to notify OIC clients
+                * about the changed state or not.
                 *
-                * @param key - key of attribute to get
+                * @param key Name of attribute to get
                 *
-                * @return RCSResourceAttributes::Value - return value of the attribute
+                *
+                * @return Value of all attributes
                 */
-                virtual RCSResourceAttributes::Value getAttribute(const std::string &key) = 0;
+                virtual RCSResourceAttributes &handleGetAttributesRequest() = 0;
+
+                /**
+                * This function should be implemented by the according bundle resource
+                * and execute the according business logic (e.g., light switch or sensor resource)
+                * and write either on soft sensor values or external bridged devices.
+                *
+                * The call of this method could for example trigger a HTTP PUT request on
+                * an external APIs. This method is responsible to update the resource internal
+                * data and call the setAttribute method.
+                *
+                * The implementor of the function can decide weather to notify OIC clients
+                * about the changed state or not.
+                *
+                * @param key Name of attribute to set
+                *
+                * @param attrs Attributes to set
+                *
+                * @return void
+                */
+                virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs) = 0;
         };
     }
 }

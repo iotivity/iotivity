@@ -102,6 +102,7 @@
                                     <listOptionValue builtIn="false" value="../../../../NotificationManager/include"/>
                                     <listOptionValue builtIn="false" value="../../../../NotificationManager/src"/>
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\include&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\c_common&quot;"/>
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\stack\include&quot;"/>
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\logger\include&quot;"/>
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\occoap\include&quot;"/>
@@ -222,11 +223,15 @@
                                 </option>
                                 <option id="gnu.cpp.link.option.libs.1032324584" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
                                     <listOptionValue builtIn="false" value="uuid"/>
-                                    <listOptionValue builtIn="false" value="NotificationManager"/>
                                     <listOptionValue builtIn="false" value="oc"/>
                                     <listOptionValue builtIn="false" value="octbstack"/>
                                     <listOptionValue builtIn="false" value="oc_logger"/>
+                                    <listOptionValue builtIn="false" value="oc_logger_core"/>
                                     <listOptionValue builtIn="false" value="connectivity_abstraction"/>
+                                    <listOptionValue builtIn="false" value="rcs_client"/>
+                                    <listOptionValue builtIn="false" value="rcs_server"/>
+                                    <listOptionValue builtIn="false" value="rcs_common"/>
+                                    <listOptionValue builtIn="false" value="NotificationManager"/>
                                 </option>
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.361234161" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
                                     <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>

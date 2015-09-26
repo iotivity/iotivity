@@ -20,7 +20,7 @@
 
 #include "reserver.h"
 
-#include "reservermain.h"
+#include "remain.h"
 #include "PrimitiveResource.h"
 #include "RCSResourceObject.h"
 
@@ -178,7 +178,7 @@ static void initServer()
         server = RCSResourceObject::Builder(resourceUri, resourceType,
                                             resourceInterface).setDiscoverable(true).setObservable(true).build();
     }
-    catch (const PlatformException &e)
+    catch (const RCSPlatformException &e)
     {
         dlog_print(DLOG_ERROR, LOG_TAG, "#### Create resource exception! (%s)", e.what());
     }
@@ -346,11 +346,13 @@ naviframe_pop_cb(void *data, Elm_Object_Item *it)
 }
 
 // Method to set up server screens
-void serverCreateUI(void *data)
+void serverCreateUI(void *data, Evas_Object *obj, void *event_info)
 {
     Evas_Object *layout;
     Evas_Object *scroller;
     Evas_Object *nf = (Evas_Object *)data;
+    Evas_Object *button1;
+    Evas_Object *button2;
     Elm_Object_Item *nf_it;
     naviframe = nf;
 
@@ -361,10 +363,22 @@ void serverCreateUI(void *data)
 
     // Layout
     layout = elm_layout_add(nf);
-    elm_layout_file_set(layout, ELM_DEMO_EDJ, "group_layout");
+    elm_layout_file_set(layout, ELM_DEMO_EDJ, "server_layout");
     evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 
     elm_object_content_set(scroller, layout);
+
+    // Button
+    button1 = elm_button_add(layout);
+    elm_object_part_content_set(layout, "button1", button1);
+    elm_object_text_set(button1, "Auto Control");
+    evas_object_smart_callback_add(button1, "clicked", start_server, NULL);
+
+    // Button
+    button2 = elm_button_add(layout);
+    elm_object_part_content_set(layout, "button2", button2);
+    elm_object_text_set(button2, "Dev Control");
+    evas_object_smart_callback_add(button2, "clicked", start_server_cb, NULL);
 
     // List
     list = elm_list_add(layout);
@@ -388,10 +402,10 @@ void serverCreateUI(void *data)
 
 void start_server(void *data, Evas_Object *obj, void *event_info)
 {
+    server = NULL;
     string logMessage = "SERVER WITHOUT CALLBACK<br>";
 
     serverCallback = false;
-    serverCreateUI(data);
     initServer();
 
     dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
@@ -401,10 +415,10 @@ void start_server(void *data, Evas_Object *obj, void *event_info)
 
 void start_server_cb(void *data, Evas_Object *obj, void *event_info)
 {
+    server = NULL;
     string logMessage = "SERVER WITH CALLBACK<br>";
 
     serverCallback = true;
-    serverCreateUI(data);
     initServer();
 
     if (checkServer)

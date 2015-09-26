@@ -64,12 +64,12 @@ namespace OIC
         {
             if (delay < 0LL)
             {
-                throw InvalidParameterException{ "delay can't be negative." };
+                throw RCSInvalidParameterException{ "delay can't be negative." };
             }
 
             if (!cb)
             {
-                throw InvalidParameterException{ "callback is empty." };
+                throw RCSInvalidParameterException{ "callback is empty." };
             }
 
             return addTask(convertToTime(Milliseconds{ delay }), std::move(cb), generateId());

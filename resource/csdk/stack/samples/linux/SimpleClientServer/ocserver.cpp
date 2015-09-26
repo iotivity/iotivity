@@ -928,19 +928,66 @@ static void PrintUsage()
     OC_LOG(INFO, TAG, "-o 1 : Notify list of observers");
 }
 
+#ifdef RA_ADAPTER
+static void jidbound(char *jid)
+{
+    OC_LOG_V(INFO, TAG, "\n\n    Bound JID: %s\n\n", jid);
+}
+#endif
+
 int main(int argc, char* argv[])
 {
     pthread_t threadId;
     pthread_t threadId_presence;
-    int opt;
 
-    while ((opt = getopt(argc, argv, "o:")) != -1)
+#ifdef RA_ADAPTER
+    char host[] = "localhost";
+    char user[] = "test1";
+    char pass[] = "intel123";
+    char empstr[] = "";
+    OCRAInfo_t rainfo = {};
+
+    rainfo.hostname = host;
+    rainfo.port = 5222;
+    rainfo.xmpp_domain = host;
+    rainfo.username = user;
+    rainfo.password = pass;
+    rainfo.resource = empstr;
+    rainfo.user_jid = empstr;
+    rainfo.jidbound = jidbound;
+#endif
+
+    int opt = 0;
+    while ((opt = getopt(argc, argv, "o:s:p:d:u:w:r:j:")) != -1)
     {
         switch(opt)
         {
             case 'o':
                 gObserveNotifyType = atoi(optarg);
                 break;
+#ifdef RA_ADAPTER
+            case 's':
+                rainfo.hostname = optarg;
+                break;
+            case 'p':
+                rainfo.port = atoi(optarg);
+                break;
+            case 'd':
+                rainfo.xmpp_domain = optarg;
+                break;
+            case 'u':
+                rainfo.username = optarg;
+                break;
+            case 'w':
+                rainfo.password = optarg;
+                break;
+            case 'j':
+                rainfo.user_jid = optarg;
+                break;
+            case 'r':
+                rainfo.resource = optarg;
+                break;
+#endif
             default:
                 PrintUsage();
                 return -1;
@@ -952,16 +999,8 @@ int main(int argc, char* argv[])
         PrintUsage();
         return -1;
     }
-#ifdef RA_ADAPTER
-    OCRAInfo_t rainfo;
-    rainfo.hostname = "localhost";
-    rainfo.port = 5222;
-    rainfo.xmpp_domain = "localhost";
-    rainfo.username = "test1";
-    rainfo.password = "intel123";
-    rainfo.resource = "";
-    rainfo.user_jid = "";
 
+#ifdef RA_ADAPTER
     OCSetRAInfo(&rainfo);
 #endif
 

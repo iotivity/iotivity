@@ -26,11 +26,13 @@ const char ID_3[] = "3111111111111111";
 const char ID_4[] = "4111111111111111";
 const char ID_5[] = "5111111111111111";
 const char ID_6[] = "6111111111111111";
+const char ID_7[] = "7777777777777777";
+const char ID_8[] = "8777777777777777";
 
 TEST(CallPDMAPIbeforeInit, BeforeInit)
 {
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMAddDevice(NULL));
-    EXPECT_EQ(true, PDMIsDuplicateDevice(NULL)); // return type is not OCStackResult
+    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMIsDuplicateDevice(NULL,NULL));
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMLinkDevices(NULL, NULL));
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMUnlinkDevices(NULL, NULL));
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMDeleteDevice(NULL));
@@ -38,6 +40,7 @@ TEST(CallPDMAPIbeforeInit, BeforeInit)
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMGetLinkedDevices(NULL, NULL, NULL));
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMSetLinkStale(NULL, NULL));
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMGetToBeUnlinkedDevices(NULL, NULL));
+    EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMIsLinkExists(NULL, NULL, NULL));
 }
 
 TEST(PDMInitTest, PDMInitWithNULL)
@@ -52,7 +55,7 @@ TEST(PDMAddDeviceTest, NullUUID)
 
 TEST(PDMIsDuplicateDeviceTest, NullUUID)
 {
-    EXPECT_TRUE(PDMIsDuplicateDevice(NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, PDMIsDuplicateDevice(NULL,NULL));
 }
 
 
@@ -66,9 +69,12 @@ TEST(PDMIsDuplicateDeviceTest, ValidUUID)
     PDMAddDevice(&uid2);
     OicUuid_t uid3 = {{0,}};
     memcpy(&uid3.id, ID_3, sizeof(uid3.id));
+    bool isDuplicate = true;
+    EXPECT_EQ(OC_STACK_OK, PDMIsDuplicateDevice(&uid1,&isDuplicate));
+    EXPECT_TRUE(isDuplicate);
 
-    EXPECT_TRUE(PDMIsDuplicateDevice(&uid1));
-    EXPECT_FALSE(PDMIsDuplicateDevice(&uid3));
+    EXPECT_EQ(OC_STACK_OK, PDMIsDuplicateDevice(&uid3, &isDuplicate));
+    EXPECT_FALSE(isDuplicate);
 }
 
 TEST(PDMAddDeviceTest, ValidUUID)
@@ -241,4 +247,20 @@ TEST(PDMDestoryOicUuidLinkList, NULLParam)
 TEST(PDMDestoryStaleLinkList, NULLParam)
 {
     PDMDestoryStaleLinkList(NULL);
+}
+
+TEST(PDMIsLinkExistsTest, DuplicateID)
+{
+    EXPECT_EQ(OC_STACK_OK, PDMInit(NULL));
+    OicUuid_t uid1 = {{0,}};
+    memcpy(&uid1.id, ID_7, sizeof(uid1.id));
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&uid1));
+    OicUuid_t uid2 = {{0,}};
+    memcpy(&uid2.id, ID_8, sizeof(uid2.id));
+    EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&uid2));
+
+    bool linkExisits = true;
+    OCStackResult res = PDMIsLinkExists(&uid1, &uid2, &linkExisits);
+    EXPECT_EQ(OC_STACK_OK, res);
+    EXPECT_FALSE(linkExisits);
 }

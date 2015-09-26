@@ -4,7 +4,7 @@ Import('env')
 
 boost_env = env.Clone()
 
-modules = ['thread','program_options']
+modules = ['thread','program_options', 'system', 'date_time']
 
 target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
@@ -50,7 +50,10 @@ if 'android' == target_os :
         os.path.join(dep_src_dir, 'boost', 'config.hpp'),
         os.path.join(dep_src_dir, 'boost', 'variant.hpp'),
         os.path.join(dep_src_dir, 'boost', 'program_options.hpp'),
-        os.path.join(dep_src_dir, 'libboost_thread.a'),
+        os.path.join(dep_src_dir, 'boost', 'thread.hpp'),
+        os.path.join(dep_src_dir, 'boost', 'date_time.hpp'),
+        os.path.join(dep_src_dir, 'libboost_thread.a'),        
+        os.path.join(dep_src_dir, 'libboost_date_time.a'),
         os.path.join(dep_src_dir, 'libboost_atomic.a'),
         os.path.join(dep_src_dir, 'libboost_system.a'),
         os.path.join(dep_src_dir, 'libboost_program_options.a')

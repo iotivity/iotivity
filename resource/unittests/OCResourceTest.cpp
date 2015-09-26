@@ -25,6 +25,8 @@
 #include <string>
 #include <map>
 
+static char gLongHostAddress[] = "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111:5000";
+
 namespace OCResourceTest
 {
     using namespace OC;
@@ -79,6 +81,11 @@ namespace OCResourceTest
     TEST(ConstructResourceTest, ConstructResourceObjectWithoutPortNumber)
     {
         EXPECT_ANY_THROW(ConstructResourceObject("coap://192.168.1.2", "/resource"));
+    }
+
+    TEST(ConstructResourceTest, ConstructResourceObjectWithLongHostAddress)
+    {
+        EXPECT_ANY_THROW(ConstructResourceObject(gLongHostAddress, "/resource"));
     }
 
     TEST(ConstructResourceTest, ConstructResourceObjectInvalidHost)

@@ -23,12 +23,14 @@ cp -R ./examples $sourcedir/tmp
 cp -R ./extlibs/tinycbor $sourcedir/tmp/extlibs
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
+cp -R ./extlibs/sqlite3 $sourcedir/tmp/extlibs
 cp -R ./extlibs/timer $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
 cp -R ./resource $sourcedir/tmp
 cp -R ./service $sourcedir/tmp
 cp ./extra_options.scons $sourcedir/tmp
 cp ./tools/tizen/*.spec ./tmp/packaging
+cp ./tools/tizen/*.manifest ./tmp/packaging
 cp ./SConstruct ./tmp
 cp ./tools/tizen/*.rpm ./tmp
 cp ./tools/tizen/.gbs.conf ./tmp

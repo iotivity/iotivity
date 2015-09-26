@@ -42,267 +42,241 @@ import android.view.View.OnClickListener;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-
-
 public class SampleProvider extends Activity implements OnClickListener,
-    IMessageLogger
-{
-        private final static String TAG = "NMProvider : SampleProvider";
-        private TextView mLogTextView;
-        private TextView mTempValue;
-        private TextView mHumValue;
-        private TemperatureResource mySensor;
-        private boolean isExecutePresence;
-        private ScrollView sv_sclLog;
-        private MessageReceiver mMessageReceiver = new MessageReceiver();
-        private Handler mHandler;
-        private static String message;
-        private static SampleProvider  sampleProviderObj;
-        private String temp;
-        private String hum;
+        IMessageLogger {
+    private final static String   TAG              = "NMProvider : SampleProvider";
+    private TextView              mLogTextView;
+    private TextView              mTempValue;
+    private TextView              mHumValue;
+    private TemperatureResource   mySensor;
+    private boolean               isExecutePresence;
+    private ScrollView            sv_sclLog;
+    private MessageReceiver       mMessageReceiver = new MessageReceiver();
+    private Handler               mHandler;
+    private static String         message;
+    private static SampleProvider sampleProviderObj;
+    private String                temp;
+    private String                hum;
 
-        /*
-         * To initialize UI Function Setting
-         * To execute initOICStack for running find resource
-         */
-        @Override
-        public void onCreate(Bundle savedInstanceState)
-        {
+    /*
+     * To initialize UI Function Setting To execute initOICStack for running
+     * find resource
+     */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
 
-            sampleProviderObj = this;
-            super.onCreate(savedInstanceState);
-            setContentView(R.layout.sampleprovider_layout);
-            registerReceiver(mMessageReceiver, new IntentFilter(
-                                 "com.example.sample.provider.SampleProvider"));
+        sampleProviderObj = this;
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.sampleprovider_layout);
+        registerReceiver(mMessageReceiver, new IntentFilter(
+                "com.example.sample.provider.SampleProvider"));
 
-            mLogTextView = (TextView) findViewById(R.id.txtLog);
-            mTempValue = (TextView) findViewById(R.id.temperatureValue);
-            mHumValue = (TextView) findViewById(R.id.humidityValue);
+        mLogTextView = (TextView) findViewById(R.id.txtLog);
+        mTempValue = (TextView) findViewById(R.id.temperatureValue);
+        mHumValue = (TextView) findViewById(R.id.humidityValue);
 
-            sv_sclLog = (ScrollView)findViewById(R.id.sclLog);
-            sv_sclLog.fullScroll(View.FOCUS_DOWN);
-            findViewById(R.id.btnTemperatureUP).setOnClickListener(this);
-            findViewById(R.id.btnTemperatureDown).setOnClickListener(this);
-            findViewById(R.id.btnHumidityUP).setOnClickListener(this);
-            findViewById(R.id.btnHumidityDown).setOnClickListener(this);
-            findViewById(R.id.btnLogClear).setOnClickListener(this);
+        sv_sclLog = (ScrollView) findViewById(R.id.sclLog);
+        sv_sclLog.fullScroll(View.FOCUS_DOWN);
+        findViewById(R.id.btnTemperatureUP).setOnClickListener(this);
+        findViewById(R.id.btnTemperatureDown).setOnClickListener(this);
+        findViewById(R.id.btnHumidityUP).setOnClickListener(this);
+        findViewById(R.id.btnHumidityDown).setOnClickListener(this);
+        findViewById(R.id.btnLogClear).setOnClickListener(this);
 
-            isExecutePresence = false;
-            mHandler = new Handler() {
-                @Override
-                public void handleMessage(Message msg) {
-                    switch (msg.what) {
-                        case 0:
-                            String[] tempHum = message.split(":");
-                            mTempValue.setText(tempHum[0]);
-                            mHumValue.setText(tempHum[1]);
-                    }
+        isExecutePresence = false;
+        mHandler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                switch (msg.what) {
+                    case 0:
+                        String[] tempHum = message.split(":");
+                        mTempValue.setText(tempHum[0]);
+                        mHumValue.setText(tempHum[1]);
                 }
-            };
-            setmHandler(mHandler);
-        }
-
-        private void initOICStack()
-        {
-            // create platform config
-            PlatformConfig cfg = new PlatformConfig(this,ServiceType.IN_PROC,
-                                                    ModeType.SERVER, "0.0.0.0", // bind to all available interfaces
-                                                    0, QualityOfService.LOW);
-
-            OcPlatform.Configure(cfg);
-
-            try
-            {
-                OcPlatform.startPresence(30);
-                isExecutePresence = true;
             }
-            catch (OcException e)
-            {
-                e.printStackTrace();
+        };
+        setmHandler(mHandler);
+    }
+
+    private void initOICStack() {
+        // create platform config
+        PlatformConfig cfg = new PlatformConfig(this, ServiceType.IN_PROC,
+                ModeType.SERVER, "0.0.0.0", // bind to all available interfaces
+                0, QualityOfService.LOW);
+
+        OcPlatform.Configure(cfg);
+
+        try {
+            OcPlatform.startPresence(30);
+            isExecutePresence = true;
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+
+        mySensor = new TemperatureResource(this);
+        // create and register a resource
+        mySensor.createResource();
+    }
+
+    /*
+     * To execute initOICStack for running find resource
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+        initOICStack();
+
+    }
+
+    /*
+     * To execute initOICStack for running find resource
+     */
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        initOICStack();
+
+    }
+
+    /*
+     * To terminate presence process and unregister messageHandler(to get
+     * message from JNI Function)
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        try {
+            mySensor.destroyResource();
+
+            if (isExecutePresence == true) {
+                OcPlatform.stopPresence();
+                isExecutePresence = false;
+            }
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(
+                mMessageReceiver);
+    }
+
+    public class MessageReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String message = intent
+                    .getStringExtra(StringConstants.MESSAGE);
+            logMessage(message);
+
+        }
+    }
+
+    public void logMessage(final String text) {
+        runOnUiThread(new Runnable() {
+            public void run() {
+                final Message msg = new Message();
+                msg.obj = text;
+                mLogTextView.append("\n");
+                mLogTextView.append(text);
+            }
+        });
+        Log.i(TAG, text);
+    }
+
+    /*
+     * To terminate presence process and unregister messagehandler(to get
+     * message from JNI Function)
+     */
+    @Override
+    protected void onStop() {
+        super.onStop();
+        try {
+            mySensor.destroyResource();
+
+            if (isExecutePresence == true) {
+                OcPlatform.stopPresence();
+                isExecutePresence = false;
             }
 
-            mySensor = new TemperatureResource(this);
-            // create and register a resource
-            mySensor.createResource();
-        }
-        /*
-         * To execute initOICStack for running find resource
-         */
-        @Override
-        protected void onStart()
-        {
-            super.onStart();
-            initOICStack();
+        } catch (OcException e) {
 
+            e.printStackTrace();
         }
-        /*
-         * To execute initOICStack for running find resource
-         */
-        @Override
-        protected void onRestart()
-        {
-            super.onRestart();
-            initOICStack();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(
+                mMessageReceiver);
+    }
 
+    @Override
+    public void onClick(View v) {
+        int getId = v.getId();
+
+        switch (getId) {
+            case R.id.btnTemperatureUP:
+                logMessage(TAG + "Click temerature up btn");
+                mySensor.mtemp++;
+                mySensor.notifyObserver();
+                break;
+            case R.id.btnTemperatureDown:
+                logMessage(TAG + "Click temerature down btn");
+                mySensor.mtemp--;
+                mySensor.notifyObserver();
+                break;
+            case R.id.btnHumidityUP:
+                logMessage(TAG + "Click Humidity up btn");
+                mySensor.mhumidity++;
+                mySensor.notifyObserver();
+                break;
+            case R.id.btnHumidityDown:
+                logMessage(TAG + "Click Humidity down btn");
+                mySensor.mhumidity--;
+                mySensor.notifyObserver();
+                break;
+            case R.id.btnLogClear:
+                mLogTextView.setText("");
+                Log.i(TAG, "Log message cleared");
+                break;
         }
-        /*
-         * To terminate presence process and unregister messageHandler(to get message from JNI Function)
-         */
-        @Override
-        protected void onDestroy()
-        {
-            super.onDestroy();
 
-            try
-            {
+        mTempValue.setText(String.valueOf(mySensor.getTemp()));
+        mHumValue.setText(String.valueOf(mySensor.getHumidity()));
+
+    }
+
+    /*
+     * To handle event about back button
+     */
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            try {
                 mySensor.destroyResource();
 
-                if (isExecutePresence == true)
-                {
+                if (isExecutePresence == true) {
                     OcPlatform.stopPresence();
                     isExecutePresence = false;
                 }
-            }
-            catch (OcException e)
-            {
-                e.printStackTrace();
-            }
-            LocalBroadcastManager.getInstance(this).unregisterReceiver(
-                mMessageReceiver);
-        }
-
-        public class MessageReceiver extends BroadcastReceiver
-        {
-                @Override
-                public void onReceive(Context context, Intent intent)
-                {
-                    final String message = intent
-                                           .getStringExtra(StringConstants.MESSAGE);
-                    logMessage(message);
-
-                }
-        }
-
-        public void logMessage(final String text)
-        {
-            runOnUiThread(new Runnable()
-            {
-                public void run()
-                {
-                    final Message msg = new Message();
-                    msg.obj = text;
-                    mLogTextView.append("\n");
-                    mLogTextView.append(text);
-                }
-            });
-            Log.i(TAG, text);
-        }
-        /*
-         * To terminate presence process and unregister messagehandler(to get message from JNI Function)
-         */
-        @Override
-        protected void onStop()
-        {
-            super.onStop();
-            try
-            {
-                mySensor.destroyResource();
-
-                if (isExecutePresence == true)
-                {
-                    OcPlatform.stopPresence();
-                    isExecutePresence = false;
-                }
-
-            }
-            catch (OcException e)
-            {
+            } catch (OcException e) {
 
                 e.printStackTrace();
             }
             LocalBroadcastManager.getInstance(this).unregisterReceiver(
-                mMessageReceiver);
-        }
-
-        @Override
-        public void onClick(View v)
-        {
-            int getId = v.getId();
-
-            switch (getId)
-            {
-                case R.id.btnTemperatureUP:
-                    logMessage(TAG + "Click temerature up btn");
-                    mySensor.mtemp++;
-                    mySensor.notifyObserver();
-                    break;
-                case R.id.btnTemperatureDown:
-                    logMessage(TAG + "Click temerature down btn");
-                    mySensor.mtemp--;
-                    mySensor.notifyObserver();
-                    break;
-                case R.id.btnHumidityUP:
-                    logMessage(TAG + "Click Humidity up btn");
-                    mySensor.mhumidity++;
-                    mySensor.notifyObserver();
-                    break;
-                case R.id.btnHumidityDown:
-                    logMessage(TAG + "Click Humidity down btn");
-                    mySensor.mhumidity--;
-                    mySensor.notifyObserver();
-                    break;
-                case R.id.btnLogClear:
-                    mLogTextView.setText("");
-                    Log.i(TAG, "Log message cleared");
-                    break;
-            }
-
-            mTempValue.setText(String.valueOf(mySensor.getTemp()));
-            mHumValue.setText(String.valueOf(mySensor.getHumidity()));
-
-        }
-        /*
-         * To handle event about back button
-         */
-        @Override
-        public boolean onKeyDown(int keyCode, KeyEvent event)
-        {
-            if (keyCode == KeyEvent.KEYCODE_BACK )
-            {
-                try
-                {
-                    mySensor.destroyResource();
-
-                    if (isExecutePresence == true)
-                    {
-                        OcPlatform.stopPresence();
-                        isExecutePresence = false;
-                    }
-                }
-                catch (OcException e)
-                {
-
-                    e.printStackTrace();
-                }
-                LocalBroadcastManager.getInstance(this).unregisterReceiver(
                     mMessageReceiver);
-            }
-            return super.onKeyDown(keyCode, event);
         }
+        return super.onKeyDown(keyCode, event);
+    }
 
-        public Handler getmHandler() {
-            return mHandler;
-        }
+    public Handler getmHandler() {
+        return mHandler;
+    }
 
-        public void setmHandler(Handler mHandler) {
-            this.mHandler = mHandler;
-        }
+    public void setmHandler(Handler mHandler) {
+        this.mHandler = mHandler;
+    }
 
-        public static SampleProvider getSampleProviderObject() {
-            return sampleProviderObj;
-        }
+    public static SampleProvider getSampleProviderObject() {
+        return sampleProviderObj;
+    }
 
-        public static void setmessage(String msg) {
-            message = msg;
-        }
+    public static void setmessage(String msg) {
+        message = msg;
+    }
 }

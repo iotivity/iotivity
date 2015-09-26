@@ -53,12 +53,12 @@ TEST_F(ResourceAttributesTest, ValueThrowsIfTypeDoesNotMatch)
      resourceAttributes[KEY] = 1;
     auto& valueRef = resourceAttributes[KEY];
 
-    ASSERT_THROW(valueRef.get< std::string >(), BadGetException);
+    ASSERT_THROW(valueRef.get< std::string >(), RCSBadGetException);
 }
 
 TEST_F(ResourceAttributesTest, GettingWithAtThrowsIfThereIsNoMatchedValue)
 {
-    ASSERT_THROW(resourceAttributes.at(KEY), InvalidKeyException);
+    ASSERT_THROW(resourceAttributes.at(KEY), RCSInvalidKeyException);
 }
 
 TEST_F(ResourceAttributesTest, CopyingValueDoesNotShareState)
@@ -103,7 +103,7 @@ TEST_F(ResourceAttributesTest, GettingWithAtThrowsAfterRemoved)
 
     resourceAttributes.erase(KEY);
 
-    ASSERT_THROW(resourceAttributes.at(KEY), InvalidKeyException);
+    ASSERT_THROW(resourceAttributes.at(KEY), RCSInvalidKeyException);
 }
 
 TEST_F(ResourceAttributesTest, NoDataErasedIfKeyDoesNotMatch)

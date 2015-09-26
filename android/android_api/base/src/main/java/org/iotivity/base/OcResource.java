@@ -34,6 +34,7 @@ import java.util.Map;
  * one or more resources.
  */
 public class OcResource {
+    public static final String CREATED_URI_KEY = "createduri";
 
     private OcResource(long nativeHandle) {
         this.mNativeHandle = nativeHandle;
@@ -556,6 +557,19 @@ public class OcResource {
      * Event listeners are notified asynchronously
      */
     public interface OnObserveListener {
+        /**
+         * To Register.
+         */
+        public static final int REGISTER = 0;
+        /**
+         * To Deregister.
+         */
+        public static final int DEREGISTER = 1;
+        /**
+         * Others.
+         */
+        public static final int NO_OPTION = 2;
+
         public void onObserveCompleted(List<OcHeaderOption> headerOptionList,
                                        OcRepresentation ocRepresentation,
                                        int sequenceNumber);

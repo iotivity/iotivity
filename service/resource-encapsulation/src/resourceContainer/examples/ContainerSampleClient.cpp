@@ -65,6 +65,7 @@ int observe_count()
 void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep,
                const int &eCode, const int &sequenceNumber)
 {
+    (void)headerOptions;
     try
     {
         if (eCode == OC_STACK_OK)
@@ -105,6 +106,7 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep,
 
 void onPost2(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
+    (void)headerOptions;
     try
     {
         if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
@@ -149,6 +151,7 @@ void onPost2(const HeaderOptions &headerOptions, const OCRepresentation &rep, co
 
 void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
+    (void)headerOptions;
     try
     {
         if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
@@ -213,6 +216,8 @@ void postLightRepresentation(std::shared_ptr<OCResource> resource)
 // callback handler on PUT request
 void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
+    (void)headerOptions;
+    (void)rep;
     try
     {
         if (eCode == OC_STACK_OK)
@@ -246,6 +251,8 @@ void onPutForDISensor(const HeaderOptions &headerOptions, const OCRepresentation
     void onGetForDISensor(const HeaderOptions & headerOptions, const OCRepresentation & rep,
                           const int eCode);
 
+    (void)headerOptions;
+    (void)rep;
     try
     {
         if (eCode == OC_STACK_OK)
@@ -290,6 +297,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 // Callback handler on GET request
 void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
+    (void)headerOptions;
     try
     {
         if (eCode == OC_STACK_OK)
@@ -323,6 +331,7 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
 void onGetForDISensor(const HeaderOptions &headerOptions, const OCRepresentation &rep,
                       const int eCode)
 {
+    (void)headerOptions;
     try
     {
         if (eCode == OC_STACK_OK)
@@ -419,7 +428,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
             {
                 std::cout << "\t\t" << resourceTypes << std::endl;
 
-                if (resourceTypes == "oic.light.control")
+                if (resourceTypes == "oic.r.light")
                 {
                     curResource = resource;
                     // Call a local function which will internally invoke get API on the resource pointer
@@ -478,6 +487,8 @@ void checkObserverValue(int value)
 
 static FILE *client_open(const char *path, const char *mode)
 {
+    (void)path;
+
     return fopen("./oic_svr_db_client.json", mode);
 }
 

@@ -55,31 +55,39 @@ namespace OIC
                 virtual void initAttributes();
 
                 /**
-                * Return all attributes of the resource
+                * This function should be implemented by the according bundle resource
+                * and execute the according business logic (e.g., light switch or sensor resource)
+                * to retrieve a sensor value. If a new sensor value is retrieved, the
+                * setAttribute data should be called to update the value.
+                * The implementor of the function can decide weather to notify OIC clients
+                * about the changed state or not.
                 *
-                * @return RCSResourceAttributes - attributes of the resource
+                * @param key Name of attribute to get
+                *
+                *
+                * @return Value of all attributes
                 */
-                virtual RCSResourceAttributes &getAttributes();
+                virtual RCSResourceAttributes &handleGetAttributesRequest() = 0;
 
                 /**
-                * Execute the logic of bundle to set the value of attribute
+                * This function should be implemented by the according bundle resource
+                * and execute the according business logic (e.g., light switch or sensor resource)
+                * and write either on soft sensor values or external bridged devices.
                 *
-                * @param key - name of attribute to set
+                * The call of this method could for example trigger a HTTP PUT request on
+                * an external APIs. This method is responsible to update the resource internal
+                * data and call the setAttribute method.
                 *
-                * @param value - value of attribute to set
+                * The implementor of the function can decide weather to notify OIC clients
+                * about the changed state or not.
+                *
+                * @param key Name of attribute to set
+                *
+                * @param attrs Attributes to set
                 *
                 * @return void
                 */
-                virtual void setAttribute(std::string key, RCSResourceAttributes::Value &&value);
-
-                /**
-                * Execute the logic of bundle to get the value of attribute
-                *
-                * @param key - key of attribute to get
-                *
-                * @return RCSResourceAttributes::Value - return value of the attribute
-                */
-                virtual RCSResourceAttributes::Value getAttribute(const std::string &key);
+                virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs) = 0;
 
                 /**
                 * SoftSensor logic. Has to be provided by the soft sensor developer.
@@ -88,6 +96,21 @@ namespace OIC
                 * @return void
                 */
                 virtual void executeLogic() = 0;
+
+                /**
+                * Callback from the client module in the container.
+                * This function will be called if input data from remote resources are updated.
+                * SoftSensor resource can get a vector of input data from multiple input resources
+                *    which have attributeName that softsensor needs to execute its logic.
+                *
+                * @param attributeName Attribute key of input data
+                *
+                * @param values Vector of input data value
+                *
+                * @return void
+                */
+                virtual void onUpdatedInputResource(const std::string attributeName,
+                                                    std::vector<RCSResourceAttributes::Value> values) = 0;
 
 
             public:

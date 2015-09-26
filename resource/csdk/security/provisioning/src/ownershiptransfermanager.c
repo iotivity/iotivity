@@ -920,9 +920,17 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
     for(size_t devIdx = 0; devIdx < otmCtx->ctxResultArraySize; devIdx++)
     {
         //Checking duplication of Device ID.
-        if(true == PDMIsDuplicateDevice(&pCurDev->doxm->deviceID))
+        bool isDuplicate = true;
+        OCStackResult res = PDMIsDuplicateDevice(&pCurDev->doxm->deviceID, &isDuplicate);
+        if (OC_STACK_OK != res)
         {
-            OC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Device ID is duplicate");
+            OICFree(otmCtx->ctxResultArray);
+            OICFree(otmCtx);
+            return res;
+        }
+        if (isDuplicate)
+        {
+            OC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Device ID is duplicated");
             OICFree(otmCtx->ctxResultArray);
             OICFree(otmCtx);
             return OC_STACK_INVALID_PARAM;

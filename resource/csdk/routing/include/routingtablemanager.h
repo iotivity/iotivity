@@ -221,12 +221,11 @@ OCStackResult RTMRemoveGateways(u_linklist_t **gatewayTable);
 OCStackResult RTMRemoveEndpoints(u_linklist_t **endpointTable);
 
 /**
- * Gets the neighbour nodes i.e nodes with routecost 1.
- * @param[in/out]   neighbourNodes        link list containing neighbouring nodes.
+ * Gets the neighbor nodes i.e nodes with routecost 1.
+ * @param[in/out]   neighbourNodes        link list containing neighbor nodes.
                                           this list will be pointer to GatewayIds
                                           and must be freed by caller.
  * @param[in]       gatewayTable           Gateway Routing Table.
- * @return  NONE.
  */
 void RTMGetNeighbours(u_linklist_t **neighbourNodes, const u_linklist_t *gatewayTable);
 
@@ -251,7 +250,7 @@ CAEndpoint_t *RTMGetEndpointEntry(uint16_t endpointId, const u_linklist_t *endpo
  * as destination.
  * @param[in]        gatewayId               Gateway Id of Hop need to be updated.
  * @param[in]        destInterfaces          Destination Interface Information.
- * @param[in]        addAdr                  Add/Remove Dest intf addr.
+ * @param[in]        addAdr                  Add/Remove destination address.
  * @param[in/out]    gatewayTable            Gateway Routing Table.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
@@ -261,7 +260,7 @@ OCStackResult RTMUpdateDestinationIntfAdr(uint32_t gatewayId, RTMDestIntfInfo_t 
 /**
  * Updates Multicast sequence number for gatewayID
  * @param[in]       gatewayId           Gateway Id of Hop need to be updated.
- * @param[in]       seqNum              sequence number for last cast packet from gateway.
+ * @param[in]       seqNum              Sequence number for last cast packet from gateway.
  * @param[in/out]   gatewayTable        Gateway Routing Table.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
@@ -272,7 +271,6 @@ OCStackResult RTMUpdateMcastSeqNumber(uint32_t gatewayId, uint16_t seqNum,
  * Prints the routing table
  * @param[in]    gatewayTable           Gateway Routing Table.
  * @param[in]    endpointTable          Endpoint Routing Table.
- * @return  NONE.
  */
 void RTMPrintTable(const u_linklist_t *gatewayTable, const u_linklist_t *endpointTable);
 
@@ -280,7 +278,6 @@ void RTMPrintTable(const u_linklist_t *gatewayTable, const u_linklist_t *endpoin
  * Frees the GatewayId
  * @param[in]        gateway                Gateway Structure pointer.
  * @param[in/out]    gatewayTable           Gateway Routing Table.
- * @return  NONE.
  */
 void RTMFreeGateway(RTMGatewayId_t *gateway, u_linklist_t **gatewayTable);
 
@@ -289,7 +286,6 @@ void RTMFreeGateway(RTMGatewayId_t *gateway, u_linklist_t **gatewayTable);
  * @param[in/out]    obsList                List of Observation IDs.
  * @param[in/out]    obsListLen             Length if Observation ID list.
  * @param[in]        gatewayTable           Gateway Routing Table.
- * @return  NONE.
  */
 void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
                         const u_linklist_t *gatewayTable);
@@ -299,7 +295,7 @@ void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
  * @param[in]        obsID                  Observation ID.
  * @param[in]        devAddr                Address of Gateway.
  * @param[in/out]    gatewayTable           Gateway Routing Table.
- * @return  NONE.
+ * @return  ::OC_STACK_OK or Appropriate error code.
  */
 OCStackResult RTMAddObserver(uint32_t obsID, CAEndpoint_t devAddr, u_linklist_t **gatewayTable);
 
@@ -309,7 +305,7 @@ OCStackResult RTMAddObserver(uint32_t obsID, CAEndpoint_t devAddr, u_linklist_t 
  * @param[in]        devAddr                Address of Gateway.
  * @param[in/out]    obsID                  Observation ID.
  * @param[in]        gatewayTable           Gateway Routing Table.
- * @return  NONE
+ * @return  true or false.
  */
 bool RTMIsObserverPresent(CAEndpoint_t devAddr, OCObservationId *obsID,
                           const u_linklist_t *gatewayTable);
@@ -322,16 +318,16 @@ uint64_t RTMGetCurrentTime();
 
 /**
  * Update Gateway Address Validity.
- * @param[in/out] invalidTable      Removed entries Table.
- * @param[in/out] gatewayTable      Gateway Routing Table.
+ * @param[in/out]    invalidTable      Removed entries Table.
+ * @param[in/out]    gatewayTable      Gateway Routing Table.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
 OCStackResult RTMUpdateDestAddrValidity(u_linklist_t **invalidTable, u_linklist_t **gatewayTable);
 
 /**
  * Removes invalid gateways.
- * @param[in/out] invalidTable      Removed entries Table.
- * @param[in/out] gatewayTable      Gateway Routing Table.
+ * @param[in/out]    invalidTable      Removed entries Table.
+ * @param[in/out]    gatewayTable      Gateway Routing Table.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
 OCStackResult RTMRemoveInvalidGateways(u_linklist_t **invalidTable, u_linklist_t **gatewayTable);
@@ -341,7 +337,7 @@ OCStackResult RTMRemoveInvalidGateways(u_linklist_t **invalidTable, u_linklist_t
  * @param[in]       gatewayId           Gateway Id.
  * @param[in]       seqNum              Sequence Number of Entry.
  * @param[in]       destInterfaces      Destination Interface Information.
- * @param[out]   gatewayTable        Gateway Routing Table.
+ * @param[out]      gatewayTable        Gateway Routing Table.
  * @param[in]       forceUpdate         To Update parameters forcefully.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */

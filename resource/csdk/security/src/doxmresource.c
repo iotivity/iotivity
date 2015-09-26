@@ -367,7 +367,7 @@ static bool ValidateQuery(const char * query)
     // access rules. Eventually, the PE and PM code will
     // not send a request to the /doxm Entity Handler at all
     // if it should not respond.
-    OC_LOG (INFO, TAG, "In ValidateQuery");
+    OC_LOG (DEBUG, TAG, "In ValidateQuery");
     if(NULL == gDoxm)
     {
         return false;
@@ -428,12 +428,12 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     char* jsonStr = NULL;
     OCEntityHandlerResult ehRet = OC_EH_OK;
 
-    OC_LOG (INFO, TAG, "Doxm EntityHandle processing GET request");
+    OC_LOG (DEBUG, TAG, "Doxm EntityHandle processing GET request");
 
     //Checking if Get request is a query.
     if(ehRequest->query)
     {
-        OC_LOG (INFO, TAG, "HandleDoxmGetRequest processing query");
+        OC_LOG (DEBUG, TAG, "HandleDoxmGetRequest processing query");
         if(!ValidateQuery(ehRequest->query))
         {
             ehRet = OC_EH_ERROR;
@@ -488,7 +488,7 @@ static OCEntityHandlerResult AddOwnerPSK(const CAEndpoint_t* endpoint,
                     sizeof(base64Buff), &outLen);
     VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
 
-    OC_LOG (INFO, TAG, "Doxm EntityHandle  generating Credential");
+    OC_LOG (DEBUG, TAG, "Doxm EntityHandle  generating Credential");
     cred = GenerateCredential(&ptDoxm->owner, SYMMETRIC_PAIR_WISE_KEY,
                               NULL, base64Buff, ownLen, &ptDoxm->owner);
     VERIFY_NON_NULL(TAG, cred, ERROR);
@@ -509,7 +509,7 @@ exit:
 
 static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    OC_LOG (INFO, TAG, "Doxm EntityHandle  processing PUT request");
+    OC_LOG (DEBUG, TAG, "Doxm EntityHandle  processing PUT request");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t emptyOwner = {.id = {0}};
 
@@ -587,6 +587,10 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                  * in owned state.
                  */
                 CAEnableAnonECDHCipherSuite(false);
+#ifdef __WITH_X509__
+#define TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 0xC0AE
+                CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+#endif //__WITH_X509__
 #endif //__WITH_DTLS__
             }
         }
@@ -600,7 +604,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
             {
 #ifdef __WITH_DTLS__
                 CAEnableAnonECDHCipherSuite(false);
-                OC_LOG(DEBUG, TAG, "ECDH_ANON CipherSuite is DISABLED");
+                OC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
                 CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256);
 
                 char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0,};
@@ -608,7 +612,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                 {
                     if(tmpCredGenFlag)
                     {
-                       OC_LOG(DEBUG, TAG, "Corrupted PSK is detected!!!");
+                       OC_LOG(INFO, TAG, "Corrupted PSK is detected!!!");
                        VERIFY_SUCCESS(TAG,
                                       OC_STACK_RESOURCE_DELETED == RemoveCredential(&tmpCredId),
                                       ERROR);
@@ -706,7 +710,7 @@ OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -797,7 +801,7 @@ static OCStackResult CheckDeviceID()
  */
 static OicSecDoxm_t* GetDoxmDefault()
 {
-    OC_LOG (INFO, TAG, "GetDoxmToDefault");
+    OC_LOG (DEBUG, TAG, "GetDoxmToDefault");
     return &gDefaultDoxm;
 }
 

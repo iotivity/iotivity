@@ -53,6 +53,11 @@
             "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
         }
 	],
+	"amacl": [{
+		"rsrc" : ["/a/led"],
+		"amss" : ["MTkxOTE5MTkxOTE5MTkxOQ=="],
+		"ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	}],
 	"pstat":	{
 		"isop":	true,
 		"deviceid":	"ZGV2aWNlaWQAAAAAABhanw==",
@@ -89,6 +94,20 @@
 	    "sub": "Nzc3Nzc3Nzc3Nzc3Nzc3Nw==",
 	    "credtyp": 1,
 	    "pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	},
+	{
+	    "credid": 4,
+	    "sub": "NDQ0NDMzMzMyMjIyMTExMQ==",
+	    "credtyp": 1,
+	    "pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	},
+	{
+	    "credid": 5,
+	    "sub": "MTkxOTE5MTkxOTE5MTkxOQ==",
+	    "credtyp": 1,
+	    "pvdata": "QkJCQkJCQkJCQkJCQkJCQg==",
         "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 	}]
 }
