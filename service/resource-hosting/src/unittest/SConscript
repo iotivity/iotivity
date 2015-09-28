@@ -54,7 +54,7 @@ GTest_Main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 #hosting_test_env.AppendUnique(LIBPATH = [gtest_dir + '/lib/.libs'])
 hosting_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
 hosting_test_env.AppendUnique(LIBS = [
-	'NotificationManager', 'rcs_server', 'rcs_client','rcs_common',
+	'resource_hosting', 'rcs_server', 'rcs_client','rcs_common',
 	'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap',
 	GTest_Main, GTest])
 
@@ -68,9 +68,9 @@ if target_os == 'linux':
 hosting_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master',
                              gtest_dir + '/include'])
 hosting_test_env.AppendUnique(CPPPATH = ['../'])
-hosting_test_env.AppendUnique(CPPPATH = ['../../../../resource-encapsulation/include'])
-hosting_test_env.AppendUnique(CPPPATH = ['../../../../resource-encapsulation/src/common/primitiveResource/include'])
-hosting_test_env.AppendUnique(CPPPATH = ['../../../../resource-encapsulation/src/common/utils/include'])
+hosting_test_env.AppendUnique(CPPPATH = ['../../../resource-encapsulation/include'])
+hosting_test_env.AppendUnique(CPPPATH = ['../../../resource-encapsulation/src/common/primitiveResource/include'])
+hosting_test_env.AppendUnique(CPPPATH = ['../../../resource-encapsulation/src/common/utils/include'])
 ######################################################################
 # Build Test
 ######################################################################

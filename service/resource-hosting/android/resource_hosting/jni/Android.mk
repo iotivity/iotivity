@@ -62,8 +62,8 @@ include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../../../out/android/$(TARGET_ARCH_ABI)/release
-LOCAL_MODULE := NotificationManager
-LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libNotificationManager.so
+LOCAL_MODULE := resourceHosting
+LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libresource_hosting.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -80,7 +80,7 @@ LOCAL_STATIC_LIBRARIES += ocstack-jni
 LOCAL_STATIC_LIBRARIES += rcsCommon
 LOCAL_STATIC_LIBRARIES += rcsClient
 LOCAL_STATIC_LIBRARIES += rcsServer
-LOCAL_STATIC_LIBRARIES += NotificationManager
+LOCAL_STATIC_LIBRARIES += resourceHosting
 
 
 OIC_SRC_DIR := ../../../../..
@@ -92,7 +92,7 @@ LOCAL_C_INCLUDES := $(OIC_SRC_DIR)/resource/csdk/stack/include \
                     $(OIC_SRC_DIR)/resource/oc_logger/include \
                     $(OIC_SRC_DIR)/extlibs/boost/boost_1_58_0 \
                     $(OIC_SRC_DIR)/service/resource-encapsulation/include \
-                    $(OIC_SRC_DIR)/service/notification-manager/NotificationManager/include \
+                    $(OIC_SRC_DIR)/service/resource-hosting/include \
 
 LOCAL_SRC_FILES := ResourceHosing_JNI.cpp
 include $(BUILD_SHARED_LIBRARY)

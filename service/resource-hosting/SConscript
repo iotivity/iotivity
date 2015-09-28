@@ -35,17 +35,17 @@ if env.get('LOGGING'):
 
 lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
-notimgr_env = lib_env.Clone()
+resourcehosting_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-notimgr_env.AppendUnique(CPPPATH = ['NotificationManager/include'])
-notimgr_env.AppendUnique(CPPPATH = ['../resource-encapsulation/include'])
-notimgr_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/common/primitiveResource/include'])
+resourcehosting_env.AppendUnique(CPPPATH = ['include'])
+resourcehosting_env.AppendUnique(CPPPATH = ['../resource-encapsulation/include'])
+resourcehosting_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/common/primitiveResource/include'])
 
-notimgr_env.PrependUnique(LIBS = [
+resourcehosting_env.PrependUnique(LIBS = [
 	'rcs_client',
 	'rcs_server',
 	'rcs_common',
@@ -57,45 +57,45 @@ notimgr_env.PrependUnique(LIBS = [
 	])
 
 if target_os not in ['windows', 'winrt']:
-	notimgr_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+	resourcehosting_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
-	notimgr_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
+	resourcehosting_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 if target_os == 'linux':
-	notimgr_env.AppendUnique(LIBS = ['pthread'])
+	resourcehosting_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os == 'android':
-	notimgr_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	notimgr_env.AppendUnique(LIBS = ['gnustl_shared','log'])
+	resourcehosting_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	resourcehosting_env.AppendUnique(LIBS = ['gnustl_shared','log'])
 
 	if not env.get('RELEASE'):
-		notimgr_env.AppendUnique(LIBS = ['log'])
+		resourcehosting_env.AppendUnique(LIBS = ['log'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-NOTI_SRC_DIR = 'NotificationManager/src/'
-notimgr_src = [
-        NOTI_SRC_DIR + 'hosting.cpp',
-        NOTI_SRC_DIR + 'ResourceHosting.cpp',
-        NOTI_SRC_DIR + 'HostingObject.cpp',
-        NOTI_SRC_DIR + 'RequestObject.cpp'
+HOSTING_SRC_DIR = 'src/'
+resourcehosting_src = [
+        HOSTING_SRC_DIR + 'hosting.cpp',
+        HOSTING_SRC_DIR + 'ResourceHosting.cpp',
+        HOSTING_SRC_DIR + 'HostingObject.cpp',
+        HOSTING_SRC_DIR + 'RequestObject.cpp'
         ]
 
 if target_os in ['tizen','android'] :
-    notificationsdk = notimgr_env.SharedLibrary('NotificationManager', notimgr_src)
+    resourcehostingsdk = resourcehosting_env.SharedLibrary('resource_hosting', resourcehosting_src)
 else :
-    notificationsdk = notimgr_env.StaticLibrary('NotificationManager', notimgr_src)
+    resourcehostingsdk = resourcehosting_env.StaticLibrary('resource_hosting', resourcehosting_src)
 
-notimgr_env.InstallTarget(notificationsdk, 'libResouceHosting')
-notimgr_env.UserInstallTargetLib(notificationsdk, 'libResouceHosting')
-notimgr_env.UserInstallTargetHeader('NotificationManager/include/hosting.h',\
-	'service/notification-manager', 'hosting.h')
+resourcehosting_env.InstallTarget(resourcehostingsdk, 'libresource_hosting')
+resourcehosting_env.UserInstallTargetLib(resourcehostingsdk, 'libresource_hosting')
+resourcehosting_env.UserInstallTargetHeader('include/hosting.h',\
+	'service/resource-hosting', 'hosting.h')
 
 # Go to build Unit test
 if target_os == 'linux':
-	SConscript('NotificationManager/src/unittest/SConscript')
+	SConscript('src/unittest/SConscript')
 
 # Go to build sample apps
 SConscript('SampleApp/SConscript')

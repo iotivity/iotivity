@@ -52,8 +52,6 @@ private:
     typedef std::shared_ptr<PrimitiveResource> PrimiteveResourcePtr;
 
     typedef std::function<
-            void(OCStackResult, const unsigned int, const std::string&)> SubscribeCallback;
-    typedef std::function<
             void(std::shared_ptr<RCSRemoteResourceObject>)> DiscoveryCallback;
     typedef std::function<void()> DestroyedCallback;
 
@@ -79,19 +77,14 @@ private:
     std::list<HostingObjectPtr> hostingObjectList;
 
     RCSDiscoveryManager * discoveryManager;
-    PresenceSubscriber presenceHandle;
     std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
 
-    SubscribeCallback pPresenceCB;
     DiscoveryCallback pDiscoveryCB;
 
     void initializeResourceHosting();
 
-    void requestMulticastPresence();
     void requestMulticastDiscovery();
-    void requestDiscovery(std::string address = std::string());
 
-    void presenceHandler(OCStackResult ret, const unsigned int seq, const std::string & address);
     void discoverHandler(RemoteObjectPtr remoteResource);
 
     HostingObjectPtr findRemoteResource(RemoteObjectPtr remoteResource);

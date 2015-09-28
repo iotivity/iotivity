@@ -43,8 +43,7 @@ std::mutex ResourceHosting::s_mutexForCreation;
 ResourceHosting::ResourceHosting()
 : hostingObjectList(),
   discoveryManager(nullptr),
-  presenceHandle(),
-  pPresenceCB(nullptr), pDiscoveryCB(nullptr)
+  pDiscoveryCB(nullptr)
 {
 }
 
@@ -67,7 +66,6 @@ void ResourceHosting::startHosting()
 {
     try
     {
-        requestMulticastPresence();
         requestMulticastDiscovery();
     }catch(const RCSPlatformException &e)
     {
@@ -89,106 +87,27 @@ void ResourceHosting::startHosting()
 
 void ResourceHosting::stopHosting()
 {
-    // clear list hostingObjectList
-    if(presenceHandle.isSubscribing())
-    {
-        presenceHandle.unsubscribe();
-    }
 
     hostingObjectList.clear();
 }
 
 void ResourceHosting::initializeResourceHosting()
 {
-    pPresenceCB = std::bind(&ResourceHosting::presenceHandler, this,
-            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     pDiscoveryCB = std::bind(&ResourceHosting::discoverHandler, this,
             std::placeholders::_1);
 
     discoveryManager = RCSDiscoveryManager::getInstance();
 }
 
-void ResourceHosting::requestMulticastPresence()
-{
-    try
-    {
-        presenceHandle = PresenceSubscriber(MULTICAST_PRESENCE_ADDRESS,
-                OCConnectivityType::CT_DEFAULT, pPresenceCB);
-    }catch(...)
-    {
-        throw;
-    }
-}
-
-void ResourceHosting::presenceHandler(OCStackResult ret, const unsigned int /*seq*/,
-        const std::string & address)
-{
-    switch(ret)
-    {
-    case OC_STACK_OK:
-    case OC_STACK_CONTINUE:
-    case OC_STACK_RESOURCE_CREATED:
-    {
-        // TODO start discovery
-        requestDiscovery(address);
-        break;
-    }
-
-    case OC_STACK_RESOURCE_DELETED:
-    case OC_STACK_COMM_ERROR:
-    case OC_STACK_TIMEOUT:
-    case OC_STACK_PRESENCE_STOPPED:
-    case OC_STACK_PRESENCE_TIMEOUT:
-    case OC_STACK_PRESENCE_DO_NOT_HANDLE:
-    case OC_STACK_ERROR:
-        // TODO presence error
-        break;
-
-    case OC_STACK_INVALID_URI:
-    case OC_STACK_INVALID_QUERY:
-    case OC_STACK_INVALID_IP:
-    case OC_STACK_INVALID_PORT:
-    case OC_STACK_INVALID_CALLBACK:
-    case OC_STACK_INVALID_METHOD:
-    case OC_STACK_INVALID_PARAM:
-    case OC_STACK_INVALID_OBSERVE_PARAM:
-    case OC_STACK_NO_MEMORY:
-    case OC_STACK_ADAPTER_NOT_ENABLED:
-    case OC_STACK_NOTIMPL:
-    case OC_STACK_NO_RESOURCE:
-    case OC_STACK_RESOURCE_ERROR:
-    case OC_STACK_SLOW_RESOURCE:
-    case OC_STACK_DUPLICATE_REQUEST:
-    case OC_STACK_NO_OBSERVERS:
-    case OC_STACK_OBSERVER_NOT_FOUND:
-    case OC_STACK_INVALID_OPTION:
-    case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
-    case OC_STACK_MALFORMED_RESPONSE:
-    case OC_STACK_PERSISTENT_BUFFER_REQUIRED:
-    case OC_STACK_INVALID_REQUEST_HANDLE:
-    case OC_STACK_INVALID_DEVICE_INFO:
-    case OC_STACK_INVALID_JSON:
-        break;
-    default:
-        // TODO unknown presence result
-        break;
-    }
-}
-
 void ResourceHosting::requestMulticastDiscovery()
 {
-    requestDiscovery();
-}
-void ResourceHosting::requestDiscovery(std::string address)
-{
-    std::string host = address;
-    RCSAddress rcsAddress = RCSAddress::unicast(host);
     discoveryTask = discoveryManager->discoverResourceByType(
-        rcsAddress, OC_RSRVD_WELL_KNOWN_URI, HOSTING_RESOURSE_TYPE, pDiscoveryCB);
+            RCSAddress::multicast(), OC_RSRVD_WELL_KNOWN_URI, HOSTING_RESOURSE_TYPE, pDiscoveryCB);
 }
 
 void ResourceHosting::discoverHandler(RemoteObjectPtr remoteResource)
 {
+    std::cout << "Discovered Resource uri : " << remoteResource->getUri() << std::endl;
     std::string discoverdUri = remoteResource->getUri();
     if(discoverdUri.compare(
             discoverdUri.size()-HOSTING_TAG_SIZE, HOSTING_TAG_SIZE, HOSTING_TAG) != 0)
