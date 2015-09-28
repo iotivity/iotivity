@@ -46,8 +46,7 @@ constexpr int QUIT_INPUT = 3;
 std::shared_ptr<RCSRemoteResourceObject>  resource;
 
 const std::string defaultKey = "Temperature";
-const std::string resourceType = "?rt=core.TemperatureSensor";
-const std::string targetUri = OC_RSRVD_WELL_KNOWN_URI + resourceType;
+const std::string resourceType = "oic.r.temperaturesensor";
 
 std::mutex mtx;
 std::condition_variable cond;
@@ -159,9 +158,9 @@ void onCacheUpdated(const RCSResourceAttributes &attributes)
                                           &logMessage);
 }
 
-void onRemoteAttributesReceivedCallback(const RCSResourceAttributes &attributes)
+void onRemoteAttributesReceived(const RCSResourceAttributes& attributes, int)
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### onRemoteAttributesReceivedCallback callback");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### onRemoteAttributesReceived entry");
 
     string logMessage = "Remote Attribute Updated : <br> ";
 
@@ -257,7 +256,7 @@ static void getAttributeFromRemoteServer(void *data, Evas_Object *obj, void *eve
 {
     if (checkResource)
     {
-        resource->getRemoteAttributes(&onRemoteAttributesReceivedCallback);
+        resource->getRemoteAttributes(&onRemoteAttributesReceived);
     }
     else
     {
@@ -276,7 +275,7 @@ static void setAttributeToRemoteServer(int setTemperature)
     if (checkResource)
     {
         resource->setRemoteAttributes(setAttribute,
-                                      &onRemoteAttributesReceivedCallback);
+                                      &onRemoteAttributesReceived);
     }
     else
     {
@@ -481,7 +480,7 @@ void discoverResource()
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### Wait 2 seconds until discovered");
 
-    RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(), targetUri,
+    RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(), resourceType,
             &onResourceDiscovered);
 
     std::unique_lock<std::mutex> lck(mtx);

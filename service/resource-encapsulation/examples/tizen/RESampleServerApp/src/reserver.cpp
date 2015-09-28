@@ -73,6 +73,11 @@ static void onDestroy()
     server = NULL;
     string logMessage = "SERVER DESTROYED";
 
+    if(isPresenceOn == PRESENCE_ON)
+    {
+        OCPlatform::stopPresence();
+    }
+
     dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                           &logMessage);

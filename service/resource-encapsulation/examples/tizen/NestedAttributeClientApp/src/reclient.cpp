@@ -178,7 +178,7 @@ void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource
     cond.notify_all();
 }
 
-void onRemoteAttributesReceivedCallback(const RCSResourceAttributes &attributes)
+void onRemoteAttributesReceived(const RCSResourceAttributes &attributes, int)
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### onRemoteAttributesReceivedCallback callback");
 
@@ -229,7 +229,7 @@ static void getAttributeFromRemoteServer(void *data, Evas_Object *obj, void *eve
 {
     if (checkResource)
     {
-        resource->getRemoteAttributes(&onRemoteAttributesReceivedCallback);
+        resource->getRemoteAttributes(&onRemoteAttributesReceived);
     }
     else
     {
@@ -248,7 +248,7 @@ static void setAttributeToRemoteServer(int fanSpeed, int airSpeed)
     if (checkResource)
     {
         resource->setRemoteAttributes(setAttribute,
-                                      &onRemoteAttributesReceivedCallback);
+                                      &onRemoteAttributesReceived);
     }
     else
     {
