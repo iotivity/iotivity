@@ -204,6 +204,21 @@ TEST(StackStart, SetPlatformInfoValid)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+TEST(StackStart, SetPlatformInfoWithClientMode)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
+
+    OCPlatformInfo info =
+    {
+        gDeviceUUID,
+        gManufacturerName,
+        0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
+    EXPECT_EQ(OC_STACK_ERROR, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
 TEST(StackStart, SetPlatformInfoWithNoPlatformID)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
