@@ -1393,7 +1393,16 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
     };
     respInfo.info.messageId = coapID;
     respInfo.info.numOptions = numOptions;
-    respInfo.info.options = (CAHeaderOption_t*)options;
+
+    if (respInfo.info.numOptions)
+    {
+        respInfo.info.options =
+            (CAHeaderOption_t *)OICCalloc(respInfo.info.numOptions, sizeof(CAHeaderOption_t));
+        memcpy (respInfo.info.options, options,
+                sizeof(CAHeaderOption_t) * respInfo.info.numOptions);
+
+    }
+
     respInfo.info.payload = NULL;
     respInfo.info.token = token;
     respInfo.info.tokenLength = tokenLength;
@@ -1418,7 +1427,7 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
     // resourceUri in the info field is cloned in the CA layer and
     // thus ownership is still here.
     OICFree (respInfo.info.resourceUri);
-
+    OICFree (respInfo.info.options);
     if(CA_STATUS_OK != caResult)
     {
         OC_LOG(ERROR, TAG, "CASendResponse error");
@@ -2286,9 +2295,6 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     char *resourceUri = NULL;
     char *resourceType = NULL;
 
-    // To track if memory is allocated for additional header options
-    uint8_t hdrOptionMemAlloc = 0;
-
     // This validation is broken, but doesn't cause harm
     size_t uriLen = strlen(requestUri );
     if ((result = verifyUriQueryLength(requestUri , uriLen)) != OC_STACK_OK)
@@ -2403,13 +2409,15 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         {
             goto exit;
         }
-        hdrOptionMemAlloc = 1;
         requestInfo.info.numOptions = numOptions + 1;
     }
     else
     {
-        requestInfo.info.options = (CAHeaderOption_t*)options;
         requestInfo.info.numOptions = numOptions;
+        requestInfo.info.options =
+            (CAHeaderOption_t*) OICCalloc(numOptions, sizeof(CAHeaderOption_t));
+        memcpy(requestInfo.info.options, (CAHeaderOption_t*)options,
+               numOptions * sizeof(CAHeaderOption_t));
     }
 
     CopyDevAddrToEndpoint(devAddr, &endpoint);
@@ -2499,10 +2507,7 @@ exit:
     OICFree(devAddr);
     OICFree(resourceUri);
     OICFree(resourceType);
-    if (hdrOptionMemAlloc)
-    {
-        OICFree(requestInfo.info.options);
-    }
+    OICFree(requestInfo.info.options);
     return result;
 }
 
