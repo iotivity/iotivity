@@ -77,3 +77,5 @@ oclib = oclib_env.SharedLibrary('oc', oclib_src)
 oclib_env.InstallTarget(oclib, 'liboc')
 oclib_env.UserInstallTargetLib(oclib, 'liboc')
 
+if target_os in ['linux', 'android'] and env.get('SECURED') == '1':
+        SConscript('../provisioning/SConscript')

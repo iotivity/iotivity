@@ -59,6 +59,8 @@ jclass g_cls_OcPresenceStatus = NULL;
 jclass g_cls_OcHeaderOption = NULL;
 jclass g_cls_ObservationInfo = NULL;
 jclass g_cls_OcResourceIdentifier = NULL;
+jclass g_cls_List = NULL;
+jclass g_cls_Byte = NULL;
 
 jmethodID g_mid_Integer_ctor = NULL;
 jmethodID g_mid_Double_ctor = NULL;
@@ -89,6 +91,11 @@ jmethodID g_mid_OcHeaderOption_get_data = NULL;
 jmethodID g_mid_ObservationInfo_N_ctor = NULL;
 jmethodID g_mid_OcPresenceStatus_get = NULL;
 jmethodID g_mid_OcResourceIdentifier_N_ctor = NULL;
+jmethodID g_mid_List_toArray = NULL;
+jmethodID g_mid_List_ctor = NULL;
+jmethodID g_mid_List_add_object = NULL;
+jmethodID g_mid_Byte_ctor = NULL;
+jmethodID g_mid_Byte_byteValue = NULL;
 
 jobject getOcException(JNIEnv* env, const char* file, const char* functionName,
     const int line, const int code, const char* message)
@@ -400,6 +407,28 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     g_mid_OcResourceIdentifier_N_ctor = env->GetMethodID(g_cls_OcResourceIdentifier, "<init>", "(J)V");
     if (!g_mid_OcResourceIdentifier_N_ctor) return JNI_ERR;
 
+    //List
+    clazz = env->FindClass("java/util/List");
+    if (!clazz) return JNI_ERR;
+    g_cls_List = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+    g_mid_List_ctor = env->GetMethodID(g_cls_List, "<init>", "()V");
+    if (!g_mid_List_ctor) return JNI_ERR;
+    g_mid_List_add_object = env->GetMethodID(g_cls_List, "add", "(Ljava/lang/Object;)Z");
+    if (!g_mid_List_add_object) return JNI_ERR;
+    g_mid_List_toArray = env->GetMethodID(g_cls_List, "toArray", "()[Ljava/lang/Object;");
+    if (!g_mid_List_toArray) return JNI_ERR;
+
+    //Byte
+    clazz = env->FindClass("java/lang/Byte");
+    if (!clazz) return JNI_ERR;
+    g_cls_Byte = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+    g_mid_Byte_ctor = env->GetMethodID(g_cls_Byte, "<init>", "(B)V");
+    if (!g_mid_Byte_ctor) return JNI_ERR;
+    g_mid_Byte_byteValue = env->GetMethodID(g_cls_Byte, "byteValue", "()B");
+    if (!g_mid_Byte_ctor) return JNI_ERR;
+
     return JNI_CURRENT_VERSION;
 }
 
@@ -446,4 +475,6 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     env->DeleteGlobalRef(g_cls_OcHeaderOption);
     env->DeleteGlobalRef(g_cls_ObservationInfo);
     env->DeleteGlobalRef(g_cls_OcResourceIdentifier);
+    env->DeleteGlobalRef(g_cls_List);
+    env->DeleteGlobalRef(g_cls_Byte);
 }

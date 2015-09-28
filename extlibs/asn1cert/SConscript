@@ -13,7 +13,7 @@ asn1_env = env.Clone()
 target_os = asn1_env.get('TARGET_OS')
 src_dir = asn1_env.get('SRC_DIR')
 
-targets_need_asn1 = ['linux']
+targets_need_asn1 = ['linux','android']
 asn1c_dir      = src_dir + '/extlibs/asn1cert/asn1c-0.9.27'
 asn1c_gz_file = src_dir + '/extlibs/asn1cert/asn1c-0.9.27.tar.gz'
 asn1c_url      = 'http://lionet.info/soft/asn1c-0.9.27.tar.gz'

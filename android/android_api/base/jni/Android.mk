@@ -1,5 +1,8 @@
 LOCAL_PATH := $(call my-dir)
 TARGET_ARCH_ABI := $(APP_ABI)
+SECURED := $(SECURE)
+DTLS_WITH_X509 := $(X509)
+
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../out/android/$(APP_ABI)/$(APP_OPTIM)
@@ -24,6 +27,16 @@ OIC_LIB_PATH := ../../../../out/android/$(APP_ABI)/$(APP_OPTIM)
 LOCAL_MODULE := libandroid-ca
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libconnectivity_abstraction.so
 include $(PREBUILT_SHARED_LIBRARY)
+
+ifeq ($(SECURED), 1)
+ifeq ($(DTLS_WITH_X509),1)
+include $(CLEAR_VARS)
+OIC_LIB_PATH := ../../../../out/android/$(APP_ABI)/$(APP_OPTIM)
+LOCAL_MODULE := libandroid-occert
+LOCAL_SRC_FILES := $(OIC_LIB_PATH)/liboccert.so
+include $(PREBUILT_SHARED_LIBRARY)
+endif
+endif
 
 include $(CLEAR_VARS)
 OIC_SRC_PATH := ../../../resource
@@ -60,6 +73,11 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniOcResource.cpp \
                     JniOcResourceIdentifier.cpp \
                     JniOcSecurity.cpp
+ifeq ($(SECURED), 1)
+ifeq ($(DTLS_WITH_X509),1)
+LOCAL_SRC_FILES +=  JniOcCertificates.cpp
+endif
+endif
 
 LOCAL_LDLIBS := -llog
 LOCAL_STATIC_LIBRARIES := android-oc
@@ -68,14 +86,29 @@ LOCAL_STATIC_LIBRARIES += android-coap
 LOCAL_STATIC_LIBRARIES += android-oc_logger
 LOCAL_STATIC_LIBRARIES += android-ca
 LOCAL_STATIC_LIBRARIES += android_cpp11_compat
+ifeq ($(SECURED), 1)
+ifeq ($(DTLS_WITH_X509),1)
+LOCAL_STATIC_LIBRARIES += android-occert
+endif
+endif
 
 LOCAL_CPPFLAGS += -std=c++0x
 LOCAL_CPP_FEATURES := rtti exceptions
 LOCAL_C_INCLUDES := $(OIC_SRC_PATH)/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/stack/include
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/stack/include/internal
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/ocsocket/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/oc_logger/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/boost/boost_1_58_0
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../build_common/android/compatibility
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include/oxm
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include/internal
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/include
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/ck_manager/include
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/connectivity/inc/pkix
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/asn1cert
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/tinydtls/ecc
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/tinydtls/sha2
 include $(BUILD_SHARED_LIBRARY)

@@ -1,0 +1,73 @@
+#******************************************************************
+#
+# Copyright 2015 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+##
+# OCCertificates (share library) build script
+##
+Import('env')
+
+occert_env = env.Clone()
+######################################################################
+# Build flags
+######################################################################
+occert_env.AppendUnique(CPPPATH = [
+		'../../include/',
+		'../../csdk/stack/include',
+		'../../csdk/security/provisioning/ck_manager/include',
+		'../../csdk/connectivity/inc/pkix',
+		'../../csdk/logger/include',
+		'../../oc_logger/include',
+		'../../../extlibs/asn1cert',
+		'../../../extlibs/tinydtls/ecc/',
+		'../../../extlibs/tinydtls/sha2/'
+		])
+
+occert_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+occert_env.AppendUnique(LIBS = ['CKManager', 'asn1', 'oc', 'oc_logger', 'octbstack', 'ocsrm'])
+
+#Workaround. Connectivity_abstraction adds tinydtls in LIBS variable to global env,
+#that's why its order is wrong and linker says that functions from it are missing...
+#To minimize changes in scons files, add it 2nd time (to the end of local env)
+occert_env.Append(LIBS = ['tinydtls'])
+
+target_os = env.get('TARGET_OS')
+if target_os not in ['windows', 'winrt']:
+	occert_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-fPIC'])
+
+if target_os == 'android':
+	occert_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+	occert_env.AppendUnique(LIBS = ['boost_thread', 'gnustl_shared'])
+	if not env.get('RELEASE'):
+		occert_env.AppendUnique(LIBS = ['log'])
+
+if target_os in ['darwin', 'ios']:
+	occert_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+occert_src = Glob('src/*.cpp')
+
+static_occert = occert_env.StaticLibrary('occert', occert_src)
+shared_occert = occert_env.SharedLibrary('occert', occert_src)
+occert_env.InstallTarget([static_occert, shared_occert], 'liboccert')
+
+if target_os in ['linux']:
+    SConscript('examples/SConscript')

@@ -79,6 +79,8 @@ extern jclass g_cls_OcPresenceStatus;
 extern jclass g_cls_OcHeaderOption;
 extern jclass g_cls_ObservationInfo;
 extern jclass g_cls_OcResourceIdentifier;
+extern jclass g_cls_List;
+extern jclass g_cls_Byte;
 
 extern jmethodID g_mid_Integer_ctor;
 extern jmethodID g_mid_Double_ctor;
@@ -109,6 +111,11 @@ extern jmethodID g_mid_OcHeaderOption_get_data;
 extern jmethodID g_mid_ObservationInfo_N_ctor;
 extern jmethodID g_mid_OcPresenceStatus_get;
 extern jmethodID g_mid_OcResourceIdentifier_N_ctor;
+extern jmethodID g_mid_List_toArray;
+extern jmethodID g_mid_List_ctor;
+extern jmethodID g_mid_List_add_object;
+extern jmethodID g_mid_Byte_ctor;
+extern jmethodID g_mid_Byte_byteValue;
 
 typedef void(*RemoveListenerCallback)(JNIEnv* env, jobject jListener);
 
