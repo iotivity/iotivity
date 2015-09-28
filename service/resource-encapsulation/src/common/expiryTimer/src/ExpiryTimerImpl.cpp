@@ -34,13 +34,14 @@ namespace OIC
 
         ExpiryTimerImpl::ExpiryTimerImpl() :
                 m_tasks{ },
-                m_thread{ std::thread(&ExpiryTimerImpl::run, this) },
+                m_thread{ },
                 m_mutex{ },
                 m_cond{ },
                 m_stop{ false },
                 m_mt{ std::random_device{ }() },
                 m_dist{ }
         {
+            m_thread = std::thread(&ExpiryTimerImpl::run, this);
         }
 
         ExpiryTimerImpl::~ExpiryTimerImpl()
