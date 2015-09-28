@@ -118,7 +118,11 @@ static size_t
 dsrv_print_addr(const session_t *addr, char *buf, size_t len) {
 #ifdef HAVE_ARPA_INET_H
   const void *addrptr = NULL;
+#ifdef __ANDROID__
+  unsigned short int port;
+#else
   in_port_t port;
+#endif
   char *p = buf;
 
   switch (addr->addr.sa.sa_family) {
