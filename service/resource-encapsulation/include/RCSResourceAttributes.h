@@ -523,7 +523,7 @@ namespace OIC
             bool erase(const std::string& key);
 
             /**
-             * Checks the container has an element with a Key equivalent to key.
+             * Checks this contains an element for the specified key.
              *
              * @param key Key to check.
              *

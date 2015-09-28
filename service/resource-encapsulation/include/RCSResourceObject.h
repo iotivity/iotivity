@@ -113,7 +113,7 @@ namespace OIC
                     NEVER,     /**< Requests will be ignored if attributes of the request contain
                                     a new key or a value that has different type from the current
                                     value of the key. */
-                    ACCEPTANCE /**< The whole attributes of the request will be applied
+                    ACCEPTANCE /**< The attributes of the request will be applied unconditionally
                                     even if there are new name or type conflicts. */
                 };
 
@@ -143,7 +143,7 @@ namespace OIC
                         /**
                          * Sets whether the resource is discoverable.
                          *
-                         * @param discoverable whether to be discovered.
+                         * @param discoverable whether to be discoverable.
                          *
                          */
                         Builder& setDiscoverable(bool discoverable);
@@ -151,13 +151,13 @@ namespace OIC
                         /**
                          * Sets the observable property of the resource.
                          *
-                         * @param observable whether to be observed.
+                         * @param observable whether to be observable.
                          *
                          */
                         Builder& setObservable(bool observable);
 
                         /**
-                         * Sets attribute of the resource.
+                         * Sets attributes for the resource.
                          *
                          * @param attributes attributes to set
                          *
@@ -344,12 +344,12 @@ namespace OIC
                 const RCSResourceAttributes& getAttributes() const;
 
                 /**
-                 * Checks whether the particular resource is observable or not.
+                 * Checks whether the resource is observable or not.
                  */
                 virtual bool isObservable() const;
 
                 /**
-                 * Checks whether the particular resource is discoverable or not.
+                 * Checks whether the resource is discoverable or not.
                  */
                 virtual bool isDiscoverable() const;
 
@@ -357,7 +357,7 @@ namespace OIC
                  * Sets the get request handler.
                  * To remove handler, pass empty handler or nullptr.
                  *
-                 * Default behavior is RCSGetResponse::defaultAction()
+                 * Default behavior is RCSGetResponse::defaultAction().
                  *
                  * @param handler a get request handler
                  *
@@ -370,7 +370,7 @@ namespace OIC
                  * Sets the set request handler.
                  * To remove handler, pass empty handler or nullptr.
                  *
-                 * Default behavior is RCSGetResponse::defaultAction()
+                 * Default behavior is RCSSetResponse::defaultAction().
                  *
                  * @param handler a set request handler
                  *
@@ -380,7 +380,7 @@ namespace OIC
                 virtual void setSetRequestHandler(SetRequestHandler handler);
 
                 /**
-                 * Adds a listener for a particular attribute update.
+                 * Adds a listener for a particular attribute updated.
                  *
                  * @param key the interested attribute's key
                  * @param listener listener to be invoked
@@ -396,9 +396,11 @@ namespace OIC
                         AttributeUpdatedListener listener);
 
                 /**
-                 * Removes a listener for a particular attribute update.
+                 * Removes a listener for a particular attribute updated.
                  *
-                 * @param key the key to be removed
+                 * @param key the key associated with the listener to be removed
+                 *
+                 * @return True if the listener added with same key exists and is removed.
                  *
                  */
                 virtual bool removeAttributeUpdatedListener(const std::string& key);
@@ -488,7 +490,7 @@ namespace OIC
         };
 
         /**
-         * The class provides a convinent RAII-style mechanism for the attributes of a
+         * The class provides a convenient RAII-style mechanism for the attributes of a
          * RCSResourceObject. When a LockGuard is created, it attempts to lock the attributes of
          * the RCSResourceObject it is given. When control leaves the scope in which the LockGuard
          * object was created, the LockGuard is destructed and the attributes is unlocked.

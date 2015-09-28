@@ -45,6 +45,12 @@ public final class RcsDiscoveryManager {
         System.loadLibrary("rcs_jni");
     }
 
+    /**
+     * This represents a task for discovery.
+     *
+     * The task must be canceled if no longer needed.
+     *
+     */
     public static class DiscoveryTask extends RcsObject {
         private DiscoveryTask() {
         }
@@ -92,6 +98,8 @@ public final class RcsDiscoveryManager {
      *
      * @param address
      *            the target address
+     * @param listener
+     *            the listener to be invoked when a resource is discovered
      *
      * @return a task object indicating this request.
      *
@@ -114,7 +122,9 @@ public final class RcsDiscoveryManager {
      *            the target address
      * @param uri
      *            the relative uri of resource to be searched
-     * 
+     * @param listener
+     *            the listener to be invoked when a resource is discovered
+     *
      * @return a task object indicating this request.
      *
      * @throws RcsPlatformException
@@ -135,6 +145,8 @@ public final class RcsDiscoveryManager {
      *            the target address
      * @param resourceType
      *            the resource type
+     * @param listener
+     *            the listener to be invoked when a resource is discovered
      *
      * @return a task object indicating this request.
      *
@@ -161,6 +173,8 @@ public final class RcsDiscoveryManager {
      *            the relative uri of resource to be searched
      * @param resourceType
      *            the resource type
+     * @param listener
+     *            the listener to be invoked when a resource is discovered
      *
      * @return a task object indicating this request.
      *

@@ -92,6 +92,15 @@ public final class RcsLockedAttributes extends RcsObject {
         }
     }
 
+    /**
+     * Returns a unmodifiable Set view of the keys contained in this attributes.
+     *
+     * @return an unmodifiable set view of the keys in this attributes
+     *
+     * @throws RcsUnlockedException
+     *             if the {@link RcsResourceObject.AttributesLock} for this
+     *             object is unlocked
+     */
     public Set<String> keySet() throws RcsException {
         ensureLocked();
 
@@ -102,6 +111,22 @@ public final class RcsLockedAttributes extends RcsObject {
         return Collections.unmodifiableSet(keySet);
     }
 
+    /**
+     * Returns the value to which the specified key is mapped, or null if this
+     * contains no mapping for the key.
+     *
+     * @param key
+     *            the key whose associated value is to be returned
+     *
+     * @return the value to which the specified key is mapped, or null if this
+     *         contains no mapping for the key
+     *
+     * @throws NullPointerException
+     *             if key is null
+     * @throws RcsUnlockedException
+     *             if the {@link RcsResourceObject.AttributesLock} for this
+     *             object is unlocked
+     */
     public RcsValue get(String key) throws RcsException {
         ensureLocked();
 
@@ -113,7 +138,21 @@ public final class RcsLockedAttributes extends RcsObject {
         return mCache.get(key);
     }
 
-    public RcsLockedAttributes putAll(RcsResourceAttributes attributes) {
+    /**
+     * Copies all of the mappings from the specified to this
+     *
+     * @param attributes
+     *            attributes to be copied
+     *
+     * @throws RcsUnlockedException
+     *             if the {@link RcsResourceObject.AttributesLock} for this
+     *             object is unlocked
+     *
+     */
+    public RcsLockedAttributes putAll(RcsResourceAttributes attributes)
+            throws RcsException {
+        ensureLocked();
+
         final Set<String> keys = attributes.keySet();
 
         for (final String k : keys) {
@@ -123,13 +162,21 @@ public final class RcsLockedAttributes extends RcsObject {
     }
 
     /**
-     * set a attribute value.
+     * Sets the specified value with the specified key.
+     * If the object previously contained a mapping for the key, the old value
+     * is replaced by the specified value.
      *
      * @param key
-     *            - Key of the element to be added.
+     *            key with which the specified value is to be associated
      *
      * @param value
-     *            - value to be set.
+     *            value to be associated with the specified key
+     *
+     * @throws NullPointerException
+     *             if key or value is null
+     * @throws RcsUnlockedException
+     *             if the {@link RcsResourceObject.AttributesLock} for this
+     *             object is unlocked
      *
      */
     public RcsLockedAttributes put(String key, RcsValue value)
@@ -145,9 +192,36 @@ public final class RcsLockedAttributes extends RcsObject {
     }
 
     /**
+     * Sets the specified value with the specified key.
+     * If the object previously contained a mapping for the key, the old value
+     * is replaced by the specified value.
+     *
+     * @param key
+     *            key with which the specified value is to be associated
+     *
+     * @param value
+     *            value to be associated with the specified key
+     *
+     * @throws NullPointerException
+     *             if key or value is null
+     * @throws IllegalArgumentException
+     *             if object is not supported type by {@link RcsValue}
+     * @throws RcsUnlockedException
+     *             if the {@link RcsResourceObject.AttributesLock} for this
+     *             object is unlocked
+     */
+    public void put(String key, Object value) throws RcsException {
+        if (key == null) throw new NullPointerException("key is null");
+
+        put(key, new RcsValue(value));
+    }
+
+    /**
      * Returns whether attribute is empty.
      *
-     * @return boolean
+     * @throws RcsUnlockedException
+     *             if the {@link RcsResourceObject.AttributesLock} for this
+     *             object is unlocked
      */
     public boolean isEmpty() throws RcsException {
         ensureLocked();
@@ -156,8 +230,11 @@ public final class RcsLockedAttributes extends RcsObject {
     }
 
     /**
-     * Returns the number of elements.
+     * Returns the number of key-value mappings.
      *
+     * @throws RcsUnlockedException
+     *             if the {@link RcsResourceObject.AttributesLock} for this
+     *             object is unlocked
      */
     public int size() throws RcsException {
         ensureLocked();
@@ -166,12 +243,16 @@ public final class RcsLockedAttributes extends RcsObject {
     }
 
     /**
-     * Removes a single attribute
+     * Removes the mapping for a key from this attributes if it is present.
      *
      * @param key
-     *            Key to be removed.
+     *            key whose mapping is to be removed
      *
-     * @return true if an attribute is removed, false otherwise.
+     * @return true if the key is present and the the value mapped is removed.
+     *
+     * @throws RcsUnlockedException
+     *             if the {@link RcsResourceObject.AttributesLock} for this
+     *             object is unlocked
      */
     public boolean remove(String key) throws RcsException {
         ensureLocked();
@@ -185,18 +266,32 @@ public final class RcsLockedAttributes extends RcsObject {
         return cacheRemove || nativeRemove;
     }
 
-    public void clear() {
+    /**
+     * Removes all elements.
+     *
+     * @throws RcsUnlockedException
+     *             if the {@link RcsResourceObject.AttributesLock} for this
+     *             object is unlocked
+     */
+    public void clear() throws RcsException {
+        ensureLocked();
+
         nativeClear(mResourceObject);
     }
 
     /**
-     * Checks the container has an attribute with a Key equivalent to the
-     * provided key.
+     * Returns true if this contains a mapping for the specified key.
      *
      * @param key
-     *            Key to check.
+     *            key whose presence is to be tested
      *
-     * @return true if an attribute with requests key exists, false otherwise.
+     * @return true if this contains a mapping for the specified key.
+     *
+     * @throws NullPointerException
+     *             if key is null
+     * @throws RcsUnlockedException
+     *             if the {@link RcsResourceObject.AttributesLock} for this
+     *             object is unlocked
      */
     public boolean contains(String key) throws RcsException {
         ensureLocked();

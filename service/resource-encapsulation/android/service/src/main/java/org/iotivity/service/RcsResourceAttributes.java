@@ -26,9 +26,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.iotivity.service.server.RcsLockedAttributes;
+
 /**
  *
- * RCSResourceAttributes represents the attributes for a resource.
+ * This class represents the attributes for a resource.
  *
  * @see RcsValue
  */
@@ -53,6 +55,13 @@ public final class RcsResourceAttributes extends RcsObject {
     private final Map<String, RcsValue> mCache = new HashMap<>();
 
     public RcsResourceAttributes() {
+    }
+
+    public RcsResourceAttributes(RcsLockedAttributes lockedAttrs)
+            throws RcsException {
+        for (final String key : lockedAttrs.keySet()) {
+            mCache.put(key, lockedAttrs.get(key));
+        }
     }
 
     /**
@@ -99,12 +108,14 @@ public final class RcsResourceAttributes extends RcsObject {
      * If the object previously contained a mapping for the key, the old value
      * is replaced by the specified value.
      *
-     *
      * @param key
      *            key with which the specified value is to be associated
      *
      * @param value
      *            value to be associated with the specified key
+     *
+     * @throws NullPointerException
+     *             if key or value is null
      *
      */
     public void put(String key, RcsValue value) {
@@ -115,7 +126,25 @@ public final class RcsResourceAttributes extends RcsObject {
         if (hasHandle()) nativeRemove(key);
     }
 
+    /**
+     * Sets the specified value with the specified key.
+     * If the object previously contained a mapping for the key, the old value
+     * is replaced by the specified value.
+     *
+     * @param key
+     *            key with which the specified value is to be associated
+     *
+     * @param value
+     *            value to be associated with the specified key
+     *
+     * @throws NullPointerException
+     *             if key or value is null
+     * @throws IllegalArgumentException
+     *             if object is not supported type by {@link RcsValue}
+     */
     public void put(String key, Object object) {
+        if (key == null) throw new NullPointerException("key is null");
+
         put(key, new RcsValue(object));
     }
 
@@ -171,6 +200,9 @@ public final class RcsResourceAttributes extends RcsObject {
      *            key whose presence is to be tested
      *
      * @return true if this contains a mapping for the specified key.
+     *
+     * @throws NullPointerException
+     *             if key is null
      */
     public boolean contains(String key) {
         if (key == null) throw new NullPointerException("key is null");

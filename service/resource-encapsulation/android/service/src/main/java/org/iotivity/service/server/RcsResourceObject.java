@@ -43,23 +43,25 @@ import org.iotivity.service.RcsValue;
  * <p>
  * It also provides an auto notification mechanism that notifies to the
  * observers. Requests are handled automatically by defaultAction of
- * RCSGetResponse and RCSSetResponse. Developer can override them and send your
- * own response.
+ * {@link RcsGetResponse} and {@link RcsSetResponse}. You can override them and
+ * send your own response with {@link GetRequestHandler} and
+ * {@link SetRequestHandler}.
  * <p>
- * For simple resources, developer may want to know whenever attributes are
- * changed by a set request. In this case, add an AttributeUpdatedListener with
- * a key interested in instead of overriding SetRequestHandler.
+ * For simple resources, they are simply required to notify whenever attributes
+ * are changed by a set request. In this case, add an
+ * {@link OnAttributeUpdatedListener} with a key interested in instead of
+ * overriding {@link SetRequestHandler}.
  *
  * @see Builder
  */
 public final class RcsResourceObject extends RcsObject {
     /**
-     * This class provides APIs for resource creation, setting properties and
-     * attributes for the constructed resource. It provides the build() API
-     * which
-     * builds a resource and returns RCSResourceObject.
+     * This is a builder to create resource with properties and attributes.
      *
-     * {@link RcsResourceObject}
+     * The resource will be observable and discoverable by default, to make them
+     * disable
+     * set these properties explicitly with setDiscoverable and setObservable.
+     *
      */
     public static class Builder {
         private final String          mUri;
@@ -70,21 +72,20 @@ public final class RcsResourceObject extends RcsObject {
         private RcsResourceAttributes mAttributes;
 
         /**
-         * Constructor
+         * Constructs a Builder.
          *
          * @param uri
-         *            Resource URI value to be set
+         *            resource uri
          * @param resourceType
-         *            Resource type value to be set
+         *            resource type
          * @param resourceInterface
-         *            Interface value to be set
+         *            resource interface
          *
          * @throws NullPointerException
-         *             If any parameter is null.
+         *             if any parameter is null
          */
         public Builder(String uri, String resourceType,
                 String resourceInterface) {
-
             if (uri == null) {
                 throw new NullPointerException("uri is null.");
             }
@@ -101,10 +102,10 @@ public final class RcsResourceObject extends RcsObject {
         }
 
         /**
-         * Sets the discoverable(OC_DISCOVERABLE) property for the resource.
+         * Sets whether the resource is discoverable.
          *
          * @param isDiscoverable
-         *            Whether to be discovered or not
+         *            whether to be discoverable or not
          *
          */
         public Builder setDiscoverable(boolean isDiscoverable) {
@@ -116,7 +117,7 @@ public final class RcsResourceObject extends RcsObject {
          * Sets the observable(OC_OBSERVABLE) property of the resource.
          *
          * @param isObservable
-         *            Whether to be observed or not
+         *            whether to be observable or not
          *
          */
         public Builder setObservable(boolean isObservable) {
@@ -125,10 +126,7 @@ public final class RcsResourceObject extends RcsObject {
         }
 
         /**
-         * API for setting attributes of the resource.
-         *
-         * @param attributes
-         *            Attributes to set
+         * Sets attributes foe the resource.
          *
          */
         public Builder setAttributes(RcsResourceAttributes attributes) {
@@ -137,7 +135,7 @@ public final class RcsResourceObject extends RcsObject {
         }
 
         /**
-         * Creates a RCSResourceObject.
+         * Register a resource and returns a RCSResourceObject.
          *
          * @throws RcsPlatformException
          *             If registering a resource is failed.
@@ -161,8 +159,7 @@ public final class RcsResourceObject extends RcsObject {
      * {@code
      * AttributesLock lock = rcsResourceObject.getAttributesLock();
      *
-     * try
-     * {
+     * try {
      *     lock.lock();
      *
      *     ....
@@ -170,6 +167,7 @@ public final class RcsResourceObject extends RcsObject {
      *     lock.apply();
      * } finally {
      *     lock.unlock();
+     * }
      * }
      * </pre>
      */
@@ -185,8 +183,8 @@ public final class RcsResourceObject extends RcsObject {
         }
 
         private RcsResourceObject ensureResourceObject() throws RcsException {
-
             final RcsResourceObject object = mResourceObjectRef.get();
+
             if (object == null || object.isDestroyed()) {
                 throw new RcsDestroyedObjectException(
                         "The object is already destroyed!");
@@ -202,7 +200,7 @@ public final class RcsResourceObject extends RcsObject {
          * @return Locked attributes.
          *
          * @throws RcsException
-         *             If the RcsResourceObject is destroyed.
+         *             if the RcsResourceObject is destroyed
          */
         public RcsLockedAttributes lock() throws RcsException {
             return mCurrentAttributes = new RcsLockedAttributes(
@@ -225,7 +223,7 @@ public final class RcsResourceObject extends RcsObject {
          * Applies the modified attributes to the RcsResourceObject.
          *
          * @throws RcsIllegalStateException
-         *             If not in locked state.
+         *             if not in locked state
          */
         public void apply() throws RcsIllegalStateException {
             if (mCurrentAttributes == null) {
@@ -278,38 +276,58 @@ public final class RcsResourceObject extends RcsObject {
 
     /**
      * Represents the policy of AutoNotify function of RCSResourceObject class
-     * In accord with this policy, observers are notified of attributes that are
+     * In accord with this, observers are notified of attributes that are
      * changed or updated.
      *
      * <p>
      * Attributes are changed or updated according to execution of some
-     * functions or receipt of 'set-request'.
+     * functions which modify attributes or receipt of set requests.
      *
-     * {@link RcsResourceObject}
+     * @see setAttribute
+     * @see removeAttribute
+     * @see getAttributesLock
+     *
      */
     public enum AutoNotifyPolicy {
-        NEVER, /** < Never notify. */
-        ALWAYS, /** < Always notify. */
-        UPDATED;
-        /** < When attributes are changed, notify. */
+        /** Never */
+        NEVER,
+
+        /** Always */
+        ALWAYS,
+
+        /** When attributes are changed */
+        UPDATED
     }
 
+    /**
+     * Represents the policy of set-request handler.
+     * In accord with this, the RCSResourceObject decides whether a set-request
+     * is
+     * acceptable or not.
+     */
     public enum SetRequestHandlerPolicy {
-
-        NEVER, /**
-                * < Server ignore when server is received set-request of
-                * attributes of the new key.
-                */
-        ACCEPT;
         /**
-         * < Server creates attributes of the new key When server is received
-         * set-request of attributes of the new key.
+         * Requests will be ignored if attributes of the request contain
+         * a new key or a value that has different type from the current
+         * value of the key.
          */
+        NEVER,
+
+        /**
+         * The attributes of the request will be applied unconditionally
+         * even if there are new name or type conflicts.
+         */
+        ACCEPT
     }
 
     /**
      * Interface definition for a handler to be invoked when a get request is
      * received.
+     * <p>
+     * The handler will be called first when a get request is received, before
+     * the RCSResourceObject handles.
+     *
+     * @see setGetRequestHandler
      */
     public interface GetRequestHandler {
 
@@ -333,6 +351,13 @@ public final class RcsResourceObject extends RcsObject {
     /**
      * Interface definition for a handler to be invoked when a set request is
      * received.
+     * <p>
+     * The handler will be called first when a get request is received, before
+     * the RCSResourceObject handles. If the attributes are modified in the
+     * callback, the modified attributes will be set in the RCSResourceObject if
+     * the request is not ignored.
+     *
+     * @see setGetRequestHandler
      */
     public interface SetRequestHandler {
 
@@ -340,10 +365,10 @@ public final class RcsResourceObject extends RcsObject {
          * Called when received a set request from the client.
          *
          * @param request
-         *            Request information.
+         *            request information
          * @param attributes
-         *            The attributes of the request.
-         *            It will be applied to the RcsResourceObject.
+         *            the attributes of the request.
+         *            it will be applied to the RcsResourceObject
          *
          * @return A response indicating how to handle this request.
          *
@@ -364,9 +389,9 @@ public final class RcsResourceObject extends RcsObject {
          * Called when an attribute value is updated.
          *
          * @param oldValue
-         *            The attribute value before updated.
+         *            the attribute value before updated
          * @param newValue
-         *            The current resource attribute value.
+         *            the current resource attribute value
          */
         void onAttributeUpdated(RcsValue oldValue, RcsValue newValue);
     }
@@ -379,18 +404,17 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * Sets a particular attribute value as a integer.
-     * The thread-safety for attributes is taken care internally.
+     * Sets a particular attribute value.
      *
      * @param key
-     *            name of attribute(used to map the attribute value).
+     *            key with which the specified value is to be associated
      * @param value
-     *            value to be mapped against the key.
+     *            value to be associated with the specified key
      *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      * @throws NullPointerException
-     *             If key or value is null.
+     *             if key or value is null
      *
      */
     public void setAttribute(String key, RcsValue value) throws RcsException {
@@ -404,17 +428,17 @@ public final class RcsResourceObject extends RcsObject {
 
     /**
      * Returns a copied attribute value associated with the supplied key.
-     * The thread-safety for attributes is taken care internally.
      *
      * @param key
-     *            key of an attribute.
+     *            the key whose associated value is to be returned
      *
-     * @return An attributes value.
+     * @return the value to which the specified key is mapped, or null if no
+     *         attribute for the key
      *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      * @throws NullPointerException
-     *             If key is null.
+     *             if key is null
      */
     public RcsValue getAttributeValue(String key) throws RcsException {
         assertAlive();
@@ -424,18 +448,17 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for removing a particular attribute of the resource.
-     * The thread-safety for attributes is taken care internally.
+     * Removes the mapping for a key from the attributes if it is present.
      *
      * @param key
-     *            Name of the attribute.
+     *            key whose mapping is to be removed
      *
-     * @return If the key exist and matched attribute is deleted, return true.
+     * @return true if the key is present and the the value mapped is removed.
      *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      * @throws NullPointerException
-     *             If key is null.
+     *             if key is null
      */
     public boolean removeAttribute(String key) throws RcsException {
         assertAlive();
@@ -445,19 +468,17 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for checking whether a particular attribute is there for a resource
-     * or not.
-     * The thread-safety for attributes is taken care internally.
+     * Returns true if the attributes contains a mapping for the specified key.
      *
      * @param key
-     *            Name of the attribute.
+     *            key whose presence is to be tested
      *
-     * @return If the key exist, return true.
+     * @return true if the attributes contains a mapping for the specified key.
      *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      * @throws NullPointerException
-     *             If key is null.
+     *             if key is null
      */
     public boolean containsAttribute(String key) throws RcsException {
         assertAlive();
@@ -468,10 +489,10 @@ public final class RcsResourceObject extends RcsObject {
 
     /**
      * Returns a copied attributes of the RCSResourceObject.
-     * To modify the attributes, use AttrbutesLock.
+     * To modify the attributes, use {@link AttributesLock}.
      *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      *
      * @see getAttributesLock
      */
@@ -482,10 +503,10 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * Returns the AttributesLock for this RcsResourceObject.
+     * Returns an AttributesLock for this RcsResourceObject.
      *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      */
     public AttributesLock getAttributesLock() throws RcsException {
         assertAlive();
@@ -494,12 +515,10 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for checking whether the particular resource is observable or not.
+     * Checks whether the resource is observable or not.
      *
-     * @return true if this is observable. Otherwise false.
-     *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      */
     public boolean isObservable() throws RcsException {
         assertAlive();
@@ -508,12 +527,10 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for checking whether the particular resource is discoverable or not.
+     * Checks whether the resource is discoverable or not.
      *
-     * @return true if this is discoverable. Otherwise false.
-     *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      */
     public boolean isDiscoverable() throws RcsException {
         assertAlive();
@@ -522,13 +539,12 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for setting the resource's get request handler by the
-     * developer/application. If developer set this handler then all get request
-     * will come to the application and developer can send the response to the
-     * client using APIs of RCSGetResponse class.
+     * Sets the get request handler. To remove handler, pass null.
      *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * Default behavior is {@link RcsGetResponse#defaultAction()}.
+     *
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      */
     public void setGetRequestHandler(GetRequestHandler handler)
             throws RcsException {
@@ -538,13 +554,12 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for setting the resource's set request handler by the
-     * developer/application. If developer set this handler then all set request
-     * will come to the application and developer can send the response to the
-     * client using APIs of RCSSetResponse class.
+     * Sets the set request handler. To remove handler, pass null.
      *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * Default behavior is {@link RcsSetResponse#defaultAction()}.
+     *
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      *
      */
     public void setSetRequestHandler(SetRequestHandler handler)
@@ -555,16 +570,17 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for setting the Listener for a particular attribute update.
+     * Adds a listener for a particular attribute updated.
      *
      * @param key
-     *            The interested attribute's key
+     *            the interested attribute's key
+     * @param listener
+     *            listener to be invoked
      *
      * @throws NullPointerException
-     *             If key or listener is null.
-     *
-     * @throws RcsException
-     *             If the object is destroyed.
+     *             if key or listener is null
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      */
     public void addAttributeUpdatedListener(String key,
             OnAttributeUpdatedListener listener) throws RcsException {
@@ -581,18 +597,17 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for removing the handler for a particular attribute update.
+     * Removes a listener for a particular attribute updated.
      *
      * @param key
-     *            The interested attribute's key
+     *            key the key associated with the listener to be removed
      *
-     * @return true if the requested attribute is removed successfully.
-     *         Otherwise false.
+     * @return true if the listener added with same key exists and is removed.
      *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      * @throws NullPointerException
-     *             If key is null.
+     *             if key is null
      */
     public boolean removeAttributeUpdatedListener(String key)
             throws RcsException {
@@ -603,13 +618,12 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for notifying all observers of the RCSResourceObject with the updated
-     * attributes value
+     * Notifies all observers of the current attributes.
      *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      * @throws RcsPlatformException
-     *             If the operation failed.
+     *             if the operation failed
      */
     public void notifyObservers() throws RcsException {
         assertAlive();
@@ -618,13 +632,13 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for setting Auto notify policy
+     * Sets auto notify policy
      *
      * @param policy
      *            policy to be set
      *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      *
      */
     public void setAutoNotifyPolicy(AutoNotifyPolicy policy)
@@ -636,12 +650,10 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for getting auto notify policy
+     * Returns the current policy
      *
-     * @return AntoNotify policy
-     *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      *
      */
     public AutoNotifyPolicy getAutoNotifyPolicy() throws RcsException {
@@ -651,13 +663,13 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for setting the policy for a setRequestHandler.
+     * Sets the policy for handling a set request.
      *
      * @param policy
      *            policy to be set
      *
-     * @throws RcsException
-     *             If the object is destroyed.
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      *
      */
     public void setSetRequestHandlerPolicy(SetRequestHandlerPolicy policy)
@@ -669,13 +681,10 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * API for getting the SetRequestHandler Policy.
+     * Returns the current policy.
      *
-     * @return Property of setRequesthandler
-     *
-     * @throws RcsException
-     *             If the object is destroyed.
-     *
+     * @throws RcsDestroyedObjectException
+     *             if the object is destroyed
      */
     public SetRequestHandlerPolicy getSetRequestHandlerPolicy()
             throws RcsException {

@@ -224,7 +224,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_RcsResourceAttributes_nativeAdd
 JNIEXPORT jobject JNICALL Java_org_iotivity_service_RcsResourceAttributes_nativeExtract
 (JNIEnv* env, jobject obj, jstring keyObj)
 {
-    LOGD("extractAsJavaObject");
+    LOGD("extract");
     EXPECT_RET_DEF(keyObj, "Key is null.");
     EXPECT_RET_DEF(hasNativeHandle(env, obj), "no native handle.");
 
@@ -240,6 +240,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_RcsResourceAttributes_native
     VERIFY_NO_EXC_RET_DEF(env);
 
     attrs.erase(key);
+    if (attrs.empty()) releaseNativeHandle(env, obj);
     return valueObj;
 }
 

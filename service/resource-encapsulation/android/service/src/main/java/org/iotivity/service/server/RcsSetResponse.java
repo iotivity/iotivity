@@ -33,14 +33,12 @@ public final class RcsSetResponse extends RcsResponse {
     /**
      * Options for handling a set request.
      *
-     * This overrides RcsResourceObject#SetRequestHandlerPolicy.
-     *
-     * @see RcsResourceObject#SetRequestHandlerPolicy
+     * This overrides {@link RcsResourceObject.SetRequestHandlerPolicy}.
      *
      */
     public enum AcceptanceMethod {
         /**
-         * Follow RcsResourceObject#SetRequestHandlerPolicy.
+         * Follow {@link RcsResourceObject.SetRequestHandlerPolicy}.
          */
         DEFAULT,
 
@@ -59,9 +57,10 @@ public final class RcsSetResponse extends RcsResponse {
     private AcceptanceMethod mAcceptanceMethod = AcceptanceMethod.DEFAULT;
 
     /**
-     * Creates a default RCSSetResponse with DEFAULT acceptance method. The
-     * response will have RCSResponse.DEFAULT_ERROR_CODE for the errorCode. The
-     * attributes of RCSResourceObject will be set as the result attributes.
+     * Creates a default RcsSetResponse with {@link AcceptanceMethod#DEFAULT}.
+     * The response will have {@link #DEFAULT_ERROR_CODE} for the errorCode. The
+     * attributes of {@link RcsResourceObject} will be set as the result
+     * attributes.
      *
      */
     public static RcsSetResponse defaultAction() {
@@ -69,9 +68,10 @@ public final class RcsSetResponse extends RcsResponse {
     }
 
     /**
-     * Creates a default RCSSetResponse with ACCEPT acceptance method. The
-     * response will have RCSResponse.DEFAULT_ERROR_CODE for the errorCode. The
-     * attributes of RCSResourceObject will be set as the result attributes.
+     * Creates a default RcsSetResponse with {@link AcceptanceMethod#ACCEPT}
+     * The response will have {@link #DEFAULT_ERROR_CODE} for the errorCode. The
+     * attributes of {@link RcsResourceObject} will be set as the result
+     * attributes.
      *
      */
     public static RcsSetResponse accept() {
@@ -80,13 +80,13 @@ public final class RcsSetResponse extends RcsResponse {
     }
 
     /**
-     * Creates a RCSSetResponse with ACCEPT acceptance method and error code
-     * passed.
-     * The attributes of the RCSResourceObject will be set as the result
+     * Creates a RcsSetResponse with {@link AcceptanceMethod#ACCEPT} and error
+     * code passed.
+     * The attributes of the {@link RcsResourceObject} will be set as the result
      * attributes.
      *
      * @param errorCode
-     *            The error code to set in response.
+     *            error code to be set in response
      *
      */
     public static RcsSetResponse accept(int errorCode) {
@@ -95,9 +95,10 @@ public final class RcsSetResponse extends RcsResponse {
     }
 
     /**
-     * Creates a default RCSSetResponse with IGNORE acceptance method. The
-     * response will have RCSResponse.DEFAULT_ERROR_CODE for the errorCode. The
-     * attributes of RCSResourceObject will be set as the result attributes.
+     * Creates a default RcsSetResponse with {@link AcceptanceMethod#IGNORE}.
+     * The response will have {@link #DEFAULT_ERROR_CODE} for the errorCode. The
+     * attributes of {@link RcsResourceObject} will be set as the result
+     * attributes.
      *
      */
     public static RcsSetResponse ignore() {
@@ -106,12 +107,12 @@ public final class RcsSetResponse extends RcsResponse {
     }
 
     /**
-     * Creates a RCSSetResponse with IGNORE acceptance method and
-     * error code passed. The attributes of the RCSResourceObject will be set as
-     * the result attributes.
+     * Creates a RcsSetResponse with {@link AcceptanceMethod#IGNORE} and error
+     * code passed. The attributes of the {@link RcsResourceObject} will be set
+     * as the result attributes.
      *
      * @param errorCode
-     *            The error code to set in response.
+     *            error code to be set in response
      *
      */
     public static RcsSetResponse ignore(int errorCode) {
@@ -120,12 +121,12 @@ public final class RcsSetResponse extends RcsResponse {
     }
 
     /**
-     * Creates a RCSSetResponse with error code passed and has
-     * DEFAULT acceptance method. The attributes of the RCSResourceObject will
-     * be set as the result attributes.
+     * Creates a RcsSetResponse with error code passed and
+     * {@link AcceptanceMethod#DEFAULT}. The attributes of the
+     * {@link RcsResourceObject} will be set as the result attributes.
      *
      * @param errorCode
-     *            The error code to set in response.
+     *            error code to be set in response
      *
      */
     public static RcsSetResponse create(int errorCode) {
@@ -133,16 +134,32 @@ public final class RcsSetResponse extends RcsResponse {
     }
 
     /**
-     * Creates a RCSSetResponse with custom attributes and has DEFAULT
-     * acceptance method. This sends the passed attributes as the result
-     * attributes instead of one the RCSResourceObject holds.
+     * Creates a RcsSetResponse with custom attributes and
+     * {@link AcceptanceMethod#DEFAULT}. This sends the passed attributes as the
+     * result attributes instead of one the {@link RcsResourceObject} holds.
      *
      * @param attributes
-     *            The attributes to send in response.
+     *            attributes to be sent as the result
      *
      */
     public static RcsSetResponse create(RcsResourceAttributes attributes) {
         return new RcsSetResponse(attributes);
+    }
+
+    /**
+     * Creates a RcsSetResponse with error code passed and
+     * {@link AcceptanceMethod#DEFAULT}. This sends the passed attributes as the
+     * result attributes instead of one the {@link RcsResourceObject} holds.
+     *
+     * @param attributes
+     *            attributes to be sent as the result
+     * @param errorCode
+     *            error code for response
+     *
+     */
+    public static RcsSetResponse create(RcsResourceAttributes attributes,
+            int errorCode) {
+        return new RcsSetResponse(attributes, errorCode);
     }
 
     /**
@@ -154,33 +171,17 @@ public final class RcsSetResponse extends RcsResponse {
     }
 
     /**
-     * Sets the acceptance method for the RCSSetResponse.
+     * Sets the acceptance method.
      *
      * @param method
-     *            AcceptanceMethod value to set
+     *            method to be set
      *
-     * @return The reference to this RCSSetResponse
+     * @return The reference to this RcsSetResponse
      *
      */
     public RcsSetResponse setAcceptanceMethod(AcceptanceMethod method) {
         mAcceptanceMethod = method;
         return this;
-    }
-
-    /**
-     * Creates a RCSSetResponse with error code passed. This sends
-     * the passed attributes as the result attributes instead of one the
-     * RCSResourceObject holds.
-     *
-     * @param attributes
-     *            The attributes to send in response.
-     * @param errorCode
-     *            The error code for response.
-     *
-     */
-    public static RcsSetResponse create(RcsResourceAttributes attributes,
-            int errorCode) {
-        return new RcsSetResponse(attributes, errorCode);
     }
 
     private RcsSetResponse() {
