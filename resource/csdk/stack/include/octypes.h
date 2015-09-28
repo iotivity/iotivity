@@ -245,7 +245,7 @@ extern "C" {
 #define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
 
 /** Device specification version.*/
-#define OC_SPEC_VERSION                "0.9.0"
+#define OC_SPEC_VERSION                "0.9.2"
 
 /** Device Data Model version.*/
 #define OC_DATA_MODEL_VERSION          "sec.0.95"
