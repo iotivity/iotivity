@@ -1,6 +1,6 @@
 #******************************************************************
 #
-# Copyright 2015 Samsung Electronics All Rights Reserved.
+# Copyright 2014 Samsung Electronics All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
@@ -19,27 +19,28 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 ##
-# 'service' sub-project main build script
-#
+# sampleapp build script
 ##
+
 Import('env')
 
+# Add third party libraries
+lib_env = env.Clone()
+
+sample_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
 
-if target_os not in ['arduino','darwin']:
-    # Build things manager project
-    SConscript('things-manager/SConscript')
+######################################################################
+# Build flags
+######################################################################
 
-    # Build notification manager project
-    SConscript('notification-manager/SConscript')
+######################################################################
+# Source files and Targets
+######################################################################
+if target_os == 'arduino' :
+	# Build linux sample app
+	SConscript('enrollee/arduino/SConscript')
 
-    # Build resource-encapsulation project
-    SConscript('resource-encapsulation/SConscript')
-
-    # Build simulator module
-    if target_os in ['linux'] and env.get('SIMULATOR', False):
-        SConscript('simulator/SConscript')
-
-# Build EasySetup module
-if target_os in ['arduino','android', 'linux']:
-    SConscript('easy-setup/SConscript')
+if target_os == 'linux' :
+	# Build linux sample app
+	SConscript('mediator/linux/SConscript')
