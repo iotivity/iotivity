@@ -81,10 +81,6 @@ OCStackResult StartProvisioning(const EnrolleeNWProvInfo_t *netInfo) {
     if (netInfo->connType == CT_IP_USE_V4) {
         snprintf(findQuery, sizeof(findQuery), UNICAST_PROVISIONING_QUERY,
                  netInfo->netAddressInfo.WIFI.ipAddress, IP_PORT);
-    } else {
-
-        snprintf(findQuery, sizeof(findQuery),
-                 MULTICAST_PROVISIONING_QUERY_BLE);
     }
 
     return StartProvisioningProcess(netInfo, cbData, findQuery);

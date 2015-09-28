@@ -26,7 +26,7 @@ package org.iotivity.service.easysetup.core;
  * This is an abstract class represents the device being provisioned into the network. The
  * device being enrolled or provisioned into the network is called Enrollee.
  * Application has to extend this class and provide implementation of abstract methods according
- * to the ON-BOARDING & PROVISION connectivity i.e. WiFi, BLE, BT etc. the device is having.
+ * to the ON-BOARDING & PROVISION connectivity i.e. WiFi etc.
  */
 
 public abstract class EnrolleeDevice {

@@ -44,10 +44,6 @@ static OCConnectivityType OC_CONNTYPE_BLE =  CT_ADAPTER_GATT_BTLE;
 static const char * UNICAST_PROVISIONING_QUERY = "coap://%s:%d/oic/res?rt=oic.prov";
 static const char * UNICAST_PROV_STATUS_QUERY = "coap://%s:%d%s";
 
-static const char * UNICAST_PROVISIONING_QUERY_BLE = "coap://%s/oic/prov";
-static const char * MULTICAST_PROVISIONING_QUERY_BLE = "/oic/res?rt=oic.prov";
-
-
 /**
  * Attributes used to form a proper easysetup conforming JSON message.
  */

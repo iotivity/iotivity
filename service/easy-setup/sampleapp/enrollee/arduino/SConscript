@@ -26,38 +26,22 @@ transport = enrollee_env.get('TARGET_TRANSPORT')
 ######################################################################
 # Build flags
 ######################################################################
-if 'BLE' in transport:
-	enrollee_env.PrependUnique(CPPPATH = [
-                '../../../../../resource/oc_logger/include',
-	        '../../../../../resource/csdk/logger/include',
-                '../../../../../resource/csdk/stack/include',
-		'../../../../../extlibs/cjson',
-		'../../../sdk/common',
-		'../../../sdk/enrollee/arduino/ble',
-		'../../../sdk/enrollee/common/inc',
-		'../../../sdk/enrollee/common/src'
-		])
-	enrollee_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESBLE'])	
-else : 
-	enrollee_env.PrependUnique(CPPPATH = [
-                '../../../../../resource/oc_logger/include',
-	        '../../../../../resource/csdk/logger/include',
-                '../../../../../resource/csdk/stack/include',
-		'../../../../../extlibs/cjson',
-		'../../../sdk/common',
-		'../../../sdk/enrollee/arduino/wifi',
-		'../../../sdk/enrollee/common/inc',
-		'../../../sdk/enrollee/common/src'
-		])
-	enrollee_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
+enrollee_env.PrependUnique(CPPPATH = [
+        '../../../../../resource/oc_logger/include',
+        '../../../../../resource/csdk/logger/include',
+        '../../../../../resource/csdk/stack/include',
+	'../../../../../extlibs/cjson',
+	'../../../sdk/common',
+	'../../../sdk/enrollee/arduino/wifi',
+	'../../../sdk/enrollee/common/inc',
+	'../../../sdk/enrollee/common/src'
+	])
+enrollee_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
 	
 enrollee_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 enrollee_env.PrependUnique(LIBS = ['octbstack','ocsrm','connectivity_abstraction','coap', 'ESSDKLibrary'])
-if 'BLE' in transport:
-	enrollee = enrollee_env.Program('enrollee', 'enrollee_ble.cpp')
-else :
-	enrollee = enrollee_env.Program('enrollee', 'enrollee_wifi.cpp')
+enrollee = enrollee_env.Program('enrollee', 'enrollee_wifi.cpp')
 env.CreateBin('enrollee')
 
 i_enrollee = enrollee_env.Install(env.get('BUILD_DIR'), enrollee)

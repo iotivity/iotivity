@@ -59,26 +59,15 @@ if target_os in ['android', 'linux']:
 	else:
 		easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
 if target_os == 'arduino':
-	if 'BLE' in transport:
-		easy_setup_env.AppendUnique(CPPPATH = [
-				       '../../resource/oc_logger/include',
-   				       '../../resource/csdk/logger/include',
-				       '../../resource/csdk/stack/include',
-				       '../../extlibs/cjson',
-					   'sdk/enrollee/arduino/ble',
-					   'sdk/enrollee/common/src',
-				       'sdk/enrollee/common/inc'])
-		easy_setup_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESBLE'])			   
-	else:
-		easy_setup_env.AppendUnique(CPPPATH = [
-				       '../../resource/oc_logger/include',
-   				       '../../resource/csdk/logger/include',
-				       '../../resource/csdk/stack/include',
-				       '../../extlibs/cjson',
-					   'sdk/enrollee/arduino/wifi',
-					   'sdk/enrollee/common/src',
-				       'sdk/enrollee/common/inc'])
-		easy_setup_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
+	easy_setup_env.AppendUnique(CPPPATH = [
+			       '../../resource/oc_logger/include',
+			       '../../resource/csdk/logger/include',
+			       '../../resource/csdk/stack/include',
+			       '../../extlibs/cjson',
+				   'sdk/enrollee/arduino/wifi',
+				   'sdk/enrollee/common/src',
+			       'sdk/enrollee/common/inc'])
+	easy_setup_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
 if target_os in ['android','linux']:					   
 	easy_setup_env.PrependUnique(CPPPATH = [
 		env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',		
@@ -96,28 +85,17 @@ if target_os in ['android','linux']:
 ######################################################################
 
 if target_os == 'arduino':
-	if 'BLE' in transport:
-		es_sdk_static = easy_setup_env.StaticLibrary('ESSDKLibrary',
-						['sdk/enrollee/common/src/easysetupble.cpp',
-						'sdk/enrollee/common/src/resourceHandler.cpp'])
-	else:
-		es_sdk_static = easy_setup_env.StaticLibrary('ESSDKLibrary',
-						['sdk/enrollee/common/src/easysetup.cpp',
-						'sdk/enrollee/common/src/resourceHandler.cpp',
-						'sdk/enrollee/arduino/wifi/networkHandler.cpp'])
+	es_sdk_static = easy_setup_env.StaticLibrary('ESSDKLibrary',
+					['sdk/enrollee/common/src/easysetup.cpp',
+					'sdk/enrollee/common/src/resourceHandler.cpp',
+					'sdk/enrollee/arduino/wifi/networkHandler.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_static, 'libESSDK')
 
 if target_os == 'android':
-	if 'BLE' in transport:
-		es_sdk_shared = easy_setup_env.StaticLibrary('libESSDK',
-						['sdk/mediator/src/prov_adapter.cpp',
-						'sdk/mediator/src/ble_provisioning.cpp',
-						'sdk/mediator/src/provisioning.cpp'])
-	else :
-		es_sdk_shared = easy_setup_env.StaticLibrary('libESSDK',
-						['sdk/mediator/src/prov_adapter.cpp',
-						'sdk/mediator/src/wifi_provisioning.cpp',
-                                                'sdk/mediator/src/provisioning.cpp'])
+	es_sdk_shared = easy_setup_env.StaticLibrary('libESSDK',
+					['sdk/mediator/src/prov_adapter.cpp',
+					'sdk/mediator/src/wifi_provisioning.cpp',
+                                        'sdk/mediator/src/provisioning.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 if target_os == 'linux':

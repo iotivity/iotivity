@@ -4,12 +4,6 @@
     android:versionCode="1"
     android:versionName="1.0">
 
-    <uses-feature
-        android:name="android.hardware.bluetooth_le"
-        android:required="true" />
-
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -36,17 +30,6 @@
             android:name=".MainActivity"
             android:label="@string/app_name">
 
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-
-                <data android:mimeType="text/plain" />
-            </intent-filter>
-        </activity>
-
-        <activity android:name=".BLEActivity" />
-        <activity android:name=".OnBoardingSelect">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

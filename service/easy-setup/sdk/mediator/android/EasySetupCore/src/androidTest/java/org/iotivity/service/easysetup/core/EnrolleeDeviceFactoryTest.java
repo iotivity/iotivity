@@ -25,8 +25,6 @@ package org.iotivity.service.easysetup.core;
 import android.net.wifi.WifiConfiguration;
 import android.test.AndroidTestCase;
 
-import org.iotivity.service.easysetup.impl.BLEOnBoardingConfig;
-import org.iotivity.service.easysetup.impl.EnrolleeDeviceBLEOnBoarding;
 import org.iotivity.service.easysetup.impl.EnrolleeDeviceFactory;
 import org.iotivity.service.easysetup.impl.EnrolleeDeviceWiFiOnboarding;
 import org.iotivity.service.easysetup.impl.WiFiOnBoardingConfig;
@@ -73,28 +71,5 @@ public class EnrolleeDeviceFactoryTest extends AndroidTestCase {
         assertTrue((device instanceof EnrolleeDeviceWiFiOnboarding));
 
     }
-
-    public void testNewEnrolleeDevice_with_BleOnboarding() {
-
-        /* Create On boarding configuration */
-
-        BLEOnBoardingConfig bleOnBoardingConfig = new BLEOnBoardingConfig();
-        bleOnBoardingConfig.setUuid("ade3d529-c784-4f63-a987-eb69f70ee816");
-
-        /* Create provisioning configuration */
-        WiFiProvConfig mWiFiProvConfig = new WiFiProvConfig("hub2.4G", "11112222");
-
-        /* Create enrolling device */
-        EnrolleeDevice device = mFactory.newEnrolleeDevice(bleOnBoardingConfig, mWiFiProvConfig);
-
-        /* Check if the the device is created */
-        assertTrue(device != null);
-
-        /* Check if the the correct device is created as per the given configuration*/
-        assertTrue((device instanceof EnrolleeDeviceBLEOnBoarding));
-
-    }
-
-
 
 }

@@ -164,6 +164,7 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
             WiFiProvConfig wifiProvConfig = (WiFiProvConfig) mProvConfig;
 
             easySetupManagerNativeInstance = EasySetupManager.getInstance();
+            easySetupManagerNativeInstance.setApplicationContext(mContext);
             easySetupManagerNativeInstance.initEasySetup();
 
             // Native Api call to start provisioning of the enrolling device
