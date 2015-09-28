@@ -88,6 +88,19 @@ public class OcProvisioning {
     }
 
     /**
+     * Server API to set Callback for Displaying stack generated PIN.
+     *
+     * @param DisplayPinListener Pin callback Listener to be registered.
+     * @throws OcException
+     */
+    public static native void setDisplayPinListener(DisplayPinListener displayPinListener)
+        throws OcException;
+
+    public static interface DisplayPinListener {
+        public void displayPinListener(String Pin);
+    }
+
+    /**
      * Method to get Array of owned and un-owned devices in the current subnet.
      *
      * @param timeout    timeout in sec for the API to return.

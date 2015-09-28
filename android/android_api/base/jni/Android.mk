@@ -80,7 +80,8 @@ LOCAL_SRC_FILES +=  JniOcSecureResource.cpp \
                     JniOcProvisioning.cpp \
                     JniSecureUtils.cpp \
                     JniProvisionResultListner.cpp \
-                    JniPinCheckListener.cpp
+                    JniPinCheckListener.cpp \
+                    JniDisplayPinListener.cpp
 endif
 
 LOCAL_LDLIBS := -llog
@@ -100,6 +101,7 @@ LOCAL_CPP_FEATURES := rtti exceptions
 LOCAL_C_INCLUDES := $(OIC_SRC_PATH)/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common/oic_string/include
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common/oic_malloc/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/stack/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/ocsocket/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/oc_logger/include
