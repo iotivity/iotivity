@@ -22,21 +22,35 @@
 
 #include "JniOcProvisioning.h"
 #include "JniPinCheckListener.h"
+#include "JniDisplayPinListener.h"
 
 using namespace OC;
 namespace PH = std::placeholders;
 
-static JniPinCheckListener *PinListener = nullptr;
+static JniPinCheckListener *jniPinListener = nullptr;
+static JniDisplayPinListener *jniDisplayPinListener = nullptr;
 
 void Callback(char *buf, size_t size)
 {
-    if (PinListener)
+    if (jniPinListener)
     {
-        PinListener->PinCallback(buf, size);
+        jniPinListener->PinCallback(buf, size);
     }
     else
     {
-        LOGE("PinListener is null");
+        LOGE("jniPinListener is null");
+    }
+}
+
+void displayPinCB(char *pinBuf, size_t pinSize)
+{
+    if (jniDisplayPinListener)
+    {
+        jniDisplayPinListener->displayPinCallback(pinBuf, pinSize);
+    }
+    else
+    {
+        LOGE("DisplayPinListener is null");
     }
 }
 
@@ -68,8 +82,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCB
         {
             if (jListener)
             {
-                delete PinListener;
-                PinListener = new JniPinCheckListener(env, jListener);
+                delete jniPinListener;
+                jniPinListener = new JniPinCheckListener(env, jListener);
                 CBData.loadSecretCB = InputPinCodeCallback;
                 CBData.createSecureSessionCB = CreateSecureSessionRandomPinCallbak;
                 CBData.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
@@ -214,6 +228,41 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_getDeviceSt
         }
         ownedDevList.insert(ownedDevList.end(), unownedDevList.begin(), unownedDevList.end());
         return JniSecureUtils::convertDeviceVectorToJavaArray(env, ownedDevList);
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+    }
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setDisplayPinListener
+ * Signature: (Lorg/iotivity/base/OcProvisioning/DisplayPinListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListener
+  (JNIEnv *env, jclass thiz, jobject jListener)
+{
+
+    LOGI("OcProvisioning_setDisplayPinListener");
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "displayPinListener can't be null");
+        return;
+    }
+    delete jniDisplayPinListener;
+    jniDisplayPinListener = new JniDisplayPinListener(env, jListener);
+
+    try
+    {
+        OCStackResult result = OCSecure::setDisplayPinCB(displayPinCB);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to set displayPinListener");
+            return;
+        }
     }
     catch (OCException& e)
     {
