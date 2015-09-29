@@ -32,7 +32,6 @@
 #include "global.h"
 #include "cainterface.h"
 #include "cacommon.h"
-#include "ocstackinternal.h"
 #include "payload_logging.h"
 #include "ocpayload.h"
 
@@ -363,7 +362,7 @@ OCStackApplicationResult putReqCB(void * ctx, OCDoHandle /*handle*/, OCClientRes
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
         if ((OCSecurityPayload*)clientResponse->payload)
         {
             OC_LOG_V(INFO, TAG, "=============> Put Response",
@@ -381,7 +380,7 @@ OCStackApplicationResult getReqCB(void * /*ctx*/, OCDoHandle /*handle*/, OCClien
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
         if ((OCSecurityPayload*)clientResponse->payload)
         {
             OC_LOG(INFO, TAG, PCF("=============> Get Response"));
@@ -406,7 +405,7 @@ OCStackApplicationResult discoveryReqCB(void* /*ctx*/, OCDoHandle /*handle*/,
 
         if (clientResponse->result == OC_STACK_OK)
         {
-            OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+            OC_LOG_PAYLOAD(INFO, clientResponse->payload);
             ocConnType = clientResponse->connType;
             parseClientResponse(clientResponse);
         }

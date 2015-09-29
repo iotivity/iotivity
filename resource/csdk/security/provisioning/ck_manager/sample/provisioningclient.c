@@ -51,6 +51,7 @@
 static OicSecAcl_t        *gAcl = NULL;
 static OicSecCrl_t        *gCrl = NULL;
 static char PROV_TOOL_DB_FILE[] = "oic_svr_db_pt.json";
+static const char* PRVN_DB_FILE_NAME = "oic_prvn_mng.db";
 static int gOwnershipState = 0;
 
 typedef enum
@@ -495,6 +496,11 @@ int main()
         OC_LOG(ERROR, TAG, "OCStack init error");
         goto error;
     }
+    if(OC_STACK_OK != OCInitPM(PRVN_DB_FILE_NAME))
+    {
+        OC_LOG(ERROR, TAG, "OC_PM init error");
+        goto error;
+    }
 
     OCProvisionDev_t* pDeviceList = NULL;
     res = OCDiscoverUnownedDevices(PREDEFINED_TIMEOUT, &pDeviceList);
@@ -671,7 +677,6 @@ int main()
 
     PRINT_BYTE_ARRAY("gCrl = \n", gCrl->CrlData);
 
-
     res = OCProvisionCRL(ctx, pOwnedDevices[Device2], gCrl, &ProvisionCrlCB);
     if (OC_STACK_OK != res) OC_LOG_V(ERROR, TAG, "Failed to CRL provision Device 2 : %d", res);
 
@@ -694,8 +699,8 @@ int main()
 
 error:
     deleteACL(gAcl);
-    OCDeleteDiscoveredDevices(&pDeviceList);
-    OCDeleteDiscoveredDevices(&pOwnedList);
+    OCDeleteDiscoveredDevices(pDeviceList);
+    OCDeleteDiscoveredDevices(pOwnedList);
 
     return 0;
 }
