@@ -10,7 +10,7 @@
 			],
 			"perms": 2,
 			"ownrs" : [
-				"bGlnaHREZXZpY2VVVUlEMA=="
+				"ZG9vckRldmljZVVVSUQwMA=="
 			]
 		},
         {
@@ -24,13 +24,13 @@
              ],
              "perms": 6,
              "ownrs" : [
-                 "bGlnaHREZXZpY2VVVUlEMA=="
+                 "ZG9vckRldmljZVVVSUQwMA=="
              ]
         }
 	],
 	"pstat":	{
 		"isop":	false,
-		"deviceid":	"bGlnaHREZXZpY2VVVUlEMA==",
+		"deviceid":	"ZG9vckRldmljZVVVSUQwMA==",
 		"commithash": 0,
 		"cm":	0,
 		"tm":	0,
@@ -40,7 +40,8 @@
 	"doxm":	{
 		"oxm":	[0],
 		"oxmsel": 0,
+		"sct": 1,
 		"owned": false,
-		"deviceid":	"bGlnaHREZXZpY2VVVUlEMA=="
+		"deviceid":	"ZG9vckRldmljZVVVSUQwMA=="
 	}
 }
