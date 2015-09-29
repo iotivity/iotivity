@@ -37,7 +37,7 @@ namespace OIC {
 
         bool RCSDiscoveryManager::DiscoveryTask::isCanceled()
         {
-            return false;
+            return RCSDiscoveryManagerImpl::getInstance()->isCanceled(m_id);
         }
 
         void RCSDiscoveryManager::DiscoveryTask::cancel()

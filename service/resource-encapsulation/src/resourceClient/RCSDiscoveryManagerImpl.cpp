@@ -28,7 +28,7 @@
 
 namespace
 {
-    constexpr unsigned int LIMITNUMBER = std::numeric_limits<unsigned int>::max();;
+    constexpr unsigned int LIMITNUMBER = std::numeric_limits<unsigned int>::max();
     constexpr unsigned int INTERVALTIME = 60000;
 }
 
@@ -50,7 +50,8 @@ namespace OIC
         }
 
         void RCSDiscoveryManagerImpl::onResourceFound(std::shared_ptr< PrimitiveResource > resource,
-                    RCSDiscoveryManagerImpl::ID discoveryId, const RCSDiscoveryManager::ResourceDiscoveredCallback& discoverCB)
+                    RCSDiscoveryManagerImpl::ID discoveryId,
+                    const RCSDiscoveryManager::ResourceDiscoveredCallback& discoverCB)
         {
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
@@ -74,10 +75,11 @@ namespace OIC
             ID discoveryId = createId();
             auto discoverCb = std::bind(&RCSDiscoveryManagerImpl::onResourceFound, this,
                     std::placeholders::_1, discoveryId, std::move(cb));
-            DiscoverRequestInfo discoveryItem(RCSAddressDetail::getDetail(address)->getAddress(), relativeUri,
+            DiscoveryRequestInfo discoveryItem(RCSAddressDetail::getDetail(address)->getAddress(), relativeUri,
                     resourceType, std::move(discoverCb));
             discoveryItem.discoverRequest();
 
+            std::lock_guard<std::mutex> lock(m_mutex);
             m_discoveryMap.insert(std::make_pair(discoveryId, std::move(discoveryItem)));
 
             return std::unique_ptr<RCSDiscoveryManager::DiscoveryTask>(
@@ -128,7 +130,7 @@ namespace OIC
             {
                 throw RCSException { "Discovery request is full!" };
             }
-
+            s_uniqueId++;
             while(m_discoveryMap.find(s_uniqueId) != m_discoveryMap.end())
             {
                 s_uniqueId++;
@@ -142,17 +144,26 @@ namespace OIC
             m_discoveryMap.erase(id);
         }
 
-        DiscoverRequestInfo::DiscoverRequestInfo(const std::string &address, const std::string &relativeUri,
+        bool RCSDiscoveryManagerImpl::isCanceled(unsigned int id)
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            auto it = m_discoveryMap.find(id);
+            if(it == m_discoveryMap.end()) return true;
+
+            return false;
+        }
+
+        DiscoveryRequestInfo::DiscoveryRequestInfo(const std::string &address, const std::string &relativeUri,
                 const std::string &resourceType, DiscoverCallback cb) : m_address(address),
                         m_relativeUri(relativeUri), m_resourceType(resourceType), m_discoverCB(cb) {}
 
-        void DiscoverRequestInfo::discoverRequest() const
+        void DiscoveryRequestInfo::discoverRequest() const
         {
             OIC::Service::discoverResource(m_address, m_relativeUri + "?rt=" + m_resourceType,
                     OCConnectivityType::CT_DEFAULT, m_discoverCB);
         }
 
-        bool DiscoverRequestInfo::isKnownResource(const std::shared_ptr<PrimitiveResource>& resource)
+        bool DiscoveryRequestInfo::isKnownResource(const std::shared_ptr<PrimitiveResource>& resource)
         {
             std::string resourceId = resource->getSid() + resource->getUri();
 
@@ -163,7 +174,7 @@ namespace OIC
             return false;
         }
 
-        bool DiscoverRequestInfo::isMatchingAddress(const std::string& address) const
+        bool DiscoveryRequestInfo::isMatchingAddress(const std::string& address) const
         {
             return m_address == RCSAddressDetail::getDetail(RCSAddress::multicast())->getAddress()
                     || m_address == address;
