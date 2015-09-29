@@ -670,9 +670,7 @@ INPUT                  = . \
                          ../csdk/stack/include/ocstackconfig.h \
                          guides \
                          ../../service/things-manager/sdk/inc \
-                         ../../service/soft-sensor-manager/SDK/cpp/include \
-                         ../../service/protocol-plugin/plugin-manager/src/PluginManager.h \
-                         ../../service/notification-manager/NotificationManager/include/hosting.h \
+                         ../../service/resource-hosting/include/hosting.h \
                          ../../service/resource-encapsulation/include \
 
 # This tag can be used to specify the character encoding of the source files
