@@ -653,7 +653,7 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
                    // This should not happen but,
                    // give it a value just in case but output an error
                    ret = CA_CONTENT;
-                   OC_LOG_V(ERROR, TAG, "Unexpected OC_STACK_OK return code for method [d].", method);
+                   OC_LOG_V(ERROR, TAG, "Unexpected OC_STACK_OK return code for method [%d].", method);
             }
             break;
         case OC_STACK_RESOURCE_CREATED:
