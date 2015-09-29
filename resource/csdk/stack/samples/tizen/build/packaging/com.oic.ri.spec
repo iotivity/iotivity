@@ -48,7 +48,7 @@ cp -f %{ROOTDIR}/resource/csdk/connectivity/src/libconnectivity_abstraction.so %
 cp -f %{ROOTDIR}/resource/csdk/connectivity/lib/libcoap-4.1.1/libcoap.a %{buildroot}/%{_libdir}
 cp /usr/lib/libuuid.so.1 %{buildroot}%{_libdir}
 if echo %{SECURED}|grep -qi '1'; then
-	cp -f %{ROOTDIR}/con/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
 fi
 
 cp -rf %{ROOTDIR}/resource/csdk/stack/include/ocstack.h* %{DEST_INC_DIR}/
