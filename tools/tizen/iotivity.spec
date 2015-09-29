@@ -151,7 +151,7 @@ cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 %defattr(-,root,root,-)
 %{_libdir}/libBMISensorBundle.so
 %{_libdir}/libDISensorBundle.so
-%{_libdir}/libNotificationManager.so
+%{_libdir}/libresource_hosting.so
 %{_libdir}/libTGMSDKLibrary.so
 %{_libdir}/libHueBundle.so
 %{_libdir}/librcs_client.so
