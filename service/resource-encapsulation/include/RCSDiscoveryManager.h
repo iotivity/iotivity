@@ -180,7 +180,7 @@ namespace OIC
 
             private:
                 RCSDiscoveryManager() = default;
-                ~RCSDiscoveryManager()= default;;
+                ~RCSDiscoveryManager()= default;
 
                 friend class DiscoveryTask;
         };

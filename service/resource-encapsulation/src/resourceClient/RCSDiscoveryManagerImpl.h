@@ -35,8 +35,6 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "octypes.h"
-
 #include "RCSDiscoveryManager.h"
 #include "ExpiryTimer.h"
 #include "PrimitiveResource.h"
@@ -55,10 +53,10 @@ namespace OIC
          *
          * @see RCSDiscoveryManager
          */
-        class DiscoverRequestInfo
+        class DiscoveryRequestInfo
         {
             public:
-                DiscoverRequestInfo(const std::string &, const std::string &,
+                DiscoveryRequestInfo(const std::string &, const std::string &,
                         const std::string &, DiscoverCallback);
 
             private:
@@ -128,6 +126,7 @@ namespace OIC
                         RCSDiscoveryManager::ResourceDiscoveredCallback cb);
 
                 void cancel(ID);
+                bool isCanceled(ID);
 
             private:
                 RCSDiscoveryManagerImpl();
@@ -175,7 +174,7 @@ namespace OIC
                 ExpiryTimer m_timer;
 
             private:
-                std::unordered_map<ID,DiscoverRequestInfo> m_discoveryMap;
+                std::unordered_map<ID,DiscoveryRequestInfo> m_discoveryMap;
                 std::mutex m_mutex;
         };
     }

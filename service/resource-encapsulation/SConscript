@@ -120,7 +120,6 @@ if target_os == 'linux':
     SConscript('unittests/SConscript')
     SConscript('src/resourceCache/unittests/SConscript')
     SConscript('src/resourceBroker/unittest/SConscript')
-    SConscript('src/resourceClient/unittests/SConscript')
 
 if target_os == 'android':
 	SConscript('android/SConscript')
