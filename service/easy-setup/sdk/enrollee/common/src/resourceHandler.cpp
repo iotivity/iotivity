@@ -60,7 +60,7 @@ OCStackResult CreateProvisioningResource()
     sprintf(g_prov.tnn, "Unknown");
     sprintf(g_prov.cd, "Unknown");
 
-    OCStackResult res = OCCreateResource(&g_prov.handle, "oic.prov", OC_RSRVD_INTERFACE_DEFAULT,
+    OCStackResult res = OCCreateResource(&g_prov.handle, "oic.r.prov", OC_RSRVD_INTERFACE_DEFAULT,
             OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
 
     OC_LOG_V(INFO, TAG, "Created Prov resource with result: %s", getResult(res));
@@ -91,7 +91,7 @@ OCStackResult CreateNetworkResource()
     OC_LOG_V(INFO, TAG, "SSID: %s", g_net.cnn);
     OC_LOG_V(INFO, TAG, "IP Address: %s", g_net.ipaddr);
 
-    OCStackResult res = OCCreateResource(&g_net.handle, "oic.net", OC_RSRVD_INTERFACE_DEFAULT,
+    OCStackResult res = OCCreateResource(&g_net.handle, "oic.r.net", OC_RSRVD_INTERFACE_DEFAULT,
             OC_RSRVD_ES_URI_NET, OCEntityHandlerCb,NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
     OC_LOG_V(INFO, TAG, "Created Net resource with result: %s", getResult(res));
 

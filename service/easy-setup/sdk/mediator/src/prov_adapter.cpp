@@ -77,11 +77,8 @@ void UnRegisterCallback() {
 OCStackResult StartProvisioning(const EnrolleeNWProvInfo_t *netInfo) {
 
     char findQuery[64] = {0};
-
-    if (netInfo->connType == CT_IP_USE_V4) {
-        snprintf(findQuery, sizeof(findQuery), UNICAST_PROVISIONING_QUERY,
-                 netInfo->netAddressInfo.WIFI.ipAddress, IP_PORT);
-    }
+    snprintf(findQuery, sizeof(findQuery) - 1, UNICAST_PROVISIONING_QUERY,
+             netInfo->netAddressInfo.WIFI.ipAddress, IP_PORT);
 
     return StartProvisioningProcess(netInfo, cbData, findQuery);
 }
@@ -93,4 +90,5 @@ OCStackResult StopProvisioning(OCConnectivityType connectivityType) {
 
     return result;
 }
+
 

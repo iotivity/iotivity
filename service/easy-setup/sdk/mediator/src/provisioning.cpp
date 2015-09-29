@@ -75,10 +75,6 @@ OCStackResult InitProvisioningHandler() {
         return OC_STACK_ERROR;
     }
 
-    pthread_join(thread_handle, NULL);
-
-    ResetProgress();
-
     return OC_STACK_OK;
 }
 
@@ -200,8 +196,7 @@ OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo_t *netInfo,
 
     OCStackResult result = OC_STACK_ERROR;
 
-    strncpy(szFindResourceQueryUri, findResQuery, sizeof(szFindResourceQueryUri, findResQuery) - 1);
-
+    snprintf(szFindResourceQueryUri, sizeof(szFindResourceQueryUri) - 1, findResQuery);
     char *string = "Starting provisioning process ";
 
     pthread_t thread_handle;
