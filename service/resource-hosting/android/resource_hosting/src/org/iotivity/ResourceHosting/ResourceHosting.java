@@ -86,7 +86,7 @@ public class ResourceHosting {
         System.loadLibrary("rcs_common");
         System.loadLibrary("rcs_client");
         System.loadLibrary("rcs_server");
-        System.loadLibrary("resourceHosting");
+        System.loadLibrary("resource_hosting");
         System.loadLibrary("ResourceHosing_JNI");
     }
 }
