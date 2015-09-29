@@ -21,7 +21,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "hosting.h"
+#include "Hosting.h"
 
 int g_quitFlag = 0;
 

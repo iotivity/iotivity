@@ -77,7 +77,7 @@ if target_os == 'android':
 ######################################################################
 HOSTING_SRC_DIR = 'src/'
 resourcehosting_src = [
-        HOSTING_SRC_DIR + 'hosting.cpp',
+        HOSTING_SRC_DIR + 'Hosting.cpp',
         HOSTING_SRC_DIR + 'ResourceHosting.cpp',
         HOSTING_SRC_DIR + 'HostingObject.cpp',
         HOSTING_SRC_DIR + 'RequestObject.cpp'
@@ -90,8 +90,8 @@ else :
 
 resourcehosting_env.InstallTarget(resourcehostingsdk, 'libresource_hosting')
 resourcehosting_env.UserInstallTargetLib(resourcehostingsdk, 'libresource_hosting')
-resourcehosting_env.UserInstallTargetHeader('include/hosting.h',\
-	'service/resource-hosting', 'hosting.h')
+resourcehosting_env.UserInstallTargetHeader('include/Hosting.h',\
+	'service/resource-hosting', 'Hosting.h')
 
 # Go to build Unit test
 if target_os == 'linux':

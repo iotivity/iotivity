@@ -34,7 +34,7 @@ namespace
     std::string HOSTING_TAG = "/hosting";
     size_t HOSTING_TAG_SIZE = (size_t)HOSTING_TAG.size();
     std::string MULTICAST_PRESENCE_ADDRESS = std::string("coap://") + OC_MULTICAST_PREFIX;
-    std::string HOSTING_RESOURSE_TYPE = "resource.hosting";
+    std::string HOSTING_RESOURSE_TYPE = "oic.r.resourcehosting";
 }
 
 ResourceHosting * ResourceHosting::s_instance(nullptr);
@@ -107,7 +107,6 @@ void ResourceHosting::requestMulticastDiscovery()
 
 void ResourceHosting::discoverHandler(RemoteObjectPtr remoteResource)
 {
-    std::cout << "Discovered Resource uri : " << remoteResource->getUri() << std::endl;
     std::string discoverdUri = remoteResource->getUri();
     if(discoverdUri.compare(
             discoverdUri.size()-HOSTING_TAG_SIZE, HOSTING_TAG_SIZE, HOSTING_TAG) != 0)

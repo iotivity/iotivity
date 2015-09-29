@@ -22,7 +22,7 @@
 #include "nmutil.h"
 #include <algorithm>
 #include <signal.h>
-#include "hosting.h"
+#include "Hosting.h"
 
 using namespace std;
 using namespace OC;

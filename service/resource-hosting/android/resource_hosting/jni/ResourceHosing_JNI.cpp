@@ -20,7 +20,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 extern "C" {
-#include "hosting.h"
+#include "Hosting.h"
 }
 #include "ResourceHosing_JNI.h"
 #include "OCAndroid.h"
