@@ -351,6 +351,7 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
     if (gatewayId == g_GatewayID)
     {
         OC_LOG(INFO, TAG, "-------------->Own entry, continue!!");
+        RTMFreeGatewayRouteTable(&gatewayTableList);
         return OC_STACK_ERROR;
     }
     // Convert OCDevAddr to endpoint address
@@ -369,11 +370,13 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
             OC_LOG(ERROR, TAG, "Few packet drops are found, sequence number is not matching");
             // Send a observe request to the gateway.
             RMSendObserveRequest(devAddr, NULL);
+            RTMFreeGatewayRouteTable(&gatewayTableList);
             return result;
         }
         else if (OC_STACK_DUPLICATE_REQUEST == result)
         {
             OC_LOG(ERROR, TAG, "Same sequence number is received");
+            RTMFreeGatewayRouteTable(&gatewayTableList);
             return result;
         }
     }
@@ -393,7 +396,19 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
 
     // Create a list to add the updated entries and notify the observers
     u_linklist_t *updatedTableList = u_linklist_create();
+    if(!updatedTableList)
+    {
+        OC_LOG(DEBUG, TAG, "Failed to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+
     u_linklist_t *alternativeRouteList = u_linklist_create();
+    if(!alternativeRouteList)
+    {
+        OC_LOG(DEBUG, TAG, "Failed to allocate memory");
+        return OC_STACK_NO_MEMORY;
+    }
+
     OCRepPayload *updatedPayload = NULL;
     if (false == doRemoveEntry)
     {
@@ -540,6 +555,7 @@ OCStackResult RMHandleGETRequest(const OCServerRequest *request, const OCResourc
     if (OC_STACK_OK != result)
     {
         OC_LOG_V(DEBUG, TAG, "Send response failed[%d]", result);
+        RMPFreePayload(payload);
         return result;
     }
 
@@ -832,6 +848,11 @@ void RMSendDeleteToNeighbourNodes()
             for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
             {
                 RTMDestIntfInfo_t *dest = u_arraylist_get(entry->destination->destIntfAddr, i);
+                if (!dest)
+                {
+                    OC_LOG(ERROR, RM_TAG, "Failed to get dest address");
+                    continue;
+                }
                 OCDevAddr devAddr = {.adapter = OC_DEFAULT_ADAPTER};
                 CopyEndpointToDevAddr(&(dest->destIntfAddr), &devAddr);
                 OC_LOG_V(DEBUG, TAG, "\nDestination interface addresses: %s[%d], OCDevAddr: %s[%d]",
@@ -839,7 +860,7 @@ void RMSendDeleteToNeighbourNodes()
                 RMSendDeleteRequest(&devAddr, payload);
             }
         }
-        RMPFreePayload(payload);
+
         u_linklist_get_next(&iterTable);
     }
 

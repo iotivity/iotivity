@@ -1381,6 +1381,7 @@ static void CASendErrorInfo(const CAEndpoint_t *endpoint, const CAInfo_t *info, 
     if (CA_STATUS_OK != res)
     {
         OICFree(cadata);
+        OICFree(errorInfo);
         CAFreeEndpoint(ep);
         return;
     }

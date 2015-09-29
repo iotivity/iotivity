@@ -181,8 +181,11 @@ CAResult_t u_linklist_remove(u_linklist_t *linklist, u_linklist_iterator_t **ite
 
 uint32_t u_linklist_length(const u_linklist_t *linklist)
 {
-    VERIFY_NON_NULL(linklist, TAG, "list is null");
-
+    if (NULL == linklist)
+    {
+        OIC_LOG(ERROR, TAG, "linklist is NULL");
+        return 0;
+    }
     return linklist->size;
 }
 
