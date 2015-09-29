@@ -41,7 +41,7 @@
 static OCConnectivityType OC_CONNTYPE = CT_IP_USE_V4;
 static OCConnectivityType OC_CONNTYPE_BLE =  CT_ADAPTER_GATT_BTLE;
 
-static const char * UNICAST_PROVISIONING_QUERY = "coap://%s:%d/oic/res?rt=oic.prov";
+static const char * UNICAST_PROVISIONING_QUERY = "coap://%s:%d/oic/res?rt=oic.r.prov";
 static const char * UNICAST_PROV_STATUS_QUERY = "coap://%s:%d%s";
 
 /**
