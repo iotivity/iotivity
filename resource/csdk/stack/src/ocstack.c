@@ -1179,6 +1179,10 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
 #endif
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_RD_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_RD;
+                    }
                     else
                     {
                         OC_LOG_V(ERROR, TAG, "Unknown Payload type in Discovery: %d %s",
@@ -1193,9 +1197,19 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                          cbNode->method == OC_REST_OBSERVE_ALL ||
                          cbNode->method == OC_REST_DELETE)
                 {
-                    OC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
-                            cbNode->method, cbNode->requestUri);
-                    type = PAYLOAD_TYPE_REPRESENTATION;
+                    char targetUri[MAX_URI_LENGTH];
+                    snprintf(targetUri, MAX_URI_LENGTH, "%s?rt=%s",
+                            OC_RSRVD_RD_URI, OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
+                    if (strcmp(targetUri, cbNode->requestUri) == 0)
+                    {
+                        type = PAYLOAD_TYPE_RD;
+                    }
+                    if (type == PAYLOAD_TYPE_INVALID)
+                    {
+                        OC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
+                                cbNode->method, cbNode->requestUri);
+                        type = PAYLOAD_TYPE_REPRESENTATION;
+                    }
                 }
                 else
                 {
@@ -1990,6 +2004,33 @@ OCStackResult OCStop()
 
 
     stackState = OC_STACK_UNINITIALIZED;
+    return OC_STACK_OK;
+}
+
+OCStackResult OCStartMulticastServer()
+{
+    if(stackState != OC_STACK_INITIALIZED)
+    {
+        OC_LOG(ERROR, TAG, "OCStack is not initalized. Cannot start multicast server.");
+        return OC_STACK_ERROR;
+    }
+    CAResult_t ret = CAStartListeningServer();
+    if (CA_STATUS_OK != ret)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed starting listening server: %d", ret);
+        return OC_STACK_ERROR;
+    }
+    return OC_STACK_OK;
+}
+
+OCStackResult OCStopMulticastServer()
+{
+    CAResult_t ret = CAStopListeningServer();
+    if (CA_STATUS_OK != ret)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed stopping listening server: %d", ret);
+        return OC_STACK_ERROR;
+    }
     return OC_STACK_OK;
 }
 
@@ -4208,4 +4249,3 @@ OCStackResult CAResultToOCResult(CAResult_t caResult)
             return OC_STACK_ERROR;
     }
 }
-

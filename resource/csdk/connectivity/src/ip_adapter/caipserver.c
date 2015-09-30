@@ -96,7 +96,6 @@ static CAIPExceptionCallback g_exceptionCallback;
 static CAIPPacketReceivedCallback g_packetReceivedCallback;
 
 static void CAHandleNetlink();
-static void CAApplyInterfaces();
 static void CAFindReadyMessage();
 static void CASelectReturned(fd_set *readFds, int ret);
 static void CAProcessNewInterface(CAInterface_t *ifchanged);
@@ -479,7 +478,12 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
 
     caglobals.ip.selectTimeout = CAGetPollingInterval(caglobals.ip.selectTimeout);
 
-    CAApplyInterfaces();
+    res = CAIPStartListenServer();
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to start listening server![%d]", res);
+        return res;
+    }
 
     caglobals.ip.terminate = false;
     res = ca_thread_pool_add_task(threadPool, CAReceiveHandler, NULL);
@@ -591,13 +595,13 @@ static void applyMulticastToInterface6(uint32_t interface)
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressGlb, interface);
 }
 
-static void CAApplyInterfaces()
+CAResult_t CAIPStartListenServer()
 {
     u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
     if (!iflist)
     {
         OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
-        return;
+        return CA_STATUS_FAILED;
     }
 
     uint32_t len = u_arraylist_length(iflist);
@@ -630,6 +634,53 @@ static void CAApplyInterfaces()
     }
 
     u_arraylist_destroy(iflist);
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAIPStopListenServer()
+{
+    u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
+    if (!iflist)
+    {
+        OIC_LOG_V(ERROR, TAG, "Get interface info failed: %s", strerror(errno));
+        return CA_STATUS_FAILED;
+    }
+
+    uint32_t len = u_arraylist_length(iflist);
+    OIC_LOG_V(DEBUG, TAG, "IP network interfaces found: %d", len);
+
+    for (uint32_t i = 0; i < len; i++)
+    {
+        CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+
+        if (!ifitem)
+        {
+            continue;
+        }
+
+        if ((ifitem->flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
+        {
+            continue;
+        }
+        if (ifitem->family == AF_INET)
+        {
+            close(caglobals.ip.m4.fd);
+            close(caglobals.ip.m4s.fd);
+            caglobals.ip.m4.fd = -1;
+            caglobals.ip.m4s.fd = -1;
+            OIC_LOG_V(DEBUG, TAG, "IPv4 network interface: %s cloed", ifitem->name);
+        }
+        if (ifitem->family == AF_INET6)
+        {
+            close(caglobals.ip.m6.fd);
+            close(caglobals.ip.m6s.fd);
+            caglobals.ip.m6.fd = -1;
+            caglobals.ip.m6s.fd = -1;
+            OIC_LOG_V(DEBUG, TAG, "IPv6 network interface: %s", ifitem->name);
+        }
+    }
+    u_arraylist_destroy(iflist);
+    return CA_STATUS_OK;
 }
 
 static void CAProcessNewInterface(CAInterface_t *ifitem)
@@ -975,4 +1026,3 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
-

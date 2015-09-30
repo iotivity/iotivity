@@ -79,6 +79,13 @@ CAResult_t CAStartEDR();
 CAResult_t CAStartEDRListeningServer();
 
 /**
+ * @brief  Stops listening server for receiving multicast search requests.
+ *
+ * @return #CA_STATUS_OK or Appropriate error code
+ */
+CAResult_t CAStopEDRListeningServer();
+
+/**
  * @brief  Starts discovery server for receiving multicast advertisements.
  *         Starts RFCOMM Server with prefixed UUID as per OIC specification.
  * @return #CA_STATUS_OK or Appropriate error code

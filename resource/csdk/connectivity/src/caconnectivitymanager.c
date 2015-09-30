@@ -99,6 +99,18 @@ CAResult_t CAStartListeningServer()
     return CAStartListeningServerAdapters();
 }
 
+CAResult_t CAStopListeningServer()
+{
+    OIC_LOG(DEBUG, TAG, "CAStopListeningServer");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    return CAStopListeningServerAdapters();
+}
+
 CAResult_t CAStartDiscoveryServer()
 {
     OIC_LOG(DEBUG, TAG, "CAStartDiscoveryServer");

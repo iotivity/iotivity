@@ -796,6 +796,7 @@ CAResult_t CAInitializeRA(CARegisterConnectivityCallback registerCallback,
     CAConnectivityHandler_t raHandler = {};
     raHandler.startAdapter = CAStartRA;
     raHandler.startListenServer = CAStartRAListeningServer;
+    raHandler.stopListenServer = CAStopRAListeningServer;
     raHandler.startDiscoveryServer = CAStartRADiscoveryServer;
     raHandler.sendData = CASendRAUnicastData;
     raHandler.sendDataToAll = CASendRAMulticastData;
@@ -970,6 +971,12 @@ int32_t CASendRAMulticastData(const CAEndpoint_t *endpoint,
 }
 
 CAResult_t CAStartRAListeningServer()
+{
+    OIC_LOG(INFO, RA_ADAPTER_TAG, "RA adapter does not support listening for multicast data");
+    return CA_NOT_SUPPORTED;
+}
+
+CAResult_t CAStopRAListeningServer()
 {
     OIC_LOG(INFO, RA_ADAPTER_TAG, "RA adapter does not support listening for multicast data");
     return CA_NOT_SUPPORTED;
