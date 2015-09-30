@@ -57,12 +57,17 @@
 #define ZB_CURRENT_LEVEL_ATTRIBUTE_READONLY  "0000"
 #define ZB_ON_LEVEL_ATTRIBUTE                "0011"
 #define ZB_LEVEL_CONTROL_CLUSTER             "0008"
-#define ZB_CONTACT_CLUSTER                   "0500"
-#define ZB_CONTACT_ATTRIBUTE_ID              "0002"
+#define ZB_IAS_ZONE_CLUSTER                  "0500"
+#define ZB_IAS_ZONE_STATUS_ATTRIBUTE_ID      "0002"
 #define ZB_INDICATOR_CLUSTER                 "0003"
 #define ZB_INDICATOR_ATTRIBUTE_ID            "0000"
 #define ZB_ON_OFF_CLUSTER                    "0006"
 #define ZB_ON_OFF_ATTRIBUTE_ID               "0000"
+#define ZB_IAS_ZONE_TYPE_ATTRIBUTE_ID        "0001"
+
+#define IAS_ZONE_TYPE_MOTION_SENSOR          "000d"
+#define IAS_ZONE_TYPE_CONTACT_SENSOR         "0015"
+#define IAS_ZONE_TYPE_WATER_SENSOR           "002a"
 
 #define ZB_DATA_TYPE_NULL                    "00"
 #define ZB_DATA_TYPE_1_BYTE                  "08"
@@ -92,6 +97,8 @@
 static const char* OIC_TEMPERATURE_SENSOR = "oic.r.temperature";
 static const char* OIC_DIMMABLE_LIGHT = "oic.r.light.dimming";
 static const char* OIC_CONTACT_SENSOR = "oic.r.sensor.contact";
+static const char* OIC_MOTION_SENSOR = "oic.r.sensor.motion";
+static const char* OIC_WATER_SENSOR = "oic.r.sensor.water";
 static const char* OIC_BINARY_SWITCH = "oic.r.switch.binary";
 
 static const char* OIC_TEMPERATURE_ATTRIBUTE = "temperature";
@@ -127,7 +134,7 @@ typedef enum
 } ZigBeeAttributeDataType;
 
 char * getZBDataTypeString(ZigBeeAttributeDataType attrType);
-OCEntityHandlerResult ProcessEHRequest (PIPluginBase * plugin, OCEntityHandlerRequest *ehRequest,
+OCEntityHandlerResult ProcessEHRequest(PIPluginBase * plugin, OCEntityHandlerRequest *ehRequest,
         OCRepPayload **payload);
 
 typedef enum
@@ -169,20 +176,141 @@ typedef struct
     OICZigBeeAttributePair list[MAX_ATTRIBUTES];
 } AttributeList;
 
-const char* ZigBeeClusterIDToOICResourceType (const char * clusterID);
+const char* ZigBeeClusterIDToOICResourceType(const char * clusterID);
 
-OCStackResult getZigBeeAttributesForOICResource (char * OICResourceType,
+OCStackResult getZigBeeAttributesForOICResource(const char * OICResourceType,
                                                     AttributeList *attributeList);
 
-bool getZigBeeAttributesIfValid (char * OICResourceType,
+bool getZigBeeAttributesIfValid(const char * OICResourceType,
                                     AttributeList *attributeList,
                                     OCRepPayload *payload);
 
+const char * getResourceTypeForIASZoneType(TWDevice *device)
+{
+    if(!device)
+    {
+        return NULL;
+    }
+    char *IASZoneType = NULL;
+    const char *resourceType = NULL;
+    uint8_t length = 0;
+
+    OCStackResult ret = TWGetAttribute(
+        NULL,
+        device->nodeId,
+        device->endpointOfInterest->endpointId,
+        ZB_IAS_ZONE_CLUSTER,
+        ZB_IAS_ZONE_TYPE_ATTRIBUTE_ID,
+        &IASZoneType,
+        &length
+    );
+
+    if (ret != OC_STACK_OK || !IASZoneType)
+    {
+        OC_LOG_V (ERROR, TAG, "Error %u getting IAS Zone Type", ret);
+        return NULL;
+    }
+
+    if (strcmp (IASZoneType, IAS_ZONE_TYPE_CONTACT_SENSOR) == 0)
+    {
+        resourceType = OIC_CONTACT_SENSOR;
+    }
+    else if (strcmp (IASZoneType, IAS_ZONE_TYPE_MOTION_SENSOR) == 0)
+    {
+        resourceType = OIC_MOTION_SENSOR;
+    }
+    else if (strcmp (IASZoneType, IAS_ZONE_TYPE_WATER_SENSOR) == 0)
+    {
+        resourceType = OIC_WATER_SENSOR;
+    }
+    else
+    {
+        OC_LOG_V (ERROR, TAG, "Unsupported Zone Type %s", IASZoneType);
+        resourceType = NULL;
+    }
+
+    OICFree(IASZoneType);
+
+    return resourceType;
+}
+
+OCStackResult buildURI(char ** output,
+                       const char * prefix,
+                       const char * nodeId,
+                       const char * endpointId,
+                       const char * clusterId)
+{
+    if(!output || !prefix || !nodeId || !endpointId || !clusterId)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    const char LEN_SEPARATOR[] = "/";
+    size_t lenSeparatorSize = sizeof(LEN_SEPARATOR) - 1;
+    size_t newUriSize = strlen(prefix) + lenSeparatorSize +
+                        strlen(nodeId) + lenSeparatorSize +
+                        strlen(endpointId) + lenSeparatorSize +
+                        strlen(clusterId)
+                        + 1; // NULL Terminator
+    *output = (char *) OICCalloc(1, newUriSize);
+
+    if (!*output)
+    {
+        OC_LOG (ERROR, TAG, "Out of memory");
+        return OC_STACK_NO_MEMORY;
+    }
+
+    char * temp = OICStrcpy(*output, newUriSize, prefix);
+    if(temp != *output)
+    {
+        goto exit;
+    }
+    temp = OICStrcat(*output, newUriSize, LEN_SEPARATOR);
+    if(temp != *output)
+    {
+        goto exit;
+    }
+    temp = OICStrcat(*output, newUriSize, nodeId);
+    if(temp != *output)
+    {
+        goto exit;
+    }
+    temp = OICStrcat(*output, newUriSize, LEN_SEPARATOR);
+    if(temp != *output)
+    {
+        goto exit;
+    }
+    temp = OICStrcat(*output, newUriSize, endpointId);
+    if(temp != *output)
+    {
+        goto exit;
+    }
+    temp = OICStrcat(*output, newUriSize, LEN_SEPARATOR);
+    if(temp != *output)
+    {
+        goto exit;
+    }
+    temp = OICStrcat(*output, newUriSize, clusterId);
+    if(temp != *output)
+    {
+        goto exit;
+    }
+
+    return OC_STACK_OK;
+
+exit:
+    OICFree(*output);
+    *output = NULL;
+    return OC_STACK_NO_MEMORY;
+}
+
 void foundZigbeeCallback(TWDevice *device)
 {
+    if(!device)
+    {
+        OC_LOG(ERROR, TAG, "foundZigbeeCallback: Invalid parameter.");
+        return;
+    }
     int count = device->endpointOfInterest->clusterList->count;
-    size_t lenSeparator = strlen ("/");
-    int ret = 0;
     for(int i=0; i < count; i++)
     {
         PIResource_Zigbee *piResource = (PIResource_Zigbee *) OICMalloc(sizeof(*piResource));
@@ -192,43 +320,46 @@ void foundZigbeeCallback(TWDevice *device)
             return;
         }
         piResource->header.plugin = (PIPluginBase *)gPlugin;
-        size_t newUriSize = strlen(PI_ZIGBEE_PREFIX) + lenSeparator +
-                        sizeof(device->nodeId) + lenSeparator +
-                        sizeof(device->endpointOfInterest->endpointId) + lenSeparator +
-                        sizeof(device->endpointOfInterest->clusterList->clusterIds[i].clusterId)
-                        + 1; // NULL Terminator
-        char * newUri = (char *) OICCalloc(newUriSize, 1);
 
-        if (!newUri)
+        OCStackResult result = buildURI(&piResource->header.piResource.uri,
+                                PI_ZIGBEE_PREFIX,
+                                device->nodeId,
+                                device->endpointOfInterest->endpointId,
+                                device->endpointOfInterest->clusterList->clusterIds[i].clusterId);
+
+        if(result != OC_STACK_OK)
         {
-            OC_LOG (ERROR, TAG, "Out of memory");
+            OICFree(piResource);
             return;
         }
 
-        ret = snprintf(newUri, newUriSize, "%s/%s/%s/%s",
-                      PI_ZIGBEE_PREFIX,
-                      device->nodeId,
-                      device->endpointOfInterest->endpointId,
-                      device->endpointOfInterest->clusterList->clusterIds[i].clusterId);
-        if(ret < 0)
-        {
-            OC_LOG (ERROR, TAG, "Encoding error occurred trying to build Zigbee URI.");
-        }
-        else if(ret > newUriSize)
-        {
-            OC_LOG_V (ERROR, TAG, "Did not allocate enough memory to build URI. Required Size: %d",
-                      ret);
-        }
+        char * foundClusterID =
+            device->endpointOfInterest->clusterList->clusterIds[i].clusterId;
 
-        piResource->header.piResource.uri = newUri;
-        piResource->header.piResource.resourceTypeName =
+        if (strcmp (foundClusterID, ZB_IAS_ZONE_CLUSTER) == 0)
+        {
+            piResource->header.piResource.resourceTypeName
+                = getResourceTypeForIASZoneType (device);
 
-            (char *) ZigBeeClusterIDToOICResourceType(
-                device->endpointOfInterest->clusterList->clusterIds[i].clusterId);
+            OCStackResult ret = TWListenForStatusUpdates (device->nodeId,
+                                      device->endpointOfInterest->endpointId);
+
+            if (ret != OC_STACK_OK)
+            {
+                // Just log it and move on if this fails?
+                // or not create this resource at all?
+                OC_LOG (ERROR, TAG, "Command to listen for status updates failed");
+            }
+        }
+        else
+        {
+            piResource->header.piResource.resourceTypeName =
+                    (char *) ZigBeeClusterIDToOICResourceType(foundClusterID);
+        }
 
         if(piResource->header.piResource.resourceTypeName == NULL)
         {
-            OC_LOG_V (ERROR, TAG, "unsupported clusterId : %d",
+            OC_LOG_V (ERROR, TAG, "unsupported clusterId : %s",
                 device->endpointOfInterest->clusterList->clusterIds[i].clusterId);
             OICFree(piResource->header.piResource.uri);
             OICFree(piResource);
@@ -248,8 +379,32 @@ void foundZigbeeCallback(TWDevice *device)
     }
 }
 
+void zigbeeZoneStatusUpdate(TWUpdate * update)
+{
+    if(!update)
+    {
+        return;
+    }
+
+    char * uri = NULL;
+    OCStackResult result = buildURI(&uri,
+                                    PI_ZIGBEE_PREFIX,
+                                    update->nodeId,
+                                    update->endpoint,
+                                    ZB_IAS_ZONE_CLUSTER);
+    if(result != OC_STACK_OK || !uri)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed to build URI with result: %d", result);
+        return;
+    }
+
+    (*gPlugin)->header.ObserveNotificationUpdate((PIPluginBase *)*gPlugin, uri);
+    OICFree(uri);
+}
+
 OCStackResult ZigbeeInit(const char * comPort, PIPlugin_Zigbee ** plugin,
-                         PINewResourceFound newResourceCB)
+                         PINewResourceFound newResourceCB,
+                         PIObserveNotificationUpdate observeNotificationUpdate)
 {
     if(!plugin)
     {
@@ -261,14 +416,21 @@ OCStackResult ZigbeeInit(const char * comPort, PIPlugin_Zigbee ** plugin,
         return OC_STACK_NO_MEMORY;
     }
     ((*plugin)->header).type = PLUGIN_ZIGBEE;
-    ((*plugin)->header).comPort = OICStrdup(comPort);
+    ((*plugin)->header).comPort = comPort;
     ((*plugin)->header).NewResourceFoundCB = newResourceCB;
+    ((*plugin)->header).ObserveNotificationUpdate = observeNotificationUpdate;
     ((*plugin)->header).next = NULL;
     ((*plugin)->header).resourceList = NULL;
     ((*plugin)->header).processEHRequest = ProcessEHRequest;
 
     gPlugin = plugin;
-    return TWInitialize(comPort);
+    OCStackResult result = TWInitialize(comPort);
+    if(result != OC_STACK_OK)
+    {
+        return result;
+    }
+
+    return TWSetStatusUpdateCallback(zigbeeZoneStatusUpdate);
 }
 
 OCStackResult ZigbeeDiscover(PIPlugin_Zigbee * plugin)
@@ -284,7 +446,6 @@ OCStackResult ZigbeeDiscover(PIPlugin_Zigbee * plugin)
 
 OCStackResult ZigbeeStop(PIPlugin_Zigbee * plugin)
 {
-    free((plugin->header).comPort);
     free(plugin);
     return TWUninitialize();
 }
@@ -299,7 +460,7 @@ OCStackResult ZigbeeProcess(PIPlugin_Zigbee * plugin)
 // from the cluster ID. If the cluster is not supported, null is
 // returned.
 // NOTE: The returned string is NOT malloc'ed.
-const char* ZigBeeClusterIDToOICResourceType (const char * clusterID) //Discovery/CreateResource
+const char* ZigBeeClusterIDToOICResourceType(const char * clusterID) //Discovery/CreateResource
 {
     if (strcmp(clusterID, ZB_TEMPERATURE_CLUSTER) == 0)
     {
@@ -309,7 +470,7 @@ const char* ZigBeeClusterIDToOICResourceType (const char * clusterID) //Discover
     {
         return OIC_DIMMABLE_LIGHT;
     }
-    else if (strcmp(clusterID, ZB_CONTACT_CLUSTER) == 0)
+    else if (strcmp(clusterID, ZB_IAS_ZONE_CLUSTER) == 0)
     {
         return OIC_CONTACT_SENSOR;
     }
@@ -323,7 +484,7 @@ const char* ZigBeeClusterIDToOICResourceType (const char * clusterID) //Discover
     }
 }
 
-const char* OICResourceToZigBeeClusterID (char *oicResourceType)
+const char* OICResourceToZigBeeClusterID(char *oicResourceType)
 {
     if (strcmp(oicResourceType, OIC_TEMPERATURE_SENSOR) == 0)
     {
@@ -335,7 +496,7 @@ const char* OICResourceToZigBeeClusterID (char *oicResourceType)
     }
     else if (strcmp(oicResourceType, OIC_CONTACT_SENSOR) == 0)
     {
-        return ZB_CONTACT_CLUSTER;
+        return ZB_IAS_ZONE_CLUSTER;
     }
     else if (strcmp(oicResourceType, OIC_BINARY_SWITCH) == 0)
     {
@@ -351,7 +512,7 @@ const char* OICResourceToZigBeeClusterID (char *oicResourceType)
     }
 }
 
-OCStackResult getZigBeeAttributesForOICResource (char * OICResourceType,
+OCStackResult getZigBeeAttributesForOICResource(const char * OICResourceType,
                                                     AttributeList *attributeList) // GET
 {
     if (strcmp (OICResourceType, OIC_TEMPERATURE_SENSOR) == 0)
@@ -376,7 +537,7 @@ OCStackResult getZigBeeAttributesForOICResource (char * OICResourceType,
     {
         attributeList->count = 1;
         attributeList->list[0].oicAttribute = OICStrdup(OIC_CONTACT_ATTRIBUTE);
-        attributeList->list[0].zigBeeAttribute = ZB_CONTACT_ATTRIBUTE_ID;
+        attributeList->list[0].zigBeeAttribute = ZB_IAS_ZONE_STATUS_ATTRIBUTE_ID;
         attributeList->list[0].oicType = OIC_ATTR_BOOL;
         attributeList->list[0].zigbeeType = ZB_BOOL;
         return OC_STACK_OK;
@@ -394,7 +555,7 @@ OCStackResult getZigBeeAttributesForOICResource (char * OICResourceType,
     return OC_STACK_ERROR;
 }
 
-bool getZigBeeAttributesIfValid (char * OICResourceType,
+bool getZigBeeAttributesIfValid(const char * OICResourceType,
                                     AttributeList *attributeList,
                                     OCRepPayload *payload) // Put
 {
@@ -448,7 +609,7 @@ bool getZigBeeAttributesIfValid (char * OICResourceType,
         {
             attributeList->count = 1;
             attributeList->list[0].oicAttribute = OICStrdup(OIC_CONTACT_ATTRIBUTE);
-            attributeList->list[0].zigBeeAttribute = ZB_CONTACT_ATTRIBUTE_ID;
+            attributeList->list[0].zigBeeAttribute = ZB_IAS_ZONE_STATUS_ATTRIBUTE_ID;
             attributeList->list[0].oicType = OIC_ATTR_BOOL;
             attributeList->list[0].val.i = value;
             attributeList->list[0].zigbeeType = ZB_BOOL;
@@ -651,7 +812,7 @@ exit:
     return stackResult;
 }
 
-OCEntityHandlerResult processPutRequest (PIPluginBase * plugin,
+OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
     OCEntityHandlerRequest *ehRequest, OCRepPayload **payload)
 {
     if (!plugin || !ehRequest || !payload)
@@ -775,7 +936,7 @@ OCEntityHandlerResult processPutRequest (PIPluginBase * plugin,
     return processGetRequest(plugin, ehRequest, payload);
 }
 
-OCEntityHandlerResult ProcessEHRequest (PIPluginBase * plugin,
+OCEntityHandlerResult ProcessEHRequest(PIPluginBase * plugin,
     OCEntityHandlerRequest *ehRequest, OCRepPayload **payload)
 {
     if(!ehRequest || !payload)

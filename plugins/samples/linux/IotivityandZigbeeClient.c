@@ -65,10 +65,12 @@ static DiscoveredResourceInfo g_discoveredResources[MAX_RESOURCES_REMEMBERED];
 static void PrintTestCases()
 {
     printf("\nTest Cases:\n");
-    printf ("\n\t0 : Quit    1: GET    2: Build PUT payload\n\n");
-    printf ("\t3 : Turn binary switch for light ON\n");
-    printf ("\t4 : Turn binary switch for light OFF\n");
-    printf ("\t5 : Change light brightness\n");
+    printf ("\n\t%d : Quit    %d: GET    %d: Build PUT payload %d: OBSERVE\n\n",
+            TEST_QUIT, TEST_GET, TEST_CUSTOM_PUT, TEST_OBSERVE);
+    printf ("\t%d : Turn binary switch for light ON\n", TEST_TURN_SWITCH_ON);
+    printf ("\t%d : Turn binary switch for light OFF\n", TEST_TURN_SWITCH_OFF);
+    printf ("\t%d : Change light brightness\n", TEST_SET_LIGHT_BRIGHTNESS);
+    printf ("\n\t%d : Check for observation updates.\n", TEST_CYCLE);
 }
 
 static void PrintResources ()
@@ -159,6 +161,12 @@ int InitPutRequest (const char *resourceUri, OCPayload* payload)
 {
     OC_LOG_V(INFO, TAG, "Executing %s for resource: %s", __func__, resourceUri);
     return (InvokeOCDoResource(resourceUri, payload, OC_REST_PUT, responseCallbacks));
+}
+
+int InitObserveRequest(const char *resourceUri)
+{
+    OC_LOG_V(INFO, TAG, "Executing %s for resource: %s", __func__, resourceUri);
+    return (InvokeOCDoResource(resourceUri, NULL, OC_REST_OBSERVE, responseCallbacks));
 }
 
 OCPayload * getSwitchStatePayload (bool state)
@@ -314,6 +322,11 @@ void processUserInput (int resourceNo, int testCase)
             }
             break;
         }
+
+        case TEST_OBSERVE:
+            InitObserveRequest (g_discoveredResources[resourceNo].uri);
+            break;
+
         case TEST_TURN_SWITCH_ON:
             InitPutRequest (g_discoveredResources[resourceNo].uri, getSwitchStatePayload (true));
             break;
@@ -335,6 +348,11 @@ void processUserInput (int resourceNo, int testCase)
                 printf("Invalid value\n");
                 promptUser = true;
             }
+            break;
+
+        case TEST_CYCLE:
+            OCProcess();
+            promptUser = true;
             break;
 
         case TEST_QUIT:

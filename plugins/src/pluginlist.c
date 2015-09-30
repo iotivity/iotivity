@@ -101,6 +101,33 @@ OCStackResult GetResourceFromHandle(PIPluginBase * plugin, PIResource ** piResou
     return OC_STACK_NO_RESOURCE;
 }
 
+OCStackResult GetResourceFromURI(PIPluginBase * plugin, PIResource ** piResource,
+                                    const char * uri)
+{
+    if (!plugin || !piResource || !uri)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    PIResourceBase * out = NULL;
+    PIResourceBase * tmp = NULL;
+    size_t checkUriLength = strlen(uri);
+    size_t indexUriLength = 0;
+    size_t minLength = 0;
+    LL_FOREACH_SAFE(plugin->resourceList, out, tmp)
+    {
+        indexUriLength = strlen(out->piResource.uri);
+        minLength = indexUriLength > checkUriLength ? checkUriLength : indexUriLength;
+        if ((checkUriLength == indexUriLength) &&
+            memcmp(out->piResource.uri, uri, minLength + 1) == 0)
+        {
+            *piResource = (PIResource *) out;
+            return OC_STACK_OK;
+        }
+    }
+    *piResource = NULL;
+    return OC_STACK_NO_RESOURCE;
+}
+
 OCStackResult AddResourceToPlugin (PIPluginBase * plugin, PIResourceBase * resource)
 {
     if (!plugin || !resource)
