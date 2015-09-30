@@ -120,6 +120,8 @@ public:
             return OCEntityHandlerResult::OC_EH_SLOW;
         case 5:
             return OCEntityHandlerResult::OC_EH_FORBIDDEN;
+        case 6:
+            return OCEntityHandlerResult::OC_EH_RESOURCE_NOT_FOUND;
         default:
             ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected OCEntityHandlerResult");
             return OCEntityHandlerResult::OC_EH_ERROR;

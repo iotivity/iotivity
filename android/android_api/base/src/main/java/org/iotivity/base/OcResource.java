@@ -47,7 +47,7 @@ public class OcResource {
      * @param onGetListener  The event handler will be invoked with a map of attribute name and
      *                       values. The event handler will also have the result from this Get
      *                       operation This will have error codes
-     * @throws OcException
+     * @throws OcException if failure
      */
     public native void get(Map<String, String> queryParamsMap,
                            OnGetListener onGetListener) throws OcException;
@@ -60,7 +60,7 @@ public class OcResource {
      *                         values. The event handler will also have the result from this Get
      *                         operation This will have error codes
      * @param qualityOfService the quality of communication
-     * @throws OcException
+     * @throws OcException if failure
      */
     public void get(Map<String, String> queryParamsMap,
                     OnGetListener onGetListener,
@@ -81,7 +81,7 @@ public class OcResource {
      * @param onGetListener     The event handler will be invoked with a map of attribute name and
      *                          values. The event handler will also have the result from this Get
      *                          operation This will have error codes
-     * @throws OcException
+     * @throws OcException if failure
      */
     public void get(String resourceType,
                     String resourceInterface,
@@ -109,7 +109,7 @@ public class OcResource {
      *                          values. The event handler will also have the result from this Get
      *                          operation This will have error codes
      * @param qualityOfService  the quality of communication
-     * @throws OcException
+     * @throws OcException if failure
      */
     public void get(String resourceType,
                     String resourceInterface,
@@ -137,7 +137,7 @@ public class OcResource {
      * @param queryParamsMap Map which can have the query parameter name and value
      * @param onPutListener  event handler The event handler will be invoked with a map of attribute
      *                       name and values.
-     * @throws OcException
+     * @throws OcException if failure
      */
     public native void put(OcRepresentation representation,
                            Map<String, String> queryParamsMap,
@@ -151,7 +151,7 @@ public class OcResource {
      * @param onPutListener    event handler The event handler will be invoked with a map of
      *                         attribute name and values.
      * @param qualityOfService the quality of communication
-     * @throws OcException
+     * @throws OcException if failure
      */
     public void put(OcRepresentation ocRepresentation,
                     Map<String, String> queryParamsMap,
@@ -178,7 +178,7 @@ public class OcResource {
      * @param queryParamsMap    Map which can have the query parameter name and value
      * @param onPutListener     event handler The event handler will be invoked with a map of
      *                          attribute name and values.
-     * @throws OcException
+     * @throws OcException if failure
      */
     public void put(String resourceType,
                     String resourceInterface,
@@ -209,7 +209,7 @@ public class OcResource {
      * @param onPutListener     event handler The event handler will be invoked with a map of
      *                          attribute name and values.
      * @param qualityOfService  the quality of communication
-     * @throws OcException
+     * @throws OcException if failure
      */
     public void put(String resourceType,
                     String resourceInterface,
@@ -240,7 +240,7 @@ public class OcResource {
      * @param queryParamsMap   Map which can have the query parameter name and value
      * @param onPostListener   event handler The event handler will be invoked with a map of
      *                         attribute name and values.
-     * @throws OcException
+     * @throws OcException if failure
      */
     public native void post(OcRepresentation ocRepresentation,
                             Map<String, String> queryParamsMap,
@@ -254,7 +254,7 @@ public class OcResource {
      * @param onPostListener   event handler The event handler will be invoked with a map of
      *                         attribute name and values.
      * @param qualityOfService the quality of communication
-     * @throws OcException
+     * @throws OcException if failure
      */
     public void post(OcRepresentation ocRepresentation,
                      Map<String, String> queryParamsMap,
@@ -281,7 +281,7 @@ public class OcResource {
      * @param queryParamsMap    Map which can have the query parameter name and value
      * @param onPostListener    event handler The event handler will be invoked with a map of
      *                          attribute name and values.
-     * @throws OcException
+     * @throws OcException if failure
      */
     public void post(String resourceType,
                      String resourceInterface,
@@ -503,7 +503,9 @@ public class OcResource {
 
     /**
      * Method to get a string representation of the resource's server ID.
-     * * This is unique per- server independent on how it was discovered.
+     * <p>
+     * This is unique per- server independent on how it was discovered.
+     * </p>
      *
      * @return server ID
      */
