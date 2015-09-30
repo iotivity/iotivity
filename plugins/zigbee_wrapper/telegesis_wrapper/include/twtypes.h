@@ -50,27 +50,35 @@ extern "C" {
 
 #define SIMPLEDESC_RESPONSE_EXPECTED_LINES (6)
 
-#define AT_STR_ERROR_OK         "00"
+#define AT_STR_ERROR_OK             "00"
+#define AT_STR_ERROR_INVALID_OP     "70"
+
+#define AT_STR_ERROR_EVERYTHING_OK                              "00"
+#define AT_STR_ERROR_NODE_IS_PART_OF_PAN                        "28"
+#define AT_STR_ERROR_MESSAGE_NOT_SENT_TO_TARGET_SUCCESSFULLY    "66"
+#define AT_STR_ERROR_INVALID_OPERATION                          "70"
+
 
 #define SENDMODE                "0"
 #define SEPARATOR               ","
 #define SEPARATOR_LENGTH        strlen(SEPARATOR)
 
-#define AT_CMD_RESET                "AT&F"
-#define AT_CMD_GET_NETWORK_INFO     "AT+N"
-#define AT_CMD_ESTABLISH_NETWORK    "AT+EN"
-#define AT_CMD_PERMIT_JOIN          "AT+PJOIN:"
-#define AT_CMD_MATCH_REQUEST        "AT+MATCHREQ:"
-#define AT_CMD_SIMPLE_DESC          "AT+SIMPLEDESC:"
-#define AT_CMD_WRITE_ATR            "AT+WRITEATR:"
-#define AT_CMD_READ_ATR             "AT+READATR:"
-#define AT_CMD_RUN_ON_OFF           "AT+RONOFF:"
-#define AT_CMD_MOVE_TO_LEVEL        "AT+LCMVTOLEV:"
-#define AT_CMD_DOOR_LOCK            "AT+DRLOCK:"
-#define AT_CMD_GET_LOCAL_EUI        "ATS04?"
-#define AT_CMD_REMOTE_EUI_REQUEST   "AT+EUIREQ:"
+#define AT_CMD_RESET                                    "AT&F"
+#define AT_CMD_GET_NETWORK_INFO                         "AT+N"
+#define AT_CMD_ESTABLISH_NETWORK                        "AT+EN"
+#define AT_CMD_PERMIT_JOIN                              "AT+PJOIN:"
+#define AT_CMD_MATCH_REQUEST                            "AT+MATCHREQ:"
+#define AT_CMD_SIMPLE_DESC                              "AT+SIMPLEDESC:"
+#define AT_CMD_WRITE_ATR                                "AT+WRITEATR:"
+#define AT_CMD_READ_ATR                                 "AT+READATR:"
+#define AT_CMD_RUN_ON_OFF                               "AT+RONOFF:"
+#define AT_CMD_MOVE_TO_LEVEL                            "AT+LCMVTOLEV:"
+#define AT_CMD_DOOR_LOCK                                "AT+DRLOCK:"
+#define AT_CMD_COLOR_CTRL_MOVE_TO_COLOR_TEMPERATURE     "AT+CCMVTOCT:"
+#define AT_CMD_GET_LOCAL_EUI                            "ATS04?"
+#define AT_CMD_REMOTE_EUI_REQUEST                       "AT+EUIREQ:"
 
-#define TW_ENDCONTROL_ERROR_STRING  "ERROR:"
+#define TW_ENDCONTROL_ERROR_STRING                      "ERROR:"
 
 #define SIZE_EUI                    (17)
 #define SIZE_NODEID                 (5)
@@ -122,6 +130,7 @@ typedef enum
     TW_RESULT_ERROR_INVALID_PARAMS,
     TW_RESULT_ERROR_INVALID_PORT,
     TW_RESULT_ERROR_NO_MEMORY,
+    TW_RESULT_ERROR_INVALID_OP,
     TW_RESULT_ERROR_NOTIMPL,
 
     TW_RESULT_ERROR = 255
