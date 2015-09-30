@@ -21,8 +21,6 @@
 #include "reclient.h"
 
 #include<iostream>
-#include "mutex"
-#include "condition_variable"
 
 #include "reclientmain.h"
 
@@ -45,13 +43,11 @@ constexpr int INCORRECT_INPUT = 2;
 constexpr int QUIT_INPUT = 3;
 
 std::shared_ptr<RCSRemoteResourceObject>  resource;
+std::vector<RCSRemoteResourceObject::Ptr> resourceList;
+std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
 
 const std::string defaultKey = "deviceInfo";
-const std::string resourceType = "core.ac";
-const std::string relativeUri = OC_RSRVD_WELL_KNOWN_URI;
-
-std::mutex mtx;
-std::condition_variable cond;
+const std::string resourceType = "oic.r.ac";
 
 RCSResourceAttributes model;
 RCSResourceAttributes speed;
@@ -151,6 +147,7 @@ nestedAtrribute createNestedAttribute(int fanSpeed, int airSpeed)
 static void onDestroy()
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### Destroy sequence called");
+    resourceList.clear();
     resource = nullptr;
 }
 
@@ -161,26 +158,26 @@ void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource
     std::string resourceURI = foundResource->getUri();
     std::string hostAddress = foundResource->getAddress();
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### Resource URI :  %s", resourceURI.c_str());
-    dlog_print(DLOG_INFO, LOG_TAG, "#### Resource Host : %S", hostAddress.c_str());
-
-    string logMessage = "Resource Found <br>";
+    int resourceSize = resourceList.size() + 1;
+    string logMessage = "Resource Found : " + std::to_string(resourceSize) + "<br>";
     logMessage = logMessage + "URI: " + resourceURI + "<br>";
     logMessage = logMessage + "Host:" + hostAddress + "<br>";
     logMessage += "----------------------<br>";
-    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                           &logMessage);
 
-    resource = foundResource;
+    resourceList.push_back(foundResource);
+
+    if ("/a/airConditioner" == resourceURI)
+        resource = foundResource;
 
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))showClientAPIs, NULL);
-    cond.notify_all();
 }
 
 void onRemoteAttributesReceived(const RCSResourceAttributes &attributes, int)
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### onRemoteAttributesReceivedCallback callback");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### onRemoteAttributesReceived entry");
 
     string logMessage = "Remote Attribute Updated : <br> ";
 
@@ -262,15 +259,55 @@ static void setAttributeToRemoteServer(int fanSpeed, int airSpeed)
 
 void discoverResource()
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### Wait 2 seconds until discovered");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### discovery started");
 
-    RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(), relativeUri,
-            resourceType, &onResourceDiscovered);
-
-    std::unique_lock<std::mutex> lck(mtx);
-    cond.wait_for(lck, std::chrono::seconds(2));
+    while (!discoveryTask)
+    {
+        try
+        {
+            discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
+                                RCSAddress::multicast(), resourceType, &onResourceDiscovered);
+        }
+        catch (const RCSPlatformException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+    }
 
     dlog_print(DLOG_INFO, LOG_TAG, "#### Discovery over");
+}
+
+void cancelDiscoverResource()
+{
+    dlog_print(DLOG_INFO, LOG_TAG, "#### cancelDiscoverResource entry");
+    string logMessage = "";
+
+    if (!discoveryTask)
+    {
+        logMessage += "There is no discovery request <br>";
+    }
+    else
+    {
+        discoveryTask->cancel();
+
+        logMessage += "Discovery canceled <br>";
+
+        int resourceSize = resourceList.size();
+        if (!resourceSize)
+        {
+            logMessage += "No Resource Discovered <br>";
+        }
+        else
+        {
+            logMessage += std::to_string(resourceSize) + " : Resource Discovered <br>";
+            ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))showClientAPIs, NULL);
+        }
+
+    }
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
+                                          &logMessage);
 }
 
 static void
@@ -491,6 +528,20 @@ find_resource_cb(void *data, Evas_Object *obj, void *event_info)
     }
 }
 
+// Method to be called when the Cancel Discovery UI Button is selected
+static void
+cancel_resource_cb(void *data, Evas_Object *obj, void *event_info)
+{
+    if (NULL != list)
+    {
+        cancelDiscoverResource();
+    }
+    else
+    {
+        dlog_print(DLOG_ERROR, "cancel_resource_cb", "list is NULL - So unable to add items!!!");
+    }
+}
+
 void *showClientAPIs(void *data)
 {
     // Add items to the list only if the list is empty
@@ -536,7 +587,8 @@ void group_cb(void *data, Evas_Object *obj, void *event_info)
     Evas_Object *layout;
     Evas_Object *scroller;
     Evas_Object *nf = (Evas_Object *)data;
-    Evas_Object *find_button;
+    Evas_Object *button1;
+    Evas_Object *button2;
     Elm_Object_Item *nf_it;
 
     naviframe = nf;
@@ -553,11 +605,17 @@ void group_cb(void *data, Evas_Object *obj, void *event_info)
 
     elm_object_content_set(scroller, layout);
 
-    // Button
-    find_button = elm_button_add(layout);
-    elm_object_part_content_set(layout, "find_button", find_button);
-    elm_object_text_set(find_button, "Discover Resource");
-    evas_object_smart_callback_add(find_button, "clicked", find_resource_cb, NULL);
+    // Start Discovery Button
+    button1 = elm_button_add(layout);
+    elm_object_part_content_set(layout, "button1", button1);
+    elm_object_text_set(button1, "Start Discovery");
+    evas_object_smart_callback_add(button1, "clicked", find_resource_cb, NULL);
+
+    // Cancel Discovery Button
+    button2 = elm_button_add(layout);
+    elm_object_part_content_set(layout, "button2", button2);
+    elm_object_text_set(button2, "Cancel Discovery");
+    evas_object_smart_callback_add(button2, "clicked", cancel_resource_cb, NULL);
 
     // List
     list = elm_list_add(layout);

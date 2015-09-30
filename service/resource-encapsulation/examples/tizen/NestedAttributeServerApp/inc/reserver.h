@@ -32,7 +32,7 @@ typedef void(*ClientMenuHandler)();
 typedef int ReturnValue;
 
 std::string resourceUri = "/a/airConditioner";
-std::string resourceType = "core.ac";
+std::string resourceType = "oic.r.ac";
 std::string resourceInterface = "oic.if.";
 std::string attributeKey = "deviceInfo";
 

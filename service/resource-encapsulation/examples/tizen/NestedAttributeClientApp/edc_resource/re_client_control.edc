@@ -28,13 +28,24 @@ group
     {
         part
         {
-            name: "find_button";
+            name: "button1";
             type: SWALLOW;
             scale: 1;
             description
             {
                 rel1.relative: 0.01 0.01;
-                rel2.relative: 0.7 0.09;
+                rel2.relative: 0.5 0.09;
+            }
+        }
+        part
+        {
+            name: "button2";
+            type: SWALLOW;
+            scale: 1;
+            description
+            {
+                rel1.relative: 0.51 0.01;
+                rel2.relative: 1.0 0.09;
             }
         }
         part
@@ -56,7 +67,7 @@ group
             description
             {
                 state: "default" 0.0;
-                rel1.relative: 0.01 0.71;
+                rel1.relative: 0.01 0.45;
                 rel2.relative: 0.98 1.0;
                 color: 220 220 220 255;
             }
