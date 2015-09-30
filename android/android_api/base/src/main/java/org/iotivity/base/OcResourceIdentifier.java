@@ -22,6 +22,11 @@
 
 package org.iotivity.base;
 
+/**
+ * OcResourceIdentifier represents the identity information for a server. This
+ * object combined with the OcResource's URI property uniquely identify an
+ * OcResource on or across networks.
+ */
 public class OcResourceIdentifier {
     private OcResourceIdentifier(long nativeHandle) {
         this.mNativeHandle = nativeHandle;
