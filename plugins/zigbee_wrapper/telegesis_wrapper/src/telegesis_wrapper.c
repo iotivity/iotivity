@@ -1,4 +1,4 @@
-/******************************************************************
+//******************************************************************
 //
 // Copyright 2015 Intel Mobile Communications GmbH All Rights Reserved.
 //
@@ -16,7 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
 #include <stdio.h>
@@ -35,125 +35,10 @@
 #include "logger.h"
 
 #include "telegesis_wrapper.h"
+#include "twtypes.h"
 
 #define TAG PCF("telegesiswrapper")     // Module Name
 #define ARRAY_LENGTH            (100)
-
-#define DEVICE_BAUDRATE                 (B19200)
-#define MAX_ZIGBEE_BYTES                (512)
-#define MAX_ZIGBEE_ENROLLED_DEVICES     (255)
-
-#define TIME_OUT_00_SECOND      (0)
-#define TIME_OUT_01_SECOND      (1)
-#define TIME_OUT_05_SECONDS     (5)
-#define TIME_OUT_07_SECONDS     (7)
-#define TIME_OUT_10_SECONDS     (10)
-#define TIME_OUT_15_SECONDS     (15)
-
-#define SIMPLEDESC_RESPONSE_EXPECTED_LINES (6)
-
-#define AT_STR_ERROR_OK         "00"
-
-#define SENDMODE                "0"
-#define SEPARATOR               ","
-#define SEPARATOR_LENGTH        strlen(SEPARATOR)
-
-#define AT_CMD_RESET                "AT&F"
-#define AT_CMD_GET_NETWORK_INFO     "AT+N"
-#define AT_CMD_ESTABLISH_NETWORK    "AT+EN"
-#define AT_CMD_PERMIT_JOIN          "AT+PJOIN:"
-#define AT_CMD_MATCH_REQUEST        "AT+MATCHREQ:"
-#define AT_CMD_SIMPLE_DESC          "AT+SIMPLEDESC:"
-#define AT_CMD_WRITE_ATR            "AT+WRITEATR:"
-#define AT_CMD_READ_ATR             "AT+READATR:"
-#define AT_CMD_RUN_ON_OFF           "AT+RONOFF:"
-#define AT_CMD_MOVE_TO_LEVEL        "AT+LCMVTOLEV:"
-#define AT_CMD_DOOR_LOCK            "AT+DRLOCK:"
-#define AT_CMD_GET_LOCAL_EUI        "ATS04?"
-#define AT_CMD_REMOTE_EUI_REQUEST   "AT+EUIREQ:"
-
-
-
-
-
-//-----------------------------------------------------------------------------
-// Typedefs
-//-----------------------------------------------------------------------------
-typedef enum
-{
-    ZB_STATE_UNKNOWN,
-    ZB_STATE_INIT
-} TWState;
-
-typedef struct
-{
-    TWState state;
-    uint64_t panId;
-    uint64_t extPanId;
-
-    char*   remoteAttributeValueRead;
-    uint8_t remoteAtrributeValueReadLength;
-} TWStatus;
-
-typedef enum
-{
-    TW_RESULT_OK = 0,
-
-    TW_RESULT_NO_LOCAL_PAN,
-    TW_RESULT_HAS_LOCAL_PAN,
-    TW_RESULT_NEW_LOCAL_PAN_ESTABLISHED,
-    TW_RESULT_DEVICE_JOINED,
-    TW_RESULT_FOUND_NO_MATCHED_DEVICE,
-    TW_RESULT_FOUND_MATCHED_DEVICES,
-    TW_RESULT_HAS_CLUSTERS,
-    TW_RESULT_HAS_NO_CLUSTER,
-    TW_RESULT_REMOTE_ATTR_HAS_VALUE,
-
-    TW_RESULT_UNKNOWN,
-
-    TW_RESULT_ERROR_INVALID_PARAMS,
-    TW_RESULT_ERROR_INVALID_PORT,
-    TW_RESULT_ERROR_NO_MEMORY,
-    TW_RESULT_ERROR_NOTIMPL,
-
-    TW_RESULT_ERROR = 255
-
-} TWResultCode;
-
-typedef enum
-{
-    AT_ERROR_EVERYTHING_OK  = 0,
-    AT_ERROR_NODE_IS_PART_OF_PAN = 28,
-    AT_ERROR_MESSAGE_NOT_SENT_TO_TARGET_SUCCESSFULLY   = 66,
-    AT_ERROR_INVALID_OPERATION  = 70,
-
-} TWATErrorCode;
-
-typedef enum
-{
-    TW_ENDCONTROL_OK = 0,
-    TW_ENDCONTROL_ERROR,
-    TW_ENDCONTROL_ACK,
-    TW_ENDCONTROL_SEQ,
-    TW_ENDCONTROL_MAX_VALUE
-
-} TWEndControl;
-
-typedef struct
-{
-    const char * endStr;
-    TWEndControl endControl;
-
-} TWEndControlMap;
-
-typedef TWResultCode (*TWATResultHandler)(int count, char** tokens);
-
-typedef struct
-{
-    const char *resultTxt;
-    TWATResultHandler handler;
-
-} TWATResultHandlerPair;
 
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
@@ -1488,7 +1373,7 @@ TWResultCode HandleATResponse(char* responseArray[], int count)
                         ) == 0)
             {
                 char* tokens[ARRAY_LENGTH] = {};
-                const char* delimiters = ",\r";
+                const char* delimiters = ",\r\n";
                 int paramCount = Tokenize(responseArray[i] +
                                            strlen(g_TWATResultHandlerPairArray[k].resultTxt),
                                            delimiters, tokens);
@@ -1567,7 +1452,7 @@ TWResultCode TelNetworkInfoHandler(int count, char* tokens[])
     {
         if (tokens[i] != NULL)
         {
-            printf ("Token[%d] = %s", i, tokens[i]);
+            OC_LOG_V(INFO, TAG, "Token[%d] = %s", i, tokens[i]);
         }
     }
 
