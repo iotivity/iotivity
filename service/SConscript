@@ -44,6 +44,12 @@ if target_os not in ['arduino','darwin']:
     if target_os in ['linux'] and env.get('SIMULATOR', False):
         SConscript('simulator/SConscript')
 
+    # Build resource directory project
+    if env.get('WITH_RD') == '1':
+        SConscript('resource-directory/SConscript')
+
 # Build EasySetup module
 if target_os in ['arduino','android', 'linux']:
     SConscript('easy-setup/SConscript')
+
+	

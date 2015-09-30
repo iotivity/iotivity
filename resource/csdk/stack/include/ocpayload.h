@@ -142,9 +142,12 @@ OCPresencePayload* OCPresencePayloadCreate(uint32_t seqNum, uint32_t maxAge,
         OCPresenceTrigger trigger, const char* resourceType);
 void OCPresencePayloadDestroy(OCPresencePayload* payload);
 
+// Helper API
+OCStringLL* CloneOCStringLL (OCStringLL* ll);
+void OCFreeOCStringLL(OCStringLL* ll);
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-
