@@ -26,7 +26,6 @@ Import('env')
 
 SConscript('src/common/SConscript')
 SConscript('src/serverBuilder/SConscript')
-SConscript('src/resourceContainer/SConscript')
 
 ######################################################################
 #building Resource client, resourceBroker and resourceCache
@@ -90,7 +89,7 @@ client_src = [
         RESOURCECLIENT_DIR + 'RCSDiscoveryManager.cpp',
         RESOURCECLIENT_DIR + 'RCSDiscoveryManagerImpl.cpp',
         RESOURCECLIENT_DIR + 'RCSRemoteResourceObject.cpp'
-		]
+        ]
 ResourceClientsdk_static = resourceClient_env.StaticLibrary('rcs_client', client_src)
 ResourceClientsdk_shared = resourceClient_env.SharedLibrary('rcs_client', client_src)
 
@@ -101,10 +100,8 @@ resourceClient_env.UserInstallTargetHeader('include/RCSDiscoveryManager.h', 'ser
 resourceClient_env.UserInstallTargetHeader('include/RCSRemoteResourceObject.h', 'service/resource-encapsulation', 'RCSRemoteResourceObject.h')
 resourceClient_env.UserInstallTargetHeader('include/RCSResourceAttributes.h', 'service/resource-encapsulation', 'RCSResourceAttributes.h')
 resourceClient_env.UserInstallTargetHeader('include/RCSResourceObject.h', 'service/resource-encapsulation', 'RCSResourceObject.h')
-resourceClient_env.UserInstallTargetHeader('include/RCSBundleInfo.h', 'service/resource-encapsulation', 'RCSBundleInfo.h')
 resourceClient_env.UserInstallTargetHeader('include/RCSException.h', 'service/resource-encapsulation', 'RCSException.h')
 resourceClient_env.UserInstallTargetHeader('include/RCSRequest.h', 'service/resource-encapsulation', 'RCSRequest.h')
-resourceClient_env.UserInstallTargetHeader('include/RCSResourceContainer.h', 'service/resource-encapsulation', 'RCSResourceContainer.h')
 resourceClient_env.UserInstallTargetHeader('include/RCSResponse.h', 'service/resource-encapsulation', 'RCSResponse.h')
 
 ######################################################################
@@ -122,4 +119,4 @@ if target_os == 'linux':
     SConscript('src/resourceBroker/unittest/SConscript')
 
 if target_os == 'android':
-	SConscript('android/SConscript')
+    SConscript('android/SConscript')

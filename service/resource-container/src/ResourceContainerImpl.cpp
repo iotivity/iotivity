@@ -486,7 +486,7 @@ namespace OIC
                 bundleInfo->setActivatorName(activator);
                 if (params.find("libraryPath") != params.end())
                 {
-                    string activatorName = params["activator"]; // modify activator for Java bundle
+                    string activatorName = activator; // modify activator for Java bundle
                     std::replace(activatorName.begin(), activatorName.end(), '.', '/');
                     ((BundleInfoInternal *) bundleInfo)->setActivatorName(activatorName);
                     ((BundleInfoInternal *)bundleInfo)->setLibraryPath(params[BUNDLE_LIBRARY_PATH]);
