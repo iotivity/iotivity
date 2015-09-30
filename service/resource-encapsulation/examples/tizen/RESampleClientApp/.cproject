@@ -236,6 +236,9 @@
 									<listOptionValue builtIn="false" value="oc_logger_core"/>
 									<listOptionValue builtIn="false" value="connectivity_abstraction"/>
 									<listOptionValue builtIn="false" value="uuid"/>
+									<listOptionValue builtIn="false" value="boost_date_time"/>
+									<listOptionValue builtIn="false" value="boost_system"/>
+									<listOptionValue builtIn="false" value="boost_thread"/>
 									<listOptionValue builtIn="false" value="rcs_client"/>
 									<listOptionValue builtIn="false" value="rcs_common"/>
 									<listOptionValue builtIn="false" value="rcs_container"/>

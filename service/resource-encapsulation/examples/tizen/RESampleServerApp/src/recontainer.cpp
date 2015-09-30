@@ -322,7 +322,8 @@ static void addHueBundle(void *data, Evas_Object *obj, void *event_info)
     {
         std::map<string, string> bundleParams;
         container->addBundle("oic.bundle.hueSample", "",
-                             "/opt/usr/apps/org.tizen.resampleserver/lib/libHueBundle.so", bundleParams);
+                             "/opt/usr/apps/org.tizen.resampleserver/lib/libHueBundle.so",
+                             "hueSample", bundleParams);
         logMessage += "HUE Bundle added <br>";
     }
     else
@@ -348,7 +349,8 @@ static void addBMIBundle(void *data, Evas_Object *obj, void *event_info)
     {
         std::map<string, string> bundleParams;
         container->addBundle("oic.bundle.BMISensor", "",
-                             "/opt/usr/apps/org.tizen.resampleserver/lib/libBMISensorBundle.so", bundleParams);
+                             "/opt/usr/apps/org.tizen.resampleserver/lib/libBMISensorBundle.so",
+                             "BMISensor", bundleParams);
         logMessage += "BMI Bundle added <br>";
     }
     else

@@ -33,10 +33,14 @@ typedef int ReturnValue;
 
 constexpr int DEFALUT_VALUE = 0;
 
+constexpr int PRESENCE_ON = 1;
+constexpr int PRESENCE_OFF = 2;
+
 std::string resourceUri = "/a/TempSensor";
-std::string resourceType = "core.TemperatureSensor";
+std::string resourceType = "oic.r.temperaturesensor";
 std::string resourceInterface = "oic.if.";
 std::string attributeKey = "Temperature";
+int isPresenceOn = PRESENCE_ON;
 
 enum class Control
 {
