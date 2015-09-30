@@ -25,13 +25,13 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion 21
     buildToolsVersion "20.0.0"
-    archivesBaseName = "iotivity"
+    archivesBaseName = "iotivity-base"
 
     libraryVariants.all { variant ->
         variant.outputs.each { output ->
             def outputFile = output.outputFile
             if (outputFile != null && outputFile.name.endsWith('.aar')) {
-                def fileName = "${archivesBaseName}-base-${TARGET_ARCH}-${RELEASE}.aar"
+                def fileName = "${archivesBaseName}-${TARGET_ARCH}-${RELEASE}.aar"
                 output.outputFile = new File(outputFile.parent, fileName)
             }
         }
@@ -80,14 +80,7 @@ task copyNativeLibs(type: Copy, dependsOn: 'buildNative') {
     into new File(buildDir, 'native-libs')
 }
 
-task copyToJniLibs(type: Copy, dependsOn: 'buildNative') {
-    dependsOn 'buildNative'
-    from(new File('obj/local')) { include '**/*.so' }
-    into new File(buildDir, 'jniLibs')
-}
-
 tasks.withType(JavaCompile) { compileTask -> compileTask.dependsOn copyNativeLibs }
-tasks.withType(JavaCompile) { compileTask -> compileTask.dependsOn copyToJniLibs }
 
 clean.dependsOn 'cleanCopyNativeLibs'
 
