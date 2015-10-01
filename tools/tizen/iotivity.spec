@@ -122,7 +122,10 @@ cp out/tizen/*/%{build_mode}/resource/examples/simpleclientserver %{buildroot}%{
 cp out/tizen/*/%{build_mode}/resource/examples/simpleserver %{buildroot}%{_bindir}
 cp out/tizen/*/%{build_mode}/resource/examples/simpleserverHQ %{buildroot}%{_bindir}
 cp out/tizen/*/%{build_mode}/resource/examples/threadingsample %{buildroot}%{_bindir}
-
+if echo %{secure_mode}|grep -qi '1'; then
+	cp out/tizen/*/%{build_mode}/libocpmapi.a %{buildroot}%{_libdir}
+fi
+cp out/tizen/*/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
 cp out/tizen/*/%{build_mode}/lib*.so %{buildroot}%{_libdir}
 
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
@@ -145,6 +148,7 @@ cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 %{_libdir}/liboc_logger_core.so
 %{_libdir}/liboctbstack.so
 %{_libdir}/libconnectivity_abstraction.so
+%{_libdir}/lib*.a
 
 %files service
 %manifest %{name}.manifest
