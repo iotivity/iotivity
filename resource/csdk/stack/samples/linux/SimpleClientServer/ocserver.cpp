@@ -50,8 +50,12 @@ static LightResource gLightInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 
 Observers interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
 
+pthread_t threadId_observe;
+pthread_t threadId_presence;
+
+static bool observeThreadStarted = false;
+
 #ifdef WITH_PRESENCE
-static int stopPresenceCount = 10;
 #define numPresenceResources (2)
 #endif
 
@@ -378,6 +382,12 @@ void ProcessObserveRegister (OCEntityHandlerRequest *ehRequest)
 {
     OC_LOG_V (INFO, TAG, "Received observation registration request with observation Id %d",
             ehRequest->obsInfo.obsId);
+
+    if (!observeThreadStarted)
+    {
+        pthread_create (&threadId_observe, NULL, ChangeLightRepresentation, (void *)NULL);
+        observeThreadStarted = 1;
+    }
     for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
     {
         if (interestedObservers[i].valid == false)
@@ -696,17 +706,6 @@ void *ChangeLightRepresentation (void *param)
                 OC_LOG (ERROR, TAG, "Incorrect notification type selected");
             }
         }
-#ifdef WITH_PRESENCE
-        if(stopPresenceCount > 0)
-        {
-            OC_LOG_V(INFO, TAG, "================  Counting down to stop presence %d", stopPresenceCount);
-        }
-        if(!stopPresenceCount--)
-        {
-            OC_LOG(INFO, TAG, "================ stopping presence");
-            OCStopPresence();
-        }
-#endif
     }
     return NULL;
 }
@@ -714,7 +713,9 @@ void *ChangeLightRepresentation (void *param)
 #ifdef WITH_PRESENCE
 void *presenceNotificationGenerator(void *param)
 {
-    sleep(10);
+    uint8_t secondsBeforePresence = 10;
+    OC_LOG_V(INFO, TAG, "Will send out presence in %u seconds", secondsBeforePresence);
+    sleep(secondsBeforePresence);
     (void)param;
     OCDoHandle presenceNotificationHandles[numPresenceResources];
     OCStackResult res = OC_STACK_OK;
@@ -765,6 +766,10 @@ void *presenceNotificationGenerator(void *param)
         OC_LOG_V(INFO, TAG, PCF("Deleted %s for presence notification"),
                                 presenceNotificationUris[i].c_str());
     }
+
+    OC_LOG(INFO, TAG, "================ stopping presence");
+    OCStopPresence();
+
     return NULL;
 }
 #endif
@@ -930,8 +935,6 @@ static void PrintUsage()
 
 int main(int argc, char* argv[])
 {
-    pthread_t threadId;
-    pthread_t threadId_presence;
     int opt;
 
     while ((opt = getopt(argc, argv, "o:")) != -1)
@@ -1028,10 +1031,6 @@ int main(int argc, char* argv[])
         interestedObservers[i].valid = false;
     }
 
-    /*
-     * Create a thread for changing the representation of the Light
-     */
-    pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)NULL);
 
     /*
      * Create a thread for generating changes that cause presence notifications
@@ -1057,16 +1056,14 @@ int main(int argc, char* argv[])
             OC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
-#ifndef ROUTING_GATEWAY
-        sleep(2);
-#endif
     }
 
-    /*
-     * Cancel the Light thread and wait for it to terminate
-     */
-    pthread_cancel(threadId);
-    pthread_join(threadId, NULL);
+    if (observeThreadStarted)
+    {
+        pthread_cancel(threadId_observe);
+        pthread_join(threadId_observe, NULL);
+    }
+
     pthread_cancel(threadId_presence);
     pthread_join(threadId_presence, NULL);
 
