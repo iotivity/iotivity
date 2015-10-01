@@ -397,7 +397,7 @@ public class ResourceManager {
         // TODO: For debugging
         if (null != attributeMap) {
             RemoteResourceAttribute.printAttributes(attributeMap);
-            System.out.println("Attributes found: " + (null != attributeMap));
+            System.out.println("Attributes found: ");
             System.out.println("No of attributes: " + attributeMap.size());
 
             resource.setResourceAttributesMap(attributeMap);
@@ -581,7 +581,7 @@ public class ResourceManager {
     }
 
     public boolean isResourceObserved(String resourceURI) {
-        boolean observed = false;
+        boolean observed;
         synchronized (observedResourceURIList) {
             observed = observedResourceURIList.contains(resourceURI);
         }

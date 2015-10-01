@@ -302,8 +302,8 @@ int SimulatorRemoteResourceImpl::startVerification(RequestType type,
             if (m_getRequestSender)
             {
                 return m_autoRequestGenMngr->startOnGET(m_getRequestSender,
-                                    m_requestModelList[RequestType::RQ_TYPE_GET]->getQueryParams(),
-                                    localCallback);
+                                                        m_requestModelList[RequestType::RQ_TYPE_GET]->getQueryParams(),
+                                                        localCallback);
             }
             break;
 
@@ -311,9 +311,9 @@ int SimulatorRemoteResourceImpl::startVerification(RequestType type,
             if (m_putRequestSender)
             {
                 return m_autoRequestGenMngr->startOnPUT(m_putRequestSender,
-                                    m_requestModelList[RequestType::RQ_TYPE_PUT]->getQueryParams(),
-                                    m_requestModelList[RequestType::RQ_TYPE_PUT]->getRepSchema(),
-                                    localCallback);
+                                                        m_requestModelList[RequestType::RQ_TYPE_PUT]->getQueryParams(),
+                                                        m_requestModelList[RequestType::RQ_TYPE_PUT]->getRepSchema(),
+                                                        localCallback);
             }
             break;
 
@@ -321,9 +321,9 @@ int SimulatorRemoteResourceImpl::startVerification(RequestType type,
             if (m_postRequestSender)
             {
                 return m_autoRequestGenMngr->startOnPOST(m_putRequestSender,
-                                    m_requestModelList[RequestType::RQ_TYPE_POST]->getQueryParams(),
-                                    m_requestModelList[RequestType::RQ_TYPE_POST]->getRepSchema(),
-                                    localCallback);
+                        m_requestModelList[RequestType::RQ_TYPE_POST]->getQueryParams(),
+                        m_requestModelList[RequestType::RQ_TYPE_POST]->getRepSchema(),
+                        localCallback);
             }
             break;
 
@@ -360,7 +360,7 @@ void SimulatorRemoteResourceImpl::configure(const std::string &path)
         throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Empty path string!");
     }
 
-    RAML::RamlParser *ramlParser = new RAML::RamlParser(path);
+    std::shared_ptr<RAML::RamlParser> ramlParser = std::make_shared<RAML::RamlParser>(path);
     RAML::RamlPtr raml = ramlParser->getRamlPtr();
 
     configure(raml);

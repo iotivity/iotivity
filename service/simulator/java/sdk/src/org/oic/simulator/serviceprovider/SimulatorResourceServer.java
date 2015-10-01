@@ -477,7 +477,6 @@ public class SimulatorResourceServer {
         } catch(Throwable t){
             throw t;
         } finally{
-            System.out.println("Calling finalize of Super Class");
             super.finalize();
         }
     }
