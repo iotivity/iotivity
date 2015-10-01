@@ -30,7 +30,6 @@ public class RcsObject {
         System.loadLibrary("rcs_client");
         System.loadLibrary("rcs_server");
         System.loadLibrary("rcs_common");
-        System.loadLibrary("rcs_container");
         System.loadLibrary("rcs_jni");
     }
 
