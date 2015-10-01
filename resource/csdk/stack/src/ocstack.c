@@ -116,10 +116,8 @@ static bool gRASetInfo = false;
 #endif
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
-
-#ifdef TCP_ADAPTER
 static const char COAP_TCP[] = "coap+tcp:";
-#endif
+
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -1880,17 +1878,6 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
         caglobals.clientFlags = (CATransportFlags_t)(caglobals.clientFlags|CA_IPV4|CA_IPV6);
     }
 
-#ifdef TCP_ADAPTER
-    if (!(caglobals.serverFlags & CA_IPFAMILY_MASK))
-    {
-        caglobals.serverFlags = (CATransportFlags_t)(caglobals.serverFlags|CA_IPV4);
-    }
-    if (!(caglobals.clientFlags & CA_IPFAMILY_MASK))
-    {
-        caglobals.clientFlags = (CATransportFlags_t)(caglobals.clientFlags|CA_IPV4);
-    }
-#endif
-
     defaultDeviceHandler = NULL;
     defaultDeviceHandlerCallbackParameter = NULL;
     OCSeedRandom();
@@ -2133,7 +2120,6 @@ static OCStackResult ParseRequestUri(const char *fullUri,
         return OC_STACK_INVALID_URI;
     }
 
-#ifdef TCP_ADAPTER
     // process url scheme
     size_t prefixLen = slash2 - fullUri;
     bool istcp = false;
@@ -2144,7 +2130,6 @@ static OCStackResult ParseRequestUri(const char *fullUri,
             istcp = true;
         }
     }
-#endif
 
     // TODO: this logic should come in with unit tests exercising the various strings
     // processs url prefix, if any
@@ -2176,13 +2161,12 @@ static OCStackResult ParseRequestUri(const char *fullUri,
             {   // ipv4 address
                 colon = strchr(start, ':');
                 end = (colon && colon < slash) ? colon : slash;
-#ifdef TCP_ADAPTER
+
                 if (istcp)
                 {   // coap over tcp
                     adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_TCP);
                 }
                 else
-#endif
                 {
                     adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
                     flags = (OCTransportFlags)(flags | OC_IP_USE_V4);
