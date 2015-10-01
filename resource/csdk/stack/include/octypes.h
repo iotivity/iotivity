@@ -336,11 +336,8 @@ typedef enum
     /**Remote Access over XMPP.*/
     OC_ADAPTER_REMOTE_ACCESS = (1 << 3),
 #endif
-
-#ifdef TCP_ADAPTER
     /** CoAP over TCP.*/
     OC_ADAPTER_TCP           = (1 << 4)
-#endif
 
 } OCTransportAdapter;
 
@@ -462,11 +459,8 @@ typedef enum
     /** Remote Access over XMPP.*/
     CT_ADAPTER_REMOTE_ACCESS = (1 << 19),
 #endif
-
-#ifdef TCP_ADAPTER
     /** CoAP over TCP.*/
     CT_ADAPTER_TCP          = (1 << 20),
-#endif
 
     /** Insecure transport is the default (subject to change).*/
 
