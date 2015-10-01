@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef RESERVERMAIN_H__
-#define RESERVERMAIN_H__
+#ifndef RCMAIN_H__
+#define RCMAIN_H__
 
 #include <app.h>
 #include <Elementary.h>
@@ -35,16 +35,14 @@ using namespace OC;
 #ifdef  LOG_TAG
 #undef  LOG_TAG
 #endif
-#define LOG_TAG "reservermain"
+#define LOG_TAG "containerserver"
 
 #if !defined(PACKAGE)
-#define PACKAGE "org.tizen.resampleserver"
+#define PACKAGE "org.tizen.containerserver"
 #endif
 
-#define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.resampleserver/res/ui_controls.edj"
+#define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.containerserver/res/ui_controls.edj"
 
-void start_server(void *data, Evas_Object *obj, void *event_info);
+void containerCreateUI(void *data, Evas_Object *obj, void *event_info);
 
-void start_server_cb(void *data, Evas_Object *obj, void *event_info);
-
-#endif // RESERVERMAIN_H__
+#endif // RCMAIN_H__

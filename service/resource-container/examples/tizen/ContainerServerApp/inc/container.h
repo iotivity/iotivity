@@ -18,12 +18,10 @@
  *
  ******************************************************************/
 
-#include "remain.h"
+#include "rcmain.h"
 
-#ifndef RECONTAINER_H__
-#define RECONTAINER_H__
-
-# define LOG_TAG "recontainer"
+#ifndef CONTAINER_H__
+#define CONTAINER_H__
 
 using namespace std;
 
@@ -35,4 +33,4 @@ static void startContainer(void *data, Evas_Object *obj, void *event_info);
 
 static void stopContainer(void *data, Evas_Object *obj, void *event_info);
 
-#endif // RECONTAINER_H__
+#endif // CONTAINER_H__

@@ -239,12 +239,8 @@
                                     <listOptionValue builtIn="false" value="boost_date_time"/>
                                     <listOptionValue builtIn="false" value="boost_system"/>
                                     <listOptionValue builtIn="false" value="boost_thread"/>
-                                    <listOptionValue builtIn="false" value="HueBundle"/>
-                                    <listOptionValue builtIn="false" value="BMISensorBundle"/>
-                                    <listOptionValue builtIn="false" value="DISensorBundle"/>
                                     <listOptionValue builtIn="false" value="rcs_client"/>
                                     <listOptionValue builtIn="false" value="rcs_common"/>
-                                    <listOptionValue builtIn="false" value="rcs_container"/>
                                     <listOptionValue builtIn="false" value="rcs_server"/>
                                 </option>
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.618645708" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">

@@ -18,7 +18,7 @@
  *
  ******************************************************************/
 
-#include "remain.h"
+#include "rcmain.h"
 #include <tizen.h>
 
 typedef struct appdata
@@ -66,7 +66,7 @@ create_list_view(appdata_s *ad)
     evas_object_smart_callback_add(list, "selected", list_selected_cb, NULL);
 
     // Main Menu Items Here
-    elm_list_item_append(list, "Start Temperature Sensor", NULL, NULL, serverCreateUI, nf);
+    elm_list_item_append(list, "Resource Container", NULL, NULL, containerCreateUI, nf);
 
     elm_list_go(list);
 

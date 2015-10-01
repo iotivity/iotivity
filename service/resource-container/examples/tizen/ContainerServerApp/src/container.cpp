@@ -18,10 +18,9 @@
  *
  ******************************************************************/
 
-#include "recontainer.h"
+#include "container.h"
 
-#include "remain.h"
-#include "PrimitiveResource.h"
+#include "rcmain.h"
 #include "RCSResourceContainer.h"
 
 #include <string>
@@ -166,12 +165,12 @@ static void addHueResourceConfig(void *data, Evas_Object *obj, void *event_info)
     if (checkContainer)
     {
         std::map<string, string> resourceParams;
-        resourceParams["resourceType"] = "oic.light.control";
+        resourceParams["resourceType"] = "oic.r.light";
         resourceParams["address"] = "http://192.168.0.2/api/newdeveloper/lights/1";
         if (s_hueBundleFlag)
         {
             container->addResourceConfig("oic.bundle.hueSample", "", resourceParams);
-            logMessage += "Resource added<br>";
+            logMessage += "1 Light Resource added<br>";
             listHueResources(NULL, NULL, NULL);
         }
         else
@@ -322,8 +321,8 @@ static void addHueBundle(void *data, Evas_Object *obj, void *event_info)
     {
         std::map<string, string> bundleParams;
         container->addBundle("oic.bundle.hueSample", "",
-                             "/opt/usr/apps/org.tizen.resampleserver/lib/libHueBundle.so",
-                             "hueSample", bundleParams);
+                             "/opt/usr/apps/org.tizen.containerserver/lib/libHueBundle.so",
+                             "huesample", bundleParams);
         logMessage += "HUE Bundle added <br>";
     }
     else
@@ -349,8 +348,8 @@ static void addBMIBundle(void *data, Evas_Object *obj, void *event_info)
     {
         std::map<string, string> bundleParams;
         container->addBundle("oic.bundle.BMISensor", "",
-                             "/opt/usr/apps/org.tizen.resampleserver/lib/libBMISensorBundle.so",
-                             "BMISensor", bundleParams);
+                             "/opt/usr/apps/org.tizen.containerserver/lib/libBMISensorBundle.so",
+                             "bmisensor", bundleParams);
         logMessage += "BMI Bundle added <br>";
     }
     else
@@ -422,7 +421,7 @@ static void startHueBundle(void *data, Evas_Object *obj, void *event_info)
     if (checkContainer)
     {
         container->startBundle("oic.bundle.hueSample");
-        logMessage += "BMI Bundle started <br>";
+        logMessage += "HUE Bundle started <br>";
         s_hueBundleFlag = true;
     }
     else
@@ -523,31 +522,22 @@ void *showContainerAPIs(void *data)
         elm_list_item_append(listnew, "2. List Hue resources", NULL, NULL,
                              listHueResources, NULL);
 
-        elm_list_item_append(listnew, "3. Add HUE Resource Config", NULL, NULL,
+        elm_list_item_append(listnew, "3. Add HUE Bundle Resource", NULL, NULL,
                              addHueResourceConfig, NULL);
 
-        elm_list_item_append(listnew, "4. Remove HUE Resource Config", NULL, NULL,
+        elm_list_item_append(listnew, "4. Remove HUE Bundle Resource", NULL, NULL,
                              removeHueResourceConfig, NULL);
 
-        elm_list_item_append(listnew, "5. List BMI resources", NULL, NULL,
-                             listBMIResources, NULL);
-
-        elm_list_item_append(listnew, "6. Add BMI Bundle", NULL, NULL,
+        elm_list_item_append(listnew, "5. Add BMI Bundle", NULL, NULL,
                              addBMIBundle, NULL);
 
-        elm_list_item_append(listnew, "7. Start BMI Bundle", NULL, NULL,
+        elm_list_item_append(listnew, "6. Start BMI Bundle", NULL, NULL,
                              startBMIBundle, NULL);
 
-        elm_list_item_append(listnew, "8. Add BMI Resource Config", NULL, NULL,
-                             addBMIResourceConfig, NULL);
-
-        elm_list_item_append(listnew, "9. Remove BMI Resource Config", NULL, NULL,
-                             removeBMIResourceConfig, NULL);
-
-        elm_list_item_append(listnew, "10. Remove BMI Bundle", NULL, NULL,
+        elm_list_item_append(listnew, "7. Remove BMI Bundle", NULL, NULL,
                              removeBMIBundle, NULL);
 
-        elm_list_item_append(listnew, "11. Stop BMI Bundle", NULL, NULL,
+        elm_list_item_append(listnew, "8. Stop BMI Bundle", NULL, NULL,
                              stopBMIBundle, NULL);
 
         elm_list_go(listnew);
@@ -559,7 +549,7 @@ void *showContainerAPIs(void *data)
 static void startContainer(void *data, Evas_Object *obj, void *event_info)
 {
     std::string xmlDescription =
-        "/opt/usr/apps/org.tizen.resampleserver/lib/ResourceContainerConfig.xml";
+        "/opt/usr/apps/org.tizen.containerserver/lib/ResourceContainerConfig.xml";
     string logMessage = "";
 
     if (NULL != listnew)
@@ -573,8 +563,7 @@ static void startContainer(void *data, Evas_Object *obj, void *event_info)
             s_containerFlag = true;
             s_hueBundleFlag = true;
             logMessage += "CONTAINER STARTED<br>";
-            logMessage += "HUE BUNDLE ADDED<br>";
-            logMessage += "HUE BUNDLE STARTED<br>";
+            logMessage += "ADD AND START BUNDLES<br>";
         }
         else
         {
@@ -642,6 +631,7 @@ naviframe_pop_cb(void *data, Elm_Object_Item *it)
 // Method to set up server screens
 void containerCreateUI(void *data, Evas_Object *obj, void *event_info)
 {
+	dlog_print(DLOG_INFO, LOG_TAG, "#### container UI");
     s_containerFlag = false;
     s_hueBundleFlag = false;
     Evas_Object *layout;
@@ -656,6 +646,7 @@ void containerCreateUI(void *data, Evas_Object *obj, void *event_info)
     scroller = elm_scroller_add(nf);
     elm_scroller_bounce_set(scroller, EINA_FALSE, EINA_TRUE);
     elm_scroller_policy_set(scroller, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_AUTO);
+    dlog_print(DLOG_INFO, LOG_TAG, "#### container UI 1");
 
     // Layout
     layout = elm_layout_add(nf);
@@ -663,18 +654,21 @@ void containerCreateUI(void *data, Evas_Object *obj, void *event_info)
     evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 
     elm_object_content_set(scroller, layout);
+    dlog_print(DLOG_INFO, LOG_TAG, "#### container UI 2");
 
     // Button
     start_button = elm_button_add(layout);
     elm_object_part_content_set(layout, "start_button", start_button);
     elm_object_text_set(start_button, "Start Container");
     evas_object_smart_callback_add(start_button, "clicked", startContainer, NULL);
+    dlog_print(DLOG_INFO, LOG_TAG, "#### container UI 3");
 
     // Button
     stop_button = elm_button_add(layout);
     elm_object_part_content_set(layout, "stop_button", stop_button);
     elm_object_text_set(stop_button, "Stop Container");
     evas_object_smart_callback_add(stop_button, "clicked", stopContainer, NULL);
+    dlog_print(DLOG_INFO, LOG_TAG, "#### container UI 4");
 
     // List
     listnew = elm_list_add(layout);
@@ -682,6 +676,7 @@ void containerCreateUI(void *data, Evas_Object *obj, void *event_info)
     evas_object_smart_callback_add(listnew, "selected", list_selected_cb, NULL);
     elm_object_part_content_set(layout, "listnew", listnew);
     elm_list_go(listnew);
+    dlog_print(DLOG_INFO, LOG_TAG, "#### container UI 5");
 
     // log_entry - text area for log
     log_entry = elm_entry_add(layout);
@@ -694,4 +689,5 @@ void containerCreateUI(void *data, Evas_Object *obj, void *event_info)
 
     nf_it = elm_naviframe_item_push(nf, "Resource Container", NULL, NULL, scroller, NULL);
     elm_naviframe_item_pop_cb_set(nf_it, naviframe_pop_cb, NULL);
+    dlog_print(DLOG_INFO, LOG_TAG, "#### container UI 6");
 }
