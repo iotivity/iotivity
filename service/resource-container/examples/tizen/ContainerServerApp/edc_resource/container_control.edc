@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
-
+ 
 group
 {
     name: "container_layout";
@@ -78,67 +78,6 @@ group
             {
                 rel1.to: "log_bg";
                 rel2.to: "log_bg";
-            }
-        }
-    }
-}
-
-group
-{
-    name: "popup_datetime_text";
-    parts
-    {
-        part
-        {
-            name: "pad_l";
-            type: SPACER;
-            scale: 1;
-            description
-            {
-                state: "default" 0.0;
-                min: POPUP_CONTENT_DEFAULT_PADDING_LEFT_MIN_INC 0;
-                fixed: 1 0;
-                rel1.relative: 0.0 0.0;
-                rel2.relative: 0.0 1.0;
-                align: 0.0 0.0;
-            }
-        }
-        part
-        {
-            name: "pad_r";
-            type: SPACER;
-            scale: 1;
-            description
-            {
-                state: "default" 0.0;
-                min: POPUP_CONTENT_DEFAULT_PADDING_LEFT_MIN_INC 0;
-                fixed: 1 0;
-                rel1.relative: 1.0 0.0;
-                rel2.relative: 1.0 1.0;
-                align: 1.0 0.0;
-            }
-        }
-        part
-        {
-            name: "elm.swallow.content";
-            type: SWALLOW;
-            scale: 1;
-            description
-            {
-                state: "default" 0.0;
-                min: 0 POPUP_EDITFIELD_LAYOUT_MINMAX_HEIGHT_INC;
-                max: -1 POPUP_EDITFIELD_LAYOUT_MINMAX_HEIGHT_INC;
-                align: 0.5 0.5;
-                rel1
-                {
-                    relative: 1.0 0.0;
-                    to_x: "pad_l";
-                }
-                rel2
-                {
-                    relative: 0.0 1.0;
-                    to_x: "pad_r";
-                }
             }
         }
     }

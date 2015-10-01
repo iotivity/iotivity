@@ -18,31 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef REMAIN_H__
-#define REMAIN_H__
-
-#include <app.h>
-#include <Elementary.h>
-#include <system_settings.h>
-#include <efl_extension.h>
-#include <dlog.h>
-
-#include "OCPlatform.h"
-#include "OCApi.h"
-
-using namespace OC;
-
-#ifdef  LOG_TAG
-#undef  LOG_TAG
-#endif
-#define LOG_TAG "reservermain"
-
-#if !defined(PACKAGE)
-#define PACKAGE "org.tizen.resampleserver"
-#endif
-
-#define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.resampleserver/res/ui_controls.edj"
-
-void serverCreateUI(void *data, Evas_Object *obj, void *event_info);
-
-#endif // REMAIN_H__
+collections
+{
+    base_scale: 1.8;
+    #include "../edc_resource/container_control.edc"
+}
