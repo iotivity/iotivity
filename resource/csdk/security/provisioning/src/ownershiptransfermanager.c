@@ -43,6 +43,7 @@
 #include "cainterface.h"
 #include "base64.h"
 #include "cJSON.h"
+#include "global.h"
 
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
@@ -513,11 +514,23 @@ static OCStackApplicationResult OwnershipInformationHandler(void *ctx, OCDoHandl
 
         CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
         endpoint->port = otmCtx->selectedDeviceInfo->securePort;
-        CAResult_t closeRes = CACloseDtlsSession(endpoint);
-        if(CA_STATUS_OK != closeRes)
+        CAResult_t caResult = CACloseDtlsSession(endpoint);
+        if(CA_STATUS_OK != caResult)
         {
             OC_LOG(ERROR, TAG, "Failed to close DTLS session");
-            SetResult(otmCtx, closeRes);
+            SetResult(otmCtx, caResult);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+
+        /**
+         * If we select NULL cipher,
+         * client will select appropriate cipher suite according to server's cipher-suite list.
+         */
+        caResult = CASelectCipherSuite(TLS_NULL_WITH_NULL_NULL);
+        if(CA_STATUS_OK != caResult)
+        {
+            OC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
+            SetResult(otmCtx, caResult);
             return OC_STACK_DELETE_TRANSACTION;
         }
 

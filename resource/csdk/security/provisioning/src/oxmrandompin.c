@@ -122,6 +122,23 @@ OCStackResult CreateSecureSessionRandomPinCallbak(OTMContext_t* otmCtx)
         return OC_STACK_INVALID_PARAM;
     }
 
+    CAResult_t caresult = CAEnableAnonECDHCipherSuite(false);
+    if (CA_STATUS_OK != caresult)
+    {
+        OC_LOG_V(ERROR, TAG, "Unable to disable anon cipher suite");
+        return OC_STACK_ERROR;
+    }
+    OC_LOG(INFO, TAG, "Anonymous cipher suite disabled.");
+
+    caresult  = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256);
+    if (CA_STATUS_OK != caresult)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256");
+        return OC_STACK_ERROR;
+    }
+    OC_LOG(INFO, TAG, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
+
+
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
     CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
     if(NULL == endpoint)
@@ -130,7 +147,7 @@ OCStackResult CreateSecureSessionRandomPinCallbak(OTMContext_t* otmCtx)
     }
     memcpy(endpoint,&selDevInfo->endpoint,sizeof(CAEndpoint_t));
     endpoint->port = selDevInfo->securePort;
-    CAResult_t caresult = CAInitiateHandshake(endpoint);
+    caresult = CAInitiateHandshake(endpoint);
     OICFree(endpoint);
     if (CA_STATUS_OK != caresult)
     {
