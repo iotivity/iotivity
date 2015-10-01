@@ -218,6 +218,7 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
     CAConnectivityHandler_t TCPHandler = {
         .startAdapter = CAStartTCP,
         .startListenServer = CAStartTCPListeningServer,
+        .stopListenServer = CAStopTCPListeningServer,
         .startDiscoveryServer = CAStartTCPDiscoveryServer,
         .sendData = CASendTCPUnicastData,
         .sendDataToAll = CASendTCPMulticastData,
@@ -261,6 +262,14 @@ CAResult_t CAStartTCP()
 }
 
 CAResult_t CAStartTCPListeningServer()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAStopTCPListeningServer()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 

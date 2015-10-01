@@ -65,6 +65,8 @@ cp resource/csdk/stack/include/ocpresence.h %{DEST_INC_DIR}
 cp resource/csdk/stack/include/ocpayload.h %{DEST_INC_DIR}
 cp resource/c_common/platform_features.h %{DEST_INC_DIR}
 cp resource/csdk/stack/include/payload_logging.h %{DEST_INC_DIR}
+cp resource/csdk/stack/include/rdpayload.h %{DEST_INC_DIR}
+cp extlibs/tinycbor/tinycbor/src/cbor.h %{DEST_INC_DIR}
 cp extlibs/cjson/cJSON.h %{DEST_INC_DIR}
 cp -rf %{ROOTDIR}/com.oic.ri.pc %{DEST_LIB_DIR}/pkgconfig/
 

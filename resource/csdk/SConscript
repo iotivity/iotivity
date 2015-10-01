@@ -128,7 +128,8 @@ liboctbstack_src = [
 	OCTBSTACK_SRC + 'occollection.c',
 	OCTBSTACK_SRC + 'oicgroup.c',
 	'logger/src/logger.c',
-	'ocrandom/src/ocrandom.c'
+	'ocrandom/src/ocrandom.c',
+	OCTBSTACK_SRC + "rdpayload.c"
 	]
 
 liboctbstack_src.extend(env['cbor_files'])

@@ -69,6 +69,14 @@ CAResult_t CAStartIP();
 CAResult_t CAStartIPListeningServer();
 
 /**
+ * Stop listening server from receiving multicast search requests.
+ * Transport Specific Behavior:
+ * IP closes open multicast socket for a particular interface.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAStopIPListeningServer();
+
+/**
  * Start discovery servers for receiving multicast advertisements.
  * Transport Specific Behavior:
  * IP Starts multicast server on a particular interface and prefixed port

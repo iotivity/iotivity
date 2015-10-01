@@ -27,6 +27,7 @@
 #include "ocstackinternal.h"
 #include "ocresource.h"
 #include "logger.h"
+#include "rdpayload.h"
 
 #define TAG "OCPayload"
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val);
@@ -59,6 +60,9 @@ void OCPayloadDestroy(OCPayload* payload)
         case PAYLOAD_TYPE_SECURITY:
             OCSecurityPayloadDestroy((OCSecurityPayload*)payload);
             break;
+        case PAYLOAD_TYPE_RD:
+           OCRDPayloadDestroy((OCRDPayload*)payload);
+           break;
         default:
             OC_LOG_V(ERROR, TAG, "Unsupported payload type in destroy: %d", payload->type);
             OICFree(payload);
