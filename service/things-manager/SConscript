@@ -68,4 +68,9 @@ things_manager_env.UserInstallTargetLib([tgmsdk_static,tgmsdk_shared], 'libTGMSD
 #Go to build sample apps
 SConscript('sampleapp/SConscript')
 
+######################################################################
+# Build UnitTests Things Manager
+################################################ ######################
+if target_os == 'linux':
+    SConscript('unittests/SConscript')
 
