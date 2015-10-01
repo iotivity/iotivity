@@ -53,10 +53,18 @@ public class WiFiProvConfig implements ProvisioningConfig {
         return mConnType;
     }
 
+    /**
+     * This method returns the SSID of the Target WIFI network
+     * @return SSID of Target Network
+     */
     public String getSsId() {
         return mSsId;
     }
 
+    /**
+     * This method returns the password of the Target WIFI network
+     * @return password of Target Network
+     */
     public String getPassword() {
         return mPassword;
     }

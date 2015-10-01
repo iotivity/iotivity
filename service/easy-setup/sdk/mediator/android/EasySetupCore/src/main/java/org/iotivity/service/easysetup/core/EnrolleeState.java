@@ -36,6 +36,11 @@ public enum EnrolleeState {
     /**
      * Device will move to this state after successful on-boarding of the device
      */
+    DEVICE_ON_BOARDED_STATE,
+
+    /**
+     * Device will move to this state once the on boarding begins
+     */
     DEVICE_ON_BOARDING_STATE,
 
     /**
@@ -46,19 +51,20 @@ public enum EnrolleeState {
     /**
      * Easy setup process is successful.
      */
-    DEVICE_PROVISIONING_SUCCESS_STATE,
-
-    /**
-     * Device is not able to provisioned.
-     * Easy setup process failed to enrolled the device in the network
-     */
-    DEVICE_PROVISIONING_FAILED_STATE,
+    DEVICE_PROVISIONED_STATE,
 
     /**
      * This state is arbitrary one, any time device can come into this state
      * Device will move to this state if the ownership transfer initiated  by the Application
      */
-    DEVICE_OWNERSHIP_TRANSFER_STATE,
+    DEVICE_OWNERSHIP_TRANSFERRING_STATE,
+
+    /**
+     * This state is arbitrary one, any time device can come into this state
+     * Device will move to this state if the ownership transfer is completed
+     */
+    DEVICE_OWNERSHIP_TRANSFERRED_STATE,
+
 
     /**
      * This state is arbitrary one, any time device can come into this state

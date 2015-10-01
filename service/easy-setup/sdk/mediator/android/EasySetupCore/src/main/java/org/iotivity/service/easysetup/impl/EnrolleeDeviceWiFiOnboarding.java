@@ -135,8 +135,6 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
 
     @Override
     protected void startProvisioningProcess(OnBoardingConnection conn) {
-        mState = EnrolleeState.DEVICE_PROVISIONING_STATE;
-
         try {
             Log.i(TAG, "waiting for 15 seconds to start provisioning");
             Thread.sleep(15000);//Sleep for allowing thin device to start the services
@@ -144,7 +142,9 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
             e.printStackTrace();
         }
 
-
+        mState = EnrolleeState.DEVICE_PROVISIONING_STATE;
+        mProvisioningCallback.onProgress(this);
+        final EnrolleeDevice device = this;
         if (mProvConfig.getConnType() == ProvisioningConfig.ConnType.WiFi) {
 
             provisionEnrolleInstance = new ProvisionEnrollee(mContext);
@@ -154,9 +154,10 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
                 public void onFinishProvisioning(int statuscode) {
 
                     Log.i(TAG, "Provisioning is finished with status code " + statuscode);
-                    mState = (statuscode == 0) ? EnrolleeState.DEVICE_PROVISIONING_SUCCESS_STATE
-                            : EnrolleeState.DEVICE_PROVISIONING_FAILED_STATE;
+                    mState = (statuscode == 0) ? EnrolleeState.DEVICE_PROVISIONED_STATE
+                            : EnrolleeState.DEVICE_INIT_STATE;
                     stopOnBoardingProcess();
+                    mProvisioningCallback.onProgress(device);
                     mProvisioningCallback.onFinished(EnrolleeDeviceWiFiOnboarding.this);
                 }
             });

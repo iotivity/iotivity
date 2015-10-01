@@ -43,8 +43,8 @@ public interface EasySetupStatus {
      * setup process This method is called on worker thread, UI operations to be
      * executed on main / Ui Thread.
      *
-     * @param state Gives state of the device changed during easy setup process
+     * @param enrolleeDevice Gives state of the device changed during easy setup process
      */
-    public void onProgress(EnrolleeState state);
+    public void onProgress(EnrolleeDevice enrolleeDevice);
 
 }

@@ -21,15 +21,30 @@
  */
 package org.iotivity.service.easysetup.core;
 
+/**
+ * This interface contains the connection details of the enrollee device
+ */
 public interface OnBoardingConnection {
 
-
-    // Get the implementation of the Connection
+    /**
+     * This method returns the implementation of the Connection
+     *
+     * @return implementation
+     */
     public Object getConnection();
 
-    // Any general description on the connectivity.
+    /**
+     * This method returns description on the connectivity.
+     *
+     * @return description
+     */
     public String getDesc();
 
+    /**
+     * This method is used to know if the device is connected or not
+     *
+     * @return True if connected or False
+     */
     public boolean isConnected();
 
 }

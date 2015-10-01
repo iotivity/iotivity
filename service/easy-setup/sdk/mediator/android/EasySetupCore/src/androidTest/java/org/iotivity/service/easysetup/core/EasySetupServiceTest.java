@@ -74,8 +74,8 @@ public class EasySetupServiceTest extends AndroidTestCase {
             }
 
             @Override
-            public void onProgress(EnrolleeState state) {
-                // TODO
+            public void onProgress(EnrolleeDevice enrolleeDevice) {
+                // Handled in EasySetupStatusTest
             }
         });
 
@@ -121,7 +121,7 @@ public class EasySetupServiceTest extends AndroidTestCase {
 
             Log.i("EasySetupTest", "Lock is released");
 
-            if(! mDevice.isSetupSuccessful()) {
+            if (!mDevice.isSetupSuccessful()) {
                 assertTrue(false);
                 return;
             }
