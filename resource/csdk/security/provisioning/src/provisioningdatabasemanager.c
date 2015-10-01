@@ -73,6 +73,7 @@
 #define PDM_SQLITE_LIST_ALL_UUID "SELECT UUID FROM T_DEVICE_LIST"
 #define PDM_SQLITE_GET_UUID "SELECT UUID FROM T_DEVICE_LIST WHERE ID = ?"
 #define PDM_SQLITE_GET_LINKED_DEVICES "SELECT ID,ID2 FROM T_DEVICE_LINK_STATE WHERE ID = ? or ID2 = ?"
+#define PDM_SQLITE_GET_DEVICE_LINKS "SELECT ID,ID2 FROM T_DEVICE_LINK_STATE WHERE ID = ? and ID2 = ?"
 
 #define ASCENDING_ORDER(id1, id2) do{if( (id1) > (id2) )\
   { int temp; temp = id1; id1 = id2; id2 = temp; }}while(0)
@@ -704,8 +705,8 @@ OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
 
     sqlite3_stmt *stmt = 0;
     int res = 0;
-    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_LINKED_DEVICES,
-                              strlen(PDM_SQLITE_GET_LINKED_DEVICES) + 1, &stmt, NULL);
+    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_DEVICE_LINKS,
+                              strlen(PDM_SQLITE_GET_DEVICE_LINKS) + 1, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id1);
