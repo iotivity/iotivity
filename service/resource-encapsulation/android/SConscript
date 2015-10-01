@@ -45,8 +45,7 @@ if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exi
 
 def ensure_libs(target, source, env):
     return target, [source, env.get('BUILD_DIR') + 'librcs_server.so', 
-                    env.get('BUILD_DIR') + 'librcs_client.so',
-                    env.get('BUILD_DIR') + 'librcs_container.so']
+                    env.get('BUILD_DIR') + 'librcs_client.so']
 
 jdk_env = Environment(ENV=os.environ)
 jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + 

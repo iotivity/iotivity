@@ -27,7 +27,6 @@ import org.iotivity.service.RcsObject;
 import org.iotivity.service.RcsPlatformException;
 import org.iotivity.service.RcsResourceAttributes;
 import org.iotivity.service.RcsValue;
-import org.iotivity.service.server.RcsResourceObject;
 
 /**
  *
@@ -86,21 +85,29 @@ public final class RcsRemoteResourceObject extends RcsObject {
     /**
      * This represents states of monitoring.
      *
-     * @see #startMonitoring()
+     * @see #startMonitoring(OnStateChangedListener)
      * @see #getState()
      * @see OnStateChangedListener
      *
      */
     public enum ResourceState {
+        /** Monitoring is not started. */
+        NONE,
 
-        NONE, /** < Monitoring is not started. */
-        REQUESTED, /**
-                    * < Monitoring is started and checking state is in progress.
-                    * This is the default state after startMonitoring.
-                    */
-        ALIVE, /** < The resource is alive. */
-        LOST_SIGNAL, /** < Failed to reach the resource. */
-        DESTROYED /** < The resource is deleted. */
+        /**
+         * Monitoring is started and checking state is in progress.
+         * This is the default state after startMonitoring.
+         */
+        REQUESTED,
+
+        /** The resource is alive. */
+        ALIVE,
+
+        /** Failed to reach the resource. */
+        LOST_SIGNAL,
+
+        /** The resource is deleted. */
+        DESTROYED
     }
 
     /**
@@ -110,14 +117,20 @@ public final class RcsRemoteResourceObject extends RcsObject {
      * @see #getCacheState()
      */
     public enum CacheState {
+        /** Caching is not started. */
+        NONE,
 
-        NONE, /** < Caching is not started. */
-        UNREADY, /**
-                  * < Caching is started, but the data is not ready yet. This is
-                  * the default state after startCaching.
-                  */
-        READY, /** < The data is ready. */
-        LOST_SIGNAL /** < Failed to reach the resource. */
+        /**
+         * Caching is started, but the data is not ready yet. This is
+         * the default state after startCaching.
+         */
+        UNREADY,
+
+        /** The data is ready. */
+        READY,
+
+        /** Failed to reach the resource. */
+        LOST_SIGNAL
     }
 
     /**
@@ -227,7 +240,7 @@ public final class RcsRemoteResourceObject extends RcsObject {
      * @throws RcsDestroyedObjectException
      *             if the object is already destroyed
      *
-     * @see RcsResourceObject.Builder#setObservable(boolean)
+     * @see org.iotivity.service.server.RcsResourceObject.Builder#setObservable(boolean)
      */
     public boolean isObservable() throws RcsException {
         assertAlive();
@@ -303,8 +316,9 @@ public final class RcsRemoteResourceObject extends RcsObject {
      * This will start data caching for the resource. Once caching started it
      * will look for the data updation on the resource and updates the cache
      * data accordingly.
-     *
-     * It is equivalent to calling startCaching(CacheUpdatedCallback) with null.
+     * <p>
+     * It is equivalent to calling {@link #startCaching(OnCacheUpdatedListener)}
+     * with null.
      *
      * @throws RcsDestroyedObjectException
      *             if the object is already destroyed
@@ -386,8 +400,9 @@ public final class RcsRemoteResourceObject extends RcsObject {
     /**
      * Returns whether cached data is available.
      *
-     * Cache will be available always once cache state had been READY even if
-     * current state is LOST_SIGNAL.
+     * Cache will be available always once cache state had been
+     * {@link CacheState#READY} even if current state is
+     * {@link CacheState#LOST_SIGNAL} until stopped.
      *
      * @return true if cache data is available.
      *
@@ -407,7 +422,8 @@ public final class RcsRemoteResourceObject extends RcsObject {
 
     /**
      * Returns the cached attributes.
-     * This works only when cache is available.
+     * <p>
+     * Note that this works only when cache is available.
      *
      * @return the cached attributes.
      *
@@ -431,9 +447,9 @@ public final class RcsRemoteResourceObject extends RcsObject {
 
     /**
      * Returns the cached value to which the specified key is mapped, or null if
-     * RcsResourceAttributes contains no mapping for the key.
-     *
-     * This works only when cache is available.
+     * no mapping for the key.
+     * <p>
+     * Note that this works only when cache is available.
      *
      * @param key
      *            the key whose associated value is to be returned
@@ -466,7 +482,7 @@ public final class RcsRemoteResourceObject extends RcsObject {
     }
 
     /**
-     * Sends a request for the resource attributes directly to the server.
+     * Sends a request for the resource attributes directly to the resource.
      *
      * @param listener
      *            the listener to receive the response
@@ -491,8 +507,8 @@ public final class RcsRemoteResourceObject extends RcsObject {
     }
 
     /**
-     * Sends a set request with resource attributes to the server.
-     *
+     * Sends a set request with resource attributes to the resource.
+     * <p>
      * The SetRequest behavior depends on the server, whether updating its
      * attributes or not.
      *

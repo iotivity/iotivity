@@ -29,7 +29,7 @@ import java.util.Map;
  *
  * Type helps identify type information of Value.
  *
- * @see RCSResourceAttributes
+ * @see RcsResourceAttributes
  * @see Type
  */
 public final class RcsValue {
@@ -53,8 +53,8 @@ public final class RcsValue {
     /**
      * A Helper class to identify types of Value.
      *
-     * @see RCSResourceAttributes
-     * @see Value
+     * @see RcsResourceAttributes
+     * @see RcsValue
      * @see TypeId
      */
     public static class Type {
@@ -69,9 +69,9 @@ public final class RcsValue {
          *
          * @return Identifier of type
          *
-         * @see getBaseTypeId
+         * @see #getBaseTypeId(RcsValue.Type)
          */
-        public final TypeId getTypeId() {
+        public final TypeId getId() {
             return mTypeId;
         }
 
@@ -86,7 +86,7 @@ public final class RcsValue {
         /**
          * Returns the type identifier of a base type of sequence.
          *
-         * For non sequence types, it is equivalent to calling getId.
+         * For non sequence types, it is equivalent to calling {@link #getId()}.
          *
          * @return identifier of type
          *
@@ -110,10 +110,9 @@ public final class RcsValue {
 
         /**
          * Factory method to create Type instance from an object.
+         * Note that object must be a supported type by RcsValue.
          *
          * @return An instance that has TypeId for obj.
-         *
-         * @note object must be a supported type by Value.
          *
          * @throws NullPointerException
          *             if obj is null.
@@ -130,11 +129,10 @@ public final class RcsValue {
         }
 
         /**
-         * Factory method to create Type instance from a clss.
+         * Factory method to create Type instance from a class.
+         * Note that class must be a supported type by RcsValue.
          *
          * @return An instance that has TypeId for class.
-         *
-         * @note class must be a supported type by Value.
          *
          * @throws NullPointerException
          *             if cls is null.
@@ -257,7 +255,7 @@ public final class RcsValue {
     }
 
     /**
-     * Constructs a new value that holds null value.
+     * Constructs a new value that holds a boolean value.
      *
      * @param value
      *            a boolean
@@ -510,7 +508,7 @@ public final class RcsValue {
     }
 
     /**
-     * Returns the value it represents is null.
+     * Returns whether the value is null.
      *
      * @return true if the value is null.
      */
@@ -519,7 +517,7 @@ public final class RcsValue {
     }
 
     /**
-     * Returns the object represents null for RcsValue.
+     * Returns whether the object represents null for RcsValue.
      *
      * @param o
      *            an object to be tested

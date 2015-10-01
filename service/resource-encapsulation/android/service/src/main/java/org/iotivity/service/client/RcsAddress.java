@@ -21,13 +21,9 @@
 package org.iotivity.service.client;
 
 /**
- * This class provides a set of APIs for constructing RCSAddress object.
- *
- * <p>
- * RCSAddress object is the first parameter for Discover Resource APIs of
- * RCSDiscoveryManager Class.
- * <p>
- * {@link RcsDiscoveryManager}
+ * This is to specify a target address to discover.
+ * 
+ * @see RcsDiscoveryManager
  */
 public final class RcsAddress {
     private final String mAddress;

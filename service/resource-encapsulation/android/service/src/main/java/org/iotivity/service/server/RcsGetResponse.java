@@ -23,8 +23,7 @@ package org.iotivity.service.server;
 import org.iotivity.service.RcsResourceAttributes;
 
 /**
- * This class provides methods to create the response for a received get
- * request.
+ * This class provides methods to create the response for a get request.
  *
  * @see RcsResourceObject
  * @see RcsSetResponse
@@ -32,9 +31,9 @@ import org.iotivity.service.RcsResourceAttributes;
 public class RcsGetResponse extends RcsResponse {
 
     /**
-     * Creates a default RcsResourceObject. The response will have
-     * RCSResponse.DEFAULT_ERROR_CODE for the errorCode. The attributes of
-     * RCSResourceObject will be set as the result attributes.
+     * Creates a default RCcsGetResponse. The response will have
+     * {@link #DEFAULT_ERROR_CODE} for the errorCode. The attributes of
+     * {@link RcsResourceObject} will be set as the result attributes.
      *
      */
     public static RcsGetResponse defaultAction() {
@@ -42,11 +41,12 @@ public class RcsGetResponse extends RcsResponse {
     }
 
     /**
-     * Creates a RcsResourceObject with error code passed. The
-     * attributes of the RCSResourceObject will be set as the result attributes.
+     * Creates a RcsGetResponse with error code passed. The
+     * attributes of the {@link RcsResourceObject} will be set as the result
+     * attributes.
      *
      * @param errorCode
-     *            The error code to set in response.
+     *            error code to be set in response
      *
      */
     public static RcsGetResponse create(int errorCode) {
@@ -55,12 +55,13 @@ public class RcsGetResponse extends RcsResponse {
     }
 
     /**
-     * Creates a RcsResourceObject with custom attributes. This sends the passed
+     * Creates a RcsGetResponse with custom attributes and
+     * {@link #DEFAULT_ERROR_CODE} for the errorCode. This sends the passed
      * attributes as the result attributes instead of the one the
-     * RCSResourceObject holds.
+     * {@link RcsResourceObject} holds.
      *
      * @param attributes
-     *            The attributes to send in response.
+     *            attributes to be sent as the result
      *
      */
     public static RcsGetResponse create(RcsResourceAttributes attributes) {
@@ -68,14 +69,14 @@ public class RcsGetResponse extends RcsResponse {
     }
 
     /**
-     * Creates a RcsResourceObject with error code passed. This sends
+     * Creates a RcsGetResponse with error code passed. This sends
      * the passed attributes as the result attributes instead of one the
-     * RCSResourceObject holds.
+     * {@link RcsResourceObject} holds.
      *
      * @param attributes
-     *            The attributes to send in response.
+     *            attributes to be sent as the result
      * @param errorCode
-     *            The error code for response.
+     *            error code for response
      *
      */
     public static RcsGetResponse create(RcsResourceAttributes attributes,

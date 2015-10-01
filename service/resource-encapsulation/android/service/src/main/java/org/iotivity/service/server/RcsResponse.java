@@ -22,7 +22,7 @@ package org.iotivity.service.server;
 
 import org.iotivity.service.RcsResourceAttributes;
 
-public class RcsResponse {
+class RcsResponse {
     private native static int nativeGetDefaultErrorCode();
 
     public static final int DEFAULT_ERROR_CODE;

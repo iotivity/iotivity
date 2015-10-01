@@ -3,7 +3,7 @@ package org.iotivity.service.server;
 import org.iotivity.service.RcsException;
 
 /**
- * Thrown when trying to access a unlocked RcsLockedAttributes.
+ * Thrown when trying to access a unlocked {@link RcsLockedAttributes}.
  *
  */
 public class RcsUnlockedException extends RcsException {
