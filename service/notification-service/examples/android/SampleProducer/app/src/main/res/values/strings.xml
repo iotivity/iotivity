@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">SampleProducer</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <array name="Devices">
+       <item>Light</item>
+        <item>Coffee Maker</item>
+        <item>AC</item>
+        <item>Refrigerator</item>
+        <item>Microwave</item>
+    </array>
+    <string name="title_activity_mainactivity">Mainactivity</string>
+</resources>

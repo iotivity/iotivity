@@ -36,6 +36,9 @@ if target_os not in ['arduino','darwin']:
     # Build resource-encapsulation project
     SConscript('resource-encapsulation/SConscript')
 
+    # Build multi platform notification manager project
+    SConscript('notification-service/SConscript')
+
     # Build resource-container project
     if target_os not in ['android', 'tizen']:
         SConscript('resource-container/SConscript')
@@ -52,4 +55,4 @@ if target_os not in ['arduino','darwin']:
 if target_os in ['arduino','android', 'linux']:
     SConscript('easy-setup/SConscript')
 
-	
+

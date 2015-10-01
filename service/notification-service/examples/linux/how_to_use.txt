@@ -1,0 +1,19 @@
+Steps to run Multi-Platform Notification Manager
+
+1. Go to /iotivity/service/mp-notification-manager
+2. Use "scons" to compile and build the folder
+
+
+Server
+
+1. Go to /iotivity/service/mp-notification-manager/out/linux/x86/release
+2. Use this command to export the libraries "export LD_LIBRARY_PATH=."
+3. run "./sampleNotificationProvider"
+4. Follow on screen instuctions.
+
+Client
+
+1. Go to /iotivity/service/mp-notification-manager/out/linux/x86/release
+2. Use this command to export the libraries "export LD_LIBRARY_PATH=."
+3. run "./sampleNotificationConsumer"
+4. Follow on screen instuctions.

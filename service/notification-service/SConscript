@@ -1,0 +1,101 @@
+#******************************************************************
+#
+# Copyright 2015 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+######################################################################
+#  Multi platform notification manager build script
+######################################################################
+import platform
+Import('env')
+
+if env.get('RELEASE'):
+    env.AppendUnique(CCFLAGS = ['-Os'])
+    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+else:
+    env.AppendUnique(CCFLAGS = ['-g'])
+
+if env.get('LOGGING'):
+    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+# Add third party libraries
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+
+nmService_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
+
+######################################################################
+# Build flags
+######################################################################
+nmService_env.AppendUnique(CPPPATH = [
+		'include',
+		'../resource-encapsulation/include',
+		'../resource-encapsulation/src/common/primitiveResource/include',
+		'../../extlibs/cjson',
+		])
+
+nmService_env.PrependUnique(LIBS = ['rcs_server', 'rcs_client', 'rcs_common','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread'])
+
+if target_os not in ['windows', 'winrt']:
+    nmService_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+if target_os == 'linux':
+   nmService_env.AppendUnique(LIBS = ['pthread'])
+
+if target_os == 'android':
+    nmService_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
+    nmService_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
+
+nmService_env.AppendUnique(LIBS = ['dl'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+MP_NM_SRC_DIR = 'src/'
+
+nmservice_src = [
+        MP_NM_SRC_DIR + 'NotificationProducer.cpp',
+        MP_NM_SRC_DIR + 'NotificationDiscoveryManager.cpp',
+        MP_NM_SRC_DIR + 'NotificationObject.cpp',
+        MP_NM_SRC_DIR + 'NotificationConsumer.cpp',
+]
+if target_os=="android" :
+	NMServicesdk_static = nmService_env.StaticLibrary('nmservice', nmservice_src)
+	nmService_env.InstallTarget([NMServicesdk_static], 'libnm_service')
+	nmService_env.UserInstallTargetLib([NMServicesdk_static], 'libnm_service')
+elif target_os=="linux" :
+	NMServicesdk_static = nmService_env.StaticLibrary('nmservice', nmservice_src)
+	NMServicesdk_shared = nmService_env.SharedLibrary('nmservice', nmservice_src)
+	nmService_env.InstallTarget([NMServicesdk_static, NMServicesdk_shared], 'libnm_service')
+	nmService_env.UserInstallTargetLib([NMServicesdk_static, NMServicesdk_shared], 'libnm_service')
+
+#nmService_env.UserInstallTargetHeader('include/NotificationProducer.h', 'service/notification-service', 'NotificationProducer.h')
+#nmService_env.UserInstallTargetHeader('include/NotificationConsumer.h', 'service/notification-service', 'NotificationConsumer.h')
+#nmService_env.UserInstallTargetHeader('include/NotificationObject.h', 'service/notification-service', 'NotificationObject.h')
+#nmService_env.UserInstallTargetHeader('include/NotificationDiscoveryManager.h', 'service/notification-service', 'NotificationDiscoveryManager.h')
+
+#########################################################################
+# Build Sample Application: NotificationProducer & Notification Consumer
+#########################################################################
+SConscript('examples/SConscript')
+
+######################################################################
+# Build UnitTests for Multi Platform Notification Manager
+######################################################################
+
+## TBD
