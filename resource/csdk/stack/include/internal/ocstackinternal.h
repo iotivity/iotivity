@@ -279,18 +279,6 @@ OCStackResult CAResultToOCResult(CAResult_t caResult);
 const OicUuid_t* OCGetServerInstanceID(void);
 
 /**
- * Get a string representation the server instance ID.
- * The memory is managed internal to this function, so freeing externally will result
- * in a runtime error.
- * Note: This will NOT seed the RNG, so it must be called after the RNG is seeded.
- * This is done automatically during the OCInit process,
- * so ensure that this call is done after that.
- *
- * @return A string representation  the server instance ID.
- */
-const char* OCGetServerInstanceIDString(void);
-
-/**
  * Map OCQualityOfService to CAMessageType.
  *
  * @param qos Input qos.
@@ -327,4 +315,3 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out);
 #endif // __cplusplus
 
 #endif /* OCSTACKINTERNAL_H_ */
-

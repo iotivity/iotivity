@@ -275,6 +275,44 @@ extern "C" {
 /** Max identity size. */
 #define MAX_IDENTITY_SIZE (32)
 
+/** Resource Directory */
+
+/** Resource Directory URI used to Discover RD and Publish resources.*/
+#define OC_RSRVD_RD_URI                  "/oic/rd"
+
+/** To represent resource type with rd.*/
+#define OC_RSRVD_RESOURCE_TYPE_RD        "oic.wk.rd"
+
+/** RD Discovery bias factor type. */
+#define OC_RSRVD_RD_DISCOVERY_SEL        "sel"
+
+/** Base URI. */
+#define OC_RSRVD_BASE_URI                "baseURI"
+
+/** Unique value per collection/link. */
+#define OC_RSRVD_INS                     "ins"
+
+/** Allowable resource types in the links. */
+#define OC_RSRVD_RTS                     "rts"
+
+/** Default relationship. */
+#define OC_RSRVD_DREL                    "drel"
+
+/** Defines relationship between links. */
+#define OC_RSRVD_REL                     "rel"
+
+/** Defines title. */
+#define OC_RSRVD_TITLE                   "title"
+
+/** Defines URI. */
+#define OC_RSRVD_URI                     "uri"
+
+/** Defines media type. */
+#define OC_RSRVD_MEDIA_TYPE              "mt"
+
+/** To represent resource type with Publish RD.*/
+#define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdPub"
+
 /**
  * These enums (OCTransportAdapter and OCTransportFlags) must
  * be kept synchronized with OCConnectivityType (below) as well as
@@ -882,7 +920,8 @@ typedef enum
     PAYLOAD_TYPE_PLATFORM,
     PAYLOAD_TYPE_REPRESENTATION,
     PAYLOAD_TYPE_SECURITY,
-    PAYLOAD_TYPE_PRESENCE
+    PAYLOAD_TYPE_PRESENCE,
+    PAYLOAD_TYPE_RD
 } OCPayloadType;
 
 typedef struct
@@ -965,11 +1004,121 @@ typedef struct OCResourcePayload
     struct OCResourcePayload* next;
 } OCResourcePayload;
 
+/**
+ * Structure holding Links Payload. It is a sub-structure used in
+ * OCResourceCollectionPayload.
+ */
+typedef struct OCLinksPayload
+{
+    /** This is the target relative URI. */
+    char *href;
+    /** Resource Type - A standard OIC specified or vendor defined resource
+     * type of the resource referenced by the target URI. */
+    OCStringLL *rt;
+    /** Interface - The interfaces supported by the resource referenced by the target URI. */
+    OCStringLL *itf;
+    /** The relation of the target URI referenced by the link to the context URI;
+     * The default value is null. */
+    char *rel;
+    /** Specifies if the resource referenced by the target URIis observable or not. */
+    bool obs;
+    /** A title for the link relation. Can be used by the UI to provide a context. */
+    char *title;
+    /** This is used to override the context URI e.g. override the URI of the containing collection. */
+    char *uri;
+    /** The instance identifier for this web link in an array of web links - used in links. */
+    union
+    {
+        /** An ordinal number that is not repeated - must be unique in the collection context. */
+        uint8_t ins;
+        /** Any unique string including a URI. */
+        char *uniqueStr;
+        /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
+        OCIdentity uniqueUUID;
+    };
+    /** A hint of the media type of the representation of the resource referenced by the target URI. */
+    OCStringLL *mt;
+    /** Holding address of the next resource. */
+    struct OCLinksPayload *next;
+} OCLinksPayload;
+
+/** Structure holding tags value of the links payload. */
+typedef struct
+{
+    /** Name of tags. */
+    OCDeviceInfo n;
+    /** Device identifier. */
+    OCIdentity di;
+    /** The base URI where the resources are hold. */
+    char *baseURI;
+    /** Bitmap holds observable, discoverable, secure option flag.*/
+    uint8_t bitmap;
+    /** Port set in case, the secure flag is set above. */
+    uint16_t port;
+    /** Id for each set of links i.e. tag. */
+    union
+    {
+        /** An ordinal number that is not repeated - must be unique in the collection context. */
+        uint8_t ins;
+        /** Any unique string including a URI. */
+        char *uniqueStr;
+        /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
+        OCIdentity uniqueUUID;
+    };
+    /** Defines the list of allowable resource types (for Target and anchors) in links included
+     * in the collection; new links being created can only be from this list. */
+    char *rts;
+    /** When specified this is the default relationship to use when an OIC Link does not specify
+     * an explicit relationship with *rel* parameter. */
+    char *drel;
+    /** Time to keep holding resource.*/
+    uint32_t ttl;
+} OCTagsPayload;
+
+/** Resource collection payload. */
+typedef struct OCResourceCollectionPayload
+{
+    /** Collection tags payload.*/
+    OCTagsPayload *tags;
+    /** Array of links payload. */
+    OCLinksPayload *setLinks;
+    /** Holding address of the next resource. */
+    struct OCResourceCollectionPayload *next;
+} OCResourceCollectionPayload;
+
 typedef struct
 {
     OCPayload base;
-    OCResourcePayload* resources;
+    /** This structure holds the old /oic/res response. */
+    OCResourcePayload *resources;
+    /** This structure holds the collection response for the /oic/res. */
+    OCResourceCollectionPayload *collectionResources;
 } OCDiscoveryPayload;
+
+/**
+ * Structure holding discovery payload.
+ */
+typedef struct
+{
+    /** Device Name. */
+    OCDeviceInfo n;
+    /** Device Identity. */
+    OCIdentity di;
+    /** Value holding the bias factor of the RD. */
+    uint8_t sel;
+} OCRDDiscoveryPayload;
+
+/**
+ * RD Payload that will be transmitted over the wire.
+ */
+typedef struct
+{
+    OCPayload base;
+    /** Pointer to the discovery response payload.*/
+    OCRDDiscoveryPayload *rdDiscovery;
+    /** Pointer to the publish payload.*/
+    OCResourceCollectionPayload *rdPublish;
+} OCRDPayload;
 
 typedef struct
 {

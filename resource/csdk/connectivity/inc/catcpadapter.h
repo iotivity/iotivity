@@ -78,6 +78,15 @@ CAResult_t CAStartTCP();
 CAResult_t CAStartTCPListeningServer();
 
 /**
+ * Stops listening server from receiving connect requests.
+ * Transport Specific Behavior:
+ * TCP Stops Listening Server on a particular interface and prefixed port
+ * number and as per OIC Specification.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAStopTCPListeningServer();
+
+/**
  * Start discovery servers for receiving advertisements.
  * Transport Specific Behavior:
  * TCP Starts Discovery server on a particular interface and prefixed port

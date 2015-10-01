@@ -46,6 +46,7 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
     CAConnectivityHandler_t handler = {
         .startAdapter = CAStartEDR,
         .startListenServer = CAStartEDRListeningServer,
+        .stopListenServer = CAStopEDRListeningServer,
         .startDiscoveryServer = CAStartEDRDiscoveryServer,
         .sendData = CASendEDRUnicastData,
         .sendDataToAll = CASendEDRMulticastData,
@@ -70,6 +71,13 @@ CAResult_t CAStartEDR()
 CAResult_t CAStartEDRListeningServer()
 {
     OIC_LOG(DEBUG, TAG, "CAStartEDRListeningServer");
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAStopEDRListeningServer()
+{
+    OIC_LOG(DEBUG, TAG, "CAStopEDRListeningServer");
 
     return CA_STATUS_OK;
 }
