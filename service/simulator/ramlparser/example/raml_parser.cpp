@@ -19,6 +19,7 @@
  ******************************************************************/
 
 #include "RamlParser.h"
+#include "Helpers.h"
 #include <iostream>
 #include <string>
 #include <memory>
@@ -73,20 +74,80 @@ void printRequestResponseBody(const RequestResponseBodyPtr &body)
 
     for ( auto pro : body->getSchema()->getProperties()->getProperties() )
     {
+        std::cout << "-----------------------------" << std::endl;
         std::cout << "Name : " << pro.second->getName() << std::endl;
-        std::cout << "default : " << pro.second->getValue() << std::endl;
-        std::cout << "update_frequency : " << pro.second->getUpdateFrequencyTime() << std::endl;
-        int min = 0, max = 0, multipleOf = 0;
-        pro.second->getRange(min, max, multipleOf);
+        std::cout << "-----------------------------" << std::endl;
+        try
+        {
+            switch (pro.second->getVariantType())
+            {
+                case VariantType::INT : // Integer
+                    std::cout << "Defaut: " << pro.second->getValueInt() << std::endl;
+                    for (auto tt : pro.second->getAllowedValuesInt())
+                    {
+                        std::cout << "enum value : " << tt << std::endl;
+                    }
+                    {
+                        int min = 0, max = 0, mul = 0;
+                        pro.second->getRange(min, max, mul);
+                        std::cout << "Minimum: " << min << std::endl;
+                        std::cout << "Maximum: " << max << std::endl;
+                    }
+                    break;
 
-        std::cout << "range_min : " << min << std::endl;
-        std::cout << "range_max : " << max << std::endl;
-        std::cout << "allowed values : "  << std::endl;
-        for (auto v :  pro.second->getAllowedValues())
-            std::cout <<  v << "    ";
-        std::cout << std::endl;
+                case VariantType::DOUBLE : // Double
+                    std::cout << "Defaut: " << pro.second->getValueDouble() << std::endl;
+                    for (auto tt : pro.second->getAllowedValuesDouble())
+                    {
+                        std::cout << "enum value : " << tt << std::endl;
+                    }
+                    {
+                        double min = 0, max = 0;
+                        int mul = 0;
+                        pro.second->getRangeDouble(min, max, mul);
+                        std::cout << "MinimumDouble: " << min << std::endl;
+                        std::cout << "MaximumDouble: " << max << std::endl;
+                    }
+                    break;
+
+                case VariantType::BOOL : // Boolean
+                    std::cout << "Defaut: " << std::boolalpha << pro.second->getValueBool() << std::noboolalpha <<
+                              std::endl;
+                    for (auto tt : pro.second->getAllowedValuesBool())
+                    {
+                        std::cout << "enum value : " << tt << std::endl;
+                    }
+                    break;
+
+                case VariantType::STRING : // String
+                    std::cout << "Defaut: " << pro.second->getValueString() << std::endl;
+                    for (auto tt : pro.second->getAllowedValuesString())
+                    {
+                        std::cout << "enum value : " << tt << std::endl;
+                    }
+                    {
+                        int min = 0, max = 0, mul = 0;
+                        pro.second->getRange(min, max, mul);
+                        std::cout << "MinimumLength: " << min << std::endl;
+                        std::cout << "MaximumLength: " << max << std::endl;
+                    }
+                    break;
+                default:
+                    break;
+
+            }
+        }
+        catch (const boost::bad_lexical_cast &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+        catch ( ... )
+        {
+            std::cout << "Unknown exception caught!" << std::endl;
+        }
 
     }
+    std::cout << "-----------------------------" << std::endl;
     std::cout << "Body : example : " << body->getExample() << std::endl;
 
 #ifdef PRINT_REQUEST_RESPONSE_BODY_PARAMS
@@ -238,23 +299,74 @@ void printProperties(const PropertiesPtr &prop)
     std::cout << "-------------------------------" << std::endl;
     std::cout << "Type: " << prop->getType() << std::endl;
     std::cout << "Description: " << prop->getDescription() << std::endl;
-    int type = prop->getValueType();
-    if (type)
+    try
     {
-        std::cout << "Defaut: " << prop->getValueString() << std::endl;
-        for (auto tt : prop->getAllowedValuesString())
+        switch (prop->getVariantType())
         {
-            std::cout << "enum value : " << tt << std::endl;
+            case VariantType::INT : // Integer
+                std::cout << "Defaut: " << prop->getValueInt() << std::endl;
+                for (auto tt : prop->getAllowedValuesInt())
+                {
+                    std::cout << "enum value : " << tt << std::endl;
+                }
+                {
+                    int min = 0, max = 0, mul = 0;
+                    prop->getRange(min, max, mul);
+                    std::cout << "Minimum: " << min << std::endl;
+                    std::cout << "Maximum: " << max << std::endl;
+                }
+                break;
+
+            case VariantType::DOUBLE : // Double
+                std::cout << "Defaut: " << prop->getValueDouble() << std::endl;
+                for (auto tt : prop->getAllowedValuesDouble())
+                {
+                    std::cout << "enum value : " << tt << std::endl;
+                }
+                {
+                    double min = 0, max = 0;
+                    int mul = 0;
+                    prop->getRangeDouble(min, max, mul);
+                    std::cout << "MinimumDouble: " << min << std::endl;
+                    std::cout << "MaximumDouble: " << max << std::endl;
+                }
+                break;
+
+            case VariantType::BOOL : // Boolean
+                std::cout << "Defaut: " << std::boolalpha << prop->getValueBool() << std::noboolalpha << std::endl;
+                for (auto tt : prop->getAllowedValuesBool())
+                {
+                    std::cout << std::boolalpha << "enum value : " << tt << std::noboolalpha << std::endl;
+                }
+                break;
+
+            case VariantType::STRING : // String
+                std::cout << "Defaut: " << prop->getValueString() << std::endl;
+                for (auto tt : prop->getAllowedValuesString())
+                {
+                    std::cout << "enum value : " << tt << std::endl;
+                }
+                {
+                    int min = 0, max = 0, mul = 0;
+                    prop->getRange(min, max, mul);
+                    std::cout << "MinimumLength: " << min << std::endl;
+                    std::cout << "MaximumLength: " << max << std::endl;
+                }
+                break;
+            default:
+                break;
+
         }
     }
-    else
+    catch (const boost::bad_lexical_cast &e)
     {
-        std::cout << "Defaut: " << prop->getValueInt() << std::endl;
-        for (auto tt : prop->getAllowedValuesString())
-        {
-            std::cout << "enum value : " << tt << std::endl;
-        }
+        std::cout << e.what() << std::endl;
     }
+    catch ( ... )
+    {
+        std::cout << "Unknown exception caught!" << std::endl;
+    }
+
     if (prop->getType() == "array")
     {
         for (auto it : prop->getItems())
@@ -265,13 +377,17 @@ void printProperties(const PropertiesPtr &prop)
                 {
                     std::cout << "enum value : " << tt << std::endl;
                 }
+            for (auto tt : it->getProperties())
+            {
+                printProperties(tt.second);
+            }
+            std::cout << "Item Required Values : " << std::endl;
+            for (auto tt : it->getRequiredValues())
+            {
+                std::cout << tt << std::endl;
+            }
         }
     }
-    int min = 0, max = 0, mul = 0;
-    prop->getRange(min, max, mul);
-    std::cout << "Minimum: " << min << std::endl;
-    std::cout << "Maximum: " << max << std::endl;
-    std::cout << "MultipleOf: " << mul << std::endl;
 #endif
 
 }
