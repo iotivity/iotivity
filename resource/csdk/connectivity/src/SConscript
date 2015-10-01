@@ -137,6 +137,7 @@ if 'BLE' in ca_transport:
 if ca_os in ['linux', 'tizen', 'android']:
 	if with_tcp == True:
 		env.SConscript(os.path.join(ca_path, 'tcp_adapter/SConscript'))
+		env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
 
 print "Include path is %s" % env.get('CPPPATH')
 print "Files path is %s" % env.get('CA_SRC')
