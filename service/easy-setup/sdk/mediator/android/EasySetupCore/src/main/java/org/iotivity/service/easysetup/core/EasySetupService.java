@@ -25,7 +25,6 @@ package org.iotivity.service.easysetup.core;
 import android.content.Context;
 import android.util.Log;
 
-import org.iotivity.service.easysetup.impl.EnrolleeDeviceFactory;
 import org.iotivity.service.easysetup.mediator.EasySetupManager;
 import org.iotivity.service.easysetup.mediator.ProvisionEnrollee;
 
@@ -41,7 +40,7 @@ import java.util.ArrayList;
  */
 public class EasySetupService {
 
-    public static final String TAG = EasySetupService.class.getName();
+    private static final String TAG = EasySetupService.class.getName();
 
     private static EasySetupService sInstance;
 
@@ -53,7 +52,6 @@ public class EasySetupService {
 
     private static Context mContext;
 
-    public EnrolleeDeviceFactory mDeviceFactory;
 
     ProvisionEnrollee mProvisionEnrolleeInstance;
 
@@ -62,7 +60,7 @@ public class EasySetupService {
         mProvisioningCallback = new ProvisioningCallbackImpl(mCallback);
         mEnrolleeDeviceList = new ArrayList<EnrolleeDevice>();
         mContext = null;
-        mDeviceFactory = null;
+
     }
 
     /**
@@ -110,7 +108,9 @@ public class EasySetupService {
             enrolledevice.startProvisioning(mProvisioningCallback);
             return;
         }
+        enrolledevice.mState = EnrolleeState.DEVICE_ON_BOARDING_STATE;
 
+        mCallback.onProgress(enrolledevice);
         enrolledevice.startOnBoarding(new OnBoardingCallback() {
 
             @Override
@@ -118,10 +118,12 @@ public class EasySetupService {
                 if (connection.isConnected()) {
                     Log.i(TAG, "On boarding is successful ");
                     // Start provisioning here
+                    enrolledevice.mState = EnrolleeState.DEVICE_ON_BOARDED_STATE;
+                    mCallback.onProgress(enrolledevice);
                     enrolledevice.setConnection(connection);
                     enrolledevice.startProvisioning(mProvisioningCallback);
                 } else {
-                    enrolledevice.mState = EnrolleeState.DEVICE_PROVISIONING_FAILED_STATE;
+                    enrolledevice.mState = EnrolleeState.DEVICE_INIT_STATE;
                     mProvisioningCallback.onFinished(enrolledevice);
                 }
 
@@ -137,28 +139,24 @@ public class EasySetupService {
      * @param enrolleedevice Device to be enrolled in network
      */
     public synchronized void stopSetup(EnrolleeDevice enrolleedevice) {
-        if (enrolleedevice.mState == EnrolleeState.DEVICE_ON_BOARDING_STATE) {
-            if (mEnrolleeDeviceList.contains(enrolleedevice)) {
+        if (mEnrolleeDeviceList.contains(enrolleedevice)) {
+            enrolleedevice.mState = EnrolleeState.DEVICE_INIT_STATE;
+            mCallback.onProgress(enrolleedevice);
+            if (enrolleedevice.mState == EnrolleeState.DEVICE_ON_BOARDING_STATE) {
                 Log.i(TAG, "stopOnBoardingProcess for enrolleedevice");
                 enrolleedevice.stopOnBoardingProcess();
                 mEnrolleeDeviceList.remove(enrolleedevice);
-            }
-        } else if (enrolleedevice.mState == EnrolleeState.DEVICE_PROVISIONING_STATE) {
-            if (mEnrolleeDeviceList.contains(enrolleedevice)) {
+            } else if (enrolleedevice.mState == EnrolleeState.DEVICE_PROVISIONING_STATE) {
                 Log.i(TAG, "stopOnBoardingProcess for enrolleedevice");
                 enrolleedevice.stopOnBoardingProcess();
-
                 Log.i(TAG, "stopEnrolleeProvisioning for enrolleedevice");
                 //Native Api call to stop on-going enrolling process for the enrolling device
                 EasySetupManager.getInstance().stopEnrolleeProvisioning(enrolleedevice
                         .mOnBoardingConfig.getConnType().getValue());
                 mEnrolleeDeviceList.remove(enrolleedevice);
+
             }
         }
-    }
-
-    public synchronized void getEnrolleeDevice(OnBoardingConfig connType) {
-        mDeviceFactory = EnrolleeDeviceFactory.newInstance(mContext);
     }
 
     class ProvisioningCallbackImpl extends ProvisioningCallback {
@@ -180,7 +178,11 @@ public class EasySetupService {
             }
         }
 
+        @Override
+        public void onProgress(EnrolleeDevice enrolledevice) {
+            mCallback.onProgress(enrolledevice);
+        }
+
+
     }
-
-
 }

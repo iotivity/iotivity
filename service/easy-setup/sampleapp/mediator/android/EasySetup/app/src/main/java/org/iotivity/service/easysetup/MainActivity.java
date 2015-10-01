@@ -116,7 +116,7 @@ public class MainActivity extends Activity {
                     }
 
                     @Override
-                    public void onProgress(EnrolleeState state) {
+                    public void onProgress(EnrolleeDevice enrolleeDevice) {
                         Log.i("MainActivity", "onProgress() is received ");
                         mHandler.sendEmptyMessage(STATE_CHANGED);
                     }

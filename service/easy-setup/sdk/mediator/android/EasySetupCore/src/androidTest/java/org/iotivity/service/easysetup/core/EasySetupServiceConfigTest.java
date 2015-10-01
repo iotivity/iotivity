@@ -41,7 +41,7 @@ public class EasySetupServiceConfigTest extends AndroidTestCase {
             }
 
             @Override
-            public void onProgress(EnrolleeState state) {
+            public void onProgress(EnrolleeDevice enrolleeDevice) {
 
             }
         });
@@ -59,7 +59,7 @@ public class EasySetupServiceConfigTest extends AndroidTestCase {
             }
 
             @Override
-            public void onProgress(EnrolleeState state) {
+            public void onProgress(EnrolleeDevice enrolleeDevice) {
 
             }
         });

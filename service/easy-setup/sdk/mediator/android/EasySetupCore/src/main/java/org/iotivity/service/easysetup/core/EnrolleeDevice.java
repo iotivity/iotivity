@@ -83,10 +83,15 @@ public abstract class EnrolleeDevice {
      *
      * @param conn Connectivity between Enrollee device & Mediator device.
      */
-    public void setConnection(OnBoardingConnection conn) {
+    protected void setConnection(OnBoardingConnection conn) {
         mConnection = conn;
     }
 
+    /**
+     * This method returns the OnBoardingConnection object depending on the connection type
+     *
+     * @return onBoardingConnection object
+     */
     public OnBoardingConnection getConnection() {
         return mConnection;
     }
@@ -119,13 +124,13 @@ public abstract class EnrolleeDevice {
      */
 
     public boolean isSetupSuccessful() {
-        return (mState == EnrolleeState.DEVICE_PROVISIONING_SUCCESS_STATE) ? true : false;
+        return (mState == EnrolleeState.DEVICE_PROVISIONED_STATE) ? true : false;
     }
 
     /**
      * sets error occured during easy setup process
      */
-    public void setError(EnrolleeSetupError error) {
+    protected void setError(EnrolleeSetupError error) {
         mError = error;
     }
 
@@ -153,7 +158,7 @@ public abstract class EnrolleeDevice {
      * @return True if on-boarded successfully or False
      */
 
-    public boolean onBoarded() {
+    protected boolean onBoarded() {
         return (mState == EnrolleeState.DEVICE_PROVISIONING_STATE) ? true : false;
     }
 
