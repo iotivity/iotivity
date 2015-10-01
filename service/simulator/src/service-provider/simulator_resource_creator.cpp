@@ -118,9 +118,6 @@ SimulatorResourceServerImplSP SimulatorResourceCreator::createResource(
                         break;
                 }
 
-                // Set attriute update frequency interval
-                attribute.setUpdateFrequencyTime(propertyElement.second->getUpdateFrequencyTime());
-
                 // Set range/supported values set
                 int min = 0, max = 0, multipleof = 0;
                 propertyElement.second->getRange(min, max, multipleof);

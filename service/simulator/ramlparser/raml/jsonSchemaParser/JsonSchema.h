@@ -280,7 +280,8 @@ namespace RAML
                              const std::string &attType);
             void readString( cJSON *childProperties, PropertiesPtr property);
             void readArray( cJSON *childProperties,  PropertiesPtr property);
-            void readNumber( cJSON *childProperties,  PropertiesPtr property);
+            void readInteger( cJSON *childProperties,  PropertiesPtr property);
+            void readDouble( cJSON *childProperties,  PropertiesPtr property);
             DefinitionsPtr readRef(std::string m_ref);
 
 
