@@ -18,7 +18,7 @@
  *
  ******************************************************************/
 
-#include "reclientmain.h"
+#include "clientmain.h"
 
 #include "RCSRemoteResourceObject.h"
 
@@ -28,10 +28,8 @@
 #include <efl_extension.h>
 #include <dlog.h>
 
-#ifndef RECONTAINER_H__
-#define RECONTAINER_H__
-
-# define LOG_TAG "recontainerclient"
+#ifndef CONTAINERCLIENT_H__
+#define CONTAINERCLIENT_H__
 
 using namespace OIC::Service;
 
@@ -39,10 +37,10 @@ void *showContainerAPIs(void *data);
 
 void onContainerDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource);
 
-static void find_resource_cb(void *data, Evas_Object *obj, void *event_info);
-
 static void findLight(void *data, Evas_Object *obj, void *event_info);
 
 static void findSoftsensor(void *data, Evas_Object *obj, void *event_info);
 
-#endif // RECONTAINER_H__
+static void cancelDiscoverResource(void *data, Evas_Object *obj, void *event_info);
+
+#endif // CONTAINERCLIENT_H__

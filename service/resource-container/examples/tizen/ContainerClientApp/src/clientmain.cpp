@@ -18,7 +18,7 @@
  *
  ******************************************************************/
 
-#include "reclientmain.h"
+#include "clientmain.h"
 #include <tizen.h>
 
 #include "OCPlatform.h"
@@ -69,6 +69,9 @@ create_list_view(appdata_s *ad)
     evas_object_smart_callback_add(list, "selected", list_selected_cb, NULL);
 
     // Main Menu Items Here
+
+    elm_list_item_append(list, "Start Container Client", NULL, NULL, containerCreateUI, nf);
+
     elm_list_go(list);
 
     // This button is set for devices which doesn't have H/W back key.
@@ -76,8 +79,6 @@ create_list_view(appdata_s *ad)
     elm_object_style_set(btn, "naviframe/end_btn/default");
     nf_it = elm_naviframe_item_push(nf, "Resource Encapsulation", btn, NULL, list, NULL);
     elm_naviframe_item_pop_cb_set(nf_it, naviframe_pop_cb, ad->win);
-
-    client_cb(nf, NULL, NULL);
 }
 
 

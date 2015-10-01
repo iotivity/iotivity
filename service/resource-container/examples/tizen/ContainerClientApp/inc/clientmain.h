@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef RECLIENTMAIN_H__
-#define RECLIENTMAIN_H__
+#ifndef CLIENTMAIN_H__
+#define CLIENTMAIN_H__
 
 #include <app.h>
 #include <Elementary.h>
@@ -35,14 +35,14 @@ using namespace OC;
 #ifdef  LOG_TAG
 #undef  LOG_TAG
 #endif
-#define LOG_TAG "reclient"
+#define LOG_TAG "clientmain"
 
 #if !defined(PACKAGE)
-#define PACKAGE "org.tizen.resampleclient"
+#define PACKAGE "org.tizen.containerclient"
 #endif
 
-#define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.resampleclient/res/ui_controls.edj"
+#define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.containerclient/res/ui_controls.edj"
 
-void client_cb(void *data, Evas_Object *obj, void *event_info);
+void containerCreateUI(void *data, Evas_Object *obj, void *event_info);
 
-#endif // RECLIENTMAIN_H__
+#endif // CLIENTMAIN_H__

@@ -241,7 +241,6 @@
                                              <listOptionValue builtIn="false" value="boost_thread"/>
                                              <listOptionValue builtIn="false" value="rcs_client"/>
                                              <listOptionValue builtIn="false" value="rcs_common"/>
-                                             <listOptionValue builtIn="false" value="rcs_container"/>
                                              <listOptionValue builtIn="false" value="rcs_server"/>
                                         </option>
                                         <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.618645708" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
