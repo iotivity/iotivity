@@ -413,9 +413,13 @@ public class SimulatorRemoteResource {
 
     @Override
     protected void finalize() throws Throwable {
-        super.finalize();
-
-        dispose();
+        try {
+            dispose();
+        } catch(Throwable t){
+            throw t;
+        } finally{
+            super.finalize();
+        }
     }
 
     private native void dispose();

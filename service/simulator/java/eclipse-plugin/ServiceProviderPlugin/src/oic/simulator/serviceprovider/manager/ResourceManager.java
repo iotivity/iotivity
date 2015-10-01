@@ -483,7 +483,7 @@ public class ResourceManager {
     }
 
     public boolean isDisplayName(String displayName) {
-        boolean exist = false;
+        boolean exist;
         synchronized (displayNameMap) {
             exist = displayNameMap.containsKey(displayName);
         }
@@ -491,7 +491,7 @@ public class ResourceManager {
     }
 
     public String getCompleteUriFromDisplayName(String displayName) {
-        String completeURI = null;
+        String completeURI;
         synchronized (displayNameMap) {
             completeURI = displayNameMap.get(displayName);
         }
@@ -567,7 +567,7 @@ public class ResourceManager {
             @Override
             public void run() {
                 Map<String, SimulatorResource> resourceTypeMap;
-                SimulatorResourceServer[] simulatorResourceServers = null;
+                SimulatorResourceServer[] simulatorResourceServers;
                 try {
                     simulatorResourceServers = SimulatorManager.createResource(
                             configFilePath, noOfInstances,
@@ -1123,12 +1123,12 @@ public class ResourceManager {
     }
 
     public List<String> getURIList() {
-        List<String> list = null;
+        List<String> list;
         synchronized (orderedResourceUriMap) {
             Set<String> typeSet = orderedResourceUriMap.keySet();
             List<String> typeList = Utility.convertSetToList(typeSet);
             if (null == typeList || typeList.size() < 1) {
-                return list;
+                return null;
             }
             list = new ArrayList<String>();
 
@@ -1241,18 +1241,18 @@ public class ResourceManager {
                         int val;
                         try {
                             val = Integer.parseInt(value);
+                            server.updateAttributeInteger(attributeName, val);
                         } catch (NumberFormatException nfe) {
                             return;
                         }
-                        server.updateAttributeInteger(attributeName, val);
                     } else if (baseType == Type.DOUBLE) {
                         double val;
                         try {
                             val = Double.parseDouble(value);
+                            server.updateAttributeDouble(attributeName, val);
                         } catch (NumberFormatException nfe) {
                             return;
                         }
-                        server.updateAttributeDouble(attributeName, val);
                     } else if (baseType == Type.BOOL) {
                         boolean val;
                         val = Boolean.parseBoolean(value);
