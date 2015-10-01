@@ -407,7 +407,7 @@ static int32_t CAReadDecryptedPayload(dtls_context_t *context,
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
 
     VERIFY_NON_NULL_RET(session, NET_DTLS_TAG, "Param Session is NULL", 0);
-    OIC_LOG_V(DEBUG, NET_DTLS_TAG, "Decrypted buf len [%d]", bufLen);
+    OIC_LOG_V(DEBUG, NET_DTLS_TAG, "Decrypted buf len [%zu]", bufLen);
 
     stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
 

@@ -166,7 +166,7 @@ static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload
     }
     else if (err != 0)
     {
-        OC_LOG_V(ERROR, TAG, "Convert Payload failed", err);
+        OC_LOG_V(ERROR, TAG, "Convert Payload failed with %lld", err);
         return err;
     }
     else

@@ -775,7 +775,7 @@ void RMProcess()
 
     if (!g_isValidated && ROUTINGTABLE_REFRESH_TIMEOUT <= (currentTime - g_refreshTableTime))
     {
-        OC_LOG_V(DEBUG, TAG, "Refreshing the routing table: %u", currentTime);
+        OC_LOG_V(DEBUG, TAG, "Refreshing the routing table: %llu", currentTime);
         u_linklist_t* invalidInterfaces = NULL;
         RTMUpdateDestAddrValidity(&invalidInterfaces, &g_routingGatewayTable);
         if (0 < u_linklist_length(invalidInterfaces))

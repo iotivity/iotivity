@@ -442,7 +442,7 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
                    // This should not happen but,
                    // give it a value just in case but output an error
                    caResult = CA_CONTENT;
-                   OC_LOG_V(ERROR, TAG, "Unexpected OC_EH_OK return code for method [d].", method);
+                   OC_LOG_V(ERROR, TAG, "Unexpected OC_EH_OK return code for method [%d].", method);
            }
             break;
         case OC_EH_ERROR:

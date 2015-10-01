@@ -289,8 +289,8 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
                 }
                 msgLength += optLength;
                 prevOptNumber = curOptNumber;
-                OIC_LOG_V(DEBUG, TAG, "curOptNumber[%d], prevOptNumber[%d], optValueLen[%d], "
-                        "optLength[%d], msgLength[%d]",
+                OIC_LOG_V(DEBUG, TAG, "curOptNumber[%d], prevOptNumber[%d], optValueLen[%zu], "
+                        "optLength[%zu], msgLength[%d]",
                           curOptNumber, prevOptNumber, optValueLen, optLength, msgLength);
             }
         }
@@ -317,7 +317,7 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
         return NULL;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "transport type: %d, payload size: %d",
+    OIC_LOG_V(DEBUG, TAG, "transport type: %d, payload size: %zu",
               *transport, info->payloadSize);
 
 #ifdef TCP_ADAPTER
@@ -953,7 +953,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
 
     if (optionResult[0] != '\0')
     {
-        OIC_LOG_V(DEBUG, TAG, "URL length:%d", strlen(optionResult));
+        OIC_LOG_V(DEBUG, TAG, "URL length:%zu", strlen(optionResult));
         outInfo->resourceUri = OICStrdup(optionResult);
         if (!outInfo->resourceUri)
         {

@@ -1329,7 +1329,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
 #endif
                             if (delay > 0)
                             {
-                                OC_LOG_V(INFO, TAG, "delay_time is %lf seconds.",
+                                OC_LOG_V(INFO, TAG, "delay_time is %ld seconds.",
                                         actionset->timesteps);
 #ifndef WITH_ARDUINO
                                 pthread_mutex_lock(&lock);

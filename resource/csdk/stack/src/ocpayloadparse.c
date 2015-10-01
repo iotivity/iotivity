@@ -56,7 +56,7 @@ OCStackResult OCParsePayload(OCPayload** outPayload, OCPayloadType payloadType,
     CborValue rootValue;
     bool err = false;
 
-    OC_LOG_V(INFO, TAG, "CBOR Parsing size: %d", payloadSize);
+    OC_LOG_V(INFO, TAG, "CBOR Parsing size: %zu", payloadSize);
     if((err = cbor_parser_init(payload, payloadSize, 0, &parser, &rootValue)) != false)
     {
         OC_LOG_V(ERROR, TAG, "CBOR Parser init failed: %d", err);

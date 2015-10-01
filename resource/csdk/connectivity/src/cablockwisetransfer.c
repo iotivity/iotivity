@@ -62,7 +62,7 @@ static bool CACheckPayloadLength(const CAData_t *sendData)
 
     // check if message has to be transfered to a block
     size_t maxBlockSize = BLOCK_SIZE(CA_DEFAULT_BLOCK_SIZE);
-    OIC_LOG_V(DEBUG, TAG, "payloadLen=%d, maxBlockSize=%d", payloadLen, maxBlockSize);
+    OIC_LOG_V(DEBUG, TAG, "payloadLen=%zu, maxBlockSize=%zu", payloadLen, maxBlockSize);
 
     if (payloadLen <= maxBlockSize)
     {
@@ -1408,7 +1408,7 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
     if (info->payload)
     {
         dataLength = info->payloadSize;
-        OIC_LOG_V(DEBUG, TAG, "dataLength - %d", dataLength);
+        OIC_LOG_V(DEBUG, TAG, "dataLength - %zu", dataLength);
     }
 
     OIC_LOG_V(DEBUG, TAG, "previous payload - %s", (*pdu)->data);
@@ -1843,7 +1843,7 @@ bool CAIsPayloadLengthInPduWithBlockSizeOption(coap_pdu_t *pdu,
         *totalPayloadLen = coap_decode_var_bytes(COAP_OPT_VALUE(option),
                                                  COAP_OPT_LENGTH(option));
 
-        OIC_LOG_V(DEBUG, TAG, "the total payload length to be received is [%d]bytes",
+        OIC_LOG_V(DEBUG, TAG, "the total payload length to be received is [%zu]bytes",
                   *totalPayloadLen);
 
         return true;
@@ -2031,7 +2031,7 @@ CAResult_t CAUpdatePayloadData(CABlockData_t *currData, const CAData_t *received
         // update received payload length
         currData->receivedPayloadLen += blockPayloadLen;
 
-        OIC_LOG_V(DEBUG, TAG, "updated payload: %s, len: %d", currData->payload,
+        OIC_LOG_V(DEBUG, TAG, "updated payload: %s, len: %zu", currData->payload,
                   currData->receivedPayloadLen);
     }
 

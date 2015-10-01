@@ -30,6 +30,9 @@
 // For POSIX.1-2001 base specification,
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
+#define __STDC_FORMAT_MACROS
+#define __STDC_LIMIT_MACROS
+#include <inttypes.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -2820,7 +2823,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
     {
         presenceResource.presenceTTL = ttl;
     }
-    OC_LOG_V(DEBUG, TAG, "Presence TTL is %lu seconds", presenceResource.presenceTTL);
+    OC_LOG_V(DEBUG, TAG, "Presence TTL is %" PRIu32 " seconds", presenceResource.presenceTTL);
 
     if (OC_PRESENCE_UNINITIALIZED == presenceState)
     {
