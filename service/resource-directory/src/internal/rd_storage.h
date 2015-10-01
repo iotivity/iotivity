@@ -22,6 +22,10 @@
 
 #include "octypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 /** Stucture holding Published Resources on the Resource Directory. */
 typedef struct OCRDStorePublishResources
 {
