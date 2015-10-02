@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Samsung Electronics All Rights Reserved.
+// Copyright 2015 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -21,18 +21,41 @@
 #include "resourceHandler.h"
 #include "ocpayload.h"
 
-#define TAG "ES_RH"
+/**
+ * @var ES_RH_TAG
+ * @brief Logging tag for module name.
+ */
+#define ES_RH_TAG "ES_RH"
 
-ProvResource g_prov;
-NetResource g_net;
+//-----------------------------------------------------------------------------
+// Private variables
+//-----------------------------------------------------------------------------
 
+/**
+ * @var g_prov
+ * @brief Structure for holding the Provisioning status and target information required to connect to the target network
+ */
+static ProvResource g_prov;
+
+/**
+ * @var g_net
+ * @brief Structure forr holding the Provisioning status of network information
+ */
+static NetResource g_net;
+
+//-----------------------------------------------------------------------------
+// Private internal function prototypes
+//-----------------------------------------------------------------------------
 OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *ehRequest, void *callback);
 const char *getResult(OCStackResult result);
 
-OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
-OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
-OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
+OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
+                                               OCRepPayload** payload);
+OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
+                                               OCRepPayload** payload);
+OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
+                                                OCRepPayload** payload);
 OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest);
 
 int g_flag = 0;
@@ -56,14 +79,14 @@ void GetTargetNetworkInfoFromProvResource(char *name, char *pass)
 OCStackResult CreateProvisioningResource()
 {
     g_prov.ps = 1; // need to provisioning
-    g_prov.tnt = ES_WIFI;
+    g_prov.tnt = CT_ADAPTER_IP;
     sprintf(g_prov.tnn, "Unknown");
     sprintf(g_prov.cd, "Unknown");
 
     OCStackResult res = OCCreateResource(&g_prov.handle, "oic.r.prov", OC_RSRVD_INTERFACE_DEFAULT,
             OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
 
-    OC_LOG_V(INFO, TAG, "Created Prov resource with result: %s", getResult(res));
+    OC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
 
     return res;
 }
@@ -72,50 +95,51 @@ OCStackResult CreateNetworkResource()
 {
     NetworkInfo netInfo;
 
-    if (getCurrentNetworkInfo(ES_WIFI, &netInfo) != 0)
+    if (getCurrentNetworkInfo(CT_ADAPTER_IP, &netInfo) != ES_OK)
     {
         return OC_STACK_ERROR;
     }
 
-    if (netInfo.type != ES_WIFI)
+    if (netInfo.type != CT_ADAPTER_IP)
     {
         return OC_STACK_ERROR;
     }
 
     g_net.cnt = (int) netInfo.type;
-    g_net.ant[0] = (int) ES_WIFI;
+    g_net.ant[0] = (int) CT_ADAPTER_IP;
     sprintf(g_net.ipaddr, "%d.%d.%d.%d", netInfo.ipaddr[0], netInfo.ipaddr[1], netInfo.ipaddr[2],
             netInfo.ipaddr[3]);
     sprintf(g_net.cnn, "%s", netInfo.ssid);
 
-    OC_LOG_V(INFO, TAG, "SSID: %s", g_net.cnn);
-    OC_LOG_V(INFO, TAG, "IP Address: %s", g_net.ipaddr);
+    OC_LOG_V(INFO, ES_RH_TAG, "SSID: %s", g_net.cnn);
+    OC_LOG_V(INFO, ES_RH_TAG, "IP Address: %s", g_net.ipaddr);
 
     OCStackResult res = OCCreateResource(&g_net.handle, "oic.r.net", OC_RSRVD_INTERFACE_DEFAULT,
             OC_RSRVD_ES_URI_NET, OCEntityHandlerCb,NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
-    OC_LOG_V(INFO, TAG, "Created Net resource with result: %s", getResult(res));
+    OC_LOG_V(INFO, ES_RH_TAG, "Created Net resource with result: %s", getResult(res));
 
     return res;
 }
 #endif
-OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload **payload)
+OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
+                                                OCRepPayload **payload)
 {
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if (!ehRequest)
     {
-        OC_LOG(ERROR, TAG, "Request is Null");
+        OC_LOG(ERROR, ES_RH_TAG, "Request is Null");
         return ehResult;
     }
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, TAG, "Incoming payload not a representation");
+        OC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
         return ehResult;
     }
 
     OCRepPayload *getResp = constructResponse(ehRequest);
     if (!getResp)
     {
-        OC_LOG(ERROR, TAG, "constructResponse failed");
+        OC_LOG(ERROR, ES_RH_TAG, "constructResponse failed");
         return OC_EH_ERROR;
     }
 
@@ -125,20 +149,21 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
     return ehResult;
 }
 
-OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload)
+OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
+                                               OCRepPayload** payload)
 {
 
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, TAG, "Incoming payload not a representation");
+        OC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
         return ehResult;
     }
 
     OCRepPayload* input = (OCRepPayload*) (ehRequest->payload);
     if (!input)
     {
-        OC_LOG(ERROR, TAG, "Failed to parse");
+        OC_LOG(ERROR, ES_RH_TAG, "Failed to parse");
         return ehResult;
     }
 
@@ -159,7 +184,7 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest, OCRep
     OCRepPayload *getResp = constructResponse(ehRequest);
     if (!getResp)
     {
-        OC_LOG(ERROR, TAG, "constructResponse failed");
+        OC_LOG(ERROR, ES_RH_TAG, "constructResponse failed");
         return OC_EH_ERROR;
     }
 
@@ -169,24 +194,25 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest, OCRep
     return ehResult;
 }
 
-OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload)
+OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
+                                                OCRepPayload** payload)
 {
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if (!ehRequest)
     {
-        OC_LOG(ERROR, TAG, "Request is Null");
+        OC_LOG(ERROR, ES_RH_TAG, "Request is Null");
         return ehResult;
     }
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, TAG, "Incoming payload not a representation");
+        OC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
         return ehResult;
     }
 
     OCRepPayload* input = (OCRepPayload*) (ehRequest->payload);
     if (!input)
     {
-        OC_LOG(ERROR, TAG, "Failed to parse");
+        OC_LOG(ERROR, ES_RH_TAG, "Failed to parse");
         return ehResult;
     }
     char* tr;
@@ -207,7 +233,7 @@ OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
-        OC_LOG(ERROR, TAG, "Failed to allocate Payload");
+        OC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
         return NULL;
     }
 
@@ -242,12 +268,12 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
     {
         if (OC_REST_GET == entityHandlerRequest->method)
         {
-            OC_LOG(INFO, TAG, "Received GET request");
+            OC_LOG(INFO, ES_RH_TAG, "Received GET request");
             ehRet = ProcessGetRequest(entityHandlerRequest, &payload);
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
-            OC_LOG(INFO, TAG, "Received PUT request");
+            OC_LOG(INFO, ES_RH_TAG, "Received PUT request");
 
             if (g_prov.handle != NULL && entityHandlerRequest->resource == g_prov.handle)
             {
@@ -261,7 +287,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             // TODO: As of now, POST request will be not received.
-            OC_LOG(INFO, TAG, "Received OC_REST_POST from client");
+            OC_LOG(INFO, ES_RH_TAG, "Received OC_REST_POST from client");
             //ehRet = ProcessPostRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
         }
 
@@ -283,7 +309,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             // Send the response
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG(ERROR, TAG, "Error sending response");
+                OC_LOG(ERROR, ES_RH_TAG, "Error sending response");
                 ehRet = OC_EH_ERROR;
             }
         }

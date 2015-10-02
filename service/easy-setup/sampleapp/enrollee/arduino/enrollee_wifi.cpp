@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Samsung Electronics All Rights Reserved.
+// Copyright 2015 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -80,13 +80,13 @@ void setup()
     OC_LOG_INIT();
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
 
-    if(InitEasySetup(ES_WIFI, ssid, passwd, EventCallbackInApp) == ES_ERROR)
+    if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, EventCallbackInApp) == ES_ERROR)
     {
         OC_LOG(ERROR, TAG, "EasySetup Init Failed");
         return;
     }
 
-    if(InitProvisioning(EventCallbackInApp)== ES_ERROR)
+    if(InitProvisioning()== ES_ERROR)
     {
         OC_LOG(ERROR, TAG, "Init Provisioning Failed");
         return;
