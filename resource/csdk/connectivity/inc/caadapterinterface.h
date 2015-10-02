@@ -168,7 +168,7 @@ typedef void (*CARegisterConnectivityCallback)(CAConnectivityHandler_t handler,
  * This will be used during the receive of network requests and response.
  * @see SendUnicastData(), SendMulticastData()
  */
-typedef void (*CANetworkPacketReceivedCallback)(const CAEndpoint_t *endPoint,
+typedef void (*CANetworkPacketReceivedCallback)(const CASecureEndpoint_t *sep,
                                             const void *data, uint32_t dataLen);
 
 /**

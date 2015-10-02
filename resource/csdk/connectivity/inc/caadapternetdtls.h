@@ -38,7 +38,7 @@
  */
 extern void OCGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
 
-typedef void (*CAPacketReceivedCallback)(const CAEndpoint_t *endpoint,
+typedef void (*CAPacketReceivedCallback)(const CASecureEndpoint_t *sep,
                                          const void *data, uint32_t dataLength);
 
 typedef void (*CAPacketSendCallback)(CAEndpoint_t *endpoint,
@@ -249,7 +249,7 @@ CAResult_t CAAdapterNetDtlsEncrypt(const CAEndpoint_t *endpoint,
  * @retval  ::CA_STATUS_FAILED Operation failed.
  *
  */
-CAResult_t CAAdapterNetDtlsDecrypt(const CAEndpoint_t *endpoint,
+CAResult_t CAAdapterNetDtlsDecrypt(const CASecureEndpoint_t *sep,
                                    uint8_t *data,
                                    uint32_t dataLen);
 

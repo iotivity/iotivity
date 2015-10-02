@@ -69,9 +69,18 @@ function build_android()
 
 	echo "*********** Build for android x86 *************"
 	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=IP $2
+	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BT $2
+	scons TARGET_OS=android TARGET_ARCH=x86 RELEASE=$1 TARGET_TRANSPORT=BLE $2
+
+	echo "*********** Build for android x86_64 *************"
+	scons TARGET_OS=android TARGET_ARCH=x86_64 RELEASE=$1 TARGET_TRANSPORT=IP $2
+	scons TARGET_OS=android TARGET_ARCH=x86_64 RELEASE=$1 TARGET_TRANSPORT=BT $2
+	scons TARGET_OS=android TARGET_ARCH=x86_64 RELEASE=$1 TARGET_TRANSPORT=BLE $2
 
 	echo "*********** Build for android armeabi *************"
 	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=IP $2
+	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BT $2
+	scons TARGET_OS=android TARGET_ARCH=armeabi RELEASE=$1 TARGET_TRANSPORT=BLE $2
 
 	# enable parallel build
 	export SCONSFLAGS="-Q -j 4"
@@ -82,10 +91,12 @@ function build_arduino()
 	echo "*********** Build for arduino avr *************"
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=IP SHIELD=ETH RELEASE=$1 $2
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=IP SHIELD=WIFI RELEASE=$1 $2
+	scons resource TARGET_OS=arduino UPLOAD=false BOARD=mega TARGET_ARCH=avr TARGET_TRANSPORT=BLE SHIELD=RBL_NRF8001 RELEASE=$1 $2
 
 	echo "*********** Build for arduino arm *************"
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=ETH RELEASE=$1 $2
 	scons resource TARGET_OS=arduino UPLOAD=false BOARD=arduino_due_x TARGET_ARCH=arm TARGET_TRANSPORT=IP SHIELD=WIFI RELEASE=$1 $2
+	# BLE support for the Arduino Due is currently unavailable.
 }
 
 function build_tizen()
@@ -210,5 +221,3 @@ else
 fi
 
 echo "===================== done ====================="
-
-

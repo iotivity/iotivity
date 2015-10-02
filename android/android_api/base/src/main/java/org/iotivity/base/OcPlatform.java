@@ -63,7 +63,7 @@ public final class OcPlatform {
      */
     public static final String GROUP_INTERFACE = "oic.mi.grp";
 
-    public static final String WELL_KNOWN_QUERY = "224.0.1.187:5683/oic/res";
+    public static final String WELL_KNOWN_QUERY = "/oic/res";
     public static final String MULTICAST_PREFIX = "224.0.1.187:5683";
     public static final String MULTICAST_IP = "224.0.1.187";
     public static final int MULTICAST_PORT = 5683;

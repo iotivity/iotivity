@@ -229,6 +229,14 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode)
         return NULL;
     }
 
+    if (outpdu->hdr->version != COAP_DEFAULT_VERSION)
+    {
+        OIC_LOG_V(ERROR, TAG, "coap version is not available : %d",
+                  outpdu->hdr->version);
+        coap_delete_pdu(outpdu);
+        return NULL;
+    }
+
     if (outCode)
     {
         (*outCode) = (uint32_t) CA_RESPONSE_CODE(outpdu->hdr->code);

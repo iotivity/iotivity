@@ -109,14 +109,18 @@ class QueryEngineEventReceiver
                 env->GetMethodID(g_ClassQueryEngineEvent, "onQueryEngineEvent",
                                  "(ILorg/iotivity/service/ssm/DataReader;)V");
 
-            jmethodID cid_DataReader = env->GetMethodID(g_ClassDataReader, "<init>", "(I)V");
+            jmethodID cid_DataReader = env->GetMethodID(g_ClassDataReader, "<init>", "(J)V");
 
             if (cid_DataReader == NULL)
                 return SSM_E_FAIL;
 
-            env->CallVoidMethod(m_objQueryEngineEvent, midQueryEngineEvent,
+            env->CallVoidMethod(m_objQueryEngineEvent,
+                                midQueryEngineEvent,
                                 (jint)cqid,
-                                env->NewObject(g_ClassDataReader, cid_DataReader, (jint)pResult));
+                                env->NewObject(
+                                    g_ClassDataReader,
+                                    cid_DataReader,
+                                    reinterpret_cast<jlong>(pResult)));
 
             DETACH_CURRENT_THREAD(g_JVM);
 
@@ -240,12 +244,12 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_createQue
         return NULL;
     }
 
-    jmethodID cid_QueryEngine = env->GetMethodID(g_ClassQueryEngine, "<init>", "(I)V");
+    jmethodID cid_QueryEngine = env->GetMethodID(g_ClassQueryEngine, "<init>", "(J)V");
 
     if (cid_QueryEngine == NULL)
         return NULL;
 
-    return env->NewObject(g_ClassQueryEngine, cid_QueryEngine, (jint)pQueryEngine);
+    return env->NewObject(g_ClassQueryEngine, cid_QueryEngine, reinterpret_cast<jlong>(pQueryEngine));
 }
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_releaseQueryEngine
@@ -265,7 +269,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_releaseQuery
 }
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_executeContextQuery
-(JNIEnv *env, jclass clz, jint pQueryEngineInstance, jstring jstrContextQuery)
+(JNIEnv *env, jclass clz, jlong pQueryEngineInstance, jstring jstrContextQuery)
 {
     int                 cqid = -1;
     if (jstrContextQuery == NULL)
@@ -289,7 +293,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_executeConte
 }
 
 JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_registerQueryEvent
-(JNIEnv *env, jclass clz, jint pQueryEngineInstance, jobject queryEngineEvent)
+(JNIEnv *env, jclass clz, jlong pQueryEngineInstance, jobject queryEngineEvent)
 {
     IQueryEngine        *pQueryEngine = (IQueryEngine *)pQueryEngineInstance;
 
@@ -304,7 +308,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_registerQuer
 }
 
 JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_killContextQuery
-(JNIEnv *env, jclass clz, jint pQueryEngineInstance, jint cqid)
+(JNIEnv *env, jclass clz, jlong pQueryEngineInstance, jint cqid)
 {
     IQueryEngine        *pQueryEngine = (IQueryEngine *)pQueryEngineInstance;
 
@@ -315,7 +319,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_killContextQ
 }
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getDataId
-(JNIEnv *env, jclass clz, jint pDataReaderInstance)
+(JNIEnv *env, jclass clz, jlong pDataReaderInstance)
 {
     IModelData *pDataReader = (IModelData *)pDataReaderInstance;
 
@@ -323,7 +327,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getDataId
 }
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyCount
-(JNIEnv *env, jclass clz, jint pIModelDataInstance )
+(JNIEnv *env, jclass clz, jlong pIModelDataInstance )
 {
     IModelData *pModelData = (IModelData *)pIModelDataInstance;
 
@@ -331,7 +335,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyC
 }
 
 JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyName
-(JNIEnv *env, jclass clz, jint pIModelDataInstance, jint propertyIndex )
+(JNIEnv *env, jclass clz, jlong pIModelDataInstance, jint propertyIndex )
 {
     IModelData *pModelData = (IModelData *)pIModelDataInstance;
 
@@ -339,7 +343,7 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_getProper
 }
 
 JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_getPropertyValue
-(JNIEnv *env, jclass clz, jint pIModelDataInstance, jint propertyIndex )
+(JNIEnv *env, jclass clz, jlong pIModelDataInstance, jint propertyIndex )
 {
     IModelData *pModelData = (IModelData *)pIModelDataInstance;
 
@@ -347,7 +351,7 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_service_ssm_CoreController_getProper
 }
 
 JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_getAffectedModels
-(JNIEnv *env, jclass clz, jint pDataReaderInstance)
+(JNIEnv *env, jclass clz, jlong pDataReaderInstance)
 {
     IDataReader *pDataReader = (IDataReader *)pDataReaderInstance;
     std::vector<std::string>    affectedModels;
@@ -372,7 +376,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_getAffect
 }
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getModelDataCount
-(JNIEnv *env, jclass clz, jint pDataReaderInstance, jstring jstrModelName)
+(JNIEnv *env, jclass clz, jlong pDataReaderInstance, jstring jstrModelName)
 {
     IDataReader *pDataReader = (IDataReader *)pDataReaderInstance;
     int modelCount = 0;
@@ -389,7 +393,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ssm_CoreController_getModelData
 }
 //return IModelData
 JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_getModelData
-(JNIEnv *env, jclass clz, jint pDataReaderInstance, jstring jstrModelName, jint jintDataIndex )
+(JNIEnv *env, jclass clz, jlong pDataReaderInstance, jstring jstrModelName, jint jintDataIndex )
 {
     IDataReader *pDataReader = (IDataReader *)pDataReaderInstance;
     IModelData *pModelData = NULL;
@@ -401,12 +405,12 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ssm_CoreController_getModelD
         return NULL;
     }
 
-    jmethodID cid_ModelData = env->GetMethodID(g_ClassModelData, "<init>", "(I)V");
+    jmethodID cid_ModelData = env->GetMethodID(g_ClassModelData, "<init>", "(J)V");
 
     if (cid_ModelData == NULL)
         return NULL;
 
-    return env->NewObject(g_ClassModelData, cid_ModelData, (jint)pModelData);
+    return env->NewObject(g_ClassModelData, cid_ModelData, reinterpret_cast<jlong>(pModelData));
 }
 
 JNIEXPORT void JNICALL Java_org_iotivity_service_ssm_CoreController_registerReportReceiver

@@ -86,6 +86,11 @@ namespace OCResourceTest
         EXPECT_ANY_THROW(ConstructResourceObject("coap://:5000", "/resource"));
     }
 
+    TEST(ConstructResourceTest, ConstructResourceObjectInvalidUri)
+    {
+        EXPECT_ANY_THROW(ConstructResourceObject("coap://192.168.1.2:5000", "/"));
+    }
+
     TEST(ResourceGetTest, DISABLED_ResourceGetForValidUri)
     {
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");

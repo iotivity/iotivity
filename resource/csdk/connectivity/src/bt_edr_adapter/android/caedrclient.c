@@ -201,21 +201,21 @@ CAResult_t CAEDRManagerReadData(void)
     return CA_NOT_SUPPORTED;
 }
 
-CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const void *data,
+CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const uint8_t *data,
                                       uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    CAResult_t result = CAEDRSendUnicastMessage(remoteAddress, (const char*) data, dataLength);
+    CAResult_t result = CAEDRSendUnicastMessage(remoteAddress, data, dataLength);
     OIC_LOG(DEBUG, TAG, "OUT");
     return result;
 }
 
-CAResult_t CAEDRClientSendMulticastData(const void *data, uint32_t dataLength)
+CAResult_t CAEDRClientSendMulticastData(const uint8_t *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    CAResult_t result = CAEDRSendMulticastMessage((const char*) data, dataLength);
+    CAResult_t result = CAEDRSendMulticastMessage(data, dataLength);
     OIC_LOG(DEBUG, TAG, "OUT");
     return result;
 }
@@ -514,7 +514,7 @@ void CAEDRCoreJniInit()
     g_jvm = (JavaVM*) CANativeJNIGetJavaVM();
 }
 
-CAResult_t CAEDRSendUnicastMessage(const char* address, const char* data, uint32_t dataLen)
+CAResult_t CAEDRSendUnicastMessage(const char* address, const uint8_t* data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CAEDRSendUnicastMessage(%s, %s)", address, data);
 
@@ -522,7 +522,7 @@ CAResult_t CAEDRSendUnicastMessage(const char* address, const char* data, uint32
     return result;
 }
 
-CAResult_t CAEDRSendMulticastMessage(const char* data, uint32_t dataLen)
+CAResult_t CAEDRSendMulticastMessage(const uint8_t* data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CAEDRSendMulticastMessage(%s)", data);
 
@@ -608,7 +608,7 @@ void CAEDRGetLocalAddress(char **address)
     }
 }
 
-CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const char* data, uint32_t dataLen)
+CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CAEDRSendUnicastMessageImpl, address: %s, data: %s", address, data);
 
@@ -708,7 +708,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const char* data, ui
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t dataLen)
+CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data, uint32_t dataLen)
 {
     OIC_LOG_V(DEBUG, TAG, "CASendMulticastMessageImpl, send to, data: %s, %d", data, dataLen);
 
@@ -764,7 +764,7 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const char* data, uint32_t
 /**
  * EDR Method
  */
-CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const char *data,
+CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *data,
                                uint32_t dataLength)
 {
     OIC_LOG_V(DEBUG, TAG, "[EDR][Native] btSendData logic start : %s, %d", data, dataLength);

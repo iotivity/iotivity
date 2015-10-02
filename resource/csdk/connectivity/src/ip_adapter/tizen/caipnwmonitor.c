@@ -36,6 +36,26 @@
 
 #define TAG "IP_MONITOR"
 
+CAResult_t CAIPInitializeNetworkMonitor()
+{
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAIPTerminateNetworkMonitor()
+{
+    return CA_STATUS_OK;
+}
+
+int CAGetPollingInterval(int interval)
+{
+    return interval;
+}
+
+CAInterface_t *CAFindInterfaceChange()
+{
+    return NULL;
+}
+
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 {
     u_arraylist_t *iflist = u_arraylist_create();

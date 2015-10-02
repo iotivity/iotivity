@@ -42,6 +42,7 @@ release = env.get('RELEASE')
 ######################################################################
 server_builder_env.AppendUnique(CPPPATH = [
     '../common/primitiveResource/include',
+    '../common/utils/include',
     '../../include',
     ])
 

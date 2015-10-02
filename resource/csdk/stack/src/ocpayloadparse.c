@@ -635,7 +635,7 @@ static bool OCParseArray(OCRepPayload* out, const char* name, CborValue* contain
                      err = err || cbor_value_get_boolean(&insideArray, &(((bool*)arr)[i]));
                      err = err || cbor_value_advance_fixed(&insideArray);
                 }
-                if(err && !OCRepPayloadSetBoolArrayAsOwner(out, name, (bool*)arr, dimensions))
+                if(err || !OCRepPayloadSetBoolArrayAsOwner(out, name, (bool*)arr, dimensions))
                 {
                     OICFree(arr);
                     err = true;

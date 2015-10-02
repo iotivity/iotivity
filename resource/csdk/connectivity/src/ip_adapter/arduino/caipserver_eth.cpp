@@ -194,12 +194,10 @@ void CAPacketReceivedCallback(const char *ipAddress, const uint16_t port,
     OIC_LOG(DEBUG, TAG, "IN");
     if (g_packetReceivedCallback)
     {
-        CAEndpoint_t ep;
-        strncpy(ep.addr, ipAddress, MAX_ADDR_STR_SIZE_CA);
-        ep.port = port;
-        ep.flags = CA_IPV4;
-        ep.adapter = CA_ADAPTER_IP;
-        g_packetReceivedCallback(&ep, data, dataLength);
+        CASecureEndpoint_t sep =
+        {.endpoint = {.adapter = CA_ADAPTER_IP, .flags = CA_IPV4, .port = port}};
+        OICStrcpy(sep.endpoint.addr, sizeof(sep.endpoint.addr), ipAddress);
+        g_packetReceivedCallback(&sep, data, dataLength);
     }
     OIC_LOG(DEBUG, TAG, "OUT");
 }

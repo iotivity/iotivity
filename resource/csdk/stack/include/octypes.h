@@ -380,17 +380,15 @@ typedef struct
     /** transport modifiers.*/
     OCTransportFlags        flags;
 
+    /** for IP.*/
+    uint16_t                port;
+
     /** address for all adapters.*/
     char                    addr[MAX_ADDR_STR_SIZE];
 
     /** usually zero for default interface.*/
     uint32_t                interface;
 
-    /** for IP.*/
-    uint16_t                port;
-
-    /** secure node identity.*/
-    OCIdentity              identity;
 } OCDevAddr;
 
 /**
@@ -1034,6 +1032,9 @@ typedef struct
 
     /** backward compatibility.*/
     OCConnectivityType connType;
+
+    /** the security identity of the remote server.*/
+    OCIdentity identity;
 
     /** the is the result of our stack, OCStackResult should contain coap/other error codes.*/
     OCStackResult result;

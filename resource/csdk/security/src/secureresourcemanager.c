@@ -73,7 +73,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 
     // Copy the subjectID
     OicUuid_t subjectId = {.id = {0}};
-    memcpy(subjectId.id, endPoint->identity.id, sizeof(subjectId.id));
+    memcpy(subjectId.id, requestInfo->info.identity.id, sizeof(subjectId.id));
 
     //Check the URI has the query and skip it before checking the permission
     char *uri = strstr(requestInfo->info.resourceUri, "?");

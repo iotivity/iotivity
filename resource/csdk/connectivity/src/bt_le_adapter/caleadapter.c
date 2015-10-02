@@ -257,193 +257,6 @@ static CAQueueingThread_t *g_bleReceiverQueue = NULL;
 static CAQueueingThread_t *g_bleServerSendQueueHandle = NULL;
 
 /**
- * Starting LE connectivity adapters.
- *
- * As its peer to peer it does not require to start any servers.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-static CAResult_t CAStartLE();
-
-/**
- * Start listening server for receiving multicast search requests.
- *
- * Transport Specific Behavior:
- *   LE  Starts GATT Server with prefixed UUID and Characteristics
- *   per OIC Specification.
- * @return  ::CA_STATUS_OK or Appropriate error code.
- */
-static CAResult_t CAStartLEListeningServer();
-
-/**
- * Sarting discovery of servers for receiving multicast
- * advertisements.
- *
- * Transport Specific Behavior:
- *   LE  Starts GATT Server with prefixed UUID and Characteristics
- *   per OIC Specification.
- *
- * @return ::CA_STATUS_OK or Appropriate error code
- */
-static CAResult_t CAStartLEDiscoveryServer();
-
-/**
- * Send data to the endpoint using the adapter connectivity.
- *
- * @param[in] endpoint Remote Endpoint information (like MAC address,
- *                     reference URI and connectivity type) to which
- *                     the unicast data has to be sent.
- * @param[in] data     Data which required to be sent.
- * @param[in] dataLen  Size of data to be sent.
- *
- * @note  dataLen must be > 0.
- *
- * @return The number of bytes sent on the network, or -1 on error.
- */
-static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
-                                   const void *data,
-                                   uint32_t dataLen);
-
-/**
- * Send multicast data to the endpoint using the LE connectivity.
- *
- * @param[in] endpoint Remote Endpoint information to which the
- *                     multicast data has to be sent.
- * @param[in] data     Data which required to be sent.
- * @param[in] dataLen  Size of data to be sent.
- *
- * @note  dataLen must be > 0.
- *
- * @return The number of bytes sent on the network, or -1 on error.
- */
-static int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint,
-                                     const void *data,
-                                     uint32_t dataLen);
-
-/**
- * Get LE Connectivity network information.
- *
- * @param[out] info Local connectivity information structures.
- * @param[out] size Number of local connectivity structures.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-static CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info,
-                                              uint32_t *size);
-
-/**
- * Read Synchronous API callback.
- *
- * @return  ::CA_STATUS_OK or Appropriate error code.
- */
-static CAResult_t CAReadLEData();
-
-/**
- * Stopping the adapters and close socket connections.
- *
- * LE Stops all GATT servers and GATT Clients.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-static CAResult_t CAStopLE();
-
-/**
- * Terminate the LE connectivity adapter.
- *
- * Configuration information will be deleted from further use.
- */
-static void CATerminateLE();
-
-/**
- * Set the NetworkPacket received callback to CA layer from adapter
- * layer.
- *
- * @param[in] callback Callback handle sent from the upper layer.
- */
-static void CASetLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback);
-
-/**
- * Push the data from CA layer to the Sender processor queue.
- *
- * @param[in] remoteEndpoint Remote endpoint information of the
- *                           server.
- * @param[in] data           Data to be transmitted from LE.
- * @param[in] dataLen        Length of the Data being transmitted.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
- * @retval ::CA_STATUS_FAILED Operation failed.
- */
-static CAResult_t CALEAdapterServerSendData(const CAEndpoint_t *remoteEndpoint,
-                                            const uint8_t *data,
-                                            uint32_t dataLen);
-
-/**
- * Push the data from CA layer to the Sender processor queue.
- *
- * @param[in] remoteEndpoint Remote endpoint information of the
- *                           server.
- * @param[in] data           Data to be transmitted from LE.
- * @param[in] dataLen        Length of the Data being transmitted.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
- * @retval ::CA_STATUS_FAILED Operation failed.
- */
-static CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
-                                            const uint8_t *data,
-                                            uint32_t dataLen);
-
-/**
- * This function will receive the data from the GattServer and add the
- * data to the Server receiver queue.
- *
- * @param[in] remoteAddress Remote address of the device from where
- *                          data is received.
- * @param[in] data          Actual data recevied from the remote
- *                          device.
- * @param[in] dataLength    Length of the data received from the
- *                          remote device.
- * @param[in] sentLength    Length of the data sent from the remote
- *                          device.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
- * @retval ::CA_STATUS_FAILED Operation failed.
- *
- */
-static CAResult_t CALEAdapterServerReceivedData(const char *remoteAddress,
-                                                const uint8_t *data,
-                                                uint32_t dataLength,
-                                                uint32_t *sentLength);
-
-/**
- * This function will receive the data from the GattClient and add the
- * data into the Client receiver queue.
- *
- * @param[in] remoteAddress Remote address of the device from where
- *                          data is received.
- * @param[in] data          Actual data recevied from the remote
- *                          device.
- * @param[in] dataLength    Length of the data received from the
- *                          remote device.
- * @param[in] sentLength    Length of the data sent from the remote
- *                          device.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- * @retval ::CA_STATUS_OK  Successful.
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
- * @retval ::CA_STATUS_FAILED Operation failed.
- */
-static CAResult_t CALEAdapterClientReceivedData(const char *remoteAddress,
-                                                const uint8_t *data,
-                                                uint32_t dataLength,
-                                                uint32_t *sentLength);
-
-/**
  * This function will be associated with the sender queue for
  * GattServer.
  *
@@ -1606,6 +1419,193 @@ static void CATerminateLEAdapterMutex()
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 }
 
+/**
+ * Starting LE connectivity adapters.
+ *
+ * As its peer to peer it does not require to start any servers.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+static CAResult_t CAStartLE();
+
+/**
+ * Start listening server for receiving multicast search requests.
+ *
+ * Transport Specific Behavior:
+ *   LE  Starts GATT Server with prefixed UUID and Characteristics
+ *   per OIC Specification.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ */
+static CAResult_t CAStartLEListeningServer();
+
+/**
+ * Sarting discovery of servers for receiving multicast
+ * advertisements.
+ *
+ * Transport Specific Behavior:
+ *   LE  Starts GATT Server with prefixed UUID and Characteristics
+ *   per OIC Specification.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code
+ */
+static CAResult_t CAStartLEDiscoveryServer();
+
+/**
+ * Send data to the endpoint using the adapter connectivity.
+ *
+ * @param[in] endpoint Remote Endpoint information (like MAC address,
+ *                     reference URI and connectivity type) to which
+ *                     the unicast data has to be sent.
+ * @param[in] data     Data which required to be sent.
+ * @param[in] dataLen  Size of data to be sent.
+ *
+ * @note  dataLen must be > 0.
+ *
+ * @return The number of bytes sent on the network, or -1 on error.
+ */
+static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
+                                   const void *data,
+                                   uint32_t dataLen);
+
+/**
+ * Send multicast data to the endpoint using the LE connectivity.
+ *
+ * @param[in] endpoint Remote Endpoint information to which the
+ *                     multicast data has to be sent.
+ * @param[in] data     Data which required to be sent.
+ * @param[in] dataLen  Size of data to be sent.
+ *
+ * @note  dataLen must be > 0.
+ *
+ * @return The number of bytes sent on the network, or -1 on error.
+ */
+static int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint,
+                                     const void *data,
+                                     uint32_t dataLen);
+
+/**
+ * Get LE Connectivity network information.
+ *
+ * @param[out] info Local connectivity information structures.
+ * @param[out] size Number of local connectivity structures.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+static CAResult_t CAGetLEInterfaceInformation(CAEndpoint_t **info,
+                                              uint32_t *size);
+
+/**
+ * Read Synchronous API callback.
+ *
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ */
+static CAResult_t CAReadLEData();
+
+/**
+ * Stopping the adapters and close socket connections.
+ *
+ * LE Stops all GATT servers and GATT Clients.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+static CAResult_t CAStopLE();
+
+/**
+ * Terminate the LE connectivity adapter.
+ *
+ * Configuration information will be deleted from further use.
+ */
+static void CATerminateLE();
+
+/**
+ * This function will receive the data from the GattServer and add the
+ * data to the Server receiver queue.
+ *
+ * @param[in] remoteAddress Remote address of the device from where
+ *                          data is received.
+ * @param[in] data          Actual data recevied from the remote
+ *                          device.
+ * @param[in] dataLength    Length of the data received from the
+ *                          remote device.
+ * @param[in] sentLength    Length of the data sent from the remote
+ *                          device.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ *
+ */
+static CAResult_t CALEAdapterServerReceivedData(const char *remoteAddress,
+                                                const uint8_t *data,
+                                                uint32_t dataLength,
+                                                uint32_t *sentLength);
+
+/**
+ * This function will receive the data from the GattClient and add the
+ * data into the Client receiver queue.
+ *
+ * @param[in] remoteAddress Remote address of the device from where
+ *                          data is received.
+ * @param[in] data          Actual data recevied from the remote
+ *                          device.
+ * @param[in] dataLength    Length of the data received from the
+ *                          remote device.
+ * @param[in] sentLength    Length of the data sent from the remote
+ *                          device.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ */
+static CAResult_t CALEAdapterClientReceivedData(const char *remoteAddress,
+                                                const uint8_t *data,
+                                                uint32_t dataLength,
+                                                uint32_t *sentLength);
+
+/**
+ * Set the NetworkPacket received callback to CA layer from adapter
+ * layer.
+ *
+ * @param[in] callback Callback handle sent from the upper layer.
+ */
+static void CASetLEReqRespAdapterCallback(CANetworkPacketReceivedCallback callback);
+
+/**
+ * Push the data from CA layer to the Sender processor queue.
+ *
+ * @param[in] remoteEndpoint Remote endpoint information of the
+ *                           server.
+ * @param[in] data           Data to be transmitted from LE.
+ * @param[in] dataLen        Length of the Data being transmitted.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ */
+static CAResult_t CALEAdapterServerSendData(const CAEndpoint_t *remoteEndpoint,
+                                            const uint8_t *data,
+                                            uint32_t dataLen);
+
+/**
+ * Push the data from CA layer to the Sender processor queue.
+ *
+ * @param[in] remoteEndpoint Remote endpoint information of the
+ *                           server.
+ * @param[in] data           Data to be transmitted from LE.
+ * @param[in] dataLen        Length of the Data being transmitted.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ */
+static CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
+                                            const uint8_t *data,
+                                            uint32_t dataLen);
+
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
                           CANetworkChangeCallback netCallback,
@@ -1670,7 +1670,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
 static CAResult_t CAStartLE()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, __func__);
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CAStartLE");
 
     return CAStartLEAdapter();
 }

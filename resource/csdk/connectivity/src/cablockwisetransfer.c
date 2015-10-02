@@ -2004,22 +2004,6 @@ CAData_t *CACloneCAData(const CAData_t *data)
         clone->remoteEndpoint = CACloneEndpoint(data->remoteEndpoint);
     }
 
-    if (NULL != data->options && 0 < data->numOptions)
-    {
-        // copy data
-        CAHeaderOption_t *headerOption = (CAHeaderOption_t *) OICMalloc(sizeof(CAHeaderOption_t)
-                                                                        * data->numOptions);
-        if (NULL == headerOption)
-        {
-            OIC_LOG(ERROR, TAG, "Out of memory");
-            CADestroyDataSet(clone);
-            return NULL;
-        }
-        memcpy(headerOption, data->options, sizeof(CAHeaderOption_t) * data->numOptions);
-
-        clone->options = headerOption;
-    }
-
     return clone;
 }
 
@@ -2558,7 +2542,6 @@ void CADestroyDataSet(CAData_t* data)
     CAFreeEndpoint(data->remoteEndpoint);
     CADestroyRequestInfoInternal(data->requestInfo);
     CADestroyResponseInfoInternal(data->responseInfo);
-    OICFree(data->options);
     OICFree(data);
 }
 
