@@ -22,6 +22,10 @@
 
 package org.iotivity.base.examples.fridgeserver;
 
+import android.util.Log;
+
+import org.iotivity.base.OcException;
+import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResourceHandle;
 
@@ -38,4 +42,20 @@ public class Resource {
         mResourceHandle = null;
         mRepresentation = new OcRepresentation();
     }
+
+    public void bindTo(OcResourceHandle collectionResourceHandle) {
+        try {
+            if (null != mResourceHandle && null != collectionResourceHandle) {
+                OcPlatform.bindResource(collectionResourceHandle, mResourceHandle);
+            }
+        } catch (OcException e) {
+            Log.e("Resource", e.getMessage());
+        }
+    }
+
+    public OcResourceHandle getHandle() {
+        return mResourceHandle;
+    }
+
+    public static final int SUCCESS = 200;
 }
