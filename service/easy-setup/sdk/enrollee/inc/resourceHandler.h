@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Samsung Electronics All Rights Reserved.
+// Copyright 2015 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -21,10 +21,9 @@
 // Do not remove the include below
 #include "Arduino.h"
 
+#include <string.h>
 #include "logger.h"
 #include "ocstack.h"
-#include <string.h>
-
 #include "common.h"
 #include "networkHandler.h"
 #include "octypes.h"

@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Samsung Electronics All Rights Reserved.
+// Copyright 2015 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -18,48 +18,50 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file contains IP network handling functionality for Enrollee device
+ */
+
+#ifndef ES_NETWORK_HANDLER_H_
+#define ES_NETWORK_HANDLER_H_
+
 // Do not remove the include below
 #include "Arduino.h"
 
-#include "logger.h"
-#include "ocstack.h"
-#include <string.h>
-
-// Arduino WiFi Shield
+// Arduino WiFi Shield includes
 #include <SPI.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
+#include <string.h>
+#include "logger.h"
 #include "common.h"
-
-#ifndef ES_NETWORK_HANDLER_H_
-#define ES_NETWORK_HANDLER_H_
 
 #define MAXSSIDLEN 33
 #define MAXNETCREDLEN 20
 #define MAXNUMTYPE 5
 #define MAXADDRLEN 15
 
-typedef void (*NetworkEventCallback)(ESResult);
+/*
+ * Callback function for updating the Network status to the subscribers
+ *
+ * @param esResult ESResult provides the current state of the network connection status
+ */
+typedef void (*NetworkEventCallback)(ESResult esResult);
 
-enum NetworkType
+typedef struct
 {
-    ES_WIFI = 1, ES_BT = 2, ES_BLE = 3, ES_ZIGBEE = 4, ES_ETH = 5
-};
-
-typedef struct NETWORKINFO
-{
-    NetworkType type;
-
+    OCConnectivityType type;
     // for WiFI
     IPAddress ipaddr;
     char ssid[MAXSSIDLEN];
-
     // for BT, BLE
     byte mac[6];
 } NetworkInfo;
 
 ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback);
-int getCurrentNetworkInfo(NetworkType targetType, NetworkInfo *info);
+ESResult getCurrentNetworkInfo(OCConnectivityType targetType, NetworkInfo *info);
 
 #endif

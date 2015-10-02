@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Samsung Electronics All Rights Reserved.
+// Copyright 2015 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -18,20 +18,48 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file contains the implementation for EasySetup Enrollee device
+ */
+
 #include "easysetup.h"
 
 #include "logger.h"
 #include "resourceHandler.h"
 
-#define TAG "ES"
+/**
+ * @var ES_ENROLLEE_TAG
+ * @brief Logging tag for module name.
+ */
+#define ES_ENROLLEE_TAG "ES"
 
-int g_eventflag = 0;
-int g_cnt = 0;
-char *targetSsid;
-char *targetPass;
+//-----------------------------------------------------------------------------
+// Private variables
+//-----------------------------------------------------------------------------
 
-EventCallback g_cbForProvisioning = NULL;
-EventCallback g_cbForOnboarding = NULL;
+/**
+ * @var targetSsid
+ * @brief Target SSID of the Soft Access point to which the device has to connect
+ */
+static char *targetSsid;
+
+/**
+ * @var targetPass
+ * @brief Password of the target access point to which the device has to connect
+ */
+static char *targetPass;
+
+/**
+ * @var g_cbForEnrolleeStatus
+ * @brief Fucntion pointer holding the callback for intimation of EasySetup Enrollee status callback
+ */
+static EventCallback g_cbForEnrolleeStatus = NULL;
+
+//-----------------------------------------------------------------------------
+// Private internal function prototypes
+//-----------------------------------------------------------------------------
 
 void EventCallbackInOnboarding(ESResult event);
 void EventCallbackInProvisioning(ESResult event);
@@ -41,9 +69,9 @@ void EventCallbackInOnboarding(ESResult event)
 {
     if (event == ES_NETWORKFOUND || event == ES_NETWORKCONNECTED)
     {
-        if (g_cbForOnboarding != NULL)
+        if (g_cbForEnrolleeStatus != NULL)
         {
-            g_cbForOnboarding(event);
+            g_cbForEnrolleeStatus(event);
         }
     }
 }
@@ -59,7 +87,7 @@ void EventCallbackInProvisioning(ESResult event)
 
         if(TerminateEasySetup() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "Terminating stack failed");
+            OC_LOG(ERROR, ES_ENROLLEE_TAG, "Terminating stack failed");
             return;
         }
 
@@ -67,9 +95,9 @@ void EventCallbackInProvisioning(ESResult event)
 
         res = ConnectToWiFiNetwork(targetSsid, targetPass, EventCallbackAfterProvisioning);
 
-        if (g_cbForProvisioning != NULL)
+        if (g_cbForEnrolleeStatus != NULL)
         {
-            g_cbForProvisioning(res);
+            g_cbForEnrolleeStatus(res);
         }
     }
 }
@@ -78,14 +106,14 @@ void EventCallbackAfterProvisioning(ESResult event)
 {
     if (event == ES_NETWORKFOUND || event == ES_NETWORKCONNECTED)
     {
-        if (g_cbForProvisioning != NULL)
+        if (g_cbForEnrolleeStatus != NULL)
         {
-            g_cbForProvisioning(event);
+            g_cbForEnrolleeStatus(event);
         }
     }
 }
 
-ESResult FindNetworkForOnboarding(NetworkType networkType,
+ESResult FindNetworkForOnboarding(OCConnectivityType networkType,
                                            const char *ssid,
                                            const char *passwd,
                                            EventCallback cb)
@@ -95,20 +123,22 @@ ESResult FindNetworkForOnboarding(NetworkType networkType,
         return ES_ERROR;
     }
 
-    if (networkType == ES_WIFI)
+    if (networkType == CT_ADAPTER_IP)
     {
-        if (g_cbForOnboarding == NULL)
+        if (g_cbForEnrolleeStatus == NULL)
         {
-            g_cbForOnboarding = cb;
+            g_cbForEnrolleeStatus = cb;
         }
 
         if(ConnectToWiFiNetwork(ssid, passwd, EventCallbackInOnboarding) != ES_NETWORKCONNECTED)
         {
-            OC_LOG(ERROR, TAG, "ConnectToWiFiNetwork Failed");
+            OC_LOG(ERROR, ES_ENROLLEE_TAG, "ConnectToWiFiNetwork Failed");
+            cb(ES_NETWORKNOTCONNECTED);
             return ES_ERROR;
         }
         else{
-            OC_LOG(INFO, TAG, "ConnectToWiFiNetwork Success");
+            OC_LOG(INFO, ES_ENROLLEE_TAG, "ConnectToWiFiNetwork Success");
+            cb(ES_NETWORKCONNECTED);
             return ES_OK;
         }
     }
@@ -116,24 +146,24 @@ ESResult FindNetworkForOnboarding(NetworkType networkType,
 }
 
 
-ESResult InitEasySetup(NetworkType networkType, const char *ssid, const char *passwd,
+ESResult InitEasySetup(OCConnectivityType networkType, const char *ssid, const char *passwd,
               EventCallback cb)
 {
     if(FindNetworkForOnboarding(networkType, ssid, passwd, cb) != ES_OK)
     {
-        OC_LOG(ERROR, TAG, "OnBoarding Failed");
+        OC_LOG(ERROR, ES_ENROLLEE_TAG, "OnBoarding Failed");
         return ES_ERROR;
     }
 
     // Initialize the OC Stack in Server mode
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OC_LOG(ERROR, ES_ENROLLEE_TAG, "OCStack init error");
         return ES_ERROR;
     }
     else
     {
-        OC_LOG(DEBUG, TAG, "OCStack init success");
+        OC_LOG(DEBUG, ES_ENROLLEE_TAG, "OCStack init success");
         return ES_OK;
     }
 }
@@ -142,27 +172,18 @@ ESResult TerminateEasySetup()
 {
     if(OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack stop failed");
+        OC_LOG(ERROR, ES_ENROLLEE_TAG, "OCStack stop failed");
         return ES_ERROR;
     }
     else
     {
-        OC_LOG(ERROR, TAG, "OCStack stop success");
+        OC_LOG(ERROR, ES_ENROLLEE_TAG, "OCStack stop success");
         return ES_OK;
     }
 }
 
-ESResult InitProvisioning(EventCallback cb)
+ESResult InitProvisioning()
 {
-    if (cb == NULL)
-    {
-        return ES_ERROR;
-    }
-    else
-    {
-        g_cbForProvisioning = cb;
-    }
-
     if (CreateProvisioningResource() != OC_STACK_OK)
     {
         return ES_ERROR;
