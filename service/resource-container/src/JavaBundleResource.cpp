@@ -147,13 +147,14 @@ void JavaBundleResource::handleSetAttributesRequest(RCSResourceAttributes &attrs
     }
 }
 
-RCSResourceAttributes & JavaBundleResource::handleGetAttributesRequest(){
-    RCSResourceAttributes ret;
+RCSResourceAttributes & JavaBundleResource::handleGetAttributesRequest()
+{
     std::list<string> attrsNames = getAttributeNames();
     for(std::list<string>::iterator iterator = attrsNames.begin();
-            iterator != attrsNames.end(); ++iterator ){
-        ret[*iterator] = handleGetAttributeRequest(*iterator);
+            iterator != attrsNames.end(); ++iterator )
+    {
+        handleGetAttributeRequest(*iterator);
     }
-    return ret;
+    return BundleResource::getAttributes();
 }
 #endif
