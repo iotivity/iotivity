@@ -1994,11 +1994,11 @@ check_client_certificate_verify(dtls_context_t *ctx,
   dtls_hash_finalize(sha256hash, &hs_hash);
 
   ret = dtls_ecdsa_verify_sig_hash(config->keyx.ecc.other_pub_x, config->keyx.ecc.other_pub_y,
-			    sizeof(config->keyx.ecc.other_pub_x),
-			    sha256hash, sizeof(sha256hash),
-			    result_r, result_s);
+                                   sizeof(config->keyx.ecc.other_pub_x),
+                                   sha256hash, sizeof(sha256hash),
+                                   result_r, result_s);
 
-  if (ret < 0) {
+  if (ret <= 0) {
     dtls_alert("wrong signature err: %i\n", ret);
     return dtls_alert_fatal_create(DTLS_ALERT_HANDSHAKE_FAILURE);
   }
@@ -3252,14 +3252,14 @@ check_server_key_exchange_ecdsa(dtls_context_t *ctx,
   data_length -= ret;
 
   ret = dtls_ecdsa_verify_sig(config->keyx.ecc.other_pub_x, config->keyx.ecc.other_pub_y,
-			    sizeof(config->keyx.ecc.other_pub_x),
-			    config->tmp.random.client, DTLS_RANDOM_LENGTH,
-			    config->tmp.random.server, DTLS_RANDOM_LENGTH,
-			    key_params,
-			    1 + 2 + 1 + 1 + (2 * DTLS_EC_KEY_SIZE),
-			    result_r, result_s);
+                              sizeof(config->keyx.ecc.other_pub_x),
+                              config->tmp.random.client, DTLS_RANDOM_LENGTH,
+                              config->tmp.random.server, DTLS_RANDOM_LENGTH,
+                              key_params,
+                              1 + 2 + 1 + 1 + (2 * DTLS_EC_KEY_SIZE),
+                              result_r, result_s);
 
-  if (ret < 0) {
+  if (ret <= 0) {
     dtls_alert("wrong signature\n");
     return dtls_alert_fatal_create(DTLS_ALERT_HANDSHAKE_FAILURE);
   }
