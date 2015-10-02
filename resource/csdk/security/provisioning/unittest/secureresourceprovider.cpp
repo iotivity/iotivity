@@ -20,11 +20,10 @@
 #include "gtest/gtest.h"
 #include "secureresourceprovider.h"
 
-
 static OicSecAcl_t acl;
 static OCProvisionDev_t pDev1;
 static OCProvisionDev_t pDev2;
-static OicSecCredType_t credType;
+static OicSecCredType_t credType = SYMMETRIC_PAIR_WISE_KEY;
 
 static void provisioningCB (void* UNUSED1, int UNUSED2, OCProvisionResult_t *UNUSED3, bool UNUSED4)
 {
