@@ -573,16 +573,20 @@ dtls_ecdsa_generate_key(unsigned char *priv_key,
 /* rfc4492#section-5.4 */
 void
 dtls_ecdsa_create_sig_hash(const unsigned char *priv_key, size_t key_size,
-			   const unsigned char *sign_hash, size_t sign_hash_size,
-			   uint32_t point_r[9], uint32_t point_s[9]) {
-  uint8_t privateKey[32];
-  uint8_t hashValue[32];
-  uint8_t sign[64];
+                           const unsigned char *sign_hash, size_t sign_hash_size,
+                           uint32_t point_r[9], uint32_t point_s[9])
+{
+    uint8_t sign[64];
 
+    // Check the buffers
+    if (priv_key == NULL || key_size < 32)
+        return 0;
+    if (sign_hash == NULL || sign_hash_size < 32)
+        return 0;
 
-  uECC_sign(privateKey, hashValue, sign);
-  memcpy(point_r, sign, 32);
-  memcpy(point_s, sign + 32, 32);
+    uECC_sign(priv_key, sign_hash, sign);
+    memcpy(point_r, sign, 32);
+    memcpy(point_s, sign + 32, 32);
 }
 
 void
@@ -607,17 +611,30 @@ dtls_ecdsa_create_sig(const unsigned char *priv_key, size_t key_size,
 /* rfc4492#section-5.4 */
 int
 dtls_ecdsa_verify_sig_hash(const unsigned char *pub_key_x,
-			   const unsigned char *pub_key_y, size_t key_size,
-			   const unsigned char *sign_hash, size_t sign_hash_size,
-			   unsigned char *result_r, unsigned char *result_s) {
+                           const unsigned char *pub_key_y, size_t key_size,
+                           const unsigned char *sign_hash, size_t sign_hash_size,
+                           unsigned char *result_r, unsigned char *result_s)
+{
+    uint8_t publicKey[64];
+    uint8_t sign[64];
 
-  uint8_t publicKey[64];
-  uint8_t hashValue[32];
-  uint8_t sign[64];
+    // Check the buffers
+    if (pub_key_x == NULL || pub_key_y == NULL || key_size < 32)
+        return 0;
+    if (sign_hash == NULL || sign_hash_size < 32)
+        return 0;
+    if (result_r == NULL || result_s == NULL)
+        return 0;
 
-  memcpy(publicKey, pub_key_x, 32);
-  memcpy(publicKey + 32, pub_key_y, 32);
-  return uECC_verify(publicKey, hashValue, sign);
+    // Copy the public key into a single buffer
+    memcpy(publicKey, pub_key_x, 32);
+    memcpy(publicKey + 32, pub_key_y, 32);
+
+    // Copy the signature into a single buffer
+    memcpy(sign, result_r, 32);
+    memcpy(sign + 32, result_s, 32);
+
+    return uECC_verify(publicKey, sign_hash, sign);
 }
 
 int
