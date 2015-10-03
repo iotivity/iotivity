@@ -23,6 +23,9 @@
 #include <string.h>
 #include <stdint.h>
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include "catcpadapter.h"
 #include "catcpinterface.h"
 #include "caqueueingthread.h"
@@ -75,7 +78,7 @@ static CANetworkChangeCallback g_networkChangeCallback = NULL;
 static CAErrorHandleCallback g_errorCallback = NULL;
 
 static void CATCPPacketReceivedCB(const CAEndpoint_t *endpoint,
-                                  const void *data, size_t dataLength);
+                                  const void *data, uint32_t dataLength);
 
 static CAResult_t CATCPInitializeQueueHandles();
 
@@ -88,7 +91,7 @@ static CATCPData *CACreateTCPData(const CAEndpoint_t *remoteEndpoint,
                                   bool isMulticast);
 void CAFreeTCPData(CATCPData *ipData);
 
-static void CADataDestroyer(void *data, size_t size);
+static void CADataDestroyer(void *data, uint32_t size);
 
 CAResult_t CATCPInitializeQueueHandles()
 {
@@ -142,7 +145,7 @@ void CATCPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status)
 }
 
 void CATCPPacketReceivedCB(const CAEndpoint_t *endpoint, const void *data,
-                           size_t dataLength)
+                           uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -159,7 +162,7 @@ void CATCPPacketReceivedCB(const CAEndpoint_t *endpoint, const void *data,
 }
 
 void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
-                       size_t dataLength, CAResult_t result)
+                       uint32_t dataLength, CAResult_t result)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -428,11 +431,11 @@ void CAFreeTCPData(CATCPData *TCPData)
     OICFree(TCPData);
 }
 
-void CADataDestroyer(void *data, size_t size)
+void CADataDestroyer(void *data, uint32_t size)
 {
     if (size < sizeof(CATCPData))
     {
-        OIC_LOG_V(ERROR, TAG, "Destroy data too small %p %d", data, size);
+        OIC_LOG_V(ERROR, TAG, "Destroy data too small %p %" PRIu32, data, size);
     }
     CATCPData *TCPData = (CATCPData *) data;
 
