@@ -63,7 +63,9 @@ namespace OIC
 
                 // list of bundle ids
                 /**
-                * API for getting the list of all bundles in the container
+                * API for getting the list of all bundles in the container.
+                * The caller receives a copy of the bundle information
+                * and is also responsible for freeing the memory.
                 *
                 * @return List of BundleInfo pointer each associated with a bundle
                 *
