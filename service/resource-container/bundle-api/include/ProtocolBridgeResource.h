@@ -65,9 +65,6 @@ namespace OIC
                 * The implementor of the function can decide weather to notify OIC clients
                 * about the changed state or not.
                 *
-                * @param key Name of attribute to get
-                *
-                *
                 * @return Value of all attributes
                 */
                 virtual RCSResourceAttributes &handleGetAttributesRequest() = 0;
@@ -83,8 +80,6 @@ namespace OIC
                 *
                 * The implementor of the function can decide weather to notify OIC clients
                 * about the changed state or not.
-                *
-                * @param key Name of attribute to set
                 *
                 * @param attrs Attributes to set
                 *

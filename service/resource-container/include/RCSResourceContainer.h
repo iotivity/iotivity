@@ -114,7 +114,7 @@ namespace OIC
                 * @param params key-value pairs in string form for other Bundle parameters
                 *
                 */
-                virtual void addResourceConfig(const std::string &bundleId, const std::string &esourceUri,
+                virtual void addResourceConfig(const std::string &bundleId, const std::string &resourceUri,
                                                std::map<std::string, std::string> params) = 0;
                 /**
                 * API for removing the Resource configuration information from the bundle
