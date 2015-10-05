@@ -42,17 +42,20 @@ constexpr int STOP = 3;
 constexpr int INCREASE_TEMPERATURE = 1;
 constexpr int DECREASE_TEMPERATURE = 2;
 constexpr int STOP_TEMPERATURE_SENSOR = 3;
-constexpr int STOP_LIGHT_SENSOR = 1;
+
+constexpr int INCREASE_BRIGHTNESS = 1;
+constexpr int DECREASE_BRIGHTNESS = 2;
+constexpr int STOP_LIGHT_SENSOR = 3;
 
 constexpr int CORRECT_INPUT = 1;
 constexpr int INCORRECT_INPUT = 2;
 constexpr int QUIT = 3;
 
 
-std::string resourceUri = "/a/TempSensor";
 std::string resourceType = "oic.r.temperaturesensor";
 std::string resourceInterface = "oic.if.";
-std::string attributeKey = "Temperature";
+std::string resourceUri;
+std::string attributeKey;
 int isPresenceOn = PRESENCE_ON;
 
 RCSResourceObject::Ptr server;
@@ -76,11 +79,20 @@ void displayMenu()
               << std::endl;
 }
 
+void displayResourceTypeMenu()
+{
+    std::cout << "========================================================" << std::endl;
+    std::cout << "Select Resource Type" << std::endl;
+    std::cout << "1. Temperature" << std::endl;
+    std::cout << "2. Light" << std::endl;
+    std::cout << "========================================================" << std::endl;
+}
+
 void displayControlTemperatureMenu()
 {
     std::cout << "========================================================" << std::endl;
-    std::cout << "1. Increase Temperature by 10 degree" << std::endl;
-    std::cout << "2. Decrease Temperature by 10 degree" << std::endl;
+    std::cout << "1. Increase Temperature by 1 degree" << std::endl;
+    std::cout << "2. Decrease Temperature by 1 degree" << std::endl;
     std::cout << "3. Stop the Sensor" << std::endl;
     std::cout << "========================================================" << std::endl;
 }
@@ -88,7 +100,9 @@ void displayControlTemperatureMenu()
 void displayControlLightMenu()
 {
     std::cout << "========================================================" << std::endl;
-    std::cout << "1. Stop the Sensor" << std::endl;
+    std::cout << "1. Increase Brightness by 1 stage" << std::endl;
+    std::cout << "2. Decrease Brightness by 1 stage" << std::endl;
+    std::cout << "3. Stop the Sensor" << std::endl;
     std::cout << "========================================================" << std::endl;
 }
 
@@ -105,7 +119,7 @@ void printAttribute(const RCSResourceAttributes& attrs)
 RCSGetResponse requestHandlerForGet(const RCSRequest& request,
         RCSResourceAttributes& attrs)
 {
-    std::cout << "Recieved a Get request from Client" << std::endl;
+    std::cout << "Received a Get request from Client" << std::endl;
     RCSResourceObject::LockGuard lock(*server);
     RCSResourceAttributes attributes = server->getAttributes();
 
@@ -119,7 +133,7 @@ RCSGetResponse requestHandlerForGet(const RCSRequest& request,
 RCSSetResponse requestHandlerForSet(const RCSRequest& request,
         RCSResourceAttributes& attrs)
 {
-    std::cout << "Recieved a Set request from Client" << std::endl;
+    std::cout << "Received a Set request from Client" << std::endl;
 
     std::cout << "\n\nSending response to Client : " << std::endl;
     RCSResourceObject::LockGuard lock(*server);
@@ -135,27 +149,6 @@ void createResource()
 
 void initServer()
 {
-    std::cout << "========================================================" << std::endl;
-    std::cout << "Select Resource Type" << std::endl;
-    std::cout << "1. Temperature" << std::endl;
-    std::cout << "2. Light" << std::endl;
-    std::cout << "========================================================" << std::endl;
-
-    switch(processUserInput())
-    {
-    case REQUEST_TEMP:
-        resourceUri = "/a/TempSensor";
-        resourceType = "oic.r.temperaturesensor";
-        break;
-    case REQUEST_LIGHT:
-        resourceUri = "/a/light";
-        resourceType = "core.light";
-        break;
-    default :
-        std::cout << "Invalid input, please try again" << std::endl;
-        return;
-    }
-
     try
     {
         createResource();
@@ -170,22 +163,22 @@ void initServer()
     server->setAttribute(attributeKey, DEFALUT_VALUE);
 }
 
-void changeTemperature(Control control)
+void changeAttribute(Control control)
 {
     RCSResourceObject::LockGuard lock(server);
     if(Control::INCREASE == control)
     {
         server->getAttributes()[attributeKey] =
-                server->getAttribute<int>(attributeKey) + 10;
-        std::cout << "\nTemperature increased by 10 degree" << std::endl;
+                server->getAttribute<int>(attributeKey) + 1;
+        std::cout << attributeKey << " increased." << std::endl;
     }
     else if(Control::DECREASE == control)
     {
         server->getAttributes()[attributeKey] =
-                        server->getAttribute<int>(attributeKey) - 10;
-        std::cout << "\nTemperature Decreased by 10 degree" << std::endl;
+                        server->getAttribute<int>(attributeKey) - 1;
+        std::cout << attributeKey << " Decreased." << std::endl;
     }
-    std::cout << "\nCurrent Temperature : "
+    std::cout << "\nCurrent " << attributeKey << ": "
             << server->getAttributeValue(attributeKey).get<int>() << std::endl;
 }
 
@@ -223,17 +216,50 @@ int selectPresenceMenu()
             return INCORRECT_INPUT;
         }
 }
+
+int selectResourceTypeMenu()
+{
+    displayResourceTypeMenu();
+
+    switch(processUserInput())
+    {
+        case REQUEST_TEMP:
+            resourceUri = "/a/TempSensor";
+            resourceType = "oic.r.temperaturesensor";
+            attributeKey = "Temperature";
+            return CORRECT_INPUT;
+        case REQUEST_LIGHT:
+            resourceUri = "/a/light";
+            resourceType = "oic.r.light";
+            attributeKey = "Brightness";
+            return CORRECT_INPUT;
+        default :
+            std::cout << "Invalid input, please try again" << std::endl;
+            return INCORRECT_INPUT;
+    }
+}
+
 int selectServerMenu()
 {
     switch (processUserInput())
     {
         case DEFALUT_SERVER: // Creation of Resource & Auto control for all requests from Client.
+            while(true)
+            {
+                int ret = selectResourceTypeMenu();
+                if(ret == CORRECT_INPUT) break;
+            }
             initServer();
             return CORRECT_INPUT;
 
         case CUSTOM_SERVER:
             // Creation of Resource & setting get and set handler for handling get and
             // set request from client in application.
+            while(true)
+            {
+                int ret = selectResourceTypeMenu();
+                if(ret == CORRECT_INPUT) break;
+            }
             initServer();
 
             server->setGetRequestHandler(requestHandlerForGet);
@@ -250,14 +276,16 @@ int selectServerMenu()
 
 int selectControlTemperatureMenu()
 {
-   switch (processUserInput())
-   {
+    displayControlTemperatureMenu();
+
+    switch (processUserInput())
+    {
        case INCREASE_TEMPERATURE:
-           changeTemperature(Control::INCREASE);
+           changeAttribute(Control::INCREASE);
            return CORRECT_INPUT;
 
        case DECREASE_TEMPERATURE:
-           changeTemperature(Control::DECREASE);
+           changeAttribute(Control::DECREASE);
            return CORRECT_INPUT;
 
        case STOP_TEMPERATURE_SENSOR:
@@ -271,15 +299,25 @@ int selectControlTemperatureMenu()
 
 int selectControlLightMenu()
 {
-   switch (processUserInput())
-   {
-       case STOP_LIGHT_SENSOR:
-           return QUIT;
+    displayControlLightMenu();
 
-       default:
-           std::cout << "Invalid input. Please try again." << std::endl;
-           return INCORRECT_INPUT;
-   }
+    switch (processUserInput())
+    {
+        case INCREASE_BRIGHTNESS:
+            changeAttribute(Control::INCREASE);
+            return CORRECT_INPUT;
+
+        case DECREASE_BRIGHTNESS:
+            changeAttribute(Control::DECREASE);
+            return CORRECT_INPUT;
+
+        case STOP_LIGHT_SENSOR:
+            return QUIT;
+
+        default:
+            std::cout << "Invalid input. Please try again." << std::endl;
+            return INCORRECT_INPUT;
+    }
 }
 
 void process()
@@ -303,13 +341,15 @@ void process()
     {
         if(resourceType == "oic.r.temperaturesensor")
         {
-            displayControlTemperatureMenu();
-            if (selectControlTemperatureMenu() == QUIT) return;
+            int ret = selectControlTemperatureMenu();
+            if (ret == QUIT) return;
+            if (ret == INCORRECT_INPUT) continue;
         }
-        else if(resourceType == "core.light")
+        else if(resourceType == "oic.r.light")
         {
-            displayControlLightMenu();
-            if (selectControlLightMenu() == QUIT) return;
+            int ret = selectControlLightMenu();
+            if (ret == QUIT) return;
+            if (ret == INCORRECT_INPUT) continue;
         }
     }
 }
@@ -332,3 +372,4 @@ int main(void)
     }
     std::cout << "Stopping the Server" << std::endl;
 }
+
