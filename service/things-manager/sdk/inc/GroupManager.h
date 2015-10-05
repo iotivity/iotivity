@@ -71,8 +71,9 @@ public:
      * API for candidate resources discovery.
      * Callback only call when all resource types found.
      *
-     * @param resourceTypes - required resource types(called "candidate")
-     * @param candidateCallback - callback. OCResource vector.
+     * @param resourceTypes required resource types(called "candidate")
+     * @param callback callback with OCResource vector.
+     * @param waitsec time to wait to finish finding resources
      *
      * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
      *
@@ -137,7 +138,7 @@ public:
      *
      * @param resource resource pointer of the group resource
      * @param newActionSet pointer of ActionSet class instance
-     * @param callback callback for PUT operation.
+     * @param cb callback for PUT operation.
      *
      * @return Returns ::OC_STACK_OK if success.
      *
@@ -152,7 +153,7 @@ public:
      *
      * @param resource resource pointer of the group resource
      * @param actionsetName the action set name for executing the action set
-     * @param callback callback for POST operation.
+     * @param cb callback for POST operation.
      *
      * @return Returns ::OC_STACK_OK if success.
      * @note OCStackResult is defined in ocstack.h.
@@ -167,7 +168,7 @@ public:
      * @param resource resource pointer of the group resource
      * @param actionsetName the action set name for executing the action set
      * @param delay waiting time for until the action set run.
-     * @param callback callback for POST operation.
+     * @param cb callback for POST operation.
      *
      * @return Returns ::OC_STACK_OK if success.
      * @note OCStackResult is defined in ocstack.h.
@@ -181,7 +182,7 @@ public:
      *
      * @param resource resource pointer of the group resource
      * @param actionsetName the action set name for executing the action set
-     * @param callback callback for POST operation.
+     * @param cb callback for POST operation.
      *
      * @return Returns ::OC_STACK_OK if success.
      * @note OCStackResult is defined in ocstack.h.
@@ -195,7 +196,7 @@ public:
      *
      * @param resource resource pointer of the group resource
      * @param actionsetName the action set name for reading the action set
-     * @param callback callback for GET operation.
+     * @param cb callback for GET operation.
      *
      * @return Returns ::OC_STACK_OK if success.
      * @note OCStackResult is defined in ocstack.h.
@@ -209,13 +210,13 @@ public:
      *
      * @param resource resource pointer of the group resource
      * @param actionsetName the action set name for removing the action set
-     * @param callback callback for POST operation.
+     * @param cb callback for POST operation.
      *
      * @return Returns ::OC_STACK_OK if success.
      * @note OCStackResult is defined in ocstack.h.
      */
     OCStackResult deleteActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName,
-            PostCallback);
+            PostCallback cb);
 };
 }
 #endif  /* __OC_GROUPMANAGER__*/
