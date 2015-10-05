@@ -99,8 +99,8 @@
                                 <option id="gnu.cpp.compiler.option.include.paths.1698435591" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/inc}&quot;"/>
                                     <listOptionValue builtIn="false" value="../../../../../../extlibs/cjson"/>
-                                    <listOptionValue builtIn="false" value="../../../../NotificationManager/include"/>
-                                    <listOptionValue builtIn="false" value="../../../../NotificationManager/src"/>
+                                    <listOptionValue builtIn="false" value="../../../../include"/>
+                                    <listOptionValue builtIn="false" value="../../../../src"/>
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\include&quot;"/>
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\c_common&quot;"/>
                                     <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\stack\include&quot;"/>
@@ -231,7 +231,7 @@
                                     <listOptionValue builtIn="false" value="rcs_client"/>
                                     <listOptionValue builtIn="false" value="rcs_server"/>
                                     <listOptionValue builtIn="false" value="rcs_common"/>
-                                    <listOptionValue builtIn="false" value="NotificationManager"/>
+                                    <listOptionValue builtIn="false" value="resource_hosting"/>
                                 </option>
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.361234161" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
                                     <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
