@@ -88,14 +88,10 @@ static const char* GetOxmString(OicSecOxm_t oxmType)
     {
         case OIC_JUST_WORKS:
             return OXM_JUST_WORKS;
-        case OIC_MODE_SWITCH:
-            return OXM_MODE_SWITCH;
         case OIC_RANDOM_DEVICE_PIN:
             return OXM_RANDOM_DEVICE_PIN;
-        case OIC_PRE_PROVISIONED_DEVICE_PIN:
-            return OXM_PRE_PROVISIONED_DEVICE_PIN;
-        case OIC_PRE_PROVISION_STRONG_CREDENTIAL:
-            return OXM_PRE_PROVISIONED_STRONG_CREDENTIAL;
+        case OIC_MANUFACTURER_CERTIFICATE:
+            return OXM_MANUFACTURER_CERTIFICATE;
         default:
             return NULL;
     }
