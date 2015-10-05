@@ -35,20 +35,11 @@ extern "C" {
 #endif // __cplusplus
 
 #include "octypes.h"
+#include "twtypes.h"
+
 #include <stdint.h>
 #include <time.h>
 #include <stdbool.h>
-
-#define SIZE_EUI                    (17)
-#define SIZE_NODEID                 (5)
-#define SIZE_CLUSTERID              (5)
-#define SIZE_ENDPOINTID             (3)
-
-#define SIZE_ZONESTATUS             (5)
-#define SIZE_ZONESTATUS_EXTENDED    (3)
-#define SIZE_ZONEID                 (3)
-#define SIZE_ZONETYPE               (5)
-#define SIZE_UPDATE_DELAY_TIME      (5)
 
 /**
  *

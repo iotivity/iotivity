@@ -26,6 +26,10 @@
 #include "zigbee_wrapper.h"
 #include "utlist.h"
 #include "oic_malloc.h"
+#include "ocstack.h"
+#include "logger.h"
+
+#define TAG "pluginlist"
 
 static PIPluginBase * pluginList = NULL;
 
@@ -120,6 +124,13 @@ OCStackResult DeleteResource(PIPluginBase * plugin, PIResourceBase * resource)
     PIResourceBase * resourceList = ((PIResourceBase *) plugin->resourceList);
 
     LL_DELETE(resourceList, resource);
+
+    OCStackResult result = OCDeleteResource(resource->piResource.resourceHandle);
+    if(result != OC_STACK_OK)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed to delete resource with error: %d", result);
+        return result;
+    }
 
     OICFree (resource->piResource.uri);
     if (plugin->type == PLUGIN_ZIGBEE)
