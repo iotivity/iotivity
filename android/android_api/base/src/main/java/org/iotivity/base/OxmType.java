@@ -24,11 +24,9 @@ package org.iotivity.base;
 
 public enum OxmType {
     OIC_JUST_WORKS(0),
-    OIC_MODE_SWITCH(1),
-    OIC_RANDOM_DEVICE_PIN(2),
-    OIC_PRE_PROVISIONED_DEVICE_PIN(3),
-    OIC_PRE_PROVISION_STRONG_CREDENTIAL(4),
-    OIC_OXM_COUNT(5);
+    OIC_RANDOM_DEVICE_PIN(1),
+    OIC_MANUFACTURER_CERTIFICATE(2),
+    OIC_OXM_COUNT(3);
 
     private int value;
 

@@ -240,10 +240,8 @@ typedef enum
 typedef enum
 {
     OIC_JUST_WORKS                          = 0x0,
-    OIC_MODE_SWITCH                         = 0x1,
-    OIC_RANDOM_DEVICE_PIN                   = 0x2,
-    OIC_PRE_PROVISIONED_DEVICE_PIN          = 0x3,
-    OIC_PRE_PROVISION_STRONG_CREDENTIAL     = 0x4,
+    OIC_RANDOM_DEVICE_PIN                   = 0x1,
+    OIC_MANUFACTURER_CERTIFICATE           = 0x2,
     OIC_OXM_COUNT
 }OicSecOxm_t;
 
@@ -448,8 +446,8 @@ struct OicSecSvc
 struct OicSecCrl
 {
     uint16_t CrlId;
-    ByteArray ThisUpdate;   
-    ByteArray CrlData;      
+    ByteArray ThisUpdate;
+    ByteArray CrlData;
 };
 #endif /* __WITH_X509__ */
 
