@@ -109,7 +109,7 @@ void piNewResourceCB(PIPluginBase * p_plugin, PIResourceBase * r_newResource)
         return;
     }
 
-    r_newResource->piResource.resourceProperties = OC_DISCOVERABLE;
+    r_newResource->piResource.resourceProperties = OC_DISCOVERABLE | OC_OBSERVABLE;
     OCStackResult result = OCCreateResource(&r_newResource->piResource.resourceHandle,
                                             r_newResource->piResource.resourceTypeName,
                                             r_newResource->piResource.resourceInterfaceName,
@@ -129,6 +129,28 @@ void piNewResourceCB(PIPluginBase * p_plugin, PIResourceBase * r_newResource)
     result = AddResourceToPlugin(p_plugin, r_newResource);
 }
 
+void piObserveNotificationUpdate(PIPluginBase * plugin, const char * uri)
+{
+    if(!plugin || !uri)
+    {
+        return;
+    }
+    PIResource * piResource = NULL;
+
+    OCStackResult result = GetResourceFromURI(plugin, &piResource, uri);
+    if(result != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "Failed to find a matching URI based on observe notification update.");
+        return;
+    }
+
+    result = OCNotifyAllObservers(piResource->resourceHandle, OC_LOW_QOS);
+    if(result != OC_STACK_OK && result != OC_STACK_NO_OBSERVERS)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed to notify observers of update. Result: %d", result);
+    }
+}
+
 OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPlugin ** plugin)
 {
     if (!plugin || !comPort || strlen(comPort) == 0)
@@ -138,7 +160,10 @@ OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPlu
     OCStackResult result = OC_STACK_ERROR;
     if (pluginType == PLUGIN_ZIGBEE)
     {
-        result = ZigbeeInit(comPort, (PIPlugin_Zigbee **) plugin, piNewResourceCB);
+        result = ZigbeeInit(comPort,
+                            (PIPlugin_Zigbee **) plugin,
+                            piNewResourceCB,
+                            piObserveNotificationUpdate);
         if (result != OC_STACK_OK)
         {
             return result;
