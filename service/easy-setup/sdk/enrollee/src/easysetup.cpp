@@ -61,26 +61,35 @@ static EventCallback g_cbForEnrolleeStatus = NULL;
 // Private internal function prototypes
 //-----------------------------------------------------------------------------
 
-void EventCallbackInOnboarding(ESResult event);
-void EventCallbackInProvisioning(ESResult event);
-void EventCallbackAfterProvisioning(ESResult event);
+void EventCallbackInOnboarding(ESResult esResult);
+void EventCallbackInProvisioning(ESResult esResult);
+void EventCallbackAfterProvisioning(ESResult esResult);
 
-void EventCallbackInOnboarding(ESResult event)
+void EventCallbackInOnboarding(ESResult esResult)
 {
-    if (event == ES_NETWORKFOUND || event == ES_NETWORKCONNECTED)
-    {
-        if (g_cbForEnrolleeStatus != NULL)
-        {
-            g_cbForEnrolleeStatus(event);
+    if (g_cbForEnrolleeStatus != NULL){
+        OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with esResult = %d", esResult);
+        if(esResult == ES_OK){
+            OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
+                                                ES_ON_BOARDED_STATE);
+            g_cbForEnrolleeStatus(esResult, ES_ON_BOARDED_STATE);
         }
+        else{
+            OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
+                                                ES_INIT_STATE);
+            g_cbForEnrolleeStatus(esResult, ES_INIT_STATE);
+        }
+    }
+    else{
+        OC_LOG(ERROR, ES_ENROLLEE_TAG, "g_cbForEnrolleeStatus is NULL");
     }
 }
 
-void EventCallbackInProvisioning(ESResult event)
+void EventCallbackInProvisioning(ESResult esResult)
 {
     ESResult res = ES_OK;
 
-    if (event == ES_RECVTRIGGEROFPROVRES)
+    if (esResult == ES_RECVTRIGGEROFPROVRES)
     {
         targetSsid = (char *) malloc(MAXSSIDLEN);
         targetPass = (char *) malloc(MAXNETCREDLEN);
@@ -97,19 +106,37 @@ void EventCallbackInProvisioning(ESResult event)
 
         if (g_cbForEnrolleeStatus != NULL)
         {
-            g_cbForEnrolleeStatus(res);
+            if(res == ES_NETWORKCONNECTED){
+                OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
+                                                    ES_PROVISIONED_STATE);
+                g_cbForEnrolleeStatus(ES_OK, ES_PROVISIONED_STATE);
+            }
+            else{
+                OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
+                                                    ES_PROVISIONING_STATE);
+                g_cbForEnrolleeStatus(ES_OK, ES_PROVISIONING_STATE);
+            }
+
         }
     }
 }
 
-void EventCallbackAfterProvisioning(ESResult event)
+void EventCallbackAfterProvisioning(ESResult esResult)
 {
-    if (event == ES_NETWORKFOUND || event == ES_NETWORKCONNECTED)
-    {
-        if (g_cbForEnrolleeStatus != NULL)
-        {
-            g_cbForEnrolleeStatus(event);
+    if (g_cbForEnrolleeStatus != NULL){
+        if(esResult == ES_OK){
+            OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
+                                                   ES_PROVISIONED_STATE);
+            g_cbForEnrolleeStatus(esResult, ES_PROVISIONED_STATE);
         }
+        else{
+            OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
+                                                   ES_PROVISIONING_STATE);
+            g_cbForEnrolleeStatus(esResult, ES_PROVISIONING_STATE);
+        }
+    }
+    else{
+        OC_LOG(ERROR, ES_ENROLLEE_TAG, "g_cbForEnrolleeStatus is NULL");
     }
 }
 
@@ -133,12 +160,12 @@ ESResult FindNetworkForOnboarding(OCConnectivityType networkType,
         if(ConnectToWiFiNetwork(ssid, passwd, EventCallbackInOnboarding) != ES_NETWORKCONNECTED)
         {
             OC_LOG(ERROR, ES_ENROLLEE_TAG, "ConnectToWiFiNetwork Failed");
-            cb(ES_NETWORKNOTCONNECTED);
+            cb(ES_ERROR, ES_ON_BOARDING_STATE);
             return ES_ERROR;
         }
         else{
             OC_LOG(INFO, ES_ENROLLEE_TAG, "ConnectToWiFiNetwork Success");
-            cb(ES_NETWORKCONNECTED);
+            cb(ES_OK, ES_ON_BOARDED_STATE);
             return ES_OK;
         }
     }

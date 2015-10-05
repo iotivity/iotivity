@@ -27,10 +27,8 @@
 #ifndef EASYSETUP_ENROLLEE_H__
 #define EASYSETUP_ENROLLEE_H__
 
-// Do not remove the include below
 #include "Arduino.h"
 #include "escommon.h"
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,7 +39,7 @@ extern "C" {
  *
  * @param esResult ESResult provides the current state of the Enrollee Device
  */
-typedef void (*EventCallback)(ESResult esResult);
+typedef void (*EventCallback)(ESResult esResult, EnrolleeState enrolleeState);
 
 /**
  * This function Initializes the EasySetup. This API must be called prior to invoking any other API

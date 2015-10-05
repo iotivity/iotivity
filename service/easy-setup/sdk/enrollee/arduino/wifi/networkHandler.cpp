@@ -110,7 +110,7 @@ ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCa
 
     if (cb != NULL)
     {
-        cb(ES_NETWORKFOUND);
+        cb(ES_OK);
     }
 
     if (WiFi.status() == WL_CONNECTED)

@@ -60,6 +60,7 @@ static const char * UNICAST_PROV_STATUS_QUERY = "coap://%s:%d%s";
 
 typedef enum
 {
+
     ES_ERROR = -1,
     ES_OK = 0,
     ES_NETWORKFOUND = 1,
@@ -71,6 +72,53 @@ typedef enum
     ES_RECVUPDATEOFPROVRES,
     ES_RECVTRIGGEROFPROVRES,
 } ESResult;
+
+typedef enum
+{
+    /**
+        * Default state of the device
+        */
+    ES_INIT_STATE,
+
+    /**
+        * Device will move to this state once the on boarding begins
+        */
+    ES_ON_BOARDING_STATE,
+
+    /**
+        * Device will move to this state after successful on-boarding of the device
+        */
+    ES_ON_BOARDED_STATE,
+
+    /**
+        * Device will move to this state once the on boarding is done
+        */
+    ES_PROVISIONING_STATE,
+
+    /**
+        * Easy setup process is successful.
+        */
+    ES_PROVISIONED_STATE,
+
+    /**
+        * This state is arbitrary one, any time device can come into this state
+        * Device will move to this state if the ownership transfer initiated  by the Application
+        */
+    ES_OWNERSHIP_TRANSFERRING_STATE,
+
+    /**
+        * This state is arbitrary one, any time device can come into this state
+        * Device will move to this state if the ownership transfer is completed
+        */
+    ES_OWNERSHIP_TRANSFERRED_STATE,
+
+    /**
+        * This state is arbitrary one, any time device can come into this state
+        * Device will move to this state once the Application factory reset the device
+        */
+    ES_FACTORY_RESET_STATE,
+}EnrolleeState;
+
 
 
 /**
