@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<!--
+    Striped by HTML5 UP
+    html5up.net | @n33co
+    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html ng-app="wsi">
+    <head>
+        <title>WSI Controller</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+        <link rel="stylesheet" href="assets/css/main.css" />
+        <!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    </head>
+    <body ng-controller="serviceController">
+
+        <!-- Content -->
+            <div id="content">
+                <article class="box post post-excerpt">
+                    <h2><a href="#">WSI Service Configuration</a></h2>
+                </article>
+                
+                <div class="row">
+                    <div class="col-sm-8  text-center">
+                        <form>
+                            <div class="form-group">
+                                <textarea class="form-control" rows="10" ng-model="formData.text"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg" ng-click="createService()">Add Service Description</button>
+                            <p />
+                            <div class="form-group">
+                                <textarea class="form-control" rows="5" ng-model="requestData.text"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg" ng-click="sendRequest()">Send Request</button>
+                            <p />
+                        </form>
+                    </div>
+                    <div class="col-sm-8 col-sm-offset-2"> {{ response }} </div>
+                </div>
+            </div>
+
+        <!-- Sidebar -->
+            <div id="sidebar">
+            <h1 id="logo"><a href="#">WSI</a></h1>
+            <section class="box search">
+                <form method="post" action="#">
+                    <input type="text" class="text" name="search" placeholder="Search" />
+                </form>
+            </section>
+
+            <section class="box recent-posts">
+                <header>
+                    <h4>Services List (<span>{{ services.length }}</span>)</h4>
+                </header>
+                <ul>
+                    <div class="checkbox" ng-repeat="service in services">
+                        <label>
+                            <li><input type="checkbox" ng-click="deleteService(service._id, service.name)"> {{ service.name }}</li>
+                        </label>
+                    </div>
+                </ul>
+            </section>
+
+            <section class="box recent-posts">
+                <header>
+                    <h4>Testing</h4>
+                </header>
+                <ul>
+                    <li><input name = "capradio" type="radio" ng-click="webgetweather()">Signin With Twitter</li></li>
+                    <li><input name = "capradio" type="radio" ng-click="webgetweather()">Get Weather</li>
+                    <li><input name = "capradio" type="radio" ng-click="webputtemp()">Put Temperature</li>
+                    <li><input name = "capradio" type="radio" ng-click="iotivitygettemp()">IoTivity Get Temperature</li>
+                    <li><input name = "capradio" type="radio" ng-click="iotivityposttemp()">Iotivity Post Temperature</li>
+                </ul>
+            </section>
+            </div>
+
+            <script src="assets/js/jquery.min.js"></script>
+            <script src="assets/js/skel.min.js"></script>
+            <script src="assets/js/util.js"></script>
+            <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+            <script src="assets/js/main.js"></script>
+            <script src="assets/js/angular.min.js"></script>
+            <script src="assets/js/controllers/serviceController.js"></script>
+            <script src="assets/js/services/wsiservice.js"></script>
+            <script src="assets/js/core.js"></script>
+    </body>
+</html>
+<!-- Copyright
+    <ul id="copyright">
+        <li>&copy; Untitled.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+    </ul>
+-->

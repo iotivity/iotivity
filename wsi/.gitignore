@@ -1,0 +1,17 @@
+.metadata
+Debug
+SA_Report
+.cproject
+.exportMap
+.tproject
+*.o
+*.os
+*.so
+*.so.*
+nbproject
+.sconsign.dblite
+node_modules
+junk
+Code
+iotivity/build
+npm-debug.log
