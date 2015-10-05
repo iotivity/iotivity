@@ -674,6 +674,7 @@ INPUT                  = . \
                          ../../service/resource-container/include \
                          ../../service/resource-container/bundle-api/include \
                          ../../service/things-manager/sdk/inc \
+                         ../../service/easy-setup/sdk/common \
                          ../../service/easy-setup/sdk/enrollee/api \
                          ../../service/resource-directory/include
 

@@ -37,7 +37,7 @@
 
 #include <string.h>
 #include "logger.h"
-#include "common.h"
+#include "escommon.h"
 
 #define MAXSSIDLEN 33
 #define MAXNETCREDLEN 20

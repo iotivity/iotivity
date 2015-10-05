@@ -26,7 +26,7 @@
 
 #include "logger.h"
 #include "ocstack.h"
-#include "common.h"
+#include "escommon.h"
 
 //-----------------------------------------------------------------------------
 // Defines

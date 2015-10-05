@@ -24,7 +24,7 @@
 #include <string.h>
 #include "logger.h"
 #include "ocstack.h"
-#include "common.h"
+#include "escommon.h"
 #include "networkHandler.h"
 #include "octypes.h"
 

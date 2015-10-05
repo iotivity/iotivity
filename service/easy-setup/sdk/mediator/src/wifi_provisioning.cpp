@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-// NOTE : Keeping Wifi provisioning in this file to have adaptability while doing OOPs refactoring 
+// NOTE : Keeping Wifi provisioning in this file to have adaptability while doing OOPs refactoring
 
 #include "provisioning.h"
 
@@ -32,7 +32,7 @@
 
 //EasySetup include files
 #include "ocpayload.h"
-#include "common.h"
+#include "escommon.h"
 
 // External includes
 #include "logger.h"

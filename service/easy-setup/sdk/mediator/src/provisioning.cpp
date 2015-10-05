@@ -30,7 +30,7 @@
 
 //EasySetup include files
 #include "ocpayload.h"
-#include "common.h"
+#include "escommon.h"
 
 
 // External includes
