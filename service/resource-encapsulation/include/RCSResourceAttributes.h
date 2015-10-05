@@ -600,6 +600,7 @@ namespace OIC
             const Value& m_valueRef;
         };
 
+        //! @cond
         template< typename T >
         struct RCSResourceAttributes::IsSupportedTypeHelper
         {
@@ -619,6 +620,7 @@ namespace OIC
         };
 
         template < typename T > constexpr int RCSResourceAttributes::IndexOfType< T >::value;
+        //! @endcond
 
         /**
          * @relates RCSResourceAttributes::Type
