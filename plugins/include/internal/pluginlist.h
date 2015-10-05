@@ -42,6 +42,9 @@ OCStackResult DeletePluginList();
 OCStackResult GetResourceFromHandle(PIPluginBase * plugin, PIResource ** piResource,
                                     OCResourceHandle * resourceHandle);
 
+OCStackResult GetResourceFromURI(PIPluginBase * plugin, PIResource ** piResource,
+                                    const char * uri);
+
 OCStackResult AddResourceToPlugin(PIPluginBase * plugin, PIResourceBase * resource);
 
 OCStackResult DeleteResource(PIPluginBase * plugin, PIResourceBase * resource);
