@@ -196,16 +196,6 @@ CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requ
 CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo);
 
 /**
- * Send notification to the remote object.
- * @param[in]   object           Endpoint where the payload need to be sent.
- *                               This endpoint is delivered with Request or response callback.
- * @param[in]   responseInfo     Information for the response.
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
- */
-CAResult_t CASendNotification(const CAEndpoint_t *object,
-                      const  CAResponseInfo_t *responseInfo);
-
-/**
  * Select network to use.
  * @param[in]   interestedNetwork    Connectivity Type enum.
  * @return  ::CA_STATUS_OK or ::CA_NOT_SUPPORTED or

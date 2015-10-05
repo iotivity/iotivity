@@ -779,7 +779,7 @@ void send_notification()
     CAPayload_t payload = (CAPayload_t) "TempNotificationData";
     size_t payloadSize = strlen((const char *) payload);
 
-    CAInfo_t respondData = { .type = messageType,
+    CAInfo_t requestData = { .type = messageType,
                              .messageId = 0,
                              .token = token,
                              .tokenLength = tokenLength,
@@ -787,13 +787,13 @@ void send_notification()
                              .numOptions = 0,
                              .payload = payload,
                              .payloadSize = payloadSize,
-                             .resourceUri = (CAURI_t)uri };
+                             .resourceUri = (CAURI_t) uri };
 
-    CAResponseInfo_t responseInfo = { .result = CA_CONTENT,
-                                      .info = respondData };
+    CARequestInfo_t requestInfo = { .method = CA_GET,
+                                    .info = requestData };
 
     // send request
-    res = CASendNotification(endpoint, &responseInfo);
+    res = CASendRequest(endpoint, &requestInfo);
     if (CA_STATUS_OK != res)
     {
         printf("Send notification error, error code: %d\n", res);

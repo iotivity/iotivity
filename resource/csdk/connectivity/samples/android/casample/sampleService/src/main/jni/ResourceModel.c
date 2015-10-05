@@ -647,8 +647,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject obj, jstring uri,
                                                             jstring payload, jint selectedNetwork,
-                                                            jint isSecured, jint msgType,
-                                                            jint responseValue)
+                                                            jint isSecured, jint msgType)
 {
     LOGI("selectedNetwork - %d", selectedNetwork);
     if (!env || !obj)
@@ -714,11 +713,11 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
         return;
     }
 
-    CAInfo_t responseData = { 0 };
-    responseData.token = token;
-    responseData.tokenLength = tokenLength;
-    responseData.resourceUri = (CAURI_t) malloc(sizeof(resourceURI));
-    if (NULL == responseData.resourceUri)
+    CAInfo_t requestData = { 0 };
+    requestData.token = token;
+    requestData.tokenLength = tokenLength;
+    requestData.resourceUri = (CAURI_t) malloc(sizeof(resourceURI));
+    if (NULL == requestData.resourceUri)
     {
         LOGE("Memory allocation failed!");
         // destroy token
@@ -727,13 +726,13 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
         CADestroyEndpoint(endpoint);
         return;
     }
-    memcpy(responseData.resourceUri, resourceURI, sizeof(resourceURI));
+    memcpy(requestData.resourceUri, resourceURI, sizeof(resourceURI));
 
     if (1 == isSecured)
     {
         uint32_t length = sizeof(SECURE_INFO_DATA) + strlen(resourceURI);
-        responseData.payload = (CAPayload_t) malloc(length);
-        if (NULL == responseData.payload)
+        requestData.payload = (CAPayload_t) malloc(length);
+        if (NULL == requestData.payload)
         {
             LOGE("Memory allocation failed!");
             // destroy token
@@ -741,17 +740,17 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
             // destroy remote endpoint
             CADestroyEndpoint(endpoint);
 
-            free(responseData.resourceUri);
+            free(requestData.resourceUri);
             return;
         }
-        snprintf((char *) responseData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
-        responseData.payloadSize = length;
+        snprintf((char *) requestData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
+        requestData.payloadSize = length;
     }
     else
     {
         uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(resourceURI);
-        responseData.payload = (CAPayload_t) malloc(length);
-        if (NULL == responseData.payload)
+        requestData.payload = (CAPayload_t) malloc(length);
+        if (NULL == requestData.payload)
         {
             LOGE("Memory allocation failed!");
             // destroy token
@@ -759,21 +758,21 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
             // destroy remote endpoint
             CADestroyEndpoint(endpoint);
 
-            free(responseData.resourceUri);
+            free(requestData.resourceUri);
             return;
         }
-        snprintf((char *) responseData.payload, length, NORMAL_INFO_DATA, resourceURI);
-        responseData.payloadSize = length;
+        snprintf((char *) requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
+        requestData.payloadSize = length;
     }
 
-    responseData.type = messageType;
+    requestData.type = messageType;
 
-    CAResponseInfo_t responseInfo = { 0 };
-    responseInfo.result = responseValue;
-    responseInfo.info = responseData;
+    CARequestInfo_t requestInfo = { 0 };
+    requestInfo.method = CA_GET;
+    requestInfo.info = requestData;
 
     // send notification
-    if (CA_STATUS_OK != CASendNotification(endpoint, &responseInfo))
+    if (CA_STATUS_OK != CASendRequest(endpoint, &requestInfo))
     {
         LOGE("Could not send notification");
     }
@@ -786,8 +785,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
     // destroy remote endpoint
     CADestroyEndpoint(endpoint);
 
-    free(responseData.payload);
-    free(responseData.resourceUri);
+    free(requestData.payload);
+    free(requestData.resourceUri);
 }
 
 JNIEXPORT void JNICALL
