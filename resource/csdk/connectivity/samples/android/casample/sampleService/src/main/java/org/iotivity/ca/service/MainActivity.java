@@ -383,7 +383,7 @@ public class MainActivity extends Activity {
             DLog.v(TAG, "SendNotification click");
             if ( selectedNetwork != -1) {
                 RM.RMSendNotification(mNotification_ed.getText().toString(),
-                    null, selectedNetwork, isSecured, msgType, responseValue);
+                    null, selectedNetwork, isSecured, msgType);
             }
             else {
                 DLog.v(TAG, "Please Select Network Type");

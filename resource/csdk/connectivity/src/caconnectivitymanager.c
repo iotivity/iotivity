@@ -248,18 +248,6 @@ CAResult_t CASendRequest(const CAEndpoint_t *object,const CARequestInfo_t *reque
     return CADetachRequestMessage(object, requestInfo);
 }
 
-CAResult_t CASendNotification(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
-{
-    OIC_LOG(DEBUG, TAG, "CASendNotification");
-
-    if(!g_isInitialized)
-    {
-        return CA_STATUS_NOT_INITIALIZED;
-    }
-
-    return CADetachResponseMessage(object, responseInfo);
-}
-
 CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
 {
     OIC_LOG(DEBUG, TAG, "CASendResponse");

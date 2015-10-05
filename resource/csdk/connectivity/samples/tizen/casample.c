@@ -771,20 +771,20 @@ void send_notification()
 
     printf("Generated token %s\n", token);
 
-    CAInfo_t respondData = { 0 };
-    respondData.token = token;
-    respondData.tokenLength = tokenLength;
-    respondData.payload = (CAPayload_t) "TempNotificationData";
-    respondData.payloadSize = strlen((const char *) respondData.payload);
-    respondData.type = messageType;
-    respondData.resourceUri = (CAURI_t)uri;
+    CAInfo_t requestData = { 0 };
+    requestData.token = token;
+    requestData.tokenLength = tokenLength;
+    requestData.payload = (CAPayload_t) "TempNotificationData";
+    requestData.payloadSize = strlen((const char *) requestData.payload);
+    requestData.type = messageType;
+    requestData.resourceUri = (CAURI_t)uri;
 
-    CAResponseInfo_t responseInfo = { 0 };
-    responseInfo.result = CA_CONTENT;
-    responseInfo.info = respondData;
+    CARequestInfo_t requestInfo = { 0 };
+    requestInfo.method = CA_GET;
+    requestInfo.info = requestData;
 
     // send notification
-    res = CASendNotification(endpoint, &responseInfo);
+    res = CASendRequest(endpoint, &requestInfo);
     if (CA_STATUS_OK != res)
     {
         printf("Send notification error, error code: %d\n", res);
