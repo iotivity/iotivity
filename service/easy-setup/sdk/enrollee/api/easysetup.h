@@ -29,7 +29,8 @@
 
 // Do not remove the include below
 #include "Arduino.h"
-#include "networkHandler.h"
+#include "escommon.h"
+
 
 #ifdef __cplusplus
 extern "C" {

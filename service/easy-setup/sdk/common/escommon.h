@@ -91,7 +91,7 @@ typedef enum {
 } ProvStatus;
 
 /**
- * Response from queries to remote servers. Queries are made by calling the @ref OCDoResource API.
+ * Response from queries to remote servers.
  */
 typedef struct {
     // Provisioning Status
