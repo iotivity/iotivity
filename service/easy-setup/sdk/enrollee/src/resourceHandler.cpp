@@ -58,7 +58,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
                                                 OCRepPayload** payload);
 OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest);
 
-int g_flag = 0;
+static int g_flag = 0;
 
 ResourceEventCallback g_cbForResEvent = NULL;
 
