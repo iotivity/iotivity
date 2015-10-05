@@ -608,7 +608,7 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
         case OC_STACK_OK:
            switch (method)
            {
-               case OC_REST_PUT: 
+               case OC_REST_PUT:
                case OC_REST_POST:
                    // This Response Code is like HTTP 204 "No Content" but only used in
                    // response to POST and PUT requests.
@@ -1702,17 +1702,17 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     switch (myStackMode)
     {
         case OC_CLIENT:
-			CARegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
+            CARegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartDiscoveryServer());
             OC_LOG(INFO, TAG, "Client mode: CAStartDiscoveryServer");
             break;
         case OC_SERVER:
-			SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
+            SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartListeningServer());
             OC_LOG(INFO, TAG, "Server mode: CAStartListeningServer");
             break;
         case OC_CLIENT_SERVER:
-			SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
+            SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartListeningServer());
             if(result == OC_STACK_OK)
             {
@@ -1786,7 +1786,7 @@ OCStackResult OCStop()
     // Remove all the client callbacks
     DeleteClientCBList();
 
-	// De-init the SRM Policy Engine
+    // De-init the SRM Policy Engine
     // TODO after BeachHead delivery: consolidate into single SRMDeInit()
     SRMDeInitPolicyEngine();
 
@@ -2394,6 +2394,12 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
 
             // send request
             ret = OCSendRequest(&endpoint, &requestInfo);
+            break;
+
+        case OC_REST_DISCOVER:
+            OC_LOG_V(INFO, TAG, "Cancelling discovery callback for resource %s",
+                                           clientCB->requestUri);
+            FindAndDeleteClientCB(clientCB);
             break;
 
 #ifdef WITH_PRESENCE
