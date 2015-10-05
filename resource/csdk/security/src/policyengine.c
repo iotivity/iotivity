@@ -96,6 +96,9 @@ void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
     context->matchingAclFound = false;
     context->amsProcessing = false;
     context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
+
+    FreeCARequestInfo(context->amsMgrContext->requestInfo);
+    OICFree(context->amsMgrContext->endpoint);
     memset(context->amsMgrContext, 0, sizeof(AmsMgrContext_t));
 
     // Set state.
@@ -442,14 +445,7 @@ SRMAccessResponse_t CheckPermission(
     // Capture retVal before resetting state for next request.
     retVal = context->retVal;
 
-    //Change the state of PE to "AWAITING_AMS_RESPONSE", if waiting
-    //for response from AMS service else to "AWAITING_REQUEST"
-    if(ACCESS_WAITING_FOR_AMS == retVal)
-    {
-        OC_LOG(INFO, TAG, "Setting PE State to AWAITING_AMS_RESPONSE");
-        context->state = AWAITING_AMS_RESPONSE;
-    }
-    else if(!context->amsProcessing)
+   if(!context->amsProcessing)
     {
         OC_LOG(INFO, TAG, "Resetting PE context and PE State to AWAITING_REQUEST");
         SetPolicyEngineState(context, AWAITING_REQUEST);
@@ -466,14 +462,18 @@ exit:
  */
 OCStackResult InitPolicyEngine(PEContext_t *context)
 {
-    if(NULL== context)
+    if(NULL == context)
     {
         return OC_STACK_ERROR;
     }
 
-    context->amsMgrContext = (AmsMgrContext_t *)OICMalloc(sizeof(AmsMgrContext_t));
-    SetPolicyEngineState(context, AWAITING_REQUEST);
+    context->amsMgrContext = (AmsMgrContext_t *)OICCalloc(1, sizeof(AmsMgrContext_t));
+    if(NULL == context->amsMgrContext)
+    {
+        return OC_STACK_ERROR;
+    }
 
+    SetPolicyEngineState(context, AWAITING_REQUEST);
     return OC_STACK_OK;
 }
 

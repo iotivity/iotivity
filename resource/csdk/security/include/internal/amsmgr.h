@@ -125,11 +125,19 @@ bool FoundAmaclForRequest(PEContext_t *context);
 
 /*
  * This method is used by Policy engine to process AMS request
- * *
+ *
  * @param context   Policy engine context.
  *
- * @return          None
  */
 void ProcessAMSRequest(PEContext_t *context);
+
+
+/*
+ * This method is used by Policy engine to free AMS context requestInfo
+ *
+ * @param requestInfo   pointer to CARequestInfo_t.
+ *
+ */
+void FreeCARequestInfo(CARequestInfo_t *requestInfo);
 
 #endif //IOTVT_SRM_AMSMGR_H
