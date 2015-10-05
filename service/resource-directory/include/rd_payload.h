@@ -126,7 +126,7 @@ void OCRDPayloadLog(LogLevel level, const char *tag, const OCRDPayload *payload)
  * @param payload Pointer to already allocated memory for OCRDPublish.
  */
 void OCRDPublishPayloadLog(LogLevel level, const char *tag,
-        const OCRDPublishPayload *rdPublish);
+        const OCRDPublishPayload *payload);
 
 #ifdef __cplusplus
 }
