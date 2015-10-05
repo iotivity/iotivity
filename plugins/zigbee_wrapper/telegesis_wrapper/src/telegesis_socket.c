@@ -88,6 +88,8 @@ static TWEntryTypePair TWEntryTypePairArray[] =
     {"SEQ:",            1, TW_SEQ},
     {"ZENROLLREQ:",     1, TW_ZENROLLREQ},
     {"ENROLLED:",       1, TW_ENROLLED},
+    {"ZONESTATUS:",     1, TW_ZONESTATUS},
+    {"AddrResp:",       1, TW_ADDRESS_RESPONSE},
     {"Unknown:",        0, TW_NONE},
     {"Unknown:",        1, TW_MAX_ENTRY}
 };

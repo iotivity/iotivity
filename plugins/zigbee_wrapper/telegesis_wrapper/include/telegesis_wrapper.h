@@ -132,6 +132,7 @@ typedef struct
 typedef void (*TWDeviceFoundCallback)(TWDevice* device);
 typedef void (*TWEnrollmentSucceedCallback)(TWEnrollee* enrollee);
 typedef void (*TWDeviceStatusUpdateCallback)(TWUpdate* update);
+typedef void (*TWInitCompleteCallback)(bool status);
 
 /**
  *
@@ -208,7 +209,7 @@ OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState);
  *
  * @param[in] level The The meaning of ‘level’ is device dependent
  *                  e.g. for a light it may mean brightness level.
-
+ *
  * @param[in] transTime The time taken to move to the new level
  *
  */
@@ -228,12 +229,24 @@ OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newSta
 
 /**
  *
+ * Move Color Temperature
+ *
+ * @param[in] nodeId The node id of the device.
+ * @param[in] endpointId The endpoint id from which the attribute belongs.
+ * @param[in] colorTemperature 16 bit hexadecimal number.
+ * @param[in] transTime The time taken to move to the new level.
+ *
+ */
+OCStackResult TWColorMoveToColorTemperature(char* nodeId, char* endpointId,
+                                            char* colorTemperature, char* transTime);
+
+/**
+ *
  * Sets discovery callback.
  * This callback will be called when TWDiscover() discovers ZigBee device(s).
  *
  */
 OCStackResult TWSetDiscoveryCallback(const TWDeviceFoundCallback callback);
-
 /**
  *
  * Sets status update callback.
@@ -252,6 +265,13 @@ OCStackResult TWSetStatusUpdateCallback(TWDeviceStatusUpdateCallback callback);
  *
  */
 OCStackResult TWListenForStatusUpdates(char* nodeId, char* endpointId);
+
+/**
+ *
+ * Process TWEntry.
+ *
+ */
+OCStackResult TWProcess();
 
 /**
  *

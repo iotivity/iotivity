@@ -59,6 +59,8 @@ typedef enum
     TW_SEQ,
     TW_ZENROLLREQ,
     TW_ENROLLED,
+    TW_ZONESTATUS,
+    TW_ADDRESS_RESPONSE,
     TW_NONE,
     TW_MAX_ENTRY
 } TWEntryType;

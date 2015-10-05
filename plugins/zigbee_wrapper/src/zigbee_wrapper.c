@@ -292,8 +292,7 @@ OCStackResult ZigbeeStop(PIPlugin_Zigbee * plugin)
 OCStackResult ZigbeeProcess(PIPlugin_Zigbee * plugin)
 {
     (void)plugin;
-    // Invoke TelegesisProcess() at some point.
-    return OC_STACK_OK;
+    return TWProcess();
 }
 
 // Function returns an OIC Smart Home resource Type
