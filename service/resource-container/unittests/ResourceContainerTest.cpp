@@ -25,6 +25,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <memory>
 
 #include <UnitTestHelper.h>
 
@@ -70,6 +71,25 @@ void getCurrentPath(std::string *pPath)
     }
 #endif
     pPath->append(buffer);
+}
+
+template<typename Derived, typename Base, typename Del>
+std::unique_ptr<Derived, Del>
+static_unique_ptr_cast( std::unique_ptr<Base, Del>&& p )
+{
+    auto d = static_cast<Derived *>(p.release());
+    return std::unique_ptr<Derived, Del>(d, std::move(p.get_deleter()));
+}
+
+template<typename Derived, typename Base, typename Del>
+std::unique_ptr<Derived, Del>
+dynamic_unique_ptr_cast( std::unique_ptr<Base, Del>&& p )
+{
+    if(Derived *result = dynamic_cast<Derived *>(p.get())) {
+        p.release();
+        return std::unique_ptr<Derived, Del>(result, std::move(p.get_deleter()));
+    }
+    return std::unique_ptr<Derived, Del>(nullptr, p.get_deleter());
 }
 
 /*Fake bundle resource class for testing*/
@@ -127,9 +147,11 @@ TEST_F(ResourceContainerTest, BundleLoadedWhenContainerStartedWithValidConfigFil
     m_pResourceContainer->startContainer(m_strConfigPath);
 
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
-    EXPECT_TRUE(((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isLoaded());
+    unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
+    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    EXPECT_TRUE( firstInternal->isLoaded() );
     EXPECT_NE(nullptr,
-              ((BundleInfoInternal *)( *m_pResourceContainer->listBundles().begin()))->getBundleHandle());
+    		firstInternal->getBundleHandle());
 
     m_pResourceContainer->stopContainer();
 }
@@ -139,10 +161,10 @@ TEST_F(ResourceContainerTest, BundleActivatedWhenContainerStartedWithValidConfig
     m_pResourceContainer->startContainer(m_strConfigPath);
 
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
-    EXPECT_TRUE(
-        ((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isActivated());
-    EXPECT_NE(nullptr,
-              ((BundleInfoInternal *)( *m_pResourceContainer->listBundles().begin()))->getBundleActivator());
+    unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
+    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    EXPECT_TRUE(firstInternal->isActivated());
+    EXPECT_NE(nullptr,firstInternal->getBundleActivator());
 
     m_pResourceContainer->stopContainer();
 }
@@ -174,8 +196,9 @@ TEST_F(ResourceContainerTest, BundleStoppedWithStartBundleAPI)
     m_pResourceContainer->startContainer(m_strConfigPath);
     m_pResourceContainer->stopBundle("oic.bundle.test");
 
-    EXPECT_FALSE(
-        ((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isActivated());
+    unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
+    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    EXPECT_FALSE(firstInternal->isActivated());
 
     m_pResourceContainer->stopContainer();
 }
@@ -185,9 +208,9 @@ TEST_F(ResourceContainerTest, BundleStartedWithStartBundleAPI)
     m_pResourceContainer->startContainer(m_strConfigPath);
     m_pResourceContainer->stopBundle("oic.bundle.test");
     m_pResourceContainer->startBundle("oic.bundle.test");
-
-    EXPECT_TRUE(
-        ((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isActivated());
+    unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
+    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    EXPECT_TRUE(firstInternal->isActivated());
 
     m_pResourceContainer->stopContainer();
 }
@@ -195,19 +218,21 @@ TEST_F(ResourceContainerTest, BundleStartedWithStartBundleAPI)
 TEST_F(ResourceContainerTest, AddNewSoBundleToContainer)
 {
     std::map<string, string> bundleParams;
-    std::list<RCSBundleInfo *> bundles;
+    std::list<std::unique_ptr<RCSBundleInfo>> bundles;
 
     bundles = m_pResourceContainer->listBundles();
     m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", "test", bundleParams);
 
     EXPECT_EQ(bundles.size() + 1, m_pResourceContainer->listBundles().size());
-    EXPECT_TRUE(((BundleInfoInternal *)(*m_pResourceContainer->listBundles().begin()))->isLoaded());
+    unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
+    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    EXPECT_TRUE(firstInternal->isLoaded());
 }
 
 TEST_F(ResourceContainerTest, RemoveSoBundleFromContainer)
 {
     std::map<string, string> bundleParams;
-    std::list<RCSBundleInfo *> bundles;
+    std::list<std::unique_ptr<RCSBundleInfo>> bundles;
 
     bundles = m_pResourceContainer->listBundles();
     m_pResourceContainer->removeBundle("oic.bundle.test");
@@ -218,7 +243,7 @@ TEST_F(ResourceContainerTest, RemoveSoBundleFromContainer)
 TEST_F(ResourceContainerTest, AddBundleAlreadyRegistered)
 {
     std::map<string, string> bundleParams;
-    std::list<RCSBundleInfo *> bundles;
+    std::list<std::unique_ptr<RCSBundleInfo> > bundles;
 
     m_pResourceContainer->addBundle("oic.bundle.test", "", "libTestBundle.so", "test", bundleParams);
     bundles = m_pResourceContainer->listBundles();
