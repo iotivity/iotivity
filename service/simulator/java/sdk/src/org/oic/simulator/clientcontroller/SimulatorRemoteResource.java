@@ -24,6 +24,7 @@ import org.oic.simulator.NoSupportException;
 import org.oic.simulator.OperationInProgressException;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorResourceModel;
+import org.oic.simulator.SimulatorResult;
 
 /**
  * SimulatorRemoteResource represents a Resource running in the remote Simulator
@@ -156,6 +157,10 @@ public class SimulatorRemoteResource {
     public void get(Map<String, String> queryParamsMap,
             IGetListener onGetListener) throws InvalidArgsException,
             NoSupportException, SimulatorException {
+        if (null == onGetListener)
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
+                    "Parameter passed in invalid");
         this.get(null, queryParamsMap, onGetListener);
     }
 
@@ -180,7 +185,17 @@ public class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void get(String resourceInterface,
+    public void get(String resourceInterface,
+            Map<String, String> queryParamsMap, IGetListener onGetListener)
+            throws InvalidArgsException, NoSupportException, SimulatorException {
+        if (resourceInterface.isEmpty() || null == onGetListener)
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
+                    "Parameter passed in invalid");
+        this.get(resourceInterface, queryParamsMap, onGetListener);
+    }
+
+    private native void nativeGet(String resourceInterface,
             Map<String, String> queryParamsMap, IGetListener onGetListener)
             throws InvalidArgsException, NoSupportException, SimulatorException;
 
@@ -209,6 +224,10 @@ public class SimulatorRemoteResource {
     public void put(SimulatorResourceModel representation,
             Map<String, String> queryParamsMap, IPutListener onPutListener)
             throws InvalidArgsException, NoSupportException, SimulatorException {
+        if (null == representation || null == onPutListener)
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
+                    "Parameter passed in invalid");
         this.put(null, representation, queryParamsMap, onPutListener);
     }
 
@@ -236,7 +255,18 @@ public class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    private native void put(String resourceInterface,
+    public void put(String resourceInterface,
+            SimulatorResourceModel representation,
+            Map<String, String> queryParamsMap, IPutListener onPutListener)
+            throws InvalidArgsException, NoSupportException, SimulatorException {
+        if (resourceInterface.isEmpty() || null == representation || null == onPutListener)
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
+                    "Parameter passed in invalid");
+        this.put(resourceInterface, representation, queryParamsMap, onPutListener);
+    }
+
+    private native void nativePut(String resourceInterface,
             SimulatorResourceModel representation,
             Map<String, String> queryParamsMap, IPutListener onPutListener)
             throws InvalidArgsException, NoSupportException, SimulatorException;
@@ -266,6 +296,10 @@ public class SimulatorRemoteResource {
     public void post(SimulatorResourceModel representation,
             Map<String, String> queryParamsMap, IPostListener onPostListener)
             throws InvalidArgsException, NoSupportException, SimulatorException {
+        if (null == representation || null == onPostListener)
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
+                    "Parameter passed in invalid");
         this.post(null, representation, queryParamsMap, onPostListener);
     }
 
@@ -293,7 +327,18 @@ public class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void post(String resourceInterface,
+    public void post(String resourceInterface,
+            SimulatorResourceModel representation,
+            Map<String, String> queryParamsMap, IPostListener onPostListener)
+            throws InvalidArgsException, NoSupportException, SimulatorException {
+        if (resourceInterface.isEmpty() || null == representation || null == onPostListener)
+            throw new InvalidArgsException(
+                SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
+                "Parameter passed in invalid");
+        this.post(resourceInterface, representation, queryParamsMap, onPostListener);
+    }
+
+    private native void nativePost(String resourceInterface,
             SimulatorResourceModel representation,
             Map<String, String> queryParamsMap, IPostListener onPostListener)
             throws InvalidArgsException, NoSupportException, SimulatorException;

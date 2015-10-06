@@ -389,7 +389,7 @@ public class SimulatorResourceServer {
      *             This exception will be thrown for other errors.
      */
     public native void stopAutomation(int automationId)
-            throws SimulatorException;
+            throws InvalidArgsException, SimulatorException;
 
     /**
      * API to remove an attribute from the simulated resource.
