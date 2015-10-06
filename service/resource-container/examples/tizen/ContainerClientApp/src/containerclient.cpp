@@ -18,30 +18,25 @@
  *
  ******************************************************************/
 
-#include "recontainerclient.h"
+#include "containerclient.h"
 
-#include "reclientmain.h"
+#include "clientmain.h"
 #include "RCSDiscoveryManager.h"
 #include "RCSResourceAttributes.h"
 #include "RCSAddress.h"
 
 #include <string>
-#include "mutex"
-#include "condition_variable"
 
 using namespace std;
 using namespace OC;
 using namespace OIC::Service;
 
 std::shared_ptr<RCSRemoteResourceObject>  g_containerResource;
+std::vector<RCSRemoteResourceObject::Ptr> resourceList;
+std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
 
-const std::string resourceTypeLight = "?rt=oic.light.control";
-const std::string resourceTypeSoftsensor = "?rt=oic.softsensor";
-const std::string targetLightUri = OC_RSRVD_WELL_KNOWN_URI + resourceTypeLight;
-const std::string targetSoftsensorUri = OC_RSRVD_WELL_KNOWN_URI + resourceTypeSoftsensor;
-
-std::mutex g_containerMtx;
-std::condition_variable g_containerCond;
+const std::string resourceTypeLight = "oic.r.light";
+const std::string resourceTypeSoftsensor = "oic.r.sensor";
 
 static Evas_Object *log_entry = NULL;
 static Evas_Object *listnew = NULL;
@@ -65,7 +60,9 @@ static void list_selected_cb(void *data, Evas_Object *obj, void *event_info)
 
 static void onDestroy()
 {
-    g_containerResource = NULL;
+	dlog_print(DLOG_INFO, LOG_TAG, "#### Destroy sequence called");
+	resourceList.clear();
+    g_containerResource = nullptr;
 }
 
 void onContainerDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource)
@@ -75,9 +72,7 @@ void onContainerDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResourc
     std::string resourceURI = foundResource->getUri();
     std::string hostAddress = foundResource->getAddress();
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### Resource URI :  %s", resourceURI.c_str());
-    dlog_print(DLOG_INFO, LOG_TAG, "#### Resource Host : %S", hostAddress.c_str());
-
+    int resourceSize = resourceList.size() + 1;
     string logMessage = "Resource Found <br>";
     logMessage = logMessage + "URI: " + resourceURI + "<br>";
     logMessage = logMessage + "Host:" + hostAddress + "<br>";
@@ -86,10 +81,11 @@ void onContainerDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResourc
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
                                           &logMessage);
 
+    resourceList.push_back(foundResource);
+
     g_containerResource = foundResource;
 
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))showContainerAPIs, NULL);
-    g_containerCond.notify_all();
 }
 
 void *showContainerAPIs(void *data)
@@ -99,11 +95,14 @@ void *showContainerAPIs(void *data)
     int count = eina_list_count(eina_list);
     if (!count)
     {
-        elm_list_item_append(listnew, "1. Find Light resource", NULL, NULL,
+        elm_list_item_append(listnew, "1. Start Light resource Discovery", NULL, NULL,
                              findLight, NULL);
 
-        elm_list_item_append(listnew, "1. Find Softsensor resource", NULL, NULL,
+        elm_list_item_append(listnew, "2. Start Softsensor resource Discovery", NULL, NULL,
                              findSoftsensor, NULL);
+
+        elm_list_item_append(listnew, "3.Stop Discovery", NULL, NULL,
+        					cancelDiscoverResource, NULL);
 
         elm_list_go(listnew);
     }
@@ -112,28 +111,74 @@ void *showContainerAPIs(void *data)
 
 static void findLight(void *data, Evas_Object *obj, void *event_info)
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### Wait 2 seconds until discovered");
+	dlog_print(DLOG_INFO, LOG_TAG, "#### Light discovery started");
 
-    RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(), targetLightUri,
-            &onContainerDiscovered);
+	while (!discoveryTask)
+	{
+		try
+		{
+			discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
+								RCSAddress::multicast(), resourceTypeLight, &onContainerDiscovered);
+		}
+		catch (const RCSPlatformException &e)
+		{
+			std::cout << e.what() << std::endl;
+		}
+	}
 
-    std::unique_lock<std::mutex> lck(g_containerMtx);
-    g_containerCond.wait_for(lck, std::chrono::seconds(2));
-
-    dlog_print(DLOG_INFO, LOG_TAG, "#### Light Discovery over");
+	dlog_print(DLOG_INFO, LOG_TAG, "#### Light Discovery over");
 }
 
 static void findSoftsensor(void *data, Evas_Object *obj, void *event_info)
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### Wait 2 seconds until discovered");
+	dlog_print(DLOG_INFO, LOG_TAG, "#### SoftSensor discovery started");
 
-    RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(), targetSoftsensorUri,
-            &onContainerDiscovered);
+	while (!discoveryTask)
+	{
+		try
+		{
+			discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
+								RCSAddress::multicast(), resourceTypeSoftsensor, &onContainerDiscovered);
+		}
+		catch (const RCSPlatformException &e)
+		{
+			std::cout << e.what() << std::endl;
+		}
+	}
 
-    std::unique_lock<std::mutex> lck(g_containerMtx);
-    g_containerCond.wait_for(lck, std::chrono::seconds(2));
+	dlog_print(DLOG_INFO, LOG_TAG, "#### SoftSensor Discovery over");
+}
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### Softsensor Discovery over");
+static void cancelDiscoverResource(void *data, Evas_Object *obj, void *event_info)
+{
+    dlog_print(DLOG_INFO, LOG_TAG, "#### cancelDiscoverResource entry");
+    string logMessage = "";
+
+    if (!discoveryTask)
+    {
+        logMessage += "There is no discovery request <br>";
+    }
+    else
+    {
+        discoveryTask->cancel();
+
+        logMessage += "Discovery canceled <br>";
+
+        int resourceSize = resourceList.size();
+        if (!resourceSize)
+        {
+            logMessage += "No Resource Discovered <br>";
+        }
+        else
+        {
+            logMessage += std::to_string(resourceSize) + " : Resource Discovered <br>";
+        }
+
+    }
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateContainerLog,
+                                          &logMessage);
 }
 
 static Eina_Bool

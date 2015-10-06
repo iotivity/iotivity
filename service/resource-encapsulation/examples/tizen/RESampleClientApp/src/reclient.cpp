@@ -717,7 +717,7 @@ naviframe_pop_cb(void *data, Elm_Object_Item *it)
 }
 
 // Method to be called when the Group APIs UI Button is selected
-void group_cb(void *data, Evas_Object *obj, void *event_info)
+void client_cb(void *data, Evas_Object *obj, void *event_info)
 {
     Evas_Object *layout;
     Evas_Object *scroller;
