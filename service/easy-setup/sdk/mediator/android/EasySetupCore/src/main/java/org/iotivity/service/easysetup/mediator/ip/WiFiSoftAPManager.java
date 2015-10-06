@@ -201,58 +201,6 @@ public class WiFiSoftAPManager {
     }
 
     /**
-     * Fetch the current state of the Wi-Fi Soft AP
-     *
-     * @return {@link WIFI_AP_STATE}
-     */
-    public WIFI_AP_STATE getWifiApState() {
-        try {
-            Method method = mWifiManager.getClass().getMethod("getWifiApState");
-
-            int currentWiFiState = ((Integer) method.invoke(mWifiManager));
-            WIFI_AP_STATE wifi_ap_state_enum[] = WIFI_AP_STATE.class.getEnumConstants();
-            if (wifi_ap_state_enum != null)
-                return wifi_ap_state_enum[currentWiFiState];
-            else return WIFI_AP_STATE.WIFI_AP_STATE_FAILED;
-        } catch (Exception e) {
-            Log.e(this.getClass().toString(), "", e);
-            return WIFI_AP_STATE.WIFI_AP_STATE_FAILED;
-        }
-    }
-
-    /**
-     * Fetch the current Wi-Fi AP Configuration.
-     *
-     * @return AP details in {@link WifiConfiguration}
-     */
-    public WifiConfiguration getWifiApConfiguration() {
-        try {
-            Method method = mWifiManager.getClass().getMethod(
-                    "getWifiApConfiguration");
-            return (WifiConfiguration) method.invoke(mWifiManager);
-        } catch (Exception e) {
-            Log.e(this.getClass().toString(), "", e);
-            return null;
-        }
-    }
-
-    /**
-     * Set/Update the Wi-Fi AP Configuration.
-     *
-     * @return {@code true} if the operation succeeds, {@code false} otherwise
-     */
-    public boolean setWifiApConfiguration(WifiConfiguration wifiConfig) {
-        try {
-            Method method = mWifiManager.getClass().getMethod(
-                    "setWifiApConfiguration", WifiConfiguration.class);
-            return (Boolean) method.invoke(mWifiManager, wifiConfig);
-        } catch (Exception e) {
-            Log.e(this.getClass().toString(), "", e);
-            return false;
-        }
-    }
-
-    /**
      * Gets a list of the Soft AP clients connected to the Wi-Fi Soft Access point
      *
      * @param finishListener   Interface called when the scan method finishes
