@@ -44,6 +44,7 @@ import oic.simulator.serviceprovider.utils.Utility;
 import org.eclipse.swt.graphics.Image;
 import org.oic.simulator.IAutomation;
 import org.oic.simulator.ILogger.Level;
+import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.ResourceAttribute;
 import org.oic.simulator.ResourceAttribute.Range;
 import org.oic.simulator.ResourceAttribute.Type;
@@ -403,7 +404,7 @@ public class ResourceManager {
                         orderedResourceUriMap.remove(resourceType);
                     }
                 }
-            } else if (null != resourceURI) {
+            } else if (null != resourceType) {
                 orderedResourceUriMap.remove(resourceType);
             } else {
                 orderedResourceUriMap.clear();
@@ -1383,7 +1384,17 @@ public class ResourceManager {
             if (null != resourceServerN) {
                 try {
                     resourceServerN.stopAutomation(autoId);
-                } catch (SimulatorException e) {
+                } catch (InvalidArgsException e) {
+                    Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "[" + e.getClass().getSimpleName() + "]"
+                                    + e.code().toString() + "-"
+                                    + e.message());
+                    return;
+               }catch (SimulatorException e) {
                     Activator
                             .getDefault()
                             .getLogManager()
@@ -1522,6 +1533,16 @@ public class ResourceManager {
         // Call native method
         try {
             resourceServer.stopAutomation(autoId);
+        } catch (InvalidArgsException e) {
+            Activator
+            .getDefault()
+            .getLogManager()
+            .log(Level.ERROR.ordinal(),
+                    new Date(),
+                    "[" + e.getClass().getSimpleName() + "]"
+                            + e.code().toString() + "-"
+                            + e.message());
+            return false;
         } catch (SimulatorException e) {
             Activator
                     .getDefault()

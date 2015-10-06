@@ -47,6 +47,10 @@ public class SimulatorManager {
     public static SimulatorResourceServer createResource(String configPath,
             IResourceModelChangedListener listener)
             throws InvalidArgsException, SimulatorException {
+        if (configPath.isEmpty() || null == listener)
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
+                    "Parameter passed in invalid");
         SimulatorResourceServer simulatorResourceServerObj;
         simulatorResourceServerObj = SimulatorManagerNativeInterface
                 .createResource(configPath, listener);
@@ -76,6 +80,10 @@ public class SimulatorManager {
     public static SimulatorResourceServer[] createResource(String configPath,
             int count, IResourceModelChangedListener listener)
             throws InvalidArgsException, SimulatorException {
+        if (configPath.isEmpty() || count < 0 || null == listener)
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
+                    "Parameter passed in invalid");
         SimulatorResourceServer[] simulatorResourceServers;
         simulatorResourceServers = SimulatorManagerNativeInterface
                 .createResources(configPath, count, listener);

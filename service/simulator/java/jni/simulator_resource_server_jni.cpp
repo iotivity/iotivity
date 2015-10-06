@@ -603,8 +603,20 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_stopAutomation
         throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
         return;
     }
-
-    resource->stopUpdateAutomation(automationId);
+    
+	try
+    {
+        resource->stopUpdateAutomation(automationId);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+    }	
+    
     SIM_LOG(ILogger::INFO, "Automation has been forcibly stopped.")
 }
 
