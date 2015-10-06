@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.oic.simulator.test;
 
 import java.util.concurrent.CountDownLatch;
@@ -8,11 +24,15 @@ import org.oic.simulator.PlatformInfo;
 import org.oic.simulator.SimulatorManager;
 import org.oic.simulator.serviceprovider.SimulatorResourceServer;
 
+/**
+ * This class tests the functionality of Simulator Manager
+ * class APIs.
+ */
 public class SimulatorManagerTest extends TestCase
 {
 
     private static final String CONFIG_PATH = "./ramls/simple-light.raml";
-    private static final String RESOURCE_TYPE = "oic.light";
+    private static final String RESOURCE_TYPE = "oic.r.light";
 
     private CountDownLatch lockObject;
     private ResourceModelObject resourceModelObject;
@@ -257,18 +277,6 @@ public class SimulatorManagerTest extends TestCase
         assertTrue(simulatorResourceServers == null);
     }
 
-    /**
-     * When count is set to -ve
-     */
-    //TODO issue. Not coming out of loop
-    /*public void testCreateResourceCount_N05() {
-        int count = -10;
-
-        SimulatorResourceServer[] simulatorResourceServers = createResources(count);
-
-        assertTrue(simulatorResourceServers != null && simulatorResourceServers.length == 0);
-    }*/
-
     public void testDeleteResource_P01()
     {
         boolean result = true;
@@ -375,7 +383,7 @@ public class SimulatorManagerTest extends TestCase
     }
 
     /**
-     *  checkign for crash
+     *  checking for crash
      */
     public void testSetDeviceInfo_P01()
     {
@@ -383,58 +391,16 @@ public class SimulatorManagerTest extends TestCase
     }
 
     /**
-     *  checkign for crash
+     *  checking for crash
      *  Pass empty
      */
-    //TODO failing
     public void testSetDeviceInfo_N01()
     {
         SimulatorManager.setDeviceInfo("");
     }
 
     /**
-     *  checkign for crash
-     * pass null
-     */
-    //TODO failign
-    public void testSetDeviceInfo_N02()
-    {
-        SimulatorManager.setDeviceInfo(null);
-    }
-
-    //TODO crashing
-    /*public void testGetDeviceInfo_P01() {
-
-        lockObject = new CountDownLatch(1);
-
-        SimulatorManager.getDeviceInfo(new IDeviceInfo() {
-
-            @Override
-            public void onDeviceFound(DeviceInfo devInfo) {
-                info = devInfo;
-                lockObject.countDown();
-            }
-        });
-
-        try {
-            lockObject.await(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-        }
-
-        assertNotNull(info);
-    }*/
-
-    /**
-     * when listener is null
-     * Checkign crash
-     */
-    //TODO crashing
-    /*public void testGetDeviceInfo_N01() {
-        SimulatorManager.getDeviceInfo(null);
-    }*/
-
-    /**
-     * Checkign for crash
+     * Checking for crash
      */
     public void testSetPlatformInfo_P01()
     {
@@ -453,52 +419,4 @@ public class SimulatorManagerTest extends TestCase
 
         SimulatorManager.setPlatformInfo(platformInfo);
     }
-
-    /**
-     * Checkign for crash
-     */
-    //TODO crashing
-    /*public void testSetPlatformInfo_N01() {
-        SimulatorManager.setPlatformInfo(null);
-    }*/
-
-    /**
-     * Checkign for crash
-     */
-    //TODO crashing
-    /*public void testSetPlatformInfo_N02() {
-        SimulatorManager.setPlatformInfo(new PlatformInfo());
-    }*/
-
-    /**
-     * Checkign for crash
-     */
-    //TODO crashing
-    /*public void testGetPlatformInfo_P01() {
-        lockObject = new CountDownLatch(1);
-
-        SimulatorManager.getPlatformInfo(new IPlatformInfo() {
-
-            @Override
-            public void onPlatformFound(PlatformInfo info) {
-                platformInfo = info;
-            }
-        });
-
-        try {
-            lockObject.await(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-        }
-
-        assertNotNull(platformInfo);
-    }*/
-
-    /**
-     * Setting listener to null
-     * Checkign for crash
-     */
-    //TODO crashing
-    /*public void testGetPlatformInfo_N01() {
-        SimulatorManager.getPlatformInfo(null);
-    }*/
 }

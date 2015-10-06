@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.oic.simulator.clientcontroller.test;
 
 import java.util.HashMap;
@@ -18,9 +34,12 @@ import org.oic.simulator.test.ResourceModelChangeListener;
 import org.oic.simulator.test.ResourceModelObject;
 import org.oic.simulator.test.SimulatorRemoteResourceObject;
 
+/**
+ * This class tests the functionality of Simulator Remote Resource
+ * class APIs.
+ */
 public class SimulatorRemoteResourceTest extends TestCase
 {
-
     private static final String CONFIG_PATH = "./ramls/simple-light.raml";
     //  private static final String RESOURCE_TYPE = "oic.light";
 
@@ -117,7 +136,6 @@ public class SimulatorRemoteResourceTest extends TestCase
         assertNotNull(simulatorRemoteResource.getId());
     }
 
-    //TODO call back not coming
     public void testStartObserve_P01()
     {
         boolean result = true;
@@ -161,7 +179,6 @@ public class SimulatorRemoteResourceTest extends TestCase
         observeListener = null;
     }
 
-    //TODO call back not coming
     public void testStopObserve_P01()
     {
         boolean result = true;
@@ -335,31 +352,6 @@ public class SimulatorRemoteResourceTest extends TestCase
         assertTrue(result && listenerObject != null && listenerObject.getRepresentation() != null && listenerObject.getuId() != null);
     }
 
-    /**
-     * model as null
-     */
-    //TODO crashing
-    /*public void testPut_N01() {
-        boolean result = true;
-        ListenerObject listenerObject = new ListenerObject();
-        PutListener putListener = new PutListener(lockObject, listenerObject);
-
-        try {
-            simulatorRemoteResource.put(null, null, putListener);
-            result = false;
-        } catch (Exception e1) {
-            result = true;
-        }
-
-        try {
-            lockObject.await(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-        }
-
-        assertTrue(result && listenerObject.getRepresentation() == null && listenerObject.getuId() == null);
-    }*/
-
-    //TODO fail
     public void testPost_P01()
     {
         boolean result = true;
@@ -393,34 +385,6 @@ public class SimulatorRemoteResourceTest extends TestCase
         assertTrue(result && listenerObject != null && listenerObject.getRepresentation() != null && listenerObject.getuId() != null);
     }
 
-    /**
-     * Model is set to null
-     */
-    //TODO crash
-    /*public void testPost_N01() {
-        boolean result = true;
-
-        lockObject = new CountDownLatch(1);
-
-        ListenerObject listenerObject = new ListenerObject();
-        PostListener postListener = new PostListener(lockObject, listenerObject);
-
-        try {
-            simulatorRemoteResource.post(null, null, postListener);
-            result = false;
-        } catch (Exception e1) {
-            result = true;
-        }
-
-        try {
-            lockObject.await(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-        }
-
-        assertTrue(result && listenerObject.getRepresentation() == null && listenerObject.getuId() == null);
-    }*/
-
-    //TODO failign
     public void testGet_P01()
     {
         boolean result = true;
@@ -458,7 +422,6 @@ public class SimulatorRemoteResourceTest extends TestCase
     /**
      * null resInterface
      */
-    //TODO failing
     public void testGet_N01()
     {
         boolean result = false;
@@ -492,7 +455,6 @@ public class SimulatorRemoteResourceTest extends TestCase
     /**
      * null listener
      */
-    //TODO failing
     public void testGet_N02()
     {
         boolean result = false;
@@ -580,7 +542,6 @@ public class SimulatorRemoteResourceTest extends TestCase
         assertTrue(result);
     }
 
-    //TODO Resource does not support this request type!
     public void testSetConfigInfo_P01()
     {
         boolean result = true;
@@ -640,7 +601,6 @@ public class SimulatorRemoteResourceTest extends TestCase
         assertTrue(result);
     }
 
-    //TODO Resource does not support this request type!
     public void testStartVerification_P01()
     {
         boolean result = true;
@@ -680,7 +640,6 @@ public class SimulatorRemoteResourceTest extends TestCase
                    verifyListenerObject.getId() != -1);
     }
 
-    //TODO Resource does not support this request type!
     public void testStartVerification_P02()
     {
         boolean result = true;
@@ -720,7 +679,6 @@ public class SimulatorRemoteResourceTest extends TestCase
                    verifyListenerObject.getId() != -1);
     }
 
-    //TODO Resource does not support this request type!
     public void testStartVerification_P03()
     {
         boolean result = true;
@@ -763,7 +721,6 @@ public class SimulatorRemoteResourceTest extends TestCase
     /**
      * setting listener to null
      */
-    //TODO Resource does not support this request type!
     public void testStartVerification_N01()
     {
         boolean result = true;
@@ -789,7 +746,6 @@ public class SimulatorRemoteResourceTest extends TestCase
         assertTrue(result);
     }
 
-    //TODO Resource does not support this request type!
     public void testStopVerification_P01()
     {
         boolean result = true;
@@ -855,7 +811,6 @@ public class SimulatorRemoteResourceTest extends TestCase
     /**
      * Random id. This is just to check the crash
      */
-    //TODO Resource does not support this request type!
     public void testStopVerification_N01()
     {
         boolean result = true;

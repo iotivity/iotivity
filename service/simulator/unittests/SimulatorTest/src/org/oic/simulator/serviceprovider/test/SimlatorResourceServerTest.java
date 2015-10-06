@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.oic.simulator.serviceprovider.test;
 
 import java.util.Vector;
@@ -16,6 +32,10 @@ import org.oic.simulator.serviceprovider.SimulatorResourceServer;
 import org.oic.simulator.test.ResourceModelChangeListener;
 import org.oic.simulator.test.ResourceModelObject;
 
+/**
+ * This class tests the functionality of Simulator Resource Server
+ * class APIs.
+ */
 public class SimlatorResourceServerTest extends TestCase
 {
 
@@ -123,7 +143,6 @@ public class SimlatorResourceServerTest extends TestCase
         assertEquals(Double.parseDouble(getValue(KEY) + ""), 4.0);
     }
 
-    //TODO failing
     public void testAddAttributeBoolean_P01()
     {
         try
@@ -211,7 +230,6 @@ public class SimlatorResourceServerTest extends TestCase
         assertTrue(result);
     }
 
-    //TODO failing
     public void testUpdateAttributeBoolean_P01()
     {
         boolean result = true;
@@ -309,7 +327,6 @@ public class SimlatorResourceServerTest extends TestCase
     /**
      * Try to set the value out of range
      */
-    //TODO failing
     public void testSetRange_N01()
     {
         boolean result = true;
@@ -342,7 +359,6 @@ public class SimlatorResourceServerTest extends TestCase
         assertTrue(result);
     }
 
-    //TODO failing
     public void testSetAllowedValuesInteger_P01()
     {
         boolean result = true;
@@ -393,7 +409,6 @@ public class SimlatorResourceServerTest extends TestCase
     /**
      * Try setting with out of range
      */
-    //TODO failing
     public void testSetAllowedValuesInteger_N01()
     {
         boolean result = true;
@@ -444,7 +459,6 @@ public class SimlatorResourceServerTest extends TestCase
     /**
      * Try setting values multiple times
      */
-    //TODO failing
     public void testSetAllowedValuesDouble_P01()
     {
         boolean result = true;
@@ -495,7 +509,6 @@ public class SimlatorResourceServerTest extends TestCase
     /**
      * Try setting with out of range
      */
-    //TODO failing
     public void testSetAllowedValuesDouble_N01()
     {
         boolean result = true;
@@ -543,7 +556,6 @@ public class SimlatorResourceServerTest extends TestCase
         assertTrue(result);
     }
 
-    //TODO failing
     public void testsetAllowedValuesString_P01()
     {
         boolean result = true;
@@ -593,7 +605,6 @@ public class SimlatorResourceServerTest extends TestCase
     /**
      * Set the value that is not in allowed values
      */
-    //TODO failing
     public void testsetAllowedValuesString_N01()
     {
         boolean result = true;
@@ -673,7 +684,6 @@ public class SimlatorResourceServerTest extends TestCase
     /**
      * Try removing the attribute thats not present
      */
-    //TODO failing
     public void testRemoveAttribute_N01()
     {
         boolean result = false;
@@ -712,7 +722,6 @@ public class SimlatorResourceServerTest extends TestCase
     /**
      * Try removing when attribute is empty
      */
-    //TODO failing
     public void testRemoveAttribute_N03()
     {
         boolean result = false;
@@ -729,7 +738,6 @@ public class SimlatorResourceServerTest extends TestCase
         assertTrue(result);
     }
 
-    //TODO failing
     public void testStartResourceAutomation_P01()
     {
         boolean result = true;
@@ -771,7 +779,6 @@ public class SimlatorResourceServerTest extends TestCase
     /**
      * null listener
      */
-    //TODO failing
     public void testStartResourceAutomation_N01()
     {
         boolean result = true;
@@ -787,7 +794,6 @@ public class SimlatorResourceServerTest extends TestCase
         assertTrue(result && id == -1);
     }
 
-    //TODO failing
     public void testStartAttributeAutomation_P01()
     {
         boolean result = true;
@@ -846,7 +852,6 @@ public class SimlatorResourceServerTest extends TestCase
         assertTrue(result && id != -1);
     }
 
-    //TODO failing
     public void testStopAutomation_P01()
     {
         boolean result = true;
@@ -892,7 +897,6 @@ public class SimlatorResourceServerTest extends TestCase
      * checking for crash
      * random id
      */
-    //TODO failing
     public void testStopAutomation_N01()
     {
         boolean result = false;
