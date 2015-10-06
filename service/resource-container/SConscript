@@ -239,3 +239,9 @@ containersampleclient_src =  ['examples/ContainerSampleClient.cpp']
 containersampleclientapp = containersample_env.Program('ContainerSampleClient',containersampleclient_src)
 Alias("containersampleclient", containersampleclientapp)
 env.AppendTarget('containersampleclient')
+
+######################################################################
+# Build Container Java SDK
+######################################################################
+if target_os == 'android':
+    SConscript('android/SConscript')
