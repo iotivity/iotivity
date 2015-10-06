@@ -59,6 +59,9 @@
 #define COAPS_PREFIX         "coaps://"
 #define COAPS_PREFIX_LEN     8
 
+#define COAP_TCP_PREFIX      "coap+tcp://"
+#define COAP_TCP_PREFIX_LEN  11
+
 // Iotivity Device Identity.
 const unsigned char IDENTITY[] = ("1111111111111111");
 
@@ -425,6 +428,7 @@ void send_request()
         printf("Enter the URI like below....\n");
         printf("coap://10.11.12.13:4545/resource_uri ( for IP )\n");
         printf("coap://10:11:12:13:45:45/resource_uri ( for BT )\n");
+        printf("coap+tcp://10:11:12:13:45:45/resource_uri ( for TCP )\n");
     }
     else
     {
@@ -808,6 +812,7 @@ void select_network()
     printf("IP     : 0\n");
     printf("GATT   : 1\n");
     printf("RFCOMM : 2\n");
+    printf("TCP    : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -818,7 +823,7 @@ void select_network()
 
     int number = buf[0] - '0';
 
-    if (number < 0 || number > 3)
+    if (number < 0 || number > 4)
     {
         printf("Invalid network type\n");
         return;
@@ -844,6 +849,7 @@ void unselect_network()
     printf("IP     : 0\n");
     printf("GATT   : 1\n");
     printf("RFCOMM : 2\n");
+    printf("TCP    : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -854,7 +860,7 @@ void unselect_network()
 
     int number = buf[0] - '0';
 
-    if (number < 0 || number > 3)
+    if (number < 0 || number > 4)
     {
         printf("Invalid network type\n");
         return;
@@ -1311,6 +1317,7 @@ CAResult_t get_network_type()
     printf("IP     : 0\n");
     printf("GATT   : 1\n");
     printf("RFCOMM : 2\n");
+    printf("TCP    : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -1320,7 +1327,7 @@ CAResult_t get_network_type()
     }
 
     int number = buf[0] - '0';
-    if (0 > number || 2 < number)
+    if (0 > number || 4 < number)
     {
         printf("\nInvalid Network type");
         return CA_NOT_SUPPORTED;
@@ -1370,6 +1377,12 @@ void parse_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *
     {
         printf("uri has '%s' prefix\n", COAP_PREFIX);
         startIndex = COAP_PREFIX_LEN;
+        *flags = CA_IPV4;
+    }
+    else if (strncmp(COAP_TCP_PREFIX, uri, COAP_TCP_PREFIX_LEN) == 0)
+    {
+        printf("uri has '%s' prefix\n", COAP_TCP_PREFIX);
+        startIndex = COAP_TCP_PREFIX_LEN;
         *flags = CA_IPV4;
     }
 
