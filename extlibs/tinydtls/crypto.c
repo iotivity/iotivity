@@ -585,8 +585,13 @@ dtls_ecdsa_create_sig_hash(const unsigned char *priv_key, size_t key_size,
         return 0;
 
     uECC_sign(priv_key, sign_hash, sign);
-    memcpy(point_r, sign, 32);
-    memcpy(point_s, sign + 32, 32);
+
+    int i;
+    for (i = 0; i < 32; i++)
+    {
+        ((uint8_t *) point_r)[i] = sign[31 - i];
+        ((uint8_t *) point_s)[i] = sign[63 - i];
+    }
 }
 
 void
