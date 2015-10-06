@@ -238,7 +238,8 @@ CAResult_t CAInitializeRA(CARegisterConnectivityCallback registerCallback,
     raHandler.readData = CAReadRAData;
     raHandler.stopAdapter = CAStopRA;
     raHandler.terminate = CATerminateRA;
-    registerCallback(raHandler, CA_ADAPTER_REMOTE_ACCESS);
+    raHandler.cType = CA_ADAPTER_REMOTE_ACCESS;
+    registerCallback(raHandler);
 
     return CA_STATUS_OK;
 }

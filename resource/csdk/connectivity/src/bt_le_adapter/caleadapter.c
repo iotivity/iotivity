@@ -1659,9 +1659,10 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
             .GetnetInfo = CAGetLEInterfaceInformation,
             .readData = CAReadLEData,
             .terminate = CATerminateLE
+            .cType = CA_ADAPTER_GATT_BTLE;
         };
 
-    registerCallback(connHandler, CA_ADAPTER_GATT_BTLE);
+    registerCallback(connHandler);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 

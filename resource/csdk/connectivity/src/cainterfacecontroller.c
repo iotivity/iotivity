@@ -49,13 +49,10 @@
 #define CA_MEMORY_ALLOC_CHECK(arg) {if (arg == NULL) \
     {OIC_LOG(ERROR, TAG, "memory error");goto memory_error_exit;} }
 
-#ifdef RA_ADAPTER
-#define CA_TRANSPORT_TYPE_NUM  5
-#else
-#define CA_TRANSPORT_TYPE_NUM  4
-#endif
 
-static CAConnectivityHandler_t g_adapterHandler[CA_TRANSPORT_TYPE_NUM] = {};
+static CAConnectivityHandler_t *g_adapterHandler;
+
+static uint16_t g_numberOfAdapters;
 
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
@@ -65,28 +62,15 @@ static CAErrorHandleCallback g_errorHandleCallback = NULL;
 
 static int CAGetAdapterIndex(CATransportAdapter_t cType)
 {
-    switch (cType)
+    for(uint16_t index=0 ; index < g_numberOfAdapters ; index++)
     {
-        case CA_ADAPTER_IP:
-            return 0;
-        case CA_ADAPTER_GATT_BTLE:
-            return 1;
-        case CA_ADAPTER_RFCOMM_BTEDR:
-            return 2;
-        case CA_ADAPTER_NFC:
-              return 3;
-        #ifdef RA_ADAPTER
-        case CA_ADAPTER_REMOTE_ACCESS:
-            return 4;
-        #endif
-
-        default:
-            break;
+        if(cType == g_adapterHandler[index].cType )
+            return index;
     }
     return -1;
 }
 
-static void CARegisterCallback(CAConnectivityHandler_t handler, CATransportAdapter_t cType)
+static void CARegisterCallback(CAConnectivityHandler_t handler)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -103,18 +87,11 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CATransportAdapt
         OIC_LOG(ERROR, TAG, "connectivity handler is not enough to be used!");
         return;
     }
+    g_adapterHandler = OICRealloc(g_adapterHandler,
+        (++g_numberOfAdapters) * sizeof(CAConnectivityHandler_t));
+    g_adapterHandler[g_numberOfAdapters-1] = handler;
 
-    int index = CAGetAdapterIndex(cType);
-
-    if (index == -1)
-    {
-        OIC_LOG(ERROR, TAG, "unknown connectivity type!");
-        return;
-    }
-
-    g_adapterHandler[index] = handler;
-
-    OIC_LOG_V(DEBUG, TAG, "%d type adapter, register complete!", cType);
+    OIC_LOG_V(DEBUG, TAG, "%d type adapter, register complete!", handler.cType);
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
@@ -171,8 +148,6 @@ static void CAAdapterErrorHandleCallback(const CAEndpoint_t *endpoint,
 void CAInitializeAdapters(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "initialize adapters..");
-
-    memset(g_adapterHandler, 0, sizeof(CAConnectivityHandler_t) * CA_TRANSPORT_TYPE_NUM);
 
     // Initialize adapters and register callback.
 #ifdef IP_ADAPTER
@@ -270,12 +245,12 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
         return CA_STATUS_INVALID_PARAM;
     }
 
-    CAEndpoint_t *tempInfo[CA_TRANSPORT_TYPE_NUM] = { 0 };
-    uint32_t tempSize[CA_TRANSPORT_TYPE_NUM] = { 0 };
+    CAEndpoint_t **tempInfo = (CAEndpoint_t**) OICCalloc(g_numberOfAdapters, sizeof(CAEndpoint_t*));
+    uint32_t *tempSize =(uint32_t*) OICCalloc(g_numberOfAdapters, sizeof(uint32_t));;
 
     CAResult_t res = CA_STATUS_FAILED;
     uint32_t resSize = 0;
-    for (int index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
+    for (int index = 0; index < g_numberOfAdapters; index++)
     {
         if (g_adapterHandler[index].GetnetInfo != NULL)
         {
@@ -304,6 +279,8 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
     {
         if (res == CA_ADAPTER_NOT_ENABLED || res == CA_NOT_SUPPORTED)
         {
+            OICFree(tempInfo);
+            OICFree(tempSize);
             return res;
         }
         return CA_STATUS_FAILED;
@@ -318,7 +295,7 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
     *info = resInfo;
     *size = resSize;
 
-    for (int index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
+    for (int index = 0; index < g_numberOfAdapters; index++)
     {
         // check information
         if (tempSize[index] == 0)
@@ -336,6 +313,8 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
         OICFree(tempInfo[index]);
         tempInfo[index] = NULL;
     }
+    OICFree(tempInfo);
+    OICFree(tempSize);
 
     OIC_LOG(DEBUG, TAG, "each network info save success!");
     return CA_STATUS_OK;
@@ -343,12 +322,14 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
     // memory error label.
 memory_error_exit:
 
-    for (int index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
+    for (int index = 0; index < g_numberOfAdapters; index++)
     {
 
         OICFree(tempInfo[index]);
         tempInfo[index] = NULL;
     }
+    OICFree(tempInfo);
+    OICFree(tempSize);
 
     return CA_MEMORY_ALLOC_FAILED;
 }
@@ -570,7 +551,7 @@ void CATerminateAdapters()
     OIC_LOG(DEBUG, TAG, "IN");
 
     uint32_t index;
-    for (index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
+    for (index = 0; index < g_numberOfAdapters; index++)
     {
         if (g_adapterHandler[index].terminate != NULL)
         {

@@ -281,7 +281,8 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     ipHandler.readData = CAReadIPData;
     ipHandler.stopAdapter = CAStopIP;
     ipHandler.terminate = CATerminateIP;
-    registerCallback(ipHandler, CA_ADAPTER_IP);
+    ipHandler.cType = CA_ADAPTER_IP;
+    registerCallback(ipHandler);
 
     OIC_LOG(INFO, TAG, "OUT IntializeIP is Success");
     return CA_STATUS_OK;

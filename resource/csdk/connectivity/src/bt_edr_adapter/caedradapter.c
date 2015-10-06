@@ -184,7 +184,8 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
     handler.readData = CAReadEDRData;
     handler.stopAdapter = CAStopEDR;
     handler.terminate = CATerminateEDR;
-    registerCallback(handler, CA_ADAPTER_RFCOMM_BTEDR);
+    handler.cType = CA_ADAPTER_RFCOMM_BTEDR;
+    registerCallback(handler);
 
     // Initialize Send/Receive data message queues
     if (CA_STATUS_OK != CAEDRInitializeQueueHandlers())

@@ -220,7 +220,8 @@ CAResult_t CAInitializeNFC(CARegisterConnectivityCallback registerCallback,
     nfcHandler.readData = CAReadNFCData;
     nfcHandler.stopAdapter = CAStopNFC;
     nfcHandler.terminate = CATerminateNFC;
-    registerCallback(nfcHandler, CA_ADAPTER_NFC);
+    nfcHandler.cType = CA_ADAPTER_NFC;
+    registerCallback(nfcHandler);
 
     OIC_LOG(INFO, TAG, "OUT Intialize NFC is Success");
     return CA_STATUS_OK;
