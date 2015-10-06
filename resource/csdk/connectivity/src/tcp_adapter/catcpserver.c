@@ -639,7 +639,10 @@ static size_t CACheckPayloadLength(const void *data, size_t dlen)
     }
 
     size_t payloadLen = 0;
-    if (pdu->data)
+    size_t headerSize = coap_get_tcp_header_length_for_transport(transport);
+    OIC_LOG_V(DEBUG, TAG, "headerSize : %d, pdu length : %d",
+              headerSize, pdu->length);
+    if (pdu->length > headerSize)
     {
         payloadLen = (unsigned char *) pdu->hdr + pdu->length - pdu->data;
     }
