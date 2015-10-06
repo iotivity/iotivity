@@ -437,8 +437,15 @@ void discoverResource()
 
     if(addressInput == multicastAdd)
     {
+        try
+        {
         discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
                 relativeUri, resourceType, &onResourceDiscovered);
+        }
+        catch (const RCSPlatformException& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
     }
     else
     {
