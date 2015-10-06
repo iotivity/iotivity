@@ -25,7 +25,7 @@ import java.lang.String;
  * To execute resource hosting function for android sample application .
  *
  * @author Copyright 2015 Samsung Electronics All Rights Reserved.
- * @see className class : ResourceHosting</br>
+ * @see className class : ResourceHosting
  *
  */
 
@@ -34,20 +34,14 @@ public class ResourceHosting {
     /**
      * jni function - OicCorrdinatorstart() method.
      *
-     * @see Class class :
-     *      org_iotivity_resourcehosting_ResourceHosting</br>
-     * @see Method method : OICCoordinatorStart</br>
-     * @see Signature signature : ()V</br>
+     * @see ResourceHosting
      */
     public native int OICCoordinatorStart();
 
     /**
      * jni function - OICCoordinatorStop() method.
      *
-     * @see Class class :
-     *      org_iotivity_resourcehosting_ResourceHosting</br>
-     * @see Method method : OICCoordinatorStop</br>
-     * @see signature signature : ()V</br>
+     * @see ResourceHosting
      */
     public native int OICCoordinatorStop();
 
@@ -55,12 +49,9 @@ public class ResourceHosting {
      * jni function - ResourceHostingInit() method in order to execute
      * OICCoordinatorStart() method.
      *
-     * @see Class class :
-     *      org_iotivity_resourcehosting_ResourceHosting</br>
-     * @see Method method : ResourceHostingInit</br>
+     * @see ResourceHosting
      * @param addr
      *            ipAddress
-     * @see signature signature : (Ljava/lang/String;)V</br>
      */
     public native int ResourceHostingInit(String addr);
 
@@ -68,10 +59,7 @@ public class ResourceHosting {
      * jni function - ResourceHostingTerminate() method in order to terminate
      * resource hosting
      *
-     * @see Class class :
-     *      org_iotivity_resourcehosting_ResourceHosting</br>
-     * @see Method method : ResourceHostingTerminate</br>
-     * @see signature signature : ()V</br>
+     * @see ResourceHosting
      */
     public native int ResourceHostingTerminate();
 
