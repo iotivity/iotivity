@@ -400,7 +400,7 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesInteger
 (JNIEnv *env, jobject object, jstring jKey, jobject jAllowedValues)
 {
-    if (!jKey || jAllowedValues)
+    if (!jKey || !jAllowedValues)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid parameter!");
         return;
@@ -428,7 +428,7 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesDouble
 (JNIEnv *env, jobject object, jstring jKey, jobject jAllowedValues)
 {
-    if (!jKey || jAllowedValues)
+    if (!jKey || !jAllowedValues)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid parameter!");
         return;
@@ -456,7 +456,7 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesString
 (JNIEnv *env, jobject object, jstring jKey, jobject jAllowedValues)
 {
-    if (!jKey || jAllowedValues)
+    if (!jKey || !jAllowedValues)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid parameter!");
         return;
