@@ -31,6 +31,7 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <memory>
 
 #include "RCSBundleInfo.h"
 
@@ -64,13 +65,13 @@ namespace OIC
                 // list of bundle ids
                 /**
                 * API for getting the list of all bundles in the container.
-                * The caller receives a copy of the bundle information
-                * and is also responsible for freeing the memory.
+                * The returned list and the contained bundle information are a copy
+                * and will not be updated by the resource container.
                 *
                 * @return List of BundleInfo pointer each associated with a bundle
                 *
                 */
-                virtual std::list<RCSBundleInfo *> listBundles() = 0;
+                virtual std::list<std::unique_ptr<RCSBundleInfo>> listBundles() = 0;
                 /**
                  * API for starting the bundle.
                  *

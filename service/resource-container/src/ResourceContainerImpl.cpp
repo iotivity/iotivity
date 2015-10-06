@@ -518,16 +518,16 @@ namespace OIC
             }
         }
 
-        std::list< RCSBundleInfo * > ResourceContainerImpl::listBundles()
+        std::list<std::unique_ptr<RCSBundleInfo>> ResourceContainerImpl::listBundles()
         {
-            std::list< RCSBundleInfo * > ret;
+            std::list<std::unique_ptr<RCSBundleInfo> > ret;
             for (std::map< std::string, BundleInfoInternal * >::iterator it = m_bundles.begin();
                  it != m_bundles.end(); ++it)
             {
                 {
-                    BundleInfoInternal *bundleInfo = new BundleInfoInternal();
+                    std::unique_ptr<BundleInfoInternal> bundleInfo(new BundleInfoInternal);
                     (bundleInfo)->setBundleInfo(it->second);
-                    ret.push_back((RCSBundleInfo *) bundleInfo);
+                    ret.push_back(std::move(bundleInfo));
                 }
             }
             return ret;

@@ -91,7 +91,7 @@ namespace OIC
                                std::map< string, string > params);
                 void removeBundle(const std::string &bundleId);
 
-                std::list< RCSBundleInfo * > listBundles();
+                std::list<std::unique_ptr<RCSBundleInfo>> listBundles();
 
                 void addResourceConfig(const std::string &bundleId, const std::string &resourceUri,
                                        std::map< string, string > params);
