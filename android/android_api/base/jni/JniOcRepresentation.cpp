@@ -170,10 +170,17 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresent
     if (!rep) return;
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
-    OCRepresentation *value = JniOcRepresentation::getOCRepresentationPtr(env, jValue);
-    if (!value) return;
 
-    rep->setValue(key, *value);
+    if (jValue)
+    {
+        OCRepresentation *value = JniOcRepresentation::getOCRepresentationPtr(env, jValue);
+        if (!value) return;
+        rep->setValue(key, *value);
+    }
+    else
+    {
+        rep->setNULL(key);
+    }
 }
 
 /*
