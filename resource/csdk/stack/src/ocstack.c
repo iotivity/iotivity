@@ -931,6 +931,8 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         if(cbNode->sequenceNumber == response.sequenceNumber)
         {
             OC_LOG(INFO, TAG, "No presence change");
+            ResetPresenceTTL(cbNode, maxAge);
+            OC_LOG_V(INFO, TAG, "ResetPresenceTTL - TTLlevel:%d\n", cbNode->presence->TTLlevel);
             goto exit;
         }
 
