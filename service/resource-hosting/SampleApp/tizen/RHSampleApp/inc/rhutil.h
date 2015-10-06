@@ -22,8 +22,8 @@
 
 using namespace std;
 
-#ifndef NMUTIL_H_
-#define NMUTIL_H_
+#ifndef RHUTIL_H_
+#define RHUTIL_H_
 
 #define LOGI(...) dlog_print(DLOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGD(...) dlog_print(DLOG_DEBUG, LOG_TAG, __VA_ARGS__)
@@ -31,6 +31,6 @@ using namespace std;
 
 extern std::string getOCStackResultStringFromInt(int result);
 
-#endif // TMUTIL_H_
+#endif // RHUTIL_H_
 
 

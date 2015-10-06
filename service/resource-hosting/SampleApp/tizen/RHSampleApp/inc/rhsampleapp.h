@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef __NMSAMPLEAPP_H__
-#define __NMSAMPLEAPP_H__
+#ifndef RHSAMPLEAPP_H__
+#define RHSAMPLEAPP_H__
 
 #include <app.h>
 #include <Elementary.h>
@@ -33,13 +33,13 @@
 #ifdef  LOG_TAG
 #undef  LOG_TAG
 #endif
-#define LOG_TAG "nmsampleapp"
+#define LOG_TAG "resource-hosting"
 
 #if !defined(PACKAGE)
-#define PACKAGE "org.tizen.nmsampleapp"
+#define PACKAGE "org.tizen.rhsampleapp"
 #endif
 
-#define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.nmsampleapp/res/ui_controls.edj"
+#define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.rhsampleapp/res/ui_controls.edj"
 
 void start_cb(void *data, Evas_Object *obj, void *event_info);
 
@@ -49,4 +49,4 @@ void stop_hosting();
 
 void *updateGroupLog(void *data);
 
-#endif // __NMSAMPLEAPP_H__
+#endif // RHSAMPLEAPP_H__
