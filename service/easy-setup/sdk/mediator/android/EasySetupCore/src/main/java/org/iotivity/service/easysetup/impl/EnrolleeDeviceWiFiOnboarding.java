@@ -136,8 +136,8 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
     @Override
     protected void startProvisioningProcess(OnBoardingConnection conn) {
         try {
-            Log.i(TAG, "waiting for 15 seconds to start provisioning");
-            Thread.sleep(15000);//Sleep for allowing thin device to start the services
+            Log.i(TAG, "waiting for 20 seconds to start provisioning");
+            Thread.sleep(20000);//Sleep for allowing thin device to start the services
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
