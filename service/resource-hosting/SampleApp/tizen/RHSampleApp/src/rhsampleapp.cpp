@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#include "nmsampleapp.h"
-#include "nmutil.h"
+#include "rhsampleapp.h"
+#include "rhutil.h"
 #include <tizen.h>
 
 using namespace std;
@@ -124,7 +124,7 @@ create_list_view(appdata_s *ad)
     evas_object_size_hint_align_set(log_entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
     elm_object_part_content_set(layout, "log", log_entry);
 
-    nf_it = elm_naviframe_item_push(nf, "Notification Manager", NULL, NULL, scroller, NULL);
+    nf_it = elm_naviframe_item_push(nf, "Resource Hosting", NULL, NULL, scroller, NULL);
     elm_naviframe_item_pop_cb_set(nf_it, naviframe_pop_cb, NULL);
 }
 

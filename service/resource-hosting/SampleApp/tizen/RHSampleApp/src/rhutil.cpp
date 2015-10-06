@@ -18,7 +18,7 @@
  *
  ******************************************************************/
 
-#include "nmutil.h"
+#include "rhutil.h"
 
 // Utility function to return the string equivalent of OCStackResult for the given int value
 std::string getOCStackResultStringFromInt(int result)

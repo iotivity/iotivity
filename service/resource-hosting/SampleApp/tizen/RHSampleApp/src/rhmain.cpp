@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#include "nmsampleapp.h"
-#include "nmutil.h"
+#include "rhsampleapp.h"
+#include "rhutil.h"
 #include <algorithm>
 #include <signal.h>
 #include "Hosting.h"
