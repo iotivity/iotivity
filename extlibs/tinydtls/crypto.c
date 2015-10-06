@@ -631,8 +631,12 @@ dtls_ecdsa_verify_sig_hash(const unsigned char *pub_key_x,
     memcpy(publicKey + 32, pub_key_y, 32);
 
     // Copy the signature into a single buffer
-    memcpy(sign, result_r, 32);
-    memcpy(sign + 32, result_s, 32);
+    int i;
+    for (i = 0; i < 32; i++)
+    {
+        sign[i] = result_r[31 - i];
+        sign[i + 32] = result_s[31 - i];
+    }
 
     return uECC_verify(publicKey, sign_hash, sign);
 }
