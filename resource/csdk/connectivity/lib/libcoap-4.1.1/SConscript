@@ -37,7 +37,7 @@ if target_os not in ['windows', 'winrt']:
 	libcoap_env.AppendUnique(CFLAGS = ['-Wall', '-ffunction-sections',
 			'-fdata-sections', '-fno-exceptions'])
 
-if target_os == 'linux':
+if target_os in ['linux', 'tizen']:
 	if with_tcp == True:
 		libcoap_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
 

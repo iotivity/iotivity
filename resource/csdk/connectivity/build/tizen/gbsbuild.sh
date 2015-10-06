@@ -25,8 +25,12 @@ export RELEASE=$4
 echo $5
 export LOGGING=$5
 
+echo $6
+export WITH_TCP=$6
+
 echo $TARGET_TRANSPORT
 echo $BUILD_SAMPLE
+echo $WITH_TCP
 
 rm -rf $name-$version
 
@@ -90,7 +94,7 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l --include-all  --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5'"
+gbscommand="gbs build -A armv7l --include-all  --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'WITH_TCP $6'"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Core build is successful"
