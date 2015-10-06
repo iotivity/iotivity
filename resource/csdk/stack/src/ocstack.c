@@ -1901,18 +1901,18 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     switch (myStackMode)
     {
         case OC_CLIENT:
-			CARegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
+            CARegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartDiscoveryServer());
             OC_LOG(INFO, TAG, "Client mode: CAStartDiscoveryServer");
             break;
         case OC_SERVER:
-			SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
+            SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartListeningServer());
             OC_LOG(INFO, TAG, "Server mode: CAStartListeningServer");
             break;
         case OC_CLIENT_SERVER:
         case OC_GATEWAY:
-			SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
+            SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartListeningServer());
             if(result == OC_STACK_OK)
             {
@@ -2000,7 +2000,7 @@ OCStackResult OCStop()
     // Remove all the client callbacks
     DeleteClientCBList();
 
-	// De-init the SRM Policy Engine
+    // De-init the SRM Policy Engine
     // TODO after BeachHead delivery: consolidate into single SRMDeInit()
     SRMDeInitPolicyEngine();
 
@@ -2636,6 +2636,12 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
                 OICFree (requestInfo.info.resourceUri);
             }
 
+            break;
+
+        case OC_REST_DISCOVER:
+            OC_LOG_V(INFO, TAG, "Cancelling discovery callback for resource %s",
+                                           clientCB->requestUri);
+            FindAndDeleteClientCB(clientCB);
             break;
 
 #ifdef WITH_PRESENCE
