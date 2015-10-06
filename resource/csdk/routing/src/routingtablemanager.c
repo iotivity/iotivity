@@ -240,6 +240,11 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
     if (NULL == *gatewayTable)
     {
         *gatewayTable = u_linklist_create();
+        if (NULL == *gatewayTable)
+        {
+            OC_LOG(ERROR, TAG, "u_linklist_create failed");
+            return OC_STACK_NO_MEMORY;
+        }
     }
 
     if (1 == routeCost && 0 != nextHop)
@@ -504,6 +509,11 @@ OCStackResult RTMAddEndpointEntry(uint16_t *endpointId, const CAEndpoint_t *dest
     if (NULL == *endpointTable)
     {
         *endpointTable = u_linklist_create();
+        if (NULL == *endpointTable)
+        {
+            OC_LOG(ERROR, TAG, "u_linklist_create failed");
+            return OC_STACK_NO_MEMORY;
+        }
     }
 
     u_linklist_iterator_t *iterTable = NULL;
@@ -636,6 +646,11 @@ OCStackResult RTMRemoveGatewayEntry(uint32_t gatewayId, u_linklist_t **removedGa
     if (NULL == *removedGatewayNodes)
     {
         *removedGatewayNodes = u_linklist_create();
+        if (NULL == *removedGatewayNodes)
+        {
+            OC_LOG(ERROR, TAG, "u_linklist_create failed");
+            return OC_STACK_NO_MEMORY;
+        }
     }
     OCStackResult ret = OC_STACK_OK;
     u_linklist_init_iterator(*gatewayTable, &iterTable);
@@ -700,6 +715,10 @@ OCStackResult RTMRemoveGatewayDestEntry(uint32_t gatewayId, uint32_t nextHop,
             for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
             {
                 RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, i);
+                if(!destCheck)
+                {
+                    continue;
+                }
                 if (0 == memcmp(destCheck->destIntfAddr.addr, destInfAdr->destIntfAddr.addr,
                     strlen(destInfAdr->destIntfAddr.addr))
                     && destInfAdr->destIntfAddr.port == destCheck->destIntfAddr.port)
@@ -829,6 +848,11 @@ void RTMGetNeighbours(u_linklist_t **neighbourNodes, const u_linklist_t *gateway
     RM_NULL_CHECK_VOID(gatewayTable, TAG, "gatewayTable");
 
     *neighbourNodes = u_linklist_create();
+    if (NULL == *neighbourNodes)
+    {
+        OC_LOG(ERROR, TAG, "u_linklist_create failed");
+        return;
+    }
     u_linklist_iterator_t *iterTable = NULL;
     u_linklist_init_iterator(gatewayTable, &iterTable);
     while (NULL != iterTable)
@@ -931,9 +955,9 @@ void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
     while (NULL != iterTable)
     {
         RTMGatewayEntry_t *entry = u_linklist_get_data(iterTable);
-        for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
+        if (0 < u_arraylist_length(entry->destination->destIntfAddr))
         {
-            RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, i);
+            RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, 0);
             if (NULL == destCheck)
             {
                 OC_LOG(ERROR, TAG, "destCheck is null");
@@ -950,7 +974,6 @@ void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
                 *obsList = (OCObservationId *) OICRealloc((void *)*obsList,
                            (sizeof(OCObservationId) * (len + 1)));
             }
-            break;
         }
         u_linklist_get_next(&iterTable);
     }
@@ -1023,6 +1046,10 @@ OCStackResult RTMUpdateDestinationIntfAdr(uint32_t gatewayId, RTMDestIntfInfo_t 
             {
                 RTMDestIntfInfo_t *removeAdr =
                     u_arraylist_get(entry->destination->destIntfAddr, i);
+                if (!removeAdr)
+                {
+                    continue;
+                }
                 if (0 == memcmp(removeAdr->destIntfAddr.addr, destInterfaces.destIntfAddr.addr,
                     strlen(destInterfaces.destIntfAddr.addr))
                     && destInterfaces.destIntfAddr.port == removeAdr->destIntfAddr.port)
@@ -1109,6 +1136,12 @@ OCStackResult RTMUpdateDestAddrValidity(u_linklist_t **invalidTable, u_linklist_
     RM_NULL_CHECK_WITH_RET(*gatewayTable, TAG, "*gatewayTable");
 
     *invalidTable = u_linklist_create();
+    if (NULL == *invalidTable)
+    {
+        OC_LOG(ERROR, TAG, "u_linklist_create failed");
+        return OC_STACK_NO_MEMORY;
+    }
+
     u_linklist_iterator_t *iterTable = NULL;
     uint64_t presentTime = RTMGetCurrentTime();
 
@@ -1126,6 +1159,10 @@ OCStackResult RTMUpdateDestAddrValidity(u_linklist_t **invalidTable, u_linklist_
             for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
             {
                 RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, i);
+                if (!destCheck)
+                {
+                    continue;
+                }
                 if (GATEWAY_ALIVE_TIMEOUT < (presentTime - destCheck->timeElapsed))
                 {
                     destCheck->isValid = false;
@@ -1151,6 +1188,11 @@ OCStackResult RTMRemoveInvalidGateways(u_linklist_t **invalidTable, u_linklist_t
     RM_NULL_CHECK_WITH_RET(*gatewayTable, TAG, "*gatewayTable");
 
     *invalidTable = u_linklist_create();
+    if (NULL == *invalidTable)
+    {
+        OC_LOG(ERROR, TAG, "u_linklist_create failed");
+        return OC_STACK_NO_MEMORY;
+    }
 
     u_linklist_iterator_t *iterTable = NULL;
     u_linklist_init_iterator(*gatewayTable, &iterTable);
@@ -1168,7 +1210,7 @@ OCStackResult RTMRemoveInvalidGateways(u_linklist_t **invalidTable, u_linklist_t
             for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
             {
                 RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, i);
-                if (!destCheck->isValid)
+                if (!destCheck && !destCheck->isValid)
                 {
                     void *data = u_arraylist_remove(entry->destination->destIntfAddr, i);
                     OICFree(data);

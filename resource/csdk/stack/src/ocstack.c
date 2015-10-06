@@ -1173,6 +1173,12 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                     {
                         type = PAYLOAD_TYPE_PLATFORM;
                     }
+#ifdef ROUTING_GATEWAY
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_GATEWAY_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_REPRESENTATION;
+                    }
+#endif
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_RD_URI) == 0)
                     {
                         type = PAYLOAD_TYPE_RD;

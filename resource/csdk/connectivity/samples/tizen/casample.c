@@ -680,7 +680,6 @@ void send_request_all()
     if (CA_STATUS_OK != res)
     {
         printf("Could not send request to all\n");
-        CADestroyEndpoint(endpoint);
     }
     else
     {

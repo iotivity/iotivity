@@ -341,6 +341,7 @@ void SendRequest()
     if (res != CA_STATUS_OK || (!token))
     {
         Serial.println("token error");
+        CADestroyEndpoint(endpoint);
         return;
     }
 
@@ -425,6 +426,7 @@ void SendRequestAll()
     if (res != CA_STATUS_OK || (!token))
     {
         Serial.println("token error");
+        CADestroyEndpoint(endpoint);
         return;
     }
 
@@ -508,6 +510,7 @@ void SendNotification()
     if (res != CA_STATUS_OK || (!token))
     {
         Serial.println("token error");
+        CADestroyEndpoint(endpoint);
         return;
     }
 
