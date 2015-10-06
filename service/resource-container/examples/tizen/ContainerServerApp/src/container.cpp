@@ -68,8 +68,8 @@ static void listBundles(void *data, Evas_Object *obj, void *event_info)
 
     if (checkContainer)
     {
-        std::list<RCSBundleInfo *> bundles = container->listBundles();
-        std::list<RCSBundleInfo *>::iterator bundleIt;
+        std::list<unique_ptr<RCSBundleInfo>> bundles = container->listBundles();
+        std::list<unique_ptr<RCSBundleInfo>>::iterator bundleIt;
         logMessage += "Bundle List Size : " + to_string(bundles.size()) + "<br>";
 
         for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)
