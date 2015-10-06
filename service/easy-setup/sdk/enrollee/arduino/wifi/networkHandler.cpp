@@ -36,9 +36,25 @@
 #define ES_NH_TAG "ES_NH"
 
 //-----------------------------------------------------------------------------
+// Defines
+//-----------------------------------------------------------------------------
+/**
+ *  ES_MAX_NETWORK_RETRY sets the default number of retry count for network connection.
+ */
+#define ES_MAX_NETWORK_RETRY (5)
+
+//-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
-static IPAddress myIP;
+static IPAddress enrolleeIP;
+
+/**
+ * @var g_retryCounter
+ * @brief Retry counter for cancelling network retry. Currently network retry is limited to 5 attempts
+ */
+static uint16_t g_retryCounter = 0;
+
+
 
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
@@ -72,14 +88,24 @@ ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCa
             != 0)
     {
         OC_LOG(DEBUG, ES_NH_TAG, "!!!!! Upgrade WiFi Shield Firmware version !!!!!!");
-        //return ES_ERROR;
+        return ES_ERROR;
     }
+
+    //Retry counter is reset everytime the ConnectToWiFiNetwork is invoked
+    g_retryCounter = 0;
 
     OC_LOG_V(INFO, ES_NH_TAG, "Finding SSID: %s", ssid);
 
-    while (findNetwork(ssid) == 0) // found
+    while ((findNetwork(ssid) == 0) && g_retryCounter < ES_MAX_NETWORK_RETRY) // found
     {
         delay(1000);
+        g_retryCounter++;
+    }
+
+    if(g_retryCounter == ES_MAX_NETWORK_RETRY){
+        OC_LOG_V(ERROR, ES_NH_TAG, "Connection to network failed after %d attempts",
+                                                                    g_retryCounter);
+        return ES_ERROR;
     }
 
     if (cb != NULL)
@@ -89,6 +115,9 @@ ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCa
 
     if (WiFi.status() == WL_CONNECTED)
         WiFi.disconnect();
+
+    //Retry counter is reset everytime the ConnectToWiFiNetwork is invoked
+    g_retryCounter = 0;
 
     res = ConnectToNetwork(ssid, pass);
 
@@ -142,7 +171,7 @@ int ConnectToNetwork(const char *ssid, const char *pass)
     int status = WL_IDLE_STATUS;
 
     // attempt to connect to Wifi network:
-    while (status != WL_CONNECTED)
+    while (status != WL_CONNECTED && g_retryCounter < ES_MAX_NETWORK_RETRY)
     {
         OC_LOG_V(INFO, ES_NH_TAG, "Attempting to connect to SSID: %s", ssid);
 
@@ -150,14 +179,25 @@ int ConnectToNetwork(const char *ssid, const char *pass)
 
         // wait 10 seconds for connection:
         delay(10000);
+
+        g_retryCounter++;
     }
+
+    if(g_retryCounter == ES_MAX_NETWORK_RETRY){
+        OC_LOG_V(ERROR, ES_NH_TAG, "Connection to network failed after %d attempts",
+                                                                    g_retryCounter);
+        return ES_ERROR;
+    }
+
     OC_LOG(DEBUG, ES_NH_TAG, "Connected to wifi");
 
-    myIP = WiFi.localIP();
-    OC_LOG_V(INFO, ES_NH_TAG, "IP Address:  %d.%d.%d.%d", myIP[0], myIP[1], myIP[2], myIP[3]);
+    enrolleeIP = WiFi.localIP();
+    OC_LOG_V(INFO, ES_NH_TAG, "IP Address:  %d.%d.%d.%d", enrolleeIP[0], enrolleeIP[1],
+                                                          enrolleeIP[2], enrolleeIP[3]);
 
     char buf[50];
-    sprintf(buf, "IP Address:  %d.%d.%d.%d", myIP[0], myIP[1], myIP[2], myIP[3]);
+    sprintf(buf, "IP Address:  %d.%d.%d.%d", enrolleeIP[0], enrolleeIP[1],
+                                             enrolleeIP[2], enrolleeIP[3]);
     Serial.println(buf);
 
     return 0;
