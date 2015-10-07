@@ -32,10 +32,10 @@
 #include <thread>
 #include <mutex>
 
-#define EASY_SETUP_SERVICE_NATIVE_API_CLASS_PATH    "org/iotivity/service/easysetup/mediator/EasySetupManager"
-#define EASY_SETUP_SERVICE_NATIVE_API_CLASS_TYPE    "Lorg/iotivity/service/easysetup/mediator/EasySetupManager;"
-#define EASY_SETUP_SERVICE_CALLBACK_NATIVE_API_CLASS_PATH    "org/iotivity/service/easysetup/mediator/EasySetupCallbackHandler"
-#define EASY_SETUP_SERVICE_CALLBACK_NATIVE_API_CLASS_TYPE    "Lorg/iotivity/service/easysetup/mediator/EasySetupCallbackHandler;"
+#define EASY_SETUP_SERVICE_NATIVE_API_CLASS_PATH    "org/iotivity/service/easysetup/core/EasySetupManager"
+#define EASY_SETUP_SERVICE_NATIVE_API_CLASS_TYPE    "Lorg/iotivity/service/easysetup/core/EasySetupManager;"
+#define EASY_SETUP_SERVICE_CALLBACK_NATIVE_API_CLASS_PATH    "org/iotivity/service/easysetup/core/EasySetupCallbackHandler"
+#define EASY_SETUP_SERVICE_CALLBACK_NATIVE_API_CLASS_TYPE    "Lorg/iotivity/service/easysetup/core/EasySetupCallbackHandler;"
 
 #define EASY_SETUP_JAVA_STRING_TYPE "Ljava/lang/String;"
 #define EASY_SETUP_JAVA_INTEGER_TYPE "I"
