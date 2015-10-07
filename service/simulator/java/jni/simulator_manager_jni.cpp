@@ -217,7 +217,6 @@ class JNIFoundResourceListener
                 return;
             }
 
-            delete jniSimulatorResource;
             releaseEnv();
         }
 
