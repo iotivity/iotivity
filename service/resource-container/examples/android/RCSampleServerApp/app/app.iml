@@ -84,6 +84,7 @@
     <orderEntry type="jdk" jdkName="Android API 21 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="iotivity-service-release-" level="project" />
+    <orderEntry type="library" exported="" name="iotivity-resource-container-release-" level="project" />
     <orderEntry type="library" exported="" name="iotivity-base-release-" level="project" />
   </component>
 </module>

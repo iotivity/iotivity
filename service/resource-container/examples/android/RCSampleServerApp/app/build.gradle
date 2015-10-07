@@ -21,6 +21,7 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile(name:'iotivity-service-release', ext:'aar')
     compile(name:'iotivity-base-release', ext:'aar')
+    compile(name:'iotivity-service-release', ext:'aar')
+    compile(name:'iotivity-resource-container-release', ext:'aar')
 }

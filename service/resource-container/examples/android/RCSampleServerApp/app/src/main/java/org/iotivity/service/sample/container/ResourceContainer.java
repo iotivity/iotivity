@@ -189,8 +189,8 @@ public class ResourceContainer {
     public void removeBMIBundle() {
 
         List<RcsBundleInfo> bundleList = containerInstance.listBundles();
-        if (0 == bundleList.size()) {
-            logMessage = "No bundle to remove" + "\n";
+        if (1 == bundleList.size()) {
+            logMessage = "BMI Bundle not added" + "\n";
 
         } else {
 
