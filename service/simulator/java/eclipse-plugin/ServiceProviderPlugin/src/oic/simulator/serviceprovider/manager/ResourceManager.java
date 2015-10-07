@@ -1384,17 +1384,7 @@ public class ResourceManager {
             if (null != resourceServerN) {
                 try {
                     resourceServerN.stopAutomation(autoId);
-                } catch (InvalidArgsException e) {
-                    Activator
-                    .getDefault()
-                    .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-"
-                                    + e.message());
-                    return;
-               }catch (SimulatorException e) {
+                } catch (SimulatorException e) {
                     Activator
                             .getDefault()
                             .getLogManager()
@@ -1533,16 +1523,6 @@ public class ResourceManager {
         // Call native method
         try {
             resourceServer.stopAutomation(autoId);
-        } catch (InvalidArgsException e) {
-            Activator
-            .getDefault()
-            .getLogManager()
-            .log(Level.ERROR.ordinal(),
-                    new Date(),
-                    "[" + e.getClass().getSimpleName() + "]"
-                            + e.code().toString() + "-"
-                            + e.message());
-            return false;
         } catch (SimulatorException e) {
             Activator
                     .getDefault()

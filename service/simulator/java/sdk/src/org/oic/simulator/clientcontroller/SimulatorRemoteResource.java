@@ -161,7 +161,7 @@ public class SimulatorRemoteResource {
             throw new InvalidArgsException(
                     SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
                     "Parameter passed in invalid");
-        this.get(null, queryParamsMap, onGetListener);
+        this.nativeGet(null, queryParamsMap, onGetListener);
     }
 
     /**
@@ -188,11 +188,11 @@ public class SimulatorRemoteResource {
     public void get(String resourceInterface,
             Map<String, String> queryParamsMap, IGetListener onGetListener)
             throws InvalidArgsException, NoSupportException, SimulatorException {
-        if (resourceInterface.isEmpty() || null == onGetListener)
+        if (null == resourceInterface || resourceInterface.isEmpty() || null == onGetListener)
             throw new InvalidArgsException(
                     SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
                     "Parameter passed in invalid");
-        this.get(resourceInterface, queryParamsMap, onGetListener);
+        this.nativeGet(resourceInterface, queryParamsMap, onGetListener);
     }
 
     private native void nativeGet(String resourceInterface,
@@ -228,7 +228,7 @@ public class SimulatorRemoteResource {
             throw new InvalidArgsException(
                     SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
                     "Parameter passed in invalid");
-        this.put(null, representation, queryParamsMap, onPutListener);
+        this.nativePut(null, representation, queryParamsMap, onPutListener);
     }
 
     /**
@@ -259,11 +259,12 @@ public class SimulatorRemoteResource {
             SimulatorResourceModel representation,
             Map<String, String> queryParamsMap, IPutListener onPutListener)
             throws InvalidArgsException, NoSupportException, SimulatorException {
-        if (resourceInterface.isEmpty() || null == representation || null == onPutListener)
+        if (null == resourceInterface || resourceInterface.isEmpty() ||
+            null == representation || null == onPutListener)
             throw new InvalidArgsException(
                     SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
                     "Parameter passed in invalid");
-        this.put(resourceInterface, representation, queryParamsMap, onPutListener);
+        this.nativePut(resourceInterface, representation, queryParamsMap, onPutListener);
     }
 
     private native void nativePut(String resourceInterface,
@@ -300,7 +301,7 @@ public class SimulatorRemoteResource {
             throw new InvalidArgsException(
                     SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
                     "Parameter passed in invalid");
-        this.post(null, representation, queryParamsMap, onPostListener);
+        this.nativePost(null, representation, queryParamsMap, onPostListener);
     }
 
     /**
@@ -331,11 +332,12 @@ public class SimulatorRemoteResource {
             SimulatorResourceModel representation,
             Map<String, String> queryParamsMap, IPostListener onPostListener)
             throws InvalidArgsException, NoSupportException, SimulatorException {
-        if (resourceInterface.isEmpty() || null == representation || null == onPostListener)
+        if (null == resourceInterface || resourceInterface.isEmpty() ||
+            null == representation || null == onPostListener)
             throw new InvalidArgsException(
                 SimulatorResult.SIMULATOR_INVALID_PARAM.ordinal(),
                 "Parameter passed in invalid");
-        this.post(resourceInterface, representation, queryParamsMap, onPostListener);
+        this.nativePost(resourceInterface, representation, queryParamsMap, onPostListener);
     }
 
     private native void nativePost(String resourceInterface,

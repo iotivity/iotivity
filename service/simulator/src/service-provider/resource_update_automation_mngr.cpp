@@ -114,8 +114,8 @@ void UpdateAutomationMngr::stop(int id)
         return;
     }
 
-    //Throw InvalidArgsException
-    throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Invalid Automation Id!");
+    //Throw SimulatorException
+    throw SimulatorException(SIMULATOR_ERROR, "No automation is currently in progress for the given automation Id!");
 }
 
 void UpdateAutomationMngr::stopAll()
