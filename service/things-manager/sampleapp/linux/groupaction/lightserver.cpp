@@ -291,7 +291,7 @@ void * handleSlowResponse(void *param, std::shared_ptr< OCResourceRequest > pReq
     return NULL;
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     // Create PlatformConfig object
     PlatformConfig cfg

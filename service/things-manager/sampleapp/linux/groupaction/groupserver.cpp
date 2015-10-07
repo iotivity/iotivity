@@ -134,7 +134,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
 }
 
-void onGet(const HeaderOptions& opt, const OCRepresentation &rep,
+void onGet(const HeaderOptions& /*opt*/, const OCRepresentation &/*rep*/,
         const int eCode)
 {
     cout << "\nonGet" << endl;
@@ -144,7 +144,7 @@ void onGet(const HeaderOptions& opt, const OCRepresentation &rep,
         cout << "\tInvalid parameter." << endl;
 }
 
-void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+void onPut(const HeaderOptions& /*opt*/, const OCRepresentation &/*rep*/,
         const int eCode)
 {
     cout << "\nonPut" << endl;
@@ -154,8 +154,8 @@ void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep,
         cout << "\tInvalid parameter." << endl;
 }
 
-void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-        const int eCode)
+void onPost(const HeaderOptions& /*opt*/, const OCRepresentation &rep,
+        const int /*eCode*/)
 {
     printf("\nonPost\n");
 
@@ -259,7 +259,7 @@ void CancelRecursive_allBulbOn()
     groupMgr->cancelActionSet(g_resource, "AllBulbOnRecursiveCall", &onPost);
 }
 
-void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
+void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& rep,
         const int& eCode, const int& sequenceNumber)
 {
     if (eCode == OC_STACK_OK)

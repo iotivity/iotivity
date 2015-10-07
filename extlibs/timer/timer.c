@@ -327,7 +327,7 @@ time_t registerTimer(const time_t seconds, int *id,  void (*cb)())
 
 void unregisterTimer(int idx)
 {
-    if( 0 <= idx && idx <= TIMEOUTS)
+    if( 0 <= idx && idx < TIMEOUTS)
         timeout_list[idx].timeout_state = TIMEOUT_UNUSED;
 }
 
