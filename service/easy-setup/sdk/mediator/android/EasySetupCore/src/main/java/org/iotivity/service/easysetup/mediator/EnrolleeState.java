@@ -20,7 +20,7 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.core;
+package org.iotivity.service.easysetup.mediator;
 
 /**
  * It defines various states of the Enrollee device during easy setup process

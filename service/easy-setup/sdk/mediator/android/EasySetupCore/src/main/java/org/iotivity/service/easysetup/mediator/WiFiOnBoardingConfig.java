@@ -20,10 +20,9 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.impl;
+package org.iotivity.service.easysetup.mediator;
 
-import org.iotivity.service.easysetup.core.IpOnBoardingConnection;
-import org.iotivity.service.easysetup.core.OnBoardingConfig;
+import org.iotivity.service.easysetup.mediator.OnBoardingConfig;
 
 import android.net.wifi.WifiConfiguration;
 

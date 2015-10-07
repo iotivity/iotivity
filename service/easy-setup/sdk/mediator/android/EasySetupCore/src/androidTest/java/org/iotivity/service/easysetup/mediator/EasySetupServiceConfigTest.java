@@ -20,13 +20,9 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.core;
+package org.iotivity.service.easysetup.mediator;
 
 import android.test.AndroidTestCase;
-
-import junit.framework.Assert;
-
-import org.iotivity.service.easysetup.impl.EnrolleeDeviceFactory;
 
 
 public class EasySetupServiceConfigTest extends AndroidTestCase {

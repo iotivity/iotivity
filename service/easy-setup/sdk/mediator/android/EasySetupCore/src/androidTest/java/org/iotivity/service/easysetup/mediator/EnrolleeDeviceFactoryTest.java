@@ -20,15 +20,10 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.core;
+package org.iotivity.service.easysetup.mediator;
 
 import android.net.wifi.WifiConfiguration;
 import android.test.AndroidTestCase;
-
-import org.iotivity.service.easysetup.impl.EnrolleeDeviceFactory;
-import org.iotivity.service.easysetup.impl.EnrolleeDeviceWiFiOnboarding;
-import org.iotivity.service.easysetup.impl.WiFiOnBoardingConfig;
-import org.iotivity.service.easysetup.impl.WiFiProvConfig;
 
 public class EnrolleeDeviceFactoryTest extends AndroidTestCase {
 

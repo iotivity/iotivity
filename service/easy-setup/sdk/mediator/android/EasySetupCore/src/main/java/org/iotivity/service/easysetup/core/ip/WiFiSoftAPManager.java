@@ -20,7 +20,7 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.mediator.ip;
+package org.iotivity.service.easysetup.core.ip;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -35,9 +35,9 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
-import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
-import org.iotivity.service.easysetup.mediator.EnrolleeOnBoardingInfo;
-import org.iotivity.service.easysetup.mediator.IOnBoardingStatus;
+import org.iotivity.service.easysetup.core.EnrolleeInfo;
+import org.iotivity.service.easysetup.core.EnrolleeOnBoardingInfo;
+import org.iotivity.service.easysetup.core.IOnBoardingStatus;
 
 /**
  * WiFiSoftAPManager provides wrapper methods for accessing Android Soft Access Point functionality.

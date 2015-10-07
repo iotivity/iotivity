@@ -20,23 +20,17 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.impl;
+package org.iotivity.service.easysetup.mediator;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.iotivity.service.easysetup.core.OnBoardingConnection;
-import org.iotivity.service.easysetup.core.EnrolleeDevice;
-import org.iotivity.service.easysetup.core.EnrolleeState;
-import org.iotivity.service.easysetup.core.IpOnBoardingConnection;
-import org.iotivity.service.easysetup.core.OnBoardingConfig;
-import org.iotivity.service.easysetup.core.ProvisioningConfig;
-import org.iotivity.service.easysetup.mediator.EasySetupManager;
-import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
-import org.iotivity.service.easysetup.mediator.IOnBoardingStatus;
-import org.iotivity.service.easysetup.mediator.IProvisioningListener;
-import org.iotivity.service.easysetup.mediator.ProvisionEnrollee;
-import org.iotivity.service.easysetup.mediator.ip.WiFiSoftAPManager;
+import org.iotivity.service.easysetup.core.EasySetupManager;
+import org.iotivity.service.easysetup.core.EnrolleeInfo;
+import org.iotivity.service.easysetup.core.IOnBoardingStatus;
+import org.iotivity.service.easysetup.core.IProvisioningListener;
+import org.iotivity.service.easysetup.core.ProvisionEnrollee;
+import org.iotivity.service.easysetup.core.ip.WiFiSoftAPManager;
 
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;

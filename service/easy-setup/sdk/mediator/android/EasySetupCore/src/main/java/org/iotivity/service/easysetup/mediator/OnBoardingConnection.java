@@ -19,7 +19,7 @@
  * <p/>
  * ****************************************************************
  */
-package org.iotivity.service.easysetup.core;
+package org.iotivity.service.easysetup.mediator;
 
 /**
  * This interface contains the connection details of the enrollee device

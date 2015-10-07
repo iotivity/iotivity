@@ -20,13 +20,13 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.core;
+package org.iotivity.service.easysetup.mediator;
 
 import android.content.Context;
 import android.util.Log;
 
-import org.iotivity.service.easysetup.mediator.EasySetupManager;
-import org.iotivity.service.easysetup.mediator.ProvisionEnrollee;
+import org.iotivity.service.easysetup.core.EasySetupManager;
+import org.iotivity.service.easysetup.core.ProvisionEnrollee;
 
 import java.io.IOException;
 import java.util.ArrayList;

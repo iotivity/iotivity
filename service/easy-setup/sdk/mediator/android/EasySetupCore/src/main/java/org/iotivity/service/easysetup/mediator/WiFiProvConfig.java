@@ -20,12 +20,9 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.impl;
+package org.iotivity.service.easysetup.mediator;
 
-import org.iotivity.service.easysetup.core.ProvisioningConfig;
-import org.iotivity.service.easysetup.mediator.EnrolleeInfo;
-
-import android.net.wifi.WifiConfiguration;
+import org.iotivity.service.easysetup.mediator.ProvisioningConfig;
 
 /**
  * This class contains on provisioning configuration information for for target network.
