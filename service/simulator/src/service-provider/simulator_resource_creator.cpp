@@ -52,7 +52,7 @@ SimulatorResourceServerImplSP SimulatorResourceCreator::createResource(
 
     if (ramlResource)
     {
-        SimulatorResourceServerImplSP simResource = std::make_shared<SimulatorResourceServerImpl>();
+        SimulatorResourceServerImplSP simResource(new SimulatorResourceServerImpl());
         simResource->setName(ramlResource->getDisplayName());
         simResource->setURI(ramlResource->getResourceUri());
 
