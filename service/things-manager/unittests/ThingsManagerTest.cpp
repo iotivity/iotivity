@@ -57,12 +57,12 @@ std::string defaultCurrency = "Seoul, Korea";
 OCResourceHandle resourceHandle;
 OCResourceHandle foundResourceHandle;
 
-std::shared_ptr<OCResource> g_resource;
-std::shared_ptr<OCResource> g_room_resource;
-std::shared_ptr<OCResource> g_light;
-std::shared_ptr<OCResource> configurationResource;
-std::vector<string> lights;
-std::vector<OCResourceHandle> resourceHandleVector;
+std::shared_ptr< OCResource > g_resource;
+std::shared_ptr< OCResource > g_room_resource;
+std::shared_ptr< OCResource > g_light;
+std::shared_ptr< OCResource > configurationResource;
+std::vector< string > lights;
+std::vector< OCResourceHandle > resourceHandleVector;
 
 GroupManager *groupMgr = new GroupManager();
 ConfigurationResource *myConfigurationResource;
@@ -86,193 +86,192 @@ typedef std::function< OCRepresentation(void) > getFunc;
 void *ChangeLightRepresentation(void *param);
 void *handleSlowResponse(void *param, std::shared_ptr< OCResourceRequest > pRequest);
 
-
 /****** Light Resource [Required to gtestcases of GroupManager APIs]  ******/
 
 class LightResource
 {
-    public:
-        std::string m_power;
-        std::string testing;
-        std::string m_lightUri;
-        OCResourceHandle m_resourceHandle;
-        OCRepresentation m_lightRep;
+public:
+    std::string m_power;
+    std::string testing;
+    std::string m_lightUri;
+    OCResourceHandle m_resourceHandle;
+    OCRepresentation m_lightRep;
 
-    public:
-        LightResource() :
+public:
+    LightResource() :
             m_power("on"), m_lightUri("/a/light"), m_resourceHandle(0)
+    {
+        m_lightRep.setUri(m_lightUri);
+        m_lightRep.setValue("power", m_power);
+    }
+
+    void createResource()
+    {
+        std::string resourceURI = m_lightUri;
+        std::string resourceTypeName = "core.light";
+        std::string resourceInterface = DEFAULT_INTERFACE;
+        EntityHandler cb = std::bind(&LightResource::entityHandler, this, PH::_1);
+
+        OCStackResult result = OCPlatform::registerResource(m_resourceHandle, resourceURI,
+                resourceTypeName, resourceInterface, cb, OC_DISCOVERABLE | OC_OBSERVABLE);
+
+        if (OC_STACK_OK != result)
         {
-            m_lightRep.setUri(m_lightUri);
-            m_lightRep.setValue("power", m_power);
+            printf("\nLightResource : OC_STACK_OK != result...");
         }
-
-        void  createResource()
+        else
         {
-            std::string resourceURI = m_lightUri;
-            std::string resourceTypeName = "core.light";
-            std::string resourceInterface = DEFAULT_INTERFACE;
-            EntityHandler cb = std::bind(&LightResource::entityHandler, this, PH::_1);
+            cv2.notify_all();
+            std::mutex blocker;
+            std::condition_variable cv;
+            std::unique_lock < std::mutex > lock(blocker);
+            cv.wait(lock);
+        }
+    }
 
-            OCStackResult result = OCPlatform::registerResource(m_resourceHandle, resourceURI,
-                                   resourceTypeName, resourceInterface, cb, OC_DISCOVERABLE | OC_OBSERVABLE);
+    OCResourceHandle getHandle()
+    {
+        return m_resourceHandle;
+    }
 
-            if (OC_STACK_OK != result)
+    void put(OCRepresentation &rep)
+    {
+        try
+        {
+            std::string test;
+            if (rep.getValue < std::string > ("power", test))
             {
-                printf("\nLightResource : OC_STACK_OK != result...");
+                cout << "\t\t\t\t" << "power: " << test << endl;
             }
             else
             {
-                cv2.notify_all();
-                std::mutex blocker;
-                std::condition_variable cv;
-                std::unique_lock < std::mutex > lock(blocker);
-                cv.wait(lock);
+                cout << "\t\t\t\t" << "power not found in the representation" << endl;
             }
         }
-
-        OCResourceHandle getHandle()
+        catch (exception &e)
         {
-            return m_resourceHandle;
+            cout << e.what() << endl;
         }
+    }
 
-        void put(OCRepresentation &rep)
+    OCRepresentation post(OCRepresentation &rep)
+    {
+        put(rep);
+        return get();
+    }
+
+    OCRepresentation get()
+    {
+        m_lightRep.setValue("power", m_power);
+
+        return m_lightRep;
+    }
+
+    void addType(const std::string &type) const
+    {
+        OCStackResult result = OCPlatform::bindTypeToResource(m_resourceHandle, type);
+        if (OC_STACK_OK != result)
         {
-            try
+            cout << "Binding TypeName to Resource was unsuccessful\n";
+        }
+    }
+
+    void addInterface(const std::string &interface) const
+    {
+        OCStackResult result = OCPlatform::bindInterfaceToResource(m_resourceHandle, interface);
+        if (OC_STACK_OK != result)
+        {
+            cout << "Binding TypeName to Resource was unsuccessful\n";
+        }
+    }
+
+private:
+    OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request)
+    {
+        cout << "\tIn Server CPP entity handler:\n";
+        OCEntityHandlerResult ehResult = OC_EH_ERROR;
+        if (request)
+        {
+            std::string requestType = request->getRequestType();
+            int requestFlag = request->getRequestHandlerFlag();
+
+            if (requestFlag & RequestHandlerFlag::RequestFlag)
             {
-                std::string test;
-                if (rep.getValue<std::string>("power", test))
+                cout << "\t\trequestFlag : Request\n";
+                auto pResponse = std::make_shared< OC::OCResourceResponse >();
+                pResponse->setRequestHandle(request->getRequestHandle());
+                pResponse->setResourceHandle(request->getResourceHandle());
+
+                if (requestType == "GET")
                 {
-                    cout << "\t\t\t\t" << "power: " << test << endl;
-                }
-                else
-                {
-                    cout << "\t\t\t\t" << "power not found in the representation" << endl;
-                }
-            }
-            catch (exception &e)
-            {
-                cout << e.what() << endl;
-            }
-        }
-
-        OCRepresentation post(OCRepresentation &rep)
-        {
-            put(rep);
-            return get();
-        }
-
-        OCRepresentation get()
-        {
-            m_lightRep.setValue("power", m_power);
-
-            return m_lightRep;
-        }
-
-        void addType(const std::string &type) const
-        {
-            OCStackResult result = OCPlatform::bindTypeToResource(m_resourceHandle, type);
-            if (OC_STACK_OK != result)
-            {
-                cout << "Binding TypeName to Resource was unsuccessful\n";
-            }
-        }
-
-        void addInterface(const std::string &interface) const
-        {
-            OCStackResult result = OCPlatform::bindInterfaceToResource(m_resourceHandle, interface);
-            if (OC_STACK_OK != result)
-            {
-                cout << "Binding TypeName to Resource was unsuccessful\n";
-            }
-        }
-
-    private:
-        OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request)
-        {
-            cout << "\tIn Server CPP entity handler:\n";
-            OCEntityHandlerResult ehResult = OC_EH_ERROR;
-            if (request)
-            {
-                std::string requestType = request->getRequestType();
-                int requestFlag = request->getRequestHandlerFlag();
-
-                if (requestFlag & RequestHandlerFlag::RequestFlag)
-                {
-                    cout << "\t\trequestFlag : Request\n";
-                    auto pResponse = std::make_shared< OC::OCResourceResponse >();
-                    pResponse->setRequestHandle(request->getRequestHandle());
-                    pResponse->setResourceHandle(request->getResourceHandle());
-
-                    if (requestType == "GET")
+                    cout << "\t\t\trequestType : GET\n";
+                    if (isSlowResponse)
                     {
-                        cout << "\t\t\trequestType : GET\n";
-                        if (isSlowResponse)
+                        static int startedThread = 0;
+                        if (!startedThread)
                         {
-                            static int startedThread = 0;
-                            if (!startedThread)
-                            {
-                                std::thread t(handleSlowResponse, (void *) this, request);
-                                startedThread = 1;
-                                t.detach();
-                            }
-                            ehResult = OC_EH_SLOW;
+                            std::thread t(handleSlowResponse, (void *) this, request);
+                            startedThread = 1;
+                            t.detach();
                         }
-                        else
-                        {
-                            pResponse->setErrorCode(200);
-                            pResponse->setResponseResult(OC_EH_OK);
-                            pResponse->setResourceRepresentation(get());
-                            if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
-                            {
-                                ehResult = OC_EH_OK;
-                            }
-                        }
+                        ehResult = OC_EH_SLOW;
                     }
-                    else if (requestType == "PUT")
+                    else
                     {
-                        cout << "\t\t\trequestType : PUT\n";
-                        OCRepresentation rep = request->getResourceRepresentation();
-                        put(rep);
                         pResponse->setErrorCode(200);
                         pResponse->setResponseResult(OC_EH_OK);
-                        pResponse->setResourceRepresentation(rep);
+                        pResponse->setResourceRepresentation(get());
                         if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                         {
                             ehResult = OC_EH_OK;
                         }
-                    }
-                    else if (requestType == "POST")
-                    {
-                        cout << "\t\t\trequestType : POST\n";
-
-                        OCRepresentation rep = request->getResourceRepresentation();
-                        OCRepresentation rep_post = post(rep);
-
-                        pResponse->setResourceRepresentation(rep_post);
-                        pResponse->setErrorCode(200);
-                        if (rep_post.hasAttribute("createduri"))
-                        {
-                            pResponse->setResponseResult(OC_EH_RESOURCE_CREATED);
-                            pResponse->setNewResourceUri(
-                                rep_post.getValue< std::string >("createduri"));
-                        }
-
-                        if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
-                        {
-                            ehResult = OC_EH_OK;
-                        }
-                    }
-                    else if (requestType == "DELETE")
-                    {
                     }
                 }
+                else if (requestType == "PUT")
+                {
+                    cout << "\t\t\trequestType : PUT\n";
+                    OCRepresentation rep = request->getResourceRepresentation();
+                    put(rep);
+                    pResponse->setErrorCode(200);
+                    pResponse->setResponseResult(OC_EH_OK);
+                    pResponse->setResourceRepresentation(rep);
+                    if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                    {
+                        ehResult = OC_EH_OK;
+                    }
+                }
+                else if (requestType == "POST")
+                {
+                    cout << "\t\t\trequestType : POST\n";
+
+                    OCRepresentation rep = request->getResourceRepresentation();
+                    OCRepresentation rep_post = post(rep);
+
+                    pResponse->setResourceRepresentation(rep_post);
+                    pResponse->setErrorCode(200);
+                    if (rep_post.hasAttribute("createduri"))
+                    {
+                        pResponse->setResponseResult(OC_EH_RESOURCE_CREATED);
+                        pResponse->setNewResourceUri(
+                                rep_post.getValue < std::string > ("createduri"));
+                    }
+
+                    if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                    {
+                        ehResult = OC_EH_OK;
+                    }
+                }
+                else if (requestType == "DELETE")
+                {
+                }
             }
-            else
-            {
-                std::cout << "Request invalid" << std::endl;
-            }
-            return ehResult;
         }
+        else
+        {
+            std::cout << "Request invalid" << std::endl;
+        }
+        return ehResult;
+    }
 };
 
 void *handleSlowResponse(void *param, std::shared_ptr< OCResourceRequest > pRequest)
@@ -305,8 +304,8 @@ void ConfigurationResource::createResources(ResourceEntityHandler callback)
     }
 
     OCStackResult result = registerResource(m_configurationHandle, m_configurationUri,
-                                            m_configurationTypes[0], m_configurationInterfaces[0], callback,
-                                            OC_DISCOVERABLE | OC_OBSERVABLE);
+            m_configurationTypes[0], m_configurationInterfaces[0], callback,
+            OC_DISCOVERABLE | OC_OBSERVABLE);
 
     if (OC_STACK_OK != result)
     {
@@ -381,7 +380,6 @@ void ConfigurationResource::factoryReset()
     m_region = defaultRegion;
 }
 
-
 /****** FactorySet  Resource  ******/
 
 FactorySetResource::FactorySetResource()
@@ -393,7 +391,9 @@ FactorySetResource::FactorySetResource()
     m_configurationRep.setResourceTypes(m_configurationTypes);
 }
 
-FactorySetResource::~FactorySetResource() {}
+FactorySetResource::~FactorySetResource()
+{
+}
 
 void FactorySetResource::createResources(ResourceEntityHandler callback)
 {
@@ -406,8 +406,8 @@ void FactorySetResource::createResources(ResourceEntityHandler callback)
     }
 
     OCStackResult result = registerResource(m_configurationHandle, m_configurationUri,
-                                            m_configurationTypes[0], m_configurationInterfaces[0], callback,
-                                            OC_DISCOVERABLE | OC_OBSERVABLE);
+            m_configurationTypes[0], m_configurationInterfaces[0], callback,
+            OC_DISCOVERABLE | OC_OBSERVABLE);
 
     if (OC_STACK_OK != result)
     {
@@ -475,7 +475,6 @@ std::string FactorySetResource::getUri()
     return m_configurationUri;
 }
 
-
 /****** Maintenance Resource ********/
 
 void MaintenanceResource::createResources(ResourceEntityHandler callback)
@@ -489,8 +488,8 @@ void MaintenanceResource::createResources(ResourceEntityHandler callback)
     }
 
     OCStackResult result = registerResource(m_maintenanceHandle, m_maintenanceUri,
-                                            m_maintenanceTypes[0], m_maintenanceInterfaces[0], callback,
-                                            OC_DISCOVERABLE | OC_OBSERVABLE);
+            m_maintenanceTypes[0], m_maintenanceInterfaces[0], callback,
+            OC_DISCOVERABLE | OC_OBSERVABLE);
 
     if (OC_STACK_OK != result)
     {
@@ -498,9 +497,9 @@ void MaintenanceResource::createResources(ResourceEntityHandler callback)
     }
 
     thread exec(
-        std::function< void(int second) >(
-            std::bind(&MaintenanceResource::maintenanceMonitor, this,
-                      std::placeholders::_1)), 10);
+            std::function< void(int second) >(
+                    std::bind(&MaintenanceResource::maintenanceMonitor, this,
+                            std::placeholders::_1)), 10);
     exec.detach();
     cv3.notify_all();
     std::mutex blocker;
@@ -580,12 +579,11 @@ getFunc getGetFunction(std::string uri)
     if (uri == myConfigurationResource->getUri())
     {
         res = std::bind(&ConfigurationResource::getConfigurationRepresentation,
-                        myConfigurationResource);
+                myConfigurationResource);
     }
     else if (uri == myMaintenanceResource->getUri())
     {
-        res = std::bind(&MaintenanceResource::getMaintenanceRepresentation,
-                        myMaintenanceResource);
+        res = std::bind(&MaintenanceResource::getMaintenanceRepresentation, myMaintenanceResource);
     }
     return res;
 }
@@ -597,12 +595,12 @@ putFunc getPutFunction(std::string uri)
     if (uri == myConfigurationResource->getUri())
     {
         res = std::bind(&ConfigurationResource::setConfigurationRepresentation,
-                        myConfigurationResource, std::placeholders::_1);
+                myConfigurationResource, std::placeholders::_1);
     }
     else if (uri == myMaintenanceResource->getUri())
     {
-        res = std::bind(&MaintenanceResource::setMaintenanceRepresentation,
-                        myMaintenanceResource, std::placeholders::_1);
+        res = std::bind(&MaintenanceResource::setMaintenanceRepresentation, myMaintenanceResource,
+                std::placeholders::_1);
     }
     return res;
 }
@@ -710,62 +708,61 @@ OCEntityHandlerResult entityHandlerForResource(std::shared_ptr< OCResourceReques
     return ehResult;
 }
 
-
 /****** BootStrap Resource [Required for doBootstrap API of ThingsConfiguration class]  ******/
 
 class BootstrapResource
 {
-    public:
-        std::string m_bootstrapUri;
-        std::vector< std::string > m_bootstrapTypes;
-        std::vector< std::string > m_bootstrapInterfaces;
-        OCResourceHandle m_bootstrapHandle;
-        OCRepresentation m_bootstrapRep;
+public:
+    std::string m_bootstrapUri;
+    std::vector< std::string > m_bootstrapTypes;
+    std::vector< std::string > m_bootstrapInterfaces;
+    OCResourceHandle m_bootstrapHandle;
+    OCRepresentation m_bootstrapRep;
 
-    public:
-        BootstrapResource()
+public:
+    BootstrapResource()
+    {
+        m_bootstrapUri = "/bootstrap";
+        m_bootstrapTypes.push_back("bootstrap");
+        m_bootstrapInterfaces.push_back(DEFAULT_INTERFACE);
+        m_bootstrapRep.setUri(m_bootstrapUri);
+        m_bootstrapRep.setResourceTypes(m_bootstrapTypes);
+        m_bootstrapRep.setResourceInterfaces(m_bootstrapInterfaces);
+        m_bootstrapHandle = NULL;
+    }
+    void createResources()
+    {
+        using namespace OC::OCPlatform;
+        OCStackResult result = registerResource(m_bootstrapHandle, m_bootstrapUri,
+                m_bootstrapTypes[0], m_bootstrapInterfaces[0], entityHandlerBootstrap,
+                OC_DISCOVERABLE | OC_OBSERVABLE);
+
+        if (OC_STACK_OK != result)
         {
-            m_bootstrapUri = "/bootstrap";
-            m_bootstrapTypes.push_back("bootstrap");
-            m_bootstrapInterfaces.push_back(DEFAULT_INTERFACE);
-            m_bootstrapRep.setUri(m_bootstrapUri);
-            m_bootstrapRep.setResourceTypes(m_bootstrapTypes);
-            m_bootstrapRep.setResourceInterfaces(m_bootstrapInterfaces);
-            m_bootstrapHandle = NULL;
-        }
-        void createResources()
-        {
-            using namespace OC::OCPlatform;
-            OCStackResult result = registerResource(m_bootstrapHandle, m_bootstrapUri,
-                                                    m_bootstrapTypes[0], m_bootstrapInterfaces[0], entityHandlerBootstrap,
-                                                    OC_DISCOVERABLE | OC_OBSERVABLE);
-
-            if (OC_STACK_OK != result)
-            {
-                cout << "Resource creation (room) was unsuccessful\n";
-            }
-
-            cv5.notify_all();
-            std::mutex blocker;
-            std::condition_variable cv;
-            std::unique_lock < std::mutex > lock(blocker);
-            cv.wait(lock);
+            cout << "Resource creation (room) was unsuccessful\n";
         }
 
-        void setBootstrapRepresentation(OCRepresentation &rep)
-        {
-        }
+        cv5.notify_all();
+        std::mutex blocker;
+        std::condition_variable cv;
+        std::unique_lock < std::mutex > lock(blocker);
+        cv.wait(lock);
+    }
 
-        OCRepresentation getBootstrapRepresentation()
-        {
-            m_bootstrapRep.setValue< std::string >("n", defaultDeviceName);
-            m_bootstrapRep.setValue< std::string >("loc", defaultLocation);
-            m_bootstrapRep.setValue< std::string >("locn", defaultLocationName);
-            m_bootstrapRep.setValue< std::string >("c", defaultCurrency);
-            m_bootstrapRep.setValue< std::string >("r", defaultRegion);
+    void setBootstrapRepresentation(OCRepresentation& /*rep*/)
+    {
+    }
 
-            return m_bootstrapRep;
-        }
+    OCRepresentation getBootstrapRepresentation()
+    {
+        m_bootstrapRep.setValue < std::string > ("n", defaultDeviceName);
+        m_bootstrapRep.setValue < std::string > ("loc", defaultLocation);
+        m_bootstrapRep.setValue < std::string > ("locn", defaultLocationName);
+        m_bootstrapRep.setValue < std::string > ("c", defaultCurrency);
+        m_bootstrapRep.setValue < std::string > ("r", defaultRegion);
+
+        return m_bootstrapRep;
+    }
 };
 
 BootstrapResource myBootstrapResource;
@@ -850,68 +847,86 @@ OCEntityHandlerResult entityHandlerBootstrap(std::shared_ptr< OCResourceRequest 
     return ehResult;
 }
 
-
 /****** gtest class ******/
 
 class ThingsManagerTest: public TestWithMock
 {
-    public :
-        void Proceed()
-        {
-            cond.notify_all();
-        }
+public:
+    void Proceed()
+    {
+        cond.notify_all();
+    }
 
-        void Wait(int waitingTime = DEFAULT_WAITING_TIME_IN_MILLIS)
-        {
-            std::unique_lock< std::mutex > lock { mutex };
-            cond.wait_for(lock, std::chrono::milliseconds { waitingTime });
-        }
+    void Wait(int waitingTime = DEFAULT_WAITING_TIME_IN_MILLIS)
+    {
+        std::unique_lock < std::mutex > lock
+        { mutex };
+        cond.wait_for(lock, std::chrono::milliseconds
+        { waitingTime });
+    }
 
-    protected:
-        void SetUp()
-        {
-            TestWithMock::SetUp();
-        }
+protected:
+    void SetUp()
+    {
+        TestWithMock::SetUp();
+    }
 
-        void TearDown()
-        {
-            TestWithMock::TearDown();
-        }
+    void TearDown()
+    {
+        TestWithMock::TearDown();
+    }
 
-    private:
-        std::condition_variable cond;
-        std::mutex mutex;
+private:
+    std::condition_variable cond;
+    std::mutex mutex;
 };
 
 //Callbacks
-void onUpdate(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode) {}
-
-void onGetBootstrapInformation(const HeaderOptions &headerOptions, const OCRepresentation &rep,
-                               const int eCode) {}
-
-void onReboot(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode) {}
-
-void onFactoryReset(const HeaderOptions &headerOptions, const OCRepresentation &rep,
-                    const int eCode) {}
-
-void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode) {}
-
-void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode) {}
-
-void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode) {}
-
-void foundResources(std::vector<std::shared_ptr<OC::OCResource> > listOfResource)
+void onUpdate(const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+        const int /*eCode*/)
 {
-    for (auto rsrc = listOfResource.begin(); rsrc != listOfResource.end();
-         ++rsrc)
+}
+
+void onGetBootstrapInformation(const HeaderOptions& /*headerOptions*/,
+        const OCRepresentation& /*rep*/, const int /*eCode*/)
+{
+}
+
+void onReboot(const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+        const int /*eCode*/)
+{
+}
+
+void onFactoryReset(const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+        const int /*eCode*/)
+{
+}
+
+void onGet(const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+        const int /*eCode*/)
+{
+}
+
+void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+        const int /*eCode*/)
+{
+}
+
+void onPost(const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+        const int /*eCode*/)
+{
+}
+
+void foundResources(std::vector< std::shared_ptr< OC::OCResource > > listOfResource)
+{
+    for (auto rsrc = listOfResource.begin(); rsrc != listOfResource.end(); ++rsrc)
     {
         std::string resourceURI = (*rsrc)->uri();
         std::string hostAddress = (*rsrc)->host();
 
         if (resourceURI == "/a/light")
         {
-            result = OCPlatform::registerResource(
-                         foundResourceHandle, (*rsrc));
+            result = OCPlatform::registerResource(foundResourceHandle, (*rsrc));
             if (result == OC_STACK_OK)
             {
                 OCPlatform::bindResource(resourceHandle, foundResourceHandle);
@@ -933,7 +948,7 @@ void foundResources(std::vector<std::shared_ptr<OC::OCResource> > listOfResource
     cv2.notify_all();
 }
 
-void foundGroupResource(std::shared_ptr<OCResource> resource)
+void foundGroupResource(std::shared_ptr< OCResource > resource)
 {
     std::string resourceURI;
     resourceURI = resource->uri();
@@ -951,9 +966,9 @@ void foundGroupResource(std::shared_ptr<OCResource> resource)
 //This test case is to create the lightserver , BootstrapServer & configuration sever
 TEST_F(ThingsManagerTest, testCreateResources)
 {
-    PlatformConfig cfg { OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos };
+    PlatformConfig cfg
+    {   OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos};
     OCPlatform::Configure(cfg);
-    bool actual = true;
 
     LightResource myLight;
     std::thread t1(&LightResource::createResource, &myLight);
@@ -970,7 +985,7 @@ TEST_F(ThingsManagerTest, testCreateResources)
 
     myConfigurationResource = new ConfigurationResource();
     std::thread t3(&ConfigurationResource::createResources, myConfigurationResource,
-                   &entityHandlerForResource);
+            &entityHandlerForResource);
 
     t3.detach();
     std::mutex blocker3;
@@ -979,7 +994,7 @@ TEST_F(ThingsManagerTest, testCreateResources)
 
     myMaintenanceResource = new MaintenanceResource();
     std::thread t4(&MaintenanceResource::createResources, myMaintenanceResource,
-                   &entityHandlerForResource);
+            &entityHandlerForResource);
     t4.detach();
 
     std::mutex blocker4;
@@ -988,7 +1003,7 @@ TEST_F(ThingsManagerTest, testCreateResources)
 
     myFactorySetResource = new FactorySetResource();
     std::thread t5(&FactorySetResource::createResources, myFactorySetResource,
-                   &entityHandlerForResource);
+            &entityHandlerForResource);
     t5.detach();
 
     std::mutex blocker5;
@@ -996,8 +1011,8 @@ TEST_F(ThingsManagerTest, testCreateResources)
     cv4.wait(lock5);
 
     myMaintenanceResource->factoryReset = std::function < void()
-                                          > (std::bind(&ConfigurationResource::factoryReset,
-                                                  myConfigurationResource));
+    > (std::bind(&ConfigurationResource::factoryReset,
+                    myConfigurationResource));
 }
 
 //Check findCandidateResources
@@ -1009,7 +1024,7 @@ TEST_F(ThingsManagerTest, testFindCandidateResources)
     string resourceInterface = BATCH_INTERFACE;
 
     OCStackResult res = OCPlatform::registerResource(resourceHandle, resourceURI,
-                        resourceTypeName, resourceInterface, NULL, OC_DISCOVERABLE);
+            resourceTypeName, resourceInterface, NULL, OC_DISCOVERABLE);
 
     if ( res != OC_STACK_OK )
     {
@@ -1047,6 +1062,7 @@ TEST_F(ThingsManagerTest, testFindCandidateResourcesEmptyResourceType)
     vector<string> types;
     result = instance->findCandidateResources(types, &foundResources);
     EXPECT_TRUE(result == OC_STACK_ERROR);
+    delete instance;
 }
 
 //Find Candidate Resource when Callback is null
@@ -1057,22 +1073,21 @@ TEST_F(ThingsManagerTest, testFindCandidateResourcesNullCallback)
     types.push_back("core.light");
     result = instance->findCandidateResources(types, NULL);
     EXPECT_TRUE(result == OC_STACK_ERROR);
+    delete instance;
 }
 
 //test bind resource to group
 TEST_F(ThingsManagerTest, testBindResourceToGroup)
 {
     GroupManager *instance = new GroupManager();
-    OCResourceHandle groupHandle = NULL;
-    OCResourceHandle foundHandle = NULL;
     OCResourceHandle rHandle = NULL;
 
     string resourceURI = "/core/room-large";
-    string resourceTypeName =  "core.room-large";
+    string resourceTypeName = "core.room-large";
     string resourceInterface = BATCH_INTERFACE;
 
     OCStackResult res = OCPlatform::registerResource(rHandle, resourceURI,
-                        resourceTypeName, resourceInterface, NULL, OC_DISCOVERABLE);
+            resourceTypeName, resourceInterface, NULL, OC_DISCOVERABLE);
 
     if ( res != OC_STACK_OK )
     {
@@ -1081,7 +1096,6 @@ TEST_F(ThingsManagerTest, testBindResourceToGroup)
 
     OCPlatform::bindInterfaceToResource(rHandle, GROUP_INTERFACE);
     OCPlatform::bindInterfaceToResource(rHandle, DEFAULT_INTERFACE);
-
 
     std::string query = OC_RSRVD_WELL_KNOWN_URI;
     query.append("?rt=");
@@ -1096,6 +1110,7 @@ TEST_F(ThingsManagerTest, testBindResourceToGroup)
     result = instance->bindResourceToGroup (resourceHandle, g_room_resource, rHandle);
 
     EXPECT_TRUE(result == OC_STACK_OK);
+    delete instance;
 }
 
 //Add actionset
@@ -1106,7 +1121,8 @@ TEST_F(ThingsManagerTest, testAddActionSetAllBulbOff)
     allBulbOff->actionsetName = "AllBulbOff";
 
     mocks.ExpectCallFunc(onPut).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1178,7 +1194,8 @@ TEST_F(ThingsManagerTest, testAddActionSetAllBulbOn)
     allBulbON->actionsetName = "AllBulbOn";
 
     mocks.ExpectCallFunc(onPut).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1194,7 +1211,7 @@ TEST_F(ThingsManagerTest, testAddActionSetAllBulbOn)
     }
     if (g_resource)
     {
-        result =  groupMgr->addActionSet(g_resource, allBulbON, onPut);
+        result = groupMgr->addActionSet(g_resource, allBulbON, onPut);
         Wait();
         EXPECT_TRUE(result == OC_STACK_OK);
         result = 0;
@@ -1222,7 +1239,7 @@ TEST_F(ThingsManagerTest, testAddActionSetAllBulbOnResourceNull)
         allBulbON->listOfAction.push_back(action);
     }
 
-    result =  groupMgr->addActionSet(NULL, allBulbON, onPut);
+    result = groupMgr->addActionSet(NULL, allBulbON, onPut);
     Wait();
     EXPECT_TRUE(result == OC_STACK_ERROR);
     result = 0;
@@ -1235,7 +1252,7 @@ TEST_F(ThingsManagerTest, testAddActionSetAllBulbOnActionSetNull)
 {
     if (g_resource)
     {
-        result =  groupMgr->addActionSet(g_resource, NULL, onPut);
+        result = groupMgr->addActionSet(g_resource, NULL, onPut);
         Wait();
         EXPECT_TRUE(result == OC_STACK_ERROR);
         result = 0;
@@ -1250,7 +1267,8 @@ TEST_F(ThingsManagerTest, testExecuteActionSetAllBulbOn)
     allBulbON->actionsetName = "AllBulbOn1";
 
     mocks.ExpectCallFunc(onPut).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1266,14 +1284,15 @@ TEST_F(ThingsManagerTest, testExecuteActionSetAllBulbOn)
     }
     if (g_resource)
     {
-        result =  groupMgr->addActionSet(g_resource, allBulbON, onPut);
+        result = groupMgr->addActionSet(g_resource, allBulbON, onPut);
         Wait();
         EXPECT_TRUE(result == OC_STACK_OK);
         result = 0;
     }
 
     mocks.ExpectCallFunc(onPost).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     if (g_resource)
     {
@@ -1297,7 +1316,8 @@ TEST_F(ThingsManagerTest, testExecuteActionSetAllBulbOnResourceNull)
 TEST_F(ThingsManagerTest, testExecuteActionSetAllBulbOff)
 {
     mocks.ExpectCallFunc(onPost).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     if (g_resource)
     {
@@ -1326,7 +1346,8 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelay)
     allBulbON->setDelay(1);
 
     mocks.ExpectCallFunc(onPut).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1347,7 +1368,8 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelay)
     }
 
     mocks.ExpectCallFunc(onPost).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     if (g_resource)
     {
@@ -1366,7 +1388,8 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelayEqulasZero)
     allBulbON->actionsetName = "AllBulbOnDelay";
 
     mocks.ExpectCallFunc(onPut).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1403,7 +1426,8 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithInvalidDelay)
     allBulbON->actionsetName = "AllBulbOnDelay";
 
     mocks.ExpectCallFunc(onPut).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1441,7 +1465,8 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelayWithResourceNull)
     allBulbON->setDelay(5);
 
     mocks.ExpectCallFunc(onPut).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1470,7 +1495,8 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelayWithResourceNull)
 TEST_F(ThingsManagerTest, testCancelActionSet)
 {
     mocks.ExpectCallFunc(onPost).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     if (g_resource)
     {
@@ -1494,7 +1520,8 @@ TEST_F(ThingsManagerTest, testCancelActionSetResourceNull)
 TEST_F(ThingsManagerTest, testDeleteActionSet)
 {
     mocks.ExpectCallFunc(onPut).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     if (g_resource)
     {
@@ -1518,11 +1545,12 @@ TEST_F(ThingsManagerTest, testDeleteActionSetResourceNull)
 TEST_F(ThingsManagerTest, testGetActionSet)
 {
     mocks.ExpectCallFunc(onPost).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     if (g_resource)
     {
-        result =  groupMgr->getActionSet(g_resource, "AllBulbOn", &onPost);
+        result = groupMgr->getActionSet(g_resource, "AllBulbOn", &onPost);
         Wait();
         EXPECT_TRUE(result == OC_STACK_OK);
         result = 0;
@@ -1532,7 +1560,7 @@ TEST_F(ThingsManagerTest, testGetActionSet)
 //Get ActionSet on NULL Resource
 TEST_F(ThingsManagerTest, testGetActionSetResourceNull)
 {
-    result =  groupMgr->getActionSet(NULL, "AllBulbOn", &onPost);
+    result = groupMgr->getActionSet(NULL, "AllBulbOn", &onPost);
     Wait();
     EXPECT_TRUE(result == OC_STACK_ERROR);
     result = 0;
@@ -1549,7 +1577,8 @@ TEST_F(ThingsManagerTest, testGetConfigurations)
     configurations.push_back(name);
 
     mocks.ExpectCallFunc(onGet).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     vector<string> types;
     types.push_back("oic.wk.con");
@@ -1622,7 +1651,8 @@ TEST_F(ThingsManagerTest, testDoBootstrap)
     ThingsConfiguration *g_thingsConf = ThingsConfiguration::getInstance();
 
     mocks.ExpectCallFunc(onGetBootstrapInformation).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
     result = g_thingsConf->doBootstrap(&onGetBootstrapInformation);
     Wait();
     EXPECT_TRUE(result == OC_STACK_OK);
@@ -1651,7 +1681,8 @@ TEST_F(ThingsManagerTest, testUpdateConfiguration)
     configurations.insert(std::make_pair(name, value));
 
     mocks.ExpectCallFunc(onUpdate).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     vector<string> types;
     types.push_back("oic.wk.con");
@@ -1663,7 +1694,8 @@ TEST_F(ThingsManagerTest, testUpdateConfiguration)
 
     if (result == OC_STACK_OK)
     {
-        result = g_thingsConf->updateConfigurations(configurationResource, configurations, &onUpdate);
+        result = g_thingsConf->updateConfigurations(configurationResource, configurations,
+                                                    &onUpdate);
         Wait();
         EXPECT_TRUE(result == OC_STACK_OK);
         result = 0;
@@ -1686,7 +1718,8 @@ TEST_F(ThingsManagerTest, testUpdateConfigurationEmptyConfiguration)
 
     if (result == OC_STACK_OK)
     {
-        result = g_thingsConf->updateConfigurations(configurationResource, configurations, &onUpdate);
+        result = g_thingsConf->updateConfigurations(configurationResource, configurations,
+                                                    &onUpdate);
         Wait();
         EXPECT_TRUE(result == OC_STACK_ERROR);
         result = 0;
@@ -1716,7 +1749,8 @@ TEST_F(ThingsManagerTest, testReboot)
     ThingsMaintenance *g_thingsMnt = ThingsMaintenance::getInstance();
 
     mocks.ExpectCallFunc(onReboot).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     vector<string> types;
     types.push_back("oic.wk.mnt");
@@ -1752,7 +1786,8 @@ TEST_F(ThingsManagerTest, testFactoryReset)
     ThingsMaintenance *g_thingsMnt = ThingsMaintenance::getInstance();
 
     mocks.ExpectCallFunc(onFactoryReset).
-    Do([this](const HeaderOptions & headerOptions, const OCRepresentation & rep, const int eCode) { Proceed(); });
+    Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
+            const int /*eCode*/) {   Proceed();});
 
     vector<string> types;
     types.push_back("oic.wk.mnt");

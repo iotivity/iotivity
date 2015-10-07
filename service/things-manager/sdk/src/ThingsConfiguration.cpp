@@ -199,8 +199,8 @@ namespace OIC
         return newUri;
     }
 
-    void ThingsConfiguration::onDeleteActionSet(const HeaderOptions& headerOptions,
-            const OCRepresentation& rep, const int eCode, std::string conf)
+    void ThingsConfiguration::onDeleteActionSet(const HeaderOptions& /*headerOptions*/,
+            const OCRepresentation& /*rep*/, const int /*eCode*/, std::string conf)
     {
         std::shared_ptr < OCResource > resource = getResource(conf);
 
