@@ -123,7 +123,7 @@ public:
     std::string getStringFromActionSet(const ActionSet *newActionSet);
 
     /**
-     * API for extrracting ActionSet class instance from an action set string.
+     * API for extracting ActionSet class instance from an action set string.
      *
      * @param desc description of an action set string
      *
