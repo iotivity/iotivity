@@ -20,18 +20,35 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.core;
-
+package org.iotivity.service.easysetup.mediator;
 /**
- * This class defines constants for Errors comes during Easy setup process
+ * It contains configuration details about the the target network where Enrollee device is
+ * going to be enrolled.
  */
-public enum EnrolleeSetupError {
+public interface ProvisioningConfig {
+
     /**
-     * Device setup successful
+     * It provides constants for connectivity types of target network
      */
-    DEVICE_SETUP_SUCCESSFUL,
+    public static enum ConnType {
+        WiFi,
+        BT
+    }
+
     /**
-     * Device setup failed
+     * Gives the instance of the configuration object created according to the connectivity
+     * type of target network.
+     *
+     * @return instance object of configuration according to connectivity type of target network
      */
-    DEVICE_SETUP_FAILED,
+    Object getConfig();
+
+
+    /**
+     * Gives connectivity type of target network
+     *
+     * @return Connectivity type of target network
+     */
+    ConnType getConnType();
+
 }

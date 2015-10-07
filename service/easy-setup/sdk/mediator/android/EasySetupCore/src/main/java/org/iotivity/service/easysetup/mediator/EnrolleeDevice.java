@@ -20,7 +20,7 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.core;
+package org.iotivity.service.easysetup.mediator;
 
 /**
  * This is an abstract class represents the device being provisioned into the network. The

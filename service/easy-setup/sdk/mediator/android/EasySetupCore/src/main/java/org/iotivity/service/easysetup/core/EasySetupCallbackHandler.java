@@ -19,7 +19,7 @@
  * <p>
  * ****************************************************************
  */
-package org.iotivity.service.easysetup.mediator;
+package org.iotivity.service.easysetup.core;
 
 import android.util.Log;
 

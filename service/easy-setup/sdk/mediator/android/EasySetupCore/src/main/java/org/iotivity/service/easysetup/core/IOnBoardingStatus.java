@@ -19,10 +19,17 @@
  * <p>
  * ****************************************************************
  */
-
 package org.iotivity.service.easysetup.core;
 
-public abstract class ProvisioningCallback {
-    public abstract void onFinished(EnrolleeDevice enrolledevice);
-    public abstract void onProgress(EnrolleeDevice enrolledevice);
+public interface IOnBoardingStatus {
+
+    /**
+     * Interface called when the scan method finishes. Network operations should
+     * not execute on UI thread
+     *
+     * @param clients of {@link EnrolleeInfo}
+     */
+
+    public void deviceOnBoardingStatus(EnrolleeInfo clients);
+
 }

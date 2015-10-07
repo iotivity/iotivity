@@ -24,14 +24,13 @@ package org.iotivity.service.easysetup;
 
 import java.io.IOException;
 
-import org.iotivity.service.easysetup.core.EasySetupService;
-import org.iotivity.service.easysetup.core.EasySetupStatus;
-import org.iotivity.service.easysetup.core.EnrolleeDevice;
-import org.iotivity.service.easysetup.core.EnrolleeState;
-import org.iotivity.service.easysetup.core.IpOnBoardingConnection;
-import org.iotivity.service.easysetup.impl.EnrolleeDeviceFactory;
-import org.iotivity.service.easysetup.impl.WiFiOnBoardingConfig;
-import org.iotivity.service.easysetup.impl.WiFiProvConfig;
+import org.iotivity.service.easysetup.mediator.EasySetupService;
+import org.iotivity.service.easysetup.mediator.EasySetupStatus;
+import org.iotivity.service.easysetup.mediator.EnrolleeDevice;
+import org.iotivity.service.easysetup.mediator.IpOnBoardingConnection;
+import org.iotivity.service.easysetup.mediator.EnrolleeDeviceFactory;
+import org.iotivity.service.easysetup.mediator.WiFiOnBoardingConfig;
+import org.iotivity.service.easysetup.mediator.WiFiProvConfig;
 
 import android.app.Activity;
 import android.net.wifi.WifiConfiguration;

@@ -20,7 +20,7 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.core;
+package org.iotivity.service.easysetup.mediator;
 
 import org.iotivity.base.OcConnectivityType;
 

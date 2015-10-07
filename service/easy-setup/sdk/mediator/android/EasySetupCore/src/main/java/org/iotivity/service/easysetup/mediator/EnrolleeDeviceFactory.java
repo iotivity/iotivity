@@ -20,13 +20,9 @@
  * ****************************************************************
  */
 
-package org.iotivity.service.easysetup.impl;
+package org.iotivity.service.easysetup.mediator;
 
 import android.content.Context;
-
-import org.iotivity.service.easysetup.core.EnrolleeDevice;
-import org.iotivity.service.easysetup.core.OnBoardingConfig;
-import org.iotivity.service.easysetup.core.ProvisioningConfig;
 
 /**
  * This a factory class provides the native implementation of the various Enrollee devices.
