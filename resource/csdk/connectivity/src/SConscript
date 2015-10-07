@@ -10,6 +10,7 @@ ca_os = env.get('TARGET_OS')
 ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
 with_ra = env.get ('WITH_RA')
+with_tcp = env.get('WITH_TCP')
 root_dir = os.pardir
 ca_path = os.curdir
 
@@ -112,6 +113,7 @@ env.AppendUnique(CA_SRC = ca_common_src)
 if 'ALL' in ca_transport:
 		transports = [ 'ip_adapter', 'bt_edr_adapter', 'bt_le_adapter']
 		if ca_os == 'linux':
+			if with_tcp:
 				transports.append ('tcp_adapter')
 		if with_ra:
 				transports.append ('ra_adapter')
@@ -127,8 +129,6 @@ if 'BT' in ca_transport:
 if 'BLE' in ca_transport:
 	env.SConscript(os.path.join(ca_path, 'bt_le_adapter/SConscript'))
 
-if 'TCP' in ca_transport:
-	env.SConscript(os.path.join(ca_path, 'tcp_adapter/SConscript'))
 
 print "Include path is %s" % env.get('CPPPATH')
 print "Files path is %s" % env.get('CA_SRC')
