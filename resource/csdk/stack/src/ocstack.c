@@ -4197,6 +4197,10 @@ CAResult_t OCSelectNetwork()
 #ifdef RA_ADAPTER
             ,CA_ADAPTER_REMOTE_ACCESS
 #endif
+
+#ifdef TCP_ADAPTER
+            ,CA_ADAPTER_TCP
+#endif
         };
     int numConnTypes = sizeof(connTypes)/sizeof(connTypes[0]);
 
