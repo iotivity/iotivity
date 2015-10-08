@@ -20,24 +20,19 @@
 
 #include "JniRcsResourceContainer.h"
 
+#include "JavaClasses.h"
 #include "JavaLocalRef.h"
 #include "JNIEnvWrapper.h"
 #include "Log.h"
 #include "Verify.h"
-#include "JniRcsObject.h"
 
 #include "RCSResourceContainer.h"
-#include "RCSBundleInfo.h"
 
 #define LOG_TAG "JNI-RCSResourceContainer"
 
 using namespace OIC::Service;
 
-#define CLS_NAME_BUNDLE_INFO PACKAGE_NAME "/resourcecontainer/RcsBundleInfo"
-
-#include <android/log.h>
-
-
+#define CLS_NAME_BUNDLE_INFO "org/iotivity/service/resourcecontainer/RcsBundleInfo"
 
 namespace
 {
@@ -60,16 +55,27 @@ namespace
             JavaLocalObject entryObj { env, invoke_Iterator_next(env, iterObj) };
 
             JavaLocalString keyObj { env,
-                                     static_cast< jstring >(invoke_MapEntry_getKey(env, entryObj))
-                                   };
+                static_cast< jstring >(invoke_MapEntry_getKey(env, entryObj)) };
+
             JavaLocalString valueObj { env,
-                                       static_cast< jstring >(invoke_MapEntry_getValue(env, entryObj))
-                                     };
+                static_cast< jstring >(invoke_MapEntry_getValue(env, entryObj)) };
 
             ret.emplace(toStdString(env, keyObj), toStdString(env, valueObj));
         }
 
         return ret;
+    }
+
+    jobject newBundleInfoObj(JNIEnvWrapper *env, const std::unique_ptr< RCSBundleInfo > &bundleInfo)
+    {
+        JavaLocalString id{env, newStringObject(env, bundleInfo->getID()) };
+        JavaLocalString path{env, newStringObject(env, bundleInfo->getPath()) };
+        JavaLocalString activatorName{env, newStringObject(env, bundleInfo->getActivatorName()) };
+        JavaLocalString libraryPath{env, newStringObject(env, bundleInfo->getLibraryPath()) };
+        JavaLocalString version{env, newStringObject(env, bundleInfo->getVersion()) };
+
+        return env->NewObject(g_cls_RCSBundleInfo, g_ctor_RCSBundleInfo,
+                id.get(), path.get(), activatorName.get(), libraryPath.get(), version.get());
     }
 }
 
@@ -77,7 +83,13 @@ void initRCSResourceContainer(JNIEnvWrapper *env)
 {
     g_cls_RCSBundleInfo = env->FindClassAsGlobalRef(CLS_NAME_BUNDLE_INFO);
 
-    g_ctor_RCSBundleInfo = env->GetConstructorID(g_cls_RCSBundleInfo, "()V");
+    g_ctor_RCSBundleInfo = env->GetConstructorID(g_cls_RCSBundleInfo, "("
+            AS_SIG(CLS_NAME_STRING)
+            AS_SIG(CLS_NAME_STRING)
+            AS_SIG(CLS_NAME_STRING)
+            AS_SIG(CLS_NAME_STRING)
+            AS_SIG(CLS_NAME_STRING)
+            ")V");
 }
 
 void clearRCSResourceContainer(JNIEnvWrapper *env)
@@ -165,14 +177,9 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeListBundl
     {
         auto listObj = newArrayList(&envWrapper);
 
-        for (auto& uniqeBundleInfo : RCSResourceContainer::getInstance()->listBundles())
+        for (const auto& bundleInfo : RCSResourceContainer::getInstance()->listBundles())
         {
-            RCSBundleInfo* bundleInfo = uniqeBundleInfo.release();
-            JavaLocalObject bundleInfoObj { &envWrapper,
-                envWrapper.NewObject(g_cls_RCSBundleInfo, g_ctor_RCSBundleInfo) };
-
-            setSafeNativeHandle< RCSBundleInfo* >(&envWrapper, bundleInfoObj, bundleInfo);
-
+            JavaLocalObject bundleInfoObj{ &envWrapper, newBundleInfoObj(&envWrapper, bundleInfo) };
             invoke_Collection_add(&envWrapper, listObj, bundleInfoObj);
         }
         return listObj;
@@ -268,9 +275,9 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeListBundl
 
         auto listObj = newArrayList(&envWrapper);
 
-        for (const auto & s : RCSResourceContainer::getInstance()->listBundleResources(id))
+        for (const auto& s : RCSResourceContainer::getInstance()->listBundleResources(id))
         {
-            JavaLocalString strObj { &envWrapper, newStringObject(&envWrapper, s) };
+            JavaLocalString strObj{ &envWrapper, newStringObject(&envWrapper, s) };
 
             invoke_Collection_add(&envWrapper, listObj, strObj);
         }

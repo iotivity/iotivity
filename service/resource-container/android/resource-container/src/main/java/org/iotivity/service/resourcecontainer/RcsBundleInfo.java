@@ -24,23 +24,23 @@
  */
 package org.iotivity.service.resourcecontainer;
 
-import org.iotivity.service.utils.RcsObject;
-
 /**
  * This class provides APIs for getting and setting the Bundle Information
  */
-public class RcsBundleInfo extends RcsObject {
-    private native String nativeGetID();
+public class RcsBundleInfo {
+    private final String mId;
+    private final String mPath;
+    private final String mActivatorName;
+    private final String mLibraryPath;
+    private final String mVersion;
 
-    private native String nativeGetPath();
-
-    private native String nativeGetActivatorName();
-
-    private native String nativeGetLibraryPath();
-
-    private native String nativeGetVersion();
-
-    private RcsBundleInfo() {
+    private RcsBundleInfo(String id, String path, String activatorName, 
+            String libraryPath, String version) {
+        mId = id;
+        mPath = path;
+        mActivatorName = activatorName;
+        mLibraryPath = libraryPath;
+        mVersion = version;
     }
 
     /**
@@ -50,7 +50,7 @@ public class RcsBundleInfo extends RcsObject {
      *
      */
     public String getID() {
-        return nativeGetID();
+        return mId;
     }
 
     /**
@@ -60,7 +60,7 @@ public class RcsBundleInfo extends RcsObject {
      *
      */
     public String getPath() {
-        return nativeGetPath();
+        return mPath;
     }
 
     /**
@@ -70,7 +70,7 @@ public class RcsBundleInfo extends RcsObject {
      *
      */
     public String getActivatorName() {
-        return nativeGetActivatorName();
+        return mActivatorName;
     }
 
     /**
@@ -80,7 +80,7 @@ public class RcsBundleInfo extends RcsObject {
      *
      */
     public String getLibraryPath() {
-        return nativeGetLibraryPath();
+        return mLibraryPath;
     }
 
     /**
@@ -90,7 +90,7 @@ public class RcsBundleInfo extends RcsObject {
      *
      */
     public String getVersion() {
-        return nativeGetVersion();
+        return mVersion;
     }
 
 }
