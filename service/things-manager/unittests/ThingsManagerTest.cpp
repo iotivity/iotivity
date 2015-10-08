@@ -1301,6 +1301,7 @@ TEST_F(ThingsManagerTest, testExecuteActionSetAllBulbOn)
         EXPECT_TRUE(result == OC_STACK_OK);
         result = 0;
     }
+    delete allBulbON;
 }
 
 //Execute actionset with NULL Resource
@@ -1378,6 +1379,8 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelay)
         EXPECT_TRUE(result == OC_STACK_OK);
         result = 0;
     }
+
+    delete allBulbON;
 }
 
 //Execute actionset with Delay = 0
@@ -1416,6 +1419,8 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelayEqulasZero)
         EXPECT_TRUE(result == OC_STACK_INVALID_PARAM);
         result = 0;
     }
+
+    delete allBulbON;
 }
 
 //Execute actionset with invalid Delay
@@ -1454,6 +1459,8 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithInvalidDelay)
         EXPECT_TRUE(result == OC_STACK_INVALID_PARAM);
         result = 0;
     }
+
+    delete allBulbON;
 }
 
 //Execute actionset with delay on NULL Resource
@@ -1489,6 +1496,7 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelayWithResourceNull)
     EXPECT_TRUE(result == OC_STACK_ERROR);
     result = 0;
 
+    delete allBulbON;
 }
 
 //Cancel ActionSet
