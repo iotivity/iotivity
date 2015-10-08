@@ -36,7 +36,7 @@ typedef OCStackResult (*registerResource)(OCResourceHandle&, string&, const stri
 typedef OCStackResult (*NotifyAllObservers)(OCResourceHandle);
 
 constexpr char RESOURCE_URI[]{ "a/test" };
-constexpr char RESOURCE_TYPE[]{ "resourceType" };
+constexpr char RESOURCE_TYPE[]{ "resourcetype" };
 constexpr char KEY[]{ "key" };
 constexpr int value{ 100 };
 

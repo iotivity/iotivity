@@ -52,7 +52,7 @@ protected:
 
         mocks.OnCallFunc(OC::OCPlatform::unregisterResource).Return(OC_STACK_OK);
 
-        server = RCSResourceObject::Builder("a/test", "resourceType", "").build();
+        server = RCSResourceObject::Builder("a/test", "resourcetype", "").build();
 
         server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
         server->setAttribute(EXISTING, ORIGIN_VALUE);
