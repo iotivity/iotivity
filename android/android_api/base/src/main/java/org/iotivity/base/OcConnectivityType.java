@@ -41,6 +41,9 @@ public enum OcConnectivityType {
     /** Remote Access over XMPP.*/
     CT_ADAPTER_REMOTE_ACCESS(1 << 19),
 
+    /** CoAP over TCP.*/
+    CT_ADAPTER_TCP(1 << 20),
+
     /** Insecure transport is the default (subject to change).*/
 
     /** secure the transport path.*/

@@ -60,8 +60,11 @@ static uint8_t g_lastRequestTokenLength = 0;
 
 static const char COAP_PREFIX[] =  "coap://";
 static const char COAPS_PREFIX[] = "coaps://";
+static const char COAP_TCP_PREFIX[] =  "coap+tcp://";
+
 static const uint16_t COAP_PREFIX_LEN = sizeof(COAP_PREFIX) - 1;
 static const uint16_t COAPS_PREFIX_LEN = sizeof(COAPS_PREFIX) - 1;
+static const uint16_t COAP_TCP_PREFIX_LEN = sizeof(COAP_TCP_PREFIX) - 1;
 
 static const char RECEIVED_FILE_PATH[] = "/storage/emulated/0/Download/%d%s.txt";
 
@@ -1377,31 +1380,20 @@ uint32_t get_secure_information(CAPayload_t payLoad)
 
 CAResult_t get_network_type(uint32_t selectedNetwork, CATransportFlags_t *flags)
 {
-
     uint32_t number = selectedNetwork;
 
-    if (!(number & 0xf))
+    switch (number)
     {
-        return CA_NOT_SUPPORTED;
+        case CA_ADAPTER_IP:
+            *flags = CA_IPV4;
+        case CA_ADAPTER_GATT_BTLE:
+        case CA_ADAPTER_RFCOMM_BTEDR:
+        case CA_ADAPTER_TCP:
+            g_selectedNwType = number;
+            return CA_STATUS_OK;
+        default:
+            return CA_NOT_SUPPORTED;
     }
-    if (number & CA_ADAPTER_IP)
-    {
-        *flags = CA_IPV4;
-        g_selectedNwType = CA_ADAPTER_IP;
-        return CA_STATUS_OK;
-    }
-    if (number & CA_ADAPTER_RFCOMM_BTEDR)
-    {
-        g_selectedNwType = CA_ADAPTER_RFCOMM_BTEDR;
-        return CA_STATUS_OK;
-    }
-    if (number & CA_ADAPTER_GATT_BTLE)
-    {
-        g_selectedNwType = CA_ADAPTER_GATT_BTLE;
-        return CA_STATUS_OK;
-    }
-
-    return CA_NOT_SUPPORTED;
 }
 
 void callback(char *subject, char *receivedData)
@@ -1506,6 +1498,12 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     {
         LOGI("uri has '%s' prefix", COAP_PREFIX);
         startIndex = COAP_PREFIX_LEN;
+    }
+    else if (strncmp(COAP_TCP_PREFIX, uri, COAP_TCP_PREFIX_LEN) == 0)
+    {
+        LOGI("uri has '%s' prefix\n", COAP_TCP_PREFIX);
+        startIndex = COAP_TCP_PREFIX_LEN;
+        *flags = CA_IPV4;
     }
 
     // #2. copy uri for parse

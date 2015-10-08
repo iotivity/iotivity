@@ -15,7 +15,7 @@ src_dir = './tcp_adapter/'
 
 # Source files to build common for all platforms
 common_files = None
-if target_os in ['linux', 'tizen']:
+if target_os in ['linux', 'tizen', 'android']:
     common_files = [
         os.path.join(src_dir, 'catcpadapter.c'),
         os.path.join(src_dir, 'catcpserver.c') ]
