@@ -69,8 +69,9 @@ if env.get('LOGGING'):
 # Source files and Targets
 ######################################################################
 stacktests = stacktest_env.Program('stacktests', ['stacktests.cpp'])
+cbortests = stacktest_env.Program('cbortests', ['cbortests.cpp'])
 
-Alias("test", [stacktests])
+Alias("test", [stacktests, cbortests])
 
 env.AppendTarget('test')
 if env.get('TEST') == '1':

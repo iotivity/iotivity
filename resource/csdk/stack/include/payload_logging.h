@@ -94,6 +94,10 @@ static inline void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
                 case OCREP_PROP_STRING:
                     OC_LOG_V(level, PL_TAG, "\t\t%s(string):%s", val->name, val->str);
                     break;
+                case OCREP_PROP_BYTE_STRING:
+                    OC_LOG_V(level, PL_TAG, "\t\t%s(binary):", val->name);
+                    OC_LOG_BUFFER(level, PL_TAG, val->ocByteStr.bytes, val->ocByteStr.len);
+                    break;
                 case OCREP_PROP_OBJECT:
                     // Note: Only prints the URI (if available), to print further, you'll
                     // need to dig into the object better!
@@ -122,6 +126,12 @@ static inline void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
                             break;
                         case OCREP_PROP_STRING:
                             OC_LOG_V(level, PL_TAG, "\t\t%s(string array):%zu x %zu x %zu",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        case OCREP_PROP_BYTE_STRING:
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(byte array):%lld x %lld x %lld",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);

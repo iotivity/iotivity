@@ -723,6 +723,8 @@ static OCRepPayloadPropType DecodeCborType(CborType type)
                 return OCREP_PROP_BOOL;
             case CborTextStringType:
                 return OCREP_PROP_STRING;
+            case CborByteStringType:
+                return OCREP_PROP_BYTE_STRING;
             case CborMapType:
                 return OCREP_PROP_OBJECT;
             case CborArrayType:
@@ -803,6 +805,8 @@ static size_t getAllocSize(OCRepPayloadPropType type)
             return sizeof (bool);
         case OCREP_PROP_STRING:
             return sizeof (char*);
+        case OCREP_PROP_BYTE_STRING:
+            return sizeof (OCByteString);
         case OCREP_PROP_OBJECT:
             return sizeof (OCRepPayload*);
         default:
@@ -828,6 +832,7 @@ static bool OCParseArrayFillArray(const CborValue* parent, size_t dimensions[MAX
 
     size_t i = 0;
     char* tempStr = NULL;
+    OCByteString ocByteStr = { .bytes = NULL, .len = 0};
     size_t tempLen = 0;
     OCRepPayload* tempPl = NULL;
 
@@ -898,6 +903,21 @@ static bool OCParseArrayFillArray(const CborValue* parent, size_t dimensions[MAX
                             type,
                             &(((char**)targetArray)[arrayStep(dimensions, i)])
                             );
+                    }
+                    break;
+                case OCREP_PROP_BYTE_STRING:
+                    if (dimensions[1] == 0)
+                    {
+                        err = err || cbor_value_dup_byte_string(&insideArray,
+                                &(ocByteStr.bytes), &(ocByteStr.len), NULL);
+                        ((OCByteString*)targetArray)[i] = ocByteStr;
+                    }
+                    else
+                    {
+                        err = err || OCParseArrayFillArray(&insideArray, newdim,
+                                type,
+                                &(((OCByteString*)targetArray)[arrayStep(dimensions, i)])
+                                );
                     }
                     break;
                 case OCREP_PROP_OBJECT:
@@ -988,6 +1008,17 @@ static bool OCParseArray(OCRepPayload* out, const char* name, CborValue* contain
                 for(size_t i = 0; i < dimTotal; ++i)
                 {
                     OICFree(((char**)arr)[i]);
+                }
+                OICFree(arr);
+                err = true;
+            }
+            break;
+        case OCREP_PROP_BYTE_STRING:
+            if (err || !OCRepPayloadSetByteStringArrayAsOwner(out, name, (OCByteString*)arr, dimensions))
+            {
+                for (size_t i = 0; i < dimTotal; ++i)
+                {
+                    OICFree(((OCByteString*)arr)[i].bytes);
                 }
                 OICFree(arr);
                 err = true;
@@ -1111,6 +1142,7 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
             int64_t intval = 0;
             bool boolval = false;
             char* strval = NULL;
+            uint8_t* bytestrval = NULL;
             double doubleval = 0;
             OCRepPayload* pl;
 
@@ -1145,6 +1177,14 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue* repPar
                     if (!err)
                     {
                         err = !OCRepPayloadSetPropStringAsOwner(curPayload, name, strval);
+                    }
+                    break;
+                case CborByteStringType:
+                    err = err || cbor_value_dup_byte_string(&repMap, &bytestrval, &len, NULL);
+                    if (!err)
+                    {
+                        OCByteString tmp = {.bytes = bytestrval, .len = len};
+                        err = !OCRepPayloadSetPropByteStringAsOwner(curPayload, name, &tmp);
                     }
                     break;
                 case CborMapType:
