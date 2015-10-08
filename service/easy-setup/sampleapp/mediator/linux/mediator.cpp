@@ -29,7 +29,7 @@
 #include "prov_adapter.h"
 #include "logger.h"
 
-#define TAG "easysetupsample"
+#define ES_MEDIATOR_TAG "easysetupsample"
 
 int quitFlag = 0;
 
@@ -47,19 +47,19 @@ void handleSigInt(int signum) {
  * This function can be used to update the application about the current provisioning status of the Enrollee
  */
 void ProvisioningStatusCallback(ProvisioningInfo * provInfo) {
-    OIC_LOG_V(INFO, TAG, "Enrollee connectivity: %d", provInfo->provDeviceInfo.connType);
+    OIC_LOG_V(INFO, ES_MEDIATOR_TAG, "Enrollee connectivity: %d", provInfo->provDeviceInfo.connType);
     if (provInfo->provStatus == DEVICE_PROVISIONED) {
-        OIC_LOG_V(INFO, TAG, "Successfully provisioned the Enrollee with IP : %s ",
+        OIC_LOG_V(INFO, ES_MEDIATOR_TAG, "Successfully provisioned the Enrollee with IP : %s ",
                   provInfo->provDeviceInfo.addr->addr);
     }
     else {
-        OIC_LOG_V(INFO, TAG, "Provisioing Failed for the Enrollee with IP : %s",
+        OIC_LOG_V(INFO, ES_MEDIATOR_TAG, "Provisioing Failed for the Enrollee with IP : %s",
                   provInfo->provDeviceInfo.addr->addr);
     }
 }
 
 static void PrintUsage() {
-    OIC_LOG(INFO, TAG, "Usage : occlient -d \"192.168.0.20\"");
+    OIC_LOG(INFO, ES_MEDIATOR_TAG, "Usage : occlient -d \"192.168.0.20\"");
 }
 
 int main(int argc, char **argv) {
@@ -89,10 +89,10 @@ int main(int argc, char **argv) {
     }
 
     netInfo.connType = CT_ADAPTER_IP;
-    OIC_LOG_V(INFO, TAG, "IP Address of the Provisioning device is =%s\n",
+    OIC_LOG_V(INFO, ES_MEDIATOR_TAG, "IP Address of the Provisioning device is =%s\n",
               netInfo.netAddressInfo.WIFI.ipAddress);
-    OIC_LOG_V(INFO, TAG, "SSID of the Enroller is =%s\n", netInfo.netAddressInfo.WIFI.ssid);
-    OIC_LOG_V(INFO, TAG, "Password of the Enroller is =%s\n", netInfo.netAddressInfo.WIFI.pwd);
+    OIC_LOG_V(INFO, ES_MEDIATOR_TAG, "SSID of the Enroller is =%s\n", netInfo.netAddressInfo.WIFI.ssid);
+    OIC_LOG_V(INFO, ES_MEDIATOR_TAG, "Password of the Enroller is =%s\n", netInfo.netAddressInfo.WIFI.pwd);
 
     StartProvisioning(&netInfo);
 
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
     }
 
     ResetProvProcess();
-    OIC_LOG(INFO, TAG, "Exiting occlient main loop...");
+    OIC_LOG(INFO, ES_MEDIATOR_TAG, "Exiting occlient main loop...");
 
     return 0;
 }

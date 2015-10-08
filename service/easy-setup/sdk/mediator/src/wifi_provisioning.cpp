@@ -36,20 +36,14 @@
 
 // External includes
 #include "logger.h"
-#include "oic_malloc.h"
 
+#define ES_WIFI_PROV_TAG "ES_WIFI_PROVISIONING"
 
-static EnrolleeNWProvInfo_t *netProvInfo;
+static const char * UNICAST_PROV_STATUS_QUERY = "coap://%s:%d%s";
 
-/**
- * @var cbData
- * @brief Callback for providing provisioning status callback to application
- */
-static OCProvisioningStatusCB cbData = NULL;
-
-
-OCStackApplicationResult GetProvisioningStatusResponse(void *ctx, OCDoHandle handle,
-                                                       OCClientResponse *clientResponse) {
+OCStackApplicationResult GetProvisioningStatusResponse(void* /*ctx*/,
+                                                        OCDoHandle /*handle*/,
+                                                        OCClientResponse *clientResponse) {
 
 
     // If user stopped the process then return from this function;
@@ -58,9 +52,6 @@ OCStackApplicationResult GetProvisioningStatusResponse(void *ctx, OCDoHandle han
         ClearMemory();
         return OC_STACK_DELETE_TRANSACTION;
     }
-
-
-    ProvisioningInfo *provInfo;
 
     if (!ValidateEnrolleResponse(clientResponse)) {
         ErrorCallback(DEVICE_NOT_PROVISIONED);
@@ -75,19 +66,16 @@ OCStackApplicationResult GetProvisioningStatusResponse(void *ctx, OCDoHandle han
     char resURI[MAX_URI_LENGTH] =
             {'\0'};
 
-    OIC_LOG_V(DEBUG, TAG, "resUri = %s", input->uri);
+    OIC_LOG_V(DEBUG, ES_WIFI_PROV_TAG, "resUri = %s", input->uri);
 
     strncpy(resURI, input->uri, sizeof(resURI) - 1);
 
     snprintf(query, sizeof(query), UNICAST_PROV_STATUS_QUERY, clientResponse->addr->addr, IP_PORT,
              resURI);
 
-    //OCPayloadLogRep(DEBUG,TAG,input);
-
     if (ProvisionEnrollee(OC_HIGH_QOS, query, OC_RSRVD_ES_URI_PROV, clientResponse->addr, 0)
         != OC_STACK_OK) {
-        OIC_LOG(INFO, TAG,
-                "GetProvisioningStatusResponse received NULL clientResponse.Invoking Provisioing Status Callback");
+        OIC_LOG(INFO, ES_WIFI_PROV_TAG, "GetProvisioningStatusResponse received NULL clientResponse");
 
         ErrorCallback(DEVICE_NOT_PROVISIONED);
         ClearMemory();
@@ -103,7 +91,7 @@ OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char *query,
     OCStackResult ret = OC_STACK_ERROR;
     OCHeaderOption options[MAX_HEADER_OPTIONS];
 
-    OIC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+    OIC_LOG_V(INFO, ES_WIFI_PROV_TAG, "\n\nExecuting %s", __func__);
 
     uint8_t option0[] =
             {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -119,17 +107,18 @@ OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char *query,
     memcpy(options[1].optionData, option1, sizeof(option1));
     options[1].optionLength = 10;
 
-    ret = InvokeOCDoResource(query, OC_REST_GET, destination, OC_HIGH_QOS,
+    ret = InvokeOCDoResource(query, OC_REST_GET, destination, qos,
                              GetProvisioningStatusResponse, NULL, options, 2);
     return ret;
 }
 
 
 // This is a function called back when a device is discovered
-OCStackApplicationResult FindProvisioningResourceResponse(void *ctx, OCDoHandle handle,
-                                                          OCClientResponse *clientResponse) {
+OCStackApplicationResult FindProvisioningResourceResponse(void* /*ctx*/,
+                                                            OCDoHandle /*handle*/,
+                                                            OCClientResponse *clientResponse) {
 
-    OIC_LOG(INFO, TAG, PCF("Entering FindProvisioningResourceResponse"));
+    OIC_LOG(INFO, ES_WIFI_PROV_TAG, PCF("Entering FindProvisioningResourceResponse"));
 
     // If user stopped the process then return from this function;
     if (IsSetupStopped()) {
@@ -144,27 +133,16 @@ OCStackApplicationResult FindProvisioningResourceResponse(void *ctx, OCDoHandle 
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    OCStackApplicationResult response = OC_STACK_DELETE_TRANSACTION;
-
-    ProvisioningInfo *provInfo;
-    char szQueryUri[64] =
-            {0};
+    char szQueryUri[64] = {0};
 
     OCDiscoveryPayload *discoveryPayload = (OCDiscoveryPayload * )(clientResponse->payload);
 
-    // Need to conform if below check is required or not. As Null check of clientResponse->payload is already performed above
-    if (!discoveryPayload) {
-        OIC_LOG_V(DEBUG, TAG, "Failed To parse");
-        ErrorCallback(DEVICE_NOT_PROVISIONED);
-        return OC_STACK_DELETE_TRANSACTION;
-    }
-
-    OIC_LOG_V(DEBUG, TAG, "resUri = %s", discoveryPayload->resources->uri);
+    OIC_LOG_V(DEBUG, ES_WIFI_PROV_TAG, "resUri = %s", discoveryPayload->resources->uri);
 
     snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PROV_STATUS_QUERY,
              clientResponse->devAddr.addr, IP_PORT, discoveryPayload->resources->uri);
 
-    OIC_LOG_V(DEBUG, TAG, "query before GetProvisioningStatus call = %s", szQueryUri);
+    OIC_LOG_V(DEBUG, ES_WIFI_PROV_TAG, "query before GetProvisioningStatus call = %s", szQueryUri);
 
     if (GetProvisioningStatus(OC_HIGH_QOS, szQueryUri, &clientResponse->devAddr) != OC_STACK_OK) {
         ErrorCallback(DEVICE_NOT_PROVISIONED);
@@ -179,12 +157,12 @@ bool ValidateEasySetupParams(const EnrolleeNWProvInfo_t *netInfo,
                              OCProvisioningStatusCB provisioningStatusCallback) {
 
     if (netInfo == NULL || strlen(netInfo->netAddressInfo.WIFI.ipAddress) == 0) {
-        OIC_LOG(ERROR, TAG, "Request URI is NULL");
+        OIC_LOG(ERROR, ES_WIFI_PROV_TAG, "Request URI is NULL");
         return false;
     }
 
     if (provisioningStatusCallback == NULL) {
-        OIC_LOG(ERROR, TAG, "ProvisioningStatusCallback is NULL");
+        OIC_LOG(ERROR, ES_WIFI_PROV_TAG, "ProvisioningStatusCallback is NULL");
         return false;
     }
 
