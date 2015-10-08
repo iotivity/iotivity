@@ -62,6 +62,16 @@ OCStackResult PIStopAll();
 
 /**
  *
+ * Performs any required work on this specific plugin to initiate it's respective
+ * discovery operation.
+ *
+ * @param[in] plugin The plugin to initiate it's discovery operation on.
+ *
+ */
+OCStackResult PISetup(PIPlugin * plugin);
+
+/**
+ *
  * Called in main loop of application. Gives cycles for Plugin Interface'
  * internal operation.
  *

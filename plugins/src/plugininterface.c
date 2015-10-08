@@ -181,10 +181,10 @@ OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPlu
         {
             return OC_STACK_ERROR;
         }
-        result = AddPlugin((PIPluginBase *) *plugin);
-        if (result == OC_STACK_OK)
+        result = AddPlugin((PIPluginBase *)*plugin);
+        if(result != OC_STACK_OK)
         {
-            result = ZigbeeDiscover((PIPlugin_Zigbee *) plugin);
+            return result;
         }
     }
     return result;
@@ -203,6 +203,24 @@ OCStackResult PIStopPlugin(PIPlugin * plugin)
 OCStackResult PIStopAll()
 {
     return DeletePluginList();
+}
+
+OCStackResult PISetup(PIPlugin * plugin)
+{
+    if (!plugin)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    OCStackResult result = OC_STACK_ERROR;
+    if (((PIPluginBase *)plugin)->type == PLUGIN_ZIGBEE)
+    {
+        result = ZigbeeDiscover((PIPlugin_Zigbee *) plugin);
+        if( result != OC_STACK_OK)
+        {
+            return result;
+        }
+    }
+    return result;
 }
 
 OCStackResult PIProcess(PIPlugin * p_plugin)
