@@ -275,7 +275,7 @@ public class PostRequestDialog extends TitleAreaDialog {
         @Override
         protected void setValue(Object element, Object value) {
             PutPostAttributeModel model = (PutPostAttributeModel) element;
-            boolean status = (boolean) value;
+            boolean status = (Boolean) value;
             model.setModified(status);
             viewer.update(element, null);
         }

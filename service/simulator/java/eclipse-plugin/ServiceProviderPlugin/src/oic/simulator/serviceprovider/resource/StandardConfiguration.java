@@ -78,9 +78,12 @@ public class StandardConfiguration {
                     stdConfigFiles.put(relPath, absPath);
                     System.out.println("File path:" + absPath);
                 }
-            } catch (URISyntaxException | IOException e) {
+            } catch (URISyntaxException e) {
                 Activator.getDefault().getLogManager()
                         .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+            } catch (IOException e) {
+                Activator.getDefault().getLogManager()
+                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
             }
         }
     }
