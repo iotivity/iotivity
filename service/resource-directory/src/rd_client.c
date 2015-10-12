@@ -86,8 +86,7 @@ static void retreiveRDDetails(OCClientResponse *clientResponse, OCRDBiasFactorCB
     OC_LOG_V(DEBUG, TAG, "\tAddress of the RD: %s:%d", clientResponse->devAddr.addr,
             clientResponse->devAddr.port);
 
-    OCRDPayload *payload = (OCRDPayload *) clientResponse->payload;
-    OC_LOG_PAYLOAD(DEBUG, (OCPayload *) payload);
+    OC_LOG_PAYLOAD(DEBUG, clientResponse->payload);
 
     // TODO: Multiple Resource Directory will have different biasFactor,
     // needs to cache here detail
@@ -118,15 +117,21 @@ static OCStackApplicationResult handleDiscoverCB(void *ctx,
         return ret;
     }
 
-    OC_LOG_V(DEBUG, TAG, "Callback Context for DISCOVER query received successfully :%d.", clientResponse->result);
-
-    if (clientResponse && clientResponse->result == OC_STACK_OK)
+    if (clientResponse)
     {
-        retreiveRDDetails(clientResponse, cb->cbFunc);
+        OC_LOG_V(DEBUG, TAG, "Callback Context for DISCOVER query received successfully :%d.", clientResponse->result);
+        if (clientResponse->result == OC_STACK_OK)
+        {
+            retreiveRDDetails(clientResponse, cb->cbFunc);
+        }
+        else
+        {
+            OC_LOG(ERROR, TAG, "Discovery of RD Failed");
+        }
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Discovery of RD Failed");
+        OC_LOG(ERROR, TAG, "No client response.");
     }
 
     OICFree(cb);
@@ -266,7 +271,6 @@ OCStackResult OCRDPublish(char *addr, uint16_t port, int numArg, ... )
                 OCStackResult res = createStringLL(numElement, handle, OCGetResourceTypeName, &rt);
                 if (res != OC_STACK_OK || !rt)
                 {
-                    va_end(arguments);
                     goto no_memory;
                 }
             }
@@ -276,7 +280,6 @@ OCStackResult OCRDPublish(char *addr, uint16_t port, int numArg, ... )
                 OCStackResult res = createStringLL(numElement, handle, OCGetResourceInterfaceName, &itf);
                 if (res != OC_STACK_OK || !itf)
                 {
-                    va_end(arguments);
                     goto no_memory;
                 }
             }
@@ -284,13 +287,11 @@ OCStackResult OCRDPublish(char *addr, uint16_t port, int numArg, ... )
             mt = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
             if (!mt)
             {
-                va_end(arguments);
                 goto no_memory;
             }
             mt->value = OICStrdup("application/json");
             if (!mt->value)
             {
-                va_end(arguments);
                 goto no_memory;
             }
 
@@ -340,11 +341,27 @@ OCStackResult OCRDPublish(char *addr, uint16_t port, int numArg, ... )
 
 no_memory:
     OC_LOG(ERROR, TAG, "Failed allocating memory.");
-    OCFreeOCStringLL(rt);
-    OCFreeOCStringLL(itf);
-    OCFreeOCStringLL(mt);
-    OCFreeTagsResource(tagsPayload);
-    OCFreeLinksResource(linksPayload);
+    va_end(arguments);
+    if (rt)
+    {
+        OCFreeOCStringLL(rt);
+    }
+    if (itf)
+    {
+        OCFreeOCStringLL(itf);
+    }
+    if (mt)
+    {
+        OCFreeOCStringLL(mt);
+    }
+    if (tagsPayload)
+    {
+        OCFreeTagsResource(tagsPayload);
+    }
+    if (linksPayload)
+    {
+        OCFreeLinksResource(linksPayload);
+    }
     OCRDPayloadDestroy(rdPayload);
     return OC_STACK_NO_MEMORY;
 }
