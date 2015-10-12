@@ -596,9 +596,11 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
         }
         else if(OIC_RANDOM_DEVICE_PIN == newDoxm->oxmSel)
         {
+#ifdef __WITH_DTLS__
             //this temp Credential ID is used to track temporal Cred Id
             static OicUuid_t tmpCredId = {.id={0}};
             static bool tmpCredGenFlag = false;
+#endif //__WITH_DTLS__
 
             if ((false == gDoxm->owned) && (false == newDoxm->owned))
             {
