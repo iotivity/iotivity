@@ -994,6 +994,7 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
     }
     printf("Data: %s\n", requestInfo->info.payload);
     printf("Message type: %s\n", MESSAGE_TYPE[requestInfo->info.type]);
+    printf("Resource URI: %s \n", requestInfo->info.resourceUri);
 
     if (requestInfo->info.options)
     {
@@ -1061,6 +1062,8 @@ void response_handler(const CAEndpoint_t *object, const CAResponseInfo_t *respon
     printf("Data: %s\n", responseInfo->info.payload);
     printf("Message type: %s\n", MESSAGE_TYPE[responseInfo->info.type]);
     printf("Token: %s\n", responseInfo->info.token);
+    printf("Resource URI: %s \n", responseInfo->info.resourceUri);
+
     if (responseInfo->info.options)
     {
         uint32_t len = responseInfo->info.numOptions;

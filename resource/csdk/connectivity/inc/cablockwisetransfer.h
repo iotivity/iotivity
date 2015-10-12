@@ -329,14 +329,22 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
                              const CABlockDataID_t *blockID, coap_list_t **options);
 
 /**
- * Add the block option in pdu data.
- * @param[in]   pdu    pdu object.
+ * Add the block option in option list.
  * @param[out]  block    block data.
  * @param[in]   blockType   block option type.
+ * @param[out]  options   option list.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAAddBlockOptionImpl(coap_pdu_t *pdu, coap_block_t *block, uint8_t blockType,
+CAResult_t CAAddBlockOptionImpl(coap_block_t *block, uint8_t blockType,
                                 coap_list_t **options);
+
+/**
+ * Add the option list in pdu data.
+ * @param[out]  pdu    pdu object.
+ * @param[out]  options   option list.
+ * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAAddOptionToPDU(coap_pdu_t *pdu, coap_list_t **options);
 
 /**
  * Add the size option in pdu data.

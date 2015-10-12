@@ -136,7 +136,7 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
     }
     else
     {
-        if (CA_MSG_ACKNOWLEDGE != info->type && info->resourceUri)
+        if (info->resourceUri)
         {
             uint32_t length = strlen(info->resourceUri);
             if (CA_MAX_URI_LENGTH < length)
