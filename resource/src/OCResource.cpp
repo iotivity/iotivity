@@ -69,7 +69,11 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri),
-    m_devAddr{ OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0 },
+    m_devAddr{ OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    , {0}
+#endif
+    },
     m_isObservable(observable), m_isCollection(false),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
@@ -562,4 +566,3 @@ bool OCResourceIdentifier::operator>=(const OCResourceIdentifier &other) const
 }
 
 } // namespace OC
-

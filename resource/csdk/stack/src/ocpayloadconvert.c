@@ -166,7 +166,7 @@ static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload
     }
     else if (err != 0)
     {
-        OC_LOG_V(ERROR, TAG, "Convert Payload failed with %lld", err);
+        OC_LOG_V(ERROR, TAG, "Convert Payload failed : %zd", err);
         return err;
     }
     else
@@ -175,6 +175,7 @@ static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload
         return 0;
     }
 }
+
 static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* outPayload,
         size_t* size)
 {
@@ -200,7 +201,6 @@ static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* out
 
     err = err | cbor_encoder_close_container(&encoder, &rootArray);
     return checkError(err, &encoder, outPayload, size);
-
 }
 
 static char* OCStringLLJoin(OCStringLL* val)
