@@ -393,7 +393,7 @@ bool selectResourceType(std::string& resourceType)
         return true;
     case REQUEST_LIGHT:
         resourceType = LIGHT;
-        defaultKey = "Light";
+        defaultKey = "Brightness";
         return true;
     default :
         std::cout << "Invalid input, please try again" << std::endl;
