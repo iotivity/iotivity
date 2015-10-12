@@ -18,12 +18,12 @@
  *
  ******************************************************************/
 
-#include "reservermain.h"
+#include "remain.h"
 
 #include "RCSResourceObject.h"
 
-#ifndef __RESERVER_H__
-#define __RESERVER_H__
+#ifndef RESERVER_H__
+#define RESERVER_H__
 
 using namespace std;
 using namespace OIC::Service;
@@ -33,10 +33,16 @@ typedef int ReturnValue;
 
 constexpr int DEFALUT_VALUE = 0;
 
-std::string resourceUri = "/a/TempSensor";
-std::string resourceType = "core.TemperatureSensor";
-std::string resourceInterface = "oic.if.";
-std::string attributeKey = "Temperature";
+constexpr int PRESENCE_ON = 1;
+constexpr int PRESENCE_OFF = 2;
+
+const std::string TEMPERATURE_URI = "/a/TempSensor";
+const std::string LIGHT_URI = "/a/light";
+const std::string TEMPERATURE_RT = "oic.r.temperaturesensor";
+const std::string LIGHT_RT = "oic.r.light";
+const std::string TEMPERATURE_AK = "Temperature";
+const std::string LIGHT_AK = "Brightness";
+const std::string RESOURCE_INTERFACE = "oic.if.";
 
 enum class Control
 {
@@ -46,8 +52,10 @@ enum class Control
 
 void printAttribute(const RCSResourceAttributes &attrs);
 
-void *showGroupAPIs(void *data);
+void start_server(void *data, Evas_Object *obj, void *event_info);
 
-void serverCreateUI(void *data);
+void start_server_cb(void *data, Evas_Object *obj, void *event_info);
 
-#endif // __RESERVER_H__
+void *showAPIs(void *data);
+
+#endif // RESERVER_H__

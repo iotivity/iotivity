@@ -82,66 +82,68 @@ static const char NORMAL_INFO_DATA[] =
 
 #ifdef __WITH_DTLS__
 
-/**
- * @def RS_IDENTITY
- * @brief
- */
-#define IDENTITY     ("1111111111111111")
-/* @def RS_CLIENT_PSK
- * @brief
- */
-#define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
+// Iotivity Device Identity.
+const unsigned char IDENTITY[] = ("1111111111111111");
 
-static CADtlsPskCredsBlob_t *pskCredsBlob = NULL;
+// PSK between this device and peer device.
+const unsigned char RS_CLIENT_PSK[] = ("AAAAAAAAAAAAAAAA");
 
-void clearDtlsCredentialInfo()
-{
-    printf("clearDtlsCredentialInfo IN\n");
-    if (pskCredsBlob)
-    {
-        // Initialize sensitive data to zeroes before freeing.
-        memset(pskCredsBlob->creds, 0, sizeof(OCDtlsPskCreds) * (pskCredsBlob->num));
-        free(pskCredsBlob->creds);
-
-        memset(pskCredsBlob, 0, sizeof(CADtlsPskCredsBlob_t));
-        free(pskCredsBlob);
-        pskCredsBlob = NULL;
-    }
-    printf("clearDtlsCredentialInfo OUT\n");
-}
-
-// Internal API. Invoked by OC stack to retrieve credentials from this module
-void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
+// Internal API. Invoked by CA stack to retrieve credentials from this module
+int32_t CAGetDtlsPskCredentials( CADtlsPskCredType_t type,
+              const unsigned char *desc, size_t desc_len,
+              unsigned char *result, size_t result_length)
 {
     printf("CAGetDtlsPskCredentials IN\n");
 
-    if (pskCredsBlob != NULL)
+    int32_t ret = -1;
+
+    if (NULL == result)
     {
-        *credInfo = pskCredsBlob;
+        return ret;
     }
 
+    switch (type)
+    {
+        case CA_DTLS_PSK_HINT:
+        case CA_DTLS_PSK_IDENTITY:
+
+            if (result_length < sizeof(IDENTITY))
+            {
+                printf("ERROR : Wrong value for result for storing IDENTITY");
+                return ret;
+            }
+
+            memcpy(result, IDENTITY, sizeof(IDENTITY));
+            ret = sizeof(IDENTITY);
+            break;
+
+        case CA_DTLS_PSK_KEY:
+
+            if ((desc_len == sizeof(IDENTITY)) &&
+                memcmp(desc, IDENTITY, sizeof(IDENTITY)) == 0)
+            {
+                if (result_length < sizeof(RS_CLIENT_PSK))
+                {
+                    printf("ERROR : Wrong value for result for storing RS_CLIENT_PSK");
+                    return ret;
+                }
+
+                memcpy(result, RS_CLIENT_PSK, sizeof(RS_CLIENT_PSK));
+                ret = sizeof(RS_CLIENT_PSK);
+            }
+            break;
+
+        default:
+
+            printf("Wrong value passed for PSK_CRED_TYPE.");
+            ret = -1;
+    }
+
+
     printf("CAGetDtlsPskCredentials OUT\n");
+    return ret;
 }
-
-int32_t SetCredentials()
-{
-    printf("SetCredentials IN\n");
-    pskCredsBlob = (CADtlsPskCredsBlob_t *)malloc(sizeof(CADtlsPskCredsBlob_t));
-
-    memset(pskCredsBlob, 0x0, sizeof(CADtlsPskCredsBlob_t));
-    memcpy(pskCredsBlob->identity, IDENTITY, DTLS_PSK_ID_LEN);
-
-    pskCredsBlob->num = 1;
-
-    pskCredsBlob->creds = (OCDtlsPskCreds *)malloc(sizeof(OCDtlsPskCreds) * (pskCredsBlob->num));
-
-    memcpy(pskCredsBlob->creds[0].id, IDENTITY, DTLS_PSK_ID_LEN);
-    memcpy(pskCredsBlob->creds[0].psk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
-
-    printf("SetCredentials OUT\n");
-    return 1;
-}
-#endif
+#endif  //__WITH_DTLS__
 
 int main(int argc, char **argv)
 {
@@ -395,46 +397,6 @@ TEST_F(CATests, SendResponseTest)
     }
 }
 
-// CASendNotification TC
-// check return value
-TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
-{
-    addr = (char *) ADDRESS;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
-
-    memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.type = CA_MSG_NONCONFIRM;
-    responseData.payload = (CAPayload_t)malloc(sizeof("Temp Notification Data"));
-
-    EXPECT_TRUE(responseData.payload != NULL);
-    if(!responseData.payload)
-    {
-        CADestroyEndpoint(tempRep);
-        return;
-    }
-
-    memcpy(responseData.payload, "Temp Notification Data", sizeof("Temp Notification Data"));
-    responseData.payloadSize = sizeof("Temp Notification Data");
-
-    CAGenerateToken(&tempToken, tokenLength);
-    requestData.token = tempToken;
-    requestData.tokenLength = tokenLength;
-
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_CONTENT;
-    responseInfo.info = responseData;
-
-    EXPECT_EQ(CA_STATUS_OK, CASendNotification(tempRep, &responseInfo));
-
-    CADestroyToken(tempToken);
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
-    free(responseData.payload);
-}
-
 // CASelectNewwork TC
 // check return value
 TEST_F(CATests, SelectNetworkTestGood)
@@ -494,11 +456,6 @@ TEST_F (CATests, GetNetworkInformationTestGood)
 TEST_F(CATests, RegisterDTLSCredentialsHandlerTest)
 {
 #ifdef __WITH_DTLS__
-    if (SetCredentials() == 0)
-    {
-        printf("SetCredentials failed\n");
-    }
-
     EXPECT_EQ(CA_STATUS_OK, CARegisterDTLSCredentialsHandler(CAGetDtlsPskCredentials));
 #endif
 }

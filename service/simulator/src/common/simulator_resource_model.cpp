@@ -311,6 +311,11 @@ void SimulatorResourceModel::updateAttributeFromAllowedValues(const std::string 
 
 void SimulatorResourceModel::removeAttribute(const std::string &attrName)
 {
+   if (m_attributes.end() == m_attributes.find(attrName))
+   {
+       return;
+   }
+
     m_attributes.erase(attrName);
     return;
 }

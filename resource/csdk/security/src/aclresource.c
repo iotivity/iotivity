@@ -54,7 +54,7 @@ static void FreeACE(OicSecAcl_t *ace)
     size_t i;
     if(NULL == ace)
     {
-        OC_LOG (INFO, TAG, "Invalid Parameter");
+        OC_LOG (ERROR, TAG, "Invalid Parameter");
         return;
     }
 
@@ -65,14 +65,25 @@ static void FreeACE(OicSecAcl_t *ace)
     }
     OICFree(ace->resources);
 
-    //Clean Period & Recurrence
-    for(i = 0; i < ace->prdRecrLen; i++)
+    //Clean Period
+    if(ace->periods)
     {
-        OICFree(ace->periods[i]);
-        OICFree(ace->recurrences[i]);
+        for(i = 0; i < ace->prdRecrLen; i++)
+        {
+            OICFree(ace->periods[i]);
+        }
+        OICFree(ace->periods);
     }
-    OICFree(ace->periods);
-    OICFree(ace->recurrences);
+
+    //Clean Recurrence
+    if(ace->recurrences)
+    {
+        for(i = 0; i < ace->prdRecrLen; i++)
+        {
+            OICFree(ace->recurrences[i]);
+        }
+        OICFree(ace->recurrences);
+    }
 
     // Clean Owners
     OICFree(ace->owners);
@@ -331,6 +342,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
             {
                 VERIFY_SUCCESS(TAG, cJSON_Array == jsonRecurObj->type,
                                ERROR);
+
                 if(acl->prdRecrLen > 0)
                 {
                     acl->recurrences = (char**)OICCalloc(acl->prdRecrLen,
@@ -341,11 +353,12 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
                     for(size_t i = 0; i < acl->prdRecrLen; i++)
                     {
                         jsonRecur = cJSON_GetArrayItem(jsonRecurObj, i);
+                        VERIFY_NON_NULL(TAG, jsonRecur, ERROR);
                         jsonObjLen = strlen(jsonRecur->valuestring) + 1;
                         acl->recurrences[i] = (char*)OICMalloc(jsonObjLen);
                         VERIFY_NON_NULL(TAG, acl->recurrences[i], ERROR);
                         OICStrcpy(acl->recurrences[i], jsonObjLen,
-                                  jsonRecur->valuestring);
+                              jsonRecur->valuestring);
                     }
                 }
             }
@@ -409,6 +422,7 @@ static bool UpdatePersistentStorage(const OicSecAcl_t *acl)
     }
     return false;
 }
+
 /*
  * This method removes ACE for the subject and resource from the ACL
  *
@@ -423,7 +437,7 @@ static bool UpdatePersistentStorage(const OicSecAcl_t *acl)
 static OCStackResult RemoveACE(const OicUuid_t * subject,
                                const char * resource)
 {
-    OC_LOG(INFO, TAG, "IN RemoveACE");
+    OC_LOG(DEBUG, TAG, "IN RemoveACE");
 
     OicSecAcl_t *acl = NULL;
     OicSecAcl_t *tempAcl = NULL;
@@ -432,7 +446,7 @@ static OCStackResult RemoveACE(const OicUuid_t * subject,
 
     if(memcmp(subject->id, &WILDCARD_SUBJECT_ID, sizeof(subject->id)) == 0)
     {
-        OC_LOG_V (INFO, TAG, "%s received invalid parameter", __func__ );
+        OC_LOG_V (ERROR, TAG, "%s received invalid parameter", __func__ );
         return  OC_STACK_INVALID_PARAM;
     }
 
@@ -520,6 +534,7 @@ static bool GetSubjectFromQueryString(const char *query, OicUuid_t *subject)
 
     ParseQueryIterInit((unsigned char *)query, &parseIter);
 
+
     while(GetNextQuery(&parseIter))
     {
         if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECT_NAME, parseIter.attrLen) == 0)
@@ -582,7 +597,7 @@ static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest *
     // Process the REST querystring parameters
     if(ehRequest->query)
     {
-        OC_LOG (INFO, TAG, "HandleACLGetRequest processing query");
+        OC_LOG (DEBUG, TAG, "HandleACLGetRequest processing query");
 
         OicUuid_t subject = {.id={0}};
         char resource[MAX_URI_LENGTH] = {0};
@@ -644,7 +659,7 @@ exit:
 
     OICFree(jsonStr);
 
-    OC_LOG_V (INFO, TAG, "%s RetVal %d", __func__ , ehRet);
+    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -669,13 +684,13 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
-    OC_LOG_V (INFO, TAG, "%s RetVal %d", __func__ , ehRet);
+    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
 static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest *ehRequest)
 {
-    OC_LOG (INFO, TAG, "Processing ACLDeleteRequest");
+    OC_LOG (DEBUG, TAG, "Processing ACLDeleteRequest");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t subject = {.id={0}};
     char resource[MAX_URI_LENGTH] = {0};
@@ -709,7 +724,7 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParameter)
 {
-    OC_LOG(INFO, TAG, "Received request ACLEntityHandler");
+    OC_LOG(DEBUG, TAG, "Received request ACLEntityHandler");
     (void)callbackParameter;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
@@ -721,7 +736,7 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
     if (flag & OC_REQUEST_FLAG)
     {
         // TODO :  Handle PUT method
-        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -968,4 +983,35 @@ const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **
     // Cleanup in case no ACL is found
     *savePtr = NULL;
     return NULL;
+}
+
+
+OCStackResult InstallNewACL(const char* newJsonStr)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    // Convert JSON ACL data into binary. This will also validate the ACL data received.
+    OicSecAcl_t* newAcl = JSONToAclBin(newJsonStr);
+
+    if (newAcl)
+    {
+        // Append the new ACL to existing ACL
+        LL_APPEND(gAcl, newAcl);
+
+        // Convert ACL data into JSON for update to persistent storage
+        char *jsonStr = BinToAclJSON(gAcl);
+        if (jsonStr)
+        {
+            cJSON *jsonAcl = cJSON_Parse(jsonStr);
+            OICFree(jsonStr);
+
+            if (jsonAcl)
+            {
+                ret = UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl);
+            }
+            cJSON_Delete(jsonAcl);
+        }
+    }
+
+    return ret;
 }

@@ -129,6 +129,11 @@ namespace OCProvisioningTest
                     owned, unowned));
     }
 
+    TEST(SetDisplayPinCBTest, SetDisplayPinCBTestNullCB)
+    {
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setDisplayPinCB(nullptr));
+    }
+
     TEST(ProvisionAclTest, ProvisionAclTestNullAcl)
     {
         OCSecureResource device;

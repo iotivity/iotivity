@@ -54,7 +54,7 @@ public class ConfigurationServer {
     private ThingsMaintenance                 thingsmnt          = null;
     private ConfigurationResource             conResource        = null;
     private MaintenanceResource               mntResource        = null;
-    private FactorySetResource                factorySetResource = null;
+    private FactorySetResource                factorysetResource = null;
 
     private final ThingsConfigurationListener thingConfigurationListener;
     private final ThingsMaintenanceListener   thingsMaintenanceListener;
@@ -85,8 +85,8 @@ public class ConfigurationServer {
             mntResource = new MaintenanceResource();
             mntResource.createResource(requestHandler);
 
-            factorySetResource = new FactorySetResource();
-            factorySetResource.createResource(requestHandler);
+            factorysetResource = new FactorySetResource();
+            factorysetResource.createResource(requestHandler);
         } catch (OcException e) {
             Log.e(LOG_TAG, "OcException occured: " + e.toString());
         }
@@ -207,8 +207,8 @@ public class ConfigurationServer {
             conResource.deleteResource();
         if (null != mntResource)
             mntResource.deleteResource();
-        if (null != factorySetResource)
-            factorySetResource.deleteResource();
+        if (null != factorysetResource)
+            factorysetResource.deleteResource();
     }
 
     private class RequestHandler implements OcPlatform.EntityHandler {
@@ -248,8 +248,8 @@ public class ConfigurationServer {
                     } else if (request.getResourceUri().equalsIgnoreCase(
                             mntResource.getUri())) {
 
-                        String factorySetAtt = rep.getValueString("fr");
-                        if (factorySetAtt.equalsIgnoreCase("true")) {
+                        String factorysetAtt = rep.getValueString("fr");
+                        if (factorysetAtt.equalsIgnoreCase("true")) {
                             conResource.factoryReset();
                         }
                         mntResource.setDiagnosticsRepresentation(rep);

@@ -70,7 +70,7 @@ void timeCheck(int timeSec)
     pthread_mutex_unlock(&mutex_lock);
 }
 
-void onReboot(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onReboot(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -85,8 +85,7 @@ void onReboot(const HeaderOptions& headerOptions, const OCRepresentation& rep, c
     std::cout << "\t\tReboot:" << rep.getValue< std::string >("value") << std::endl;
 }
 
-void onFactoryReset(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-        const int eCode)
+void onFactoryReset(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -101,7 +100,7 @@ void onFactoryReset(const HeaderOptions& headerOptions, const OCRepresentation& 
     std::cout << "\t\tFactoryReset:" << rep.getValue< std::string >("value") << std::endl;
 }
 
-void onUpdate(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onUpdate(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -126,7 +125,7 @@ void onUpdate(const HeaderOptions& headerOptions, const OCRepresentation& rep, c
         std::cout << "\t\tRegion:" << rep.getValue< std::string >("r") << std::endl;
 }
 
-void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onGet(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -192,7 +191,9 @@ void onFoundCollectionResource(std::vector< std::shared_ptr< OCResource > > reso
         std::cout << "Exception: " << e.what() << std::endl;
     }
 
+    pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
+    pthread_mutex_unlock(&mutex_lock);
 }
 
 // Callback to found resources
@@ -240,7 +241,7 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
                             if (g_maintenanceResource == NULL)
                                 g_maintenanceResource = resource;
                         }
-                        else if (resource->uri() == "/factorySet")
+                        else if (resource->uri() == "/factoryset")
                         {
                             OCPlatform::bindResource(setCollectionHandle, foundResourceHandle);
                             if (g_setResource == NULL)
@@ -275,7 +276,7 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
     pthread_mutex_unlock(&mutex_lock);
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     std::string str_steps;
 
@@ -393,7 +394,7 @@ int main(int argc, char* argv[])
 
                 types.push_back("oic.wk.con");
                 types.push_back("oic.wk.mnt");
-                types.push_back("factorySet");
+                types.push_back("factoryset");
 
                 std::cout << "Finding Configuration Resource... " << std::endl;
                 std::cout << "Finding Maintenance Resource... " << std::endl;

@@ -47,7 +47,14 @@ static bool g_isInitialized = false;
 #ifdef __WITH_DTLS__
 // CAAdapterNetDTLS will register the callback.
 // Taking callback all the way through adapters not the right approach, hence calling here.
-extern void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
+extern void CADTLSSetCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback);
+#endif
+
+#ifdef __WITH_X509__
+// CAAdapterNetDTLS will register the callback.
+// Taking callback all the way through adapters not the right approach, hence calling here.
+extern void CADTLSSetX509CredentialsCallback(CAGetDTLSX509CredentialsHandler credCallback);
+extern void CADTLSSetCrlCallback(CAGetDTLSCrlHandler crlCallback);
 #endif
 
 CAResult_t CAInitialize()
@@ -92,6 +99,18 @@ CAResult_t CAStartListeningServer()
     return CAStartListeningServerAdapters();
 }
 
+CAResult_t CAStopListeningServer()
+{
+    OIC_LOG(DEBUG, TAG, "CAStopListeningServer");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    return CAStopListeningServerAdapters();
+}
+
 CAResult_t CAStartDiscoveryServer()
 {
     OIC_LOG(DEBUG, TAG, "CAStartDiscoveryServer");
@@ -119,7 +138,7 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 }
 
 #ifdef __WITH_DTLS__
-CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSCredentialsHandler)
+CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentialsHandler)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSCredentialsHandler");
 
@@ -132,6 +151,34 @@ CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSC
     return CA_STATUS_OK;
 }
 #endif //__WITH_DTLS__
+
+#ifdef __WITH_X509__
+CAResult_t CARegisterDTLSX509CredentialsHandler(CAGetDTLSX509CredentialsHandler GetDTLSX509CredentialsHandler)
+{
+    OIC_LOG(DEBUG, TAG, "CARegisterDTLSX509CredentialsHandler");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CADTLSSetX509CredentialsCallback(GetDTLSX509CredentialsHandler);
+    return CA_STATUS_OK;
+}
+
+CAResult_t CARegisterDTLSCrlHandler(CAGetDTLSCrlHandler GetDTLSCrlHandler)
+{
+    OIC_LOG(DEBUG, TAG, "CARegisterDTLSCrlHandler");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CADTLSSetCrlCallback(GetDTLSCrlHandler);
+    return CA_STATUS_OK;
+}
+#endif //__WITH_X509__
 
 CAResult_t CACreateEndpoint(CATransportFlags_t flags,
                             CATransportAdapter_t adapter,
@@ -199,18 +246,6 @@ CAResult_t CASendRequest(const CAEndpoint_t *object,const CARequestInfo_t *reque
     }
 
     return CADetachRequestMessage(object, requestInfo);
-}
-
-CAResult_t CASendNotification(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
-{
-    OIC_LOG(DEBUG, TAG, "CASendNotification");
-
-    if(!g_isInitialized)
-    {
-        return CA_STATUS_NOT_INITIALIZED;
-    }
-
-    return CADetachResponseMessage(object, responseInfo);
 }
 
 CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)

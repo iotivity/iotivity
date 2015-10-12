@@ -89,24 +89,18 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *endpoi
 #ifdef WITH_BWT
 void CAAddDataToSendThread(CAData_t *data)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
 
     // add thread
     CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CAAddDataToReceiveThread(CAData_t *data)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CAAddDataToReceiveThread");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
 
     // add thread
     CAQueueingThreadAddData(&g_receiveThread, data, sizeof(CAData_t));
-
-    OIC_LOG(DEBUG, TAG, "OUT - CAAddDataToReceiveThread");
 }
 #endif
 
@@ -256,7 +250,6 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
 
 static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uint32_t size)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint");
     VERIFY_NON_NULL_VOID(pdu, TAG, "pdu");
 
@@ -309,8 +302,6 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
 #else
     CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
 #endif
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 static void CADestroyData(void *data, uint32_t size)
@@ -397,20 +388,17 @@ static void CAProcessReceivedData(CAData_t *data)
 
 static void CAReceiveThreadProcess(void *threadData)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
 #ifndef SINGLE_HANDLE
     CAData_t *data = (CAData_t *) threadData;
     CAProcessReceivedData(data);
 #else
     (void)threadData;
 #endif
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 #endif
 
 static CAResult_t CAProcessSendData(const CAData_t *data)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(data, TAG, "data");
     VERIFY_NON_NULL(data->remoteEndpoint, TAG, "remoteEndpoint");
 
@@ -420,6 +408,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
 
     coap_pdu_t *pdu = NULL;
     CAInfo_t *info = NULL;
+    coap_list_t *options = NULL;
+    coap_transport_type transport;
 
     if (SEND_TYPE_UNICAST == type)
     {
@@ -440,7 +430,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
 #ifdef ROUTING_GATEWAY
             skipRetransmission = data->requestInfo->info.skipRetransmission;
 #endif
-            pdu = CAGeneratePDU(data->requestInfo->method, info, data->remoteEndpoint);
+            pdu = CAGeneratePDU(data->requestInfo->method, info, data->remoteEndpoint,
+                                &options, &transport);
         }
         else if (NULL != data->responseInfo)
         {
@@ -450,7 +441,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
 #ifdef ROUTING_GATEWAY
             skipRetransmission = data->responseInfo->info.skipRetransmission;
 #endif
-            pdu = CAGeneratePDU(data->responseInfo->result, info, data->remoteEndpoint);
+            pdu = CAGeneratePDU(data->responseInfo->result, info, data->remoteEndpoint,
+                                &options, &transport);
         }
         else
         {
@@ -472,11 +464,13 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 if (NULL != info)
                 {
                     CAResult_t res = CAAddBlockOption(&pdu, info,
-                                                      data->remoteEndpoint);
+                                                      data->remoteEndpoint,
+                                                      &options);
                     if (CA_STATUS_OK != res)
                     {
                         OIC_LOG(INFO, TAG, "to write block option has failed");
                         CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+                        coap_delete_list(options);
                         coap_delete_pdu(pdu);
                         return res;
                     }
@@ -490,6 +484,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             {
                 OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
                 CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+                coap_delete_list(options);
                 coap_delete_pdu(pdu);
                 return res;
             }
@@ -512,11 +507,13 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 {
                     //when retransmission not supported this will return CA_NOT_SUPPORTED, ignore
                     OIC_LOG_V(INFO, TAG, "retransmission is not enabled due to error, res : %d", res);
+                    coap_delete_list(options);
                     coap_delete_pdu(pdu);
                     return res;
                 }
             }
 
+            coap_delete_list(options);
             coap_delete_pdu(pdu);
         }
         else
@@ -534,7 +531,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             OIC_LOG(DEBUG, TAG, "requestInfo is available..");
 
             info = &data->requestInfo->info;
-            pdu = CAGeneratePDU(CA_GET, info, data->remoteEndpoint);
+            pdu = CAGeneratePDU(CA_GET, info, data->remoteEndpoint, &options, &transport);
+
             if (NULL != pdu)
             {
 #ifdef WITH_BWT
@@ -546,11 +544,13 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 {
                     // Blockwise transfer
                     CAResult_t res = CAAddBlockOption(&pdu, &data->requestInfo->info,
-                                                      data->remoteEndpoint);
+                                                      data->remoteEndpoint,
+                                                      &options);
                     if (CA_STATUS_OK != res)
                     {
                         OIC_LOG(DEBUG, TAG, "CAAddBlockOption has failed");
                         CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+                        coap_delete_list(options);
                         coap_delete_pdu(pdu);
                         return res;
                     }
@@ -569,7 +569,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             OIC_LOG(DEBUG, TAG, "responseInfo is available..");
 
             info = &data->responseInfo->info;
-            pdu = CAGeneratePDU(data->responseInfo->result, info, data->remoteEndpoint);
+            pdu = CAGeneratePDU(data->responseInfo->result, info, data->remoteEndpoint,
+                                &options, &transport);
 
             if (NULL != pdu)
             {
@@ -584,11 +585,13 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                     if (NULL != info)
                     {
                         CAResult_t res = CAAddBlockOption(&pdu, info,
-                                                          data->remoteEndpoint);
+                                                          data->remoteEndpoint,
+                                                          &options);
                         if (CA_STATUS_OK != res)
                         {
                             OIC_LOG(INFO, TAG, "to write block option has failed");
                             CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+                            coap_delete_list(options);
                             coap_delete_pdu(pdu);
                             return res;
                         }
@@ -619,10 +622,12 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
         {
             OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
             CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+            coap_delete_list(options);
             coap_delete_pdu(pdu);
             return res;
         }
 
+        coap_delete_list(options);
         coap_delete_pdu(pdu);
     }
 
@@ -705,7 +710,6 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
 static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
                                      const void *data, uint32_t dataLen)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_VOID(sep, TAG, "remoteEndpoint");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
 
@@ -808,8 +812,6 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
 #endif
 
     coap_delete_pdu(pdu);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 static void CANetworkChangedCallback(const CAEndpoint_t *info, CANetworkStatus_t status)
@@ -941,8 +943,6 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
 
 CAResult_t CADetachRequestMessage(const CAEndpoint_t *object, const CARequestInfo_t *request)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL(object, TAG, "object");
     VERIFY_NON_NULL(request, TAG, "request");
 
@@ -1005,14 +1005,12 @@ CAResult_t CADetachRequestMessage(const CAEndpoint_t *object, const CARequestInf
     }
 #endif
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CADetachResponseMessage(const CAEndpoint_t *object,
                                    const CAResponseInfo_t *response)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL(object, TAG, "object");
     VERIFY_NON_NULL(response, TAG, "response");
 
@@ -1066,7 +1064,6 @@ CAResult_t CADetachResponseMessage(const CAEndpoint_t *object,
     }
 #endif
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -1085,16 +1082,13 @@ CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t
 void CASetInterfaceCallbacks(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
                              CAErrorCallback errorHandler)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     g_requestHandler = ReqHandler;
     g_responseHandler = RespHandler;
     g_errorHandler = errorHandler;
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CAResult_t CAInitializeMessageHandler()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     CASetPacketReceivedCallback(CAReceivedPacketCallback);
 
     CASetNetworkChangeCallback(CANetworkChangedCallback);
@@ -1175,13 +1169,11 @@ CAResult_t CAInitializeMessageHandler()
     CAInitializeAdapters();
 #endif
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CATerminateMessageHandler()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
 #ifndef SINGLE_THREAD
     CATransportAdapter_t connType;
     u_arraylist_t *list = CAGetSelectedNetworkList();
@@ -1247,8 +1239,6 @@ void CATerminateMessageHandler()
     CARetransmissionStop(&g_retransmissionContext);
     CARetransmissionDestroy(&g_retransmissionContext);
 #endif
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CALogPDUInfo(coap_pdu_t *pdu, const CAEndpoint_t *endpoint)
@@ -1381,6 +1371,7 @@ static void CASendErrorInfo(const CAEndpoint_t *endpoint, const CAInfo_t *info, 
     if (CA_STATUS_OK != res)
     {
         OICFree(cadata);
+        OICFree(errorInfo);
         CAFreeEndpoint(ep);
         return;
     }

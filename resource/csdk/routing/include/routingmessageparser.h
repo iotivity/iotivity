@@ -72,7 +72,7 @@ OCStackResult RMPConstructRemovalPayload(uint32_t gatewayId, uint32_t seqNum,
 
 /**
  * Parse payload for request and get gateway id.
- * @param[in]   payload              Payload.
+ * @param[in]       payload              Payload.
  * @param[in]       payloadSize          Payload Size.
  * @param[out]      gatewayId            Gateway Id.
  * @return  ::OC_STACK_OK or Appropriate error code.
@@ -86,7 +86,7 @@ OCStackResult RMPParseRequestPayload(const uint8_t* payload, size_t payloadSize,
  * @param[in/out]   seqNum               Sequence Number of Gateway.
  * @param[in/out]   gatewayId            Gateway Id.
  * @param[in/out]   gatewayTable         Parsed routing table from Payload.
- * @param[out]      isUpdateSeqNeeded   Response type of payload response/notification.
+ * @param[out]      isUpdateSeqNeeded    Response type of payload response/notification.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
 OCStackResult RMPParseResponsePayload(const OCRepPayload *payload, uint32_t *gatewayId,
@@ -96,7 +96,6 @@ OCStackResult RMPParseResponsePayload(const OCRepPayload *payload, uint32_t *gat
 /**
  * Frees payload.
  * @param[in/out]   payload              Encoded Payload for Gateway ID.
- * @return  NONE.
  */
 void RMPFreePayload(OCRepPayload *payload);
 

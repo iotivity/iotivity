@@ -47,17 +47,17 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_stopObserve
 (JNIEnv *env, jobject thiz);
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_get
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_nativeGet
 (JNIEnv *env, jobject thiz, jstring jResourceInterface,
  jobject jQueryParamsMap, jobject jListener);
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_put
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_nativePut
 (JNIEnv *env, jobject thiz, jstring jResourceInterface,
  jobject jRepresentation, jobject jQueryParamsMap, jobject jListener);
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_post
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_nativePost
 (JNIEnv *env, jobject thiz, jstring jResourceInterface,
  jobject jRepresentation, jobject jQueryParamsMap, jobject jListener);
 

@@ -52,6 +52,11 @@ extern const char * OIC_RSRC_TYPE_SEC_CRED;
 extern const char * OIC_RSRC_CRED_URI;
 extern const char * OIC_JSON_CRED_NAME;
 
+//CRL
+extern const char * OIC_RSRC_TYPE_SEC_CRL;
+extern const char * OIC_RSRC_CRL_URI;
+extern const char * OIC_JSON_CRL_NAME;
+
 //SVC
 extern const char * OIC_RSRC_TYPE_SEC_SVC;
 extern const char * OIC_RSRC_SVC_URI;
@@ -93,10 +98,8 @@ extern const char * WILDCARD_RESOURCE_URI;
 
 //Ownership Transfer Methods
 extern const char * OXM_JUST_WORKS;
-extern const char * OXM_MODE_SWITCH;
 extern const char * OXM_RANDOM_DEVICE_PIN;
-extern const char * OXM_PRE_PROVISIONED_DEVICE_PIN;
-extern const char * OXM_PRE_PROVISIONED_STRONG_CREDENTIAL;
+extern const char * OXM_MANUFACTURER_CERTIFICATE;
 
 extern const char * OIC_SEC_TRUE;
 extern const char * OIC_SEC_FALSE;

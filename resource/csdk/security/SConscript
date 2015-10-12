@@ -48,10 +48,11 @@ libocsrm_env.PrependUnique(CPPPATH = [
 		'../../oc_logger/include',
 		'../connectivity/lib/libcoap-4.1.1',
 		'../connectivity/external/inc',
+		'../connectivity/common/inc',
 		'../connectivity/inc',
 		'../connectivity/api',
 		'../security/include',
-		'../security/include/internal',
+		'../security/include/internal'
 		])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
@@ -78,6 +79,9 @@ if target_os in ['darwin', 'ios']:
 if not env.get('RELEASE'):
 	libocsrm_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
+if env.get('DTLS_WITH_X509') == '1':
+	libocsrm_env.AppendUnique(CPPDEFINES = ['__WITH_X509__'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -88,6 +92,7 @@ if env.get('SECURED') == '1':
 		OCSRM_SRC + 'resourcemanager.c',
 		OCSRM_SRC + 'aclresource.c',
 		OCSRM_SRC + 'amaclresource.c',
+		OCSRM_SRC + 'amsmgr.c',
 		OCSRM_SRC + 'pstatresource.c',
 		OCSRM_SRC + 'doxmresource.c',
 		OCSRM_SRC + 'credresource.c',
@@ -109,6 +114,7 @@ else:
 		OCSRM_SRC + 'resourcemanager.c',
 		OCSRM_SRC + 'aclresource.c',
 		OCSRM_SRC + 'amaclresource.c',
+		OCSRM_SRC + 'amsmgr.c',
 		OCSRM_SRC + 'pstatresource.c',
 		OCSRM_SRC + 'doxmresource.c',
 		OCSRM_SRC + 'credresource.c',
@@ -121,11 +127,16 @@ else:
 		OCSRM_SRC + 'base64.c'
 		]
 
+if env.get('DTLS_WITH_X509') == '1' and env.get('SECURED') == '1':
+	crl_src = [OCSRM_SRC + 'crlresource.c']
+	libocsrm_src  = libocsrm_src + crl_src
+
+
 libocsrm = libocsrm_env.StaticLibrary('libocsrm', libocsrm_src)
 
 libocsrm_env.InstallTarget(libocsrm, 'libocsrm')
 libocsrm_env.UserInstallTargetLib(libocsrm, 'libocsrm')
 
-if target_os == 'linux' and env.get('SECURED') == '1':
+if target_os in ['linux', 'android', 'tizen'] and env.get('SECURED') == '1':
 	SConscript('provisioning/SConscript')
 

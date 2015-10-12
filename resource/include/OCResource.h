@@ -438,18 +438,12 @@ namespace OC
         * header options, they will be ignored. <br>
         * Use unsetHeaderOptions API to clear the header information.
         */
-        void setHeaderOptions(const HeaderOptions& headerOptions)
-        {
-            m_headerOptions = headerOptions;
-        }
+        void setHeaderOptions(const HeaderOptions& headerOptions);
 
         /**
         * Function to unset header options.
         */
-        void unsetHeaderOptions()
-        {
-            m_headerOptions.clear();
-        }
+        void unsetHeaderOptions();
 
         /**
         * Function to get the host address of this resource
@@ -481,19 +475,13 @@ namespace OC
         * Function to get the list of resource types
         * @return vector of resource types
         */
-        std::vector<std::string> getResourceTypes() const
-        {
-            return m_resourceTypes;
-        }
+        std::vector<std::string> getResourceTypes() const;
 
         /**
         * Function to get the list of resource interfaces
         * @return vector of resource interface
         */
-        std::vector<std::string> getResourceInterfaces(void) const
-        {
-            return m_interfaces;
-        }
+        std::vector<std::string> getResourceInterfaces(void) const;
 
         // TODO-CA Revisit this since we are exposing two identifiers
         /**

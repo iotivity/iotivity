@@ -233,6 +233,7 @@ jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env)
     {
         (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
         (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_setPairedDevices);
 
         OIC_LOG(ERROR, TAG, "[EDR][Native] getBondedDevices: jni_cid_Set is null");
         return NULL;
@@ -244,6 +245,7 @@ jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env)
     {
         (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
         (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_setPairedDevices);
 
         OIC_LOG(ERROR, TAG, "[EDR][Native] getBondedDevices: jni_mid_toArray is null");
         return NULL;
@@ -255,6 +257,7 @@ jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env)
     {
         (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
         (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+        (*env)->DeleteLocalRef(env, jni_obj_setPairedDevices);
 
         OIC_LOG(ERROR, TAG, "[EDR][Native] getBondedDevices: jni_arrayPairedDevices is null");
         return NULL;
@@ -262,6 +265,7 @@ jobjectArray CAEDRNativeGetBondedDevices(JNIEnv *env)
 
     (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
     (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
+    (*env)->DeleteLocalRef(env, jni_obj_setPairedDevices);
 
     return jni_arrayPairedDevices;
 }
@@ -617,6 +621,7 @@ void CAEDRNativeAddDeviceSocketToList(JNIEnv *env, jobject deviceSocket)
         OIC_LOG(DEBUG, TAG, "Set Socket Object to Array");
     }
     (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
+    (*env)->DeleteLocalRef(env, jni_remoteAddress);
 }
 
 bool CAEDRNativeIsDeviceSocketInList(JNIEnv *env, const char* remoteAddress)

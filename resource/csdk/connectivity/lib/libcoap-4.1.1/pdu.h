@@ -178,6 +178,10 @@ typedef int coap_tid_t;
 #define COAP_TCP_LENGTH_FIELD_NUM_16_BIT     14
 #define COAP_TCP_LENGTH_FIELD_NUM_32_BIT     15
 
+#define COAP_OPTION_FIELD_8_BIT      12
+#define COAP_OPTION_FIELD_16_BIT     256
+#define COAP_OPTION_FIELD_32_BIT     65536
+
 typedef enum
 {
     coap_udp = 0,
@@ -200,30 +204,21 @@ typedef union
         unsigned char token[]; /* the actual token, if any */
     } coap_hdr_udp_t;
 
-
     struct
     {
-        unsigned int message_length :4; /* length of message */
-        unsigned int token_length :4;   /* length of Token */
-        unsigned int code :8; /* request method (value 1--10) or response code (value 40-255) */
+        unsigned char header_data[COAP_TCP_HEADER_NO_FIELD];
         unsigned char token[]; /* the actual token, if any */
     } coap_hdr_tcp_t;
 
     struct
     {
-        unsigned int message_length :4; /* length of message */
-        unsigned int token_length :4;   /* length of Token */
-        unsigned int length_byte :8;       /* extend length of message */
-        unsigned int code :8; /* request method (value 1--10) or response code (value 40-255) */
+        unsigned char header_data[COAP_TCP_HEADER_8_BIT];
         unsigned char token[]; /* the actual token, if any */
     } coap_hdr_tcp_8bit_t;
 
     struct
     {
-        unsigned int message_length :4; /* length of message */
-        unsigned int token_length :4;   /* length of Token */
-        unsigned short length_byte :16;       /* extend length of message */
-        unsigned int code :8; /* request method (value 1--10) or response code (value 40-255) */
+        unsigned char header_data[COAP_TCP_HEADER_16_BIT];
         unsigned char token[]; /* the actual token, if any */
     } coap_hdr_tcp_16bit_t;
 
@@ -249,18 +244,13 @@ typedef union
 
     struct
     {
-        unsigned int token_length :4;   /* length of Token */
-        unsigned int message_length :4; /* length of message */
-        unsigned int code :8; /* request method (value 1--10) or response code (value 40-255) */
+        unsigned char header_data[COAP_TCP_HEADER_NO_FIELD];
         unsigned char token[]; /* the actual token, if any */
     } coap_hdr_tcp_t;
 
     struct
     {
-        unsigned int token_length :4;   /* length of Token */
-        unsigned int message_length :4; /* length of message */
-        unsigned int length_byte :8;       /* extend length of message */
-        unsigned int code :8; /* request method (value 1--10) or response code (value 40-255) */
+        unsigned char header_data[COAP_TCP_HEADER_8_BIT];
         unsigned char token[]; /* the actual token, if any */
     } coap_hdr_tcp_8bit_t;
 
@@ -462,6 +452,15 @@ unsigned int coap_get_tcp_header_length(unsigned char *data);
  * @return header length.
  */
 unsigned int coap_get_tcp_header_length_for_transport(coap_transport_type transport);
+
+/**
+ * Get option length.
+ *
+ * @param key      delta of option
+ * @param length   length of option
+ * @return total option length
+ */
+size_t coap_get_opt_header_length(unsigned short key, size_t length);
 #endif
 
 /**

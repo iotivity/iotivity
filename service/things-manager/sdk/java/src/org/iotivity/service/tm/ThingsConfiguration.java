@@ -172,12 +172,14 @@ public class ThingsConfiguration {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
+     *
+     * @throws OcException {@link OcException}
      */
     public OCStackResult updateConfigurations(OcResource resource,
             Map<String, String> configurations) throws OcException {
         OCStackResult result;
         if (null == configurationListener) {
-            result = OCStackResult.OC_STACK_ERROR;
+            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
         } else {
             int ordinal = nativeUpdateConfigurations(resource, configurations);
             result = OCStackResult.conversion(ordinal);
@@ -199,12 +201,14 @@ public class ThingsConfiguration {
      *
      * @return OCStackResult - OC_STACK_OK on success, otherwise a failure error
      *         code.
+     *
+     * @throws OcException {@link OcException}
      */
     public OCStackResult getConfigurations(OcResource resource,
             Vector<String> configurations) throws OcException {
         OCStackResult result;
         if (null == configurationListener) {
-            result = OCStackResult.OC_STACK_ERROR;
+            result = OCStackResult.OC_STACK_LISTENER_NOT_SET;
         } else {
             int ordinal = nativeGetConfigurations(resource, configurations);
             result = OCStackResult.conversion(ordinal);

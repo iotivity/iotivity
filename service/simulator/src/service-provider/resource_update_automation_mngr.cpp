@@ -105,12 +105,17 @@ void UpdateAutomationMngr::stop(int id)
     {
         m_resourceUpdationList[id]->stop();
         m_resourceUpdationList.erase(m_resourceUpdationList.find(id));
+        return;
     }
     else if (m_attrUpdationList.end() != m_attrUpdationList.find(id))
     {
         m_attrUpdationList[id]->stop();
         m_attrUpdationList.erase(m_attrUpdationList.find(id));
+        return;
     }
+
+    //Throw SimulatorException
+    throw SimulatorException(SIMULATOR_ERROR, "No automation is currently in progress for the given automation Id!");
 }
 
 void UpdateAutomationMngr::stopAll()

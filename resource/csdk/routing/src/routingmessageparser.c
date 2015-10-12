@@ -222,7 +222,7 @@ OCStackResult RMPParseRequestPayload(const uint8_t* payload, size_t payloadSize,
                                      uint32_t *gatewayId)
 {
     OCPayload *ocPayload = NULL;
-    OCParsePayload(&ocPayload, payload, payloadSize);
+    OCParsePayload(&ocPayload, PAYLOAD_TYPE_REPRESENTATION, payload, payloadSize);
     OCRepPayload *repPayload = (OCRepPayload *)ocPayload;
     OCStackResult res = RMPParseResponsePayload(repPayload, gatewayId, NULL, NULL, NULL);
     if (OC_STACK_OK != res)
@@ -274,7 +274,7 @@ OCStackResult RMPParseResponsePayload(const OCRepPayload *payload, uint32_t *gat
 
     if (NULL == gatewayTable)
     {
-        OC_LOG(DEBUG, TAG, "Parsed Request Payload");
+        OC_LOG(DEBUG, TAG, "gatewayTable is NULL");
         return OC_STACK_OK;
     }
 
@@ -317,8 +317,8 @@ OCStackResult RMPParseResponsePayload(const OCRepPayload *payload, uint32_t *gat
         if (NULL == entry->nextHop)
         {
             OC_LOG(DEBUG, TAG, "nextHop Calloc failed");
-            OICFree(entry);
             OICFree(entry->destination);
+            OICFree(entry);
             return OC_STACK_ERROR;
         }
 

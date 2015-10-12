@@ -101,6 +101,14 @@ namespace OIC
     typedef std::string ConfigurationName;
     typedef std::string ConfigurationValue;
 
+    /**
+     * @class ThingsConfiguration
+     * @brief
+     * There are two main usages of this class: (1) On a server side, bootstrapping requisite
+     * information (i.e. system configuration parameters) from a bootstrap server to access other
+     * IoT services, (2) On a client side, getting/updating the system configuration parameters
+     * from/to multiple remote things.
+     */
     class ThingsConfiguration
     {
     public:

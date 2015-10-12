@@ -33,7 +33,7 @@ SimulatorResourceServerImplSP SimulatorResourceCreator::createResource(
 
     try
     {
-        RAML::RamlParser *ramlParser = new RAML::RamlParser(configPath);
+        std::shared_ptr<RAML::RamlParser> ramlParser = std::make_shared<RAML::RamlParser>(configPath);
         raml = ramlParser->getRamlPtr();
     }
     catch (RAML::RamlException &e)
@@ -61,7 +61,7 @@ SimulatorResourceServerImplSP SimulatorResourceCreator::createResource(
         if (!action)
         {
             OC_LOG(ERROR, TAG, "Failed to create resource representation schema as it does not"
-                    "posess the GET request!");
+                   "posess the GET request!");
             return nullptr;
         }
 
@@ -76,7 +76,7 @@ SimulatorResourceServerImplSP SimulatorResourceCreator::createResource(
         if (responseBody)
         {
             RAML::JsonSchemaPtr resourceProperties = responseBody->getSchema()->getProperties();
-            for ( auto &propertyElement : resourceProperties->getProperties())
+            for ( auto & propertyElement : resourceProperties->getProperties())
             {
                 if (!propertyElement.second)
                     continue;

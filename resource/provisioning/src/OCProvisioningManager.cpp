@@ -204,6 +204,31 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecure::setDisplayPinCB(GeneratePinCallback displayPin)
+    {
+        if(!displayPin)
+        {
+            oclog() <<"displayPin can't be null";
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        OCStackResult result = OC_STACK_OK;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if(cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            SetGeneratePinCB(displayPin);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
     void OCSecureResource::callbackWrapper(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
     {
         PMResultList_t *results = nullptr;

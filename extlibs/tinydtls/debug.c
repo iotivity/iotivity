@@ -41,6 +41,10 @@
 #include <time.h>
 #endif
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
+
 #include "global.h"
 #include "debug.h"
 
@@ -65,9 +69,21 @@ dtls_set_log_level(log_t level) {
 }
 
 /* this array has the same order as the type log_t */
+#ifdef __ANDROID__
+static android_LogPriority loglevels_android[] = {
+  ANDROID_LOG_FATAL,
+  ANDROID_LOG_ERROR,
+  ANDROID_LOG_ERROR,
+  ANDROID_LOG_WARN,
+  ANDROID_LOG_INFO,
+  ANDROID_LOG_INFO,
+  ANDROID_LOG_DEBUG
+};
+#else
 static char *loglevels[] = {
   "EMRG", "ALRT", "CRIT", "WARN", "NOTE", "INFO", "DEBG" 
 };
+#endif
 
 #ifdef HAVE_TIME_H
 
@@ -118,7 +134,11 @@ static size_t
 dsrv_print_addr(const session_t *addr, char *buf, size_t len) {
 #ifdef HAVE_ARPA_INET_H
   const void *addrptr = NULL;
+#ifdef __ANDROID__
+  unsigned short int port;
+#else
   in_port_t port;
+#endif
   char *p = buf;
 
   switch (addr->addr.sa.sa_family) {
@@ -203,7 +223,19 @@ dsrv_print_addr(const session_t *addr, char *buf, size_t len) {
 #endif
 }
 
-#ifndef WITH_CONTIKI
+#ifdef __ANDROID__
+void
+dsrv_log(log_t level, char *format, ...) {
+  va_list ap;
+
+  if (maxlog < level)
+    return;
+
+  va_start(ap, format);
+  __android_log_vprint(loglevels_android[level], PACKAGE_NAME, format, ap);
+  va_end(ap);
+}
+#elif !defined (WITH_CONTIKI)
 void 
 dsrv_log(log_t level, char *format, ...) {
   static char timebuf[32];
@@ -285,7 +317,41 @@ void dtls_dsrv_log_addr(log_t level, const char *name, const session_t *addr)
   dsrv_log(level, "%s: %s\n", name, addrbuf);
 }
 
-#ifndef WITH_CONTIKI
+#ifdef __ANDROID__
+void
+dtls_dsrv_hexdump_log(log_t level, const char *name, const unsigned char *buf, size_t length, int extend) {
+  char *hex_dump_text;
+  char *p;
+  int ret;
+  int size;
+
+  if (maxlog < level)
+    return;
+
+  size = length * 3 + strlen(name) + 22;
+  hex_dump_text = malloc(size);
+  if (!hex_dump_text)
+    return;
+
+  p = hex_dump_text;
+
+  ret = snprintf(p, size, "%s: (%zu bytes): ", name, length);
+  if (ret >= size)
+    goto print;
+  p += ret;
+  size -= ret;
+  while (length--) {
+    ret = snprintf(p, size, "%02X ", *buf++);
+    if (ret >= size)
+      goto print;
+    p += ret;
+    size -= ret;
+  }
+print:
+  __android_log_print(loglevels_android[level], PACKAGE_NAME, "%s\n", hex_dump_text);
+  free(hex_dump_text);
+}
+#elif !defined (WITH_CONTIKI)
 void 
 dtls_dsrv_hexdump_log(log_t level, const char *name, const unsigned char *buf, size_t length, int extend) {
   static char timebuf[32];

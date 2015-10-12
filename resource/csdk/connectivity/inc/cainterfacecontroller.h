@@ -28,6 +28,7 @@
 #define CA_INTERFACE_CONTROLLER_H_
 
 #include "caadapterinterface.h"
+#include "cainterface.h"
 
 #ifndef SINGLE_THREAD
 #include "cathreadpool.h" /* for thread pool */
@@ -128,6 +129,12 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAStartListeningServerAdapters();
+
+/**
+ * Stop listening servers to receive search requests from clients.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAStopListeningServerAdapters();
 
 /**
  * Start discovery servers to receive advertisements from server.

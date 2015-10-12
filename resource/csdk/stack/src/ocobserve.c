@@ -523,8 +523,14 @@ CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
                            uint8_t numOptions,
                            uint8_t observeFlag)
 {
-    if(!caHdrOpt || !ocHdrOpt)
+    if(!caHdrOpt)
     {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (numOptions > 0 && !ocHdrOpt)
+    {
+        OC_LOG (INFO, TAG, "options are NULL though number is non zero");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -568,10 +574,9 @@ GetObserveHeaderOption (uint32_t * observationOption,
 
     if(!options || !numOptions)
     {
-        return OC_STACK_INVALID_PARAM;
+        OC_LOG (INFO, TAG, "No options present");
+        return OC_STACK_OK;
     }
-
-    *observationOption = OC_OBSERVE_NO_OPTION;
 
     for(uint8_t i = 0; i < *numOptions; i++)
     {

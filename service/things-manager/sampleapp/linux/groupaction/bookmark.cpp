@@ -139,7 +139,7 @@ public:
         }
     }
 
-    void setRepresentation(OCRepresentation& rep)
+    void setRepresentation(OCRepresentation& /*rep*/)
     {
         // AttributeMap attributeMap = rep.getAttributeMap();
         // if(rep.getValue("level", m_pressure) == true)
@@ -169,7 +169,7 @@ public:
 // Create the instance of the resource class (in this case instance of class 'BookmarkResource').
 BookmarkResource myBookmarkResource;
 
-void* ObserveHandler(void *param)
+void* ObserveHandler(void* /*param*/)
 {
     while (startedThread)
     {

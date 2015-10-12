@@ -560,6 +560,11 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_setDeviceInfo
     {
         throwSimulatorException(env, e.code(), e.what());
     }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+        return;
+    }
 
     env->ReleaseStringUTFChars(deviceInfo, deviceName);
 }
@@ -593,6 +598,11 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_getDeviceInfo
     {
         throwSimulatorException(env, e.code(), e.what());
     }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+        return;
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -614,6 +624,11 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_setPlatformInfo
     catch (SimulatorException &e)
     {
         throwSimulatorException(env, e.code(), e.what());
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+        return;
     }
 }
 
@@ -645,6 +660,11 @@ Java_org_oic_simulator_SimulatorManagerNativeInterface_getPlatformInfo
     catch (SimulatorException &e)
     {
         throwSimulatorException(env, e.code(), e.what());
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+        return;
     }
 }
 

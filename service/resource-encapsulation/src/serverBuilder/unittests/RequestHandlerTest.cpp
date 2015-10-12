@@ -61,11 +61,10 @@ protected:
 
 TEST_F(RequestHandlerTest, ResponseHasSameValuesPassedToHandlerConstructor)
 {
-    RequestHandler handler{ OC_EH_ERROR, -1000 };
+    RequestHandler handler{ -1000 };
 
     auto response = handler.buildResponse(*server);
 
-    ASSERT_EQ(OC_EH_ERROR, response->getResponseResult());
     ASSERT_EQ(-1000, response->getErrorCode());
 }
 

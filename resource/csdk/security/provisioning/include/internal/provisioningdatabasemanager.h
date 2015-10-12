@@ -43,10 +43,11 @@ OCStackResult PDMInit(const char* dbPath);
  * provisioning database.
  *
  * @param[in] uuidOfDevice information about the target device's uuid.
+ * @param[out] result true in case device UUID already exist otherwise false.
  *
- * @return false when non-duplication and true when duplication or uuidOfDevicea is NULL .
+ * @return OC_STACK_OK in case of success and other value otherwise.
  */
-bool PDMIsDuplicateDevice(const OicUuid_t* uuidOfDevice);
+OCStackResult PDMIsDuplicateDevice(const OicUuid_t* uuidOfDevice, bool* result);
 
 /**
  * This method is used by provisioning manager to add owned device's Device ID.
@@ -151,6 +152,19 @@ void PDMDestoryOicUuidLinkList(OCUuidList_t* ptr);
  *
  */
 void PDMDestoryStaleLinkList(OCPairList_t* ptr);
+
+/**
+ * This method is used by provisioning manager to check does the link exists between
+ * two devices or not.
+ *
+ * @param[in] uuidOfDevice1 UUID of device1.
+ * @param[in] uuidOfDevice2 UUID of device2.
+ * @param[out] result true when link exists otherwise false.
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* uuidOfDevice2,
+                                bool *result );
 
 #ifdef __cplusplus
 }

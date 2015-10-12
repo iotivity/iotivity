@@ -28,10 +28,12 @@ import android.content.Context;
  * Refrigerator
  * <p/>
  * Refrigerator class has different objects (resources) which are instantiated when a
- * Refrigerator object is created. Operations are performed on each of the individual resources.
+ * Refrigerator object is created.
  */
 public class Refrigerator {
-    private Context mContext;
+    public static final String LEFT_SIDE = "left";
+    public static final String RIGHT_SIDE = "right";
+    public static final String RANDOM_SIDE = "random";
 
     private LightResource mLight;
     private DeviceResource mDevice;
@@ -46,12 +48,15 @@ public class Refrigerator {
      *                messages to be displayed on the user screen
      */
     Refrigerator(Context context) {
-        mContext = context;
         mLight = new LightResource(context);
         mDevice = new DeviceResource(context);
-        mLeftDoor = new DoorResource(StringConstants.LEFT, context);
-        mRightDoor = new DoorResource(StringConstants.RIGHT, context);
-        mRandomDoor = new DoorResource(StringConstants.RANDOM, context);
-    }
+        mLeftDoor = new DoorResource(LEFT_SIDE, context);
+        mRightDoor = new DoorResource(RIGHT_SIDE, context);
+        mRandomDoor = new DoorResource(RANDOM_SIDE, context);
 
+        mLight.bindTo(mDevice.getHandle());
+        mLeftDoor.bindTo(mDevice.getHandle());
+        mRightDoor.bindTo(mDevice.getHandle());
+        mRandomDoor.bindTo(mDevice.getHandle());
+    }
 }

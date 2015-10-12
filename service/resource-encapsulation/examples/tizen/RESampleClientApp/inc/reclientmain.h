@@ -18,8 +18,8 @@
  *
  ******************************************************************/
 
-#ifndef __RECLIENTMAIN_H__
-#define __RECLIENTMAIN_H__
+#ifndef RECLIENTMAIN_H__
+#define RECLIENTMAIN_H__
 
 #include <app.h>
 #include <Elementary.h>
@@ -35,7 +35,7 @@ using namespace OC;
 #ifdef  LOG_TAG
 #undef  LOG_TAG
 #endif
-#define LOG_TAG "reclientmain"
+#define LOG_TAG "reclient"
 
 #if !defined(PACKAGE)
 #define PACKAGE "org.tizen.resampleclient"
@@ -43,6 +43,8 @@ using namespace OC;
 
 #define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.resampleclient/res/ui_controls.edj"
 
-void group_cb(void *data, Evas_Object *obj, void *event_info);
+void discoverTempSensor(void *data, Evas_Object *obj, void *event_info);
 
-#endif // __RECLIENTMAIN_H__
+void discoverLight(void *data, Evas_Object *obj, void *event_info);
+
+#endif // RECLIENTMAIN_H__

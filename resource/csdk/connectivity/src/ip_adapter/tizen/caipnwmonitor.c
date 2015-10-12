@@ -368,6 +368,7 @@ void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap,
             OIC_LOG_V(ERROR, TAG, "get interface info failed");
             return;
         }
+        u_arraylist_destroy(iflist);
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");

@@ -378,5 +378,11 @@ Java_org_iotivity_ca_CaIpInterface_caIpStateDisabled(JNIEnv *env, jclass class)
     (void)class;
     OIC_LOG(DEBUG, TAG, "caIpStateDisabled");
 
-    CAIPGetInterfaceInformation(0);
+    u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
+    if (!iflist)
+    {
+        OIC_LOG_V(ERROR, TAG, "get interface info failed");
+        return;
+    }
+    u_arraylist_destroy(iflist);
 }

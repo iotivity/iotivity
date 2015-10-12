@@ -231,16 +231,6 @@ static void CAAcceptHandler(void *data)
 
     CAAdapterAcceptThreadContext_t *ctx = (CAAdapterAcceptThreadContext_t *) data;
 
-    if (NULL == ctx)
-    {
-        OIC_LOG(ERROR, TAG, "[EDR] AcceptThread: ctx is null");
-        if (isAttached)
-        {
-            (*g_jvm)->DetachCurrentThread(g_jvm);
-        }
-        return;
-    }
-
     // it should be initialized for restart accept thread
     ca_mutex_lock(g_mutexAcceptServer);
     g_stopAccept = false;
@@ -767,17 +757,17 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
                                                                "()Ljava/io/InputStream;");
         OIC_LOG_V(DEBUG, TAG, "[EDR][Native] btReadData:  get InputStream..%d, %s", id, address);
 
-        if (!jni_obj_socket)
+        jobject jni_obj_inputStream = (*env)->CallObjectMethod(env, jni_obj_socket,
+                                                               jni_mid_getInputStream);
+        if (!jni_obj_inputStream)
         {
             (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
             (*env)->DeleteLocalRef(env, jni_str_address);
 
-            OIC_LOG(ERROR, TAG, "[EDR][Native] jni_obj_socket is not available anymore..");
+            OIC_LOG(ERROR, TAG, "[EDR] btReadData: jni_obj_inputStream is null");
             return CA_STATUS_FAILED;
         }
 
-        jobject jni_obj_inputStream = (*env)->CallObjectMethod(env, jni_obj_socket,
-                                                               jni_mid_getInputStream);
         OIC_LOG(DEBUG, TAG, "[EDR][Native] btReadData:  ready inputStream..");
 
         jclass jni_cid_InputStream = (*env)->FindClass(env, "java/io/InputStream");
@@ -793,17 +783,6 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
         jmethodID jni_mid_read = (*env)->GetMethodID(env, jni_cid_InputStream, "read", "([BII)I");
 
         jbyteArray jbuf = (*env)->NewByteArray(env, MAX_PDU_BUFFER);
-
-        if (!jni_obj_socket)
-        {
-            (*env)->DeleteLocalRef(env, jni_cid_InputStream);
-            (*env)->DeleteLocalRef(env, jni_obj_inputStream);
-            (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
-            (*env)->DeleteLocalRef(env, jni_str_address);
-
-            OIC_LOG(ERROR, TAG, "[EDR][Native] jni_obj_socket is not available anymore...");
-            return CA_STATUS_FAILED;
-        }
 
         ca_mutex_lock(g_mutexInputStream);
         if (!g_inputStream)
@@ -985,9 +964,9 @@ jobject CAEDRNativeListen(JNIEnv *env)
     jmethodID jni_mid_getDefaultAdapter = (*env)->GetStaticMethodID(env, jni_cid_BTAdapter,
                                                                     "getDefaultAdapter",
                                                                     METHODID_OBJECTNONPARAM);
-    if (!jni_cid_BTAdapter)
+    if (!jni_mid_getDefaultAdapter)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btListen: jni_cid_BTAdapter is null");
+        OIC_LOG(ERROR, TAG, "[EDR][Native] btListen: jni_mid_getDefaultAdapter is null");
         return NULL;
     }
 
@@ -1167,4 +1146,3 @@ void CAEDRNatvieCloseServerTask(JNIEnv* env)
         OIC_LOG(DEBUG, TAG, "[EDR][Native] close accept obj");
     }
 }
-

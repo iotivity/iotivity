@@ -51,62 +51,62 @@ namespace OIC
         }
 
 
-        PlatformException::PlatformException(OCStackResult reason) :
+        RCSPlatformException::RCSPlatformException(OCStackResult reason) :
                 RCSException{ "Failed : " + OC::OCException::reason(reason) },
                 m_reason { reason }
         {
         }
 
-        OCStackResult PlatformException::getReasonCode() const
+        OCStackResult RCSPlatformException::getReasonCode() const
         {
             return m_reason;
         }
 
-        std::string PlatformException::getReason() const
+        std::string RCSPlatformException::getReason() const
         {
             return  OC::OCException::reason(m_reason);
         }
 
 
-        BadRequestException::BadRequestException(const std::string& what) :
+        RCSBadRequestException::RCSBadRequestException(const std::string& what) :
                 RCSException{ what }
         {
         }
 
-        BadRequestException::BadRequestException(std::string&& what) :
+        RCSBadRequestException::RCSBadRequestException(std::string&& what) :
                 RCSException{ std::move(what) }
         {
         }
 
 
-        InvalidParameterException::InvalidParameterException(const std::string& what) :
+        RCSInvalidParameterException::RCSInvalidParameterException(const std::string& what) :
                 RCSException{ what }
         {
         }
 
-        InvalidParameterException::InvalidParameterException(std::string&& what) :
+        RCSInvalidParameterException::RCSInvalidParameterException(std::string&& what) :
                 RCSException{ std::move(what) }
         {
         }
 
 
-        BadGetException::BadGetException(const std::string& what) :
+        RCSBadGetException::RCSBadGetException(const std::string& what) :
                 RCSException{ what }
         {
         }
 
-        BadGetException::BadGetException(std::string&& what) :
+        RCSBadGetException::RCSBadGetException(std::string&& what) :
                 RCSException{ std::move(what) }
         {
         }
 
 
-        InvalidKeyException::InvalidKeyException(const std::string& what) :
+        RCSInvalidKeyException::RCSInvalidKeyException(const std::string& what) :
                 RCSException{ what }
         {
         }
 
-        InvalidKeyException::InvalidKeyException(std::string&& what) :
+        RCSInvalidKeyException::RCSInvalidKeyException(std::string&& what) :
                 RCSException{ std::move(what) }
         {
         }

@@ -1,7 +1,0 @@
-<plugin id="oic.plugin.mqtt-fan" 
-  version="0.1"
-  name="mqtt-fan"
-  url="fan"
-  resourcetype="oic.fan">
-	<runtime library="fanserver_mqtt_plugin" funcs="mqtt_plugin_fanserver_funcs"/>
-</plugin>

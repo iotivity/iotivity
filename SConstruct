@@ -62,6 +62,9 @@ if target_os not in ['arduino','darwin','ios', 'android']:
 # Build 'service' sub-project
 SConscript(build_dir + 'service/SConscript')
 
+# Build "plugin interface" sub-project
+SConscript(build_dir + 'plugins/SConscript')
+
 # Append targets information to the help information, to see help info, execute command line:
 #     $ scon [options] -h
 env.PrintTargets()
@@ -69,4 +72,7 @@ env.PrintTargets()
 # Print bin upload command line (arduino only)
 if target_os == 'arduino':
 	env.UploadHelp()
+
+# to install the generated pc file into custome prefix location
+env.UserInstallTargetPCFile('iotivity.pc', 'iotivity.pc')
 

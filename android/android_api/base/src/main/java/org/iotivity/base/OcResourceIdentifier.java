@@ -22,6 +22,11 @@
 
 package org.iotivity.base;
 
+/**
+ * OcResourceIdentifier represents the identity information for a server. This
+ * object combined with the OcResource's URI property uniquely identify an
+ * OcResource on or across networks.
+ */
 public class OcResourceIdentifier {
     private OcResourceIdentifier(long nativeHandle) {
         this.mNativeHandle = nativeHandle;
@@ -41,6 +46,13 @@ public class OcResourceIdentifier {
         }
         OcResourceIdentifier other = (OcResourceIdentifier) obj;
         return equalsN(other);
+    }
+
+    @Override
+    public int hashCode() {
+        //return the same hash code for every object to force dictionary objects to use equals() in
+        //key comparisons, since IoTivity wants to treat OcResourceIdentifier as a blob
+        return 0;
     }
 
     private native boolean equalsN(OcResourceIdentifier other);

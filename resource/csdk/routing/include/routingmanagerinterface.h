@@ -54,7 +54,7 @@ OCStackResult RMDiscoverGatewayResource();
 OCStackResult RMSendObserveRequest(const OCDevAddr *devAddr, OCRepPayload *payload);
 
 /**
- * Send delete request to all the neighbour nodes.
+ * Send delete request to all the neighbor nodes.
  * @param[in]   devAddr   Device address of the Gateway device hosting
  *                        the gateway resource.
  * @param[in]   payload   Payload to be sent with the request.

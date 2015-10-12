@@ -220,6 +220,9 @@ void RemoveScheduledResource(ScheduledResourceInfo **head,
 
     if (del == NULL)
     {
+#ifndef WITH_ARDUINO
+    pthread_mutex_unlock(&lock);
+#endif
         return;
     }
 
@@ -536,7 +539,7 @@ OCStackResult ExtractKeyValueFromRequest(OCEntityHandlerRequest *ehRequest,
 {
     OCStackResult result = OC_STACK_OK;
 
-    char *actionSetStr;
+    char *actionSetStr = NULL;
 
     if( NULL == ehRequest->payload )
     {
@@ -600,16 +603,20 @@ exit:
         OCFREE(*value)
     }
 
+    OCFREE(actionSetStr);
+
     return result;
 }
 
 OCStackResult ExtractActionSetNameAndDelaytime(char *pChar, char **setName,
         long int *pa)
 {
-    char *token, *tokenPtr;
+    char *token = NULL, *tokenPtr = NULL;
     OCStackResult result = OC_STACK_OK;
 
     token = (char*) strtok_r(pChar, ACTION_DELIMITER, &tokenPtr);
+    VARIFY_POINTER_NULL(token, result, exit)
+
     *setName = (char *) OICMalloc(strlen(token) + 1);
     VARIFY_POINTER_NULL(*setName, result, exit)
     VARIFY_PARAM_NULL(token, result, exit)
@@ -661,7 +668,11 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
     iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
     VARIFY_PARAM_NULL(iterToken, result, exit)
 #ifndef WITH_ARDUINO
-    sscanf(iterToken, "%ld %u", &(*set)->timesteps, &(*set)->type);
+    if( 2 != sscanf(iterToken, "%ld %u", &(*set)->timesteps, &(*set)->type) )
+    {
+        // If the return value should be 2, the number of items in the argument. Otherwise, it fails.
+        goto exit;
+    }
 #endif
 
     OC_LOG_V(INFO, TAG, "ActionSet Name : %s", (*set)->actionsetName);
@@ -684,6 +695,8 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
 
             attrIterToken = (char *) strtok_r(attr, ATTR_ASSIGN,
                     &attrIterTokenPtr);
+            VARIFY_POINTER_NULL(attrIterToken, result, exit);
+
             key = (char *) OICMalloc(strlen(attrIterToken) + 1);
             VARIFY_POINTER_NULL(key, result, exit)
             VARIFY_PARAM_NULL(attrIterToken, result, exit)
@@ -1024,7 +1037,10 @@ OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
                 sizeof(ClientRequestInfo));
 
         if( info == NULL )
+        {
+            OCFREE(payload);
             return OC_STACK_NO_MEMORY;
+        }
 
         memset(info, 0, sizeof(ClientRequestInfo));
 
@@ -1306,21 +1322,29 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                             OC_LOG(INFO, TAG, "Building New Call Info.");
                             memset(schedule, 0,
                                     sizeof(ScheduledResourceInfo));
-
+#ifndef WITH_ARDUINO
+                            pthread_mutex_lock(&lock);
+#endif
                             schedule->resource = resource;
                             schedule->actionset = actionset;
                             schedule->ehRequest =
                                     (OCServerRequest*) ehRequest->requestHandle;
-
+#ifndef WITH_ARDUINO
+                            pthread_mutex_unlock(&lock);
+#endif
                             if (delay > 0)
                             {
                                 OC_LOG_V(INFO, TAG, "delay_time is %lf seconds.",
                                         actionset->timesteps);
-
+#ifndef WITH_ARDUINO
+                                pthread_mutex_lock(&lock);
+#endif
                                 schedule->time = registerTimer(delay,
                                         &schedule->timer_id,
                                         &DoScheduledGroupAction);
-
+#ifndef WITH_ARDUINO
+                                pthread_mutex_unlock(&lock);
+#endif
                                 AddScheduledResource(&scheduleResourceList,
                                         schedule);
                                 stackRet = OC_STACK_OK;
@@ -1412,4 +1436,3 @@ exit:
 
     return stackRet;
 }
-

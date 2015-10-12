@@ -400,7 +400,7 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesInteger
 (JNIEnv *env, jobject object, jstring jKey, jobject jAllowedValues)
 {
-    if (!jKey || jAllowedValues)
+    if (!jKey || !jAllowedValues)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid parameter!");
         return;
@@ -428,7 +428,7 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesDouble
 (JNIEnv *env, jobject object, jstring jKey, jobject jAllowedValues)
 {
-    if (!jKey || jAllowedValues)
+    if (!jKey || !jAllowedValues)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid parameter!");
         return;
@@ -456,7 +456,7 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesString
 (JNIEnv *env, jobject object, jstring jKey, jobject jAllowedValues)
 {
-    if (!jKey || jAllowedValues)
+    if (!jKey || !jAllowedValues)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Invalid parameter!");
         return;
@@ -604,7 +604,19 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_stopAutomation
         return;
     }
 
-    resource->stopUpdateAutomation(automationId);
+    try
+    {
+        resource->stopUpdateAutomation(automationId);
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+    }
+
     SIM_LOG(ILogger::INFO, "Automation has been forcibly stopped.")
 }
 

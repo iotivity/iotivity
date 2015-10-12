@@ -363,7 +363,7 @@ namespace OIC
                 -> result_type
         {
             // should not reach here.
-            throw BadGetException("");
+            throw RCSBadGetException("");
         }
 
         auto RCSResourceAttributes::KeyValuePair::ConstValueVisitor::operator()(
@@ -551,7 +551,7 @@ namespace OIC
             }
             catch (const std::out_of_range&)
             {
-                throw InvalidKeyException{ "No attribute named '" + key + "'" };
+                throw RCSInvalidKeyException{ "No attribute named '" + key + "'" };
             }
         }
 
@@ -563,7 +563,7 @@ namespace OIC
             }
             catch (const std::out_of_range&)
             {
-                throw InvalidKeyException{ "No attribute named '" + key + "'" };
+                throw RCSInvalidKeyException{ "No attribute named '" + key + "'" };
             }
         }
 

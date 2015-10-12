@@ -22,135 +22,142 @@
 
 package org.iotivity.base;
 
-import java.lang.Error;
-
+/**
+ * This class describes the platform properties. All non-Null properties will be
+ * included in a platform discovery request.
+ */
 public class OcPlatformInfo {
+    private String mPlatformId;
+    private String mManufacturerName;
+    private String mManufacturerUrl;
+    private String mModelNumber;
+    private String mDateOfManufacture;
+    private String mPlatformVersion;
+    private String mOperatingSystemVersion;
+    private String mHardwareVersion;
+    private String mFirmwareVersion;
+    private String mSupportUrl;
+    private String mSystemTime;
 
-    private String platformID;
-    private String manufacturerName;
-    private String manufacturerUrl;
-    private String modelNumber;
-    private String dateOfManufacture;
-    private String platformVersion;
-    private String operatingSystemVersion;
-    private String hardwareVersion;
-    private String firmwareVersion;
-    private String supportUrl;
-    private String systemTime;
-
-    // construct OcPlatformInfo with mandatory fields which cannot be null
-    // manufacturerName cannot be > 16 chars
-    // manufacturerUrl cannot be > 32 chars
-    protected OcPlatformInfo(String platformID, String manufacturerName,
-                             String manufacturerUrl) throws OcException {
-        ErrorCode result = validatePlatformInfo(platformID, manufacturerName, manufacturerUrl);
-        if (ErrorCode.OK == result) {
-            this.platformID = platformID;
-            this.manufacturerName = manufacturerName;
-            this.manufacturerUrl = manufacturerUrl;
-        } else {
-            throw new OcException(result, result.getDescription());
-        }
+    /**
+     * construct OcPlatformInfo with mandatory fields which cannot be null
+     * manufacturerName cannot be > 16 chars
+     * manufacturerUrl cannot be > 32 chars
+     */
+    public OcPlatformInfo(String platformId, String manufacturerName,
+                          String manufacturerUrl) {
+        this.mPlatformId = platformId;
+        this.mManufacturerName = manufacturerName;
+        this.mManufacturerUrl = manufacturerUrl;
     }
 
-    public ErrorCode validatePlatformInfo(String platformID, String manufacturerName,
-                                          String manufacturerUrl) {
-        // checks to see if the mandatory fields have non-null values or not
-        if (platformID == null || platformID.isEmpty()) return ErrorCode.INVALID_PLATFORM_INFO_PLATFORMID;
-        if (manufacturerName == null || manufacturerName.isEmpty() ||
-                manufacturerName.length() > OcStackConfig.MAX_MANUFACTURER_NAME_LENGTH)
-            return ErrorCode.INVALID_PLATFORM_INFO_MANUFACTURER_NAME;
-        if (manufacturerUrl == null || manufacturerUrl.isEmpty() ||
-                manufacturerUrl.length() > OcStackConfig.MAX_MANUFACTURER_URL_LENGTH)
-            return ErrorCode.INVALID_PLATFORM_INFO_PLATFORMID_MANUFACTURER_URL;
-        return ErrorCode.OK;
+    public OcPlatformInfo(String platformId,
+                          String manufacturerName,
+                          String manufacturerUrl,
+                          String modelNumber,
+                          String dateOfManufacture,
+                          String platformVersion,
+                          String operatingSystemVersion,
+                          String hardwareVersion,
+                          String firmwareVersion,
+                          String supportUrl,
+                          String systemTime) {
+        this(platformId, manufacturerName, manufacturerUrl);
+        this.mModelNumber = modelNumber;
+        this.mDateOfManufacture = dateOfManufacture;
+        this.mPlatformVersion = platformVersion;
+        this.mOperatingSystemVersion = operatingSystemVersion;
+        this.mHardwareVersion = hardwareVersion;
+        this.mFirmwareVersion = firmwareVersion;
+        this.mSupportUrl = supportUrl;
+        this.mSystemTime = systemTime;
     }
 
-    public String getPlatformID() {
-        return platformID;
+    public String getPlatformId() {
+        return mPlatformId;
     }
 
-    public void setPlatformID(String platformID) {
-        this.platformID = platformID;
+    public void setPlatformId(String platformId) {
+        this.mPlatformId = platformId;
     }
 
     public String getManufacturerName() {
-        return manufacturerName;
+        return mManufacturerName;
     }
 
     public void setManufacturerName(String manufacturerName) {
-        this.manufacturerName = manufacturerName;
+        this.mManufacturerName = manufacturerName;
     }
 
     public String getManufacturerUrl() {
-        return manufacturerUrl;
+        return mManufacturerUrl;
     }
 
     public void setManufacturerUrl(String manufacturerUrl) {
-        this.manufacturerUrl = manufacturerUrl;
+        this.mManufacturerUrl = manufacturerUrl;
     }
 
     public String getModelNumber() {
-        return modelNumber;
+        return mModelNumber;
     }
 
     public void setModelNumber(String modelNumber) {
-        this.modelNumber = modelNumber;
+        this.mModelNumber = modelNumber;
     }
 
     public String getDateOfManufacture() {
-        return dateOfManufacture;
+        return mDateOfManufacture;
     }
 
     public void setDateOfManufacture(String dateOfManufacture) {
-        this.dateOfManufacture = dateOfManufacture;
+        this.mDateOfManufacture = dateOfManufacture;
     }
 
     public String getPlatformVersion() {
-        return platformVersion;
+        return mPlatformVersion;
     }
 
     public void setPlatformVersion(String platformVersion) {
-        this.platformVersion = platformVersion;
+        this.mPlatformVersion = platformVersion;
     }
 
     public String getOperatingSystemVersion() {
-        return operatingSystemVersion;
+        return mOperatingSystemVersion;
     }
 
     public void setOperatingSystemVersion(String operatingSystemVersion) {
-        this.operatingSystemVersion = operatingSystemVersion;
+        this.mOperatingSystemVersion = operatingSystemVersion;
     }
 
     public String getHardwareVersion() {
-        return hardwareVersion;
+        return mHardwareVersion;
     }
 
     public void setHardwareVersion(String hardwareVersion) {
-        this.hardwareVersion = hardwareVersion;
+        this.mHardwareVersion = hardwareVersion;
     }
 
     public String getFirmwareVersion() {
-        return firmwareVersion;
+        return mFirmwareVersion;
     }
 
     public void setFirmwareVersion(String firmwareVersion) {
-        this.firmwareVersion = firmwareVersion;
+        this.mFirmwareVersion = firmwareVersion;
     }
 
     public String getSupportUrl() {
-        return supportUrl;
+        return mSupportUrl;
     }
 
     public void setSupportUrl(String supportUrl) {
-        this.supportUrl = supportUrl;
+        this.mSupportUrl = supportUrl;
     }
 
     public String getSystemTime() {
-        return systemTime;
+        return mSystemTime;
     }
 
     public void setSystemTime(String systemTime) {
-        this.systemTime = systemTime;
+        this.mSystemTime = systemTime;
     }
 }

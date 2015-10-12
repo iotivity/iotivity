@@ -26,6 +26,8 @@
 #include <dlog.h>
 #endif
 
+#include "rdpayload.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -232,6 +234,29 @@ static inline void OCPayloadLogSecurity(LogLevel level, OCSecurityPayload* paylo
     OC_LOG_V(level, PL_TAG, "\tSecurity Data: %s", payload->securityData);
 }
 
+static inline void OCRDPayloadLog(const LogLevel level, const OCRDPayload *payload)
+{
+    if (!payload)
+    {
+        return;
+    }
+
+    if (payload->rdDiscovery)
+    {
+        OC_LOG(level, PL_TAG, "RD Discovery");
+        OC_LOG_V(level, PL_TAG, "  Device Name : %s", payload->rdDiscovery->n.deviceName);
+        OC_LOG_V(level, PL_TAG, "  Device Identity : %s", payload->rdDiscovery->di.id);
+        OC_LOG_V(level, PL_TAG, "  Bias: %d", payload->rdDiscovery->sel);
+    }
+    if (payload->rdPublish)
+    {
+        OC_LOG(level, PL_TAG, "RD Publish");
+        OCResourceCollectionPayload *rdPublish = payload->rdPublish;
+        OCTagsLog(level, rdPublish->tags);
+        OCLinksLog(level, rdPublish->setLinks);
+    }
+}
+
 static inline void OCPayloadLog(LogLevel level, OCPayload* payload)
 {
     if(!payload)
@@ -258,6 +283,9 @@ static inline void OCPayloadLog(LogLevel level, OCPayload* payload)
             break;
         case PAYLOAD_TYPE_SECURITY:
             OCPayloadLogSecurity(level, (OCSecurityPayload*)payload);
+            break;
+        case PAYLOAD_TYPE_RD:
+            OCRDPayloadLog(level, (OCRDPayload*)payload);
             break;
         default:
             OC_LOG_V(level, PL_TAG, "Unknown Payload Type: %d", payload->type);

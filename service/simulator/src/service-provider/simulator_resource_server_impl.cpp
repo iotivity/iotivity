@@ -381,8 +381,10 @@ OCEntityHandlerResult SimulatorResourceServerImpl::entityHandler(
                     "] UNKNOWN type request received. \n**Payload details**" << payload)
 
             response->setResponseResult(OC_EH_ERROR);
-            OC::OCPlatform::sendResponse(response);
-            errCode = OC_EH_ERROR;
+            if (OC_STACK_OK == OC::OCPlatform::sendResponse(response))
+            {
+                errCode = OC_EH_ERROR;
+            }
         }
     }
 

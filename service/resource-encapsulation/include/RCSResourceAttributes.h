@@ -21,7 +21,7 @@
 /**
  * @file
  *
- * This file contains the "RCSResourceAttributes" class & its helper classes
+ * This file contains the declaration of classes and its members related to RCSResourceAttributes
  */
 #ifndef RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
 #define RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
@@ -51,17 +51,12 @@ namespace OIC
     {
 
         /**
-        * RCSResourceAttributes represents the attributes for a resource.
+        * This represents the attributes for a resource.
         *
         * It provides similar usage to c++ standard containers. (iterator,
         * operators and accessors)<br/>
         * An attribute value can be one of various types. <br/>
         *
-        * @note If client developer wants to get the RCSResourceAttributes for the resource of
-        *            interest following are the steps:
-        *            - first call the discover API of DiscoveryManager class.
-        *            - After getting the RemoteResourceObject, call getRemoteAttributes() API
-        *               of RemoteResourceObject class
         *
         * @see Value
         * @see Type
@@ -145,7 +140,7 @@ namespace OIC
                 IsSupportedTypeHelper< T >::type::value, std::true_type, std::false_type>::type { };
 
             /**
-             * Identifier for types of Value.
+             * Identifiers for types of Value.
              *
              * @see Type
              */
@@ -255,6 +250,36 @@ namespace OIC
              *
              * Type helps identify type information of Value.
              *
+             * Supported types are below
+             * @code
+                int
+                double
+                bool
+                std::string
+                RCSResourceAttributes
+
+                std::vector< int >
+                std::vector< double >
+                std::vector< bool >
+                std::vector< std::string >
+                std::vector< RCSResourceAttributes >
+
+                std::vector< std::vector< int > >
+                std::vector< std::vector< std::vector< int > > >
+
+                std::vector< std::vector< double > >
+                std::vector< std::vector< std::vector< double > > >
+
+                std::vector< std::vector< bool > >
+                std::vector< std::vector< std::vector< bool > > >
+
+                std::vector< std::vector< std::string > >
+                std::vector< std::vector< std::vector< std::string > > >
+
+                std::vector< std::vector< RCSResourceAttributes > >
+                std::vector< std::vector< std::vector< RCSResourceAttributes > > >
+             * @endcode
+             *
              * @see RCSResourceAttributes
              * @see Type
              * @see is_supported_type
@@ -278,7 +303,7 @@ namespace OIC
                 {
                 }
 
-                Value(const char* value);
+                Value(const char*);
 
                 Value& operator=(const Value&);
                 Value& operator=(Value&&);
@@ -351,7 +376,7 @@ namespace OIC
                     }
                     catch (const boost::bad_get&)
                     {
-                        throw BadGetException{ "Wrong type" };
+                        throw RCSBadGetException{ "Wrong type" };
                     }
                 }
 
@@ -362,7 +387,7 @@ namespace OIC
                     {
                         return get< T >() == rhs;
                     }
-                    catch (const BadGetException&)
+                    catch (const RCSBadGetException&)
                     {
                         return false;
                     }
@@ -498,7 +523,7 @@ namespace OIC
             bool erase(const std::string& key);
 
             /**
-             * Checks the container has an element with a Key equivalent to key.
+             * Checks this contains an element for the specified key.
              *
              * @param key Key to check.
              *
@@ -575,6 +600,7 @@ namespace OIC
             const Value& m_valueRef;
         };
 
+        //! @cond
         template< typename T >
         struct RCSResourceAttributes::IsSupportedTypeHelper
         {
@@ -594,6 +620,7 @@ namespace OIC
         };
 
         template < typename T > constexpr int RCSResourceAttributes::IndexOfType< T >::value;
+        //! @endcond
 
         /**
          * @relates RCSResourceAttributes::Type

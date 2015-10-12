@@ -43,6 +43,7 @@
 #include "cainterface.h"
 #include "base64.h"
 #include "cJSON.h"
+#include "global.h"
 
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
@@ -87,14 +88,10 @@ static const char* GetOxmString(OicSecOxm_t oxmType)
     {
         case OIC_JUST_WORKS:
             return OXM_JUST_WORKS;
-        case OIC_MODE_SWITCH:
-            return OXM_MODE_SWITCH;
         case OIC_RANDOM_DEVICE_PIN:
             return OXM_RANDOM_DEVICE_PIN;
-        case OIC_PRE_PROVISIONED_DEVICE_PIN:
-            return OXM_PRE_PROVISIONED_DEVICE_PIN;
-        case OIC_PRE_PROVISION_STRONG_CREDENTIAL:
-            return OXM_PRE_PROVISIONED_STRONG_CREDENTIAL;
+        case OIC_MANUFACTURER_CERTIFICATE:
+            return OXM_MANUFACTURER_CERTIFICATE;
         default:
             return NULL;
     }
@@ -513,11 +510,23 @@ static OCStackApplicationResult OwnershipInformationHandler(void *ctx, OCDoHandl
 
         CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
         endpoint->port = otmCtx->selectedDeviceInfo->securePort;
-        CAResult_t closeRes = CACloseDtlsSession(endpoint);
-        if(CA_STATUS_OK != closeRes)
+        CAResult_t caResult = CACloseDtlsSession(endpoint);
+        if(CA_STATUS_OK != caResult)
         {
             OC_LOG(ERROR, TAG, "Failed to close DTLS session");
-            SetResult(otmCtx, closeRes);
+            SetResult(otmCtx, caResult);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+
+        /**
+         * If we select NULL cipher,
+         * client will select appropriate cipher suite according to server's cipher-suite list.
+         */
+        caResult = CASelectCipherSuite(TLS_NULL_WITH_NULL_NULL);
+        if(CA_STATUS_OK != caResult)
+        {
+            OC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
+            SetResult(otmCtx, caResult);
             return OC_STACK_DELETE_TRANSACTION;
         }
 
@@ -920,9 +929,17 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
     for(size_t devIdx = 0; devIdx < otmCtx->ctxResultArraySize; devIdx++)
     {
         //Checking duplication of Device ID.
-        if(true == PDMIsDuplicateDevice(&pCurDev->doxm->deviceID))
+        bool isDuplicate = true;
+        OCStackResult res = PDMIsDuplicateDevice(&pCurDev->doxm->deviceID, &isDuplicate);
+        if (OC_STACK_OK != res)
         {
-            OC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Device ID is duplicate");
+            OICFree(otmCtx->ctxResultArray);
+            OICFree(otmCtx);
+            return res;
+        }
+        if (isDuplicate)
+        {
+            OC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Device ID is duplicated");
             OICFree(otmCtx->ctxResultArray);
             OICFree(otmCtx);
             return OC_STACK_INVALID_PARAM;

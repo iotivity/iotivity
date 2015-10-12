@@ -26,6 +26,20 @@
 #include "global.h"
 #include <netdb.h>
 
+#ifdef __WITH_X509__
+#include "pki.h"
+#include "crl.h"
+#include "cainterface.h"
+
+/* lenght of ASN.1 header in DER format
+ * for subject field in X.509 certificate */
+#define DER_SUBJECT_HEADER_LEN  (9)
+
+#undef VERIFY_SUCCESS
+#define VERIFY_SUCCESS(op, successCode) { if ((op) != (successCode)) \
+            {OIC_LOG_V(FATAL, NET_DTLS_TAG, "%s failed!!", #op); goto exit;} }
+#endif
+
 /**
  * @def NET_DTLS_TAG
  * @brief Logging tag for module name
@@ -48,7 +62,20 @@ static ca_mutex g_dtlsContextMutex = NULL;
  * @var g_getCredentialsCallback
  * @brief callback to get DTLS credentials
  */
-static CAGetDTLSCredentialsHandler g_getCredentialsCallback = NULL;
+static CAGetDTLSPskCredentialsHandler g_getCredentialsCallback = NULL;
+
+#ifdef __WITH_X509__
+/**
+ * @var g_getX509CredentialsCallback
+ * @brief callback to get DTLS certificate credentials
+ */
+static CAGetDTLSX509CredentialsHandler g_getX509CredentialsCallback = NULL;
+/**
+ * @var g_getCrlCallback
+ * @brief callback to get CRL for DTLS
+ */
+static CAGetDTLSCrlHandler g_getCrlCallback = NULL;
+#endif //__WITH_X509__
 
 static CASecureEndpoint_t *GetPeerInfo(const CAEndpoint_t *peer)
 {
@@ -513,69 +540,26 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
     }
 
     VERIFY_NON_NULL_RET(g_getCredentialsCallback, NET_DTLS_TAG, "GetCredential callback", -1);
-    VERIFY_NON_NULL_RET(result, NET_DTLS_TAG, "result", -1);
-
-    CADtlsPskCredsBlob_t *credInfo = NULL;
 
     // Retrieve the credentials blob from security module
-    g_getCredentialsCallback(&credInfo);
+    ret =  g_getCredentialsCallback(type, desc, descLen, result, resultLen);
 
-    VERIFY_NON_NULL_RET(credInfo, NET_DTLS_TAG, "credInfo is NULL", -1);
-    if(NULL == credInfo->creds)
+    if (ret > 0)
     {
-        OIC_LOG(DEBUG, NET_DTLS_TAG, "credentials are NULL");
-        memset(credInfo, 0, sizeof(CADtlsPskCredsBlob_t));
-        OICFree(credInfo);
-        return -1;
-    }
+        // TODO SRM needs identity of the remote end-point with every data packet to
+        // perform access control management. tinyDTLS 'frees' the handshake parameters
+        // data structure when handshake completes. Therefore, currently this is a
+        // workaround to cache remote end-point identity when tinyDTLS asks for PSK.
+        stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
+        char peerAddr[MAX_ADDR_STR_SIZE_CA] = { 0 };
+        uint16_t port = 0;
+        CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, &port);
 
-    if ((type == DTLS_PSK_HINT) || (type == DTLS_PSK_IDENTITY))
-    {
-        if (DTLS_PSK_ID_LEN <= resultLen)
+        if(CA_STATUS_OK != CAAddIdToPeerInfoList(peerAddr, port, desc, descLen) )
         {
-            memcpy(result, credInfo->identity, DTLS_PSK_ID_LEN);
-            ret = DTLS_PSK_ID_LEN;
+            OIC_LOG(ERROR, NET_DTLS_TAG, "Fail to add peer id to gDtlsPeerInfoList");
         }
     }
-
-    if ((type == DTLS_PSK_KEY) && (desc) && (descLen == DTLS_PSK_PSK_LEN))
-    {
-        // Check if we have the credentials for the device with which we
-        // are trying to perform a handshake
-        for (uint32_t index = 0; index < credInfo->num; index++)
-        {
-            if (memcmp(desc, credInfo->creds[index].id, DTLS_PSK_ID_LEN) == 0)
-            {
-                if(NULL != ctx->peers && DTLS_SERVER == ctx->peers->role )
-                {
-                    // TODO SRM needs identity of the remote end-point with every data packet to
-                    // perform access control management. tinyDTLS 'frees' the handshake parameters
-                    // data structure when handshake completes. Therefore, currently this is a
-                    // workaround to cache remote end-point identity when tinyDTLS asks for PSK.
-                    stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
-                    char peerAddr[MAX_ADDR_STR_SIZE_CA] = { 0 };
-                    uint16_t port = 0;
-                    CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, &port);
-
-                    CAResult_t result = CAAddIdToPeerInfoList(peerAddr, port, desc, descLen);
-                    if(CA_STATUS_OK != result )
-                    {
-                        OIC_LOG(ERROR, NET_DTLS_TAG, "Fail to add peer id to gDtlsPeerInfoList");
-                    }
-                }
-                memcpy(result, credInfo->creds[index].psk, DTLS_PSK_PSK_LEN);
-                ret = DTLS_PSK_PSK_LEN;
-            }
-        }
-    }
-
-    // Erase sensitive data before freeing.
-    memset(credInfo->creds, 0, sizeof(OCDtlsPskCreds) * (credInfo->num));
-    OICFree(credInfo->creds);
-
-    memset(credInfo, 0, sizeof(CADtlsPskCredsBlob_t));
-    OICFree(credInfo);
-    credInfo = NULL;
 
     return ret;
 }
@@ -605,13 +589,29 @@ void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
 }
 
-void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback)
+void CADTLSSetCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback)
 {
     // TODO Does this method needs protection of DtlsContextMutex ?
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
     g_getCredentialsCallback = credCallback;
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
 }
+
+#ifdef __WITH_X509__
+void CADTLSSetX509CredentialsCallback(CAGetDTLSX509CredentialsHandler credCallback)
+{
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
+    g_getX509CredentialsCallback = credCallback;
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
+}
+void CADTLSSetCrlCallback(CAGetDTLSCrlHandler crlCallback)
+{
+    // TODO Does this method needs protection of DtlsContextMutex ?
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
+    g_getCrlCallback = crlCallback;
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
+}
+#endif // __WITH_X509__
 
 CAResult_t CADtlsSelectCipherSuite(const dtls_cipher_t cipher)
 {
@@ -772,6 +772,190 @@ CAResult_t CADtlsGenerateOwnerPSK(const CAEndpoint_t *endpoint,
     return CA_STATUS_OK;
 }
 
+#ifdef __WITH_X509__
+static CADtlsX509Creds_t g_X509Cred = {{0}, 0, 0, {0}, {0}, {0}};
+
+int CAInitX509()
+{
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "IN CAInitX509");
+    VERIFY_NON_NULL_RET(g_getX509CredentialsCallback, NET_DTLS_TAG, "GetX509Credential callback", -1);
+    int isX509Init = (0 == g_getX509CredentialsCallback(&g_X509Cred));
+
+    if (isX509Init)
+    {
+        uint8_t crlData[CRL_MAX_LEN] = {0};
+        ByteArray crlArray = {crlData, CRL_MAX_LEN};
+        g_getCrlCallback(crlArray);
+        if (crlArray.len > 0)
+        {
+            uint8_t keyData[PUBLIC_KEY_SIZE] = {0};
+            CertificateList crl = CRL_INITIALIZER;
+            ByteArray rootPubKey = {keyData, PUBLIC_KEY_SIZE};
+            memcpy(keyData, g_X509Cred.rootPublicKeyX, PUBLIC_KEY_SIZE / 2);
+            memcpy(keyData + PUBLIC_KEY_SIZE / 2, g_X509Cred.rootPublicKeyY, PUBLIC_KEY_SIZE / 2);
+            DecodeCertificateList(crlArray, &crl, rootPubKey);
+        }
+    }
+
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT CAInitX509");
+    if (isX509Init)
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+
+static int CAIsX509Active(struct dtls_context_t *ctx)
+{
+    (void)ctx;
+    return 0;
+}
+
+static int CAGetDeviceKey(struct dtls_context_t *ctx,
+                       const session_t *session,
+                       const dtls_ecc_key_t **result)
+{
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "CAGetDeviceKey");
+    static dtls_ecc_key_t ecdsa_key = {DTLS_ECDH_CURVE_SECP256R1, NULL, NULL, NULL};
+
+    int ret = 1;
+    VERIFY_SUCCESS(CAInitX509(), 0);
+
+    ecdsa_key.priv_key = g_X509Cred.devicePrivateKey;
+    *result = &ecdsa_key;
+
+    ret = 0;
+exit:
+    return ret;
+}
+
+static int
+CAGetDeviceCertificate(struct dtls_context_t *ctx,
+                    const session_t *session,
+                    const unsigned char **cert,
+                    size_t *cert_size)
+{
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "CAGetDeviceCertificate");
+    int ret = 1;
+
+    VERIFY_SUCCESS(CAInitX509(), 0);
+
+    *cert = g_X509Cred.certificateChain;
+    *cert_size = g_X509Cred.certificateChainLen;
+#ifdef X509_DEBUG
+    ByteArray ownCert = {g_X509Cred.certificateChain, g_X509Cred.certificateChainLen};
+    PRINT_BYTE_ARRAY("OWN CERT: \n", ownCert);
+#endif
+
+    ret = 0;
+exit:
+    return ret;
+}
+/**
+ * @fn  CAGetRootKey
+ * @brief  Gets x and y components of Root Certificate Autority public key
+ *
+ * @return  0 on success otherwise a positive error value.
+ *
+ */
+static int CAGetRootKey(const unsigned char **ca_pub_x, const unsigned char **ca_pub_y)
+{
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "CAGetRootKey");
+    int ret = 1;
+
+    VERIFY_SUCCESS(CAInitX509(), 0);
+
+    *ca_pub_x = g_X509Cred.rootPublicKeyX;
+    *ca_pub_y = g_X509Cred.rootPublicKeyY;
+
+    ret = 0;
+exit:
+    return ret;
+}
+
+
+static int CAVerifyCertificate(struct dtls_context_t *ctx, const session_t *session,
+                               const unsigned char *cert, size_t certLen,
+                               const unsigned char *x, size_t xLen,
+                               const unsigned char *y, size_t yLen)
+{
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "Verify Certificate");
+
+    ByteArray crtChainDer[MAX_CHAIN_LEN];
+    CertificateX509 crtChain[MAX_CHAIN_LEN];
+
+    uint8_t chainLength;
+
+    int ret;
+    const unsigned char *ca_pub_x;
+    const unsigned char *ca_pub_y;
+    ByteArray certDerCode = BYTE_ARRAY_INITIALIZER;
+    ByteArray caPubKey = BYTE_ARRAY_INITIALIZER;
+    unsigned char ca_pub_key[PUBLIC_KEY_SIZE];
+
+    if ( !ctx ||  !session ||  !cert || !x || !y)
+    {
+        return -PKI_NULL_PASSED;
+    }
+
+    CAGetRootKey (&ca_pub_x, &ca_pub_y);
+
+    certDerCode.data = (uint8_t *)cert;
+    certDerCode.len = certLen;
+
+#ifdef X509_DEBUG
+    PRINT_BYTE_ARRAY("CERT :\n", certDerCode);
+#endif
+
+
+    caPubKey.len = PUBLIC_KEY_SIZE;
+    caPubKey.data = ca_pub_key;
+
+    memcpy(caPubKey.data, ca_pub_x, PUBLIC_KEY_SIZE / 2);
+    memcpy(caPubKey.data + PUBLIC_KEY_SIZE / 2, ca_pub_y, PUBLIC_KEY_SIZE / 2);
+
+    ret = (int)  LoadCertificateChain (certDerCode, crtChainDer, &chainLength);
+    VERIFY_SUCCESS(ret, PKI_SUCCESS);
+    ret = (int)  ParseCertificateChain (crtChainDer, crtChain, chainLength );
+    VERIFY_SUCCESS(ret, PKI_SUCCESS);
+    ret = (int)  CheckCertificateChain (crtChain, chainLength, caPubKey);
+    VERIFY_SUCCESS(ret, PKI_SUCCESS);
+
+    INC_BYTE_ARRAY(crtChain[0].pubKey, 2);
+
+    memcpy(x, crtChain[0].pubKey.data, xLen);
+    memcpy(y, crtChain[0].pubKey.data + PUBLIC_KEY_SIZE / 2, yLen);
+
+    stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
+    char peerAddr[MAX_ADDR_STR_SIZE_CA] = { 0 };
+    uint16_t port = 0;
+    CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, &port);
+
+    CAResult_t result = CAAddIdToPeerInfoList(peerAddr, port,
+            crtChain[0].subject.data + DER_SUBJECT_HEADER_LEN + 2, crtChain[0].subject.data[DER_SUBJECT_HEADER_LEN + 1]);
+    if (CA_STATUS_OK != result )
+    {
+        OIC_LOG(ERROR, NET_DTLS_TAG, "Fail to add peer id to gDtlsPeerInfoList");
+    }
+
+exit:
+    if (ret != 0)
+    {
+        OIC_LOG(DEBUG, NET_DTLS_TAG, "Certificate verification FAILED\n");
+    }
+    else
+    {
+        OIC_LOG(DEBUG, NET_DTLS_TAG, "Certificate verification SUCCESS\n");
+    }
+    return -ret;
+}
+
+#endif
+
 CAResult_t CAAdapterNetDtlsInit()
 {
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
@@ -836,8 +1020,14 @@ CAResult_t CAAdapterNetDtlsInit()
     g_caDtlsContext->callbacks.write = CASendSecureData;
     g_caDtlsContext->callbacks.read  = CAReadDecryptedPayload;
     g_caDtlsContext->callbacks.event = CAHandleSecureEvent;
-    g_caDtlsContext->callbacks.get_psk_info = CAGetPskCredentials;
 
+    g_caDtlsContext->callbacks.get_psk_info = CAGetPskCredentials;
+#ifdef __WITH_X509__
+    g_caDtlsContext->callbacks.get_x509_key = CAGetDeviceKey;
+    g_caDtlsContext->callbacks.verify_x509_cert = CAVerifyCertificate;
+    g_caDtlsContext->callbacks.get_x509_cert = CAGetDeviceCertificate;
+    g_caDtlsContext->callbacks.is_x509_active = CAIsX509Active;
+#endif //__WITH_X509__*
     dtls_set_handler(g_caDtlsContext->dtlsContext, &(g_caDtlsContext->callbacks));
     ca_mutex_unlock(g_dtlsContextMutex);
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");

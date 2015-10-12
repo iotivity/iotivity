@@ -147,7 +147,13 @@ namespace OC
             static OCStackResult getDevInfoFromNetwork(unsigned short timeout,
                     DeviceList_t &ownedDevList,
                     DeviceList_t &unownedDevList);
-
+            /**
+             * Server API to register callback to display stack generated PIN.
+             *
+             * @param[in] GeneratePinCallback Method to display generated PIN.
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult setDisplayPinCB(GeneratePinCallback);
     };
 
     /**
