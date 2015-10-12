@@ -116,8 +116,8 @@ void printAttribute(const RCSResourceAttributes& attrs)
 }
 
 //hander for get request (if developer choose second option for resource Creation)
-RCSGetResponse requestHandlerForGet(const RCSRequest& request,
-        RCSResourceAttributes& attrs)
+RCSGetResponse requestHandlerForGet(const RCSRequest& /*request*/,
+        RCSResourceAttributes& /*attrs*/)
 {
     std::cout << "Received a Get request from Client" << std::endl;
     RCSResourceObject::LockGuard lock(*server);
@@ -130,7 +130,7 @@ RCSGetResponse requestHandlerForGet(const RCSRequest& request,
 }
 
 //hander for set request (if developer choose second option for resource Creation)
-RCSSetResponse requestHandlerForSet(const RCSRequest& request,
+RCSSetResponse requestHandlerForSet(const RCSRequest& /*request*/,
         RCSResourceAttributes& attrs)
 {
     std::cout << "Received a Set request from Client" << std::endl;

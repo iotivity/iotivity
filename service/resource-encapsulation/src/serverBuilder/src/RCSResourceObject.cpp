@@ -494,7 +494,7 @@ namespace OIC
             auto replaced = requestHandler->applyAcceptanceMethod(response.getAcceptanceMethod(),
                     *this, requstAttrs);
 
-            OC_LOG_V(WARNING, LOG_TAG, "replaced num %d", replaced.size());
+            OC_LOG_V(WARNING, LOG_TAG, "replaced num %zu", replaced.size());
             for (const auto& attrKeyValPair : replaced)
             {
                 std::shared_ptr< AttributeUpdatedListener > foundListener;
