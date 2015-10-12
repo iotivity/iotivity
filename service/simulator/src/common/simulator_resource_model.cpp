@@ -127,6 +127,8 @@ class range_validation : public boost::static_visitor<bool>
         {
             std::vector<SimulatorResourceModel::Attribute::ValueVariant> values
                 = m_attrItem.getAllowedValues();
+            if(0 == values.size())
+                return true;
             for (SimulatorResourceModel::Attribute::ValueVariant & val : values)
             {
                 SimulatorResourceModel::Attribute::ValueVariant vVal = value;
@@ -145,6 +147,8 @@ class range_validation : public boost::static_visitor<bool>
         {
             std::vector<SimulatorResourceModel::Attribute::ValueVariant> values
                 = m_attrItem.getAllowedValues();
+            if(0 == values.size())
+                return true;
             for (SimulatorResourceModel::Attribute::ValueVariant & vVal : values)
             {
                 std::string val = boost::get<std::string>(vVal);
@@ -183,7 +187,7 @@ std::vector<std::string> SimulatorResourceModel::Attribute::AllowedValues::toStr
 }
 
 std::vector<SimulatorResourceModel::Attribute::ValueVariant>
-SimulatorResourceModel::Attribute::AllowedValues::getValues()
+SimulatorResourceModel::Attribute::AllowedValues::getValues() const
 {
     return m_values;
 }
@@ -259,7 +263,7 @@ bool SimulatorResourceModel::Attribute::compare(SimulatorResourceModel::Attribut
 }
 
 std::vector<SimulatorResourceModel::Attribute::ValueVariant>
-SimulatorResourceModel::Attribute::getAllowedValues()
+SimulatorResourceModel::Attribute::getAllowedValues() const
 {
     return m_allowedValues.getValues();
 }
@@ -281,10 +285,10 @@ const
     return m_attributes;
 }
 
-void SimulatorResourceModel::addAttribute(const SimulatorResourceModel::Attribute &attribute)
+void SimulatorResourceModel::addAttribute(const SimulatorResourceModel::Attribute &attribute, bool overwrite)
 {
     if (!attribute.getName().empty() &&
-        m_attributes.end() == m_attributes.find(attribute.getName()))
+        (m_attributes.end() == m_attributes.find(attribute.getName()) || overwrite))
     {
         m_attributes[attribute.getName()] = attribute;
     }
@@ -377,6 +381,8 @@ SimulatorResourceModelSP SimulatorResourceModel::create(const OC::OCRepresentati
             attribute.setValue(attributeItem.getValue<double>());
         if (attributeItem.type() == OC::AttributeType::String)
             attribute.setValue(attributeItem.getValue<std::string>());
+        if (attributeItem.type() == OC::AttributeType::Boolean)
+            attribute.setValue(attributeItem.getValue<bool>());
 
         attribute.setName(attributeItem.attrname());
         resModel->m_attributes[attributeItem.attrname()] = attribute;

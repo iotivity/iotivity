@@ -66,7 +66,7 @@ void SimulatorResourceServerImpl::setObservable(bool state)
 }
 
 int SimulatorResourceServerImpl::startUpdateAutomation(AutomationType type,
-        updateCompleteCallback callback)
+        int updateInterval, updateCompleteCallback callback)
 {
     if (!callback)
     {
@@ -80,11 +80,11 @@ int SimulatorResourceServerImpl::startUpdateAutomation(AutomationType type,
         throw SimulatorException(SIMULATOR_NO_RESOURCE, "Invalid resource!");
     }
 
-    return m_updateAutomationMgr.startResourceAutomation(this, type, -1, callback);
+    return m_updateAutomationMgr.startResourceAutomation(this, type, updateInterval, callback);
 }
 
 int SimulatorResourceServerImpl::startUpdateAutomation(const std::string &attrName,
-        AutomationType type,
+        AutomationType type, int updateInterval,
         updateCompleteCallback callback)
 {
     if (!callback)
@@ -99,7 +99,7 @@ int SimulatorResourceServerImpl::startUpdateAutomation(const std::string &attrNa
         throw SimulatorException(SIMULATOR_NO_RESOURCE, "Invalid resource!");
     }
 
-    return m_updateAutomationMgr.startAttributeAutomation(this, attrName, type, -1, callback);
+    return m_updateAutomationMgr.startAttributeAutomation(this, attrName, type, updateInterval, callback);
 }
 
 std::vector<int> SimulatorResourceServerImpl::getResourceAutomationIds()

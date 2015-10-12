@@ -346,9 +346,9 @@ public class SimulatorResourceServer {
      *             This exception will be thrown for other errors.
      */
     public int startResourceAutomation(AutomationType typeOfAutomation,
-            IAutomation listener) throws InvalidArgsException,
+            int updateInterval, IAutomation listener) throws InvalidArgsException,
             SimulatorException {
-        return startResourceAutomation(typeOfAutomation.getValue(), listener);
+        return startResourceAutomation(typeOfAutomation.getValue(), updateInterval, listener);
     }
 
     /**
@@ -373,10 +373,11 @@ public class SimulatorResourceServer {
      *             This exception will be thrown for other errors.
      */
     public int startAttributeAutomation(String attrName,
-            AutomationType typeOfAutomation, IAutomation listener)
+            AutomationType typeOfAutomation, int updateInterval,
+            IAutomation listener)
             throws InvalidArgsException, SimulatorException {
         return startAttributeAutomation(attrName, typeOfAutomation.getValue(),
-                listener);
+                updateInterval, listener);
     }
 
     /**
@@ -463,11 +464,11 @@ public class SimulatorResourceServer {
             SimulatorException;
 
     private native int startResourceAutomation(int typeOfAutomation,
-            IAutomation listener) throws InvalidArgsException,
+            int updateInterval, IAutomation listener) throws InvalidArgsException,
             SimulatorException;
 
     private native int startAttributeAutomation(String attrName,
-        int typeOfAutomation, IAutomation listener)
+        int typeOfAutomation, int updateInterval, IAutomation listener)
         throws InvalidArgsException, SimulatorException;
 
     @Override

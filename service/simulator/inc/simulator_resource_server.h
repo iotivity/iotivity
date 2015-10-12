@@ -199,7 +199,7 @@ class SimulatorResourceServer
          * @return ID representing update automation session.
          * NOTE: API throws @InvalidArgsException, @SimulatorException exceptions.
          */
-        virtual int startUpdateAutomation(AutomationType type,
+        virtual int startUpdateAutomation(AutomationType type, int updateInterval,
                                           updateCompleteCallback callback) = 0;
 
         /**
@@ -216,7 +216,7 @@ class SimulatorResourceServer
          * NOTE: API throws @InvalidArgsException, @SimulatorException exceptions.
          */
         virtual int startUpdateAutomation(const std::string &attrName, AutomationType type,
-                                          updateCompleteCallback callback) = 0;
+                                          int updateInterval, updateCompleteCallback callback) = 0;
 
         /**
          * API to get the Ids of all ongoing resource update automation .

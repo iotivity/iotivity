@@ -28,6 +28,7 @@ typedef struct
     jclass classObject;
     jclass classInteger;
     jclass classDouble;
+    jclass classBoolean;
     jclass classString;
     jclass classHashMap;
     jclass classVector;
@@ -52,6 +53,7 @@ typedef struct
 
     jmethodID classIntegerCtor;
     jmethodID classDoubleCtor;
+    jmethodID classBooleanCtor;
     jmethodID classHashMapCtor;
     jmethodID classHashMapPut;
     jmethodID classVectorCtor;

@@ -56,7 +56,7 @@ public class ImageManager {
                 .createFromURL(bundle.getEntry("icons/button_pressed.PNG")));
 
         // Resource icons based on the resource type
-        r.put(Constants.OIC_R_LIGHT, ImageDescriptor.createFromURL(bundle
+        r.put(Constants.SAMPLE_LIGHT, ImageDescriptor.createFromURL(bundle
                 .getEntry("/icons/light_16x16.png")));
 
         // Log View related icons

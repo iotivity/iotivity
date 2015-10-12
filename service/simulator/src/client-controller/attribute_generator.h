@@ -28,23 +28,36 @@
 class AttributeGenerator
 {
     public:
-        AttributeGenerator(SimulatorResourceModel::Attribute &attribute);
+        AttributeGenerator(const SimulatorResourceModel::Attribute &attribute);
         bool hasNext();
         bool next(SimulatorResourceModel::Attribute &attribute);
-        bool previous(SimulatorResourceModel::Attribute &attribute);
+        SimulatorResourceModel::Attribute current();
         void reset();
 
     private:
         std::string m_name;
-        SimulatorResourceModel::Attribute::ValueType m_type;
         int m_min;
         int m_max;
         int m_rangeIndex;
-        int m_nextAllowedValueIndex;
-        int m_prevAllowedValueIndex;
+        int m_allowedValueIndex;
         bool m_hasRange;
         bool m_hasAllowedValue;
         std::vector<SimulatorResourceModel::Attribute::ValueVariant> m_allowedValues;
+};
+
+class AttributeCombinationGen
+{
+    public:
+        AttributeCombinationGen(const std::vector<SimulatorResourceModel::Attribute> &attributes);
+        bool next(SimulatorResourceModel &resModel);
+
+    private:
+        void addAttributeToModel(int index);
+
+        std::mutex m_lock;
+        std::vector<AttributeGenerator> m_attrGenList;
+        int m_index;
+        SimulatorResourceModel m_resModel;
 };
 
 #endif

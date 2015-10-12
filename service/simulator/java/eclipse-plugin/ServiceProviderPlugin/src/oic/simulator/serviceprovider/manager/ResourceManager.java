@@ -44,7 +44,6 @@ import oic.simulator.serviceprovider.utils.Utility;
 import org.eclipse.swt.graphics.Image;
 import org.oic.simulator.IAutomation;
 import org.oic.simulator.ILogger.Level;
-import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.ResourceAttribute;
 import org.oic.simulator.ResourceAttribute.Range;
 import org.oic.simulator.ResourceAttribute.Type;
@@ -483,7 +482,7 @@ public class ResourceManager {
     }
 
     public boolean isDisplayName(String displayName) {
-        boolean exist;
+        boolean exist = false;
         synchronized (displayNameMap) {
             exist = displayNameMap.containsKey(displayName);
         }
@@ -491,7 +490,7 @@ public class ResourceManager {
     }
 
     public String getCompleteUriFromDisplayName(String displayName) {
-        String completeURI;
+        String completeURI = null;
         synchronized (displayNameMap) {
             completeURI = displayNameMap.get(displayName);
         }
@@ -567,7 +566,7 @@ public class ResourceManager {
             @Override
             public void run() {
                 Map<String, SimulatorResource> resourceTypeMap;
-                SimulatorResourceServer[] simulatorResourceServers;
+                SimulatorResourceServer[] simulatorResourceServers = null;
                 try {
                     simulatorResourceServers = SimulatorManager.createResource(
                             configFilePath, noOfInstances,
@@ -1123,12 +1122,12 @@ public class ResourceManager {
     }
 
     public List<String> getURIList() {
-        List<String> list;
+        List<String> list = null;
         synchronized (orderedResourceUriMap) {
             Set<String> typeSet = orderedResourceUriMap.keySet();
             List<String> typeList = Utility.convertSetToList(typeSet);
             if (null == typeList || typeList.size() < 1) {
-                return null;
+                return list;
             }
             list = new ArrayList<String>();
 
@@ -1350,7 +1349,7 @@ public class ResourceManager {
                 String attrName = attribute.getAttributeName();
                 try {
                     autoId = resourceServerN.startAttributeAutomation(attrName,
-                            autoType, automationListener);
+                            autoType, autoUpdateInterval, automationListener);
                 } catch (SimulatorException e) {
                     Activator
                             .getDefault()
@@ -1471,7 +1470,7 @@ public class ResourceManager {
                 int autoId = -1;
                 try {
                     autoId = resourceServer.startResourceAutomation(
-                            AutomationType.NORMAL, automationListener);
+                            AutomationType.NORMAL, 500, automationListener);
                 } catch (SimulatorException e) {
                     Activator
                             .getDefault()

@@ -20,13 +20,12 @@
 
 #include "attribute_generator.h"
 
-AttributeGenerator::AttributeGenerator(SimulatorResourceModel::Attribute &attribute)
+AttributeGenerator::AttributeGenerator(const SimulatorResourceModel::Attribute &attribute)
     :   m_name(attribute.getName()),
         m_min(INT_MIN),
         m_max(INT_MAX),
         m_rangeIndex(-1),
-        m_nextAllowedValueIndex(0),
-        m_prevAllowedValueIndex(0),
+        m_allowedValueIndex(0),
         m_hasRange(false),
         m_hasAllowedValue(false)
 {
@@ -47,7 +46,6 @@ AttributeGenerator::AttributeGenerator(SimulatorResourceModel::Attribute &attrib
         {
             m_hasAllowedValue = true;
         }
-        m_prevAllowedValueIndex = m_allowedValues.size();
     }
 }
 
@@ -58,7 +56,7 @@ bool AttributeGenerator::hasNext()
         return true;
     }
 
-    if (m_hasAllowedValue && m_nextAllowedValueIndex < m_allowedValues.size())
+    if (m_hasAllowedValue && m_allowedValueIndex < m_allowedValues.size())
     {
         return true;
     }
@@ -77,28 +75,113 @@ bool AttributeGenerator::next(SimulatorResourceModel::Attribute &attribute)
     }
     else if (m_hasAllowedValue)
     {
-        attribute.setValue(m_allowedValues[m_nextAllowedValueIndex++]);
+        attribute.setValue(m_allowedValues[m_allowedValueIndex++]);
         return true;
     }
 
     return false;
 }
 
-bool AttributeGenerator::previous(SimulatorResourceModel::Attribute &attribute)
+SimulatorResourceModel::Attribute AttributeGenerator::current()
 {
-    attribute.setName(m_name);
+    SimulatorResourceModel::Attribute attribute;
 
+    attribute.setName(m_name);
     if (m_hasRange)
     {
-        attribute.setValue(m_rangeIndex - 1);
-        return true;
+        attribute.setValue(m_rangeIndex);
     }
     else if (m_hasAllowedValue)
     {
-        attribute.setValue(m_allowedValues[m_prevAllowedValueIndex - 1]);
+        attribute.setValue(m_allowedValues[m_allowedValueIndex]);
+    }
+
+    return attribute;
+}
+
+void AttributeGenerator::reset()
+{
+    if (m_hasRange)
+    {
+        m_rangeIndex = m_min;
+    }
+    else if (m_hasAllowedValue)
+    {
+        m_allowedValueIndex = 0;
+    }
+}
+
+AttributeCombinationGen::AttributeCombinationGen(
+        const std::vector<SimulatorResourceModel::Attribute> &attributes)
+{
+    for (auto &attr : attributes)
+    {
+        AttributeGenerator attrGen(attr);
+        m_attrGenList.push_back(attr);
+    }
+
+    m_index = -1;
+}
+
+bool AttributeCombinationGen::next(SimulatorResourceModel &resModel)
+{
+    if (!m_attrGenList.size())
+    {
+        return false;
+    }
+
+    std::lock_guard<std::mutex> lock(m_lock);
+
+    // This block will execute for only first time
+    if (-1 == m_index)
+    {
+        for (int index = 0; index < m_attrGenList.size(); index++)
+        {
+            // Add the attribute on resource model
+            addAttributeToModel(index);
+        }
+
+        m_index = m_attrGenList.size() - 1;
+        resModel = m_resModel;
+        return true;
+    }
+
+    // Get the next attribute from statck top element
+    if (m_attrGenList[m_index].hasNext())
+    {
+        addAttributeToModel(m_index);
+        resModel = m_resModel;
+        return true;
+    }
+    else
+    {
+        for (int index = m_index; index >= 0; index--)
+        {
+            if (!m_attrGenList[index].hasNext())
+            {
+                if (!index)
+                    return false;
+
+                m_attrGenList[index].reset();
+                addAttributeToModel(index);
+            }
+            else
+            {
+                addAttributeToModel(index);
+                break;
+            }
+        }
+
+        resModel = m_resModel;
         return true;
     }
 
     return false;
 }
 
+void AttributeCombinationGen::addAttributeToModel(int index)
+{
+    SimulatorResourceModel::Attribute attribute;
+    m_attrGenList[index].next(attribute);
+    m_resModel.addAttribute(attribute, true);
+}
