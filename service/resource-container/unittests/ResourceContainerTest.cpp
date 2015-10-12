@@ -700,12 +700,6 @@ TEST(ConfigurationTest, BundleResourceConfigurationNotParsedWithInvalidBundleId)
     delete config;
 }
 
-namespace
-{
-    void discoverdCB(RCSRemoteResourceObject::Ptr);
-    void onUpdate(RemoteResourceUnit::UPDATE_MSG, RCSRemoteResourceObject::Ptr);
-}
-
 class DiscoverResourceUnitTest: public TestWithMock
 {
     private:
@@ -767,7 +761,6 @@ TEST_F(DiscoverResourceUnitTest, onUpdateCalled)
 
 namespace
 {
-    void onStateCB(ResourceState) { }
     void onCacheCB(const RCSResourceAttributes &) { }
 }
 
