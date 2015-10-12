@@ -615,7 +615,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
         CALogPDUInfo(pdu, data->remoteEndpoint);
 
         OIC_LOG(DEBUG, TAG, "pdu to send :");
-        OIC_LOG_BUFFER(DEBUG, TAG,  pdu->hdr, pdu->length);
+        OIC_LOG_BUFFER(DEBUG, TAG,  (uint8_t*)pdu->hdr, pdu->length);
 
         res = CASendMulticastData(data->remoteEndpoint, pdu->hdr, pdu->length);
         if (CA_STATUS_OK != res)
@@ -1254,6 +1254,8 @@ void CALogPDUInfo(coap_pdu_t *pdu, const CAEndpoint_t *endpoint)
         OIC_LOG_BUFFER(DEBUG, TAG,  pdu->hdr, pdu->length);
     }
     else
+#else
+    (void) endpoint;
 #endif
     {
         OIC_LOG_V(DEBUG, TAG, "PDU Maker - type : %d", pdu->hdr->coap_hdr_udp_t.type);
@@ -1283,7 +1285,7 @@ static void CALogPayloadInfo(CAInfo_t *info)
 
         if (info->payload)
         {
-            OIC_LOG_V(DEBUG, TAG, "payload: %p(%u)", info->payload,
+            OIC_LOG_V(DEBUG, TAG, "payload: %p(%zu)", info->payload,
                       info->payloadSize);
         }
 
