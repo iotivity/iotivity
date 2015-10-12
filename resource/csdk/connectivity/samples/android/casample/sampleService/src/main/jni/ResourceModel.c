@@ -597,7 +597,13 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
 
     CAResponseInfo_t responseInfo = { 0 };
 
-    if (msgType != CA_MSG_RESET)
+    if (CA_MSG_RESET == msgType ||
+        (CA_MSG_ACKNOWLEDGE == msgType && CA_EMPTY == responseValue))
+    {
+        printf("RESET or ACK/EMPTY. there will be not payload/option\n");
+        responseInfo.result = CA_EMPTY;
+    }
+    else
     {
         responseData.token = g_clientToken;
         responseData.tokenLength = g_clientTokenLength;
@@ -618,11 +624,6 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
             sprintf((char *) responseData.payload, NORMAL_INFO_DATA, g_resourceUri);
             responseData.payloadSize = length;
         }
-    }
-    //msgType is RESET
-    else
-    {
-        responseInfo.result = CA_EMPTY;
     }
 
     responseInfo.info = responseData;
