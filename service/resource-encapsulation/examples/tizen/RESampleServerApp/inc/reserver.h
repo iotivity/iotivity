@@ -36,11 +36,13 @@ constexpr int DEFALUT_VALUE = 0;
 constexpr int PRESENCE_ON = 1;
 constexpr int PRESENCE_OFF = 2;
 
-std::string resourceUri = "/a/TempSensor";
-std::string resourceType = "oic.r.temperaturesensor";
-std::string resourceInterface = "oic.if.";
-std::string attributeKey = "Temperature";
-int isPresenceOn = PRESENCE_ON;
+const std::string TEMPERATURE_URI = "/a/TempSensor";
+const std::string LIGHT_URI = "/a/light";
+const std::string TEMPERATURE_RT = "oic.r.temperaturesensor";
+const std::string LIGHT_RT = "oic.r.light";
+const std::string TEMPERATURE_AK = "Temperature";
+const std::string LIGHT_AK = "Brightness";
+const std::string RESOURCE_INTERFACE = "oic.if.";
 
 enum class Control
 {
@@ -54,6 +56,6 @@ void start_server(void *data, Evas_Object *obj, void *event_info);
 
 void start_server_cb(void *data, Evas_Object *obj, void *event_info);
 
-void *showGroupAPIs(void *data);
+void *showAPIs(void *data);
 
 #endif // RESERVER_H__

@@ -23,12 +23,10 @@
 #include<iostream>
 
 #include "reclientmain.h"
-
 #include "RCSDiscoveryManager.h"
 #include "RCSRemoteResourceObject.h"
 #include "RCSResourceAttributes.h"
 #include "RCSAddress.h"
-
 #include "OCPlatform.h"
 
 # define checkResource nullptr == resource?false:true
@@ -37,16 +35,13 @@ using namespace std;
 using namespace OC;
 using namespace OIC::Service;
 
-constexpr int CORRECT_INPUT = 1;
-constexpr int INCORRECT_INPUT = 2;
-constexpr int QUIT_INPUT = 3;
-
 std::shared_ptr<RCSRemoteResourceObject>  resource;
 std::vector<RCSRemoteResourceObject::Ptr> resourceList;
 std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
 
-const std::string defaultKey = "Temperature";
-const std::string resourceType = "oic.r.temperaturesensor";
+std::string g_resourceUri;
+std::string g_resourceType;
+std::string g_attributeKey;
 
 static Evas_Object *log_entry = NULL;
 static Evas_Object *list = NULL;
@@ -93,7 +88,7 @@ void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource
 
     resourceList.push_back(foundResource);
 
-    if ("/a/TempSensor" == resourceURI)
+    if (g_resourceUri == resourceURI)
         resource = foundResource;
 }
 
@@ -260,13 +255,12 @@ static void getAttributeFromRemoteServer(void *data, Evas_Object *obj, void *eve
     }
 }
 
-static void setAttributeToRemoteServer(int setTemperature)
+static void setAttributeToRemoteServer(int setValue)
 {
-    string key = "Temperature";
     string logMessage = "";
 
     RCSResourceAttributes setAttribute;
-    setAttribute[key] = setTemperature;
+    setAttribute[g_attributeKey] = setValue;
 
     if (checkResource)
     {
@@ -421,8 +415,8 @@ static void getCachedAttribute(void *data, Evas_Object *obj, void *event_info)
     {
         try
         {
-            logMessage = logMessage + "KEY:" + defaultKey.c_str() + "<br>";
-            int attrValue = resource->getCachedAttribute(defaultKey).get< int >();
+            logMessage = logMessage + "KEY:" + g_attributeKey.c_str() + "<br>";
+            int attrValue = resource->getCachedAttribute(g_attributeKey).get< int >();
             logMessage = logMessage + "VALUE:" + to_string(attrValue) + "<br>";
         }
         catch (const RCSBadRequestException &e)
@@ -478,10 +472,12 @@ void discoverResource()
 
     while (!discoveryTask)
     {
+        resourceList.clear();
+        resource = nullptr;
         try
         {
             discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
-                                RCSAddress::multicast(), resourceType, &onResourceDiscovered);
+                                RCSAddress::multicast(), g_resourceType, &onResourceDiscovered);
         }
         catch (const RCSPlatformException &e)
         {
@@ -504,6 +500,7 @@ void cancelDiscoverResource()
     else
     {
         discoveryTask->cancel();
+        discoveryTask = nullptr;
 
         logMessage += "Discovery canceled <br>";
 
@@ -538,31 +535,31 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
 {
     temperature_popup_fields *popup_fields = (temperature_popup_fields *)data;
     Evas_Object *entry = popup_fields->entry;
-    const char *temperatureString = elm_entry_entry_get(entry);
+    const char *attributeString = elm_entry_entry_get(entry);
     // Remove white spaces(if any) at the beginning
     int beginning = 0;
-    while (temperatureString[beginning] == ' ')
+    while (attributeString[beginning] == ' ')
     {
         (beginning)++;
     }
 
-    int len = strlen(temperatureString);
-    if (NULL == temperatureString || 1 > len)
+    int len = strlen(attributeString);
+    if (NULL == attributeString || 1 > len)
     {
-        dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL Temperature Value");
-        string logMessage = "Temperature Cannot be NULL<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL attribute Value");
+        string logMessage = g_attributeKey + " Cannot be NULL<br>";
         logMessage += "----------------------<br>";
         dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
     }
     else
     {
-        int temperate = atoi(temperatureString);
-        string tempString(temperatureString);
-        setAttributeToRemoteServer(temperate);
-        dlog_print(DLOG_INFO, LOG_TAG, "#### Temperature to set : %d", temperate);
+        int attributeValue = atoi(attributeString);
+        string attrString(attributeString);
+        setAttributeToRemoteServer(attributeValue);
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Attribute to set : %d", attributeValue);
 
-        string logMessage = "Temperature to set : " + tempString + "<br>";
+        string logMessage = g_attributeKey + " to set : " + attrString + "<br>";
         logMessage += "----------------------<br>";
         dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
@@ -573,7 +570,7 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
 }
 
 static void
-list_scheduled_actionset_cb(void *data, Evas_Object *obj, void *event_info)
+list_get_attribute_value_cb(void *data, Evas_Object *obj, void *event_info)
 {
     Evas_Object *popup, *btn;
     Evas_Object *nf = naviframe;
@@ -585,7 +582,14 @@ list_scheduled_actionset_cb(void *data, Evas_Object *obj, void *event_info)
     elm_popup_align_set(popup, ELM_NOTIFY_ALIGN_FILL, 1.0);
     eext_object_event_callback_add(popup, EEXT_CALLBACK_BACK, eext_popup_back_cb, NULL);
     evas_object_size_hint_weight_set(popup, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    elm_object_part_text_set(popup, "title,text", "Enter the temperature");
+    if (LIGHT_RT == g_resourceType)
+    {
+        elm_object_part_text_set(popup, "title,text", "Enter the brightness");
+    }
+    else
+    {
+        elm_object_part_text_set(popup, "title,text", "Enter the temperature");
+    }
 
     layout = elm_layout_add(popup);
     elm_layout_file_set(layout, ELM_DEMO_EDJ, "popup_datetime_text");
@@ -598,7 +602,14 @@ list_scheduled_actionset_cb(void *data, Evas_Object *obj, void *event_info)
     evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
     evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
     eext_entry_selection_back_event_allow_set(entry, EINA_TRUE);
-    elm_object_part_text_set(entry, "elm.guide", "in degree celsius");
+    if (LIGHT_RT == g_resourceType)
+    {
+        elm_object_part_text_set(entry, "elm.guide", "RANGE (0 - 50)");
+    }
+    else
+    {
+        elm_object_part_text_set(entry, "elm.guide", "in degree celsius");
+    }
     elm_entry_input_panel_layout_set(entry, ELM_INPUT_PANEL_LAYOUT_NUMBER);
     elm_object_part_content_set(layout, "elm.swallow.content", entry);
 
@@ -676,7 +687,7 @@ void *showClientAPIs(void *data)
                              getAttributeFromRemoteServer, NULL);
 
         elm_list_item_append(list, "4. Set Attribute", NULL, NULL,
-                             list_scheduled_actionset_cb, NULL);
+                             list_get_attribute_value_cb, NULL);
 
         elm_list_item_append(list, "5. Start Caching - No update", NULL, NULL,
                              startCachingWithoutCallback, NULL);
@@ -716,8 +727,7 @@ naviframe_pop_cb(void *data, Elm_Object_Item *it)
     return EINA_TRUE;
 }
 
-// Method to be called when the Group APIs UI Button is selected
-void client_cb(void *data, Evas_Object *obj, void *event_info)
+void client_cb(void *data)
 {
     Evas_Object *layout;
     Evas_Object *scroller;
@@ -770,4 +780,22 @@ void client_cb(void *data, Evas_Object *obj, void *event_info)
 
     nf_it = elm_naviframe_item_push(nf, "Resource Encapsulation", NULL, NULL, scroller, NULL);
     elm_naviframe_item_pop_cb_set(nf_it, naviframe_pop_cb, NULL);
+}
+
+void discoverTempSensor(void *data, Evas_Object *obj, void *event_info)
+{
+    g_resourceUri = TEMPERATURE_URI;
+    g_resourceType = TEMPERATURE_RT;
+    g_attributeKey = TEMPERATURE_AK;
+
+    client_cb(data);
+}
+
+void discoverLight(void *data, Evas_Object *obj, void *event_info)
+{
+    g_resourceUri = LIGHT_URI;
+    g_resourceType = LIGHT_RT;
+    g_attributeKey = LIGHT_AK;
+
+    client_cb(data);
 }
