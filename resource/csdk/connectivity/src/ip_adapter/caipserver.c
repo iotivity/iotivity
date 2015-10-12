@@ -511,7 +511,7 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
 
     if (!IPv4MulticastAddress.s_addr)
     {
-        (void)inet_aton(IPv4_MULTICAST, &IPv4MulticastAddress);
+        (void)inet_pton(AF_INET, IPv4_MULTICAST, &IPv4MulticastAddress);
         (void)inet_pton(AF_INET6, IPv6_MULTICAST_INT, &IPv6MulticastAddressInt);
         (void)inet_pton(AF_INET6, IPv6_MULTICAST_LNK, &IPv6MulticastAddressLnk);
         (void)inet_pton(AF_INET6, IPv6_MULTICAST_RLM, &IPv6MulticastAddressRlm);
@@ -1076,9 +1076,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
             eps[j].flags = CA_IPV4;
             eps[j].port = caglobals.ip.u4.port;
 
-            unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
-            snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d",
-                     addr[0], addr[1], addr[2], addr[3]);
+            inet_ntop(AF_INET, &(ifitem->ipv4addr), eps[j].addr, MAX_ADDR_STR_SIZE_CA);
         }
 
 #ifdef __WITH_DTLS__
@@ -1096,10 +1094,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         {
             eps[j].flags = CA_IPV4 | CA_SECURE;
             eps[j].port = caglobals.ip.u4s.port;
-
-            unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
-            snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d",
-                     addr[0], addr[1], addr[2], addr[3]);
+            inet_ntop(AF_INET, &(ifitem->ipv4addr), eps[j].addr, MAX_ADDR_STR_SIZE_CA);
         }
 #endif
         j++;
