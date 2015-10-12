@@ -46,7 +46,7 @@ OCStackResult InitProvProcess() {
         OIC_LOG(DEBUG, ES_PROV_ADAP_TAG, "InitProvisioningHandler returned Success");
     } else {
         result = OC_STACK_ERROR;
-        OIC_LOG_V(ERROR, ES_PROV_ADAP_TAG, "InitProvisioningHandler returned error = %s",
+        OIC_LOG_V(ERROR, ES_PROV_ADAP_TAG, "InitProvisioningHandler returned error = %d",
                   result);
     }
 
@@ -93,5 +93,3 @@ OCStackResult StopProvisioning(OCConnectivityType /*connectivityType*/) {
 
     return result;
 }
-
-
