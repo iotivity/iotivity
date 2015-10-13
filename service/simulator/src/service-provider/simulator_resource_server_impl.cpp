@@ -80,7 +80,8 @@ int SimulatorResourceServerImpl::startUpdateAutomation(AutomationType type,
         throw SimulatorException(SIMULATOR_NO_RESOURCE, "Invalid resource!");
     }
 
-    return m_updateAutomationMgr.startResourceAutomation(this, type, -1, callback);
+    // This fix is temporarily to give 500 ms default delay in automation until the new UI change is merged.
+    return m_updateAutomationMgr.startResourceAutomation(this, type, 500, callback);
 }
 
 int SimulatorResourceServerImpl::startUpdateAutomation(const std::string &attrName,
@@ -99,7 +100,8 @@ int SimulatorResourceServerImpl::startUpdateAutomation(const std::string &attrNa
         throw SimulatorException(SIMULATOR_NO_RESOURCE, "Invalid resource!");
     }
 
-    return m_updateAutomationMgr.startAttributeAutomation(this, attrName, type, -1, callback);
+    // This fix is temporarily to give 500 ms default delay in automation until the new UI change is merged.
+    return m_updateAutomationMgr.startAttributeAutomation(this, attrName, type, 500, callback);
 }
 
 std::vector<int> SimulatorResourceServerImpl::getResourceAutomationIds()

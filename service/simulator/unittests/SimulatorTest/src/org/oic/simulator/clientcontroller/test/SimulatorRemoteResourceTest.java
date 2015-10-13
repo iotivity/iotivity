@@ -352,6 +352,30 @@ public class SimulatorRemoteResourceTest extends TestCase
         assertTrue(result && listenerObject != null && listenerObject.getRepresentation() != null && listenerObject.getuId() != null);
     }
 
+    /**
+     * model as null
+     */
+
+    public void testPut_N01() {
+        boolean result = true;
+        ListenerObject listenerObject = new ListenerObject();
+        PutListener putListener = new PutListener(lockObject, listenerObject);
+
+        try {
+            simulatorRemoteResource.put(null, null, putListener);
+            result = false;
+        } catch (Exception e1) {
+            result = true;
+        }
+
+        try {
+            lockObject.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+        }
+
+        assertTrue(result && listenerObject.getRepresentation() == null && listenerObject.getuId() == null);
+    }
+
     public void testPost_P01()
     {
         boolean result = true;
@@ -362,7 +386,6 @@ public class SimulatorRemoteResourceTest extends TestCase
         try
         {
             model.addAttributeInt("intensity", 8);
-            //model.addAttributeString("power", "off");
 
             listenerObject = new ListenerObject();
             PostListener postListener = new PostListener(lockObject, listenerObject);
@@ -385,6 +408,33 @@ public class SimulatorRemoteResourceTest extends TestCase
         assertTrue(result && listenerObject != null && listenerObject.getRepresentation() != null && listenerObject.getuId() != null);
     }
 
+    /**
+     * Model is set to null
+     */
+
+    public void testPost_N01() {
+        boolean result = true;
+
+        lockObject = new CountDownLatch(1);
+
+        ListenerObject listenerObject = new ListenerObject();
+        PostListener postListener = new PostListener(lockObject, listenerObject);
+
+        try {
+            simulatorRemoteResource.post(null, null, postListener);
+            result = false;
+        } catch (Exception e1) {
+            result = true;
+        }
+
+        try {
+            lockObject.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+        }
+
+        assertTrue(result && listenerObject.getRepresentation() == null && listenerObject.getuId() == null);
+    }
+
     public void testGet_P01()
     {
         boolean result = true;
@@ -398,8 +448,8 @@ public class SimulatorRemoteResourceTest extends TestCase
 
             String resInterface = simulatorRemoteResource.getResourceInterfaces().get(0);
 
-            if(resInterface == null)
-                simulatorRemoteResource.get(resInterface, null, onGetListener);
+            if(resInterface != null)
+                simulatorRemoteResource.get(resInterface,null, onGetListener);
             else
                 result = false;
         }
@@ -462,10 +512,12 @@ public class SimulatorRemoteResourceTest extends TestCase
         {
             String resInterface = simulatorRemoteResource.getResourceInterfaces().get(0);
 
-            if(resInterface == null)
-                simulatorRemoteResource.get(resInterface, null, null);
-            else
-                result = false;
+            if(resInterface != null)
+            {
+                simulatorRemoteResource.get( resInterface,null, null);
+            }
+
+            result = false;
         }
         catch(Exception e)
         {
@@ -796,7 +848,6 @@ public class SimulatorRemoteResourceTest extends TestCase
 
         try
         {
-
             lockObject.await(100, TimeUnit.MILLISECONDS);
         }
         catch (InterruptedException e)
