@@ -16,16 +16,10 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.util.Iterator;
-import java.util.Map;
-
-import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
 
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.ModifyEvent;
@@ -49,13 +43,9 @@ import org.eclipse.ui.PlatformUI;
  */
 public class CreateResourcePage extends WizardPage {
 
-    private Button stdResourceRbtn;
-    private CCombo resourceTypeCmb;
-    private Button cusResourceRbtn;
     private Text   locationTxt;
     private Button btnBrowse;
     private Text   noOfInstancesText;
-    private Label  resourceTypeLbl;
     private Label  noOfInstancesLbl;
     private Label  locationLbl;
 
@@ -87,30 +77,7 @@ public class CreateResourcePage extends WizardPage {
         gd.horizontalAlignment = SWT.FILL;
         gd.grabExcessHorizontalSpace = true;
         configGroup.setLayoutData(gd);
-        configGroup.setText("Configuration File Type");
-
-        stdResourceRbtn = new Button(configGroup, SWT.RADIO);
-        stdResourceRbtn.setText("Standard Configuration");
-
-        Composite stdConfigComp = new Composite(configGroup, SWT.NONE);
-        stdConfigComp.setLayout(new GridLayout(2, false));
-        gd = new GridData();
-        gd.horizontalAlignment = SWT.FILL;
-        gd.grabExcessHorizontalSpace = true;
-        stdConfigComp.setLayoutData(gd);
-
-        resourceTypeLbl = new Label(stdConfigComp, SWT.NONE);
-        resourceTypeLbl.setText("ResourceType:");
-        resourceTypeLbl.setEnabled(false);
-
-        resourceTypeCmb = new CCombo(stdConfigComp, SWT.READ_ONLY | SWT.BORDER);
-        gd = new GridData();
-        gd.widthHint = 150;
-        resourceTypeCmb.setLayoutData(gd);
-        resourceTypeCmb.setEnabled(false);
-
-        cusResourceRbtn = new Button(configGroup, SWT.RADIO);
-        cusResourceRbtn.setText("Custom Configuration");
+        configGroup.setText("Load RAML File");
 
         Composite cusConfigComp = new Composite(configGroup, SWT.NONE);
         cusConfigComp.setLayout(new GridLayout(3, false));
@@ -121,7 +88,6 @@ public class CreateResourcePage extends WizardPage {
 
         locationLbl = new Label(cusConfigComp, SWT.NONE);
         locationLbl.setText("Location:");
-        locationLbl.setEnabled(false);
 
         locationTxt = new Text(cusConfigComp, SWT.BORDER);
         gd = new GridData();
@@ -129,7 +95,6 @@ public class CreateResourcePage extends WizardPage {
         gd.horizontalAlignment = SWT.FILL;
         gd.grabExcessHorizontalSpace = true;
         locationTxt.setLayoutData(gd);
-        locationTxt.setEnabled(false);
 
         btnBrowse = new Button(cusConfigComp, SWT.NONE);
         btnBrowse.setText("Browse");
@@ -137,7 +102,7 @@ public class CreateResourcePage extends WizardPage {
         gd.widthHint = 80;
         gd.horizontalAlignment = SWT.FILL;
         btnBrowse.setLayoutData(gd);
-        btnBrowse.setEnabled(false);
+        btnBrowse.setFocus();
 
         Composite instanceComp = new Composite(compContent, SWT.NONE);
         instanceComp.setLayout(new GridLayout(2, false));
@@ -158,74 +123,12 @@ public class CreateResourcePage extends WizardPage {
         // Adding the default value. It can be changed by the user.
         noOfInstancesText.setText("1");
 
-        populateDataInUI();
-
         addUIListeners();
 
         setControl(compContent);
     }
 
-    private void populateDataInUI() {
-        // Populate Resource-type in Combo
-        populateResourceTypeCombo();
-    }
-
-    private void populateResourceTypeCombo() {
-        Map<String, String> configMap;
-        configMap = Activator.getDefault().getResourceManager()
-                .getResourceConfigurationList();
-        if (null != configMap) {
-            Iterator<String> itr = configMap.keySet().iterator();
-            String fileName;
-            String shortName;
-            while (itr.hasNext()) {
-                fileName = itr.next();
-                shortName = Utility.fileNameToDisplay(fileName);
-                if (null == shortName) {
-                    continue;
-                }
-                resourceTypeCmb.add(shortName);
-            }
-        }
-
-        // By default, selecting the first item in the resourceType combo
-        selectInitialItem();
-    }
-
     private void addUIListeners() {
-        stdResourceRbtn.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-
-                // Set the configFilePath to the first item in the combo
-                selectInitialItem();
-
-                setPageComplete(isSelectionDone());
-
-                // Change the visibility of widgets
-                resourceTypeLbl.setEnabled(true);
-                resourceTypeCmb.setEnabled(true);
-                locationLbl.setEnabled(false);
-                locationTxt.setEnabled(false);
-                btnBrowse.setEnabled(false);
-
-            }
-        });
-
-        cusResourceRbtn.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                setPageComplete(isSelectionDone());
-
-                // Change the visibility of widgets
-                locationLbl.setEnabled(true);
-                locationTxt.setEnabled(true);
-                btnBrowse.setEnabled(true);
-                resourceTypeLbl.setEnabled(false);
-                resourceTypeCmb.setEnabled(false);
-
-            }
-        });
 
         btnBrowse.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -235,29 +138,8 @@ public class CreateResourcePage extends WizardPage {
                 fileDialog
                         .setFilterExtensions(Constants.BROWSE_RAML_FILTER_EXTENSIONS);
                 String configFileAbsolutePath = fileDialog.open();
-                locationTxt.setText(configFileAbsolutePath);
-            }
-        });
-
-        resourceTypeCmb.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                int index = resourceTypeCmb.getSelectionIndex();
-                if (index >= 0) {
-                    String selectedItem = resourceTypeCmb.getItem(index);
-                    if (null != selectedItem) {
-                        // Convert the selectedItem to the fully qualified file
-                        // name.
-                        selectedItem = Utility.displayToFileName(selectedItem);
-
-                        // Get the RAML configuration file path of the selected
-                        // resource
-                        configFilePath = Activator.getDefault()
-                                .getResourceManager()
-                                .getConfigFilePath(selectedItem);
-
-                        setPageComplete(isSelectionDone());
-                    }
+                if (null != configFileAbsolutePath) {
+                    locationTxt.setText(configFileAbsolutePath);
                 }
             }
         });
@@ -293,25 +175,12 @@ public class CreateResourcePage extends WizardPage {
         });
     }
 
-    private void selectInitialItem() {
-        if (resourceTypeCmb.getItemCount() > 0) {
-            resourceTypeCmb.select(0);
-            String fileName = Utility.displayToFileName(resourceTypeCmb
-                    .getText());
-            configFilePath = Activator.getDefault().getResourceManager()
-                    .getConfigFilePath(fileName);
-        }
-    }
-
     private boolean isSelectionDone() {
         boolean done = false;
         try {
             resourceCount = Integer.parseInt(noOfInstancesText.getText());
         } catch (Exception e) {
             resourceCount = -1;
-        }
-        if (cusResourceRbtn.getSelection()) {
-            configFilePath = locationTxt.getText();
         }
 
         if (null != configFilePath && configFilePath.length() > 0

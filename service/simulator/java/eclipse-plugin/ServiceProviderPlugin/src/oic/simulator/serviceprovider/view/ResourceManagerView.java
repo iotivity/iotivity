@@ -304,8 +304,16 @@ public class ResourceManagerView extends ViewPart {
                         for (int index = 0; index < items.length; index++) {
                             items[index].dispose();
                         }
+
                         final String selectedItem = resourceTreeHead
                                 .getSelection()[0].getText();
+                        // Check whether automation can be done on this
+                        // resource.
+                        if (!resourceManager.isResourceAutomationAllowed(resourceManager
+                                .getCompleteUriFromDisplayName(selectedItem))) {
+                            return;
+                        }
+
                         MenuItem startItem = new MenuItem(menu, SWT.NONE);
                         startItem.setText(Constants.START_RESOURCE_AUTOMATION);
                         startItem.addSelectionListener(new SelectionAdapter() {

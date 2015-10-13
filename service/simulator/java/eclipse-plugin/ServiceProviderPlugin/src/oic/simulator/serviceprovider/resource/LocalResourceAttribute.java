@@ -67,11 +67,17 @@ public class LocalResourceAttribute {
     }
 
     public Object getMinValue() {
-        return resourceAttribute.getRange().getMin();
+        Range range = resourceAttribute.getRange();
+        if (null == range)
+            return null;
+        return range.getMin();
     }
 
     public Object getMaxValue() {
-        return resourceAttribute.getRange().getMax();
+        Range range = resourceAttribute.getRange();
+        if (null == range)
+            return null;
+        return range.getMax();
     }
 
     public boolean isAutomationInProgress() {

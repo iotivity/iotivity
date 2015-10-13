@@ -319,6 +319,10 @@ public class AttributeView extends ViewPart {
             @Override
             public String getText(Object element) {
                 LocalResourceAttribute att = (LocalResourceAttribute) element;
+                if (!resourceManager.isAttHasRangeOrAllowedValues(att)) {
+                    System.out.println("No range or allowed values");
+                    return "Read Only";
+                }
                 if (att.isAutomationInProgress()) {
                     return Constants.ENABLED;
                 }
@@ -328,6 +332,10 @@ public class AttributeView extends ViewPart {
             @Override
             public Image getImage(Object element) {
                 LocalResourceAttribute att = (LocalResourceAttribute) element;
+                if (!resourceManager.isAttHasRangeOrAllowedValues(att)) {
+                    System.out.println("No range or allowed values");
+                    return null;
+                }
                 if (att.isAutomationInProgress()) {
                     return Activator.getDefault().getImageRegistry()
                             .get(Constants.CHECKED);

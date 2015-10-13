@@ -37,7 +37,6 @@ import oic.simulator.serviceprovider.resource.LocalResourceAttribute;
 import oic.simulator.serviceprovider.resource.MetaProperty;
 import oic.simulator.serviceprovider.resource.ModelChangeNotificationType;
 import oic.simulator.serviceprovider.resource.SimulatorResource;
-import oic.simulator.serviceprovider.resource.StandardConfiguration;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.utils.Utility;
 
@@ -71,8 +70,6 @@ public class ResourceManager {
 
     private Map<String, String>                         displayNameMap;
 
-    private StandardConfiguration                       stdConfig;
-
     private SimulatorResource                           currentResourceInSelection;
 
     private List<IResourceListChangedUIListener>        resourceListChangedUIListeners;
@@ -99,7 +96,6 @@ public class ResourceManager {
         resourceMap = new HashMap<String, Map<String, SimulatorResource>>();
         orderedResourceUriMap = new HashMap<String, ArrayList<String>>();
         displayNameMap = new HashMap<String, String>();
-        stdConfig = new StandardConfiguration();
 
         resourceListChangedUIListeners = new ArrayList<IResourceListChangedUIListener>();
         resourceSelectionChangedUIListeners = new ArrayList<IResourceSelectionChangedUIListener>();
@@ -275,15 +271,6 @@ public class ResourceManager {
                 this.notify();
             }
         }
-    }
-
-    // This method gives a list of available RAML resource configurations.
-    public Map<String, String> getResourceConfigurationList() {
-        return stdConfig.getStandardResourceConfigurationList();
-    }
-
-    public String getConfigFilePath(String fileName) {
-        return stdConfig.getFilePath(fileName);
     }
 
     public void addResourceListChangedUIListener(
@@ -1626,6 +1613,52 @@ public class ResourceManager {
                             "[" + e.getClass().getSimpleName() + "]"
                                     + e.code().toString() + "-" + e.message());
         }
+    }
+
+    public boolean isAttHasRangeOrAllowedValues(LocalResourceAttribute att) {
+        if (null == att) {
+            return false;
+        }
+        Object[] obj = att.getAllowedValues();
+        if (null != obj && obj.length > 0) {
+            return true;
+        }
+        Object min = att.getMinValue();
+        Object max = att.getMaxValue();
+        if (null != min && null != max) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isResourceAutomationAllowed(String resourceURI) {
+        if (null == resourceURI) {
+            return false;
+        }
+        SimulatorResource resource = getSimulatorResourceByURI(resourceURI);
+        if (null == resource) {
+            return false;
+        }
+        Map<String, LocalResourceAttribute> attributes = resource
+                .getResourceAttributesMap();
+        if (null == attributes || attributes.size() < 1) {
+            return false;
+        }
+        Set<String> keySet = attributes.keySet();
+        Iterator<String> itr = keySet.iterator();
+        String attName;
+        boolean allowed = false;
+        LocalResourceAttribute att;
+        while (itr.hasNext()) {
+            attName = itr.next();
+            if (null != attName) {
+                att = attributes.get(attName);
+                if (null != att) {
+                    allowed = allowed | isAttHasRangeOrAllowedValues(att);
+                }
+            }
+        }
+        return allowed;
     }
 
     public Image getImage(String resourceURI) {

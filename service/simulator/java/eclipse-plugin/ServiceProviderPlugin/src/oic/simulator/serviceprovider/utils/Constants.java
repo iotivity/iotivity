@@ -91,7 +91,7 @@ public class Constants {
     public static final String         NOTIFY_BUTTON_UNSELECTED         = "Notify_Unselected";
 
     public static final String         CREATE_PAGE_TITLE                = "Create Resource";
-    public static final String         CREATE_PAGE_MESSAGE              = "Select a standard resource or custom resource to be created";
+    public static final String         CREATE_PAGE_MESSAGE              = "Create one or more resources from RAML configuration file";
 
     public static final String         DELETE_PAGE_TITLE                = "Delete Resource";
     public static final String         DELETE_PAGE_MESSAGE              = "Select the resource(s) to be deleted";
@@ -102,6 +102,4 @@ public class Constants {
     public static final String         JSON_FILE_EXTENSION              = ".json";
 
     public static final String         SPLIT_BY_DOT_PATTERN             = "\\.";
-
-    public static final String         SAMPLE_LIGHT                      = "sample.light";
 }

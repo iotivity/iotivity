@@ -739,11 +739,12 @@ class TreeLabelProvider extends LabelProvider {
         return resource.getResourceURI();
     }
 
-    @Override
+    // TODO: Commenting temporarily until resource icons are finalized.
+    /*@Override
     public Image getImage(Object element) {
         RemoteResource resource = (RemoteResource) element;
         ResourceManager resourceManager = Activator.getDefault()
                 .getResourceManager();
         return resourceManager.getImage(resource.getResourceURI());
-    }
+    }*/
 }

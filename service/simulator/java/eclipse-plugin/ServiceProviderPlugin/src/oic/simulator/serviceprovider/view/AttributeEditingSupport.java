@@ -80,6 +80,13 @@ public class AttributeEditingSupport {
         protected CellEditor getCellEditor(Object element) {
             attributeInSelection = (LocalResourceAttribute) element;
 
+            ResourceManager resourceManager = Activator.getDefault()
+                    .getResourceManager();
+            if (!resourceManager
+                    .isAttHasRangeOrAllowedValues(attributeInSelection)) {
+                return null;
+            }
+
             // CellEditor is not required as the automation is in progress.
             if (attributeInSelection.isAutomationInProgress()) {
                 return null;
@@ -182,6 +189,11 @@ public class AttributeEditingSupport {
             // CellEditor is not required as the automation is in progress.
             ResourceManager resourceManager = Activator.getDefault()
                     .getResourceManager();
+            LocalResourceAttribute att = (LocalResourceAttribute) element;
+            if (!resourceManager.isAttHasRangeOrAllowedValues(att)) {
+                return null;
+            }
+
             SimulatorResource resource = resourceManager
                     .getCurrentResourceInSelection();
             if (null != resource && resource.isResourceAutomationInProgress()) {

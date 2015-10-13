@@ -55,10 +55,6 @@ public class ImageManager {
         r.put(Constants.NOTIFY_BUTTON_SELECTED, ImageDescriptor
                 .createFromURL(bundle.getEntry("icons/button_pressed.PNG")));
 
-        // Resource icons based on the resource type
-        r.put(Constants.SAMPLE_LIGHT, ImageDescriptor.createFromURL(bundle
-                .getEntry("/icons/light_16x16.png")));
-
         // Log View related icons
         r.put(Constants.DEBUG_LOG, ImageDescriptor.createFromURL(bundle
                 .getEntry("/icons/debug_log.gif")));
