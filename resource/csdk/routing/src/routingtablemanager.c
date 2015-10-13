@@ -609,7 +609,7 @@ bool RTMIsObserverPresent(CAEndpoint_t devAddr, OCObservationId *obsID,
     while (NULL != iterTable)
     {
         RTMGatewayEntry_t *entry = u_linklist_get_data(iterTable);
-        if (NULL == entry && NULL == entry->destination)
+        if (NULL == entry || NULL == entry->destination)
         {
             OC_LOG(ERROR, TAG, "entry is NULL");
             return false;
