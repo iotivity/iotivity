@@ -19,6 +19,8 @@
  ******************************************************************/
 
 #include "simulator_resource_model.h"
+#include "simulator_exceptions.h"
+#include "logger.h"
 #include "OCPlatform.h"
 #include <sstream>
 #include <boost/lexical_cast.hpp>
@@ -315,9 +317,10 @@ void SimulatorResourceModel::updateAttributeFromAllowedValues(const std::string 
 
 void SimulatorResourceModel::removeAttribute(const std::string &attrName)
 {
-   if (m_attributes.end() == m_attributes.find(attrName))
+   if (attrName.empty() || m_attributes.end() == m_attributes.find(attrName))
    {
-       return;
+       OC_LOG(ERROR, TAG, "Attribute name is empty or not found in model!");
+       throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Attribute not found in model!");
    }
 
     m_attributes.erase(attrName);

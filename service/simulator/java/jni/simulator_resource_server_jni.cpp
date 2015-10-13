@@ -234,6 +234,12 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_addAttributeStrin
         return;
     }
 
+    if (!jValue)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Attribute value cannot be null!");
+        return;
+    }
+
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env,
                                          jobject);
     if (!resource)
@@ -639,7 +645,25 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_removeAttribute
     }
 
     std::string str = env->GetStringUTFChars(jKey, NULL);
-    resource->removeAttribute(str);
+    try
+    {
+        resource->removeAttribute(str);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+        return;
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+        return;
+    }
+    catch (...)
+    {
+        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+        return;
+    }
 }
 
 JNIEXPORT jobjectArray JNICALL

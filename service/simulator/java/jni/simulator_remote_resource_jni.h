@@ -73,6 +73,10 @@ JNIEXPORT void JNICALL
 Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_stopVerification
 (JNIEnv *env, jobject thiz, jint jId);
 
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_dispose
+(JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif

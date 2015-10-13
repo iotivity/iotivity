@@ -356,7 +356,7 @@ void SimulatorRemoteResourceImpl::configure(const std::string &path)
 {
     if (path.empty())
     {
-        OC_LOG(ERROR, TAG, "Invalid path given for configuration !");
+        OC_LOG(ERROR, TAG, "Invalid path given for configuration!");
         throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Empty path string!");
     }
 

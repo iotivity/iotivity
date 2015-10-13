@@ -334,6 +334,8 @@ public class SimulatorResourceServer {
      * @param typeOfAutomation
      *            {@link AutomationType} indicating whether the automation is
      *            one-time or recursive.
+     * @param updateInterval
+     *            Interval time in milliseconds for attribute value update automation.
      * @param listener
      *            Listener to be notified when automation ends.
      *
@@ -361,6 +363,8 @@ public class SimulatorResourceServer {
      * @param typeOfAutomation
      *            {@link AutomationType} indicating whether the automation is
      *            one-time or recursive.
+     * @param updateInterval
+     *            Interval time in milliseconds for attribute value update automation.
      * @param listener
      *            Listener to be notified when automation ends.
      *
@@ -475,9 +479,7 @@ public class SimulatorResourceServer {
     protected void finalize() throws Throwable {
         try {
             dispose();
-        } catch(Throwable t){
-            throw t;
-        } finally{
+        } finally {
             super.finalize();
         }
     }

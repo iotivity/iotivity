@@ -739,7 +739,7 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_setConfigInfo
     if (!jConfigPath)
     {
         throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM,
-                                  "Configuration file path is empty!");
+                                  "Configuration file path is null!");
         return;
     }
 
@@ -889,3 +889,9 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_stopVerification
     }
 }
 
+JNIEXPORT void JNICALL Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_dispose
+(JNIEnv *env, jobject thiz)
+{
+    JniSimulatorRemoteResource *resource = GetHandle<JniSimulatorRemoteResource>(env, thiz);
+    delete resource;
+}

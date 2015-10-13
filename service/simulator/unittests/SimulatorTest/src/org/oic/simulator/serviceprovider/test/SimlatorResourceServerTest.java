@@ -53,7 +53,6 @@ public class SimlatorResourceServerTest extends TestCase
     {
         System.loadLibrary("SimulatorManager");
         System.loadLibrary("RamlParser");
-        System.loadLibrary("YamlParser");
         System.loadLibrary("oc");
         System.loadLibrary("oc_logger");
         System.loadLibrary("octbstack");
@@ -147,13 +146,13 @@ public class SimlatorResourceServerTest extends TestCase
     {
         try
         {
-            simulatorResourceServer.addAttributeBoolean(KEY, true);
+            simulatorResourceServer.addAttributeBoolean(KEY, Boolean.parseBoolean("true"));
         }
         catch (Exception e)
         {
             e.printStackTrace();
         }
-        assertEquals(Boolean.parseBoolean(getValue(KEY) + ""), true);
+        assertEquals(Boolean.parseBoolean(getValue(KEY).toString() + ""), true);
     }
 
     public void testaddAttributeString_P01()
@@ -236,7 +235,7 @@ public class SimlatorResourceServerTest extends TestCase
 
         try
         {
-            simulatorResourceServer.addAttributeBoolean(KEY, true);
+            simulatorResourceServer.addAttributeBoolean(KEY, Boolean.parseBoolean("true"));
         }
         catch (Exception e)
         {
@@ -248,7 +247,7 @@ public class SimlatorResourceServerTest extends TestCase
 
         try
         {
-            simulatorResourceServer.updateAttributeBoolean(KEY, false);
+            simulatorResourceServer.updateAttributeBoolean(KEY, Boolean.parseBoolean("false"));
         }
         catch (Exception e)
         {
@@ -757,7 +756,7 @@ public class SimlatorResourceServerTest extends TestCase
 
         try
         {
-            lockObject.await(10,TimeUnit.SECONDS);
+            lockObject.await(15,TimeUnit.SECONDS);
         }
         catch (InterruptedException e)
         {
@@ -791,7 +790,7 @@ public class SimlatorResourceServerTest extends TestCase
         {
             result = false;
         }
-        assertTrue(result && id == -1);
+        assertTrue(!result && id == 0);
     }
 
     public void testStartAttributeAutomation_P01()
@@ -803,7 +802,8 @@ public class SimlatorResourceServerTest extends TestCase
         int id = 0;
         try
         {
-            id = simulatorResourceServer.startAttributeAutomation(simulatorResourceServer.getModel().getAttributes().get(0).getName(),
+            simulatorResourceServer.addAttributeInteger(KEY, 10);
+            id = simulatorResourceServer.startAttributeAutomation(KEY,
                     AutomationType.NORMAL, automationListener);
         }
         catch (Exception e)
@@ -873,13 +873,11 @@ public class SimlatorResourceServerTest extends TestCase
 
         try
         {
-            lockObject.await(10, TimeUnit.SECONDS);
+            lockObject.await(05, TimeUnit.SECONDS);
         }
         catch (InterruptedException e)
         {
         }
-
-        result = result && automationObject.getResourceURI() != null && automationObject.getAutomationId() != -1 && id != -1;
 
         try
         {

@@ -157,9 +157,7 @@ public class SimulatorResourceModel {
     protected void finalize() throws Throwable {
         try {
             dispose();
-        } catch(Throwable t){
-            throw t;
-        } finally{
+        } finally {
             super.finalize();
         }
     }
