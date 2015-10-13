@@ -66,17 +66,17 @@ class ResourceUpdateAutomation
 
         void stop();
 
-        void finished(int id);
-
     private:
+        void updateAttributes(std::vector<SimulatorResourceModel::Attribute> attributes);
+
         SimulatorResourceServer *m_resource;
         AutomationType m_type;
         int m_id;
+        bool m_stopRequested;
         int m_updateInterval;
-        SimulatorResourceModel m_resModel;
-        std::map<int, AttributeUpdateAutomationSP> m_attrUpdationList;
         updateCompleteCallback m_callback;
         std::function<void (const int)> m_finishedCallback;
+        std::thread *m_thread;
 };
 
 typedef std::shared_ptr<ResourceUpdateAutomation> ResourceUpdateAutomationSP;

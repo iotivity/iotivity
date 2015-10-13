@@ -103,5 +103,5 @@ public class Constants {
 
     public static final String         SPLIT_BY_DOT_PATTERN             = "\\.";
 
-    public static final String         OIC_R_LIGHT                      = "oic.r.light";
+    public static final String         SAMPLE_LIGHT                      = "sample.light";
 }

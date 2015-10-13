@@ -488,7 +488,7 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesS
 
 JNIEXPORT jint JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startResourceAutomation
-(JNIEnv *env, jobject object, jint automationType, jobject listener)
+(JNIEnv *env, jobject object, jint automationType, jint updateInterval, jobject listener)
 {
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
     if (!resource)
@@ -520,7 +520,7 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startResourceAuto
 
     try
     {
-        automationId = resource->startUpdateAutomation(type, callback);
+        automationId = resource->startUpdateAutomation(type, updateInterval, callback);
     }
     catch (InvalidArgsException &e)
     {
@@ -539,7 +539,7 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startResourceAuto
 
 JNIEXPORT jint JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startAttributeAutomation
-(JNIEnv *env, jobject object, jstring attrName, jint automationType, jobject listener)
+(JNIEnv *env, jobject object, jstring attrName, jint automationType, jint updateInterval, jobject listener)
 {
     SimulatorResourceServerSP resource = JniSimulatorResource::getJniSimulatorResourceSP(env, object);
     if (!resource)
@@ -578,7 +578,7 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startAttributeAut
     int automationId = -1;
     try
     {
-        automationId = resource->startUpdateAutomation(attrNamePtr, type, callback);
+        automationId = resource->startUpdateAutomation(attrNamePtr, type, updateInterval, callback);
     }
     catch (InvalidArgsException &e)
     {

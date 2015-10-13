@@ -47,7 +47,6 @@ import oic.simulator.clientcontroller.utils.Utility;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 import org.oic.simulator.ILogger.Level;
-import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.ResourceAttribute;
 import org.oic.simulator.ResourceAttribute.Range;
 import org.oic.simulator.ResourceAttribute.Type;
@@ -398,7 +397,7 @@ public class ResourceManager {
         // TODO: For debugging
         if (null != attributeMap) {
             RemoteResourceAttribute.printAttributes(attributeMap);
-            System.out.println("Attributes found: ");
+            System.out.println("Attributes found: " + (null != attributeMap));
             System.out.println("No of attributes: " + attributeMap.size());
 
             resource.setResourceAttributesMap(attributeMap);
@@ -582,7 +581,7 @@ public class ResourceManager {
     }
 
     public boolean isResourceObserved(String resourceURI) {
-        boolean observed;
+        boolean observed = false;
         synchronized (observedResourceURIList) {
             observed = observedResourceURIList.contains(resourceURI);
         }
@@ -1483,16 +1482,6 @@ public class ResourceManager {
         }
         try {
             resourceN.stopVerification(autoId);
-        } catch (InvalidArgsException e) {
-            Activator
-            .getDefault()
-            .getLogManager()
-            .log(Level.ERROR.ordinal(),
-                    new Date(),
-                    "[" + e.getClass().getSimpleName() + "]"
-                            + e.code().toString() + "-"
-                            + e.message());
-            return;
         } catch (SimulatorException e) {
             Activator
                     .getDefault()

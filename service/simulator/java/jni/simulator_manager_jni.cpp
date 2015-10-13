@@ -712,6 +712,11 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
         return JNI_ERR;
     }
 
+    if (false == getClassRef(env, "java/lang/Boolean", gSimulatorClassRefs.classBoolean))
+    {
+        return JNI_ERR;
+    }
+
     if (false == getClassRef(env, "java/lang/String", gSimulatorClassRefs.classString))
     {
         return JNI_ERR;
@@ -827,6 +832,11 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     gSimulatorClassRefs.classDoubleCtor = env->GetMethodID(gSimulatorClassRefs.classDouble, "<init>",
                                           "(D)V");
     if (!gSimulatorClassRefs.classDoubleCtor)
+        return JNI_ERR;
+
+    gSimulatorClassRefs.classBooleanCtor= env->GetMethodID(gSimulatorClassRefs.classBoolean, "<init>",
+                                          "(Z)V");
+    if (!gSimulatorClassRefs.classBooleanCtor)
         return JNI_ERR;
 
     gSimulatorClassRefs.classHashMapCtor = env->GetMethodID(gSimulatorClassRefs.classHashMap, "<init>",

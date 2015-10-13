@@ -417,8 +417,7 @@ public class SimulatorRemoteResource {
     protected void finalize() throws Throwable {
         try {
             dispose();
-        }
-        finally {
+        } finally {
             super.finalize();
         }
     }

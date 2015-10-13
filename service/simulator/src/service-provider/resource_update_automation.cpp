@@ -20,6 +20,7 @@
 
 #include "resource_update_automation.h"
 #include "simulator_resource_server_impl.h"
+#include "attribute_generator.h"
 #include "simulator_exceptions.h"
 #include "simulator_logger.h"
 #include "logger.h"
@@ -92,7 +93,7 @@ void AttributeUpdateAutomation::updateAttribute()
         SIM_LOG(ILogger::INFO, "Automation of " << m_attrName << " attribute is completed.");
     }
 
-    // Notify application through callback
+    // Notify application
     if (m_callback)
         m_callback(m_resource->getURI(), m_id);
 
@@ -142,65 +143,61 @@ ResourceUpdateAutomation::ResourceUpdateAutomation(int id, SimulatorResourceServ
     :   m_resource(resource),
         m_type(type),
         m_id(id),
+        m_stopRequested(false),
         m_updateInterval(interval),
         m_callback(callback),
-        m_finishedCallback(finishedCallback) {}
+        m_finishedCallback(finishedCallback),
+        m_thread(nullptr) {}
 
 void ResourceUpdateAutomation::start()
 {
-    m_resModel = m_resource->getModel();
-    std::map<std::string, SimulatorResourceModel::Attribute> attributes = m_resModel.getAttributes();
-    if (0 == attributes.size())
+    SimulatorResourceModel resModel = m_resource->getModel();
+    std::map<std::string, SimulatorResourceModel::Attribute> attributesTable =
+            resModel.getAttributes();
+    if (0 == attributesTable.size())
     {
         OC_LOG(ERROR, RTAG, "Resource has zero attributes!");
         throw SimulatorException(SIMULATOR_ERROR, "Resource has zero attributes!");
     }
 
-    int id = 0;
-    for (auto & attribute : attributes)
-    {
-        AttributeUpdateAutomationSP attributeAutomation(new AttributeUpdateAutomation(
-                    id, m_resource, attribute.first, m_type, m_updateInterval, nullptr,
-                    std::bind(&ResourceUpdateAutomation::finished, this, std::placeholders::_1)));
+    std::vector<SimulatorResourceModel::Attribute> attributes;
+    for (auto &attributeEntry : attributesTable)
+        attributes.push_back(attributeEntry.second);
 
-        m_attrUpdationList[id++] = attributeAutomation;
-        try
-        {
-            attributeAutomation->start();
-        }
-        catch (SimulatorException &e)
-        {
-            stop();
-            throw;
-        }
-    }
-}
-
-void ResourceUpdateAutomation::finished(int id)
-{
-    if (m_attrUpdationList.end() != m_attrUpdationList.find(id))
-    {
-        m_attrUpdationList.erase(m_attrUpdationList.find(id));
-    }
-
-    if (!m_attrUpdationList.size())
-    {
-        // Notify application through callback
-        if (m_callback)
-            m_callback(m_resource->getURI(), m_id);
-
-        if (m_finishedCallback)
-            m_finishedCallback(m_id);
-    }
+    m_thread = new std::thread(&ResourceUpdateAutomation::updateAttributes, this, attributes);
 }
 
 void ResourceUpdateAutomation::stop()
 {
-    // Stop all the attributes updation
-    for (auto & attrAutomation : m_attrUpdationList)
+    m_stopRequested = true;
+    if (m_thread)
+        m_thread->join();
+}
+
+void ResourceUpdateAutomation::updateAttributes(
+        std::vector<SimulatorResourceModel::Attribute> attributes)
+{
+    SimulatorResourceServerImpl *resourceImpl =
+        dynamic_cast<SimulatorResourceServerImpl *>(m_resource);
+
+    AttributeCombinationGen attrCombGen(attributes);
+    SimulatorResourceModel resModel;
+    while (!m_stopRequested && attrCombGen.next(resModel))
     {
-        (attrAutomation.second)->stop();
+        for (auto &attributeEntry : resModel.getAttributes())
+        {
+            resourceImpl->updateAttributeValue(attributeEntry.first, attributeEntry.second.getValue());
+        }
+
+        resourceImpl->notifyApp();
+        SLEEP_FOR(m_updateInterval);
     }
 
-    m_attrUpdationList.clear();
+    // Notify application
+    if (m_callback)
+        m_callback(m_resource->getURI(), m_id);
+
+    if (m_finishedCallback && !m_stopRequested)
+        m_finishedCallback(m_id);
 }
+

@@ -75,63 +75,44 @@ void PUTRequestGenerator::SendAllRequests()
     OC_LOG(DEBUG, TAG, "Sending OP_START event");
     m_callback(m_id, OP_START);
 
-    // Create attribute generator for value manipulation
-    std::vector<AttributeGenerator> attributeGenList;
+    // Create attribute combination generator for generating resource model
+    // with different attribute values
+    std::vector<SimulatorResourceModel::Attribute> attributes;
     for (auto &attributeElement : m_rep->getAttributes())
-        attributeGenList.push_back(AttributeGenerator(attributeElement.second));
+    {
+        attributes.push_back(attributeElement.second);
+    }
 
-    if (!attributeGenList.size())
+    if (!attributes.size())
     {
         OC_LOG(ERROR, TAG, "Zero attribute found from resource model!");
         return;
     }
 
-    bool hasNext = false;
-
     do
     {
-        if (!m_stopRequested)
+        if (m_stopRequested)
         {
-            // Get the next possible queryParameter
-            std::map<std::string, std::string> queryParam = m_queryParamGen.next();
+            break;
+        }
 
-            while (true)
-            {
-                SimulatorResourceModelSP repModel(new SimulatorResourceModel);
-                for (auto & attributeGen : attributeGenList)
-                {
-                    if (attributeGen.hasNext())
-                    {
-                        SimulatorResourceModel::Attribute attribute;
-                        if (true == attributeGen.next(attribute))
-                            repModel->addAttribute(attribute);
+        // Get the next possible queryParameter
+        std::map<std::string, std::string> queryParam = m_queryParamGen.next();
 
-                        hasNext = true;
-                    }
-                    else
-                    {
-                        SimulatorResourceModel::Attribute attribute;
-                        if (true == attributeGen.previous(attribute))
-                            repModel->addAttribute(attribute);
-                    }
-                }
+        AttributeCombinationGen attrCombGen(attributes);
 
-                if (hasNext)
-                {
-                    // Send the request
-                    m_requestSender->sendRequest(queryParam, repModel,
-                            std::bind(&PUTRequestGenerator::onResponseReceived, this,
-                            std::placeholders::_1, std::placeholders::_2), true);
+        // Get the new model from attribute combination generator
+        SimulatorResourceModel resModel;
+        while (!m_stopRequested && attrCombGen.next(resModel))
+        {
+            SimulatorResourceModelSP repModel(new SimulatorResourceModel(resModel));
 
-                    m_requestCnt++;
-                    hasNext = false;
-                    continue;
-                }
-                else
-                {
-                    break;
-                }
-            }
+            // Send the request
+            m_requestSender->sendRequest(queryParam, repModel,
+                    std::bind(&PUTRequestGenerator::onResponseReceived, this,
+                    std::placeholders::_1, std::placeholders::_2), true);
+
+            m_requestCnt++;
         }
     }
     while (m_queryParamGen.hasNext());
