@@ -631,7 +631,6 @@ naviframe_pop_cb(void *data, Elm_Object_Item *it)
 // Method to set up server screens
 void containerCreateUI(void *data, Evas_Object *obj, void *event_info)
 {
-	dlog_print(DLOG_INFO, LOG_TAG, "#### container UI");
     s_containerFlag = false;
     s_hueBundleFlag = false;
     Evas_Object *layout;
@@ -646,7 +645,6 @@ void containerCreateUI(void *data, Evas_Object *obj, void *event_info)
     scroller = elm_scroller_add(nf);
     elm_scroller_bounce_set(scroller, EINA_FALSE, EINA_TRUE);
     elm_scroller_policy_set(scroller, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_AUTO);
-    dlog_print(DLOG_INFO, LOG_TAG, "#### container UI 1");
 
     // Layout
     layout = elm_layout_add(nf);
@@ -654,21 +652,18 @@ void containerCreateUI(void *data, Evas_Object *obj, void *event_info)
     evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 
     elm_object_content_set(scroller, layout);
-    dlog_print(DLOG_INFO, LOG_TAG, "#### container UI 2");
 
     // Button
     start_button = elm_button_add(layout);
     elm_object_part_content_set(layout, "start_button", start_button);
     elm_object_text_set(start_button, "Start Container");
     evas_object_smart_callback_add(start_button, "clicked", startContainer, NULL);
-    dlog_print(DLOG_INFO, LOG_TAG, "#### container UI 3");
 
     // Button
     stop_button = elm_button_add(layout);
     elm_object_part_content_set(layout, "stop_button", stop_button);
     elm_object_text_set(stop_button, "Stop Container");
     evas_object_smart_callback_add(stop_button, "clicked", stopContainer, NULL);
-    dlog_print(DLOG_INFO, LOG_TAG, "#### container UI 4");
 
     // List
     listnew = elm_list_add(layout);
@@ -676,7 +671,6 @@ void containerCreateUI(void *data, Evas_Object *obj, void *event_info)
     evas_object_smart_callback_add(listnew, "selected", list_selected_cb, NULL);
     elm_object_part_content_set(layout, "listnew", listnew);
     elm_list_go(listnew);
-    dlog_print(DLOG_INFO, LOG_TAG, "#### container UI 5");
 
     // log_entry - text area for log
     log_entry = elm_entry_add(layout);
@@ -689,5 +683,4 @@ void containerCreateUI(void *data, Evas_Object *obj, void *event_info)
 
     nf_it = elm_naviframe_item_push(nf, "Resource Container", NULL, NULL, scroller, NULL);
     elm_naviframe_item_pop_cb_set(nf_it, naviframe_pop_cb, NULL);
-    dlog_print(DLOG_INFO, LOG_TAG, "#### container UI 6");
 }
