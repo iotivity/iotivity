@@ -97,7 +97,6 @@ public class ResourceManagerView extends ViewPart {
 
             @Override
             public void onNewResourceFound(final RemoteResource resource) {
-                System.out.println("View: onNewResourceFound");
                 if (null == resource) {
                     return;
                 }
@@ -123,16 +122,12 @@ public class ResourceManagerView extends ViewPart {
 
                         // Close the find dialog
                         if (null != findDialog) {
-                            boolean status = findDialog.close();
-                            System.out
-                                    .println("dialog close status: " + status);
+                            findDialog.close();
                         }
 
                         // Close the refresh dialog
                         if (null != refreshDialog) {
-                            boolean status = refreshDialog.close();
-                            System.out
-                                    .println("dialog close status: " + status);
+                            refreshDialog.close();
                         }
                     }
                 });
@@ -182,11 +177,6 @@ public class ResourceManagerView extends ViewPart {
         folder.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                /*
-                 * CTabItem selectedTab = folder.getSelection(); if(selectedTab
-                 * == foundResTab) { System.out.println("Found resources tab");
-                 * } else { System.out.println("Favorite resources tab"); }
-                 */
                 // Tab is switched.
                 treeViewer.setSelection(null);
                 favTreeViewer.setSelection(null);
@@ -355,11 +345,11 @@ public class ResourceManagerView extends ViewPart {
                                         if (null == resource) {
                                             return;
                                         }
-                                        System.out.println("Selected resource:"
-                                                + resource.getResourceURI());
                                         if (!resource.isFavorite()) {
                                             resourceManager
                                                     .addResourcetoFavorites(resource);
+                                            resourceManager
+                                                    .addResourceURItoFavorites(resource);
                                         } else {
                                             resourceManager
                                                     .removeResourceFromFavorites(resource);
@@ -467,38 +457,37 @@ public class ResourceManagerView extends ViewPart {
 
                             Set<String> searchTypes = findWizard
                                     .getSearchTypes();
-                            if (null != searchTypes) {
-                                System.out.println(searchTypes);
-                                // Call native method to clear existing
-                                // resources of
-                                // the given search types.
-                                resourceManager.deleteResources(searchTypes);
+                            // Delete cached details of resources based on the
+                            // given search types.
+                            // If there are no resource types to search, then
+                            // all resources
+                            // will be deleted.
+                            resourceManager.deleteResources(searchTypes);
 
-                                // Update the tree
-                                treeViewer.refresh();
-                                favTreeViewer.refresh();
+                            // Update the tree
+                            treeViewer.refresh();
+                            favTreeViewer.refresh();
 
-                                // Call native method to find Resources
-                                boolean result = resourceManager
-                                        .findResourceRequest(searchTypes);
-                                if (result) {
-                                    searchUIOperation(false);
-                                } else {
-                                    MessageDialog
-                                            .openError(Display.getDefault()
-                                                    .getActiveShell(),
-                                                    "Find Resource status",
-                                                    "Operation failed due to some problems in core layer.");
-                                }
-
-                                // Store this information for refresh
-                                // functionality
-                                resourceManager
-                                        .setLastKnownSearchTypes(searchTypes);
-
-                                // Change the refresh visibility
-                                refreshButton.setEnabled(true);
+                            // Call native method to find Resources
+                            boolean result = resourceManager
+                                    .findResourceRequest(searchTypes);
+                            if (result) {
+                                searchUIOperation(false);
+                            } else {
+                                MessageDialog
+                                        .openError(Display.getDefault()
+                                                .getActiveShell(),
+                                                "Find Resource status",
+                                                "Operation failed due to some problems in core layer.");
                             }
+
+                            // Store this information for refresh
+                            // functionality
+                            resourceManager
+                                    .setLastKnownSearchTypes(searchTypes);
+
+                            // Change the refresh visibility
+                            refreshButton.setEnabled(true);
                         }
                     }
                 });
@@ -510,13 +499,12 @@ public class ResourceManagerView extends ViewPart {
             public void widgetSelected(SelectionEvent e) {
                 Set<String> searchTypes = resourceManager
                         .getLastKnownSearchTypes();
-                if (null == searchTypes) {
-                    return;
-                }
                 setFoundResource(false);
 
-                // Call native method to clear existing resources of the given
-                // search types.
+                // Delete cached details of resources based on the given search
+                // types.
+                // If there are no resource types to search, then all resources
+                // will be deleted.
                 resourceManager.deleteResources(searchTypes);
 
                 // Update the tree
@@ -554,8 +542,6 @@ public class ResourceManagerView extends ViewPart {
                     if (null == resource) {
                         return;
                     }
-                    System.out.println("Selected resource: "
-                            + resource.getResourceURI());
                     resourceManager.resourceSelectionChanged(resource);
                 }
             }
@@ -608,7 +594,6 @@ public class ResourceManagerView extends ViewPart {
                         try {
                             Thread.sleep(Constants.FIND_RESOURCES_TIMEOUT * 1000);
                         } catch (InterruptedException e) {
-                            System.out.println("Interrupted during sleep.");
                             return;
                         }
 
@@ -695,7 +680,6 @@ class TreeContentProvider implements ITreeContentProvider {
 
     @Override
     public Object[] getElements(Object parent) {
-        System.out.println("Inside getElements()");
         List<RemoteResource> resourceList = Activator.getDefault()
                 .getResourceManager().getResourceList();
         return resourceList.toArray();
@@ -731,7 +715,6 @@ class FavTreeContentProvider implements ITreeContentProvider {
 
     @Override
     public Object[] getElements(Object parent) {
-        System.out.println("Inside getElements()");
         List<RemoteResource> resourceList = Activator.getDefault()
                 .getResourceManager().getFavResourceList();
         return resourceList.toArray();

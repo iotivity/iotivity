@@ -21,6 +21,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -444,7 +445,13 @@ public class LogView extends ViewPart {
                             out.close();
                         }
                     } catch (IOException e) {
-                        System.out.println("Error occurred during close.");
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.ERROR.ordinal(),
+                                        new Date(),
+                                        "[" + e.getClass().getSimpleName()
+                                                + "]" + e.getMessage());
                     }
                 }
             }

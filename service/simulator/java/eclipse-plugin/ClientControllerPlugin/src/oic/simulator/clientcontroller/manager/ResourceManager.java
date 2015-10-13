@@ -171,6 +171,15 @@ public class ResourceManager {
                         // Notify the UI listener
                         newResourceFoundNotification(resource);
 
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.INFO.ordinal(),
+                                        new Date(),
+                                        "Resource Found ["
+                                                + resource.getResourceURI()
+                                                + "].");
+
                         // Send an initial GET request to get the resource
                         // attributes
                         try {
@@ -181,9 +190,8 @@ public class ResourceManager {
                                     .getLogManager()
                                     .log(Level.ERROR.ordinal(),
                                             new Date(),
-                                            "[" + e.getClass().getSimpleName()
-                                                    + "]" + e.code().toString()
-                                                    + "-" + e.message());
+                                            Utility.getSimulatorErrorString(e,
+                                                    null));
                         }
                     }
                 });
@@ -393,14 +401,10 @@ public class ResourceManager {
 
         resource.setResourceModel(resourceModelN);
         Map<String, RemoteResourceAttribute> attributeMap = fetchResourceAttributesFromModel(resourceModelN);
-
-        // TODO: For debugging
+        resource.setResourceAttributesMap(attributeMap);
+        // TODO: Printing the values for debugging
         if (null != attributeMap) {
             RemoteResourceAttribute.printAttributes(attributeMap);
-            System.out.println("Attributes found: " + (null != attributeMap));
-            System.out.println("No of attributes: " + attributeMap.size());
-
-            resource.setResourceAttributesMap(attributeMap);
         }
         return resource;
     }
@@ -545,7 +549,6 @@ public class ResourceManager {
         resource.setFavorite(true);
         synchronized (favoriteResources) {
             favoriteResources.add(resource);
-            favoriteURIList.add(resource.getResourceURI());
         }
     }
 
@@ -556,6 +559,15 @@ public class ResourceManager {
         resource.setFavorite(false);
         synchronized (favoriteResources) {
             favoriteResources.remove(resource);
+        }
+    }
+
+    public void addResourceURItoFavorites(RemoteResource resource) {
+        if (null == resource) {
+            return;
+        }
+        synchronized (favoriteURIList) {
+            favoriteURIList.add(resource.getResourceURI());
         }
     }
 
@@ -671,11 +683,8 @@ public class ResourceManager {
                 Activator
                         .getDefault()
                         .getLogManager()
-                        .log(Level.ERROR.ordinal(),
-                                new Date(),
-                                "[" + e.getClass().getSimpleName() + "]"
-                                        + e.code().toString() + "-"
-                                        + e.message());
+                        .log(Level.ERROR.ordinal(), new Date(),
+                                Utility.getSimulatorErrorString(e, null));
                 return null;
             }
             if (null != attributeMapN) {
@@ -718,27 +727,6 @@ public class ResourceManager {
                                 }
                                 attribute.setAllowedValues(valueList);
                             }
-                            /*
-                             * Type baseType = attribute.getAttValBaseType();
-                             *
-                             * if(baseType == Type.INT) { //int[] values =
-                             * attributeN.getAllowedValues();
-                             * attribute.setAllowedValues
-                             * (attributeN.getAllowedValues()); } else
-                             * if(baseType == Type.DOUBLE) { double[] values =
-                             * attributeN.getAllowedValues();
-                             * attribute.setAllowedValues
-                             * (Utility.converArrayToList(values)); } else
-                             * if(baseType == Type.BOOL) { //boolean[] values =
-                             * attributeN.getAllowedValues(); List<Object> obj =
-                             * new ArrayList<Object>(); obj.add(true);
-                             * obj.add(false); attribute.setAllowedValues(obj);
-                             * } else if(baseType == Type.STRING) { String[]
-                             * values = attributeN.getAllowedValues();
-                             * attribute.
-                             * setAllowedValues(Utility.converArrayToList
-                             * (values)); }
-                             */
                         }
                         resourceAttributeMap.put(attName, attribute);
                     }
@@ -911,33 +899,6 @@ public class ResourceManager {
         }
     }
 
-    // TODO: Temporarily used to display the resource in the UI
-    public List<String> getURIList() {
-        List<String> list = new ArrayList<String>();
-        synchronized (resourceMap) {
-            /*
-             * Set<String> idSet = resourceMap.keySet(); Iterator<String> idItr
-             * = idSet.iterator(); String sId; RemoteResource resource;
-             * while(idItr.hasNext()) { sId = idItr.next(); resource =
-             * resourceMap.get(sId); if(null == resource) { continue; }
-             * list.add(resource.getResourceURI()); }
-             */
-            Set<String> uriSet = resourceMap.keySet();
-            Iterator<String> uriItr = uriSet.iterator();
-            String uri;
-            while (uriItr.hasNext()) {
-                uri = uriItr.next();
-                if (null != uri) {
-                    list.add(uri);
-                }
-            }
-
-            // Sort the types
-            Collections.sort(list);
-        }
-        return list;
-    }
-
     public synchronized Set<String> getLastKnownSearchTypes() {
         return lastKnownSearchTypes;
     }
@@ -948,45 +909,59 @@ public class ResourceManager {
     }
 
     public boolean findResourceRequest(Set<String> searchTypes) {
-        if (null == searchTypes || searchTypes.size() < 1) {
-            return false;
-        }
         boolean result = false;
-        Iterator<String> searchItr = searchTypes.iterator();
-        String rType;
-        while (searchItr.hasNext()) {
-            rType = searchItr.next();
+        if (null == searchTypes || searchTypes.size() < 1) {
             try {
-                SimulatorManager.findResource(rType, findResourceListener);
+                SimulatorManager.findResource(findResourceListener);
                 result = true;
             } catch (SimulatorException e) {
                 Activator
                         .getDefault()
                         .getLogManager()
-                        .log(Level.ERROR.ordinal(),
-                                new Date(),
-                                "[" + e.getClass().getSimpleName() + "]"
-                                        + e.code().toString() + "-"
-                                        + e.message());
+                        .log(Level.ERROR.ordinal(), new Date(),
+                                Utility.getSimulatorErrorString(e, null));
+            }
+        } else {
+            Iterator<String> searchItr = searchTypes.iterator();
+            String rType;
+            while (searchItr.hasNext()) {
+                rType = searchItr.next();
+                try {
+                    SimulatorManager.findResource(rType, findResourceListener);
+                    result = true;
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    Utility.getSimulatorErrorString(e, null));
+                }
             }
         }
         return result;
     }
 
     public void deleteResources(final Set<String> searchTypes) {
-        if (null == searchTypes || searchTypes.size() < 1) {
-            return;
-        }
         new Thread() {
             public void run() {
-                Iterator<String> typeItr = searchTypes.iterator();
-                String resType;
-                while (typeItr.hasNext()) {
-                    resType = typeItr.next();
-                    deleteResourcesByType(resType);
+                if (null == searchTypes || searchTypes.size() < 1) {
+                    // Delete all cached details of resources
+                    resourceMap.clear();
+                    favoriteResources.clear();
 
                     // Change the current resource in selection
-                    updateCurrentResourceInSelection(searchTypes);
+                    setCurrentResourceInSelection(null);
+                    resourceSelectionChangedUINotification(null);
+                } else {
+                    Iterator<String> typeItr = searchTypes.iterator();
+                    String resType;
+                    while (typeItr.hasNext()) {
+                        resType = typeItr.next();
+                        deleteResourcesByType(resType);
+
+                        // Change the current resource in selection
+                        updateCurrentResourceInSelection(searchTypes);
+                    }
                 }
             }
         }.start();
@@ -1040,10 +1015,10 @@ public class ResourceManager {
                 if (null != types) {
                     exist = types.contains(resourceType);
                     if (exist) {
-                        // Remove the resource
-                        keyItr.remove();
                         // Remove the resource from favorites list.
                         removeResourceFromFavorites(resource);
+                        // Remove the resource
+                        keyItr.remove();
                     }
                 }
             }
@@ -1116,13 +1091,6 @@ public class ResourceManager {
         return autoStatus;
     }
 
-    public Map<String, String> getDummyAttributes() {
-        Map<String, String> attributes = new HashMap<String, String>();
-        attributes.put("intensity", "1");
-        attributes.put("power", "off");
-        return attributes;
-    }
-
     public List<RemoteResource> getResourceList() {
         List<RemoteResource> resourceList = new ArrayList<RemoteResource>();
         synchronized (resourceMap) {
@@ -1190,10 +1158,8 @@ public class ResourceManager {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
         }
     }
 
@@ -1225,10 +1191,8 @@ public class ResourceManager {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
         }
         System.out.println("ResourceManager: called native put");
     }
@@ -1265,10 +1229,8 @@ public class ResourceManager {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
         }
     }
 
@@ -1298,17 +1260,16 @@ public class ResourceManager {
                     Activator
                             .getDefault()
                             .getLogManager()
-                            .log(Level.ERROR.ordinal(), new Date(),
-                                    e.getMessage());
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    Utility.getSimulatorErrorString(e,
+                                            "Failed to convert the attribute value."));
                 } catch (SimulatorException e) {
                     Activator
                             .getDefault()
                             .getLogManager()
-                            .log(Level.ERROR.ordinal(),
-                                    new Date(),
-                                    "[" + e.getClass().getSimpleName() + "]"
-                                            + e.code().toString() + "-"
-                                            + e.message());
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    Utility.getSimulatorErrorString(e, null));
                 }
             } else if (attType == Type.DOUBLE) {
                 double attValue;
@@ -1319,17 +1280,16 @@ public class ResourceManager {
                     Activator
                             .getDefault()
                             .getLogManager()
-                            .log(Level.ERROR.ordinal(), new Date(),
-                                    e.getMessage());
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    Utility.getSimulatorErrorString(e,
+                                            "Failed to convert the attribute value."));
                 } catch (SimulatorException e) {
                     Activator
                             .getDefault()
                             .getLogManager()
-                            .log(Level.ERROR.ordinal(),
-                                    new Date(),
-                                    "[" + e.getClass().getSimpleName() + "]"
-                                            + e.code().toString() + "-"
-                                            + e.message());
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    Utility.getSimulatorErrorString(e, null));
                 }
             } else if (attType == Type.BOOL) {
                 boolean attValue;
@@ -1340,11 +1300,8 @@ public class ResourceManager {
                     Activator
                             .getDefault()
                             .getLogManager()
-                            .log(Level.ERROR.ordinal(),
-                                    new Date(),
-                                    "[" + e.getClass().getSimpleName() + "]"
-                                            + e.code().toString() + "-"
-                                            + e.message());
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    Utility.getSimulatorErrorString(e, null));
                 }
             } else if (attType == Type.STRING) {
                 String attValue;
@@ -1355,11 +1312,8 @@ public class ResourceManager {
                     Activator
                             .getDefault()
                             .getLogManager()
-                            .log(Level.ERROR.ordinal(),
-                                    new Date(),
-                                    "[" + e.getClass().getSimpleName() + "]"
-                                            + e.code().toString() + "-"
-                                            + e.message());
+                            .log(Level.ERROR.ordinal(), new Date(),
+                                    Utility.getSimulatorErrorString(e, null));
                 }
             }
         }
@@ -1387,10 +1341,8 @@ public class ResourceManager {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
         }
         System.out.println("Observer called.");
     }
@@ -1413,10 +1365,8 @@ public class ResourceManager {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
         }
     }
 
@@ -1454,10 +1404,8 @@ public class ResourceManager {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
         }
     }
 
@@ -1486,10 +1434,8 @@ public class ResourceManager {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
         }
     }
 
@@ -1507,10 +1453,8 @@ public class ResourceManager {
             Activator
                     .getDefault()
                     .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "[" + e.getClass().getSimpleName() + "]"
-                                    + e.code().toString() + "-" + e.message());
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
             return;
         }
         // Update the status

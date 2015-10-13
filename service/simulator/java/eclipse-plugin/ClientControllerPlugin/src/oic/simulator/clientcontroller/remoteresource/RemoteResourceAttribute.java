@@ -152,6 +152,7 @@ public class RemoteResourceAttribute {
         return valueList;
     }
 
+    // Method added for debugging purpose
     public static void printAttributes(
             Map<String, RemoteResourceAttribute> attributeMap) {
         Iterator<String> itr = attributeMap.keySet().iterator();

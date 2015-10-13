@@ -268,7 +268,7 @@ public class AttributeView extends ViewPart {
 
                     @Override
                     public void run() {
-                        changeReqBtnVisibility(autoType, false);
+                        // changeReqBtnVisibility(autoType, false);
                     }
                 });
             }
@@ -280,7 +280,7 @@ public class AttributeView extends ViewPart {
 
                     @Override
                     public void run() {
-                        changeReqBtnVisibility(autoType, true);
+                        // changeReqBtnVisibility(autoType, true);
                     }
                 });
             }
@@ -292,7 +292,7 @@ public class AttributeView extends ViewPart {
 
                     @Override
                     public void run() {
-                        changeReqBtnVisibility(autoType, true);
+                        // changeReqBtnVisibility(autoType, true);
                     }
                 });
             }
@@ -370,12 +370,14 @@ public class AttributeView extends ViewPart {
     }
 
     private void updateObserve(RemoteResource resource) {
-        if (null == resource) {
+        if (null == resource || observeResButton.isDisposed()) {
             return;
         }
         boolean observed = resource.isObserved();
-        if (!observeResButton.isDisposed()) {
-            observeResButton.setSelection(observed);
+        if (observed) {
+            observeResButton.setText(Constants.STOP_OBSERVE);
+        } else {
+            observeResButton.setText(Constants.OBSERVE);
         }
     }
 
@@ -383,7 +385,7 @@ public class AttributeView extends ViewPart {
     public void createPartControl(Composite parent) {
         Color color = Display.getDefault().getSystemColor(SWT.COLOR_WHITE);
 
-        parent.setLayout(new GridLayout(2, false));
+        parent.setLayout(new GridLayout());
         GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
         parent.setLayoutData(gd);
 
@@ -402,9 +404,7 @@ public class AttributeView extends ViewPart {
 
         setupAttributeTable(attGroup);
 
-        setupMessageArea(parent);
-
-        setupResourceLevelOpsArea(parent);
+        setupRequestControls(parent);
 
         setUIListeners();
 
@@ -419,20 +419,19 @@ public class AttributeView extends ViewPart {
         }
     }
 
-    private void setupMessageArea(Composite parent) {
+    private void setupRequestControls(Composite parent) {
         GridData gd;
         Color color = Display.getDefault().getSystemColor(SWT.COLOR_WHITE);
-        Group msgTypesGrp = new Group(parent, SWT.NONE);
+        Composite opsComp = new Composite(parent, SWT.NONE);
         gd = new GridData();
         gd.grabExcessHorizontalSpace = true;
         gd.horizontalAlignment = SWT.FILL;
-        msgTypesGrp.setLayoutData(gd);
-        GridLayout grid = new GridLayout(3, false);
-        msgTypesGrp.setLayout(grid);
-        msgTypesGrp.setText("Request Types");
-        msgTypesGrp.setBackground(color);
+        opsComp.setLayoutData(gd);
+        GridLayout grid = new GridLayout(5, false);
+        opsComp.setLayout(grid);
+        opsComp.setBackground(color);
 
-        getButton = new Button(msgTypesGrp, SWT.PUSH);
+        getButton = new Button(opsComp, SWT.PUSH);
         getButton.setText("GET");
         gd = new GridData();
         gd.grabExcessHorizontalSpace = true;
@@ -440,7 +439,7 @@ public class AttributeView extends ViewPart {
         gd.widthHint = 50;
         getButton.setLayoutData(gd);
 
-        putButton = new Button(msgTypesGrp, SWT.PUSH);
+        putButton = new Button(opsComp, SWT.PUSH);
         putButton.setText("PUT");
         gd = new GridData();
         gd.grabExcessHorizontalSpace = true;
@@ -448,41 +447,27 @@ public class AttributeView extends ViewPart {
         gd.widthHint = 50;
         putButton.setLayoutData(gd);
 
-        postButton = new Button(msgTypesGrp, SWT.PUSH);
+        postButton = new Button(opsComp, SWT.PUSH);
         postButton.setText("POST");
         gd = new GridData();
         gd.grabExcessHorizontalSpace = true;
         gd.horizontalAlignment = SWT.FILL;
         gd.widthHint = 50;
         postButton.setLayoutData(gd);
-    }
 
-    private void setupResourceLevelOpsArea(Composite parent) {
-        GridData gd;
-        Color color = Display.getDefault().getSystemColor(SWT.COLOR_WHITE);
-        Group resOpsGrp = new Group(parent, SWT.NONE);
+        observeResButton = new Button(opsComp, SWT.PUSH);
+        observeResButton.setText(Constants.OBSERVE);
         gd = new GridData();
         gd.grabExcessHorizontalSpace = true;
         gd.horizontalAlignment = SWT.FILL;
-        resOpsGrp.setLayoutData(gd);
-        GridLayout grid = new GridLayout(2, false);
-        resOpsGrp.setLayout(grid);
-        resOpsGrp.setText("Resource-Level Operations");
-        resOpsGrp.setBackground(color);
+        observeResButton.setLayoutData(gd);
 
-        automateButton = new Button(resOpsGrp, SWT.PUSH);
+        automateButton = new Button(opsComp, SWT.PUSH);
         automateButton.setText("Automation");
         gd = new GridData();
         gd.grabExcessHorizontalSpace = true;
         gd.horizontalAlignment = SWT.FILL;
         automateButton.setLayoutData(gd);
-
-        observeResButton = new Button(resOpsGrp, SWT.CHECK);
-        observeResButton.setText("Observe");
-        gd = new GridData();
-        gd.grabExcessHorizontalSpace = true;
-        gd.horizontalAlignment = SWT.FILL;
-        observeResButton.setLayoutData(gd);
     }
 
     private void setupAttributeTable(Group attGroup) {
@@ -631,12 +616,13 @@ public class AttributeView extends ViewPart {
         observeResButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                boolean checked = observeResButton.getSelection();
-                if (checked) {
+                if (observeResButton.getText().equals(Constants.OBSERVE)) {
                     resourceManager.sendObserveRequest(resourceInSelection);
+                    observeResButton.setText(Constants.STOP_OBSERVE);
                 } else {
                     resourceManager
                             .sendCancelObserveRequest(resourceInSelection);
+                    observeResButton.setText(Constants.OBSERVE);
                 }
             }
         });

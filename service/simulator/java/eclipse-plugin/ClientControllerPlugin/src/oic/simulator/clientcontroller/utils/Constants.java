@@ -51,6 +51,8 @@ public class Constants {
     public static final String         GET                           = "Get";
     public static final String         PUT                           = "Put";
     public static final String         POST                          = "Post";
+    public static final String         OBSERVE                       = "Observe";
+    public static final String         STOP_OBSERVE                  = "Stop Observe";
 
     public static final String         ENABLE                        = "Enable";
     public static final String         DISABLE                       = "Disable";

@@ -17,9 +17,12 @@
 package oic.simulator.clientcontroller.utils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import org.oic.simulator.SimulatorException;
 
 /**
  * This class has common utility methods.
@@ -55,25 +58,39 @@ public class Utility {
         return strArr;
     }
 
-    /*
-     * public static List<Object> converArrayToList(int[] arr) { if(null == arr
-     * || arr.length < 1) { return null; } List<Object> valueList = new
-     * ArrayList<Object>(); for(Object val:arr) { valueList.add(val); } return
-     * valueList; }
-     * 
-     * public static List<Object> converArrayToList(double[] arr) { if(null ==
-     * arr || arr.length < 1) { return null; } List<Object> valueList = new
-     * ArrayList<Object>(); for(Object val:arr) { valueList.add(val); } return
-     * valueList; }
-     * 
-     * public static List<Object> converArrayToList(boolean[] arr) { if(null ==
-     * arr || arr.length < 1) { return null; } List<Object> valueList = new
-     * ArrayList<Object>(); for(Object val:arr) { valueList.add(val); } return
-     * valueList; }
-     * 
-     * public static List<Object> converArrayToList(String[] arr) { if(null ==
-     * arr || arr.length < 1) { return null; } List<Object> valueList = new
-     * ArrayList<Object>(); for(Object val:arr) { valueList.add(val); } return
-     * valueList; }
-     */
+    public static Set<String> splitStringByComma(String text) {
+        Set<String> tokenSet = null;
+        if (null != text) {
+            String[] token = text.split(",");
+            if (null != token) {
+                tokenSet = new HashSet<String>();
+                for (String tok : token) {
+                    tok = tok.trim();
+                    if (tok.length() > 0) {
+                        tokenSet.add(tok);
+                    }
+                }
+            }
+        }
+        return tokenSet;
+    }
+
+    public static String getSimulatorErrorString(Exception e, String info) {
+        if (null == e) {
+            return null;
+        }
+        String detail;
+        if (e instanceof SimulatorException) {
+            SimulatorException simEx = (SimulatorException) e;
+            detail = simEx.message() + "\n";
+            detail += "Exception Type: " + simEx.getClass().getSimpleName()
+                    + "\n";
+            detail += "Error code: " + simEx.code().toString();
+        } else {
+            detail = info + "\n";
+            detail += "Exception Type: " + e.getClass().getSimpleName() + "\n";
+            detail += "Message: " + e.getMessage();
+        }
+        return detail;
+    }
 }
