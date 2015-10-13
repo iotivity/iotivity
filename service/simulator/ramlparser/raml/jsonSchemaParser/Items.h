@@ -124,7 +124,7 @@ namespace RAML
                     if (*it == reqValue)
                         break;
                 }
-                if (m_required.end() == it)
+                if (m_required.end() != it)
                 {
                     m_required.push_back(reqValue);
                 }

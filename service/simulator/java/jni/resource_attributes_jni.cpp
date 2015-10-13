@@ -54,7 +54,6 @@ class attribute_value_visitor : public boost::static_visitor<jobject>
             return static_cast<jobject>(str);
         }
 
-#if 0
         // Boolean type value conversion
         jobject operator ()(const bool &value) const
         {
@@ -62,7 +61,7 @@ class attribute_value_visitor : public boost::static_visitor<jobject>
                                               gSimulatorClassRefs.classBooleanCtor, value);
             return result;
         }
-
+#if 0
         // SimulatorResourceModel::Attribute type value conversion
         jobject operator ()(const SimulatorResourceModel::Attribute &value) const
         {

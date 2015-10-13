@@ -334,6 +334,8 @@ public class SimulatorResourceServer {
      * @param typeOfAutomation
      *            {@link AutomationType} indicating whether the automation is
      *            one-time or recursive.
+     * @param updateInterval
+     *            Interval time in milliseconds for attribute value update automation.
      * @param listener
      *            Listener to be notified when automation ends.
      *
@@ -346,9 +348,9 @@ public class SimulatorResourceServer {
      *             This exception will be thrown for other errors.
      */
     public int startResourceAutomation(AutomationType typeOfAutomation,
-            IAutomation listener) throws InvalidArgsException,
+            int updateInterval, IAutomation listener) throws InvalidArgsException,
             SimulatorException {
-        return startResourceAutomation(typeOfAutomation.getValue(), listener);
+        return startResourceAutomation(typeOfAutomation.getValue(), updateInterval, listener);
     }
 
     /**
@@ -361,6 +363,8 @@ public class SimulatorResourceServer {
      * @param typeOfAutomation
      *            {@link AutomationType} indicating whether the automation is
      *            one-time or recursive.
+     * @param updateInterval
+     *            Interval time in milliseconds for attribute value update automation.
      * @param listener
      *            Listener to be notified when automation ends.
      *
@@ -373,10 +377,11 @@ public class SimulatorResourceServer {
      *             This exception will be thrown for other errors.
      */
     public int startAttributeAutomation(String attrName,
-            AutomationType typeOfAutomation, IAutomation listener)
+            AutomationType typeOfAutomation, int updateInterval,
+            IAutomation listener)
             throws InvalidArgsException, SimulatorException {
         return startAttributeAutomation(attrName, typeOfAutomation.getValue(),
-                listener);
+                updateInterval, listener);
     }
 
     /**
@@ -463,19 +468,18 @@ public class SimulatorResourceServer {
             SimulatorException;
 
     private native int startResourceAutomation(int typeOfAutomation,
-            IAutomation listener) throws InvalidArgsException,
+            int updateInterval, IAutomation listener) throws InvalidArgsException,
             SimulatorException;
 
     private native int startAttributeAutomation(String attrName,
-        int typeOfAutomation, IAutomation listener)
+        int typeOfAutomation, int updateInterval, IAutomation listener)
         throws InvalidArgsException, SimulatorException;
 
     @Override
     protected void finalize() throws Throwable {
         try {
             dispose();
-        }
-        finally {
+        } finally {
             super.finalize();
         }
     }

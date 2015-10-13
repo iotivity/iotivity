@@ -41,11 +41,11 @@ class SimulatorResourceServerImpl : public SimulatorResourceServer
 
         bool isObservable() const;
 
-        int startUpdateAutomation(AutomationType type,
+        int startUpdateAutomation(AutomationType type, int updateInterval,
                                   updateCompleteCallback callback);
 
         int startUpdateAutomation(const std::string &attrName, AutomationType type,
-                                  updateCompleteCallback callback);
+                                  int updateInterval, updateCompleteCallback callback);
 
         std::vector<int> getResourceAutomationIds();
 

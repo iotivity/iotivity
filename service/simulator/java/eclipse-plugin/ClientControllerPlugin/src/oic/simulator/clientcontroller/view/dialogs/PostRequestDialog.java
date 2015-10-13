@@ -19,7 +19,6 @@ package oic.simulator.clientcontroller.view.dialogs;
 import java.util.List;
 
 import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.manager.ResourceManager;
 import oic.simulator.clientcontroller.remoteresource.PutPostAttributeModel;
 import oic.simulator.clientcontroller.utils.Constants;
 
@@ -30,6 +29,7 @@ import org.eclipse.jface.viewers.CheckboxCellEditor;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
@@ -37,6 +37,8 @@ import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -45,6 +47,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.Text;
 
 /**
  * This dialog is used for generating a POST request.
@@ -57,15 +60,12 @@ public class PostRequestDialog extends TitleAreaDialog {
             "Select"                                  };
     private final Integer[]             attTblColWidth = { 200, 200, 50 };
 
-    private ResourceManager             resourceManager;
-
     private List<PutPostAttributeModel> modelList      = null;
-
+    
     public PostRequestDialog(Shell parentShell,
             List<PutPostAttributeModel> modelList) {
         super(parentShell);
         this.modelList = modelList;
-        resourceManager = Activator.getDefault().getResourceManager();
     }
 
     @Override
@@ -204,11 +204,33 @@ public class PostRequestDialog extends TitleAreaDialog {
     class AttributeValueEditor extends EditingSupport {
         private final TableViewer viewer;
         private final CellEditor  editor;
-
+        private final Text txt;
         public AttributeValueEditor(TableViewer viewer) {
             super(viewer);
             this.viewer = viewer;
             editor = new TextCellEditor(viewer.getTable());
+            txt = (Text)editor.getControl();
+            if(null != txt) {
+                txt.addModifyListener(new ModifyListener() {
+                    @Override
+                    public void modifyText(ModifyEvent e) {                 
+                        IStructuredSelection selection = (IStructuredSelection)AttributeValueEditor.this.viewer.getSelection();
+                        PutPostAttributeModel att = (PutPostAttributeModel)selection.getFirstElement();             
+                        if(null == att) {
+                            return;
+                        }
+                        String newValue = txt.getText();
+                        if(null != newValue && !newValue.isEmpty()) {
+                            att.setModified(true);
+                        }
+                        else {
+                            att.setModified(false);
+                        }
+                        AttributeValueEditor.this.viewer.update(att, null);
+                    }
+                });
+              
+            }
         }
 
         @Override
@@ -234,14 +256,6 @@ public class PostRequestDialog extends TitleAreaDialog {
             // If there is a change, then its corresponding check box should be
             // checked.
             String newValue = String.valueOf(value);
-            String actualValue = resourceManager.getAttributeValue(
-                    resourceManager.getCurrentResourceInSelection(),
-                    model.getAttName());
-            if (newValue.equals(actualValue)) {
-                model.setModified(false);
-            } else {
-                model.setModified(true);
-            }
             model.setAttValue(newValue);
             viewer.update(element, null);
         }

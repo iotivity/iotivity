@@ -207,12 +207,9 @@ public class DeleteResourcePage extends WizardPage {
         if (deleteCategory == DeleteCategory.ALL) {
             done = true;
         } else if (deleteCategory == DeleteCategory.BY_TYPE) {
-            int selectedItemIndex = resourceTypeCmb.getSelectionIndex();
-            if (selectedItemIndex >= 0) {
-                deleteCandidate = resourceTypeCmb.getItem(selectedItemIndex);
-                if (null != deleteCandidate && deleteCandidate.length() > 0) {
-                    done = true;
-                }
+            deleteCandidate = resourceTypeCmb.getText();
+            if (null != deleteCandidate && deleteCandidate.length() > 0) {
+                done = true;
             }
         } else if (deleteCategory == DeleteCategory.BY_URI) {
             deleteCandidate = resourceUriTxt.getText();

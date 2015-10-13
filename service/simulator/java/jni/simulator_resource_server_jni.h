@@ -98,11 +98,11 @@ Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_setAllowedValuesS
 
 JNIEXPORT jint JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startResourceAutomation
-(JNIEnv *, jobject, jint, jobject);
+(JNIEnv *, jobject, jint, jint, jobject);
 
 JNIEXPORT jint JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_startAttributeAutomation
-(JNIEnv *, jobject, jstring, jint, jobject);
+(JNIEnv *, jobject, jstring, jint, jint, jobject);
 
 JNIEXPORT void JNICALL
 Java_org_oic_simulator_serviceprovider_SimulatorResourceServer_stopAutomation

@@ -202,7 +202,7 @@ class SimulatorResourceModel
 
                 bool compare(Attribute &attribute);
 
-                std::vector<ValueVariant> getAllowedValues();
+                std::vector<ValueVariant> getAllowedValues() const;
 
                 int getUpdateFrequencyTime() {return m_updateInterval;}
                 void setUpdateFrequencyTime(int interval) {m_updateInterval = interval;}
@@ -231,7 +231,7 @@ class SimulatorResourceModel
                         ValueVariant &at(unsigned int index);
                         int size() const;
                         std::vector<std::string> toString() const;
-                        std::vector<ValueVariant> getValues();
+                        std::vector<ValueVariant> getValues() const;
                     private:
                         std::vector<ValueVariant> m_values;
                 };
@@ -291,7 +291,7 @@ class SimulatorResourceModel
           * @param attr  - Attribute pointer
           *
           */
-        void addAttribute(const Attribute &attribute);
+        void addAttribute(const Attribute &attribute, bool overwrite = false);
 
         /**
          * API to set range of attribute value.
