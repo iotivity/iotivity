@@ -19,7 +19,6 @@ package org.oic.simulator.test;
 import java.util.concurrent.CountDownLatch;
 import junit.framework.TestCase;
 
-import org.oic.simulator.DeviceInfo;
 import org.oic.simulator.PlatformInfo;
 import org.oic.simulator.SimulatorManager;
 import org.oic.simulator.serviceprovider.SimulatorResourceServer;
@@ -38,16 +37,10 @@ public class SimulatorManagerTest extends TestCase
     private ResourceModelObject resourceModelObject;
     private ResourceModelChangeListener resourceModelChangeListener;
 
-    private DeviceInfo info;
-    private PlatformInfo platformInfo;
 
     static
     {
         System.loadLibrary("SimulatorManager");
-        System.loadLibrary("RamlParser");
-        System.loadLibrary("oc");
-        System.loadLibrary("oc_logger");
-        System.loadLibrary("octbstack");
     }
 
     @Override
@@ -212,6 +205,7 @@ public class SimulatorManagerTest extends TestCase
         SimulatorResourceServer[] simulatorResourceServers = null;
         try
         {
+            SimulatorManager.setDeviceInfo("test");
             simulatorResourceServers = SimulatorManager.createResource(configPath, count, resourceModelChangeListener);
         }
         catch (Exception e)
@@ -231,7 +225,6 @@ public class SimulatorManagerTest extends TestCase
         boolean result = false;
 
         SimulatorResourceServer[] simulatorResourceServers = null;
-
         try
         {
             simulatorResourceServers = SimulatorManager.createResource(CONFIG_PATH, count, null);
@@ -275,6 +268,19 @@ public class SimulatorManagerTest extends TestCase
         SimulatorResourceServer[] simulatorResourceServers = createResources(count);
 
         assertTrue(simulatorResourceServers == null);
+    }
+
+    /**
+     * When count is set to -ve
+     */
+
+    public void testCreateResourceCount_N05()
+    {
+        int count = -10;
+
+        SimulatorResourceServer[] simulatorResourceServers = createResources(count);
+
+        assertTrue(simulatorResourceServers == null  );
     }
 
     public void testDeleteResource_P01()
@@ -396,7 +402,42 @@ public class SimulatorManagerTest extends TestCase
      */
     public void testSetDeviceInfo_N01()
     {
-        SimulatorManager.setDeviceInfo("");
+        try
+        {
+            SimulatorManager.setDeviceInfo("");
+        }
+        catch(Exception e)
+        {
+            System.out.println("Exception hit");
+        }
+    }
+
+    /**
+    *  checking for crash
+    * pass null
+    */
+    public void testSetDeviceInfo_N02()
+    {
+        try
+        {
+            SimulatorManager.setDeviceInfo(null);
+        }
+        catch(Exception e)
+        {
+            System.out.println("Exception hit");
+        }
+    }
+
+    public void testGetDeviceInfo_N01()
+    {
+        try
+        {
+            SimulatorManager.getDeviceInfo(null);
+        }
+        catch(Exception e)
+        {
+            System.out.println(" Exception hit");
+        }
     }
 
     /**
@@ -418,5 +459,32 @@ public class SimulatorManagerTest extends TestCase
         platformInfo.setSystemTime("adsfgfg");
 
         SimulatorManager.setPlatformInfo(platformInfo);
+    }
+
+    /**
+     * Checking for crash
+     */
+    public void testSetPlatformInfo_N01()
+    {
+        try
+        {
+            SimulatorManager.setPlatformInfo(null);
+        }
+        catch(Exception e)
+        {
+          System.out.println("Exception Hit");
+        }
+    }
+
+    public void testGetPlatformInfo_N01()
+    {
+        try
+        {
+            SimulatorManager.getPlatformInfo(null);
+        }
+        catch (Exception e)
+        {
+            System.out.println("Exception Hit");
+        }
     }
 }

@@ -44,7 +44,6 @@ import oic.simulator.serviceprovider.utils.Utility;
 import org.eclipse.swt.graphics.Image;
 import org.oic.simulator.IAutomation;
 import org.oic.simulator.ILogger.Level;
-import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.ResourceAttribute;
 import org.oic.simulator.ResourceAttribute.Range;
 import org.oic.simulator.ResourceAttribute.Type;

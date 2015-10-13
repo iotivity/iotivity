@@ -316,6 +316,12 @@ Java_org_oic_simulator_SimulatorResourceModel_addAttributeString
         return;
     }
 
+    if (!jvalue)
+    {
+        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM, "Attribute value cannot be null!");
+        return;
+    }
+
     SimulatorResourceModelSP resModelPtr;
     resModelPtr = JSimulatorResourceModel::getResourceModelPtr(env, thiz);
     if (!resModelPtr)

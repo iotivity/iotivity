@@ -203,6 +203,23 @@ public class SimulatorResourceModelTest extends TestCase
         assertTrue(result);
     }
 
+   public void testAddAttributeString_N02() {
+        String val = null;
+
+        boolean result = false;
+        try {
+
+            simulatorResourceModel.addAttributeString(KEY, val);
+
+            result = result && simulatorResourceModel.getAttribute(KEY).getValue().toString().equals(val);
+
+        } catch(Exception e) {
+            result = true;
+        }
+
+        assertTrue(result);
+    }
+
     public void testAddAttributeString_N03()
     {
         String val = "@#$$&^*^(*^&";
@@ -225,19 +242,20 @@ public class SimulatorResourceModelTest extends TestCase
     {
         boolean result = true;
 
-        boolean val = true;
+        boolean val;
 
         try
         {
+            val=Boolean.parseBoolean("true");
             simulatorResourceModel.addAttributeBoolean(KEY, val);
 
-            result = result && ((Boolean.parseBoolean(simulatorResourceModel.getAttribute(KEY).getValue() + "")));
+            result = result && ((Boolean.parseBoolean(simulatorResourceModel.getAttribute(KEY).getValue().toString()+"")));
 
-            val = false;
+            val = Boolean.parseBoolean("false");
 
             simulatorResourceModel.addAttributeBoolean(KEY, val);
 
-            result = result && !((Boolean.parseBoolean(simulatorResourceModel.getAttribute(KEY).getValue() + "")));
+            result = result && !((Boolean.parseBoolean(simulatorResourceModel.getAttribute(KEY).getValue().toString()+"")));
         }
         catch (Exception e)
         {
@@ -258,7 +276,7 @@ public class SimulatorResourceModelTest extends TestCase
             result = result && (simulatorResourceModel.size() == 1);
 
             simulatorResourceModel.addAttributeString("test2", "asdf");
-            simulatorResourceModel.addAttributeBoolean("test3", true);
+            simulatorResourceModel.addAttributeBoolean("test3", Boolean.parseBoolean("true"));
             simulatorResourceModel.addAttributeDouble("test4", 22.435234);
 
             result = result && (simulatorResourceModel.size() == 4);
@@ -278,14 +296,14 @@ public class SimulatorResourceModelTest extends TestCase
         {
             simulatorResourceModel.addAttributeInt("test1", 1234);
             simulatorResourceModel.addAttributeString("test2", "asdf");
-            simulatorResourceModel.addAttributeBoolean("test3", true);
+            simulatorResourceModel.addAttributeBoolean("test3", Boolean.parseBoolean("true"));
             simulatorResourceModel.addAttributeDouble("test4", 22.435234);
 
             Map<String, ResourceAttribute> attributes = simulatorResourceModel.getAttributes();
 
             result = result && (((Integer)attributes.get("test1").getValue()) == 1234) &&
                      (((String)attributes.get("test2").getValue()).equals("asdf")) &&
-                     ((Boolean.parseBoolean(attributes.get("test3").getValue() + "")==true)) &&
+                     ((Boolean.parseBoolean(attributes.get("test3").getValue().toString() + "")==true)) &&
                      (((Double)attributes.get("test4").getValue()) == 22.435234);
         }
         catch(Exception e)

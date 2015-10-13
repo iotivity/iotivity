@@ -27,12 +27,12 @@ jobject JDeviceInfo::toJava(DeviceInfo &deviceInfo)
     if (!m_env)
         return nullptr;
 
-    jmethodID constr = m_env->GetMethodID(gSimulatorClassRefs.classDeviceInfo, "<init>", "(V)V");
-    if (constr)
+    jmethodID deviceInfoMId = m_env->GetMethodID(gSimulatorClassRefs.classDeviceInfo, "<init>", "(V)V");
+    if (!deviceInfoMId)
         return nullptr;
 
-    jobject jDeviceInfo = (jobject) m_env->NewObject(gSimulatorClassRefs.classDeviceInfo, constr);
-    if (jDeviceInfo)
+    jobject jDeviceInfo = (jobject) m_env->NewObject(gSimulatorClassRefs.classDeviceInfo, deviceInfoMId);
+    if (!jDeviceInfo)
         return nullptr;
 
     setFieldValue(jDeviceInfo, "mName", deviceInfo.getName());

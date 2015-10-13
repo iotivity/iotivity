@@ -41,7 +41,6 @@ import org.eclipse.swt.widgets.Shell;
 public class AutomationSettingDialog extends TitleAreaDialog {
 
     private CCombo                        autoTypeCmb;
-    private CCombo                        updateFreqCmb;
 
     private String                        automationType;
     private String                        updateFrequencyInMillis;
@@ -81,15 +80,6 @@ public class AutomationSettingDialog extends TitleAreaDialog {
         gd.grabExcessHorizontalSpace = true;
         autoTypeCmb.setLayoutData(gd);
 
-        Label updateFreqLbl = new Label(container, SWT.NONE);
-        updateFreqLbl.setText("Update Frequency(ms)");
-
-        updateFreqCmb = new CCombo(container, SWT.READ_ONLY | SWT.BORDER);
-        gd = new GridData();
-        gd.horizontalAlignment = SWT.FILL;
-        gd.grabExcessHorizontalSpace = true;
-        updateFreqCmb.setLayoutData(gd);
-
         populateSettingsData();
 
         addUIListeners();
@@ -119,13 +109,6 @@ public class AutomationSettingDialog extends TitleAreaDialog {
                 }
                 // Select the default value
                 autoTypeCmb.select(autoTypeCmb.indexOf(value));
-            } else if (settingId.equals(Constants.UPDATE_INTERVAL_IN_MS)) {
-                itr = allowedValues.iterator();
-                while (itr.hasNext()) {
-                    updateFreqCmb.add(itr.next());
-                }
-                // Select the default value
-                updateFreqCmb.select(updateFreqCmb.indexOf(value));
             }
         }
     }
@@ -137,18 +120,10 @@ public class AutomationSettingDialog extends TitleAreaDialog {
                 automationType = autoTypeCmb.getText();
             }
         });
-
-        updateFreqCmb.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                updateFrequencyInMillis = updateFreqCmb.getText();
-            }
-        });
     }
 
     public void setInitialSettings() {
         automationType = autoTypeCmb.getText();
-        updateFrequencyInMillis = updateFreqCmb.getText();
     }
 
     public String getAutomationType() {
