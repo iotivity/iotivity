@@ -24,7 +24,7 @@
 #include <sstream>
 #include "DiscomfortIndexSensorResource.h"
 
-DISensorBundleActivator *bundle;
+DISensorBundleActivator *g_bundleDI;
 
 DISensorBundleActivator::DISensorBundleActivator()
 {
@@ -106,22 +106,22 @@ void DISensorBundleActivator::destroyResource(BundleResource::Ptr resource)
 extern "C" void disensor_externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
         std::string bundleId)
 {
-    bundle = new DISensorBundleActivator();
-    bundle->activateBundle(resourceContainer, bundleId);
+    g_bundleDI = new DISensorBundleActivator();
+    g_bundleDI->activateBundle(resourceContainer, bundleId);
 }
 
 extern "C" void disensor_externalDeactivateBundle()
 {
-    bundle->deactivateBundle();
-    delete bundle;
+    g_bundleDI->deactivateBundle();
+    delete g_bundleDI;
 }
 
 extern "C" void disensor_externalCreateResource(resourceInfo resourceInfo)
 {
-    bundle->createResource(resourceInfo);
+    g_bundleDI->createResource(resourceInfo);
 }
 
 extern "C" void disensor_externalDestroyResource(BundleResource::Ptr pBundleResource)
 {
-    bundle->destroyResource(pBundleResource);
+    g_bundleDI->destroyResource(pBundleResource);
 }
