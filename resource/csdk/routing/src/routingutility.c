@@ -203,7 +203,7 @@ void RMGetRouteOptionIndex(const CAHeaderOption_t *options, uint8_t numOptions, 
     RM_NULL_CHECK_VOID(index, TAG, "index");
     for (uint32_t i = 0; i < numOptions; i++)
     {
-        OC_LOG_V(DEBUG, TAG, "Request- optionID: %d", options[i].optionID);
+        OC_LOG_V(DEBUG, TAG, "Request- optionID: %u", options[i].optionID);
         if (RM_OPTION_MESSAGE_SWITCHING == options[i].optionID)
         {
             OC_LOG_V(INFO, TAG, "Found Option at %d", i);

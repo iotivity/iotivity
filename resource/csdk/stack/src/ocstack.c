@@ -129,7 +129,7 @@ static const char COAP_TCP[] = "coap+tcp:";
              TAG, #arg " is NULL"); return (retVal); } }
 #define VERIFY_NON_NULL_NR(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
              TAG, #arg " is NULL"); return; } }
-#define VERIFY_NON_NULL_V(arg) { if (!arg) {OC_LOG_V(FATAL, TAG, "%s is NULL", #arg);\
+#define VERIFY_NON_NULL_V(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL");\
     goto exit;} }
 
 //TODO: we should allow the server to define this
@@ -3729,12 +3729,12 @@ OCStackResult initResources()
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
 #endif
-
+#ifndef WITH_ARDUINO
     if (result == OC_STACK_OK)
     {
         result = SRMInitSecureResources();
     }
-
+#endif
     return result;
 }
 
