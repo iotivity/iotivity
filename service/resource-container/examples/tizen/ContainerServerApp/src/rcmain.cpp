@@ -65,16 +65,15 @@ create_list_view(appdata_s *ad)
     elm_list_mode_set(list, ELM_LIST_COMPRESS);
     evas_object_smart_callback_add(list, "selected", list_selected_cb, NULL);
 
-    // Main Menu Items Here
-    elm_list_item_append(list, "Resource Container", NULL, NULL, containerCreateUI, nf);
-
     elm_list_go(list);
 
     // This button is set for devices which doesn't have H/W back key.
     btn = elm_button_add(nf);
     elm_object_style_set(btn, "naviframe/end_btn/default");
-    nf_it = elm_naviframe_item_push(nf, "Resource Encapsulation", btn, NULL, list, NULL);
+    nf_it = elm_naviframe_item_push(nf, "Container Server", btn, NULL, list, NULL);
     elm_naviframe_item_pop_cb_set(nf_it, naviframe_pop_cb, ad->win);
+
+    containerCreateUI(nf);
 }
 
 

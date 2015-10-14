@@ -563,7 +563,7 @@ static void startContainer(void *data, Evas_Object *obj, void *event_info)
             s_containerFlag = true;
             s_hueBundleFlag = true;
             logMessage += "CONTAINER STARTED<br>";
-            logMessage += "ADD AND START BUNDLES<br>";
+            logMessage += "HUE BUNDLE STARTED<br>";
         }
         else
         {
@@ -625,11 +625,13 @@ naviframe_pop_cb(void *data, Elm_Object_Item *it)
         evas_object_del(listnew);
         listnew = NULL;
     }
+
+    ui_app_exit();
     return EINA_TRUE;
 }
 
 // Method to set up server screens
-void containerCreateUI(void *data, Evas_Object *obj, void *event_info)
+void containerCreateUI(void *data)
 {
     s_containerFlag = false;
     s_hueBundleFlag = false;
@@ -681,6 +683,6 @@ void containerCreateUI(void *data, Evas_Object *obj, void *event_info)
     evas_object_size_hint_align_set(log_entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
     elm_object_part_content_set(layout, "log", log_entry);
 
-    nf_it = elm_naviframe_item_push(nf, "Resource Container", NULL, NULL, scroller, NULL);
+    nf_it = elm_naviframe_item_push(nf, "Container Server", NULL, NULL, scroller, NULL);
     elm_naviframe_item_pop_cb_set(nf_it, naviframe_pop_cb, NULL);
 }
