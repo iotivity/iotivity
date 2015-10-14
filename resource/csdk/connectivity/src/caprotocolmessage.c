@@ -120,8 +120,13 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
     // and ACKNOWLEDGE can use empty message when code is empty.
     if (CA_MSG_RESET == info->type || (CA_EMPTY == code && CA_MSG_ACKNOWLEDGE == info->type))
     {
-        if ((CA_EMPTY == code) && (info->payloadSize > 0 || info->payload
-            || info->token || info->tokenLength > 0))
+        if (CA_EMPTY != code)
+        {
+            OIC_LOG(ERROR, TAG, "reset is not empty message");
+            return NULL;
+        }
+
+        if (info->payloadSize > 0 || info->payload || info->token || info->tokenLength > 0)
         {
             OIC_LOG(ERROR, TAG, "Empty message has unnecessary data after messageID");
             return NULL;

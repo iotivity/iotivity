@@ -490,10 +490,13 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     // ACK, RST --> remove the CON data
     CAMessageType_t type = CAGetMessageTypeFromPduBinaryData(pdu, size);
     uint16_t messageId = CAGetMessageIdFromPduBinaryData(pdu, size);
+    CAResponseResult_t code = CAGetCodeFromPduBinaryData(pdu, size);
 
-    OIC_LOG_V(DEBUG, TAG, "received pdu, msgtype=%d, msgid=%d", type, messageId);
+    OIC_LOG_V(DEBUG, TAG, "received pdu, msgtype=%d, msgid=%d, code=%d",
+              type, messageId, code);
 
-    if ((CA_MSG_ACKNOWLEDGE != type) && (CA_MSG_RESET != type))
+    if (((CA_MSG_ACKNOWLEDGE != type) && (CA_MSG_RESET != type))
+        || (CA_MSG_RESET == type && CA_EMPTY != code))
     {
         return CA_STATUS_OK;
     }
