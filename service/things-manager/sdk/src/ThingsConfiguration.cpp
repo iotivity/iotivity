@@ -327,10 +327,16 @@ namespace OIC
 
             std::string host = getHostFromURI(oit->getUri());
 
-            tempResource = OCPlatform::constructResourceObject(host, uri, CT_ADAPTER_IP, true,
-                    oit->getResourceTypes(), m_if);
+            try
+            {
+                tempResource = OCPlatform::constructResourceObject(host, uri, CT_ADAPTER_IP, true,
+                        oit->getResourceTypes(), m_if);
 
-            p_resources.push_back(tempResource);
+                p_resources.push_back(tempResource);
+            } catch (std::exception& e)
+            {
+                std::cout << "Exception: " << e.what() << std::endl;
+            }
         }
 
         // Send GET messages to the child resources in turn.
