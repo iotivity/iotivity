@@ -179,8 +179,6 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)
 #else // These macros are defined for Linux, Android, and Arduino
 #define OIC_LOG_INIT()    OICLogInit()
-#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)\
-    OICLogBuffer((level), (tag), (buffer), (bufferSize))
 
 #ifdef ARDUINO
 #define OIC_LOG_CONFIG(ctx)
@@ -189,11 +187,15 @@ void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
 #define OIC_LOG_V(level, tag, ...)
 // To enable OIC_LOG_V, uncomment the below
 //#define OIC_LOG_V(level, tag, format, ...)  OICLogv((level), PCF(tag), __LINE__, PCF(format), __VA_ARGS__)
+#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)\
+    OICLogBuffer((level), PCF(tag), (buffer), (bufferSize))
 #else
 #define OIC_LOG_CONFIG(ctx)    OICLogConfig((ctx))
 #define OIC_LOG_SHUTDOWN()     OICLogShutdown()
 #define OIC_LOG(level, tag, logStr)  OICLog((level), (tag), (logStr))
 #define OIC_LOG_V(level, tag, ...) OICLogv((level), (tag), __VA_ARGS__)
+#define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)\
+    OICLogBuffer((level), tag, (buffer), (bufferSize))
 #endif //ARDUINO
 #endif //__TIZEN__
 #else //TB_LOG

@@ -1275,7 +1275,7 @@ static void CALogPayloadInfo(CAInfo_t *info)
         {
             for (uint32_t i = 0; i < info->numOptions; i++)
             {
-                OIC_LOG_V(DEBUG, TAG, "optionID: %d", info->options[i].optionID);
+                OIC_LOG_V(DEBUG, TAG, "optionID: %u", info->options[i].optionID);
 
                 OIC_LOG_V(DEBUG, TAG, "list: %s", info->options[i].optionData);
             }
@@ -1293,7 +1293,7 @@ static void CALogPayloadInfo(CAInfo_t *info)
             OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) info->token,
                            info->tokenLength);
         }
-        OIC_LOG_V(DEBUG, TAG, "msgID: %d", info->messageId);
+        OIC_LOG_V(DEBUG, TAG, "msgID: %u", info->messageId);
     }
     else
     {
