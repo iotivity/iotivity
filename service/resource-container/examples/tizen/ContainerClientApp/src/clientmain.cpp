@@ -77,7 +77,7 @@ create_list_view(appdata_s *ad)
     // This button is set for devices which doesn't have H/W back key.
     btn = elm_button_add(nf);
     elm_object_style_set(btn, "naviframe/end_btn/default");
-    nf_it = elm_naviframe_item_push(nf, "Resource Encapsulation", btn, NULL, list, NULL);
+    nf_it = elm_naviframe_item_push(nf, "Container Client", btn, NULL, list, NULL);
     elm_naviframe_item_pop_cb_set(nf_it, naviframe_pop_cb, ad->win);
 }
 
