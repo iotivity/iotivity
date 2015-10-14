@@ -713,11 +713,6 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
             {
                 OC_LOG(INFO, TAG, "Build OCAction Instance.");
 
-                if(action)
-                {
-                    OICFree(action->resourceUri);
-                    OICFree(action);
-                }
                 action = (OCAction*) OICMalloc(sizeof(OCAction));
                 VARIFY_POINTER_NULL(action, result, exit)
                 memset(action, 0, sizeof(OCAction));
