@@ -109,6 +109,11 @@ if env.get('LOGGING'):
 if env.get('DTLS_WITH_X509') == '1':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['__WITH_X509__'])
 
+if env.get('WITH_RD') == '1':
+	liboctbstack_env.PrependUnique(CPPPATH = ['../../service/resource-directory/include'])
+	liboctbstack_env.AppendUnique(CPPDEFINES = ['-DWITH_RD'])
+	liboctbstack_env.AppendUnique(LIBS = ['resource_directory'])
+
 liboctbstack_env.Append(LIBS = ['c_common'])
 
 if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
@@ -152,4 +157,3 @@ else:
 	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstackconfig.h', 'resource', 'ocstackconfig.h')
 	liboctbstack_env.UserInstallTargetHeader('stack/include/octypes.h', 'resource', 'octypes.h')
 	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstack.h', 'resource', 'ocstack.h')
-
