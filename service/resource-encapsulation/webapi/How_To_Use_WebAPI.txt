@@ -1,0 +1,75 @@
+Prerequisite
+----------------
+This guide is verified with following set-up :
+
+i)   OS: Ubuntu 14.04 LTS
+ii)  Node.JS Version: 0.12.7
+iii) Browser : Chrome (Windows/Android).
+
+1) Steps for Installing nodejs
+----------------------------------------------
+i)  Create a directory structure to store locally installed packages.
+
+    mkdir -p ~/opt/packages && cd $_
+
+ii) Download latest nodejs from following path and keep it in ~/opt/packages
+
+    http://nodejs.org/dist/v0.12.7/
+
+iii) Unzip the package
+
+    gzip -dc node-v0.12.7-linux-x86.tar.gz | tar xf -
+
+iv) Create a symlink to the currently installed version. We can change the symlink in the future to easily upgrade our node version.
+
+    ln -s ~/opt/packages/node-v0.12.7-linux-x86/ ~/opt/node
+
+v) Open the following file for adding node path
+
+    vi ~/.profile
+
+vi) Write the following in your .profile file:
+
+    # include locally installed packages in PATH
+    if [ -d "$HOME/opt" ]; then
+        PATH="$PATH:$HOME/opt/node/bin"
+        export NODE_PATH="$HOME/opt/node/lib/node_modules"
+    fi
+
+vii) Source your .profile file and test Node.
+
+     source ~/.profile
+
+viii) ~/opt/packages/node-v0.12.7-linux-x86/bin will contain node and npm binaries
+
+ix) Go to ~/opt/packages/node-v0.12.7-linux-x86/bin
+
+x) Install the following packages
+
+  1) run "./npm install socket.io -g --save"
+  2) run "./npm install node-gyp -g --save"
+
+
+2) Step for building RE JS APIS and Running Samples
+----------------------------------------------------
+i) Go to "iotivity/service/resource-encapsulation/webapi"
+
+ii) Configure Node environment using below command
+    node-gyp configure --release
+
+iii) Build .node file using below command
+     node-gyp build
+
+iv) Go to "iotivity/service/resource-encapsulation/webapi/sample/webui/"
+
+iv) Execute the web server using following command
+    node iot-server.js <port>
+    Eg: node iot-server.js 4545
+
+v) Now open the browser in same or different machine which is in same subnet.
+   Execute the following URL :
+         http://ip:port/home.html
+
+        IP, Port should be of device running web server (refer step iv).         
+
+v) Follow on-screen UI for performing appropriate actions (Discovery, Caching, Monitoring..).

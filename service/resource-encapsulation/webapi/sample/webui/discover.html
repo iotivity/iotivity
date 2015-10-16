@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<link rel="stylesheet" type="text/css" href="scripts/style.css">
+<script src="scripts/jquery.js"></script>
+<script src="socket.io/socket.io.js"></script>
+<script >
+
+/*-----------------------------------------------------------
+ This method is called when a particular device is clicked 
+from the list , again send a json request for state.
+-----------------------------------------------------------*/
+var handle={};
+function clickevent()
+{
+   document.location.href = "deviceAttribute.html"+"?handle="+handle[this.id];  
+}
+
+/*---------------------------------------------------
+When discover is done, dynamic list is to be made 
+with all the discovered devices, obtained in response
+-------------------------------------------------------*/
+function list_create()
+{
+    var locate = location.host;
+    var url = "http://" + locate;
+	var socket = io.connect(url);
+		
+	socket.emit('discover-request', {"Resource": {"Type": "core.light"} });
+	socket.emit('discover-request', {"Resource": {"Type": "oic.r.airconditioner"} });
+	socket.emit('discover-request', {"Resource": {"Type": "oic.r.refrigeration"} });
+	
+	socket.on('discover-response', function(data) {
+		$("#wait").css("display", "none");	
+		
+		var deviceName =data.Name;
+		handle[deviceName]=data.Handle;
+
+		var list=document.getElementById("list");
+		var txt = document.createTextNode(deviceName+"   ");
+		var button=document.createElement("BUTTON");
+		var img_ele=document.createElement("img");
+		var imgPath="images/" + deviceName+".png";
+		var listElement = document.createElement("li");
+		
+	
+		button.setAttribute("class","btn");
+		button.setAttribute("id",deviceName);
+		button.style.fontSize= "20px";
+		button.style.textAlign="center";			
+		button.style.width="200px";
+		button.style.height="50px";
+		button.onclick=clickevent;
+	
+		img_ele.setAttribute("src",imgPath);
+		img_ele.setAttribute("width",'30px');
+		img_ele.setAttribute("height",'30px');
+		img_ele.align="left";
+		
+		button.appendChild(img_ele);
+		button.appendChild(txt);
+		
+		listElement.appendChild(button);
+	
+		list.appendChild(listElement);		
+	});
+	//loading img	
+	$("#wait").css("display", "block");	
+}
+
+</script>
+	
+<title>IoTivity Smart Home Demo</title>
+</head>
+<div class="container" border="width:5px;style:solid color:red">
+ <body onload="list_create()">
+	<header>
+		<h1>
+			<p class="p1" align="center" style="color:#007D7D;font-family:verdana"> Smart Home</p>	
+		</h1>
+		<h4>
+			<p class="p1" align="center" style="color:#335C33;font-family:verdana">Discovered Smart Appliances In Your Home Network</p>
+		</h4>
+	</header>
+	<div id="wait" style="display:none;width:69px;height:89px; solid black;position:absolute;top:50%;left:45%;padding:2px"><img src='images/Loading.gif' width="64" height="64" /><br>Loading..</div>
+	<ul id="list"></ul>	
+</body>	
+</div>
+</html>

@@ -1,0 +1,309 @@
+<!doctype html>
+<html>
+ <head>
+	<link rel="stylesheet" type="text/css" href="scripts/style.css">
+	<script src="socket.io/socket.io.js"></script>  
+    <script src="scripts/jquery.js"></script>	
+ </head>
+
+<script> 
+
+var attributeItems={};
+var handle = location.search.replace(/^.*?\=/, '');
+var obj = {};
+obj["Handle"]=handle;
+	
+function list_create()
+{    
+	$("#headValue").hide();
+	$("#set").hide();
+	$("#attribute").hide();
+	$("#value").hide();
+	$("#text").hide();
+	$("#text1").hide();
+	$("#text2").hide();
+	$("#monitor").hide();
+	$("#monitorLabel").hide();
+	$("#caching").hide();
+	$("#cachingLabel").hide();
+	$("#status").hide();
+	$("#statusField").hide();
+	$("#address").hide();
+	$("#addressField").hide();
+	$("#type").hide();
+	$("#typeField").hide();
+	
+
+	var locate = location.host;
+	var url = "http://" + locate + "/access";
+	posting=$.post( url,JSON.stringify(obj));
+	
+	$("#wait").css("display", "block");
+	 
+	var attributeNames=[] ;
+	var attributeValues=[];
+	
+	posting.done(function( data ) 
+	{
+		$("#wait").css("display", "none");
+		attributeItems=data;
+	
+		var name=data["Name"];
+		var path="images/" + name+".png";
+		var img= '<img src="'+path+'" style="height:30px;width:30px;padding:5px 10px" align="left">    <img id="statusImage" src="images/Alive.png" style="height:20px;width:20px;padding: 5px 10px" align="right" >';
+		 
+		$("#headValue").html(data["Name"]+img );
+		  
+		if(data["Status"]!=undefined){	
+			$("#status").attr("placeholder",data["Status"]);
+			updateStatus();
+		}
+		
+		if(data["Address"]!=undefined){	
+			$("#address").attr("placeholder",data["Address"]);
+		}
+		
+		if(data["Type"]!=undefined){	
+			$("#type").attr("placeholder",data["Type"]);
+		}
+		
+		$("#headValue").show();
+		$("#status").show();
+		$("#statusField").show();
+		$("#address").show();
+		$("#addressField").show();
+		$("#type").show();
+		$("#typeField").show();			
+		
+		var obj=data["Attributes"];
+		var loopVar=0;
+
+		for (var key in obj) 
+		{ 	
+		  if (obj.hasOwnProperty(key)) 
+		  {
+			attributeNames[loopVar]=key;
+			attributeValues[loopVar]=obj[key];
+		  }
+		  loopVar++;
+		}
+		
+		for (var i in attributeNames) 
+		{
+			var txt = document.createTextNode(attributeNames[i]+"   ");
+			var div = $("<div />");
+			div.html(GetDynamicTextBox(attributeNames[i],attributeValues[i],typeof(attributeValues[i])));
+			$("#TextBoxContainer").append(div);	
+		}	
+
+		$("#text").show();
+		$("#text1").show();
+		$("#text2").show();
+		$("#attribute").show();
+		$("#value").show();
+		$("#set").show();
+		$("#monitor").show();
+		$("#monitorLabel").show();
+		$("#caching").show();
+		$("#cachingLabel").show();
+		
+		$("#set").prop('disabled', true);	
+	});
+}
+
+function GetDynamicTextBox(key,value,type) {
+    return '<input name = "DynamicTextBox"  class="placeHolder" type="text" size="9"  placeholder = "' + key + '" onclick=setAttField(placeholder) readonly />&nbsp;'  +
+          '<input name = "'+type+'" class="placeHolder" type="text" size="15" id="' + key + '"  placeholder = "' + value + '" readonly />&nbsp;'+
+		   '<br>'
+}
+
+function setAttField(value,pos){
+
+	$("#attribute").val(value);
+	var defaultVal = 0;
+	$("#value").val(defaultVal);
+	$("#set").prop('disabled', false);
+}
+
+function setAttributes(){
+	
+	var locate = location.host;
+	var url = "http://" + locate + "/setattr";
+	
+	var tempAttrItems=attributeItems;
+    
+	var typeCheck="#"+$("#attribute").val();
+	
+	if($(typeCheck).attr('name')=="boolean")
+	{
+		if($("#value").val()=="true")
+			tempAttrItems["Attributes"][$("#attribute").val()]=Boolean(1);
+		else
+			tempAttrItems["Attributes"][$("#attribute").val()]=Boolean(0);
+	}
+	else if($(typeCheck).attr('name')=="string")
+	{
+		tempAttrItems["Attributes"][$("#attribute").val()]=String($("#value").val());
+	}
+	else 
+	{
+		tempAttrItems["Attributes"][$("#attribute").val()]=Number($("#value").val());
+	}
+	
+    var posting = $.post( url, JSON.stringify(tempAttrItems) );
+	
+	posting.done(function( data ) 
+	{
+			attributeItems=data;
+			updateAttributes();
+	});
+}
+
+
+function updateAttributes()
+{
+	var tempAttrItems=attributeItems["Attributes"];
+	var attributeNames=[];
+	var attributeValues=[];
+	var loopVar=0;
+	for (var key in tempAttrItems) 
+	{ 	
+	  if (tempAttrItems.hasOwnProperty(key)) 
+	  {
+		attributeNames[loopVar]=key;
+		attributeValues[loopVar]=tempAttrItems[key];
+	  }
+	  loopVar++;
+	}
+			
+	for (var i in attributeNames) 
+	{
+		var id="#"+attributeNames[i];
+		$(id).attr("placeholder",attributeValues[i]);	
+	}
+	updateStatus();				
+}
+
+
+function startMonitoring(id){
+	var status=document.getElementById(id);
+	var locate = location.host;
+	var url = "http://" + locate;
+	if(status.checked)
+	{
+		var socket = io.connect(url);
+		socket.emit('start-monitor', JSON.stringify(attributeItems));
+		socket.on('monitor-response', function(data) {
+		
+			if(data["Status"]!=undefined){	
+				attributeItems["Status"] = data["Status"];
+				updateStatus();	
+			}	
+		});
+	}
+	else
+	{	
+	    var socket = io.connect(url);
+		socket.emit('stop-monitor', JSON.stringify(attributeItems));
+	}
+}
+
+function updateStatus(){
+	
+	if(attributeItems["Status"]==0){ 
+	$("#statusImage").attr("src","images/None.png");
+	$("#status").attr("placeholder","None");
+	}
+	else if(attributeItems["Status"]==1){ 
+	$("#statusImage").attr("src","images/Alive.png");
+	$("#status").attr("placeholder","Alive");
+	}
+	else if(attributeItems["Status"]==2){ 
+	$("#statusImage").attr("src","images/Requested.png");
+	$("#status").attr("placeholder","Waiting..");
+	}
+	else if(attributeItems["Status"]==3){ 
+	$("#statusImage").attr("src","images/LostSignal.png");
+	$("#status").attr("placeholder","Signal Lost");
+	}
+	else if(attributeItems["Status"]==4){ 
+	$("#statusImage").attr("src","images/Dead.png");
+	$("#status").attr("placeholder","Destroyed");
+	}	
+}
+
+function startCaching(id){
+	var locate = location.host;
+	var url = "http://" + locate;
+	var status=document.getElementById(id);
+	if(status.checked)
+	{
+		var socket = io.connect(url);
+		socket.emit('start-caching', JSON.stringify(attributeItems));
+		socket.on('caching-response', function(data) {
+			attributeItems=data;
+			updateAttributes();
+		});
+	}
+	else
+	{  
+		var socket = io.connect(url);
+		socket.emit('stop-caching', JSON.stringify(obj));	
+	}
+}
+</script>   
+ <div class="container" border="width:5px;style:solid color:red">  
+<body onload="list_create()">
+    <header>
+		<h1>
+			<p class="p1" align="center" style="color:#007D7D;font-family:verdana"> Smart Home</p>	
+		</h1>
+		<h4>
+			<p class="p1" align="center" style="color:#335C33;font-family:verdana">Access And Monitor Your Appliances</p>
+		</h4>	
+	</header>
+	<br>
+	<p>
+	<button style="font-family:verdana; font-weight: bold" class="btn" id="headValue" type="submit" style="width:200px;height:50px;textAlign:center;fontSize= 20px"/><b> </b></button>
+	</p>
+
+
+	<form>
+		<label for="monitor" id="monitorLabel" style="font-family:verdana"><input type="checkbox" class="checkboxes" id="monitor" onclick="startMonitoring(id)" > Resource Monitoring </label>
+		<label for="caching" id="cachingLabel" style="font-family:verdana"><input type="checkbox" class="checkboxes" id="caching" onclick="startCaching(id)" > Resource Caching</label> <br><br>
+	</form>
+
+
+	<div id="TextContainer" style="font-family:verdana;  outline:none; border:none; border-style: none;">
+		<p id="text"><font color="brown"> <b> Device Information </b></font></p> 
+   
+		<input id="statusField" class="placeHolder" type="text" size="9"  placeholder = "Status" readonly />  <input class="placeHolder" id= "status" type="text" size="15" placeholder = "NULL" readonly /> <br>
+
+		<input  id= "addressField" class="placeHolder" type="text" size="9"  placeholder = "Address" readonly />  <input class="placeHolder" id= "address" type="text" size="15" placeholder = "NULL" readonly /> <br>
+
+		<input  id= "typeField" class="placeHolder" type="text" size="9"  placeholder = "Type" readonly />  <input class="placeHolder" id= "type" type="text" size="15" placeholder = "NULL" readonly /> <br>
+	
+	</div>
+	<br>
+
+
+	<div id="TextBoxContainer" style="font-family:verdana">
+	<p id="text1"><font color="brown"><b> Device Attributes </b></font>
+		<!--Attribute Textboxes will be dynamically added here -->
+	</div><br>
+
+
+	<p style="font-family:verdana" id="text2" > <font color="brown"> <b>Set Attribute Value</b></font><br>
+	<font size="2px" color="red">(Click on attribute name from above device attribute list)</font></p></p> 
+
+	<input style="font-family:verdana" id="attribute" type="text" name="text" size="7" placeholder="Attribute" readonly />	<input id="value" type="text" name="text" size="7" placeholder="Value" /><br>
+
+
+	<p>
+	<button style="font-family:verdana" class="btn" id="set" onclick="setAttributes()" />Set Value</button>
+	</p>
+
+	<div id="wait" style="display:none;width:69px;height:89px; solid black;position:absolute;top:50%;left:45%;padding:2px"><img src='images/Loading.gif' width="64" height="64" /><br>Loading..</div>
+</body>
+</div>
+</html>
