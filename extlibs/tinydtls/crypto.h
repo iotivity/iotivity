@@ -42,11 +42,12 @@
 #include "ecc/ecc.h"
 
 /* TLS_PSK_WITH_AES_128_CCM_8 */
-#define DTLS_MAC_KEY_LENGTH    0
+#define DTLS_CCM_MAC_KEY_LENGTH        0       /* MAC Key length for AES-CCM cipher suites */
+#define DTLS_CBC_MAC_KEY_LENGTH       32       /* MAC Key length for AES-CBC Cipher suites */
 #define DTLS_KEY_LENGTH        16 /* AES-128 */
 #define DTLS_BLK_LENGTH        16 /* AES-128 */
 #define DTLS_MAC_LENGTH        DTLS_HMAC_DIGEST_SIZE
-#define DTLS_IV_LENGTH         4  /* length of nonce_explicit */
+#define DTLS_CCM_IV_LENGTH     4  /* length of nonce_explicit */
 #define DTLS_CBC_IV_LENGTH     16
 
 /** 
@@ -54,8 +55,14 @@
  * be large enough to hold the pre_master_secret, i.e. twice the length of the 
  * pre-shared key + 1.
  */
+#define CCM_KB_LENGTH  \
+    (2 * DTLS_KEY_LENGTH + 2 * DTLS_CCM_IV_LENGTH)
+
+#define CBC_KB_LENGTH  \
+    (2 * DTLS_CBC_MAC_KEY_LENGTH + 2 * DTLS_KEY_LENGTH )
+
 #define MAX_KEYBLOCK_LENGTH  \
-  (2 * DTLS_MAC_KEY_LENGTH + 2 * DTLS_KEY_LENGTH + 2 * DTLS_IV_LENGTH)
+    ((CCM_KB_LENGTH) > (CBC_KB_LENGTH) ? (CCM_KB_LENGTH) : (CBC_KB_LENGTH) )
 
 /** Length of DTLS master_secret */
 #define DTLS_MASTER_SECRET_LENGTH 48
@@ -151,9 +158,59 @@ typedef struct {
 /* The following macros provide access to the components of the
  * key_block in the security parameters. */
 
+static inline int dtls_kb_mac_secret_size(dtls_cipher_t cipher)
+{
+    switch(cipher)
+    {
+        case TLS_NULL_WITH_NULL_NULL:
+
+            return 0;
+            break;
+
+        case TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256:
+        case TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256:
+
+            return DTLS_CBC_MAC_KEY_LENGTH;
+            break;
+
+        case TLS_PSK_WITH_AES_128_CCM_8:
+        case TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8:
+
+            return DTLS_CCM_MAC_KEY_LENGTH;
+            break;
+    }
+
+    return -1;
+}
+
+
+static inline int dtls_kb_iv_size(dtls_cipher_t cipher)
+{
+    switch(cipher)
+    {
+        case TLS_NULL_WITH_NULL_NULL:
+        case TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256:
+        case TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256:
+
+            return 0;
+            break;
+
+        case TLS_PSK_WITH_AES_128_CCM_8:
+        case TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8:
+
+            return DTLS_CCM_IV_LENGTH;
+            break;
+    }
+
+    return -1;
+}
+
+
+
+
 #define dtls_kb_client_mac_secret(Param, Role) ((Param)->key_block)
 #define dtls_kb_server_mac_secret(Param, Role)				\
-  (dtls_kb_client_mac_secret(Param, Role) + DTLS_MAC_KEY_LENGTH)
+  (dtls_kb_client_mac_secret(Param, Role) + dtls_kb_mac_secret_size((Param)->cipher))
 #define dtls_kb_remote_mac_secret(Param, Role)				\
   ((Role) == DTLS_SERVER						\
    ? dtls_kb_client_mac_secret(Param, Role)				\
@@ -162,9 +219,8 @@ typedef struct {
   ((Role) == DTLS_CLIENT						\
    ? dtls_kb_client_mac_secret(Param, Role)				\
    : dtls_kb_server_mac_secret(Param, Role))
-#define dtls_kb_mac_secret_size(Param, Role) DTLS_MAC_KEY_LENGTH
 #define dtls_kb_client_write_key(Param, Role)				\
-  (dtls_kb_server_mac_secret(Param, Role) + DTLS_MAC_KEY_LENGTH)
+  (dtls_kb_server_mac_secret(Param, Role) + dtls_kb_mac_secret_size((Param)->cipher))
 #define dtls_kb_server_write_key(Param, Role)				\
   (dtls_kb_client_write_key(Param, Role) + DTLS_KEY_LENGTH)
 #define dtls_kb_remote_write_key(Param, Role)				\
@@ -179,7 +235,7 @@ typedef struct {
 #define dtls_kb_client_iv(Param, Role)					\
   (dtls_kb_server_write_key(Param, Role) + DTLS_KEY_LENGTH)
 #define dtls_kb_server_iv(Param, Role)					\
-  (dtls_kb_client_iv(Param, Role) + DTLS_IV_LENGTH)
+  (dtls_kb_client_iv(Param, Role) + dtls_kb_iv_size((Param)->cipher))
 #define dtls_kb_remote_iv(Param, Role)					\
   ((Role) == DTLS_SERVER						\
    ? dtls_kb_client_iv(Param, Role)					\
@@ -188,11 +244,10 @@ typedef struct {
   ((Role) == DTLS_CLIENT						\
    ? dtls_kb_client_iv(Param, Role)					\
    : dtls_kb_server_iv(Param, Role))
-#define dtls_kb_iv_size(Param, Role) DTLS_IV_LENGTH
 
 #define dtls_kb_size(Param, Role)					\
-  (2 * (dtls_kb_mac_secret_size(Param, Role) +				\
-	dtls_kb_key_size(Param, Role) + dtls_kb_iv_size(Param, Role)))
+  (2 * (dtls_kb_mac_secret_size((Param)->cipher) +			\
+	dtls_kb_key_size(Param, Role) + dtls_kb_iv_size((Param)->cipher)))
 
 /* just for consistency */
 #define dtls_kb_digest_size(Param, Role) DTLS_MAC_LENGTH
@@ -275,7 +330,8 @@ void dtls_mac(dtls_hmac_context_t *hmac_ctx,
 int dtls_encrypt(const unsigned char *src, size_t length,
 		 unsigned char *buf,
 		 unsigned char *nounce,
-		 unsigned char *key, size_t keylen,
+		 unsigned char *write_key, size_t write_keylen,
+		 unsigned char *mac_key, size_t mac_keylen,
 		 const unsigned char *aad, size_t aad_length,
 		 const dtls_cipher_t cipher);
 
@@ -300,7 +356,8 @@ int dtls_encrypt(const unsigned char *src, size_t length,
 int dtls_decrypt(const unsigned char *src, size_t length,
 		 unsigned char *buf,
 		 unsigned char *nounce,
-		 unsigned char *key, size_t keylen,
+		 unsigned char *read_key, size_t read_keylen,
+		 unsigned char *mac_key, size_t mac_keylen,
 		 const unsigned char *a_data, size_t a_data_length,
 		 const dtls_cipher_t cipher);
 
