@@ -660,11 +660,11 @@ static void dtls_debug_keyblock(dtls_security_parameters_t *config)
   dtls_debug("key_block (%d bytes):\n", dtls_kb_size(config, peer->role));
   dtls_debug_dump("  client_MAC_secret",
 		  dtls_kb_client_mac_secret(config, peer->role),
-		  dtls_kb_mac_secret_size(config, peer->role));
+		  dtls_kb_mac_secret_size(config->cipher));
 
   dtls_debug_dump("  server_MAC_secret",
 		  dtls_kb_server_mac_secret(config, peer->role),
-		  dtls_kb_mac_secret_size(config, peer->role));
+		  dtls_kb_mac_secret_size(config->cipher));
 
   dtls_debug_dump("  client_write_key",
 		  dtls_kb_client_write_key(config, peer->role),
@@ -676,11 +676,11 @@ static void dtls_debug_keyblock(dtls_security_parameters_t *config)
 
   dtls_debug_dump("  client_IV",
 		  dtls_kb_client_iv(config, peer->role),
-		  dtls_kb_iv_size(config, peer->role));
+		  dtls_kb_iv_size(config->cipher));
 
   dtls_debug_dump("  server_IV",
 		  dtls_kb_server_iv(config, peer->role),
-		  dtls_kb_iv_size(config, peer->role));
+		  dtls_kb_iv_size(config->cipher));
 }
 
 /** returns the name of the goven handshake type number.
@@ -835,6 +835,9 @@ calculate_key_block(dtls_context_t *ctx,
   /* create key_block from master_secret
    * key_block = PRF(master_secret,
                     "key expansion" + tmp.random.server + tmp.random.client) */
+  security->cipher = handshake->cipher;
+  security->compression = handshake->compression;
+  security->rseq = 0;
 
   dtls_prf(master_secret,
 	   DTLS_MASTER_SECRET_LENGTH,
@@ -847,9 +850,6 @@ calculate_key_block(dtls_context_t *ctx,
   memcpy(handshake->tmp.master_secret, master_secret, DTLS_MASTER_SECRET_LENGTH);
   dtls_debug_keyblock(security);
 
-  security->cipher = handshake->cipher;
-  security->compression = handshake->compression;
-  security->rseq = 0;
 
   return 0;
 }
@@ -1471,6 +1471,8 @@ dtls_prepare_record(dtls_peer_t *peer, dtls_security_parameters_t *security,
                start + DTLS_CBC_IV_LENGTH, nonce,
                dtls_kb_local_write_key(security, peer->role),
                dtls_kb_key_size(security, peer->role),
+               dtls_kb_local_mac_secret(security, peer->role),
+               dtls_kb_mac_secret_size(security->cipher),
                NULL, 0,
                security->cipher);
      if (res < 0)
@@ -1553,8 +1555,8 @@ dtls_prepare_record(dtls_peer_t *peer, dtls_security_parameters_t *security,
 
     memset(nonce, 0, DTLS_CCM_BLOCKSIZE);
     memcpy(nonce, dtls_kb_local_iv(security, peer->role),
-        dtls_kb_iv_size(security, peer->role));
-    memcpy(nonce + dtls_kb_iv_size(security, peer->role), start, 8); /* epoch + seq_num */
+        dtls_kb_iv_size(security->cipher));
+    memcpy(nonce + dtls_kb_iv_size(security->cipher), start, 8); /* epoch + seq_num */
 
     dtls_debug_dump("nonce:", nonce, DTLS_CCM_BLOCKSIZE);
     dtls_debug_dump("key:", dtls_kb_local_write_key(security, peer->role),
@@ -1572,6 +1574,8 @@ dtls_prepare_record(dtls_peer_t *peer, dtls_security_parameters_t *security,
     res = dtls_encrypt(start + 8, res - 8, start + 8, nonce,
                dtls_kb_local_write_key(security, peer->role),
                dtls_kb_key_size(security, peer->role),
+               dtls_kb_local_mac_secret(security, peer->role),
+               dtls_kb_mac_secret_size(security->cipher),
                A_DATA, A_DATA_LEN,
                security->cipher);
 
@@ -2815,8 +2819,8 @@ dtls_send_client_hello(dtls_context_t *ctx, dtls_peer_t *peer,
                        uint8 cookie[], size_t cookie_length) {
   uint8 buf[DTLS_CH_LENGTH_MAX];
   uint8 *p = buf;
-  uint8_t cipher_size;
-  uint8_t extension_size;
+  uint8_t cipher_size = 0;
+  uint8_t extension_size = 0;
   int psk = 0;
   int ecdsa = 0;
   int ecdh_anon = 0;
@@ -2850,7 +2854,13 @@ dtls_send_client_hello(dtls_context_t *ctx, dtls_peer_t *peer,
    }
 
   cipher_size = 2 + ((ecdsa || x509) ? 2 : 0) + (psk ? 2 : 0) + (ecdh_anon ? 2 : 0) + (ecdhe_psk ? 2 : 0);
-  extension_size = (ecdsa || x509) ? (2 + 6 + 6 + 8 + 6) : 0;
+
+  /* Is extension needed? */
+  extension_size = (ecdsa || x509 || ecdhe_psk || ecdh_anon) ? 2 : 0;
+  /* Supported EC and Supported Point Formats */
+  extension_size += (ecdsa || x509 || ecdhe_psk | ecdh_anon) ? ( 8 + 6) : 0;
+  /* Supported Client and Server Cert Types */
+  extension_size += (ecdsa || x509) ? ( 6 + 6) : 0;
 
   if (cipher_size == 0) {
     dtls_crit("no cipher callbacks implemented\n");
@@ -2944,7 +2954,7 @@ dtls_send_client_hello(dtls_context_t *ctx, dtls_peer_t *peer,
 
     p += sizeof(uint8);
 
-    /* client certificate type extension */
+    /* server certificate type extension */
     dtls_int_to_uint16(p, TLS_EXT_SERVER_CERTIFICATE_TYPE);
     p += sizeof(uint16);
 
@@ -2964,7 +2974,9 @@ dtls_send_client_hello(dtls_context_t *ctx, dtls_peer_t *peer,
       dtls_int_to_uint8(p, TLS_CERT_TYPE_RAW_PUBLIC_KEY);
 
     p += sizeof(uint8);
+  }
 
+  if (ecdsa || x509 || ecdhe_psk || ecdh_anon ) {
     /* elliptic_curves */
     dtls_int_to_uint16(p, TLS_EXT_ELLIPTIC_CURVES);
     p += sizeof(uint16);
@@ -3646,6 +3658,8 @@ decrypt_verify(dtls_peer_t *peer, uint8 *packet, size_t length,
     clen = dtls_decrypt(*cleartext, clen, *cleartext, nonce,
 		       dtls_kb_remote_write_key(security, peer->role),
 		       dtls_kb_key_size(security, peer->role),
+                       dtls_kb_remote_mac_secret(security, peer->role),
+                       dtls_kb_mac_secret_size(security->cipher),
 		       NULL, 0,
 		       security->cipher);
 
@@ -3663,10 +3677,10 @@ decrypt_verify(dtls_peer_t *peer, uint8 *packet, size_t length,
 
     memset(nonce, 0, DTLS_CCM_BLOCKSIZE);
     memcpy(nonce, dtls_kb_remote_iv(security, peer->role),
-        dtls_kb_iv_size(security, peer->role));
+        dtls_kb_iv_size(security->cipher));
 
     /* read epoch and seq_num from message */
-    memcpy(nonce + dtls_kb_iv_size(security, peer->role), *cleartext, 8);
+    memcpy(nonce + dtls_kb_iv_size(security->cipher), *cleartext, 8);
     *cleartext += 8;
     clen -= 8;
 
@@ -3687,6 +3701,8 @@ decrypt_verify(dtls_peer_t *peer, uint8 *packet, size_t length,
     clen = dtls_decrypt(*cleartext, clen, *cleartext, nonce,
 		       dtls_kb_remote_write_key(security, peer->role),
 		       dtls_kb_key_size(security, peer->role),
+                       dtls_kb_remote_mac_secret(security, peer->role),
+                       dtls_kb_mac_secret_size(security->cipher),
 		       A_DATA, A_DATA_LEN,
 		       security->cipher);
   }
