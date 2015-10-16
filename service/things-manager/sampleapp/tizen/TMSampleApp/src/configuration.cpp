@@ -521,23 +521,9 @@ static void findAllResources(void *data, Evas_Object *obj, void *event_info)
     dlog_print(DLOG_INFO, LOG_TAG, "#### calling findCandidateResources ENTRY!!!!");
     std::vector<string> resourceTypes;
     resourceTypes.push_back("oic.wk.con");
-
-    if (NULL != g_groupManager)
-    {
-        g_groupManager->findCandidateResources(resourceTypes, &onFoundCandidateResource,
-                                               FINDRESOURCE_TIMEOUT);
-    }
-
-    resourceTypes.clear();
     resourceTypes.push_back("oic.wk.mnt");
-    if (NULL != g_groupManager)
-    {
-        g_groupManager->findCandidateResources(resourceTypes, &onFoundCandidateResource,
-                                               FINDRESOURCE_TIMEOUT);
-    }
-
-    resourceTypes.clear();
     resourceTypes.push_back("factoryset");
+
     if (NULL != g_groupManager)
     {
         g_groupManager->findCandidateResources(resourceTypes, &onFoundCandidateResource,
@@ -554,6 +540,15 @@ static void getConfiguration(void *data, Evas_Object *obj, void *event_info)
     {
         dlog_print(DLOG_ERROR, LOG_TAG, "Note that you first create a group to use this command");
         string logMessage = "FIRST CREATE GROUP <br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
+        return;
+    }
+
+    if (NULL == g_configurationResource)
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "Configuration Resource not found.");
+        string logMessage = "FIRST FIND CONFIGURATION RESOURCE <br>";
         dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
         return;
@@ -579,11 +574,11 @@ static void getConfiguration(void *data, Evas_Object *obj, void *event_info)
     dlog_print(DLOG_INFO, LOG_TAG, "#### getConfiguration EXIT!!!!");
 }
 
-// Updates the configuration i.e. region value to INDIA
-static void updateConfiguration(std::string newRegionValue)
+// Updates the configuration i.e. Device name to OIC Device
+static void updateConfiguration(std::string newDeviceName)
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### updateConfiguration ENTRY!!!!");
-    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", newRegionValue.c_str());
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", newDeviceName.c_str());
 
     if (NULL == g_configurationCollection || NULL == g_configurationCollection.get())
     {
@@ -595,9 +590,18 @@ static void updateConfiguration(std::string newRegionValue)
         return;
     }
 
+    if (NULL == g_configurationResource)
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "Configuration Resource not found.");
+        string logMessage = "FIRST FIND CONFIGURATION RESOURCE <br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
+        return;
+    }
+
     OCStackResult result;
-    ConfigurationName name = DEFAULT_REGION;
-    ConfigurationValue value = newRegionValue;
+    ConfigurationName name = DEFAULT_DEVICENAME;
+    ConfigurationValue value = newDeviceName;
 
     std::map< ConfigurationName, ConfigurationValue > configurations;
     configurations.insert(std::make_pair(name, value));
@@ -637,6 +641,15 @@ static void factoryReset(void *data, Evas_Object *obj, void *event_info)
         return;
     }
 
+    if (NULL == g_maintenanceResource)
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "Maintenance Resource not found.");
+        string logMessage = "FIRST FIND MAINTENANCE RESOURCE <br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
+        return;
+    }
+
     OCStackResult result;
 
     try
@@ -668,6 +681,15 @@ static void reboot(void *data, Evas_Object *obj, void *event_info)
         dlog_print(DLOG_INFO, LOG_TAG, "Note that you first create a group to use this command");
         string logMessage = "FIRST CREATE GROUP <br>";
         logMessage += "----------------------<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
+        return;
+    }
+
+    if (NULL == g_maintenanceResource)
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "Maintenance Resource not found.");
+        string logMessage = "FIRST FIND MAINTENANCE RESOURCE <br>";
         dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
         return;
@@ -779,7 +801,7 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
 }
 
 static void
-list_update_region_cb(void *data, Evas_Object *obj, void *event_info)
+list_update_devicename_cb(void *data, Evas_Object *obj, void *event_info)
 {
     if (NULL == g_configurationCollection || NULL == g_configurationCollection.get())
     {
@@ -800,7 +822,7 @@ list_update_region_cb(void *data, Evas_Object *obj, void *event_info)
     elm_popup_align_set(popup, ELM_NOTIFY_ALIGN_FILL, 1.0);
     eext_object_event_callback_add(popup, EEXT_CALLBACK_BACK, eext_popup_back_cb, NULL);
     evas_object_size_hint_weight_set(popup, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    elm_object_part_text_set(popup, "title,text", "Enter New Region Value");
+    elm_object_part_text_set(popup, "title,text", "Enter new device name to update");
 
     layout = elm_layout_add(popup);
     elm_layout_file_set(layout, ELM_DEMO_EDJ, "popup_region_text");
@@ -813,7 +835,7 @@ list_update_region_cb(void *data, Evas_Object *obj, void *event_info)
     evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
     evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
     eext_entry_selection_back_event_allow_set(entry, EINA_TRUE);
-    elm_object_part_text_set(entry, "elm.guide", "region value");
+    elm_object_part_text_set(entry, "elm.guide", "e.g. OIC Device");
     elm_object_part_content_set(layout, "elm.swallow.content" , entry);
 
     region_popup_fields *popup_fields;
@@ -927,8 +949,8 @@ configuration_cb(void *data, Evas_Object *obj, void *event_info)
     elm_list_item_append(list, "Find All Resources",
                          NULL, NULL, findAllResources, NULL);
     elm_list_item_append(list, "Get a Configuration Resource", NULL, NULL, getConfiguration, NULL);
-    elm_list_item_append(list, "Update Attribute (Region)", NULL, NULL,
-                         list_update_region_cb, nf);
+    elm_list_item_append(list, "Update Attribute (Device Name)", NULL, NULL,
+                         list_update_devicename_cb, nf);
     elm_list_item_append(list, "Factory Reset", NULL, NULL, factoryReset, NULL);
     elm_list_item_append(list, "Reboot", NULL, NULL, reboot, NULL);
     elm_list_item_append(list, "Get Supported Configuration Units", NULL, NULL,
