@@ -12,11 +12,41 @@
 from the list , again send a json request for state.
 -----------------------------------------------------------*/
 var handle={};
+var requestDiscoveryMap={};
+var reqDiscoveryId=0;
+var PROFILING_ENABLED=1;
 function clickevent()
-{
+{  		
    document.location.href = "deviceAttribute.html"+"?handle="+handle[this.id];  
 }
 
+function print_Discovery_Request_Log(discoverResourceType)
+{
+	if(PROFILING_ENABLED == 1)
+	{
+		reqDiscoveryId++;
+		var curTime=new Date().getTime();
+		
+		var requestTime = {"id" : reqDiscoveryId, "time" : curTime} ;
+		
+		requestDiscoveryMap[discoverResourceType] = requestTime;
+		
+		console.log("[PROFILING][Discovery] [ReqId] = "+reqDiscoveryId+  " [Time] = "+curTime);	}
+
+}
+
+function print_Discovery_Response_Log(resourceType)
+{
+	if(PROFILING_ENABLED == 1)
+	{
+		var requestTime = requestDiscoveryMap[resourceType];
+		var curTime=new Date().getTime();
+		
+		var totalTime = curTime - requestTime.time;
+		
+		console.log("[PROFILING][Discovery] [RespId] = "+requestTime.id+  " [Time] = "+ curTime+ " [TotalTime] = " + totalTime);	
+	}
+}
 /*---------------------------------------------------
 When discover is done, dynamic list is to be made 
 with all the discovered devices, obtained in response
@@ -26,12 +56,18 @@ function list_create()
     var locate = location.host;
     var url = "http://" + locate;
 	var socket = io.connect(url);
-		
-	socket.emit('discover-request', {"Resource": {"Type": "core.light"} });
-	socket.emit('discover-request', {"Resource": {"Type": "oic.r.airconditioner"} });
-	socket.emit('discover-request', {"Resource": {"Type": "oic.r.refrigeration"} });
+	socket.emit('discover-request', {"Resource": {"Type": "oic.r.airconditioner"} });				print_Discovery_Request_Log("oic.r.airconditioner");
+	
+	socket.emit('discover-request', {"Resource": {"Type": "core.light"} });							print_Discovery_Request_Log("core.light");	
+	
+	socket.emit('discover-request', {"Resource": {"Type": "oic.r.refrigeration"} });				print_Discovery_Request_Log("oic.r.refrigeration");
 	
 	socket.on('discover-response', function(data) {
+
+		///////////////////////////////////
+		print_Discovery_Response_Log(data.Type);
+		//////////////////////////////////
+
 		$("#wait").css("display", "none");	
 		
 		var deviceName =data.Name;

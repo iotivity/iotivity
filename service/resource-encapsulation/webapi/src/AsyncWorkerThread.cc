@@ -149,6 +149,6 @@ void WorkAttributesReceivedAsyncComplete(uv_work_t *req, int status)
 
 void WorkAsync(uv_work_t *req)
 {
-    cout << "workAsync API" << endl;
+    // cout << "workAsync API" << endl;
 }
 

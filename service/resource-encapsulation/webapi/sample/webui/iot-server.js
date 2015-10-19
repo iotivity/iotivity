@@ -27,6 +27,8 @@ var qs = require('querystring');
 var path = require('path');
 var io = require('socket.io').listen(server);
 
+var PROFILING_ENABLED = 0;
+
 /*********************************************
 * variables to maintain status 
 **********************************************/
@@ -39,6 +41,14 @@ var STATUS_DESTROYED = 4;
 
 iotivityre.initPlatform();
 
+var reqGetAttrId =0;
+var  requestGetAttrMap={};
+
+var reqSetAttrId =0;
+var  requestSetAttrMap={};
+
+var reqDiscoveryId =0;
+var requestDiscoveryMap={};
 
 /*****************************************************************
  * Function Name::SendEmitResponse 
@@ -133,8 +143,7 @@ function handler (req, res) {
       }
 	  else if(parsedUrl.pathname === '/discover')
 	  {
-		  console.log("discovery:: type " + discoverResourceType);
-			
+		  console.log("discovery:: type " + discoverResourceType);	
       }  
 	  else if (parsedUrl.pathname === '/access')
 	  {
@@ -151,9 +160,30 @@ function handler (req, res) {
 				
 				var json = JSON.parse(body);
 				console.log("Access req handle received ::" +json.Handle);
+				
+				if(PROFILING_ENABLED == 1)
+				{
+					reqGetAttrId++;
+					var curTime=new Date().getTime();
+					
+					var requestTime = {"id" : reqGetAttrId, "time" : curTime} ;
+					
+					requestGetAttrMap[json.Handle] = requestTime;
+					
+					console.log("[PROFILING][GET ATTR] [ReqId] = "+reqSetAttrId+  " [Time] = "+curTime);
+				}
+		
 				//iotivity callback getRemoteAttributes
 				iotivityre.getRemoteAttributes(json.Handle, function callback(handle, mapAttributes) {	
 					
+					if(PROFILING_ENABLED == 1)
+					{
+						var requestTime = requestGetAttrMap[handle];
+						var curTime=new Date().getTime();
+						
+						var totalTime = curTime - requestTime.time;
+						console.log("[PROFILING][GET ATTR] [RespId] = "+requestTime.id+  " [Time] = "+curTime + " [TotalTime] = " + totalTime + " ms");
+					}
 					
                     var resourceTypes = iotivityre.getResourceTypes(handle);
 					if(resourceTypes[0] == "core.light")
@@ -198,10 +228,33 @@ function handler (req, res) {
 					
 					loopVar++;
 				}
+				
+				if(PROFILING_ENABLED == 1)
+				{
+					reqSetAttrId++;
+					var curTime = new Date().getTime();
+					
+					var requestTime = {"id" : reqSetAttrId, "time" : curTime} ;
+					
+					requestSetAttrMap[json.Handle] = requestTime;
+					
+					console.log("[PROFILING][SET ATTR] [ReqId] = "+reqSetAttrId+  " [Time] = "+curTime);
+				}
+				
 				//iotivity callback setRemoteAttributes
 				iotivityre. setRemoteAttributes(json.Handle, attrMap ,function callback(handle, mapAttributes) {	
 					console.log("before entry callback setRemoteAttributes");
+					
+					if(PROFILING_ENABLED == 1)
+					{
+						var requestTime = requestSetAttrMap[handle];
+						var curTime=new Date().getTime();
+						
+						var totalTime = curTime - requestTime.time;
 
+						console.log("[PROFILING][SET ATTR] [RespId] = "+requestTime.id+  " [Time] = "+curTime + " [TotalTime] = " + totalTime + " ms");
+					}
+					
                     var resourceTypes = iotivityre.getResourceTypes(handle);
 					if(resourceTypes[0] == "core.light")
 				    {
@@ -236,11 +289,12 @@ function handler (req, res) {
 		var filePath = '.' + parsedUrl.pathname;
 		if (filePath == './')
 			filePath = './home.html';
-
+		
 		var extname = path.extname(filePath);
 		var contentType = 'text/html';
 
         console.log(filePath);
+		
 
 		switch (extname) {
 			case '.js':
@@ -292,14 +346,36 @@ io.sockets.on('connection', function (socket) {
 	  
 		//This variable holds type of the resource to be discovered 
 		var discoverResourceType = discoveryReq.Resource.Type;
-		
+		if(PROFILING_ENABLED == 1)
+		{
+			reqDiscoveryId++;
+			var curTime=new Date().getTime();
+			
+			var requestTime = {"id" : reqDiscoveryId, "time" : curTime} ;
+			
+			requestDiscoveryMap[discoverResourceType] = requestTime;
+			
+			console.log("[PROFILING][Discovery] [ReqId] = "+reqDiscoveryId+  " [Time] = "+curTime);
+		}
+
 		//iotivity discoverResourceByType called	
 		iotivityre.discoverResourceByType("/oic/res", discoverResourceType , function callback(handle) {
-	
-			var deviceAddress = iotivityre.getAddress(handle);
-			var deviceUri = iotivityre. getUri(handle);
 			var resourceTypes = iotivityre.getResourceTypes(handle);
 			var resourceType = resourceTypes[0];
+			
+			if(PROFILING_ENABLED == 1)
+			{
+				var requestTime = requestDiscoveryMap[resourceType];
+				var curTime=new Date().getTime();
+				
+				var totalTime = curTime - requestTime.time;
+				
+				console.log("[PROFILING][Discovery] [RespId] = "+requestTime.id+  " [Time] = "+curTime + " [TotalTime] = " + totalTime + " ms");
+			}
+			
+			var deviceAddress = iotivityre.getAddress(handle);
+			var deviceUri = iotivityre. getUri(handle);
+			
 			var deviceName = "";
 			if(resourceType == "core.light")  
 			{
@@ -412,6 +488,16 @@ io.sockets.on('connection', function (socket) {
 	
 });
 
+if(process.argv[3] == undefined)
+	PROFILING_ENABLED = 0;
+else
+	PROFILING_ENABLED = process.argv[3];
+
+console.log("PROFILING STATUS " + PROFILING_ENABLED);
+
 //start server to listen for incoming request 
 console.log("Started iotivity-server, listening on port " + process.argv[2]);
 server.listen(parseInt(process.argv[2]));
+
+
+

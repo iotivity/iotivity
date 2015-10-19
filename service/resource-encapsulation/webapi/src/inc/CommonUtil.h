@@ -46,7 +46,7 @@ using namespace std;
 
 /**
  * This function is used to converts V8:String to string type
- * 
+ *
  *@param[in] value - v8 input string
  *
  * @return none

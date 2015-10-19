@@ -69,7 +69,7 @@ namespace REClient
 
     void onResourceDiscovered(shared_ptr<RCSRemoteResourceObject> discoveredResource)
     {
-        cout << "onResourceDiscovered callback :: " << endl;
+        cout << "[Discovery CB] Entry:: " << endl;
 
         if (NULL == discoveredResource.get())
         {
@@ -80,13 +80,13 @@ namespace REClient
 
         string address = discoveredResource->getAddress();
 
-        cout << "resourceURI : " << uri.c_str() << endl;
+        cout << "[Discovery CB] resourceURI : " << uri.c_str() << endl;
 
-        cout << "hostAddress : " << address.c_str() << endl;
+        cout << "[Discovery CB] hostAddress : " << address.c_str() << endl;
 
         string jsHandle = CreateJSHandle(address, uri);
 
-        cout <<  "Device Handle = " << jsHandle << endl;
+        cout <<  "[Discovery CB] Device Handle = " << jsHandle << endl;
 
         DiscoveryEventWork *work = new DiscoveryEventWork();
 
@@ -99,12 +99,15 @@ namespace REClient
         SetRCSRemoteResourceObject(jsHandle, discoveredResource);
 
         uv_queue_work(uv_default_loop(), &work->request, WorkAsync, WorkResourceDiscoveredAsyncComplete);
+
+        cout << "[Discovery CB] onResourceDiscovered callback Exit:: " << endl;
+
     }
 
     void onResourceStateChanged(const ResourceState &resourceState, std::string context)
     {
-        std::cout << "onResourceStateChanged callback" << std::endl;
-        std::cout << "Callback Context :: " << context << std::endl;
+        std::cout << "[Resource Montior CB] Entry" << std::endl;
+        std::cout << "[Resource Montior CB] Callback Context :: " << context << std::endl;
 
         int status = 0;
         switch (resourceState)
@@ -145,12 +148,15 @@ namespace REClient
         work->callback.Reset(isolate , resourceStateChangedCb);
 
         uv_queue_work(uv_default_loop(), &work->request, WorkAsync, WorkResourceStateChangedAsyncComplete);
+
+        std::cout << "[Resource Montior CB] Exit" << std::endl;
+
     }
 
     void onCacheUpdated(const RCSResourceAttributes &attributes, std::string context)
     {
-        std::cout << "onCacheUpdated callback" << std::endl;
-        std::cout << "Callback Context :: " << context << std::endl;
+        std::cout << "[Resource Caching CB] Entry" << std::endl;
+        std::cout << "[Resource Caching CB] Callback Context :: " << context << std::endl;
 
 
         printAttributes(attributes);
@@ -179,13 +185,17 @@ namespace REClient
         work->callback.Reset(isolate, cacheUpdatedCb);
 
         uv_queue_work(uv_default_loop(), &work->request, WorkAsync, WorkCacheUpdatedAsyncComplete);
+
+        std::cout << "[Resource Caching CB] Exit" << std::endl;
+
     }
 
     void onRemoteAttributesReceived(const RCSResourceAttributes &attributes, int status,
                                     std::string context)
     {
-        std::cout << "onRemoteAttributesReceived callback" << std::endl;
-        std::cout << "Callback Context :: " << context << std::endl;
+        std::cout << "[Resource Attributes Received CB] Entry" << std::endl;
+
+        std::cout << "[Resource Attributes Received CB] Callback Context :: " << context << std::endl;
 
         AttrChangeEventWork *work = new AttrChangeEventWork();
         work->request.data = work;
@@ -201,33 +211,34 @@ namespace REClient
 
         for (const auto &attr : attributes)
         {
-            cout << "Inside c++ " << attr.key().c_str() << "  " << attr.value().toString().c_str();
+
 
             RCSResourceAttributes::TypeId type = attr.value().getType().getId();
 
-            cout << "Type " <<  static_cast<int>(type) << endl;
-
-            int typeValue = static_cast<int>(type);
 
             if (type == RCSResourceAttributes::TypeId::INT)
             {
-                cout << " Integer Type" << endl;
+
                 attrMap->Set(String::NewFromUtf8(isolate, attr.key().c_str()), Integer::New(isolate,
                              attr.value().get<int>()));
             }
             else if (type == RCSResourceAttributes::TypeId::BOOL)
             {
-                cout << " Boolean Type" << endl;
+
                 attrMap->Set(String::NewFromUtf8(isolate, attr.key().c_str()), Boolean::New(isolate,
                              attr.value().get<bool>()));
 
             }
             else if (type == RCSResourceAttributes::TypeId::STRING)
             {
-                cout << " String Type" << endl;
+
                 attrMap->Set(String::NewFromUtf8(isolate, attr.key().c_str()), String::NewFromUtf8(isolate,
                              attr.value().toString().c_str()));
 
+            }
+            else
+            {
+                cout << "[Resource Attributes Received CB] Attributes Data Type is not handled" << endl;
             }
 
         }
@@ -237,6 +248,9 @@ namespace REClient
         work->callback.Reset(isolate, attributesReceivedCb);
 
         uv_queue_work(uv_default_loop(), &work->request, WorkAsync, WorkAttributesReceivedAsyncComplete);
+
+        std::cout << "[Resource Attributes Received CB] Exit" << std::endl;
+
 
     }
 
@@ -270,7 +284,7 @@ namespace REClient
 
     void DiscoverResourceByType(const FunctionCallbackInfo<Value> &args)
     {
-        cout << "DiscoverResource Entry" << endl;
+        cout << "DiscoverResourceByType Entry" << endl;
 
         isolate = args.GetIsolate();
 
@@ -287,11 +301,17 @@ namespace REClient
 
         discoveryCb.Reset(isolate, callback);
 
+        try
+        {
+            RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
+                    uri, resourceType , onResourceDiscovered);
+        }
+        catch (const RCSPlatformException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
 
-        RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
-                uri, resourceType , onResourceDiscovered);
-
-        cout << "DiscoverResource Exit" << endl;
+        cout << "DiscoverResourceByType Exit" << endl;
 
         args.GetReturnValue().Set(String::NewFromUtf8(isolate, "Done"));
 
@@ -312,9 +332,15 @@ namespace REClient
 
         discoveryCb.Reset(isolate, callback);
 
-
-        RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(),
-                uri, onResourceDiscovered);
+        try
+        {
+            RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(),
+                    uri, onResourceDiscovered);
+        }
+        catch (const RCSPlatformException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
 
         cout << "DiscoverResource Exit" << endl;
 
@@ -350,8 +376,22 @@ namespace REClient
 
         std::string context(uri);
 
-        obj->startMonitoring(std::bind(&onResourceStateChanged, std::placeholders::_1, context));
-
+        if (!obj->isMonitoring())
+        {
+            try
+            {
+                obj->startMonitoring(std::bind(&onResourceStateChanged, std::placeholders::_1, context));
+                std::cout << "\tHosting Started..." << std::endl;
+            }
+            catch (const RCSPlatformException &e)
+            {
+                std::cout << e.what() << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "\tAlready Started..." << std::endl;
+        }
 
         cout << "StartMonitoring Exit" << endl;
 
@@ -377,7 +417,22 @@ namespace REClient
             return;
         }
 
-        obj->stopMonitoring();;
+        if (obj->isMonitoring())
+        {
+            try
+            {
+                obj->stopMonitoring();
+                std::cout << "\tHosting stopped..." << std::endl;
+            }
+            catch (const RCSPlatformException &e)
+            {
+                std::cout << e.what() << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "\tHosting not started..." << std::endl;
+        }
 
         cout << "StopMonitoring Exit" << endl;
 
@@ -409,7 +464,23 @@ namespace REClient
 
         string context(uri);
 
-        obj->startCaching(std::bind(&onCacheUpdated, std::placeholders::_1, context));
+        sleep(1);
+        if (!obj->isCaching())
+        {
+            try
+            {
+                obj->startCaching(std::bind(&onCacheUpdated, std::placeholders::_1, context));
+                std::cout << "\tCaching Started..." << std::endl;
+            }
+            catch (const RCSPlatformException &e)
+            {
+                std::cout << e.what() << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "\tAlready Started Caching..." << std::endl;
+        }
 
         cout << "StartCaching Exit" << endl;
 
@@ -435,7 +506,22 @@ namespace REClient
             return;
         }
 
-        obj->stopCaching();;
+        if (obj->isCaching())
+        {
+            try
+            {
+                obj->stopCaching();
+                std::cout << "\tCaching stopped..." << std::endl;
+            }
+            catch (const RCSPlatformException &e)
+            {
+                std::cout << e.what() << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "\tCaching not started..." << std::endl;
+        }
 
         cout << "StopCaching Exit" << endl;
 
@@ -461,8 +547,24 @@ namespace REClient
             cout << "Remote Object is NULL" << endl;
             return;
         }
+        RCSResourceAttributes attributes;
+        try
+        {
+            attributes = obj->getCachedAttributes();
+        }
+        catch (const RCSBadRequestException &e)
+        {
+            std::cout << "Exception in getCachedAttributes : " << e.what() << std::endl;
+        }
+        catch (const RCSBadGetException &e)
+        {
+            std::cout << "Exception in getCachedAttributes : " << e.what() << std::endl;
+        }
+        catch (const RCSPlatformException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
 
-        RCSResourceAttributes attributes = obj->getCachedAttributes();
 
         printAttributes(attributes);
 
@@ -481,6 +583,8 @@ namespace REClient
         }
 
         args.GetReturnValue().Set(attrMap);
+        cout << "GetCachedAttribute Exit" << endl;
+
     }
 
     void GetRemoteAttributes(const FunctionCallbackInfo<Value> &args)
@@ -508,13 +612,21 @@ namespace REClient
 
         string context(uri);
 
-        obj->getRemoteAttributes(std::bind(&onRemoteAttributesReceived, std::placeholders::_1,
-                                           std::placeholders::_2, context));
+        try
+        {
+            obj->getRemoteAttributes(std::bind(&onRemoteAttributesReceived, std::placeholders::_1,
+                                               std::placeholders::_2, context));
+        }
+        catch (const RCSPlatformException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
 
         cout << "GetRemoteAttributes Exit" << endl;
 
 
         args.GetReturnValue().Set(String::NewFromUtf8(isolate, "Done"));
+
     }
 
     void SetRemoteAttributes(const FunctionCallbackInfo<Value> &args)
@@ -601,8 +713,15 @@ namespace REClient
 
         string context(uri);
 
-        obj->setRemoteAttributes(attributes, std::bind(&onRemoteAttributesReceived, std::placeholders::_1,
-                                 std::placeholders::_2, context));
+        try
+        {
+            obj->setRemoteAttributes(attributes, std::bind(&onRemoteAttributesReceived, std::placeholders::_1,
+                                     std::placeholders::_2, context));
+        }
+        catch (const RCSPlatformException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
 
         cout << "SetRemoteAttributes Exit" << endl;
 
@@ -630,19 +749,27 @@ namespace REClient
             return;
         }
 
-        std::string retUri = obj->getUri();
+        std::string retUri;
+        try
+        {
+            retUri = obj->getUri();
+        }
+        catch (const RCSPlatformException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
 
         cout << "GetURIExit" << endl;
 
         args.GetReturnValue().Set(String::NewFromUtf8(isolate, retUri.c_str()));
 
-        cout << "GetURI Exit -2" << endl;
+
 
     }
 
     void GetAddress(const FunctionCallbackInfo<Value> &args)
     {
-        cout << "GetAddress Entry 1" << endl;
+        cout << "GetAddress Entry" << endl;
 
         isolate = args.GetIsolate();
 
@@ -652,21 +779,23 @@ namespace REClient
 
         cout << uri << endl;
 
-        cout << "GetAddress Entry 2" << endl;
-
-
         std::shared_ptr<RCSRemoteResourceObject> obj = GetRCSRemoteResourceObject(uri);
-
-        cout << "GetAddress Entry 3" << endl;
 
         if (obj.get() == NULL)
         {
             cout << "Remote Object is NULL" << endl;
             return;
         }
-        cout << "GetAddress Entry 4" << endl;
 
-        std::string address = obj->getAddress();
+        std::string address;
+        try
+        {
+            address = obj->getAddress();
+        }
+        catch (const RCSPlatformException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
 
         //std::string address("107.108.71.175");
 
@@ -674,13 +803,13 @@ namespace REClient
 
         args.GetReturnValue().Set(String::NewFromUtf8(isolate, address.c_str()));
 
-        cout << "GetAddress Exit - 2" << endl;
+
 
     }
 
     void GetResourceTypes(const FunctionCallbackInfo<Value> &args)
     {
-        cout << "GetResourceTypesEntry" << endl;
+        cout << "GetResourceTypes Entry" << endl;
 
         isolate = args.GetIsolate();
 
@@ -697,7 +826,16 @@ namespace REClient
             return;
         }
 
-        std::vector< std::string > resourceTypeList = obj->getTypes();
+        std::vector< std::string > resourceTypeList;
+
+        try
+        {
+            resourceTypeList = obj->getTypes();
+        }
+        catch (const RCSPlatformException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
 
         Local<Array> retList = Array::New(isolate);
         for (std::vector<int>::size_type i = 0; i != resourceTypeList.size(); i++)
@@ -731,8 +869,17 @@ namespace REClient
             cout << "Remote Object is NULL" << endl;
             return;
         }
+        std::vector< std::string > interfaceList;
 
-        std::vector< std::string > interfaceList = obj->getInterfaces();
+        try
+        {
+            interfaceList = obj->getInterfaces();
+        }
+        catch (const RCSPlatformException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+
 
 
         Local<Array> retList = Array::New(isolate);

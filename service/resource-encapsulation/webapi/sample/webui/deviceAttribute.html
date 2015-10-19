@@ -8,10 +8,72 @@
 
 <script> 
 
+var reqGetAttrId=0;
+var requestGetAttrMap={};
+var reqSetAttrId=0;
+requestSetAttrMap={};
+var PROFILING_ENABLED=1;
 var attributeItems={};
 var handle = location.search.replace(/^.*?\=/, '');
 var obj = {};
 obj["Handle"]=handle;
+
+function post_Access_Request_Log()
+{
+	if(PROFILING_ENABLED == 1)
+	{
+		reqGetAttrId++;
+		var curTime=new Date().getTime();
+		
+		var requestTime = {"id" : reqGetAttrId, "time" : curTime} ;
+		
+		requestGetAttrMap[handle] = requestTime;
+		
+		console.log("[PROFILING][GET ATTR] [ReqId] = "+reqGetAttrId+  " [Time] = "+curTime);
+	}
+}
+
+function post_Access_Response_Log()
+{
+	if(PROFILING_ENABLED == 1)
+	{
+		var requestTime = requestGetAttrMap[handle];
+		var curTime=new Date().getTime();
+		
+		var totalTime = curTime - requestTime.time;
+		console.log("[PROFILING][GET ATTR] [RespId] = "+requestTime.id+  " [Time] = "+curTime + " [TotalTime] = " + totalTime + " ms");
+	}
+}
+
+function post_Set_Request_Log()
+{
+	if(PROFILING_ENABLED == 1)
+	{
+		reqSetAttrId++;
+		var curTime = new Date().getTime();
+		
+		var requestTime = {"id" : reqSetAttrId, "time" : curTime} ;
+		
+		requestSetAttrMap[handle] = requestTime;
+		
+		console.log("[PROFILING][SET ATTR] [ReqId] = "+reqSetAttrId+  " [Time] = "+curTime);
+	}
+}
+
+function post_Set_Response_Log()
+{
+	if(PROFILING_ENABLED == 1)
+	{
+		var requestTime = requestSetAttrMap[handle];
+		var curTime=new Date().getTime();
+		
+		var totalTime = curTime - requestTime.time;
+		
+		console.log("[PROFILING][SET ATTR] [RespId] = "+requestTime.id+  " [Time] = "+curTime + " [TotalTime] = " + totalTime + " ms");
+	}
+					
+}
+		
 	
 function list_create()
 {    
@@ -36,7 +98,8 @@ function list_create()
 
 	var locate = location.host;
 	var url = "http://" + locate + "/access";
-	posting=$.post( url,JSON.stringify(obj));
+	posting=$.post( url,JSON.stringify(obj));   post_Access_Request_Log();
+	
 	
 	$("#wait").css("display", "block");
 	 
@@ -44,7 +107,9 @@ function list_create()
 	var attributeValues=[];
 	
 	posting.done(function( data ) 
-	{
+	{	
+		post_Access_Response_Log();
+	
 		$("#wait").css("display", "none");
 		attributeItems=data;
 	
@@ -151,11 +216,13 @@ function setAttributes(){
 	}
 	
     var posting = $.post( url, JSON.stringify(tempAttrItems) );
+	post_Set_Request_Log();
 	
 	posting.done(function( data ) 
-	{
-			attributeItems=data;
-			updateAttributes();
+	{		
+		post_Set_Response_Log();
+		attributeItems=data;
+		updateAttributes();
 	});
 }
 
@@ -300,7 +367,7 @@ function startCaching(id){
 
 
 	<p>
-	<button style="font-family:verdana" class="btn" id="set" onclick="setAttributes()" />Set Value</button>
+	<button style="font-family:verdana;font-size:15px;text-align:center;width:120px;height:40px" class="btn" id="set" onclick="setAttributes()" />Set Value</button>
 	</p>
 
 	<div id="wait" style="display:none;width:69px;height:89px; solid black;position:absolute;top:50%;left:45%;padding:2px"><img src='images/Loading.gif' width="64" height="64" /><br>Loading..</div>

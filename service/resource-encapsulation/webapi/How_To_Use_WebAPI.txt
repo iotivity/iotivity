@@ -63,8 +63,17 @@ iii) Build .node file using below command
 iv) Go to "iotivity/service/resource-encapsulation/webapi/sample/webui/"
 
 iv) Execute the web server using following command
-    node iot-server.js <port>
-    Eg: node iot-server.js 4545
+    node iot-server.js <port> <Enable Profiling>
+    	
+	Eg: node iot-server.js 4545 0
+    	
+	For enabling profiling,
+		
+		Eg: node iot-server.js 4545 1
+       
+	For enabling profiling,
+
+		Eg: node iot-server.js 4545 0
 
 v) Now open the browser in same or different machine which is in same subnet.
    Execute the following URL :
