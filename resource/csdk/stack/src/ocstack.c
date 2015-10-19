@@ -1595,20 +1595,24 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
 
     OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)requestInfo->info.token,
             requestInfo->info.tokenLength);
-    serverRequest.requestToken = (CAToken_t)OICMalloc(requestInfo->info.tokenLength);
-    serverRequest.tokenLength = requestInfo->info.tokenLength;
 
-    if (!serverRequest.requestToken)
-    {
-        OC_LOG(FATAL, TAG, "Allocation for token failed.");
-        SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_INTERNAL_SERVER_ERROR,
-                requestInfo->info.type, requestInfo->info.numOptions,
-                requestInfo->info.options, requestInfo->info.token,
-                requestInfo->info.tokenLength, requestInfo->info.resourceUri);
-        OICFree(serverRequest.payload);
-        return;
+    serverRequest.tokenLength = requestInfo->info.tokenLength;
+    if (serverRequest.tokenLength) {
+        // Non empty token
+        serverRequest.requestToken = (CAToken_t)OICMalloc(requestInfo->info.tokenLength);
+
+        if (!serverRequest.requestToken)
+        {
+            OC_LOG(FATAL, TAG, "Allocation for token failed.");
+            SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_INTERNAL_SERVER_ERROR,
+                    requestInfo->info.type, requestInfo->info.numOptions,
+                    requestInfo->info.options, requestInfo->info.token,
+                    requestInfo->info.tokenLength, requestInfo->info.resourceUri);
+            OICFree(serverRequest.payload);
+            return;
+        }
+        memcpy(serverRequest.requestToken, requestInfo->info.token, requestInfo->info.tokenLength);
     }
-    memcpy(serverRequest.requestToken, requestInfo->info.token, requestInfo->info.tokenLength);
 
     switch (requestInfo->info.acceptFormat)
     {
