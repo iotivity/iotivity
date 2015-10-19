@@ -18,7 +18,6 @@
  *
  ******************************************************************/
 
-#include "PrimitiveResource.h"
 #include "RCSResourceObject.h"
 #include "OCPlatform.h"
 #include "OCApi.h"
