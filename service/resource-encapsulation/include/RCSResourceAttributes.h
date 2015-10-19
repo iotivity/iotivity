@@ -36,14 +36,14 @@
 #include <unordered_map>
 #include <vector>
 
-#include <boost/variant.hpp>
-#include <boost/mpl/contains.hpp>
-#include <boost/mpl/find.hpp>
-#include <boost/mpl/distance.hpp>
-#include <boost/mpl/begin_end.hpp>
-#include <boost/scoped_ptr.hpp>
+#include "boost/variant.hpp"
+#include "boost/mpl/contains.hpp"
+#include "boost/mpl/find.hpp"
+#include "boost/mpl/distance.hpp"
+#include "boost/mpl/begin_end.hpp"
+#include "boost/scoped_ptr.hpp"
 
-#include <RCSException.h>
+#include "RCSException.h"
 
 namespace OIC
 {
@@ -581,6 +581,9 @@ namespace OIC
         {
         public:
             ComparisonHelper(const Value&);
+
+            ComparisonHelper(const ComparisonHelper&) = delete;
+            ComparisonHelper& operator=(const ComparisonHelper&) = delete;
 
             template< typename T >
             typename std::enable_if< is_supported_type< T >::value, bool >::type equals(
