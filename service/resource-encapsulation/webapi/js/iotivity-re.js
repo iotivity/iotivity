@@ -90,11 +90,17 @@ exports.discoverResourceByType = function discoverResourceType(uri, resourceType
     console.log(addon.DiscoverResourceByType(uri, resourceType, discoveryCallback));
 }
 
-exports.startCaching = function startCaching(handle, cb) {
+exports.startCachingWithCb = function startCachingWithCb(handle, cb) {
 
     webServerCachingCallback = cb;
-    console.log("JS:: In startCaching, handle =" + handle);
-    console.log(addon.StartCaching(handle, cachingCallback));
+    console.log("JS:: In active startCaching, handle =" + handle);
+    console.log(addon.StartCachingWithCb(handle, cachingCallback));
+}
+
+exports.startCachingWithoutCb = function startCachingWithoutCb(handle) {
+
+    console.log("JS:: In passive startCaching, handle =" + handle);
+    console.log(addon.StartCachingWithoutCb(handle));
 }
 
 exports.stopCaching = function stopCaching(handle) {

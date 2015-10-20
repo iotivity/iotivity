@@ -440,7 +440,7 @@ namespace REClient
 
     }
 
-    void StartCaching(const FunctionCallbackInfo<Value> &args)
+    void StartCachingWithCb(const FunctionCallbackInfo<Value> &args)
     {
         cout << "StartCaching Entry" << endl;
 
@@ -485,9 +485,51 @@ namespace REClient
         cout << "StartCaching Exit" << endl;
 
         args.GetReturnValue().Set(String::NewFromUtf8(isolate, "Done"));
-
-
     }
+
+    void StartCachingWithoutCb(const FunctionCallbackInfo<Value> &args)
+    {
+        cout << "StartCaching Entry" << endl;
+
+        isolate = args.GetIsolate();
+
+        v8::String::Utf8Value strUri(args[0]);
+        const char *uri = ToCString(strUri);
+        cout << uri << endl;
+
+
+        std::shared_ptr<RCSRemoteResourceObject> obj = GetRCSRemoteResourceObject(uri);
+        if (obj.get() == NULL)
+        {
+            cout << "Remote Object is NULL" << endl;
+            return;
+        }
+
+        string context(uri);
+
+        sleep(1);
+        if (!obj->isCaching())
+        {
+            try
+            {
+                obj->startCaching(NULL);
+                std::cout << "\tCaching Started..." << std::endl;
+            }
+            catch (const RCSPlatformException &e)
+            {
+                std::cout << e.what() << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "\tAlready Started Caching..." << std::endl;
+        }
+
+        cout << "StartCaching CB Exit" << endl;
+
+        args.GetReturnValue().Set(String::NewFromUtf8(isolate, "Done"));
+    }
+
 
     void StopCaching(const FunctionCallbackInfo<Value> &args)
     {
@@ -577,14 +619,40 @@ namespace REClient
 
         for (const auto &attr : attributes)
         {
-            //printAttribute(attr.key(), attr.value());
-            attrMap->Set(String::NewFromUtf8(isolate, attr.key().c_str()), String::NewFromUtf8(isolate,
-                         attr.value().toString().c_str()));
+
+
+            RCSResourceAttributes::TypeId type = attr.value().getType().getId();
+
+
+            if (type == RCSResourceAttributes::TypeId::INT)
+            {
+
+                attrMap->Set(String::NewFromUtf8(isolate, attr.key().c_str()), Integer::New(isolate,
+                             attr.value().get<int>()));
+            }
+            else if (type == RCSResourceAttributes::TypeId::BOOL)
+            {
+
+                attrMap->Set(String::NewFromUtf8(isolate, attr.key().c_str()), Boolean::New(isolate,
+                             attr.value().get<bool>()));
+
+            }
+            else if (type == RCSResourceAttributes::TypeId::STRING)
+            {
+
+                attrMap->Set(String::NewFromUtf8(isolate, attr.key().c_str()), String::NewFromUtf8(isolate,
+                             attr.value().toString().c_str()));
+
+            }
+            else
+            {
+                cout << "[Resource Attributes Received CB] Attributes Data Type is not handled" << endl;
+            }
+
         }
 
         args.GetReturnValue().Set(attrMap);
         cout << "GetCachedAttribute Exit" << endl;
-
     }
 
     void GetRemoteAttributes(const FunctionCallbackInfo<Value> &args)
@@ -762,9 +830,6 @@ namespace REClient
         cout << "GetURIExit" << endl;
 
         args.GetReturnValue().Set(String::NewFromUtf8(isolate, retUri.c_str()));
-
-
-
     }
 
     void GetAddress(const FunctionCallbackInfo<Value> &args)
@@ -802,9 +867,6 @@ namespace REClient
         cout << "GetAddress Exit" << endl;
 
         args.GetReturnValue().Set(String::NewFromUtf8(isolate, address.c_str()));
-
-
-
     }
 
     void GetResourceTypes(const FunctionCallbackInfo<Value> &args)
@@ -909,7 +971,9 @@ namespace REClient
 
         NODE_SET_METHOD(exports, "StopMonitoring", StopMonitoring);
 
-        NODE_SET_METHOD(exports, "StartCaching", StartCaching);
+        NODE_SET_METHOD(exports, "StartCachingWithCb", StartCachingWithCb);
+
+        NODE_SET_METHOD(exports, "StartCachingWithoutCb", StartCachingWithoutCb);
 
         NODE_SET_METHOD(exports, "StopCaching", StopCaching);
 

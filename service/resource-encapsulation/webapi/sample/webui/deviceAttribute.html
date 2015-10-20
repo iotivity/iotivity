@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
  <head>
+	<link rel="icon" type="image/png" href="images/Favicon.png">
 	<link rel="stylesheet" type="text/css" href="scripts/style.css">
 	<script src="socket.io/socket.io.js"></script>  
     <script src="scripts/jquery.js"></script>	
@@ -78,6 +79,8 @@ function post_Set_Response_Log()
 function list_create()
 {    
 	$("#headValue").hide();
+	$("#getRemoteValues").hide();
+	$("#getCachedValues").hide();
 	$("#set").hide();
 	$("#attribute").hide();
 	$("#value").hide();
@@ -86,8 +89,10 @@ function list_create()
 	$("#text2").hide();
 	$("#monitor").hide();
 	$("#monitorLabel").hide();
-	$("#caching").hide();
-	$("#cachingLabel").hide();
+	$("#activeCaching").hide();
+	$("#passiveCaching").hide();
+	$("#activeCachingLabel").hide();
+	$("#passiveCachingLabel").hide();
 	$("#status").hide();
 	$("#statusField").hide();
 	$("#address").hide();
@@ -97,7 +102,7 @@ function list_create()
 	
 
 	var locate = location.host;
-	var url = "http://" + locate + "/access";
+	var url = "http://" + locate+"/getremoteattr";
 	posting=$.post( url,JSON.stringify(obj));   post_Access_Request_Log();
 	
 	
@@ -115,7 +120,7 @@ function list_create()
 	
 		var name=data["Name"];
 		var path="images/" + name+".png";
-		var img= '<img src="'+path+'" style="height:30px;width:30px;padding:5px 10px" align="left">    <img id="statusImage" src="images/Alive.png" style="height:20px;width:20px;padding: 5px 10px" align="right" >';
+		var img= '<img src="'+path+'" style="height:30px;width:30px;padding:5px 10px" align="left" id="img1">    <img id="statusImage" src="images/Alive.png" style="height:20px;width:20px;padding: 5px 10px" align="right" id="img2">';
 		 
 		$("#headValue").html(data["Name"]+img );
 		  
@@ -167,11 +172,16 @@ function list_create()
 		$("#attribute").show();
 		$("#value").show();
 		$("#set").show();
+		$("#getRemoteValues").show();
+		$("#getCachedValues").show();
 		$("#monitor").show();
 		$("#monitorLabel").show();
-		$("#caching").show();
-		$("#cachingLabel").show();
+		$("#activeCaching").show();
+		$("#passiveCaching").show();
+		$("#activeCachingLabel").show();
+        $("#passiveCachingLabel").show();
 		
+		$("#headValue").prop('disabled', true);	
 		$("#set").prop('disabled', true);	
 	});
 }
@@ -189,6 +199,17 @@ function setAttField(value,pos){
 	$("#value").val(defaultVal);
 	$("#set").prop('disabled', false);
 }
+
+function FindLength(data)
+{
+	var length =0;
+	for (var key in data) 
+	{
+		length++;
+	}
+	return length;
+}
+
 
 function setAttributes(){
 	
@@ -221,8 +242,12 @@ function setAttributes(){
 	posting.done(function( data ) 
 	{		
 		post_Set_Response_Log();
-		attributeItems=data;
-		updateAttributes();
+		var len = FindLength(data.Attributes);
+		if(len != 0)
+		{
+			attributeItems=data;
+			updateAttributes();
+		}
 	});
 }
 
@@ -299,26 +324,92 @@ function updateStatus(){
 	}	
 }
 
-function startCaching(id){
+function activeStartCaching(id){
 	var locate = location.host;
 	var url = "http://" + locate;
 	var status=document.getElementById(id);
 	if(status.checked)
-	{
+	{	
+		$("#passiveCaching").prop('disabled', true);	
 		var socket = io.connect(url);
-		socket.emit('start-caching', JSON.stringify(attributeItems));
+		socket.emit('active-start-caching', JSON.stringify(obj));
 		socket.on('caching-response', function(data) {
-			attributeItems=data;
-			updateAttributes();
+			var len = FindLength(data.Attributes);
+			if(len != 0)
+			{
+				attributeItems=data;
+				updateAttributes();
+			}
 		});
 	}
 	else
 	{  
+		$("#passiveCaching").prop('disabled', false);
 		var socket = io.connect(url);
 		socket.emit('stop-caching', JSON.stringify(obj));	
 	}
 }
-</script>   
+
+function passiveStartCaching(id){
+	var locate = location.host;
+	var url = "http://" + locate;
+	var status=document.getElementById(id);
+	if(status.checked)
+	{	
+		$("#activeCaching").prop('disabled', true);
+		var socket = io.connect(url);
+		socket.emit('passive-start-caching', JSON.stringify(obj));
+	
+	}
+	else
+	{  
+		$("#activeCaching").prop('disabled', false);
+		var socket = io.connect(url);
+		socket.emit('stop-caching', JSON.stringify(obj));	
+	}
+}
+
+function getRemoteAttributes(){
+	var locate = location.host;
+	var url = "http://" + locate+"/getremoteattr";
+		
+	posting=$.post( url,JSON.stringify(obj));   
+	post_Access_Request_Log();
+	
+	posting.done(function( data ) 
+	{		
+		post_Access_Response_Log();
+		var len = FindLength(data.Attributes);
+		if(len != 0)
+		{
+			attributeItems=data;
+			updateAttributes();
+		}
+	});
+}
+
+
+function getCachedAttributes(){
+	var locate = location.host;
+	var url = "http://" + locate+"/getcachedattr";
+		
+	posting=$.post( url,JSON.stringify(obj));   
+	post_Access_Request_Log();
+	
+	posting.done(function( data ) 
+	{		
+		post_Access_Response_Log();
+		var len = FindLength(data.Attributes);
+		if(len != 0)
+		{
+			attributeItems=data;
+			updateAttributes();
+		}
+	});
+}
+
+</script>
+<title>IoTivity Smart Home Demo</title>   
  <div class="container" border="width:5px;style:solid color:red">  
 <body onload="list_create()">
     <header>
@@ -330,15 +421,17 @@ function startCaching(id){
 		</h4>	
 	</header>
 	<br>
+	
 	<p>
-	<button style="font-family:verdana; font-weight: bold" class="btn" id="headValue" type="submit" style="width:200px;height:50px;textAlign:center;fontSize= 20px"/><b> </b></button>
+	<button style="font-family:verdana;width:200px;height:50px;textAlign:center;fontSize: 20px;font-weight: bold" class="btn" id="headValue" /><b> </b></button>
 	</p>
 
-
 	<form>
-		<label for="monitor" id="monitorLabel" style="font-family:verdana"><input type="checkbox" class="checkboxes" id="monitor" onclick="startMonitoring(id)" > Resource Monitoring </label>
-		<label for="caching" id="cachingLabel" style="font-family:verdana"><input type="checkbox" class="checkboxes" id="caching" onclick="startCaching(id)" > Resource Caching</label> <br><br>
-	</form>
+		<label for="monitor" id="monitorLabel" style="font-family:verdana;font-size:12px;font-weight: bold"><input type="checkbox" class="checkboxes" id="monitor" onclick="startMonitoring(id)" > Resource Monitoring </label><br><br>
+		<label for="caching" id="activeCachingLabel" style="font-family:verdana;font-size:12px;font-weight: bold"><input type="checkbox" class="checkboxes" id="activeCaching" onclick="activeStartCaching(id)" > Active Resource Caching</label> 
+		<label for="caching" id="passiveCachingLabel" style="font-family:verdana;font-size:12px;font-weight: bold"><input type="checkbox" class="checkboxes" id="passiveCaching" onclick="passiveStartCaching(id)" > Passive Resource Caching</label>
+		<br><br>
+	</form> 
 
 
 	<div id="TextContainer" style="font-family:verdana;  outline:none; border:none; border-style: none;">
@@ -358,16 +451,20 @@ function startCaching(id){
 	<p id="text1"><font color="brown"><b> Device Attributes </b></font>
 		<!--Attribute Textboxes will be dynamically added here -->
 	</div><br>
-
+	
+	<p>
+	<button style="font-family:verdana;font-size:12px;text-align:center;width:170px;height:40px;font-weight: bold" class="btn" id="getRemoteValues" onclick="getRemoteAttributes()" />Get Remote Values</button>&nbsp;
+	<button style="font-family:verdana;font-size:12px;text-align:center;width:170px;height:40px;font-weight: bold" class="btn" id="getCachedValues" onclick="getCachedAttributes()" />Get Cached Values</button><br><br>
+	</p>
 
 	<p style="font-family:verdana" id="text2" > <font color="brown"> <b>Set Attribute Value</b></font><br>
 	<font size="2px" color="red">(Click on attribute name from above device attribute list)</font></p></p> 
 
-	<input style="font-family:verdana" id="attribute" type="text" name="text" size="7" placeholder="Attribute" readonly />	<input id="value" type="text" name="text" size="7" placeholder="Value" /><br>
+	<input style="font-family:verdana;font-weight: bold" id="attribute" type="text" name="text" size="9" placeholder="Attribute" readonly />	<input style="font-family:verdana;font-weight: bold" id="value" type="text" name="text" size="15" placeholder="Value" /><br>
 
 
 	<p>
-	<button style="font-family:verdana;font-size:15px;text-align:center;width:120px;height:40px" class="btn" id="set" onclick="setAttributes()" />Set Value</button>
+	<button style="font-family:verdana;font-size:12px;text-align:center;width:170px;height:40px;font-weight: bold" class="btn" id="set" onclick="setAttributes()" />Set Remote Values</button> <br><br><br><br>
 	</p>
 
 	<div id="wait" style="display:none;width:69px;height:89px; solid black;position:absolute;top:50%;left:45%;padding:2px"><img src='images/Loading.gif' width="64" height="64" /><br>Loading..</div>

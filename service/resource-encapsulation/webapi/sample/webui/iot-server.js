@@ -99,11 +99,7 @@ function SendAttributeResponse(handle, mapAttributes, res, deviceName, type, fla
 	var devUri = iotivityre. getUri(handle);		
 					
 	accessResponse.Attributes= mapAttributes;
-	if(flag == 1)
-		accessResponse.Status=STATUS_ALIVE;
-	else
-		accessResponse.Status=STATUS_NONE;
-	
+	accessResponse.Status=STATUS_ALIVE;	
 	accessResponse.Handle=handle;
 	accessResponse.Name=deviceName;
 	accessResponse.Address= devAddress;
@@ -145,21 +141,18 @@ function handler (req, res) {
 	  {
 		  console.log("discovery:: type " + discoverResourceType);	
       }  
-	  else if (parsedUrl.pathname === '/access')
+	  else if (parsedUrl.pathname === '/getremoteattr')
 	  {
 		  
-		    console.log("/access, Access request:: ");
+		    console.log("/getremoteattr, getremoteattr request:: ");
 			var body = '';
-			
-	  
 			req.on('data', function(data){ body += data;});
 			
 			//request data is json
 			req.on('end', function(){
 				
-				
 				var json = JSON.parse(body);
-				console.log("Access req handle received ::" +json.Handle);
+				console.log("getremoteattr req handle received ::" +json.Handle);
 				
 				if(PROFILING_ENABLED == 1)
 				{
@@ -170,7 +163,7 @@ function handler (req, res) {
 					
 					requestGetAttrMap[json.Handle] = requestTime;
 					
-					console.log("[PROFILING][GET ATTR] [ReqId] = "+reqSetAttrId+  " [Time] = "+curTime);
+					console.log("[PROFILING][GET REMOTE ATTR] [ReqId] = "+reqSetAttrId+  " [Time] = "+curTime);
 				}
 		
 				//iotivity callback getRemoteAttributes
@@ -182,7 +175,7 @@ function handler (req, res) {
 						var curTime=new Date().getTime();
 						
 						var totalTime = curTime - requestTime.time;
-						console.log("[PROFILING][GET ATTR] [RespId] = "+requestTime.id+  " [Time] = "+curTime + " [TotalTime] = " + totalTime + " ms");
+						console.log("[PROFILING][GET REMOTE ATTR] [RespId] = "+requestTime.id+  " [Time] = "+curTime + " [TotalTime] = " + totalTime + " ms");
 					}
 					
                     var resourceTypes = iotivityre.getResourceTypes(handle);
@@ -200,7 +193,57 @@ function handler (req, res) {
 				});
 			});	
 			
-		}		
+		}
+		else if (parsedUrl.pathname === '/getcachedattr')
+		{
+		  
+		    console.log("/getcachedattr, getcachedattr request:: ");
+			var body = '';
+			req.on('data', function(data){ body += data;});
+			
+			//request data is json
+			req.on('end', function(){
+				
+				var json = JSON.parse(body);
+				console.log("getcachedattr req handle received ::" +json.Handle);
+				
+				if(PROFILING_ENABLED == 1)
+				{
+					reqGetAttrId++;
+					var curTime=new Date().getTime();
+					
+					var requestTime = {"id" : reqGetAttrId, "time" : curTime} ;
+					
+					requestGetAttrMap[json.Handle] = requestTime;
+					
+					console.log("[PROFILING][GET CACHED ATTR] [ReqId] = "+reqSetAttrId+  " [Time] = "+curTime);
+				}
+		
+				//iotivity callback getRemoteAttributes
+				var mapAttributes = iotivityre.getCachedAttributes(json.Handle);	
+					
+				if(PROFILING_ENABLED == 1)
+				{
+					var requestTime = requestGetAttrMap[json.Handle];
+					var curTime=new Date().getTime();
+					
+					var totalTime = curTime - requestTime.time;
+					console.log("[PROFILING][GET CACHED ATTR] [RespId] = "+requestTime.id+  " [Time] = "+curTime + " [TotalTime] = " + totalTime + " ms");
+				}
+				
+				var resourceTypes = iotivityre.getResourceTypes(json.Handle);
+				if(resourceTypes[0] == "core.light")
+				{
+					SendAttributeResponse(json.Handle, mapAttributes, res, "Light", resourceTypes[0] ,0);
+				}else if(resourceTypes[0] == "oic.r.refrigeration")
+				{
+					SendAttributeResponse(json.Handle, mapAttributes, res, "Fridge", resourceTypes[0], 0);
+				}else if(resourceTypes[0] == "oic.r.airconditioner")
+				{
+					SendAttributeResponse(json.Handle, mapAttributes, res, "AC", resourceTypes[0], 0);
+				}
+			});	
+		}
 		else if (parsedUrl.pathname === '/setattr')
 		{   console.log("/setattr ,set Attributes request");
 			
@@ -452,13 +495,13 @@ io.sockets.on('connection', function (socket) {
 		});
 	
 	//Receiving start caching request
-	socket.on('start-caching', function (data) {
+	socket.on('active-start-caching', function (data) {
               var json = JSON.parse(data);
 
-		console.log("start caching request");
+		console.log("start active caching request");
 		var handle = json.Handle;
 		console.log("Given Handle : " + handle);
-		iotivityre.startCaching(handle, function callback(handle, attributeMap) {
+		iotivityre.startCachingWithCb(handle, function callback(handle, attributeMap) {
 	        console.log("inside caching response");
 			var deviceAddress = iotivityre.getAddress(handle);
 			var deviceUri = iotivityre. getUri(handle);
@@ -482,9 +525,16 @@ io.sockets.on('connection', function (socket) {
 		
 			console.log('[Caching]::Server pushed cached attributes to client');		
 		});  
-		
-		
 	});
+	
+	socket.on('passive-start-caching', function (data) {
+        var json = JSON.parse(data);
+
+		console.log("start passive caching request");
+		var handle = json.Handle;
+		console.log("Given Handle : " + handle);
+		iotivityre.startCachingWithoutCb(handle);	
+	}); 
 	
 });
 
