@@ -119,7 +119,8 @@ SimulatorResourceServerImplSP SimulatorResourceCreator::createResource(
                 }
 
                 // Set range/supported values set
-                int min = 0, max = 0, multipleof = 0;
+                double min = 0, max = 0;
+                int multipleof = 0;
                 propertyElement.second->getRange(min, max, multipleof);
                 attribute.setRange(min, max);
 

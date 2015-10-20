@@ -24,8 +24,8 @@
  * @brief   This file provides utilities for RamlParser.
  */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef RAML_UTILS_H
+#define RAML_UTILS_H
 
 #include "yaml-cpp/yaml.h"
 #include "ActionType.h"

@@ -142,7 +142,8 @@ SimulatorResourceModelSP RequestModelBuilder::createRepSchema(const RAML::Reques
                     repSchema->addAttribute(propertyEntry.second->getName(), propertyEntry.second->getValue<int>());
 
                     // Set the range
-                    int min, max, multipleof;
+                    double min, max;
+                    int multipleof;
                     propertyEntry.second->getRange(min, max, multipleof);
                     repSchema->setRange(propertyEntry.second->getName(), min, max);
                 }

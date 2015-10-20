@@ -33,19 +33,21 @@
 //#define PRINT_RESOURCE_URI_BASEURI
 //#define PRINT_ACTION_QUERY_PARAM
 //#define PRINT_RESPONSE_HEADER
-//#define PRINT_REQUEST_RESPONSE_BODY_PARAMS
+#define PRINT_REQUEST_RESPONSE_BODY_PARAMS
 //#define PRINT_ACTION_HEADERS
 //#define PRINT_SCHEMAS
 #define PRINT_RAML
 #define PRINT_JSON
-//#define PRINT_JSON_PROPERTIES
+//#define PRINT_JSON_DEFINITION
+#define PRINT_JSON_PROPERTIES
 
 using namespace RAML;
 
-void printParameters(AbstractParam abstractParam)
-{
+void printProperties(const PropertiesPtr &prop);
 
 #ifdef PRINT_PARAMS
+void printParameters(AbstractParam abstractParam)
+{
     std::cout << "Description : "  << abstractParam.getDescription()  << std::endl;
     std::cout << "DefaultValue : "  << abstractParam.getDefaultValue()  << std::endl;
     std::cout << "Example : " << abstractParam.getExample()  << std::endl;
@@ -62,93 +64,35 @@ void printParameters(AbstractParam abstractParam)
     for (auto elem : abstractParam.getEnumeration())
         std::cout << elem   << " 	";
     std::cout << std::endl;
-#endif
 }
+#endif
 
 void printRequestResponseBody(const RequestResponseBodyPtr &body)
 {
     std::cout << "Body : Type : " << body->getType() << std::endl;
     if ( body->getSchema() == NULL ) return;
+#ifdef PRINT_SCHEMAS
     std::cout << "Body : Schema : " << body->getSchema()->getSchema() << std::endl;
+#endif
     std::cout << "Body : Schema : PROPERTIES :" << std::endl;
 
     for ( auto pro : body->getSchema()->getProperties()->getProperties() )
     {
-        std::cout << "-----------------------------" << std::endl;
-        std::cout << "Name : " << pro.second->getName() << std::endl;
-        std::cout << "-----------------------------" << std::endl;
-        try
-        {
-            switch (pro.second->getVariantType())
-            {
-                case VariantType::INT : // Integer
-                    std::cout << "Defaut: " << pro.second->getValueInt() << std::endl;
-                    for (auto tt : pro.second->getAllowedValuesInt())
-                    {
-                        std::cout << "enum value : " << tt << std::endl;
-                    }
-                    {
-                        int min = 0, max = 0, mul = 0;
-                        pro.second->getRange(min, max, mul);
-                        std::cout << "Minimum: " << min << std::endl;
-                        std::cout << "Maximum: " << max << std::endl;
-                    }
-                    break;
-
-                case VariantType::DOUBLE : // Double
-                    std::cout << "Defaut: " << pro.second->getValueDouble() << std::endl;
-                    for (auto tt : pro.second->getAllowedValuesDouble())
-                    {
-                        std::cout << "enum value : " << tt << std::endl;
-                    }
-                    {
-                        double min = 0, max = 0;
-                        int mul = 0;
-                        pro.second->getRangeDouble(min, max, mul);
-                        std::cout << "MinimumDouble: " << min << std::endl;
-                        std::cout << "MaximumDouble: " << max << std::endl;
-                    }
-                    break;
-
-                case VariantType::BOOL : // Boolean
-                    std::cout << "Defaut: " << std::boolalpha << pro.second->getValueBool() << std::noboolalpha <<
-                              std::endl;
-                    for (auto tt : pro.second->getAllowedValuesBool())
-                    {
-                        std::cout << "enum value : " << tt << std::endl;
-                    }
-                    break;
-
-                case VariantType::STRING : // String
-                    std::cout << "Defaut: " << pro.second->getValueString() << std::endl;
-                    for (auto tt : pro.second->getAllowedValuesString())
-                    {
-                        std::cout << "enum value : " << tt << std::endl;
-                    }
-                    {
-                        int min = 0, max = 0, mul = 0;
-                        pro.second->getRange(min, max, mul);
-                        std::cout << "MinimumLength: " << min << std::endl;
-                        std::cout << "MaximumLength: " << max << std::endl;
-                    }
-                    break;
-                default:
-                    break;
-
-            }
-        }
-        catch (const boost::bad_lexical_cast &e)
-        {
-            std::cout << e.what() << std::endl;
-        }
-        catch ( ... )
-        {
-            std::cout << "Unknown exception caught!" << std::endl;
-        }
-
+        printProperties(pro.second);
     }
+
+    std::cout << "Body : Schema : ITEMS :" << std::endl;
+    for (auto it : body->getSchema()->getProperties()->getItems())
+    {
+        for (auto  tt : it->getProperties())
+        {
+            printProperties(tt.second);
+        }
+    }
+#ifdef PRINT_SCHEMAS
     std::cout << "-----------------------------" << std::endl;
     std::cout << "Body : example : " << body->getExample() << std::endl;
+#endif
 
 #ifdef PRINT_REQUEST_RESPONSE_BODY_PARAMS
     std::cout << "Body : FormParameters	"  << std::endl;
@@ -158,7 +102,9 @@ void printRequestResponseBody(const RequestResponseBodyPtr &body)
         std::cout << tw.first << " : "  << std::endl;
         std::cout << "-----------------------------" << std::endl;
         FormParameter formParameter = *tw.second;
+#ifdef PRINT_PARAMS
         printParameters((AbstractParam)formParameter);
+#endif
     }
 #endif
 }
@@ -180,7 +126,9 @@ void printResponse(const ResponsePtr &response)
         std::cout << "-----------------------------" << std::endl;
 
         Header header = *tw.second;
+#ifdef PRINT_PARAMS
         printParameters((AbstractParam)header);
+#endif
     }
 #endif
 }
@@ -206,7 +154,9 @@ void printAction(const ActionPtr &action)
         std::cout << tw.first << " : "  << std::endl;
         std::cout << "-----------------------------" << std::endl;
         QueryParameter queryParam = *tw.second;
+#ifdef PRINT_PARAMS
         printParameters((AbstractParam)queryParam);
+#endif
     }
 #endif
 #ifdef PRINT_ACTION_HEADERS
@@ -217,7 +167,9 @@ void printAction(const ActionPtr &action)
         std::cout << tw.first << " : "  << std::endl;
         std::cout << "-----------------------------" << std::endl;
         Header header = *tw.second;
+#ifdef PRINT_PARAMS
         printParameters((AbstractParam)header);
+#endif
     }
 #endif
 
@@ -247,7 +199,9 @@ void printResource(const RamlResourcePtr &resource)
         std::cout << tt.first << " : "  << std::endl;
         std::cout << "-----------------------------" << std::endl;
         UriParameter uriParameter = *tt.second;
+#ifdef PRINT_PARAMS
         printParameters((AbstractParam)uriParameter);
+#endif
     }
     std::cout << "#############################################" << std::endl;
     std::cout << "BaseUriParameters	"    << std::endl;
@@ -258,7 +212,9 @@ void printResource(const RamlResourcePtr &resource)
         std::cout << "-----------------------------" << std::endl;
 
         UriParameter uriParameter = *tt.second;
+#ifdef PRINT_PARAMS
         printParameters((AbstractParam)uriParameter);
+#endif
     }
 #endif
     std::cout << "Actions  " << std::endl;
@@ -310,7 +266,8 @@ void printProperties(const PropertiesPtr &prop)
                     std::cout << "enum value : " << tt << std::endl;
                 }
                 {
-                    int min = 0, max = 0, mul = 0;
+                    double min = 0, max = 0;
+                    int mul = 0;
                     prop->getRange(min, max, mul);
                     std::cout << "Minimum: " << min << std::endl;
                     std::cout << "Maximum: " << max << std::endl;
@@ -326,7 +283,7 @@ void printProperties(const PropertiesPtr &prop)
                 {
                     double min = 0, max = 0;
                     int mul = 0;
-                    prop->getRangeDouble(min, max, mul);
+                    prop->getRange(min, max, mul);
                     std::cout << "MinimumDouble: " << min << std::endl;
                     std::cout << "MaximumDouble: " << max << std::endl;
                 }
@@ -347,7 +304,8 @@ void printProperties(const PropertiesPtr &prop)
                     std::cout << "enum value : " << tt << std::endl;
                 }
                 {
-                    int min = 0, max = 0, mul = 0;
+                    double min = 0, max = 0;
+                    int mul = 0;
                     prop->getRange(min, max, mul);
                     std::cout << "MinimumLength: " << min << std::endl;
                     std::cout << "MaximumLength: " << max << std::endl;
@@ -403,7 +361,7 @@ void printJsonSchema(JsonSchemaPtr js)
     std::cout << "Type: " << js->getType() << std::endl;
     std::cout << "Description: " << js->getDescription() << std::endl;
     std::cout << "AdditionalProperties: " << js->getAdditionalProperties() << std::endl;
-
+#ifdef PRINT_JSON_DEFINITION
     std::cout << "-------------------------------" << std::endl;
     std::cout << "Definitions." << std::endl;
     for (auto  tt : js->getDefinitions())
@@ -415,7 +373,7 @@ void printJsonSchema(JsonSchemaPtr js)
             printProperties(it.second);
         }
     }
-
+#endif
     std::cout << "##############################" << std::endl;
     std::cout << "Properties." << std::endl;
     for (auto  it : js->getProperties())
@@ -428,6 +386,23 @@ void printJsonSchema(JsonSchemaPtr js)
     for (auto it : js->getRequiredValues())
     {
         std::cout << it << std::endl;
+    }
+    std::cout << "-------------------------------" << std::endl;
+    std::cout << "Items." << std::endl;
+    std::cout << "-------------------------------" << std::endl;
+    for (auto it : js->getItems())
+    {
+        for (auto  tt : it->getProperties())
+        {
+            printProperties(tt.second);
+        }
+        std::cout << "-------------------------------" << std::endl;
+        std::cout << "Required." << std::endl;
+        std::cout << "-------------------------------" << std::endl;
+        for (auto tt : it->getRequiredValues())
+        {
+            std::cout << tt << std::endl;
+        }
     }
     std::cout << "-------------------------------" << std::endl;
 }
@@ -472,7 +447,9 @@ int main(int argc, char *argv[])
             std::cout << it.first << " : "  << std::endl;
             std::cout << "-----------------------------" << std::endl;
             UriParameter uriParameter = *it.second;
+#ifdef PRINT_PARAMS
             printParameters((AbstractParam)uriParameter);
+#endif
         }
 #endif
 #ifdef PRINT_SCHEMAS
