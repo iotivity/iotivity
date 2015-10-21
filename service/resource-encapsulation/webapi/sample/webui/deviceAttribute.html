@@ -131,10 +131,13 @@ function list_create()
 		
 		if(data["Address"]!=undefined){	
 			$("#address").attr("placeholder",data["Address"]);
+			$("#address").attr("title",data["Address"]);
 		}
 		
 		if(data["Type"]!=undefined){	
 			$("#type").attr("placeholder",data["Type"]);
+			$("#type").attr("title",data["Type"]);
+
 		}
 		
 		$("#headValue").show();
@@ -187,14 +190,15 @@ function list_create()
 }
 
 function GetDynamicTextBox(key,value,type) {
-    return '<input name = "DynamicTextBox"  class="placeHolder" type="text" size="9"  placeholder = "' + key + '" onclick=setAttField(placeholder) readonly />&nbsp;'  +
-          '<input name = "'+type+'" class="placeHolder" type="text" size="15" id="' + key + '"  placeholder = "' + value + '" readonly />&nbsp;'+
+    return '<input title="'+key+'" name = "DynamicTextBox"  class="placeHolder" type="text" size="9"  placeholder = "' + key + '" onclick=setAttField(placeholder) readonly />&nbsp;'  +
+           '<input title="'+value+'" name = "'+type+'" class="placeHolder" type="text" size="15" id="' + key + '"  placeholder = "' + value + '" readonly />&nbsp;'+
 		   '<br>'
 }
 
 function setAttField(value,pos){
 
 	$("#attribute").val(value);
+	$("#attribute").attr("title",value);
 	var defaultVal = 0;
 	$("#value").val(defaultVal);
 	$("#set").prop('disabled', false);
@@ -271,7 +275,8 @@ function updateAttributes()
 	for (var i in attributeNames) 
 	{
 		var id="#"+attributeNames[i];
-		$(id).attr("placeholder",attributeValues[i]);	
+		$(id).attr("placeholder",attributeValues[i]);
+		$(id).attr("title",attributeValues[i]);		
 	}
 	updateStatus();				
 }
@@ -305,22 +310,27 @@ function updateStatus(){
 	if(attributeItems["Status"]==0){ 
 	$("#statusImage").attr("src","images/None.png");
 	$("#status").attr("placeholder","None");
+	$("#status").attr("title","None");
 	}
 	else if(attributeItems["Status"]==1){ 
 	$("#statusImage").attr("src","images/Alive.png");
 	$("#status").attr("placeholder","Alive");
+	$("#status").attr("title","Alive");
 	}
 	else if(attributeItems["Status"]==2){ 
 	$("#statusImage").attr("src","images/Requested.png");
 	$("#status").attr("placeholder","Waiting..");
+	$("#status").attr("title","Waiting..");
 	}
 	else if(attributeItems["Status"]==3){ 
 	$("#statusImage").attr("src","images/LostSignal.png");
 	$("#status").attr("placeholder","Signal Lost");
+	$("#status").attr("title","Signal Lost");
 	}
 	else if(attributeItems["Status"]==4){ 
 	$("#statusImage").attr("src","images/Dead.png");
 	$("#status").attr("placeholder","Destroyed");
+	$("#status").attr("title","Destroyed");
 	}	
 }
 
@@ -437,11 +447,11 @@ function getCachedAttributes(){
 	<div id="TextContainer" style="font-family:verdana;  outline:none; border:none; border-style: none;">
 		<p id="text"><font color="brown"> <b> Device Information </b></font></p> 
    
-		<input id="statusField" class="placeHolder" type="text" size="9"  placeholder = "Status" readonly />  <input class="placeHolder" id= "status" type="text" size="15" placeholder = "NULL" readonly /> <br>
+		<input title="Status" id="statusField" class="placeHolder" type="text" size="9"  placeholder = "Status" readonly />  <input class="placeHolder" id= "status" type="text" size="15" placeholder = "NULL" readonly /> <br>
 
-		<input  id= "addressField" class="placeHolder" type="text" size="9"  placeholder = "Address" readonly />  <input class="placeHolder" id= "address" type="text" size="15" placeholder = "NULL" readonly /> <br>
+		<input  title="Address" id= "addressField" class="placeHolder" type="text" size="9"  placeholder = "Address" readonly />  <input class="placeHolder" id= "address" type="text" size="15" placeholder = "NULL" readonly /> <br>
 
-		<input  id= "typeField" class="placeHolder" type="text" size="9"  placeholder = "Type" readonly />  <input class="placeHolder" id= "type" type="text" size="15" placeholder = "NULL" readonly /> <br>
+		<input  title="Type" id= "typeField" class="placeHolder" type="text" size="9"  placeholder = "Type" readonly />  <input class="placeHolder" id= "type" type="text" size="15" placeholder = "NULL" readonly /> <br>
 	
 	</div>
 	<br>

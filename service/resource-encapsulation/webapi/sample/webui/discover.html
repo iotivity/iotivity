@@ -68,39 +68,46 @@ function list_create()
 		///////////////////////////////////
 		print_Discovery_Response_Log(data.Type);
 		//////////////////////////////////
-
+		
 		$("#wait").css("display", "none");	
-		
 		var deviceName =data.Name;
-		handle[deviceName]=data.Handle;
+		var deviceHandle =data.Handle;
+		if(handle[deviceHandle] == undefined)
+		{
+			handle[deviceHandle]=data.Handle;
 
-		var list=document.getElementById("list");
-		var txt = document.createTextNode(deviceName+"   ");
-		var button=document.createElement("BUTTON");
-		var img_ele=document.createElement("img");
-		var imgPath="images/" + deviceName+".png";
-		var listElement = document.createElement("li");
+			var list=document.getElementById("list");
+			var txt = document.createTextNode(deviceName+"   ");
+			var button=document.createElement("BUTTON");
+			var img_ele=document.createElement("img");
+			var imgPath="images/" + deviceName+".png";
+			var listElement = document.createElement("li");
+			
 		
-	
-		button.setAttribute("class","btn");
-		button.setAttribute("id",deviceName);
-		button.style.fontSize= "20px";
-		button.style.textAlign="center";			
-		button.style.width="200px";
-		button.style.height="50px";
-		button.onclick=clickevent;
-	
-		img_ele.setAttribute("src",imgPath);
-		img_ele.setAttribute("width",'30px');
-		img_ele.setAttribute("height",'30px');
-		img_ele.align="left";
+			button.setAttribute("class","btn");
+			button.setAttribute("id",deviceHandle);
+			button.style.fontSize= "20px";
+			button.style.textAlign="center";			
+			button.style.width="200px";
+			button.style.height="50px";
+			button.onclick=clickevent;
 		
-		button.appendChild(img_ele);
-		button.appendChild(txt);
+			img_ele.setAttribute("src",imgPath);
+			img_ele.setAttribute("width",'30px');
+			img_ele.setAttribute("height",'30px');
+			img_ele.align="left";
+			
+			button.appendChild(img_ele);
+			button.appendChild(txt);
+			
+			listElement.appendChild(button);
 		
-		listElement.appendChild(button);
-	
-		list.appendChild(listElement);		
+			list.appendChild(listElement);
+		}
+		else
+		{
+			console.log("Duplicate Device Found");
+		}
 	});
 	//loading img	
 	$("#wait").css("display", "block");	
