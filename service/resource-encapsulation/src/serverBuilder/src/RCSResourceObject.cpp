@@ -18,20 +18,21 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <RCSResourceObject.h>
+#include "RCSResourceObject.h"
 
 #include <string>
 #include <functional>
 #include <vector>
 
-#include <RequestHandler.h>
-#include <AssertUtils.h>
-#include <AtomicHelper.h>
-#include <ResourceAttributesConverter.h>
-#include <ResourceAttributesUtils.h>
+#include "RequestHandler.h"
+#include "AssertUtils.h"
+#include "AtomicHelper.h"
+#include "ResourceAttributesConverter.h"
+#include "ResourceAttributesUtils.h"
+#include "RCSRequest.h"
 
-#include <logger.h>
-#include <OCPlatform.h>
+#include "logger.h"
+#include "OCPlatform.h"
 
 #define LOG_TAG "RCSResourceObject"
 
@@ -56,7 +57,7 @@ namespace
 
     template <typename RESPONSE>
     OCEntityHandlerResult sendResponse(RCSResourceObject& resource,
-            std::shared_ptr< OC::OCResourceRequest > ocRequest, RESPONSE&& response)
+            const std::shared_ptr< OC::OCResourceRequest >& ocRequest, RESPONSE&& response)
     {
         auto ocResponse = response.getHandler()->buildResponse(resource);
         ocResponse->setRequestHandle(ocRequest->getRequestHandle());
@@ -78,7 +79,7 @@ namespace
     }
 
     RCSResourceAttributes getAttributesFromOCRequest(
-            std::shared_ptr< OC::OCResourceRequest > request)
+            const std::shared_ptr< OC::OCResourceRequest >& request)
     {
         return ResourceAttributesConverter::fromOCRepresentation(
                 request->getResourceRepresentation());
@@ -87,11 +88,12 @@ namespace
     template< typename HANDLER, typename RESPONSE =
             typename std::decay<HANDLER>::type::result_type >
     RESPONSE invokeHandler(RCSResourceAttributes& attrs,
-            std::shared_ptr< OC::OCResourceRequest > ocRequest, HANDLER&& handler)
+            const std::shared_ptr< OC::OCResourceRequest >& ocRequest,
+            std::shared_ptr< HANDLER > handler)
     {
         if (handler)
         {
-            return handler(RCSRequest{ ocRequest->getResourceUri() }, attrs);
+            return (*handler)(RCSRequest{ ocRequest->getResourceUri() }, attrs);
         }
 
         return RESPONSE::defaultAction();
@@ -100,7 +102,7 @@ namespace
     typedef void (RCSResourceObject::* AutoNotifyFunc)
             (bool, RCSResourceObject::AutoNotifyPolicy) const;
 
-    std::function <void ()> createAutoNotifyInvoker(AutoNotifyFunc autoNotifyFunc,
+    std::function<void()> createAutoNotifyInvoker(AutoNotifyFunc autoNotifyFunc,
             const RCSResourceObject& resourceObject, const RCSResourceAttributes& resourceAttributes,
             RCSResourceObject::AutoNotifyPolicy autoNotifyPolicy)
     {
@@ -337,12 +339,12 @@ namespace OIC
 
         void RCSResourceObject::setGetRequestHandler(GetRequestHandler h)
         {
-            m_getRequestHandler = std::move(h);
+            m_getRequestHandler = std::make_shared< GetRequestHandler >(std::move(h));
         }
 
         void RCSResourceObject::setSetRequestHandler(SetRequestHandler h)
         {
-            m_setRequestHandler = std::move(h);
+            m_setRequestHandler = std::make_shared< SetRequestHandler >(std::move(h));
         }
 
         void RCSResourceObject::notify() const
@@ -422,7 +424,7 @@ namespace OIC
         }
 
         OCEntityHandlerResult RCSResourceObject::entityHandler(
-                std::shared_ptr< OC::OCResourceRequest > request)
+                const std::shared_ptr< OC::OCResourceRequest >& request)
         {
             OC_LOG(WARNING, LOG_TAG, "entityHandler");
             if (!request)
@@ -457,7 +459,7 @@ namespace OIC
         }
 
         OCEntityHandlerResult RCSResourceObject::handleRequest(
-                std::shared_ptr< OC::OCResourceRequest > request)
+                const std::shared_ptr< OC::OCResourceRequest >& request)
         {
             assert(request != nullptr);
 
@@ -475,7 +477,7 @@ namespace OIC
         }
 
         OCEntityHandlerResult RCSResourceObject::handleRequestGet(
-                std::shared_ptr< OC::OCResourceRequest > request)
+                const std::shared_ptr< OC::OCResourceRequest >& request)
         {
             assert(request != nullptr);
 
@@ -518,7 +520,7 @@ namespace OIC
         }
 
         OCEntityHandlerResult RCSResourceObject::handleRequestSet(
-                std::shared_ptr< OC::OCResourceRequest > request)
+                const std::shared_ptr< OC::OCResourceRequest >& request)
         {
             assert(request != nullptr);
 
@@ -538,7 +540,7 @@ namespace OIC
         }
 
         OCEntityHandlerResult RCSResourceObject::handleObserve(
-                std::shared_ptr< OC::OCResourceRequest >)
+                const std::shared_ptr< OC::OCResourceRequest >&)
         {
             if (!isObservable())
             {
@@ -583,9 +585,9 @@ namespace OIC
             init();
         }
 
-        RCSResourceObject::LockGuard::~LockGuard()
+        RCSResourceObject::LockGuard::~LockGuard() noexcept(false)
         {
-            if (m_autoNotifyFunc) m_autoNotifyFunc();
+            if (!std::uncaught_exception() && m_autoNotifyFunc) m_autoNotifyFunc();
 
             if (m_isOwningLock)
             {
