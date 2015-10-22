@@ -50,11 +50,4 @@ Java_org_iotivity_ca_CaInterface_initialize
     LOGI("CaInterface_initialize");
 
     CANativeJNISetContext(env, context);
-
-    CAResult_t res = CAInitialize();
-
-    if (CA_STATUS_OK != res)
-    {
-        LOGE("Could not Initialize");
-    }
 }
