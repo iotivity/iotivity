@@ -1413,7 +1413,7 @@ TWResultCode processEntryMatchDesc(TWEntry* entry, TWContext* ctx)
                 if (ctx->g_DeviceFoundCallback != NULL)
                 {
                     OC_LOG(INFO, TAG, "Found a match node -- invoke callback");
-                    ctx->g_DeviceFoundCallback(ctx->g_WIPDevice);
+                    ctx->g_DeviceFoundCallback(ctx->g_WIPDevice, ctx->g_plugin);
                 }
                 ret =  TW_RESULT_OK;
             }
@@ -2314,7 +2314,8 @@ TWResultCode TelEndDeviceJoinHandler(int count, char* tokens[], TWContext* ctx)
     if (ctx->g_EndDeviceNodeIdChangedCallback != NULL)
     {
         ctx->g_EndDeviceNodeIdChangedCallback(tokens[TOKEN_PJOIN_RESPONSE_IEEE_ADDRESS],
-                                              tokens[TOKEN_PJOIN_RESPONSE_NODEID]);
+                                              tokens[TOKEN_PJOIN_RESPONSE_NODEID],
+                                              ctx->g_plugin);
     }
 
     ret = TW_RESULT_OK;
@@ -2891,7 +2892,7 @@ TWResultCode TelEnrolledHandler(int count, char* tokens[], TWContext* ctx)
     if (ctx->g_EnrollmentSucceedCallback != NULL)
     {
         OC_LOG_V(INFO, TAG, "Enrolled - Invoke callback");
-        ctx->g_EnrollmentSucceedCallback(&enrollee);
+        ctx->g_EnrollmentSucceedCallback(&enrollee, ctx->g_plugin);
     }
     ret = TW_RESULT_OK;
 
@@ -2931,7 +2932,7 @@ TWResultCode TelZoneStatusHandler(int count, char* tokens[], TWContext* ctx)
     if (ctx->g_DeviceStatusUpdateCallback != NULL)
     {
         OC_LOG(INFO, TAG, "device status update - invoke callback");
-        ctx->g_DeviceStatusUpdateCallback(&update);
+        ctx->g_DeviceStatusUpdateCallback(&update, ctx->g_plugin);
         OC_LOG(INFO, TAG, "device status update - callback done");
     }
     ret = TW_RESULT_OK;

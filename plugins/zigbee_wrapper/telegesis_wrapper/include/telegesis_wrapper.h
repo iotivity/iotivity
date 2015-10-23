@@ -129,10 +129,11 @@ typedef struct
     char eui[SIZE_EUI];
 } TWEnrollee;
 
-typedef void (*TWDeviceFoundCallback)(TWDevice* device);
-typedef void (*TWEnrollmentSucceedCallback)(TWEnrollee* enrollee);
-typedef void (*TWDeviceStatusUpdateCallback)(TWUpdate* update);
-typedef void (*TWDeviceNodeIdChangedCallback)(const char* eui, const char* nodeId);
+typedef void (*TWDeviceFoundCallback)(TWDevice* device, PIPlugin_Zigbee* plugin);
+typedef void (*TWEnrollmentSucceedCallback)(TWEnrollee* enrollee, PIPlugin_Zigbee* plugin);
+typedef void (*TWDeviceStatusUpdateCallback)(TWUpdate* update, PIPlugin_Zigbee* plugin);
+typedef void (*TWDeviceNodeIdChangedCallback)(const char* eui, const char* nodeId,
+                                              PIPlugin_Zigbee* plugin);
 
 /**
  *

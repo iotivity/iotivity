@@ -43,7 +43,7 @@
 #define MAX_URI_SIZE                (256)
 #define MAX_RESOURCE_TYPE_SIZE      (32)
 #define MAX_RESOURCE_TYPE_LENGTH    (MAX_RESOURCE_TYPE_SIZE - 1)
-#define MAX_RESOURCES_REMEMBERED    (10)
+#define MAX_RESOURCES_REMEMBERED    (100)
 
 #define MAX_USER_INPUT              (100)
 

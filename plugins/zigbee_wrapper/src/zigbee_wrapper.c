@@ -120,8 +120,6 @@ static const char* OIC_MOTION_ATTRIBUTE = "value";
 static const char* OIC_ON_OFF_ATTRIBUTE = "value";
 static const char* OIC_COLOUR_TEMPERATURE_ATTRIBUTE = "colourspacevalue";
 
-PIPlugin_Zigbee ** gPlugin = NULL;
-
 typedef enum
 {
     ZB_NULL,   // No Data
@@ -199,7 +197,7 @@ bool getZigBeeAttributesIfValid(const char * OICResourceType,
                                     AttributeList *attributeList,
                                     OCRepPayload *payload);
 
-const char * getResourceTypeForIASZoneType(TWDevice *device)
+const char * getResourceTypeForIASZoneType(TWDevice *device, PIPluginBase* plugin)
 {
     if (!device)
     {
@@ -217,7 +215,7 @@ const char * getResourceTypeForIASZoneType(TWDevice *device)
         ZB_IAS_ZONE_TYPE_ATTRIBUTE_ID,
         &IASZoneType,
         &length,
-        *gPlugin
+        (PIPlugin_Zigbee*)plugin
     );
 
     if (ret != OC_STACK_OK || !IASZoneType)
@@ -318,7 +316,7 @@ exit:
     return OC_STACK_NO_MEMORY;
 }
 
-void foundZigbeeCallback(TWDevice *device)
+void foundZigbeeCallback(TWDevice *device, PIPlugin_Zigbee* plugin)
 {
     if (!device)
     {
@@ -334,7 +332,7 @@ void foundZigbeeCallback(TWDevice *device)
             OC_LOG(ERROR, TAG, "Out of memory");
             return;
         }
-        piResource->header.plugin = (PIPluginBase *)gPlugin;
+        piResource->header.plugin = (PIPluginBase *)plugin;
 
         OCStackResult result = buildURI(&piResource->header.piResource.uri,
                                 PI_ZIGBEE_PREFIX,
@@ -354,11 +352,11 @@ void foundZigbeeCallback(TWDevice *device)
         if (strcmp(foundClusterID, ZB_IAS_ZONE_CLUSTER) == 0)
         {
             piResource->header.piResource.resourceTypeName
-                = getResourceTypeForIASZoneType(device);
+                = getResourceTypeForIASZoneType (device, (PIPluginBase *)plugin);
 
             OCStackResult ret = TWListenForStatusUpdates(device->nodeId,
                                                           device->endpointOfInterest->endpointId,
-                                                          *gPlugin);
+                                                          plugin);
 
             if (ret != OC_STACK_OK)
             {
@@ -391,11 +389,11 @@ void foundZigbeeCallback(TWDevice *device)
         piResource->endpointId = OICStrdup(device->endpointOfInterest->endpointId);
         piResource->clusterId =
             OICStrdup(device->endpointOfInterest->clusterList->clusterIds[i].clusterId);
-        (*gPlugin)->header.NewResourceFoundCB(&(*gPlugin)->header, &piResource->header);
+        plugin->header.NewResourceFoundCB(&(plugin)->header, &piResource->header);
     }
 }
 
-void zigbeeZoneStatusUpdate(TWUpdate * update)
+void zigbeeZoneStatusUpdate(TWUpdate * update, PIPlugin_Zigbee* plugin)
 {
     if (!update)
     {
@@ -414,7 +412,7 @@ void zigbeeZoneStatusUpdate(TWUpdate * update)
         return;
     }
 
-    (*gPlugin)->header.ObserveNotificationUpdate((PIPluginBase *)*gPlugin, uri);
+    plugin->header.ObserveNotificationUpdate((PIPluginBase *)plugin, uri);
     OICFree(uri);
 }
 
@@ -439,14 +437,13 @@ OCStackResult ZigbeeInit(const char * comPort, PIPlugin_Zigbee ** plugin,
     ((*plugin)->header).resourceList = NULL;
     ((*plugin)->header).processEHRequest = ProcessEHRequest;
 
-    gPlugin = plugin;
-    OCStackResult result = TWInitialize(*gPlugin, comPort);
+    OCStackResult result = TWInitialize(*plugin, comPort);
     if (result != OC_STACK_OK)
     {
         return result;
     }
 
-    return TWSetStatusUpdateCallback(zigbeeZoneStatusUpdate, *gPlugin);
+    return TWSetStatusUpdateCallback(zigbeeZoneStatusUpdate, *plugin);
 }
 
 OCStackResult ZigbeeDiscover(PIPlugin_Zigbee * plugin)
@@ -843,7 +840,7 @@ OCEntityHandlerResult processGetRequest(PIPluginBase * plugin,
                                      attributeList.list[i].zigBeeAttribute,
                                      &outVal,
                                      &outValLength,
-                                     *gPlugin);
+                                     (PIPlugin_Zigbee *)plugin);
 
         if (stackResult != OC_STACK_OK || !outVal)
         {
