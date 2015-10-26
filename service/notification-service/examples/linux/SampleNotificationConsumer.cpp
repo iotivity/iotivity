@@ -33,7 +33,9 @@ using namespace OIC::Service;
 constexpr int CORRECT_INPUT = 99;
 constexpr int INCORRECT_INPUT = 100;
 
-std::shared_ptr<NotificationConsumer> resource;
+std::shared_ptr<NotificationConsumer> selectedResource;
+std::vector<std::shared_ptr<NotificationConsumer>> notificationResourceList;
+std::vector<std::string> DeviceList;
 
 enum Menu
 {
@@ -41,6 +43,7 @@ enum Menu
     NOTIFICATION_SUBSCRIBE,
     NOTIFICATION_UNSUBSCRIBE,
     NOTIFICATION_CHECK_SUBSCRIBE_STATUS,
+    NOTIFICATION_DISPLAY_LIST,
     QUIT,
     END_OF_MENU
 };
@@ -52,7 +55,8 @@ void displayMenu()
     std::cout << "2 :: Subscribe for notifications" << std::endl;
     std::cout << "3 :: Un-subscribe from notifications" << std::endl;
     std::cout << "4 :: Check notifications status (IsSubscribing ?)" << std::endl;
-    std::cout << "5 :: Quit Sample Application" << std::endl;
+    std::cout << "5 :: Display notification resouce list" << std::endl;
+    std::cout << "6 :: Quit Sample Application" << std::endl;
     std::cout << "====================================================" << std::endl;
 }
 
@@ -69,23 +73,40 @@ int processUserInput()
     return userInput;
 }
 
+void displayNotificationResourceList()
+{
+    unsigned int i;
+
+    for (i = 0; i < notificationResourceList.size(); i++)
+    {
+        std::cout << "\t\t" << i + 1 << ". Resource Name : " << DeviceList[i] << std::endl;
+        std::cout << "\t\tResource URI : " << notificationResourceList[i]->getUri() << std::endl;
+        std::cout << "\t\tResource Host : " << notificationResourceList[i]->getAddress() << std::endl;
+    }
+}
+
+void onGetDeviceName(std::string deviceName)
+{
+    DeviceList.push_back(deviceName);
+}
+
 void onResourceDiscovered(std::shared_ptr<NotificationConsumer> foundResource)
 {
     std::cout << "onResourceDiscovered callback........." << std::endl;
 
-    std::string resourceURI = foundResource->getUri();
-    std::string hostAddress = foundResource->getAddress();
-
-    std::cout << "\t\tResource URI : " << resourceURI << std::endl;
-    std::cout << "\t\tResource Host : " << hostAddress << std::endl;
-
-    resource = foundResource;
+    foundResource->getDeviceName(&onGetDeviceName);
+    notificationResourceList.push_back(foundResource);
 }
 
 void discoverResource()
 {
     NotificationDiscoveryManager::getInstance()->discoverNotificationResource(RCSAddress::multicast(),
             &onResourceDiscovered);
+}
+
+void notificationAcknowledgement(NotificationObject *m_notificationObjectPtr)
+{
+    selectedResource->sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId);
 }
 
 void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
@@ -161,17 +182,26 @@ void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
                   std::endl;
         std::cout << "==========================================" << std::endl;
     }
+
+    notificationAcknowledgement(m_notificationObjectPtr);
 }
 
 void startSubscribeNotifications()
 {
-    resource->subscribeNotifications(&onResourceUpdated);
+    unsigned int userInput;
+    displayNotificationResourceList();
+
+    std::cout << "Enter the resource you want to subscribe to" << std::endl;
+    std::cin >> userInput;
+
+    selectedResource = notificationResourceList[userInput - 1];
+    selectedResource->subscribeNotifications(&onResourceUpdated);
     std::cout << "\tSubscribing started..." << std::endl;
 }
 
 void stopSubscribeNotifications()
 {
-    resource->unSubscribeNotifications();
+    selectedResource->unSubscribeNotifications();
     std::cout << "\tSubscribing stopped..." << std::endl;
 }
 
@@ -184,31 +214,37 @@ int selectConsumerMenu()
 {
     switch (processUserInput())
     {
-            // Start Discovery
+        // Start Discovery
         case Menu::DISCOVER_NOTIFICATION_SERVICE:
             std::cout << "DISCOVER_NOTIFICATION_SERVICE" << std::endl;
             discoverResource();
             return CORRECT_INPUT;
 
-            // Send Subscription Request
+        // Send Subscription Request
         case Menu::NOTIFICATION_SUBSCRIBE:
             std::cout << "NOTIFICATION_SUBSCRIBE" << std::endl;
             startSubscribeNotifications();
             return CORRECT_INPUT;
 
-            // Send Un-Subscription Request
+        // Send Un-Subscription Request
         case Menu::NOTIFICATION_UNSUBSCRIBE :
             std::cout << "NOTIFICATION_UNSUBSCRIBE" << std::endl;
             stopSubscribeNotifications();
             return CORRECT_INPUT;
 
-            // Check state of subscription
+        // Check state of subscription
         case Menu::NOTIFICATION_CHECK_SUBSCRIBE_STATUS :
             std::cout << "NOTIFICATION_CHECK_SUBSCRIBE_STATUS" << std::endl;
             checkSubscribeStatus();
             return CORRECT_INPUT;
 
-            // Check state of subscription
+        // Check state of subscription
+        case Menu::NOTIFICATION_DISPLAY_LIST :
+            std::cout << "NOTIFICATION_DISPLAY_LIST" << std::endl;
+            displayNotificationResourceList();
+            return CORRECT_INPUT;
+
+        // Check state of subscription
         case Menu::QUIT :
             std::cout << "QUIT" << std::endl;
             return QUIT;

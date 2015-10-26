@@ -28,21 +28,21 @@ namespace OIC
     namespace Service
     {
 
-       static int sNotificationId;
+        static int sNotificationId = 0;
 
-       NotificationObject::NotificationObject()
+        NotificationObject::NotificationObject()
         {
-                 time_t now = time(0);
-                 char *dt = ctime(&now);
-                 mNotificationTime = dt;
-                 if(mNotificationId< INT_MAX)
-                 {
-                     mNotificationId = ++sNotificationId;
-                 }
-                 else
-                 {
-                     mNotificationId = 0;
-                 }
+            time_t now = time(0);
+            char *dt = ctime(&now);
+            mNotificationTime = dt;
+            if (mNotificationId < INT_MAX)
+            {
+                mNotificationId = ++sNotificationId;
+            }
+            else
+            {
+                mNotificationId = 0;
+            }
         }
 
         void TextNotification::setTextAttributes(const std::string &nNotificationMessage,

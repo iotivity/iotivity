@@ -78,7 +78,7 @@ if target_os=="android" :
 	NMServicesdk_static = nmService_env.StaticLibrary('nmservice', nmservice_src)
 	nmService_env.InstallTarget([NMServicesdk_static], 'libnm_service')
 	nmService_env.UserInstallTargetLib([NMServicesdk_static], 'libnm_service')
-elif target_os=="linux" :
+elif target_os in ['tizen', 'linux'] :
 	NMServicesdk_static = nmService_env.StaticLibrary('nmservice', nmservice_src)
 	NMServicesdk_shared = nmService_env.SharedLibrary('nmservice', nmservice_src)
 	nmService_env.InstallTarget([NMServicesdk_static, NMServicesdk_shared], 'libnm_service')

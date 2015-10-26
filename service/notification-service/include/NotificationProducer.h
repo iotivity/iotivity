@@ -66,6 +66,8 @@ namespace OIC
 
                 typedef std::shared_ptr<NotificationProducer> NotificationProducerPtr;
 
+                typedef std::function < void(int) > notificationIdListener;
+
                 /**
                  * @brief Constructor.
                  *           Sets the resource property values using initializers list.
@@ -90,7 +92,8 @@ namespace OIC
                  * the caller.
                  */
 
-                NotificationProducerPtr startNotificationManager(std::string& notifyDeviceName);
+                NotificationProducerPtr startNotificationManager(std::string& notifyDeviceName,
+                                                                           NotificationProducer::notificationIdListener cb);
 
                 /**
                  * API to stops the Notification Manager.

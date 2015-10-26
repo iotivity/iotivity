@@ -153,6 +153,7 @@ cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 #%{_libdir}/libDISensorBundle.so
 %{_libdir}/libresource_hosting.so
 %{_libdir}/libTGMSDKLibrary.so
+%{_libdir}/libnmservice.so
 #%{_libdir}/libHueBundle.so
 %{_libdir}/librcs_client.so
 %{_libdir}/librcs_common.so

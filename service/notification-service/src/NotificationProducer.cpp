@@ -20,6 +20,8 @@
 
 #include <NotificationProducer.h>
 
+#include <string.h>
+
 #include <RCSResourceAttributes.h>
 #include <RCSResourceObject.h>
 
@@ -31,21 +33,37 @@
 
 constexpr char TAG[] { "NotificationProducer" };
 
+namespace
+{
+    using namespace OIC::Service;
+
+    void IdAttributeUpdatedListener(const RCSResourceAttributes::Value &oldValue,
+                                    const RCSResourceAttributes::Value &newValue, NotificationProducer::notificationIdListener cb)
+    {
+        int notificationId = std::stoi (newValue.toString());
+
+        cb(notificationId);
+    }
+}
 namespace OIC
 {
     namespace Service
     {
+        std::string Key;
+        std::string Value;
+        int IdValue;
+
         NotificationProducer::NotificationProducer(const std::string &uri,
                 const std::string &type,
                 const std::string &interface) :
             m_uri {uri},
-              m_type {type},
-        m_interface {interface}
+            m_type {type},
+            m_interface {interface}
         {
         }
 
         NotificationProducer::NotificationProducerPtr NotificationProducer::startNotificationManager(
-            std::string &notifyDeviceName)
+            std::string &notifyDeviceName, NotificationProducer::notificationIdListener cb)
         {
             if (mRCSResource == NULL)
             {
@@ -58,9 +76,17 @@ namespace OIC
             }
 
             mRCSResource->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy:: UPDATED);
-            std::string Key = "DeviceName";
-            std::string Value = notifyDeviceName;
+
+            Key = "DeviceName";
+            Value = notifyDeviceName;
             mRCSResource->setAttribute( Key, Value);
+
+            std::string nIdKey = "notificationId";
+            IdValue = 0;
+            mRCSResource->setAttribute(nIdKey, IdValue);
+
+            mRCSResource->addAttributeUpdatedListener(nIdKey, std::bind(IdAttributeUpdatedListener,
+                    std::placeholders::_1, std::placeholders::_2, std::move(cb)));
             return NULL;
         }
 
@@ -89,9 +115,9 @@ namespace OIC
                 cJSON_AddStringToObject(json, "MESSAGE", &textNotificationPtr->mNotificationMessage[0]);
                 cJSON_AddStringToObject(json, "OBJECTTYPE", "text");
 
-                 jsonResponse = cJSON_Print(json);
-                 std::string payload(jsonResponse);
-                 mRCSResource->setAttribute("notification-payload", payload);
+                jsonResponse = cJSON_Print(json);
+                std::string payload(jsonResponse);
+                mRCSResource->setAttribute("notification-payload", payload);
             }
 
             if ( type == NotificationObjectType::Image)

@@ -29,6 +29,9 @@ constexpr int INCORRECT_INPUT = 100;
 std::string resourceUri = "/oic/notify";
 std::string resourceType = "oic.r.notify";
 std::string resourceInterface = "oic.if.";
+std::string notificationSender;
+std::string space;
+std::vector<std::pair<int, int>> notificationList;
 
 NotificationProducer notificationProducer(resourceUri, resourceType, resourceInterface);
 
@@ -64,10 +67,32 @@ int processUserInput()
     return userInput;
 }
 
-void startNotificationProducer()
+void displayNotificationList()
 {
-    std::string notificationSender = "Coffee maker";
-    notificationProducer.startNotificationManager(notificationSender);
+    for (unsigned int i = 0; i < notificationList.size(); i++)
+    {
+        std::cout << "=========Notification List============" << std::endl;
+        std::cout << i + 1 << " Notification Id : " << notificationList[i].first << std::endl;
+        std::cout << "  Notification Read : " << notificationList[i].second << std::endl;
+        std::cout << "===============================" << std::endl;
+    }
+}
+
+void notificationIdListener(int notificationId)
+{
+    for (unsigned int i = 0; i < notificationList.size(); i++)
+    {
+        if (notificationList[i].first == notificationId)
+        {
+            notificationList[i].second = 1;
+        }
+    }
+    displayNotificationList();
+}
+
+void startNotificationProducer(std::string notificationSender)
+{
+    notificationProducer.startNotificationManager(notificationSender, &notificationIdListener);
 }
 
 void sendNotification()
@@ -83,7 +108,6 @@ void sendNotification()
     NotificationObjectType nImage = NotificationObjectType::Image;
     NotificationObjectType nVideo = NotificationObjectType::Video;
 
-    std::string space;
     std::cout << "Enter the type of object you want to create (text, image, video)" << std::endl;
     std::cin >> notificationObjectType;
 
@@ -94,7 +118,6 @@ void sendNotification()
     std::getline(std::cin, space);
 
     std::string notificationTime = notificationObjectPtr->mNotificationTime;
-    std::string notificationSender = "Coffee maker";
     int notificationTtl = 9;
     int notificationId = notificationObjectPtr->mNotificationId;
 
@@ -113,6 +136,7 @@ void sendNotification()
                 notificationTtl);
 
         notificationObjectPtr = &textNotificationObject;
+        notificationList.push_back(std::make_pair(notificationId, 0));
 
         notificationProducer.sendNotification(nText, notificationObjectPtr);
 
@@ -120,11 +144,11 @@ void sendNotification()
 
     if (notificationObjectType == "image")
     {
+        std::cout << "Enter the message you want to send" << std::endl;
+        std::getline(std::cin, notificationMessage);
+
         std::cout << "Enter the icon url you want to send" << std::endl;
         std::cin >> notificationIconUrl;
-
-        std::cout << "Enter the message you want to send" << std::endl;
-        std::cin >> notificationMessage;
 
         ImageNotification imageNotificationObject;
 
@@ -138,6 +162,7 @@ void sendNotification()
                 notificationTtl);
 
         notificationObjectPtr = &imageNotificationObject;
+        notificationList.push_back(std::make_pair(notificationId, 0));
 
         notificationProducer.sendNotification(nImage, notificationObjectPtr);
 
@@ -158,6 +183,7 @@ void sendNotification()
                 notificationTtl);
 
         notificationObjectPtr = &videoNotificationObject;
+        notificationList.push_back(std::make_pair(notificationId, 0));
 
         notificationProducer.sendNotification(nVideo, notificationObjectPtr);
     }
@@ -172,25 +198,28 @@ int selectProviderMenu()
 {
     switch (processUserInput())
     {
-            // Start Provider
+        // Start Provider
         case Menu::START_NOTIFICATION_PRODUCER :
+            std::getline(std::cin, space);
             std::cout << "START_NOTIFICATION_PRODUCER" << std::endl;
-            startNotificationProducer();
+            std::cout << "Enter the name of the device hosting the notification resource" << std::endl;
+            std::getline(std::cin, notificationSender);
+            startNotificationProducer(notificationSender);
             return CORRECT_INPUT;
 
-            // Send Notification
+        // Send Notification
         case Menu::SEND_NOTIFICATION:
             std::cout << "SEND_NOTIFICATION" << std::endl;
             sendNotification();
             return CORRECT_INPUT;
 
-            // Stop Provider
+        // Stop Provider
         case Menu::STOP_NOTIFICATION_PRODUCER :
             std::cout << "STOP_NOTIFICATION_PRODUCER" << std::endl;
             stopNotificationProducer();
             return QUIT;
 
-            // Exit
+        // Exit
         case Menu::QUIT :
             std::cout << "QUIT" << std::endl;
             return QUIT;

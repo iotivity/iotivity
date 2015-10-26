@@ -98,6 +98,8 @@ namespace OIC
 
                 void getDeviceName(onGetDeviceName cb);
 
+                void sendNotificationAcknowledgement(int notificationId);
+
             private:
 
 

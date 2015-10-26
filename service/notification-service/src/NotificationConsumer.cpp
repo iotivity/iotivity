@@ -114,7 +114,7 @@ namespace
     {
         std::string DeviceName;
 
-        for (const auto & attr : attributes)
+        for (const auto &attr : attributes)
         {
             if (attr.key() == "DeviceName")
             {
@@ -123,6 +123,11 @@ namespace
             }
         }
         cb(DeviceName);
+    }
+
+    void onSetRemoteAttributesReceived(const RCSResourceAttributes &attributes, int)
+    {
+        OC_LOG(WARNING, TAG, "Acknowledgement Sent............");
     }
 }
 
@@ -173,6 +178,15 @@ namespace OIC
             {
                 OC_LOG(WARNING, TAG, "Subscribing not started.......");
             }
+        }
+
+        void NotificationConsumer::sendNotificationAcknowledgement(int notificationId)
+        {
+            RCSResourceAttributes setAttribute;
+
+            setAttribute["notificationId"] = notificationId;
+            m_rcsRemoteResource->setRemoteAttributes(setAttribute,
+                    &onSetRemoteAttributesReceived);
         }
 
         std::string NotificationConsumer::getUri() const

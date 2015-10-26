@@ -171,7 +171,7 @@ JNIEXPORT void JNICALL JNIStartSubscribeNotifications(JNIEnv *env, jobject thisO
 {
     resource = notificationResourceList[resourceIndex];
 
-	LOGI("JNIStartSubscribeNotifications:after index");
+    LOGI("JNIStartSubscribeNotifications:after index");
     resource->subscribeNotifications(&onResourceUpdated);
     LOGI("Subscribing started...");
 
@@ -179,8 +179,8 @@ JNIEXPORT void JNICALL JNIStartSubscribeNotifications(JNIEnv *env, jobject thisO
 JNIEXPORT void JNICALL  JNIDiscover(JNIEnv *env, jobject thisObj)
 {
     LOGI("JNI JNIDiscover: Enter");
-	DeviceList.clear();
-	notificationResourceList.clear();
+    DeviceList.clear();
+    notificationResourceList.clear();
     NotificationDiscoveryManager::getInstance()->discoverNotificationResource(RCSAddress::multicast(),
             &onResourceDiscovered);
 

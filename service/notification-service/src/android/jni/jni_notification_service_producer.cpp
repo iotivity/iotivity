@@ -95,7 +95,7 @@ JNIEXPORT jint JNICALL  JNISendNotification(JNIEnv *env, jobject thisObj, jstrin
 {
     LOGI("JNISendNotification %d", MessageType);
 
-   NotificationObject *notificationObjectPtr=new NotificationObject();
+    NotificationObject *notificationObjectPtr=new NotificationObject();
 
     time_t now = time(0);
     char *dt = ctime(&now);
@@ -108,8 +108,7 @@ JNIEXPORT jint JNICALL  JNISendNotification(JNIEnv *env, jobject thisObj, jstrin
     std::string notificationTime = notificationObjectPtr->mNotificationTime;
     std::string notificationSender;
     int notificationTtl = 9;
-    int notificationId=notificationObjectPtr->mNotificationId;
-
+    int notificationId =notificationObjectPtr->mNotificationId;
 	
     NotificationObjectType nText = NotificationObjectType::Text;
     NotificationObjectType nImage = NotificationObjectType::Image;
