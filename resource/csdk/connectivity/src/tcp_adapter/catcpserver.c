@@ -478,7 +478,7 @@ static void CAAcceptHandler(void *data)
                 }
                 svritem->u4tcp.fd = sockfd;
 
-                CAConvertAddrToName((struct sockaddr_storage *)&clientaddr,
+                CAConvertAddrToName((struct sockaddr_storage *)&clientaddr, clientlen,
                                     (char *) &svritem->addr, &svritem->u4tcp.port);
 
                 ca_mutex_lock(g_mutexObjectList);
