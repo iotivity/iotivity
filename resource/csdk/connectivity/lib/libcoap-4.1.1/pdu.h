@@ -194,7 +194,7 @@ typedef enum
 #ifdef WORDS_BIGENDIAN
 typedef union
 {
-    typedef struct
+    struct
     {
         unsigned int version:2; /* protocol version */
         unsigned int type:2; /* type flag */
