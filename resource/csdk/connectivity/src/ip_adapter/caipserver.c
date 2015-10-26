@@ -304,7 +304,7 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags)
         }
     }
 
-    CAConvertAddrToName(&srcAddr, sep.endpoint.addr, &sep.endpoint.port);
+    CAConvertAddrToName(&srcAddr, msg.msg_namelen, sep.endpoint.addr, &sep.endpoint.port);
 
     if (flags & CA_SECURE)
     {

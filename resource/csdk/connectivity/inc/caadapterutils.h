@@ -212,13 +212,16 @@ void CAClearNetInterfaceInfoList(u_arraylist_t *infoList);
  */
 void CAClearServerInfoList(u_arraylist_t *serverInfoList);
 
+#ifndef WITH_ARDUINO
 /**
  * Convert address from binary to string.
- * @param[in]    ipaddr   IP address info.
- * @param[out]   host     address string (must be CA_IPADDR_SIZE).
- * @param[out]   port     host order port number.
+ * @param[in]    sockAddr     IP address info.
+ * @param[in]    sockAddrLen  size of sockAddr.
+ * @param[out]   host         address string (must be CA_IPADDR_SIZE).
+ * @param[out]   port         host order port number.
  */
-void CAConvertAddrToName(const struct sockaddr_storage *sockaddr, char *host, uint16_t *port);
+void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sockAddrLen,
+                         char *host, uint16_t *port);
 
 /**
  * Convert address from string to binary.
@@ -227,6 +230,7 @@ void CAConvertAddrToName(const struct sockaddr_storage *sockaddr, char *host, ui
  * @param[out]  ipaddr    IP address info.
  */
 void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storage *sockaddr);
+#endif /* WITH_ARDUINO */
 
 #ifdef __ANDROID__
 /**

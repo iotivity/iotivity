@@ -417,7 +417,7 @@ static int32_t CAReadDecryptedPayload(dtls_context_t *context,
             ((addrInfo->addr.st.ss_family == AF_INET) ? CA_IPV4 : CA_IPV6) | CA_SECURE, .port = 0 },
             .identity =
             { 0 } };
-    CAConvertAddrToName(&(addrInfo->addr.st), sep.endpoint.addr, &sep.endpoint.port);
+    CAConvertAddrToName(&(addrInfo->addr.st), addrInfo->size, sep.endpoint.addr, &sep.endpoint.port);
 
     if (NULL == g_caDtlsContext)
     {
@@ -468,7 +468,7 @@ static int32_t CASendSecureData(dtls_context_t *context,
 
     CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
 
-    CAConvertAddrToName(&(addrInfo->addr.st), endpoint.addr, &endpoint.port);
+    CAConvertAddrToName(&(addrInfo->addr.st), addrInfo->size, endpoint.addr, &endpoint.port);
     endpoint.flags = addrInfo->addr.st.ss_family == AF_INET ? CA_IPV4 : CA_IPV6;
     endpoint.flags |= CA_SECURE;
     endpoint.adapter = CA_ADAPTER_IP;
@@ -515,7 +515,7 @@ static int32_t CAHandleSecureEvent(dtls_context_t *context,
         stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
         char peerAddr[MAX_ADDR_STR_SIZE_CA] = { 0 };
         uint16_t port = 0;
-        CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, &port);
+        CAConvertAddrToName(&(addrInfo->addr.st), addrInfo->size, peerAddr, &port);
         CARemovePeerFromPeerInfoList(peerAddr, port);
     }
 
@@ -553,7 +553,7 @@ static int32_t CAGetPskCredentials(dtls_context_t *ctx,
         stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
         char peerAddr[MAX_ADDR_STR_SIZE_CA] = { 0 };
         uint16_t port = 0;
-        CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, &port);
+        CAConvertAddrToName(&(addrInfo->addr.st), addrInfo->size, peerAddr, &port);
 
         if(CA_STATUS_OK != CAAddIdToPeerInfoList(peerAddr, port, desc, descLen) )
         {
@@ -933,7 +933,7 @@ static int CAVerifyCertificate(struct dtls_context_t *ctx, const session_t *sess
     stCADtlsAddrInfo_t *addrInfo = (stCADtlsAddrInfo_t *)session;
     char peerAddr[MAX_ADDR_STR_SIZE_CA] = { 0 };
     uint16_t port = 0;
-    CAConvertAddrToName(&(addrInfo->addr.st), peerAddr, &port);
+    CAConvertAddrToName(&(addrInfo->addr.st), addrInfo->size, peerAddr, &port);
 
     CAResult_t result = CAAddIdToPeerInfoList(peerAddr, port,
             crtChain[0].subject.data + DER_SUBJECT_HEADER_LEN + 2, crtChain[0].subject.data[DER_SUBJECT_HEADER_LEN + 1]);
