@@ -28,10 +28,6 @@ public class NotificationObject {
         return notificationType;
     }
 
-    public void setNotificationType(NotificationType notificationType) {
-        this.notificationType = notificationType;
-    }
-
     public String getNotifcationTime() {
         return notifcationTime;
     }
@@ -64,7 +60,7 @@ public class NotificationObject {
         this.notifcationTTL = notifcationTTL;
     }
 
-    private NotificationType notificationType;
+    protected NotificationType notificationType;
     private String notifcationTime;
     private String notifcationSender;
     private int notifcationId;

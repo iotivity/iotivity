@@ -23,9 +23,13 @@
 package org.iotivity.service.notificationservice.impl;
 
 import org.iotivity.service.notificationservice.NotificationObject;
+import org.iotivity.service.notificationservice.NotificationType;
 
 public class TextNotification extends NotificationObject {
     private String notificationMessage;
+    public TextNotification(){
+        notificationType= NotificationType.TYPE_TEXT;
+    }
 
     public String getNotificationMessage() {
         return notificationMessage;

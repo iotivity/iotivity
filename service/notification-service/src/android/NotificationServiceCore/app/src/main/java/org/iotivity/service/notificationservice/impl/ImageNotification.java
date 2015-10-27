@@ -23,10 +23,18 @@
 package org.iotivity.service.notificationservice.impl;
 
 import org.iotivity.service.notificationservice.NotificationObject;
+import org.iotivity.service.notificationservice.NotificationType;
 
 public class ImageNotification extends NotificationObject {
+
+
     private String notificationMessage;
     private String notificationImageUrl;
+
+
+    public ImageNotification(){
+        notificationType= NotificationType.TYPE_IMAGE;
+    }
 
     public String getNotificationMessage() {
         return notificationMessage;

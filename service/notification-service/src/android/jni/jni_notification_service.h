@@ -14,7 +14,7 @@ JNIEXPORT void JNICALL JNIDiscover(JNIEnv *env, jobject thisObj);
 
 JNIEXPORT void JNICALL JNIStartNotificationProducer(JNIEnv *env, jobject thisObj,jstring notifyDeviceName);
 
-JNIEXPORT void JNICALL	JNISendNotification(JNIEnv *env,jobject thisObj,jstring URL,jstring Message,jstring Sender,jint MessageType);
+JNIEXPORT jint JNICALL	JNISendNotification(JNIEnv *env,jobject thisObj,jstring URL,jstring Message,jstring Sender,jint MessageType);
 
 JNIEXPORT void JNICALL JNIStartSubscribeNotifications(JNIEnv *env,jobject thisObj,jint resourceIndex);
 

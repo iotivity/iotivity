@@ -8,6 +8,7 @@ import org.iotivity.service.notificationservice.NotificationService;
 
 public class WifiIntentService extends IntentService {
 
+    public static String WifiIntentServiceAction="org.iotivity.service.notificationservice.WIFI_STATUS";
     public WifiIntentService() {
         super(WifiIntentService.class.getName());
     }
@@ -20,7 +21,7 @@ public class WifiIntentService extends IntentService {
         if(wifiStatus==false)
             {
                 Intent broadcastIntent = new Intent();
-                broadcastIntent.setAction("org.iotivity.service.notificationservice.WIFI_STATUS");
+                broadcastIntent.setAction(WifiIntentServiceAction);
                 broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
                 sendBroadcast(broadcastIntent);
             }

@@ -1,134 +1,168 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-xmlns:tools="http://schemas.android.com/tools"
-android:layout_width="match_parent"
-android:layout_height="match_parent"
-android:orientation="vertical"
-android:paddingBottom="@dimen/activity_vertical_margin"
-android:paddingLeft="@dimen/activity_horizontal_margin"
-android:paddingRight="@dimen/activity_horizontal_margin"
-android:paddingTop="@dimen/activity_vertical_margin"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:background="@drawable/background"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
 
-tools:context=".SampleProducer">
+    tools:context=".SampleProducer">
 
-<LinearLayout
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal">
-
-    <RadioGroup
-        android:id="@+id/radiogrouptype"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <RadioButton
-            android:id="@+id/radiotext"
+        <RadioGroup
+            android:id="@+id/radiogrouptype"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="Text" />
+            android:orientation="horizontal">
 
-        <RadioButton
-            android:id="@+id/radioimage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="Image" />
+            <RadioButton
+                android:id="@+id/radiotext"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="Text" />
 
-        <RadioButton
-            android:id="@+id/radiovideo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Video" />
-    </RadioGroup>
-</LinearLayout>
+            <RadioButton
+                android:id="@+id/radioimage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="Image" />
 
-<LinearLayout
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_centerHorizontal="true"
-    android:layout_gravity="center"
-    android:layout_marginTop="20dp"
-    android:orientation="vertical">
-
-    <LinearLayout
-        android:id="@+id/senderLL"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_gravity="center"
-        android:orientation="vertical">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Select Sender:" />
-
-<Spinner
-    android:id="@+id/sender"
-    android:layout_width="250dp"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center_horizontal"
-    >
-
-</Spinner>
+            <RadioButton
+                android:id="@+id/radiovideo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Video" />
+        </RadioGroup>
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/URLLL"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_gravity="center"
-        android:orientation="vertical"
-        android:visibility="gone"
+        android:layout_marginTop="5dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/senderLL"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select Sender:" />
+
+            <TextView
+                android:id="@+id/sender"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal">
+</TextView>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/URLLL"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Enter URL" />
+
+
+            <EditText
+
+                android:id="@+id/url"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="https://www.youtube.com/watch?v=CppgLnNM1PE"
+                android:textColor="#4c4c4c" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/messageLL"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Enter Message" />
+
+            <EditText
+                android:id="@+id/message"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="5dp"
+        android:text="Send Notification" />
+
+    <LinearLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="1"
+        android:padding="5dp"
         >
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Enter URL" />
-
-
-        <EditText
-
-            android:id="@+id/url"
-            android:textColor="#4c4c4c"
-            android:layout_width="250dp"
-            android:text="https://www.youtube.com/watch?v=CppgLnNM1PE"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/messageLL"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_gravity="center"
-        android:orientation="vertical">
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="ID"
+            android:layout_weight=".15"
+            android:id="@+id/notification_id" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Enter Message" />
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Notification"
+            android:layout_weight=".7"
+            android:id="@+id/notification_object" />
 
-        <EditText
-            android:id="@+id/message"
-            android:layout_width="250dp"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal" />
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Read"
+            android:layout_weight="0.15"
+            android:id="@+id/notification_read" />
     </LinearLayout>
-</LinearLayout>
-
-<Button
-    android:id="@+id/button"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center_horizontal"
-    android:layout_marginTop="20dp"
-    android:text="Send Notification" />
+    <ListView
+        android:id="@+id/notification_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 </LinearLayout>

@@ -31,17 +31,24 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import org.iotivity.service.notificationservice.NotificationProducerCallback;
 import org.iotivity.service.notificationservice.NotificationService;
 import org.iotivity.service.notificationservice.NotificationObject;
+import org.iotivity.service.notificationservice.NotificationServiceCallbackHandler;
 import org.iotivity.service.notificationservice.NotificationType;
 import org.iotivity.service.notificationservice.impl.ImageNotification;
 import org.iotivity.service.notificationservice.impl.TextNotification;
 import org.iotivity.service.notificationservice.impl.VideoNotification;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class SampleProducer extends Activity {
@@ -51,8 +58,13 @@ public class SampleProducer extends Activity {
     LinearLayout messageLL, urlLL;
     EditText editTextMessage, editTextUrl;
     NotificationType notificationType = NotificationType.TYPE_TEXT;
-    Spinner spinnerSender;
+    TextView textViewSender;
     String sender;
+    ListView listView;
+    NotificationProducerCallback notificationProducerCallback;
+    NotificationAdapter notificationlistAdapter;
+    ArrayList<NotificationObject> notifications = new ArrayList<NotificationObject>();
+    HashMap<Integer,Integer> notificationRead=new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +73,25 @@ public class SampleProducer extends Activity {
         sender = getIntent().getStringExtra("DEVICENAME");
         Log.d("Device name", sender);
         final NotificationService notificationservice = NotificationService.getInstance();
+        notificationProducerCallback =new NotificationProducerCallback() {
+            @Override
+            public void onNotificationAcknowledgementReceieved(int id, int i1) {
+                Log.d("SampleProducer", "onNotificationAcknowledgementReceieved" + id);
+
+                notificationRead.put(id, notificationRead.get(id) + 1);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        notificationlistAdapter.notifyDataSetChanged();
+                        Toast.makeText(getApplicationContext(), "onNotificationAcknowledgementReceieved", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+            }
+        };
+        final NotificationServiceCallbackHandler callbackHandler=NotificationServiceCallbackHandler.getInstance();
+        callbackHandler.setNotificationCallback(notificationProducerCallback);
         notificationservice.startnotificationproducer(sender);
         messageLL = (LinearLayout) findViewById(R.id.messageLL);
         urlLL = (LinearLayout) findViewById(R.id.URLLL);
@@ -72,23 +103,9 @@ public class SampleProducer extends Activity {
         radioButtonVideo = (RadioButton) findViewById(R.id.radiovideo);
 
         editTextMessage = (EditText) findViewById(R.id.message);
-        spinnerSender = (Spinner) findViewById(R.id.sender);
-        String[] devices = {sender};
-        ArrayAdapter<String> senderAdapter = new ArrayAdapter<String>(SampleProducer.this, android.R.layout.simple_spinner_item, devices);
-        senderAdapter.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);
-        spinnerSender.setAdapter(senderAdapter);
-        spinnerSender.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        textViewSender = (TextView) findViewById(R.id.sender);
+        textViewSender.setText(sender);
 
-                Log.d("sender", sender);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
-            }
-        });
 
         editTextUrl = (EditText) findViewById(R.id.url);
         radioGroupType.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -120,6 +137,7 @@ public class SampleProducer extends Activity {
                     Toast.makeText(SampleProducer.this, "Sender is empty", Toast.LENGTH_SHORT).show();
                     return;
                 }
+
                 String message = editTextMessage.getText().toString();
                 String url = editTextUrl.getText().toString();
                 Log.d("sending:", sender + message);
@@ -127,42 +145,69 @@ public class SampleProducer extends Activity {
                 if (notificationType == NotificationType.TYPE_TEXT) {
                     notificationObject = new TextNotification();
                     notificationObject.setNotifcationSender(sender);
-                    notificationObject.setNotificationType(notificationType);
                     ((TextNotification) notificationObject).setNotificationMessage(message);
+
+
+
 
                 } else if (notificationType == NotificationType.TYPE_IMAGE) {
 
                     notificationObject = new ImageNotification();
                     notificationObject.setNotifcationSender(sender);
-                    notificationObject.setNotificationType(notificationType);
                     ((ImageNotification) notificationObject).setNotificationImageUrl(url);
                     ((ImageNotification) notificationObject).setNotificationImageUrl("http://weknowyourdreams.com/images/coffee/coffee-01.jpg");
                     ((ImageNotification) notificationObject).setNotificationMessage(message);
+
+
                 } else if (notificationType == NotificationType.TYPE_VIDEO) {
 
                     notificationObject = new VideoNotification();
-                    notificationObject.setNotificationType(notificationType);
                     notificationObject.setNotifcationSender(sender);
                     String url2 = "https://www.youtube.com/watch?v=CppgLnNM1PE";
                     ((VideoNotification) notificationObject).setNotificationVideoUrl(url2);
 
+
+
                 }
-                notificationservice.sendnotification(notificationObject);
+                int id=notificationservice.sendnotification(notificationObject);
+                notificationObject.setNotifcationId(id);
+                //update List and UI
+                notifications.add(notificationObject);
+                notificationRead.put(id, 0);
+                notificationlistAdapter.notifyDataSetChanged();
+
+
                 editTextMessage.setText("");
 
             }
         });
+
+        listView = (ListView) findViewById(R.id.notification_list);
+       // notificationlistAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_dropdown_item_1line, notifications);
+        notificationlistAdapter=new NotificationAdapter(this,notifications,notificationRead);
+        listView.setAdapter(notificationlistAdapter);
+
         sendWelcomeNotification();
+
     }
 
-    void sendWelcomeNotification()
-    {
-        TextNotification textNotification=new TextNotification();
+    void sendWelcomeNotification() {
+        TextNotification textNotification = new TextNotification();
         textNotification.setNotificationMessage("Welcome");
         textNotification.setNotifcationSender(sender);
-        textNotification.setNotificationType(NotificationType.TYPE_TEXT);
-        NotificationService notificationService=NotificationService.getInstance();
-        notificationService.sendnotification(textNotification);
+        NotificationService notificationService = NotificationService.getInstance();
+        int id=notificationService.sendnotification(textNotification);
+        textNotification.setNotifcationId(id);
+        //update List and UI
+        notifications.add(textNotification);
+        notificationRead.put(id,0);
+        notificationlistAdapter.notifyDataSetChanged();
     }
 
+
+
+    public void onItemClick(int mPosition){
+
+        Log.d("Clicked",notifications.get(mPosition).getNotificationType()+"");
+    }
 }

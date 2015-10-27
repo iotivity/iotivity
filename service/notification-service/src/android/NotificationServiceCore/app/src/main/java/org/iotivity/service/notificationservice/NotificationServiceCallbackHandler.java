@@ -32,6 +32,8 @@ public class NotificationServiceCallbackHandler {
 
     private static NotificationServiceCallbackHandler notificationServiceCallbackHandlerobj;
     private NotificationCallback mNotificationCallback;
+    private NotificationProducerCallback mNotificationProducerCallback;
+    private String TAG="NSCallbackHandler";
 
     public static synchronized NotificationServiceCallbackHandler getInstance() {
         if (notificationServiceCallbackHandlerobj == null)
@@ -43,16 +45,20 @@ public class NotificationServiceCallbackHandler {
         mNotificationCallback = notificationCallback;
     }
 
+
+    public void setNotificationCallback(NotificationProducerCallback callback) {
+        mNotificationProducerCallback = callback;
+
+    }
+
     public void ReceivedNotificationcallback(String url, String message, String sender, String time, int type, int TTL, int id) {
 
-
-        Log.d("NMcallback", "Received notifcation" + TTL + ":" + id);
+        Log.d(TAG, "Received notifcation" + TTL + ":" + id);
 
         if (type == NotificationType.TYPE_TEXT.getValue()) {
 
             TextNotification textNotification = new TextNotification();
             textNotification.setNotificationMessage(message);
-            textNotification.setNotificationType(NotificationType.TYPE_TEXT);
             textNotification.setNotifcationSender(sender);
             textNotification.setNotifcationTime(time);
             textNotification.setNotifcationTTL(TTL);
@@ -63,7 +69,6 @@ public class NotificationServiceCallbackHandler {
             ImageNotification imageNotification = new ImageNotification();
             imageNotification.setNotificationImageUrl(url);
             imageNotification.setNotificationMessage(message);
-            imageNotification.setNotificationType(NotificationType.TYPE_IMAGE);
             imageNotification.setNotifcationSender(sender);
             imageNotification.setNotifcationTime(time);
             imageNotification.setNotifcationId(id);
@@ -73,7 +78,6 @@ public class NotificationServiceCallbackHandler {
             VideoNotification videoNotification = new VideoNotification();
 
             videoNotification.setNotificationVideoUrl(url);
-            videoNotification.setNotificationType(NotificationType.TYPE_VIDEO);
             videoNotification.setNotifcationSender(sender);
             videoNotification.setNotifcationTime(time);
             videoNotification.setNotifcationId(id);
@@ -84,9 +88,18 @@ public class NotificationServiceCallbackHandler {
 
     }
 
-    public void onResourceDiscoveredCallback(String resourceURI, int status) {
-        Log.d("NSCallbackHandler", "Resource discovered" + status);
-        mNotificationCallback.onResourceDiscoveredCallback(resourceURI, status);
+    public void onResourceDiscoveredCallback(String resourceName, int resourceIndex) {
+        Log.d(TAG, "Resource discovered" + resourceIndex);
+        mNotificationCallback.onResourceDiscoveredCallback(resourceName, resourceIndex);
+    }
+
+        public void onNotificationAcknowledgementReceievedCallback(int notificationID, int readStatus)
+    {
+        // TODO: 10/22/2015 add sdk code
+        Log.d(TAG,"onNotificationAcknowledgementReceievedCallback:"+notificationID+":"+readStatus);
+        mNotificationProducerCallback.onNotificationAcknowledgementReceieved(notificationID,readStatus);
+
+
     }
 
 

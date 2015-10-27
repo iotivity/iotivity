@@ -90,7 +90,7 @@ static JNINativeMethod gNotificationManagerMethodTable[] =
     { "Discover", "()V", (void *) JNIDiscover },
     { "StartNotificationProducer", "(Ljava/lang/String;)V", (void *) JNIStartNotificationProducer },
     { "StartSubscribeNotifications", "(I)V", (void *) JNIStartSubscribeNotifications },
-    { "SendNotification", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V", (void *) JNISendNotification },
+    { "SendNotification", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)I", (jint *) JNISendNotification },
     { "StopSubscribeNotifications", "()V", (void *) JNIStopSubscribeNotifications },
 
 };

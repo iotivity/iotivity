@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:weightSum="1"
+    android:padding="5dp"
+    >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="NO "
+        android:layout_weight=".25"
+        android:id="@+id/notification_id" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:layout_weight=".6"
+        android:singleLine="false"
+        android:id="@+id/notification_object" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Read"
+        android:layout_weight="0.15"
+        android:id="@+id/notification_read" />
+</LinearLayout>

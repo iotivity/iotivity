@@ -41,7 +41,7 @@ public class NotificationService {
 
     private native void StopSubscribeNotifications();
 
-    private native void SendNotification(String URL, String Message, String Sender, int type);
+    private native int SendNotification(String URL, String Message, String Sender, int type);
 
     private static NotificationService notificationServiceobj = null;
     private String Tag = "NotificationService";
@@ -89,18 +89,23 @@ public class NotificationService {
         StopSubscribeNotifications();
     }
 
-    public void sendnotification(NotificationObject notificationObject) {
+    public int sendnotification(NotificationObject notificationObject) {
 
+        int id=-1;
         if (notificationObject.getNotificationType() == NotificationType.TYPE_TEXT) {
             TextNotification textNotification = (TextNotification) notificationObject;
-            SendNotification(null, textNotification.getNotificationMessage(), textNotification.getNotifcationSender(), textNotification.getNotificationType().getValue());
+            id=SendNotification(null, textNotification.getNotificationMessage(), textNotification.getNotifcationSender(), textNotification.getNotificationType().getValue());
         } else if (notificationObject.getNotificationType() == NotificationType.TYPE_IMAGE) {
             ImageNotification imageNotification = (ImageNotification) notificationObject;
-            SendNotification(imageNotification.getNotificationImageUrl(), imageNotification.getNotificationMessage(), imageNotification.getNotifcationSender(), imageNotification.getNotificationType().getValue());
+            id=SendNotification(imageNotification.getNotificationImageUrl(), imageNotification.getNotificationMessage(), imageNotification.getNotifcationSender(), imageNotification.getNotificationType().getValue());
         } else if (notificationObject.getNotificationType() == NotificationType.TYPE_VIDEO) {
             VideoNotification videoNotification = (VideoNotification) notificationObject;
-            SendNotification(videoNotification.getNotificationVideoUrl(), null, videoNotification.getNotifcationSender(), videoNotification.getNotificationType().getValue());
+            id=SendNotification(videoNotification.getNotificationVideoUrl(), null, videoNotification.getNotifcationSender(), videoNotification.getNotificationType().getValue());
         }
 
+        Log.d(Tag,"id="+id);
+        return id;
     }
+
+
 }

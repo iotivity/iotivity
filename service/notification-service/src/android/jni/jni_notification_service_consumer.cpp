@@ -39,7 +39,7 @@ constexpr int INCORRECT_INPUT = 100;
 std::shared_ptr<NotificationConsumer> resource;
 std::vector<std::shared_ptr<NotificationConsumer>> notificationResourceList;
 std::vector<std::string> DeviceList;
-
+int resource_index=-1;
 jmethodID g_notificationcallback;
 jobject g_callback_obj;
 JNIEnv *m_env;
@@ -105,12 +105,15 @@ void SendCallback(NotificationObject *m_notificationObjectPtr)
     NotificationManagerJVM::releaseEnv();
 }
 
-void sendcallbackResourceDiscovered(std::string resourceName)
+void sendcallbackResourceDiscovered(std::string resourceName,int resource_index)
 {
     LOGI("sending callback to android");
     m_env = NotificationManagerJVM::getEnv();
     if (m_env == NULL)
-    {LOGE("jvm is null"); return;}
+    {
+		LOGE("jvm is null"); 
+		return;
+	}
 
     jclass NMCallbacks = GetJClass(NM_CALLBACK_NATIVE_API_CLASS_PATH);
     if (NMCallbacks == NULL)
@@ -127,18 +130,22 @@ void sendcallbackResourceDiscovered(std::string resourceName)
     else LOGI("registered callback");
     jstring jresourceName = m_env->NewStringUTF(resourceName.c_str());
 
-    m_env->CallVoidMethod(g_callback_obj, g_discoverycallback, jresourceName, 1);
+    m_env->CallVoidMethod(g_callback_obj, g_discoverycallback, jresourceName, resource_index);
     NotificationManagerJVM::releaseEnv();
-
-
+	
 }
 
 void onGetDeviceName(std::string deviceName)
 {
+	resource_index++;
     DeviceList.push_back(deviceName);
-    sendcallbackResourceDiscovered(deviceName);
+    sendcallbackResourceDiscovered(deviceName,resource_index);
 }
-
+void notificationAcknowledgement(NotificationObject *m_notificationObjectPtr)
+{
+    resource->sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId);
+	LOGI("ACK sent");
+}
 void onResourceDiscovered(std::shared_ptr<NotificationConsumer> foundResource)
 {
 
@@ -146,6 +153,7 @@ void onResourceDiscovered(std::shared_ptr<NotificationConsumer> foundResource)
     std::string hostAddress = foundResource->getAddress();
     LOGI("Resource Discovered %s %s", resourceURI.c_str(), hostAddress.c_str());
 
+	
     foundResource->getDeviceName(&onGetDeviceName);
     notificationResourceList.push_back(foundResource);
 }
@@ -154,6 +162,7 @@ void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
 {
     LOGI("onResourceUpdated callback");
     SendCallback(m_notificationObjectPtr);
+	notificationAcknowledgement(m_notificationObjectPtr);
 
 }
 

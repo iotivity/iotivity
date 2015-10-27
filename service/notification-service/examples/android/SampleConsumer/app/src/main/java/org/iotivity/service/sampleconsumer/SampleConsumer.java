@@ -59,8 +59,12 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
+
+
 
 public class SampleConsumer extends Activity implements NotificationCallback {
 
@@ -80,7 +84,9 @@ public class SampleConsumer extends Activity implements NotificationCallback {
     HashMap<String, Integer> icons = new HashMap<>();
     HashMap<String, Integer> actions = new HashMap<>();
     ArrayList<RadioButton> radioButtons = new ArrayList<>();
+    HashMap<String,Integer> resourceList=new HashMap<>();
 
+    long discoverTime,notificationtime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,7 +120,8 @@ public class SampleConsumer extends Activity implements NotificationCallback {
                 selected = -1;
                 for (RadioButton r : radioButtons)
                     if (r.isChecked()) {
-                        selected = radioButtons.indexOf(r);
+
+                        selected = resourceList.get(r.getText().toString());//radioButtons.indexOf(r);
                         break;
                     }
                 Log.d("Selected=", selected + "");
@@ -153,6 +160,7 @@ public class SampleConsumer extends Activity implements NotificationCallback {
 
 
 
+                discoverTime=System.currentTimeMillis();
                 discovered_from_activity = true;
                 notificationservice.discover();
 
@@ -171,6 +179,10 @@ public class SampleConsumer extends Activity implements NotificationCallback {
     @Override
     public void onNotificationReceived(NotificationObject notificationObject) {
         Log.d("onNotificationReceived", "Inside" + notificationObject.getNotifcationSender() + notificationObject.getNotificationType().getValue() + notificationObject.getNotifcationId());
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SS");
+
+        Log.d("Notification TIme",sdf.format(cal.getTime())+"...."+notificationObject.getNotifcationTime());
         final NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(SampleConsumer.this);
         String sender = notificationObject.getNotifcationSender();
 
@@ -225,9 +237,9 @@ public class SampleConsumer extends Activity implements NotificationCallback {
             mBuilder.setAutoCancel(true);
             Uri notificationSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             mBuilder.setSound(notificationSound);
-            service.notify(0, mBuilder.build());
+            service.notify(id, mBuilder.build());
 
-/*            Runnable r = new Runnable() {
+            Runnable r = new Runnable() {
                 @Override
                 public void run() {
                     try {
@@ -247,7 +259,7 @@ public class SampleConsumer extends Activity implements NotificationCallback {
                         mBuilder.setAutoCancel(true);
                         Uri notificationSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
                         mBuilder.setSound(notificationSound);
-                        service.notify(0, mBuilder.build());
+                        service.notify(id, mBuilder.build());
 
                     } catch (MalformedURLException e) {
                         e.printStackTrace();
@@ -258,7 +270,7 @@ public class SampleConsumer extends Activity implements NotificationCallback {
                     }
                 }
             };
-            new Thread(r).start();*/
+            //new Thread(r).start();
 
 
         } else if (notificationObject.getNotificationType() == NotificationType.TYPE_VIDEO) {
@@ -290,7 +302,7 @@ public class SampleConsumer extends Activity implements NotificationCallback {
                         mBuilder.addAction(R.drawable.play_icon, "Play Video", null);
                         Uri notificationSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
                         mBuilder.setSound(notificationSound);
-                        service.notify(0, mBuilder.build());
+                        service.notify(id, mBuilder.build());
 
                     } catch (MalformedURLException e) {
                         e.printStackTrace();
@@ -325,19 +337,21 @@ public class SampleConsumer extends Activity implements NotificationCallback {
     }
 
     @Override
-    public void onResourceDiscoveredCallback(final String resourceURI, int i) {
+    public void onResourceDiscoveredCallback(final String resourceName, int resourceIndex) {
+
+        resourceList.put(resourceName,resourceIndex);
+        Log.d("Discover time=", (System.currentTimeMillis()-discoverTime)+"");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
-                if(radioButtons.size()!=0)
-                {
+                if (radioButtons.size() != 0) {
                     radioGroupResources.removeAllViewsInLayout();
                 }
 
                 Toast.makeText(SampleConsumer.this, "Notification Rescource discovered", Toast.LENGTH_SHORT).show();
 
-              if (!discovered_from_activity) {
+                if (!discovered_from_activity) {
                     subscribe.setEnabled(true);
                     unsubscribe.setEnabled(false);
 
@@ -345,7 +359,7 @@ public class SampleConsumer extends Activity implements NotificationCallback {
                 }
 
                 RadioButton radioButtonView = new RadioButton(SampleConsumer.this);
-                radioButtonView.setText(resourceURI);
+                radioButtonView.setText(resourceName);
 
                 LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.FILL_PARENT,

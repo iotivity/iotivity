@@ -23,12 +23,16 @@
 package org.iotivity.service.notificationservice.impl;
 
 import org.iotivity.service.notificationservice.NotificationObject;
+import org.iotivity.service.notificationservice.NotificationType;
 
 public class VideoNotification extends NotificationObject {
     public String getNotificationVideoUrl() {
         return notificationVideoUrl;
     }
 
+    public VideoNotification(){
+        notificationType= NotificationType.TYPE_VIDEO;
+    }
     public void setNotificationVideoUrl(String notificationVideoUrl) {
         this.notificationVideoUrl = notificationVideoUrl;
     }

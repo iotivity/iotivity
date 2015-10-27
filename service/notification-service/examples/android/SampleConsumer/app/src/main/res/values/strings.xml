@@ -11,4 +11,5 @@
         <item>Microwave</item>
     </array>
     <string name="title_activity_test_video">TestVideo</string>
+    <string name="title_activity_test">Test</string>
 </resources>
