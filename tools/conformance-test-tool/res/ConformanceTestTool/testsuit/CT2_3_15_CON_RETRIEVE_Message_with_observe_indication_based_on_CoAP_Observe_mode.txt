@@ -1,0 +1,48 @@
+*** Settings ***
+Documentation     CT2_3_15_CON_RETRIEVE_Message_with_observe_indication_based_on_CoAP_Observe_mode
+Resource          OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT2_3_15_CON_RETRIEVE_Message_with_observe_indication_based_on_CoAP_Observe_mode
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2015-05-11|
+    ...    |see |Section 11.4: NOTIFICATION|
+    ...    |objective |Verify that the client (DUT) properly sends a CON RETRIEVE request with observe indication to server (TE)|
+    ...    |target | |
+    ...    |test_data||
+    ...    |pre_condition|1. Server (TE) is discovered from the Client (DUT)|
+    ...    |pre_condition|| 2. Resource properties and attribute contents are known for verification|
+    ...    |pre_condition|| 3. Resource on server is observable|
+    ...    |procedure| 1. Send a CON (high QoS) RETRIEVE request message with observer option (=0) to server|
+    ...    |procedure| 2. Reply with RETRIEVE response message to client|
+    ...    |procedure| 3. Reply with RETRIEVE response message to client|
+    ...    |post_condition| |
+    ...    |expected| 1. Verify Client sends the request message including below|
+    ...    |expected| In OIC Layer|
+    ...    |expected| - fr, to, ri, cn, op|
+    ...    |expected| - op = RETRIEVE|
+    ...    |expected| - cn Information, including properties, of the resource to be updated |
+    ...    |expected| In CoAP Layer|
+    ...    |expected| - Type = 0 (CON)|
+    ...    |expected| - Code = 1 (GET)|
+    [Tags]    Mandatory    Client    Con    Retrieve
+    #Pre-Condition
+    ####################################################
+    Start Server
+    ConformanceKeyword.Log To Console    \n-----------------Send Multicast Discovery Request from DUT App-----------------
+    Get Discovery Requests
+    #Test-Body
+    #####################################################
+    ConformanceKeyword.Log To Console    \n-----------------Send CON RETRIEVE Request with observe indication from DUT App-----------------
+    ${request}    Get Request
+    ${request_code}    Get Request Code    ${request}
+    Should Be Equal    ${request_code}    ${GET}
+    ${request_type}    Get Request Type    ${request}
+    Should Be Equal    ${request_type}    ${CON}
+    ${payload}    Get Request Json    ${request}
+    Should Be Empty        ${payload}
+    ${request_observe}    Get Request Observe    ${request}
+    Should Be Equal    ${request_observe}    ${OBSERVE_ON}
+#Observe
+    Stop Server

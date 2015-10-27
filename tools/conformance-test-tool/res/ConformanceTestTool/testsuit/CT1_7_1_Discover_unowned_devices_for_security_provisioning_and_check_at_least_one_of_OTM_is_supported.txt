@@ -1,0 +1,42 @@
+*** Settings ***
+Documentation	CT1.7.1 Discover unowned devices for security provisioning and check at least one of OTM is supported.
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.7.1 Discover unowned devices for security provisioning and check at least one of OTM is supported.
+    [Documentation]
+	...	|author	| jisan.m@samsung.com|
+	...	|reviewer|	|
+	...	|since	| 2015-10-09 |
+	...	|see	| Security Spec Section 7.3.1 OTM implementation requirements |
+	...	|objective	| Verify the Server (DUT) has at least one of the OTMs and responds with the /oic/sec/doxm resource  |
+	...	|objective	| when a unowned device discovery request is received. |
+	...	|target	| Server DUT |
+	...	|test_data| None |
+	...	|test_configuration| Server (DUT)  should be an ‘unowned’ state  and support at least one owner transfer method |
+	...	|test_configuration|  described in the Security Spec section 7.3. |
+	...	|pre_condition| Server (DUT) is newly introduced in the OIC network and discoverable from the Client (TE). |
+	...	|procedure| 1. Server DUT is Connected / discoverable |	
+	...	|procedure| 2. Client TE uses the Test Application to initiate a multicast unowned device discovery request with no query |
+	...	|procedure| 3. Server Sends discovery response |
+	...	|procedure| 4. Client displays discovered unowned devices |
+	...	|post_condition|None |
+	...	|expected| 1. An unowned Server (DUT) is discovered.  |
+	...	|expected| 2. Discovery response should be the following; : “oic/sec/doxm.owned==false”. |
+	...	|expected| 3. The response should contain at least one owner transfer method (“oic.sec.doxm.jw” or |
+	...	|expected| 	  "oic.sec.doxm.rdp", etc) as a supported ownership transfer method in “/oic/sec/doxm.oxm ”  property |
+	...	|expected| 4. The response should contain Server(DUT)’s device ID  in "“/oic/sec/doxm.deviceid"”  property |
+
+    [Tags]	Mandatory     Security
+    ${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_PROVISION_URI}	${PROVISION_QUERY_UNOWNED}
+    
+    ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}
+    Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_response_code}
+	${owned_status}	Get Owned Status From Response	${response_payload}
+	Should Contain	${owned_status}	false
+	${is_jw_or_rdp_exists}	Check Oxm List Contains Atleast Justworks Or Randompin Method	${response_payload}
+	Should be True	${is_jw_or_rdp_exists}
+	${device_id}	Get Device ID From Response	${response_payload}
+	Should Not be Empty	${device_id}
+    
+

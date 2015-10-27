@@ -1,0 +1,73 @@
+*** Settings ***
+Documentation	CT1.3.18 NON RETRIEVE Message without observe indication based on CoAP Observe mode cancellation
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.3.18 NON RETRIEVE Message without observe indication based on CoAP Observe mode cancellation
+    [Documentation]					
+	...	|author	|SK Tuhin Islam |		
+	...	|reviewer| |				
+	...	|since	|2015-05-11 |
+	...	|see	|Section 11.4: NOTIFICATION |
+	...	|objective|Verify that the Server (DUT) properly responds CON RETRIEVE request without observe indication from client (TE) |
+	...	|target	|Server DUT |
+	...	|test_data|NON RETRIEVE Message without observe indication based on CoAP Observe mode cancellation |
+	...	|pre_condition	|Server (DUT) is discovered from the Client (TE) |
+	...	|pre_condition	|Resources properties and attribute contents are known for verification |
+	...	|pre_condition	|Server (DUT) is in observe mode |
+	...	|procedure	|1. Send a NON (low QoS) RETRIEVE request message to server (without observe field to the same resource) |
+	...	|procedure	|2. Reply with NON RETRIEVE response message to client |
+	...	|procedure	|3. Receive RETRIEVE response message from server |
+	...	|procedure	|4. Cancel observation mode	|
+	...	|procedure	|5. Observe condition satisfied |
+	...	|post_condition	|None |
+	...	|expected|1. Server sends the response message including below, OIC Layer fr, to, ri, cn, rs, obs - cn includes URI of the resource in request CoAP Layer - Type = 2 (Ack) - Token = Token in request - MsgId = MsgId in request - Resp Code = 2.05 |
+	...	|expected|2. Check client does not receive any RETRIEVE Response messages with observe indication |
+
+    [Tags]	Mandatory	Server    Observe
+#Pre-Condition
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+    @{dut1_resource_types}  Get DUT Info Value      ${RESOURCE_TYPE}        ${DUT1_ID}      ${OBSERVABLE}=1&${DISCOVERABLE}=1
+    ${resource_ip}  ${resource_port}        ${resource_href}        Get IP Port And Uri             ${RESOURCE_TYPE}=@{dut1_resource_types}[0]
+    @{dut1_resource_hrefs}       Get DUT Info Value      ${HREF}    ${DUT1_ID}      ${OBSERVABLE}=1&${DISCOVERABLE}=1
+    :FOR        ${resource_href}   IN      @{dut1_resource_hrefs}
+    \   ${msgid1}    Generate Message Id
+    \   ${token1}    Generate Token
+    \   Send Observe Request    ${COAP}	${msgid1}	${token1}  ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}
+    \   ${length}    Get Length Available Representation To Update    ${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}
+    \   Run Keyword If    ${length} > 0    Set Modified Partial Representation Value Payload       ${DUT1_ID}      ${OBSERVABLE}=1&${HREF}=${resource_href}&${DISCOVERABLE}=1
+    \   ${payload}    Run Keyword If    ${length} > 0    Get Json Representation
+    \   ${msgid2}    Generate Message Id
+    \   ${token2}    Generate Token
+    \   ${dut2_response}    Run Keyword If    ${length} > 0    Send Post Request        ${UNICAST}      ${COAP}    ${msgid2}       ${token2}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
+    \   Run Keyword If    ${length} < 1    Log To Console    ============== User Control -> Change state of resource for notification================
+    \   Builtin.sleep   ${${DEFAULT_WAIT_TIME}}
+    \   ${dut1_response}        Get Observe Response	 ${COAP}
+    \   Should Not Be Empty             ${dut1_response}
+    \   Clear Notifications	${COAP}
+    \   ${msgid3}    Generate Message Id
+    \   ${token3}    Generate Token
+    \   ${dut2_response}        Send Get Request       ${UNICAST}      ${COAP}  ${msgid3}       ${token3}  ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}
+#    \	${dut2_response}	Cancel Observe With Get message		${COAP}	${msgid3}	${CONFIRMABLE}		${resource_ip}		${${resource_port}}		${resource_href}
+    \   Should Not Be Empty             ${dut2_response}
+    \   ${duty_response_type}   Get Response Type       ${dut2_response}
+    \   Should Be Equal    ${duty_response_type}        ${NON}
+    \   ${dut2_response_json}   Get Response Json       ${dut2_response}
+    \   ${validate_json_result}    Validate JSON Format        ${dut2_response_json}
+    \   Should Be True  ${validate_json_result}
+    \   ${dut2_response_code}   Get Response Code       ${dut2_response}
+    \   Should Be Equal    ${COAP_RESPONSE_CODE_RETRIEVED}      ${dut2_response_code}
+    \   ${dut2_response_token}   Get Response Token       ${dut2_response}
+    \   Should Be Equal            ${dut2_response_token}    ${token3}
+    \   ${dut2_response_msgid}   Get Response Msgid       ${dut2_response}
+    \   ${msgid4}    Generate Message Id
+    \   ${token4}    Generate Token
+    \   ${dut2_response}    Run Keyword If    ${length} > 0    Send Post Request        ${UNICAST}      ${COAP}    ${msgid4}       ${token4}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
+    \   Builtin.sleep   ${${DEFAULT_WAIT_TIME}}
+    \   ${dut1_response}        Get Observe Response	 ${COAP}
+    \   Should Be Empty             ${dut1_response}
+    Release DUT information     ${DUT1_ID}
+

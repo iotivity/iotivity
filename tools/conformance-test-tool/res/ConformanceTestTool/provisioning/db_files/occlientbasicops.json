@@ -1,0 +1,35 @@
+{
+    "acl": [
+        {
+            "sub": "YWRtaW5EZXZpY2VVVUlEMA==",
+            "rsrc": ["*"
+			],
+			"perms": 31,
+			"ownrs" : ["YWRtaW5EZXZpY2VVVUlEMA=="]
+		}
+	],
+	"pstat":	{
+		"isop":	true,
+		"deviceid":	"TGlnaHREZXZfVVVJRDAwMA==",
+		"ch": 0,
+		"cm":	0,
+		"tm":	0,
+		"om":	3,
+		"sm":	[3]
+	},
+	"doxm":	{
+		"oxm":	[0],
+		"oxmsel": 0,
+		"sct": 1,
+		"owned": true,
+		"deviceid":	"TGlnaHREZXZfVVVJRDAwMA==",
+		"ownr":	"YWRtaW5EZXZpY2VVVUlEMA=="
+	},
+    "cred":	[{
+		"credid": 1,
+		"sub": "RG9vckxvY2tEZXZfVVVJRA==",
+		"credtyp": 1,
+		"pvdata": "B9ubeMBh4WsROdGZyB8+tw==",
+        "ownrs" : ["YWRtaW5EZXZpY2VVVUlEMA=="]
+	}]
+}

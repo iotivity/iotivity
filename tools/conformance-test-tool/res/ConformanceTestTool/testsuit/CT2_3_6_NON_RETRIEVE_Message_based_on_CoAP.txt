@@ -1,0 +1,45 @@
+*** Settings ***
+Documentation   CT2.3.6 NON RETRIEVE Message based on CoAP
+Resource          OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT2.3.6 NON RETRIEVE Message based on CoAP
+    [Documentation]					
+	...	|author	|jisan.m@samsung.com	|	
+	...	|reviewer|	|			
+	...	|since	|2015-06-16|
+	...	|see	|Section 8.2: RETRIEVE|
+	...	|objective	|Verify that the client (DUT) properly sends RETIEVE request message to server (TE)  |
+	...	|target	|	|
+	...	|test_data|	|
+	...	|pre_condition|Server (TE) is discovered from the Client (DUT)  |
+	...	|procedure| 1. From Client DUT, Send a NON (low QoS) ) RETRIEVE request message to server|	
+	...	|procedure| 2. From Server TE, Reply with a RETRIEVE response message to client|
+	...	|procedure| 3. From Client DUT, Receives RETRIEVE response message from server and returns an Ack |
+	...	|post_condition| |
+	...	|expected| 1. Verify Client sends the request message including below|
+	...	|expected|    In OIC Layer|
+	...	|expected|       - fr, to, ri, op|
+	...	|expected|       - op = RETRIEVE|
+	...	|expected|    In CoAP Layer|
+	...	|expected|       - Type = 1 (NON)|
+	...	|expected|       - Code = 1 (GET)|
+	...	|expected| 2. Check acknowledgement message on server|
+
+    [Tags]    Mandantory    Retrieve    Non    Client
+    #Pre-Condition
+    ####################################################
+    Start Server
+    ConformanceKeyword.Log To Console    \n-----------------Send Multicast Discovery Request from DUT App-----------------
+    Get Discovery Requests
+    #Test-Body
+    #####################################################
+    ConformanceKeyword.Log To Console    "Send NON RETRIEVE Message based on CoAP..."
+    ConformanceKeyword.Log To Console    \n-----------------Send NON RETRIEVE Message based on CoAP from DUT App-----------------
+    ${request}    Get Request
+    ${request_code}    Get Request Code    ${request}
+    Should Be Equal    ${request_code}    ${GET}
+    ${request_type}    Get Request Type    ${request}
+    Should Be Equal    ${request_type}    ${NON}
+    Stop Server
+

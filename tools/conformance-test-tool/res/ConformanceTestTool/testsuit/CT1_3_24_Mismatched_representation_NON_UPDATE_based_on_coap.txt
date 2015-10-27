@@ -1,0 +1,52 @@
+*** Settings ***
+Documentation	CT1.3.24 Mismatched representation NON UPDATE based on CoAP
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.3.24 Mismatched representation NON UPDATE based on CoAP
+    [Documentation]					
+	...	|author	|sk.islam |		
+	...	|reviewer| |				
+	...	|since	|2015-06-16|
+	...	|see	|Section 12.2.2|
+	...	|objective|Verify that when the client sends a NON UPDATE message with mismatched resource representation to update a resource,server(DUT) returns client error and no representation overwrite happens |
+	...	|pre_condition	|1. Server (DUT) is discovered from the client (TE) |
+	...	|pre_condition	|2. Resource properties and attribute contents are known for verification |
+	...	|procedure	|1. Send a NON UPDATE (low QoS) request message with mismatched resource representation to server |
+	...	|procedure	|2. Return a client error message to client|
+	...	|procedure	|3. Receive error message from server |
+	...	|procedure	|4. Send a GET to the same resource to server |
+	...	|procedure	|5. Return GET response to client |
+	...	|procedure	|6. Receive GET response from server |
+	...	|post_condition	| |
+	...	|expected|1. A client error message is returned|
+	...	|expected|2. Server side resource representation is not overwritten|
+
+
+    [Tags]	Mandatory	Server
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+    @{dut1_resource_types}	Get DUT Info Value	${RESOURCE_TYPE}	${DUT1_ID}	${DISCOVERABLE}=1
+    ${resource_ip}	${resource_port}	${resource_href}	Get IP Port And Uri		${RESOURCE_TYPE}=${dut1_resource_types[0]}
+    @{dut1_resource_hrefs}      Get DUT Info Value      ${HREF}    ${DUT1_ID}   ${DISCOVERABLE}=1
+    :FOR	${resource_href}	IN	@{dut1_resource_hrefs}
+    \	Create Json Representation
+    \	Add Into Json Representation	${INVALID_KEY}	${INVALID_VALUE}
+    \	${payload}	Get Json Representation
+    \   ${msgid}    Generate Message Id
+    \   ${token}    Generate Token
+    \	${dut2_response}	Send Post Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
+    \	Builtin.sleep	${${DEFAULT_WAIT_TIME}}
+    \	${dut2_response_code}	Get Response Code	${dut2_response}
+    \	Should Be Equal		${COAP_RESPONSE_CODE_ERROR}		${dut2_response_code}
+    \   ${msgid}    Generate Message Id
+    \   ${token}    Generate Token
+    \	${dut2_response}	Send Get Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	
+    \	Should Not Be Empty		${dut2_response}
+    \	${dut2_response_json}	Get Response Json	${dut2_response}
+    \	${mismatched_value}		Get Json Value	${INVALID_KEY}	${dut2_response_json}
+    \	Should Be Empty		${mismatched_value}
+    Release DUT information     ${DUT1_ID}
+

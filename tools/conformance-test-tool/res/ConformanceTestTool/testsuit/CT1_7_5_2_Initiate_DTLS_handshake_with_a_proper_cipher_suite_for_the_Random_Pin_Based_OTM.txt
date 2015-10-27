@@ -1,0 +1,58 @@
+*** Settings ***
+Documentation	CT1.7.5.2 Initiate DTLS handshake with a proper cipher suite for the Random Pin Based OTM
+Resource	OIC_ConformanceTest_Setting.txt
+
+
+*** Test Cases ***
+CT1.7.5.2 Initiate DTLS handshake with a proper cipher suite for the Random Pin Based OTM
+    [Documentation]					
+	...	|author	| jisan.m@samsung.com|	
+	...	|reviewer|	|			
+	...	|since	| 2015-10-09 |
+	...	|see	| 1. Security Spec Section 7.3.4 Random PIN Based Owner Transfer Method |
+	...	|see	| 2. Security Spec Section 10.2.1.2 Random PIN Method Cipher Suites |
+	...	|objective	| Verify the Server (DUT) selects cipher suite as TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 for the  |
+	...	|objective	| DTLS handshake , and successfully finishes the DTLS handshake process if the Server(DUT) claims it supports Random Pin Based OTM in CT1.7.1 |
+	...	|target	| Server DUT |
+	...	|test_data| DTLS Hello Message |
+	...	|test_configuration | 1. Server (DUT) should be an ‘unowned’ state and support the ‘Random Pin Based’ OTM |
+	...	|test_configuration | 2. Client (TE)  should support ‘Random Pin Based’ OTM.|
+	...	|pre_condition|1. CT1.7.2.1 with option2 (Random Pin Based) is successfully finished. |
+	...	|pre_condition|2. CT1.7.4 is successfully finished. |
+	...	|procedure| 1. Use the Test Application to  initiate DTLS handshake |	
+	...	|procedure| 2. Server participates handshake |
+	...	|post_condition|None |
+	...	|expected| 1. Wireless packet sniffer can see that TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 cipher suite is selected.  |
+	...	|expected| 2. DTLS handshake is successfully finished. |
+
+    [Tags]	Optional    Security
+    
+    Initialize Device Controller	${DEVICE_ID}
+    Change Working Directory	${SECURITY_CLIENT_DIR}
+    Execute Application	${SECURITY_CLIENT_PROCESS_ID}	${SECURITY_CLIENT}
+    ConformanceKeyword.Log to Console	Starting Security Provisioning Client ...
+    Start Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
+    Sleep	5 seconds
+    ConformanceKeyword.Log to Console	Discovering Unowned Devices ...
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DISCOVERY_UNOWNED_DEVICE}
+    Sleep	5 seconds
+    Wait For User Confirmation	Please Start Wireless Packet Sniffer Tool to Monitor
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_OWNER_TRANSFER}
+    Sleep	3 seconds
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DEVICE_SELECTION}
+    ${current_time}	Get Current Date
+    Print Message	Initializing DTLS Handshake for Random PIN at ${current_time} ...
+    ${random_pin}	Wait For User Confirmation	Please input the Random Pin generated in Server
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${random_pin}
+    Sleep	5 seconds
+    ${current_time}	Get Current Date
+    Print Message	Finishing DTLS Handshake for Random PIN at ${current_time} ...
+    
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_CLOSE_SECURITY_CLIENT}
+    ${app_log}	Get Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
+    Should Contain	${app_log}	${OWNER_TRANSFER_SUCCESS_MESSAGE}
+    ConformanceKeyword.Log to Console	${app_log}
+    
+    Print Message	Please verify Wireless packet sniffer can see that TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 ciphersuite is selected Manually
+    
+

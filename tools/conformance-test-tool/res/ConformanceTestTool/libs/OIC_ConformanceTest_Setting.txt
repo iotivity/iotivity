@@ -1,0 +1,224 @@
+** Settings ***
+Documentation     OIC Conformance Test Setting
+Library           ConformanceKeyword.py
+Library        OperatingSystem
+Library        DateTime
+Resource	OIC_Core_Spec.txt
+
+
+*** Keywords ***
+Get Length Available Representation To Update
+        [Arguments]     ${DUT_ID}       ${DUT_HREF_QUERY}
+	@{representation_list}	Get Dut Resource Value  ${DUT_ID}       ${DUT_HREF_QUERY}       ${REPRESENTATION}    W
+        ${length}    Get Length    ${representation_list}
+        Log    {@{representation_list}}
+	[Return]	${length}
+        
+        
+Check Modified Representation Value
+        [Arguments]     ${DUT_ID}       ${DUT_HREF_QUERY}	${Response_Payload}
+        @{Representation_Keys}  Get Dut Resource Value  ${DUT_ID}       ${DUT_HREF_QUERY}       ${REPRESENTATION}    W
+        : FOR   ${Representation_Key}   IN      @{Representation_Keys}
+	\   Log		${response_Payload}
+	\   @{response_region_key}  Get Json Value  @{Representation_Key}[0]   ${Response_Payload}
+	\   Run Keyword Unless    '@{Representation_Key}[1]' == 'array'  Should Be Equal         @{response_region_key}[0]               @{Representation_Key}[2]
+
+Check Modified Partial Representation Value
+        [Arguments]     ${DUT_ID}       ${DUT_HREF_QUERY}	${Response_Payload}
+        @{Representation_Keys}  Get Dut Resource Value  ${DUT_ID}       ${DUT_HREF_QUERY}       ${REPRESENTATION}    W
+        @{response_key}  Get Json Value  ${Representation_Keys[0][0]}   ${Response_Payload}
+        @{selected_list}    Set Variable    @{Representation_Keys[0]}
+        ${selected_list1}    Set Variable    @{selected_list}[1]
+        Run Keyword Unless    '${selected_list1}' == 'array'    Should Be Equal         @{response_key}[0]               ${Representation_Keys[0][2]}
+
+Set Modified Representation Value Payload
+	[Arguments]	${DUT_ID}	${DUT_HREF_QUERY}	
+	Create Json Representation
+        Add Into Json Representation    ${HREF}    ${EMPTY}
+        Log    ${DUT_HREF_QUERY}
+	@{Representation_List}	Get Dut Resource Value  ${DUT_ID}       ${DUT_HREF_QUERY}       ${REPRESENTATION}    W
+	: FOR	${Representation_Values}	IN	@{Representation_List}
+	\	Add Into Json Representation	@{Representation_Values}[0]	@{Representation_Values}[2]	@{Representation_Values}[1]
+
+Set Modified Partial Representation Value Payload
+        [Arguments]     ${DUT_ID}       ${DUT_HREF_QUERY}
+        Create Json Representation
+        @{Representation_List}  Get Dut Resource Value  ${DUT_ID}       ${DUT_HREF_QUERY}       ${REPRESENTATION}    W
+        Add Into Json Representation    ${Representation_List[0][0]}  ${Representation_List[0][2]}  ${Representation_List[0][1]}
+
+Check Response Representation With False
+        [Arguments]        ${DUT_ID}     ${Response_Json}        ${Data_Format}  ${Query}       @{Representation}
+        : FOR        ${Property}        IN      @{Representation}
+        \        Check Discovery Response       ${Property}     ${DUT_ID}      ${Response_Json}   ${Data_Format}        ${Query}	${false}
+
+Check Response Representation
+        [Arguments]        ${DUT_ID}     ${Response_Json}        ${Data_Format}  ${Query}       @{Representation}
+        : FOR        ${Property}        IN      @{Representation}                 
+        \        Check Discovery Response       ${Property}     ${DUT_ID}      ${Response_Json}   ${Data_Format}        ${Query}	
+
+Check Representation
+        [Arguments]        ${DUT_ID}     ${Response_Json}        ${Data_Format}  ${Query}       @{Representation}
+        : FOR        ${Property}        IN      @{Representation}                 
+        \        @{response_key}  Get Json Value  ${Property}   ${Response_Json}
+        \        Should Not Be Empty    @{response_key}[0]
+
+Check In List
+        [Arguments]     ${To_Check}     ${does_contain}        @{Type_List}
+        ${does_contain}		Get False
+        : FOR        ${Resource_Type}        IN      @{Type_List}                
+        \        : IF   ${dut1_info_href}       IS      ${resource_href}
+        \        \        ${does_contain}               Get True
+        Should Be True	${does_contatin}
+
+Get IP Port And Uri
+	[Arguments]		${query}
+	${dut1_response}		Discover Resource With Query		${MULTICAST}	${COAP}	${OIC_CORE_RESOURCE_DEFAULT_URI}	${query}	${NON_CONFIRMABLE}
+	Should Not Be Empty             ${dut1_response}
+	${dut1_response_json}   Get Response Json       ${dut1_response}
+	${validate_json_result}  Validate JSON Format        ${dut1_response_json}
+	Should Be True          ${validate_json_result}
+	${dut1_response_code}   Get Response Code       ${dut1_response}
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut1_response_code}
+	@{dut1_info_hrefs}      Get DUT Info Value      ${HREF}         ${false}      ${DISCOVERABLE}=1
+	@{resource_href}        Get Json Value          ${HREF}         ${dut1_response_json}
+	Check Type In List      ${resource_href}                ${dut1_info_hrefs}
+	${resource_ip}          Get Response Ip         ${dut1_response}
+	Should Not Be Empty     ${resource_ip}
+	${resource_port}        Get Response Port       ${dut1_response}
+	Should Not Be Empty     ${resource_port}
+	[Return]	 ${resource_ip}		${resource_port}	@{resource_href}
+	
+Get Response Code IP Port And Payload From Response
+	[Arguments]		${dut_response}
+	${dut_response_code}   	Get Multicast Discovery Response Code       ${dut_response}
+	${resource_ip}          Get Secured Server Ip         ${dut_response}
+	Should Not Be Empty     ${resource_ip}
+	${resource_port}        Get Secured Server Port       ${dut_response}
+	Should Not Be Empty     ${resource_port}
+	${response_payload}		Get Multicast Discovery Response Paylaod	${dut_response}
+	Should Not Be Empty     ${response_payload}
+	[Return]	${dut_response_code}	 ${resource_ip}		${resource_port}	${response_payload}
+
+Take Random Pin From User
+        [Arguments]     ${PROCESS_ID}
+        ${RANDOM_PIN}	Wait For User Confirmation	Please input the Random Pin generated in Server
+        Input Command To Application	${PROCESS_ID}	${RANDOM_PIN}
+
+*** Variables ***
+${DUT1_INFO_PATH}       DUTDescriptor.json
+${DUT_TYPE_SERVER}      SERVER
+${DUT_TYPE_CLIENT}      CLIENT
+${DUT_TYPE_BOTH}        BOTH
+${MULTICAST}    MULTICAST
+${UNICAST}      UNICAST
+${COAP}         COAP
+${HTTP}         HTTP
+
+${CON}          CON
+${NON}          NON
+${ACK}          ACK
+${RST}          RST
+${OBSERVE_ON}    0
+${OBSERVE_OFF}    1
+
+#REQUEST KEY
+${SOURCE_ADDRESS}	srcAddress
+${SOURCE_PORT}		srcPort
+${REQUEST_CODE}		requestCode
+
+#DUT Info Key
+${HREF}         href
+${DISCOVERABLE}         dis
+${OBSERVABLE}           obs
+${RESOURCE_TYPE}        rt
+${INTERFACE}            if
+${DEVICE_ID}		di
+${DUT_TYPE}             dutType
+${REPRESENTATION}	rep
+${NAME}        n
+${DATA_MODEL_VERSION}    dmv
+${PLATFORM_ID}    pi
+${MANUFACTURER_NAME}    mnmn
+
+
+#Representation of core resources
+@{REPRESENTATION_OIC_RES}		${HREF}		${RESOURCE_TYPE}	${INTERFACE}
+@{REPRESENTATION_OIC_D}		${DEVICE_ID}	${NAME}    ${DATA_MODEL_VERSION}
+@{REPRESENTATION_OIC_P}		${PLATFORM_ID}    ${MANUFACTURER_NAME}
+
+#TestData
+${CONFIRMABLE}			${true}
+${NON_CONFIRMABLE}		${false}
+${FALSE_URI}			/oic/res
+${FALSE_RESOURCE_TYPE}	core.dummydummy
+${EMPTY_QUERY}	
+${DEFAULT_WAIT_TIME}	10
+${FALSE_DEVICE_ID}	FALSE960-731F-46F1-BEC1-1E6CBD61ADC1
+${TEST_REP_VALUE}	1
+
+#Physical Information (It will be moved to DUT_INFO)
+${IP}	107.109.7.76
+${PORT}	53052
+${CREATED_HREF}	-created
+${SUBORDINATE_HREF}	/subordinate-sensor
+
+${DISCOVERABLE_RESOURCE_TYPE}	core.dis
+${NON_DISCOVERABLE_RESOURCE_TYPE}	core.nondis
+${CREATED_DIS_HREF}	-created-discoverable
+${CREATED_NON_DIS_HREF}	-created-nondiscoverable
+
+
+#Test DUT Rep
+@{INVALID_URI_LIST}     /oic/rts        /oic/ifs        /oic/con        /oic/mon        /oic/mnt        /oic/foo 	/oic/ad
+@{URI_LIST}     	/oic/rts        /oic/ifs        /oic/con        /oic/mon        /oic/mnt        	/oic/ad        /oic/d	/oic/p	/oic/res
+${INVALID_KEY}  	invalidKey
+${INVALID_VALUE}        invalidvalue
+${INVALID_URI}          /invalidURI
+${FACTORY_KEY}  	fr
+${FACTORY_VALUE}        true
+${REBOOT_KEY}  		 rb
+${REBOOT_VALUE}	 	true
+${REGION_KEY}   	region
+${REGION_VALUE} 	Chittagong, Bangladesh
+
+${PATTERN}      ://
+
+#Provision
+${OXM_JUST_WORKS}	0
+${RANDOM_PIN_BASED_OTM}    1
+${MANUFACTURER_CERTIFICATE_BASED_OTM}	2
+${PAYLOAD_TYPE_REP}	REP
+${PAYLOAD_TYPE_SECURITY}	SECURITY
+${PROVISIONING_TOOL_DIRECTED_PROVISIONING_MODE}	3
+${PROVISION_QUERY_UNOWNED}	Owned=FALSE
+${PROVISION_QUERY_OWNED}	Owned=TRUE
+
+${SECURITY_CLIENT_DIR}        ../provisioning
+${SECURITY_CLIENT}    stdbuf -oL ./simulator_runner.sh 1
+${SECURED_CLIENT}    stdbuf -oL ./simulator_runner.sh 2
+${SECURITY_CLIENT_PROCESS_ID}    Security_Client_Process_Id
+${DEVICE_ID}    Linux
+${PROVISIONING_SUCCESS_MESSAGE}	Received provisioning results: Result is = 1
+${OWNER_TRANSFER_SUCCESS_MESSAGE}	Transferred Ownership successfuly for device
+${SECURED_GET_FAILURE_MESSAGE}	INFO: PayloadLog: NULL Payload
+${RANDOM_PIN}	0
+${SUBJECT}	1111111111111111
+${RESOURCE_URI}	/oic/conformance/test
+${PERMISSION}	CRUDN
+${RESOURCE_OWNER}	1234567891234567
+${INPUT_DEVICE_SELECTION}	1
+${INPUT_RESOURCE_COUNT}    1
+${INPUT_OWNER_COUNT}	1
+${INPUT_DISCOVERY_UNOWNED_DEVICE}	1
+${INPUT_DISCOVERY_OWNED_DEVICE}	2
+${INPUT_OWNER_TRANSFER}	3
+${INPUT_PROVISIONING_ACL}	4
+${INPUT_CLOSE_SECURITY_CLIENT}	11
+
+${PAYLOAD_OXMSEL_JUST_WORKS}	payload_oxmsel
+${PAYLOAD_PSTAT_PROVISIONING_MODE}	payload_pstat
+${PAYLOAD_BLOCKWISE}	payload_blockwise
+${PAYLOAD_FILE_DIR}	./payload.json
+${FIND_AND_GET}    TE -------->   Discovering Secured Resource and Sending Get Request   --------> DUT
+${PROVISION_CLIENT_DI}    YWRtaW5EZXZpY2VVVUlEMA==
+

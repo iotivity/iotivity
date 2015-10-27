@@ -1,0 +1,37 @@
+
+
+[
+
+   4,
+
+   {
+
+      "href": "/a/light",
+
+      "prop": {
+
+         "rt": [
+
+            "core.light"
+
+         ],
+
+         "if": [
+
+            "default"
+
+         ]
+
+      },
+
+      "rep": {
+
+         "power": "on"
+
+      }
+
+   }
+
+]
+
+

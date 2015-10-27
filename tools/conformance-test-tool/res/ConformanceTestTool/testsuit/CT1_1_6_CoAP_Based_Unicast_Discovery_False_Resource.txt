@@ -1,0 +1,52 @@
+*** Settings ***
+Documentation	CT1_1_6_CoAP_Based_Unicast_Discovery_False_Resource
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.1.6 CoAP Based Unicast Discovery on a false resource
+    [Documentation]					
+	...	|author	| |
+	...	|reviewer| |				
+	...	|since	|2015-05-11 |
+	...	|see	|Section 11.3 |
+	...	|objective	|Verify the Server (DUT) properly responds with error case when a unicast discovery request is received | 
+	...	|target	| |			
+	...	|test_data	| |
+	...	|pre_condition	|Server (DUT) is discoverable from the Client (TE) |
+	...	|procedure	|1. Connected / discoverable |
+	...	|procedure	|2. Use the Test Application to initiate a unicast discovery request on /oic/foo. Case 1: Confirmable Case 2:Non-confirmable |
+	...	|procedure	|3. Sends discovery response |
+	...	|procedure	|4. Displays discovered resources |
+	...	|post_condition	|None |
+	...	|expected	|For Case 1 & 2 : Server returns an error response “resource not found”| 
+	...	|expected	|For Case 2 : Server returns no response |
+
+    [Tags]	Mandatory	Server	Discovery
+    Set Log File Directory	${TESTNAME}
+#Pre-Condition
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+    @{dut1_resource_types}	Get DUT Info Value	${RESOURCE_TYPE}	${DUT1_ID}	${OBSERVABLE}=1&${DISCOVERABLE}=1
+    :FOR	${dut1_resource_type}	IN	@{dut1_resource_types}
+    \	${resource_ip}	${resource_port}	${resource_href}	Get IP Port And Uri		${RESOURCE_TYPE}=${dut1_resource_type}
+
+#Test-Body Case2
+    ${msgid}    Generate Message Id
+    ${token}    Generate Token
+    ${dut1_response}		Discover Resource Using Unicast		${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}    ${${resource_port}}	${FALSE_URI}	${NON_CONFIRMABLE}		${RESOURCE_TYPE}=${FALSE_RESOURCE_TYPE}
+    Should Not Be Empty		${dut1_response}
+    ${dut1_response_code}	Get Response Code       ${dut1_response}
+    Should Be Equal	${COAP_RESOURCE_NOT_FOUND}	${dut1_response_code}
+    ${dut1_response_payload}	Get Response Json	${dut1_response}
+    Should Be Empty		${dut1_response_payload}
+
+#Test-Body Case1
+    ${msgid}    Generate Message Id
+    ${token}    Generate Token
+    ${dut1_response}		Discover Resource Using Unicast		${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}    ${${resource_port}}    ${FALSE_URI}	${CONFIRMABLE}		${RESOURCE_TYPE}=${FALSE_RESOURCE_TYPE}
+    Should Not Be Empty		${dut1_response}
+    ${dut1_response_code}	Get Response Code       ${dut1_response}
+    Should Be Equal	${COAP_RESOURCE_NOT_FOUND}	${dut1_response_code}
+    Release DUT information     ${DUT1_ID}
+

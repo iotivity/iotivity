@@ -1,0 +1,43 @@
+*** Settings ***
+Documentation	CT1.1.1 CoAP Based Multicast Endpoint Discovery - No Query  
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.1.1 CoAP Based Multicast Endpoint Discovery - No Query
+    [Documentation]					
+	...	|author	|	|	
+	...	|reviewer|	|			
+	...	|since	|2015-05-11 |
+	...	|see	|Section 11.2 : CoAP based endpoint discovery |
+	...	|objective	|Verify the Server (DUT) properly responds with discovery information when a multicast |
+	...	|objective	|discovery request is received |
+	...	|target	|Server DUT |
+	...	|test_data|Multicast Endpoint Discovery |
+	...	|pre_condition|Server (DUT) is discoverable from the Client (TE) |
+	...	|procedure| 1. Use the Test Application(TE) to initiate a multicast discovery request with no query |	
+	...	|procedure| 2. DUT Sends discovery response |
+	...	|procedure| 3. TE Displays discovered resources |
+	...	|post_condition|None |
+	...	|expected| 1. TE discovered defined resources on the server |
+	...	|expected| 2. Non-discoverable resources (if present) were not discovered |
+	...	|expected| 3. The format of returned resources against the correct JSON schema |
+	...	|expected| 4. Representation of /oic/d |
+
+    [Tags]	Mandatory	Server	Discovery
+#Pre-Condition
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+
+#Test-Body
+    ${dut1_response}		Discover All Resources		${MULTICAST}	${COAP}	${OIC_CORE_RESOURCE_DEFAULT_URI}
+    Should Not Be Empty		${dut1_response}
+    ${dut1_response_json}	Get Response Json	${dut1_response}
+    ${validate_json_result}	Validate JSON Format        ${dut1_response_json}
+    Should Be True	${validate_json_result}
+    ${dut1_response_code}	Get Response Code       ${dut1_response}
+    Should Be Equal	${COAP_RESPONSE_CODE_SUCCESS}	${dut1_response_code}
+    Check Response Representation	${DUT1_ID}      ${dut1_response_json}   Json   ${DISCOVERABLE}=1  @{REPRESENTATION_OIC_RES}
+    Release DUT information     ${DUT1_ID}
+

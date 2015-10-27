@@ -1,0 +1,64 @@
+*** Settings ***
+Documentation     Test Conformance Tool
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.1.3 CoAP Based Multicast Endpoint Discovery – With Device ID query
+    [Documentation]					
+	...	|author	| |
+	...	|reviewer| |				
+	...	|since	|2015-05-11 |
+	...	|see	|Section 11.2 : CoAP based endpoint discovery |
+	...	|objective	|Verify the Server (DUT) properly responds with discovery information when a multicast discovery request is received |			
+	...	|target	|Server DUT |
+	...	|test_data|CoAP Based Multicast Endpoint Discovery – With Device ID query |
+	...	|pre_condition	|Server (DUT) is discoverable from the Client (TE) |
+	...	|procedure|1. Use the Test Application(TE) to initiate a multicast discovery request with device id query |
+	...	|procedure|2. DUT Sends discovery response |
+	...	|procedure|3. TE Displays discovered resources |
+	...	|post_condition	|None |
+	...	|expected|1. TE discovered defined resources on the server |
+	...	|expected|2. resource types other than core.fan resources (if present) were not discovered |
+	...	|expected|3. The format of returned resources against the correct JSON schema |
+	...	|expected|4. Representation of /oic/d and /oic/p are included for the matching rt |
+
+    [Tags]	Mandatory	Server	Discovery
+#Pre-Condition
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+
+#Test-Body
+    ${dut1_device_id}	Get DUT Info Value	${DEVICE_ID}	${DUT1_ID}	${DISCOVERABLE}=1
+#    ${dut1_response}		Discover Resource With Query		${MULTICAST}	${COAP}	${OIC_CORE_RESOURCE_DEFAULT_URI}	${DEVICE_ID}=${dut1_device_id}	${NON_CONFIRMABLE}
+    ${dut1_response}        Discover All Resources        ${MULTICAST}    ${COAP}     ${OIC_CORE_RESOURCE_DEVICE_URI}
+    Should Not Be Empty		${dut1_response}
+    ${dut1_response_json}	Get Response Json	${dut1_response}
+    ${validate_json_result}	Validate JSON Format        ${dut1_response_json}
+    Should Be True	${validate_json_result}
+    ${dut1_response_code}	Get Response Code       ${dut1_response}
+    Should Be Equal	${COAP_RESPONSE_CODE_SUCCESS}	${dut1_response_code}
+    ${response_href}    Get Json Value    ${HREF}     ${dut1_response_json}
+    Should Contain    ${response_href}    ${OIC_CORE_RESOURCE_DEVICE_URI}
+    @{response_rep}    Get Json Value    ${REPRESENTATION}     ${dut1_response_json}
+    ConformanceKeyword.Log To Console      @{response_rep}[0]
+    @{response_di}      Get Json Value    ${DEVICE_ID}     @{response_rep}[0]
+    ConformanceKeyword.Log To Console      @{response_di}[0]
+    ${dut2_response}        Discover Resource With Query        ${MULTICAST}    ${COAP}      ${OIC_CORE_RESOURCE_DEFAULT_URI}    ${DEVICE_ID}=@{response_di}[0]      ${NON_CONFIRMABLE}
+    Should Not Be Empty     ${dut2_response}
+    ${dut1_response_json}   Get Response Json   ${dut2_response}
+    ${validate_json_result} Validate JSON Format        ${dut2_response_json}
+    Should Be True  ${validate_json_result}
+    ${dut2_response_code}   Get Response Code       ${dut2_response}
+    Should Be Equal ${COAP_RESPONSE_CODE_SUCCESS}   ${dut2_response_code}
+    ${response_href}    Get Json Value    ${HREF}     ${dut2_response_json}
+    Should Contain    ${response_href}    ${OIC_CORE_RESOURCE_DEVICE_URI}
+    @{response_rep}    Get Json Value    ${REPRESENTATION}     ${dut2_response_json}
+    ConformanceKeyword.Log To Console      @{response_rep}[0]
+    @{discovered_di}      Get Json Value    ${DEVICE_ID}     @{response_rep}[0]
+    ConformanceKeyword.Log To Console      @{discovered_di}[0]
+    Should Be Equal     @{response_di}[0]           @{discovered_di}[0]
+#    Check Response Representation    ${DUT1_ID}      ${dut1_response_json}   Json   ${DISCOVERABLE}=1                @{REPRESENTATION_OIC/D}
+    Release DUT information     ${DUT1_ID}
+

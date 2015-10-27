@@ -1,0 +1,50 @@
+*** Settings ***
+Documentation     CT2_3_21_RESET_on_CON_observe_notification_Observe_mode_cancellation
+Resource          OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT2_3_21_RESET_on_CON_observe_notification_Observe_mode_cancellation
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2015-05-11|
+    ...    |see |IETF draft-ietf-core-observe-16, Section 3.6|
+    ...    |objective |Verify that the client (DUT) can de-register the observation by sending a RESET message upon receiving a CON observe notification from the server|
+    ...    |target | |
+    ...    |test_data||
+    ...    |pre_condition|1. Server (TE) is discovered from the Client (DUT)|
+    ...    |pre_condition|2. Resource properties and attribute contents are known for verification|
+    ...    |pre_condition|3. Server (TE) is in CON observe mode|
+    ...    |procedure| 1. Observe condition satisfied |
+    ...    |procedure| 2. Reply with CON RETRIEVE response message to client	|
+    ...    |procedure| 3. Upon receiving the response message, send a RESET message with the same token back	|
+    ...    |post_condition| |
+    ...    |expected| 1.Client sends the RESET message including below, CoAP Layer - Type = 3 (RESET) - Token is the token in observe notification |
+    
+    [Tags]    Mandatory    Client    Reset    Con    Observe    Cancelation
+    #Pre-Condition
+    ####################################################
+    ConformanceKeyword.Log To Console    "Start NON DUT Client App..."
+    Start Server
+    ConformanceKeyword.Log To Console    \n-----------------Send Multicast Discovery Request from NON DUT App-----------------
+    Get Discovery Requests
+    #Test-Body
+    #####################################################
+    ConformanceKeyword.Log To Console    \n-----------------Send Observe Resource Request from NON DUT App-----------------
+    ${request}    Get Request
+    Should Not Be Empty		${request}
+    ${observe_token}		Get Request Token		${request}
+    ConformanceKeyword.Log To Console    \n-----------------Send POST (Partial Update) Request from NON DUT App-----------------
+    Get Request
+    Clear Reset State
+    ConformanceKeyword.Log To Console    \n-----------------Send Cancel Observe Resource Request from NON DUT App-----------------
+    BuiltIn.Sleep	10s
+    ConformanceKeyword.Log To Console    \n-----------------Send POST (Partial Update) Request from NON DUT App-----------------
+    Get Request
+    ConformanceKeyword.Log To Console    \n-----------------Send POST (Partial Update) Request Again from NON DUT App-----------------
+    Get Request
+    ${is_reset}		Get Reset State
+    Should Be True		${is_reset}
+    ${reset_token}		Get Reset Token
+    Should Be Equal		${observe_token}		${reset_token}
+#Token Check
+    Stop Server

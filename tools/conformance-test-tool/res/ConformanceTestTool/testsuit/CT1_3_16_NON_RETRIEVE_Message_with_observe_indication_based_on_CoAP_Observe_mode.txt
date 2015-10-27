@@ -1,0 +1,60 @@
+*** Settings ***
+Documentation	CT1.3.16 NON RETRIEVE Message with observe indication based on CoAP - Observe mode 
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.3.16 NON RETRIEVE Message with observe indication based on CoAP - Observe mode 
+    [Documentation]					
+	...	|author	|SK Tuhin Islam |		
+	...	|reviewer| |				
+	...	|since	|2015-06-16|
+	...	|see	|Section 11.4 : NOTIFICATION |
+	...	|objective|Verify the Server (DUT) properly responds to NON RETRIEVE request with observer indication from client (TE) |
+	...	|target	|Server DUT |
+	...	|test_data|NON RETRIEVE Message with observe indication based on CoAP - Observe mode |
+	...	|pre_condition	|Server (DUT) is discovered from the Client (TE) |
+	...	|pre_condition	|Resources properties and attribute contents are known for verification |
+	...	|pre_condition	|Resources on server is observable |
+	...	|procedure	|1. Send NON RETRIEVE (low Qos) request message with observer option (=0) to server Case1:Resource is observable Case2:Resource is not observable |
+	...	|procedure	|2. Reply with CON RETRIEVE response message to client |
+	...	|procedure	|3. Receive RETRIEVE response message from server |
+	...	|procedure	|4. Observe condition satisfied in server |
+	...	|procedure	|5. Reply with CON RETRIEVE response message to client |
+	...	|procedure	|5. Receive RETRIEVE response message from server |	
+	...	|post_condition	|Cancel Observe mode |
+	...	|expected|1. Server sends the response message including  *OIC Layer -fr,to,ri,cn,rs,obs -cn includes URI of the resource in request  *Coap Layer -Type=1(NON) -Token = Token in request |
+	...	|expected|2. Case 1: Server sends the response message OIC Layer -fr,to,cn,obs -cn includes URI of the resource CoAP Layer -Type = 1 (NON) -Token=Token in original GET -Response Code = 2.05  Case 2: No response is present |
+
+    [Tags]	Mandatory	Server    Observe
+#Pre-Condition
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+    @{dut1_resource_types}  Get DUT Info Value      ${RESOURCE_TYPE}        ${DUT1_ID}      ${OBSERVABLE}=1&${DISCOVERABLE}=1
+    ${resource_ip}  ${resource_port}        ${resource_href}        Get IP Port And Uri             ${RESOURCE_TYPE}=@{dut1_resource_types}[0]
+    @{dut1_resource_hrefs}       Get DUT Info Value      ${HREF}    ${DUT1_ID}      ${OBSERVABLE}=1&${DISCOVERABLE}=1
+    :FOR        ${resource_href}   IN      @{dut1_resource_hrefs}
+#Test-Body
+    \   ${msgid1}    Generate Message Id
+    \   ${token1}    Generate Token
+    \	Send Observe Request	${COAP}	${msgid1}	${token1}	${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}
+    \   ${length}    Get Length Available Representation To Update    ${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}
+    \	Run Keyword If    ${length} > 0    Set Modified Partial Representation Value Payload       ${DUT1_ID}      ${OBSERVABLE}=1&${HREF}=${resource_href}&${DISCOVERABLE}=1
+    \	${payload}    Run Keyword If    ${length} > 0    Get Json Representation
+    \   ${msgid2}    Generate Message Id
+    \   ${token2}    Generate Token
+    \	${dut2_response}    Run Keyword If    ${length} > 0    Send Post Request	${UNICAST}	${COAP}	${msgid2}	${token2}	${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
+    \   Run Keyword If    ${length} > 0    Should Not Be Empty    ${dut2_response}
+    \   Run Keyword If    ${length} < 1    Log To Console    ============== User Control -> Change state of resource for notification================
+    \	Builtin.sleep	${${DEFAULT_WAIT_TIME}}
+    \	${dut2_response}	Get Observe Response	 ${COAP}
+    \	Should Not Be Empty		${dut2_response}
+    \   ${dut2_response_json}   Get Response Json       ${dut2_response}
+    \   ${validate_json_result}         Validate JSON Format        ${dut2_response_json}
+    \   Should Be True   ${validate_json_result}
+    \   ${dut2_response_code}   Get Response Code       ${dut2_response}
+    \   Should Be Equal         ${COAP_RESPONSE_CODE_RETRIEVED}         ${dut2_response_code}
+    \	${dut2_response_token}   Get Response Token       ${dut2_response}
+    \	Should Be Equal             ${dut2_response_token}    ${token1} 
+    \	${dut2_response_code}	Get Response Code       ${dut2_response}

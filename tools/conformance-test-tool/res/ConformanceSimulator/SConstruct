@@ -1,0 +1,64 @@
+#******************************************************************
+#
+# Copyright 2015 Samsung Electronics Co. Ltd. All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+##
+# The main build script
+# for ConformanceSimulator
+##
+
+import os
+import platform
+
+print '---------------Started Building ConformanceSimulator---------------'
+
+# Load common build config
+SConscript('build/SConscript')
+
+Import('env')
+
+target_os = env.get('TARGET_OS')
+target_arch = env.get('TARGET_ARCH')
+shield = ARGUMENTS.get('SHIELD')
+
+print '---------------Target OS : ' + target_os + '---------------'
+print '---------------Target Architecture : ' + target_arch + '---------------'
+
+env_linux = env.Clone()
+env_windows = env.Clone()
+
+if 'linux' in target_os or 'all' in target_os:
+    build_dir = 'bin/linux/'
+    env_linux.Append(VARIANT_DIR = build_dir)
+    env_linux.VariantDir(build_dir, 'src', duplicate=0)
+
+    if target_os == 'all':
+        env_linux.Replace(TARGET_ARCH = 'x86')
+        print "Target_Arch " + env.get('TARGET_ARCH')
+        
+        env_linux.Replace(TARGET_OS = 'linux')
+        
+    SConscript('build/linux/SConscript', exports = 'env_linux')
+
+
+if 'windows' in target_os or 'all' in target_os:
+    print "windows"
+
+    
+    

@@ -1,0 +1,145 @@
+######################################################################
+# Build script for Linux#
+######################################################################
+
+print '\n---------------Started Building ConformanceSimulator for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+######################################################################
+# Initializing Home Dir
+######################################################################
+
+TARGET = env_linux['VARIANT_DIR']
+
+PROJECT_HOME = '../../'
+IOTIVITY_HOME = PROJECT_HOME + '../../../../'
+ORG_SRC_HOME = IOTIVITY_HOME
+target_arch = env_linux.get('TARGET_ARCH')
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/release'
+SERVER_JUST_WORKS_SECURITY_FILE_NAME = 'oic_svr_db_server_justworks.json'
+SERVER_SECURITY_FILE_NAME = 'oic_svr_db_server.json'
+CLIENT_SECURITY_FILE_NAME = 'oic_svr_db_client.json'
+
+######################################################################
+# Initializing TM Dir
+######################################################################
+
+CONFORMANCE_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+CONFORMANCE_RESOURCE_INCLUDE = CONFORMANCE_RESOURCE_DIR + '/include'
+CONFORMANCE_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+CONFORMANCE_RESOURCE_CSDK_LIB = CONFORMANCE_RESOURCE_LIB
+CONFORMANCE_RESOURCE_STACK = CONFORMANCE_RESOURCE_DIR + '/csdk/stack/include'
+CONFORMANCE_RESOURCE_SOCKET = CONFORMANCE_RESOURCE_DIR + '/csdk/ocsocket/include'
+CONFORMANCE_RESOURCE_RANDOM = CONFORMANCE_RESOURCE_DIR + '/csdk/ocrandom/include'
+CONFORMANCE_RESOURCE_LOGGER = CONFORMANCE_RESOURCE_DIR + '/csdk/logger/include'
+CONFORMANCE_RESOURCE_COMMON = CONFORMANCE_RESOURCE_DIR + '/c_common/'
+CONFORMANCE_RESOURCE_OC_LOGGER = CONFORMANCE_RESOURCE_DIR + '/oc_logger/include'
+CONFORMANCE_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+CONFORMANCE_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+CONFORMANCE_RESOURCE_OC_LOGGER_LIB = CONFORMANCE_RESOURCE_LIB
+TM_DIR = ORG_SRC_HOME + '/service/things-manager'
+TM_INCLUDE = TM_DIR + '/sdk/inc'
+TM_SDK_INCLUDE = TM_DIR + '/sdk/src'
+CONFORMANCE_LIB = CONFORMANCE_RESOURCE_LIB
+CONFORMANCE_LIB_TIMER = CONFORMANCE_RESOURCE_LIB + '/extlibs/timer/'
+
+######################################################################
+# Initializing Project Dir
+######################################################################
+
+RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+
+INCLUDE_DIR = PROJECT_HOME + '/include'
+SOURCE_DIR = PROJECT_HOME + TARGET
+JUST_WORKS_SECURITY_DB_SERVER = PROJECT_HOME + '/src/' + SERVER_JUST_WORKS_SECURITY_FILE_NAME
+SECURITY_DB_SERVER = PROJECT_HOME + '/src/' + SERVER_SECURITY_FILE_NAME
+SECURITY_DB_CLIENT = PROJECT_HOME + '/src/' + CLIENT_SECURITY_FILE_NAME
+
+######################################################################
+# Initializing Flags
+######################################################################
+
+env_linux['CC'] = 'g++'
+
+COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__LINUX__ -D __WITH_DTLS__ -finstrument-functions')
+
+CONFORMANCE_CFLAGS = [COMMON_FLAGS]
+
+######################################################################
+# Initializing Includes
+######################################################################
+
+COMMON_CINCLUDE = [INCLUDE_DIR]
+CONFORMANCE_CINCLUDE = [COMMON_CINCLUDE, CONFORMANCE_RESOURCE_INCLUDE, CONFORMANCE_RESOURCE_STACK, CONFORMANCE_RESOURCE_SOCKET, CONFORMANCE_RESOURCE_RANDOM, CONFORMANCE_RESOURCE_OC_LOGGER, TM_INCLUDE, CONFORMANCE_RESOURCE_CEREAL, CONFORMANCE_RESOURCE_TIMER, CONFORMANCE_LIB_TIMER, TM_SDK_INCLUDE, INCLUDE_DIR, CONFORMANCE_RESOURCE_COMMON]
+
+######################################################################
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [RESOURCE_LIB_DIR]
+CONFORMANCE_LIB_LOCATION = [COMMON_LIB_LOCATION, CONFORMANCE_RESOURCE_LIB, CONFORMANCE_RESOURCE_CSDK_LIB, CONFORMANCE_RESOURCE_OC_LOGGER_LIB, CONFORMANCE_LIB]
+
+COMMON_STATIC_LIBS = []
+COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger liboc_logger_core libconnectivity_abstraction libcoap pthread libglib-2.0 gcov')
+
+
+CONFORMANCE_STATIC_LIBS = [CONFORMANCE_LIB + '/libTGMSDKLibrary.a']
+#CONFORMANCE_STATIC_RESOURCE_LIBS = [CONFORMANCE_RESOURCE_LIB + '/liboc.a', CONFORMANCE_RESOURCE_CSDK_LIB + '/liboctbstack.a', CONFORMANCE_RESOURCE_OC_LOGGER_LIB + '/liboc_logger.a', CONFORMANCE_RESOURCE_OC_LOGGER_LIB + '/libcoap.a']
+CONFORMANCE_STATIC_RESOURCE_LIBS = []
+CONFORMANCE_LIBS = COMMON_SHARED_LIBS
+
+######################################################################
+# Initializing Targets
+######################################################################
+
+DUT_APP_BIN = 'ConformanceSimulator'
+TC_BINS = [ DUT_APP_BIN]
+
+######################################################################
+# Initializing Sources
+######################################################################
+
+SOURCE_CPP = Glob(SOURCE_DIR + '/*.cpp')
+DUT_APP_SRC = [SOURCE_CPP, COMMON_STATIC_LIBS, CONFORMANCE_STATIC_LIBS, CONFORMANCE_STATIC_RESOURCE_LIBS]
+
+######################################################################
+# Initializing Build
+######################################################################
+
+create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
+
+DUT_App = env_linux.Program(source = DUT_APP_SRC, target = DUT_APP_BIN, CPPPATH = CONFORMANCE_CINCLUDE, LIBS = CONFORMANCE_LIBS, LIBPATH = CONFORMANCE_LIB_LOCATION, CPPFLAGS = COMMON_FLAGS)
+
+pre_job = [create_target_dir]
+
+######################################################################
+# Define Build Targets
+######################################################################
+
+target_service = env_linux.get('TARGET_SERVICE')
+target_tc = env_linux.get('TARGET_TC')
+default_targets = [pre_job]
+install_targets = []
+
+
+#DUT_App
+install_targets += [DUT_App]
+install_targets += [JUST_WORKS_SECURITY_DB_SERVER]
+install_targets += [SECURITY_DB_SERVER]
+install_targets += [SECURITY_DB_CLIENT]
+
+install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets += install_targets + install + delete_bin
+
+env_linux.Default(default_targets)
+

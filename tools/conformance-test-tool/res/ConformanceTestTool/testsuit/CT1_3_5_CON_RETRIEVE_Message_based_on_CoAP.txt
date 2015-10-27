@@ -1,0 +1,54 @@
+*** Settings ***
+Documentation	CT1.3.5 CON RETRIEVE Message based on CoAP
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.3.5 CON RETRIEVE Message based on CoAP
+    [Documentation]					
+	...	|author	| |		
+	...	|reviewer| |				
+	...	|since	|2015-05-11|
+	...	|see	|Section 8.2: RETRIEVE |
+	...	|objective|Verify that the server (DUT) properly responds to CON RETRIEVE request message from client (TE) |
+	...	|target	|Server DUT |
+	...	|test_data|CON RETRIEVE request message based on CoAp |
+	...	|pre_condition	|Server (DUT) is discovered from the Client (TE) |
+	...	|pre_condition	|Resource properties and attribute contents are known for verification |
+	...	|procedure	|1. Send CON (high QoS) RETRIEVE request message to server |
+	...	|procedure	|2. Reply with RETRIEVE response message to client |
+	...	|procedure	|3. Receive RETRIEVE response message from server and return an Ack |
+	...	|post_condition	| |
+	...	|expected|1. OIC Layer |
+	...	|expected| - fr, to, ri, cn, rs |
+	...	|expected|2. CoAP Layer |
+	...	|expected| - Type = 3 (Ack) |
+	...	|expected| - Token = Token in request |
+	...	|expected| - MsgId = MsgId in request |
+	...	|expected| - Resp Code = 2.05 (Content) |
+
+    [Tags]	Mandatory	Server    Retrieve
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+    @{dut1_resource_types}      Get DUT Info Value      ${RESOURCE_TYPE}        ${DUT1_ID}      ${DISCOVERABLE}=1
+    ${resource_ip}      ${resource_port}        ${resource_href}        Get IP Port And Uri             ${RESOURCE_TYPE}=@{dut1_resource_types}[0]
+    @{dut1_resource_hrefs}      Get DUT Info Value      ${HREF}    ${DUT1_ID}   ${DISCOVERABLE}=1
+    :FOR	${dut1_resource_href}	IN	@{dut1_resource_hrefs}
+    \   ${msgid}    Generate Message Id
+    \   ${token}    Generate Token
+    \	${dut2_response}	Send Get Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${dut1_resource_href}	${CONFIRMABLE}
+    \	Should Not Be Empty		${dut2_response}
+    \	${duty_response_type}	Get Response Type	${dut2_response}
+    \	Should Be Equal    ${duty_response_type}	${ACK}    
+    \	${dut2_response_json}	Get Response Json	${dut2_response}
+    \	${validate_json_result}    Validate JSON Format        ${dut2_response_json}
+    \	Should Be True	${validate_json_result}
+    \	${dut2_response_code}	Get Response Code       ${dut2_response}
+    \	Should Be Equal    ${COAP_RESPONSE_CODE_RETRIEVED}	${dut2_response_code}
+    \   ${dut2_response_token}   Get Response Token       ${dut2_response}
+    \   Should Be Equal            ${dut2_response_token}    ${token}
+    \   ${dut2_response_msgid}   Get Response Msgid       ${dut2_response}
+    \   Should Be Equal            ${dut2_response_msgid}    ${msgid}
+    Release DUT information     ${DUT1_ID}
+

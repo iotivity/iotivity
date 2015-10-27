@@ -1,0 +1,52 @@
+*** Settings ***
+Documentation     CT2_3_11_CON_UPDATE_Collection_Resource_based_on_CoAP
+Resource          OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT2_3_11_CON_UPDATE_Collection_Resource_based_on_CoAP
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2015-05-11|
+    ...    |see |Section 8.3: UPDATE; Section 12.2.2|
+    ...    |objective |Verify that the client (DUT) properly sends a CON UPDATE to post a resource to a collection on a server (TE) |
+    ...    |target | |
+    ...    |test_data||
+    ...    |pre_condition|1. Server (TE) is discovered from the Client (DUT) |
+    ...    |pre_condition|2. A resource collection exists |
+    ...    |pre_condition|3. A standalone resource exists |
+    ...    |procedure| 1. Send a CON (high QoS) UPDATE request message to post the standalone resource to be a subordinate resource of the resource collection on the server |
+    ...    |procedure| 2. Reply with UPDATE response message to client|
+    ...    |procedure| 3. Receives UPDATE response message from server and returns an Ack |
+    ...    |post_condition| |
+    ...    |expected| 1. Verify Client sends the request message including below|
+    ...    |expected| In OIC Layer|
+    ...    |expected| - fr, to, ri, cn, op|
+    ...    |expected| - op = UPDATE|
+    ...    |expected| - cn Information, including properties, of the resource to be updated |
+    ...    |expected| In CoAP Layer|
+    ...    |expected| - Type = 0 (CON)|
+    ...    |expected| - Code = 2 (POST)|
+    ...    |expected| The payload of this PUT includes the initial state of the resource.|
+    ...    |expected| 2. Check acknowledgement message on server|
+    [Tags]    Mandatory    Client    Update    Con
+    #Pre-Condition
+    ####################################################
+    Start Server
+    ConformanceKeyword.Log To Console    \n-----------------Send Multicast Discovery Request from DUT App-----------------
+    Get Discovery Requests
+    #Test-Body
+    #####################################################
+    ConformanceKeyword.Log To Console    \n-----------------Send CON Partial UPDATE Request from DUT App-----------------
+    ${request}    Get Request
+    ${request_code}    Get Request Code    ${request}
+    Should Be Equal    ${request_code}    ${POST}
+    ${request_type}    Get Request Type    ${request}
+    Should Be Equal    ${request_type}    ${CON}
+    ${payload}    Get Request Json    ${request}
+    ${validate_json_result}     Validate JSON Format    ${payload} 
+    Should Be True    ${validate_json_result}
+    ${resource_type}    Get JSON Value    ${RESOURCE_TYPE}    ${payload}
+    Should be Empty    ${resource_type}  
+    ${resource_representation}    Get JSON Value    ${REPRESENTATION}    ${payload}
+    Should Not be Empty    ${resource_representation}
+    Stop Server

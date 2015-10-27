@@ -1,0 +1,100 @@
+*** Settings ***
+Documentation	CT1.1.8 New resource declaration in /oic/res
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.1.8 New resource declaration in /oic/res
+    [Documentation]					
+	...	|author	|ma.hasan |		
+	...	|reviewer| |				
+	...	|since	|2015-05-11 |
+	...	|see	|Section 11.3 |
+	...	|objective	|Verify that the server (DUT) properly updates /oic/res with new resources |
+	...	|target	|Server DUT |
+	...	|test_data|New resource declaration in /oic/res |
+	...	|pre_condition	|Server (DUT) is discoverable from the Client (TE) |
+	...	|pre_condition	|Resource properties and attribute contents are known for verification |
+	...	|procedure	|1.Send CON (high QoS) CREATE request message with a complete URI to server Case 1: Discoverable Case 2: Non-discoverable |
+	...	|procedure	|2.Reply with CREATE response message to client |
+	...	|procedure	|3.Receive CREATE response message from server and reply a Ack |
+	...	|procedure	|4.Use the Test Application to initiate a confirmable unicast discovery request on /oic/res |
+	...	|procedure	|5.Sends discovery response |
+	...	|procedure	|6.Displays discovered resources |
+	...	|post_condition	|None |
+	...	|expected	|1. Case 1: Client (TE) discovered defined resources on the server,The newly created resource is discovered |
+	...	|expected	|2. Case 2: Client (TE) discovered defined resources on the server,The newly created resource is not discovered |
+
+    [Tags]	Mandatory	Server	Create
+#Pre-Condition
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+    @{dut1_resource_types}	Get DUT Info Value	${RESOURCE_TYPE}	${DUT1_ID}	${DISCOVERABLE}=1
+    :FOR       ${dut1_resource_type}   IN      @{dut1_resource_types}
+    \	${resource_ip}	${resource_port}	${resource_href}	Get IP Port And Uri		${RESOURCE_TYPE}=${dut1_resource_type}
+#Test-Body
+    \	Create Json Representation
+    \	Add Into Json Representation    ${RESOURCE_TYPE}        ${DISCOVERABLE_RESOURCE_TYPE}
+    \	Add Into Json Representation    ${HREF}		 ${resource_href}${CREATED_DIS_HREF}
+    \	Add Into Json Representation    ${DISCOVERABLE}	1
+    \	${payload}      Get Json Representation
+    \   ${msgid}    Generate Message Id
+    \   ${token}    Generate Token
+    \	${dut2_response}        Send Put Request        ${UNICAST}      ${COAP}    ${msgid}    ${token}    ${resource_ip}	  ${${resource_port}}     ${resource_href}        ${CONFIRMABLE}  ${payload}
+    \	Should Not Be Empty             ${dut2_response}
+    \	${dut2_response_code}   Get Response Code       ${dut2_response}
+    \	Should Be Equal 	${COAP_RESPONSE_CODE_CREATED}   ${dut2_response_code}
+    \	${dut2_response_json}	Get Response Json       ${dut2_response}
+    \	@{dut2_response_href}	Get Json Value          ${HREF}         ${dut2_response_json}
+    \	Should Contain		@{dut2_response_href}[0]		${resource_href}${CREATED_DIS_HREF}
+    \   ${msgid}    Generate Message Id
+    \   ${token}    Generate Token    
+    \	${dut1_response}            Discover Resource Using Unicast         ${UNICAST}      ${COAP}    ${msgid}    ${token}	 ${resource_ip}   ${${resource_port}}      ${resource_href}${CREATED_DIS_HREF}        ${NON_CONFIRMABLE}	
+    \	Should Not Be Empty         ${dut1_response}
+    \	${dut1_response_code}       Get Response Code       ${dut1_response}
+    \	Should Be Equal     ${COAP_RESPONSE_CODE_SUCCESS}   ${dut1_response_code}
+    \	${dut1_response_json}       Get Response Json       ${dut1_response}
+    \	${validate_json_result}     Validate JSON Format        ${dut1_response_json}
+    \	Should Be True      ${validate_json_result}
+    \	Create Json Representation
+    \	Add Into Json Representation    ${RESOURCE_TYPE}        ${NON_DISCOVERABLE_RESOURCE_TYPE}
+    \	Add Into Json Representation    ${HREF}		 ${resource_href}${CREATED_NON_DIS_HREF}
+    \	Add Into Json Representation    ${DISCOVERABLE}	0
+    \	${payload}      Get Json Representation
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \	${dut2_response}        Send Put Request        ${UNICAST}      ${COAP}    ${msgid}    ${token} 	${resource_ip}	  ${${resource_port}}     ${resource_href}        ${CONFIRMABLE}  ${payload}
+    \	Should Not Be Empty             ${dut2_response}
+    \	${dut2_response_code}   Get Response Code       ${dut2_response}
+    \	Should Be Equal 	${COAP_RESPONSE_CODE_CREATED}   ${dut2_response_code}
+    \	${dut2_response_json}	Get Response Json       ${dut2_response}
+    \	@{dut2_response_href}	Get Json Value          ${HREF}         ${dut2_response_json}
+    \	Should Be Equal		@{dut2_response_href}[0]		${resource_href}${CREATED_NON_DIS_HREF}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \   ${dut1_response}            Discover Resource Using Unicast         ${UNICAST}      ${COAP}    ${msgid}    ${token}      ${resource_ip}   ${${resource_port}}     ${OIC_CORE_RESOURCE_DEFAULT_URI}        ${NON_CONFIRMABLE}
+    \   Should Not Contain         ${dut1_response}	${resource_href}${CREATED_NON_DIS_HREF}
+    \   Should Be True      ${validate_json_result}
+#Post-Condition
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \   ${dut2_response}        Send Delete Request             ${UNICAST}      ${COAP}    ${msgid}    ${token}     ${resource_ip}    ${${resource_port}}     ${resource_href}${CREATED_NON_DIS_HREF}             ${CONFIRMABLE}
+    \   Should Not Be Empty             ${dut2_response}
+    \   ${dut2_response_json}   Get Response Json       ${dut2_response}
+    \   ${validate_json_result}         Validate JSON Format    ${dut2_response_json}
+    \   Should Be True  ${validate_json_result}
+    \   ${dut2_response_code}   Get Response Code       ${dut2_response}
+    \   Should Be Equal         ${COAP_RESPONSE_CODE_DELETED}   ${dut2_response_code}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \   ${dut2_response}        Send Delete Request             ${UNICAST}      ${COAP}    ${msgid}    ${token}      ${resource_ip}  ${${resource_port}}     ${resource_href}${CREATED_DIS_HREF}            ${CONFIRMABLE}
+    \   Should Not Be Empty             ${dut2_response}
+    \   ${dut2_response_json}   Get Response Json       ${dut2_response}
+    \   ${validate_json_result}         Validate JSON Format    ${dut2_response_json}
+    \   Should Be True  ${validate_json_result}
+    \   ${dut2_response_code}   Get Response Code       ${dut2_response}
+    \   Should Be Equal         ${COAP_RESPONSE_CODE_DELETED}   ${dut2_response_code}
+
+    Release DUT information     ${DUT1_ID}
+
