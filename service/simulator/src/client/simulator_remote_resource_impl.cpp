@@ -21,6 +21,8 @@
 #include "simulator_remote_resource_impl.h"
 #include "request_model_builder.h"
 #include "simulator_exceptions.h"
+#include "simulator_utils.h"
+#include "simulator_logger.h"
 #include "logger.h"
 
 #define TAG "SIMULATOR_REMOTE_RESOURCE"
@@ -75,41 +77,37 @@ bool SimulatorRemoteResourceImpl::isObservable() const
 void SimulatorRemoteResourceImpl::observe(ObserveType type,
         ObserveNotificationCallback callback)
 {
-    if (!callback)
-    {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
-        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-    }
+    VALIDATE_CALLBACK(callback)
 
-    std::lock_guard<std::mutex> lock(m_observeMutex);
+    std::lock_guard<std::mutex> lock(m_observeLock);
     if (m_observeState)
     {
-        OC_LOG(WARNING, TAG, "Resource already in observe state !");
         throw SimulatorException(SIMULATOR_ERROR, "Resource is already being observed!");
     }
 
-    OC::ObserveCallback observeCallback = [this, callback](const OC::HeaderOptions & headerOptions,
-                                          const OC::OCRepresentation & rep, const int errorCode,
-                                          const int sequenceNum)
+    OC::ObserveCallback observeCallback = std::bind(
+            [](const OC::HeaderOptions & headerOptions, const OC::OCRepresentation & ocRep,
+               const int errorCode, const int sqNum, std::string id, ObserveNotificationCallback callback)
     {
-        // Convert OCRepresentation to SimulatorResourceModel
-        SimulatorResourceModelSP repModel = SimulatorResourceModel::create(rep);
-        callback(m_id, static_cast<SimulatorResult>(errorCode), repModel, sequenceNum);
-    };
+        SIM_LOG(ILogger::INFO, "Observe response received..." << "\n" << getPayloadString(ocRep));
+
+        SimulatorResourceModelSP resourceModel(
+            new  SimulatorResourceModel(SimulatorResourceModel::build(ocRep)));
+        callback(id, static_cast<SimulatorResult>(errorCode), resourceModel, sqNum);
+    }, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
+    m_id, callback);
 
     OC::ObserveType observeType = OC::ObserveType::Observe;
     if (type == ObserveType::OBSERVE_ALL)
-    {
         observeType = OC::ObserveType::ObserveAll;
-    }
 
     try
     {
         OCStackResult ocResult = m_ocResource->observe(observeType, OC::QueryParamsMap(), observeCallback);
         if (OC_STACK_OK != ocResult)
-        {
             throw SimulatorException(static_cast<SimulatorResult>(ocResult), OC::OCException::reason(ocResult));
-        }
+
+        SIM_LOG(ILogger::INFO, "OBSERVE request sent");
     }
     catch (OC::OCException &e)
     {
@@ -125,16 +123,16 @@ void SimulatorRemoteResourceImpl::cancelObserve()
     {
         OCStackResult ocResult = m_ocResource->cancelObserve(OC::QualityOfService::HighQos);
         if (OC_STACK_OK != ocResult)
-        {
             throw SimulatorException(static_cast<SimulatorResult>(ocResult), OC::OCException::reason(ocResult));
-        }
+
+        SIM_LOG(ILogger::INFO, "OBSERVE CANCEL request sent");
     }
     catch (OC::OCException &e)
     {
         throw SimulatorException(static_cast<SimulatorResult>(e.code()), e.reason());
     }
 
-    std::lock_guard<std::mutex> lock(m_observeMutex);
+    std::lock_guard<std::mutex> lock(m_observeLock);
     m_observeState = false;
 }
 
@@ -142,11 +140,7 @@ void SimulatorRemoteResourceImpl::get(const std::string &interfaceType,
                                       const std::map<std::string, std::string> &queryParams,
                                       ResponseCallback callback)
 {
-    if (!callback)
-    {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
-        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-    }
+    VALIDATE_CALLBACK(callback)
 
     if (!m_getRequestSender)
     {
@@ -163,11 +157,7 @@ void SimulatorRemoteResourceImpl::get(const std::string &interfaceType,
 void SimulatorRemoteResourceImpl::get(const std::map<std::string, std::string> &queryParams,
                                       ResponseCallback callback)
 {
-    if (!callback)
-    {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
-        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-    }
+    VALIDATE_CALLBACK(callback)
 
     if (!m_getRequestSender)
     {
@@ -183,14 +173,10 @@ void SimulatorRemoteResourceImpl::get(const std::map<std::string, std::string> &
 
 void SimulatorRemoteResourceImpl::put(const std::string &interfaceType,
                                       const std::map<std::string, std::string> &queryParams,
-                                      SimulatorResourceModelSP representation,
+                                      SimulatorResourceModelSP resourceModel,
                                       ResponseCallback callback)
 {
-    if (!callback)
-    {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
-        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-    }
+    VALIDATE_CALLBACK(callback)
 
     if (!m_putRequestSender)
     {
@@ -199,20 +185,16 @@ void SimulatorRemoteResourceImpl::put(const std::string &interfaceType,
     }
 
     m_putRequestSender->sendRequest(interfaceType, queryParams,
-                                    representation, std::bind(
+                                    resourceModel, std::bind(
                                         &SimulatorRemoteResourceImpl::onResponseReceived,
                                         this, std::placeholders::_1, std::placeholders::_2, callback));
 }
 
 void SimulatorRemoteResourceImpl::put(const std::map<std::string, std::string> &queryParams,
-                                      SimulatorResourceModelSP representation,
+                                      SimulatorResourceModelSP resourceModel,
                                       ResponseCallback callback)
 {
-    if (!callback)
-    {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
-        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-    }
+    VALIDATE_CALLBACK(callback)
 
     if (!m_putRequestSender)
     {
@@ -221,21 +203,17 @@ void SimulatorRemoteResourceImpl::put(const std::map<std::string, std::string> &
     }
 
     m_putRequestSender->sendRequest(std::string(), queryParams,
-                                    representation, std::bind(
+                                    resourceModel, std::bind(
                                         &SimulatorRemoteResourceImpl::onResponseReceived,
                                         this, std::placeholders::_1, std::placeholders::_2, callback));
 }
 
 void SimulatorRemoteResourceImpl::post(const std::string &interfaceType,
                                        const std::map<std::string, std::string> &queryParams,
-                                       SimulatorResourceModelSP representation,
+                                       SimulatorResourceModelSP resourceModel,
                                        ResponseCallback callback)
 {
-    if (!callback)
-    {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
-        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-    }
+    VALIDATE_CALLBACK(callback)
 
     if (!m_postRequestSender)
     {
@@ -244,20 +222,16 @@ void SimulatorRemoteResourceImpl::post(const std::string &interfaceType,
     }
 
     m_postRequestSender->sendRequest(interfaceType, queryParams,
-                                     representation, std::bind(
+                                     resourceModel, std::bind(
                                          &SimulatorRemoteResourceImpl::onResponseReceived,
                                          this, std::placeholders::_1, std::placeholders::_2, callback));
 }
 
 void SimulatorRemoteResourceImpl::post(const std::map<std::string, std::string> &queryParams,
-                                       SimulatorResourceModelSP representation,
+                                       SimulatorResourceModelSP resourceModel,
                                        ResponseCallback callback)
 {
-    if (!callback)
-    {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
-        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-    }
+    VALIDATE_CALLBACK(callback)
 
     if (!m_postRequestSender)
     {
@@ -266,7 +240,7 @@ void SimulatorRemoteResourceImpl::post(const std::map<std::string, std::string> 
     }
 
     m_postRequestSender->sendRequest(std::string(), queryParams,
-                                     representation, std::bind(
+                                     resourceModel, std::bind(
                                          &SimulatorRemoteResourceImpl::onResponseReceived,
                                          this, std::placeholders::_1, std::placeholders::_2, callback));
 }
@@ -274,11 +248,7 @@ void SimulatorRemoteResourceImpl::post(const std::map<std::string, std::string> 
 int SimulatorRemoteResourceImpl::startVerification(RequestType type,
         StateCallback callback)
 {
-    if (!callback)
-    {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
-        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-    }
+    VALIDATE_CALLBACK(callback)
 
     if (!m_autoRequestGenMngr)
     {
@@ -302,8 +272,8 @@ int SimulatorRemoteResourceImpl::startVerification(RequestType type,
             if (m_getRequestSender)
             {
                 return m_autoRequestGenMngr->startOnGET(m_getRequestSender,
-                                    m_requestModelList[RequestType::RQ_TYPE_GET]->getQueryParams(),
-                                    localCallback);
+                                                        m_requestModelList[RequestType::RQ_TYPE_GET]->getQueryParams(),
+                                                        localCallback);
             }
             break;
 
@@ -311,19 +281,19 @@ int SimulatorRemoteResourceImpl::startVerification(RequestType type,
             if (m_putRequestSender)
             {
                 return m_autoRequestGenMngr->startOnPUT(m_putRequestSender,
-                                    m_requestModelList[RequestType::RQ_TYPE_PUT]->getQueryParams(),
-                                    m_requestModelList[RequestType::RQ_TYPE_PUT]->getRepSchema(),
-                                    localCallback);
+                                                        m_requestModelList[RequestType::RQ_TYPE_PUT]->getQueryParams(),
+                                                        m_requestModelList[RequestType::RQ_TYPE_PUT]->getRepSchema(),
+                                                        localCallback);
             }
             break;
 
         case RequestType::RQ_TYPE_POST:
             if (m_postRequestSender)
             {
-                return m_autoRequestGenMngr->startOnPOST(m_putRequestSender,
-                                    m_requestModelList[RequestType::RQ_TYPE_POST]->getQueryParams(),
-                                    m_requestModelList[RequestType::RQ_TYPE_POST]->getRepSchema(),
-                                    localCallback);
+                return m_autoRequestGenMngr->startOnPOST(m_postRequestSender,
+                        m_requestModelList[RequestType::RQ_TYPE_POST]->getQueryParams(),
+                        m_requestModelList[RequestType::RQ_TYPE_POST]->getRepSchema(),
+                        localCallback);
             }
             break;
 
@@ -352,18 +322,28 @@ void SimulatorRemoteResourceImpl::stopVerification(int id)
     m_autoRequestGenMngr->stop(id);
 }
 
-void SimulatorRemoteResourceImpl::configure(const std::string &path)
+SimulatorResourceModelSP SimulatorRemoteResourceImpl::configure(const std::string &path)
 {
-    if (path.empty())
-    {
-        OC_LOG(ERROR, TAG, "Invalid path given for configuration!");
-        throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Empty path string!");
-    }
+    VALIDATE_INPUT(path.empty(), "Path is empty!")
 
     std::shared_ptr<RAML::RamlParser> ramlParser = std::make_shared<RAML::RamlParser>(path);
     RAML::RamlPtr raml = ramlParser->getRamlPtr();
 
     configure(raml);
+
+    if (m_requestModelList.empty())
+        throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "RAML file is invalid for the resource!");
+
+    for (auto &model : m_requestModelList)
+    {
+        SimulatorResourceModelSP schema = (model.second)->getRepSchema();
+        if (schema)
+        {
+            return std::make_shared<SimulatorResourceModel>(*(schema.get()));
+        }
+    }
+
+    return std::make_shared<SimulatorResourceModel>();
 }
 
 void SimulatorRemoteResourceImpl::configure(std::shared_ptr<RAML::Raml> &raml)
@@ -394,10 +374,9 @@ void SimulatorRemoteResourceImpl::configure(std::shared_ptr<RAML::Raml> &raml)
 }
 
 void SimulatorRemoteResourceImpl::onResponseReceived(SimulatorResult result,
-        SimulatorResourceModelSP repModel,
-        ResponseCallback clientCallback)
+        SimulatorResourceModelSP resourceModel, ResponseCallback clientCallback)
 {
-    clientCallback(m_id, result, repModel);
+    clientCallback(m_id, result, resourceModel);
 }
 
 SimulatorConnectivityType SimulatorRemoteResourceImpl::convertConnectivityType(

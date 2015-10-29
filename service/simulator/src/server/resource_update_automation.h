@@ -21,14 +21,16 @@
 #ifndef RESOURCE_UPDATE_AUTOMATION_H_
 #define RESOURCE_UPDATE_AUTOMATION_H_
 
-#include "simulator_resource_server.h"
+#include "simulator_single_resource.h"
+#include "attribute_generator.h"
 #include <thread>
 
 class AttributeUpdateAutomation
 {
     public:
-        AttributeUpdateAutomation(int id, SimulatorResourceServer *resource,
-                                  const std::string &attrName, AutomationType type, int interval,
+        AttributeUpdateAutomation(int id, SimulatorSingleResource *resource,
+                                  const SimulatorResourceModel::Attribute &attribute,
+                                  AutomationType type, int interval,
                                   updateCompleteCallback callback,
                                   std::function<void (const int)> finishedCallback);
 
@@ -38,15 +40,14 @@ class AttributeUpdateAutomation
 
     private:
         void updateAttribute();
-        void setAttributeValue();
 
-        SimulatorResourceServer *m_resource;
+        SimulatorSingleResource *m_resource;
         std::string m_attrName;
         AutomationType m_type;
         int m_id;
         bool m_stopRequested;
         int m_updateInterval;
-        SimulatorResourceModel::Attribute m_attribute;
+        AttributeGenerator m_attributeGen;
         updateCompleteCallback m_callback;
         std::function<void (const int)> m_finishedCallback;
         std::thread *m_thread;
@@ -57,7 +58,7 @@ typedef std::shared_ptr<AttributeUpdateAutomation> AttributeUpdateAutomationSP;
 class ResourceUpdateAutomation
 {
     public:
-        ResourceUpdateAutomation(int id, SimulatorResourceServer *resource,
+        ResourceUpdateAutomation(int id, SimulatorSingleResource *resource,
                                  AutomationType type, int interval,
                                  updateCompleteCallback callback,
                                  std::function<void (const int)> finishedCallback);
@@ -69,7 +70,7 @@ class ResourceUpdateAutomation
     private:
         void updateAttributes(std::vector<SimulatorResourceModel::Attribute> attributes);
 
-        SimulatorResourceServer *m_resource;
+        SimulatorSingleResource *m_resource;
         AutomationType m_type;
         int m_id;
         bool m_stopRequested;

@@ -27,98 +27,10 @@ void ResponseModel::setRepSchema(SimulatorResourceModelSP &repSchema)
     m_repSchema = repSchema;
 }
 
-SimulatorResult ResponseModel::verifyResponse(const OC::OCRepresentation &rep)
+SimulatorResult ResponseModel::verifyResponse(const OC::OCRepresentation &ocRep)
 {
-    for (auto & ocAttribute : rep)
-    {
-        SimulatorResourceModel::Attribute attribute;
-        if (false == m_repSchema->getAttribute(ocAttribute.attrname(), attribute))
-        {
-            return SIMULATOR_UKNOWN_PROPERTY;
-        }
-
-        switch (attribute.getValueType())
-        {
-            case SimulatorResourceModel::Attribute::ValueType::INTEGER : // Integer
-                {
-                    SimulatorResult result = validateAttributeInteger(attribute, ocAttribute);
-                    if (SIMULATOR_OK != result)
-                    {
-                        return result;
-                    }
-                }
-                break;
-
-            case SimulatorResourceModel::Attribute::ValueType::DOUBLE : // Double
-                {
-                    SimulatorResult result = validateAttributeDouble(attribute, ocAttribute);
-                    if (SIMULATOR_OK != result)
-                    {
-                        return result;
-                    }
-                }
-                break;
-
-            case SimulatorResourceModel::Attribute::ValueType::STRING : // String
-                {
-                    SimulatorResult result = validateAttributeString(attribute, ocAttribute);
-                    if (SIMULATOR_OK != result)
-                    {
-                        return result;
-                    }
-                }
-                break;
-        }
-    }
-
-    return SIMULATOR_OK;
-}
-
-SimulatorResult ResponseModel::validateAttributeInteger(
-    SimulatorResourceModel::Attribute &attrSchema,
-    const OC::OCRepresentation::AttributeItem &ocAttribute)
-{
-    // Check the value type
-    if (OC::AttributeType::Integer != ocAttribute.type())
-    {
-        return SIMULATOR_TYPE_MISMATCH;
-    }
-
-    // Check value if it is in range
-    int min, max, value;
-    attrSchema.getRange(min, max);
-    value = ocAttribute.getValue<int>();
-    if (value < min || value > max)
-    {
-        return SIMULATOR_BAD_VALUE;
-    }
-
-    return SIMULATOR_OK;
-}
-
-SimulatorResult ResponseModel::validateAttributeDouble(
-    SimulatorResourceModel::Attribute &attrSchema,
-    const OC::OCRepresentation::AttributeItem &ocAttribute)
-{
-    // Check the value type
-    if (OC::AttributeType::Double != ocAttribute.type())
-    {
-        return SIMULATOR_TYPE_MISMATCH;
-    }
-
-    return SIMULATOR_OK;
-}
-
-SimulatorResult ResponseModel::validateAttributeString(
-    SimulatorResourceModel::Attribute &attrSchema,
-    const OC::OCRepresentation::AttributeItem &ocAttribute)
-{
-    // Check the value type
-    if (OC::AttributeType::String != ocAttribute.type())
-    {
-        return SIMULATOR_TYPE_MISMATCH;
-    }
-
-    // TODO: Check the allowed values
-    return SIMULATOR_OK;
+    SimulatorResourceModel resModel = SimulatorResourceModel::build(ocRep);
+    if (m_repSchema->match(resModel))
+        return SIMULATOR_OK;
+    return SIMULATOR_ERROR;
 }

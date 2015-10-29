@@ -34,14 +34,14 @@ std::map<RequestType, RequestModelSP> RequestModelBuilder::build(const std::stri
         return modelList;
     }
 
-    for (auto  & resource : m_raml->getResources())
+    for (auto   &resource : m_raml->getResources())
     {
         // Pick the resource based on the resource uri.
         if (std::string::npos == uri.find((resource.second)->getResourceUri()))
             continue;
 
-        // Construcut Request and Response Model from RAML::Action
-        for (auto  & action :  (resource.second)->getActions())
+        // Construct Request and Response Model from RAML::Action
+        for (auto   &action :  (resource.second)->getActions())
         {
             RequestModelSP requestModel = createRequestModel(action.second);
             if (requestModel)
@@ -71,9 +71,9 @@ RequestModelSP RequestModelBuilder::createRequestModel(const RAML::ActionPtr &ac
     RequestModelSP requestModel(new RequestModel(getRequestType(actionType)));
 
     // Get the allowed query parameters of the request
-    for (auto & qpEntry : action->getQueryParameters())
+    for (auto &qpEntry : action->getQueryParameters())
     {
-        for (auto & value :  (qpEntry.second)->getEnumeration())
+        for (auto &value :  (qpEntry.second)->getEnumeration())
         {
             requestModel->addQueryParam(qpEntry.first, value);
         }
@@ -84,7 +84,7 @@ RequestModelSP RequestModelBuilder::createRequestModel(const RAML::ActionPtr &ac
     requestModel->setRepSchema(repSchema);
 
     // Corresponsing responses
-    for (auto  & responseEntry :  action->getResponses())
+    for (auto   &responseEntry :  action->getResponses())
     {
         std::string codeStr = responseEntry.first;
         int code = boost::lexical_cast<int>(codeStr);
@@ -115,6 +115,7 @@ SimulatorResourceModelSP RequestModelBuilder::createRepSchema(const RAML::Reques
     {
         return nullptr;
     }
+
     RAML::SchemaPtr schema = rep->getSchema();
     if (!schema)
     {
@@ -126,7 +127,7 @@ SimulatorResourceModelSP RequestModelBuilder::createRepSchema(const RAML::Reques
         return nullptr;
 
     SimulatorResourceModelSP repSchema = std::make_shared<SimulatorResourceModel>();
-    for (auto & propertyEntry : properties->getProperties())
+    for (auto &propertyEntry : properties->getProperties())
     {
         std::string propName = propertyEntry.second->getName();
         if ("rt" == propName || "resourceType" == propName || "if" == propName
@@ -139,34 +140,29 @@ SimulatorResourceModelSP RequestModelBuilder::createRepSchema(const RAML::Reques
             case 0: // Integer
                 {
                     // Add the attribute with value
-                    repSchema->addAttribute(propertyEntry.second->getName(), propertyEntry.second->getValue<int>());
+                    repSchema->add(propertyEntry.second->getName(), propertyEntry.second->getValue<int>());
 
-                    // Set the range
-                    double min, max;
-                    int multipleof;
-                    propertyEntry.second->getRange(min, max, multipleof);
-                    repSchema->setRange(propertyEntry.second->getName(), min, max);
+                    // Convert supported values
+                    std::vector<int> allowedValues = propertyEntry.second->getAllowedValuesInt();
+                    if (allowedValues.size() > 0)
+                    {
+                        SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
+                        repSchema->setAttributeProperty(propName, attrProp);
+                    }
                 }
                 break;
 
             case 1: // Double
                 {
                     // Add the attribute with value
-                    repSchema->addAttribute(propertyEntry.second->getName(), propertyEntry.second->getValue<double>());
+                    repSchema->add(propertyEntry.second->getName(), propertyEntry.second->getValue<double>());
 
-                    std::vector<SimulatorResourceModel::Attribute::ValueVariant> propValues =
-                        propertyEntry.second->getAllowedValues();
-
-                    // TODO: Use RAML function once available
-                    if (0 < propertyEntry.second->getAllowedValuesSize())
+                    // Convert suppoted values
+                    std::vector<double> allowedValues = propertyEntry.second->getAllowedValuesDouble();
+                    if (allowedValues.size() > 0)
                     {
-                        std::vector<double> allowedValues;
-                        for (auto & propValue : propValues)
-                        {
-                            double value = boost::lexical_cast<double> (propValue);
-                            allowedValues.push_back(value);
-                        }
-                        repSchema->setAllowedValues(propertyEntry.second->getName(), allowedValues);
+                        SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
+                        repSchema->setAttributeProperty(propName, attrProp);
                     }
                 }
                 break;
@@ -174,32 +170,42 @@ SimulatorResourceModelSP RequestModelBuilder::createRepSchema(const RAML::Reques
             case 2: // Boolean
                 {
                     // Add the attribute with value
-                    repSchema->addAttribute(propertyEntry.second->getName(), propertyEntry.second->getValue<bool>());
+                    repSchema->add(propertyEntry.second->getName(), propertyEntry.second->getValue<bool>());
+                    // Convert supported values
+                    std::vector<bool> allowedValues = propertyEntry.second->getAllowedValuesBool();
+                    if (allowedValues.size() > 0)
+                    {
+                        SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
+                        repSchema->setAttributeProperty(propName, attrProp);
+                    }
                 }
                 break;
 
             case 3: // String
                 {
                     // Add the attribute with value
-                    repSchema->addAttribute(propertyEntry.second->getName(),
-                                            propertyEntry.second->getValue<std::string>());
+                    repSchema->add(propertyEntry.second->getName(),
+                                   propertyEntry.second->getValue<std::string>());
 
-                    std::vector<SimulatorResourceModel::Attribute::ValueVariant> propValues =
-                        propertyEntry.second->getAllowedValues();
-
-                    // TODO: Use RAML function once available
-                    if (0 < propertyEntry.second->getAllowedValuesSize())
+                    // Convert suppored values
+                    std::vector<std::string> allowedValues = propertyEntry.second->getAllowedValuesString();
+                    if (allowedValues.size() > 0)
                     {
-                        std::vector<std::string> allowedValues;
-                        for (auto & propValue : propValues)
-                        {
-                            std::string value = boost::lexical_cast<std::string> (propValue);
-                            allowedValues.push_back(value);
-                        }
-                        repSchema->setAllowedValues(propertyEntry.second->getName(), allowedValues);
+                        SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
+                        repSchema->setAttributeProperty(propName, attrProp);
                     }
                 }
                 break;
+        }
+
+        // Set the range property if its present
+        double min, max;
+        int multipleof;
+        propertyEntry.second->getRange(min, max, multipleof);
+        if (min != INT_MIN && max != INT_MAX)
+        {
+            SimulatorResourceModel::AttributeProperty attrProp(min, max);
+            repSchema->setAttributeProperty(propName, attrProp);
         }
     }
 
@@ -210,8 +216,6 @@ RequestType RequestModelBuilder::getRequestType(RAML::ActionType actionType)
 {
     switch (actionType)
     {
-        case RAML::ActionType::GET:
-            return RequestType::RQ_TYPE_GET;
         case RAML::ActionType::PUT:
             return RequestType::RQ_TYPE_PUT;
         case RAML::ActionType::POST:
@@ -219,5 +223,7 @@ RequestType RequestModelBuilder::getRequestType(RAML::ActionType actionType)
         case RAML::ActionType::DELETE:
             return RequestType::RQ_TYPE_DELETE;
     }
+
+    return RequestType::RQ_TYPE_GET;
 }
 

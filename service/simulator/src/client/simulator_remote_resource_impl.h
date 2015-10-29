@@ -59,35 +59,35 @@ class SimulatorRemoteResourceImpl : public SimulatorRemoteResource
                  ResponseCallback callback);
 
         void put(const std::map<std::string, std::string> &queryParams,
-                 SimulatorResourceModelSP representation,
+                 SimulatorResourceModelSP resourceModel,
                  ResponseCallback callback);
 
         void put(const std::string &interfaceType,
                  const std::map<std::string, std::string> &queryParams,
-                 SimulatorResourceModelSP representation,
+                 SimulatorResourceModelSP resourceModel,
                  ResponseCallback callback);
 
         void post(const std::map<std::string, std::string> &queryParams,
-                  SimulatorResourceModelSP representation,
+                  SimulatorResourceModelSP resourceModel,
                   ResponseCallback callback);
 
         void post(const std::string &interfaceType,
                   const std::map<std::string, std::string> &queryParams,
-                  SimulatorResourceModelSP representation,
+                  SimulatorResourceModelSP resourceModel,
                   ResponseCallback callback);
 
         int startVerification(RequestType type, StateCallback callback);
         void stopVerification(int id);
-        void configure(const std::string &path);
+        SimulatorResourceModelSP configure(const std::string &path);
 
     private:
         void configure(std::shared_ptr<RAML::Raml> &raml);
-        void onResponseReceived(SimulatorResult result, SimulatorResourceModelSP repModel,
+        void onResponseReceived(SimulatorResult result, SimulatorResourceModelSP resourceModel,
                                 ResponseCallback clientCallback);
         SimulatorConnectivityType convertConnectivityType(OCConnectivityType type) const;
 
         std::string m_id;
-        std::mutex m_observeMutex;
+        std::mutex m_observeLock;
         bool m_observeState;
         GETRequestSenderSP m_getRequestSender;
         PUTRequestSenderSP m_putRequestSender;

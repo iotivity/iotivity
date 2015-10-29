@@ -206,7 +206,7 @@ bool AutoRequestGenMngr::isValid(int id)
 bool AutoRequestGenMngr::isInProgress(RequestType type)
 {
     std::lock_guard<std::mutex> lock(m_lock);
-    for (auto & session : m_requestGenList)
+    for (auto &session : m_requestGenList)
     {
         if ((session.second)->type() == type)
             return true;

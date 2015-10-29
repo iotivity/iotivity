@@ -19,7 +19,7 @@
  ******************************************************************/
 
 #include "resource_update_automation.h"
-#include "simulator_resource_server_impl.h"
+#include "simulator_single_resource_impl.h"
 #include "attribute_generator.h"
 #include "simulator_exceptions.h"
 #include "simulator_logger.h"
@@ -30,36 +30,27 @@
 
 #define SLEEP_FOR(X) if (X > 0) std::this_thread::sleep_for(std::chrono::milliseconds(X));
 
-AttributeUpdateAutomation::AttributeUpdateAutomation(int id, SimulatorResourceServer *resource,
-        const std::string &attrName, AutomationType type, int interval,
+AttributeUpdateAutomation::AttributeUpdateAutomation(int id, SimulatorSingleResource *resource,
+        const SimulatorResourceModel::Attribute &attribute, AutomationType type, int interval,
         updateCompleteCallback callback, std::function<void (const int)> finishedCallback)
     :   m_resource(resource),
-        m_attrName(attrName),
         m_type(type),
         m_id(id),
         m_stopRequested(false),
         m_updateInterval(interval),
+        m_attributeGen(attribute),
         m_callback(callback),
         m_finishedCallback(finishedCallback),
-        m_thread(nullptr) {}
+        m_thread(nullptr)
+{
+    if (m_updateInterval < 0)
+    {
+        m_updateInterval = 0;
+    }
+}
 
 void AttributeUpdateAutomation::start()
 {
-    // Check the validity of attribute
-    SimulatorResourceModel resModel = m_resource->getModel();
-    if (false == resModel.getAttribute(m_attrName, m_attribute))
-    {
-        OC_LOG_V(ERROR, ATAG, "Attribute:%s not present in resource!", m_attrName.c_str());
-        throw SimulatorException(SIMULATOR_ERROR, "Attribute is not present in resource!");
-    }
-
-    if (m_updateInterval < 0)
-    {
-        m_updateInterval = m_attribute.getUpdateFrequencyTime();
-        if (0 > m_updateInterval)
-            m_updateInterval = 0;
-    }
-
     m_thread = new std::thread(&AttributeUpdateAutomation::updateAttribute, this);
 }
 
@@ -72,20 +63,37 @@ void AttributeUpdateAutomation::stop()
 
 void AttributeUpdateAutomation::updateAttribute()
 {
+    SimulatorSingleResourceImpl *resourceImpl =
+        dynamic_cast<SimulatorSingleResourceImpl *>(m_resource);
+
+    if (!resourceImpl)
+        return;
+
     do
     {
         try
         {
-            setAttributeValue();
+            SimulatorResourceModel::Attribute attribute;
+            while (!m_stopRequested && true == m_attributeGen.next(attribute))
+            {
+                if (false == m_resource->updateAttributeValue(attribute))
+                {
+                    OC_LOG_V(ERROR, TAG, "Failed to update the attribute![%s]", attribute.getName());
+                    continue;
+                }
+                resourceImpl->notifyApp();
+
+                SLEEP_FOR(m_updateInterval);
+            }
+
+            m_attributeGen.reset();
         }
         catch (SimulatorException &e)
         {
             break;
         }
-        if (m_stopRequested)
-            break;
     }
-    while (AutomationType::RECURRENT == m_type);
+    while (!m_stopRequested && AutomationType::RECURRENT == m_type);
 
     if (!m_stopRequested)
     {
@@ -93,7 +101,7 @@ void AttributeUpdateAutomation::updateAttribute()
         SIM_LOG(ILogger::INFO, "Automation of " << m_attrName << " attribute is completed.");
     }
 
-    // Notify application
+    // Notify application through callback
     if (m_callback)
         m_callback(m_resource->getURI(), m_id);
 
@@ -101,43 +109,7 @@ void AttributeUpdateAutomation::updateAttribute()
         m_finishedCallback(m_id);
 }
 
-void AttributeUpdateAutomation::setAttributeValue()
-{
-    SimulatorResourceServerImpl *resourceImpl =
-        dynamic_cast<SimulatorResourceServerImpl *>(m_resource);
-    if (!resourceImpl)
-        return;
-
-    if (SimulatorResourceModel::Attribute::ValueType::INTEGER ==
-            m_attribute.getValueType()) // For integer type values
-    {
-        int min;
-        int max;
-
-        m_attribute.getRange(min, max);
-        for (int value = min; value <= max; value++)
-        {
-            if (m_stopRequested)
-                break;
-            resourceImpl->updateAttributeValue(m_attribute.getName(), value);
-            resourceImpl->notifyApp();
-            SLEEP_FOR(m_updateInterval);
-        }
-    }
-    else
-    {
-        for (int index = 0; index < m_attribute.getAllowedValuesSize(); index++)
-        {
-            if (m_stopRequested)
-                break;
-            resourceImpl->updateFromAllowedValues(m_attribute.getName(), index);
-            resourceImpl->notifyApp();
-            SLEEP_FOR(m_updateInterval);
-        }
-    }
-}
-
-ResourceUpdateAutomation::ResourceUpdateAutomation(int id, SimulatorResourceServer *resource,
+ResourceUpdateAutomation::ResourceUpdateAutomation(int id, SimulatorSingleResource *resource,
         AutomationType type, int interval, updateCompleteCallback callback,
         std::function<void (const int)> finishedCallback)
     :   m_resource(resource),
@@ -151,18 +123,17 @@ ResourceUpdateAutomation::ResourceUpdateAutomation(int id, SimulatorResourceServ
 
 void ResourceUpdateAutomation::start()
 {
-    SimulatorResourceModel resModel = m_resource->getModel();
-    std::map<std::string, SimulatorResourceModel::Attribute> attributesTable =
-            resModel.getAttributes();
-    if (0 == attributesTable.size())
+    std::vector<SimulatorResourceModel::Attribute> attributes;
+    for (auto &attributeEntry : m_resource->getResourceModel().getAttributes())
+    {
+        attributes.push_back(attributeEntry.second);
+    }
+
+    if (0 == attributes.size())
     {
         OC_LOG(ERROR, RTAG, "Resource has zero attributes!");
         throw SimulatorException(SIMULATOR_ERROR, "Resource has zero attributes!");
     }
-
-    std::vector<SimulatorResourceModel::Attribute> attributes;
-    for (auto &attributeEntry : attributesTable)
-        attributes.push_back(attributeEntry.second);
 
     m_thread = new std::thread(&ResourceUpdateAutomation::updateAttributes, this, attributes);
 }
@@ -175,23 +146,30 @@ void ResourceUpdateAutomation::stop()
 }
 
 void ResourceUpdateAutomation::updateAttributes(
-        std::vector<SimulatorResourceModel::Attribute> attributes)
+    std::vector<SimulatorResourceModel::Attribute> attributes)
 {
-    SimulatorResourceServerImpl *resourceImpl =
-        dynamic_cast<SimulatorResourceServerImpl *>(m_resource);
+    SimulatorSingleResourceImpl *resourceImpl =
+        dynamic_cast<SimulatorSingleResourceImpl *>(m_resource);
 
-    AttributeCombinationGen attrCombGen(attributes);
-    SimulatorResourceModel resModel;
-    while (!m_stopRequested && attrCombGen.next(resModel))
+    if (!resourceImpl)
+        return;
+
+    do
     {
-        for (auto &attributeEntry : resModel.getAttributes())
+        AttributeCombinationGen attrCombGen(attributes);
+        SimulatorResourceModel resModel;
+        while (!m_stopRequested && attrCombGen.next(resModel))
         {
-            resourceImpl->updateAttributeValue(attributeEntry.first, attributeEntry.second.getValue());
-        }
+            for (auto &attributeEntry : resModel.getAttributes())
+            {
+                resourceImpl->updateAttributeValue(attributeEntry.second);
+            }
 
-        resourceImpl->notifyApp();
-        SLEEP_FOR(m_updateInterval);
+            resourceImpl->notifyApp();
+            SLEEP_FOR(m_updateInterval);
+        }
     }
+    while (!m_stopRequested && AutomationType::RECURRENT == m_type);
 
     // Notify application
     if (m_callback)

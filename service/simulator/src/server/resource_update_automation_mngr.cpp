@@ -28,7 +28,7 @@
 UpdateAutomationMngr::UpdateAutomationMngr()
     :   m_id(0) {}
 
-int UpdateAutomationMngr::startResourceAutomation(SimulatorResourceServer *resource,
+int UpdateAutomationMngr::startResourceAutomation(SimulatorSingleResource *resource,
         AutomationType type, int interval, updateCompleteCallback callback)
 {
     if (!callback)
@@ -51,7 +51,7 @@ int UpdateAutomationMngr::startResourceAutomation(SimulatorResourceServer *resou
     return m_id++;
 }
 
-int UpdateAutomationMngr::startAttributeAutomation(SimulatorResourceServer *resource,
+int UpdateAutomationMngr::startAttributeAutomation(SimulatorSingleResource *resource,
         const std::string &attrName, AutomationType type, int interval,
         updateCompleteCallback callback)
 {
@@ -61,8 +61,16 @@ int UpdateAutomationMngr::startAttributeAutomation(SimulatorResourceServer *reso
         throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
     }
 
+    // Check the validity of attribute
+    SimulatorResourceModel::Attribute attribute;
+    if (false == resource->getAttribute(attrName, attribute))
+    {
+        OC_LOG_V(ERROR, ATAG, "Attribute:%s not present in resource!", m_attrName.c_str());
+        throw SimulatorException(SIMULATOR_ERROR, "Attribute is not present in resource!");
+    }
+
     AttributeUpdateAutomationSP attributeAutomation(new AttributeUpdateAutomation(
-                m_id, resource, attrName, type, interval, callback,
+                m_id, resource, attribute, type, interval, callback,
                 std::bind(&UpdateAutomationMngr::automationCompleted, this, std::placeholders::_1)));
 
     std::lock_guard<std::mutex> lock(m_lock);
@@ -82,7 +90,7 @@ std::vector<int> UpdateAutomationMngr::getResourceAutomationIds()
 {
     std::vector<int> ids;
     std::lock_guard<std::mutex> lock(m_lock);
-    for (auto & automation : m_resourceUpdationList)
+    for (auto &automation : m_resourceUpdationList)
         ids.push_back(automation.first);
 
     return ids;
@@ -92,7 +100,7 @@ std::vector<int> UpdateAutomationMngr::getAttributeAutomationIds()
 {
     std::vector<int> ids;
     std::lock_guard<std::mutex> lock(m_lock);
-    for (auto & automation : m_attrUpdationList)
+    for (auto &automation : m_attrUpdationList)
         ids.push_back(automation.first);
 
     return ids;
@@ -113,9 +121,6 @@ void UpdateAutomationMngr::stop(int id)
         m_attrUpdationList.erase(m_attrUpdationList.find(id));
         return;
     }
-
-    //Throw SimulatorException
-    throw SimulatorException(SIMULATOR_ERROR, "No automation is currently in progress for the given automation Id!");
 }
 
 void UpdateAutomationMngr::stopAll()

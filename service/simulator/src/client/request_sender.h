@@ -44,19 +44,19 @@ class RequestSender
                          ResponseCallback responseCb, bool verifyResponse = false);
 
         void sendRequest(const std::map<std::string, std::string> &queryParam,
-                         SimulatorResourceModelSP repModel,
+                         SimulatorResourceModelSP resourceModel,
                          ResponseCallback responseCb, bool verifyResponse = false);
 
         void sendRequest(const std::string &interfaceType,
                          const std::map<std::string, std::string> &queryParam,
-                         SimulatorResourceModelSP repModel,
+                         SimulatorResourceModelSP resourceModel,
                          ResponseCallback responseCb, bool verifyResponse = false);
 
         void setRequestModel(const RequestModelSP &requestModel);
 
     protected:
         virtual OCStackResult send(OC::QueryParamsMap &queryParams,
-                                   SimulatorResourceModelSP &repModel, OC::GetCallback callback) = 0;
+                                   SimulatorResourceModelSP &resourceModel, OC::GetCallback callback) = 0;
 
         void onResponseReceived(const OC::HeaderOptions &headerOptions,
                                 const OC::OCRepresentation &rep, const int errorCode, int requestId);
@@ -84,7 +84,7 @@ class GETRequestSender : public RequestSender
         GETRequestSender(std::shared_ptr<OC::OCResource> &ocResource);
 
         OCStackResult send(OC::QueryParamsMap &queryParams,
-                           SimulatorResourceModelSP &repModel, OC::GetCallback callback);
+                           SimulatorResourceModelSP &resourceModel, OC::GetCallback callback);
 };
 
 class PUTRequestSender : public RequestSender
@@ -93,7 +93,7 @@ class PUTRequestSender : public RequestSender
         PUTRequestSender(std::shared_ptr<OC::OCResource> &ocResource);
 
         OCStackResult send(OC::QueryParamsMap &queryParams,
-                           SimulatorResourceModelSP &repModel, OC::GetCallback callback);
+                           SimulatorResourceModelSP &resourceModel, OC::GetCallback callback);
 };
 
 class POSTRequestSender : public RequestSender
@@ -102,7 +102,7 @@ class POSTRequestSender : public RequestSender
         POSTRequestSender(std::shared_ptr<OC::OCResource> &ocResource);
 
         OCStackResult send(OC::QueryParamsMap &queryParams,
-                           SimulatorResourceModelSP &repModel, OC::GetCallback callback);
+                           SimulatorResourceModelSP &resourceModel, OC::GetCallback callback);
 };
 
 typedef std::shared_ptr<RequestSender> RequestSenderSP;

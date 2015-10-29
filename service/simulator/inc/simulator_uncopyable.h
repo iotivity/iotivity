@@ -18,19 +18,16 @@
  *
  ******************************************************************/
 
-#ifndef SIMULATOR_RESOURCE_CREATOR_H_
-#define SIMULATOR_RESOURCE_CREATOR_H_
+#ifndef SIMULATOR_UNCOPYABLE_H_
+#define SIMULATOR_UNCOPYABLE_H_
 
-#include "simulator_resource_server_impl.h"
-
-class SimulatorResourceCreator
+class UnCopyable
 {
     public:
-        SimulatorResourceServerImplSP createResource(const std::string &configPath);
-
-    private:
-        std::string constructURI(const std::string &uri);
-        static unsigned int s_id;
+        UnCopyable() = default;
+        UnCopyable(const UnCopyable &) = delete;
+        UnCopyable &operator=(const UnCopyable &) = delete;
+        virtual ~UnCopyable() {};
 };
 
 #endif

@@ -21,7 +21,7 @@
 #ifndef RESOURCE_UPDATE_AUTOMATION_MNGR_H_
 #define RESOURCE_UPDATE_AUTOMATION_MNGR_H_
 
-#include "simulator_resource_server.h"
+#include "simulator_single_resource.h"
 #include "resource_update_automation.h"
 
 class UpdateAutomationMngr
@@ -29,10 +29,10 @@ class UpdateAutomationMngr
     public:
         UpdateAutomationMngr();
 
-        int startResourceAutomation(SimulatorResourceServer *resource,
+        int startResourceAutomation(SimulatorSingleResource *resource,
                                     AutomationType type, int interval, updateCompleteCallback callback);
 
-        int startAttributeAutomation(SimulatorResourceServer *resource,
+        int startAttributeAutomation(SimulatorSingleResource *resource,
                                      const std::string &attrName, AutomationType type, int interval,
                                      updateCompleteCallback callback);
 

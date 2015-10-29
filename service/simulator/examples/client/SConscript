@@ -22,7 +22,7 @@ if sim_env.get('SECURED') == '1':
 ######################################################################
 # Source files and Targets
 ######################################################################
-clientcontroller = sim_env.Program('client-controller', 'client_controller.cpp')
+client = sim_env.Program('simulator-client', 'simulator_client.cpp')
 
-Alias("clientcontroller", clientcontroller)
-env.AppendTarget('clientcontroller')
+Alias("simulatorclient", client)
+env.AppendTarget('client')

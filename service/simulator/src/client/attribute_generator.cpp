@@ -21,42 +21,31 @@
 #include "attribute_generator.h"
 
 AttributeGenerator::AttributeGenerator(const SimulatorResourceModel::Attribute &attribute)
-    :   m_name(attribute.getName()),
-        m_min(INT_MIN),
-        m_max(INT_MAX),
-        m_rangeIndex(-1),
-        m_allowedValueIndex(0),
-        m_hasRange(false),
-        m_hasAllowedValue(false)
+    :   m_attribute(attribute),
+        m_curIntValue(INT_MIN),
+        m_valueSetIndex(0)
 {
-    if (attribute.getValueType() ==
-        SimulatorResourceModel::Attribute::ValueType::INTEGER)
+    if (m_attribute.getProperty().type() == SimulatorResourceModel::AttributeProperty::Type::RANGE)
     {
-        attribute.getRange(m_min, m_max);
-        if (INT_MIN != m_min && INT_MAX != m_max)
-        {
-            m_hasRange = true;
-            m_rangeIndex = m_min;
-        }
+        m_curIntValue = m_attribute.getProperty().min();
     }
-    else
+    else if (m_attribute.getProperty().type() ==
+             SimulatorResourceModel::AttributeProperty::Type::VALUE_SET)
     {
-        m_allowedValues = attribute.getAllowedValues();
-        if (0 != m_allowedValues.size())
-        {
-            m_hasAllowedValue = true;
-        }
+        m_supportedValues = m_attribute.getProperty().valueSet();
     }
 }
 
 bool AttributeGenerator::hasNext()
 {
-    if (m_hasRange && m_rangeIndex <= m_max)
+    if (m_attribute.getProperty().type() == SimulatorResourceModel::AttributeProperty::Type::RANGE
+        && m_curIntValue <= m_attribute.getProperty().max())
     {
         return true;
     }
-
-    if (m_hasAllowedValue && m_allowedValueIndex < m_allowedValues.size())
+    else if (m_attribute.getProperty().type() ==
+             SimulatorResourceModel::AttributeProperty::Type::VALUE_SET
+             && m_valueSetIndex <= m_supportedValues.size() - 1)
     {
         return true;
     }
@@ -66,34 +55,40 @@ bool AttributeGenerator::hasNext()
 
 bool AttributeGenerator::next(SimulatorResourceModel::Attribute &attribute)
 {
-    attribute.setName(m_name);
+    if (!hasNext())
+        return false;
 
-    if (m_hasRange)
+    attribute.setName(m_attribute.getName());
+    if (m_attribute.getProperty().type() == SimulatorResourceModel::AttributeProperty::Type::RANGE
+        && m_curIntValue <= m_attribute.getProperty().max())
     {
-        attribute.setValue(m_rangeIndex++);
-        return true;
+        attribute.setValue(m_curIntValue++);
     }
-    else if (m_hasAllowedValue)
+    else if (m_attribute.getProperty().type() ==
+             SimulatorResourceModel::AttributeProperty::Type::VALUE_SET
+             && m_valueSetIndex <= m_supportedValues.size() - 1)
     {
-        attribute.setValue(m_allowedValues[m_allowedValueIndex++]);
-        return true;
+        attribute.setValue(m_supportedValues[m_valueSetIndex++]);
     }
 
-    return false;
+    return true;
 }
 
 SimulatorResourceModel::Attribute AttributeGenerator::current()
 {
     SimulatorResourceModel::Attribute attribute;
+    attribute.setName(m_attribute.getName());
 
-    attribute.setName(m_name);
-    if (m_hasRange)
+    if (m_attribute.getProperty().type() == SimulatorResourceModel::AttributeProperty::Type::RANGE
+        && m_curIntValue <= m_attribute.getProperty().max())
     {
-        attribute.setValue(m_rangeIndex);
+        attribute.setValue(m_curIntValue);
     }
-    else if (m_hasAllowedValue)
+    else if (m_attribute.getProperty().type() ==
+             SimulatorResourceModel::AttributeProperty::Type::VALUE_SET
+             && m_valueSetIndex <= m_supportedValues.size() - 1)
     {
-        attribute.setValue(m_allowedValues[m_allowedValueIndex]);
+        attribute.setValue(m_supportedValues[m_valueSetIndex]);
     }
 
     return attribute;
@@ -101,23 +96,18 @@ SimulatorResourceModel::Attribute AttributeGenerator::current()
 
 void AttributeGenerator::reset()
 {
-    if (m_hasRange)
-    {
-        m_rangeIndex = m_min;
-    }
-    else if (m_hasAllowedValue)
-    {
-        m_allowedValueIndex = 0;
-    }
+    m_curIntValue = m_attribute.getProperty().min();
+    m_valueSetIndex = 0;
 }
 
 AttributeCombinationGen::AttributeCombinationGen(
-        const std::vector<SimulatorResourceModel::Attribute> &attributes)
+    const std::vector<SimulatorResourceModel::Attribute> &attributes)
 {
     for (auto &attr : attributes)
     {
         AttributeGenerator attrGen(attr);
         m_attrGenList.push_back(attr);
+        m_resModel.add(attr);
     }
 
     m_index = -1;
@@ -135,10 +125,10 @@ bool AttributeCombinationGen::next(SimulatorResourceModel &resModel)
     // This block will execute for only first time
     if (-1 == m_index)
     {
-        for (int index = 0; index < m_attrGenList.size(); index++)
+        for (size_t index = 0; index < m_attrGenList.size(); index++)
         {
             // Add the attribute on resource model
-            addAttributeToModel(index);
+            updateAttributeInModel(index);
         }
 
         m_index = m_attrGenList.size() - 1;
@@ -149,7 +139,7 @@ bool AttributeCombinationGen::next(SimulatorResourceModel &resModel)
     // Get the next attribute from statck top element
     if (m_attrGenList[m_index].hasNext())
     {
-        addAttributeToModel(m_index);
+        updateAttributeInModel(m_index);
         resModel = m_resModel;
         return true;
     }
@@ -163,11 +153,11 @@ bool AttributeCombinationGen::next(SimulatorResourceModel &resModel)
                     return false;
 
                 m_attrGenList[index].reset();
-                addAttributeToModel(index);
+                updateAttributeInModel(index);
             }
             else
             {
-                addAttributeToModel(index);
+                updateAttributeInModel(index);
                 break;
             }
         }
@@ -179,9 +169,9 @@ bool AttributeCombinationGen::next(SimulatorResourceModel &resModel)
     return false;
 }
 
-void AttributeCombinationGen::addAttributeToModel(int index)
+void AttributeCombinationGen::updateAttributeInModel(int index)
 {
     SimulatorResourceModel::Attribute attribute;
-    m_attrGenList[index].next(attribute);
-    m_resModel.addAttribute(attribute, true);
+    if (m_attrGenList[index].next(attribute))
+        m_resModel.updateValue(attribute);
 }

@@ -34,6 +34,21 @@ std::string getOperationStateString(OperationState state)
     return "OP_UNKNOWN";
 }
 
+std::string getPropertyTypeString(SimulatorResourceModel::AttributeProperty::Type type)
+{
+    switch(type)
+    {
+        case SimulatorResourceModel::AttributeProperty::Type::RANGE:
+            return "RANGE";
+        case SimulatorResourceModel::AttributeProperty::Type::VALUE_SET:
+            return "VALUE_SET";
+        default:
+            break;
+    }
+
+    return "UNKNOWN";
+}
+
 class AppLogger : public ILogger
 {
     public:
@@ -202,15 +217,10 @@ class ClientController
                 [](std::string uid, SimulatorResult errorCode, SimulatorResourceModelSP rep, int seq)
             {
                 std::cout << "\nObserve notification received ###[errorcode:  " << errorCode <<
-                          " seq:  " << seq << "UID: " << uid << "]" << std::endl;
-                std::map<std::string, SimulatorResourceModel::Attribute> attributes = rep->getAttributes();
-                for (auto & attribute : attributes)
-                {
-                    std::cout << (attribute.second).getName() << " :  {" << std::endl;
-                    std::cout << "value: " << (attribute.second).valueToString().c_str() << std::endl;
-                    std::cout << "}" << std::endl;
-                }
-                std::cout << std::endl;
+                    " seq:  " << seq << "UID: " << uid << "]" << std::endl;
+
+                std::cout << "Representation is: " << std::endl;
+                std::cout << rep->toString() << std::endl;
             };
 
             try
@@ -260,16 +270,7 @@ class ClientController
                         << std::endl;
                 std::cout << "UID is: " << uId << std::endl;
                 std::cout << "Representation is: " << std::endl;
-                std::map<std::string, SimulatorResourceModel::Attribute> attributes =
-                        rep->getAttributes();
-                for (auto & attribute : attributes)
-                {
-                    std::cout << (attribute.second).getName() << " :  {" << std::endl;
-                    std::cout << "value: " << (attribute.second).valueToString().c_str()
-                            << std::endl;
-                    std::cout << "}" << std::endl;
-                }
-                std::cout << std::endl;
+                std::cout << rep->toString() << std::endl;
             };
 
             try
@@ -307,24 +308,15 @@ class ClientController
                         << std::endl;
                 std::cout << "UID is: " << uId << std::endl;
                 std::cout << "Representation is: " << std::endl;
-                std::map<std::string, SimulatorResourceModel::Attribute> attributes =
-                        rep->getAttributes();
-                for (auto & attribute : attributes)
-                {
-                    std::cout << (attribute.second).getName() << " :  {" << std::endl;
-                    std::cout << "value: " << (attribute.second).valueToString().c_str()
-                            << std::endl;
-                    std::cout << "}" << std::endl;
-                }
-                std::cout << std::endl;
+                std::cout << rep->toString() << std::endl;
             };
 
             try
             {
                 SimulatorResourceModelSP rep = std::make_shared<SimulatorResourceModel>();
                 std::string value = "off";
-                rep->addAttribute("power", value);
-                rep->addAttribute("intensity", 5);
+                rep->add("power", value);
+                rep->add("intensity", 5);
 
                 resource->put(std::map <std::string, std::string>(), rep, callback);
                 std::cout << "PUT is successfull!" << std::endl;
@@ -359,24 +351,15 @@ class ClientController
                         << std::endl;
                 std::cout << "UID is: " << uId << std::endl;
                 std::cout << "Representation is: " << std::endl;
-                std::map<std::string, SimulatorResourceModel::Attribute> attributes =
-                        rep->getAttributes();
-                for (auto & attribute : attributes)
-                {
-                    std::cout << (attribute.second).getName() << " :  {" << std::endl;
-                    std::cout << "value: " << (attribute.second).valueToString().c_str()
-                            << std::endl;
-                    std::cout << "}" << std::endl;
-                }
-                std::cout << std::endl;
+                std::cout << rep->toString() << std::endl;
             };
 
             try
             {
                 SimulatorResourceModelSP rep = std::make_shared<SimulatorResourceModel>();
                 std::string value = "on";
-                rep->addAttribute("power", value);
-                rep->addAttribute("intensity", 7);
+                rep->add("power", value);
+                rep->add("intensity", 7);
 
                 resource->post(std::map <std::string, std::string>(), rep, callback);
                 std::cout << "POST is successfull!" << std::endl;
@@ -515,8 +498,33 @@ class ClientController
                 std::cout << "Enter the config path: ";
                 std::cin >> configPath;
 
-                resource->configure(configPath);
-                std::cout << "configuration is successfull!" << std::endl;
+                SimulatorResourceModelSP representation = resource->configure(configPath);
+                if (representation)
+                {
+                    std::cout << "configuration is successfull!" << std::endl;
+                    std::map<std::string, SimulatorResourceModel::Attribute> attributes =
+                    representation->getAttributes();
+                    std::cout << "##### Attributes [" << attributes.size() << "]" << std::endl;
+                    for (auto & attribute : attributes)
+                    {
+                        std::cout << (attribute.second).getName() << " :  {" << std::endl;
+                        std::cout << "value: " << (attribute.second).toString() << std::endl;
+                        SimulatorResourceModel::AttributeProperty prop = (attribute.second).getProperty();
+                        std::cout << "Supported values given by : " << getPropertyTypeString(prop.type()) << std::endl;
+                        if (SimulatorResourceModel::AttributeProperty::Type::RANGE == prop.type())
+                        {
+                            std::cout << "Min: " << prop.min() << std::endl;
+                            std::cout << "Max: " << prop.max() << std::endl;
+                        }
+                        else if (SimulatorResourceModel::AttributeProperty::Type::VALUE_SET == prop.type())
+                        {
+                            std::cout << "Value set: " << prop.valueSetToString() << std::endl;
+                        }
+
+                        std::cout << "}" << std::endl << std::endl;
+                    }
+                    std::cout << "#############################" << std::endl;
+                }
             }
             catch (InvalidArgsException &e)
             {

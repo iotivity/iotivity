@@ -28,10 +28,11 @@
 #ifndef SIMULATOR_RESOURCE_MODEL_H_
 #define SIMULATOR_RESOURCE_MODEL_H_
 
-#include <string>
-#include <vector>
 #include "OCPlatform.h"
-#include <climits>
+#include <map>
+
+class OCRepresentationBuilder;
+class ToStringConverter;
 
 /**
  * @class   SimulatorResourceModel
@@ -40,300 +41,212 @@
 class SimulatorResourceModel
 {
     public:
+        friend class OCRepresentationBuilder;
+        friend class ToStringConverter;
+
+        typedef boost::variant <
+        int,
+        double,
+        bool,
+        std::string,
+        SimulatorResourceModel,
+
+        std::vector<int>,
+        std::vector<double>,
+        std::vector<bool>,
+        std::vector<std::string>,
+        std::vector<SimulatorResourceModel>,
+
+        std::vector<std::vector<int>>,
+        std::vector<std::vector<double>>,
+        std::vector<std::vector<bool>>,
+        std::vector<std::vector<std::string>>,
+        std::vector<std::vector<SimulatorResourceModel>>,
+
+        std::vector<std::vector<std::vector<int>>>,
+        std::vector<std::vector<std::vector<double>>>,
+        std::vector<std::vector<std::vector<bool>>>,
+        std::vector<std::vector<std::vector<std::string>>>,
+        std::vector<std::vector<std::vector<SimulatorResourceModel>>>
+        > ValueVariant;
+
+        enum class ValueType
+        {
+            UNKNOWN,
+            INTEGER,
+            DOUBLE,
+            BOOLEAN,
+            STRING,
+            RESOURCE_MODEL,
+            VECTOR
+        };
+
+        class TypeInfo
+        {
+            public:
+                TypeInfo(ValueType, ValueType, int);
+                TypeInfo(const TypeInfo &) = default;
+                TypeInfo &operator=(const TypeInfo &) = default;
+                TypeInfo(TypeInfo &&) = default;
+                TypeInfo &operator=(TypeInfo &&) = default;
+
+                ValueType type() const;
+                ValueType baseType() const;
+                int depth() const;
+                bool operator ==(const TypeInfo &) const;
+                bool operator !=(const TypeInfo &) const;
+
+            private:
+                ValueType m_type;
+                ValueType m_baseType;
+                int m_depth;
+        };
+
+        class AttributeProperty
+        {
+            public:
+                enum class Type
+                {
+                    UNKNOWN,
+                    RANGE,
+                    VALUE_SET
+                };
+
+                AttributeProperty();
+                AttributeProperty(const AttributeProperty &) = default;
+                AttributeProperty &operator=(const AttributeProperty &) = default;
+                AttributeProperty(AttributeProperty &&) = default;
+                AttributeProperty &operator=(AttributeProperty &&) = default;
+
+                explicit AttributeProperty(int min, int max);
+                explicit AttributeProperty(const std::vector<int> &valueSet);
+                explicit AttributeProperty(const std::vector<double> &valueSet);
+                explicit AttributeProperty(const std::vector<bool> &valueSet);
+                explicit AttributeProperty(const std::vector<std::string> &valueSet);
+                explicit AttributeProperty(const std::vector<ValueVariant> &valueSet);
+
+                Type type() const;
+                int min() const;
+                int max() const;
+                int valueSetSize() const;
+                std::vector<ValueVariant> valueSet() const;
+                std::string valueSetToString() const;
+
+            private:
+                Type m_type;
+                int m_min;
+                int m_max;
+                std::vector<ValueVariant> m_valueSet;
+        };
+
+        class Attribute
+        {
+            public:
+                Attribute(const std::string &name) : m_name(name) {}
+                Attribute() = default;
+                Attribute(const Attribute &) = default;
+                Attribute &operator=(const Attribute &) = default;
+                Attribute(Attribute &&) = default;
+                Attribute &operator=(Attribute &&) = default;
+
+                std::string getName() const;
+                TypeInfo getType() const;
+                const AttributeProperty &getProperty() const;
+                AttributeProperty &getProperty();
+
+                void setName(const std::string &);
+                void setProperty(const AttributeProperty &);
+
+                template <typename T>
+                void setValue(const T &value)
+                {
+                    m_value = std::make_shared<ValueVariant>(value);
+                }
+
+                ValueVariant getValue() const { return *m_value; }
+
+                std::string toString() const;
+
+            private:
+                std::string m_name;
+                std::shared_ptr<ValueVariant> m_value;
+                AttributeProperty m_property;
+        };
+
         SimulatorResourceModel() = default;
         SimulatorResourceModel(const SimulatorResourceModel &) = default;
         SimulatorResourceModel &operator=(const SimulatorResourceModel &) = default;
         SimulatorResourceModel(SimulatorResourceModel &&) = default;
         SimulatorResourceModel &operator=(SimulatorResourceModel && ) = default;
 
-        /**
-          * @class   Attribute
-          * @brief   This class represents a resource attribute whose values can be generic.
-          */
-        class Attribute
-        {
-            public:
-                typedef boost::variant <
-                int,
-                double,
-                bool,
-                std::string
-                > ValueVariant;
-
-                enum class ValueType
-                {
-                    UNKNOWN,
-                    INTEGER,
-                    DOUBLE,
-                    BOOLEAN,
-                    STRING
-                };
-
-                Attribute()
-                {
-                    m_min = INT_MIN;
-                    m_max = INT_MAX;
-                    m_updateInterval = -1;
-                }
-
-                Attribute(const std::string &attrName)
-                {
-                    m_name = attrName;
-                    m_min = INT_MIN;
-                    m_max = INT_MAX;
-                    m_updateInterval = -1;
-                }
-
-                /**
-                 * API to get attribute's name.
-                 *
-                 * @return Attribute name.
-                 */
-                std::string getName(void) const;
-
-                /**
-                 * API to set the name of attribute.
-                 *
-                 * @param name - Attribute name.
-                 */
-                void setName(const std::string &name);
-
-                /**
-                 * API to get attribute's value.
-                 *
-                 * @return value of attribute.
-                 */
-                template <typename T>
-                T getValue() const
-                {
-                    T val = T();
-                    return boost::get<T>(m_value);
-                }
-
-                /**
-                 * API to get attribute's value.
-                 *
-                 * @return value of attribute as ValueVariant.
-                 */
-                ValueVariant &getValue()
-                {
-                    return m_value;
-                }
-
-                /**
-                 * API to get attribute's value type.
-                 *
-                 * @return ValueType enum.
-                 */
-                ValueType getValueType() const;
-
-                /**
-                 * API to set the attribute's value.
-                 *
-                 * @param value - value to be set.
-                 */
-                template <typename T>
-                void setValue(const T &value)
-                {
-                    m_value = value;
-                }
-
-                /**
-                 * API to set the attribute's value from allowed values container.
-                 *
-                 * @param allowedValueIndex - Index of value to be set from allowed vaules container.
-                 */
-                void setFromAllowedValue(unsigned int index);
-
-                /**
-                 * API to get range of attribute's value.
-                 */
-                void getRange(int &min, int &max) const;
-
-                /**
-                 * API to set range of attribute's value.
-                 *
-                 * @param min - minimum value could be set as attribute value.
-                 * @param max - maximum value could be set as attribute value.
-                 */
-                void setRange(const int &min, const int &max);
-
-                /**
-                 * API to set the values to allowed values set.
-                 *
-                 * @param values - vector of values which will be set as allowed values.
-                 */
-                template <typename T>
-                bool setAllowedValues(const std::vector<T> &values)
-                {
-                    ValueVariant temp = values.at(0);
-                    if (temp.which() != m_value.which())
-                    {
-                        return false;
-                    }
-
-                    m_allowedValues.addValues(values);
-                    return true;
-                }
-
-                /**
-                 * API to get the number of values present in allowed values set.
-                 *
-                 * @return Size of the allowed values.
-                 */
-                int getAllowedValuesSize() const;
-
-                /**
-                 * API to get the string representation of the value.
-                 *
-                 * @return Attribute's value as a string.
-                 */
-                std::string valueToString() const;
-
-                /**
-                 * API to get the string representation of all the allowed values.
-                 *
-                 * @return All allowed values as a string.
-                 */
-                std::vector<std::string> allowedValuesToString() const;
-
-                void addValuetoRepresentation(OC::OCRepresentation &rep,
-                                              const std::string &key) const;
-
-                bool compare(Attribute &attribute);
-
-                std::vector<ValueVariant> getAllowedValues() const;
-
-                int getUpdateFrequencyTime() {return m_updateInterval;}
-                void setUpdateFrequencyTime(int interval) {m_updateInterval = interval;}
-
-            private:
-                class AllowedValues
-                {
-                    public:
-                        template <typename T>
-                        void addValue(const T &value)
-                        {
-                            ValueVariant temp = value;
-                            m_values.push_back(temp);
-                        }
-
-                        template <typename T>
-                        void addValues(const std::vector<T> &values)
-                        {
-                            for (auto value : values)
-                            {
-                                ValueVariant vValue = value;
-                                m_values.push_back(vValue);
-                            }
-                        }
-
-                        ValueVariant &at(unsigned int index);
-                        int size() const;
-                        std::vector<std::string> toString() const;
-                        std::vector<ValueVariant> getValues() const;
-                    private:
-                        std::vector<ValueVariant> m_values;
-                };
-
-                std::string m_name;
-                ValueVariant m_value;
-                int m_max;
-                int m_min;
-                AllowedValues m_allowedValues;
-                int m_updateInterval;
-        };
-
-        /**
-         * API to get the number of attributes in the resource model.
-         *
-         * @return Number of attributes.
-         */
-        int size() const { return m_attributes.size(); }
-
-        /**
-         * API to get the value of an attribute.
-         *
-         * @param attrName - Attribute name
-         * @param value - Attribute value
-         *
-         * @return true if attribute exists, otherwise false.
-         */
-        bool getAttribute(const std::string &attrName, Attribute &value);
-
-        /**
-         * API to get the entire list of attributes in the form of key-value pair.
-         * Attribute name is the key and an instance of Attribute is the value.
-         *
-         * @return A map of all the attributes
-         */
-        std::map<std::string, Attribute> getAttributes() const;
-
-        /**
-         * API to add new attribute to resource model.
-         *
-         * @param attrName - Attribute name
-         * @param attrValue - Attribute value
-         */
         template <typename T>
-        void addAttribute(const std::string &attrName, const T &attrValue)
+        bool add(const std::string &key, T value)
         {
-            if (m_attributes.end() == m_attributes.find(attrName))
+            ValueVariant newValue = value;
+            return setAttributeValue(key, newValue, true, false);
+        }
+
+        bool add(const Attribute &attribute);
+
+        template <typename T>
+        T get(const std::string &key) const
+        {
+            T val = T();
+            auto x = m_attributes.find(key);
+            if (x != m_attributes.end())
             {
-                m_attributes[attrName] = Attribute(attrName);
-                m_attributes[attrName].setValue(attrValue);
+                val = boost::get<T>(x->second);
             }
+            return val;
         }
-
-        /**
-          * API to add new attribute to resource model.
-          *
-          * @param attr  - Attribute pointer
-          *
-          */
-        void addAttribute(const Attribute &attribute, bool overwrite = false);
-
-        /**
-         * API to set range of attribute value.
-         *
-         * @param attrName - Attribute name.
-         * @param min - Minimum value could be set as attribute value.
-         * @param max - Maximum value could be set as attribute value.
-         */
-        void setRange(const std::string &attrName, const int min, const int max);
-
-        OC::OCRepresentation getOCRepresentation() const;
-        static std::shared_ptr<SimulatorResourceModel> create(const OC::OCRepresentation &ocRep);
 
         template <typename T>
-        void setAllowedValues(const std::string &attrName, const std::vector<T> &values)
+        bool updateValue(const std::string &key, T value, bool forcewrite = false)
         {
-            if (m_attributes.end() != m_attributes.find(attrName))
-                m_attributes[attrName].setAllowedValues(values);
+            ValueVariant newValue = value;
+            return setAttributeValue(key, newValue, false, forcewrite);
         }
+
+        bool updateValue(const Attribute &attribute, bool forcewrite = false);
+
+        bool containsAttribute(const std::string &key);
+
+        bool setAttributeProperty(const std::string &key, const AttributeProperty &property);
+
+        bool getAttributeProperty(const std::string &key, AttributeProperty &property);
+
+        int size() const;
+
+        TypeInfo getType(const std::string &key);
+
+        std::map<std::string, Attribute> getAttributes();
+
+        bool getAttribute(const std::string &key, Attribute &attribute);
+
+        bool removeAttribute(const std::string &key);
 
         bool update(OC::OCRepresentation &ocRep);
 
-        bool update(std::shared_ptr<SimulatorResourceModel> &repModel);
+        OC::OCRepresentation getOCRepresentation();
 
-        template <typename T>
-        void updateAttribute(const std::string &attrName, const T &value)
-        {
-            if (m_attributes.end() != m_attributes.find(attrName))
-                m_attributes[attrName].setValue(value);
-        }
+        bool match(const SimulatorResourceModel &resModel, bool strict = false);
 
-        void updateAttributeFromAllowedValues(const std::string &attrName, unsigned int index);
+        std::string toString() const;
 
-        void removeAttribute(const std::string &attrName);
-
-        void setUpdateInterval(const std::string &attrName, int interval);
+        static SimulatorResourceModel build(const OC::OCRepresentation &ocRep);
 
     private:
-        std::map<std::string, Attribute> m_attributes;
+        TypeInfo getTypeInfo(const ValueVariant &value) const;
+        bool setAttributeValue(const std::string &key, const ValueVariant &newValue,
+                               bool create, bool overwrite);
+        bool match(const std::string &key, const ValueVariant &newValue);
+        bool update(SimulatorResourceModel &resModel);
+        std::map<std::string, ValueVariant> getValues() const;
+
+        std::map<std::string, ValueVariant> m_attributes;
+        std::map<std::string, AttributeProperty> m_attrProperties;
 };
 
 typedef std::shared_ptr<SimulatorResourceModel> SimulatorResourceModelSP;
-typedef std::shared_ptr<SimulatorResourceModel::Attribute> AttributeSP;
 
 #endif
