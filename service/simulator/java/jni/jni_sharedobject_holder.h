@@ -18,29 +18,32 @@
  *
  ******************************************************************/
 
-#ifndef SIMULATOR_DEVICE_INFO_JNI_H_
-#define SIMULATOR_DEVICE_INFO_JNI_H_
+#ifndef JNI_SHARED_OBJECT_HOLDER_H_
+#define JNI_SHARED_OBJECT_HOLDER_H_
 
-#include "simulator_device_info.h"
-#include <jni.h>
+#include <memory>
 
-class JniDeviceInfo
+template <typename T>
+class JniSharedObjectHolder
 {
     public:
-        JniDeviceInfo(JNIEnv *env) : m_env(env) {}
-        JniDeviceInfo(const JniDeviceInfo &) = delete;
-        JniDeviceInfo &operator=(const JniDeviceInfo &) = delete;
-        JniDeviceInfo(const JniDeviceInfo &&) = delete;
-        JniDeviceInfo &operator=(const JniDeviceInfo && ) = delete;
-        jobject toJava(DeviceInfo &deviceInfo);
+        std::shared_ptr<T> get()
+        {
+            return m_sharedObject;
+        }
+
+        static JniSharedObjectHolder *create(std::shared_ptr<T> &sharedObject)
+        {
+            return new JniSharedObjectHolder(sharedObject);
+        }
 
     private:
-        void setFieldValue(jobject jDeviceInfo, const std::string &fieldName,
-                           const std::string &value);
+        JniSharedObjectHolder(std::shared_ptr<T> &sharedObject)
+        {
+            m_sharedObject = sharedObject;
+        }
 
-        JNIEnv *m_env;
+        std::shared_ptr<T> m_sharedObject;
 };
-
-void onDeviceInfoReceived(jobject listener, DeviceInfo &deviceInfo);
 
 #endif

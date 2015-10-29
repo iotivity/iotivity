@@ -1,5 +1,8 @@
-/*
+/******************************************************************
+ *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,25 +15,32 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *
+ ******************************************************************/
 
-package org.oic.simulator;
+#include "jni_string.h"
 
-/**
- * Class for representing invalid arguments exception.
- */
-@SuppressWarnings("serial")
-public class InvalidArgsException extends SimulatorException {
-
-    public InvalidArgsException(int code, String message) {
-        super(code, message);
-    }
-
-    public InvalidArgsException(SimulatorResult code, String message) {
-        super(code, message);
-    }
-
-    public InvalidArgsException(String message) {
-        super(SimulatorResult.SIMULATOR_INVALID_PARAM, message);
+JniString::JniString(JNIEnv *env, jstring &string)
+    :   m_env(nullptr), m_string(nullptr), m_cStr("")
+{
+    m_env = env;
+    m_string = string;
+    if (m_string)
+    {
+        m_cStr = env->GetStringUTFChars(m_string, nullptr);
     }
 }
+
+JniString::~JniString()
+{
+    if (m_string && m_cStr)
+    {
+        m_env->ReleaseStringUTFChars(m_string, m_cStr);
+    }
+}
+
+std::string JniString::get()
+{
+    return std::string(m_cStr);
+}
+

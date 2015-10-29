@@ -18,29 +18,18 @@
  *
  ******************************************************************/
 
-#ifndef SIMULATOR_DEVICE_INFO_JNI_H_
-#define SIMULATOR_DEVICE_INFO_JNI_H_
+#ifndef SIMULATOR_RESOURCE_UTILS_JNI_H_
+#define SIMULATOR_RESOURCE_UTILS_JNI_H_
 
-#include "simulator_device_info.h"
 #include <jni.h>
+#include "simulator_single_resource.h"
+#include "simulator_collection_resource.h"
+#include "simulator_remote_resource.h"
 
-class JniDeviceInfo
-{
-    public:
-        JniDeviceInfo(JNIEnv *env) : m_env(env) {}
-        JniDeviceInfo(const JniDeviceInfo &) = delete;
-        JniDeviceInfo &operator=(const JniDeviceInfo &) = delete;
-        JniDeviceInfo(const JniDeviceInfo &&) = delete;
-        JniDeviceInfo &operator=(const JniDeviceInfo && ) = delete;
-        jobject toJava(DeviceInfo &deviceInfo);
-
-    private:
-        void setFieldValue(jobject jDeviceInfo, const std::string &fieldName,
-                           const std::string &value);
-
-        JNIEnv *m_env;
-};
-
-void onDeviceInfoReceived(jobject listener, DeviceInfo &deviceInfo);
+jobject createSingleResource(JNIEnv *env, SimulatorResourceSP singleResource);
+jobject createCollectionResource(JNIEnv *env, SimulatorResourceSP collectionResource);
+jobject createSimulatorResource(JNIEnv *env, SimulatorResourceSP resource);
+jobject createSimulatorResourceVector(JNIEnv *env, std::vector<SimulatorResourceSP> &resources);
+jobject createSimulatorRemoteResource(JNIEnv *env, SimulatorRemoteResourceSP &remoteResource);
 
 #endif

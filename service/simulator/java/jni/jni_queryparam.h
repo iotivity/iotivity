@@ -1,5 +1,8 @@
-/*
+/******************************************************************
+ *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,25 +15,24 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *
+ ******************************************************************/
 
-package org.oic.simulator;
+#ifndef JNI_QUERY_PARAM_H_
+#define JNI_QUERY_PARAM_H_
 
-/**
- * Class for representing invalid arguments exception.
- */
-@SuppressWarnings("serial")
-public class InvalidArgsException extends SimulatorException {
+#include <jni.h>
+#include <map>
+#include <string>
 
-    public InvalidArgsException(int code, String message) {
-        super(code, message);
-    }
+class JniQueryParameter
+{
+    public:
+        JniQueryParameter(JNIEnv *env);
+        std::map<std::string, std::string> toCpp(jobject queryParams);
 
-    public InvalidArgsException(SimulatorResult code, String message) {
-        super(code, message);
-    }
+    private:
+        JNIEnv *m_env;
+};
 
-    public InvalidArgsException(String message) {
-        super(SimulatorResult.SIMULATOR_INVALID_PARAM, message);
-    }
-}
+#endif

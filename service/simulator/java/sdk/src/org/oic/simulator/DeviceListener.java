@@ -17,20 +17,14 @@
 package org.oic.simulator;
 
 /**
- * Class for representing invalid arguments exception.
+ * Listener for getting device information.
  */
-@SuppressWarnings("serial")
-public class InvalidArgsException extends SimulatorException {
-
-    public InvalidArgsException(int code, String message) {
-        super(code, message);
-    }
-
-    public InvalidArgsException(SimulatorResult code, String message) {
-        super(code, message);
-    }
-
-    public InvalidArgsException(String message) {
-        super(SimulatorResult.SIMULATOR_INVALID_PARAM, message);
-    }
+public interface DeviceListener {
+    /**
+     * Method which provides remote device information.
+     *
+     * @param devInfo
+     *            {@link DeviceInfo} object holding the device information.
+     */
+    public void onDeviceFound(DeviceInfo devInfo);
 }

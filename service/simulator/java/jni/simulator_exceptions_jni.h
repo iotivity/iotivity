@@ -18,29 +18,27 @@
  *
  ******************************************************************/
 
-#ifndef SIMULATOR_DEVICE_INFO_JNI_H_
-#define SIMULATOR_DEVICE_INFO_JNI_H_
+/**
+ * @file   simulator_jni_util.h
+ *
+ * @brief  This file contains the utility functions for conversions from java to CPP
+ * and viceversa
+ */
 
-#include "simulator_device_info.h"
+#ifndef SIMULATOR_EXCEPTIONS_JNI_H_
+#define SIMULATOR_EXCEPTIONS_JNI_H_
+
 #include <jni.h>
+#include "simulator_error_codes.h"
 
-class JniDeviceInfo
-{
-    public:
-        JniDeviceInfo(JNIEnv *env) : m_env(env) {}
-        JniDeviceInfo(const JniDeviceInfo &) = delete;
-        JniDeviceInfo &operator=(const JniDeviceInfo &) = delete;
-        JniDeviceInfo(const JniDeviceInfo &&) = delete;
-        JniDeviceInfo &operator=(const JniDeviceInfo && ) = delete;
-        jobject toJava(DeviceInfo &deviceInfo);
+void throwSimulatorException(JNIEnv *env, SimulatorResult code, const char *message);
 
-    private:
-        void setFieldValue(jobject jDeviceInfo, const std::string &fieldName,
-                           const std::string &value);
+void throwInvalidArgsException(JNIEnv *env, SimulatorResult code, const char *message);
 
-        JNIEnv *m_env;
-};
+void throwNoSupportException(JNIEnv *env, const char *message);
 
-void onDeviceInfoReceived(jobject listener, DeviceInfo &deviceInfo);
+void throwOperationInProgressException(JNIEnv *env, const char *message);
+
+void throwBadObjectException(JNIEnv *env, const char *message);
 
 #endif

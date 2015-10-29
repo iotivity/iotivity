@@ -18,29 +18,37 @@
  *
  ******************************************************************/
 
-#ifndef SIMULATOR_DEVICE_INFO_JNI_H_
-#define SIMULATOR_DEVICE_INFO_JNI_H_
+#ifndef JNI_LISTENER_HOLDER_H_
+#define JNI_LISTENER_HOLDER_H_
 
-#include "simulator_device_info.h"
-#include <jni.h>
-
-class JniDeviceInfo
+class JniListenerHolder
 {
     public:
-        JniDeviceInfo(JNIEnv *env) : m_env(env) {}
-        JniDeviceInfo(const JniDeviceInfo &) = delete;
-        JniDeviceInfo &operator=(const JniDeviceInfo &) = delete;
-        JniDeviceInfo(const JniDeviceInfo &&) = delete;
-        JniDeviceInfo &operator=(const JniDeviceInfo && ) = delete;
-        jobject toJava(DeviceInfo &deviceInfo);
+        ~JniListenerHolder()
+        {
+            JNIEnv *env = getEnv();
+            if (!env)
+                return;
+            env->DeleteGlobalRef(m_listener);
+            releaseEnv();
+        }
+
+        jobject get()
+        {
+            return m_listener;
+        }
+
+        static std::shared_ptr<JniListenerHolder> create(JNIEnv *env, jobject &listener)
+        {
+            return std::shared_ptr<JniListenerHolder>(new JniListenerHolder(env, listener));
+        }
 
     private:
-        void setFieldValue(jobject jDeviceInfo, const std::string &fieldName,
-                           const std::string &value);
+        JniListenerHolder(JNIEnv *env, jobject &listener)
+            : m_listener(env->NewGlobalRef(listener)) {}
 
-        JNIEnv *m_env;
+        jobject m_listener;
 };
 
-void onDeviceInfoReceived(jobject listener, DeviceInfo &deviceInfo);
-
 #endif
+

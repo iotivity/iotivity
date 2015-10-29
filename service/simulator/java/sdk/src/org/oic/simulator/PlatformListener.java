@@ -17,20 +17,14 @@
 package org.oic.simulator;
 
 /**
- * Class for representing invalid arguments exception.
+ * Listener for getting platform information.
  */
-@SuppressWarnings("serial")
-public class InvalidArgsException extends SimulatorException {
-
-    public InvalidArgsException(int code, String message) {
-        super(code, message);
-    }
-
-    public InvalidArgsException(SimulatorResult code, String message) {
-        super(code, message);
-    }
-
-    public InvalidArgsException(String message) {
-        super(SimulatorResult.SIMULATOR_INVALID_PARAM, message);
-    }
+public interface PlatformListener {
+    /**
+     * Method which provides remote device platform information.
+     *
+     * @param platformInfo
+     *            {@link PlatformInfo} object holding the platform information.
+     */
+    public void onPlatformFound(PlatformInfo platformInfo);
 }

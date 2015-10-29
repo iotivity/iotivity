@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-package org.oic.simulator;
+package org.oic.simulator.client;
+
+import org.oic.simulator.client.SimulatorRemoteResource;
 
 /**
- * Class for representing invalid arguments exception.
+ * Listener for getting notification when resources are discovered in
+ * network.
  */
-@SuppressWarnings("serial")
-public class InvalidArgsException extends SimulatorException {
-
-    public InvalidArgsException(int code, String message) {
-        super(code, message);
-    }
-
-    public InvalidArgsException(SimulatorResult code, String message) {
-        super(code, message);
-    }
-
-    public InvalidArgsException(String message) {
-        super(SimulatorResult.SIMULATOR_INVALID_PARAM, message);
-    }
+public interface FindResourceListener {
+    /**
+     * Method will be called when resource is discovered in the
+     * network.
+     *
+     * @param resource
+     *            {@link SimulatorRemoteResource} object representing the
+     *            resource discovered in the network.
+     */
+    public void onResourceFound(SimulatorRemoteResource resource);
 }
