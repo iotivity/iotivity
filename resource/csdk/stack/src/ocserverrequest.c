@@ -117,7 +117,7 @@ static void DeleteServerResponse(OCServerResponse * serverResponse)
     if(serverResponse)
     {
         LL_DELETE(serverResponseList, serverResponse);
-        OICFree(serverResponse->payload);
+        OCPayloadDestroy(serverResponse->payload);
         OICFree(serverResponse);
         OC_LOG(INFO, TAG, "Server Response Removed!!");
     }
@@ -746,14 +746,16 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
             goto exit;
         }
 
+        OCRepPayload *newPayload = OCRepPayloadClone((OCRepPayload *)ehResponse->payload);
+
         if(!serverResponse->payload)
         {
-            serverResponse->payload = ehResponse->payload;
+            serverResponse->payload = (OCPayload *)newPayload;
         }
         else
         {
             OCRepPayloadAppend((OCRepPayload*)serverResponse->payload,
-                    (OCRepPayload*)ehResponse->payload);
+                    (OCRepPayload*)newPayload);
         }
 
 
