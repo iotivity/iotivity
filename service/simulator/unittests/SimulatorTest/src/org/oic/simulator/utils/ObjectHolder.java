@@ -14,35 +14,16 @@
  * limitations under the License.
  */
 
-package org.oic.simulator.serviceprovider.test;
+package org.oic.simulator.utils;
 
-/**
- * This class implements methods for setting/getting URI
- * and automation ID.
- */
-public class AutomationObject
-{
+public class ObjectHolder<T> {
+    private T mObject;
 
-    private String resourceURI;
-    private int automationId;
-
-    public void setResourceURI(String resourceURI)
-    {
-        this.resourceURI = resourceURI;
+    public void set(T object) {
+        mObject = object;
     }
 
-    public String getResourceURI()
-    {
-        return resourceURI;
-    }
-
-    public void setAutomationId(int automationId)
-    {
-        this.automationId = automationId;
-    }
-
-    public int getAutomationId()
-    {
-        return automationId;
+    public T get() {
+        return mObject;
     }
 }

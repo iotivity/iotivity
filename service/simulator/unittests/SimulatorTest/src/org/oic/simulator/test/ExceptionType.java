@@ -16,23 +16,6 @@
 
 package org.oic.simulator.test;
 
-import org.oic.simulator.clientcontroller.SimulatorRemoteResource;
-
-/**
- * This class provides methods to set/get remote resource objects.
- */
-public class SimulatorRemoteResourceObject
-{
-
-    private SimulatorRemoteResource simulatorRemoteResource;
-
-    public void setSimulatorRemoteResource(SimulatorRemoteResource simulatorRemoteResource)
-    {
-        this.simulatorRemoteResource = simulatorRemoteResource;
-    }
-
-    public SimulatorRemoteResource getSimulatorRemoteResource()
-    {
-        return simulatorRemoteResource;
-    }
+public enum ExceptionType {
+    UNKNOWN, INVALID_ARGS, NOT_SUPPORTED, OPERATION_IN_PROGRESS, SIMULATOR
 }
