@@ -7,7 +7,7 @@ Steps to be followed for android build:
 	2.1 export android-ndk path:
 		<path-to-iotivity>/extlibs/android/ndk/android-ndk-r10d/ndk-build
 	2.2 navigate to android-sdk folder
-		<path-to-iotivity>/service/notification-service/examples/android/
+		<path-to-iotivity>/service/notification-service/src/android/
 	2.3 build command
 		<path-to-iotivity>/extlibs/android/ndk/android-ndk-r10d/ndk-build
 	2.4 This step will generate the libnotification_service_jni.so in the libs folder
@@ -24,7 +24,7 @@ Steps to be followed for android build:
 	4.3 Import app-debug.aar from the NotificationService SDK Project(build/outputs/aar)
 	4.3 Add the following jni in jnilibs/armeabi folder(generated during the ndk-build)
 		-libnotification_service_jni.so
-		-librc_client.so
-		-librc_common.so
-		-librc_server.so
+		-librcs_client.so
+		-librcs_common.so
+		-librcs_server.so
 	4.4 Follow the same steps for sample producer project

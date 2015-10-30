@@ -1,22 +1,22 @@
 /**
  * ***************************************************************
- * <p>
+ * <p/>
  * Copyright 2015 Samsung Electronics All Rights Reserved.
- * <p>
- * <p>
- * <p>
+ * <p/>
+ * <p/>
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * <p>
+ * <p/>
  * ****************************************************************
  */
 
@@ -65,7 +65,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 
 
-
 public class SampleConsumer extends Activity implements NotificationCallback {
 
 
@@ -84,9 +83,9 @@ public class SampleConsumer extends Activity implements NotificationCallback {
     HashMap<String, Integer> icons = new HashMap<>();
     HashMap<String, Integer> actions = new HashMap<>();
     ArrayList<RadioButton> radioButtons = new ArrayList<>();
-    HashMap<String,Integer> resourceList=new HashMap<>();
+    HashMap<String, Integer> resourceList = new HashMap<>();
 
-    long discoverTime,notificationtime;
+    long discoverTime, notificationtime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,7 +129,7 @@ public class SampleConsumer extends Activity implements NotificationCallback {
                 unsubscribe.setEnabled(true);
                 discover.setEnabled(false);
 
-                Runnable r=new Runnable() {
+                Runnable r = new Runnable() {
                     @Override
                     public void run() {
                         notificationservice.subscribesnotifications(selected);
@@ -157,10 +156,16 @@ public class SampleConsumer extends Activity implements NotificationCallback {
             @Override
             public void onClick(View view) {
 
+                if (radioButtons.size() != 0) {
+
+                    Log.d("discover ", "clear list");
+                    radioGroupResources.removeAllViewsInLayout();
+                    radioButtons.clear();
+                    resourceList.clear();
+                }
 
 
-
-                discoverTime=System.currentTimeMillis();
+                discoverTime = System.currentTimeMillis();
                 discovered_from_activity = true;
                 notificationservice.discover();
 
@@ -182,7 +187,7 @@ public class SampleConsumer extends Activity implements NotificationCallback {
         Calendar cal = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SS");
 
-        Log.d("Notification TIme",sdf.format(cal.getTime())+"...."+notificationObject.getNotifcationTime());
+        Log.d("Notification TIme", sdf.format(cal.getTime()) + "...." + notificationObject.getNotifcationTime());
         final NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(SampleConsumer.this);
         String sender = notificationObject.getNotifcationSender();
 
@@ -227,18 +232,6 @@ public class SampleConsumer extends Activity implements NotificationCallback {
                 sender = "Light";
             }
 
-            Bitmap myBitmap = BitmapFactory.decodeResource(getResources(),R.drawable.coffee_action);
-            if (myBitmap == null)
-                Log.d("Bitmap is", "NULl");
-
-            mBuilder.setStyle(new NotificationCompat.BigPictureStyle().bigPicture(myBitmap));
-            final android.app.NotificationManager service = (android.app.NotificationManager)
-                    getSystemService(Context.NOTIFICATION_SERVICE);
-            mBuilder.setAutoCancel(true);
-            Uri notificationSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            mBuilder.setSound(notificationSound);
-            service.notify(id, mBuilder.build());
-
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
@@ -270,7 +263,7 @@ public class SampleConsumer extends Activity implements NotificationCallback {
                     }
                 }
             };
-            //new Thread(r).start();
+            new Thread(r).start();
 
 
         } else if (notificationObject.getNotificationType() == NotificationType.TYPE_VIDEO) {
@@ -339,15 +332,12 @@ public class SampleConsumer extends Activity implements NotificationCallback {
     @Override
     public void onResourceDiscoveredCallback(final String resourceName, int resourceIndex) {
 
-        resourceList.put(resourceName,resourceIndex);
-        Log.d("Discover time=", (System.currentTimeMillis()-discoverTime)+"");
+        resourceList.put(resourceName, resourceIndex);
+        Log.d("Discover time=", (System.currentTimeMillis() - discoverTime) + "");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
-                if (radioButtons.size() != 0) {
-                    radioGroupResources.removeAllViewsInLayout();
-                }
 
                 Toast.makeText(SampleConsumer.this, "Notification Rescource discovered", Toast.LENGTH_SHORT).show();
 
@@ -404,17 +394,18 @@ public class SampleConsumer extends Activity implements NotificationCallback {
 
     }
 
-    void registerReceiver(){
+    void registerReceiver() {
         IntentFilter filter = new IntentFilter("org.iotivity.service.notificationservice.WIFI_STATUS");
         filter.addCategory(Intent.CATEGORY_DEFAULT);
-       wifiReceiver=new WifiReceiver();
+        wifiReceiver = new WifiReceiver();
         registerReceiver(wifiReceiver, filter);
     }
-    public class WifiReceiver extends BroadcastReceiver{
+
+    public class WifiReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d("WifiReceiver","Wifi disconnected");
+            Log.d("WifiReceiver", "Wifi disconnected");
             infomesssage.setText("Wifi disconnected");
         }
     }

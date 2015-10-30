@@ -1,1 +1,1 @@
-include ':app', ':NotificationService-debug', ':iotivity-base-armeabi-debug'
+include ':app'

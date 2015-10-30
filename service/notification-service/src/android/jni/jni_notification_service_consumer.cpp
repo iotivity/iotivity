@@ -39,7 +39,7 @@ constexpr int INCORRECT_INPUT = 100;
 std::shared_ptr<NotificationConsumer> resource;
 std::vector<std::shared_ptr<NotificationConsumer>> notificationResourceList;
 std::vector<std::string> DeviceList;
-int resource_index=-1;
+int resource_index = -1;
 jmethodID g_notificationcallback;
 jobject g_callback_obj;
 JNIEnv *m_env;
@@ -50,16 +50,25 @@ void SendCallback(NotificationObject *m_notificationObjectPtr)
     LOGE("sending callback to android");
     m_env = NotificationManagerJVM::getEnv();
     if (m_env == NULL)
-    {LOGE("jvm is null"); return;}
+    {
+        LOGE("jvm is null");
+        return;
+    }
 
     jclass NMCallbacks = GetJClass(NM_CALLBACK_NATIVE_API_CLASS_PATH);
     if (NMCallbacks == NULL)
-    {LOGE("jclass is null"); return;}
+    {
+        LOGE("jclass is null");
+        return;
+    }
 
     g_callback_obj = GetJObjectInstance(
                          NM_CALLBACK_NATIVE_API_CLASS_PATH);
     if (g_callback_obj == NULL)
-    {LOGE("jobj is null"); return;}
+    {
+        LOGE("jobj is null");
+        return;
+    }
     g_notificationcallback = m_env->GetMethodID(NMCallbacks, "ReceivedNotificationcallback",
                              "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;III)V");
     if (g_notificationcallback == NULL)
@@ -105,24 +114,30 @@ void SendCallback(NotificationObject *m_notificationObjectPtr)
     NotificationManagerJVM::releaseEnv();
 }
 
-void sendcallbackResourceDiscovered(std::string resourceName,int resource_index)
+void sendcallbackResourceDiscovered(std::string resourceName, int resource_index)
 {
-    LOGI("sending callback to android");
+    LOGI("sending callback to android %d", resource_index);
     m_env = NotificationManagerJVM::getEnv();
     if (m_env == NULL)
     {
-		LOGE("jvm is null"); 
-		return;
-	}
+        LOGE("jvm is null");
+        return;
+    }
 
     jclass NMCallbacks = GetJClass(NM_CALLBACK_NATIVE_API_CLASS_PATH);
     if (NMCallbacks == NULL)
-    {LOGE("jclass is null"); return;}
+    {
+        LOGE("jclass is null");
+        return;
+    }
 
     g_callback_obj = GetJObjectInstance(
                          NM_CALLBACK_NATIVE_API_CLASS_PATH);
     if (g_callback_obj == NULL)
-    {LOGE("jobj is null"); return;}
+    {
+        LOGE("jobj is null");
+        return;
+    }
     jmethodID g_discoverycallback = m_env->GetMethodID(NMCallbacks, "onResourceDiscoveredCallback",
                                     "(Ljava/lang/String;I)V");
     if (g_discoverycallback == NULL)
@@ -132,37 +147,39 @@ void sendcallbackResourceDiscovered(std::string resourceName,int resource_index)
 
     m_env->CallVoidMethod(g_callback_obj, g_discoverycallback, jresourceName, resource_index);
     NotificationManagerJVM::releaseEnv();
-	
+
 }
 
 void onGetDeviceName(std::string deviceName)
 {
-	resource_index++;
+    resource_index++;
     DeviceList.push_back(deviceName);
-    sendcallbackResourceDiscovered(deviceName,resource_index);
+    LOGI("DeviceList %d", DeviceList.size());
+    sendcallbackResourceDiscovered(deviceName, resource_index);
 }
+
 void notificationAcknowledgement(NotificationObject *m_notificationObjectPtr)
 {
     resource->sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId);
-	LOGI("ACK sent");
+    LOGI("ACK sent");
 }
+
 void onResourceDiscovered(std::shared_ptr<NotificationConsumer> foundResource)
 {
 
     std::string resourceURI = foundResource->getUri();
     std::string hostAddress = foundResource->getAddress();
     LOGI("Resource Discovered %s %s", resourceURI.c_str(), hostAddress.c_str());
-
-	
     foundResource->getDeviceName(&onGetDeviceName);
     notificationResourceList.push_back(foundResource);
+    LOGI("notificationResourceList size=%d", notificationResourceList.size());
 }
 
 void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
 {
     LOGI("onResourceUpdated callback");
     SendCallback(m_notificationObjectPtr);
-	notificationAcknowledgement(m_notificationObjectPtr);
+    notificationAcknowledgement(m_notificationObjectPtr);
 
 }
 
@@ -171,16 +188,18 @@ JNIEXPORT void JNICALL JNIStartSubscribeNotifications(JNIEnv *env, jobject thisO
 {
     resource = notificationResourceList[resourceIndex];
 
-    LOGI("JNIStartSubscribeNotifications:after index");
+    LOGI("JNIStartSubscribeNotifications:after index %d %d %d", DeviceList.size(),
+         notificationResourceList.size(), resourceIndex);
     resource->subscribeNotifications(&onResourceUpdated);
     LOGI("Subscribing started...");
 
 }
 JNIEXPORT void JNICALL  JNIDiscover(JNIEnv *env, jobject thisObj)
 {
-    LOGI("JNI JNIDiscover: Enter");
+    LOGI("JNI JNIDiscover: Enter %d", notificationResourceList.size());
     DeviceList.clear();
     notificationResourceList.clear();
+    resource_index = -1;
     NotificationDiscoveryManager::getInstance()->discoverNotificationResource(RCSAddress::multicast(),
             &onResourceDiscovered);
 
