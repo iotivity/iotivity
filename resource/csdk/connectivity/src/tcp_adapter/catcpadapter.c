@@ -233,7 +233,9 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
     VERIFY_NON_NULL(registerCallback, TAG, "registerCallback");
     VERIFY_NON_NULL(networkPacketCallback, TAG, "networkPacketCallback");
     VERIFY_NON_NULL(netCallback, TAG, "netCallback");
+#ifndef SINGLE_THREAD
     VERIFY_NON_NULL(handle, TAG, "thread pool handle");
+#endif
 
     g_networkChangeCallback = netCallback;
     g_connectionChangeCallback = connCallback;
@@ -241,7 +243,9 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
     g_errorCallback = errorCallback;
 
     CAInitializeTCPGlobals();
+#ifndef SINGLE_THREAD
     caglobals.tcp.threadpool = handle;
+#endif
 
     CATCPSetConnectionChangedCallback(CATCPConnectionHandler);
     CATCPSetPacketReceiveCallback(CATCPPacketReceivedCB);
@@ -268,6 +272,9 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartTCP()
 {
+    OIC_LOG(DEBUG, TAG, "IN");
+
+#ifndef SINGLE_THREAD
     if (CA_STATUS_OK != CATCPInitializeQueueHandles())
     {
         OIC_LOG(ERROR, TAG, "Failed to Initialize Queue Handle");
@@ -282,11 +289,21 @@ CAResult_t CAStartTCP()
         return CA_STATUS_FAILED;
     }
 
+#else
+    CAResult_t ret = CATCPStartServer();
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG_V(DEBUG, TAG, "CATCPStartServer failed[%d]", ret);
+        return ret;
+    }
+#endif
+
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartTCPListeningServer()
 {
+#ifndef SINGLE_THREAD
     if (!caglobals.server)
     {
         caglobals.server = true;    // only needed to run CA tests
@@ -298,6 +315,7 @@ CAResult_t CAStartTCPListeningServer()
         OIC_LOG_V(ERROR, TAG, "Failed to start listening server![%d]", ret);
         return ret;
     }
+#endif
 
     return CA_STATUS_OK;
 }
@@ -354,7 +372,13 @@ static size_t CAQueueTCPData(bool isMulticast, const CAEndpoint_t *endpoint,
 int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
                              const void *data, uint32_t dataLength)
 {
+    OIC_LOG(DEBUG, TAG, "IN");
+#ifndef SINGLE_THREAD
     return CAQueueTCPData(false, endpoint, data, dataLength);
+#else
+    CATCPSendData(endpoint, data, dataLength, false);
+    return dataLength;
+#endif
 }
 
 int32_t CASendTCPMulticastData(const CAEndpoint_t *endpoint,
@@ -365,15 +389,21 @@ int32_t CASendTCPMulticastData(const CAEndpoint_t *endpoint,
 
 CAResult_t CAReadTCPData()
 {
+    OIC_LOG(DEBUG, TAG, "IN");
+#ifdef SINGLE_THREAD
+    CATCPPullData();
+#endif
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStopTCP()
 {
+#ifndef SINGLE_THREAD
     if (g_sendQueueHandle && g_sendQueueHandle->threadMutex)
     {
         CAQueueingThreadStop(g_sendQueueHandle);
     }
+#endif
 
     CATCPStopServer();
 
@@ -387,7 +417,9 @@ void CATerminateTCP()
 {
     CATCPSetPacketReceiveCallback(NULL);
 
+#ifndef SINGLE_THREAD
     CATCPDeinitializeQueueHandles();
+#endif
 }
 
 void CATCPSendDataThread(void *threadData)
@@ -461,3 +493,55 @@ void CADataDestroyer(void *data, uint32_t size)
 
     CAFreeTCPData(TCPData);
 }
+
+#ifdef SINGLE_THREAD
+size_t CAGetTotalLengthFromPacketHeader(const unsigned char *recvBuffer, size_t size)
+{
+    OIC_LOG(DEBUG, TAG, "IN - CAGetTotalLengthFromHeader");
+
+    if (NULL == recvBuffer || !size)
+    {
+        OIC_LOG(ERROR, TAG, "recvBuffer is NULL");
+        return 0;
+    }
+
+    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+            ((unsigned char *)recvBuffer)[0] >> 4);
+    size_t optPaylaodLen = coap_get_length_from_header((unsigned char *)recvBuffer,
+                                                        transport);
+    size_t headerLen = coap_get_tcp_header_length((unsigned char *)recvBuffer);
+
+    OIC_LOG_V(DEBUG, TAG, "option/paylaod length [%d]", optPaylaodLen);
+    OIC_LOG_V(DEBUG, TAG, "header length [%d]", headerLen);
+    OIC_LOG_V(DEBUG, TAG, "total data length [%d]", headerLen + optPaylaodLen);
+
+    OIC_LOG(DEBUG, TAG, "OUT - CAGetTotalLengthFromHeader");
+    return headerLen + optPaylaodLen;
+}
+
+void CAGetTCPHeaderDetails(unsigned char* recvBuffer, coap_transport_type *transport,
+                           size_t *headerlen)
+{
+    if (NULL == recvBuffer)
+    {
+        OIC_LOG(ERROR, TAG, "recvBuffer is NULL");
+        return;
+    }
+
+    if (NULL == transport)
+    {
+        OIC_LOG(ERROR, TAG, "transport is NULL");
+        return;
+    }
+
+    if (NULL == headerlen)
+    {
+        OIC_LOG(ERROR, TAG, "headerlen is NULL");
+        return;
+    }
+
+    *transport = coap_get_tcp_header_type_from_initbyte(
+        ((unsigned char *)recvBuffer)[0] >> 4);
+    *headerlen = coap_get_tcp_header_length_for_transport(*transport);
+}
+#endif

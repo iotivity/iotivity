@@ -29,6 +29,7 @@
 #include "caadapterinterface.h"
 #include "cathreadpool.h"
 #include "cainterface.h"
+#include "pdu.h"
 
 #ifdef __cplusplus
 extern "C"
