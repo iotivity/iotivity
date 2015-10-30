@@ -58,6 +58,11 @@ std::vector<std::string> SimulatorCollectionResourceImpl::getInterface() const
     return m_interfaces;
 }
 
+void SimulatorCollectionResourceImpl::setInterface(const std::vector<std::string> &interfaces)
+{
+    m_interfaces = interfaces;
+}
+
 void SimulatorCollectionResourceImpl::setName(const std::string &name)
 {
     VALIDATE_INPUT(name.empty(), "Name is empty!")
@@ -204,6 +209,18 @@ void SimulatorCollectionResourceImpl::stop()
                      m_resourceHandle);
 
     m_resourceHandle = nullptr;
+}
+
+SimulatorResourceModel SimulatorCollectionResourceImpl::getResourceModel()
+{
+    std::lock_guard<std::mutex> lock(m_modelLock);
+    return m_resModel;
+}
+
+void SimulatorCollectionResourceImpl::setResourceModel(const SimulatorResourceModel &resModel)
+{
+    std::lock_guard<std::mutex> lock(m_modelLock);
+    m_resModel = resModel;
 }
 
 std::vector<ObserverInfo> SimulatorCollectionResourceImpl::getObserversList()

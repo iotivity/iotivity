@@ -105,13 +105,120 @@ std::shared_ptr<SimulatorCollectionResource> SimulatorResourceFactory::createCol
     return std::shared_ptr<SimulatorCollectionResource>(collectionResource);
 }
 
+SimulatorResourceModel::Attribute SimulatorResourceFactory::buildAttribute(
+    std::shared_ptr<RAML::Properties> propertyElement)
+{
+    std::string propName = propertyElement->getName();
+
+    // Build representation attribute
+    SimulatorResourceModel::Attribute attribute(propName);
+    switch (propertyElement->getVariantType())
+    {
+        case RAML::VariantType::INT:
+            {
+                attribute.setValue(propertyElement->getValue<int>());
+
+                // Convert suppoted values
+                std::vector<int> allowedValues = propertyElement->getAllowedValuesInt();
+                if (allowedValues.size() > 0)
+                {
+                    SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
+                    attribute.setProperty(attrProp);
+                }
+            }
+            break;
+
+        case RAML::VariantType::DOUBLE:
+            {
+                attribute.setValue(propertyElement->getValue<double>());
+
+                // Convert suppoted values
+                std::vector<double> allowedValues = propertyElement->getAllowedValuesDouble();
+                if (allowedValues.size() > 0)
+                {
+                    SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
+                    attribute.setProperty(attrProp);
+                }
+            }
+            break;
+
+        case RAML::VariantType::BOOL:
+            {
+                attribute.setValue(propertyElement->getValue<bool>());
+
+                std::vector<bool> allowedValues = {true, false};
+                SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
+                attribute.setProperty(attrProp);
+            }
+            break;
+
+        case RAML::VariantType::STRING:
+            {
+                attribute.setValue(propertyElement->getValue<std::string>());
+
+                // Convert suppoted values
+                std::vector<std::string> allowedValues = propertyElement->getAllowedValuesString();
+                if (allowedValues.size() > 0)
+                {
+                    SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
+                    attribute.setProperty(attrProp);
+                }
+            }
+            break;
+    }
+
+    // Set the range property if its present
+    double min, max;
+    int multipleof;
+    propertyElement->getRange(min, max, multipleof);
+    if (min != INT_MIN && max != INT_MAX)
+    {
+        SimulatorResourceModel::AttributeProperty attrProp(min, max);
+        attribute.setProperty(attrProp);
+    }
+    return attribute;
+}
+
+SimulatorResourceModel SimulatorResourceFactory::buildResourceModel(
+    std::shared_ptr<RAML::Items> item)
+{
+    SimulatorResourceModel itemModel;
+    for ( auto &propElement : item->getProperties())
+    {
+        if (!propElement.second)
+            continue;
+
+        std::string propName = propElement.second->getName();
+        if ("rt" == propName || "resourceType" == propName || "if" == propName ||
+            "p" == propName || "n" == propName || "id" == propName )
+        {
+            continue;
+        }
+
+        if ("array" == propElement.second->getType())
+        {
+            std::vector<SimulatorResourceModel> arrayResModel;
+            for ( auto &propertyItem : propElement.second->getItems())
+            {
+                arrayResModel.push_back(buildResourceModel(propertyItem));
+            }
+            itemModel.add(propName, arrayResModel);
+        }
+        else
+        {
+            itemModel.add(buildAttribute(propElement.second));
+        }
+    }
+    return itemModel;
+}
+
 std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
     std::shared_ptr<RAML::RamlResource> ramlResource)
 {
     std::string name;
     std::string uri;
     std::string resourceType;
-    std::string interfaceType;
+    std::vector<std::string> interfaceType;
 
     name = ramlResource->getDisplayName();
     uri = ramlResource->getResourceUri();
@@ -158,7 +265,21 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
         // Interface type
         if ("if" == propName)
         {
-            interfaceType = propertyElement.second->getValueString();
+            if ("string" == propertyElement.second->getType())
+            {
+                interfaceType.push_back(propertyElement.second->getValueString());
+            }
+            else if ("array" == propertyElement.second->getType())
+            {
+                for (auto &item : propertyElement.second->getItems())
+                {
+                    if ("string" == item->getType())
+                    {
+                        interfaceType = item->getAllowedValuesString();
+                        break;
+                    }
+                }
+            }
             continue;
         }
 
@@ -168,81 +289,34 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
             continue;
         }
 
-        // Build representation attribute
-        SimulatorResourceModel::Attribute attribute(propName);
-        switch (propertyElement.second->getValueType())
-        {
-            case 0: // Integer
-                {
-                    attribute.setValue(propertyElement.second->getValue<int>());
-
-                    // Convert suppoted values
-                    std::vector<int> allowedValues = propertyElement.second->getAllowedValuesInt();
-                    if (allowedValues.size() > 0)
-                    {
-                        SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
-                        attribute.setProperty(attrProp);
-                    }
-                }
-                break;
-
-            case 1: // Double
-                {
-                    attribute.setValue(propertyElement.second->getValue<double>());
-
-                    // Convert suppoted values
-                    std::vector<double> allowedValues = propertyElement.second->getAllowedValuesDouble();
-                    if (allowedValues.size() > 0)
-                    {
-                        SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
-                        attribute.setProperty(attrProp);
-                    }
-                }
-                break;
-
-            case 2: // Boolean
-                {
-                    attribute.setValue(propertyElement.second->getValue<bool>());
-
-                    std::vector<bool> allowedValues = {true, false};
-                    SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
-                    attribute.setProperty(attrProp);
-                }
-                break;
-
-            case 3: // String
-                {
-                    attribute.setValue(propertyElement.second->getValue<std::string>());
-
-                    // Convert suppoted values
-                    std::vector<std::string> allowedValues = propertyElement.second->getAllowedValuesString();
-                    if (allowedValues.size() > 0)
-                    {
-                        SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
-                        attribute.setProperty(attrProp);
-                    }
-                }
-                break;
-        }
-
-        // Set the range property if its present
-        double min, max;
-        int multipleof;
-        propertyElement.second->getRange(min, max, multipleof);
-        if (min != INT_MIN && max != INT_MAX)
-        {
-            SimulatorResourceModel::AttributeProperty attrProp(min, max);
-            attribute.setProperty(attrProp);
-        }
-
         // Add the attribute to resource model
-        resModel.add(attribute);
+        if ("array" == propertyElement.second->getType())
+        {
+            std::vector<SimulatorResourceModel> arrayResModel;
+            for ( auto &propertyItem : propertyElement.second->getItems())
+            {
+                arrayResModel.push_back(buildResourceModel(propertyItem));
+            }
+            resModel.add(propName, arrayResModel);
+        }
+        else
+        {
+            resModel.add(buildAttribute(propertyElement.second));
+        }
     }
 
+    if ("array" == resourceProperties->getType())
+    {
+        std::vector<SimulatorResourceModel> arrayResModel;
+        for ( auto &propertyItem : resourceProperties->getItems())
+        {
+            arrayResModel.push_back(buildResourceModel(propertyItem));
+        }
+        resModel.add("links", arrayResModel);
+    }
     // Create simple/collection resource
     std::shared_ptr<SimulatorResource> simResource;
-    if (interfaceType == "oic.if.ll"
-        || resModel.containsAttribute("links") || resModel.containsAttribute("rts"))
+    if (resModel.containsAttribute("links"))
     {
         try
         {
@@ -251,11 +325,13 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
 
             collectionRes->setName(name);
             collectionRes->setResourceType(resourceType);
+            collectionRes->setInterface(interfaceType);
             if (ResourceURIFactory::getInstance()->isUnique(uri))
                 collectionRes->setURI(uri);
             else
                 collectionRes->setURI(ResourceURIFactory::getInstance()->constructURI(uri));
 
+            collectionRes->setResourceModel(resModel);
             simResource = std::dynamic_pointer_cast<SimulatorResource>(collectionRes);
         }
         catch (InvalidArgsException &e) {}
@@ -269,6 +345,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
 
             singleRes->setName(name);
             singleRes->setResourceType(resourceType);
+            singleRes->setInterface(interfaceType);
             if (ResourceURIFactory::getInstance()->isUnique(uri))
                 singleRes->setURI(uri);
             else

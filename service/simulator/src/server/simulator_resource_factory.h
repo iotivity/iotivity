@@ -27,6 +27,8 @@
 namespace RAML
 {
     class RamlResource;
+    class Properties;
+    class Items;
 }
 
 class SimulatorResourceFactory
@@ -84,6 +86,9 @@ class SimulatorResourceFactory
             const std::string &name, const std::string &uri, const std::string &resourceType);
 
     private:
+        SimulatorResourceModel::Attribute buildAttribute(
+            std::shared_ptr<RAML::Properties> propertyElement);
+        SimulatorResourceModel buildResourceModel(std::shared_ptr<RAML::Items> item);
         std::shared_ptr<SimulatorResource> buildResource(
             std::shared_ptr<RAML::RamlResource> ramlResource);
 

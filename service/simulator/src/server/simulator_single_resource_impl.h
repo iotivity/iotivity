@@ -35,6 +35,7 @@ class SimulatorSingleResourceImpl : public SimulatorSingleResource
         std::string getURI() const;
         std::string getResourceType() const;
         std::vector<std::string> getInterface() const;
+        void setInterface(const std::vector<std::string> &interfaces);
         void setName(const std::string &name);
         void setURI(const std::string &uri);
         void setResourceType(const std::string &resourceType);

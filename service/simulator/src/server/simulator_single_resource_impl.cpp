@@ -58,6 +58,11 @@ std::vector<std::string> SimulatorSingleResourceImpl::getInterface() const
     return m_interfaces;
 }
 
+void SimulatorSingleResourceImpl::setInterface(const std::vector<std::string> &interfaces)
+{
+    m_interfaces = interfaces;
+}
+
 void SimulatorSingleResourceImpl::setName(const std::string &name)
 {
     VALIDATE_INPUT(name.empty(), "Name is empty!")

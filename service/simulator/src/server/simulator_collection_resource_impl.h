@@ -34,6 +34,7 @@ class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
         std::string getURI() const;
         std::string getResourceType() const;
         std::vector<std::string> getInterface() const;
+        void setInterface(const std::vector<std::string> &interfaces);
         void setName(const std::string &name);
         void setURI(const std::string &uri);
         void setResourceType(const std::string &resourceType);
@@ -44,6 +45,8 @@ class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
         bool isStarted();
         void start();
         void stop();
+        SimulatorResourceModel getResourceModel();
+        void setResourceModel(const SimulatorResourceModel &resModel);
         std::vector<ObserverInfo> getObserversList();
         void notify(int id);
         void notifyAll();
@@ -73,6 +76,8 @@ class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
         std::string m_resourceType;
         std::vector<std::string> m_interfaces;
 
+        std::mutex m_modelLock;
+        SimulatorResourceModel m_resModel;
         std::recursive_mutex m_objectLock;
         std::mutex m_childResourcesLock;
         std::map<std::string, SimulatorResourceSP> m_childResources;
