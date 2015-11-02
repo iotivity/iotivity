@@ -684,7 +684,7 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
             if ((familyFlags ^ item->flags) == CA_IPFAMILY_MASK)
             {
                 OIC_LOG_V(INFO, TAG, "IPv%c duplicate message ignored",
-                                            familyFlags & CA_IPV6 ? '6' : '4');
+                          familyFlags & CA_IPV6 ? '6' : '4');
                 ret = true;
                 break;
             }
@@ -1133,7 +1133,7 @@ CAResult_t CAInitializeMessageHandler()
 
 #ifndef SINGLE_HANDLE // This will be enabled when RI supports multi threading
     // start receive thread
-    res = CAQueueingThreadStart(&gReceiveThread);
+    res = CAQueueingThreadStart(&g_receiveThread);
 
     if (res != CA_STATUS_OK)
     {
@@ -1211,7 +1211,7 @@ void CATerminateMessageHandler()
     if (NULL != g_receiveThread.threadMutex)
     {
 #ifndef SINGLE_HANDLE // This will be enabled when RI supports multi threading
-        CAQueueingThreadStop(&gReceiveThread);
+        CAQueueingThreadStop(&g_receiveThread);
 #endif /* SINGLE_HANDLE */
     }
 
