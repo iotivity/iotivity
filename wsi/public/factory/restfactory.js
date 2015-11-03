@@ -14,6 +14,5 @@
     }
     restfactory.$inject = ['$http'];
     
-    angular.module('wsi', [])
-            .factory('restfactory',  restfactory); 
+    angular.module('wsi').factory('restfactory',  restfactory); 
 }());

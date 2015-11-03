@@ -1,10 +1,8 @@
-/* global $scope */
-
 (function () {
     var wsicontroller = function ($scope, dbfactory) {
         var sampleServices = [
             {
-                "name": "Facebook",
+                "handler": "facebook",
                 "sid": "com.facebook",
                 "description": "Facebook RESTful API.",
                 "platforms": [
@@ -46,7 +44,7 @@
                 ]
             },
             {
-                "name": "Naver",
+                "handler": "naver",
                 "id": "com.naver",
                 "capability": [
                     {
@@ -66,7 +64,7 @@
                 ]
             },
             {
-                "name": "Twitter",
+                "handler": "twitter",
                 "id": "com.twitter",
                 "auth": [
                     {"type": "oauth2.0"},
@@ -100,7 +98,7 @@
                 ]
             },
             {
-                "name": "IoTivity",
+                "handler": "iotivity",
                 "id": "org.iotivity",
                 "capability": [
                     {

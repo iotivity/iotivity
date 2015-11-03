@@ -1,9 +1,10 @@
 var FacebookStrategy = require('passport-facebook').Strategy;
+var passport = require('passport');
 var servicedb = require('../models/service');
 console.log("Facebook initialized");
 
 module.exports = {
-    init :  function(passport, app, auth) {
+    init :  function(app, auth) {
             passport.use('facebook', new FacebookStrategy({
                 clientID        : auth.clientid,
                 clientSecret    : auth.secret,
@@ -41,7 +42,6 @@ module.exports = {
             // different scopes while logging in
             app.get('/auth/facebook', function(req, res) {
                     console.log("Auth via facebook " + req.query.userid);
-
                     passport.authenticate('facebook', 
                     { 
                         //TODO : remove hardcoding

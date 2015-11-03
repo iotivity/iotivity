@@ -145,6 +145,18 @@ module.exports = function(app, passport) {
             console.log(response);
         });
     });
+    
+    app.post('/wsi/cap/auth', function(sid, cid, body) {
+        
+    });
+    
+    app.get('/wsi/cap/get', function(sid, cid, params) {
+        
+    });
+    
+    app.post('/wsi/cap/post', function(sid, cid, params, body) {
+        
+    });
 
     app.get('*', function(req, res) {
         console.log("Home Page Redirect");

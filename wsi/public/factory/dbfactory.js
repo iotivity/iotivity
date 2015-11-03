@@ -20,7 +20,6 @@
     }
     dbfactory.$inject = ['$http'];
     
-    angular.module('wsi', [])
-            .factory('dbfactory',  dbfactory); 
+    angular.module('wsi').factory('dbfactory',  dbfactory); 
 
 }());

@@ -1,6 +1,6 @@
 How to run WSI
 
-sudo apt-get install npm nodejs nodejs-lecgacy mongodb
+sudo apt-get install npm nodejs nodejs-lecgacy mongodb libkrb5-dev
 
 npm install
 node server.js

@@ -15,9 +15,18 @@
                                     if (obj.isauthrequired == "true")
                                     {
                                         alert(JSON.stringify(auth));
-                                        $scope.strategy[obj.handler].init(passport, app, auth);
+                                        restfactory.auth(jsonObj.sid, capid, auth);
                                     }
-                                    alert(JSON.stringify(obj.cid));
+                                    if (obj.endpointtype.toUpperCase() == "GET")
+                                    {
+                                        alert("GET   " + obj.endpoint);
+                                        restfactory.get(jsonObj.sid, capid, auth);
+                                    }
+                                    else if (obj.endpointtype.toUpperCase() == "POST")
+                                    {
+                                        alert("POST " + obj.endpoint);
+                                        restfactory.post(jsonObj.sid, capid, auth);
+                                    }
                                 }
                                 if (obj.endpointtype.toUpperCase() == "IOTIVITY") {
                                 }

@@ -20,7 +20,7 @@ app.use(methodOverride('X-HTTP-Method-Override')); // override with the X-HTTP-M
 app.use(session({ secret: 'SECRET' , resave: true, saveUninitialized: true}));
 app.use(express.static('public'));
 
-strategy = auth.init(app);
+auth.init(app);
 require('./app/routes')(app);
 
 

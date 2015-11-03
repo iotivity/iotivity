@@ -12,13 +12,13 @@
         </div>
         <div id="pagewrap">
             <div id="content">
-		<form  ng-controller="capcontroller">
+                <form  ng-controller="capcontroller">
                     <h3>Execute</h3>
                     <textarea id="capidtext" style="font-size: 10px;" rows="10" cols="60"></textarea><br>
                     <button type="submit" ng-click="runCapability()">Run</button><br>
                 </form>                
                 <h3>Services List (<span>{{ services.length }}</span>)</h3>
-                <select ng-change="selectService(sampleService)" ng-model="sampleService" ng-options="service.name for service in getSampleServices()">
+                <select ng-change="selectService(sampleService)" ng-model="sampleService" ng-options="service.handler for service in getSampleServices()">
                   <option selected="selected" value="">Examples</option>
                 </select>                
                 
@@ -26,7 +26,7 @@
                 <ul style="list-style-type:none">
                     <div ng-repeat="service in services">
                         <li><input name = "capradio" type="radio" ng-click="readService(service._id)">
-                          {{ service.name }}<img ng-click="deleteService(service._id)" src="assets/images/delete.png" style="width:15px;height:15px;border:0">
+                          {{ service.handler }}<img ng-click="deleteService(service._id)" src="assets/images/delete.png" style="width:15px;height:15px;border:0">
                         </li>
                     </div>
                 </ul>
@@ -55,9 +55,10 @@
         <script src="assets/js/angular.js"></script>
 	<script src="app.js"></script>
 	<script src="factory/dbfactory.js"></script>
+        <script src="factory/restfactory.js"></script>
+        <script src="controllers/capcontroller.js"></script>
         <script src="controllers/wsicontroller.js"></script>
-        <script src="controllers/capcontroller.js"></script>        
-	<script src="assets/jsoneditor/jsoneditor.min.js"></script>
+        <script src="assets/jsoneditor/jsoneditor.min.js"></script>
         <link rel="stylesheet" type="text/css" href="assets/jsoneditor/jsoneditor.min.css">
     </body>
 </html>

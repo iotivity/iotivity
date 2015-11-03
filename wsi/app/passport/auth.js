@@ -30,6 +30,6 @@ module.exports = {
                 strategy[svc] = require("./" + svc);
                 console.log("Initializing Web Service : " + svc);
             }
-        });        
+        });
     }
 }
