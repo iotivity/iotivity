@@ -1,6 +1,6 @@
 {
-    "id":"org.openweathermap",
-    "name":"OpenWeatherMap",
+    "sid":"org.openweathermap",
+    "handler" : "openweathermap",
     "description":"The open weather service that keeps you up to date.",
     "platforms":[
         {
@@ -22,7 +22,7 @@
     },
     "capability":[
         {
-            "id":"org.openweathermap.getweather.cityname",
+            "cid":"org.openweathermap.getweather.cityname",
             "platform" : "linux",
             "isauthrequired":"false",
             "description":"Gets the current weather for a given place.",
@@ -43,7 +43,7 @@
             ]
         },
         {
-            "id":"org.openweathermap.getweather.cityid",
+            "cid":"org.openweathermap.getweather.cityid",
             "isauthrequired":"false",
             "platform" : "linux",
             "description":"Search for a given location for the past n days.",

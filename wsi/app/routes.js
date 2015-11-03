@@ -94,7 +94,7 @@ module.exports = function(app, passport) {
 
         servicedb.create({
             sid:        jsonObj.sid,
-            name:       jsonObj.name,
+            handler:    jsonObj.handler,
             desc:       jsonObj.description,
             platforms : jsonObj.platforms,
             auth :      jsonObj.auth,

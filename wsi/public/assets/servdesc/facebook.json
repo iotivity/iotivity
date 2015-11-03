@@ -1,6 +1,6 @@
 {
-    "name": "Facebook",
-    "id": "com.facebook",
+    "sid": "com.facebook",
+    "handler" : "facebook",
     "description": "Facebook RESTful API.",
     "platforms": [
         {
@@ -26,7 +26,7 @@
     },
     "capability": [
         {
-            "id": "com.facebook.post",
+            "cid": "com.facebook.post",
             "isauthrequired": "true",
             "description": "Post Message to Facebook.",
             "endpoint": "",

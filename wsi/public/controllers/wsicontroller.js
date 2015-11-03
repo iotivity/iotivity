@@ -147,6 +147,7 @@
         var preview = new JSONEditor(p, optionspreview);
         preview.expandAll();
         $scope.selService = null;
+        $scope.strategy = [];
 
         dbfactory.get()
                 .success(function (data) {

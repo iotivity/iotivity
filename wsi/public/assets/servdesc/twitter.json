@@ -1,6 +1,6 @@
 {
-    "name": "Twitter",
-    "id": "com.twitter",
+    "sid": "com.twitter",
+    "handler" : "twitter",    
     "description": "Twitter RESTful API.",
     "platforms": [
         {
@@ -19,7 +19,7 @@
     },
     "capability": [
         {
-            "id": "com.twitter.auth",
+            "cid": "com.twitter.auth",
             "isauthrequired": "false",
             "description": "Authenticate with Twitter.",
             "endpoint": "/auth/twitter",

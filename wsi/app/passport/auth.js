@@ -1,9 +1,11 @@
 var passport = require('passport');
-var facebook = require('./facebook');
+var fs = require('fs');
+var normalizedPath = require("path").join(__dirname, ".");
 var servicedb = require('../models/service');
 
 module.exports = {
     init: function (app) {
+        var strategy = [];
         console.log("Initializing services.");
         app.use(passport.initialize());
         app.use(passport.session());
@@ -21,10 +23,13 @@ module.exports = {
                 done(err, user);
             });
         });
-    },
-
-    //TODO Dynamically load when needed
-    loadstrategy: function(app) {
-        facebook.init(passport, app);
+        
+        fs.readdirSync(normalizedPath).forEach(function(file) {
+            if(file!='auth.js'){
+                var svc = file.substring(0, file.indexOf(".js"));
+                strategy[svc] = require("./" + svc);
+                console.log("Initializing Web Service : " + svc);
+            }
+        });        
     }
 }

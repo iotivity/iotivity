@@ -1,6 +1,6 @@
 {
-    "name":"Accuweather",
-    "id":"com.accuweather",
+    "sid":"com.accuweather",
+    "handler" : "accuweather",
     "description":"The open weather service that keeps you up to date.",
     "platforms":[
         {
@@ -37,7 +37,7 @@
     },
     "capability":[
         {
-            "id":"com.accuweather.getWeather",
+            "cid":"com.accuweather.getWeather",
             "platform" : "linux",
             "isauthrequired":"false",
             "description":"Gets the current weather for a given date and place.",
@@ -62,7 +62,7 @@
             ]
         },
         {
-            "id":"com.accuweather.locationSearch",
+            "cid":"com.accuweather.locationSearch",
             "isauthrequired":"false",
             "platform" : "linux",
             "description":"Gets the weather alert for a given date and place.",

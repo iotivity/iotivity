@@ -7,7 +7,7 @@ var database = require('./app/config/database'); 			// load the database config
 var morgan   = require('morgan');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
-var webservice = require('./app/passport/auth');
+var auth = require('./app/passport/auth');
 
 mongoose.connect(database.url); 	// connect to mongoDB database on modulus.io
 
@@ -20,8 +20,9 @@ app.use(methodOverride('X-HTTP-Method-Override')); // override with the X-HTTP-M
 app.use(session({ secret: 'SECRET' , resave: true, saveUninitialized: true}));
 app.use(express.static('public'));
 
+strategy = auth.init(app);
 require('./app/routes')(app);
-webservice.init(app);
+
 
 app.listen(port);
 console.log("App listening on port " + port);
