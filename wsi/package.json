@@ -21,6 +21,6 @@
         "jsoneditor" : "*",
         "express-session" : "*",
         "passport" : "*",
-        "passport-facebook" : "*",
+        "passport-facebook" : "*"
     }
 }
