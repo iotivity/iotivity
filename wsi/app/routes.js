@@ -73,13 +73,19 @@ function processRequest(query, res, callback){
 
 */
 
+function getServices(res){
+    servicedb.find(function(err, services) {
+        if (err) return;
+        console.log("getServices = " + services.length);
+        res.json(services);
+    });
+};
+
+
 module.exports = function(app, passport) {
 
     app.get('/wsi/services', function(req, res) {
-        servicedb.find(function(err, services) {
-            if (err) return;
-            res.json(services);
-        });
+	getServices(res);
     });
 
     app.post('/wsi/service', function(req, res) {
