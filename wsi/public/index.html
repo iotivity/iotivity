@@ -1,95 +1,64 @@
 <!DOCTYPE HTML>
-<!--
-    Striped by HTML5 UP
-    html5up.net | @n33co
-    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
--->
 <html ng-app="wsi">
     <head>
         <title>WSI Controller</title>
         <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
-        <link rel="stylesheet" href="assets/css/main.css" />
-        <!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
-        <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="assets/css/style.css">
     </head>
-    <body ng-controller="serviceController">
-
-        <!-- Content -->
+    <body  ng-controller="wsicontroller">
+        <div id="topbar">
+            <h1>WSI SERVICE CONFIGURATION</h1>
+        </div>
+        <div id="pagewrap">
             <div id="content">
-                <article class="box post post-excerpt">
-                    <h2><a href="#">WSI Service Configuration</a></h2>
-                </article>
+		<form  ng-controller="capcontroller">
+                    <h3>Execute</h3>
+                    <textarea id="capidtext" style="font-size: 10px;" rows="10" cols="60"></textarea><br>
+                    <button type="submit" ng-click="runCapability()">Run</button><br>
+                </form>                
+                <h3>Services List (<span>{{ services.length }}</span>)</h3>
+                <select ng-change="selectService(sampleService)" ng-model="sampleService" ng-options="service.name for service in getSampleServices()">
+                  <option selected="selected" value="">Examples</option>
+                </select>                
                 
-                <div class="row">
-                    <div class="col-sm-8  text-center">
-                        <form>
-                            <div class="form-group">
-                                <textarea class="form-control" rows="10" ng-model="formData.text"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-lg" ng-click="createService()">Add Service Description</button>
-                            <p />
-                            <div class="form-group">
-                                <textarea class="form-control" rows="5" ng-model="requestData.text"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-lg" ng-click="sendRequest()">Send Request</button>
-                            <p />
-                        </form>
+                <input type="text" name="servicename" value=""><input type="submit" value="Search">
+                <ul style="list-style-type:none">
+                    <div ng-repeat="service in services">
+                        <li><input name = "capradio" type="radio" ng-click="readService(service._id)">
+                          {{ service.name }}<img ng-click="deleteService(service._id)" src="assets/images/delete.png" style="width:15px;height:15px;border:0">
+                        </li>
                     </div>
-                    <div class="col-sm-8 col-sm-offset-2"> {{ response }} </div>
-                </div>
+                </ul>
             </div>
 
-        <!-- Sidebar -->
+            <div id="middle">
+                <h3>Manage</h3>
+		<form>
+                    <button id="create" type="submit" ng-click="createService()">Create</button>
+                    <div style="width: 450px; height: 350px" id="jsoneditor"></div>
+                </form>                
+            </div>
+
             <div id="sidebar">
-            <h1 id="logo"><a href="#">WSI</a></h1>
-            <section class="box search">
-                <form method="post" action="#">
-                    <input type="text" class="text" name="search" placeholder="Search" />
-                </form>
-            </section>
-
-            <section class="box recent-posts">
-                <header>
-                    <h4>Services List (<span>{{ services.length }}</span>)</h4>
-                </header>
-                <ul>
-                    <div class="checkbox" ng-repeat="service in services">
-                        <label>
-                            <li><input type="checkbox" ng-click="deleteService(service._id, service.name)"> {{ service.name }}</li>
-                        </label>
-                    </div>
-                </ul>
-            </section>
-
-            <section class="box recent-posts">
-                <header>
-                    <h4>Testing</h4>
-                </header>
-                <ul>
-                    <li><input name = "capradio" type="radio" ng-click="webgetweather()">Signin With Twitter</li></li>
-                    <li><input name = "capradio" type="radio" ng-click="webgetweather()">Get Weather</li>
-                    <li><input name = "capradio" type="radio" ng-click="webputtemp()">Put Temperature</li>
-                    <li><input name = "capradio" type="radio" ng-click="iotivitygettemp()">IoTivity Get Temperature</li>
-                    <li><input name = "capradio" type="radio" ng-click="iotivityposttemp()">Iotivity Post Temperature</li>
-                </ul>
-            </section>
+		<form>
+                    <h3>Preview</h3>
+                    <button id='save' type="submit" ng-click="updateService()">Save</button><br>
+                    <div style="width: 450px; height: 350px" id="jsoneditorpreview"></div>
+                </form>                
             </div>
-
-            <script src="assets/js/jquery.min.js"></script>
-            <script src="assets/js/skel.min.js"></script>
-            <script src="assets/js/util.js"></script>
-            <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
-            <script src="assets/js/main.js"></script>
-            <script src="assets/js/angular.min.js"></script>
-            <script src="assets/js/controllers/serviceController.js"></script>
-            <script src="assets/js/services/wsiservice.js"></script>
-            <script src="assets/js/core.js"></script>
+            <div id="footer">
+                <h3>Authentication and Authorization</h3>
+            </div>
+            
+        </div>
+        <script src="assets/js/angular.js"></script>
+	<script src="app.js"></script>
+	<script src="factory/dbfactory.js"></script>
+        <script src="controllers/wsicontroller.js"></script>
+        <script src="controllers/capcontroller.js"></script>        
+	<script src="assets/jsoneditor/jsoneditor.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="assets/jsoneditor/jsoneditor.min.css">
     </body>
 </html>
-<!-- Copyright
-    <ul id="copyright">
-        <li>&copy; Untitled.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
-    </ul>
--->
+

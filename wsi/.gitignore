@@ -14,4 +14,7 @@ node_modules
 junk
 Code
 iotivity/build
+iotivity.js/build
 npm-debug.log
+iotivity-node
+startbootstrap

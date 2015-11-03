@@ -1,6 +1,6 @@
-var request = require('request');
 
-module.exports = function (capability, query, res, endpoint) {
+
+module.exports = function (capability, res) {
 
     function handle_response(error, response, body) {
         if (!error && response.statusCode == 200) {

@@ -1,17 +1,24 @@
 var servicedb = require('./models/service');
-var Mustache = require('mustache');
-var request_http = require('./endpoint/request_http');
-//var request_iotivity = require('./endpoint/request_iotivity');
 
-function getServices(res){
-    servicedb.find(function(err, services) {
-        // if there is an error retrieving, send the error. nothing after res.send(err) will execute
+/*
+var Mustache = require('mustache');
+
+function getCapabilities(sid){
+    var capArray = [];
+    
+    var service = servicedb.find(function(err, services) {
         if (err)
             res.send(err);
 
-        res.json(services); // return all services in JSON format
+        res.json(services);
     });
-};
+    
+    var jsonData = JSON.parse(service);
+    for (var i = 0; i < jsonData.capability.length; i++) {
+        capArray[i] = jsonData.capability[i].id;
+    }
+    return capArray;
+}
 
 function match(item, filter) {
     var keys = Object.keys(filter);
@@ -27,7 +34,7 @@ function sendRequest(capability, query, res) {
 
     if(capability.endpointtype == "http" || capability.endpointtype == "https") {
         console.log("Accessing http/https endpoint");
-        request_http(capability, query, res, endpoint); 
+        request_http(capability, query, res, endpoint);
     }
     
     if(capability.endpointtype == "iotivity") {
@@ -36,15 +43,13 @@ function sendRequest(capability, query, res) {
     }
 }
 
-
-
 function sendPutRequest(capability, query, res) {
     var endpoint = Mustache.render(capability.endpoint, query);
     console.log(capability.endpointtype + '://' + endpoint);
 
     if(capability.endpointtype == "http" || capability.endpointtype == "https") {
         console.log("Accessing http/https endpoint");
-//        request_http_put(capability, query, res, endpoint); 
+//        request_http_put(capability, query, res, endpoint);
     }
     
 //    if(capability.endpointtype == "iotivity") {
@@ -52,8 +57,6 @@ function sendPutRequest(capability, query, res) {
 //        request_iotivity(capability, query, res, endpoint);
 //    }
 }
-
-
 
 function processRequest(query, res, callback){
     servicedb.find({ 'id': query.id }, function (err, service) {
@@ -68,25 +71,23 @@ function processRequest(query, res, callback){
     });
 };
 
+*/
 
+module.exports = function(app, passport) {
 
-
-
-module.exports = function(app) {
-
-    // api ---------------------------------------------------------------------
-    app.get('/api/services', function(req, res) {
-
-        getServices(res);
+    app.get('/wsi/services', function(req, res) {
+        servicedb.find(function(err, services) {
+            if (err) return;
+            res.json(services);
+        });
     });
 
-    app.post('/api/service', function(req, res) {
+    app.post('/wsi/service', function(req, res) {
+        var jsonObj = req.body;
+        console.log("Create Req Body = " + JSON.stringify(req.body));
 
-        var jsonObj = JSON.parse(req.body.text);
-        console.log(jsonObj);
-        
         servicedb.create({
-            id:         jsonObj.id,
+            sid:        jsonObj.sid,
             name:       jsonObj.name,
             desc:       jsonObj.description,
             platforms : jsonObj.platforms,
@@ -100,35 +101,47 @@ module.exports = function(app) {
 
     });
 
-    // delete a service
-    app.delete('/api/service/:id', function(req, res) {
-        console.log(req.params.id);
-        servicedb.find({name:req.params.id}).remove({
-        }, function(err, service) {
+    app.delete('/wsi/service/:id', function(req, res) {
+        console.log("Delete this ID : " + req.params.id);
+        servicedb.find({_id:req.params.id}).remove({}, function(err, service) {
             if (err)
                 res.send(err);
-
             getServices(res);
         });
     });
-    
-    
-    app.get('/api/service/:id', function(req, res) {
-       console.log('GET req.query:');
-       console.log(req.query);
-       console.log(req.query.id);
-       processRequest(req.query, res, sendRequest);
+
+    app.get('/wsi/service/:id', function(req, res) {
+        console.log('GET req......query:' + req.params.id);
+        servicedb.find({_id:req.params.id}, function(err, service) {
+            if (err){
+                console.log('Response Service Error: ' + err);
+                res.send(err);
+            }
+            console.log('Response Service: ' + service);
+            //res.send(JSON.stringify(JSON.parse(service), undefined, 2));
+            res.send(service);
+            
+        });
     });
 
-    app.put('/api/service/:id', function(req, res) {
-       console.log('PUT req.query:');
-       console.log(req.query);
-       console.log(req.query.id);
-       processRequest(req.query, res, sendPutRequest);
+    app.put('/wsi/service/:id', function(req, res) {
+        var options = { overwrite: true };
+        console.log('PUT Param (' + req.params.id + '):');
+        var jsonObj = req.body[0];
+        console.log('PUT BODY (' + req.body[0] + '):');
+        delete jsonObj._id;
+        servicedb.findByIdAndUpdate(req.params.id, jsonObj, options, function(err, model) {
+            if (err) {
+                console.log(err);
+                return res.status(500).send(err);
+            }
+            var response = "Success = " + JSON.stringify(model);
+            console.log(response);
+        });
     });
 
-    // application -------------------------------------------------------------
     app.get('*', function(req, res) {
-        res.sendfile('./public/index.html'); // load the single view file (angular will handle the page changes on the front-end)
+        console.log("Home Page Redirect");
+        res.sendFile('index.html', {root : 'public/'});
     });
 };

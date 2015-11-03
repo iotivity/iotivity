@@ -1,11 +1,11 @@
 var mongoose = require('mongoose');
 
 var wsSchema = new mongoose.Schema({
-    id:             String,
-    name:           String,
-    desc:           String,
+    sid:   {type: String, default: ''},
+    name: {type: String, default: ''},
+    desc: {type: String, default: ''},
     platforms :     [],
-    auth :          [],
+    auth : [],
     capability :    []
 });
 
