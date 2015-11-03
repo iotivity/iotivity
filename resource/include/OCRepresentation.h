@@ -266,27 +266,10 @@ namespace OC
                     // ambigious conversions in the case where conversions can include a number of
                     // types, such as the string constructor.
                     template<typename T, typename std::enable_if<
-                     std::is_same<T, int>::value ||
-                     std::is_same<T, double>::value ||
-                     std::is_same<T, bool>::value ||
-                     std::is_same<T, std::string>::value ||
-                     std::is_same<T, OCRepresentation>::value ||
-                     std::is_same<T, std::vector<int>>::value ||
-                     std::is_same<T, std::vector<std::vector<int>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<int>>>>::value ||
-                     std::is_same<T, std::vector<double>>::value ||
-                     std::is_same<T, std::vector<std::vector<double>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<double>>>>::value ||
-                     std::is_same<T, std::vector<bool>>::value ||
-                     std::is_same<T, std::vector<std::vector<bool>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<bool>>>>::value ||
-                     std::is_same<T, std::vector<std::string>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::string>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<std::string>>>>::value ||
-                     std::is_same<T, std::vector<OCRepresentation>>::value ||
-                     std::is_same<T, std::vector<std::vector<OCRepresentation>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<OCRepresentation>>>>::value
-                     , int>::type = 0// enable_if
+                        is_component<T,
+                            remove_first<AttributeValue>::type
+                            >::value
+                        , int>::type = 0
                     >
                     operator T() const
                     {
