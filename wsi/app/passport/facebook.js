@@ -52,19 +52,19 @@ module.exports = {
             app.get('/auth/facebook/callback', 
               passport.authenticate('facebook', { successRedirect: '/fbSuccess', failureRedirect: '/fbFail' }),
               function(req, res) {
-                res.redirect('/app/public/200.html');
+                //res.redirect('/app/public/200.html');
               });
             app.get('/fbSuccess', function(req, res) {
                 console.log("Facebook Auth Successful");
                 console.log('Request Params' + req.params.id);
                 console.log('Request' + req.body);
                 console.log('Response' + res.body);
-                res.sendFile(__dirname + '/public/index.html');
+                //res.sendFile(__dirname + '/public/index.html');
             });
 
             app.get('/fbFail', function(req, res) {
                 console.log("Facebook Auth Failed... Try Again");
-                res.sendFile(__dirname + '/public/index.html');
+                //res.sendFile(__dirname + '/public/index.html');
             });
             app.post('/facebook/post', function(req, res) {
                 var jsonObj = req.body;
@@ -72,7 +72,7 @@ module.exports = {
                 httphandler.post({url:''+jsonObj.userid+''+jsonObj.message+''+jsonObj.access_token},
                     function (error, response, body) {
                         if (!error && response.statusCode == 200) {
-                            console.log(body) // Show the HTML for the Google homepage.
+                            console.log(body);
                         }
                     }
                 )

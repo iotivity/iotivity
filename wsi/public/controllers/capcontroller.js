@@ -3,7 +3,6 @@
         //Run a Capability
         $scope.runCapability = function () {
             var capid = document.getElementById('capidtext').value;
-            alert(JSON.stringify(capid));
             dbfactory.read($scope.selService)
                     .success(function (data) {
                         var jsonObj = data[0];
@@ -14,7 +13,7 @@
                                 if (obj.endpointtype.toUpperCase() == "REST") {
                                     if (obj.isauthrequired == "true")
                                     {
-                                        alert(JSON.stringify(auth));
+                                        alert(JSON.stringify(capid) + " " + JSON.stringify(auth));
                                         restfactory.auth(jsonObj.sid, capid, auth);
                                     }
                                     if (obj.endpointtype.toUpperCase() == "GET")
