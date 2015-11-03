@@ -58,4 +58,4 @@ elif env.get('ROUTING') == 'EP':
 
 routinglib = local_env.StaticLibrary('routingmanager', routing_src)
 local_env.InstallTarget(routinglib, 'routingmanager')
-local_env.UserInstallTargetLib(routinglib, 'routingmanager')
+

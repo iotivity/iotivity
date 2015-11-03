@@ -175,17 +175,13 @@ def __installlib(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
 	if user_prefix:
 		i_n = ienv.Install(user_prefix + '/lib', targets)
-	else:
-		i_n = ienv.Install(env.get('BUILD_DIR'), targets)
-	ienv.Alias("install", i_n)
+		ienv.Alias("install", i_n)
 
 def __installbin(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
 	if user_prefix:
 		i_n = ienv.Install(user_prefix + '/bin', targets)
-	else:
-		i_n = ienv.Install(env.get('BUILD_DIR'), targets)
-	ienv.Alias("install", i_n)
+		ienv.Alias("install", i_n)
 
 def __append_target(ienv, target):
 	env.AppendUnique(TS = [target])
