@@ -134,66 +134,282 @@ void OCResource::setHost(const std::string& host)
             m_interfaces.empty(), m_clientWrapper.expired(), false, false);
     }
 
-    // removed coap:// or coaps:// or coap+tcp://
+    // removed 'coap://' or 'coaps://' or 'coap+tcp://'
     std::string host_token = host.substr(prefix_len);
 
-    if(host_token[0] == '[')
+    if (host_token[0] == '[') // ipv6 address
     {
-        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_IP_USE_V6);
+        m_devAddr.flags = static_cast< OCTransportFlags >(m_devAddr.flags & OC_IP_USE_V6);
 
         size_t found = host_token.find(']');
 
-        if(found == std::string::npos || found == 0)
+        if (found == std::string::npos || found == 0)
         {
             throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
-                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+                                        m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                        false);
         }
-        // extract the ipaddress
-        std::string ip6Addr = host_token.substr(1, found-1);
+        // extract the ipv6 address
+        std::string ip6Addr = host_token.substr(1, found - 1);
 
-        if (ip6Addr.length() >= MAX_ADDR_STR_SIZE)
+        size_t addrLength = ip6Addr.length();
+
+        if (MAX_ADDR_STR_SIZE <= addrLength)
         {
             throw std::length_error("host address is too long.");
         }
+
+        // address validity check
+        size_t colon = ip6Addr.find(':');
+
+        if (std::string::npos == colon)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                        m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                        false);
+        }
+
+        size_t colonCnt = 1;
+        int omittedColon = -2;
+
+        while (std::string::npos != colon)
+        {
+            size_t nextColon = ip6Addr.find(':', colon + 1);
+
+            if (nextColon == colon + 1)
+            {
+                if (0 < omittedColon)
+                {
+                    throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                                m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                                false);
+                }
+                omittedColon = colon;
+            }
+
+            colon = nextColon;
+
+            if (7 < colonCnt++)
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                            m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                            false);
+            }
+        }
+
+        if (7 >= colonCnt && 0 > omittedColon)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                        m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                        false);
+        }
+
+        size_t startPoint = 0;
+
+        if (0 == omittedColon)
+        {
+            startPoint = 2;
+        }
+
+        while (1)
+        {
+            std::string block;
+            colon = ip6Addr.find(':', startPoint);
+
+            if (std::string::npos != colon)
+            {
+                block = ip6Addr.substr(startPoint, colon - startPoint);
+
+                if (4 < block.length() ||
+                       std::string::npos != block.find_first_not_of("0123456789ABCDEFabcdef") ||
+                       0 == block.length())
+                {
+                    throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                                m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                                false);
+                }
+
+                startPoint = colon + 1;
+            }
+            else
+            {
+                block = ip6Addr.substr(startPoint);
+
+                if (4 < block.length() ||
+                        std::string::npos != block.find_first_not_of("0123456789ABCDEFabcdef") ||
+                        0 == block.length())
+                {
+                    throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                                m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                                false);
+                }
+
+                break;
+            }
+
+            if ((int)colon == omittedColon)
+            {
+                if (colon == addrLength - 2)
+                {
+                    break;
+                }
+                startPoint = colon + 2;
+                continue;
+            }
+
+        }
+        // end of address validity check
 
         ip6Addr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
         m_devAddr.addr[ip6Addr.length()] = '\0';
         //skip ']' and ':' characters in host string
         host_token = host_token.substr(found + 2);
+
+        int port = std::stoi(host_token);
+
+        if (0 > port || UINT16_MAX < port)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                        m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                        false);
+        }
+
+        m_devAddr.port = static_cast< uint16_t >(port);
+    }
+    else if (host_token[0] == ':')
+    {
+        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                    m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                    false);
     }
     else
     {
-        size_t found = host_token.find(':');
-
-        if(found == std::string::npos || found == 0)
+        size_t dot = host_token.find('.');
+        if (dot == std::string::npos) // MAC address
         {
-            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
-                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+            std::string macAddr = host_token;
+
+            // address validity check
+            if (MAC_ADDR_STR_SIZE != macAddr.length())
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                            m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                            false);
+            }
+
+            for (size_t blockCnt = 0; blockCnt < 6; blockCnt++)
+            {
+                std::string block = macAddr.substr(blockCnt * 3, 2);
+
+                if (std::string::npos != block.find_first_not_of("0123456789ABCDEFabcdef"))
+                {
+                    throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                                m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                                false);
+                }
+
+                if (5 > blockCnt)
+                {
+                    char delimiter = macAddr[blockCnt * 3 + 2];
+
+                    if (':' != delimiter || '-' != delimiter)
+                    {
+                        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                                    m_interfaces.empty(), m_clientWrapper.expired(),
+                                                    false, false);
+                    }
+                }
+            }
+            // end of address validity check
+
+            macAddr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
+            m_devAddr.addr[macAddr.length()] = '\0';
         }
-
-        std::string addrPart = host_token.substr(0, found);
-
-        if (addrPart.length() >= MAX_ADDR_STR_SIZE)
+        else // ipv4 address
         {
-            throw std::length_error("host address is too long.");
+            size_t colon = host_token.find(':');
+
+            if (colon == std::string::npos)
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                            m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                            false);
+            }
+
+            std::string ip4Addr = host_token.substr(0, colon);
+            size_t addrLength = ip4Addr.length();
+
+            if (MAX_ADDR_STR_SIZE <= addrLength)
+            {
+                throw std::length_error("host address is too long.");
+            }
+
+            // address validity check
+            size_t startPoint = 0;
+
+            for (size_t blockCnt = 1; blockCnt <= 4; blockCnt++)
+            {
+                size_t dot = ip4Addr.find('.', startPoint);
+                std::string addrBlock;
+
+                if (4 > blockCnt)
+                {
+                    if (std::string::npos == dot || dot <= startPoint)
+                    {
+                        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                                    m_interfaces.empty(), m_clientWrapper.expired(),
+                                                    false, false);
+                    }
+                    addrBlock = ip4Addr.substr(startPoint, dot - startPoint);
+                }
+                else
+                {
+                    if (std::string::npos != dot)
+                    {
+                        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                                    m_interfaces.empty(), m_clientWrapper.expired(),
+                                                    false, false);
+                    }
+                    addrBlock = ip4Addr.substr(startPoint, colon - startPoint);
+                }
+
+                int i_addrBlock = std::stoi(addrBlock);
+
+                if (std::string::npos != addrBlock.find_first_not_of("0123456789") ||
+                    0 > i_addrBlock || 255 < i_addrBlock)
+                {
+                    throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                                m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                                false);
+                }
+                startPoint = dot + 1;
+
+                if (addrLength <= startPoint)
+                {
+                    throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                                m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                                false);
+                }
+            }
+            // end of address validity check
+
+            ip4Addr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
+            m_devAddr.addr[ip4Addr.length()] = '\0';
+            //skip ':' character in host string
+            host_token = host_token.substr(colon + 1);
+
+            int port = std::stoi(host_token);
+
+            if (0 > port || UINT16_MAX < port)
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                                            m_interfaces.empty(), m_clientWrapper.expired(), false,
+                                            false);
+            }
+
+            m_devAddr.port = static_cast< uint16_t >(port);
         }
-
-        addrPart.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
-        m_devAddr.addr[addrPart.length()] = '\0';
-        //skip ':' character in host string
-        host_token = host_token.substr(found + 1);
     }
-
-    int port = std::stoi(host_token);
-
-    if( port < 0 || port > UINT16_MAX )
-    {
-        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
-            m_interfaces.empty(), m_clientWrapper.expired(), false, false);
-    }
-
-    m_devAddr.port = static_cast<uint16_t>(port);
-
 }
 
 OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
