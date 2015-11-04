@@ -12,7 +12,7 @@
         </div>
         <div id="pagewrap">
             <div id="content">
-                <form  ng-controller="capcontroller">
+                <form  method="post" ng-controller="capcontroller">
                     <h3>Execute</h3>
                     <textarea id="capidtext" style="font-size: 10px;" rows="10" cols="60"></textarea><br>
                     <button type="submit" ng-click="runCapability()">Run</button><br>
@@ -50,7 +50,6 @@
             <div id="footer">
                 <h3>Authentication and Authorization</h3>
             </div>
-            
         </div>
         <script src="assets/js/angular.js"></script>
 	<script src="app.js"></script>

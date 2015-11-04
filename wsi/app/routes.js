@@ -83,7 +83,7 @@ function getServices(res){
 };
 
 
-module.exports = function(app, passport) {
+module.exports = function(app) {
 
     app.get('/wsi/services', function(req, res) {
 	getServices(res);
@@ -147,8 +147,10 @@ module.exports = function(app, passport) {
         });
     });
     
-    app.post('/wsi/cap/auth', function(sid, cid, body) {
-        
+    app.post('/wsi/cap/auth', function(req, res) {
+        var auth = req.body.auth;
+        console.log("WSI Cap Auth " + req.body.sid);
+        app.settings.strategy[req.body.handler].auth(app, req.body.auth[0]);
     });
     
     app.get('/wsi/cap/get', function(sid, cid, params) {

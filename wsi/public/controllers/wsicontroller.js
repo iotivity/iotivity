@@ -12,18 +12,20 @@
                     }
                 ],
                 "auth": [
-                    {"type": "oauth2.0"},
-                    {"appId": "949606648410465"},
-                    {"appSecret": "2a35037f1919e7cbefcc1d2f95ef24fb"},
-                    {"endpoint": "/auth/facebook"},
-                    {"callbackUrl": "/auth/facebook/callback"},
-                    {"access_token": ""},
-                    {"userid": ""},
-                    {"access_token": ""},
-                    {"refresh_token": ""},
-                    {"firstName": ""},
-                    {"lastName": ""},
-                    {"email": ""}
+                    {
+                    "type": "oauth2.0",
+                    "clientID": "949606648410465",
+                    "clientSecret": "2a35037f1919e7cbefcc1d2f95ef24fb",
+                    "endpoint": "/wsi/auth/facebook",
+                    "callbackURL": "/wsi/auth/facebook/callback",
+                    "userid": "",
+                    "access_token": "",
+                    "refresh_token": "",
+                    "firstName": "",
+                    "lastName": "",
+                    "email": "",
+                    "scope" : ['email', 'publish_actions']
+                    },
                 ],
                 "capability": [
                     {

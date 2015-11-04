@@ -13,8 +13,8 @@
                                 if (obj.endpointtype.toUpperCase() == "REST") {
                                     if (obj.isauthrequired == "true")
                                     {
-                                        alert(JSON.stringify(capid) + " " + JSON.stringify(auth));
-                                        restfactory.auth(jsonObj.sid, capid, auth);
+                                        //alert(JSON.stringify(jsonObj.handler) + " " + JSON.stringify(auth));
+                                        restfactory.auth(jsonObj);
                                     }
                                     if (obj.endpointtype.toUpperCase() == "GET")
                                     {
