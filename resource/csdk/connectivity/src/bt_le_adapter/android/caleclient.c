@@ -2155,7 +2155,6 @@ bool CALEClientIsDeviceInScanDeviceList(JNIEnv *env, const char* remoteAddress)
 
         if (!strcmp(remoteAddress, setAddress))
         {
-            OIC_LOG(DEBUG, TAG, "the device is already set");
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             return true;
         }
