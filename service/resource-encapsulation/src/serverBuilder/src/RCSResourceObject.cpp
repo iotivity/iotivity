@@ -480,7 +480,7 @@ namespace OIC
             assert(request != nullptr);
 
             auto attrs = getAttributesFromOCRequest(request);
-
+            OC_LOG(INFO, "RESOURCE_OBJECT", ("handleRequestGet " + request->getResourceUri()).c_str());
             return sendResponse(*this, request, invokeHandler(attrs, request, m_getRequestHandler));
         }
 

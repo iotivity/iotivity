@@ -195,7 +195,7 @@ void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, con
     }
 }
 
-// Local function to put a different state for this resource
+// Local function to put a different state for this re<< std::endlsource
 void postLightRepresentation(std::shared_ptr<OCResource> resource)
 {
     if (resource)
@@ -306,14 +306,11 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
             std::cout << "Resource URI: " << rep.getUri() << std::endl;
 
             std::cout << "Payload: " << rep.getPayload() << std::endl;
+            std::cout << "On-off: " << rep.getValueToString("on-off") << std::endl;
 
             rep.getValue("on-off", mylight.m_on_off);
-            rep.getValue("dim", mylight.m_dim);
-            rep.getValue("color", mylight.m_color);
 
             std::cout << "\ton-off: " << mylight.m_on_off << std::endl;
-            std::cout << "\tcolor: " << mylight.m_color << std::endl;
-            std::cout << "\tdim: " << mylight.m_dim << std::endl;
 
             putLightRepresentation(curResource);
         }
@@ -376,39 +373,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     std::string hostAddress;
     try
     {
-        {
-            std::lock_guard<std::mutex> lock(curResourceLock);
-            if (discoveredResources.find(resource->uniqueIdentifier()) == discoveredResources.end())
-            {
-                std::cout << "Found resource " << resource->uniqueIdentifier() <<
-                          " for the first time on server with ID: " << resource->sid() << std::endl;
-                discoveredResources[resource->uniqueIdentifier()] = resource;
 
-                if (resourceURI.find("/discomfortIndex") != std::string::npos)
-                {
-                    std::cout << "discomfortIndex found !!! " << std::endl;
-
-                    DISensorResource = resource;
-
-                    OCRepresentation rep;
-
-                    rep.setValue("humidity", std::string("30"));
-                    rep.setValue("temperature", std::string("27"));
-
-                    resource->put(rep, QueryParamsMap(), &onPutForDISensor);
-                }
-            }
-            else
-            {
-                std::cout << "Found resource " << resource->uniqueIdentifier() << " again!" << std::endl;
-            }
-
-            if (curResource)
-            {
-                std::cout << "Found another resource, ignoring" << std::endl;
-                return;
-            }
-        }
 
         // Do some operations with resource object.
         if (resource)
@@ -427,7 +392,6 @@ void foundResource(std::shared_ptr<OCResource> resource)
             for (auto &resourceTypes : resource->getResourceTypes())
             {
                 std::cout << "\t\t" << resourceTypes << std::endl;
-
                 if (resourceTypes == "oic.r.light")
                 {
                     curResource = resource;

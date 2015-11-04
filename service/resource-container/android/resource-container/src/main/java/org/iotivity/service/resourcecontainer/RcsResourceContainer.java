@@ -26,14 +26,22 @@ package org.iotivity.service.resourcecontainer;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Enumeration;
+import android.util.Log;
+import android.content.Context;
+
+import dalvik.system.DexFile;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 
 // TODO null check for parameters
 /**
  * This class provides APIs for managing the container and bundles in the
  * container.
  */
-public class RcsResourceContainer {
+public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
 
+    private static final String TAG = RcsResourceContainer.class.getSimpleName();
     static {
         System.loadLibrary("gnustl_shared");
         System.loadLibrary("oc_logger");
@@ -47,8 +55,8 @@ public class RcsResourceContainer {
         System.loadLibrary("rcs_container");
         System.loadLibrary("resource_container_jni");
     }
-
-    private static RcsResourceContainer sInstance = new RcsResourceContainer();
+    
+    private Context appContext;
 
     private native void nativeStartContainer(String configFile);
 
@@ -72,13 +80,21 @@ public class RcsResourceContainer {
             String resourceUri);
 
     private native List<String> nativeListBundleResources(String bundleId);
-
-    /**
-     * API for getting the Instance of ResourceContainer class
-     *
-     */
-    public static RcsResourceContainer getInstance() {
-        return sInstance;
+    
+    private native void nativeRegisterAndroidResource(AndroidBundleResource resource,
+        String[] attributes, String bundleId, String uri,
+        String resourceType, String name);
+    
+    private native void nativeUnregisterAndroidResource(AndroidBundleResource resource,
+        String uri);
+    
+    private native int nativeGetNumberOfConfiguredResources(String bundleId);
+        
+    private native String[] nativeGetConfiguredResourceParams(String bundleId,
+        int resId);  
+    
+    public RcsResourceContainer(Context appContext){
+        this.appContext = appContext;
     }
 
     /**
@@ -92,8 +108,43 @@ public class RcsResourceContainer {
      *            information.
      *
      */
-    public void startContainer(String configFile) {
+    public void startContainer(String configFile) {        
         nativeStartContainer(configFile);
+        Log.d(TAG, "startContainer");
+        List<RcsBundleInfo> bundles = listBundles();
+        for(RcsBundleInfo bundleInfo : bundles){
+            Log.d(TAG, "bundle-id: " + bundleInfo.getID() + ", " + bundleInfo.getPath());
+            if(bundleInfo.getPath().endsWith(".apk")){
+                String packageName = bundleInfo.getPath().replace(".apk", "");
+                try{
+                    PackageManager packageManager = appContext.getPackageManager();
+                    ApplicationInfo appInfo = packageManager.getApplicationInfo(packageName, 0);
+                    DexFile df = new DexFile(appInfo.sourceDir);
+                    ClassLoader cl = appContext.getClassLoader();
+                    for (Enumeration<String> iter = df.entries(); iter.hasMoreElements(); ) {
+                        String classN = iter.nextElement();
+                        if (classN.contains(packageName)) {
+                            Log.d(TAG,"Class: " + classN);
+                            df.loadClass(classN, cl);
+                        }
+                    }
+                    
+                    String className = bundleInfo.getActivatorName();
+                    Log.d(TAG, "Loading activator: " + className);
+                    Class activatorClass = df.loadClass(className, cl);
+                    if(activatorClass!= null){
+                        AndroidBundleActivator activator = (AndroidBundleActivator) activatorClass.getConstructor(RcsResourceContainerBundleAPI.class, Context.class).newInstance(this, appContext);
+                        activator.activateBundle();
+                    }else{
+                        Log.e(TAG, "Activator is null.");
+                    }
+                }
+                catch(Exception e){
+                    Log.e(TAG, e.getMessage());
+                }
+                Log.d(TAG, "Have to register android bundle");
+            }
+        }
     }
 
     /**
@@ -157,7 +208,18 @@ public class RcsResourceContainer {
      *
      */
     public void startBundle(String bundleId) {
-        nativeStartBundle(bundleId);
+        Log.d(TAG, "startBundle");
+        List<RcsBundleInfo> bundles = listBundles();
+        boolean androidBundle =false;
+        for(RcsBundleInfo bundleInfo : bundles){
+            if(bundleInfo.getID().equals(bundleId) && bundleInfo.getLibraryPath().endsWith(".apk")){
+                androidBundle = true;
+                Log.d(TAG, "Have to start android bundle");
+            }
+        }
+        if(!androidBundle){
+            nativeStartBundle(bundleId);
+        }
     }
 
     /**
@@ -210,5 +272,25 @@ public class RcsResourceContainer {
      */
     public List<String> listBundleResources(String bundleId) {
         return nativeListBundleResources(bundleId);
+    }
+
+    public void registerResource(String bundleId, AndroidBundleResource resource){
+        // bundleResources.add(resource);
+        nativeRegisterAndroidResource(resource, resource.getAttributeKeys(), bundleId,
+                        resource.getURI(), resource.getResourceType(),
+                        resource.getName());
+    }
+
+    
+    public void unregisterResource(AndroidBundleResource resource){
+        nativeUnregisterAndroidResource(resource, resource.getURI());
+    }
+
+    public int getNumberOfConfiguredResources(String bundleId){
+        return nativeGetNumberOfConfiguredResources(bundleId);
+    }
+
+    public String[] getConfiguredResourceParams(String bundleId, int resId){
+        return nativeGetConfiguredResourceParams(bundleId, resId);
     }
 }

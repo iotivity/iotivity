@@ -135,6 +135,7 @@ namespace OIC
                 void removeSoBundleResource(const std::string &bundleId,
                                             const std::string &resourceUri);
                 void registerSoBundle(RCSBundleInfo *bundleInfo);
+                void registerExtBundle(RCSBundleInfo *bundleInfo);
                 void discoverInputResource(const std::string &outputResourceUri);
                 void undiscoverInputResource(const std::string &outputResourceUri);
                 void activateBundleThread(const std::string &bundleId);

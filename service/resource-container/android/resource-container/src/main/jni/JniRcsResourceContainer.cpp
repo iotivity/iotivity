@@ -26,13 +26,19 @@
 #include "Log.h"
 #include "Verify.h"
 
+#include "ResourceContainerBundleAPI.h"
+#include "AndroidResource.h"
 #include "RCSResourceContainer.h"
+
+
 
 #define LOG_TAG "JNI-RCSResourceContainer"
 
 using namespace OIC::Service;
 
 #define CLS_NAME_BUNDLE_INFO "org/iotivity/service/resourcecontainer/RcsBundleInfo"
+
+std::map< string, BundleResource::Ptr > android_resources;
 
 namespace
 {
@@ -68,6 +74,8 @@ namespace
 
     jobject newBundleInfoObj(JNIEnvWrapper *env, const std::unique_ptr< RCSBundleInfo > &bundleInfo)
     {
+        LOGD("new bundle info");
+        __android_log_print(ANDROID_LOG_DEBUG, "CONTAINER", "newBundleInfoObj %s",bundleInfo->getActivatorName().c_str());
         JavaLocalString id{env, newStringObject(env, bundleInfo->getID()) };
         JavaLocalString path{env, newStringObject(env, bundleInfo->getPath()) };
         JavaLocalString activatorName{env, newStringObject(env, bundleInfo->getActivatorName()) };
@@ -195,7 +203,7 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStartBundle
 (JNIEnv *env, jobject, jstring idObj)
 {
-    LOGD("nativeStartBundle");
+    LOGD("nativeStartBundle2");
 
     EXPECT(idObj, "BundleId is null.");
 
@@ -290,5 +298,101 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeListBundl
     }
 
     return nullptr;
+}
+
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRegisterAndroidResource
+(JNIEnv *env, jobject obj, jobject bundleResource, jobjectArray attributes, jstring bundleId,
+ jstring uri, jstring resourceType, jstring res_name)
+{
+    LOGD("nativeRegisterAndroidResource");
+    const char *str_bundleId = env->GetStringUTFChars(bundleId, 0);
+    LOGD("retrieved bundle id.");
+    const char *str_uri = env->GetStringUTFChars(uri, 0);
+    LOGD("retrieved uri.");
+    const char *str_resourceType = env->GetStringUTFChars(resourceType, 0);
+    LOGD("retrieved resource type");
+    const char *str_res_name = env->GetStringUTFChars(res_name, 0);
+    LOGD("retrieved res name.");
+    AndroidResource res;
+
+    BundleResource::Ptr androidResource = std::make_shared< AndroidResource >
+            (env, obj, bundleResource, str_bundleId, attributes);
+    ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
+
+    androidResource->m_uri = string(str_uri, strlen(str_uri));
+    androidResource->m_resourceType = string(str_resourceType, strlen(str_resourceType));
+    androidResource->m_name = string(str_res_name, strlen(str_res_name));
+    container->registerResource(androidResource);
+
+    android_resources[str_uri] = androidResource;
+}
+
+/*
+ * Class:     org_iotivity_resourcecontainer_bundle_api_BaseActivator
+ * Method:    unregisterJavaResource
+ * Signature: (Lorg/iotivity/resourcecontainer/bundle/api/BundleResource;)V
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeUnregisterAndroidResource
+(JNIEnv *env, jobject obj, jobject bundleResource, jstring uri)
+{
+    (void)obj;
+    (void)bundleResource;
+    const char *str_uri = env->GetStringUTFChars(uri, 0);
+
+    if (android_resources[str_uri] != NULL)
+    {
+        ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
+        container->unregisterResource(android_resources[str_uri]);
+        android_resources.erase(str_uri);
+    }
+}
+
+/*
+ * Class:     org_iotivity_resourcecontainer_bundle_api_BaseActivator
+ * Method:    getNumberOfConfiguredResources
+ * Signature: (Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL
+Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeGetNumberOfConfiguredResources(
+    JNIEnv *env, jobject obj, jstring bundleId)
+{
+    (void)obj;
+    const char *str_bundleId = env->GetStringUTFChars(bundleId, 0);
+
+    ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
+    vector< resourceInfo > resourceConfig;
+    container->getResourceConfiguration(str_bundleId, &resourceConfig);
+
+    return resourceConfig.size();
+}
+
+/*
+ * Class:     org_iotivity_resourcecontainer_bundle_api_BaseActivator
+ * Method:    getConfiguredResourceParams
+ * Signature: (Ljava/lang/String;I)[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL
+Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeGetConfiguredResourceParams(
+    JNIEnv *env, jobject obj, jstring bundleId, jint resourceId)
+{
+    (void)obj;
+    jobjectArray ret;
+    const char *str_bundleId = env->GetStringUTFChars(bundleId, 0);
+
+    ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
+    vector< resourceInfo > resourceConfig;
+    container->getResourceConfiguration(str_bundleId, &resourceConfig);
+    resourceInfo conf = resourceConfig[resourceId];
+    ret = (jobjectArray) env->NewObjectArray(4, env->FindClass("java/lang/String"),
+            env->NewStringUTF(""));
+
+    env->SetObjectArrayElement(ret, 0, env->NewStringUTF(conf.name.c_str()));
+    env->SetObjectArrayElement(ret, 1, env->NewStringUTF(conf.uri.c_str()));
+    env->SetObjectArrayElement(ret, 2, env->NewStringUTF(conf.resourceType.c_str()));
+    env->SetObjectArrayElement(ret, 3, env->NewStringUTF(conf.address.c_str()));
+    return ret;
 }
 
