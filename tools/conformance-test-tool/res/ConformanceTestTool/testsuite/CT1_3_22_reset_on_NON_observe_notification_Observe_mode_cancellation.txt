@@ -1,0 +1,59 @@
+*** Settings ***
+Documentation	CT1.3.22 RESET on NON observe notification - Observe mode cancellation
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.3.22 RESET on NON observe notification - Observe mode cancellation
+    [Documentation]					
+	...	|author	| |		
+	...	|reviewer| |				
+	...	|since	|2015-06-18|
+	...	|see	|IETF draft-ietf-core-observe-16, Section 3.6 |
+	...	|objective|Verify the server (DUT) de-registers client from observer list if client (TE) sends a RESET upon receiving a NON observe notification from the server |
+	...	|target	||
+	...	|test_data|NON CONFIRMABLE = 1 |
+	...	|pre_condition	|1. Server (DUT) is discovered from the Client (TE)|
+	...	|pre_condition	|2. Resource properties and attribute contents are known for verification |
+	...	|pre_condition	|3. Server (DUT) is in observe mode |
+	...	|procedure	|1. Observe condition satisfied |
+	...	|procedure	|2. Reply with NON RETRIEVE response message to client |
+	...	|procedure	|3. Upon receiving the response message, send a RESET message with the same token back |
+	...	|procedure	|4. Cancel observation mode |
+	...	|procedure	|5. Observe condition satisfied |
+	...	|post_condition	| |
+	...	|expected|1. Client does not receive any RETRIEVE Response messages with observe indication |
+	
+    [Tags]	Mandatory	Server    Observe
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+    @{dut1_resource_types}  Get DUT Info Value      ${RESOURCE_TYPE}        ${DUT1_ID}      ${OBSERVABLE}=1&${DISCOVERABLE}=1
+    ${resource_ip}  ${resource_port}        ${resource_href}        Get IP Port And Uri             ${RESOURCE_TYPE}=@{dut1_resource_types}[0]
+    @{dut1_resource_hrefs}       Get DUT Info Value      ${HREF}    ${DUT1_ID}      ${OBSERVABLE}=1&${DISCOVERABLE}=1
+    :FOR        ${resource_href}   IN      @{dut1_resource_hrefs}
+    \   ${msgid}    Generate Message Id
+    \   ${token}    Generate Token
+    \	Send Observe Request	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}
+    \	Builtin.sleep	${${DEFAULT_WAIT_TIME}}
+    \   ${length}    Get Length Available Representation To Update    ${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}
+    \   Run Keyword If    ${length} > 0    Set Modified Partial Representation Value Payload       ${DUT1_ID}      ${OBSERVABLE}=1&${DISCOVERABLE}=1&${HREF}=${resource_href}
+    \	${payload}    Run Keyword If    ${length} > 0    Get Json Representation
+    \   ${msgid}    Generate Message Id
+    \   ${token}    Generate Token
+    \	${dut2_response}     Run Keyword If    ${length} > 0    Send Post Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
+    \	Builtin.sleep	${${DEFAULT_WAIT_TIME}}
+    \	${dut2_response}	Get Observe Response	${COAP}
+    \	Should Not Be Empty		${dut2_response}
+    \	Cancel Observe Reset	${COAP}	
+    \	${dut2_response}	Send Post Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
+    \	${dut2_response}	Send Post Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
+    \	${dut2_response}	Send Post Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
+    \	${dut2_response}	Send Post Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
+    \	Clear Notifications	 ${COAP}
+    \	${dut2_response}	Send Post Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
+    \	${dut2_response}	Send Post Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
+    \	${dut2_response}	Get Observe Response	${COAP}
+    \	Should Be Empty		${dut2_response}
+    Release DUT information     ${DUT1_ID}
+

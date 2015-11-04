@@ -1,0 +1,45 @@
+*** Settings ***
+Documentation	CT1.7.11 Access policy enforcement when the Server (DUT) has ACL including user resource with READ permission
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.7.11 Access policy enforcement when the Server (DUT) has ACL including user resource with READ permission
+    [Documentation]					
+	...	|author	| |	
+	...	|reviewer|	|			
+	...	|since	| 2015-10-09 |
+	...	|see	|Security Spec Section 11 : Access Control |
+	...	|objective	| Verify the Server (DUT) ) respond with a user resource (e.g.,/a/light) information when the Server (DUT)    |
+	...	|objective	| has ACL including user resource (e.g., /a/light) with no READ permission on SVR database. |
+	...	|target	| Server DUT |
+	...	|test_data| /a/light |
+	...	|test_configuration| None |
+	...	|pre_condition| 1. Server (DUT) has an ACL including "oic/res" with READ permission for all subject(e.g., "*").   |
+	...	|pre_condition| 2. Server (DUT) has an ACL including user resource (e.g.,/a/light) with READ permission for Client  on SVR database file that be installed on the Server (DUT).    |
+	...	|procedure| 1. DUT is Connected/Discoverable |
+	...	|procedure| 2. Use the Test Application to initiate a multicast discovery (GET /oic/res) |	
+	...	|procedure| 3. Send  response to GET Req. |
+	...	|procedure| 4. Use the Test Application to initiate secure GET request (e.g., GET /a/light) |
+	...	|procedure| 5. Send  response to GET Req. |
+	...	|post_condition|None |
+	...	|expected| Client (TE) get RSP 2.03 or 2.05 |
+
+    [Tags]	Mandatory	Security
+   	Wait For User Confirmation	Please Start DUT With ACL, With /a/led, With READ Permission
+#   	${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_RESOURCE_DEFAULT_URI}
+#    ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}	
+#	Should Be True	${COAP_RESPONSE_CODE_SUCCESS} == ${dut_response_code} or ${COAP_RESPONSE_CODE_VALID} == ${dut_response_code}
+	
+	Initialize Device Controller	${DEVICE_ID}
+    Change Working Directory	${SECURITY_CLIENT_DIR}
+    ConformanceKeyword.Log to Console	Starting Secured Provisioning Client ...
+    Execute Application	${SECURITY_CLIENT_PROCESS_ID}	${SECURED_CLIENT}
+    Start Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
+    ConformanceKeyword.Log to Console	${FIND_AND_GET}
+    Sleep	10 seconds
+    Terminate Application	${SECURITY_CLIENT_PROCESS_ID}
+    sleep	2 seconds
+    ${app_log}	Get Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
+    Should Not Contain	${app_log}	${SECURED_GET_FAILURE_MESSAGE}
+    ConformanceKeyword.Log to Console	${app_log}
+

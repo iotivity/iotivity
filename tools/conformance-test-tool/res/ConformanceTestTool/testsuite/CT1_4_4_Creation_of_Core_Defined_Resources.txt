@@ -1,0 +1,42 @@
+*** Settings ***
+Documentation	CT1.4.4 Creation of Core Defined Resources
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.4.4 Creation of Core Defined Resources
+    [Documentation]					
+	...	|author	| |		
+	...	|reviewer| |				
+	...	|since	|2015-05-11 |
+	...	|see	|Section 6.2.1 |
+	...	|objective|Verify the Server (DUT) returns an error if Client (TE) attempts to create a core defined resource. |
+	...	|target	|Server DUT |
+	...	|test_data	||
+	...	|pre_condition	|Server (DUT) is discovered from the Client (TE) |
+	...	|procedure	|1. Connected / discoverable |
+	...	|procedure	|2. Use the Test Application to initiate a CREATE request for a Case 1: /oic/d Case 2: /oic/p Case 3: /oic/res Case 4: /oic/rts Case 5: /oic/ifs Case 6: /oic/ad Case 7: /oic/con Case 8: /oic/mon Case 9: /oic/mnt Case 10: /oic/foo (fully defined URI, foo not defined or have any component defined in OIC) |
+	...	|procedure	|3. Reply with CREATE response message to the Client |
+	...	|procedure	|4. Displays the response |
+	...	|post_condition	| |
+	...	|expected|1. The response includes an error and the resource was not created |
+
+	[Tags]	Mandatory	Server	Discovery
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+    @{dut1_resource_types}	Get DUT Info Value	${RESOURCE_TYPE}	${DUT1_ID}	${DISCOVERABLE}=1
+    ${resource_ip}	${resource_port}	${resource_href}	Get IP Port And Uri		${RESOURCE_TYPE}=@{dut1_resource_types}[0]
+    :FOR	${uri}	IN	@{URI_LIST}
+    \	Create Json Representation
+    \	Add Into Json Representation    ${RESOURCE_TYPE}        @{dut1_resource_types}[0]
+    \	Add Into Json Representation    ${HREF}		 ${uri}
+    \	${payload}      Get Json Representation
+    \   ${msgid}    Generate Message Id
+    \   ${token}    Generate Token
+    \	${dut2_response}	Send Put Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	 ${resource_href}		${CONFIRMABLE}	${payload}
+    \	Builtin.sleep	${${DEFAULT_WAIT_TIME}}
+    \	Should Not Be Empty		${dut2_response}
+    \	${dut2_response_code}	Get Response Code	${dut2_response}
+    \	Should Be Equal		${COAP_RESPONSE_CODE_ERROR}		${dut2_response_code}	
+    Release DUT information     ${DUT1_ID}

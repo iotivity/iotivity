@@ -1,0 +1,49 @@
+*** Settings ***
+Documentation	CT1.4.2 Omission of OIC Scheme
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.4.2 Omission of OIC Scheme
+    [Documentation]					
+	...	|author	| |		
+	...	|reviewer| |				
+	...	|since	|2015-05-11 |
+	...	|see	|Section 6.2.1 |
+	...	|objective|Verify the Server (DUT) assumes OIC scheme if it is omitted from URI |
+	...	|target	|Server DUT |
+	...	|test_data	||
+	...	|pre_condition	|Server (DUT) is discovered from the Client (TE) |
+	...	|procedure	|1. Connected / discoverable |
+	...	|procedure	|2. Use the Test Application to initiate a unicast  Retrieve request on the resource whose URI started with :// |
+	...	|procedure	|3. Sends Retrieve response |
+	...	|procedure	|4. Displays the resource which was subject of the discovery |
+	...	|post_condition	| |
+	...	|expected|1.•	The resource is identical |
+	
+	[Tags]	Mandatory	Server	Discovery
+#Pre-Condition
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+    @{dut1_resource_types}	Get DUT Info Value	${RESOURCE_TYPE}	${DUT1_ID}	${DISCOVERABLE}=1
+    :FOR       ${dut1_resource_type}   IN      @{dut1_resource_types}
+    \   ${resource_ip}  ${resource_port}        ${resource_href}        Get IP Port And Uri             ${RESOURCE_TYPE}=${dut1_resource_type}
+    ${msgid}    Generate Message Id
+    ${token}    Generate Token
+    ${dut1_response}                Discover Resource Using Unicast         ${UNICAST}      ${COAP}    ${msgid}    ${token}      ${resource_ip}     ${${resource_port}}      ${OIC_CORE_RESOURCE_DEFAULT_URI}        ${NON_CONFIRMABLE}    
+    Should Not Be Empty             ${dut1_response}
+    ${dut1_response_json}   Get Response Json       ${dut1_response}
+    ${validate_json_result}         Validate JSON Format        ${dut1_response_json}
+    Should Be True          ${validate_json_result}
+    ${dut1_response_code}   Get Response Code       ${dut1_response}
+    Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut1_response_code}
+    ${check_hrf}    Check Value Contains Pattern    ${dut1_response_json}    ${HREF}   ${PATTERN}
+    Should Not Be Empty    ${check_hrf}
+    ${msgid}    Generate Message Id
+    ${token}    Generate Token
+    ${dut2_response}	Send Get Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${check_hrf}	${NON_CONFIRMABLE}
+    Should Not Be Empty		${dut2_response}
+    ${dut2_response_code}	Get Response Code	${dut2_response}
+    Should Be Equal 	${COAP_RESPONSE_CODE_SUCCESS}   ${dut2_response_code}
+

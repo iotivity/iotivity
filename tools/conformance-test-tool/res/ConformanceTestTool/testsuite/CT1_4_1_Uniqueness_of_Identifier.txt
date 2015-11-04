@@ -1,0 +1,49 @@
+*** Settings ***
+Documentation	CT1.4.1 Uniqueness of Identifier
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.4.1 Uniqueness of Identifier
+    [Documentation]					
+	...	|author	| |		
+	...	|reviewer| |				
+	...	|since	|2015-06-18 |
+	...	|see	|Section 6.2, 6.2.1 |
+	...	|objective|Verify the Server (DUT) assigned identifiers are unique within the context or domain of use. And the path part of the URIs start with slash. And if a resource name has /oic that resource is defined in OIC specifications |
+	...	|target	|Server DUT |
+	...	|test_data	||
+	...	|pre_condition	|Server (DUT) is discovered from the Client (TE) |
+	...	|procedure	|1. Connected / discoverable |
+	...	|procedure	|2. Use the Test Application to initiate a unicast  discovery request on /oic/res: |
+	...	|procedure	|3. Sends discovery response |
+	...	|procedure	|4. Displays discovered resources |
+	...	|post_condition	| |
+	...	|expected|1. The URIs of the resources are not the same |
+	...	|expected|2. If a URI is repeated, the corresponding resources are identical |
+	...	|expected|3. Whether there is a URI starting with “://” If so, conduct test CT4.1.3. |
+	...	|expected|4. The path part of all URIs starts with / (slash) [for COAP, / follows the IP_Address:Port portion of the URI] |
+	
+    [Tags]	Mandatory	Server	Discovery
+#Pre-Condition
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+    @{dut1_resource_types}	Get DUT Info Value	${RESOURCE_TYPE}	${DUT1_ID}	${DISCOVERABLE}=1
+    :FOR       ${dut1_resource_type}   IN      @{dut1_resource_types}
+    \   ${resource_ip}  ${resource_port}        ${resource_href}        Get IP Port And Uri             ${RESOURCE_TYPE}=${dut1_resource_type}
+
+#Test-Body
+    ${msgid}    Generate Message Id
+    ${token}    Generate Token
+    ${dut1_response}                Discover Resource Using Unicast         ${UNICAST}      ${COAP}    ${msgid}    ${token}      ${resource_ip}     ${${resource_port}}      ${OIC_CORE_RESOURCE_DEFAULT_URI}        ${NON_CONFIRMABLE}    
+    Should Not Be Empty             ${dut1_response}
+    ${dut1_response_json}   Get Response Json       ${dut1_response}
+    ${validate_json_result}         Validate JSON Format        ${dut1_response_json}
+    Should Be True          ${validate_json_result}
+    ${dut1_response_code}   Get Response Code       ${dut1_response}
+    Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut1_response_code}
+    ${is_identical}          Validate Unique Value By Key        ${dut1_response_json}     ${HREF}
+    Should Not Be True    ${is_identical}
+    ${starts_with_slash}      Check Start With Slash    ${dut1_response_json}     ${HREF}
+    Should Be True          ${starts_with_slash}

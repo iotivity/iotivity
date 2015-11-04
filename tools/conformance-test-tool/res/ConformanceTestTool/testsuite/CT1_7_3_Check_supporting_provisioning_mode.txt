@@ -1,0 +1,67 @@
+*** Settings ***
+Documentation	CT1.7.3 Check supporting provisioning mode
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.7.3 Check supporting provisioning mode
+    [Documentation]					
+	...	|author	| |	
+	...	|reviewer|	|			
+	...	|since	| 2015-10-09 |
+	...	|see	| Security Spec section 7.4 Provisioning |
+	...	|objective	| Verify the Server (DUT) supports the client-directed provisioning mode |
+	...	|objective	| and replies a provisioning status to Client (TE). |
+	...	|target	|S erver DUT |
+	...	|test_data| None |
+	...	|test_configuration | 1. Server (DUT) should be an ‘unowned’ state and support the device provisioning operation mode bit |
+	...	|test_configuration |    as bx0000,0011 (single device has all provisioning services and provisioning service in control of provisioning) |
+	...	|test_configuration | 2. jj)	Client (TE) should support the client -directed provisioning mode. |
+	...	|pre_condition| Any one of three method is successfully finished.  |
+	...	|pre_condition|    Option 1) Just-Works: CT1.7.2.1 is successfully finished.  |
+	...	|pre_condition|    Option 2) Random Pin Based: CT1.7.2.2 is successfully finished. |
+	...	|pre_condition|    Option 3) Manufacturer Certificate Based: CT1.7.2.3 is successfully finished. |
+	...	|procedure| 1. Client uses the Test Application to initiate a GET request to /oic/sec/pstat resource in the Server (DUT). |	
+	...	|procedure| 2. Server Sends response of pstat |
+	...	|post_condition|None |
+	...	|expected| The response should contain “bx0000 0011” as a supported provisioning mode    |
+	...	|expected| in “Sm” property. Server (DUT)’s “/oic/sec/pstat.sm” == “bx0000 0011” |
+
+    [Tags]    Security     Mandatary
+    #Precondition
+    Set Log File Directory	${TESTNAME}
+    ${server_type}	Wait For User Confirmation	Please Select Server Type [1 = Just_Works Server, 2 = Random Pin Server]    
+    
+    Initialize Device Controller	${DEVICE_ID}
+    Change Working Directory	${SECURITY_CLIENT_DIR}
+    Execute Application	${SECURITY_CLIENT_PROCESS_ID}	${SECURITY_CLIENT}
+    ConformanceKeyword.Log to Console	Starting Security Provisioning Client ...
+    Start Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
+    Sleep	5 seconds
+    
+    #Main Body
+    ConformanceKeyword.Log to Console	Discovering Unowned Devices ...
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DISCOVERY_UNOWNED_DEVICE}
+    Sleep	5 seconds
+    ${current_time}	Get Current Date
+    ConformanceKeyword.Log to Console	Transferring Ownership ...
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_OWNER_TRANSFER}
+    Sleep	3 seconds
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DEVICE_SELECTION}
+    
+    Run Keyword if	${server_type} == 2	Take Random Pin From User	${SECURITY_CLIENT_PROCESS_ID}
+    
+    Sleep	5 seconds
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_CLOSE_SECURITY_CLIENT}
+    ${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_PROVISION_URI}	${PROVISION_QUERY_OWNED}
+    ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}	
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_response_code}
+    
+    ${message_id}	Generate Message Id
+	${token}	Generate Token
+    ${dut_get_response}        Send Get Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_PSTAT}	${CONFIRMABLE}
+    Should Not Be Empty             ${dut_get_response}
+    ${dut_get_response_code}   Get Response Code       ${dut_get_response}
+    Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_get_response_code}
+    ${dut_get_response_payload}	Get Response Payload	${dut_get_response}
+    ${sm_property}	Get SM Property From Response	${dut_get_response_payload}
+    Should Contain	${sm_property}	${PROVISIONING_TOOL_DIRECTED_PROVISIONING_MODE}

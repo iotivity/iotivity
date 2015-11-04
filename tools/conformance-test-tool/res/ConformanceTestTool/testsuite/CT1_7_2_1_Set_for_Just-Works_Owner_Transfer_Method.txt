@@ -1,0 +1,45 @@
+*** Settings ***
+Documentation	CT1.7.2.1 Set for Just-Works Owner Transfer Method
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.7.2.1 Set for Just-Works Owner Transfer Method
+    [Documentation]
+	...	|author	| |
+	...	|reviewer|	|
+	...	|since	| 2015-10-09 |
+	...	|see	| Security Spec section 7.3.3 Just-Works Owner Transfer Method |
+	...	|objective	| Verify the Server (DUT) accept the Just-Works OTM if the  Server (DUT) claims it supports Just-Works OTM in CT1.7.1.   |
+	...	|target	| Server DUT |
+	...	|test_data| OxmSel == 0 (”oic.sec.doxm.jw”) |
+	...	|test_configuration| 1. Server (DUT) should be an ‘unowned’ state and support the ‘Just-Works’ OTM |
+	...	|test_configuration| 2. Client (TE) should support ‘Just-Works’ OTM. |
+	...	|pre_condition| CT1.7.1 is successfully finished. |
+	...	|procedure| 1. Use the Test Application to  sends PUT req. to the Server(DUT) to choose “Just-Works” |	
+	...	|procedure| 2. DUT sends reply to PUT request |
+	...	|post_condition|None |
+	...	|expected| 1. Client (TE) get RSP 2.04  |
+	...	|expected| 2. Server’s (DUT) doxm.OxmSel property is 0 (“oic.sec.doxm.jw”). "/oic/sec/doxm.OxmSel "  == 0 ("oic.sec.doxm.jw") |
+
+    [Tags]	Optional Security
+    ${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_PROVISION_URI}	${PROVISION_QUERY_UNOWNED}
+    
+    ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_response_code}
+	${payload}	Get Payload From File	${PAYLOAD_OXMSEL_JUST_WORKS}	${PAYLOAD_FILE_DIR}
+	
+	${message_id}	Generate Message Id
+	${token}	Generate Token
+	${dut_put_response}        Send Put Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_URI}	${CONFIRMABLE}	${payload}	${PAYLOAD_TYPE_SECURITY}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	Should Be Equal	${COAP_RESPONSE_CODE_UPDATED}	${dut_put_response_code}
+	
+	${dut_get_response}        Send Get Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_URI}?${PROVISION_QUERY_UNOWNED}	${CONFIRMABLE}
+	Should Not Be Empty             ${dut_get_response}
+	${dut_get_response_code}   Get Response Code       ${dut_get_response}
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_get_response_code}
+	${dut_get_response_payload}	Get Response Payload	${dut_get_response}
+	${oxmsel_property}	Get OXM Selection From Response	${dut_get_response_payload}
+	Should Contain	${oxmsel_property}	${OXM_JUST_WORKS}
+

@@ -1,0 +1,92 @@
+*** Settings ***
+Documentation	CT1.3.19 No Ack on CON observe notification - Observe mode cancellation
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.3.19 No Ack on CON observe notification - Observe mode cancellation
+    [Documentation]					
+	...	|author	| |		
+	...	|reviewer| |				
+	...	|since	|2015-06-17|
+	...	|see	|Section 11.4 : Notification|
+	...	|objective|Verify that the server (DUT) de-registers client from observer list if client (TE) doesn’t send Ack on the CON observe notifications and when MAX_RETRANSMIT (default 4) is exceeded |
+	...	|target	||
+	...	|test_data|CONFIRMABLE=1 |
+	...	|pre_condition	|Server (DUT) is discoverable from the Client (TE)|
+	...	|pre_condition	|Resource properties and attribute contents are known for verification |
+	...	|pre_condition	|Server (DUT) is in observe mode |
+	...	|procedure	|1. Observe condition satisfied |
+	...	|procedure	|2. Reply with CON RETRIEVE response message to client |
+	...	|procedure	|3. Don’t send Ack back until MAX_TRANSMIT exceeds |
+	...	|procedure	|4. Cancel observation mode |
+	...	|procedure	|5. Observe condition satisfied |
+	...	|post_condition	| |
+	...	|expected|1. Check client does not receive any RETRIEVE Response messages with observe indication |
+	
+    [Tags]	Mandatory	Server    Observe
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+    @{dut1_resource_types}  Get DUT Info Value      ${RESOURCE_TYPE}        ${DUT1_ID}      ${OBSERVABLE}=1&${DISCOVERABLE}=1
+    ${resource_ip}  ${resource_port}        ${resource_href}        Get IP Port And Uri             ${RESOURCE_TYPE}=@{dut1_resource_types}[0]
+    @{dut1_resource_hrefs}       Get DUT Info Value      ${HREF}    ${DUT1_ID}      ${OBSERVABLE}=1&${DISCOVERABLE}=1
+    :FOR        ${resource_href}   IN      @{dut1_resource_hrefs}
+    \   ${msgid1}    Generate Message Id
+    \   ${token1}    Generate Token
+    \	Send Observe Request	${COAP}	${msgid1}	${token1}	${resource_ip}	${${resource_port}}	${resource_href}	${CONFIRMABLE}
+    \   ${length}    Get Length Available Representation To Update    ${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}
+    \   Run Keyword If    ${length} > 0    Set Modified Partial Representation Value Payload       ${DUT1_ID}      ${OBSERVABLE}=1&${HREF}=${resource_href}&${DISCOVERABLE}=1
+    \   ${payload}    Run Keyword If    ${length} > 0    Get Json Representation
+    \   ${msgid2}    Generate Message Id
+    \   ${token2}    Generate Token
+    \   ${dut2_response}    Run Keyword If    ${length} > 0    Send Post Request        ${UNICAST}      ${COAP}    ${msgid2}       ${token2}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
+    \   Run Keyword If    ${length} < 1    Log To Console    ============== User Control -> Change state of resource for notification================
+    \   Builtin.sleep   ${${DEFAULT_WAIT_TIME}}
+    \	${dut2_response}	Get Observe Response	 ${COAP}
+    \	Should Not Be Empty		${dut2_response}
+    \	Cancel Observe Passively	${COAP}
+
+    \   ${msgid3}    Generate Message Id
+    \   ${token3}    Generate Token
+    \   ${dut2_response}    Run Keyword If    ${length} > 0    Send Post Request        ${UNICAST}      ${COAP}    ${msgid3}       ${token3}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
+    \   Run Keyword If    ${length} < 1    Log To Console    ============== User Control -> Change state of resource for notification================
+    \   Builtin.sleep   ${${DEFAULT_WAIT_TIME}}
+
+    \   ${msgid4}    Generate Message Id
+    \   ${token4}    Generate Token
+    \   ${dut2_response}    Run Keyword If    ${length} > 0    Send Post Request        ${UNICAST}      ${COAP}    ${msgid4}       ${token4}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
+    \   Run Keyword If    ${length} < 1    Log To Console    ============== User Control -> Change state of resource for notification================
+    \   Builtin.sleep   ${${DEFAULT_WAIT_TIME}}
+
+    \   ${msgid5}    Generate Message Id
+    \   ${token5}    Generate Token
+    \   ${dut2_response}    Run Keyword If    ${length} > 0    Send Post Request        ${UNICAST}      ${COAP}    ${msgid5}       ${token5}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
+    \   Run Keyword If    ${length} < 1    Log To Console    ============== User Control -> Change state of resource for notification================
+    \   Builtin.sleep   ${${DEFAULT_WAIT_TIME}}
+
+    \   ${msgid6}    Generate Message Id
+    \   ${token6}    Generate Token
+    \   ${dut2_response}    Run Keyword If    ${length} > 0    Send Post Request        ${UNICAST}      ${COAP}    ${msgid6}       ${token6}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
+    \   Run Keyword If    ${length} < 1    Log To Console    ============== User Control -> Change state of resource for notification================
+    \   Builtin.sleep   ${${DEFAULT_WAIT_TIME}}
+
+    \   ${msgid7}    Generate Message Id
+    \   ${token7}    Generate Token
+    \   ${dut2_response}    Run Keyword If    ${length} > 0    Send Post Request        ${UNICAST}      ${COAP}    ${msgid7}       ${token7}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
+    \   Run Keyword If    ${length} < 1    Log To Console    ============== User Control -> Change state of resource for notification================
+    \   Builtin.sleep   ${${DEFAULT_WAIT_TIME}}
+
+
+    \   Clear Notifications     ${COAP}
+
+    \   ${msgid8}    Generate Message Id
+    \   ${token8}    Generate Token
+    \   ${dut2_response}    Run Keyword If    ${length} > 0    Send Post Request        ${UNICAST}      ${COAP}    ${msgid8}       ${token8}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
+    \   Run Keyword If    ${length} < 1    Log To Console    ============== User Control -> Change state of resource for notification================
+    \   Builtin.sleep   ${${DEFAULT_WAIT_TIME}}
+
+    \	${dut2_response}	Get Observe Response	 ${COAP}
+    \	Should Be Empty		${dut2_response}
+    Release DUT information     ${DUT1_ID}
+

@@ -1,0 +1,51 @@
+*** Settings ***
+Documentation	CT1.4.3 Uniqueness of path
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.4.3 Uniqueness of path
+    [Documentation]					
+	...	|author	| |		
+	...	|reviewer| |				
+	...	|since	|2015-05-11 |
+	...	|see	|Section 6.2.1 |
+	...	|objective|Verify the Server (DUT) returns an error if two resources have the same path |
+	...	|target	|Server DUT |
+	...	|test_data	||
+	...	|pre_condition	|Server (DUT) is discovered from the Client (TE) |
+	...	|procedure	|1. Connected / discoverable |
+	...	|procedure	|2. Use the Test Application to initiate a CREATE request for a resources with complete URI; note the URI.|
+	...	|procedure	|3. Reply with CREATE response message to the Client |
+	...	|procedure	|4. Displays the response |
+	...	|procedure	|5. Use the Test Application to initiate a 2nd CREATE request for a resource with complete URI which has the same path as the resource created in step 2. If there is a different network connection available, use that for sending the CREATE request. e.g., If step 2 was via IPv4, use IPv6 |
+	...	|procedure	|6. Reply with CREATE response message to the Client | 
+	...	|procedure	|7. Displays the response |
+	...	|post_condition	| |
+	...	|expected|1. If the response for the 1st CREATE resource was successful, the 2nd CREATE was unsuccessful and error was returned. |
+
+    [Tags]	Mandatory	Server	Discovery
+#Pre-Condition
+    Set Log File Directory	${TESTNAME}
+    ${DUT1_ID} =	Set Variable	Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}
+    @{dut1_resource_types}	Get DUT Info Value	${RESOURCE_TYPE}	${DUT1_ID}	${DISCOVERABLE}=1
+    :FOR       ${dut1_resource_type}   IN      @{dut1_resource_types}
+    \	${resource_ip}	${resource_port}	${resource_href}	Get IP Port And Uri		${RESOURCE_TYPE}=${dut1_resource_type}
+
+#Test-Body
+    \	Create Json Representation
+    \	Add Into Json Representation    ${RESOURCE_TYPE}        ${dut1_resource_type}
+    \	Add Into Json Representation    ${HREF}		 ${resource_href}${CREATED_HREF}
+    \	${payload}      Get Json Representation
+    \   ${msgid}    Generate Message Id
+    \   ${token}    Generate Token
+    \	${dut1_response}        Send Put Request        ${UNICAST}      ${COAP}    ${msgid}    ${token}    ${resource_ip}	  ${${resource_port}}     ${resource_href}        ${CONFIRMABLE}  ${payload}
+    \	Should Not Be Empty             ${dut1_response}
+    \	${dut1_response_code}   Get Response Code       ${dut1_response}
+    \	Should Be Equal 	${COAP_RESPONSE_CODE_CREATED}   ${dut1_response_code}
+    \	${dut2_response}        Send Put Request        ${UNICAST}      ${COAP}    ${msgid}    ${token}    ${resource_ip}	  ${${resource_port}}     ${resource_href}        ${CONFIRMABLE}  ${payload}
+    \	Should Not Be Empty             ${dut2_response}
+    \	${dut2_response_code}   Get Response Code       ${dut2_response}
+    \	Should Be Equal 	${COAP_RESPONSE_CODE_ERROR}   ${dut2_response_code}
+    

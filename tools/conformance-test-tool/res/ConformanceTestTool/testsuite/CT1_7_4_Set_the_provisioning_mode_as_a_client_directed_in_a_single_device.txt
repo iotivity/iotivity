@@ -1,0 +1,70 @@
+*** Settings ***
+Documentation	CT1.7.4 Set the provisioning mode as a client-directed in a single device
+Resource	OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+CT1.7.4 Set the provisioning mode as a client-directed in a single device
+    [Documentation]					
+	...	|author	| |	
+	...	|reviewer|	|			
+	...	|since	|2015-10-09 |
+	...	|see	|Security Spec Section 7.3 Device Owner Transfer Methods |
+	...	|objective	|Verify the Server (DUT) accept an operation mode of provisioning from provisioning tool  |
+	...	|target	|Server DUT |
+	...	|test_data| “/oic/sec/pstat.om” == “bx0000 0011” |
+	...	|test_configuration| 1. Server (DUT) should be an ‘unowned’ state and support device provisioning operation mode bit as bx0000,0011 |
+	...	|test_configuration|    (single device has all provisioning services and provisioning service in control of provisioning) |
+	...	|test_configuration| 2. Client (TE) should support the client-directed in a single device mode|
+	...	|pre_condition| CT1.7.3 is successfully finished.  |
+	...	|procedure| 1. Use the Test Application to initiates a PUT request to /oic/sec/pstat resource in the Server (DUT) to select a client-directed in a single device mode |	
+	...	|procedure| 2. Server sends response of PUT req. to pstat |
+	...	|post_condition|None |
+	...	|expected| 1. Client (TE) get RSP 2.04    |
+	...	|expected| 2. Server’s (DUT) pstat.Om property is “bx0000 0011”. “/oic/sec/pstat.om” == “bx0000 0011” |
+
+    [Tags]	Mandatory	Security
+    #Precondition
+    Set Log File Directory	${TESTNAME}
+    ${server_type}	Wait For User Confirmation	Please Select Server Type [1 = Just_Works Server, 2 = Random Pin Server]    
+    
+    Initialize Device Controller	${DEVICE_ID}
+    Change Working Directory	${SECURITY_CLIENT_DIR}
+    Execute Application	${SECURITY_CLIENT_PROCESS_ID}	${SECURITY_CLIENT}
+    ConformanceKeyword.Log to Console	Starting Security Provisioning Client ...
+    Start Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
+    Sleep	5 seconds
+    
+    #Main Body
+    ConformanceKeyword.Log to Console	Discovering Unowned Devices ...
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DISCOVERY_UNOWNED_DEVICE}
+    Sleep	5 seconds
+    ${current_time}	Get Current Date
+    ConformanceKeyword.Log to Console	Transferring Ownership ...
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_OWNER_TRANSFER}
+    Sleep	3 seconds
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DEVICE_SELECTION}
+    
+    Run Keyword if	${server_type} == 2	Take Random Pin From User	${SECURITY_CLIENT_PROCESS_ID}
+    
+    Sleep	5 seconds
+    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_CLOSE_SECURITY_CLIENT}
+    ${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_PROVISION_URI}	${PROVISION_QUERY_OWNED}
+    ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}	
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_response_code}
+    
+	${payload}	Get Payload From File	${PAYLOAD_PSTAT_PROVISIONING_MODE}	${PAYLOAD_FILE_DIR}
+	
+    ${message_id}	Generate Message Id
+    ${token}	Generate Token
+    ${dut_put_response}        Send Put Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_PSTAT}	${CONFIRMABLE}	${payload}	${PAYLOAD_TYPE_SECURITY}
+    Should Not Be Empty             ${dut_put_response}
+    ${dut_put_response_code}   Get Response Code       ${dut_put_response}
+    Should Be Equal         ${COAP_RESPONSE_CODE_UPDATED}   ${dut_put_response_code}
+    
+    ${dut_get_response}        Send Get Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_PSTAT}	${CONFIRMABLE}
+    Should Not Be Empty             ${dut_get_response}
+    ${dut_get_response_code}   Get Response Code       ${dut_get_response}
+    Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_get_response_code}
+    ${dut_get_response_payload}	Get Response Payload	${dut_get_response}
+    ${om_property}	Get OM Property From Response	${dut_get_response_payload}
+    Should Contain	${om_property}	${PROVISIONING_TOOL_DIRECTED_PROVISIONING_MODE}
