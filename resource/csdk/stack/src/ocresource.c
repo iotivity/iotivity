@@ -734,7 +734,8 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         {
             SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
         }
-        else if(bMulticast == false)
+        else if(bMulticast == false && (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
+               (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
         {
             OC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d)  \
                 discovery request", discoveryResult, virtualUriInRequest);
