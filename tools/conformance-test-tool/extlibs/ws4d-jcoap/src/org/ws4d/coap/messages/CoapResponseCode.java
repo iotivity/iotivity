@@ -6,29 +6,29 @@ package org.ws4d.coap.messages;
 
 public enum CoapResponseCode {
 	Ok_200(64),
-	Created_201(65), 
-	Deleted_202(66), 
-	Valid_203(67), 
-	Changed_204(68), 
+	Created_201(65),
+	Deleted_202(66),
+	Valid_203(67),
+	Changed_204(68),
 	Content_205(69),
 	Continue_231(95),
-	Bad_Request_400(128), 
-	Unauthorized_401(129), 
+	Bad_Request_400(128),
+	Unauthorized_401(129),
 	Bad_Option_402(130),
-	Forbidden_403(131), 
-	Not_Found_404(132), 
+	Forbidden_403(131),
+	Not_Found_404(132),
 	Method_Not_Allowed_405(133),
 	Not_Acceptable(134),
-	Request_Entity_Incomplete(136),
-	Precondition_Failed_412(140), 
-	Request_Entity_To_Large_413(141), 
-	Unsupported_Media_Type_415(143), 
-	Internal_Server_Error_500(160), 
+	Request_Entity_Incomplete_408(136),
+	Precondition_Failed_412(140),
+	Request_Entity_To_Large_413(141),
+	Unsupported_Media_Type_415(143),
+	Internal_Server_Error_500(160),
 	Not_Implemented_501(161),
-	Bad_Gateway_502(162), 
-	Service_Unavailable_503(163), 
-	Gateway_Timeout_504(164), 
-	Proxying_Not_Supported_505(165), 
+	Bad_Gateway_502(162),
+	Service_Unavailable_503(163),
+	Gateway_Timeout_504(164),
+	Proxying_Not_Supported_505(165),
 	UNKNOWN(-1);
 
 	private int code;
@@ -58,7 +58,7 @@ public enum CoapResponseCode {
 		case 132: return Not_Found_404;
 		case 133: return Method_Not_Allowed_405;
 		case 134: return Not_Acceptable;
-		case 136: return Request_Entity_Incomplete;
+		case 136: return Request_Entity_Incomplete_408;
 		case 140: return Precondition_Failed_412;
 		case 141: return Request_Entity_To_Large_413;
 		case 143: return Unsupported_Media_Type_415;
@@ -110,6 +110,8 @@ public enum CoapResponseCode {
 			return "Not_Found_404";
 		case Method_Not_Allowed_405:
 			return "Method_Not_Allowed_405";
+		case Request_Entity_Incomplete_408:
+			return "Request_Entity_Incomplete_408";
 		case Precondition_Failed_412:
 			return "Precondition_Failed_412";
 		case Request_Entity_To_Large_413:

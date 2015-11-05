@@ -15,8 +15,8 @@
 
 /* WS4D Java CoAP Implementation
  * (c) 2011 WS4D.org
- * 
- * written by Sebastian Unger 
+ *
+ * written by Sebastian Unger
  */
 
 package org.ws4d.coap.messages;
@@ -73,12 +73,10 @@ public abstract class AbstractCoapMessage implements CoapMessage {
     int                         retransmissionCounter = 0;
 
     protected void serialize(byte[] bytes, int length, int offset) {
-
         /* check length to avoid buffer overflow exceptions */
         this.version = 1;
         this.packetType = (CoapPacketType
                 .getPacketType((bytes[offset + 0] & 0x30) >> 4));
-        // int optionCount = bytes[offset + 0] & 0x0F;
         this.tokenLength = bytes[offset + 0] & 0x0F;
         this.messageCodeValue = (bytes[offset + 1] & 0xFF);
         this.messageId = ((bytes[offset + 2] << 8) & 0xFF00)
@@ -99,8 +97,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         /* get and check payload length */
         payloadLength = length - HEADER_LENGTH
                 - options.getDeserializedLength() - tokenLength;
-        //Antu
-        System.out.println("\npayloadLength: " + payloadLength + "\nlength"  + length  + "\nHEADER_LENGTH: " + HEADER_LENGTH  + "\n options.getDeserializedLength(): " +  options.getDeserializedLength() + "\ntokenLength : " + tokenLength);
         if (payloadLength < 0) {
             throw new IllegalStateException(
                     "Invalid CoAP Message (payload length negative)");
@@ -115,8 +111,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         /* copy payload */
         int payloadOffset = offset + HEADER_LENGTH + tokenLength
                 + options.getDeserializedLength() + payloadMarker;
-        // System.out.println("Payload length: "+payloadLength + ", & Offset: "+
-        // payloadOffset);
         payload = new byte[payloadLength];
         for (int i = 0; i < payloadLength; i++) {
             payload[i] = bytes[i + payloadOffset];
@@ -197,7 +191,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
     }
 
     public String getPayloadString() {
-
         if (payloadLength == 0)
             return "";
 
@@ -262,9 +255,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         if (this.payloadLength > 0) {
             /* Use the payload marker */
             serializedPacket[offset] = (byte) 0xFF;
-
             offset++;
-
             /* copy payload to the final array */
             for (int i = 0; i < this.payloadLength; i++) {
                 serializedPacket[i + offset] = payload[i];
@@ -272,6 +263,10 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         }
 
         return serializedPacket;
+    }
+
+    public void setPacketType(CoapPacketType packetType) {
+        this.packetType = packetType;
     }
 
     public void setPayload(byte[] payload) {
@@ -330,11 +325,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 
     @Override
     public byte[] getToken() {
-        /*
-         * CoapHeaderOption option =
-         * options.getOption(CoapHeaderOptionType.Token); if (option == null){
-         * return null; } return option.getOptionData();
-         */
         return token;
     }
 
@@ -354,7 +344,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         if (token.length < 1 || token.length > 8) {
             throw new IllegalArgumentException("Invalid Token Length");
         }
-        // options.addOption(CoapHeaderOptionType.Token, token);
         tokenLength = token.length;
         this.token = token;
     }
@@ -417,7 +406,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
             logger.warn("invalid observe option length, return null");
             return null;
         }
-        
+
         //Reorder bytes
         for (int i = 0; i < data.length / 2; i++)
         {
@@ -426,10 +415,9 @@ public abstract class AbstractCoapMessage implements CoapMessage {
           data[(data.length - i - 1)] = temp;
         }
 
-        
         return (int) AbstractCoapMessage.coapUint2Long(data);
     }
-    
+
     public void setObserveOption(byte[] oicObserve)
     {
         for (int i = 0; i < oicObserve.length / 2; i++)
@@ -596,7 +584,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         UNKNOWN(-1), If_Match(1), Uri_Host(3), Etag(4), If_None_Match(5), Observe(
                 6), Uri_Port(7), Location_Path(8), Uri_Path(11), Content_Type(
                 12), Max_Age(14), Uri_Query(15), Accept(17), Location_Query(20), Block2(
-                23), Block1(27), Proxy_Uri(35);
+                23), Block1(27), Size2(28), Proxy_Uri(35), Size1(60);
 
         int value;
 
@@ -637,13 +625,17 @@ public abstract class AbstractCoapMessage implements CoapMessage {
                     return Block2;
                 case 27:
                     return Block1;
+                case 28:
+                    return Size2;
                 case 35:
                     return Proxy_Uri;
+                case 60:
+                	return Size1;
                 default:
                     return UNKNOWN;
             }
         }
-        
+
         public String getString(){
             String optionName = "";
             switch(value)
@@ -651,12 +643,10 @@ public abstract class AbstractCoapMessage implements CoapMessage {
                 case 11:
                     optionName = "Uri-Path";
                     break;
-                    
                 case 15:
                     optionName = "Uri-Query";
                     break;
             }
-            
             return optionName;
         }
 
@@ -712,53 +702,46 @@ public abstract class AbstractCoapMessage implements CoapMessage {
             /* parse option type */
 
             optionTypeValue = ((bytes[offset] & 0xF0) >> 4);
-            // logger.warn("Last Option Number: "+ lastOptionNumber);
-            // logger.warn("Option Number: "+ optionTypeValue);
-            System.out.println("Last Option Number: "+ lastOptionNumber);
-            System.out.println("Option Number: "+ optionTypeValue);
             if (optionTypeValue == 13 ) {
             	optionTypeValue = optionTypeValue + (bytes[offset + 1] & 0xFF) + lastOptionNumber;
                 shortLength = bytes[offset] & 0x0F;
                 longLength = 0;
                 headerLength = 2;
-                
+
                 /* copy value */
                 optionData = new byte[shortLength + longLength];
                 for (int i = 0; i < shortLength + longLength; i++) {
                     optionData[i] = bytes[i + headerLength + offset];
-                    System.out.println("Option Data : " + optionData[i]);
                 }
             	deserializedLength += headerLength + shortLength + longLength;
             	optionType = CoapHeaderOptionType.parse(optionTypeValue);
             	return;
             }
             if (optionTypeValue == 14 ) {
-            	optionTypeValue = optionTypeValue + (bytes[offset + 1] & 0xFF) * 16 + (bytes[offset + 2] & 0xFF) + lastOptionNumber;
+                optionTypeValue = optionTypeValue + (bytes[offset + 1] & 0xFF) * 16 + (bytes[offset + 2] & 0xFF) + lastOptionNumber;
                 shortLength = bytes[offset] & 0x0F;
                 longLength = 0;
                 headerLength = 3;
-                
+
                 /* copy value */
                 optionData = new byte[shortLength + longLength];
                 for (int i = 0; i < shortLength + longLength; i++) {
                     optionData[i] = bytes[i + headerLength + offset];
-                    System.out.println("Option Data : " + optionData[i]);
                 }
             	deserializedLength += headerLength + shortLength + longLength;
             	optionType = CoapHeaderOptionType.parse(optionTypeValue);
             	return;
-            }            
+            }
             optionTypeValue = optionTypeValue + lastOptionNumber;
             if (optionTypeValue == 28 ) {
                 shortLength = bytes[offset] & 0x0F;
                 longLength = 0;
                 headerLength = 1;
-                
+
                 /* copy value */
                 optionData = new byte[shortLength + longLength];
                 for (int i = 0; i < shortLength + longLength; i++) {
                     optionData[i] = bytes[i + headerLength + offset];
-                    System.out.println("Option Data : " + optionData[i]);
                 }
             	deserializedLength += headerLength + shortLength + longLength;
             	optionType = CoapHeaderOptionType.parse(optionTypeValue);
@@ -766,8 +749,6 @@ public abstract class AbstractCoapMessage implements CoapMessage {
             }
             optionType = CoapHeaderOptionType.parse(optionTypeValue);
             if (optionType == CoapHeaderOptionType.UNKNOWN) {
-                System.out.println("Inside unknown header option : " + optionTypeValue + "(" + optionType + ")");
-                //TANVIR
                 //Temporary code to ignore unknown option
                 if(optionTypeValue > 12)
                 {
@@ -778,11 +759,10 @@ public abstract class AbstractCoapMessage implements CoapMessage {
                     optionData = null;
                     return;
                 }
-                
+
                 if (optionTypeValue % 14 == 0) {
                     /* no-op: no operation for deltas > 14 */
                 } else {
-                    
 
                     /* TODO: implement check if it is a critical option */
                     throw new IllegalArgumentException("Unknown header option");
@@ -884,30 +864,18 @@ public abstract class AbstractCoapMessage implements CoapMessage {
             deserializedLength = 0;
             int lastOptionNumber = 0;
             int optionOffset = offset;
-            
-//            System.out.println("From AbstractCOAPMessage");
+
             while ((optionOffset < messageLength)
                     && ((bytes[optionOffset] & 0xFF) != 0xFF)) {
-                // System.out.println("Found Header Option");
                 CoapHeaderOption option = new CoapHeaderOption(bytes,
                         optionOffset, lastOptionNumber);
                 lastOptionNumber = option.getOptionTypeValue();
-//                System.out.println("\noption.getDeserializedLength(): " + option.getDeserializedLength() );
                 deserializedLength += option.getDeserializedLength();
-//                System.out.println("\ndeserializedLength: " + deserializedLength );
                 optionOffset += option.getDeserializedLength();
                 
                 if(option.getOptionData() != null)              //TANVIR: added for ignoring unknown option
                     addOption(option);
             }
-            /*
-             * for (int i = 0; i < optionCount; i++) { CoapHeaderOption option =
-             * new CoapHeaderOption(bytes, optionOffset, lastOptionNumber);
-             * lastOptionNumber = option.getOptionTypeValue();
-             * deserializedLength += option.getDeserializedLength();
-             * optionOffset += option.getDeserializedLength();
-             * addOption(option); }
-             */
         }
 
         public CoapHeaderOptions() {

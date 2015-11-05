@@ -29,7 +29,7 @@ public interface CoapMessage {
     public static final int MAX_RETRANSMIT = 4;
     /* TODO: what is the right value? */
     public static final int ACK_RST_RETRANS_TIMEOUT_MS = 120000;
-    
+
     /* returns the value of the internal message code
      * in case of an error this function returns -1 */
     public int getMessageCodeValue();
@@ -37,7 +37,7 @@ public interface CoapMessage {
     public int getMessageID();
 
     public void setMessageID(int msgID);
-    
+
     public String getSourceIP();
 
     public void setSourceIP(String sourceIP);
@@ -49,11 +49,11 @@ public interface CoapMessage {
     public String getDestinationIP();
 
     public void setDestinationIP(String destinationIP);
-    
+
     public int getDestinationPort();
 
     public void setDestinationPort(int destinationPort);
-    
+
     public byte[] serialize();
 
     public void incRetransCounterAndTimeout();
@@ -61,8 +61,10 @@ public interface CoapMessage {
     public CoapPacketType getPacketType();
 
     public byte[] getPayload();
-    
+
     public String getPayloadString();
+
+    public void setPacketType(CoapPacketType ack);
 
     public void setPayload(byte[] payload);
 
@@ -71,37 +73,33 @@ public interface CoapMessage {
     public void setPayload(String payload);
 
     public int getPayloadLength();
-    
+
     public void setContentType(CoapMediaType mediaType);
-    
+
     public CoapMediaType getContentType();
-    
+
     public byte[] getToken();
-    
+
     public void setToken(byte[] token);
-    
+
     public String getTokenString();
-    
-//    public URI getRequestUri();
-//
-//    public void setRequestUri(URI uri); //TODO:allow this method only for Clients, Define Token Type
-    
+
     CoapBlockOption getBlock1();
-    
+
     void setBlock1(CoapBlockOption blockOption);
-    
+
     CoapBlockOption getBlock2();
-    
+
     void setBlock2(CoapBlockOption blockOption);
 
     public Integer getObserveOption();
 
     public void setObserveOption(int sequenceNumber);
-    
+
     public void setObserveOption(byte[] oicObserve);
 
     public void removeOption(CoapHeaderOptionType optionType); //TODO: could this compromise the internal state?
-    
+
     public String toString();
 
     public CoapChannel getChannel();
@@ -113,17 +111,15 @@ public interface CoapMessage {
     public boolean maxRetransReached();
 
     public boolean isReliable();
-    
+
     public boolean isRequest();
-    
+
     public boolean isResponse();
-    
+
     public boolean isEmpty();
 
     /* unique by remote address, remote port, local port and message id */
     public int hashCode();
+    
     public boolean equals(Object obj);
-
-
-
 }

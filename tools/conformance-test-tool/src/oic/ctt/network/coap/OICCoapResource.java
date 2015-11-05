@@ -66,7 +66,7 @@ public class OICCoapResource {
 
     /**
      * OIC CoAP Resource constructor
-     * 
+     *
      * @param uri
      *            URI of the resource
      */
@@ -76,7 +76,7 @@ public class OICCoapResource {
 
     /**
      * OIC CoAP Resource constructor
-     * 
+     *
      * @param uri
      *            URI of the resource
      * @param resourceType
@@ -97,7 +97,7 @@ public class OICCoapResource {
 
     /**
      * Checks if the observer has already subscribed the resource
-     * 
+     *
      * @param token
      *            Exchange token identifying the observer
      * @return True if observer already exists, False otherwise
@@ -111,7 +111,7 @@ public class OICCoapResource {
 
     /**
      * Adds a client observer to the resource (Subscribe)
-     * 
+     *
      * @param token
      *            Exchange token from the observe request
      * @param oicObserver
@@ -123,7 +123,7 @@ public class OICCoapResource {
 
     /**
      * Gets the observer from the list of observers
-     * 
+     *
      * @param token
      *            Exchange token that identifies the observer
      * @return OICObserver object
@@ -134,17 +134,15 @@ public class OICCoapResource {
 
     /**
      * Removes a client observer from this resource (Unsubscribe)
-     * 
+     *
      * @param token
      */
     public void removeObserver(String token) {
         mOicObserverMap.remove(token);
     }
 
-    private void notifyObservers() {
-
+    private void notifyObservers(byte[] payload) {
         for (Entry<String, OICObserver> entry : mOicObserverMap.entrySet()) {
-
             OICObserver observer = entry.getValue();
             String token = OICHelper.bytesToHex(observer.getCoapRequest()
                     .getToken());
@@ -165,12 +163,13 @@ public class OICCoapResource {
                     .getCoapServerChannel();
 
             CoapResponse response = notificationChannel.createNotification(
-                    observer.getCoapRequest(), CoapResponseCode.Changed_204,
+                    observer.getCoapRequest(), CoapResponseCode.Content_205,
                     observer.getSeqNumber());
             response.setObserveOption(OICHelper.hexStringToByteArray(String
                     .format("%08d", observer.getSeqNumber())));
 
             response.setToken(observer.getCoapRequest().getToken());
+            response.setPayload(payload);
 
             OICCTFlags.addToken(response.getMessageID(), token);
             notificationChannel.sendNotification(response);
@@ -179,7 +178,7 @@ public class OICCoapResource {
 
     /**
      * Check if a RST (Reset) message was received or not
-     * 
+     *
      * @return True if a RST have arrived, False otherwise
      */
     public boolean hasReset() {
@@ -188,7 +187,7 @@ public class OICCoapResource {
 
     /**
      * Sets the Reset Flag to mark that a RST (Reset) message was received
-     * 
+     *
      * @param resetReceived
      *            True to set and False to unset
      */
@@ -198,7 +197,7 @@ public class OICCoapResource {
 
     /**
      * Get the token for which a RST was received
-     * 
+     *
      * @return A string containing the RST token
      */
     public String getResetToken() {
@@ -207,7 +206,7 @@ public class OICCoapResource {
 
     /**
      * Gets the URI of this resource
-     * 
+     *
      * @return String containing the URI
      */
     public String getResourceUri() {
@@ -216,7 +215,7 @@ public class OICCoapResource {
 
     /**
      * Gets the OIC resource type value
-     * 
+     *
      * @return String containing the resource type
      */
     public String getResourceType() {
@@ -225,7 +224,7 @@ public class OICCoapResource {
 
     /**
      * Adds an OIC resource interface to this resource
-     * 
+     *
      * @param resourceInterface
      *            A OIC resource interface (String)
      */
@@ -235,7 +234,7 @@ public class OICCoapResource {
 
     /**
      * Adds an OIC resource attribute to this resource
-     * 
+     *
      * @param attribute
      *            key
      * @param attribute
@@ -251,7 +250,7 @@ public class OICCoapResource {
 
     /**
      * Gets a list of OIC resource interfaces supported by this resource
-     * 
+     *
      * @return Strings containing a resource interface value
      */
     public String getResourceInterfaces() {
@@ -260,7 +259,7 @@ public class OICCoapResource {
 
     /**
      * Checks whether this resource is obserable or not
-     * 
+     *
      * @return true if observable, false otherwise
      */
     public boolean isObservable() {
@@ -269,7 +268,7 @@ public class OICCoapResource {
 
     /**
      * Adds OICRequestData to a storage list in the resource
-     * 
+     *
      * @param oicRequestData
      *            OICRequestData type object
      */
@@ -286,7 +285,7 @@ public class OICCoapResource {
 
     /**
      * Gets all the request messages stored in local buffer
-     * 
+     *
      * @return An ArrayList containing OICRequest objects
      */
     public ArrayList<OICRequestData> getRequestList() {
@@ -295,7 +294,7 @@ public class OICCoapResource {
 
     /**
      * Gets the representation of this resource
-     * 
+     *
      * @return String containing the json representation
      */
     public byte[] getResourceRepresentation() {
@@ -322,7 +321,7 @@ public class OICCoapResource {
 
     /**
      * Update the resource with given json payload, also notifies the observers
-     * 
+     *
      * @param payloadString
      *            json representation in string
      */
@@ -347,9 +346,36 @@ public class OICCoapResource {
         }
 
         if (mObservable)
-            notifyObservers();
+            notifyObservers(getResourceRepresentation());
     }
 
+    /**
+     * Update the resource by adding 5 to each values and notifies available observers
+     *
+     */
+    public void updateResourceRespresentation() {
+        mlogger.info("UpdateResource by 5");
+        mlogger.debug("before update: " + new String (getResourceRepresentation()));
+
+        for (Entry<Object, Object> resAtb : mOicResourceAttributes.entrySet()) {
+            if (resAtb.getValue() instanceof Integer || resAtb.getValue() instanceof Double){
+                Integer val = (Integer)resAtb.getValue() + 5;
+                mOicResourceAttributes.put(resAtb.getKey(), val);
+            }
+        }
+        mlogger.debug("after update: " + new String (getResourceRepresentation()));
+        if (mObservable)
+            notifyObservers(getResourceRepresentation());
+    }
+
+    /**
+     * Updates complete representation of the resouce. All previous values are
+     * removed and new values are set according to the given payload, also
+     * notifies the observers.
+     *
+     * @param payloadString
+     *            json representation in string
+     */
     public void updateCompleteResourceRespresentation(String payloadString) {
         mlogger.info("PUT Request for UpdateResource: " + payloadString);
         String substr = payloadString.substring(1, payloadString.length() - 1);
@@ -370,7 +396,7 @@ public class OICCoapResource {
         }
 
         if (mObservable)
-            notifyObservers();
+            notifyObservers(getResourceRepresentation());
     }
 
     private ArrayList<String> getAsList(String string) {
