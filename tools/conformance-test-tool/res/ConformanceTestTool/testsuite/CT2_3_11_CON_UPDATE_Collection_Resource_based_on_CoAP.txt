@@ -32,11 +32,11 @@ CT2_3_11_CON_UPDATE_Collection_Resource_based_on_CoAP
     #Pre-Condition
     ####################################################
     Start Server
-    ConformanceKeyword.Log To Console    \n-----------------Send Multicast Discovery Request from DUT App-----------------
+    Print Message    \n-----------------Send Multicast Discovery Request from DUT App-----------------
     Get Discovery Requests
     #Test-Body
     #####################################################
-    ConformanceKeyword.Log To Console    \n-----------------Send CON Partial UPDATE Request from DUT App-----------------
+    Print Message    \n-----------------Send CON Partial UPDATE Request from DUT App-----------------
     ${request}    Get Request
     ${request_code}    Get Request Code    ${request}
     Should Be Equal    ${request_code}    ${POST}

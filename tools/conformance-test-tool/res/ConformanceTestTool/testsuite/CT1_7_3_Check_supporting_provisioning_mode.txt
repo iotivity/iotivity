@@ -29,8 +29,9 @@ CT1.7.3 Check supporting provisioning mode
     [Tags]    Security     Mandatary
     #Precondition
     Set Log File Directory	${TESTNAME}
-    ${server_type}	Wait For User Confirmation	Please Select Server Type [1 = Just_Works Server, 2 = Random Pin Server]    
+    ${server_type}	Wait For User Confirmation	Please Select Server Type	${JUST_WORKS_SERVER} ${RANDOM_PIN_SERVER}
     
+    ${SECURITY_CLIENT_DIR}	Get Security Client Simulator Directory
     Initialize Device Controller	${DEVICE_ID}
     Change Working Directory	${SECURITY_CLIENT_DIR}
     Execute Application	${SECURITY_CLIENT_PROCESS_ID}	${SECURITY_CLIENT}
@@ -48,7 +49,7 @@ CT1.7.3 Check supporting provisioning mode
     Sleep	3 seconds
     Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DEVICE_SELECTION}
     
-    Run Keyword if	${server_type} == 2	Take Random Pin From User	${SECURITY_CLIENT_PROCESS_ID}
+    Run Keyword if	'${server_type}' == '${RANDOM_PIN_SERVER}'	Take Random Pin From User	${SECURITY_CLIENT_PROCESS_ID}
     
     Sleep	5 seconds
     Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_CLOSE_SECURITY_CLIENT}

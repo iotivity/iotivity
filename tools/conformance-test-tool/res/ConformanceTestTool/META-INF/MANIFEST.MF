@@ -1,0 +1,30 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: OIC Conformance Test Tool
+Bundle-SymbolicName: oic.ctt.ui;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: oic.ctt.ui.Activator
+Eclipse-BundleShape: dir
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.jface.text,
+ org.eclipse.ui.editors,
+ org.eclipse.ui.console,
+ org.eclipse.ui.ide,
+ com.nitorcreations.robotframework.eclipseide,
+ org.eclipse.emf.common.ui,
+ org.eclipse.emf.common,
+ org.eclipse.core.resources,
+ org.eclipse.ui.forms,
+ org.eclipse.e4.ui.model.workbench,
+ org.eclipse.e4.ui.workbench,
+ org.eclipse.linuxtools.tmf.ui,
+ org.eclipse.linuxtools.tmf.core,
+ org.eclipse.e4.core.contexts
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ClassPath: .,
+ libs/commons-io-2.4.jar,
+ libs/ddmlib.jar,
+ libs/sqlite-jdbc-3.8.6.jar,
+ libs/commons-exec-1.3.jar
+ 

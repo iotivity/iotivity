@@ -5,7 +5,7 @@ Resource          OIC_ConformanceTest_Setting.txt
 *** Test Cases ***
 CT2.3.10 Partial NON UPDATE Message based on CoAP
     [Documentation]					
-	...	|author	| |	
+	...	|author	|	|	
 	...	|reviewer|	|			
 	...	|since	|2015-06-16|
 	...	|see	|Section 8.3: UPDATE|
@@ -30,11 +30,11 @@ CT2.3.10 Partial NON UPDATE Message based on CoAP
     #Pre-Condition
     ####################################################
     Start Server
-    ConformanceKeyword.Log To Console    \n-----------------Send Multicast Discovery Request from NON DUT App-----------------
+    Print Message    \n-----------------Send Multicast Discovery Request from NON DUT App-----------------
     Get Discovery Requests
     #Test-Body
     #####################################################
-    ConformanceKeyword.Log To Console    \n-----------------Send Partial NON UPDATE Message based on CoAP from NON DUT App-----------------
+    Print Message    \n-----------------Send Partial NON UPDATE Message based on CoAP from NON DUT App-----------------
     ${request}    Get Request
     ${request_code}    Get Request Code    ${request}
     Should Be Equal    ${request_code}    ${POST}

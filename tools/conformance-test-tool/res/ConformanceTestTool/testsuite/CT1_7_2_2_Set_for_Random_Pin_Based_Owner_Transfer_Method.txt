@@ -24,6 +24,7 @@ CT1.7.2.2 Set for Random Pin Based Owner Transfer Method
 
     [Tags]	Optional    Security
     
+    ${SECURITY_CLIENT_DIR}	Get Security Client Simulator Directory
     Initialize Device Controller	${DEVICE_ID}
     Change Working Directory	${SECURITY_CLIENT_DIR}
     Execute Application	${SECURITY_CLIENT_PROCESS_ID}	${SECURITY_CLIENT}

@@ -30,11 +30,11 @@ CT2_3_15_CON_RETRIEVE_Message_with_observe_indication_based_on_CoAP_Observe_mode
     #Pre-Condition
     ####################################################
     Start Server
-    ConformanceKeyword.Log To Console    \n-----------------Send Multicast Discovery Request from DUT App-----------------
+    Print Message    \n-----------------Send Multicast Discovery Request from DUT App-----------------
     Get Discovery Requests
     #Test-Body
     #####################################################
-    ConformanceKeyword.Log To Console    \n-----------------Send CON RETRIEVE Request with observe indication from DUT App-----------------
+    Print Message    \n-----------------Send CON RETRIEVE Request with observe indication from DUT App-----------------
     ${request}    Get Request
     ${request_code}    Get Request Code    ${request}
     Should Be Equal    ${request_code}    ${GET}

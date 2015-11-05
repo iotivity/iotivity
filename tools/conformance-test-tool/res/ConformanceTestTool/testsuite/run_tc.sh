@@ -19,8 +19,8 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+export CLI_ENABLED=true
 echo "Executing Testcase: " $1
-cp ../libs/DUTDescriptor.json ../libs/logger.config ./ -f
 
 echo_time() {
     date +"%T*"
@@ -28,4 +28,4 @@ echo_time() {
 
 ts=$(echo_time)
 
-CLASSPATH=$CLASSPATH:null:../libs/* JYTHONPATH=../libs/:../ jybot --listener oic.ctt.devicecontroller.LogManager -d "../testreport/"$ts -b debugLog.log -C auto $1 
+CLASSPATH=$CLASSPATH:null:libs/*:plugins/oic.ctt.ui_1.0.0/libs/* JYTHONPATH=libs/:plugins/oic.ctt.ui_1.0.0/libs/:./:testsuite/ jybot -d "testreport/"$ts -b debugLog.log -C auto $1 

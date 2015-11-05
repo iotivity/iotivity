@@ -33,6 +33,7 @@ CT1.7.5.1 Initiate DTLS handshake with a proper cipher suite for the Just-Works 
 
     [Tags]	Optional    Security
     
+    ${SECURITY_CLIENT_DIR}	Get Security Client Simulator Directory
     Initialize Device Controller	${DEVICE_ID}
     Change Working Directory	${SECURITY_CLIENT_DIR}
     Execute Application	${SECURITY_CLIENT_PROCESS_ID}	${SECURITY_CLIENT}

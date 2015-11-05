@@ -30,6 +30,7 @@ bold=`tput bold`
 rm -rf bin
 
 RunCommand () {
+	echo $green''$2' Started'$reset
 	if eval $1; then
 		echo $green''$2' SUCCESSFUL'$reset
 	else
@@ -48,12 +49,20 @@ cd res/ConformanceSimulator
 RunCommand "scons" "Conformance Simulator Build" 
 cd ../..
 
-#rm -rf res/ConformanceTestTool/ConformanceTool/workspace
+
+# Preparing Conformance Tool
+echo ''
+echo 'Preparing Conformance Tool. It will take 2/3 minute. Please Wait ...'
+echo ''
+
 mkdir -p bin/linux/ConformanceTestTool
+mkdir -p bin/linux/ConformanceTestTool/libs
+mkdir -p bin/linux/ConformanceTestTool/testsuite
 mkdir -p bin/linux/ConformanceSimulator
-RunCommand "cp -r res/ConformanceTestTool/* bin/linux/ConformanceTestTool" "Required Files Installation"
+RunCommand "cp -r res/ConformanceTestTool/bin/ConformanceTestTool/* res/ConformanceTestTool/provisioning res/ConformanceTestTool/testsuite bin/linux/ConformanceTestTool" "Required Files Installation"
 RunCommand "cp -r res/ConformanceSimulator/bin/linux/* bin/linux/ConformanceSimulator" "Conformance Simulator Installation"
-RunCommand "cp -r libs/*.jar bin/linux/ConformanceTestTool/libs/" "Dependent Library Installation"
+RunCommand "cp -r res/ConformanceTestTool/libs/* bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/" "Dependent Jars Installation"
+
 
 # Buiding JCOAP
 cd extlibs/ws4d-jcoap
@@ -62,17 +71,13 @@ RunCommand "gradle install" "JCOAP Build"
 # Buiding Conformance Lib
 cd ../../
 RunCommand "gradle install" "Conformance Lib Build"
-RunCommand "cp libs/jcoap.jar bin/linux/ConformanceTestTool/libs" "JCOAP Installation"
+RunCommand "cp libs/*.jar bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/" "JCOAP Installation"
+RunCommand "cp bin/linux/ConformanceTestTool/libs/IoTConformanceTestLib.jar bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/IoTConformanceTestLib.jar" "Conformance Lib Installation"
 
-# Preparing Conformance Tool
-echo ''
-echo 'Preparing Conformance Tool. It will take 2/3 minute. Please Wait ...'
-echo ''
-
-
-#RunCommand "cp -r res/* bin/linux" "Conformance Tool Installation"
-#RunCommand "cp res/ConformanceTestTool/ConformanceTool/plugins/com.sec.swc.toi.ui_1.0.0/libs/logger.config bin/linux/ConformanceTestTool/ConformanceTool" "Logger Config Installation Installation"
-#RunCommand "cp res/ConformanceTestTool/ConformanceTool/plugins/com.sec.swc.toi.ui_1.0.0/libs/DUTDescriptor.json bin/linux/ConformanceTestTool/ConformanceTool" "JSON Descriptor Installation"
+RunCommand "mv bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/logger.config bin/linux/ConformanceTestTool/" "Logger Config Installation"
+RunCommand "mv bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/DUTDescriptor.json bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/payload.json bin/linux/ConformanceTestTool/libs/" "Required JSON Files Installation"
+RunCommand "mv bin/linux/ConformanceTestTool/testsuite/run_tc.sh bin/linux/ConformanceTestTool/" "Command Line Interface Installation"
+RunCommand "rm -rf res/ConformanceTestTool/bin/oic res/ConformanceTestTool/bin/repository" "Unnecessary File Remove"
 
 echo $green""
 echo " ============================================"

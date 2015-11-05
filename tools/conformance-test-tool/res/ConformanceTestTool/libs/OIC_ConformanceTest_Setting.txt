@@ -69,6 +69,12 @@ Check In List
         \        : IF   ${dut1_info_href}       IS      ${resource_href}
         \        \        ${does_contain}               Get True
         Should Be True	${does_contatin}
+        
+Get Security Client Simulator Directory
+		[Arguments]
+		${is_cli}	Is Cli Enabled
+		${client_dir}	Set Variable If	${is_cli}	${SECURITY_CLIENT_DIR_CLI}	${SECURITY_CLIENT_DIR_GUI}
+		[Return]	${client_dir}
 
 Get IP Port And Uri
 	[Arguments]		${query}
@@ -105,7 +111,7 @@ Take Random Pin From User
         Input Command To Application	${PROCESS_ID}	${RANDOM_PIN}
 
 *** Variables ***
-${DUT1_INFO_PATH}       DUTDescriptor.json
+${DUT1_INFO_PATH}       libs/DUTDescriptor.json
 ${DUT_TYPE_SERVER}      SERVER
 ${DUT_TYPE_CLIENT}      CLIENT
 ${DUT_TYPE_BOTH}        BOTH
@@ -184,6 +190,8 @@ ${REGION_VALUE} 	Chittagong, Bangladesh
 ${PATTERN}      ://
 
 #Provision
+${JUST_WORKS_SERVER}	just_works_server
+${RANDOM_PIN_SERVER}	random_pin_server
 ${OXM_JUST_WORKS}	0
 ${RANDOM_PIN_BASED_OTM}    1
 ${MANUFACTURER_CERTIFICATE_BASED_OTM}	2
@@ -193,7 +201,8 @@ ${PROVISIONING_TOOL_DIRECTED_PROVISIONING_MODE}	3
 ${PROVISION_QUERY_UNOWNED}	Owned=FALSE
 ${PROVISION_QUERY_OWNED}	Owned=TRUE
 
-${SECURITY_CLIENT_DIR}        ../provisioning
+${SECURITY_CLIENT_DIR_GUI}        provisioning
+${SECURITY_CLIENT_DIR_CLI}        provisioning
 ${SECURITY_CLIENT}    stdbuf -oL ./simulator_runner.sh 1
 ${SECURED_CLIENT}    stdbuf -oL ./simulator_runner.sh 2
 ${SECURITY_CLIENT_PROCESS_ID}    Security_Client_Process_Id
@@ -218,7 +227,7 @@ ${INPUT_CLOSE_SECURITY_CLIENT}	11
 ${PAYLOAD_OXMSEL_JUST_WORKS}	payload_oxmsel
 ${PAYLOAD_PSTAT_PROVISIONING_MODE}	payload_pstat
 ${PAYLOAD_BLOCKWISE}	payload_blockwise
-${PAYLOAD_FILE_DIR}	./payload.json
+${PAYLOAD_FILE_DIR}	libs/payload.json
 ${FIND_AND_GET}    TE -------->   Discovering Secured Resource and Sending Get Request   --------> DUT
 ${PROVISION_CLIENT_DI}    YWRtaW5EZXZpY2VVVUlEMA==
 

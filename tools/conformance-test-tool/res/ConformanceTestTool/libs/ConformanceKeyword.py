@@ -126,6 +126,7 @@ class ConformanceKeyword(object):
         self.oic_resource_light.addResourceAttribute("manufacturer","Korea")
         self.request = OICRequestData()
         self.rep_key_list = ArrayList()
+        self.ui = UserInterface()
 
     # Documentation for a function
     # @brief print log to console
@@ -134,6 +135,16 @@ class ConformanceKeyword(object):
     def log_to_console(self, arg):
         "Print log at robotframework console"
         logger.info('\n%s' % arg, also_console=True)
+        
+    # Documentation for a function
+    # @brief Returns true if ran from GUI, else false
+    # @return boolean
+    def is_cli_enabled(self):
+        "Returns true if ran from GUI, else false"
+        if os.environ.get('CLI_ENABLED') == "true":
+            return True
+        else:
+            return False
 
     # Documentation for a function
     # @brief print send log to console
@@ -1382,16 +1393,28 @@ class ConformanceKeyword(object):
     	ownr = self.get_rep_value_from_response("ownr", response)
     	return ownr
       	
-    def wait_for_user_confirmation(self, msg):
+    def wait_for_user_confirmation(self, msg, option_list=None):
     	"Waiting for User Input"
-    	sentence = ['\n<------------ ', msg,  ' and Press Enter',' ------------>\n']
-    	self.log_to_console("".join(sentence))
-        return raw_input("")
+        sentence = ['\n<------------ ', msg]
+    	if (option_list != None):
+            sentence += [' [', option_list, ']']
+            option_list = option_list.split(" ")
+    	else:
+    		option_list = []
+        sentence += [' and Press Enter',' ------------>\n']
+        if self.is_cli_enabled():
+            self.log_to_console("".join(sentence))
+            return raw_input()
+        else:	
+    	    return self.ui.showInputDialog(msg, option_list)
         
     def print_message(self, msg):
         "Waiting for User Input"
         sentence = ['\n<------------ ', msg, ' ------------>\n']
-        self.log_to_console("".join(sentence))
+        if self.is_cli_enabled():
+            self.log_to_console("".join(sentence))
+        else:
+            self.ui.showMessageDialog(msg)
 
     def get_reset_token(self):
         return self.oic_resource_light.getResetToken()

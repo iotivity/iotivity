@@ -5,7 +5,7 @@ Resource          OIC_ConformanceTest_Setting.txt
 *** Test Cases ***
 CT2.1.2 CoAP Based Unicast Resource Discovery
     [Documentation]					
-	...	|author	| |	
+	...	|author	|	|	
 	...	|reviewer|	|			
 	...	|since	|2015-06-16|
 	...	|see	|Section 11.2 : CoAP based endpoint discovery|
@@ -32,9 +32,9 @@ CT2.1.2 CoAP Based Unicast Resource Discovery
     [Tags]    Mandatory    Client    Discovery
     Start Server
     Clear Request List
-    ConformanceKeyword.Log To Console    \n-----------------Send Multicast discovery request from DUT App-----------------
+    Print Message    \n-----------------Send Multicast discovery request from DUT App-----------------
     Get Discovery Requests
-    ConformanceKeyword.Log To Console    \n-----------------Send Unicast discovery request with no query from DUT App-----------------
+    Print Message    \n-----------------Send Unicast discovery request with no query from DUT App-----------------
     Clear Request List
     ${request}    Get Discovery Requests
 

@@ -5,7 +5,7 @@ Resource          OIC_ConformanceTest_Setting.txt
 *** Test Cases ***
 CT2.3.4 NON CREATE subordinate resource based on CoAP
     [Documentation]					
-	...	|author	| |	
+	...	|author	|	|	
 	...	|reviewer|	|			
 	...	|since	|2015-06-16|
 	...	|see	|Section 8.1: CREATE; Section 12.2.2|
@@ -32,11 +32,11 @@ CT2.3.4 NON CREATE subordinate resource based on CoAP
     #Pre-Condition
     ####################################################
     Start Server
-    ConformanceKeyword.Log To Console    \n-----------------Send Multicast Discovery Request from DUT App-----------------
+    Print Message    \n-----------------Send Multicast Discovery Request from DUT App-----------------
     Get Discovery Requests
     #Test-Body
     #####################################################
-    ConformanceKeyword.Log To Console    \n-----------------Send NON CREATE subordinate resource based on CoAP from DUT App-----------------
+    Print Message    \n-----------------Send NON CREATE subordinate resource based on CoAP from DUT App-----------------
     ${request}    Get Request
     ${request_code}    Get Request Code    ${request}
     Should Be Equal    ${request_code}    ${POST}

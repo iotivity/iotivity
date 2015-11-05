@@ -23,24 +23,24 @@ CT2_3_22_RESET_on_NON_observe_notification_Observe_mode_cancellation
     [Tags]    Mandatory    Client    Reset    Non    Observe    Cancelation
     #Pre-Condition
     ####################################################
-    ConformanceKeyword.Log To Console    "Start NON DUT Client App..."
+    Print Message    "Start NON DUT Client App..."
     Start Server
-    ConformanceKeyword.Log To Console    \n-----------------Send Multicast Discovery Request from NON DUT App-----------------
+    Print Message    \n-----------------Send Multicast Discovery Request from NON DUT App-----------------
     Get Discovery Requests
     #Test-Body
     #####################################################
-    ConformanceKeyword.Log To Console    \n-----------------Send Observe Resource Request from NON DUT App-----------------
+    Print Message    \n-----------------Send Observe Resource Request from NON DUT App-----------------
     ${request}    Get Request
     Should Not Be Empty		${request}
     ${observe_token}		Get Request Token		${request}
-    ConformanceKeyword.Log To Console    \n-----------------Send POST (Partial Update) Request from NON DUT App-----------------
+    Print Message    \n-----------------Send POST (Partial Update) Request from NON DUT App-----------------
     Get Request
     Clear Reset State
-    ConformanceKeyword.Log To Console    \n-----------------Send Cancel Observe Resource Request from NON DUT App-----------------
+    Print Message    \n-----------------Send Cancel Observe Resource Request from NON DUT App-----------------
     BuiltIn.Sleep	10s
-    ConformanceKeyword.Log To Console    \n-----------------Send POST (Partial Update) Request from NON DUT App-----------------
+    Print Message    \n-----------------Send POST (Partial Update) Request from NON DUT App-----------------
     Get Request
-    ConformanceKeyword.Log To Console    \n-----------------Send POST (Partial Update) Request Again from NON DUT App-----------------
+    Print Message    \n-----------------Send POST (Partial Update) Request Again from NON DUT App-----------------
     Get Request
     ${is_reset}		Get Reset State
     Should Be True		${is_reset}

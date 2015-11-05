@@ -5,7 +5,7 @@ Resource          OIC_ConformanceTest_Setting.txt
 *** Test Cases ***
 CT2.3.5 CON RETRIEVE Message based on CoAP
     [Documentation]					
-	...	|author	| |	
+	...	|author	|	|	
 	...	|reviewer|	|			
 	...	|since	|2015-06-16|
 	...	|see	|Section 8.2: RETRIEVE|
@@ -30,12 +30,12 @@ CT2.3.5 CON RETRIEVE Message based on CoAP
     #Pre-Condition
     ####################################################
     Start Server
-    ConformanceKeyword.Log To Console    \n-----------------Send Multicast Discovery Request from DUT App-----------------
+    Print Message    \n-----------------Send Multicast Discovery Request from DUT App-----------------
     Get Discovery Requests
     #Test-Body
     #####################################################
-    ConformanceKeyword.Log To Console    "Send CON RETRIEVE Message based on CoAP..."
-    ConformanceKeyword.Log To Console    \n-----------------Send CON RETRIEVE Message based on CoAP from DUT App-----------------
+    Print Message    "Send CON RETRIEVE Message based on CoAP..."
+    Print Message    \n-----------------Send CON RETRIEVE Message based on CoAP from DUT App-----------------
     ${request}    Get Request
     ${request_code}    Get Request Code    ${request}
     Should Be Equal    ${request_code}    ${GET}

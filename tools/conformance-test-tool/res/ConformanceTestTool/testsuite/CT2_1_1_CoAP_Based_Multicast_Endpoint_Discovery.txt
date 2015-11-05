@@ -5,7 +5,7 @@ Resource          OIC_ConformanceTest_Setting.txt
 *** Test Cases ***
 CT2.1.1 CoAP Based Multicast Endpoint Discovery
     [Documentation]					
-	...	|author	| |	
+	...	|author	|	|	
 	...	|reviewer|	|			
 	...	|since	|2015-06-16|
 	...	|see	|Section 11.2 : CoAP based endpoint discovery|
@@ -32,7 +32,7 @@ CT2.1.1 CoAP Based Multicast Endpoint Discovery
     [Tags]    Mandatory    Client    Discovery
     Start Server
     Clear Request List
-    ConformanceKeyword.Log To Console    \n-----------------Send Multicast discovery request with no query from DUT App-----------------
+    Print Message    \n-----------------Send Multicast discovery request with no query from DUT App-----------------
     ${request}    Get Discovery Requests
 
     ${request_code}       Get Request Code       ${request}

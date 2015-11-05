@@ -29,12 +29,12 @@ CT2_3_13_CON_DELETE_Message_based_on_CoAP
     #Pre-Condition
     ####################################################
     Start Server
-    ConformanceKeyword.Log To Console    \n-----------------Send Multicast Discovery Request from DUT App-----------------
+    Print Message    \n-----------------Send Multicast Discovery Request from DUT App-----------------
     Get Discovery Requests
     #Test-Body
     #####################################################
-    ConformanceKeyword.Log To Console    "Send CON DELETE Request..."
-    ConformanceKeyword.Log To Console    \n-----------------Send CON DELETE Request from DUT App-----------------
+    Print Message    "Send CON DELETE Request..."
+    Print Message    \n-----------------Send CON DELETE Request from DUT App-----------------
     ${request}    Get Request
     ${request_code}    Get Request Code    ${request}
     Should Be Equal    ${request_code}    ${DELETE}

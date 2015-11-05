@@ -29,6 +29,7 @@ CT1.7.8 Access policy enforcement when the Server (DUT) doesn't have ACL
 #    ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}	
 #	Should Be True	${COAP_RESPONSE_CODE_SUCCESS} == ${dut_response_code} or ${COAP_RESPONSE_CODE_VALID} == ${dut_response_code}
 	
+	${SECURITY_CLIENT_DIR}	Get Security Client Simulator Directory
 	Initialize Device Controller	${DEVICE_ID}
     Change Working Directory	${SECURITY_CLIENT_DIR}
     ConformanceKeyword.Log to Console	Starting Secured Provisioning Client ...
