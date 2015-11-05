@@ -335,6 +335,7 @@ void CALEClientTerminate()
     CALEClientSetSendFinishFlag(false);
 
     CALEClientTerminateGattMutexVariables();
+    CALEClientDestroyJniInterface();
 
     ca_cond_free(g_deviceDescCond);
     ca_cond_free(g_threadCond);
@@ -346,6 +347,77 @@ void CALEClientTerminate()
     {
         (*g_jvm)->DetachCurrentThread(g_jvm);
     }
+}
+
+CAResult_t CALEClientDestroyJniInterface()
+{
+    OIC_LOG(DEBUG, TAG, "CALEClientDestroyJniInterface");
+
+    if (!g_jvm)
+    {
+        OIC_LOG(ERROR, TAG, "g_jvm is null");
+        return CA_STATUS_FAILED;
+    }
+
+    bool isAttached = false;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
+    if (JNI_OK != res)
+    {
+        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if (JNI_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
+            return CA_STATUS_FAILED;
+        }
+        isAttached = true;
+    }
+
+    jclass jni_LeInterface = (*env)->FindClass(env, "org/iotivity/ca/CaLeClientInterface");
+    if (!jni_LeInterface)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get CaLeClientInterface class");
+        goto error_exit;
+    }
+
+    jmethodID jni_InterfaceDestroyMethod = (*env)->GetStaticMethodID(env, jni_LeInterface,
+                                                                     "destroyLeInterface",
+                                                                     "()V");
+    if (!jni_InterfaceDestroyMethod)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get CaLeClientInterface destroy method");
+        goto error_exit;
+    }
+
+    (*env)->CallStaticVoidMethod(env, jni_LeInterface, jni_InterfaceDestroyMethod);
+
+    if ((*env)->ExceptionCheck(env))
+    {
+        OIC_LOG(ERROR, TAG, "destroyLeInterface has failed");
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        goto error_exit;
+    }
+
+    OIC_LOG(DEBUG, TAG, "Destroy instance for CaLeClientInterface");
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
+    return CA_STATUS_OK;
+
+error_exit:
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
+    return CA_STATUS_FAILED;
 }
 
 void CALEClientSendFinish(JNIEnv *env, jobject gatt)
