@@ -1,0 +1,61 @@
+{
+    "di": "0685B960-736F-46F7-BEC0-9E6CBD61ADC2",
+    "oc": [
+        {
+            "href": "/device/light-1",
+            "rt": ["core.light"],
+            "if": "oic.if.baseline",
+            "dis": "1",
+            "obs": "1",
+            "rep": [
+		{"key":"power","type":"bool","testdata":true,"accessmode":"R"},
+                {"key":"intensity","type":"int","testdata":1,"accessmode":"RW"},
+                {"key":"manufacturer","type":"string","testdata":"samsung","accessmode":"RW"},
+                {"key":"region","type":"string","testdata":"Bangladesh","accessmode":"RW"}
+            ],
+            "dutType": "SERVER"
+        },
+        {
+            "href": "/device/fan-1",
+            "rt": "core.fan",
+            "if": "oic.if.baseline",
+            "dis": "1",
+            "obs": "0",
+            "rep": [
+                {"key":"power","type":"bool","testdata":true,"accessmode":"RW"},
+                {"key":"intensity","type":"int","testdata":1,"accessmode":"RW"},
+                {"key":"manufacturer","type":"string","testdata":"samsung","accessmode":"RW"},
+                {"key":"region","type":"string","testdata":"Bangladesh","accessmode":"RW"}
+            ],
+            "dutType": "SERVER"
+        },
+        {
+            "href": "/device/fan-invisible",
+            "rt": "core.fan",
+            "if": "oic.if.baseline",
+            "dis": "0",
+            "obs": "0",
+            "rep": [
+                {"key":"power","type":"bool","testdata":true,"accessmode":"RW"},
+                {"key":"intensity","type":"int","testdata":1,"accessmode":"RW"},
+                {"key":"manufacturer","type":"string","testdata":"samsung","accessmode":"RW"},
+                {"key":"region","type":"string","testdata":"Bangladesh","accessmode":"RW"}
+            ],
+            "dutType": "SERVER"
+        },
+        {
+            "href": "/device/light-invisible",
+            "rt": "core.light",
+            "if": "oic.if.baseline",
+            "dis": "0",
+            "obs": "0",
+            "rep": [
+                {"key":"power","type":"bool","testdata":true,"accessmode":"RW"},
+                {"key":"intensity","type":"int","testdata":1,"accessmode":"RW"},
+                {"key":"manufacturer","type":"string","testdata":"samsung","accessmode":"RW"},
+                {"key":"region","type":"string","testdata":"Bangladesh","accessmode":"RW"}
+            ],
+            "dutType": "SERVER"
+        }
+    ]
+}

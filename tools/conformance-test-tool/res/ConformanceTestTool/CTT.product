@@ -8,10 +8,9 @@
       <text>
          OIC Conformance Test Tool
 
-Version: 1.0.0
-Build id: 20151028
+Version: 0.8.0
 
-(c) Copyright SQE Lab., 2015.  All rights reserved.
+(c) Copyright OIC/IoTivity, 2015.  All rights reserved.
 
 This product includes Robot Framework
 http://robotframework.org/
@@ -47,7 +46,6 @@ http://robotframework.org/
 
    <vm>
    </vm>
-
 
    <plugins>
       <plugin id="com.google.guava"/>
