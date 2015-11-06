@@ -286,7 +286,7 @@ OCStackResult JniOcResource::observe(JNIEnv* env, ObserveType observeType,
 
 OCStackResult JniOcResource::cancelObserve(JNIEnv* env)
 {
-    this->m_onObserveManager.removeAllListeners(env);
+    //this->m_onObserveManager.removeAllListeners(env);
     return m_sharedResource->cancelObserve();
 }
 
@@ -294,7 +294,7 @@ OCStackResult JniOcResource::cancelObserve(JNIEnv* env, QualityOfService qos)
 {
     //TODO confirm behavior
     //add removal of java listeners by qos
-    this->m_onObserveManager.removeAllListeners(env);
+    //this->m_onObserveManager.removeAllListeners(env);
     return m_sharedResource->cancelObserve(qos);
 }
 
