@@ -31,7 +31,8 @@ std::string resourceType = "oic.r.notify";
 std::string resourceInterface = "oic.if.";
 std::string notificationSender;
 std::string space;
-std::vector<std::pair<int, int>> notificationList;
+std::vector<std::pair<int, std::pair<std::string,int>>> notificationList;
+#define notify_ttl 20
 
 NotificationProducer notificationProducer(resourceUri, resourceType, resourceInterface);
 
@@ -73,21 +74,35 @@ void displayNotificationList()
     {
         std::cout << "=========Notification List============" << std::endl;
         std::cout << i + 1 << " Notification Id : " << notificationList[i].first << std::endl;
-        std::cout << "  Notification Read : " << notificationList[i].second << std::endl;
+        std::cout << "  Notification Read : " << notificationList[i].second.second << std::endl;
         std::cout << "===============================" << std::endl;
     }
 }
 
-void notificationIdListener(int notificationId)
+void displayNotificationObjectMenu()
 {
+    std::cout << "=========Notification Object List==========" << std::endl;
+    std::cout << "1. Text " << std::endl;
+    std::cout << "2. Image " << std::endl;
+    std::cout << "3. Video " << std::endl;
+    std::cout << "=================================" << std::endl;
+}
+
+void notificationIdListener(int notificationId, std::string hostAddressValue)
+{
+
     for (unsigned int i = 0; i < notificationList.size(); i++)
     {
         if (notificationList[i].first == notificationId)
         {
-            notificationList[i].second = 1;
+            if(notificationList[i].second.first != hostAddressValue)
+            {
+                notificationList[i].second.second++;
+            }
         }
     }
     displayNotificationList();
+
 }
 
 void startNotificationProducer(std::string notificationSender)
@@ -97,95 +112,94 @@ void startNotificationProducer(std::string notificationSender)
 
 void sendNotification()
 {
+    int userInput;
     NotificationObject *notificationObjectPtr = new NotificationObject();
-    std::string notificationObjectType;
     std::string notificationMessageType;
     std::string notificationMessage;
     std::string notificationIconUrl;
     std::string notificationVideoUrl;
 
+    std::string notificationTime = notificationObjectPtr->mNotificationTime;
+    int notificationTtl = notify_ttl;
+    int notificationId = notificationObjectPtr->mNotificationId;
+
     NotificationObjectType nText = NotificationObjectType::Text;
     NotificationObjectType nImage = NotificationObjectType::Image;
     NotificationObjectType nVideo = NotificationObjectType::Video;
 
-    std::cout << "Enter the type of object you want to create (text, image, video)" << std::endl;
-    std::cin >> notificationObjectType;
-
-    ///TODO: Message Type attribute is to be handled
-    //std::cout << "Enter the type of message (Information, Warning, Emergency)" << std::endl;
-    //std::cin >> notificationMessageType;
+    std::cout << "Enter the type of object you want to create : " << std::endl;
+    displayNotificationObjectMenu();
+    userInput = processUserInput();
 
     std::getline(std::cin, space);
 
-    std::string notificationTime = notificationObjectPtr->mNotificationTime;
-    int notificationTtl = 9;
-    int notificationId = notificationObjectPtr->mNotificationId;
-
-    if (notificationObjectType == "text")
+    switch (userInput)
     {
-        std::cout << "Enter the message you want to send" << std::endl;
-        std::getline(std::cin, notificationMessage);
+        case 1:
+            {
+                std::cout << "Enter the message you want to send" << std::endl;
+                std::getline(std::cin, notificationMessage);
 
-        TextNotification textNotificationObject;
+                TextNotification textNotificationObject;
 
-        textNotificationObject.setTextAttributes(notificationMessage, nText ,
-                ///TODO: Message Type attribute is to be handled
-                //notificationMessageType,
-                notificationTime, notificationSender,
-                notificationId,
-                notificationTtl);
+                textNotificationObject.setTextAttributes(notificationMessage, nText ,
+                        notificationTime, notificationSender,
+                        notificationId,
+                        notificationTtl);
 
-        notificationObjectPtr = &textNotificationObject;
-        notificationList.push_back(std::make_pair(notificationId, 0));
+                notificationObjectPtr = &textNotificationObject;
+                notificationList.push_back(std::make_pair(notificationId, std::make_pair(" ",0)));
 
-        notificationProducer.sendNotification(nText, notificationObjectPtr);
+                notificationProducer.sendNotification(nText, notificationObjectPtr);
+                break;
+            }
 
-    }
+        case 2 :
+            {
+                std::cout << "Enter the message you want to send" << std::endl;
+                std::getline(std::cin, notificationMessage);
 
-    if (notificationObjectType == "image")
-    {
-        std::cout << "Enter the message you want to send" << std::endl;
-        std::getline(std::cin, notificationMessage);
+                std::cout << "Enter the icon url you want to send" << std::endl;
+                std::cin >> notificationIconUrl;
 
-        std::cout << "Enter the icon url you want to send" << std::endl;
-        std::cin >> notificationIconUrl;
+                ImageNotification imageNotificationObject;
 
-        ImageNotification imageNotificationObject;
+                imageNotificationObject.setImageAttributes(notificationIconUrl, notificationMessage,
+                        nImage,
+                        notificationTime, notificationSender,
+                        notificationId,
+                        notificationTtl);
 
-        imageNotificationObject.setImageAttributes(notificationIconUrl, notificationMessage,
-                nImage,
-                ///TODO: Message Type attribute is to be handled
-                //notificationMessageType ,
-                notificationTime,
-                notificationSender,
-                notificationId,
-                notificationTtl);
+                notificationObjectPtr = &imageNotificationObject;
+                notificationList.push_back(std::make_pair(notificationId, std::make_pair(" ",0)));
 
-        notificationObjectPtr = &imageNotificationObject;
-        notificationList.push_back(std::make_pair(notificationId, 0));
+                notificationProducer.sendNotification(nImage, notificationObjectPtr);
+                break;
+            }
 
-        notificationProducer.sendNotification(nImage, notificationObjectPtr);
+        case 3 :
+            {
+                std::cout << "Enter the video url you want to send" << std::endl;
+                std::cin >> notificationVideoUrl;
 
-    }
+                VideoNotification videoNotificationObject;
 
-    if (notificationObjectType == "video")
-    {
-        std::cout << "Enter the video url you want to send" << std::endl;
-        std::cin >> notificationVideoUrl;
+                videoNotificationObject.setVideoAttributes(notificationVideoUrl, nVideo,
+                        notificationTime, notificationSender,
+                        notificationId,
+                        notificationTtl);
 
-        VideoNotification videoNotificationObject;
+                notificationObjectPtr = &videoNotificationObject;
 
-        videoNotificationObject.setVideoAttributes(notificationVideoUrl, nVideo,
-                ///TODO: Message Type attribute is to be handled
-                //notificationMessageType,
-                notificationTime, notificationSender,
-                notificationId,
-                notificationTtl);
+                notificationList.push_back(std::make_pair(notificationId, std::make_pair(" ",0)));
 
-        notificationObjectPtr = &videoNotificationObject;
-        notificationList.push_back(std::make_pair(notificationId, 0));
+                notificationProducer.sendNotification(nVideo, notificationObjectPtr);
+                break;
+            }
 
-        notificationProducer.sendNotification(nVideo, notificationObjectPtr);
+        default :
+            std::cout << "Invalid input, please try again" << std::endl;
+            break;
     }
 
 }

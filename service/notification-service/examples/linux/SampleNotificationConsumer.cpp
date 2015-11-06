@@ -35,6 +35,7 @@ constexpr int INCORRECT_INPUT = 100;
 
 std::shared_ptr<NotificationConsumer> selectedResource;
 std::vector<std::shared_ptr<NotificationConsumer>> notificationResourceList;
+std::vector<int> notificationList;
 std::vector<std::string> DeviceList;
 
 enum Menu
@@ -104,13 +105,36 @@ void discoverResource()
             &onResourceDiscovered);
 }
 
-void notificationAcknowledgement(NotificationObject *m_notificationObjectPtr)
+int checkNotificationList(NotificationObject *m_notificationObjectPtr)
 {
-    selectedResource->sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId);
+    for(unsigned int i=0;i<notificationList.size();i++)
+    {
+        if(m_notificationObjectPtr->mNotificationId == notificationList[i])
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void sendNotificationAcknowledgement(int notificationId, std::string hostAddressValue)
+{
+    selectedResource->sendAcknowledgement(notificationId, hostAddressValue);
 }
 
 void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
 {
+    if(m_notificationObjectPtr == NULL)
+    {
+        std::cout << "ERROR: notification object pointer is NULL" << std::endl;
+        return;
+    }
+
+    if(checkNotificationList(m_notificationObjectPtr))
+    {
+        return;
+    }
+
     std::cout << "           onResourceUpdated callback.........." << std::endl;
 
     if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Text)
@@ -133,6 +157,10 @@ void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
         std::cout << "ID                  : " << textNotificationPtr->mNotificationId <<
                   std::endl;
         std::cout << "==========================================" << std::endl;
+
+        notificationList.push_back(textNotificationPtr->mNotificationId);
+        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
+                        selectedResource->getAddress());
     }
 
     if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Image)
@@ -158,6 +186,10 @@ void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
         std::cout << "ID                  : " << imageNotificationPtr->mNotificationId <<
                   std::endl;
         std::cout << "==========================================" << std::endl;
+
+        notificationList.push_back(imageNotificationPtr->mNotificationId);
+        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
+                        selectedResource->getAddress());
     }
 
     if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Video)
@@ -181,9 +213,11 @@ void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
         std::cout << "ID                  : " << videoNotificationPtr->mNotificationId <<
                   std::endl;
         std::cout << "==========================================" << std::endl;
-    }
 
-    notificationAcknowledgement(m_notificationObjectPtr);
+        notificationList.push_back(videoNotificationPtr->mNotificationId);
+        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
+                        selectedResource->getAddress());
+    }
 }
 
 void startSubscribeNotifications()

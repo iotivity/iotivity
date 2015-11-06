@@ -40,11 +40,6 @@ namespace OIC
             Video
         };
 
-        enum class NotificationMessageType
-        {
-            Information, Emergency, Warning
-        };
-
         /**
          * This class is used to declare a basic NotificationObject
          * which is inherited by TextNotification , ImageNotification and
@@ -59,11 +54,19 @@ namespace OIC
         {
             public:
 
+                /** It is used to define the type of notification object to be created. */
                 NotificationObjectType mNotificationObjectType;
-                NotificationMessageType mNotificationMessageType;
+
+                /** It is used to define the timestamp at which the notification was created. */
                 std::string mNotificationTime;
+
+                /** It is used to define the sender of the notification. */
                 std::string mNotificationSender;
+
+                /** It is used to define a unique Id for the notification. */
                 int mNotificationId;
+
+                /** It is used to define the ttl of the notification after which it will expire. */
                 int mNotificationTtl;
 
                 NotificationObject();
@@ -83,12 +86,10 @@ namespace OIC
 
                 std::string mNotificationMessage;
 
-                void setTextAttributes(const std::string &nNotificationMessage,
-                                       NotificationObjectType &nNotificationObjectType,
-                                       ///TODO: Message Type attribute is to be handled
-                                       //NotificationMessageType &nNotificationMessageType,
-                                       const std::string &nNotificationTime,
-                                       const std::string &nNotificationSender,
+                void setTextAttributes(const std::string& nNotificationMessage,
+                                       NotificationObjectType& nNotificationObjectType,
+                                       const std::string& nNotificationTime,
+                                       const std::string& nNotificationSender,
                                        int nNotificationId,
                                        int nNotificationTtl);
         };
@@ -107,13 +108,11 @@ namespace OIC
                 std::string mNotificationIconUrl;
                 std::string mNotificationMessage;
 
-                void setImageAttributes(const std::string &nNotificationIconUrl,
+                void setImageAttributes(const std::string& nNotificationIconUrl,
                                         const std::string nNotificationMessage,
-                                        NotificationObjectType &nNotificationObjectType,
-                                        ///TODO: Message Type attribute is to be handled
-                                        // NotificationMessageType &nNotificationMessageType,
-                                        const std::string &nNotificationTime,
-                                        const std::string &nNotificationSender,
+                                        NotificationObjectType& nNotificationObjectType,
+                                        const std::string& nNotificationTime,
+                                        const std::string& nNotificationSender,
                                         int nNotificationId,
                                         int nNotificationTtl);
         };
@@ -130,12 +129,10 @@ namespace OIC
 
                 std::string mNotificationVideoUrl;
 
-                void setVideoAttributes(const std::string &nNotificationVideoUrl,
-                                        NotificationObjectType &nNotificationObjectType,
-                                        ///TODO: Message Type attribute is to be handled
-                                        // NotificationMessageType &nNotificationMessageType,
-                                        const std::string &nNotificationTime,
-                                        const std::string &nNotificationSender,
+                void setVideoAttributes(const std::string& nNotificationVideoUrl,
+                                        NotificationObjectType& nNotificationObjectType,
+                                        const std::string& nNotificationTime,
+                                        const std::string& nNotificationSender,
                                         int nNotificationId,
                                         int nNotificationTtl);
         };

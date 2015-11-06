@@ -32,27 +32,30 @@
 
 #include "NotificationObject.h"
 
+#define TimeStamp "TIME"
+#define Sender "SENDER"
+#define Ttl "TTL"
+#define Id "ID"
+#define Message "MESSAGE"
+#define IconUrl "ICONURL"
+#define VideoUrl "VIDEOURL"
+#define ObjectType "OBJECTTYPE"
+#define notification_payload "notification-payload"
+#define DeviceName "DeviceName"
+#define notification_id "notificationId"
+#define hostAddress "hostAddress"
+#define notification_ack "notificationAck"
+
 namespace OIC
 {
     namespace Service
     {
-        const std::string OBJECTTYPE = "object";
-        const std::string ICONURL = "icon";
-        const std::string VIDEOURL = "video";
-        const std::string MESSAGE = "message";
-        const std::string MESSAGETYPE = "type";
-        const std::string TIME = "time";
-        const std::string SENDER = "sender";
-        const std::string TTL = "ttl";
-        const std::string ID = "id";
-
         /**
          * This class is used to initalise the NotificationManager
          * and send the desired Notification Object.
          *
          *@see startNotificationManager()
          *@see sendNotification()
-         *
          */
         class NotificationProducer
         {
@@ -60,25 +63,24 @@ namespace OIC
                 std::string m_uri;
                 std::string m_type;
                 std::string m_interface;
-                RCSResourceObject::Ptr mRCSResource;
+                RCSResourceObject::Ptr mNotificationResource;
 
             public:
 
                 typedef std::shared_ptr<NotificationProducer> NotificationProducerPtr;
 
-                typedef std::function < void(int) > notificationIdListener;
+                typedef std::function < void(int, std::string) > notificationIdListener;
 
                 /**
                  * @brief Constructor.
-                 *           Sets the resource property values using initializers list.
+                 *  Sets the resource property values using initializers list.
                  *
                  * @param uri Resource URI value to be set.
                  * @param type Resource type value to be set.
                  * @param interface Interface value to be set.
-                 *
                  */
-                NotificationProducer(const std::string &n_uri, const std::string &n_type,
-                                     const std::string &n_interface);
+                NotificationProducer(const std::string& n_uri, const std::string& n_type,
+                                     const std::string& n_interface);
 
                 /**
                  * API to start the Notification Manager.

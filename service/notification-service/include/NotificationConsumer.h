@@ -48,6 +48,7 @@ namespace OIC
                 typedef std::function< void(std::string)> onGetDeviceName;
 
                 typedef std::shared_ptr<NotificationConsumer> notificationConsumerPtr;
+
                 /**
                  * typedef for callback of startSubscribing API
                  *
@@ -77,33 +78,36 @@ namespace OIC
                 void subscribeNotifications(SubscribedCallback cb);
 
                 /**
-                 * UnSubscribe Notifications
+                 * Stops subscribing attributes for the resource.
                  *
                  * It does nothing if subscribing is not started.
                  *
                  * @see subscribeNotifications(SubscribedCallback)
                  */
                 void unSubscribeNotifications();
+
                 /**
                   * @return Returns the uri of the resource.
-                  *
                   */
                 std::string getUri() const;
 
                 /**
                   * @return Returns the address of the resource .
-                  *
                   */
                 std::string getAddress() const;
 
+                /**
+                  * It is used to get the name of the device
+                  * sending the notification.
+                  *
+                  *@param cb If non-empty function, it will be invoked whenever a resource is discovered.
+                  */
                 void getDeviceName(onGetDeviceName cb);
 
-                void sendNotificationAcknowledgement(int notificationId);
+                void sendAcknowledgement(int notificationId, std::string hostAddressValue);
 
             private:
-
-
-                std::shared_ptr<RCSRemoteResourceObject> m_rcsRemoteResource;
+                std::shared_ptr<RCSRemoteResourceObject> m_NotificationResource;
 
         };
     }

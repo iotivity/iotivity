@@ -27,7 +27,6 @@ namespace OIC
 {
     namespace Service
     {
-
         static int sNotificationId = 0;
 
         NotificationObject::NotificationObject()
@@ -47,8 +46,6 @@ namespace OIC
 
         void TextNotification::setTextAttributes(const std::string &nNotificationMessage,
                 NotificationObjectType &nNotificationObjectType,
-                ///TODO: Message Type attribute is to be handled
-                // NotificationMessageType &nNotificationMessageType,
                 const std::string &nNotificationTime,
                 const std::string &nNotificationSender,
                 int nNotificationId,
@@ -56,8 +53,6 @@ namespace OIC
         {
             mNotificationMessage = nNotificationMessage;
             mNotificationObjectType = nNotificationObjectType;
-            ///TODO: Message Type attribute is to be handled
-            // mNotificationMessageType = nNotificationMessageType;
             mNotificationTime = nNotificationTime;
             mNotificationSender = nNotificationSender;
             mNotificationId = nNotificationId;
@@ -67,8 +62,6 @@ namespace OIC
         void ImageNotification::setImageAttributes(const std::string &nNotificationIconUrl,
                 const std::string nNotificationMessage,
                 NotificationObjectType &nNotificationObjectType,
-                ///TODO: Message Type attribute is to be handled
-                // NotificationMessageType &nNotificationMessageType,
                 const std::string &nNotificationTime,
                 const std::string &nNotificationSender,
                 int nNotificationId,
@@ -77,8 +70,6 @@ namespace OIC
             mNotificationIconUrl = nNotificationIconUrl;
             mNotificationMessage = nNotificationMessage;
             mNotificationObjectType = nNotificationObjectType;
-            ///TODO: Message Type attribute is to be handled
-            // mNotificationMessageType = nNotificationMessageType;
             mNotificationTime = nNotificationTime;
             mNotificationSender = nNotificationSender;
             mNotificationId = nNotificationId;
@@ -87,8 +78,6 @@ namespace OIC
 
         void VideoNotification::setVideoAttributes(const std::string &nNotificationVideoUrl,
                 NotificationObjectType &nNotificationObjectType,
-                ///TODO: Message Type attribute is to be handled
-                // NotificationMessageType &nNotificationMessageType,
                 const std::string &nNotificationTime,
                 const std::string &nNotificationSender,
                 int nNotificationId,
@@ -96,8 +85,6 @@ namespace OIC
         {
             mNotificationVideoUrl = nNotificationVideoUrl;
             mNotificationObjectType = nNotificationObjectType;
-            ///TODO: Message Type attribute is to be handled
-            // mNotificationMessageType = nNotificationMessageType;
             mNotificationTime = nNotificationTime;
             mNotificationSender = nNotificationSender;
             mNotificationId = nNotificationId;

@@ -190,23 +190,7 @@ public class SampleProducer extends Activity {
         notificationlistAdapter = new NotificationAdapter(this, notifications, notificationRead);
         listView.setAdapter(notificationlistAdapter);
 
-        sendWelcomeNotification();
-
     }
-
-    void sendWelcomeNotification() {
-        TextNotification textNotification = new TextNotification();
-        textNotification.setNotificationMessage("Welcome");
-        textNotification.setNotifcationSender(sender);
-        NotificationService notificationService = NotificationService.getInstance();
-        int id = notificationService.sendnotification(textNotification);
-        textNotification.setNotifcationId(id);
-        //update List and UI
-        notifications.add(textNotification);
-        notificationRead.put(id, 0);
-        notificationlistAdapter.notifyDataSetChanged();
-    }
-
 
     public void onItemClick(int mPosition) {
 

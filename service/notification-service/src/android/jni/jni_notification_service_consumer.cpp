@@ -36,13 +36,19 @@ using namespace OIC::Service;
 
 constexpr int CORRECT_INPUT = 99;
 constexpr int INCORRECT_INPUT = 100;
-std::shared_ptr<NotificationConsumer> resource;
+std::shared_ptr<NotificationConsumer> selectedResource;
 std::vector<std::shared_ptr<NotificationConsumer>> notificationResourceList;
+std::vector<int> notificationList;
 std::vector<std::string> DeviceList;
 int resource_index = -1;
 jmethodID g_notificationcallback;
 jobject g_callback_obj;
 JNIEnv *m_env;
+
+void sendNotificationAcknowledgement(int notificationId, std::string hostAddressValue)
+{
+    selectedResource->sendAcknowledgement(notificationId, hostAddressValue);
+}
 
 void SendCallback(NotificationObject *m_notificationObjectPtr)
 {
@@ -85,6 +91,11 @@ void SendCallback(NotificationObject *m_notificationObjectPtr)
         jstring time = m_env->NewStringUTF(textNotification->mNotificationTime.c_str());
         jstring sender = m_env->NewStringUTF(textNotification->mNotificationSender.c_str());
         jint ttl = textNotification->mNotificationTtl;
+
+        notificationList.push_back(textNotification->mNotificationId);
+        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
+            selectedResource->getAddress());
+
         LOGI("ID and ttl=%d %d", id, ttl);
         m_env->CallVoidMethod(g_callback_obj, g_notificationcallback, NULL, message, sender, time, 0, ttl,
                               id);
@@ -97,6 +108,11 @@ void SendCallback(NotificationObject *m_notificationObjectPtr)
         jstring time = m_env->NewStringUTF(imageNotificationPtr->mNotificationTime.c_str());
         jstring sender = m_env->NewStringUTF(imageNotificationPtr->mNotificationSender.c_str());
         int ttl = imageNotificationPtr->mNotificationTtl;
+
+         notificationList.push_back(imageNotificationPtr->mNotificationId);
+        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
+            selectedResource->getAddress());
+
         m_env->CallVoidMethod(g_callback_obj, g_notificationcallback, url, message, sender, time, 1, ttl,
                               id);
     }
@@ -107,6 +123,11 @@ void SendCallback(NotificationObject *m_notificationObjectPtr)
         jstring time = m_env->NewStringUTF(videoNotificationPtr->mNotificationTime.c_str());
         jstring sender = m_env->NewStringUTF(videoNotificationPtr->mNotificationSender.c_str());
         int ttl = videoNotificationPtr->mNotificationTtl;
+
+        notificationList.push_back(videoNotificationPtr->mNotificationId);
+        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
+            selectedResource->getAddress());
+
         m_env->CallVoidMethod(g_callback_obj, g_notificationcallback, url, NULL, sender, time, 2, ttl, id);
     }
 
@@ -157,13 +178,13 @@ void onGetDeviceName(std::string deviceName)
     LOGI("DeviceList %d", DeviceList.size());
     sendcallbackResourceDiscovered(deviceName, resource_index);
 }
-
+/*
 void notificationAcknowledgement(NotificationObject *m_notificationObjectPtr)
 {
     resource->sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId);
     LOGI("ACK sent");
 }
-
+*/
 void onResourceDiscovered(std::shared_ptr<NotificationConsumer> foundResource)
 {
 
@@ -175,22 +196,42 @@ void onResourceDiscovered(std::shared_ptr<NotificationConsumer> foundResource)
     LOGI("notificationResourceList size=%d", notificationResourceList.size());
 }
 
+int checkNotificationList(NotificationObject *m_notificationObjectPtr)
+{
+    for(unsigned int i=0;i<notificationList.size();i++)
+    {
+        if(m_notificationObjectPtr->mNotificationId == notificationList[i])
+        {
+            return 1;
+         }
+     }
+    return 0;
+}
 void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
 {
+    if(m_notificationObjectPtr == NULL)
+    {
+        std::cout << "ERROR: notification object pointer is NULL" << std::endl;
+        return;
+    }
+    if(checkNotificationList(m_notificationObjectPtr))
+    {
+        return;
+    }
     LOGI("onResourceUpdated callback");
     SendCallback(m_notificationObjectPtr);
-    notificationAcknowledgement(m_notificationObjectPtr);
+    //notificationAcknowledgement(m_notificationObjectPtr);
 
 }
 
 JNIEXPORT void JNICALL JNIStartSubscribeNotifications(JNIEnv *env, jobject thisObj,
         jint resourceIndex)
 {
-    resource = notificationResourceList[resourceIndex];
+    selectedResource = notificationResourceList[resourceIndex];
 
     LOGI("JNIStartSubscribeNotifications:after index %d %d %d", DeviceList.size(),
          notificationResourceList.size(), resourceIndex);
-    resource->subscribeNotifications(&onResourceUpdated);
+    selectedResource->subscribeNotifications(&onResourceUpdated);
     LOGI("Subscribing started...");
 
 }
@@ -207,6 +248,6 @@ JNIEXPORT void JNICALL  JNIDiscover(JNIEnv *env, jobject thisObj)
 
 JNIEXPORT void JNICALL  JNIStopSubscribeNotifications(JNIEnv *env, jobject thisObj)
 {
-    resource->unSubscribeNotifications();
+    selectedResource->unSubscribeNotifications();
     LOGI("Subscribing stopped");
 }

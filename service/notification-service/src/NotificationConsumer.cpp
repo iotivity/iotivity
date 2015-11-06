@@ -20,8 +20,6 @@
 
 #include <NotificationConsumer.h>
 
-#include <sstream>
-
 #include <RCSRemoteResourceObject.h>
 #include <RCSResourceAttributes.h>
 
@@ -37,29 +35,52 @@ namespace
 {
     using namespace OIC::Service;
 
-    void onCacheUpdated(const RCSResourceAttributes &attributes,
-                        NotificationConsumer::SubscribedCallback cb)
+    void onSetRemoteAttributesReceived(const RCSResourceAttributes &attributes, int)
     {
-        ///TODO: Message Type attribute is to be handled
-        //mNotificationMessageType
+        OC_LOG(WARNING, TAG, "Acknowledgement Sent............");
+    }
 
+    void onRemoteAttributesReceived(const RCSResourceAttributes &attributes, int,
+                                    NotificationConsumer::onGetDeviceName cb)
+    {
+        std::string deviceName;
+
+        for (const auto &attr : attributes)
+        {
+            if (attr.key() == DeviceName)
+            {
+                deviceName = attr.value().toString();
+                break;
+            }
+        }
+        cb(deviceName);
+    }
+    void onCacheUpdated(const RCSResourceAttributes &attributes,
+                        NotificationConsumer::SubscribedCallback cb,
+                        std::shared_ptr<RCSRemoteResourceObject> m_NotificationResource)
+    {
         RCSResourceAttributes attr = attributes;
 
-        std::string payload = attr["notification-payload"].toString();
-        char *nPayload = &payload[0];
+        if (!attr.contains(notification_payload))
+        {
+            OC_LOG(WARNING, TAG, "Notification Payload Null......");
+            return;
+        }
 
+        std::string payload = attr[notification_payload].toString();
+        char *nPayload = &payload[0];
         cJSON *putJson = cJSON_Parse(nPayload);
 
-        std::string objectType(cJSON_GetObjectItem(putJson, "OBJECTTYPE")->valuestring);
-        std::string objectTime(cJSON_GetObjectItem(putJson, "TIME")->valuestring);
-        std::string objectSender(cJSON_GetObjectItem(putJson, "SENDER")->valuestring);
-        int objectTtl = cJSON_GetObjectItem(putJson, "TTL")->valueint;
-        int objectId = cJSON_GetObjectItem(putJson, "ID")->valueint;
+        std::string objectType(cJSON_GetObjectItem(putJson, ObjectType)->valuestring);
+        std::string objectTime(cJSON_GetObjectItem(putJson, TimeStamp)->valuestring);
+        std::string objectSender(cJSON_GetObjectItem(putJson, Sender)->valuestring);
+        int objectTtl = cJSON_GetObjectItem(putJson, Ttl)->valueint;
+        int objectId = cJSON_GetObjectItem(putJson, Id)->valueint;
 
         if (objectType == "text")
         {
             std::shared_ptr<TextNotification> textNotificationPtr = std::make_shared<TextNotification>();
-            std::string objectMessage(cJSON_GetObjectItem(putJson, "MESSAGE")->valuestring);
+            std::string objectMessage(cJSON_GetObjectItem(putJson, Message)->valuestring);
 
             textNotificationPtr->mNotificationObjectType = NotificationObjectType::Text;
             textNotificationPtr->mNotificationTime = objectTime;
@@ -76,8 +97,8 @@ namespace
         else if (objectType == "image")
         {
             std::shared_ptr<ImageNotification> imageNotificationPtr = std::make_shared<ImageNotification>();
-            std::string objectMessage(cJSON_GetObjectItem(putJson, "MESSAGE")->valuestring);
-            std::string objectImageUrl(cJSON_GetObjectItem(putJson, "ICONURL")->valuestring);
+            std::string objectMessage(cJSON_GetObjectItem(putJson, Message)->valuestring);
+            std::string objectImageUrl(cJSON_GetObjectItem(putJson, IconUrl)->valuestring);
 
             imageNotificationPtr->mNotificationObjectType = NotificationObjectType::Image;
             imageNotificationPtr->mNotificationTime = objectTime;
@@ -91,10 +112,11 @@ namespace
 
             cb(notificationObjectPtr.get());
         }
+
         else if (objectType == "video")
         {
             std::shared_ptr<VideoNotification> videoNotificationPtr = std::make_shared<VideoNotification>();
-            std::string objectVideoUrl(cJSON_GetObjectItem(putJson, "VIDEOURL")->valuestring);
+            std::string objectVideoUrl(cJSON_GetObjectItem(putJson, VideoUrl)->valuestring);
 
             videoNotificationPtr->mNotificationObjectType = NotificationObjectType::Video;
             videoNotificationPtr->mNotificationTime = objectTime;
@@ -108,27 +130,6 @@ namespace
             cb(notificationObjectPtr.get());
         }
     }
-
-    void onRemoteAttributesReceived(const RCSResourceAttributes &attributes, int,
-                                    NotificationConsumer::onGetDeviceName cb)
-    {
-        std::string DeviceName;
-
-        for (const auto &attr : attributes)
-        {
-            if (attr.key() == "DeviceName")
-            {
-                DeviceName = attr.value().toString();
-                break;
-            }
-        }
-        cb(DeviceName);
-    }
-
-    void onSetRemoteAttributesReceived(const RCSResourceAttributes &attributes, int)
-    {
-        OC_LOG(WARNING, TAG, "Acknowledgement Sent............");
-    }
 }
 
 namespace OIC
@@ -136,7 +137,7 @@ namespace OIC
     namespace Service
     {
         NotificationConsumer::NotificationConsumer(std::shared_ptr<RCSRemoteResourceObject> remoteResource):
-            m_rcsRemoteResource {remoteResource}
+            m_NotificationResource {remoteResource}
         {
         }
 
@@ -146,7 +147,11 @@ namespace OIC
 
         void NotificationConsumer::getDeviceName(NotificationConsumer::onGetDeviceName cb)
         {
-            m_rcsRemoteResource->RCSRemoteResourceObject::getRemoteAttributes(std::bind(
+            if (m_NotificationResource == NULL)
+            {
+                return;
+            }
+            m_NotificationResource->RCSRemoteResourceObject::getRemoteAttributes(std::bind(
                         onRemoteAttributesReceived, std::placeholders::_1,
                         std::placeholders::_2, std::move(cb)));
         }
@@ -155,48 +160,70 @@ namespace OIC
 
         void NotificationConsumer::subscribeNotifications(SubscribedCallback cb)
         {
-
-            if (!m_rcsRemoteResource->isCaching())
+            if (m_NotificationResource == NULL)
             {
-                m_rcsRemoteResource->startCaching(std::bind(onCacheUpdated, std::placeholders::_1,
-                                                  std::move(cb)));
+                return;
+            }
+
+            if (!m_NotificationResource->isCaching())
+            {
+                m_NotificationResource->startCaching(std::bind(onCacheUpdated, std::placeholders::_1,
+                                                     std::move(cb), m_NotificationResource));
             }
             else
             {
-                OC_LOG(WARNING, TAG, "Already started Subscribing......");
+                OC_LOG(INFO, TAG, "Already started Subscribing......");
             }
-
         }
 
         void NotificationConsumer::unSubscribeNotifications()
         {
-            if (m_rcsRemoteResource->isCaching())
+            if (m_NotificationResource == NULL)
             {
-                m_rcsRemoteResource->stopCaching();
+                return;
+            }
+
+            if (m_NotificationResource->isCaching())
+            {
+                m_NotificationResource->stopCaching();
             }
             else
             {
-                OC_LOG(WARNING, TAG, "Subscribing not started.......");
+                OC_LOG(ERROR, TAG, "Subscribing not started.......");
             }
-        }
-
-        void NotificationConsumer::sendNotificationAcknowledgement(int notificationId)
-        {
-            RCSResourceAttributes setAttribute;
-
-            setAttribute["notificationId"] = notificationId;
-            m_rcsRemoteResource->setRemoteAttributes(setAttribute,
-                    &onSetRemoteAttributesReceived);
         }
 
         std::string NotificationConsumer::getUri() const
         {
-            return (m_rcsRemoteResource->getUri());
+            if (m_NotificationResource != NULL)
+                return (m_NotificationResource->getUri());
         }
 
         std::string NotificationConsumer::getAddress() const
         {
-            return (m_rcsRemoteResource->getAddress());
+            if (m_NotificationResource != NULL)
+                return (m_NotificationResource->getAddress());
+        }
+
+        void NotificationConsumer::sendAcknowledgement(int notificationId, std::string hostAddressValue)
+        {
+            RCSResourceAttributes setAttribute;
+
+            cJSON *ackJson = cJSON_CreateObject();
+            char *jsonResponse;
+
+            cJSON_AddNumberToObject(ackJson, notification_id, notificationId);
+            cJSON_AddStringToObject(ackJson, hostAddress, &hostAddressValue[0]);
+
+            jsonResponse = cJSON_Print(ackJson);
+            std::string ack(jsonResponse);
+            setAttribute[notification_ack] =  ack;
+
+            if (m_NotificationResource != NULL)
+            {
+                m_NotificationResource->setRemoteAttributes(setAttribute,
+                        &onSetRemoteAttributesReceived);
+            }
         }
     }
 }

@@ -40,9 +40,14 @@ namespace
     void IdAttributeUpdatedListener(const RCSResourceAttributes::Value &oldValue,
                                     const RCSResourceAttributes::Value &newValue, NotificationProducer::notificationIdListener cb)
     {
-        int notificationId = std::stoi (newValue.toString());
+        std::string ack = newValue.toString();
+        char *nAck = &ack[0];
+        cJSON *putJson = cJSON_Parse(nAck);
 
-        cb(notificationId);
+        std::string notificationHostAddress(cJSON_GetObjectItem(putJson, hostAddress)->valuestring);
+        int notificationId = cJSON_GetObjectItem(putJson, notification_id)->valueint;
+
+        cb(notificationId, notificationHostAddress);
     }
 }
 namespace OIC
@@ -52,6 +57,7 @@ namespace OIC
         std::string Key;
         std::string Value;
         int IdValue;
+        std::string hostAddressValue;
 
         NotificationProducer::NotificationProducer(const std::string &uri,
                 const std::string &type,
@@ -65,28 +71,44 @@ namespace OIC
         NotificationProducer::NotificationProducerPtr NotificationProducer::startNotificationManager(
             std::string &notifyDeviceName, NotificationProducer::notificationIdListener cb)
         {
-            if (mRCSResource == NULL)
+            if (mNotificationResource == NULL)
             {
-                mRCSResource = RCSResourceObject::Builder(m_uri, m_type,
-                               m_interface).setDiscoverable(true).setObservable(true).build();
+                mNotificationResource = RCSResourceObject::Builder(m_uri, m_type,
+                                        m_interface).setDiscoverable(true).setObservable(true).build();
+
+                if (mNotificationResource == NULL)
+                {
+                    OC_LOG(WARNING, TAG, "Resource not created.....");
+                    return NULL;
+                }
             }
             else
             {
                 OC_LOG(WARNING, TAG, "Resource already created.....");
             }
 
-            mRCSResource->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy:: UPDATED);
+            mNotificationResource->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy:: UPDATED);
 
-            Key = "DeviceName";
+            Key = DeviceName;
             Value = notifyDeviceName;
-            mRCSResource->setAttribute( Key, Value);
+            mNotificationResource->setAttribute( Key, Value);
 
-            std::string nIdKey = "notificationId";
             IdValue = 0;
-            mRCSResource->setAttribute(nIdKey, IdValue);
+            hostAddressValue = " ";
 
-            mRCSResource->addAttributeUpdatedListener(nIdKey, std::bind(IdAttributeUpdatedListener,
+            cJSON *ackJson = cJSON_CreateObject();
+            char *jsonResponse;
+
+            cJSON_AddNumberToObject(ackJson, notification_id, IdValue);
+            cJSON_AddStringToObject(ackJson, hostAddress, &hostAddressValue[0]);
+
+            jsonResponse = cJSON_Print(ackJson);
+            std::string ack(jsonResponse);
+            mNotificationResource->setAttribute(notification_ack, ack);
+
+             mNotificationResource->addAttributeUpdatedListener(notification_ack, std::bind(IdAttributeUpdatedListener,
                     std::placeholders::_1, std::placeholders::_2, std::move(cb)));
+
             return NULL;
         }
 
@@ -99,57 +121,63 @@ namespace OIC
         {
             cJSON *json = cJSON_CreateObject();
             char *jsonResponse;
-            std::string payload;
 
-            cJSON_AddStringToObject(json, "TIME", &notificationObjectPtr->mNotificationTime[0]);
-            cJSON_AddStringToObject(json, "SENDER", &notificationObjectPtr->mNotificationSender[0]);
-            cJSON_AddNumberToObject(json, "TTL", notificationObjectPtr->mNotificationTtl);
-            cJSON_AddNumberToObject(json, "ID", notificationObjectPtr->mNotificationId);
+            if (notificationObjectPtr == NULL)
+            {
+                return;
+            }
+
+            cJSON_AddStringToObject(json, TimeStamp, &notificationObjectPtr->mNotificationTime[0]);
+            cJSON_AddStringToObject(json, Sender, &notificationObjectPtr->mNotificationSender[0]);
+            cJSON_AddNumberToObject(json, Ttl, notificationObjectPtr->mNotificationTtl);
+            cJSON_AddNumberToObject(json, Id, notificationObjectPtr->mNotificationId);
 
             if ( type == NotificationObjectType::Text)
             {
                 TextNotification *textNotificationPtr = (TextNotification *) notificationObjectPtr;
 
-                ///TODO: Message Type attribute is to be handled
-                //mRCSResource->setAttribute(MESSAGETYPE, textNotificationPtr->mNotificationMessageType);
-                cJSON_AddStringToObject(json, "MESSAGE", &textNotificationPtr->mNotificationMessage[0]);
-                cJSON_AddStringToObject(json, "OBJECTTYPE", "text");
+                if (textNotificationPtr != NULL)
+                {
+                    cJSON_AddStringToObject(json, Message, &textNotificationPtr->mNotificationMessage[0]);
+                    cJSON_AddStringToObject(json, ObjectType, "text");
 
-                jsonResponse = cJSON_Print(json);
-                std::string payload(jsonResponse);
-                mRCSResource->setAttribute("notification-payload", payload);
+                    jsonResponse = cJSON_Print(json);
+                    std::string payload(jsonResponse);
+                    mNotificationResource->setAttribute(notification_payload, payload);
+                }
             }
 
             if ( type == NotificationObjectType::Image)
             {
-
                 ImageNotification *imageNotificationPtr = (ImageNotification *) notificationObjectPtr;
 
-                ///TODO: Message Type attribute is to be handled
-                //mRCSResource->setAttribute(MESSAGETYPE, imageNotificationPtr->mNotificationMessageType);
-                cJSON_AddStringToObject(json, "ICONURL", &imageNotificationPtr->mNotificationIconUrl[0]);
-                cJSON_AddStringToObject(json, "MESSAGE", &imageNotificationPtr->mNotificationMessage[0]);
-                cJSON_AddStringToObject(json, "OBJECTTYPE", "image");
+                if (imageNotificationPtr != NULL)
+                {
+                    cJSON_AddStringToObject(json, IconUrl, &imageNotificationPtr->mNotificationIconUrl[0]);
+                    cJSON_AddStringToObject(json, Message, &imageNotificationPtr->mNotificationMessage[0]);
+                    cJSON_AddStringToObject(json, ObjectType, "image");
 
-                jsonResponse = cJSON_Print(json);
-                std::string payload(jsonResponse);
-                mRCSResource->setAttribute("notification-payload", payload);
+                    jsonResponse = cJSON_Print(json);
+                    std::string payload(jsonResponse);
+                    mNotificationResource->setAttribute(notification_payload, payload);
+                }
             }
 
             if ( type == NotificationObjectType::Video)
             {
-
                 VideoNotification *videoNotificationPtr = (VideoNotification *) notificationObjectPtr;
 
-                ///TODO: Message Type attribute is to be handled
-                //mRCSResource->setAttribute(MESSAGETYPE, videoNotificationPtr->mNotificationMessageType);
-                cJSON_AddStringToObject(json, "VIDEOURL", &videoNotificationPtr->mNotificationVideoUrl[0]);
-                cJSON_AddStringToObject(json, "OBJECTTYPE", "video");
+                if (videoNotificationPtr != NULL)
+                {
+                    cJSON_AddStringToObject(json, VideoUrl, &videoNotificationPtr->mNotificationVideoUrl[0]);
+                    cJSON_AddStringToObject(json, ObjectType, "video");
 
-                jsonResponse = cJSON_Print(json);
-                std::string payload(jsonResponse);
-                mRCSResource->setAttribute("notification-payload", payload);
+                    jsonResponse = cJSON_Print(json);
+                    std::string payload(jsonResponse);
+                    mNotificationResource->setAttribute(notification_payload, payload);
+                }
             }
+
         }
     }
 }

@@ -39,12 +39,12 @@ NotificationProducer notificationProducer(resourceUri, resourceType, resourceInt
 
 void SendAcknowledgementCallback(int notificationId,int readStatus)
 {
-	
+
 	LOGI("sending callback to android");
     JNIEnv *m_env = NotificationManagerJVM::getEnv();
     if (m_env == NULL)
     {
-		LOGE("jvm is null"); 
+		LOGE("jvm is null");
 		return;
 	}
 
@@ -61,7 +61,7 @@ void SendAcknowledgementCallback(int notificationId,int readStatus)
 		LOGE("jobj is null");
 		return;
 	}
-    
+
 	jmethodID g_AckCallback = m_env->GetMethodID(NMCallbacks, "onNotificationAcknowledgementReceievedCallback",
                                     "(II)V");
     if (g_AckCallback == NULL)
@@ -69,12 +69,13 @@ void SendAcknowledgementCallback(int notificationId,int readStatus)
     else LOGI("registered callback");
 
     m_env->CallVoidMethod(g_callback_obj, g_AckCallback,notificationId,readStatus);
-	
+
 	//remove this comment
     NotificationManagerJVM::releaseEnv();
-	
+
 }
-void notificationIdListener(int notificationId)
+
+void notificationIdListener(int notificationId, std::string hostAddressValue)
 {
     LOGI("Received ACK");
 	SendAcknowledgementCallback(notificationId,1);
@@ -86,7 +87,7 @@ JNIEXPORT void JNICALL  JNIStartNotificationProducer(JNIEnv *env, jobject thisOb
     LOGI("JNI JNIstartNotificationProducer: Enter");
     std::string deviceName = env->GetStringUTFChars(notifyDeviceName, NULL);
     notificationProducer.startNotificationManager(deviceName,&notificationIdListener);
-	
+
 
 }
 
@@ -109,7 +110,7 @@ JNIEXPORT jint JNICALL  JNISendNotification(JNIEnv *env, jobject thisObj, jstrin
     std::string notificationSender;
     int notificationTtl = 9;
     int notificationId =notificationObjectPtr->mNotificationId;
-	
+
     NotificationObjectType nText = NotificationObjectType::Text;
     NotificationObjectType nImage = NotificationObjectType::Image;
     NotificationObjectType nVideo = NotificationObjectType::Video;
@@ -169,7 +170,7 @@ JNIEXPORT jint JNICALL  JNISendNotification(JNIEnv *env, jobject thisObj, jstrin
 
         notificationProducer.sendNotification(nVideo, notificationObjectPtr);
     }
-	
+
 	return (jint)notificationId;
 }
 

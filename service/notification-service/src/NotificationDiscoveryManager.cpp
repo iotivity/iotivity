@@ -42,7 +42,7 @@ namespace
     void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject>
                               foundResource, NotificationDiscoveryManager::ResourceDiscoveredCallback cb)
     {
-        cb(std::make_shared< NotificationConsumer>(foundResource));
+        cb(std::make_shared<NotificationConsumer>(foundResource));
     }
 }
 
