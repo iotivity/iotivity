@@ -16,8 +16,8 @@
                     "type": "oauth2.0",
                     "clientID": "949606648410465",
                     "clientSecret": "2a35037f1919e7cbefcc1d2f95ef24fb",
-                    "endpoint": "/wsi/auth/facebook",
-                    "callbackURL": "/wsi/auth/facebook/callback",
+                    "endpoint": "/wsi/facebook/auth",
+                    "callbackURL": "/wsi/facebook/auth/callback",
                     "userid": "",
                     "access_token": "",
                     "refresh_token": "",
@@ -29,14 +29,24 @@
                 ],
                 "capability": [
                     {
+                        "cid": "com.facebook.auth",
+                        "isauthrequired": "true",
+                        "description": "Authorize this app to use facebook.",
+                        "endpoint": "/wsi/facebook/auth",
+                        "endpointtype": "REST",
+                        "operation": "GET"
+                    },                    
+                    {
                         "cid": "com.facebook.post",
                         "isauthrequired": "true",
                         "description": "Post Message to Facebook.",
-                        "endpoint": "http://graph.facebook.com/{userid}/feed/message={msg}&access_token={access_token}",
+                        "endpoint": "https://graph.facebook.com/me/feed?message={{message}}&access_token={{access_token}}",
                         "endpointtype": "REST",
                         "operation": "POST",
                         "params": {
-                            "msg": "Message to post"
+                            "userid" : "userid",
+                            "message": "Message to post",
+                            "access_token" : "access token"
                         },
                         "tags": [
                             "share",
@@ -46,17 +56,38 @@
                 ]
             },
             {
-                "handler": "naver",
-                "id": "com.naver",
+                "handler": "iotivity",
+                "sid": "org.iotivity",
+                "capability": [
+                    {
+                        "cid": "org.iotivity.getresource",
+                        "isauthrequired": false,
+                        "endpoint": "/wsi/iotivity/getresource",
+                        "endpointtype": "IOTIVITY",
+                        "operation": "GET",
+                        "params": {
+                            "sampleUri": "/a/light"
+                        },
+                        "tags": [
+                            "get reosurce properties"
+                        ]
+                    }
+                ]
+            },            
+            {
+                "handler": "google",
+                "sid": "com.google",
                 "capability": [
                     {
-                        "id": "com.naver.search",
-                        "isauthrequired": false,
-                        "endpoint": "",
+                        "cid": "com.google.search",
+                        "isauthrequired": "false",
+                        "endpoint": "https://www.googleapis.com/customsearch/v1",
                         "endpointtype": "REST",
                         "operation": "GET",
                         "params": {
-                            "msg": "Text to search"
+                            "key": "AIzaSyBGXrtIyGsrOOT9soXavjGwj9lxmJYOli4",
+                            "cx" : "017576662512468239146:omuauf_lfve",
+                            "q": "Topic"
                         },
                         "tags": [
                             "search",
@@ -66,59 +97,56 @@
                 ]
             },
             {
-                "handler": "twitter",
-                "id": "com.twitter",
-                "auth": [
-                    {"type": "oauth2.0"},
-                    {"appId": "949606648410465"},
-                    {"appSecret": "2a35037f1919e7cbefcc1d2f95ef24fb"},
-                    {"endpoint": "/auth/twitter"},
-                    {"callbackUrl": "/auth/twitter/callback"},
-                    {"access_token": ""},
-                    {"userid": ""},
-                    {"access_token": ""},
-                    {"refresh_token": ""},
-                    {"firstName": ""},
-                    {"lastName": ""},
-                    {"email": ""}
-                ],
+                "handler": "openweathermap",
+                "id": "org.openweathermap",
                 "capability": [
                     {
-                        "id": "com.twitter.timeline",
+                        "id": "org.openweathermap.getbycity",
                         "isauthrequired": false,
-                        "endpoint": "",
+                        "endpoint": "http://api.openweathermap.org/data/2.5/weather",
                         "endpointtype": "REST",
                         "operation": "GET",
                         "params": {
-                            "twitterhandle": "twitter handle"
+                            "q": "cityname",
+                            "appid": "appid"                            
                         },
                         "tags": [
-                            "tweets",
-                            "handle"
+                            "weather by name"
                         ]
-                    }
-                ]
-            },
-            {
-                "handler": "iotivity",
-                "id": "org.iotivity",
-                "capability": [
+                    },
                     {
-                        "id": "org.iotivity.findresource",
+                        "id": "org.openweathermap.getbylocation",
                         "isauthrequired": false,
-                        "endpoint": "",
-                        "endpointtype": "IOTIVITY",
+                        "endpoint": "http://api.openweathermap.org/data/2.5/weather",
+                        "endpointtype": "REST",
                         "operation": "GET",
                         "params": {
-                            "rt": "core.light"
+                            "lat": "135",
+                            "long": "135",
+                            "appid": "appid"
                         },
                         "tags": [
-                            "find reosurces",
-                            "discover devices"
+                            "weather by name"
+                        ]
+                    },
+                    {
+                        "id": "org.openweathermap.getbycode",
+                        "isauthrequired": false,
+                        "endpoint": "http://api.openweathermap.org/data/2.5/weather",
+                        "endpointtype": "REST",
+                        "operation": "GET",
+                        "params": {
+                            "zip": "zip",
+                            "cc": "country code",
+                            "appid": "appid"
+                        },
+                        "tags": [
+                            "weather by name"
                         ]
                     }
                 ]
             }
+
         ];
         
         $scope.getSampleServices = function(){

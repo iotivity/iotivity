@@ -12,24 +12,39 @@
         </div>
         <div id="pagewrap">
             <div id="content">
-                <form  method="post" ng-controller="capcontroller">
-                    <h3>Execute</h3>
-                    <textarea id="capidtext" style="font-size: 10px;" rows="10" cols="60"></textarea><br>
-                    <button type="submit" ng-click="runCapability()">Run</button><br>
-                </form>                
-                <h3>Services List (<span>{{ services.length }}</span>)</h3>
-                <select ng-change="selectService(sampleService)" ng-model="sampleService" ng-options="service.handler for service in getSampleServices()">
-                  <option selected="selected" value="">Examples</option>
-                </select>                
+                <!-- <input type="text" name="servicename" value=""><input type="submit" value="Search"> -->
+                <h3>Services List (<span>{{ services.length}}</span>)
+                <select style="align: middle;" ng-change="selectService(sampleService)" ng-model="sampleService" ng-options="service.handler for service in getSampleServices()">
+                    <option selected="selected" value="">Examples</option>
+                </select>
+                </h3>
                 
-                <input type="text" name="servicename" value=""><input type="submit" value="Search">
-                <ul style="list-style-type:none">
-                    <div ng-repeat="service in services">
-                        <li><input name = "capradio" type="radio" ng-click="readService(service._id)">
-                          {{ service.handler }}<img ng-click="deleteService(service._id)" src="assets/images/delete.png" style="width:15px;height:15px;border:0">
-                        </li>
-                    </div>
-                </ul>
+                <a href="/wsi/facebook/auth">Signin with Facebook</a>
+                <table border="1" align="left" style="width: 490px;">
+                    <tr ng-repeat="service in services">
+                        <td>
+                            <ul style="list-style-type:none; align=left;">
+                                
+                                <li>
+                                    <img ng-click="deleteService(service._id)" src="assets/images/delete.png" style="width:15px;height:15px;border:0">
+                                    <input name = "serviceradio" type="radio" ng-click="readService(service._id)">
+                                    {{ service.handler}}
+                                </li>
+		            </ul>
+                        </td>
+                        <td>
+                            <div ng-controller="capcontroller">
+                                <ul style="list-style-type:none; align=left;" ng-repeat="cap in service.capability track by cap.cid"">
+                                    <li>
+                                        <input name="capradio" id="selectcap" value="{{cap.cid}}" type="radio" ng-click="initCapability(cap.cid)">{{cap.cid}}
+                                        <img ng-click="runCapability(cap.cid)" src="assets/images/execute.png" style="width:15px;height:15px;border:0">
+                                    </li>
+                                </ul>
+                                
+                            </div>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
             <div id="middle">
@@ -46,9 +61,6 @@
                     <button id='save' type="submit" ng-click="updateService()">Save</button><br>
                     <div style="width: 450px; height: 350px" id="jsoneditorpreview"></div>
                 </form>                
-            </div>
-            <div id="footer">
-                <h3>Authentication and Authorization</h3>
             </div>
         </div>
         <script src="assets/js/angular.js"></script>

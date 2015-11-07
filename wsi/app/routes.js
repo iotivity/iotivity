@@ -1,6 +1,4 @@
 var servicedb = require('./models/service');
-
-
 /*
 var Mustache = require('mustache');
 
@@ -83,8 +81,8 @@ function getServices(res){
 };
 
 
-module.exports = function(app) {
-
+module.exports = function(app, passport) {
+    
     app.get('/wsi/services', function(req, res) {
 	getServices(res);
     });
@@ -146,19 +144,39 @@ module.exports = function(app) {
             console.log(response);
         });
     });
-    
+
     app.post('/wsi/cap/auth', function(req, res) {
-        var auth = req.body.auth;
+        var authcred = req.body.auth[0];
         console.log("WSI Cap Auth " + req.body.sid);
-        app.settings.strategy[req.body.handler].auth(app, req.body.auth[0]);
+        return app.settings.strategy[req.body.handler].auth(app, authcred, passport, req.body.sid);
+//	console.log(authcred.userid);
+//	console.log(authcred.access_token);
+//	console.log(authcred.refresh_token);
+//	console.log(authcred.firstName);
+//	console.log(authcred.lastName);
+
+
+//        console.log("REDIRECTING.......******************************");
+//        console.log("Return objject  " +  temp);
+//        
+        //res.header("Access-Control-Allow-Origin", "*");
+        //res.setHeader('Access-Control-Allow-Credentials', true);    
+        //res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+
+        //return res.redirect(302, '/wsi/auth/facebook', authcred.scope);
+        //console.log("REDIRECTED.......******************************");
     });
     
-    app.get('/wsi/cap/get', function(sid, cid, params) {
+    app.post('/wsi/cap/get', function(req, res) {
+        var cap = req.body;
+        console.log("WSI GET " + JSON.stringify(cap));
+        app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap);
         
     });
-    
-    app.post('/wsi/cap/post', function(sid, cid, params, body) {
-        
+    app.post('/wsi/cap/post', function(req, res) {
+        var cap = req.body;
+        console.log("WSI GET " + JSON.stringify(cap));
+        app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap);
     });
 
     app.get('*', function(req, res) {

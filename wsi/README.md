@@ -1,7 +1,24 @@
-How to run WSI
+Web Service Description
+
+The Web Service Interface of IoTivity aims to simplify representation of web based services in an network of IoTivity devices. It will act as a conceptual bridging layer between the IoTivity network and web based services.
+
+Bridging the two, needs a few common features to be supported.
+
+Service specific provisioning and configuration.
+Platform specific abstractions.
+A simplified app framework for developing new kinds of IoT based applications.
+
+
+Installation and Usage
+
+Dependencies
 
 sudo apt-get install npm nodejs nodejs-lecgacy mongodb libkrb5-dev
-
+git clone https://github.com/otcshare/iotivity-node.git
+cd iotivity-node
+./build_csdk.sh
+sudo npm install -g
+cd ..
 npm install
 node server.js
 
@@ -9,7 +26,4 @@ from browser
 
 localhost:8080
 
-Add a service description file from 
-config/servdesc
-
-It should appear in the screen.
+Use the web service interface to integrate iotivity and web services.
