@@ -49,6 +49,8 @@ class SimulatorSingleResourceImpl : public SimulatorSingleResource
         std::vector<ObserverInfo> getObserversList();
         void notify(int id);
         void notifyAll();
+        void notify(int id, SimulatorResourceModel &resModel);
+        void notifyAll(SimulatorResourceModel &resModel);
 
         bool getAttribute(const std::string &attrName,
                           SimulatorResourceModel::Attribute &attribute);
@@ -71,6 +73,7 @@ class SimulatorSingleResourceImpl : public SimulatorSingleResource
         void stopUpdation(const int id);
         void setResourceModel(const SimulatorResourceModel &resModel);
         void notifyApp();
+        void notifyApp(SimulatorResourceModel &resModel);
 
     private:
         SimulatorSingleResourceImpl();
@@ -78,6 +81,7 @@ class SimulatorSingleResourceImpl : public SimulatorSingleResource
         std::shared_ptr<OC::OCResourceResponse> requestOnBaseLineInterface(
             std::shared_ptr<OC::OCResourceRequest> request);
         void resourceModified();
+        bool updateResourceModel(OC::OCRepresentation &ocRep, SimulatorResourceModel &resModel);
 
         SimulatorResource::Type m_type;
         std::string m_name;

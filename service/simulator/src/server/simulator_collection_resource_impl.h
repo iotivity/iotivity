@@ -34,6 +34,9 @@ class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
         std::string getURI() const;
         std::string getResourceType() const;
         std::vector<std::string> getInterface() const;
+        bool isObservable();
+        bool isStarted();
+        SimulatorResourceModel getResourceModel();
         void setInterface(const std::vector<std::string> &interfaces);
         void setName(const std::string &name);
         void setURI(const std::string &uri);
@@ -41,12 +44,9 @@ class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
         void addInterface(std::string interfaceType);
         void setObservable(bool state);
         void setObserverCallback(ObserverCallback callback);
-        bool isObservable();
-        bool isStarted();
+        void setModelChangeCallback(ResourceModelChangedCallback callback);
         void start();
         void stop();
-        SimulatorResourceModel getResourceModel();
-        void setResourceModel(const SimulatorResourceModel &resModel);
         std::vector<ObserverInfo> getObserversList();
         void notify(int id);
         void notifyAll();
@@ -56,6 +56,8 @@ class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
         void removeChildResource(SimulatorResourceSP &resource);
         void removeChildResource(const std::string &uri);
         std::vector<SimulatorResourceSP> getChildResources();
+
+        void setResourceModel(const SimulatorResourceModel &resModel);
 
     private:
         SimulatorCollectionResourceImpl();
@@ -84,6 +86,7 @@ class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
         std::vector<std::string> m_supportedTypes;
         std::vector<ObserverInfo> m_observersList;
         ObserverCallback m_observeCallback;
+        ResourceModelChangedCallback m_modelCallback;
 
         OCResourceProperty m_property;
         OCResourceHandle m_resourceHandle;

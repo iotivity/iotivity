@@ -21,6 +21,7 @@ import java.util.Vector;
 import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorManager;
+import org.oic.simulator.SimulatorResourceModel;
 import org.oic.simulator.server.SimulatorCollectionResource;
 import org.oic.simulator.server.SimulatorResource;
 import org.oic.simulator.test.ExceptionType;
@@ -41,13 +42,8 @@ public class SimulatorCollectionResourceTest extends TestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
-        // collectionResource = (SimulatorCollectionResource)
-        // SimulatorManager.createResource(
-        // COLLECTION_RES_RAML);
         collectionResource = (SimulatorCollectionResource) SimulatorManager
-                .createResource(SimulatorResource.Type.COLLECTION,
-                        "test-collection", "/test/collection",
-                        "test.collection");
+                .createResource(COLLECTION_RES_RAML);
     }
 
     protected void tearDown() throws Exception {
@@ -286,5 +282,20 @@ public class SimulatorCollectionResourceTest extends TestCase {
         }
 
         assertTrue(exType == ExceptionType.INVALID_ARGS);
+    }
+
+    public void testGetResourceModel_P01() {
+        SimulatorResourceModel result = null;
+
+        try {
+            result = collectionResource.getResourceModel();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        assertNotNull(result);
+        assertTrue(result.size() > 0);
     }
 }

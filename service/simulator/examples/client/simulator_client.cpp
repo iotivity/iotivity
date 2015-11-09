@@ -120,7 +120,7 @@ class ClientController
             std::lock_guard<std::recursive_mutex> lock(m_mutex);
             if (0 == m_resList.size())
             {
-                std::cout << "No resouces!" << std::endl;
+                std::cout << "No resources!" << std::endl;
                 return nullptr;
             }
 
@@ -169,7 +169,8 @@ class ClientController
             try
             {
                 SimulatorManager::getInstance()->findResource(resourceType, callback);
-                std::cout << "SimulatorManager::findResource is successfull" << std::endl;
+                std::cout << "SimulatorManager::findResource is successful" << std::endl;
+                m_resList.clear();
             }
             catch (InvalidArgsException &e)
             {
@@ -226,7 +227,7 @@ class ClientController
             try
             {
                 resource->observe(ObserveType::OBSERVE, callback);
-                std::cout << "Observe is successfull!" << std::endl;
+                std::cout << "Observe is successful!" << std::endl;
             }
             catch (InvalidArgsException &e)
             {
@@ -248,7 +249,7 @@ class ClientController
             try
             {
                 resource->cancelObserve();
-                std::cout << "Cancelling observe is successfull!" << std::endl;
+                std::cout << "Cancelling observe is successful!" << std::endl;
             }
             catch (SimulatorException &e)
             {
@@ -276,7 +277,7 @@ class ClientController
             try
             {
                 resource->get(std::map <std::string, std::string>(), callback);
-                std::cout << "GET is successfull!" << std::endl;
+                std::cout << "GET is successful!" << std::endl;
             }
             catch (InvalidArgsException &e)
             {
@@ -319,7 +320,7 @@ class ClientController
                 rep->add("intensity", 5);
 
                 resource->put(std::map <std::string, std::string>(), rep, callback);
-                std::cout << "PUT is successfull!" << std::endl;
+                std::cout << "PUT is successful!" << std::endl;
             }
             catch (InvalidArgsException &e)
             {
@@ -362,7 +363,7 @@ class ClientController
                 rep->add("intensity", 7);
 
                 resource->post(std::map <std::string, std::string>(), rep, callback);
-                std::cout << "POST is successfull!" << std::endl;
+                std::cout << "POST is successful!" << std::endl;
             }
             catch (InvalidArgsException &e)
             {
@@ -397,7 +398,7 @@ class ClientController
             try
             {
                 int id = resource->startVerification(RequestType::RQ_TYPE_GET, callback);
-                std::cout << "startVerification for GET is successfull!id: " << id << std::endl;
+                std::cout << "startVerification for GET is successful!id: " << id << std::endl;
             }
             catch (InvalidArgsException &e)
             {
@@ -432,7 +433,7 @@ class ClientController
             try
             {
                 int id = resource->startVerification(RequestType::RQ_TYPE_PUT, callback);
-                std::cout << "startVerification for PUT is successfull!id: " << id << std::endl;
+                std::cout << "startVerification for PUT is successful!id: " << id << std::endl;
             }
             catch (InvalidArgsException &e)
             {
@@ -467,7 +468,7 @@ class ClientController
             try
             {
                 int id = resource->startVerification(RequestType::RQ_TYPE_POST, callback);
-                std::cout << "startVerification for POST is successfull!id: " << id << std::endl;
+                std::cout << "startVerification for POST is successful!id: " << id << std::endl;
             }
             catch (InvalidArgsException &e)
             {
@@ -501,7 +502,7 @@ class ClientController
                 SimulatorResourceModelSP representation = resource->configure(configPath);
                 if (representation)
                 {
-                    std::cout << "configuration is successfull!" << std::endl;
+                    std::cout << "configuration is successful!" << std::endl;
                     std::map<std::string, SimulatorResourceModel::Attribute> attributes =
                     representation->getAttributes();
                     std::cout << "##### Attributes [" << attributes.size() << "]" << std::endl;

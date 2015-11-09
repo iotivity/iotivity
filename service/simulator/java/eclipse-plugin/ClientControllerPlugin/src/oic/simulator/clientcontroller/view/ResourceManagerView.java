@@ -60,6 +60,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.dialogs.PatternFilter;
 import org.eclipse.ui.part.ViewPart;
+import org.oic.simulator.SimulatorException;
 
 /**
  * This class manages and shows the resource manager view in the perspective.
@@ -266,68 +267,10 @@ public class ResourceManagerView extends ViewPart {
                         for (int index = 0; index < items.length; index++) {
                             items[index].dispose();
                         }
-                        MenuItem uploadRAMLItem = new MenuItem(menu, SWT.NONE);
-                        uploadRAMLItem.setText("Upload RAML Configuration");
-                        uploadRAMLItem
-                                .addSelectionListener(new SelectionAdapter() {
-                                    @Override
-                                    public void widgetSelected(SelectionEvent e) {
-                                        // Open the RAML configuration dialog if
-                                        // RAML file is not yet uploaded for the
-                                        // currently selected resource
-                                        RemoteResource resource = resourceManager
-                                                .getCurrentResourceInSelection();
-                                        if (null == resource) {
-                                            return;
-                                        }
-                                        if (!resource.isConfigUploaded()) {
-                                            // Open the dialog in a separate
-                                            // UI thread.
-                                            PlatformUI.getWorkbench()
-                                                    .getDisplay()
-                                                    .syncExec(new Thread() {
-                                                        @Override
-                                                        public void run() {
-                                                            LoadRAMLDialog ramlDialog = new LoadRAMLDialog(
-                                                                    Display.getDefault()
-                                                                            .getActiveShell());
-                                                            if (ramlDialog
-                                                                    .open() != Window.OK) {
-                                                                return;
-                                                            }
-                                                            String configFilePath = ramlDialog
-                                                                    .getConfigFilePath();
-                                                            if (null == configFilePath
-                                                                    || configFilePath
-                                                                            .length() < 1) {
-                                                                MessageDialog
-                                                                        .openInformation(
-                                                                                Display.getDefault()
-                                                                                        .getActiveShell(),
-                                                                                "Invalid RAML Config path",
-                                                                                "Configuration file path is invalid.");
-                                                                return;
-                                                            }
-                                                            resourceManager
-                                                                    .setConfigFilePath(
-                                                                            resourceManager
-                                                                                    .getCurrentResourceInSelection(),
-                                                                            configFilePath);
-                                                        }
-                                                    });
-                                        } else {
-                                            MessageDialog
-                                                    .openInformation(Display
-                                                            .getDefault()
-                                                            .getActiveShell(),
-                                                            "Already Uploaded",
-                                                            "Configuration file for the selected resource is already uploaded");
-                                        }
-                                    }
-                                });
+                        setupUploadRamlMenuItem(menu);
 
-                        RemoteResource resource = resourceManager
-                                .getCurrentResourceInSelection();
+                        final RemoteResource resource = (RemoteResource) ((IStructuredSelection) treeViewer
+                                .getSelection()).getFirstElement();
                         if (null == resource) {
                             return;
                         }
@@ -339,12 +282,6 @@ public class ResourceManagerView extends ViewPart {
                                 .addSelectionListener(new SelectionAdapter() {
                                     @Override
                                     public void widgetSelected(SelectionEvent e) {
-                                        RemoteResource resource = (RemoteResource) ((IStructuredSelection) treeViewer
-                                                .getSelection())
-                                                .getFirstElement();
-                                        if (null == resource) {
-                                            return;
-                                        }
                                         if (!resource.isFavorite()) {
                                             resourceManager
                                                     .addResourcetoFavorites(resource);
@@ -412,6 +349,9 @@ public class ResourceManagerView extends ViewPart {
                         for (int index = 0; index < items.length; index++) {
                             items[index].dispose();
                         }
+
+                        setupUploadRamlMenuItem(menu);
+
                         MenuItem addToFavMenuItem = new MenuItem(menu, SWT.NONE);
                         addToFavMenuItem.setText("Remove from favorites");
                         addToFavMenuItem
@@ -435,6 +375,73 @@ public class ResourceManagerView extends ViewPart {
                 });
             }
         }
+    }
+
+    private void setupUploadRamlMenuItem(Menu menu) {
+        MenuItem uploadRAMLItem = new MenuItem(menu, SWT.NONE);
+        uploadRAMLItem.setText("Upload RAML Configuration");
+        uploadRAMLItem.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                // Open the RAML configuration dialog if
+                // RAML file is not yet uploaded for the
+                // currently selected resource
+                RemoteResource resource = resourceManager
+                        .getCurrentResourceInSelection();
+                if (null == resource) {
+                    return;
+                }
+                if (resource.isConfigUploaded()) {
+                    boolean answer = MessageDialog
+                            .openQuestion(
+                                    Display.getDefault().getActiveShell(),
+                                    "Upload Another RAML",
+                                    "This resource is already configured with RAML.\n"
+                                            + "Do you want to upload a new configuration?");
+                    if (!answer) {
+                        return;
+                    }
+                }
+                // Open the dialog in a separate
+                // UI thread.
+                PlatformUI.getWorkbench().getDisplay().syncExec(new Thread() {
+                    @Override
+                    public void run() {
+                        LoadRAMLDialog ramlDialog = new LoadRAMLDialog(Display
+                                .getDefault().getActiveShell());
+                        if (ramlDialog.open() != Window.OK) {
+                            return;
+                        }
+                        String configFilePath = ramlDialog.getConfigFilePath();
+                        if (null == configFilePath
+                                || configFilePath.length() < 1) {
+                            MessageDialog.openInformation(Display.getDefault()
+                                    .getActiveShell(),
+                                    "Invalid RAML Config path",
+                                    "Configuration file path is invalid.");
+                            return;
+                        }
+                        try {
+                            boolean result = resourceManager.setConfigFilePath(
+                                    resourceManager
+                                            .getCurrentResourceInSelection(),
+                                    configFilePath);
+                            if (!result) {
+                                MessageDialog
+                                        .openInformation(Display.getDefault()
+                                                .getActiveShell(),
+                                                "Operation failed",
+                                                "Failed to obtain the details from the given RAML.");
+                            }
+                        } catch (SimulatorException e) {
+                            MessageDialog.openInformation(Display.getDefault()
+                                    .getActiveShell(), "Invalid RAML",
+                                    "Given configuration file is invalid.");
+                        }
+                    }
+                });
+            }
+        });
     }
 
     private void addUIListeners() {
@@ -736,15 +743,11 @@ class TreeLabelProvider extends LabelProvider {
     @Override
     public String getText(Object element) {
         RemoteResource resource = (RemoteResource) element;
-        return resource.getResourceURI();
+        return resource.getRemoteResourceRef().getURI();
     }
 
-    // TODO: Commenting temporarily until resource icons are finalized.
-    /*@Override
+    @Override
     public Image getImage(Object element) {
-        RemoteResource resource = (RemoteResource) element;
-        ResourceManager resourceManager = Activator.getDefault()
-                .getResourceManager();
-        return resourceManager.getImage(resource.getResourceURI());
-    }*/
+        return null;
+    }
 }

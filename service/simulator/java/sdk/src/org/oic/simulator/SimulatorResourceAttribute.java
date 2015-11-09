@@ -17,17 +17,18 @@
 package org.oic.simulator;
 
 /**
- * This class represents the resource attribute which contains
- * attribute value and its property.
+ * This class represents the resource attribute which contains attribute value
+ * and its property.
  */
 public class SimulatorResourceAttribute {
 
-    private String mName = null;
-    private AttributeValue mValue = null;
+    private String            mName     = null;
+    private AttributeValue    mValue    = null;
     private AttributeProperty mProperty = null;
 
     /**
-     * Constructs {@SimulatorResourceAttribute} with attribute name, value and its property.
+     * Constructs {@SimulatorResourceAttribute}
+     * with attribute name, value and its property.
      *
      * @param name
      *            Name of the attribute.
@@ -36,14 +37,16 @@ public class SimulatorResourceAttribute {
      * @param property
      *            Property of attribute value.
      */
-    public SimulatorResourceAttribute(String name, AttributeValue value, AttributeProperty property) {
+    public SimulatorResourceAttribute(String name, AttributeValue value,
+            AttributeProperty property) {
         mName = new String(name);
         mValue = value;
         mProperty = property;
     }
 
     /**
-     * Constructs {@SimulatorResourceAttribute} with attribute name, value.
+     * Constructs {@SimulatorResourceAttribute}
+     * with attribute name, value.
      *
      * @param name
      *            Name of the attribute.
@@ -77,9 +80,20 @@ public class SimulatorResourceAttribute {
     /**
      * API to get propety of attribute's value.
      *
-     * @return Attribute's value property{@AttributeProperty}.
+     * @return Attribute's value property        {@AttributeProperty
+     * }.
      */
     public AttributeProperty property() {
         return mProperty;
+    }
+
+    /**
+     * API to set the value of attribute.
+     * 
+     * @param value
+     *            Value of the attribute.
+     */
+    public void setValue(AttributeValue value) {
+        this.mValue = value;
     }
 }

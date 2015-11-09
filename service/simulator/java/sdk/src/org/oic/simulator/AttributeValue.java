@@ -36,10 +36,11 @@ public class AttributeValue {
     public class TypeInfo {
         public ValueType mType;
         public ValueType mBaseType;
-        public int mDepth;
+        public int       mDepth;
 
         /**
-         * Constructs {@AttributeValue.TypeInfo} with default values.
+         * Constructs {@AttributeValue.TypeInfo} with
+         * default values.
          */
         TypeInfo() {
             mType = ValueType.UNKNOWN;
@@ -48,7 +49,8 @@ public class AttributeValue {
         }
 
         /**
-         * Constructs {@AttributeValue.TypeInfo} with given {AttributeValue.ValueType}.
+         * Constructs {@AttributeValue.TypeInfo} with
+         * given {AttributeValue.ValueType}.
          *
          * @param type
          *            Value type.
@@ -60,15 +62,17 @@ public class AttributeValue {
         }
 
         /**
-         * Constructs {@AttributeValue.TypeInfo} with given {AttributeValue.ValueType}s
-         * and depth information.
+         * Constructs {@AttributeValue.TypeInfo} with
+         * given {AttributeValue.ValueType}s and depth information.
          *
          * @param type
          *            Value type.
          * @param baseType
-         *            Value base type. This type is useful when vaule is of array type.
+         *            Value base type. This type is useful when vaule is of
+         *            array type.
          * @param depth
-         *            Depth of array type value. This type is useful when vaule is of array type.
+         *            Depth of array type value. This type is useful when vaule
+         *            is of array type.
          */
         TypeInfo(ValueType type, ValueType baseType, int depth) {
             mType = type;
@@ -118,7 +122,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with SimulatorResourceModel type value.
+     * Constructs {@AttributeValue} with SimulatorResourceModel
+     * type value.
      *
      * @param value
      *            SimulatorResourceModel type value.
@@ -128,7 +133,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of int type values.
+     * Constructs {@AttributeValue} with array of int type
+     * values.
      *
      * @param values
      *            Array of int type values.
@@ -141,7 +147,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of Integer type values.
+     * Constructs {@AttributeValue} with array of Integer type
+     * values.
      *
      * @param values
      *            Array of Integer type values.
@@ -151,7 +158,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of double type values.
+     * Constructs {@AttributeValue} with array of double type
+     * values.
      *
      * @param values
      *            Array of double type values.
@@ -164,7 +172,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of Double type values.
+     * Constructs {@AttributeValue} with array of Double type
+     * values.
      *
      * @param values
      *            Array of Double type values.
@@ -174,7 +183,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of boolean type values.
+     * Constructs {@AttributeValue} with array of boolean type
+     * values.
      *
      * @param values
      *            Array of boolean type values.
@@ -187,7 +197,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of Boolean type values.
+     * Constructs {@AttributeValue} with array of Boolean type
+     * values.
      *
      * @param values
      *            Array of Boolean type values.
@@ -197,7 +208,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of String type values.
+     * Constructs {@AttributeValue} with array of String type
+     * values.
      *
      * @param values
      *            Array of String type values.
@@ -207,7 +219,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of SimulatorResourceModel type values.
+     * Constructs {@AttributeValue} with array of
+     * SimulatorResourceModel type values.
      *
      * @param values
      *            Array of SimulatorResourceModel type values.
@@ -217,7 +230,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of int type values.
+     * Constructs {@AttributeValue} with 2 dimensional array of
+     * int type values.
      *
      * @param values
      *            2 dimensional array of int type values.
@@ -234,7 +248,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of Integer type values.
+     * Constructs {@AttributeValue} with 2 dimensional array of
+     * Integer type values.
      *
      * @param values
      *            2 dimensional array of Integer type values.
@@ -244,7 +259,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of double type values.
+     * Constructs {@AttributeValue} with 2 dimensional array of
+     * double type values.
      *
      * @param values
      *            2 dimensional array of double type values.
@@ -261,7 +277,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of Double type values.
+     * Constructs {@AttributeValue} with 2 dimensional array of
+     * Double type values.
      *
      * @param values
      *            2 dimensional array of Double type values.
@@ -271,7 +288,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of boolean type values.
+     * Constructs {@AttributeValue} with 2 dimensional array of
+     * boolean type values.
      *
      * @param values
      *            2 dimensional array of boolean type values.
@@ -288,7 +306,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of Boolean type values.
+     * Constructs {@AttributeValue} with 2 dimensional array of
+     * Boolean type values.
      *
      * @param values
      *            2 dimensional array of Boolean type values.
@@ -298,7 +317,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of String type values.
+     * Constructs {@AttributeValue} with 2 dimensional array of
+     * String type values.
      *
      * @param values
      *            2 dimensional array of String type values.
@@ -459,25 +479,21 @@ public class AttributeValue {
     }
 
     private TypeInfo createTypeInfo(Object value) {
-        TypeInfo typeInfo  = new TypeInfo();
+        TypeInfo typeInfo = new TypeInfo();
         String className = value.getClass().getName();
         if (className.contains(Integer.class.getName())) {
             typeInfo.mBaseType = ValueType.INTEGER;
             typeInfo.mType = ValueType.INTEGER;
-        }
-        else if (className.contains(Double.class.getName())) {
+        } else if (className.contains(Double.class.getName())) {
             typeInfo.mBaseType = ValueType.DOUBLE;
             typeInfo.mType = ValueType.DOUBLE;
-        }
-        else if (className.contains(Boolean.class.getName())) {
+        } else if (className.contains(Boolean.class.getName())) {
             typeInfo.mBaseType = ValueType.BOOLEAN;
             typeInfo.mType = ValueType.BOOLEAN;
-        }
-        else if (className.contains(String.class.getName())) {
+        } else if (className.contains(String.class.getName())) {
             typeInfo.mBaseType = ValueType.STRING;
             typeInfo.mType = ValueType.STRING;
-        }
-        else if (className.contains(SimulatorResourceModel.class.getName())) {
+        } else if (className.contains(SimulatorResourceModel.class.getName())) {
             typeInfo.mBaseType = ValueType.RESOURCEMODEL;
             typeInfo.mType = ValueType.RESOURCEMODEL;
         }
@@ -486,7 +502,8 @@ public class AttributeValue {
         if (value.getClass().isArray()) {
             typeInfo.mType = ValueType.ARRAY;
             for (char ch : className.toCharArray()) {
-                if (ch == '[') typeInfo.mDepth++;
+                if (ch == '[')
+                    typeInfo.mDepth++;
             }
         }
 

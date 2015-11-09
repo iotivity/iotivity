@@ -16,27 +16,31 @@
 
 package oic.simulator.clientcontroller.view.dialogs;
 
+import java.util.Iterator;
 import java.util.List;
 
 import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.manager.ResourceManager;
 import oic.simulator.clientcontroller.remoteresource.PutPostAttributeModel;
 import oic.simulator.clientcontroller.utils.Constants;
 
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.CheckboxCellEditor;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.jface.viewers.ComboBoxCellEditor;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
-import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Image;
@@ -45,9 +49,9 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.Text;
 
 /**
  * This dialog is used for generating a POST request.
@@ -66,6 +70,7 @@ public class PostRequestDialog extends TitleAreaDialog {
             List<PutPostAttributeModel> modelList) {
         super(parentShell);
         this.modelList = modelList;
+        resourceManager = Activator.getDefault().getResourceManager();
     }
 
     @Override
@@ -139,6 +144,7 @@ public class PostRequestDialog extends TitleAreaDialog {
                 }
             }
         });
+
         attValue.setEditingSupport(new AttributeValueEditor(attTblViewer));
 
         TableViewerColumn updateColumn = new TableViewerColumn(tableViewer,
@@ -203,34 +209,11 @@ public class PostRequestDialog extends TitleAreaDialog {
 
     class AttributeValueEditor extends EditingSupport {
         private final TableViewer viewer;
-        private final CellEditor  editor;
-        private final Text txt;
+        private CCombo            comboBox;
+
         public AttributeValueEditor(TableViewer viewer) {
             super(viewer);
             this.viewer = viewer;
-            editor = new TextCellEditor(viewer.getTable());
-            txt = (Text)editor.getControl();
-            if(null != txt) {
-                txt.addModifyListener(new ModifyListener() {
-                    @Override
-                    public void modifyText(ModifyEvent e) {
-                        IStructuredSelection selection = (IStructuredSelection)AttributeValueEditor.this.viewer.getSelection();
-                        PutPostAttributeModel att = (PutPostAttributeModel)selection.getFirstElement();
-                        if(null == att) {
-                            return;
-                        }
-                        String newValue = txt.getText();
-                        if(null != newValue && !newValue.isEmpty()) {
-                            att.setModified(true);
-                        }
-                        else {
-                            att.setModified(false);
-                        }
-                        AttributeValueEditor.this.viewer.update(att, null);
-                    }
-                });
-
-            }
         }
 
         @Override
@@ -240,24 +223,82 @@ public class PostRequestDialog extends TitleAreaDialog {
 
         @Override
         protected CellEditor getCellEditor(Object element) {
-            return editor;
+            PutPostAttributeModel attributeInSelection = (PutPostAttributeModel) element;
+
+            String values[] = null;
+            List<String> valueSet = attributeInSelection.getValues();
+            values = convertListToStringArray(valueSet);
+
+            ComboBoxCellEditor comboEditor = new ComboBoxCellEditor(
+                    viewer.getTable(), values);
+            comboBox = (CCombo) comboEditor.getControl();
+            if (null != comboBox) {
+                comboBox.addModifyListener(new ModifyListener() {
+                    @Override
+                    public void modifyText(ModifyEvent e) {
+                        IStructuredSelection selection = (IStructuredSelection) AttributeValueEditor.this.viewer
+                                .getSelection();
+                        PutPostAttributeModel att = (PutPostAttributeModel) selection
+                                .getFirstElement();
+                        if (null == att) {
+                            return;
+                        }
+                        String newValue = comboBox.getText();
+                        if (null != newValue && !newValue.isEmpty()) {
+                            att.setModified(true);
+                        } else {
+                            att.setModified(false);
+                        }
+                        AttributeValueEditor.this.viewer.update(att, null);
+                    }
+                });
+            }
+            return comboEditor;
         }
 
         @Override
         protected Object getValue(Object element) {
-            PutPostAttributeModel model = (PutPostAttributeModel) element;
-            return model.getAttValue();
+            int indexOfItem = 0;
+            PutPostAttributeModel att = (PutPostAttributeModel) element;
+            String valueString = att.getAttValue();
+            List<String> valueSet = att.getValues();
+            if (null != valueSet) {
+                indexOfItem = valueSet.indexOf(valueString);
+            }
+            if (indexOfItem == -1) {
+                indexOfItem = 0;
+            }
+            return indexOfItem;
         }
 
         @Override
         protected void setValue(Object element, Object value) {
-            PutPostAttributeModel model = (PutPostAttributeModel) element;
-            // Compare the actual value and the new value
-            // If there is a change, then its corresponding check box should be
-            // checked.
-            String newValue = String.valueOf(value);
-            model.setAttValue(newValue);
+            PutPostAttributeModel att = (PutPostAttributeModel) element;
+            int index;
+            try {
+                index = Integer.parseInt(String.valueOf(value));
+            } catch (NumberFormatException nfe) {
+                index = -1;
+            }
+            String newValue;
+            if (index == -1) {
+                newValue = comboBox.getText();
+                att.prependNewValue(newValue);
+            } else {
+                newValue = att.getValues().get(index);
+            }
+            att.setAttValue(newValue);
             viewer.update(element, null);
+        }
+
+        public String[] convertListToStringArray(List<String> valueList) {
+            String[] strArr;
+            if (null != valueList && valueList.size() > 0) {
+                strArr = valueList.toArray(new String[1]);
+            } else {
+                strArr = new String[1];
+            }
+            return strArr;
         }
     }
 
@@ -293,5 +334,26 @@ public class PostRequestDialog extends TitleAreaDialog {
             model.setModified(status);
             viewer.update(element, null);
         }
+    }
+
+    @Override
+    protected void okPressed() {
+        String value;
+        PutPostAttributeModel attModel;
+        Iterator<PutPostAttributeModel> itr;
+        itr = modelList.iterator();
+        while (itr.hasNext()) {
+            attModel = itr.next();
+            if (null == attModel) {
+                return;
+            }
+            value = attModel.getAttValue();
+            if (null == value || value.isEmpty()) {
+                MessageDialog.openError(Display.getDefault().getActiveShell(),
+                        "Empty value", "Attribute value should not be empty.");
+                return;
+            }
+        }
+        close();
     }
 }

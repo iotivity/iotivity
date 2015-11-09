@@ -403,35 +403,109 @@ class SimulatorResourceModelBuilder
         }
 };
 
-class RangeValidater : public boost::static_visitor<bool>
+class RangeValidator : public boost::static_visitor<bool>
 {
     public:
-        RangeValidater(SimulatorResourceModel::AttributeProperty &property) :
+        RangeValidator(SimulatorResourceModel::AttributeProperty &property) :
             m_property(property) {}
 
         bool operator ()(const int &value)
         {
-            if (checkIntRange(value) || checkSupportedValueSet(value))
+            if (checkRange(value) || checkSupportedValueSet(value))
                 return true;
             return false;
         }
 
         bool operator ()(const double &value)
         {
-            return checkSupportedValueSet(value);
+            if (checkRange(value) || checkSupportedValueSet(value))
+                return true;
+            return false;
+        }
+
+        bool operator ()(const bool &value)
+        {
+            if (checkSupportedValueSet(value))
+                return true;
+            return false;
         }
 
         bool operator ()(const std::string &value)
         {
             int len = value.length();
-            if (checkIntRange(len) || checkSupportedValueSet(value))
+            if (checkRange(len) || checkSupportedValueSet(value))
                 return true;
             return false;
         }
 
-        template <typename T>
-        bool operator ()(const T &)
+        bool operator ()(const SimulatorResourceModel &)
         {
+            return true;
+        }
+
+        template <typename T>
+        bool operator ()(const std::vector<T> &values)
+        {
+            // Verify array property
+            int length = values.size();
+            if (!checkRange(length))
+                return false;
+
+            // Verify array element property
+            if (!m_property.getChildProperty())
+                return true;
+
+            m_property = *(m_property.getChildProperty());
+            for (int index = 0; index < length; index++)
+            {
+                if (!operator ()(values[index]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        template <typename T>
+        bool operator ()(const std::vector<std::vector<T>> &values)
+        {
+            // Verify array property
+            int length = values.size();
+            if (!checkRange(length))
+                return false;
+
+            // Verify array element property
+            if (!m_property.getChildProperty())
+                return true;
+
+            m_property = *(m_property.getChildProperty());
+            for (int index = 0; index < length; index++)
+            {
+                if (!operator ()(values[index]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        template <typename T>
+        bool operator ()(const std::vector<std::vector<std::vector<T>>> &values)
+        {
+            // Verify array property
+            int length = values.size();
+            if (!checkRange(length))
+                return false;
+
+            // Verify array element property
+            if (!m_property.getChildProperty())
+                return true;
+
+            m_property = *(m_property.getChildProperty());
+            for (int index = 0; index < length; index++)
+            {
+                if (!operator ()(values[index]))
+                    return false;
+            }
+
             return true;
         }
 
@@ -444,7 +518,7 @@ class RangeValidater : public boost::static_visitor<bool>
             return false;
         }
 
-        bool checkIntRange(const int &value)
+        bool checkRange(const double &value)
         {
             if (SimulatorResourceModel::AttributeProperty::Type::RANGE ==
                 m_property.type())
@@ -473,7 +547,7 @@ class RangeValidater : public boost::static_visitor<bool>
             return false;
         }
 
-        SimulatorResourceModel::AttributeProperty &m_property;
+        SimulatorResourceModel::AttributeProperty m_property;
 };
 
 class ToStringConverter
@@ -617,25 +691,12 @@ bool SimulatorResourceModel::TypeInfo::operator!=(
     return false;
 }
 
-std::string SimulatorResourceModel::AttributeProperty::valueSetToString() const
-{
-    std::ostringstream out;
-    out << "[ ";
-    for (auto &value : m_valueSet)
-    {
-        out << ToStringConverter().getStringRepresentation(value);
-        out << ", ";
-    }
-    out << "]";
-    return out.str();
-}
-
 SimulatorResourceModel::AttributeProperty::AttributeProperty()
     :   m_type(SimulatorResourceModel::AttributeProperty::Type::UNKNOWN),
         m_min(INT_MIN),
         m_max(INT_MAX) {}
 
-SimulatorResourceModel::AttributeProperty::AttributeProperty(int min, int max)
+SimulatorResourceModel::AttributeProperty::AttributeProperty(double min, double max)
     :   m_type(SimulatorResourceModel::AttributeProperty::Type::RANGE),
         m_min(min),
         m_max(max) {}
@@ -681,12 +742,12 @@ SimulatorResourceModel::AttributeProperty::type() const
     return m_type;
 }
 
-int SimulatorResourceModel::AttributeProperty::min() const
+double SimulatorResourceModel::AttributeProperty::min() const
 {
     return m_min;
 }
 
-int SimulatorResourceModel::AttributeProperty::max() const
+double SimulatorResourceModel::AttributeProperty::max() const
 {
     return m_max;
 }
@@ -700,6 +761,30 @@ std::vector<SimulatorResourceModel::ValueVariant>
 SimulatorResourceModel::AttributeProperty::valueSet() const
 {
     return m_valueSet;
+}
+
+std::string SimulatorResourceModel::AttributeProperty::valueSetToString() const
+{
+    std::ostringstream out;
+    out << "[ ";
+    for (auto &value : m_valueSet)
+    {
+        out << ToStringConverter().getStringRepresentation(value);
+        out << ", ";
+    }
+    out << "]";
+    return out.str();
+}
+
+void SimulatorResourceModel::AttributeProperty::setChildProperty(AttributeProperty &childProperty)
+{
+    m_childProperty.reset(new SimulatorResourceModel::AttributeProperty(childProperty));
+}
+
+std::shared_ptr<SimulatorResourceModel::AttributeProperty>
+SimulatorResourceModel::AttributeProperty::getChildProperty()
+{
+    return m_childProperty;
 }
 
 std::string SimulatorResourceModel::Attribute::getName() const
@@ -921,8 +1006,8 @@ bool SimulatorResourceModel::setAttributeValue(const std::string &key,
 {
     if (key.empty())
     {
-        OC_LOG(ERROR, TAG, "Invalid key!");
-        throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Attribute name is empty!");
+        OC_LOG(ERROR, TAG, "key is empty!");
+        return false;
     }
 
     /*
@@ -969,8 +1054,8 @@ bool SimulatorResourceModel::match(const std::string &key,
         if (getAttributeProperty(key, prop)
             && SimulatorResourceModel::AttributeProperty::Type::UNKNOWN != prop.type())
         {
-            RangeValidater rangeValidater(prop);
-            return boost::apply_visitor(rangeValidater, newValue);
+            RangeValidator rangeValidator(prop);
+            return boost::apply_visitor(rangeValidator, newValue);
         }
 
         return true;
@@ -1000,13 +1085,11 @@ bool SimulatorResourceModel::match(const SimulatorResourceModel &resModel, bool 
         }
 
         SimulatorResourceModel::AttributeProperty prop;
-        if (getAttributeProperty(element.first, prop))
+        if (getAttributeProperty(element.first, prop)
+            && SimulatorResourceModel::AttributeProperty::Type::UNKNOWN != prop.type())
         {
-            RangeValidater rangeValidater(prop);
-            if (false == boost::apply_visitor(rangeValidater, element.second))
-            {
-                return false;
-            }
+            RangeValidator rangeValidator(prop);
+            return boost::apply_visitor(rangeValidator, element.second);
         }
     }
 

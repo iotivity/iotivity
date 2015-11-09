@@ -153,77 +153,77 @@ class ValueConverterJava : public boost::static_visitor<jobject>
     private:
         jclass getClass(const std::vector<int> &)
         {
-            return gSimulatorClassRefs.integer1DArrayCls;
+            return gSimulatorClassRefs.integerCls;
         }
 
         jclass getClass(const std::vector<std::vector<int>> &)
         {
-            return gSimulatorClassRefs.integer2DArrayCls;
+            return gSimulatorClassRefs.integer1DArrayCls;
         }
 
         jclass getClass(const std::vector<std::vector<std::vector<int>>> &)
         {
-            return gSimulatorClassRefs.integer3DArrayCls;
+            return gSimulatorClassRefs.integer2DArrayCls;
         }
 
         jclass getClass(const std::vector<double> &)
         {
-            return gSimulatorClassRefs.double1DArrayCls;
+            return gSimulatorClassRefs.doubleCls;
         }
 
         jclass getClass(const std::vector<std::vector<double>> &)
         {
-            return gSimulatorClassRefs.double2DArrayCls;
+            return gSimulatorClassRefs.double1DArrayCls;
         }
 
         jclass getClass(const std::vector<std::vector<std::vector<double>>> &)
         {
-            return gSimulatorClassRefs.double3DArrayCls;
+            return gSimulatorClassRefs.double2DArrayCls;
         }
 
         jclass getClass(const std::vector<bool> &)
         {
-            return gSimulatorClassRefs.boolean1DArrayCls;
+            return gSimulatorClassRefs.booleanCls;
         }
 
         jclass getClass(const std::vector<std::vector<bool>> &)
         {
-            return gSimulatorClassRefs.boolean2DArrayCls;
+            return gSimulatorClassRefs.boolean1DArrayCls;
         }
 
         jclass getClass(const std::vector<std::vector<std::vector<bool>>> &)
         {
-            return gSimulatorClassRefs.boolean3DArrayCls;
+            return gSimulatorClassRefs.boolean2DArrayCls;
         }
 
         jclass getClass(const std::vector<std::string> &)
         {
-            return gSimulatorClassRefs.string1DArrayCls;
+            return gSimulatorClassRefs.stringCls;
         }
 
         jclass getClass(const std::vector<std::vector<std::string>> &)
         {
-            return gSimulatorClassRefs.string2DArrayCls;
+            return gSimulatorClassRefs.string1DArrayCls;
         }
 
         jclass getClass(const std::vector<std::vector<std::vector<std::string>>> &)
         {
-            return gSimulatorClassRefs.string3DArrayCls;
+            return gSimulatorClassRefs.string2DArrayCls;
         }
 
         jclass getClass(const std::vector<SimulatorResourceModel> &)
         {
-            return gSimulatorClassRefs.simulatorResModel1DArrayCls;
+            return gSimulatorClassRefs.simulatorResourceModelCls;
         }
 
         jclass getClass(const std::vector<std::vector<SimulatorResourceModel>> &)
         {
-            return gSimulatorClassRefs.simulatorResModel2DArrayCls;
+            return gSimulatorClassRefs.simulatorResModel1DArrayCls;
         }
 
         jclass getClass(const std::vector<std::vector<std::vector<SimulatorResourceModel>>> &)
         {
-            return gSimulatorClassRefs.simulatorResModel3DArrayCls;
+            return gSimulatorClassRefs.simulatorResModel2DArrayCls;
         }
 
         JNIEnv *m_env;
@@ -552,13 +552,14 @@ class JniAttributeProperty
         static jobject toJava(JNIEnv *env,
                               SimulatorResourceModel::AttributeProperty &property)
         {
+            jobject jAttributeProperty = nullptr;
             if (SimulatorResourceModel::AttributeProperty::Type::RANGE == property.type())
             {
                 static jmethodID propertyCtor = env->GetMethodID(
                                                     gSimulatorClassRefs.attributePropertyCls, "<init>", "(DD)V");
 
-                return env->NewObject(gSimulatorClassRefs.attributePropertyCls, propertyCtor,
-                                      property.min(), property.max());
+                jAttributeProperty = env->NewObject(gSimulatorClassRefs.attributePropertyCls, propertyCtor,
+                                                    property.min(), property.max());
             }
             else
             {
@@ -574,11 +575,24 @@ class JniAttributeProperty
                     env->SetObjectArrayElement(jValueSet, index++, jValue);
                 }
 
-                return env->NewObject(gSimulatorClassRefs.attributePropertyCls, propertyCtor,
-                                      jValueSet);
+                jAttributeProperty = env->NewObject(gSimulatorClassRefs.attributePropertyCls, propertyCtor,
+                                                    jValueSet);
             }
 
-            return nullptr;
+            // Add child property
+            if (jAttributeProperty && property.getChildProperty())
+            {
+                SimulatorResourceModel::AttributeProperty childProperty = *(property.getChildProperty());
+                jobject jChildProperty = JniAttributeProperty::toJava(env,  property);
+                if (jChildProperty)
+                {
+                    static jfieldID childPropFID = env->GetFieldID(gSimulatorClassRefs.attributePropertyCls,
+                                                   "mChildProperty", "Lorg/oic/simulator/AttributeProperty;");
+                    env->SetObjectField(jAttributeProperty, childPropFID, jChildProperty);
+                }
+            }
+
+            return jAttributeProperty;
         }
 
         static SimulatorResourceModel::AttributeProperty toCpp(JNIEnv *env, jobject jAttributeProperty)
@@ -591,21 +605,26 @@ class JniAttributeProperty
                                      "mMax", "D");
             static jfieldID valueSetFID = env->GetFieldID(gSimulatorClassRefs.attributePropertyCls,
                                           "mValueSet", "[Lorg/oic/simulator/AttributeValue;");
+            static jfieldID childPropFID = env->GetFieldID(gSimulatorClassRefs.attributePropertyCls,
+                                           "mChildProperty", "Lorg/oic/simulator/AttributeProperty;");
             static jmethodID ordinalMID = env->GetMethodID(
                                               gSimulatorClassRefs.attributePropertyTypeCls, "ordinal", "()I");
 
+            SimulatorResourceModel::AttributeProperty attributeProperty;
             jobject jType = env->GetObjectField(jAttributeProperty, typeFID);
             jdouble jMin = env->GetDoubleField(jAttributeProperty, minFID);
             jdouble jMax = env->GetDoubleField(jAttributeProperty, maxFID);
             jobjectArray jValueSet = (jobjectArray) env->GetObjectField(jAttributeProperty, valueSetFID);
+            jobject jChildProperty = env->GetObjectField(jAttributeProperty, childPropFID);
 
             int ordinal = env->CallIntMethod(jType, ordinalMID);
             switch (SimulatorResourceModel::AttributeProperty::Type(ordinal))
             {
                 case SimulatorResourceModel::AttributeProperty::Type::RANGE:
                     {
-                        return SimulatorResourceModel::AttributeProperty(jMin, jMax);
+                        attributeProperty = SimulatorResourceModel::AttributeProperty(jMin, jMax);
                     }
+                    break;
 
                 case SimulatorResourceModel::AttributeProperty::Type::VALUE_SET:
                     {
@@ -617,11 +636,20 @@ class JniAttributeProperty
                             valueSet.push_back(JniAttributeValue::toCpp(env, jAttributeValue));
                         }
 
-                        return SimulatorResourceModel::AttributeProperty(valueSet);
+                        attributeProperty = SimulatorResourceModel::AttributeProperty(valueSet);
                     }
+                    break;
             }
 
-            return SimulatorResourceModel::AttributeProperty();
+            // Set child property
+            if (jChildProperty)
+            {
+                SimulatorResourceModel::AttributeProperty childProperty =
+                    JniAttributeProperty::toCpp(env, jAttributeProperty);
+                attributeProperty.setChildProperty(childProperty);
+            }
+
+            return attributeProperty;
         }
 };
 

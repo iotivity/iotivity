@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 
+#include "simulator_resource_model_jni.h"
 #include "simulator_exceptions_jni.h"
 #include "simulator_utils_jni.h"
 #include "jni_sharedobject_holder.h"
@@ -90,7 +91,7 @@ static void onObserverChange(jobject listener, const std::string &uri,
                              ObservationStatus state, const ObserverInfo &observerInfo)
 {
     JNIEnv *env = getEnv();
-    if (env)
+    if (!env)
         return;
 
     jclass listenerCls = env->GetObjectClass(listener);
@@ -110,6 +111,23 @@ static void onObserverChange(jobject listener, const std::string &uri,
     jobject jobserver = createObserverInfo(env, observerInfo);
 
     env->CallVoidMethod(listener, listenerMethod, jUri, jobserver);
+    releaseEnv();
+}
+
+static void onResourceModelChange(jobject listener, const std::string &uri,
+                                  SimulatorResourceModel &resModel)
+{
+    JNIEnv *env = getEnv();
+    if (!env)
+        return;
+
+    jclass listenerCls = env->GetObjectClass(listener);
+    jmethodID listenerMethod = env->GetMethodID(listenerCls, "onResourceModelChanged",
+                               "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;)V");
+
+    jobject jResModel = simulatorResourceModelToJava(env, resModel);
+    jstring jUri = env->NewStringUTF(uri.c_str());
+    env->CallVoidMethod(listener, listenerMethod, jUri, jResModel);
     releaseEnv();
 }
 
@@ -166,6 +184,37 @@ Java_org_oic_simulator_server_SimulatorResource_getInterface
 
     std::vector<std::string> interfaces = resource->getInterface();
     return JniVector(env).toJava(interfaces);
+}
+
+JNIEXPORT jboolean JNICALL
+Java_org_oic_simulator_server_SimulatorResource_isObservable
+(JNIEnv *env, jobject object)
+{
+    SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
+    VALIDATE_OBJECT_RET(env, resource, false)
+
+    return resource->isObservable();
+}
+
+JNIEXPORT jboolean JNICALL
+Java_org_oic_simulator_server_SimulatorResource_isStarted
+(JNIEnv *env, jobject object)
+{
+    SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
+    VALIDATE_OBJECT_RET(env, resource, false)
+
+    return resource->isStarted();
+}
+
+JNIEXPORT jobject JNICALL
+Java_org_oic_simulator_server_SimulatorResource_getResourceModel
+(JNIEnv *env, jobject object)
+{
+    SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
+    VALIDATE_OBJECT_RET(env, resource, nullptr)
+
+    SimulatorResourceModel resModel = resource->getResourceModel();
+    return simulatorResourceModelToJava(env, resModel);
 }
 
 JNIEXPORT void JNICALL
@@ -312,24 +361,30 @@ Java_org_oic_simulator_server_SimulatorResource_setObserverListener
     }
 }
 
-JNIEXPORT jboolean JNICALL
-Java_org_oic_simulator_server_SimulatorResource_isObservable
-(JNIEnv *env, jobject object)
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_server_SimulatorResource_setResourceModelChangeListener
+(JNIEnv *env, jobject object, jobject listener)
 {
+    VALIDATE_CALLBACK(env, listener)
+
     SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
-    VALIDATE_OBJECT_RET(env, resource, false)
+    VALIDATE_OBJECT(env, resource)
 
-    return resource->isObservable();
-}
+    SimulatorResource::ResourceModelChangedCallback callback =  std::bind(
+                [](const std::string & uri, SimulatorResourceModel & resModel,
+                   const std::shared_ptr<JniListenerHolder> &listenerRef)
+    {
+        onResourceModelChange(listenerRef->get(), uri, resModel);
+    }, std::placeholders::_1, std::placeholders::_2, JniListenerHolder::create(env, listener));
 
-JNIEXPORT jboolean JNICALL
-Java_org_oic_simulator_server_SimulatorResource_isStarted
-(JNIEnv *env, jobject object)
-{
-    SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
-    VALIDATE_OBJECT_RET(env, resource, false)
-
-    return resource->isStarted();
+    try
+    {
+        resource->setModelChangeCallback(callback);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+    }
 }
 
 JNIEXPORT void JNICALL

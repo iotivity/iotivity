@@ -91,6 +91,27 @@ class SimulatorResource : public UnCopyable
         virtual std::vector<std::string> getInterface() const = 0;
 
         /**
+         * API to get the observable state of resource.
+         *
+         * @return bool - true if resource is observable, otherwise false.
+         */
+        virtual bool isObservable() = 0;
+
+        /**
+         * API to get the start state of resource.
+         *
+         * @return bool - true if resource is started, otherwise false.
+         */
+        virtual bool isStarted() = 0;
+
+        /**
+         * API to get SimulatorResourceModel of resource.
+         *
+         * @return Resource model of the resource.
+         */
+        virtual SimulatorResourceModel getResourceModel() = 0;
+
+        /**
          * API to set the name of the resource.
          *
          * @param name - Name to be set.
@@ -144,18 +165,12 @@ class SimulatorResource : public UnCopyable
         virtual void setObserverCallback(ObserverCallback callback) = 0;
 
         /**
-         * API to get the observable state of resource.
+         * API to set the callback for receiving the notifications when the
+         * resource model changes.
          *
-         * @return bool - true if resource is observable, otherwise false.
+         * @param callback - Callback to be set for receiving the notifications.
          */
-        virtual bool isObservable() = 0;
-
-        /**
-         * API to get the start state of resource.
-         *
-         * @return bool - true if resource is started, otherwise false.
-         */
-        virtual bool isStarted() = 0;
+        virtual void setModelChangeCallback(ResourceModelChangedCallback callback) = 0;
 
         /**
          * API to start the resource.

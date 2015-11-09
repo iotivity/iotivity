@@ -16,8 +16,19 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import oic.simulator.serviceprovider.utils.Constants;
+import java.io.FileInputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Date;
 
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
+
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
@@ -37,24 +48,42 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
+import org.oic.simulator.ILogger.Level;
+import org.oic.simulator.SimulatorException;
+import org.oic.simulator.server.SimulatorResource;
+import org.oic.simulator.server.SimulatorResource.Type;
 
 /**
  * This class shows UI for creating resources.
  */
-public class CreateResourcePage extends WizardPage {
+public class LoadRamlPage extends WizardPage {
 
-    private Text   locationTxt;
-    private Button btnBrowse;
-    private Text   noOfInstancesText;
-    private Label  noOfInstancesLbl;
-    private Label  locationLbl;
+    private Text                   locationTxt;
+    private Button                 btnBrowse;
+    private Text                   noOfInstancesText;
+    private Label                  noOfInstancesLbl;
+    private Label                  locationLbl;
 
-    private String configFilePath = null;
-    private int    resourceCount;
+    private String                 configFilePath = null;
+    private int                    resourceCount;
 
-    protected CreateResourcePage() {
+    private Resource               resource;
+
+    private SimulatorResource.Type typeOfResource;
+
+    protected LoadRamlPage() {
         super("Create Resource");
         resourceCount = -1;
+    }
+
+    public void initialSetup(SimulatorResource.Type type) {
+        this.typeOfResource = type;
+        if (!noOfInstancesLbl.isDisposed()) {
+            noOfInstancesLbl.setVisible(type == Type.SINGLE);
+        }
+        if (!noOfInstancesText.isDisposed()) {
+            noOfInstancesText.setVisible(type == Type.SINGLE);
+        }
     }
 
     @Override
@@ -63,7 +92,7 @@ public class CreateResourcePage extends WizardPage {
         setTitle(Constants.CREATE_PAGE_TITLE);
         setMessage(Constants.CREATE_PAGE_MESSAGE);
         Composite compContent = new Composite(parent, SWT.NONE);
-        GridLayout gridLayout = new GridLayout(1, false);
+        GridLayout gridLayout = new GridLayout();
         compContent.setLayout(gridLayout);
         GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
         compContent.setLayoutData(gd);
@@ -129,7 +158,6 @@ public class CreateResourcePage extends WizardPage {
     }
 
     private void addUIListeners() {
-
         btnBrowse.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -138,9 +166,8 @@ public class CreateResourcePage extends WizardPage {
                 fileDialog
                         .setFilterExtensions(Constants.BROWSE_RAML_FILTER_EXTENSIONS);
                 String configFileAbsolutePath = fileDialog.open();
-                if (null != configFileAbsolutePath) {
+                if (null != configFileAbsolutePath)
                     locationTxt.setText(configFileAbsolutePath);
-                }
             }
         });
 
@@ -148,7 +175,7 @@ public class CreateResourcePage extends WizardPage {
             @Override
             public void modifyText(ModifyEvent e) {
                 configFilePath = locationTxt.getText();
-                setPageComplete(isSelectionDone());
+                getWizard().getContainer().updateButtons();
             }
         });
 
@@ -170,24 +197,109 @@ public class CreateResourcePage extends WizardPage {
         noOfInstancesText.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                setPageComplete(isSelectionDone());
+                getWizard().getContainer().updateButtons();
             }
         });
     }
 
-    private boolean isSelectionDone() {
+    @Override
+    public boolean canFlipToNextPage() {
         boolean done = false;
         try {
             resourceCount = Integer.parseInt(noOfInstancesText.getText());
         } catch (Exception e) {
             resourceCount = -1;
         }
-
-        if (null != configFilePath && configFilePath.length() > 0
-                && resourceCount >= 1) {
-            done = true;
+        if (null != configFilePath && configFilePath.trim().length() > 0) {
+            if (typeOfResource == Type.COLLECTION) {
+                done = true;
+            } else {
+                if (resourceCount == 1) {
+                    done = true;
+                }
+            }
         }
         return done;
+    }
+
+    public boolean isSelectionDone() {
+        boolean done = false;
+        try {
+            resourceCount = Integer.parseInt(noOfInstancesText.getText());
+        } catch (Exception e) {
+            resourceCount = -1;
+        }
+        if (null != configFilePath && configFilePath.trim().length() > 0) {
+            if (typeOfResource == Type.COLLECTION) {
+                done = true;
+            } else {
+                if (resourceCount >= 1) {
+                    done = true;
+                }
+            }
+        }
+        return done;
+    }
+
+    public boolean isMultiResourceCreation() {
+        if (typeOfResource != Type.COLLECTION && resourceCount > 1) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public IWizardPage getNextPage() {
+        // Validate the file path.
+        try {
+            new FileInputStream(configFilePath);
+        } catch (Exception e) {
+            MessageDialog
+                    .openError(getShell(), "Invalid File",
+                            "File doesn't exist. Either the file path or file name is invalid.");
+            // TODO: Instead of MessageDialog, errors may be shown on wizard
+            // itself.
+            return null;
+        }
+        final CreateResourceWizard wizard = ((CreateResourceWizard) getWizard());
+
+        try {
+            getContainer().run(true, true, new IRunnableWithProgress() {
+                @Override
+                public void run(IProgressMonitor monitor)
+                        throws InvocationTargetException, InterruptedException {
+                    try {
+                        monitor.beginTask("Resource Creation With RAML", 2);
+                        monitor.worked(1);
+                        resource = Activator.getDefault().getResourceManager()
+                                .createResourceByRAML(configFilePath);
+                        monitor.worked(1);
+                    } catch (SimulatorException e) {
+                        wizard.setStatus("Failed to create resource.\n"
+                                + Utility.getSimulatorErrorString(e, null));
+                    } finally {
+                        monitor.done();
+                    }
+                }
+            });
+        } catch (InvocationTargetException e) {
+            Activator.getDefault().getLogManager()
+                    .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            Activator.getDefault().getLogManager()
+                    .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+            e.printStackTrace();
+        }
+        if (null == resource) {
+            wizard.setStatus("Failed to create Resource.");
+            wizard.getWizardDialog().close();
+            return null;
+        }
+        UpdatePropertiesPage updatePageRef = wizard.getUpdatePropPage();
+        updatePageRef.setResName(resource.getResourceName());
+        updatePageRef.setResURI(resource.getResourceURI());
+        return updatePageRef;
     }
 
     public String getConfigFilePath() {
@@ -196,5 +308,13 @@ public class CreateResourcePage extends WizardPage {
 
     public int getResourceCount() {
         return resourceCount;
+    }
+
+    public Resource getResource() {
+        return resource;
+    }
+
+    public void setResource(Resource resource) {
+        this.resource = resource;
     }
 }

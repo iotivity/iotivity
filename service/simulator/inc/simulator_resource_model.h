@@ -118,7 +118,7 @@ class SimulatorResourceModel
                 AttributeProperty(AttributeProperty &&) = default;
                 AttributeProperty &operator=(AttributeProperty &&) = default;
 
-                explicit AttributeProperty(int min, int max);
+                explicit AttributeProperty(double min, double max);
                 explicit AttributeProperty(const std::vector<int> &valueSet);
                 explicit AttributeProperty(const std::vector<double> &valueSet);
                 explicit AttributeProperty(const std::vector<bool> &valueSet);
@@ -126,17 +126,20 @@ class SimulatorResourceModel
                 explicit AttributeProperty(const std::vector<ValueVariant> &valueSet);
 
                 Type type() const;
-                int min() const;
-                int max() const;
+                double min() const;
+                double max() const;
                 int valueSetSize() const;
                 std::vector<ValueVariant> valueSet() const;
                 std::string valueSetToString() const;
+                void setChildProperty(AttributeProperty &childProperty);
+                std::shared_ptr<AttributeProperty> getChildProperty();
 
             private:
                 Type m_type;
-                int m_min;
-                int m_max;
+                double m_min;
+                double m_max;
                 std::vector<ValueVariant> m_valueSet;
+                std::shared_ptr<AttributeProperty> m_childProperty;
         };
 
         class Attribute

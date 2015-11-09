@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package oic.simulator.serviceprovider.resource;
+package oic.simulator.serviceprovider.model;
 
 /**
  * This is a helper class for showing the meta properties of resources such as

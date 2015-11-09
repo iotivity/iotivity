@@ -123,21 +123,6 @@ class SimulatorSingleResource : public SimulatorResource
                                           bool notify = true) = 0;
 
         /**
-         * API to get SimulatorResourceModel of resource.
-         *
-         * @return Resource model of the resource.
-         */
-        virtual SimulatorResourceModel getResourceModel() = 0;
-
-        /**
-         * API to set the callback for receiving the notifications when the
-         * resource model changes.
-         *
-         * @param callback - Callback to be set for receiving the notifications.
-         */
-        virtual void setModelChangeCallback(ResourceModelChangedCallback callback) = 0;
-
-        /**
          * API to start the attribute value update automation for all attributes.
          * Values for the attributes will be selected from their allowed range
          * and the updated resource model will be notified to all the observers of the resource.

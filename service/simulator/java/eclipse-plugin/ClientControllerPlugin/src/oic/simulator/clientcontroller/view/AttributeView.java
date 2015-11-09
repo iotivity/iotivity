@@ -57,6 +57,7 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
+import org.oic.simulator.client.SimulatorRemoteResource.VerificationType;
 
 /**
  * This class manages and shows the attribute view in the perspective.
@@ -100,8 +101,6 @@ public class AttributeView extends ViewPart {
 
                     @Override
                     public void run() {
-                        System.out
-                                .println("AttributeView: onResourceSelectionChange");
                         resourceInSelection = resource;
 
                         // Set visibility of manual and automation controls
@@ -110,14 +109,11 @@ public class AttributeView extends ViewPart {
                         // Update the attribute table
                         if (null != attTblViewer
                                 && !attTblViewer.getControl().isDisposed()) {
-                            System.out.println("viewer is alive");
                             updateViewer(getData(resource));
                         }
 
                         // Update the observe status
                         updateObserve(resource);
-
-                        // Update the pay-load details if any
                     }
                 });
             }
@@ -131,29 +127,19 @@ public class AttributeView extends ViewPart {
 
                     @Override
                     public void run() {
-
-                        System.out.println("AttributeView: onGetCompleted");
                         if (null == resource) {
                             return;
                         }
                         // Update the attribute table
                         if (resourceInSelection != resource) {
-                            System.out
-                                    .println("AttributeView: get response arrived for a different resource");
                             return;
                         }
                         updateViewer(getData(resource));
 
                         // Update the observe status
                         updateObserve(resource);
-
-                        // Update the pay-load details if any
                     }
                 });
-            }
-
-            @Override
-            public void onGetFailed(RemoteResource resource) {
             }
         };
 
@@ -165,29 +151,19 @@ public class AttributeView extends ViewPart {
 
                     @Override
                     public void run() {
-
-                        System.out.println("AttributeView: onPutCompleted");
                         if (null == resource) {
                             return;
                         }
                         // Update the attribute table
                         if (resourceInSelection != resource) {
-                            System.out
-                                    .println("AttributeView: put response arrived for a different resource");
                             return;
                         }
                         updateViewer(getData(resource));
 
                         // Update the observe status
                         updateObserve(resource);
-
-                        // Update the pay-load details if any
                     }
                 });
-            }
-
-            @Override
-            public void onPutFailed(RemoteResource resource) {
             }
         };
 
@@ -199,29 +175,19 @@ public class AttributeView extends ViewPart {
 
                     @Override
                     public void run() {
-
-                        System.out.println("AttributeView: onPostCompleted");
                         if (null == resource) {
                             return;
                         }
                         // Update the attribute table
                         if (resourceInSelection != resource) {
-                            System.out
-                                    .println("AttributeView: post response arrived for a different resource");
                             return;
                         }
                         updateViewer(getData(resource));
 
                         // Update the observe status
                         updateObserve(resource);
-
-                        // Update the pay-load details if any
                     }
                 });
-            }
-
-            @Override
-            public void onPostFailed(RemoteResource resource) {
             }
         };
 
@@ -233,29 +199,19 @@ public class AttributeView extends ViewPart {
 
                     @Override
                     public void run() {
-
-                        System.out.println("AttributeView: onObserveCompleted");
                         if (null == resource) {
                             return;
                         }
                         // Update the attribute table
                         if (resourceInSelection != resource) {
-                            System.out
-                                    .println("AttributeView: observe response arrived for a different resource");
                             return;
                         }
                         updateViewer(getData(resource));
 
                         // Update the observe status
                         updateObserve(resource);
-
-                        // Update the pay-load details if any
                     }
                 });
-            }
-
-            @Override
-            public void onObserveFailed(RemoteResource resource) {
             }
         };
 
@@ -306,15 +262,10 @@ public class AttributeView extends ViewPart {
 
                     @Override
                     public void run() {
-
-                        System.out
-                                .println("AttributeView: onConfigurationUploaded");
                         if (null == resource) {
                             return;
                         }
                         if (resourceInSelection != resource) {
-                            System.out
-                                    .println("AttributeView: config upload response arrived for a different resource");
                             return;
                         }
                         if (!automateButton.isDisposed()) {
@@ -348,7 +299,6 @@ public class AttributeView extends ViewPart {
         }
         Map<String, RemoteResourceAttribute> attMap = resource
                 .getResourceAttributesMap();
-        System.out.println("AttributeView: \n" + attMap);
         return attMap;
     }
 
@@ -616,13 +566,29 @@ public class AttributeView extends ViewPart {
         observeResButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
+                boolean result;
                 if (observeResButton.getText().equals(Constants.OBSERVE)) {
-                    resourceManager.sendObserveRequest(resourceInSelection);
-                    observeResButton.setText(Constants.STOP_OBSERVE);
+                    result = resourceManager
+                            .sendObserveRequest(resourceInSelection);
+                    if (result) {
+                        observeResButton.setText(Constants.STOP_OBSERVE);
+                    } else {
+                        MessageDialog.openError(Display.getDefault()
+                                .getActiveShell(), "Observe failed",
+                                "Failed to observe the resource. Try again.");
+                    }
                 } else {
-                    resourceManager
-                            .sendCancelObserveRequest(resourceInSelection);
-                    observeResButton.setText(Constants.OBSERVE);
+                    result = resourceManager.sendCancelObserveRequest(
+                            resourceInSelection, true);
+                    if (result) {
+                        observeResButton.setText(Constants.OBSERVE);
+                    } else {
+                        MessageDialog
+                                .openError(Display.getDefault()
+                                        .getActiveShell(),
+                                        "Cancel Observe failed",
+                                        "Failed to stop observing the resource. Try again.");
+                    }
                 }
             }
         });
@@ -643,13 +609,121 @@ public class AttributeView extends ViewPart {
                         if (null == autoStatus) {
                             return;
                         }
+
+                        int startCount = 0;
+                        int stopCount = 0;
+                        boolean startGet, startPut, startPost;
+                        boolean stopGet, stopPut, stopPost;
+                        startGet = startPut = startPost = false;
+                        stopGet = stopPut = stopPost = false;
+                        String status = null;
+                        String startMsg = "Verification will be started for: ";
+                        String stopMsg = "Verification will be stopped for: ";
                         VerificationDialog ad = new VerificationDialog(Display
                                 .getDefault().getActiveShell(), autoStatus);
-                        ad.open();
+                        if (ad.open() == Window.OK) {
+                            Map<String, Boolean> oldStatus = resourceManager
+                                    .getAutomationStatus(resource);
+                            if (null == oldStatus || oldStatus.size() < 1) {
+                                status = "Failed to perform the requested operation.";
+                            } else {
+                                // GET
+                                if (oldStatus.get(Constants.GET) != autoStatus
+                                        .get(Constants.GET)) {
+                                    if (autoStatus.get(Constants.GET)) {
+                                        startMsg += Constants.GET;
+                                        startCount++;
+                                        startGet = true;
+                                    } else {
+                                        stopMsg += Constants.GET;
+                                        stopCount++;
+                                        stopGet = true;
+                                    }
+                                }
+                                // PUT
+                                if (oldStatus.get(Constants.PUT) != autoStatus
+                                        .get(Constants.PUT)) {
+                                    if (autoStatus.get(Constants.PUT)) {
+                                        if (startCount == 1) {
+                                            startMsg += ", ";
+                                        }
+                                        startMsg += Constants.PUT;
+                                        startCount++;
+                                        startPut = true;
+                                    } else {
+                                        if (stopCount == 1) {
+                                            stopMsg += ", ";
+                                        }
+                                        stopMsg += Constants.PUT;
+                                        stopCount++;
+                                        stopPut = true;
+                                    }
+
+                                }
+                                // POST
+                                if (oldStatus.get(Constants.POST) != autoStatus
+                                        .get(Constants.POST)) {
+                                    if (autoStatus.get(Constants.POST)) {
+                                        if (startCount > 0) {
+                                            startMsg += ", ";
+                                        }
+                                        startMsg += Constants.POST;
+                                        startCount++;
+                                        startPost = true;
+                                    } else {
+                                        if (stopCount > 0) {
+                                            stopMsg += ", ";
+                                        }
+                                        stopMsg += Constants.POST;
+                                        stopCount++;
+                                        stopPost = true;
+                                    }
+                                }
+                                if (startCount > 0) {
+                                    status = startMsg + ".";
+                                }
+                                if (stopCount > 0) {
+                                    if (startCount <= 0) {
+                                        status = stopMsg;
+                                    } else {
+                                        status += "\n" + stopMsg + ".";
+                                    }
+                                }
+                            }
+                            if (startCount == 0 && stopCount == 0) {
+                                MessageDialog.openInformation(Display
+                                        .getDefault().getActiveShell(),
+                                        "Verification", "No New Changes.");
+                            } else {
+                                boolean answer = MessageDialog.openQuestion(
+                                        Display.getDefault().getActiveShell(),
+                                        "Verification", status
+                                                + "\nDo you want to proceed?");
+                                if (answer) {
+                                    if (startGet || stopGet)
+                                        automate(VerificationType.GET,
+                                                autoStatus.get(Constants.GET));
+                                    if (startPut || stopPut)
+                                        automate(VerificationType.PUT,
+                                                autoStatus.get(Constants.PUT));
+                                    if (startPost || stopPost)
+                                        automate(VerificationType.POST,
+                                                autoStatus.get(Constants.POST));
+                                }
+                            }
+                        }
                     }
                 });
             }
         });
+    }
+
+    private void automate(VerificationType type, boolean start) {
+        if (start) {
+            resourceManager.startAutomationRequest(type, resourceInSelection);
+        } else {
+            resourceManager.stopAutomationRequest(type, resourceInSelection);
+        }
     }
 
     private void addManagerListeners() {

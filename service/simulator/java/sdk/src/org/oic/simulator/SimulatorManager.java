@@ -27,7 +27,8 @@ import org.oic.simulator.server.SimulatorResource;
  */
 public class SimulatorManager {
 
-    private SimulatorManager(){}
+    private SimulatorManager() {
+    }
 
     /**
      * API for creating a resource from a RAML configuration file.
@@ -180,8 +181,15 @@ public class SimulatorManager {
     public static native void setLogger(ILogger logger)
             throws SimulatorException;
 
-    private static native Vector<SimulatorResource> createResources(String configPath, int count);
-    private static native SimulatorResource createSingleResource(String name, String uri, String resourceType);
-    private static native SimulatorResource createCollectionResource(String name, String uri, String resourceType);
-    private static native void searchResource(String resourceType, FindResourceListener listener);
+    private static native Vector<SimulatorResource> createResources(
+            String configPath, int count);
+
+    private static native SimulatorResource createSingleResource(String name,
+            String uri, String resourceType);
+
+    private static native SimulatorResource createCollectionResource(
+            String name, String uri, String resourceType);
+
+    private static native void searchResource(String resourceType,
+            FindResourceListener listener);
 }

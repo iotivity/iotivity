@@ -40,23 +40,6 @@ SimulatorSingleResourceSP simulatorSingleResourceToCpp(JNIEnv *env, jobject obje
     return nullptr;
 }
 
-static void onResourceModelChange(jobject listener, const std::string &uri,
-                                  SimulatorResourceModel &resModel)
-{
-    JNIEnv *env = getEnv();
-    if (!env)
-        return;
-
-    jclass listenerCls = env->GetObjectClass(listener);
-    jmethodID listenerMethod = env->GetMethodID(listenerCls, "onResourceModelChanged",
-                               "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;)V");
-
-    jobject jResModel = simulatorResourceModelToJava(env, resModel);
-    jstring jUri = env->NewStringUTF(uri.c_str());
-    env->CallVoidMethod(listenerCls, listenerMethod, jUri, jResModel);
-    releaseEnv();
-}
-
 static void onAutoUpdationComplete(jobject listener, const std::string &uri, const int id)
 {
     JNIEnv *env = getEnv();
@@ -75,17 +58,6 @@ static void onAutoUpdationComplete(jobject listener, const std::string &uri, con
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_server_SimulatorSingleResource_getResourceModel
-(JNIEnv *env, jobject object)
-{
-    SimulatorSingleResourceSP singleResource = simulatorSingleResourceToCpp(env, object);
-    VALIDATE_OBJECT_RET(env, singleResource, nullptr)
-
-    SimulatorResourceModel resModel = singleResource->getResourceModel();
-    return simulatorResourceModelToJava(env, resModel);
-}
 
 JNIEXPORT jobject JNICALL
 Java_org_oic_simulator_server_SimulatorSingleResource_getAttribute
@@ -251,32 +223,6 @@ Java_org_oic_simulator_server_SimulatorSingleResource_stopUpdation
     VALIDATE_OBJECT(env, singleResource)
 
     singleResource->stopUpdation(id);
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorSingleResource_setModelChangeListener
-(JNIEnv *env, jobject object, jobject listener)
-{
-    VALIDATE_CALLBACK(env, listener)
-
-    SimulatorSingleResourceSP singleResource = simulatorSingleResourceToCpp(env, object);
-    VALIDATE_OBJECT(env, singleResource)
-
-    SimulatorResource::ResourceModelChangedCallback callback =  std::bind(
-                [](const std::string & uri, SimulatorResourceModel & resModel,
-                   const std::shared_ptr<JniListenerHolder> &listenerRef)
-    {
-        onResourceModelChange(listenerRef->get(), uri, resModel);
-    }, std::placeholders::_1, std::placeholders::_2, JniListenerHolder::create(env, listener));
-
-    try
-    {
-        singleResource->setModelChangeCallback(callback);
-    }
-    catch (InvalidArgsException &e)
-    {
-        throwInvalidArgsException(env, e.code(), e.what());
-    }
 }
 
 JNIEXPORT void JNICALL

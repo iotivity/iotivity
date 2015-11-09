@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public class SimulatorResourceModel {
 
-    private Map<String, AttributeValue> mValues = null;
+    private Map<String, AttributeValue>    mValues     = null;
     private Map<String, AttributeProperty> mProperties = null;
 
     /**
@@ -46,7 +46,8 @@ public class SimulatorResourceModel {
      * @throws InvalidArgsException
      *             This exception will be thrown on invalid input.
      */
-    public void addAttribute(String attrName, AttributeValue value) throws InvalidArgsException {
+    public void addAttribute(String attrName, AttributeValue value)
+            throws InvalidArgsException {
         if (null == attrName || attrName.isEmpty())
             throw new InvalidArgsException("Invalid attribute name!");
 
@@ -60,14 +61,16 @@ public class SimulatorResourceModel {
      * API to add an attribute to resource model.
      *
      * @param attribute
-     *            {@link SimulatorResourceAttribute} to be add to resource model.
+     *            {@link SimulatorResourceAttribute} to be add to resource
+     *            model.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown on invalid input.
      */
-    public void addAttribute(SimulatorResourceAttribute attribute) throws InvalidArgsException {
-        if (null == attribute || null == attribute.name() || attribute.name().isEmpty()
-            || null == attribute.value())
+    public void addAttribute(SimulatorResourceAttribute attribute)
+            throws InvalidArgsException {
+        if (null == attribute || null == attribute.name()
+                || attribute.name().isEmpty() || null == attribute.value())
             throw new InvalidArgsException("Invalid attribute!");
 
         mValues.put(attribute.name(), attribute.value());
@@ -84,7 +87,8 @@ public class SimulatorResourceModel {
      * @throws InvalidArgsException
      *             This exception will be thrown on invalid input.
      */
-    public void setAttributeProperty(String attrName, AttributeProperty property) throws InvalidArgsException {
+    public void setAttributeProperty(String attrName, AttributeProperty property)
+            throws InvalidArgsException {
         if (null == attrName || attrName.isEmpty())
             throw new InvalidArgsException("Invalid attribute!");
 
@@ -92,6 +96,28 @@ public class SimulatorResourceModel {
             throw new InvalidArgsException("Invalid attribute property!");
 
         mProperties.put(attrName, property);
+    }
+
+    /**
+     * API to set attribute's value.
+     *
+     * @param attrName
+     *            Name of the attribute.
+     * @param value
+     *            {@link AttributeValue} to be set for attribute.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown on invalid input.
+     */
+    public void setAttributeValue(String attrName, AttributeValue value)
+            throws InvalidArgsException {
+        if (null == attrName || attrName.isEmpty())
+            throw new InvalidArgsException("Invalid attribute name!");
+
+        if (null == value)
+            throw new InvalidArgsException("Attribute value is null!");
+
+        mValues.put(attrName, value);
     }
 
     /**
@@ -107,7 +133,8 @@ public class SimulatorResourceModel {
         Map<String, SimulatorResourceAttribute> attributes = new HashMap<>();
         for (Map.Entry<String, AttributeValue> entry : mValues.entrySet()) {
             SimulatorResourceAttribute attribute = new SimulatorResourceAttribute(
-                    entry.getKey(), entry.getValue(), mProperties.get(entry.getKey()));
+                    entry.getKey(), entry.getValue(), mProperties.get(entry
+                            .getKey()));
             attributes.put(entry.getKey(), attribute);
         }
 
@@ -139,7 +166,7 @@ public class SimulatorResourceModel {
      *            Name of the attribute.
      *
      * @return true if resource model has an attribute with given name,
-     *               otherwise false.
+     *         otherwise false.
      */
     public boolean containsAttribute(String attrName) {
         if (mValues.containsKey(attrName))
@@ -153,7 +180,8 @@ public class SimulatorResourceModel {
      * @param attrName
      *            Name of the attribute.
      *
-     * @return Attribute value type information {@AttributeValue.TypeInfo}.
+     * @return Attribute value type information         {@AttributeValue.TypeInfo
+     * }.
      */
     public AttributeValue.TypeInfo getAttributeType(String attrName) {
         if (mValues.containsKey(attrName))
@@ -167,8 +195,8 @@ public class SimulatorResourceModel {
      * @param attrName
      *            Name of the attribute.
      *
-     * @return true if resource model has attribute it is removed,
-     *               otherwise false.
+     * @return true if resource model has attribute it is removed, otherwise
+     *         false.
      */
     public boolean removeAttribute(String attrName) {
         if (mValues.containsKey(attrName)) {

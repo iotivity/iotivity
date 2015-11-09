@@ -147,6 +147,12 @@ void SimulatorCollectionResourceImpl::setObserverCallback(ObserverCallback callb
     m_observeCallback = callback;
 }
 
+void SimulatorCollectionResourceImpl::setModelChangeCallback(ResourceModelChangedCallback callback)
+{
+    VALIDATE_CALLBACK(callback)
+    m_modelCallback = callback;
+}
+
 bool SimulatorCollectionResourceImpl::isObservable()
 {
     return (m_property & OC_OBSERVABLE);

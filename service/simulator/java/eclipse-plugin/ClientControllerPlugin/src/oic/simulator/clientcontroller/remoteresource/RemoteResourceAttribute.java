@@ -21,8 +21,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.oic.simulator.ResourceAttribute;
-import org.oic.simulator.ResourceAttribute.Type;
+import org.oic.simulator.AttributeProperty.Type;
+import org.oic.simulator.AttributeValue;
+import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.SimulatorResourceAttribute;
 
 /**
  * This class represents an attribute in the remote resource.
@@ -30,23 +32,27 @@ import org.oic.simulator.ResourceAttribute.Type;
 public class RemoteResourceAttribute {
 
     // Native object reference
-    private ResourceAttribute resourceAttribute;
+    private SimulatorResourceAttribute resourceAttributeRef;
 
-    private String            attributeName;
-    private Object            attributeValue;
-    private Type              attValType;
-    private Type              attValBaseType;
-    private List<Object>      allowedValues;
+    private String                     attributeName;
+    private Object                     attributeValue;
 
-    private Object            minValue;
-    private Object            maxValue;
+    private ValueType                  attValType;
+    private ValueType                  attValBaseType;
+    private int                        depth;
 
-    public ResourceAttribute getResourceAttribute() {
-        return resourceAttribute;
+    private Type                       valuesType;
+    private List<Object>               allowedValues;
+    private Object                     minValue;
+    private Object                     maxValue;
+
+    public SimulatorResourceAttribute getResourceAttributeRef() {
+        return resourceAttributeRef;
     }
 
-    public void setResourceAttribute(ResourceAttribute resourceAttribute) {
-        this.resourceAttribute = resourceAttribute;
+    public void setResourceAttributeRef(
+            SimulatorResourceAttribute resourceAttribute) {
+        this.resourceAttributeRef = resourceAttribute;
     }
 
     public String getAttributeName() {
@@ -112,7 +118,7 @@ public class RemoteResourceAttribute {
             clone.setAttValType(attribute.getAttValType());
             clone.setMinValue(attribute.getMinValue());
             clone.setMaxValue(attribute.getMaxValue());
-            clone.setResourceAttribute(null);
+            clone.setResourceAttributeRef(null);
         }
         return clone;
     }
@@ -132,18 +138,10 @@ public class RemoteResourceAttribute {
                 }
             }
         } else if (null != minValue && null != maxValue) {
-            if (attributeValue.getClass() == Integer.class) {
-                int min = (Integer) minValue;
-                int max = (Integer) maxValue;
-                for (int value = min; value <= max; value++) {
-                    valueList.add(String.valueOf(value));
-                }
-            } else if (attributeValue.getClass() == Double.class) {
-                double min = (Double) minValue;
-                double max = (Double) maxValue;
-                for (double value = min; value <= max; value++) {
-                    valueList.add(String.valueOf(value));
-                }
+            double min = (Double) minValue;
+            double max = (Double) maxValue;
+            for (double value = min; value <= max; value++) {
+                valueList.add(String.valueOf(value));
             }
         }
         if (valueList.size() < 1 && null != attributeValue) {
@@ -168,19 +166,35 @@ public class RemoteResourceAttribute {
         }
     }
 
-    public Type getAttValType() {
+    public ValueType getAttValType() {
         return attValType;
     }
 
-    public void setAttValType(Type attValType) {
+    public void setAttValType(ValueType attValType) {
         this.attValType = attValType;
     }
 
-    public Type getAttValBaseType() {
+    public ValueType getAttValBaseType() {
         return attValBaseType;
     }
 
-    public void setAttValBaseType(Type attValBaseType) {
+    public void setAttValBaseType(ValueType attValBaseType) {
         this.attValBaseType = attValBaseType;
+    }
+
+    public Type getValuesType() {
+        return valuesType;
+    }
+
+    public void setValuesType(Type valuesType) {
+        this.valuesType = valuesType;
+    }
+
+    public int getDepth() {
+        return depth;
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 }

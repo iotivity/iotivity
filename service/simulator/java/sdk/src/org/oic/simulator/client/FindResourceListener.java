@@ -19,13 +19,11 @@ package org.oic.simulator.client;
 import org.oic.simulator.client.SimulatorRemoteResource;
 
 /**
- * Listener for getting notification when resources are discovered in
- * network.
+ * Listener for getting notification when resources are discovered in network.
  */
 public interface FindResourceListener {
     /**
-     * Method will be called when resource is discovered in the
-     * network.
+     * Method will be called when resource is discovered in the network.
      *
      * @param resource
      *            {@link SimulatorRemoteResource} object representing the

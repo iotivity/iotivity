@@ -29,24 +29,13 @@ public final class SimulatorSingleResource extends SimulatorResource {
     }
 
     /**
-     * API to get the {@link SimulatorResourceModel} of the simulated resource.
-     *
-     * @return {@link SimulatorResourceModel} object on success, otherwise null.
-     *
-     * @throws SimulatorException
-     *             This exception will be thrown if simulated resource is not
-     *             proper.
-     */
-    public native SimulatorResourceModel getResourceModel() throws SimulatorException;
-
-    /**
      * API to get attribute of resource.
      *
      * @param attrName
      *            Name of the attribute
      *
-     * @return An object of {@link SimulatorResourceAttribute},
-     *             or null if resource doest not have attribute of this name.
+     * @return An object of {@link SimulatorResourceAttribute}, or null if
+     *         resource doest not have attribute of this name.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the attribute name is
@@ -124,9 +113,9 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native int startResourceUpdation(AutoUpdateType type,
-            int interval, AutoUpdateListener listener)
-            throws InvalidArgsException, SimulatorException;
+    public native int startResourceUpdation(AutoUpdateType type, int interval,
+            AutoUpdateListener listener) throws InvalidArgsException,
+            SimulatorException;
 
     /**
      * API to start the attribute level automation. This automation involves
@@ -163,21 +152,5 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for general errors.
      */
-    public native void stopUpdation(int id)
-            throws SimulatorException;
-
-    /**
-     * API to set listener for receiving notifications when resource's model
-     * gets changed.
-     *
-     * @param listener
-     *            {@link ResourceModelChangeListener}.
-     *
-     * @throws InvalidArgsException
-     *             This exception will be thrown on invalid input.
-     * @throws SimulatorException
-     *             This exception will be thrown for other errors.
-     */
-    public native void setResourceModelChangeListener(ResourceModelChangeListener listener)
-            throws InvalidArgsException, SimulatorException;
+    public native void stopUpdation(int id) throws SimulatorException;
 }

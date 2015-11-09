@@ -22,12 +22,12 @@
 
 AttributeGenerator::AttributeGenerator(const SimulatorResourceModel::Attribute &attribute)
     :   m_attribute(attribute),
-        m_curIntValue(INT_MIN),
+        m_curValue(INT_MIN),
         m_valueSetIndex(0)
 {
     if (m_attribute.getProperty().type() == SimulatorResourceModel::AttributeProperty::Type::RANGE)
     {
-        m_curIntValue = m_attribute.getProperty().min();
+        m_curValue = m_attribute.getProperty().min();
     }
     else if (m_attribute.getProperty().type() ==
              SimulatorResourceModel::AttributeProperty::Type::VALUE_SET)
@@ -39,7 +39,7 @@ AttributeGenerator::AttributeGenerator(const SimulatorResourceModel::Attribute &
 bool AttributeGenerator::hasNext()
 {
     if (m_attribute.getProperty().type() == SimulatorResourceModel::AttributeProperty::Type::RANGE
-        && m_curIntValue <= m_attribute.getProperty().max())
+        && m_curValue <= m_attribute.getProperty().max())
     {
         return true;
     }
@@ -60,9 +60,12 @@ bool AttributeGenerator::next(SimulatorResourceModel::Attribute &attribute)
 
     attribute.setName(m_attribute.getName());
     if (m_attribute.getProperty().type() == SimulatorResourceModel::AttributeProperty::Type::RANGE
-        && m_curIntValue <= m_attribute.getProperty().max())
+        && m_curValue <= m_attribute.getProperty().max())
     {
-        attribute.setValue(m_curIntValue++);
+        if (SimulatorResourceModel::ValueType::INTEGER == m_attribute.getType().type())
+            attribute.setValue(static_cast<int>(m_curValue++));
+        else
+            attribute.setValue(m_curValue++);
     }
     else if (m_attribute.getProperty().type() ==
              SimulatorResourceModel::AttributeProperty::Type::VALUE_SET
@@ -80,9 +83,12 @@ SimulatorResourceModel::Attribute AttributeGenerator::current()
     attribute.setName(m_attribute.getName());
 
     if (m_attribute.getProperty().type() == SimulatorResourceModel::AttributeProperty::Type::RANGE
-        && m_curIntValue <= m_attribute.getProperty().max())
+        && m_curValue <= m_attribute.getProperty().max())
     {
-        attribute.setValue(m_curIntValue);
+        if (SimulatorResourceModel::ValueType::INTEGER == m_attribute.getType().type())
+            attribute.setValue(static_cast<int>(m_curValue));
+        else
+            attribute.setValue(m_curValue);
     }
     else if (m_attribute.getProperty().type() ==
              SimulatorResourceModel::AttributeProperty::Type::VALUE_SET
@@ -96,7 +102,7 @@ SimulatorResourceModel::Attribute AttributeGenerator::current()
 
 void AttributeGenerator::reset()
 {
-    m_curIntValue = m_attribute.getProperty().min();
+    m_curValue = m_attribute.getProperty().min();
     m_valueSetIndex = 0;
 }
 

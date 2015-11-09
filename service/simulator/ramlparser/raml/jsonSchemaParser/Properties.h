@@ -200,7 +200,7 @@ namespace RAML
                  *
                  * @param min - Minimum value of Properties.
                  */
-            inline void setMin(const double &min)
+            inline void setMin(double min)
             {
                 m_min = min;
             }
@@ -210,7 +210,7 @@ namespace RAML
                  *
                  * @param max - Maximum value of Properties.
                  */
-            inline void setMax(const double &max)
+            inline void setMax(double max)
             {
                 m_max = max;
             }

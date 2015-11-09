@@ -21,10 +21,11 @@ package org.oic.simulator;
  */
 public class AttributeProperty {
 
-    private Type mType = Type.UNKNOWN;
-    private double mMin = -1;
-    private double mMax = -1;
+    private Type             mType     = Type.UNKNOWN;
+    private double           mMin      = -1;
+    private double           mMax      = -1;
     private AttributeValue[] mValueSet = null;
+    private AttributeProperty mChildProperty = null;
 
     /**
      * Enum to represent propety type.
@@ -34,8 +35,9 @@ public class AttributeProperty {
     }
 
     /**
-     * Constructs {@AttributeProperty} of type {@AttributeProperty.Type.Range}
-     * with min and max values.
+     * Constructs {@AttributeProperty} of type
+     * {@AttributeProperty.Type.Range} with min
+     * and max values.
      *
      * @param min
      *            Minimun value the attribute can have.
@@ -49,11 +51,12 @@ public class AttributeProperty {
     }
 
     /**
-     * Constructs {@AttributeProperty} of type {@AttributeProperty.Type.VALUESET}
-     * with array of integers.
+     * Constructs {@AttributeProperty} of type
+     * {@AttributeProperty.Type.VALUESET} with
+     * array of integer.
      *
      * @param values
-     *            Attribute will be having one of the value from this array at any time.
+     *            Array of int type values.
      */
     public AttributeProperty(int[] values) {
         mType = Type.VALUESET;
@@ -63,11 +66,12 @@ public class AttributeProperty {
     }
 
     /**
-     * Constructs {@AttributeProperty} of type {@AttributeProperty.Type.VALUESET}
-     * with array of doubles.
+     * Constructs {@AttributeProperty} of type
+     * {@AttributeProperty.Type.VALUESET} with
+     * array of double.
      *
      * @param values
-     *            Attribute will be having one of the value from this array at any time.
+     *            Array of double type values.
      */
     public AttributeProperty(double[] values) {
         mType = Type.VALUESET;
@@ -77,11 +81,27 @@ public class AttributeProperty {
     }
 
     /**
-     * Constructs {@AttributeProperty} of type {@AttributeProperty.Type.VALUESET}
-     * with array of Strings.
+     * Constructs {@AttributeProperty} of type
+     * {@AttributeProperty.Type.VALUESET} with
+     * array of boolean.
      *
      * @param values
-     *            Attribute will be having one of the value from this array at any time.
+     *            Array of boolean type values.
+     */
+    public AttributeProperty(boolean[] values) {
+        mType = Type.VALUESET;
+        mValueSet = new AttributeValue[values.length];
+        for (int i = 0; i < values.length; i++)
+            mValueSet[i] = new AttributeValue(values[i]);
+    }
+
+    /**
+     * Constructs {@AttributeProperty} of type
+     * {@AttributeProperty.Type.VALUESET} with
+     * array of Strings.
+     *
+     * @param values
+     *            Array of strings.
      */
     public AttributeProperty(String[] values) {
         mType = Type.VALUESET;
@@ -120,6 +140,26 @@ public class AttributeProperty {
      */
     public AttributeValue[] valueSet() {
         return mValueSet;
+    }
+
+    /**
+     * API to set child attribute propety.
+     *
+     * @param childProperty
+     *            Child element property this property used if the
+     *            Attribute value is of array type.
+     */
+    public void setChildProperty(AttributeProperty childProperty) {
+        mChildProperty = childProperty;
+    }
+
+    /**
+     * API to get child attribute propety.
+     *
+     * @return Child element property.
+     */
+    public AttributeProperty getChildProperty() {
+        return mChildProperty;
     }
 
     private AttributeProperty(AttributeValue[] values) {

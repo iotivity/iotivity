@@ -142,8 +142,9 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public void get(Map<String, String> queryParams, GetResponseListener onGetListener)
-            throws InvalidArgsException, SimulatorException {
+    public void get(Map<String, String> queryParams,
+            GetResponseListener onGetListener) throws InvalidArgsException,
+            SimulatorException {
         nativeGet(null, queryParams, onGetListener);
     }
 
@@ -166,9 +167,11 @@ public final class SimulatorRemoteResource {
      *             This exception will be thrown for other errors.
      */
     public void get(String resourceInterface, Map<String, String> queryParams,
-            GetResponseListener onGetListener) throws InvalidArgsException, SimulatorException {
+            GetResponseListener onGetListener) throws InvalidArgsException,
+            SimulatorException {
         if (null == resourceInterface || resourceInterface.isEmpty())
-            throw new InvalidArgsException(SimulatorResult.SIMULATOR_INVALID_PARAM,
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM,
                     "Invalid resource interface!");
         nativeGet(resourceInterface, queryParams, onGetListener);
     }
@@ -192,8 +195,10 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public void put(Map<String, String> queryParams, SimulatorResourceModel representation,
-            PutResponseListener onPutListener) throws InvalidArgsException, SimulatorException {
+    public void put(Map<String, String> queryParams,
+            SimulatorResourceModel representation,
+            PutResponseListener onPutListener) throws InvalidArgsException,
+            SimulatorException {
         nativePut(null, queryParams, representation, onPutListener);
     }
 
@@ -219,10 +224,12 @@ public final class SimulatorRemoteResource {
      *             This exception will be thrown for other errors.
      */
     public void put(String resourceInterface, Map<String, String> queryParams,
-            SimulatorResourceModel representation, PutResponseListener onPutListener)
-            throws InvalidArgsException, SimulatorException {
+            SimulatorResourceModel representation,
+            PutResponseListener onPutListener) throws InvalidArgsException,
+            SimulatorException {
         if (null == resourceInterface || resourceInterface.isEmpty())
-            throw new InvalidArgsException(SimulatorResult.SIMULATOR_INVALID_PARAM,
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM,
                     "Invalid resource interface!");
         nativePut(resourceInterface, queryParams, representation, onPutListener);
     }
@@ -246,8 +253,10 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public void post(Map<String, String> queryParams, SimulatorResourceModel representation,
-            PostResponseListener onPostListener) throws InvalidArgsException, SimulatorException {
+    public void post(Map<String, String> queryParams,
+            SimulatorResourceModel representation,
+            PostResponseListener onPostListener) throws InvalidArgsException,
+            SimulatorException {
         nativePost(null, queryParams, representation, onPostListener);
     }
 
@@ -273,12 +282,15 @@ public final class SimulatorRemoteResource {
      *             This exception will be thrown for other errors.
      */
     public void post(String resourceInterface, Map<String, String> queryParams,
-            SimulatorResourceModel representation, PostResponseListener onPostListener)
-            throws InvalidArgsException, SimulatorException {
+            SimulatorResourceModel representation,
+            PostResponseListener onPostListener) throws InvalidArgsException,
+            SimulatorException {
         if (null == resourceInterface || resourceInterface.isEmpty())
-            throw new InvalidArgsException(SimulatorResult.SIMULATOR_INVALID_PARAM,
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM,
                     "Invalid resource interface!");
-        nativePost(resourceInterface, queryParams, representation, onPostListener);
+        nativePost(resourceInterface, queryParams, representation,
+                onPostListener);
     }
 
     /**
@@ -298,8 +310,8 @@ public final class SimulatorRemoteResource {
      *             This exception will be thrown for other errors.
      */
     public native void startObserve(Map<String, String> queryParams,
-            ObserveNotificationListener onObserveListener) throws InvalidArgsException,
-            SimulatorException;
+            ObserveNotificationListener onObserveListener)
+            throws InvalidArgsException, SimulatorException;
 
     /**
      * API to stop observing the resource.
@@ -310,7 +322,8 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void stopObserve() throws InvalidArgsException, SimulatorException;
+    public native void stopObserve() throws InvalidArgsException,
+            SimulatorException;
 
     /**
      * API to provide remote resource configure information, which is required
@@ -319,17 +332,16 @@ public final class SimulatorRemoteResource {
      * @param path
      *            Path to RAML file.
      *
-     * @return representation
-     *            {@link SimulatorResourceModel} holding the representation of
-     *            the remote resource.
+     * @return representation {@link SimulatorResourceModel} holding the
+     *         representation of the remote resource.
      *
      * @throws InvalidArgsException
      *             Thrown if the RAML configuration file path is invalid.
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public native SimulatorResourceModel setConfigInfo(String path) throws InvalidArgsException,
-            SimulatorException;
+    public native SimulatorResourceModel setConfigInfo(String path)
+            throws InvalidArgsException, SimulatorException;
 
     /**
      * API to send multiple requests for the resource, based on the configure
@@ -357,9 +369,9 @@ public final class SimulatorRemoteResource {
      *             This exception will be thrown for other errors.
      */
     public int startVerification(VerificationType type,
-            VerificationListener onVerifyListener)
-            throws InvalidArgsException, NoSupportException,
-            OperationInProgressException, SimulatorException {
+            VerificationListener onVerifyListener) throws InvalidArgsException,
+            NoSupportException, OperationInProgressException,
+            SimulatorException {
         return startVerification(type.ordinal(), onVerifyListener);
     }
 
@@ -375,8 +387,8 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public native void stopVerification(int id)
-            throws InvalidArgsException, SimulatorException;
+    public native void stopVerification(int id) throws InvalidArgsException,
+            SimulatorException;
 
     /**
      * Listener for receiving asynchronous response for GET request.
@@ -438,15 +450,16 @@ public final class SimulatorRemoteResource {
      */
     public interface ObserveNotificationListener {
         /**
-         * This method will be called when there is a change in the resource model
-         * of the remote resource.
+         * This method will be called when there is a change in the resource
+         * model of the remote resource.
          *
          * @param uid
          *            Unique Id of the resource.
          * @param resourceModel
          *            {@link SimulatorResourceModel}.
          * @param sequenceNumber
-         *            Sequential number for ordering the model change notifications.
+         *            Sequential number for ordering the model change
+         *            notifications.
          */
         public void onObserveNotification(String uid,
                 SimulatorResourceModel resourceModel, int sequenceNumber);
@@ -487,15 +500,20 @@ public final class SimulatorRemoteResource {
         public void onVerificationCompleted(String uid, int id);
     }
 
-
     private native void nativeGet(String resourceInterface,
-            Map<String, String> queryParamsMap, GetResponseListener onGetListener);
+            Map<String, String> queryParamsMap,
+            GetResponseListener onGetListener);
 
-    private native void nativePut(String resourceInterface, Map<String, String> queryParams,
-            SimulatorResourceModel representation, PutResponseListener onPutListener);
+    private native void nativePut(String resourceInterface,
+            Map<String, String> queryParams,
+            SimulatorResourceModel representation,
+            PutResponseListener onPutListener);
 
-    private native void nativePost(String resourceInterface, Map<String, String> queryParams,
-            SimulatorResourceModel representation, PostResponseListener onPostListener);
+    private native void nativePost(String resourceInterface,
+            Map<String, String> queryParams,
+            SimulatorResourceModel representation,
+            PostResponseListener onPostListener);
 
-    private native int startVerification(int type, VerificationListener onVerifyListener);
+    private native int startVerification(int type,
+            VerificationListener onVerifyListener);
 }

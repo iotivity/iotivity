@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package oic.simulator.serviceprovider.resource;
+package oic.simulator.clientcontroller.listener;
 
-/**
- * Enumerates the different types of operations for model change notifications.
- */
-public enum ModelChangeNotificationType {
-    ATTRIBUTE_ADDED, ATTRIBUTE_REMOVED, ATTRIBUTE_VALUE_CHANGED, NONE, NO_ATTRIBUTES_IN_MODEL
+public interface IDevicePlatformInfoUIListener {
+    public void onDeviceInfoFound();
+
+    public void onPlatformInfoFound();
 }

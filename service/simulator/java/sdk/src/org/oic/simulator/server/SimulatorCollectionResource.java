@@ -28,55 +28,59 @@ public final class SimulatorCollectionResource extends SimulatorResource {
     }
 
     /**
-    * API to add child resource to collection.
-    *
-    * @param resource
-    *            Child resource to be added to collection.
-    *
-    * @throws InvalidArgsException
-    *              This exception will be thrown on invalid input.
-    * @throws SimulatorException
-    *             This exception will be thrown on occurrence of error in native.
-    */
+     * API to add child resource to collection.
+     *
+     * @param resource
+     *            Child resource to be added to collection.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown on invalid input.
+     * @throws SimulatorException
+     *             This exception will be thrown on occurrence of error in
+     *             native.
+     */
     public native void addChildResource(SimulatorResource resource)
             throws InvalidArgsException, SimulatorException;
 
     /**
-    * API to remove child resource from collection.
-    *
-    * @param resource
-    *            Child resource to be removed from collection.
-    *
-    * @throws InvalidArgsException
-    *              This exception will be thrown on invalid input.
-    * @throws SimulatorException
-    *             This exception will be thrown on occurrence of error in native.
-    */
+     * API to remove child resource from collection.
+     *
+     * @param resource
+     *            Child resource to be removed from collection.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown on invalid input.
+     * @throws SimulatorException
+     *             This exception will be thrown on occurrence of error in
+     *             native.
+     */
     public native void removeChildResource(SimulatorResource resource)
             throws InvalidArgsException, SimulatorException;
 
     /**
-    * API to remove child resource from collection.
-    *
-    * @param uri
-    *            URI of child resource to be removed from collection.
-    *
-    * @throws InvalidArgsException
-    *              This exception will be thrown on invalid input.
-    * @throws SimulatorException
-    *             This exception will be thrown on occurrence of error in native.
-    */
+     * API to remove child resource from collection.
+     *
+     * @param uri
+     *            URI of child resource to be removed from collection.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown on invalid input.
+     * @throws SimulatorException
+     *             This exception will be thrown on occurrence of error in
+     *             native.
+     */
     public native void removeChildResourceByUri(String uri)
             throws InvalidArgsException, SimulatorException;
 
     /**
-    * API to get list of child resources.
-    *
-    * @return Vector of child resources {@link SimulatorResource}.
-    *
-    * @throws SimulatorException
-    *             This exception will be thrown on occurrence of error in native.
-    */
+     * API to get list of child resources.
+     *
+     * @return Vector of child resources {@link SimulatorResource}.
+     *
+     * @throws SimulatorException
+     *             This exception will be thrown on occurrence of error in
+     *             native.
+     */
     public native Vector<SimulatorResource> getChildResource()
             throws SimulatorException;
 }

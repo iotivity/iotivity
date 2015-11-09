@@ -36,7 +36,7 @@ class AttributeGenerator
 
     private:
         SimulatorResourceModel::Attribute m_attribute;
-        int m_curIntValue;
+        double m_curValue;
         size_t m_valueSetIndex;
         std::vector<SimulatorResourceModel::ValueVariant> m_supportedValues;
 };

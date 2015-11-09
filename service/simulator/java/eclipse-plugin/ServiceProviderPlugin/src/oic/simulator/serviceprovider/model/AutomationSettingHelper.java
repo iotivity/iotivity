@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package oic.simulator.serviceprovider.resource;
+package oic.simulator.serviceprovider.model;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -22,7 +22,7 @@ import java.util.List;
 
 import oic.simulator.serviceprovider.utils.Constants;
 
-import org.oic.simulator.serviceprovider.AutomationType;
+import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
 
 /**
  * This is a helper class for providing the automation settings information to
@@ -67,36 +67,44 @@ public class AutomationSettingHelper {
             LocalResourceAttribute attribute) {
         List<AutomationSettingHelper> settingList = null;
         boolean invalidSetting;
-        if (null != attribute) {
-            settingList = new ArrayList<AutomationSettingHelper>();
-            for (int count = 0; count < Constants.AUTOMATION_SETTINGS_COUNT; count++) {
-                invalidSetting = false;
-                AutomationSettingHelper setting = new AutomationSettingHelper();
-                if (Constants.AUTOMATION_SETTINGS[count]
-                        .equals(Constants.AUTOMATION_TYPE)) {
-                    setting.setSettingID(Constants.AUTOMATION_TYPE);
+
+        settingList = new ArrayList<AutomationSettingHelper>();
+        for (int count = 0; count < Constants.AUTOMATION_SETTINGS_COUNT; count++) {
+            invalidSetting = false;
+            AutomationSettingHelper setting = new AutomationSettingHelper();
+            if (Constants.AUTOMATION_SETTINGS[count]
+                    .equals(Constants.AUTOMATION_TYPE)) {
+                setting.setSettingID(Constants.AUTOMATION_TYPE);
+                if (null != attribute) {
                     setting.setSettingValue(attribute.getAutomationType()
                             .toString());
-                    List<String> valueList = new ArrayList<String>();
-                    valueList.add(AutomationType.NORMAL.toString());
-                    valueList.add(AutomationType.RECURRENT.toString());
-                    setting.setAllowedValues(valueList);
-                } else if (Constants.AUTOMATION_SETTINGS[count]
-                        .equals(Constants.UPDATE_INTERVAL_IN_MS)) {
-                    setting.setSettingID(Constants.UPDATE_INTERVAL_IN_MS);
+                } else {
+                    setting.setSettingValue(AutoUpdateType.ONE_TIME.toString());
+                }
+                List<String> valueList = new ArrayList<String>();
+                valueList.add(AutoUpdateType.ONE_TIME.toString());
+                valueList.add(AutoUpdateType.REPEAT.toString());
+                setting.setAllowedValues(valueList);
+            } else if (Constants.AUTOMATION_SETTINGS[count]
+                    .equals(Constants.UPDATE_INTERVAL_IN_MS)) {
+                setting.setSettingID(Constants.UPDATE_INTERVAL_IN_MS);
+                if (null != attribute) {
                     setting.setSettingValue(String.valueOf(attribute
                             .getAutomationUpdateInterval()));
-                    List<String> valueList = new ArrayList<String>();
-                    for (int index = 1; index <= 10; index++) {
-                        valueList.add(String.valueOf(index * 500));
-                    }
-                    setting.setAllowedValues(valueList);
                 } else {
-                    invalidSetting = true;
+                    setting.setSettingValue(String
+                            .valueOf(Constants.DEFAULT_AUTOMATION_INTERVAL));
                 }
-                if (!invalidSetting) {
-                    settingList.add(setting);
+                List<String> valueList = new ArrayList<String>();
+                for (int index = 1; index <= 10; index++) {
+                    valueList.add(String.valueOf(index * 500));
                 }
+                setting.setAllowedValues(valueList);
+            } else {
+                invalidSetting = true;
+            }
+            if (!invalidSetting) {
+                settingList.add(setting);
             }
         }
         return settingList;

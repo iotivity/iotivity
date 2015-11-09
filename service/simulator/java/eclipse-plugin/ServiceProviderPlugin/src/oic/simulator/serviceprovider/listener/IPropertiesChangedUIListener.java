@@ -14,31 +14,14 @@
  * limitations under the License.
  */
 
-package oic.simulator.serviceprovider.resource;
-
-import org.oic.simulator.serviceprovider.ObserverInfo;
+package oic.simulator.serviceprovider.listener;
 
 /**
- * This class holds observer details of resources.
+ * Interface through which the resource property change UI events are sent to
+ * the other UI listeners.
  */
-public class ObserverDetail {
+public interface IPropertiesChangedUIListener {
+    public void onResourcePropertyChange();
 
-    private ObserverInfo observerInfo;
-    private boolean      isClicked;
-
-    public ObserverInfo getObserverInfo() {
-        return observerInfo;
-    }
-
-    public void setObserverInfo(ObserverInfo observerInfo) {
-        this.observerInfo = observerInfo;
-    }
-
-    public boolean isClicked() {
-        return isClicked;
-    }
-
-    public void setClicked(boolean isClicked) {
-        this.isClicked = isClicked;
-    }
+    public void onDevicePropertyChange();
 }

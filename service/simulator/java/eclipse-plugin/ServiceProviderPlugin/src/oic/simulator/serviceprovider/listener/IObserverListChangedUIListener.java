@@ -16,10 +16,12 @@
 
 package oic.simulator.serviceprovider.listener;
 
+import oic.simulator.serviceprovider.model.Resource;
+
 /**
  * Interface through which the resource observer events are sent to the UI
  * listeners.
  */
 public interface IObserverListChangedUIListener {
-    public void onObserverListChanged(String resourceURI);
+    public void onObserverListChanged(Resource resource);
 }

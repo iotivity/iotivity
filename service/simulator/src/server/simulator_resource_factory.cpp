@@ -189,8 +189,7 @@ SimulatorResourceModel SimulatorResourceFactory::buildResourceModel(
             continue;
 
         std::string propName = propElement.second->getName();
-        if ("rt" == propName || "resourceType" == propName || "if" == propName ||
-            "p" == propName || "n" == propName || "id" == propName )
+        if ("p" == propName || "n" == propName || "id" == propName)
         {
             continue;
         }
@@ -314,6 +313,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
         }
         resModel.add("links", arrayResModel);
     }
+
     // Create simple/collection resource
     std::shared_ptr<SimulatorResource> simResource;
     if (resModel.containsAttribute("links"))
@@ -326,10 +326,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
             collectionRes->setName(name);
             collectionRes->setResourceType(resourceType);
             collectionRes->setInterface(interfaceType);
-            if (ResourceURIFactory::getInstance()->isUnique(uri))
-                collectionRes->setURI(uri);
-            else
-                collectionRes->setURI(ResourceURIFactory::getInstance()->constructURI(uri));
+            collectionRes->setURI(ResourceURIFactory::getInstance()->constructURI(uri));
 
             collectionRes->setResourceModel(resModel);
             simResource = std::dynamic_pointer_cast<SimulatorResource>(collectionRes);
@@ -346,10 +343,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
             singleRes->setName(name);
             singleRes->setResourceType(resourceType);
             singleRes->setInterface(interfaceType);
-            if (ResourceURIFactory::getInstance()->isUnique(uri))
-                singleRes->setURI(uri);
-            else
-                singleRes->setURI(ResourceURIFactory::getInstance()->constructURI(uri));
+            singleRes->setURI(ResourceURIFactory::getInstance()->constructURI(uri));
 
             singleRes->setResourceModel(resModel);
             simResource = std::dynamic_pointer_cast<SimulatorResource>(singleRes);
@@ -371,12 +365,24 @@ ResourceURIFactory::ResourceURIFactory()
 
 std::string ResourceURIFactory::constructURI(const std::string &uri)
 {
+    std::lock_guard<std::mutex> lock(m_lock);
+    if (isUnique(uri))
+    {
+        updateUri(uri);
+        return uri;
+    }
     std::ostringstream os;
     os << uri;
     if (!uri.empty() && '/' != uri[uri.length() - 1])
         os << '/';
     os << m_id++;
+    updateUri(os.str());
     return os.str();
+}
+
+void ResourceURIFactory::updateUri(const std::string &uri)
+{
+    m_uriList.insert(std::pair<std::string, bool>(uri, true));
 }
 
 bool ResourceURIFactory::isUnique(const std::string &uri)

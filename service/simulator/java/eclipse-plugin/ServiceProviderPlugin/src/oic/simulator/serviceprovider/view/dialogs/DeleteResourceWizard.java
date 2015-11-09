@@ -16,19 +16,24 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.Date;
+import java.util.Set;
 
 import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.resource.DeleteCategory;
+import oic.simulator.serviceprovider.model.CollectionResource;
+import oic.simulator.serviceprovider.model.SingleResource;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
+import org.oic.simulator.ILogger.Level;
+import org.oic.simulator.SimulatorException;
 
 /**
  * This class creates a UI wizard for delete resource operation.
@@ -36,6 +41,8 @@ import org.eclipse.ui.PlatformUI;
 public class DeleteResourceWizard extends Wizard {
 
     private DeleteResourcePage page;
+
+    private String             status;
 
     public DeleteResourceWizard() {
         setWindowTitle("Delete resources");
@@ -56,45 +63,52 @@ public class DeleteResourceWizard extends Wizard {
         if (null == page) {
             return false;
         }
-        // Check the existence of the resource if the user has entered the uri
-        if (page.getDeleteCategory() == DeleteCategory.BY_URI) {
-            // Check whether the uri is in full form or short form
-            // If it is in short form, expand it to its full form.
-            String uri = page.getDeleteCandidate();
-            boolean dispName = Activator.getDefault().getResourceManager()
-                    .isDisplayName(uri);
-            if (dispName) {
-                uri = Activator.getDefault().getResourceManager()
-                        .getCompleteUriFromDisplayName(uri);
-            }
-            boolean exist = Activator.getDefault().getResourceManager()
-                    .isResourceExist(uri);
-            if (!exist) {
-                Shell activeShell = PlatformUI.getWorkbench().getDisplay()
-                        .getActiveShell();
-                MessageDialog dialog = new MessageDialog(activeShell,
-                        "Resource Not Found", null,
-                        "No resource exist with the given URI.",
-                        MessageDialog.INFORMATION, new String[] { "OK" }, 0);
-                dialog.open();
-                page.setFocusToTextBox();
-                return false;
-            }
+        try {
+            getContainer().run(true, true, new IRunnableWithProgress() {
+
+                @Override
+                public void run(IProgressMonitor monitor)
+                        throws InvocationTargetException, InterruptedException {
+                    try {
+                        monitor.beginTask("Resource Deletion", 2);
+                        Set<CollectionResource> collectionResources = page
+                                .getSelectedCollectionResourcesList();
+                        if (null != collectionResources
+                                && collectionResources.size() > 0) {
+                            Activator
+                                    .getDefault()
+                                    .getResourceManager()
+                                    .removeCollectionResources(
+                                            collectionResources);
+                        }
+                        monitor.worked(1);
+                        Set<SingleResource> singleResources = page
+                                .getSelectedSingleResourcesList();
+                        if (null != singleResources
+                                && singleResources.size() > 0) {
+                            Activator.getDefault().getResourceManager()
+                                    .removeSingleResources(singleResources);
+                        }
+                        monitor.worked(1);
+                        status = "Resources deleted.";
+                    } catch (SimulatorException e) {
+                        status = "Failed to delete some of the resources. Please try again.";
+                    } finally {
+                        monitor.done();
+                    }
+                }
+            });
+        } catch (InvocationTargetException e) {
+            Activator.getDefault().getLogManager()
+                    .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+        } catch (InterruptedException e) {
+            Activator.getDefault().getLogManager()
+                    .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
         }
         return true;
     }
 
-    public DeleteCategory getDeleteCategory() {
-        if (null == page) {
-            return DeleteCategory.NONE;
-        }
-        return page.getDeleteCategory();
-    }
-
-    public String getDeleteCandidate() {
-        if (null == page) {
-            return null;
-        }
-        return page.getDeleteCandidate();
+    public String getStatus() {
+        return status;
     }
 }

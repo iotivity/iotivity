@@ -119,15 +119,6 @@ class ResourceURIFactory
          */
         std::string constructURI(const std::string &uri);
 
-        /**
-         * API to check the uri is unique or not.
-         *
-         * @param uri - uri to be checked for its uniqueness.
-         *
-         * @return true if uri is unique, otherwise false.
-         */
-        bool isUnique(const std::string &uri);
-
     private:
         ResourceURIFactory();
         ResourceURIFactory(const ResourceURIFactory &) = delete;
@@ -135,7 +126,11 @@ class ResourceURIFactory
         ResourceURIFactory(ResourceURIFactory &&) = delete;
         ResourceURIFactory &operator=(ResourceURIFactory && ) = delete;
 
+        bool isUnique(const std::string &uri);
+        void updateUri(const std::string &uri);
+
         unsigned int m_id;
+        std::mutex m_lock;
         std::map<std::string, bool> m_uriList;
 };
 

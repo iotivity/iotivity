@@ -21,6 +21,7 @@
 #include "simulator_manager.h"
 
 std::vector<SimulatorSingleResourceSP> g_singleResources;
+std::vector<SimulatorCollectionResourceSP> g_collectionResources;
 
 std::string getPropertyTypeString(SimulatorResourceModel::AttributeProperty::Type type)
 {
@@ -111,23 +112,33 @@ void simulateResource()
         SimulatorResourceSP resource =
             SimulatorManager::getInstance()->createResource(configPath);
 
-        SimulatorSingleResourceSP singleRes =
-            std::dynamic_pointer_cast<SimulatorSingleResource>(resource);
-        singleRes->setModelChangeCallback(modelChangeCB);
-        singleRes->setObserverCallback(observerCB);
-
-        g_singleResources.push_back(singleRes);
-
-        std::cout << "Resource created successfully! URI= " << resource->getURI() << std::endl;
+        // Add resource to appropriate list
+        if (SimulatorResource::Type::SINGLE_RESOURCE == resource->getType())
+        {
+            std::cout << "Single type resource created [URI:  " << resource->getURI() << " ]" << std::endl;
+            SimulatorSingleResourceSP singleRes =
+                std::dynamic_pointer_cast<SimulatorSingleResource>(resource);
+            singleRes->setModelChangeCallback(modelChangeCB);
+            singleRes->setObserverCallback(observerCB);
+            g_singleResources.push_back(singleRes);
+        }
+        else
+        {
+            std::cout << "Collection type resource created [URI:  " << resource->getURI() << " ]" << std::endl;
+            SimulatorCollectionResourceSP collectionRes =
+                std::dynamic_pointer_cast<SimulatorCollectionResource>(resource);
+            collectionRes->setObserverCallback(observerCB);
+            g_collectionResources.push_back(collectionRes);
+        }
     }
     catch (InvalidArgsException &e)
     {
-        std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
+        std::cout << "InvalidArgsException occured [code : " << e.code() << " Details: "
                   << e.what() << "]" << std::endl;
     }
     catch (SimulatorException &e)
     {
-        std::cout << "SimulatorException occured [code : " << e.code() << " Detail: "
+        std::cout << "SimulatorException occured [code : " << e.code() << " Details: "
                   << e.what() << "]" << std::endl;
     }
 }
@@ -223,7 +234,7 @@ void automateResourceUpdate()
     }
     catch (SimulatorException &e)
     {
-        std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
+        std::cout << "SimulatorException occured [code : " << e.code() << " Details: " <<
                   e.what() << "]" << std::endl;
     }
 }
@@ -326,12 +337,10 @@ void stopAutomation()
     }
 
     for (auto & id : ids)
+    {
         std::cout <<  id  << " ";
-
-    int automationid;
-    std::cout << "\nEnter automation id: " << std::endl;
-    std::cin >> automationid;
-    resource->stopUpdation(automationid);
+        resource->stopUpdation(id);
+    }
 }
 
 void getObservers()

@@ -164,7 +164,7 @@ void SimulatorSingleResourceImpl::start()
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (m_resourceHandle)
     {
-        throw SimulatorException(SIMULATOR_ERROR, "Resource already registered!");
+        SIM_LOG(ILogger::INFO, "[" << m_name << "] " << "Resource already registered!")
     }
 
     if (m_uri.empty() || m_resourceType.empty())
@@ -218,7 +218,7 @@ std::vector<ObserverInfo> SimulatorSingleResourceImpl::getObserversList()
     return m_observersList;
 }
 
-void SimulatorSingleResourceImpl::notify(int id)
+void SimulatorSingleResourceImpl::notify(int id, SimulatorResourceModel &resModel)
 {
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (!m_resourceHandle)
@@ -229,7 +229,7 @@ void SimulatorSingleResourceImpl::notify(int id)
 
     resourceResponse->setErrorCode(200);
     resourceResponse->setResponseResult(OC_EH_OK);
-    resourceResponse->setResourceRepresentation(m_resModel.getOCRepresentation(),
+    resourceResponse->setResourceRepresentation(resModel.getOCRepresentation(),
             OC::DEFAULT_INTERFACE);
 
     OC::ObservationIds observers;
@@ -242,7 +242,7 @@ void SimulatorSingleResourceImpl::notify(int id)
                      m_resourceHandle, observers, resourceResponse);
 }
 
-void SimulatorSingleResourceImpl::notifyAll()
+void SimulatorSingleResourceImpl::notifyAll(SimulatorResourceModel &resModel)
 {
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (!m_resourceHandle)
@@ -256,7 +256,7 @@ void SimulatorSingleResourceImpl::notifyAll()
 
     resourceResponse->setErrorCode(200);
     resourceResponse->setResponseResult(OC_EH_OK);
-    resourceResponse->setResourceRepresentation(m_resModel.getOCRepresentation(),
+    resourceResponse->setResourceRepresentation(resModel.getOCRepresentation(),
             OC::DEFAULT_INTERFACE);
 
     OC::ObservationIds observers;
@@ -268,6 +268,16 @@ void SimulatorSingleResourceImpl::notifyAll()
 
     invokeocplatform(static_cast<NotifyListOfObservers>(OC::OCPlatform::notifyListOfObservers),
                      m_resourceHandle, observers, resourceResponse);
+}
+
+void SimulatorSingleResourceImpl::notify(int id)
+{
+    notify(id, m_resModel);
+}
+
+void SimulatorSingleResourceImpl::notifyAll()
+{
+    notifyAll(m_resModel);
 }
 
 bool SimulatorSingleResourceImpl::getAttribute(const std::string &attrName,
@@ -399,13 +409,29 @@ void SimulatorSingleResourceImpl::setResourceModel(const SimulatorResourceModel 
     m_resModel = resModel;
 }
 
-void SimulatorSingleResourceImpl::notifyApp()
+void SimulatorSingleResourceImpl::notifyApp(SimulatorResourceModel &resModel)
 {
     if (m_modelCallback)
     {
-        SimulatorResourceModel resModel = m_resModel;
         m_modelCallback(m_uri, resModel);
     }
+}
+
+void SimulatorSingleResourceImpl::notifyApp()
+{
+    notifyApp(m_resModel);
+}
+
+bool SimulatorSingleResourceImpl::updateResourceModel(OC::OCRepresentation &ocRep,
+        SimulatorResourceModel &resModel)
+{
+    std::lock_guard<std::mutex> lock(m_modelLock);
+    if (m_resModel.update(ocRep))
+    {
+        resModel = m_resModel;
+        return true;
+    }
+    return false;
 }
 
 OCEntityHandlerResult SimulatorSingleResourceImpl::handleRequests(
@@ -510,16 +536,17 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorSingleResourceImpl::requestOnBa
              || "POST" == request->getRequestType())
     {
         OC::OCRepresentation requestRep = request->getResourceRepresentation();
-        if (true == m_resModel.update(requestRep))
+        SimulatorResourceModel resModel;
+        if (true == updateResourceModel(requestRep, resModel))
         {
-            notifyAll();
-            notifyApp();
+            notifyAll(resModel);
+            notifyApp(resModel);
 
             response = std::make_shared<OC::OCResourceResponse>();
             response->setErrorCode(200);
             response->setResponseResult(OC_EH_OK);
-            response->setResourceRepresentation(m_resModel.getOCRepresentation());
-            std::string resPayload = getPayloadString(m_resModel.getOCRepresentation());
+            response->setResourceRepresentation(resModel.getOCRepresentation());
+            std::string resPayload = getPayloadString(resModel.getOCRepresentation());
             SIM_LOG(ILogger::INFO, "[" << m_uri <<
                     "] Sending response for " << request->getRequestType() << " request. \n**Payload details**" <<
                     resPayload)

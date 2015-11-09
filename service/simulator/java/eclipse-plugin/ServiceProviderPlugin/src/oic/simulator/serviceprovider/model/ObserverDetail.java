@@ -14,11 +14,31 @@
  * limitations under the License.
  */
 
-package oic.simulator.serviceprovider.resource;
+package oic.simulator.serviceprovider.model;
+
+import org.oic.simulator.server.Observer;
 
 /**
- * Enumerates different types of supported delete operations.
+ * This class holds observer details of resources.
  */
-public enum DeleteCategory {
-    ALL, BY_TYPE, BY_URI, NONE
+public class ObserverDetail {
+
+    private Observer observerInfo;
+    private boolean  isClicked;
+
+    public Observer getObserverInfo() {
+        return observerInfo;
+    }
+
+    public void setObserverInfo(Observer observerInfo) {
+        this.observerInfo = observerInfo;
+    }
+
+    public boolean isClicked() {
+        return isClicked;
+    }
+
+    public void setClicked(boolean isClicked) {
+        this.isClicked = isClicked;
+    }
 }

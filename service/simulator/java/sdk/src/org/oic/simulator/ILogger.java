@@ -28,8 +28,7 @@ public interface ILogger {
     }
 
     /**
-     * This method will be used to deliver the log messages from
-     * native layer.
+     * This method will be used to deliver the log messages from native layer.
      *
      * @param time
      *            Local time information when action/event logged.

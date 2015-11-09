@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-package oic.simulator.serviceprovider.listener;
+package oic.simulator.serviceprovider.model;
 
 /**
- * Interface through which the resource selection UI event is sent to the other
- * UI listeners.
+ * This class represents the plug-in level exceptions.
  */
-public interface IResourceSelectionChangedUIListener {
-    public void onResourceSelectionChange();
+@SuppressWarnings("serial")
+public class SimulatorPluginException extends Exception {
+    String msg;
+
+    public SimulatorPluginException(String msg) {
+        this.msg = msg;
+    }
+
+    public String toString() {
+        return msg;
+    }
 }
