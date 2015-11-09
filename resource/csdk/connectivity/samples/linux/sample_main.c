@@ -417,13 +417,12 @@ void send_request()
         return;
     }
 
-    // create remote endpoint
-    CAEndpoint_t *endpoint = NULL;
-
     printf("URI : %s\n", uri);
     addressSet_t address = {{}, 0};
     parsing_coap_uri(uri, &address, &flags);
 
+    // create remote endpoint
+    CAEndpoint_t *endpoint = NULL;
     res = CACreateEndpoint(flags, g_selected_nw_type,
                            (const char*)address.ipAddress, address.port, &endpoint);
     if (CA_STATUS_OK != res || !endpoint)
@@ -457,8 +456,6 @@ void send_request()
         return;
     }
 
-    printf("Generated token %s\n", token);
-
     // extract relative resourceuri from give uri
     char resourceURI[RESOURCE_URI_LENGTH + 1] = {0};
     get_resource_uri(uri, resourceURI, RESOURCE_URI_LENGTH);
@@ -482,9 +479,7 @@ void send_request()
         if (NULL == requestData.payload)
         {
             printf("Memory allocation fail\n");
-            CADestroyEndpoint(endpoint);
-            CADestroyToken(token);
-            return;
+            goto exit;
         }
         snprintf((char *) requestData.payload, length, SECURE_INFO_DATA,
                  (const char *) resourceURI, g_local_secure_port);
@@ -500,9 +495,7 @@ void send_request()
             if (!binaryPayload)
             {
                 free(binaryPayload);
-                CADestroyToken(token);
-                CADestroyEndpoint(endpoint);
-                return;
+                goto exit;
             }
 
             requestData.payload = (CAPayload_t) malloc(payloadLength);
@@ -510,9 +503,7 @@ void send_request()
             {
                 printf("Memory allocation failed!");
                 free(binaryPayload);
-                CADestroyToken(token);
-                CADestroyEndpoint(endpoint);
-                return;
+                goto exit;
             }
             memcpy(requestData.payload, binaryPayload, payloadLength);
             requestData.payloadSize = payloadLength;
@@ -527,9 +518,7 @@ void send_request()
             if (NULL == requestData.payload)
             {
                 printf("Memory allocation fail\n");
-                CADestroyEndpoint(endpoint);
-                CADestroyToken(token);
-                return;
+                goto exit;
             }
             snprintf((char *) requestData.payload, length, NORMAL_INFO_DATA,
                      (const char *) resourceURI);
@@ -550,17 +539,13 @@ void send_request()
         printf("Could not send request : %d\n", res);
     }
 
-    if (headerOpt)
-    {
-        free(headerOpt);
-    }
-
-    //destroy token
-    CADestroyToken(token);
-    // destroy remote endpoint
-    CADestroyEndpoint(endpoint);
+    free(headerOpt);
     free(requestData.payload);
 
+exit:
+    // cleanup
+    CADestroyToken(token);
+    CADestroyEndpoint(endpoint);
     printf("=============================================\n");
 }
 
@@ -597,8 +582,6 @@ void send_secure_request()
         printf("Token generate error, error code : %d\n", res);
         goto exit;
     }
-
-    printf("Generated token %s\n", token);
 
     // create request data
     CAInfo_t requestData = { .type = CA_MSG_NONCONFIRM,
@@ -666,8 +649,6 @@ void send_request_all()
         return;
     }
 
-    printf("generated token %s\n", token);
-
     // create request data
     CAPayload_t payload = (CAPayload_t) "TempJsonPayload";
     size_t payloadSize = strlen((const char *) payload);
@@ -701,11 +682,7 @@ void send_request_all()
         g_last_request_token = token;
     }
 
-    if (headerOpt)
-    {
-        free(headerOpt);
-    }
-
+    free(headerOpt);
     // destroy remote endpoint
     CADestroyEndpoint(group);
 
@@ -773,8 +750,6 @@ void send_notification()
         CADestroyEndpoint(endpoint);
         return;
     }
-
-    printf("Generated token %s\n", token);
 
     // create response data
     CAPayload_t payload = (CAPayload_t) "TempNotificationData";
@@ -984,7 +959,7 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
     }
 
     printf("##########received request from remote device #############\n");
-    if (CA_ADAPTER_IP == object->adapter)
+    if (CA_ADAPTER_IP == object->adapter || CA_ADAPTER_TCP == object->adapter)
     {
         printf("Remote Address: %s Port: %d secured:%d\n", object->addr,
                object->port, object->flags & CA_SECURE);
@@ -1012,8 +987,7 @@ void request_handler(const CAEndpoint_t *object, const CARequestInfo_t *requestI
     printf("############################################################\n");
 
     //Check if this has secure communication information
-    if (requestInfo->info.payload &&
-            (CA_ADAPTER_IP == object->adapter))
+    if (requestInfo->info.payload && (CA_ADAPTER_IP == object->adapter))
     {
         int securePort = get_secure_information(requestInfo->info.payload);
         if (0 < securePort) //Set the remote endpoint secure details and send response
@@ -1249,7 +1223,7 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
                 CAPayload_t binaryPayload = get_binary_payload(&payloadLength);
                 if (NULL == binaryPayload)
                 {
-                    free(binaryPayload);
+                    printf("Failed to read binary file");
                     return;
                 }
 
@@ -1301,10 +1275,7 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
         printf("Send response success\n");
     }
 
-    if (responseData.payload)
-    {
-        free(responseData.payload);
-    }
+    free(responseData.payload);
 
     printf("=============================================\n");
 }
@@ -1549,10 +1520,8 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     if (!get_address_set(pAddress, address))
     {
         printf("address parse error\n");
-
-        free(cloneUri);
-        return;
     }
+
     free(cloneUri);
     return;
 }
@@ -1608,10 +1577,8 @@ bool get_address_set(const char *pAddress, addressSet_t* outAddress)
         }
         return true;
     }
-    else
-    {
-        return false;
-    }
+
+    return false;
 }
 
 void create_file(CAPayload_t bytes, size_t length)
