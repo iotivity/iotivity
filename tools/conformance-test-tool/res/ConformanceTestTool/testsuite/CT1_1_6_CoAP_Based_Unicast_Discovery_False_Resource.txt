@@ -1,6 +1,8 @@
 *** Settings ***
 Documentation	CT1_1_6_CoAP_Based_Unicast_Discovery_False_Resource
 Resource	OIC_ConformanceTest_Setting.txt
+Test Setup    Start Capture
+Test TearDown    End Capture
 
 *** Test Cases ***
 CT1.1.6 CoAP Based Unicast Discovery on a false resource

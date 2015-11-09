@@ -1,6 +1,8 @@
 *** Settings ***
 Documentation	CT2.1.1 CoAP Based Multicast Endpoint Discovery 
 Resource          OIC_ConformanceTest_Setting.txt
+Test Setup    Start Capture
+Test TearDown    End Capture
 
 *** Test Cases ***
 CT2.1.1 CoAP Based Multicast Endpoint Discovery

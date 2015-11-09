@@ -1,6 +1,8 @@
 *** Settings ***
 Documentation	CT1.1.7 CoAP Based Unicast Discovery on valid resource
 Resource	OIC_ConformanceTest_Setting.txt
+Test Setup    Start Capture
+Test TearDown    End Capture
 
 *** Test Cases ***
 CT1.1.7 CoAP Based Unicast Discovery on valid resource

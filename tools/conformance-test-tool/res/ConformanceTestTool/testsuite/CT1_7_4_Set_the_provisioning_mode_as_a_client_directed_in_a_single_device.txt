@@ -1,6 +1,8 @@
 *** Settings ***
 Documentation	CT1.7.4 Set the provisioning mode as a client-directed in a single device
 Resource	OIC_ConformanceTest_Setting.txt
+Test Setup    Start Capture
+Test TearDown    End Capture
 
 *** Test Cases ***
 CT1.7.4 Set the provisioning mode as a client-directed in a single device

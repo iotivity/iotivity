@@ -22,6 +22,7 @@ import os
 import java
 import time
 import re
+import datetime
 
 sys.path.append("IoTConformanceTestLib.jar")
 from oic.ctt.network.coap import *
@@ -1425,4 +1426,13 @@ class ConformanceKeyword(object):
         json_analyzer = JsonAnalyzer(payload_file)
         return json_analyzer.getJsonValueAsString(payload_type)
 	
+    def get_wireshark_file_name(self, tc_name):
+        "Read testcase name and return wireshark file name"
+        file_name = tc_name.replace(" - ","-")
+        file_name = file_name.replace(".","_")
+        file_name = file_name.replace(" ","_")
+        time_stamp = datetime.datetime.now().strftime('_%Y%m%d_%H%M%S')
+        file_name = file_name + time_stamp + ".pcapng"
+        return file_name
     	
+

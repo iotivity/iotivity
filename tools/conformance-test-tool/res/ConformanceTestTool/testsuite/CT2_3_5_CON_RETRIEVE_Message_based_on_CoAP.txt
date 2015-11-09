@@ -1,6 +1,8 @@
 *** Settings ***
 Documentation   CT2.3.5 CON RETRIEVE Message based on CoAP
 Resource          OIC_ConformanceTest_Setting.txt
+Test Setup    Start Capture
+Test TearDown    End Capture
 
 *** Test Cases ***
 CT2.3.5 CON RETRIEVE Message based on CoAP

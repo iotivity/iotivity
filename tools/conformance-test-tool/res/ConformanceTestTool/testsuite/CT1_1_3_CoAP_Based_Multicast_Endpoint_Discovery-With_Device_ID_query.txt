@@ -1,6 +1,8 @@
 *** Settings ***
 Documentation     Test Conformance Tool
 Resource	OIC_ConformanceTest_Setting.txt
+Test Setup    Start Capture
+Test TearDown    End Capture
 
 *** Test Cases ***
 CT1.1.3 CoAP Based Multicast Endpoint Discovery – With Device ID query

@@ -1,6 +1,8 @@
 *** Settings ***
 Documentation	CT1.7.5.1 Initiate DTLS handshake with a proper cipher suite for the Just-Works OTM
 Resource	OIC_ConformanceTest_Setting.txt
+Test Setup    Start Capture
+Test TearDown    End Capture
 
 *** Variables ***
 ${SECURITY_CLIENT_DIR}        ../../ProvisioningClient_Temp

@@ -1,6 +1,8 @@
 *** Settings ***
 Documentation     CT2_3_14_NON_DELETE_Message_based_on_CoAP
 Resource          OIC_ConformanceTest_Setting.txt
+Test Setup    Start Capture
+Test TearDown    End Capture
 
 *** Test Cases ***
 CT2_3_14_NON_DELETE_Message_based_on_CoAP

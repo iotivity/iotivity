@@ -4,9 +4,19 @@ Library           ConformanceKeyword.py
 Library        OperatingSystem
 Library        DateTime
 Resource	OIC_Core_Spec.txt
+Test Setup    Start Capture
+Test TearDown    End Capture
 
 
 *** Keywords ***
+Start Capture
+    ${file_name}    Get Wireshark File Name    ${TEST NAME}
+    OperatingSystem.Run      tshark -i any -f udp -F pcapng -w testreport/${file_name} | - &
+    BuiltIn.Sleep    2s
+
+End Capture
+    OperatingSystem.Run    killall tshark    
+
 Get Length Available Representation To Update
         [Arguments]     ${DUT_ID}       ${DUT_HREF_QUERY}
 	@{representation_list}	Get Dut Resource Value  ${DUT_ID}       ${DUT_HREF_QUERY}       ${REPRESENTATION}    W

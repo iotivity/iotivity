@@ -1,6 +1,8 @@
 *** Settings ***
 Documentation     CT2_3_16_NON_RETRIEVE_Message_with_observe_indication_based_on_CoAP_Observe_mode
 Resource          OIC_ConformanceTest_Setting.txt
+Test Setup    Start Capture
+Test TearDown    End Capture
 
 *** Test Cases ***
 CT2_3_16_NON_RETRIEVE_Message_with_observe_indication_based_on_CoAP_Observe_mode
