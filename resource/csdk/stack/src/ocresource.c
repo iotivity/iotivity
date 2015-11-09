@@ -804,7 +804,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     #endif
 #ifdef ROUTING_GATEWAY
     // Gateway uses the RMHandleGatewayRequest to respond to the request.
-    if (OC_GATEWAY != virtualUriInRequest)
+    if (OC_GATEWAY_URI != virtualUriInRequest)
 #endif
     {
         if(discoveryResult == OC_STACK_OK)
