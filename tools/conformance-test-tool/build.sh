@@ -71,7 +71,9 @@ RunCommand "gradle install" "JCOAP Build"
 # Buiding Conformance Lib
 cd ../../
 RunCommand "gradle install" "Conformance Lib Build"
-RunCommand "cp libs/*.jar bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/" "JCOAP Installation"
+
+RunCommand "cp extlibs/ws4d-jcoap/build/libs/*.jar libs/" "JCOAP Installation"
+RunCommand "cp libs/*.jar bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/" "Dependent Library Installation"
 RunCommand "cp bin/linux/ConformanceTestTool/libs/IoTConformanceTestLib.jar bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/IoTConformanceTestLib.jar" "Conformance Lib Installation"
 
 RunCommand "mv bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/logger.config bin/linux/ConformanceTestTool/" "Logger Config Installation"
