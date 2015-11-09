@@ -39,7 +39,7 @@ public class DutJsonLoader implements IDutLoader {
 
     /**
      * Constructor to Get json string from json file
-     * 
+     *
      * @param dutJsonFile
      *            : Absolute Path to JSON file
      */
@@ -50,8 +50,9 @@ public class DutJsonLoader implements IDutLoader {
                 mlogger.debug("DUT JSON String : " + dutJsonFilePath);
 
                 StringBuffer dutJson = new StringBuffer();
+                sc.useDelimiter("\\n");
                 while (sc.hasNext()) {
-                    dutJson.append(sc.next());
+                    dutJson.append(sc.next().trim());
                 }
                 mDutAnalyzer = new JsonAnalyzer(dutJson.toString());
                 mlogger.debug("DUT JSON String : "

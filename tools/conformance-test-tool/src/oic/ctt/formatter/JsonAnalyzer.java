@@ -16,7 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 package oic.ctt.formatter;
 
@@ -37,11 +37,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jackson.JsonLoader;
 
-/** JsonParser for robotFramework testcase */
+/**
+ * JsonParser for robotFramework testcase 
+ */
 public class JsonAnalyzer {
 
-    private static Logger mlogger = CTLogger.getInstance();
+    private static Logger mlogger   = CTLogger.getInstance();
     private String        mJsonString;
+    private final String  DELIMITER = " ";
+    private final String  REP       = "rep";
+    private final String  OC        = "oc";
 
     public JsonAnalyzer(String jsonString) {
         mJsonString = jsonString;
@@ -60,13 +65,14 @@ public class JsonAnalyzer {
         return validate();
     }
 
-    /** Return value from specific href resource */
+    /**
+     * Return value from specific href resource
+     */
     public ArrayList<String> getValueWithHref(String href, String key) {
 
         try {
             String targetResourceJsonString = getSingleResourceJsonNode(href,
                     mJsonString);
-
             return getValue(key, targetResourceJsonString);
         } catch (NullPointerException e) {
             e.printStackTrace();
@@ -76,7 +82,9 @@ public class JsonAnalyzer {
         return null;
     }
 
-    /** Return resource information of specific href */
+    /**
+     * Return resource information of specific href
+     */
     public String getSingleResourceJsonNode(String href, String jsonString) {
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -107,7 +115,9 @@ public class JsonAnalyzer {
 
     }
 
-    /** Return value of specific key */
+    /**
+     * Return value of specific key
+     */
     public ArrayList<String> getValue(String key) {
         return getValue(key, mJsonString);
     }
@@ -129,9 +139,8 @@ public class JsonAnalyzer {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode jsonNodeTree = mapper.readTree(jsonString);
             JsonNode jsonNode = jsonNodeTree.get(key);
-
             if (jsonNode != null) {
-                returnValueList = getValueFromJsonNode(jsonNode);
+                returnValueList = getValueFromJsonNode(key, jsonNode);
             }
 
             for (JsonNode tempJsonNode : jsonNodeTree) {
@@ -152,29 +161,22 @@ public class JsonAnalyzer {
      * Returns value of JsonNode with handing JsonNode is array and value of
      * asText() is empty string
      */
-    private ArrayList<String> getValueFromJsonNode(JsonNode jsonNode) {
+    private ArrayList<String> getValueFromJsonNode(String key, JsonNode jsonNode) {
         ArrayList<String> returnValueList = new ArrayList<String>();
 
         if (jsonNode.isArray()) {
             for (JsonNode tempNode : jsonNode) {
-
-                String value = tempNode.asText();
-                if (value.isEmpty()) {
-                    value = tempNode.toString();
-                }
-                returnValueList.add(value);
+                returnValueList.addAll(getJsonValueList(key, tempNode));
             }
         } else {
-            String value = jsonNode.asText();
-            if (value.isEmpty()) {
-                value = jsonNode.toString();
-            }
-            returnValueList.add(value);
+            returnValueList.addAll(getJsonValueList(key, jsonNode));
         }
         return returnValueList;
     }
 
-    /** Return value that are related key include duplication */
+    /**
+     * Return value that are related key include duplication
+     */
     public ArrayList<String> getAllValueFromJson(String key) {
         ArrayList<String> listHREF = new ArrayList<>();
 
@@ -204,7 +206,9 @@ public class JsonAnalyzer {
         return listHREF;
     }
 
-    /** Return JSonObject list is included oic value */
+    /**
+     * Return JSonObject list is included oic value
+     */
     public ArrayList<String> getResourceJson() {
         JSONObject jsnObject = (JSONObject) JSONValue.parse(mJsonString);
         ArrayList<String> resourceRepLst = new ArrayList<>();
@@ -221,7 +225,9 @@ public class JsonAnalyzer {
         return resourceRepLst;
     }
 
-    /** Return true if jsonString is valid, otherwise false */
+    /**
+     * Return true if jsonString is valid, otherwise false
+     */
     public boolean validate() {
         boolean retValue = false;
 
@@ -247,7 +253,9 @@ public class JsonAnalyzer {
         }
     }
 
-    /** Return Json Value as String */
+    /**
+     * Return Json Value as String
+     */
     public String getJsonValueAsString(String key) {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode jsonNodeArray = null;
@@ -259,5 +267,23 @@ public class JsonAnalyzer {
             e.printStackTrace();
         }
         return "";
+    }
+
+    private ArrayList<String> getJsonValueList(String key, JsonNode jsonNode){
+        ArrayList<String> jsonValueList = new ArrayList<>();
+        String value = jsonNode.asText();
+        if (value.isEmpty()) {
+            value = jsonNode.toString();
+        }
+        // Convert space separated values into array of values
+        if (key != REP && key != OC) {
+            String[] valList = value.split(DELIMITER);
+            for (String val : valList) {
+                jsonValueList.add(val);
+            }
+        }
+        else
+            jsonValueList.add(value);
+        return jsonValueList;
     }
 }
