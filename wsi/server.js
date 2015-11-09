@@ -30,53 +30,12 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.serializeUser(function(user, done) {
-	  done(null, user);
+    done(null, user);
 });
 passport.deserializeUser(function(user, done) {
-	  done(null, user);
+    done(null, user);
 });
-/*
-// Passport needs to be able to serialize and deserialize users to support persistent login sessions
-passport.serializeUser(function (user, done) {
-    console.log('serializing user: ');
-    console.log(user);
-    done(null, user._id);
-});
-
-passport.deserializeUser(function (id, done) {
-    servicedb.findById(id, function (err, user) {
-        console.log('deserializing user:', user);
-        done(err, user);
-    });
-});
-*/
 console.log("Serializer added");
-
-//var allowCrossDomain = function(req, res, next) {
-//        res.header('Access-Control-Allow-Credentials', true);
-//        res.header('Access-Control-Allow-Origin', req.headers.origin);
-//        res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-//        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-//
-//        // intercept OPTIONS method
-//        if ('OPTIONS' == req.method) {
-//            res.send(200);
-//        }
-//        else {
-//            next();
-//        }
-//};
-//app.use(allowCrossDomain);
-
-
-//app.use(function(req, res, next) {
-//    console.log("CORS Enabled");
-//    res.header("Access-Control-Allow-Origin", "*");
-//    res.setHeader('Access-Control-Allow-Credentials', true);    
-//    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-//    next();
-//});
-
 
 var strategy = [];
 var normalizedPath = require("path").join(__dirname, "./app/endpoint");
@@ -85,7 +44,9 @@ require('fs').readdirSync(normalizedPath).forEach(function(file) {
     var svc = file.substring(0, file.indexOf(".js"));
     strategy[svc] = require(normalizedPath + "/" + svc);
     console.log("Initializing Web Service : " + svc);
-    strategy[svc].init(app, passport);
+    var template = strategy[svc].init(app, passport);
+    if(Object.keys(template).length > 0)
+        servicedb.create(template);
     console.log(svc + " Initialized");
 });
 

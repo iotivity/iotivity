@@ -3,11 +3,32 @@ var intervalId,
         iotivity = require("../../iotivity-node/lowlevel");
 
 module.exports = {
+    
     init: function () {
     // Start iotivity and set up the processing loop
         iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT);
+        var template = {
+            "handler": "iotivity",
+            "sid": "org.iotivity",
+            "capability": [
+                {
+                    "cid": "org.iotivity.getresource",
+                    "isauthrequired": false,
+                    "endpoint": "/wsi/iotivity/getresource",
+                    "endpointtype": "IOTIVITY",
+                    "operation": "GET",
+                    "params": {
+                        "sampleUri": "/a/light"
+                    },
+                    "tags": [
+                        "get reosurce properties"
+                    ]
+                }
+            ]
+        };
+        return template;
     },
-    request: function (cap) {
+    request: function (cap, res) {
         intervalId = setInterval(function () {
             iotivity.OCProcess();
         }, 1000);
@@ -37,6 +58,7 @@ module.exports = {
                             getResponseHandler = function (handle, response) {
                                 console.log("Received response to GET request:");
                                 console.log(JSON.stringify(response, null, 4));
+                                res.send(200, response);
                                 return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
                             };
                 // If the sample URI is among the resources, issue the GET request to it

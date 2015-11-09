@@ -14,7 +14,7 @@
             <div id="content">
                 <!-- <input type="text" name="servicename" value=""><input type="submit" value="Search"> -->
                 <h3>Services List (<span>{{ services.length}}</span>)
-                <select style="align: middle;" ng-change="selectService(sampleService)" ng-model="sampleService" ng-options="service.handler for service in getSampleServices()">
+                <select style="align: middle;" ng-change="selectService(sampleService)" ng-model="sampleService" ng-options="service.handler for service in services">
                     <option selected="selected" value="">Examples</option>
                 </select>
                 </h3>

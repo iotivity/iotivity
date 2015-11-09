@@ -170,13 +170,13 @@ module.exports = function(app, passport) {
     app.post('/wsi/cap/get', function(req, res) {
         var cap = req.body;
         console.log("WSI GET " + JSON.stringify(cap));
-        app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap);
+        app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap, res);
         
     });
     app.post('/wsi/cap/post', function(req, res) {
         var cap = req.body;
         console.log("WSI GET " + JSON.stringify(cap));
-        app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap);
+        app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap, res);
     });
 
     app.get('*', function(req, res) {

@@ -1,72 +1,63 @@
 var FacebookStrategy = require('passport-facebook').Strategy;
 var servicedb = require('../models/service');
 
-var fb_service_description = {
-                "handler": "facebook",
-                "sid": "com.facebook",
-                "description": "Facebook RESTful API.",
-                "platforms": [
-                    {
-                        "name": "linux",
-                        "appURL": "https://facebook.com"
-                    }
-                ],
-                "auth": [
-                    {
-                    "type": "oauth2.0",
-                    "clientID": "949606648410465",
-                    "clientSecret": "2a35037f1919e7cbefcc1d2f95ef24fb",
-                    "endpoint": "/wsi/facebook/auth",
-                    "callbackURL": "/wsi/facebook/auth/callback",
-                    "userid": "",
-                    "access_token": "",
-                    "refresh_token": "",
-                    "firstName": "",
-                    "lastName": "",
-                    "email": "",
-                    "scope" : ['email', 'publish_actions']
-                    },
-                ],
-                "capability": [
-                    {
-                        "cid": "com.facebook.auth",
-                        "isauthrequired": "true",
-                        "description": "Authorize this app to use facebook.",
-                        "endpoint": "/wsi/facebook/auth",
-                        "endpointtype": "REST",
-                        "operation": "GET"
-                    },                    
-                    {
-                        "cid": "com.facebook.post",
-                        "isauthrequired": "true",
-                        "description": "Post Message to Facebook.",
-                        "endpoint": "http://graph.facebook.com/me/feed?message={{message}}&access_token={{access_token}}",
-                        "endpointtype": "REST",
-                        "operation": "POST",
-                        "params": {
-                            "msg": "Hello World From WSI",
-                            "access_token" : ""
-                        },
-                        "tags": [
-                            "share",
-                            "post"
-                        ]
-                    }
-                ]
-            };
-
 module.exports = {
 
     init: function(app, passport) {
-        
-        console.log("Facebook description found " + fb_service_description.auth[0].endpoint+ " " + fb_service_description.auth[0].callbackURL);
-        app.get(fb_service_description.auth[0].endpoint,
-            passport.authenticate('facebook', {scope : fb_service_description.auth[0].scope}));
+        var template = {
+            "handler": "facebook",
+            "sid": "com.facebook",
+            "description": "Facebook RESTful API.",
+            "platforms": [
+                {
+                    "name": "linux",
+                    "appURL": "https://facebook.com"
+                }
+            ],
+            "auth": [
+                {
+                "type": "oauth2.0",
+                "clientID": "949606648410465",
+                "clientSecret": "2a35037f1919e7cbefcc1d2f95ef24fb",
+                "endpoint": "/wsi/facebook/auth",
+                "callbackURL": "/wsi/facebook/auth/callback",
+                "userid": "",
+                "access_token": "",
+                "refresh_token": "",
+                "firstName": "",
+                "lastName": "",
+                "email": "",
+                "scope" : ['email', 'publish_actions']
+                },
+            ],
+            "capability": [
+                {
+                    "cid": "com.facebook.post",
+                    "isauthrequired": "true",
+                    "description": "Post Message to Facebook.",
+                    "endpoint": "https://graph.facebook.com/me/feed?message={{message}}&access_token={{access_token}}",
+                    "endpointtype": "REST",
+                    "operation": "POST",
+                    "params": {
+                        "message": "Message to post",
+                        "access_token" : "access token"
+                    },
+                    "tags": [
+                        "share",
+                        "post"
+                    ]
+                }
+            ]
+        };
+        console.log("Facebook description found " + template.auth[0].endpoint+ " " + template.auth[0].callbackURL);
+        app.get(template.auth[0].endpoint,
+            passport.authenticate('facebook', {scope : template.auth[0].scope}));
         //called by facebook
-        app.get(fb_service_description.auth[0].callbackURL, 
+        app.get(template.auth[0].callbackURL, 
             passport.authenticate('facebook', { successRedirect: '/', failureRedirect: '/' }),function(req, res) {});
             
-            
+        return template;
+
     },
 /*
         app.post('/facebook/post', function(req, res) {
