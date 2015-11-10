@@ -143,7 +143,7 @@ int8_t OCSeedRandom()
     {
         result += result + GetRandomBit();
     }
-    randomSeed(result);
+    srandom(result);
     return 0;
 #endif
 
@@ -173,7 +173,7 @@ uint8_t OCGetRandomByte(void)
 #if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
     return rand() & 0x00FF;
 #elif defined ARDUINO
-    return random(256) & 0x00FF;
+    return random() & 0x00FF;
 #endif
 }
 

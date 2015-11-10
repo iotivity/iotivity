@@ -63,4 +63,4 @@ if env.get('TEST') == '1':
                 from tools.scons.RunTest import *
                 run_test(randomtest_env,
                          'resource_csdk_random_test.memcheck',
-                         'resource/csdk/ocrandom/test/randomtests')
+                         'resource/c_common/ocrandom/test/randomtests')
