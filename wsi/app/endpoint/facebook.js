@@ -63,7 +63,7 @@ module.exports = {
         console.log("Before Use = " + authcred.callbackURL);
         console.log("facebook auth initialized");
 
-        passport.use(new FacebookStrategy({
+        return passport.use(new FacebookStrategy({
                                         clientID        : authcred.clientID,
                                         clientSecret    : authcred.clientSecret,
                                         callbackURL     : authcred.callbackURL
@@ -89,6 +89,7 @@ module.exports = {
                                                             ).exec(function(err, model){
                                                                 console.log("Facebook Record Updated " + JSON.stringify(model));
                                                             });
+                                                            
                                             return done(null, service);
                                         });
                                     });

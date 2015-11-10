@@ -60,7 +60,7 @@ const char *bulbfile[] = {
     "off.png",
 };
 
-int states[3][3];
+int states[1][1];
 
 void change_bg_image(bulbstate state) {
     char buf[PATH_MAX];
@@ -81,60 +81,6 @@ void change_bg_image(bulbstate state) {
 void
 my_win_del(void *data EINA_UNUSED, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED) {
     elm_exit(); /* exit the program's main loop that runs in elm_run() */
-}
-
-void
-launch_bulb() {
-    Evas_Object *win, *bg;
-    Evas_Object *box;
-    char buf[PATH_MAX];
-
-    win = elm_win_add(NULL, "bg-image", ELM_WIN_BASIC);
-    elm_win_title_set(win, "WSI Demo Control");
-    elm_win_autodel_set(win, EINA_TRUE);
-    evas_object_smart_callback_add(win, "delete,request", my_win_del, NULL);
-
-    bg = elm_bg_add(win);
-    evas_object_size_hint_weight_set(bg, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    elm_win_resize_object_add(win, bg);
-    evas_object_show(bg);
-
-    box = elm_box_add(win);
-    evas_object_size_hint_weight_set(box, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    elm_win_resize_object_add(win, box);
-    evas_object_show(box);
-
-   Evas_Object *tb = elm_table_add(win);
-   evas_object_size_hint_weight_set(tb, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-   
-
-   int n = 0;
-   Evas_Object *ph;
-   for (int j = 0; j < 3; j++)
-     {
-        for (int i = 0; i < 3; i++)
-          {
-             ph = elm_photo_add(win);
-             snprintf(buf, sizeof(buf), "images/%s",bulbfile[n]);
-             n++;
-             if (n >= 5) n = 0;
-             images[j][i] = ph;
-             elm_photo_aspect_fixed_set(ph, EINA_FALSE);
-             elm_photo_size_set(ph, 80);
-             elm_photo_file_set(ph, buf);
-             elm_photo_editable_set(ph, EINA_TRUE);
-             evas_object_size_hint_weight_set(ph, EVAS_HINT_EXPAND,EVAS_HINT_EXPAND);
-             evas_object_size_hint_align_set(ph, EVAS_HINT_FILL, EVAS_HINT_FILL);
-             elm_table_pack(tb, ph, i, j, 1, 1);
-             evas_object_show(ph);
-          }
-     }
-    elm_box_pack_end(box, tb);
-    evas_object_show(tb);
-    evas_object_size_hint_min_set(bg, 160, 160);
-    evas_object_size_hint_max_set(bg, 640, 640);
-    evas_object_resize(win, 320, 320);
-    evas_object_show(win);
 }
 
 /// This class represents a single resource named 'lightResource'. This resource has
@@ -224,8 +170,10 @@ public:
     // sending out.
     OCRepresentation get()
     {
-        m_lightRep.setValue("state", m_state);
-        return m_lightRep;
+	std::cout << "Get invoked......................................." << std::endl;
+	m_lightRep.setValue("state", m_state);
+	change_bg_image(m_state);
+	return m_lightRep;
     }
 
     void addType(const std::string& type) const
@@ -421,6 +369,59 @@ static FILE* client_open(const char *path, const char *mode) {
     return fopen("./oic_svr_db_server.json", mode);
 }
 
+void
+launch_bulb() {
+    Evas_Object *win, *bg;
+    Evas_Object *box;
+    char buf[PATH_MAX];
+
+    win = elm_win_add(NULL, "bg-image", ELM_WIN_BASIC);
+    elm_win_title_set(win, "WSI Demo Control");
+    elm_win_autodel_set(win, EINA_TRUE);
+    evas_object_smart_callback_add(win, "delete,request", my_win_del, NULL);
+
+    bg = elm_bg_add(win);
+    evas_object_size_hint_weight_set(bg, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+    elm_win_resize_object_add(win, bg);
+    evas_object_show(bg);
+
+    box = elm_box_add(win);
+    evas_object_size_hint_weight_set(box, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+    elm_win_resize_object_add(win, box);
+    evas_object_show(box);
+
+   Evas_Object *tb = elm_table_add(win);
+   evas_object_size_hint_weight_set(tb, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+   
+
+   int n = 0;
+   Evas_Object *ph;
+   for (int j = 0; j < 1; j++)
+     {
+        for (int i = 0; i < 1; i++)
+          {
+             ph = elm_photo_add(win);
+             snprintf(buf, sizeof(buf), "images/%s",bulbfile[n]);
+             n++;
+             if (n >= 5) n = 0;
+             images[j][i] = ph;
+             elm_photo_aspect_fixed_set(ph, EINA_FALSE);
+             elm_photo_size_set(ph, 280);
+             elm_photo_file_set(ph, buf);
+             elm_photo_editable_set(ph, EINA_TRUE);
+             evas_object_size_hint_weight_set(ph, EVAS_HINT_EXPAND,EVAS_HINT_EXPAND);
+             evas_object_size_hint_align_set(ph, EVAS_HINT_FILL, EVAS_HINT_FILL);
+             elm_table_pack(tb, ph, i, j, 1, 1);
+             evas_object_show(ph);
+          }
+     }
+    elm_box_pack_end(box, tb);
+    evas_object_show(tb);
+    evas_object_size_hint_min_set(bg, 160, 160);
+    evas_object_size_hint_max_set(bg, 640, 640);
+    evas_object_resize(win, 320, 320);
+    evas_object_show(win);
+}
 EAPI_MAIN int
 elm_main(int argc, char **argv) {
     OCPersistentStorage ps{client_open, fread, fwrite, fclose, unlink};
