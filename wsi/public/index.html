@@ -19,7 +19,7 @@
                 </select>
                 </h3>
                 
-                <a href="/wsi/facebook/auth">Signin with Facebook</a>
+                <!--<a href="/wsi/facebook/auth">Signin with Facebook</a>-->
                 <table border="1" align="left" style="width: 490px;">
                     <tr ng-repeat="service in services">
                         <td>
@@ -35,6 +35,9 @@
                         <td>
                             <div ng-controller="capcontroller">
                                 <ul style="list-style-type:none; align=left;" ng-repeat="cap in service.capability track by cap.cid"">
+                                    <div ng-if="cap.isauthrequired==='true'">
+                                        <a href="{{service.auth[0].endpoint}}">Authenticate via {{service.handler}}</a>
+                                    </div>
                                     <li>
                                         <input name="capradio" id="selectcap" value="{{cap.cid}}" type="radio" ng-click="initCapability(cap.cid)">{{cap.cid}}
                                         <img ng-click="runCapability(cap.cid)" src="assets/images/execute.png" style="width:15px;height:15px;border:0">

@@ -51,9 +51,9 @@ module.exports = {
         };
         console.log("Facebook description found " + template.auth[0].endpoint+ " " + template.auth[0].callbackURL);
         app.get(template.auth[0].endpoint,
-            passport.authenticate('facebook', {scope : template.auth[0].scope}));
+            passport.authenticate(template.handler, {scope : template.auth[0].scope}));
         app.get(template.auth[0].callbackURL, 
-            passport.authenticate('facebook', { successRedirect: '/', failureRedirect: '/' }),function(req, res) {});
+            passport.authenticate(template.handler, { successRedirect: '/', failureRedirect: '/' }),function(req, res) {});
             
         return template;
 
@@ -84,7 +84,9 @@ module.exports = {
                                             
                                             servicedb.update({sid:service.sid, 'auth.type':'oauth2.0'},
                                                                 {$set:
-                                                                    {"auth.$.access_token":access_token}
+                                                                    {"auth.$.access_token":access_token,
+                                                                     "capability.$.params.access_token":access_token
+                                                                    }
                                                                 }
                                                             ).exec(function(err, model){
                                                                 console.log("Facebook Record Updated " + JSON.stringify(model));
