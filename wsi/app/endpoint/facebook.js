@@ -52,32 +52,18 @@ module.exports = {
         console.log("Facebook description found " + template.auth[0].endpoint+ " " + template.auth[0].callbackURL);
         app.get(template.auth[0].endpoint,
             passport.authenticate('facebook', {scope : template.auth[0].scope}));
-        //called by facebook
         app.get(template.auth[0].callbackURL, 
             passport.authenticate('facebook', { successRedirect: '/', failureRedirect: '/' }),function(req, res) {});
             
         return template;
 
     },
-/*
-        app.post('/facebook/post', function(req, res) {
-            var jsonObj = req.body;
-            console.log("FB POST : " + jsonObj.userid + ' ' + jsonObj.message + ' ' + jsonObj.access_token );
-            httphandler.post({url:''+jsonObj.userid+''+jsonObj.message+''+jsonObj.access_token},
-                function (error, response, body) {
-                    if (!error && response.statusCode == 200) {
-                        console.log(body);
-                    }
-                }
-            )
-        });
-*/
-    auth :  function(app, authcred, passport, serviceid) {
+    auth :  function(authcred, passport, serviceid) {
         console.log("Client ID = " + authcred.clientID);
         console.log("Before Use = " + authcred.callbackURL);
         console.log("facebook auth initialized");
 
-        return passport.use(new FacebookStrategy({
+        passport.use(new FacebookStrategy({
                                         clientID        : authcred.clientID,
                                         clientSecret    : authcred.clientSecret,
                                         callbackURL     : authcred.callbackURL
@@ -85,7 +71,6 @@ module.exports = {
                                 function(access_token, refresh_token, profile, done) {
                                     process.nextTick(function() {
                                         console.log('Next Tick : ' +  profile.id);
-                                        var options = { overwrite: true };
                                         servicedb.findOne({ sid : serviceid}, function(err, service) {
                                             if (err)
                                                 return done(err);
@@ -95,7 +80,6 @@ module.exports = {
                                             console.log("Refresh Token : " + refresh_token);
                                             service.auth[0].userid    = profile.id;
                                             service.auth[0].access_token = access_token;
-                                            //service.auth[0].refresh_token = refresh_token;
                                             service.markModified('');
                                             
                                             servicedb.update({sid:service.sid, 'auth.type':'oauth2.0'},
@@ -106,20 +90,9 @@ module.exports = {
                                                                 console.log("Facebook Record Updated " + JSON.stringify(model));
                                                             });
                                             return done(null, service);
-                                            
-//                                            servicedb.update({ sid: service.serviceid }, service, options, function(err, model) {
-//                                                if (err) {
-//                                                    console.log(err);
-//                                                    model.save();
-//                                                    return done(err);
-//                                                }
-//                                                console.log("Facebook Record Updated " + JSON.stringify(service));
-//                                            });
-//                                            return done(null, service);
                                         });
                                     });
                                 }));
-        //return passport.authenticate('facebook', {scope : authcred.scope});
     }
 }
 console.log("Facebook initialized");

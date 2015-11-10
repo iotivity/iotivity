@@ -148,23 +148,8 @@ module.exports = function(app, passport) {
     app.post('/wsi/cap/auth', function(req, res) {
         var authcred = req.body.auth[0];
         console.log("WSI Cap Auth " + req.body.sid);
-        return app.settings.strategy[req.body.handler].auth(app, authcred, passport, req.body.sid);
-//	console.log(authcred.userid);
-//	console.log(authcred.access_token);
-//	console.log(authcred.refresh_token);
-//	console.log(authcred.firstName);
-//	console.log(authcred.lastName);
-
-
-//        console.log("REDIRECTING.......******************************");
-//        console.log("Return objject  " +  temp);
-//        
-        //res.header("Access-Control-Allow-Origin", "*");
-        //res.setHeader('Access-Control-Allow-Credentials', true);    
-        //res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-
-        //return res.redirect(302, '/wsi/auth/facebook', authcred.scope);
-        //console.log("REDIRECTED.......******************************");
+        app.settings.strategy[req.body.handler].auth(authcred, passport, req.body.sid);
+        res.send(200);
     });
     
     app.post('/wsi/cap/get', function(req, res) {
