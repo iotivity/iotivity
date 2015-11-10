@@ -4,9 +4,6 @@ Library           ConformanceKeyword.py
 Library        OperatingSystem
 Library        DateTime
 Resource	OIC_Core_Spec.txt
-Test Setup    Start Capture
-Test TearDown    End Capture
-
 
 *** Keywords ***
 Start Capture
@@ -15,7 +12,7 @@ Start Capture
     BuiltIn.Sleep    2s
 
 End Capture
-    OperatingSystem.Run    killall tshark    
+    OperatingSystem.Run    killall tshark
 
 Get Length Available Representation To Update
         [Arguments]     ${DUT_ID}       ${DUT_HREF_QUERY}
@@ -23,8 +20,7 @@ Get Length Available Representation To Update
         ${length}    Get Length    ${representation_list}
         Log    {@{representation_list}}
 	[Return]	${length}
-        
-        
+
 Check Modified Representation Value
         [Arguments]     ${DUT_ID}       ${DUT_HREF_QUERY}	${Response_Payload}
         @{Representation_Keys}  Get Dut Resource Value  ${DUT_ID}       ${DUT_HREF_QUERY}       ${REPRESENTATION}    W
@@ -42,7 +38,7 @@ Check Modified Partial Representation Value
         Run Keyword Unless    '${selected_list1}' == 'array'    Should Be Equal         @{response_key}[0]               ${Representation_Keys[0][2]}
 
 Set Modified Representation Value Payload
-	[Arguments]	${DUT_ID}	${DUT_HREF_QUERY}	
+	[Arguments]	${DUT_ID}	${DUT_HREF_QUERY}
 	Create Json Representation
         Add Into Json Representation    ${HREF}    ${EMPTY}
         Log    ${DUT_HREF_QUERY}
@@ -63,19 +59,19 @@ Check Response Representation With False
 
 Check Response Representation
         [Arguments]        ${DUT_ID}     ${Response_Json}        ${Data_Format}  ${Query}       @{Representation}
-        : FOR        ${Property}        IN      @{Representation}                 
-        \        Check Discovery Response       ${Property}     ${DUT_ID}      ${Response_Json}   ${Data_Format}        ${Query}	
+        : FOR        ${Property}        IN      @{Representation}
+        \        Check Discovery Response       ${Property}     ${DUT_ID}      ${Response_Json}   ${Data_Format}        ${Query}
 
 Check Representation
         [Arguments]        ${DUT_ID}     ${Response_Json}        ${Data_Format}  ${Query}       @{Representation}
-        : FOR        ${Property}        IN      @{Representation}                 
+        : FOR        ${Property}        IN      @{Representation}
         \        @{response_key}  Get Json Value  ${Property}   ${Response_Json}
         \        Should Not Be Empty    @{response_key}[0]
 
 Check In List
         [Arguments]     ${To_Check}     ${does_contain}        @{Type_List}
         ${does_contain}		Get False
-        : FOR        ${Resource_Type}        IN      @{Type_List}                
+        : FOR        ${Resource_Type}        IN      @{Type_List} 
         \        : IF   ${dut1_info_href}       IS      ${resource_href}
         \        \        ${does_contain}               Get True
         Should Be True	${does_contatin}
@@ -103,7 +99,7 @@ Get IP Port And Uri
 	${resource_port}        Get Response Port       ${dut1_response}
 	Should Not Be Empty     ${resource_port}
 	[Return]	 ${resource_ip}		${resource_port}	@{resource_href}
-	
+
 Get Response Code IP Port And Payload From Response
 	[Arguments]		${dut_response}
 	${dut_response_code}   	Get Multicast Discovery Response Code       ${dut_response}
@@ -156,7 +152,6 @@ ${DATA_MODEL_VERSION}    dmv
 ${PLATFORM_ID}    pi
 ${MANUFACTURER_NAME}    mnmn
 
-
 #Representation of core resources
 @{REPRESENTATION_OIC_RES}		${HREF}		${RESOURCE_TYPE}	${INTERFACE}
 @{REPRESENTATION_OIC_D}		${DEVICE_ID}	${NAME}    ${DATA_MODEL_VERSION}
@@ -182,7 +177,6 @@ ${DISCOVERABLE_RESOURCE_TYPE}	core.dis
 ${NON_DISCOVERABLE_RESOURCE_TYPE}	core.nondis
 ${CREATED_DIS_HREF}	-created-discoverable
 ${CREATED_NON_DIS_HREF}	-created-nondiscoverable
-
 
 #Test DUT Rep
 @{INVALID_URI_LIST}     /oic/rts        /oic/ifs        /oic/con        /oic/mon        /oic/mnt        /oic/foo 	/oic/ad

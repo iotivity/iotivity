@@ -44,7 +44,8 @@ CT1.3.7 Complete CON UPDATE Message based on CoAP
     :FOR	${resource_href}	IN	@{dut1_resource_hrefs}
     \   ${length}    Get Length Available Representation To Update    ${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}
     \   Continue For Loop If    ${length} < 1
-    \	Set Modified Representation Value Payload	${DUT1_ID}	${DISCOVERABLE}=1&${HREF}=${resource_href}
+    \	Create Json Representation
+    \	Add Into Json Representation	${INVALID_KEY}	${INVALID_VALUE}
     \	${payload}	Get Json Representation
     \   ${msgid}    Generate Message Id
     \   ${token}    Generate Token
@@ -61,7 +62,7 @@ CT1.3.7 Complete CON UPDATE Message based on CoAP
     \	Should Be Equal             ${dut2_response_msgid}    ${msgid}     
     \	${dut2_response_code}	Get Response Code       ${dut2_response}
     \	Should Be Equal	${COAP_RESPONSE_CODE_UPDATED}	${dut2_response_code}
-    \	${dut2_payload}	Get Response Json	${dut2_response}
-    \	@{test}		Get Json Value 	rep	${dut2_payload}
-    \	Check Modified Representation Value	${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}	${dut2_payload}
+    \	${dut2_put_response_json}	Get Response Json	${dut2_response}
+    \	@{mismatched_value}    Get Json Value    ${INVALID_KEY}    ${dut2_put_response_json}
+    \	Should Be Equal    @{mismatched_value}[0]    ${INVALID_VALUE}    Updated value does not match
     Release DUT information     ${DUT1_ID}vailable Representation To Update

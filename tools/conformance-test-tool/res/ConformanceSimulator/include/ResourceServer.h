@@ -16,7 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 /// @file ResourceServer.h
 /// @brief  This file contains the declaration of the resource server
@@ -52,7 +52,9 @@ protected:
     std::string m_resourceTypeName;
     std::string m_resourceInterface;
     OCResourceHandle m_resourceHandle;
-    PlatformConfig m_platformConfig;bool m_isServerRunning;
+    PlatformConfig m_platformConfig;
+    bool m_isServerRunning;
+    bool m_isSlowResource;
     static bool m_isServerConstructed;
     static OCPlatformInfo m_platformInfo;
     static OCDeviceInfo m_deviceInfo;
@@ -203,6 +205,42 @@ public:
      */
     std::string getUri(void);
 
+    /**
+     * API for setting the resource response as slow
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     */
+    void setAsSlowResource(void);
+
+    /**
+     * API for setting the resource response as normal
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     */
+    void setAsNormalResource(void);
+
+    /**
+     * API for handling normal response
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     * @param[in] request - OCResourceRequest variable, the request from client
+     *
+     */
+    void handleResponse(std::shared_ptr< OCResourceRequest > request);
+
+    /**
+     * API for handling slow response
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     * @param[in] request - OCResourceRequest variable, the request from client
+     *
+     */
+    void handleSlowResponse(std::shared_ptr< OCResourceRequest > request);
+
     static OCStackResult setPlatformInfo(string platformID, string manufacturerName,
             string manufacturerUrl, string modelNumber, string dateOfManufacture,
             string platformVersion, string operatingSystemVersion, string hardwareVersion,
@@ -249,7 +287,7 @@ public:
      * NOTE: This is a pure virtual function, thus it must be implemented by the child
      */
     virtual void handleDeleteRequest(QueryParamsMap &queryParamsMap,
-            OCRepresentation incomingRepresentation,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response) = 0;
 
     /***
@@ -263,7 +301,7 @@ public:
      * NOTE: This is a pure virtual function, thus it must be implemented by the child
      */
     virtual void handlePostRequest(QueryParamsMap &queryParamsMap,
-            OCRepresentation incomingRepresentation,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response) = 0;
 
     /***
@@ -277,6 +315,7 @@ public:
      * NOTE: This is a pure virtual function, thus it must be implemented by the child
      */
     virtual void handleGetRequest(QueryParamsMap &queryParamsMap,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response) = 0;
 
     /***
@@ -290,7 +329,7 @@ public:
      * NOTE: This is a pure virtual function, thus it must be implemented by the child
      */
     virtual void handlePutRequest(QueryParamsMap &queryParamsMap,
-            OCRepresentation incomingRepresentation,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response) = 0;
 
     /***
@@ -304,6 +343,7 @@ public:
      * NOTE: This is a pure virtual function, thus it must be implemented by the child
      */
     virtual void handleInitRequest(QueryParamsMap &queryParamsMap,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response) = 0;
 
     /***

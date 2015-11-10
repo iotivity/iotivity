@@ -16,7 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "ResourceServer.h"
 
@@ -36,6 +36,7 @@ ResourceServer::ResourceServer(void) :
     m_resourceInterface = DEFAULT_INTERFACE;
     m_isServerRunning = false;
     m_isServerConstructed = false;
+    m_isSlowResource = false;
 }
 
 ResourceServer::~ResourceServer(void)
@@ -90,79 +91,22 @@ OCStackResult ResourceServer::constructServer(std::string ip, int port)
 OCEntityHandlerResult ResourceServer::entityHandler(std::shared_ptr< OCResourceRequest > request)
 {
 
-    auto pResponse = std::make_shared< OC::OCResourceResponse >();
     OCEntityHandlerResult result = OC_EH_OK;
 
     cout << "\tIn Server entity handler:\n";
 
     if (request)
     {
-        pResponse->setRequestHandle(request->getRequestHandle());
-        pResponse->setResourceHandle(request->getResourceHandle());
-
-        // Get the request type and request flag
-        std::string requestType = request->getRequestType();
-        RequestHandlerFlag requestFlag = (RequestHandlerFlag) request->getRequestHandlerFlag();
-
-        if (requestFlag == RequestHandlerFlag::RequestFlag)
+        if (m_isSlowResource)
         {
-            cout << "\t\trequestFlag : Request\n";
-
-            // If the request type is GET
-            if (requestType == "GET")
-            {
-                cout << "\t\t\trequestType : GET\n";
-
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                handleGetRequest(queryParamsMap, pResponse); // Process query params and do required operations ..
-
-            }
-            else if (requestType == "PUT")
-            {
-                cout << "\t\t\trequestType : PUT\n";
-
-                OCRepresentation incomingRepresentation = request->getResourceRepresentation();
-
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                handlePutRequest(queryParamsMap, incomingRepresentation, pResponse); // Process query params and do required operations ..
-            }
-            else if (requestType == "POST")
-            {
-                // POST request operations
-                cout << "\t\t\trequestType : POST\n";
-
-                OCRepresentation incomingRepresentation = request->getResourceRepresentation();
-
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                handlePostRequest(queryParamsMap, incomingRepresentation, pResponse); // Process query params and do required operations ..
-            }
-            else if (requestType == "DELETE")
-            {
-                // DELETE request operations
-                cout << "\t\t\trequestType : Delete\n";
-
-                OCRepresentation incomingRepresentation = request->getResourceRepresentation();
-                // Check for query params (if any)
-                QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-                handleDeleteRequest(queryParamsMap, incomingRepresentation, pResponse); // Process query params and do required operations ..
-            }
+            std::thread t(bind(&ResourceServer::handleSlowResponse, this, PH::_1), request);
+            t.detach();
+            result = OC_EH_SLOW;
         }
-        else if (requestFlag & RequestHandlerFlag::ObserverFlag)
+        else
         {
-            // OBSERVE flag operations
-            cout << "\t\t\trequestType : Observe\n";
-
-            // Check for query params (if any)
-            QueryParamsMap queryParamsMap = request->getQueryParameters();
-
-            handleObserveRequest(queryParamsMap, request, pResponse); // Process query params and do required operations ..
+            handleResponse(request);
+            result = OC_EH_OK;
         }
     }
     else
@@ -209,6 +153,7 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
     result = OCPlatform::registerResource(m_resourceHandle, m_resourceURI, m_resourceTypeName,
             m_resourceInterface, std::bind(&ResourceServer::entityHandler, this, PH::_1),
             resourceProperty);
+    OCPlatform::bindInterfaceToResource(m_resourceHandle, "oic.if.a");
 
     if (result != OC_STACK_OK)
     {
@@ -239,6 +184,8 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
         std::vector< std::string > types;
         types.push_back(m_resourceTypeName);
         m_representation.setResourceTypes(types);
+
+        m_representation.addResourceInterface("oic.if.a");
     }
 
     return result;
@@ -304,8 +251,99 @@ OCStackResult ResourceServer::setPlatformInfo(string platformID, string manufact
     return OC_STACK_OK;
 }
 
+void ResourceServer::setAsSlowResource()
+{
+    m_isSlowResource = true;
+}
+
+void ResourceServer::setAsNormalResource()
+{
+    m_isSlowResource = false;
+}
+
 OCStackResult ResourceServer::setDeviceInfo(string deviceName)
 {
     CommonUtil::duplicateString(&m_deviceInfo.deviceName, deviceName);
     return OC_STACK_OK;
+}
+
+void ResourceServer::handleResponse(std::shared_ptr< OCResourceRequest > request)
+{
+    auto pResponse = std::make_shared< OC::OCResourceResponse >();
+    pResponse->setRequestHandle(request->getRequestHandle());
+    pResponse->setResourceHandle(request->getResourceHandle());
+
+    // Get the request type and request flag
+    std::string requestType = request->getRequestType();
+    RequestHandlerFlag requestFlag = (RequestHandlerFlag) request->getRequestHandlerFlag();
+
+    if (requestFlag == RequestHandlerFlag::RequestFlag)
+    {
+        cout << "\t\trequestFlag : Request\n";
+
+        // If the request type is GET
+        if (requestType == "GET")
+        {
+            cout << "\t\t\trequestType : GET\n";
+
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+            handleGetRequest(queryParamsMap, request, pResponse); // Process query params and do required operations ..
+
+        }
+        else if (requestType == "PUT")
+        {
+            cout << "\t\t\trequestType : PUT\n";
+
+            OCRepresentation incomingRepresentation = request->getResourceRepresentation();
+
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+            handlePutRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
+        }
+        else if (requestType == "POST")
+        {
+            // POST request operations
+            cout << "\t\t\trequestType : POST\n";
+
+            OCRepresentation incomingRepresentation = request->getResourceRepresentation();
+
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+            handlePostRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
+        }
+        else if (requestType == "DELETE")
+        {
+            // DELETE request operations
+            cout << "\t\t\trequestType : Delete\n";
+
+            OCRepresentation incomingRepresentation = request->getResourceRepresentation();
+            // Check for query params (if any)
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+            handleDeleteRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
+        }
+    }
+    else if (requestFlag & RequestHandlerFlag::ObserverFlag)
+    {
+        // OBSERVE flag operations
+        cout << "\t\t\trequestType : Observe\n";
+
+        // Check for query params (if any)
+        QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+        handleObserveRequest(queryParamsMap, request, pResponse); // Process query params and do required operations ..
+    }
+}
+
+void ResourceServer::handleSlowResponse(std::shared_ptr< OCResourceRequest > request)
+{
+    cout << "Acting as Slow Resource...." << endl;
+    CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
+    cout << "Slow working period is over" << endl;
+
+    handleResponse(request);
 }

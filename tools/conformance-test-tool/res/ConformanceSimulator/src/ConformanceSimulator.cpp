@@ -16,14 +16,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <vector>
 #include <iostream>
 #include <stdlib.h>
 
 #include "SampleResource.h"
-#include "SampleArrayResource.h"
 #include "CommonUtil.h"
 #include "ConformanceHelper.h"
 #include "OCPlatform.h"
@@ -57,7 +56,7 @@ vector< shared_ptr< OCResource > > foundResourceList;
 vector< shared_ptr< OCResource > > foundCollectionList;
 vector< OCResourceHandle > handleList;
 SampleResource *createdLightResource;
-SampleArrayResource *createdFanResource;
+SampleResource *createdFanResource;
 SampleResource *securedLightResource;
 SampleResource *securedFanResource;
 SampleResource *invisibleLightResource;
@@ -120,6 +119,7 @@ void joinToGroup(shared_ptr< OCResource >, shared_ptr< OCResource >);
 void joinResourceToLocalGroup(shared_ptr< OCResource >);
 void joinGroup(void);
 void deleteGroup(void);
+int selectResource(void);
 vector< OCRepresentation > createLinkRepresentation();
 string getHost();
 FILE* server_fopen(const char*, const char*);
@@ -554,10 +554,11 @@ void createResource()
             cout << "Unable to create light resource" << endl;
         }
 
-        createdFanResource = new SampleArrayResource();
+        createdFanResource = new SampleResource();
         createdFanResource->setResourceProperties(FAN_1_URI, RESOURCE_TYPE_FAN, DEFAULT_INTERFACE);
         uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE;
         result = createdFanResource->startServer(resourceProperty);
+        createdFanResource->setAsSlowResource();
 
         if (result == OC_STACK_OK)
         {
@@ -594,7 +595,7 @@ void createManyLightResources()
 
             if (result == OC_STACK_OK)
             {
-                cout << "Light Resource created successfully with uri: " <<  uri << endl;
+                cout << "Light Resource created successfully with uri: " << uri << endl;
                 isManyLightCreated = true;
             }
             else
@@ -1128,9 +1129,10 @@ void discoverPlatform()
 
 void sendGetRequest()
 {
-    if (foundResourceList.size() != 0)
+    int selection = selectResource();
+    if (selection != -1)
     {
-        foundResourceList.at(0)->get(QueryParamsMap(), onGet, qos);
+        foundResourceList.at(selection)->get(QueryParamsMap(), onGet, qos);
         cout << "GET request sent!!" << endl;
         waitForCallback();
 
@@ -1143,7 +1145,8 @@ void sendGetRequest()
 
 void sendPutRequestUpdate()
 {
-    if (foundResourceList.size() != 0)
+    int selection = selectResource();
+    if (selection != -1)
     {
         OCRepresentation rep;
 
@@ -1163,7 +1166,7 @@ void sendPutRequestUpdate()
         rep.setValue(key, value);
 
 // Invoke resource's put API with rep, query map and the callback parameter
-        foundResourceList.at(0)->put(rep, QueryParamsMap(), &onPut, qos);
+        foundResourceList.at(selection)->put(rep, QueryParamsMap(), &onPut, qos);
         cout << "PUT request sent!!" << endl;
         waitForCallback();
 
@@ -1176,7 +1179,8 @@ void sendPutRequestUpdate()
 
 void sendPutRequestCreate()
 {
-    if (foundResourceList.size() != 0)
+    int selection = selectResource();
+    if (selection != -1)
     {
         OCRepresentation rep;
 
@@ -1197,7 +1201,7 @@ void sendPutRequestCreate()
         rep.setValue(key, value);
 
         // Invoke resource's post API with rep, query map and the callback parameter
-        foundResourceList.at(0)->put(rep, QueryParamsMap(), &onPut, qos);
+        foundResourceList.at(selection)->put(rep, QueryParamsMap(), &onPut, qos);
         cout << "PUT request sent!!" << endl;
         waitForCallback();
 
@@ -1210,7 +1214,8 @@ void sendPutRequestCreate()
 
 void sendPostRequestUpdate()
 {
-    if (foundResourceList.size() != 0)
+    int selection = selectResource();
+    if (selection != -1)
     {
         OCRepresentation rep;
 
@@ -1225,7 +1230,7 @@ void sendPostRequestUpdate()
         rep.setValue(key, intensityValue);
 
         // Invoke resource's put API with rep, query map and the callback parameter
-        foundResourceList.at(0)->post(rep, QueryParamsMap(), &onPost, qos);
+        foundResourceList.at(selection)->post(rep, QueryParamsMap(), &onPost, qos);
         cout << "POST request sent!!" << endl;
         waitForCallback();
 
@@ -1238,7 +1243,8 @@ void sendPostRequestUpdate()
 
 void sendPostRequestCreate()
 {
-    if (foundResourceList.size() != 0)
+    int selection = selectResource();
+    if (selection != -1)
     {
         OCRepresentation rep;
 
@@ -1259,7 +1265,7 @@ void sendPostRequestCreate()
         rep.setValue(key, value);
 
         // Invoke resource's post API with rep, query map and the callback parameter
-        foundResourceList.at(0)->post(rep, QueryParamsMap(), &onPost, qos);
+        foundResourceList.at(selection)->post(rep, QueryParamsMap(), &onPost, qos);
         cout << "POST request sent!!" << endl;
         waitForCallback();
 
@@ -1272,14 +1278,15 @@ void sendPostRequestCreate()
 
 void sendDeleteRequest()
 {
-    if (foundResourceList.size() != 0)
+    int selection = selectResource();
+    if (selection != -1)
     {
         OCRepresentation rep;
 
         std::cout << "Putting region representation..." << std::endl;
 
         // Invoke resource's delete API with the callback parameter
-        shared_ptr< OCResource > resource = foundResourceList.at(0);
+        shared_ptr< OCResource > resource = foundResourceList.at(selection);
         resource->deleteResource(&onDelete);
         cout << "DELETE request sent!!" << endl;
         waitForCallback();
@@ -1297,13 +1304,14 @@ void sendDeleteRequest()
 
 void observeResource()
 {
-    if (foundResourceList.size() != 0)
+    int selection = selectResource();
+    if (selection != -1)
     {
         OCRepresentation rep;
 
         std::cout << "Observing resource..." << std::endl;
 
-        shared_ptr< OCResource > resource = foundResourceList.at(0);
+        shared_ptr< OCResource > resource = foundResourceList.at(selection);
         resource->observe(ObserveType::Observe, QueryParamsMap(), &onObserve, qos);
         cout << "Observe request sent!!" << endl;
         isObservingResource = true;
@@ -1318,7 +1326,8 @@ void observeResource()
 
 void cancelObserveResource()
 {
-    if (foundResourceList.size() != 0)
+    int selection = selectResource();
+    if (selection != -1)
     {
         if (isObservingResource)
         {
@@ -1326,7 +1335,7 @@ void cancelObserveResource()
 
             std::cout << "Canceling Observe resource..." << std::endl;
 
-            shared_ptr< OCResource > resource = foundResourceList.at(0);
+            shared_ptr< OCResource > resource = foundResourceList.at(selection);
             resource->cancelObserve(qos);
             cout << "Cancel Observe request sent!!" << endl;
             isObservingResource = false;
@@ -1373,7 +1382,8 @@ vector< OCRepresentation > createLinkRepresentation()
 
 void cancelObservePassively()
 {
-    if (foundResourceList.size() != 0)
+    int selection = selectResource();
+    if (selection != -1)
     {
         if (isObservingResource)
         {
@@ -1382,7 +1392,7 @@ void cancelObservePassively()
             std::cout << "Canceling Observe passively..." << std::endl;
 
             // Currently, there is no api to cancel observe passively
-            shared_ptr< OCResource > resource = foundResourceList.at(0);
+            shared_ptr< OCResource > resource = foundResourceList.at(selection);
 //            resource->cancelObserve(qos);
 //            cout << "Cancel Observe request sent!!" << endl;
 //            isObservingResource = false;
@@ -1405,9 +1415,10 @@ string getHost()
     string ip = "";
     string port = "";
 
-    if (foundResourceList.size() > 0)
+    int selection = selectResource();
+    if (selection != -1)
     {
-        host = foundResourceList.at(0)->host();
+        host = foundResourceList.at(selection)->host();
     }
     else
     {
@@ -1420,6 +1431,34 @@ string getHost()
     }
 
     return host;
+}
+
+int selectResource()
+{
+    int selection = -1;
+    int totalResource = foundResourceList.size();
+    if (totalResource > 0)
+    {
+        cout << "\t" << "Please select your desired resource no. to send request and press Enter:"
+                << endl;
+
+        for (int i = 1; i <= totalResource; i++)
+        {
+            cout << "\t\t" << i << ". " << foundResourceList.at(i - 1)->uniqueIdentifier() << endl;
+        }
+
+        cin >> selection;
+
+        while (selection < 1 || selection > totalResource)
+        {
+            cout << "Invalid selection of resource. Please select a resource no. between 1 & "
+                    << totalResource << endl;
+            cin >> selection;
+        }
+        selection--;
+    }
+
+    return selection;
 }
 
 void showMenu()
@@ -1448,7 +1487,7 @@ void showMenu()
     cout << "\t\t 20. Send POST Request - Partial Update" << endl;
     cout << "\t\t 21. Send POST Request - Create Sub-Ordinate Resource" << endl;
     cout << "\t\t 22. Send Delete Request" << endl;
-    cout << "\t\t 23. Observe Resource - Retrive Request with Observe" << endl;
+    cout << "\t\t 23. Observe Resource - Retrieve Request with Observe" << endl;
     cout << "\t\t 24. Cancel Observing Resource" << endl;
     cout << "\t\t 25. Cancel Observing Resource Passively" << endl;
     cout << "\t\t 26. Discover Device - Unicast" << endl;

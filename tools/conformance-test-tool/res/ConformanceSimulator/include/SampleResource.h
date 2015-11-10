@@ -16,14 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
-
-/*
- * SampleResource.h
- *
- *  Created on: Nov 25, 2014
- *      Author: i.mushfiq
- */
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #ifndef COMMON_TESTCASE_SAMPLERESOURCE_H_
 #define COMMON_TESTCASE_SAMPLERESOURCE_H_
@@ -55,25 +48,28 @@ public:
             std::shared_ptr< OCResourceResponse > response);
 
     virtual void handleDeleteRequest(QueryParamsMap &queryParamsMap,
-            OCRepresentation incomingRepresentation,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
     virtual void handlePostRequest(QueryParamsMap &queryParamsMap,
-            OCRepresentation incomingRepresentation,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
     virtual void handleGetRequest(QueryParamsMap &queryParamsMap,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
     virtual void handlePutRequest(QueryParamsMap &queryParamsMap,
-            OCRepresentation incomingRepresentation,
+            OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
     virtual void handleInitRequest(QueryParamsMap &queryParamsMap,
+            std::shared_ptr< OCResourceRequest > request,
             std::shared_ptr< OCResourceResponse > response);
 
-//    virtual AttributeMap getAttributeMap(void);
     virtual OCRepresentation getResourceRepresentation(OCRepresentation &resourceRep);
+
+    OCStackResult addArrayAttribute(string key, OCRepresentation arrayRep);
 
 private:
     void handleRecursiveActionSet();

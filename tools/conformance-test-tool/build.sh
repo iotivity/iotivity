@@ -59,10 +59,12 @@ mkdir -p bin/linux/ConformanceTestTool
 mkdir -p bin/linux/ConformanceTestTool/libs
 mkdir -p bin/linux/ConformanceTestTool/testsuite
 mkdir -p bin/linux/ConformanceSimulator
-RunCommand "cp -r res/ConformanceTestTool/bin/ConformanceTestTool/* res/ConformanceTestTool/provisioning res/ConformanceTestTool/testsuite bin/linux/ConformanceTestTool" "Required Files Installation"
-RunCommand "cp -r res/ConformanceSimulator/bin/linux/* bin/linux/ConformanceSimulator" "Conformance Simulator Installation"
-RunCommand "cp -r res/ConformanceTestTool/libs/* bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/" "Dependent Jars Installation"
 
+cd res/ConformanceSimulator/bin/linux
+RunCommand "find . -type f -not -iname '*.o' -exec cp '{}' '../../../../bin/linux/ConformanceSimulator/{}' ';'" "Conformance Simulator Installation"
+cd ../../../../
+RunCommand "cp -r res/ConformanceTestTool/bin/ConformanceTestTool/* res/ConformanceTestTool/provisioning res/ConformanceTestTool/testsuite bin/linux/ConformanceTestTool" "Required Files Installation"
+RunCommand "cp -r res/ConformanceTestTool/libs/* bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/" "Dependent Jars Installation"
 
 # Buiding JCOAP
 cd extlibs/ws4d-jcoap

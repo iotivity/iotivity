@@ -16,15 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
-
-/**
- * SampleResource.cpp
- *
- *  Created on: Nov 25, COAP_RESPONSE_CODE_CREATED4
- * @author: Mushfiqul Islam Antu(i.mushfiq@samsung.com)
- *
- */
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SampleResource.h"
 
@@ -127,7 +119,8 @@ void SampleResource::handleObserveRequest(QueryParamsMap &queryParamsMap,
 }
 
 void SampleResource::handleDeleteRequest(QueryParamsMap &queryParamsMap,
-        OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceResponse > response)
+        OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
+        std::shared_ptr< OCResourceResponse > response)
 {
     cout << "Inside handleDeleteRequest... " << endl;
     // handle delete request
@@ -150,8 +143,11 @@ void SampleResource::handleDeleteRequest(QueryParamsMap &queryParamsMap,
 }
 
 void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
-        OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceResponse > response)
+        OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
+        std::shared_ptr< OCResourceResponse > response)
 {
+    OCStackResult result = OC_STACK_ERROR;
+    bool isRepUpdated = false;
     cout << "Inside handlePostRequest... " << endl;
     cout << "THe POST request comprises of the following representation:" << endl;
     p_conformanceHelper->printRepresentation(incomingRepresentation);
@@ -287,7 +283,7 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
     }
     else
     {
-        bool isRepUpdated = false;
+
         if (incomingRepresentation.hasAttribute(REGION_KEY))
         {
             updateRepresentation(REGION_KEY, incomingRepresentation, response);
@@ -319,19 +315,26 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
             cout << "Resource representation is updated!! Sending Notification to observers"
                     << endl;
             notifyObservers(this);
-            response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
-            response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+//            response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
+//            response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
         }
         else
         {
             cout << "Incoming Representation not supported by this resource!!" << endl;
-            response->setErrorCode(405);
-            response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+//            response->setErrorCode(405);
+//            response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
         }
 
     }
 
-    OCStackResult result = OCPlatform::sendResponse(response);
+    try
+    {
+        result = OCPlatform::sendResponse(response);
+    }
+    catch (exception& e)
+    {
+        cout << "Exception occurred while sending response. Exception is: " << e.what() << endl;
+    }
     if (result != OC_STACK_OK)
     {
         cerr << "Unable to send response for POST Request" << endl;
@@ -339,10 +342,12 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
 }
 
 void SampleResource::handleGetRequest(QueryParamsMap &queryParamsMap,
+        std::shared_ptr< OCResourceRequest > request,
         std::shared_ptr< OCResourceResponse > response)
 {
     cout << "Inside handleGetRequest... " << endl;
-//handle GET request
+    OCStackResult result = OC_STACK_ERROR;
+
     response->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
     OCRepresentation rep = m_representation;
     cout << "Current Resource Representation to send : " << endl;
@@ -350,7 +355,15 @@ void SampleResource::handleGetRequest(QueryParamsMap &queryParamsMap,
 
     response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
     response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
-    OCStackResult result = OCPlatform::sendResponse(response);
+
+    try
+    {
+        result = OCPlatform::sendResponse(response);
+    }
+    catch (exception& e)
+    {
+        cout << "Exception occurred while sending response. Exception is: " << e.what() << endl;
+    }
     if (result != OC_STACK_OK)
     {
         cerr << "Unable to send response for GET Request" << endl;
@@ -358,7 +371,8 @@ void SampleResource::handleGetRequest(QueryParamsMap &queryParamsMap,
 }
 
 void SampleResource::handlePutRequest(QueryParamsMap &queryParamsMap,
-        OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceResponse > response)
+        OCRepresentation incomingRepresentation, std::shared_ptr< OCResourceRequest > request,
+        std::shared_ptr< OCResourceResponse > response)
 {
     OCRepresentation rep = getRepresentation();
 
@@ -541,6 +555,7 @@ void SampleResource::onResourceServerStarted(bool &isRegisteredForPresence, int 
 }
 
 void SampleResource::handleInitRequest(QueryParamsMap &queryParamsMap,
+        std::shared_ptr< OCResourceRequest > request,
         std::shared_ptr< OCResourceResponse > response)
 {
     cout << "Inside handleInitRequest... " << endl;
@@ -778,4 +793,14 @@ void SampleResource::createResource(string initialUri, OCRepresentation incoming
 
         }
     }
+}
+
+OCStackResult SampleResource::addArrayAttribute(string key, OCRepresentation arrayRep)
+{
+    OCStackResult result = OC_STACK_OK;
+
+    arrayRep.erase(URI_KEY);
+    m_representation.setValue(key, arrayRep);
+
+    return result;
 }
