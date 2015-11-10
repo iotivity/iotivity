@@ -309,9 +309,18 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 endpoint->port);
         if(NULL == blockDataID || NULL == blockDataID->id || blockDataID->idLength < 1)
         {
-            OIC_LOG(ERROR, TAG, "blockId is null");
-            CADestroyBlockID(blockDataID);
-            return CA_STATUS_FAILED;
+            // if retransmission is timeout, callback msg will be send without token.
+            if (NULL == blockDataID && !receivedData->responseInfo->info.token)
+            {
+                OIC_LOG(INFO, TAG, "retransmission was stopped");
+                return CA_REQUEST_TIMEOUT;
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "blockId is null");
+                CADestroyBlockID(blockDataID);
+                return CA_STATUS_FAILED;
+            }
         }
 
         CARemoveBlockDataFromList(blockDataID);

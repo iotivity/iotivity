@@ -794,7 +794,7 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
             )
     {
         CAResult_t res = CAReceiveBlockWiseData(pdu, &(sep->endpoint), cadata, dataLen);
-        if (CA_NOT_SUPPORTED == res)
+        if (CA_NOT_SUPPORTED == res || CA_REQUEST_TIMEOUT == res)
         {
             OIC_LOG(ERROR, TAG, "this message does not have block option");
             CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
