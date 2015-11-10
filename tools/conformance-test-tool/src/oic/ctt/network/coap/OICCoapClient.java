@@ -16,7 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 package oic.ctt.network.coap;
 
@@ -61,7 +61,7 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
     private ArrayList<OICResponseData>             mResponses        = new ArrayList<OICResponseData>();
     private ArrayList<OICResponseData>             mNotifications    = new ArrayList<OICResponseData>();
     private byte[]                                 mObserveToken     = null;
-    private int                                    mWaitTime         = 2;
+    private int                                    mWaitTime         = 60;
     private boolean                                mObserveResetFlag = false;
     private boolean                                mObserveNoAckFlag = false;
 
@@ -74,7 +74,7 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
 
     /**
      * Sets the duration the client will wait to receive the responses
-     * 
+     *
      * @param waitTime
      *            Waiting time in seconds
      */
@@ -85,7 +85,7 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
 
     /**
      * Gets the matching response for a request token
-     * 
+     *
      * @param token
      *            The token that designates the exchange
      * @return OICResponseData type object or null
@@ -104,7 +104,7 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
 
     /**
      * Gets all the received responses stored in the local response buffer
-     * 
+     *
      * @return An ArrayList of OICResponse objects
      */
     @Override
@@ -124,7 +124,7 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
     /**
      * Gets all the received notifications stored in the local notification
      * buffer
-     * 
+     *
      * @return An ArrayList of OICResponse objects
      */
     @Override
@@ -186,7 +186,7 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
 
     /**
      * Sends a CoAP based unicast/multicast discovery request message
-     * 
+     *
      * @param uriPath
      *            URI of the discovery resource object
      * @param query
@@ -255,7 +255,7 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
 
     /**
      * Sends a CoAP based unicast request message
-     * 
+     *
      * @param type
      *            The type of the transmission QoS (NON or CON)
      * @param method
@@ -363,10 +363,14 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
 
         clientChannel.sendMessage(coapRequest);
 
-        try {
-            Thread.sleep(1000 * mWaitTime);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
+        for (int t = 0; t < mWaitTime; t++){
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+            if(this.getResponse(OICHelper.bytesToHex(token)) != null)
+                break;
         }
 
         mlogger.info("Wait time over, returning response for unicast request");
@@ -377,7 +381,7 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
     /**
      * Sends a CoAP message to a resource server to subscribe/register as an
      * observer
-     * 
+     *
      * @param type
      *            The type of the transmission QoS (NON or CON)
      * @param ip
@@ -479,7 +483,7 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
 
     /**
      * Cancels observe with a GET message
-     * 
+     *
      * @param type
      *            The type of the transmission QoS (NON or CON)
      * @param ip
