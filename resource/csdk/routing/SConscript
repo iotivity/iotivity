@@ -18,7 +18,7 @@ if env.get('ROUTING') == 'GW':
 				os.path.join(Dir('.').abspath, './../stack/include/internal'),
 				os.path.join(Dir('.').abspath, './../logger'),
 				os.path.join(Dir('.').abspath, './../../oc_logger/include'),
-				os.path.join(Dir('.').abspath, './../ocrandom/include'),
+				os.path.join(Dir('.').abspath, './../../c_common/ocrandom/include'),
 				os.path.join(Dir('.').abspath, './../connectivity/api'),
 				os.path.join(Dir('.').abspath, './../connectivity/common/inc'),
 				os.path.join(Dir('.').abspath, './../security/include'),

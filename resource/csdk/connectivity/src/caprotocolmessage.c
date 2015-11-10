@@ -24,7 +24,6 @@
 // For glibc information on feature test macros,
 // Refer http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
 //
-// This file requires #define use due to random() and srandom()
 // For details on compatibility and glibc support,
 // Refer http://www.gnu.org/software/libc/manual/html_node/BSD-Random.html
 #define _DEFAULT_SOURCE
@@ -41,11 +40,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-
-// ARM GCC compiler doesnt define srandom function.
-#if defined(ARDUINO) && !defined(ARDUINO_ARCH_SAM)
-#define HAVE_SRANDOM 1
-#endif
+#include "ocrandom.h"
 
 #define TAG "CA_PRTCL_MSG"
 
@@ -64,8 +59,6 @@
 #define CA_PORT_BUFFER_SIZE (4)
 
 static const char COAP_URI_HEADER[] = "coap://[::]/";
-
-static unsigned int SEED = 0;
 
 CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                    CARequestInfo_t *outReqInfo)
@@ -1042,26 +1035,6 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
         return CA_STATUS_INVALID_PARAM;
     }
 
-    if (SEED == 0)
-    {
-#ifdef ARDUINO
-        SEED = now();
-#else
-        SEED = time(NULL);
-#endif
-        if (SEED == (unsigned int)((time_t)-1))
-        {
-            OIC_LOG(ERROR, TAG, "seed is not made");
-            SEED = 0;
-            return CA_STATUS_FAILED;
-        }
-#if HAVE_SRANDOM
-        srandom(SEED);
-#else
-        srand(SEED);
-#endif
-    }
-
     // memory allocation
     char *temp = (char *) OICCalloc(tokenLength, sizeof(char));
     if (NULL == temp)
@@ -1070,16 +1043,7 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    // set random byte
-    for (uint8_t index = 0; index < tokenLength; index++)
-    {
-        // use valid characters
-#ifdef ARDUINO
-        temp[index] = rand() & 0x00FF;
-#else
-        temp[index] = random() & 0x00FF;
-#endif
-    }
+    OCFillRandomMem((uint8_t *)temp, tokenLength);
 
     // save token
     *token = temp;

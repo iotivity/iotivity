@@ -30,7 +30,7 @@ root_dir = './../../../../'
 provisioning_env.AppendUnique(CPPPATH = [
 		'../../stack/include',
 		'../../stack/include/internal',
-		'../../ocrandom/include',
+		'../../../c_common/ocrandom/include',
 		'../../logger/include',
 		'../../../oc_logger/include',
 		'../../ocmalloc/include',

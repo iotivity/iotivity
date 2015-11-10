@@ -7,7 +7,7 @@ YOCTOCXXFLAGS=-I$(SDKTARGETSYSROOT)/usr/include/iotivity/resource/ -I$(SDKTARGET
 
 YOCTOLDFLAGS=-loc -loctbstack -loc_logger -lmraa
 
-CXXFLAGS=-I../../resource/include -I../../resource/csdk/stack/include -I../../resource/csdk/ocrandom/include -I../../resource/csdk/logger/include -I../../resource/oc_logger/include
+CXXFLAGS=-I../../resource/include -I../../resource/csdk/stack/include -I../../resource/c_common/ocrandom/include -I../../resource/csdk/logger/include -I../../resource/oc_logger/include
 
 LDFLAGS=-L../../out/linux/$(CLIENTARCH)/$(BUILDTYPE) -loc -loctbstack -loc_logger
 

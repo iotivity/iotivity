@@ -130,7 +130,7 @@ cp out/tizen/*/%{build_mode}/lib*.so %{buildroot}%{_libdir}
 
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
-cp resource/csdk/ocrandom/include/*.h %{buildroot}%{_includedir}
+cp resource/c_common/ocrandom/include/*.h %{buildroot}%{_includedir}
 cp -r resource/oc_logger/include/* %{buildroot}%{_includedir}
 cp resource/include/*.h %{buildroot}%{_includedir}
 

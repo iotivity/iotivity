@@ -20,6 +20,7 @@ BuildRequires: boost-thread
 BuildRequires: boost-system
 BuildRequires: boost-filesystem
 BuildRequires: scons
+BuildRequires: pkgconfig(uuid)
 
 
 %description

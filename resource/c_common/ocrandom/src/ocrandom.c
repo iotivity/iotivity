@@ -50,6 +50,11 @@
 #ifdef ARDUINO
 #include "Arduino.h"
 
+// ARM GCC compiler doesnt define srandom function.
+#if defined(ARDUINO) && !defined(ARDUINO_ARCH_SAM)
+#define HAVE_SRANDOM 1
+#endif
+
 uint8_t GetRandomBitRaw()
 {
     return analogRead((uint8_t)ANALOG_IN) & 0x1;
@@ -143,7 +148,11 @@ int8_t OCSeedRandom()
     {
         result += result + GetRandomBit();
     }
-    randomSeed(result);
+#if HAVE_SRANDOM
+    srandom(result);
+#else
+    srand(result);
+#endif
     return 0;
 #endif
 
@@ -173,7 +182,11 @@ uint8_t OCGetRandomByte(void)
 #if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
     return rand() & 0x00FF;
 #elif defined ARDUINO
-    return random(256) & 0x00FF;
+#ifdef HAVE_SRANDOM
+    return random() & 0x00FF;
+#else
+    return rand() & 0x00FF;
+#endif
 #endif
 }
 

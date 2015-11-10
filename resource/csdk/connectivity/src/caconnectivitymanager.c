@@ -63,6 +63,11 @@ CAResult_t CAInitialize()
 
     if (!g_isInitialized)
     {
+        if (0 != OCSeedRandom())
+        {
+            OIC_LOG(ERROR, TAG, "Seed Random Failed");
+        }
+
         CAResult_t res = CAInitializeMessageHandler();
         if (res != CA_STATUS_OK)
         {
@@ -71,6 +76,7 @@ CAResult_t CAInitialize()
         }
         g_isInitialized = true;
     }
+
     return CA_STATUS_OK;
 }
 

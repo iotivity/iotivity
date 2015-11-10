@@ -22,18 +22,24 @@
 Import('env')
 import os
 
+target_os = env.get('TARGET_OS')
+
 env.AppendUnique(CPPPATH = [
             os.path.join(Dir('.').abspath),
             os.path.join(Dir('.').abspath, 'oic_malloc/include'),
-            os.path.join(Dir('.').abspath, 'oic_string/include')
+            os.path.join(Dir('.').abspath, 'oic_string/include'),
+            os.path.join(Dir('.').abspath, 'ocrandom/include')
         ])
 
-if env.get('TARGET_OS') == 'tizen':
+if target_os == 'tizen':
 	env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 else:
 	env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource/c_common')])
 
-env.AppendUnique(LIBS = ['c_common'])
+if target_os in ['tizen', 'linux']:
+	env.ParseConfig("pkg-config --cflags --libs uuid")
+
+env.PrependUnique(LIBS = ['c_common'])
 
 common_env = env.Clone()
 
@@ -45,9 +51,10 @@ common_env = env.Clone()
 # Source files and Targets
 ######################################################################
 common_src = [
-    'oic_string/src/oic_string.c',
-    'oic_malloc/src/oic_malloc.c'
-    ]
+	'oic_string/src/oic_string.c',
+	'oic_malloc/src/oic_malloc.c',
+	'ocrandom/src/ocrandom.c',
+	]
 
 commonlib = common_env.StaticLibrary('c_common', common_src)
 common_env.InstallTarget(commonlib, 'c_common')
