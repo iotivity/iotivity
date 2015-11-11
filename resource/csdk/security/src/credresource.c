@@ -570,6 +570,14 @@ exit:
     return 0;
 }
 
+/**
+ * Get the default value
+ * @retval  NULL for now. Update it when we finalize the default info.
+ */
+static OicSecCred_t* GetCredDefault()
+{
+    return NULL;
+}
 
 /**
  * This function adds the new cred to the credential list.
@@ -629,6 +637,25 @@ OCStackResult RemoveCredential(const OicUuid_t *subject)
     }
     return ret;
 
+}
+
+/**
+ * Remove all credential data on credential resource and persistent storage
+ *
+ * @retval
+ *     OC_STACK_OK              - no errors
+ *     OC_STACK_ERROR           - stack process error
+ */
+OCStackResult RemoveAllCredentials(void)
+{
+    DeleteCredList(gCred);
+    gCred = GetCredDefault();
+
+    if(!UpdatePersistentStorage(gCred))
+    {
+        return OC_STACK_ERROR;
+    }
+    return OC_STACK_OK;
 }
 
 static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
@@ -755,15 +782,6 @@ OCStackResult CreateCredResource()
         DeInitCredResource();
     }
     return ret;
-}
-
-/**
- * Get the default value
- * @retval  NULL for now. Update it when we finalize the default info.
- */
-static OicSecCred_t* GetCredDefault()
-{
-    return NULL;
 }
 
 /**
