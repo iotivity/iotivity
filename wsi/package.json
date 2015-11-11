@@ -23,6 +23,8 @@
         "express-session" : "*",
         "passport" : "*",
         "passport-facebook" : "*",
+        "passport-twitter" : "*",
+	"twit": "*",
 	"cors" : "*"
     }
 }
