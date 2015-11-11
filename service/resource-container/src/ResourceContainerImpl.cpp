@@ -296,7 +296,7 @@ namespace OIC
                              std::string(strUri + ", " +
                                          strResourceType).c_str());
 
-                    if (m_config->isHasInput(resource->m_bundleId))
+                    if (m_config && m_config->isHasInput(resource->m_bundleId))
                     {
                         discoverInputResource(strUri);
                     }
@@ -326,7 +326,7 @@ namespace OIC
                      std::string(resource->m_uri + ", " +
                                  resource->m_resourceType).c_str());
 
-            if (m_config->isHasInput(resource->m_bundleId))
+            if (m_config && m_config->isHasInput(resource->m_bundleId))
             {
                 undiscoverInputResource(strUri);
             }
