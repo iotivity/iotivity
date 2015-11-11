@@ -70,7 +70,7 @@ else:
 ######################################################################
 # Common build options (release, target os, target arch)
 ######################################################################
-targets_disallow_multitransport = ['arduino', 'android']
+targets_disallow_multitransport = ['arduino']
 
 help_vars = Variables()
 help_vars.Add(BoolVariable('VERBOSE', 'Show compilation', False))
