@@ -38,29 +38,6 @@ extern "C"
 {
 #endif
 
-/**
- * Callback function type for request delivery.
- * @param[out]   object       Endpoint object from which the request is received.
- *                            It contains endpoint address based on the connectivity type.
- * @param[out]   requestInfo  Info for resource model to understand about the request.
- */
-typedef void (*CARequestCallback)(const CAEndpoint_t *object,
-                                  const CARequestInfo_t *requestInfo);
-
-/**
- * Callback function type for response delivery.
- * @param[out]   object           Endpoint object from which the response is received.
- * @param[out]   responseInfo     Identifier which needs to be mapped with response.
- */
-typedef void (*CAResponseCallback)(const CAEndpoint_t *object,
-                                   const CAResponseInfo_t *responseInfo);
-/**
- * Callback function type for error.
- * @param[out]   object           remote device information.
- * @param[out]   errorInfo        CA Error information.
- */
-typedef void (*CAErrorCallback)(const CAEndpoint_t *object,
-                                const CAErrorInfo_t *errorInfo);
 #ifdef RA_ADAPTER
 
 /**

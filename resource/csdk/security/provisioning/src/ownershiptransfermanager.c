@@ -80,6 +80,11 @@ static OicSecDpom_t gProvisioningToolCapability[] = { SINGLE_SERVICE_CLIENT_DRIV
 static size_t gNumOfProvisioningMethodsPT = 1;
 
 /**
+ * Variables for pointing the OTMContext to be used in the DTLS handshake result callback.
+ */
+static OTMContext_t* g_otmCtx = NULL;
+
+/**
  * Function to getting string of ownership transfer method
  */
 static const char* GetOxmString(OicSecOxm_t oxmType)
@@ -220,7 +225,6 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
  */
 static OCStackResult FinalizeProvisioning(OTMContext_t* otmCtx);
 
-
 static bool IsComplete(OTMContext_t* otmCtx)
 {
     for(size_t i = 0; i < otmCtx->ctxResultArraySize; i++)
@@ -242,7 +246,7 @@ static bool IsComplete(OTMContext_t* otmCtx)
  */
 static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
 {
-    OC_LOG(DEBUG, TAG, "IN SetResult");
+    OC_LOG_V(DEBUG, TAG, "IN SetResult : %d ", res);
 
     if(!otmCtx)
     {
@@ -265,6 +269,8 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
             }
         }
 
+        g_otmCtx = NULL;
+
         //If all request is completed, invoke the user callback.
         if(IsComplete(otmCtx))
         {
@@ -286,6 +292,79 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
     OC_LOG(DEBUG, TAG, "OUT SetResult");
 }
 
+/**
+ * Function to handle the handshake result in OTM.
+ * This function will be invoked after DTLS handshake
+ * @param   endPoint  [IN] The remote endpoint.
+ * @param   errorInfo [IN] Error information from the endpoint.
+ * @return  NONE
+ */
+void DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
+{
+    if(g_otmCtx && endpoint && info)
+    {
+        OC_LOG_V(INFO, TAG, "Received status from remote device(%s:%d) : %d",
+                 endpoint->addr, endpoint->port, info->result);
+
+        //Make sure the address matches.
+        if(strncmp(g_otmCtx->selectedDeviceInfo->endpoint.addr,
+           endpoint->addr,
+           sizeof(endpoint->addr)) == 0 &&
+           g_otmCtx->selectedDeviceInfo->securePort == endpoint->port)
+        {
+            OCStackResult res;
+
+            CARegisterDTLSHandshakeCallback(NULL);
+
+            //In case of success, send next coaps request.
+            if(CA_STATUS_OK == info->result)
+            {
+                //Send request : PUT /oic/sec/doxm [{"Owned":"True", .. , "Owner":"PT's UUID"}]
+                res = PutOwnershipInformation(g_otmCtx);
+                if(OC_STACK_OK != res)
+                {
+                    OC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to send owner information");
+                    SetResult(g_otmCtx, res);
+                }
+            }
+            //In case of failure, re-start the ownership transfer in case of PIN OxM
+            else if(CA_DTLS_AUTHENTICATION_FAILURE == info->result)
+            {
+                g_otmCtx->selectedDeviceInfo->doxm->owned = false;
+                g_otmCtx->attemptCnt++;
+
+                if(g_otmCtx->selectedDeviceInfo->doxm->oxmSel == OIC_RANDOM_DEVICE_PIN)
+                {
+                    res = RemoveCredential(&g_otmCtx->subIdForPinOxm);
+                    if(OC_STACK_RESOURCE_DELETED != res)
+                    {
+                        OC_LOG_V(ERROR, TAG, "Failed to remove temporal PSK : %d", res);
+                        SetResult(g_otmCtx, res);
+                        return;
+                    }
+
+                    if(WRONG_PIN_MAX_ATTEMP > g_otmCtx->attemptCnt)
+                    {
+                        res = StartOwnershipTransfer(g_otmCtx, g_otmCtx->selectedDeviceInfo);
+                        if(OC_STACK_OK != res)
+                        {
+                            SetResult(g_otmCtx, res);
+                            OC_LOG(ERROR, TAG, "Failed to Re-StartOwnershipTransfer");
+                        }
+                    }
+                    else
+                    {
+                        SetResult(g_otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
+                    }
+                }
+                else
+                {
+                    SetResult(g_otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
+                }
+            }
+        }
+    }
+}
 
 /**
  * Function to save ownerPSK at provisioning tool end.
@@ -488,60 +567,66 @@ static OCStackApplicationResult OwnershipInformationHandler(void *ctx, OCDoHandl
     (void)UNUSED;
     OCStackResult res = OC_STACK_OK;
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
-    if  (OC_STACK_OK == clientResponse->result)
+
+    if(OC_STACK_OK == clientResponse->result)
     {
-        if(OIC_RANDOM_DEVICE_PIN == otmCtx->selectedDeviceInfo->doxm->oxmSel)
+        if(otmCtx && otmCtx->selectedDeviceInfo)
         {
-            res = RemoveCredential(&otmCtx->subIdForPinOxm);
-            if(OC_STACK_RESOURCE_DELETED != res)
+            if(OIC_RANDOM_DEVICE_PIN == otmCtx->selectedDeviceInfo->doxm->oxmSel)
             {
-                OC_LOG_V(ERROR, TAG, "Failed to remove temporal PSK : %d", res);
+                res = RemoveCredential(&otmCtx->subIdForPinOxm);
+                if(OC_STACK_RESOURCE_DELETED != res)
+                {
+                    OC_LOG_V(ERROR, TAG, "Failed to remove temporal PSK : %d", res);
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
+            }
+
+            res = SaveOwnerPSK(otmCtx->selectedDeviceInfo);
+            if(OC_STACK_OK != res)
+            {
+                OC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to owner PSK generation");
+                SetResult(otmCtx, res);
                 return OC_STACK_DELETE_TRANSACTION;
             }
-        }
 
-        res = SaveOwnerPSK(otmCtx->selectedDeviceInfo);
-        if(OC_STACK_OK != res)
-        {
-            OC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to owner PSK generation");
-            SetResult(otmCtx, res);
-            return OC_STACK_DELETE_TRANSACTION;
-        }
+            CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
+            endpoint->port = otmCtx->selectedDeviceInfo->securePort;
+            CAResult_t caResult = CACloseDtlsSession(endpoint);
+            if(CA_STATUS_OK != caResult)
+            {
+                OC_LOG(ERROR, TAG, "Failed to close DTLS session");
+                SetResult(otmCtx, caResult);
+                return OC_STACK_DELETE_TRANSACTION;
+            }
 
-        CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
-        endpoint->port = otmCtx->selectedDeviceInfo->securePort;
-        CAResult_t caResult = CACloseDtlsSession(endpoint);
-        if(CA_STATUS_OK != caResult)
-        {
-            OC_LOG(ERROR, TAG, "Failed to close DTLS session");
-            SetResult(otmCtx, caResult);
-            return OC_STACK_DELETE_TRANSACTION;
-        }
+            /**
+             * If we select NULL cipher,
+             * client will select appropriate cipher suite according to server's cipher-suite list.
+             */
+            caResult = CASelectCipherSuite(TLS_NULL_WITH_NULL_NULL);
+            if(CA_STATUS_OK != caResult)
+            {
+                OC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
+                SetResult(otmCtx, caResult);
+                return OC_STACK_DELETE_TRANSACTION;
+            }
 
-        /**
-         * If we select NULL cipher,
-         * client will select appropriate cipher suite according to server's cipher-suite list.
-         */
-        caResult = CASelectCipherSuite(TLS_NULL_WITH_NULL_NULL);
-        if(CA_STATUS_OK != caResult)
-        {
-            OC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
-            SetResult(otmCtx, caResult);
-            return OC_STACK_DELETE_TRANSACTION;
-        }
+            OC_LOG(INFO, TAG, "Ownership transfer was successfully completed.");
+            OC_LOG(INFO, TAG, "Start defualt ACL & commit-hash provisioning.");
 
-        OC_LOG(INFO, TAG, "Ownership transfer was successfully completed.");
-        OC_LOG(INFO, TAG, "Start defualt ACL & commit-hash provisioning.");
-
-        res = FinalizeProvisioning(otmCtx);
-        if(OC_STACK_OK != res)
-        {
-            SetResult(otmCtx, res);
+            res = FinalizeProvisioning(otmCtx);
+            if(OC_STACK_OK != res)
+            {
+                SetResult(otmCtx, res);
+            }
         }
     }
     else
     {
         res = clientResponse->result;
+        OC_LOG_V(ERROR, TAG, "OwnershipInformationHandler : Unexpected result %d", res);
+        SetResult(otmCtx, res);
     }
 
     OC_LOG(DEBUG, TAG, "OUT OwnershipInformationHandler");
@@ -586,6 +671,9 @@ static OCStackApplicationResult OperationModeUpdateHandler(void *ctx, OCDoHandle
             }
         }
 
+        //It will be used in handshake event handler
+        g_otmCtx = otmCtx;
+
         //Try DTLS handshake to generate secure session
         if(g_OTMDatas[selOxm].createSecureSessionCB)
         {
@@ -596,14 +684,6 @@ static OCStackApplicationResult OperationModeUpdateHandler(void *ctx, OCDoHandle
                 SetResult(otmCtx, res);
                 return OC_STACK_DELETE_TRANSACTION;
             }
-        }
-
-        //Send request : PUT /oic/sec/doxm [{"Owned":"True", .. , "Owner":"PT's UUID"}]
-        res = PutOwnershipInformation(otmCtx);
-        if(OC_STACK_OK != res)
-        {
-            OC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to send owner information");
-            SetResult(otmCtx, res);
         }
     }
     else
@@ -757,6 +837,7 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
     cbData.cb = &OwnershipInformationHandler;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
+
     OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
                                      deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
@@ -851,6 +932,12 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
         return res;
     }
 
+    //Register DTLS event handler to catch the dtls event while handshake
+    if(CA_STATUS_OK != CARegisterDTLSHandshakeCallback(DTLSHandshakeCB))
+    {
+        OC_LOG(WARNING, TAG, "StartOwnershipTransfer : Failed to register DTLS handshake callback.");
+    }
+
     OC_LOG(INFO, TAG, "OUT StartOwnershipTransfer");
 
     return res;
@@ -925,24 +1012,22 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
     }
     pCurDev = selectedDevicelist;
 
+    OCStackResult res = OC_STACK_OK;
     //Fill the device UUID for result array.
     for(size_t devIdx = 0; devIdx < otmCtx->ctxResultArraySize; devIdx++)
     {
         //Checking duplication of Device ID.
         bool isDuplicate = true;
-        OCStackResult res = PDMIsDuplicateDevice(&pCurDev->doxm->deviceID, &isDuplicate);
+        res = PDMIsDuplicateDevice(&pCurDev->doxm->deviceID, &isDuplicate);
         if (OC_STACK_OK != res)
         {
-            OICFree(otmCtx->ctxResultArray);
-            OICFree(otmCtx);
-            return res;
+            goto error;
         }
         if (isDuplicate)
         {
             OC_LOG(ERROR, TAG, "OTMDoOwnershipTransfer : Device ID is duplicated");
-            OICFree(otmCtx->ctxResultArray);
-            OICFree(otmCtx);
-            return OC_STACK_INVALID_PARAM;
+            res = OC_STACK_INVALID_PARAM;
+            goto error;
         }
         memcpy(otmCtx->ctxResultArray[devIdx].deviceId.id,
                pCurDev->doxm->deviceID.id,
@@ -950,10 +1035,17 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
         otmCtx->ctxResultArray[devIdx].res = OC_STACK_CONTINUE;
         pCurDev = pCurDev->next;
     }
+
     StartOwnershipTransfer(otmCtx, selectedDevicelist);
 
     OC_LOG(DEBUG, TAG, "OUT OTMDoOwnershipTransfer");
     return OC_STACK_OK;
+
+error:
+    OICFree(otmCtx->ctxResultArray);
+    OICFree(otmCtx);
+    return res;
+
 }
 
 /**

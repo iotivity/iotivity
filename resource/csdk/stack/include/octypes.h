@@ -705,6 +705,12 @@ typedef enum
     OC_STACK_DUPLICATE_UUID,
     OC_STACK_INCONSISTENT_DB,
 
+    /**
+     * Error code from OTM
+     * This error is plused from DTLS interface when handshake failure happens
+     */
+    OC_STACK_AUTHENTICATION_FAILURE,
+
     /** Insert all new error codes here!.*/
     #ifdef WITH_PRESENCE
     OC_STACK_PRESENCE_STOPPED = 128,
