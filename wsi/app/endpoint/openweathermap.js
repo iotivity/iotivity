@@ -8,7 +8,7 @@ module.exports = {
             "sid": "org.openweathermap",
             "capability": [
                 {
-                    "cid": "org.openweathermap.getbycity",
+                    "cid": "org.owm.getbycity",
                     "isauthrequired": false,
                     "endpoint": "http://api.openweathermap.org/data/2.5/weather",
                     "endpointtype": "REST",
@@ -22,7 +22,7 @@ module.exports = {
                     ]
                 },
                 {
-                    "cid": "org.openweathermap.getbylocation",
+                    "cid": "org.owm.getbylocation",
                     "isauthrequired": false,
                     "endpoint": "http://api.openweathermap.org/data/2.5/weather",
                     "endpointtype": "REST",
@@ -37,7 +37,7 @@ module.exports = {
                     ]
                 },
                 {
-                    "cid": "org.openweathermap.getbycode",
+                    "cid": "org.owm.getbycode",
                     "isauthrequired": false,
                     "endpoint": "http://api.openweathermap.org/data/2.5/weather",
                     "endpointtype": "REST",

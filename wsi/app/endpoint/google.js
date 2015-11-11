@@ -3,7 +3,7 @@ var servicedb = require('../models/service');
 
 module.exports = {
 
-    init: function(app, passport) {
+    init: function() {
         var template = {
             "handler": "google",
             "sid": "com.google",
