@@ -534,13 +534,20 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                     DeleteDoxmBinData(ptrDoxm);
                     return OC_STACK_KEEP_TRANSACTION;
                 }
-
+                char rsrc_uri[MAX_URI_LENGTH+1] = {0};
+                int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",
+                          OC_RSRVD_WELL_KNOWN_URI, OC_RSRVD_RESOURCE_TYPE, OIC_RSRC_TYPE_SEC_DOXM);
+                if(wr_len <= 0 || (size_t)wr_len >= sizeof(rsrc_uri))
+                {
+                    OC_LOG(ERROR, TAG, "rsrc_uri_string_print failed");
+                    return OC_STACK_ERROR;
+                }
                 //Try to the unicast discovery to getting secure port
-                char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = { 0, };
+                char query[MAX_URI_LENGTH+MAX_QUERY_LENGTH+1] = {0};
                 if(!PMGenerateQuery(false,
                                     clientResponse->devAddr.addr, clientResponse->devAddr.port,
                                     clientResponse->connType,
-                                    query, sizeof(query), OC_RSRVD_WELL_KNOWN_URI))
+                                    query, sizeof(query), rsrc_uri))
                 {
                     OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
                     return OC_STACK_KEEP_TRANSACTION;
