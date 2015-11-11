@@ -343,7 +343,7 @@ bool PMGenerateQuery(bool isSecure,
     switch(connType & CT_MASK_ADAPTER)
     {
         case CT_ADAPTER_IP:
-            switch(connType & CT_MASK_FLAGS)
+            switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
             {
                 case CT_IP_USE_V4:
                         snRet = snprintf(buffer, bufferSize, "%s%s:%d%s",
