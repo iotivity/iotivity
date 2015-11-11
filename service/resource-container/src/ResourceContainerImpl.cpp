@@ -262,6 +262,7 @@ namespace OIC
         {
             string strUri = resource->m_uri;
             string strResourceType = resource->m_resourceType;
+            string strInterface = resource->m_interface;
             RCSResourceObject::Ptr server = nullptr;
             int ret = EINVAL;
 
@@ -271,7 +272,11 @@ namespace OIC
             registrationLock.lock();
             if (m_mapResources.find(strUri) == m_mapResources.end())
             {
-                server = buildResourceObject(strUri, strResourceType);
+                if (strInterface.empty()) {
+                    strInterface = "oic.if.baseline";
+                }
+
+                server = buildResourceObject(strUri, strResourceType, strInterface);
 
                 if (server != nullptr)
                 {
@@ -431,10 +436,10 @@ namespace OIC
         }
 
         RCSResourceObject::Ptr ResourceContainerImpl::buildResourceObject(const std::string &strUri,
-                const std::string &strResourceType)
+                const std::string &strResourceType, const std::string &strInterface)
         {
             return RCSResourceObject::Builder(strUri, strResourceType,
-                                              "oic.if.baseline").setObservable(
+                                              strInterface).setObservable(
                        true).setDiscoverable(true).build();
         }
 

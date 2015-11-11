@@ -174,7 +174,7 @@ namespace OIC
 
             public:
                 std::string m_bundleId;
-                std::string m_name, m_uri, m_resourceType, m_address;
+                std::string m_name, m_uri, m_resourceType, m_interface, m_address;
                 std::map< std::string,
                     std::vector< std::map< std::string, std::string > > > m_mapResourceProperty;
 
