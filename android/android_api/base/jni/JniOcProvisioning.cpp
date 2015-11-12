@@ -137,6 +137,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverUno
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        return nullptr;
     }
 }
 
@@ -203,6 +204,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverOwn
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        return nullptr;
     }
 }
 
@@ -233,6 +235,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_getDeviceSt
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        return nullptr;
     }
 }
 
