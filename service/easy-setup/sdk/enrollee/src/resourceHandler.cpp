@@ -173,11 +173,15 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
         sprintf(g_prov.tnn, "%s", tnn);
     }
 
+    OC_LOG_V(INFO, ES_RH_TAG, "g_prov.tnn %s", g_prov.tnn);
+
     char* cd;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd))
     {
         sprintf(g_prov.cd, "%s", cd);
     }
+
+    OC_LOG_V(INFO, ES_RH_TAG, "g_prov.cd %s", g_prov.cd);
 
     g_flag = 1;
 

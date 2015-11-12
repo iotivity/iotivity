@@ -47,7 +47,7 @@ OCStackResult RegisterCallback(
 
 void UnRegisterCallback();
 
-OCStackResult StartProvisioning(const EnrolleeNWProvInfo_t *netInfo);
+OCStackResult StartProvisioning(const EnrolleeNWProvInfo *netInfo);
 
 OCStackResult StopProvisioning(OCConnectivityType connectivityType);
 

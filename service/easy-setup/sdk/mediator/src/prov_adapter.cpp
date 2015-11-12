@@ -43,10 +43,10 @@ OCStackResult InitProvProcess() {
 
     if (InitProvisioningHandler() == OC_STACK_OK) {
         result = OC_STACK_OK;
-        OIC_LOG(DEBUG, ES_PROV_ADAP_TAG, "InitProvisioningHandler returned Success");
+        OC_LOG(DEBUG, ES_PROV_ADAP_TAG, "InitProvisioningHandler returned Success");
     } else {
         result = OC_STACK_ERROR;
-        OIC_LOG_V(ERROR, ES_PROV_ADAP_TAG, "InitProvisioningHandler returned error = %d",
+        OC_LOG_V(ERROR, ES_PROV_ADAP_TAG, "InitProvisioningHandler returned error = %d",
                   result);
     }
 
@@ -65,7 +65,7 @@ OCStackResult RegisterCallback(OCProvisioningStatusCB provisioningStatusCallback
     }
     else {
         result = OC_STACK_ERROR;
-        OIC_LOG(ERROR, ES_PROV_ADAP_TAG, "provisioningStatusCallback is NULL");
+        OC_LOG(ERROR, ES_PROV_ADAP_TAG, "provisioningStatusCallback is NULL");
     }
 
     return result;
@@ -77,7 +77,7 @@ void UnRegisterCallback() {
     }
 }
 
-OCStackResult StartProvisioning(const EnrolleeNWProvInfo_t *netInfo) {
+OCStackResult StartProvisioning(const EnrolleeNWProvInfo *netInfo) {
 
     char findQuery[64] = {0};
     snprintf(findQuery, sizeof(findQuery) - 1, UNICAST_PROVISIONING_QUERY,

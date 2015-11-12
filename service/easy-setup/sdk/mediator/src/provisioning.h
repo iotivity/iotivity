@@ -64,7 +64,7 @@ OCStackResult InvokeOCDoResource(const char *query, OCMethod method, const OCDev
 OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char *query,
                                     const OCDevAddr *destination);
 
-OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo_t *netInfo,
+OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo *netInfo,
                                        OCProvisioningStatusCB provisioningStatusCallback,
                                        char *findResQuery);
 
@@ -82,7 +82,7 @@ ProvisioningInfo *PrepareProvisioingStatusCB(OCClientResponse *clientResponse,
 
 void LogProvisioningResponse(OCRepPayloadValue * val);
 
-bool ConfigEnrolleeObject(const EnrolleeNWProvInfo_t *netInfo);
+bool ConfigEnrolleeObject(const EnrolleeNWProvInfo *netInfo);
 
 bool ClearMemory();
 
@@ -107,7 +107,7 @@ bool SetProgress(OCProvisioningStatusCB provisioningStatusCallback);
 
 bool InProgress();
 
-bool ValidateEasySetupParams(const EnrolleeNWProvInfo_t *netInfo,
+bool ValidateEasySetupParams(const EnrolleeNWProvInfo *netInfo,
                              OCProvisioningStatusCB provisioningStatusCallback);
 
 bool IsSetupStopped();

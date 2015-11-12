@@ -18,25 +18,31 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-##
+######################################################################
 # easy-setup project build script
-##
-
+######################################################################
 import os
-
 Import('env')
 
-transport = env.get('TARGET_TRANSPORT')
+######################################################################
+#building Resource client, resourceBroker and resourceCache
+######################################################################
 
-env.AppendUnique(CPPDEFINES = ['EASY_SETUP_CA_INIT'])
+if env.get('RELEASE'):
+    env.AppendUnique(CCFLAGS = ['-Os'])
+    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+else:
+    env.AppendUnique(CCFLAGS = ['-g'])
 
-easy_setup_env = env.Clone()
-#
-target_os = env.get('TARGET_OS')
-
+if env.get('LOGGING'):
+    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    
+# Add third party libraries
 lib_env = env.Clone()
-if target_os == 'android':
-	SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+
+easy_setup_env = lib_env.Clone()
+target_os = env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
@@ -44,42 +50,49 @@ if target_os == 'android':
 easy_setup_env.AppendUnique(CPPPATH = ['sdk/inc', 'sdk/src', 'sdk/common'])
 
 if target_os not in ['windows', 'winrt']:
-    easy_setup_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
-    if target_os not in ['android', 'arduino']:
-        easy_setup_env.AppendUnique(CXXFLAGS = ['-pthread'])
+    easy_setup_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
+	
+if target_os == 'linux':
+   easy_setup_env.AppendUnique(LIBS = ['pthread'])
 
-if target_os in ['android', 'linux']:
+if target_os in ['android']:
 	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	if target_os not in ['linux', 'arduino']:
-		easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'gnustl_shared'])	
-		if not env.get('RELEASE'):
-			easy_setup_env.AppendUnique(LIBS = ['log'])
-	else:
-		easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
+	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'gnustl_shared'])	
+	if not env.get('RELEASE'):
+		easy_setup_env.AppendUnique(LIBS = ['log'])
+
+if target_os == 'linux':
+	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
+	easy_setup_env.AppendUnique(CXXFLAGS = ['-pthread'])
+	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
+		
 if target_os == 'arduino':
 	easy_setup_env.AppendUnique(CPPPATH = [
 			       '../../resource/oc_logger/include',
 			       '../../resource/csdk/logger/include',
 			       '../../resource/csdk/stack/include',
 			       '../../extlibs/cjson',
-				   'sdk/enrollee/arduino/wifi',
-				   'sdk/enrollee/api',
-				   'sdk/enrollee/src',
+			       'sdk/enrollee/arduino/wifi',
+			       'sdk/enrollee/api',
+			       'sdk/enrollee/src',
 			       'sdk/enrollee/inc'])
-	easy_setup_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
+	easy_setup_env.AppendUnique(CPPDEFINES = ['ESWIFI'])
+	
 if target_os in ['android','linux']:					   
 	easy_setup_env.PrependUnique(CPPPATH = [
 		env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',		
-		env.get('SRC_DIR') + '/resource/csdk/connectivity/common/inc',
-		env.get('SRC_DIR') + '/resource/csdk/connectivity/api',
-        env.get('SRC_DIR') + '/resource/csdk/stack/include',
-        env.get('SRC_DIR') + '/resource/csdk/logger/include',
+		env.get('SRC_DIR') + '/resource/include',
+		env.get('SRC_DIR') + '/resource/csdk/logger/include',
+                env.get('SRC_DIR') + '/resource/csdk/stack/include',
+                env.get('SRC_DIR') + '/resource/csdk/logger/include',
 		env.get('SRC_DIR') + '/resource/csdk/security/include',
 		env.get('SRC_DIR') + '/extlibs/cjson',
-		'sdk/common',
-		'sdk/mediator/inc'])
+		'/ser/sdk/common',
+		'sdk/mediator/include',
+		'sdk/mediator/src'])
 
 ######################################################################
 # Source files and Targets
@@ -96,14 +109,18 @@ if target_os == 'android':
 	es_sdk_shared = easy_setup_env.StaticLibrary('libESSDK',
 					['sdk/mediator/src/prov_adapter.cpp',
 					'sdk/mediator/src/wifi_provisioning.cpp',
-                                        'sdk/mediator/src/provisioning.cpp'])
+                    'sdk/mediator/src/provisioning.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 if target_os == 'linux':
 	es_sdk_shared = easy_setup_env.SharedLibrary('ESSDKLibrary',
-					['sdk/mediator/src/prov_adapter.cpp',
+					['sdk/mediator/src/RemoteEnrollee.cpp',
+					'sdk/mediator/src/RemoteEnrolleeResource.cpp',
+					'sdk/mediator/src/EasySetup.cpp',
+					'sdk/mediator/src/prov_adapter.cpp',
+					'sdk/mediator/src/ESException.cpp',
 					'sdk/mediator/src/wifi_provisioning.cpp',
-                                        'sdk/mediator/src/provisioning.cpp'])
+                    'sdk/mediator/src/provisioning.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 #Go to build sample apps

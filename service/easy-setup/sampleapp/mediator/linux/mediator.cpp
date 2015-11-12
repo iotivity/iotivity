@@ -64,7 +64,7 @@ static void PrintUsage() {
 
 int main(int argc, char **argv) {
     int opt;
-    EnrolleeNWProvInfo_t netInfo;
+    EnrolleeNWProvInfo netInfo;
     PrintUsage();
     InitProvProcess();
 

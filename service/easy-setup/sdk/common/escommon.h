@@ -21,6 +21,10 @@
 #ifndef ES_COMMON_H_
 #define ES_COMMON_H_
 
+#ifndef WITH_ARDUINO
+#include <memory>
+#endif
+
 #include "ocstack.h"
 #include "octypes.h"
 
@@ -121,24 +125,30 @@ typedef struct {
     OCDevAddr * addr;
     /// Indicates adaptor type on which the response was received
     OCConnectivityType connType;
-} ProvDeviceInfo;
+} EasySetupDeviceInfo;
 
 /**
  * Provosioning Status
  */
-typedef enum {
-    DEVICE_PROVISIONED = 0, DEVICE_NOT_PROVISIONED
-} ProvStatus;
+typedef enum
+{
+    DEVICE_PROVISIONED = 0,
+    DEVICE_NOT_PROVISIONED,
+    DEVICE_OWNED,
+    DEVICE_NOT_OWNED
+} EasySetupState, ProvStatus;
+
+
 
 /**
  * Response from queries to remote servers.
  */
 typedef struct {
-    // Provisioning Status
-    ProvStatus provStatus;
-    // Provisioning Device Info
-    ProvDeviceInfo provDeviceInfo;
-} ProvisioningInfo;
+    // EasySetup Status
+    EasySetupState provStatus;
+    // EasySetup Device Info
+    EasySetupDeviceInfo provDeviceInfo;
+} EasySetupInfo, ProvisioningInfo;
 
 /**
  * @brief  Network information of the Enroller
@@ -170,7 +180,7 @@ typedef union
         char ssid[NET_WIFI_SSID_SIZE]; /**< ssid of the Enroller**/
         char pwd[NET_WIFI_PWD_SIZE]; /**< pwd of the Enroller**/
     } WIFI;
-} EnrolleeInfo_t;
+} EnrolleeInfo;
 
 
 /**
@@ -178,14 +188,88 @@ typedef union
  */
 typedef struct
 {
-    EnrolleeInfo_t netAddressInfo;          /**< Enroller Network Info**/
+    EnrolleeInfo netAddressInfo;          /**< Enroller Network Info**/
     OCConnectivityType connType;            /**< Connectivity Type**/
     bool isSecured;                         /**< Secure connection**/
-} EnrolleeNWProvInfo_t;
+} EnrolleeNWProvInfo;
 
 /**
  * Client applications implement this callback to consume responses received from Servers.
  */
-typedef void (*OCProvisioningStatusCB)(ProvisioningInfo *provInfo);
+typedef void (*OCProvisioningStatusCB)(EasySetupInfo *easySetupInfo);
+
+namespace OIC
+{
+    namespace Service
+    {
+        typedef enum
+        {
+            ES_PROVISIONING_ERROR = -1,
+            ES_NEED_PROVISIONING,
+            ES_PROVISIONED_ALREADY,
+            ES_PROVISIONING_SUCCESS
+        } ESState;
+
+        typedef enum
+        {
+            ES_UNKNOWN = 0,
+            ES_ONBOARDED,
+            ES_OWNED,
+            ES_PROVISIONED
+        } CurrentESState;
+
+#ifndef WITH_ARDUINO
+        class ProvisioningStatus
+        {
+        public:
+            std::shared_ptr< ProvisioningStatus > shared_ptr;
+            ProvisioningStatus(ESResult result, ESState esState) :
+                    m_result(result), m_esState(esState)
+            {
+
+            }
+
+            ESResult& getESResult()
+            {
+                return m_result;
+            }
+
+            ESState& getESState()
+            {
+                return m_esState;
+            }
+        private:
+            ESResult m_result;
+            ESState m_esState;
+        };
+
+        class EasySetupStatus
+        {
+        public:
+            std::shared_ptr< EasySetupStatus > shared_ptr;
+            EasySetupStatus(const EasySetupState& easySetupState,
+                    const EnrolleeNWProvInfo& enrolleeNWProvInfo) :
+                    m_easySetupState(easySetupState), m_enrolleeNWProvInfo(enrolleeNWProvInfo)
+            {
+
+            }
+
+            EnrolleeNWProvInfo& getEasySetupNWProvInfo()
+            {
+                return m_enrolleeNWProvInfo;
+            }
+
+            EasySetupState& getEasySetupState()
+            {
+                return m_easySetupState;
+            }
+        private:
+            EasySetupState m_easySetupState;
+            EnrolleeNWProvInfo m_enrolleeNWProvInfo;
+        };
+#endif
+
+    }
+}
 
 #endif

@@ -66,7 +66,7 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* /*ctx*/,
     char resURI[MAX_URI_LENGTH] =
             {'\0'};
 
-    OIC_LOG_V(DEBUG, ES_WIFI_PROV_TAG, "resUri = %s", input->uri);
+    OC_LOG_V(DEBUG, ES_WIFI_PROV_TAG, "resUri = %s", input->uri);
 
     strncpy(resURI, input->uri, sizeof(resURI) - 1);
 
@@ -75,7 +75,7 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* /*ctx*/,
 
     if (ProvisionEnrollee(OC_HIGH_QOS, query, OC_RSRVD_ES_URI_PROV, clientResponse->addr, 0)
         != OC_STACK_OK) {
-        OIC_LOG(INFO, ES_WIFI_PROV_TAG, "GetProvisioningStatusResponse received NULL clientResponse");
+        OC_LOG(INFO, ES_WIFI_PROV_TAG, "GetProvisioningStatusResponse received NULL clientResponse");
 
         ErrorCallback(DEVICE_NOT_PROVISIONED);
         ClearMemory();
@@ -91,7 +91,7 @@ OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char *query,
     OCStackResult ret = OC_STACK_ERROR;
     OCHeaderOption options[MAX_HEADER_OPTIONS];
 
-    OIC_LOG_V(INFO, ES_WIFI_PROV_TAG, "\n\nExecuting %s", __func__);
+    OC_LOG_V(INFO, ES_WIFI_PROV_TAG, "\n\nExecuting %s", __func__);
 
     uint8_t option0[] =
             {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -118,7 +118,7 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* /*ctx*/,
                                                             OCDoHandle /*handle*/,
                                                             OCClientResponse *clientResponse) {
 
-    OIC_LOG(INFO, ES_WIFI_PROV_TAG, PCF("Entering FindProvisioningResourceResponse"));
+    OC_LOG(INFO, ES_WIFI_PROV_TAG, PCF("Entering FindProvisioningResourceResponse"));
 
     // If user stopped the process then return from this function;
     if (IsSetupStopped()) {
@@ -137,12 +137,12 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* /*ctx*/,
 
     OCDiscoveryPayload *discoveryPayload = (OCDiscoveryPayload * )(clientResponse->payload);
 
-    OIC_LOG_V(DEBUG, ES_WIFI_PROV_TAG, "resUri = %s", discoveryPayload->resources->uri);
+    OC_LOG_V(DEBUG, ES_WIFI_PROV_TAG, "resUri = %s", discoveryPayload->resources->uri);
 
     snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PROV_STATUS_QUERY,
              clientResponse->devAddr.addr, IP_PORT, discoveryPayload->resources->uri);
 
-    OIC_LOG_V(DEBUG, ES_WIFI_PROV_TAG, "query before GetProvisioningStatus call = %s", szQueryUri);
+    OC_LOG_V(DEBUG, ES_WIFI_PROV_TAG, "query before GetProvisioningStatus call = %s", szQueryUri);
 
     if (GetProvisioningStatus(OC_HIGH_QOS, szQueryUri, &clientResponse->devAddr) != OC_STACK_OK) {
         ErrorCallback(DEVICE_NOT_PROVISIONED);
@@ -153,16 +153,16 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* /*ctx*/,
 
 }
 
-bool ValidateEasySetupParams(const EnrolleeNWProvInfo_t *netInfo,
+bool ValidateEasySetupParams(const EnrolleeNWProvInfo *netInfo,
                              OCProvisioningStatusCB provisioningStatusCallback) {
 
     if (netInfo == NULL || strlen(netInfo->netAddressInfo.WIFI.ipAddress) == 0) {
-        OIC_LOG(ERROR, ES_WIFI_PROV_TAG, "Request URI is NULL");
+        OC_LOG(ERROR, ES_WIFI_PROV_TAG, "Request URI is NULL");
         return false;
     }
 
     if (provisioningStatusCallback == NULL) {
-        OIC_LOG(ERROR, ES_WIFI_PROV_TAG, "ProvisioningStatusCallback is NULL");
+        OC_LOG(ERROR, ES_WIFI_PROV_TAG, "ProvisioningStatusCallback is NULL");
         return false;
     }
 
