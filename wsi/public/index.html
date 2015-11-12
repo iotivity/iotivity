@@ -5,10 +5,21 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" type="text/css" href="assets/css/style.css">
+        <link rel="stylesheet" href="assets/css/normalize.min.css">
+        <link rel="stylesheet" href="assets/css/main.css">        
     </head>
     <body  ng-controller="wsicontroller">
-        <div id="topbar">
-            <h1>WSI SERVICE CONFIGURATION</h1>
+        <div class="header-container">
+            <header class="wrapper clearfix">
+                <h1 class="title">WSI SERVICE CONFIGURATION</h1>
+                <nav>
+                    <ul>
+                        <li><a href="index.html">Configuration</a></li>
+                        <li><a href="demo.html">Demo</a></li>
+                        <li><a href="about.html">About</a></li>
+                    </ul>
+                </nav>
+            </header>
         </div>
         <div id="pagewrap">
             <div id="content">
@@ -54,6 +65,7 @@
                 <h3>Manage</h3>
 		<form>
                     <button id="create" type="submit" ng-click="createService()">Create</button>
+                    <button id='save' type="submit" ng-click="updateService()">Save</button><br>
                     <div style="width: 450px; height: 350px" id="jsoneditor"></div>
                 </form>                
             </div>
@@ -61,7 +73,9 @@
             <div id="sidebar">
 		<form>
                     <h3>Preview</h3>
+<!--
                     <button id='save' type="submit" ng-click="updateService()">Save</button><br>
+-->
                     <div style="width: 450px; height: 350px" id="jsoneditorpreview"></div>
                 </form>                
             </div>

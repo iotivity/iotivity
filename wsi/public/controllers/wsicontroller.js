@@ -11,10 +11,12 @@
         var c = document.getElementById('jsoneditor');
         var p = document.getElementById('jsoneditorpreview');
         var options = {
-            mode: "text"
+            mode: "text",
+            indentation: 2
         };
         var optionspreview = {
-            mode: "tree"
+            mode: "tree",
+            indentation: 2
         };
 
         var editor  = new JSONEditor(c, options);
@@ -54,12 +56,11 @@
 
         $scope.updateService = function () {
             if (preview.get() != null) {
-                dbfactory.update($scope.selService, preview.get())
+                dbfactory.update($scope.selService, editor.get())
                         .success(function (data) {
                             $scope.services = data;
-
                             //FIXME : View Not Updating
-                            editor.set(data);
+                            //editor.set(data);
                             preview.set(data);
                             preview.expandAll();
                         });
