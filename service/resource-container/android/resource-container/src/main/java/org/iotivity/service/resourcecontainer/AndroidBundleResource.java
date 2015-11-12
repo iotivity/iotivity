@@ -23,7 +23,7 @@ package org.iotivity.service.resourcecontainer;
 import java.util.HashMap;
 import java.util.Set;
 import android.content.Context;
-
+import android.util.Log;
 
 /**
  * Basic BundleResource that should be used as a base class by a bundle
@@ -32,154 +32,171 @@ import android.content.Context;
  * specific messages.
  */
 public abstract class AndroidBundleResource {
-	protected String m_name, m_uri, m_resourceType, m_address;
+    protected String                m_name, m_uri, m_resourceType, m_address;
 
-	protected RcsResourceAttributes m_attributes = new RcsResourceAttributes();
-	
-	protected Context m_context;
-	
-	public AndroidBundleResource(){
-	    initAttributes();
-	}
-	
-	public AndroidBundleResource(Context context){
-	    this();
-	    this.m_context = context;
-	}
+    protected RcsResourceAttributes m_attributes = new RcsResourceAttributes();
 
-	/**
-	 * Initialize the internal attribute structure.
-	 */
-	protected abstract void initAttributes();
+    protected Context               m_context;
 
-	/**
-	 * Set the attribute (map to a send command for the according protocol)
-	 * 
-	 * @param key
-	 *            name of the attribute to be set
-	 * @param value
-	 *            new value of the attribute
-	 */
-	protected final void setAttribute(String key, RcsValue value) {
-		m_attributes.put(key, value);
-	}
+    public AndroidBundleResource() {
+        initAttributes();
+    }
 
-	/**
-	 * Set the attribute (map to a send command for the according protocol)
-	 * 
-	 * @param key
-	 *            name of the attribute to be set
-	 * @param value
-	 *            new value of the attribute
-	 */
-	public abstract void handleSetAttributesRequest(RcsResourceAttributes value);
+    public AndroidBundleResource(Context context) {
+        this();
+        this.m_context = context;
+    }
 
-	/**
-	 * Retrieve the attribute (only data)
-	 * 
-	 * @param key
-	 *            name of the attribute to be read
-	 * @return Value of the attribute
-	 */
-	protected final RcsValue getAttribute(String key) {
-		return m_attributes.get(key);
-	}
-	
-	/**
-	 * Retrieve the attribute (map to read command)
-	 * 
-	 * @param key
-	 *            name of the attribute to be set
-	 * @param value
-	 *            new value of the attribute
-	 */
-	public abstract RcsResourceAttributes handleGetAttributesRequest();
+    /**
+     * Initialize the internal attribute structure.
+     */
+    protected abstract void initAttributes();
 
-	/**
-	 * Attribute keys provided through by the bundle resource.
-	 * 
-	 * @return Name of attribute keys as string array
-	 */
-	public String[] getAttributeKeys() {
-		Set<String> keys = m_attributes.keySet();
-		return keys.toArray(new String[keys.size()]);
-	}
+    /**
+     * Set the attribute (map to a send command for the according protocol)
+     * 
+     * @param key
+     *            name of the attribute to be set
+     * @param value
+     *            new value of the attribute
+     */
+    protected final void setAttribute(String key, RcsValue value) {
+        m_attributes.put(key, value);
+    }
 
-	/**
-	 * Setter for the uri property
-	 * 
-	 * @param uri
-	 *            URI of the resource
-	 */
-	public void setURI(String uri) {
-		this.m_uri = uri;
-	}
+    /**
+     * Set the attribute (map to a send command for the according protocol)
+     * 
+     * @param key
+     *            name of the attribute to be set
+     * @param value
+     *            new value of the attribute
+     */
+    protected final void setAttributes(RcsResourceAttributes value) {
+        m_attributes.put(value);
+    }
 
-	/**
-	 * Returns the URI of the resource
-	 * 
-	 * @return Resource URI
-	 */
-	public String getURI() {
-		return m_uri;
+    /**
+     * Set the attribute (map to a send command for the according protocol)
+     * 
+     * @param key
+     *            name of the attribute to be set
+     * @param value
+     *            new value of the attribute
+     */
+    public abstract void handleSetAttributesRequest(RcsResourceAttributes value);
+
+    /**
+     * Retrieve the attribute (only data)
+     * 
+     * @param key
+     *            name of the attribute to be read
+     * @return Value of the attribute
+     */
+    protected final RcsValue getAttribute(String key) {
+        return m_attributes.get(key);
+    }
+
+    protected final RcsResourceAttributes getAttributes() {
+        RcsResourceAttributes ret = new RcsResourceAttributes(this.m_attributes);             
+        return ret;
+    }
+
+    /**
+     * Retrieve the attribute (map to read command)
+     * 
+     * @param key
+     *            name of the attribute to be set
+     * @param value
+     *            new value of the attribute
+     */
+    public abstract RcsResourceAttributes handleGetAttributesRequest();
+
+    /**
+     * Attribute keys provided through by the bundle resource.
+     * 
+     * @return Name of attribute keys as string array
+     */
+    public String[] getAttributeKeys() {
+	    Set<String> keys = m_attributes.keySet();
+	    return keys.toArray(new String[keys.size()]);
 	}
 
-	/**
-	 * Sets the resource type property
-	 * 
-	 * @param resourceType
-	 *            OIC resource type
-	 */
-	public void setResourceType(String resourceType) {
-		this.m_resourceType = resourceType;
-	}
+    /**
+     * Setter for the uri property
+     * 
+     * @param uri
+     *            URI of the resource
+     */
+    public void setURI(String uri) {
+        this.m_uri = uri;
+    }
 
-	/**
-	 * Getter for the resource type
-	 * 
-	 * @return OIC resource type
-	 */
-	public String getResourceType() {
-		return m_resourceType;
-	}
+    /**
+     * Returns the URI of the resource
+     * 
+     * @return Resource URI
+     */
+    public String getURI() {
+        return m_uri;
+    }
 
-	/**
-	 * Sets the technology specific address information (e.g., ZigBee short or
-	 * long identifier)
-	 * 
-	 * @param address
-	 *            Resource address
-	 */
-	public void setAddress(String address) {
-		this.m_address = address;
-	}
+    /**
+     * Sets the resource type property
+     * 
+     * @param resourceType
+     *            OIC resource type
+     */
+    public void setResourceType(String resourceType) {
+        this.m_resourceType = resourceType;
+    }
 
-	/**
-	 * Returns the technology specific address information
-	 * 
-	 * @return Resource address
-	 */
-	public String getAddress() {
-		return m_address;
-	}
+    /**
+     * Getter for the resource type
+     * 
+     * @return OIC resource type
+     */
+    public String getResourceType() {
+        return m_resourceType;
+    }
 
-	/**
-	 * Sets the name property of the resource
-	 * 
-	 * @param name
-	 *            Resource name
-	 */
-	public void setName(String name) {
-		this.m_name = name;
-	}
+    /**
+     * Sets the technology specific address information (e.g., ZigBee short or
+     * long identifier)
+     * 
+     * @param address
+     *            Resource address
+     */
+    public void setAddress(String address) {
+        this.m_address = address;
+    }
 
-	/**
-	 * Returns the name property of the resource
-	 * 
-	 * @return Resource name
-	 */
-	public String getName() {
-		return m_name;
-	}
+    /**
+     * Returns the technology specific address information
+     * 
+     * @return Resource address
+     */
+    public String getAddress() {
+        return m_address;
+    }
+
+    /**
+     * Sets the name property of the resource
+     * 
+     * @param name
+     *            Resource name
+     */
+    public void setName(String name) {
+        this.m_name = name;
+    }
+
+    /**
+     * Returns the name property of the resource
+     * 
+     * @return Resource name
+     */
+    public String getName() {
+        return m_name;
+    }
 
 }

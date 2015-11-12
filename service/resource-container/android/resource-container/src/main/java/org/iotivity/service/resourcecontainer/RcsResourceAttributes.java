@@ -63,6 +63,12 @@ public final class RcsResourceAttributes extends RcsObject {
             mCache.put(key, lockedAttrs.get(key));
         }
     }
+    
+    public RcsResourceAttributes(RcsResourceAttributes attrs){
+        for (final String key : attrs.keySet()) {
+            mCache.put(key, attrs.get(key));
+        }
+    }
 
     /**
      * Returns a unmodifiable Set view of the keys contained in this attributes.
@@ -231,6 +237,15 @@ public final class RcsResourceAttributes extends RcsObject {
     public int hashCode() {
         esnureAllExtracted();
         return mCache.hashCode();
+    }
+    
+    /**
+     * Updates all properties provided as parameter.
+     */
+    public void put(RcsResourceAttributes attrs){
+        for (final String key : attrs.keySet()) {
+            mCache.put(key, attrs.get(key));
+        }
     }
 
 }
