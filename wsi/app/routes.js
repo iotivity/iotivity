@@ -1,76 +1,4 @@
 var servicedb = require('./models/service');
-/*
-var Mustache = require('mustache');
-
-function getCapabilities(sid){
-    var capArray = [];
-    
-    var service = servicedb.find(function(err, services) {
-        if (err)
-            res.send(err);
-
-        res.json(services);
-    });
-    
-    var jsonData = JSON.parse(service);
-    for (var i = 0; i < jsonData.capability.length; i++) {
-        capArray[i] = jsonData.capability[i].id;
-    }
-    return capArray;
-}
-
-function match(item, filter) {
-    var keys = Object.keys(filter);
-    return keys.some(function (key) {
-        return item[key] == filter[key];
-    });
-}
-
-
-function sendRequest(capability, query, res) {
-    var endpoint = Mustache.render(capability.endpoint, query);
-    console.log(capability.endpointtype + '://' + endpoint);
-
-    if(capability.endpointtype == "http" || capability.endpointtype == "https") {
-        console.log("Accessing http/https endpoint");
-        request_http(capability, query, res, endpoint);
-    }
-    
-    if(capability.endpointtype == "iotivity") {
-        console.log("Accessing iotivity endpoint");
-        request_iotivity(capability, query, res, endpoint);
-    }
-}
-
-function sendPutRequest(capability, query, res) {
-    var endpoint = Mustache.render(capability.endpoint, query);
-    console.log(capability.endpointtype + '://' + endpoint);
-
-    if(capability.endpointtype == "http" || capability.endpointtype == "https") {
-        console.log("Accessing http/https endpoint");
-//        request_http_put(capability, query, res, endpoint);
-    }
-    
-//    if(capability.endpointtype == "iotivity") {
-//        console.log("Accessing iotivity endpoint");
-//        request_iotivity(capability, query, res, endpoint);
-//    }
-}
-
-function processRequest(query, res, callback){
-    servicedb.find({ 'id': query.id }, function (err, service) {
-        if(err)
-            res.send(err);
-
-        for( var i = 0, len = service[0].capability.length; i < len; i++) {
-            if(match(service[0].capability[i], { id: query.capabilityid })) {
-                return callback(service[0].capability[i], query, res);
-            }
-        }
-    });
-};
-
-*/
 
 function getServices(res){
     servicedb.find(function(err, services) {
@@ -79,7 +7,6 @@ function getServices(res){
         res.json(services);
     });
 };
-
 
 module.exports = function(app, passport) {
     
