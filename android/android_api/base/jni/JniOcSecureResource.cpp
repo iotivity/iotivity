@@ -566,6 +566,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcSecureResource_getLinkedDevic
     {
         LOGE("%s", e.reason().c_str());
         ThrowOcException(e.code(), e.reason().c_str());
+        return nullptr;
     }
 }
 
