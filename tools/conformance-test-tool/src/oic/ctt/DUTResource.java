@@ -23,6 +23,9 @@ package oic.ctt;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import oic.ctt.DutKey;
+import oic.ctt.DUTResource.CRUDNType;
+
 import oic.ctt.formatter.JsonAnalyzer;
 
 /**
@@ -31,12 +34,35 @@ import oic.ctt.formatter.JsonAnalyzer;
 
 public class DUTResource {
 
+    /**
+     * Enumeration for CRUDN operations
+     */
+    public enum CRUDNType{
+        COMPLETE_CREATE("Cc"),
+        SUBORDINATE_CREATE("Cs"),
+        RETRIEVE("R"),
+        COMPLETE_UPDATE("Uc"),
+        PARTIAL_UPDATE("Up"),
+        DELETE("D");
+
+        private String key;
+
+        private CRUDNType(String key) {
+            this.key = key;
+        }
+        @Override
+        public String toString() {
+            return key;
+        }
+    }
+
     private HashMap<String, ArrayList<String>> mDutResourceValue;
+    private HashMap<String, Boolean> mCRUDNState = new HashMap<String, Boolean>();
 
     /**
      * Constructor for DUTResource. It creates DUT Resource Instance according
      * to the JSON string provided to it
-     * 
+     *
      * @param jsonString
      *            : JSON String to create DUTResource instance
      */
@@ -45,7 +71,6 @@ public class DUTResource {
         if (mDutResourceValue == null) {
             mDutResourceValue = new HashMap<String, ArrayList<String>>();
         }
-
         JsonAnalyzer jsonAnaylyzer = new JsonAnalyzer(jsonString);
         DutKey[] dutKeys = DutKey.values();
 
@@ -58,14 +83,13 @@ public class DUTResource {
                     valueList.add(value);
                 }
             }
-
             this.setDUTResourceValue(key, valueList);
         }
     }
 
     /**
      * This Method sets the Key and Value to the DUT Resource Instance
-     * 
+     *
      * @param key
      *            : Key for the Value
      * @param value
@@ -77,12 +101,36 @@ public class DUTResource {
 
     /**
      * This Method returns corresponding Value list of the Key provided
-     * 
+     *
      * @param key
      *            : Corresponding Key for the desired Value list
      * @return ArrayList<String> : Corresponding Value list of the key
      */
     public ArrayList<String> getDUTResourceValue(String key) {
         return mDutResourceValue.get(key);
+    }
+
+    /**
+     * This method generate the CRUDN states supported by the resource
+     */
+    public void generateCRUDNState() {
+        String[] crudn = DutKey.CRUDN.toString().split("(?=[A-Z])");
+
+        ArrayList<String> crudnState= getDUTResourceValue(DutKey.CRUDN.toString());
+        int count = 0;
+        for (String string : crudnState) {
+            Boolean bool = Boolean.parseBoolean(string);
+            mCRUDNState.put(crudn[count++], bool);
+        }
+    }
+
+    /**
+     * This method checks if a CRUDN operation is supported by the resource
+     *
+     * @param key : the CRUDN operation type to check
+     * @return true : if the key is supported false otherwise
+     */
+    public boolean getCRUDNState(CRUDNType key) {
+        return mCRUDNState.get(key.toString());
     }
 }

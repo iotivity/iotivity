@@ -62,6 +62,7 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
     private ArrayList<OICResponseData>             mNotifications    = new ArrayList<OICResponseData>();
     private byte[]                                 mObserveToken     = null;
     private int                                    mWaitTime         = 60;
+    private int                                    mDiscoverTime     = 5;
     private boolean                                mObserveResetFlag = false;
     private boolean                                mObserveNoAckFlag = false;
 
@@ -243,7 +244,7 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
             sendDiscoveryMessage(uriPath, query, ip, port, token);
 
         try {
-            Thread.sleep(1000 * mWaitTime);
+            Thread.sleep(1000 * mDiscoverTime);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
