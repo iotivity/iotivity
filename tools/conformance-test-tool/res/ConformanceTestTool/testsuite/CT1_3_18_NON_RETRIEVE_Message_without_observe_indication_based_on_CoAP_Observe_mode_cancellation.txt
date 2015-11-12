@@ -44,8 +44,9 @@ CT1.3.18 NON RETRIEVE Message without observe indication based on CoAP Observe m
     \   ${payload}    Run Keyword If    ${length} > 0    Get Json Representation
     \   ${msgid2}    Generate Message Id
     \   ${token2}    Generate Token
-    \   ${dut2_response}    Run Keyword If    ${length} > 0    Send Post Request        ${UNICAST}      ${COAP}    ${msgid2}       ${token2}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
-    \   Run Keyword If    ${length} < 1    Log To Console    ============== User Control -> Change state of resource for notification================
+    \	${update_support}    Is Crudn Operation Supported    ${resource_href}    ${PARTIAL_UPDATE}
+    \   ${dut2_response}    Run Keyword If    ${length} > 0 and ${update_support} == ${True}    Send Post Request        ${UNICAST}      ${COAP}    ${msgid2}       ${token2}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
+    \   Run Keyword If    ${length} < 1 or ${update_support} == ${False}    Log To Console    ============== User Control -> Change state of resource for notification================
     \   Builtin.sleep   ${${DEFAULT_WAIT_TIME}}
     \   ${dut1_response}        Get Observe Response	 ${COAP}
     \   Should Not Be Empty             ${dut1_response}
@@ -67,7 +68,8 @@ CT1.3.18 NON RETRIEVE Message without observe indication based on CoAP Observe m
     \   ${dut2_response_msgid}   Get Response Msgid       ${dut2_response}
     \   ${msgid4}    Generate Message Id
     \   ${token4}    Generate Token
-    \   ${dut2_response}    Run Keyword If    ${length} > 0    Send Post Request        ${UNICAST}      ${COAP}    ${msgid4}       ${token4}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
+    \   ${dut2_response}    Run Keyword If    ${length} > 0 and ${update_support} == ${True}    Send Post Request        ${UNICAST}      ${COAP}    ${msgid4}       ${token4}       ${resource_ip}  ${${resource_port}}     ${resource_href}        ${NON_CONFIRMABLE}      ${payload}
+    \   Run Keyword If    ${length} < 1 or ${update_support} == ${False}    Log To Console    ============== User Control -> Change state of resource for notification================
     \   Builtin.sleep   ${${DEFAULT_WAIT_TIME}}
     \   ${dut1_response}        Get Observe Response	 ${COAP}
     \   Should Be Empty             ${dut1_response}

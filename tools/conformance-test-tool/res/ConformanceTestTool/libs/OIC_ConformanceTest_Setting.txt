@@ -5,10 +5,11 @@ Library        OperatingSystem
 Library        DateTime
 Resource	OIC_Core_Spec.txt
 
+
 *** Keywords ***
 Start Capture
     ${file_name}    Get Wireshark File Name    ${TEST NAME}
-    OperatingSystem.Run      tshark -i any -f udp -F pcapng -w testreport/${file_name} | - &
+    OperatingSystem.Run      tshark -i any -f udp -w testreport/${file_name} | - &
     BuiltIn.Sleep    2s
 
 End Capture
@@ -234,4 +235,11 @@ ${PAYLOAD_BLOCKWISE}	payload_blockwise
 ${PAYLOAD_FILE_DIR}	libs/payload.json
 ${FIND_AND_GET}    TE -------->   Discovering Secured Resource and Sending Get Request   --------> DUT
 ${PROVISION_CLIENT_DI}    YWRtaW5EZXZpY2VVVUlEMA==
+
+${COMPLETE_CREATE}       COMPLETE_CREATE
+${SUBORDINATE_CREATE}    SUBORDINATE_CREATE
+${RETRIEVE}              RETRIEVE
+${COMPLETE_UPDATE}       COMPLETE_UPDATE
+${PARTIAL_UPDATE}        PARTIAL_UPDATE
+${DELETE}                DELETE
 

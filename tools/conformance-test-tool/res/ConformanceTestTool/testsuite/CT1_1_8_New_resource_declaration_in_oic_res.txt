@@ -1,11 +1,11 @@
 *** Settings ***
-Documentation	CT1.1.8 New resource declaration in /oic/res
+Documentation	CT1.1.8 New resource declaration in oic_res
 Resource	OIC_ConformanceTest_Setting.txt
 Test Setup    Start Capture
 Test TearDown    End Capture
 
 *** Test Cases ***
-CT1.1.8 New resource declaration in /oic/res
+CT1.1.8 New resource declaration in oic_res
     [Documentation]					
 	...	|author	| |		
 	...	|reviewer| |				
@@ -44,59 +44,61 @@ CT1.1.8 New resource declaration in /oic/res
     \   ${msgid}    Generate Message Id
     \   ${token}    Generate Token
     \	${dut2_response}        Send Put Request        ${UNICAST}      ${COAP}    ${msgid}    ${token}    ${resource_ip}	  ${${resource_port}}     ${resource_href}        ${CONFIRMABLE}  ${payload}
+    \	${create_support}    Is Crudn Operation Supported    ${resource_href}    ${COMPLETE_CREATE}
     \	Should Not Be Empty             ${dut2_response}
     \	${dut2_response_code}   Get Response Code       ${dut2_response}
-    \	Should Be Equal 	${COAP_RESPONSE_CODE_CREATED}   ${dut2_response_code}
-    \	${dut2_response_json}	Get Response Json       ${dut2_response}
-    \	@{dut2_response_href}	Get Json Value          ${HREF}         ${dut2_response_json}
-    \	Should Contain		@{dut2_response_href}[0]		${resource_href}${CREATED_DIS_HREF}
-    \   ${msgid}    Generate Message Id
-    \   ${token}    Generate Token    
-    \	${dut1_response}            Discover Resource Using Unicast         ${UNICAST}      ${COAP}    ${msgid}    ${token}	 ${resource_ip}   ${${resource_port}}      ${resource_href}${CREATED_DIS_HREF}        ${NON_CONFIRMABLE}	
-    \	Should Not Be Empty         ${dut1_response}
-    \	${dut1_response_code}       Get Response Code       ${dut1_response}
-    \	Should Be Equal     ${COAP_RESPONSE_CODE_SUCCESS}   ${dut1_response_code}
-    \	${dut1_response_json}       Get Response Json       ${dut1_response}
-    \	${validate_json_result}     Validate JSON Format        ${dut1_response_json}
-    \	Should Be True      ${validate_json_result}
+    \	Run Keyword if    ${create_support} == ${True}    Should Be Equal 	${COAP_RESPONSE_CODE_CREATED}   ${dut2_response_code}
+    \	Run Keyword if    ${create_support} == ${False}    Should Be Equal 	${COAP_RESPONSE_CODE_ERROR}   ${dut2_response_code}
+    \	${dut2_response_json}	Run Keyword if    ${create_support} == ${True}    Get Response Json       ${dut2_response}
+    \	@{dut2_response_href}	Run Keyword if    ${create_support} == ${True}    Get Json Value          ${HREF}         ${dut2_response_json}
+    \	Run Keyword if    ${create_support} == ${True}    Should Contain		@{dut2_response_href}[0]		${resource_href}${CREATED_DIS_HREF}
+    \   ${msgid}    Run Keyword if    ${create_support} == ${True}    Generate Message Id
+    \   ${token}    Run Keyword if    ${create_support} == ${True}    Generate Token    
+    \	${dut1_response}            Run Keyword if    ${create_support} == ${True}    Discover Resource Using Unicast         ${UNICAST}      ${COAP}    ${msgid}    ${token}	 ${resource_ip}   ${${resource_port}}      ${resource_href}${CREATED_DIS_HREF}        ${NON_CONFIRMABLE}	
+    \	Run Keyword if    ${create_support} == ${True}    Should Not Be Empty         ${dut1_response}
+    \	${dut1_response_code}       Run Keyword if    ${create_support} == ${True}    Get Response Code       ${dut1_response}
+    \	Run Keyword if    ${create_support} == ${True}    Should Be Equal     ${COAP_RESPONSE_CODE_SUCCESS}   ${dut1_response_code}
+    \	${dut1_response_json}       Run Keyword if    ${create_support} == ${True}    Get Response Json       ${dut1_response}
+    \	${validate_json_result}     Run Keyword if    ${create_support} == ${True}    Validate JSON Format        ${dut1_response_json}
+    \	Run Keyword if    ${create_support} == ${True}    Should Be True      ${validate_json_result}
     \	Create Json Representation
     \	Add Into Json Representation    ${RESOURCE_TYPE}        ${NON_DISCOVERABLE_RESOURCE_TYPE}
     \	Add Into Json Representation    ${HREF}		 ${resource_href}${CREATED_NON_DIS_HREF}
     \	Add Into Json Representation    ${DISCOVERABLE}	0
     \	${payload}      Get Json Representation
-    \    ${msgid}    Generate Message Id
-    \    ${token}    Generate Token
-    \	${dut2_response}        Send Put Request        ${UNICAST}      ${COAP}    ${msgid}    ${token} 	${resource_ip}	  ${${resource_port}}     ${resource_href}        ${CONFIRMABLE}  ${payload}
+    \   ${msgid}    Generate Message Id
+    \   ${token}    Generate Token
+    \	${dut2_response}    Send Put Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}    ${resource_ip}    ${${resource_port}}    ${resource_href}    ${CONFIRMABLE}    ${payload}
     \	Should Not Be Empty             ${dut2_response}
     \	${dut2_response_code}   Get Response Code       ${dut2_response}
-    \	Should Be Equal 	${COAP_RESPONSE_CODE_CREATED}   ${dut2_response_code}
-    \	${dut2_response_json}	Get Response Json       ${dut2_response}
+    \	Run Keyword if    ${create_support} == ${True}    Should Be Equal 	${COAP_RESPONSE_CODE_CREATED}   ${dut2_response_code}
+    \	Run Keyword if    ${create_support} == ${False}    Should Be Equal 	${COAP_RESPONSE_CODE_ERROR}   ${dut2_response_code}
+    \	${dut2_response_json}	Run Keyword if    ${create_support} == ${True}    Get Response Json       ${dut2_response}
     \	@{dut2_response_href}	Get Json Value          ${HREF}         ${dut2_response_json}
-    \	Should Be Equal		@{dut2_response_href}[0]		${resource_href}${CREATED_NON_DIS_HREF}
-    \    ${msgid}    Generate Message Id
-    \    ${token}    Generate Token
-    \   ${dut1_response}            Discover Resource Using Unicast         ${UNICAST}      ${COAP}    ${msgid}    ${token}      ${resource_ip}   ${${resource_port}}     ${OIC_CORE_RESOURCE_DEFAULT_URI}        ${NON_CONFIRMABLE}
-    \   Should Not Contain         ${dut1_response}	${resource_href}${CREATED_NON_DIS_HREF}
-    \   Should Be True      ${validate_json_result}
+    \	Run Keyword if    ${create_support} == ${True}    Should Be Equal		@{dut2_response_href}[0]		${resource_href}${CREATED_NON_DIS_HREF}
+    \   ${msgid}    Run Keyword if    ${create_support} == ${True}    Generate Message Id
+    \   ${token}    Run Keyword if    ${create_support} == ${True}    Generate Token
+    \   ${dut1_response}            Run Keyword if    ${create_support} == ${True}    Discover Resource Using Unicast         ${UNICAST}      ${COAP}    ${msgid}    ${token}      ${resource_ip}   ${${resource_port}}     ${OIC_CORE_RESOURCE_DEFAULT_URI}        ${NON_CONFIRMABLE}
+    \   Run Keyword if    ${create_support} == ${True}    Should Not Contain         ${dut1_response}	${resource_href}${CREATED_NON_DIS_HREF}
+    \   Run Keyword if    ${create_support} == ${True}    Should Be True      ${validate_json_result}
 #Post-Condition
-    \    ${msgid}    Generate Message Id
-    \    ${token}    Generate Token
-    \   ${dut2_response}        Send Delete Request             ${UNICAST}      ${COAP}    ${msgid}    ${token}     ${resource_ip}    ${${resource_port}}     ${resource_href}${CREATED_NON_DIS_HREF}             ${CONFIRMABLE}
-    \   Should Not Be Empty             ${dut2_response}
-    \   ${dut2_response_json}   Get Response Json       ${dut2_response}
-    \   ${validate_json_result}         Validate JSON Format    ${dut2_response_json}
-    \   Should Be True  ${validate_json_result}
-    \   ${dut2_response_code}   Get Response Code       ${dut2_response}
-    \   Should Be Equal         ${COAP_RESPONSE_CODE_DELETED}   ${dut2_response_code}
-    \    ${msgid}    Generate Message Id
-    \    ${token}    Generate Token
-    \   ${dut2_response}        Send Delete Request             ${UNICAST}      ${COAP}    ${msgid}    ${token}      ${resource_ip}  ${${resource_port}}     ${resource_href}${CREATED_DIS_HREF}            ${CONFIRMABLE}
-    \   Should Not Be Empty             ${dut2_response}
-    \   ${dut2_response_json}   Get Response Json       ${dut2_response}
-    \   ${validate_json_result}         Validate JSON Format    ${dut2_response_json}
-    \   Should Be True  ${validate_json_result}
-    \   ${dut2_response_code}   Get Response Code       ${dut2_response}
-    \   Should Be Equal         ${COAP_RESPONSE_CODE_DELETED}   ${dut2_response_code}
-
+    \   ${msgid}    Run Keyword if    ${create_support} == ${True}    Generate Message Id
+    \   ${token}    Run Keyword if    ${create_support} == ${True}    Generate Token
+    \   ${dut2_response}        Run Keyword if    ${create_support} == ${True}    Send Delete Request             ${UNICAST}      ${COAP}    ${msgid}    ${token}     ${resource_ip}    ${${resource_port}}     ${resource_href}${CREATED_NON_DIS_HREF}             ${CONFIRMABLE}
+    \   Run Keyword if    ${create_support} == ${True}    Should Not Be Empty             ${dut2_response}
+    \   ${dut2_response_json}   Run Keyword if    ${create_support} == ${True}    Get Response Json       ${dut2_response}
+    \   ${validate_json_result}         Run Keyword if    ${create_support} == ${True}    Validate JSON Format    ${dut2_response_json}
+    \   Run Keyword if    ${create_support} == ${True}    Should Be True  ${validate_json_result}
+    \   ${dut2_response_code}   Run Keyword if    ${create_support} == ${True}    Get Response Code       ${dut2_response}
+    \   Run Keyword if    ${create_support} == ${True}    Should Be Equal         ${COAP_RESPONSE_CODE_DELETED}   ${dut2_response_code}
+    \    ${msgid}    Run Keyword if    ${create_support} == ${True}    Generate Message Id
+    \    ${token}    Run Keyword if    ${create_support} == ${True}    Generate Token
+    \   ${dut2_response}        Run Keyword if    ${create_support} == ${True}    Send Delete Request             ${UNICAST}      ${COAP}    ${msgid}    ${token}      ${resource_ip}  ${${resource_port}}     ${resource_href}${CREATED_DIS_HREF}            ${CONFIRMABLE}
+    \   Run Keyword if    ${create_support} == ${True}    Should Not Be Empty             ${dut2_response}
+    \   ${dut2_response_json}   Run Keyword if    ${create_support} == ${True}    Get Response Json       ${dut2_response}
+    \   ${validate_json_result}         Run Keyword if    ${create_support} == ${True}    Validate JSON Format    ${dut2_response_json}
+    \   Run Keyword if    ${create_support} == ${True}    Should Be True  ${validate_json_result}
+    \   ${dut2_response_code}   Run Keyword if    ${create_support} == ${True}    Get Response Code       ${dut2_response}
+    \   Run Keyword if    ${create_support} == ${True}    Should Be Equal         ${COAP_RESPONSE_CODE_DELETED}   ${dut2_response_code}
     Release DUT information     ${DUT1_ID}
 

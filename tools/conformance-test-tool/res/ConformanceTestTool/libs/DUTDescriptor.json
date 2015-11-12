@@ -7,6 +7,7 @@
             "if": "oic.if.baseline",
             "dis": "1",
             "obs": "1",
+            "CcCsRUcUpD": [true, true,true,true, true,true],
             "rep": [
 		{"key":"power","type":"bool","testdata":true,"accessmode":"R"},
                 {"key":"intensity","type":"int","testdata":1,"accessmode":"RW"},
@@ -21,6 +22,7 @@
             "if": "oic.if.baseline",
             "dis": "1",
             "obs": "0",
+            "CcCsRUcUpD": [true, true,true,true, true,true],
             "rep": [
                 {"key":"power","type":"bool","testdata":true,"accessmode":"RW"},
                 {"key":"intensity","type":"int","testdata":1,"accessmode":"RW"},
@@ -35,6 +37,7 @@
             "if": "oic.if.baseline",
             "dis": "0",
             "obs": "0",
+            "CcCsRUcUpD": [true, true,true,true, true,true],
             "rep": [
                 {"key":"power","type":"bool","testdata":true,"accessmode":"RW"},
                 {"key":"intensity","type":"int","testdata":1,"accessmode":"RW"},
@@ -49,6 +52,7 @@
             "if": "oic.if.baseline",
             "dis": "0",
             "obs": "0",
+            "CcCsRUcUpD": [true, true,true,true, true,true],
             "rep": [
                 {"key":"power","type":"bool","testdata":true,"accessmode":"RW"},
                 {"key":"intensity","type":"int","testdata":1,"accessmode":"RW"},

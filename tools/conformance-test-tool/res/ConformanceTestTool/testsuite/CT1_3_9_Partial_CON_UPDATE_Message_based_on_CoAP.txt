@@ -50,10 +50,11 @@ CT1.3.9 Partial CON UPDATE Message based on CoAP
     \   ${msgid}    Generate Message Id
     \   ${token}    Generate Token
     \	${dut2_response}	Send Post Request	${UNICAST}	${COAP}	${msgid}	${token}	${resource_ip}	${${resource_port}}	${resource_href}	${CONFIRMABLE}	${payload}
+    \	${update_support}    Is Crudn Operation Supported    ${resource_href}    ${PARTIAL_UPDATE}
     \	Should Not Be Empty		${dut2_response}
-    \	${dut2_response_json}	Get Response Json	${dut2_response}
-    \	${validate_json_result}	Validate JSON Format        ${dut2_response_json}
-    \	Should Be True	${validate_json_result}
+    \	${dut2_response_json}	Run Keyword if    ${update_support} == ${True}    Get Response Json	${dut2_response}
+    \	${validate_json_result}	Run Keyword if    ${update_support} == ${True}    Validate JSON Format        ${dut2_response_json}
+    \	Run Keyword if    ${update_support} == ${True}    Should Be True	${validate_json_result}
     \	${duty_response_type}	Get Response Type	${dut2_response}
     \	Should Be Equal	${duty_response_type}	${ACK}
     \	${dut2_response_token}   Get Response Token       ${dut2_response}
@@ -61,8 +62,9 @@ CT1.3.9 Partial CON UPDATE Message based on CoAP
     \	${dut2_response_msgid}   Get Response Msgid       ${dut2_response}
     \	Should Be Equal             ${dut2_response_msgid}    ${msgid}   
     \	${dut2_response_code}	Get Response Code       ${dut2_response}
-    \	Should Be Equal	${COAP_RESPONSE_CODE_UPDATED}	${dut2_response_code}
-    \	${dut2_payload}	Get Response Json	${dut2_response}
-    \	Check Modified Partial Representation Value     ${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}      ${dut2_payload}
+    \	Run Keyword if    ${update_support} == ${True}    Should Be Equal	${COAP_RESPONSE_CODE_UPDATED}	${dut2_response_code}
+    \	Run Keyword if    ${update_support} == ${False}    Should Be Equal	${COAP_RESPONSE_CODE_ERROR}	${dut2_response_code}
+    \	${dut2_payload}	Run Keyword if    ${update_support} == ${True}    Get Response Json	${dut2_response}
+    \	Run Keyword if    ${update_support} == ${True}    Check Modified Partial Representation Value     ${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}      ${dut2_payload}
     Release DUT information     ${DUT1_ID}
 

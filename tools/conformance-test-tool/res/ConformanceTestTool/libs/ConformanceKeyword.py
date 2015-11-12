@@ -31,6 +31,7 @@ from oic.ctt.provision import *
 from oic.ctt.devicecontroller import *
 from oic.ctt import *
 from oic.ctt.formatter import *
+import oic.ctt.DUTResource.CRUDNType as CRUDNType
 from robot.api import logger
 from robot.libraries.BuiltIn import BuiltIn
 import java.util.ArrayList as ArrayList
@@ -128,6 +129,7 @@ class ConformanceKeyword(object):
         self.request = OICRequestData()
         self.rep_key_list = ArrayList()
         self.ui = UserInterface()
+        self.control_client = ControlClient()
 
     # Documentation for a function
     # @brief print log to console
@@ -210,6 +212,22 @@ class ConformanceKeyword(object):
             return True
         else:
             return False
+
+## Security Relay Controller Keywords ##
+    def intialize_dtls_connection(self, relay_ip, relay_port, dut_ip, dut_port_secured, cipher_suite):
+		self.control_client.initDtls(relay_ip, relay_port, dut_ip, dut_port_secured, cipher_suite)
+
+    def terminate_dtls_connection(self):
+		self.control_client.terminateDtls()
+
+    def get_secured_port(self, dut_ip, dut_port):
+        response_message = self.send_get_request("UNICAST", COAP, self.generate_message_id(), self.generate_token(), dut_ip, dut_port, "/oic/res", False)
+        response_json = self.get_response_json(response_message)
+        secured_port = OICHelper.parseSecuredPort(response_json)
+        return secured_port
+
+## End of Security Relay Controller Keywords ##
+
 
 ## End of Device Managment Keywords ##
 
@@ -1435,4 +1453,27 @@ class ConformanceKeyword(object):
         file_name = file_name + time_stamp + ".pcapng"
         return file_name
     	
+    def is_crudn_operation_supported(self, href, key):
+        self.dutInformation = self.dut_information_manager.getDUTInformation(self.dut_id)
+        self.dutInformation.generateCRUDNState(href)
+        is_supported = False
+        if key == "COMPLETE_CREATE":
+            is_supported = self.dutInformation.getCRUDNState(href, CRUDNType.COMPLETE_CREATE)
+        elif key == "COMPLETE_CREATE":
+            is_supported = self.dutInformation.getCRUDNState(href, CRUDNType.SUBORDINATE_CREATE)
+        elif key == "RETRIEVE":
+            is_supported = self.dutInformation.getCRUDNState(href, CRUDNType.RETRIEVE)
+        elif key == "COMPLETE_UPDATE":
+            is_supported = self.dutInformation.getCRUDNState(href, CRUDNType.COMPLETE_UPDATE)
+        elif key == "PARTIAL_UPDATE":
+            is_supported = self.dutInformation.getCRUDNState(href, CRUDNType.PARTIAL_UPDATE)
+        elif key == "DELETE":
+            is_supported = self.dutInformation.getCRUDNState(href, CRUDNType.DELETE)
+        else:
+            is_supported = False
+        return is_supported
+
+    def update_representation(self):
+        "updates resource representation"
+        self.oic_resource_light.updateResourceRespresentation()
 

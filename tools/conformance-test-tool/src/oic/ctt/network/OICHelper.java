@@ -215,6 +215,14 @@ public class OICHelper {
         return sb.toString().substring(0, numchars);
     }
 
+    public static int parseSecuredPort(String payloadJson) {
+        int lastIndex = payloadJson.lastIndexOf("}}]}]");
+        int firstIndex = payloadJson.lastIndexOf("port\":")
+                + "port\":".length();
+
+        return Integer.parseInt(payloadJson.substring(firstIndex, lastIndex));
+    }
+
     /**
      * Generates a random Token of the given length
      * 

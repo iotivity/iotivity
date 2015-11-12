@@ -49,10 +49,11 @@ CT1.3.8 Complete NON UPDATE Message based on CoAP
     \   ${msgid}    Generate Message Id
     \   ${token}    Generate Token
     \	${dut2_response}	Send Put Request	${UNICAST}	${COAP}	${msgid}	${token}	${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
+    \	${update_support}    Is Crudn Operation Supported    ${resource_href}    ${COMPLETE_UPDATE}
     \	Should Not Be Empty		${dut2_response}
-    \	${dut2_response_json}	Get Response Json	${dut2_response}
-    \	${validate_json_result}	Validate JSON Format        ${dut2_response_json}
-    \	Should Be True	${validate_json_result}
+    \	${dut2_response_json}	Run Keyword if    ${update_support} == ${True}    Get Response Json	${dut2_response}
+    \	${validate_json_result}	Run Keyword if    ${update_support} == ${True}    Validate JSON Format        ${dut2_response_json}
+    \	Run Keyword if    ${update_support} == ${True}    Should Be True	${validate_json_result}
     \	${duty_response_type}	Get Response Type	${dut2_response}
     \	Should Be Equal	${duty_response_type}	${NON}
     \	${dut2_response_token}   Get Response Token       ${dut2_response}

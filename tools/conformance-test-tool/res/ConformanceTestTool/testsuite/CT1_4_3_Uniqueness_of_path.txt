@@ -42,10 +42,12 @@ CT1.4.3 Uniqueness of path
     \	${payload}      Get Json Representation
     \   ${msgid}    Generate Message Id
     \   ${token}    Generate Token
+    \	${create_support}    Is Crudn Operation Supported    ${resource_href}    ${COMPLETE_CREATE}
     \	${dut1_response}        Send Put Request        ${UNICAST}      ${COAP}    ${msgid}    ${token}    ${resource_ip}	  ${${resource_port}}     ${resource_href}        ${CONFIRMABLE}  ${payload}
     \	Should Not Be Empty             ${dut1_response}
     \	${dut1_response_code}   Get Response Code       ${dut1_response}
-    \	Should Be Equal 	${COAP_RESPONSE_CODE_CREATED}   ${dut1_response_code}
+    \	Run Keyword if    ${create_support} == ${True}    Should Be Equal 	${COAP_RESPONSE_CODE_CREATED}   ${dut1_response_code}
+    \	Run Keyword if    ${create_support} == ${False}    Should Be Equal 	${COAP_RESPONSE_CODE_ERROR}   ${dut1_response_code}
     \	${dut2_response}        Send Put Request        ${UNICAST}      ${COAP}    ${msgid}    ${token}    ${resource_ip}	  ${${resource_port}}     ${resource_href}        ${CONFIRMABLE}  ${payload}
     \	Should Not Be Empty             ${dut2_response}
     \	${dut2_response_code}   Get Response Code       ${dut2_response}

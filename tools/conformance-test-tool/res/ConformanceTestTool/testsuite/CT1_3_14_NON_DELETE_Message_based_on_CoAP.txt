@@ -40,16 +40,18 @@ CT1.3.14 NON DELETE Message based on CoAP
 #Test-Body
     \   ${msgid}    Generate Message Id
     \   ${token}    Generate Token
+    \	${delete_support}    Is Crudn Operation Supported    ${resource_href}    ${DELETE}
     \	${dut2_response}	Send Delete Request	${UNICAST}	${COAP}	${msgid}	${token}	${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}
     \	Should Not Be Empty		${dut2_response}
-    \	${dut2_response_json}	Get Response Json	${dut2_response}
-    \	${validate_json_result}	Validate JSON Format        ${dut2_response_json}
-    \	Should Be True	${validate_json_result}
+    \	${dut2_response_json}	Run Keyword if    ${delete_support} == ${True}    Get Response Json	${dut2_response}
+    \	${validate_json_result}    Run Keyword if    ${delete_support} == ${True}    Validate JSON Format        ${dut2_response_json}
+    \	Run Keyword if    ${delete_support} == ${True}    Should Be True	${validate_json_result}
     \	${dut2_response_token}   Get Response Token       ${dut2_response}
     \	Should Be Equal             ${dut2_response_token}    ${token}
     \	${dut2_response_msgid}   Get Response Msgid       ${dut2_response}
     \	Should Be Equal             ${dut2_response_msgid}    ${msgid}    
     \	${dut2_response_code}	Get Response Code       ${dut2_response}
-    \	Should Be Equal    ${COAP_RESPONSE_CODE_DELETED}	${dut2_response_code}
+    \	Run Keyword if    ${delete_support} == ${True}    Should Be Equal 	${COAP_RESPONSE_CODE_DELETED}   ${dut2_response_code}
+    \	Run Keyword if    ${delete_support} == ${False}    Should Be Equal 	${COAP_RESPONSE_CODE_ERROR}   ${dut2_response_code}
     Release DUT information     ${DUT1_ID}
 

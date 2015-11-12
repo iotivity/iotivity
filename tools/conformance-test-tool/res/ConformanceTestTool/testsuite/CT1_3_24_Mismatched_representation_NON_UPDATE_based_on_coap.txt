@@ -34,12 +34,14 @@ CT1.3.24 Mismatched representation NON UPDATE based on CoAP
     ${resource_ip}	${resource_port}	${resource_href}	Get IP Port And Uri		${RESOURCE_TYPE}=${dut1_resource_types[0]}
     @{dut1_resource_hrefs}      Get DUT Info Value      ${HREF}    ${DUT1_ID}   ${DISCOVERABLE}=1
     :FOR	${resource_href}	IN	@{dut1_resource_hrefs}
+    \   ${length}    Get Length Available Representation To Update    ${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}
     \	Create Json Representation
     \	Add Into Json Representation	${INVALID_KEY}	${INVALID_VALUE}
     \	${payload}	Get Json Representation
     \   ${msgid}    Generate Message Id
     \   ${token}    Generate Token
-    \	${dut2_response}	Send Post Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
+    \	${update_support}    Is Crudn Operation Supported    ${resource_href}    ${PARTIAL_UPDATE}
+    \	${dut2_response}	Run Keyword If    ${length} > 0 and ${update_support} == ${True}    Send Post Request	${UNICAST}	${COAP}    ${msgid}    ${token}    ${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
     \	Builtin.sleep	${${DEFAULT_WAIT_TIME}}
     \	${dut2_response_code}	Get Response Code	${dut2_response}
     \	Should Be Equal		${COAP_RESPONSE_CODE_ERROR}		${dut2_response_code}

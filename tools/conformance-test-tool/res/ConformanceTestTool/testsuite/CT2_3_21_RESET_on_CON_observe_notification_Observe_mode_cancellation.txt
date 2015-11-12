@@ -27,23 +27,26 @@ CT2_3_21_RESET_on_CON_observe_notification_Observe_mode_cancellation
     ####################################################
     Print Message    "Start NON DUT Client App..."
     Start Server
-    Print Message    \n-----------------Send Multicast Discovery Request from NON DUT App-----------------
+    Print Message    \n-----------------Send Multicast Discovery Request from CON DUT App-----------------
     Get Discovery Requests
     #Test-Body
     #####################################################
-    Print Message    \n-----------------Send Observe Resource Request from NON DUT App-----------------
+    Print Message    \n-----------------Send Observe Resource Request from CON DUT App-----------------
     ${request}    Get Request
     Should Not Be Empty		${request}
     ${observe_token}		Get Request Token		${request}
-    Print Message    \n-----------------Send POST (Partial Update) Request from NON DUT App-----------------
-    Get Request
+    Update Representation
+    Print Message    \n-----------------Reprpesentation of Server Resource is Updated-----------------
+    BuiltIn.Sleep	5s
     Clear Reset State
-    Print Message    \n-----------------Send Cancel Observe Resource Request from NON DUT App-----------------
+    Print Message    \n-----------------Send Cancel Observe Resource Request from CON DUT App-----------------
     BuiltIn.Sleep	10s
-    Print Message    \n-----------------Send POST (Partial Update) Request from NON DUT App-----------------
-    Get Request
-    Print Message    \n-----------------Send POST (Partial Update) Request Again from NON DUT App-----------------
-    Get Request
+    Update Representation
+    Print Message    \n-----------------Reprpesentation of Server Resource is Updated-----------------
+    BuiltIn.Sleep	2s
+    Update Representation
+    Print Message    \n-----------------Reprpesentation of Server Resource is Updated-----------------
+    BuiltIn.Sleep	5s
     ${is_reset}		Get Reset State
     Should Be True		${is_reset}
     ${reset_token}		Get Reset Token
