@@ -22,7 +22,7 @@
 #define SERVERBUILDER_REQUESTHANDLER_H
 
 #include <RCSResponse.h>
-#include <ResourceAttributesUtils.h>
+#include <RCSResourceAttributes.h>
 
 namespace OC
 {
@@ -47,23 +47,17 @@ namespace OIC
             typedef std::shared_ptr< RequestHandler > Pre;
 
             static constexpr int DEFAULT_ERROR_CODE = 200;
-            static constexpr OCEntityHandlerResult DEFAULT_RESULT = OC_EH_OK;
 
             RequestHandler();
 
             RequestHandler(const RequestHandler&) = delete;
             RequestHandler(RequestHandler&&) = default;
 
-            RequestHandler(const OCEntityHandlerResult& result, int errorCode);
+            RequestHandler(int errorCode);
 
-            RequestHandler(const RCSResourceAttributes&,
-                    const OCEntityHandlerResult& result = DEFAULT_RESULT,
-                    int errorCode = DEFAULT_ERROR_CODE);
+            RequestHandler(const RCSResourceAttributes&, int errorCode = DEFAULT_ERROR_CODE);
 
-            RequestHandler(RCSResourceAttributes&&,
-                    const OCEntityHandlerResult& result = DEFAULT_RESULT,
-                    int errorCode = DEFAULT_ERROR_CODE);
-
+            RequestHandler(RCSResourceAttributes&&, int errorCode = DEFAULT_ERROR_CODE);
 
             virtual ~RequestHandler() { };
 
@@ -75,6 +69,10 @@ namespace OIC
 
         class SetRequestHandler: public RequestHandler
         {
+        private:
+            typedef std::pair< std::string, RCSResourceAttributes::Value > AttrKeyValuePair;
+            typedef std::vector< AttrKeyValuePair > AttrKeyValuePairs;
+
         public:
             typedef std::shared_ptr< SetRequestHandler > Ptr;
 
@@ -83,15 +81,11 @@ namespace OIC
 
             SetRequestHandler();
 
-            SetRequestHandler(const OCEntityHandlerResult& result, int errorCode);
+            SetRequestHandler(int errorCode);
 
-            SetRequestHandler(const RCSResourceAttributes&,
-                    const OCEntityHandlerResult& result = DEFAULT_RESULT,
-                    int errorCode = DEFAULT_ERROR_CODE);
+            SetRequestHandler(const RCSResourceAttributes&, int errorCode = DEFAULT_ERROR_CODE);
 
-            SetRequestHandler(RCSResourceAttributes&&,
-                    const OCEntityHandlerResult& result = DEFAULT_RESULT,
-                    int errorCode = DEFAULT_ERROR_CODE);
+            SetRequestHandler(RCSResourceAttributes&&, int errorCode = DEFAULT_ERROR_CODE);
 
             AttrKeyValuePairs applyAcceptanceMethod(RCSSetResponse::AcceptanceMethod,
                     RCSResourceObject&, const RCSResourceAttributes&) const;

@@ -1,4 +1,0 @@
-com.samsung.ssmtester system::use_internet r
-
-system::use_internet com.samsung.ssmtester r
-

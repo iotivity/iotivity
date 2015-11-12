@@ -95,7 +95,7 @@ TEST_F(DataCacheTest, initializeDataCache_normalCaseObservable)
         OIC::Service::HeaderOptions hos;
         OIC::Service::RCSResourceAttributes attr;
         OIC::Service::ResponseStatement rep(attr);
-        int seq;
+        int seq = 0;
         callback(hos, rep, OC_STACK_OK, seq);
         return;
     }

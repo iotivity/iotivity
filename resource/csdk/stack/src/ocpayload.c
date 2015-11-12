@@ -27,6 +27,7 @@
 #include "ocstackinternal.h"
 #include "ocresource.h"
 #include "logger.h"
+#include "rdpayload.h"
 
 #define TAG "OCPayload"
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val);
@@ -59,6 +60,9 @@ void OCPayloadDestroy(OCPayload* payload)
         case PAYLOAD_TYPE_SECURITY:
             OCSecurityPayloadDestroy((OCSecurityPayload*)payload);
             break;
+        case PAYLOAD_TYPE_RD:
+           OCRDPayloadDestroy((OCRDPayload*)payload);
+           break;
         default:
             OC_LOG_V(ERROR, TAG, "Unsupported payload type in destroy: %d", payload->type);
             OICFree(payload);
@@ -118,6 +122,11 @@ static OCRepPayloadValue* OCRepPayloadFindValue(const OCRepPayload* payload, con
 
 static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source)
 {
+    if(!dest || !source)
+    {
+        return;
+    }
+
     size_t dimTotal = calcDimTotal(source->arr.dimensions);
     switch(source->arr.type)
     {
@@ -188,6 +197,10 @@ static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
     {
         OICFree(val->str);
     }
+    else if(val->type == OCREP_PROP_BYTE_STRING)
+    {
+        OICFree(val->ocByteStr.bytes);
+    }
     else if (val->type == OCREP_PROP_OBJECT)
     {
         OCRepPayloadDestroy(val->obj);
@@ -210,6 +223,13 @@ static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
                     OICFree(val->arr.strArray[i]);
                 }
                 OICFree(val->arr.strArray);
+                break;
+            case OCREP_PROP_BYTE_STRING:
+                for (size_t i = 0; i< dimTotal; ++i)
+                {
+                    OICFree(val->arr.ocByteStrArray[i].bytes);
+                }
+                OICFree(val->arr.ocByteStrArray);
                 break;
             case OCREP_PROP_OBJECT:
                 for(size_t i = 0; i< dimTotal;++i)
@@ -470,6 +490,9 @@ static bool OCRepPayloadSetProp(OCRepPayload* payload, const char* name,
         case OCREP_PROP_STRING:
                val->str = (char*)value;
                return val->str != NULL;
+        case OCREP_PROP_BYTE_STRING:
+               val->ocByteStr = *(OCByteString*)value;
+               break;
         case OCREP_PROP_NULL:
                return val != NULL;
         case OCREP_PROP_ARRAY:
@@ -553,6 +576,62 @@ bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, ch
     return *value != NULL;
 }
 
+bool OCRepPayloadSetPropByteString(OCRepPayload* payload, const char* name, OCByteString value)
+{
+    if (!value.bytes || !value.len)
+    {
+        return false;
+    }
+
+    OCByteString ocByteStr = {
+                    .bytes = (uint8_t*)OICMalloc(value.len * sizeof(uint8_t)),
+                    .len = value.len };
+
+    if(!ocByteStr.bytes)
+    {
+        return false;
+    }
+    memcpy(ocByteStr.bytes, value.bytes, ocByteStr.len);
+
+    bool b = OCRepPayloadSetPropByteStringAsOwner(payload, name, &ocByteStr);
+
+    if(!b)
+    {
+        OICFree(ocByteStr.bytes);
+    }
+    return b;
+}
+
+bool OCRepPayloadSetPropByteStringAsOwner(OCRepPayload* payload, const char* name, OCByteString* value)
+{
+    return OCRepPayloadSetProp(payload, name, value, OCREP_PROP_BYTE_STRING);
+}
+
+bool OCRepPayloadGetPropByteString(const OCRepPayload* payload, const char* name, OCByteString* value)
+{
+    OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
+
+    if (!val || val->type != OCREP_PROP_BYTE_STRING)
+    {
+        return false;
+    }
+
+    if (!value)
+    {
+        return false;
+    }
+
+    value->bytes = (uint8_t*)OICMalloc(val->ocByteStr.len * sizeof(uint8_t));
+    if (!value->bytes)
+    {
+        return false;
+    }
+    value->len = val->ocByteStr.len;
+    memcpy(value->bytes, val->ocByteStr.bytes, value->len);
+
+    return true;
+}
+
 bool OCRepPayloadSetPropBool(OCRepPayload* payload,
         const char* name, bool value)
 {
@@ -616,6 +695,123 @@ size_t calcDimTotal(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
     }
     return total;
 }
+
+
+bool OCRepPayloadSetByteStringArrayAsOwner(OCRepPayload* payload, const char* name,
+        OCByteString* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
+{
+    OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_ARRAY);
+
+    if (!val)
+    {
+        return false;
+    }
+
+    val->arr.type = OCREP_PROP_BYTE_STRING;
+    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
+    val->arr.ocByteStrArray = array;
+
+    return true;
+}
+
+bool OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char* name,
+        const OCByteString* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
+{
+    if (!array)
+    {
+        return NULL;
+    }
+
+    size_t dimTotal = calcDimTotal(dimensions);
+    if (dimTotal == 0)
+    {
+        return false;
+    }
+
+    OCByteString* newArray = (OCByteString*)OICCalloc(dimTotal, sizeof(OCByteString));
+
+    if (!newArray)
+    {
+        return false;
+    }
+
+    for (size_t i = 0; i < dimTotal; ++i)
+    {
+        newArray[i].bytes = (uint8_t*)OICMalloc(array[i].len * sizeof(uint8_t));
+        if (NULL == newArray[i].bytes)
+        {
+            for (size_t j = 0; j < i; ++j)
+            {
+                OICFree(newArray[j].bytes);
+            }
+
+            OICFree(newArray);
+            return false;
+        }
+        newArray[i].len = array[i].len;
+        memcpy(newArray[i].bytes, array[i].bytes, newArray[i].len);
+    }
+
+    bool b = OCRepPayloadSetByteStringArrayAsOwner(payload, name, newArray, dimensions);
+    if (!b)
+    {
+        for (size_t i = 0; i < dimTotal; ++i)
+        {
+            OICFree(newArray[i].bytes);
+        }
+
+        OICFree(newArray);
+    }
+    return b;
+}
+
+bool OCRepPayloadGetByteStringArray(const OCRepPayload* payload, const char* name,
+        OCByteString** array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
+{
+    OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
+
+    if (!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_BYTE_STRING
+            || !val->arr.ocByteStrArray)
+    {
+        return false;
+    }
+
+    size_t dimTotal = calcDimTotal(val->arr.dimensions);
+    if (dimTotal == 0)
+    {
+        return false;
+    }
+
+    *array = (OCByteString*)OICCalloc(dimTotal, sizeof(OCByteString));
+    if (!*array)
+    {
+        return false;
+    }
+
+    for (size_t i = 0; i < dimTotal; ++i)
+    {
+        OCByteString* tmp = &(*array)[i];
+        tmp->bytes = (uint8_t*)OICMalloc(val->arr.ocByteStrArray[i].len * sizeof(uint8_t));
+        if (NULL == tmp->bytes)
+        {
+            for (size_t j = 0; j < i; ++j)
+            {
+                OCByteString* tmp = &(*array)[j];
+                OICFree(tmp->bytes);
+            }
+            OICFree(*array);
+            *array = NULL;
+
+            return false;
+        }
+        tmp->len = val->arr.ocByteStrArray[i].len;
+        memcpy(tmp->bytes, val->arr.ocByteStrArray[i].bytes, tmp->len);
+    }
+
+    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
+    return true;
+}
+
 
 bool OCRepPayloadSetIntArrayAsOwner(OCRepPayload* payload, const char* name,
         int64_t* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
@@ -1223,7 +1419,7 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
 
         OCStringLL* cur = pl->interfaces;
         ifPtr = ifPtr->next;
-        while(ifPtr)
+        while(ifPtr && cur)
         {
             cur->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
             if(!cur->next)
@@ -1253,6 +1449,104 @@ void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource
         uint16_t port)
 {
     OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, port));
+}
+
+bool OCResourcePayloadAddResourceType(OCResourcePayload* payload, const char* resourceType)
+{
+    if (!resourceType)
+    {
+        return false;
+    }
+
+    char* dup = OICStrdup(resourceType);
+
+    if (!dup)
+    {
+        return false;
+    }
+
+    if (!payload->types)
+    {
+        payload->types = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+
+        if (!payload->types)
+        {
+            OICFree(dup);
+            return false;
+        }
+
+        payload->types->value = dup;
+        return true;
+    }
+
+    else
+    {
+        OCStringLL* temp = payload->types;
+
+        while(temp->next)
+        {
+            temp = temp->next;
+        }
+
+        temp->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+        if (!temp->next)
+        {
+            OICFree(dup);
+            return false;
+        }
+
+        temp->next->value = dup;
+        return true;
+    }
+}
+
+bool OCResourcePayloadAddInterface(OCResourcePayload* payload, const char* interface)
+{
+    if (!interface)
+    {
+        return false;
+    }
+
+    char* dup = OICStrdup(interface);
+
+    if (!dup)
+    {
+        return false;
+    }
+
+    if (!payload->interfaces)
+    {
+        payload->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+
+        if (!payload->interfaces)
+        {
+            OICFree(dup);
+            return false;
+        }
+
+        payload->interfaces->value = dup;
+        return true;
+    }
+
+    else
+    {
+        OCStringLL* temp = payload->interfaces;
+
+        while(temp->next)
+        {
+            temp = temp->next;
+        }
+
+        temp->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+        if (!temp->next)
+        {
+            OICFree(dup);
+            return false;
+        }
+
+        temp->next->value = dup;
+        return true;
+    }
 }
 
 void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res)
@@ -1369,6 +1663,11 @@ void OCDevicePayloadDestroy(OCDevicePayload* payload)
 
 static void OCCopyPlatformInfo(const OCPlatformInfo* platformInfo, OCPlatformPayload* target)
 {
+    if(!platformInfo || !target)
+    {
+        return;
+    }
+
     target->info.platformID = OICStrdup(platformInfo->platformID);
     target->info.manufacturerName = OICStrdup(platformInfo->manufacturerName);
     target->info.manufacturerUrl = OICStrdup(platformInfo->manufacturerUrl);

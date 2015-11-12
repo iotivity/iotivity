@@ -239,7 +239,7 @@ static OCEntityHandlerResult HandleSVCGetRequest (const OCEntityHandlerRequest *
 
     OICFree(jsonStr);
 
-    OC_LOG_V (INFO, TAG, "%s RetVal %d", __func__ , ehRet);
+    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -274,7 +274,7 @@ static OCEntityHandlerResult HandleSVCPostRequest (const OCEntityHandlerRequest 
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
-    OC_LOG_V (INFO, TAG, "%s RetVal %d", __func__ , ehRet);
+    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -343,7 +343,7 @@ OCStackResult InitSVCResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    OC_LOG_V (INFO, TAG, "Begin %s ", __func__ );
+    OC_LOG_V (DEBUG, TAG, "Begin %s ", __func__ );
 
     // Read SVC resource from PS
     char* jsonSVRDatabase = GetSVRDatabase();
@@ -363,7 +363,7 @@ OCStackResult InitSVCResource()
         DeInitSVCResource();
     }
 
-    OC_LOG_V (INFO, TAG, "%s RetVal %d", __func__ , ret);
+    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ret);
     return ret;
 }
 

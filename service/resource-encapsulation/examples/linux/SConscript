@@ -27,44 +27,46 @@ Import('env')
 lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 
-ResourceClient_env = lib_env.Clone()
-ResourceServer_env = lib_env.Clone()
+sample_env = lib_env.Clone()
 
-######################################################################
-# ##### Resource Client #####
-######################################################################
-
-ResourceClient_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
-ResourceClient_env.AppendUnique(LIBS = ['rcs_client', 'rcs_common','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread'])
-ResourceClient_env.AppendUnique(CPPPATH = ['../../include'])
-ResourceClient_env.AppendUnique(CPPPATH = ['../../src/resourceBroker/include'])
-ResourceClient_env.AppendUnique(CPPPATH = ['../../src/resourceCache/include'])
-ResourceClient_env.AppendUnique(CPPPATH = ['../../src/common/primitiveResource/include'])
-
-######################################################################
-# ##### Resource Server #####
-######################################################################
-
-ResourceServer_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
-ResourceServer_env.AppendUnique(LIBS = ['rcs_server', 'rcs_common','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread'])
-ResourceServer_env.AppendUnique(CPPPATH = ['../../include'])
-ResourceServer_env.AppendUnique(CPPPATH = ['../../src/common/primitiveResource/include'])
-ResourceServer_env.AppendUnique(CPPPATH = ['../../src/serverBuilder/include'])
+sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
+sample_env.AppendUnique(LIBS = [
+    'rcs_common',
+    'oc', 
+    'octbstack', 
+    'oc_logger', 
+    'connectivity_abstraction', 
+    'coap', 
+    'pthread'
+    ])
+sample_env.AppendUnique(CPPPATH = ['../../include'])
 
 if env.get('SECURED') == '1':
-    ResourceClient_env.AppendUnique(LIBS = ['tinydtls'])
-    ResourceServer_env.AppendUnique(LIBS = ['tinydtls'])
+    sample_env.AppendUnique(LIBS = ['tinydtls'])
 
-if 'rt' in ResourceClient_env.get('LIBS'):
-    ResourceClient_env.Append(LIBS = ['rt'])
-if 'rt' in ResourceServer_env.get('LIBS'):
-    ResourceServer_env.Append(LIBS = ['rt'])
+if 'rt' in sample_env.get('LIBS'):
+    sample_env.Append(LIBS = ['rt'])
 
-####################################################################
-# Source files and Targets
-####################################################################
-sampleResourceClient = ResourceClient_env.Program('sampleResourceClient', 'SampleResourceClient.cpp')
-sampleResourceServer = ResourceServer_env.Program('sampleResourceServer', 'SampleResourceServer.cpp')
+######################################################################
+# ##### Client #####
+######################################################################
+client_env = sample_env.Clone()
+client_env.AppendUnique(LIBS = 'rcs_client')
 
-ResourceClient_env.InstallTarget(sampleResourceClient, 'sampleResourceClient')
-ResourceServer_env.InstallTarget(sampleResourceServer, 'sampleResourceServer')
+sampleResourceClient = client_env.Program('sampleResourceClient', 'SampleResourceClient.cpp')
+nestedAttributesClient = client_env.Program('nestedAttributesClient', 'NestedAttributesClient.cpp')
+
+client_env.InstallTarget(sampleResourceClient, 'sampleResourceClient')
+client_env.InstallTarget(nestedAttributesClient, 'nestedAttributesClient')
+
+######################################################################
+# ##### Server #####
+######################################################################
+server_env = sample_env.Clone()
+server_env.AppendUnique(LIBS = 'rcs_server')
+
+sampleResourceServer = server_env.Program('sampleResourceServer', 'SampleResourceServer.cpp')
+nestedAttributesServer = server_env.Program('nestedAttributesServer', 'NestedAttributesServer.cpp')
+
+server_env.InstallTarget(sampleResourceServer, 'sampleResourceServer')
+server_env.InstallTarget(nestedAttributesServer, 'nestedAttributesServer')

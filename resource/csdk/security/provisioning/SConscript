@@ -22,6 +22,7 @@
 Import('env')
 
 provisioning_env = env.Clone()
+root_dir = './../../../../'
 
 ######################################################################
 # Build flags
@@ -45,7 +46,12 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../connectivity/lib/libcoap-4.1.1',
 		'../../connectivity/api',
 		'../include',
-		'../include/internal'
+		'../include/internal',
+		'../../../../extlibs/sqlite3',
+ 		'../../../../extlibs/tinydtls/ecc',
+ 		'../../../../extlibs/tinydtls/sha2',
+ 		'../../../../extlibs/asn1cert',
+		'ck_manager/include'
 		])
 target_os = env.get('TARGET_OS')
 provisioning_env.AppendUnique(CFLAGS = ['-D__WITH_DTLS__'])
@@ -63,6 +69,9 @@ provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 provisioning_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
 
 provisioning_env.AppendUnique(LIBS = ['tinydtls'])
+
+if env.get('DTLS_WITH_X509') == '1':
+	provisioning_env.AppendUnique(LIBS = ['CKManger'])
 
 provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
 
@@ -86,11 +95,16 @@ provisioning_src = [
 	'src/secureresourceprovider.c',
 	'src/ocprovisioningmanager.c',
 	'src/oxmjustworks.c',
-	'src/oxmrandompin.c' ]
+	'src/oxmrandompin.c',
+	'src/provisioningdatabasemanager.c',
+	root_dir+'/extlibs/sqlite3/sqlite3.c' ]
 provisioningserver = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
 
 provisioning_env.InstallTarget(provisioningserver, 'libocpmapi')
 provisioning_env.UserInstallTargetLib(provisioningserver, 'libocpmapi')
+
+if env.get('DTLS_WITH_X509') == '1':
+	SConscript('ck_manager/SConscript')
 
 if target_os in ['linux']:
 	SConscript('sample/SConscript')

@@ -59,17 +59,25 @@ extern "C"
 #define MAX_LOG_V_BUFFER_SIZE (256)
 
 // Log levels
-#ifndef __TIZEN__
+#ifdef __TIZEN__
+typedef enum {
+    DEBUG = DLOG_DEBUG,
+    INFO = DLOG_INFO,
+    WARNING = DLOG_WARN,
+    ERROR = DLOG_ERROR,
+    FATAL = DLOG_ERROR
+} LogLevel;
+#else
 typedef enum
 {
     DEBUG = 0, INFO, WARNING, ERROR, FATAL
 } LogLevel;
-#else
-#define DEBUG DLOG_DEBUG
-#define INFO DLOG_INFO
-#define WARNING DLOG_WARN
-#define ERROR DLOG_ERROR
-#define FATAL DLOG_ERROR
+#endif
+
+#ifdef __TIZEN__
+#define OC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, level, tag, mes)
+#define OC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt,##args)
+#define OC_LOG_BUFFER(level, tag, buffer, bufferSize)
 #endif
 
 #ifdef __TIZEN__
@@ -113,7 +121,11 @@ void OICLog(LogLevel level, const char *tag, const char *logStr);
  * @param tag    - Module name
  * @param format - variadic log string
  */
-void OICLogv(LogLevel level, const char *tag, const char *format, ...);
+void OICLogv(LogLevel level, const char *tag, const char *format, ...)
+#if defined(__GNUC__)
+    __attribute__ ((format(printf, 3, 4)))
+#endif
+;
 
 /**
  * Output the contents of the specified buffer (in hex) with the specified priority level.
@@ -160,7 +172,11 @@ void OICLogBuffer(LogLevel level, const char *tag, const uint8_t *buffer, uint16
  * @param format - variadic log string
  */
 void OICLogv(LogLevel level, PROGMEM const char *tag, const int16_t lineNum,
-               PROGMEM const char *format, ...);
+               PROGMEM const char *format, ...)
+#if defined(__GNUC__)
+    __attribute__ ((format(printf, 4, 5)))
+#endif
+;
 #endif
 
 #ifdef TB_LOG

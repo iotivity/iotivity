@@ -26,13 +26,13 @@
 
 #include "logger.h"
 #include "ocstack.h"
-#include "common.h"
+#include "escommon.h"
 
 //-----------------------------------------------------------------------------
 // Defines
 //-----------------------------------------------------------------------------
 #define EASY_SETUP_DEFAULT_CONTEXT_VALUE 0x99
-#define TAG "EASY_SETUP_PROVISIONING"
+
 
 //-----------------------------------------------------------------------------
 // Typedefs

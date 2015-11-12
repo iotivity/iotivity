@@ -42,6 +42,12 @@
 // Length of the IP address decimal notation string
 #define IPNAMESIZE (16)
 
+/** Multicast IP address.*/
+#define IPv4_MULTICAST      "224.0.1.187"
+
+/** Multicast Port.*/
+#define IPv4_MULTICAST_PORT 5683
+
 CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
                                         const bool forceStart, int32_t *serverFD);
 static CAResult_t CAArduinoRecvData(int32_t sockFd);
@@ -102,6 +108,8 @@ CAResult_t CAIPStartUnicastServer(const char *localAddress, uint16_t *port,
     g_unicastSocket = serverFD;
     CAIPSetUnicastSocket(g_unicastSocket);
     CAIPSetUnicastPort(g_unicastPort);
+    caglobals.ip.u4.port =  *port;
+
     OIC_LOG_V(DEBUG, TAG, "g_unicastPort: %u", g_unicastPort);
     OIC_LOG_V(DEBUG, TAG, "g_unicastSocket: %d", g_unicastSocket);
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -127,6 +135,7 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
 
     g_multicastSocket = serverFD;
     g_isMulticastServerStarted = true;
+
     OIC_LOG_V(DEBUG, TAG, "gMulticastPort: %d", multicastPort);
     OIC_LOG_V(DEBUG, TAG, "g_multicastSocket: %d", g_multicastSocket);
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -140,9 +149,10 @@ CAResult_t CAIPStartServer()
     CAResult_t ret = CAIPStartUnicastServer("0.0.0.0", &unicastPort, false);
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG_V(DEBUG, TAG, "Start unicast serv failed[%d]", ret);
+        OIC_LOG_V(ERROR, TAG, "Start unicast server failed[%d]", ret);
+        return ret;
     }
-    ret = CAIPStartMulticastServer("0.0.0.0", "224.0.1.187", 5683);
+    ret = CAIPStartMulticastServer("0.0.0.0", IPv4_MULTICAST, IPv4_MULTICAST_PORT);
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(ERROR, TAG, "Start multicast failed[%d]", ret);
@@ -155,6 +165,7 @@ CAResult_t CAIPStopUnicastServer()
     OIC_LOG(DEBUG, TAG, "IN");
     close(g_unicastSocket);
     g_unicastSocket = 0;
+    caglobals.ip.u4.port =  0;
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -164,6 +175,30 @@ CAResult_t CAIPStopMulticastServer()
     OIC_LOG(DEBUG, TAG, "IN");
     close(g_multicastSocket);
     g_multicastSocket = 0;
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAIPStartListenServer()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    CAResult_t ret = CAIPStartMulticastServer("0.0.0.0", IPv4_MULTICAST, IPv4_MULTICAST_PORT);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "Start multicast failed[%d]", ret);
+    }
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAIPStopListenServer()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    CAResult_t ret = CAIPStopMulticastServer();
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "Stop multicast failed[%d]", ret);
+    }
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -327,12 +362,17 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     for (uint32_t i = 0, j = 0; i < len; i++)
     {
         CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+        if(!ifitem)
+        {
+            continue;
+        }
+        unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
+        snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
 
-        OICStrcpy(eps[j].addr, CA_INTERFACE_NAME_SIZE, ifitem->name);
         eps[j].flags = CA_IPV4;
         eps[j].adapter = CA_ADAPTER_IP;
         eps[j].interface = 0;
-        eps[j].port = 0;
+        eps[j].port = caglobals.ip.u4.port;
         j++;
     }
 

@@ -18,12 +18,23 @@
  *
  ******************************************************************/
 
-#ifndef __RECLIENT_H__
-#define __RECLIENT_H__
+#ifndef RECLIENT_H__
+#define RECLIENT_H__
+
+#include <string>
 
 typedef void(*ClientMenuHandler)();
 typedef int ReturnValue;
 
-void *showGroupAPIs(void *data);
+const std::string TEMPERATURE_URI = "/a/TempSensor";
+const std::string LIGHT_URI = "/a/light";
+const std::string TEMPERATURE_RT = "oic.r.temperaturesensor";
+const std::string LIGHT_RT = "oic.r.light";
+const std::string TEMPERATURE_AK = "Temperature";
+const std::string LIGHT_AK = "Brightness";
 
-#endif // __RECLIENT_H__
+void client_cb(void *data);
+
+void *showClientAPIs(void *data);
+
+#endif // RECLIENT_H__

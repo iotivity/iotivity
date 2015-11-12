@@ -27,8 +27,12 @@
 
 #include "prov_adapter.h"
 
+#define ES_PROV_ADAP_TAG "ES_PROVISIONING_ADAPTER"
+
 //Use ipv4addr for both InitDiscovery and InitDeviceDiscovery
 char ipv4addr[IPV4_ADDR_SIZE] = {0};
+
+static const char * UNICAST_PROVISIONING_QUERY = "coap://%s:%d/oic/res?rt=oic.r.prov";
 
 volatile static OCProvisioningStatusCB cbData = NULL;
 
@@ -39,10 +43,10 @@ OCStackResult InitProvProcess() {
 
     if (InitProvisioningHandler() == OC_STACK_OK) {
         result = OC_STACK_OK;
-        OIC_LOG(DEBUG, TAG, "InitProvisioningHandler returned Success");
+        OIC_LOG(DEBUG, ES_PROV_ADAP_TAG, "InitProvisioningHandler returned Success");
     } else {
         result = OC_STACK_ERROR;
-        OIC_LOG_V(ERROR, TAG, "InitProvisioningHandler returned error = %s",
+        OIC_LOG_V(ERROR, ES_PROV_ADAP_TAG, "InitProvisioningHandler returned error = %d",
                   result);
     }
 
@@ -53,8 +57,7 @@ OCStackResult ResetProvProcess() {
     return TerminateProvisioningHandler();
 }
 
-OCStackResult RegisterCallback(
-        OCProvisioningStatusCB provisioningStatusCallback) {
+OCStackResult RegisterCallback(OCProvisioningStatusCB provisioningStatusCallback) {
     OCStackResult result = OC_STACK_OK;
 
     if (provisioningStatusCallback != NULL) {
@@ -62,7 +65,7 @@ OCStackResult RegisterCallback(
     }
     else {
         result = OC_STACK_ERROR;
-        OIC_LOG(ERROR, TAG, "provisioningStatusCallback is NULL");
+        OIC_LOG(ERROR, ES_PROV_ADAP_TAG, "provisioningStatusCallback is NULL");
     }
 
     return result;
@@ -77,20 +80,16 @@ void UnRegisterCallback() {
 OCStackResult StartProvisioning(const EnrolleeNWProvInfo_t *netInfo) {
 
     char findQuery[64] = {0};
-
-    if (netInfo->connType == CT_IP_USE_V4) {
-        snprintf(findQuery, sizeof(findQuery), UNICAST_PROVISIONING_QUERY,
-                 netInfo->netAddressInfo.WIFI.ipAddress, IP_PORT);
-    }
+    snprintf(findQuery, sizeof(findQuery) - 1, UNICAST_PROVISIONING_QUERY,
+             netInfo->netAddressInfo.WIFI.ipAddress, IP_PORT);
 
     return StartProvisioningProcess(netInfo, cbData, findQuery);
 }
 
-OCStackResult StopProvisioning(OCConnectivityType connectivityType) {
+OCStackResult StopProvisioning(OCConnectivityType /*connectivityType*/) {
     OCStackResult result = OC_STACK_OK;
 
     StopProvisioningProcess();
 
     return result;
 }
-

@@ -39,17 +39,23 @@ import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 
-import base.iotivity.org.examples.message.IMessageLogger;
-
 /**
  * DeviceResource
  * <p/>
  * Creates a device resource and performs action based on client requests
  */
-public class DeviceResource extends Resource implements IMessageLogger {
-    private Context mContext;
-
+public class DeviceResource extends Resource implements OcPlatform.EntityHandler {
+    public static final String DEVICE_URI = "/device";
+    public static final String RESOURCE_TYPENAME = "intel.fridge";
+    public static final String API_VERSION = "v.1.0";
+    public static final String CLIENT_TOKEN = "21ae43gf";
+    public static final String DEVICE_NAME = "device_name";
     private static String TAG = "DeviceResource: ";
+    public static final int SUCCESS = 200;
+    public static final int API_VERSION_KEY = 2048;
+    public static final int CLIENT_VERSION_KEY = 3000;
+
+    private Context mContext;
 
     /**
      * constructor
@@ -58,51 +64,20 @@ public class DeviceResource extends Resource implements IMessageLogger {
      */
     DeviceResource(Context context) {
         mContext = context;
-
-        // eventHandler for register deviceResource
-        OcPlatform.EntityHandler eh = new OcPlatform.EntityHandler() {
-            @Override
-            public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest) {
-                // this is where the main logic of DeviceResource is handled
-                return entityHandler(ocResourceRequest);
-            }
-        };
-
-        try {
-            logMessage(TAG + "RegisterDeviceResource " + StringConstants.DEVICE_URI + " : " +
-                    StringConstants.RESOURCE_TYPENAME + " : " + StringConstants.RESOURCE_INTERFACE);
-            mResourceHandle = OcPlatform.registerResource(StringConstants.DEVICE_URI,
-                    StringConstants.RESOURCE_TYPENAME, StringConstants.RESOURCE_INTERFACE,
-                    eh, EnumSet.of(ResourceProperty.DISCOVERABLE));
-        } catch (OcException e) {
-            logMessage(TAG + "registerResource error: " + e.getMessage());
-            Log.e(TAG, e.getMessage());
-        }
+        registerDeviceResource();
     }
 
-    /**
-     * update current state of device
-     *
-     * @return device representation
-     */
-    private void updateRepresentationValues() {
+    private void registerDeviceResource() {
         try {
-            mRepresentation.setValue(StringConstants.DEVICE_NAME,
-                    "Intel Powered 2 door, 1 light refrigerator");
+            logMessage("RegisterDeviceResource " + DEVICE_URI + " : " + RESOURCE_TYPENAME);
+            mResourceHandle = OcPlatform.registerResource(
+                    DEVICE_URI,
+                    RESOURCE_TYPENAME,
+                    OcPlatform.DEFAULT_INTERFACE,
+                    this,
+                    EnumSet.of(ResourceProperty.DISCOVERABLE));
         } catch (OcException e) {
-            Log.e(TAG, e.getMessage());
-        }
-    }
-
-    /**
-     * unregister the resource
-     */
-    private void deleteDeviceResource() {
-        try {
-            OcPlatform.unregisterResource(mResourceHandle);
-            logMessage(TAG + "Unregister DeviceResource successful");
-        } catch (OcException e) {
-            logMessage(TAG + e.getMessage());
+            logMessage(TAG + "Failed to register DeviceResource");
             Log.e(TAG, e.getMessage());
         }
     }
@@ -110,77 +85,81 @@ public class DeviceResource extends Resource implements IMessageLogger {
     /**
      * this is the main method which handles different incoming requests appropriately.
      *
-     * @param request OcResourceRequest from the client
-     * @return EntityHandlerResult depending on whether the request was handled successfully or not
+     * @param ocResourceRequest OcResourceRequest from the client
+     * @return EntityHandlerResult indicates whether the request was handled successfully or not
      */
-    private EntityHandlerResult entityHandler(OcResourceRequest request) {
+    @Override
+    public synchronized EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest) {
         EntityHandlerResult result = EntityHandlerResult.ERROR;
-        if (null != request) {
-            List<OcHeaderOption> headerOptions = request.getHeaderOptions();
+        if (null != ocResourceRequest) {
+            List<OcHeaderOption> headerOptions = ocResourceRequest.getHeaderOptions();
             String clientAPIVersion = "";
             String clientToken = "";
-
             // search for header options map and look for API version and client token
             for (OcHeaderOption headerOption : headerOptions) {
                 int optionId = headerOption.getOptionId();
-                if (StringConstants.API_VERSION_KEY == optionId) {
+                if (API_VERSION_KEY == optionId) {
                     clientAPIVersion = headerOption.getOptionData();
                     logMessage(TAG + " Client API Version: " + clientAPIVersion);
-                } else if (StringConstants.CLIENT_VERSION_KEY == optionId) {
+                } else if (CLIENT_VERSION_KEY == optionId) {
                     clientToken = headerOption.getOptionData();
                     logMessage(TAG + " Client Token: " + clientToken);
                 }
             }
-
-            if (clientAPIVersion.equals(StringConstants.API_VERSION) &&
-                    clientToken.equals(StringConstants.CLIENT_TOKEN)) {
+            if (clientAPIVersion.equals(API_VERSION) &&
+                    clientToken.equals(CLIENT_TOKEN)) {
                 List<OcHeaderOption> serverHeaderOptions = new LinkedList<>();
-                OcHeaderOption apiVersion = new OcHeaderOption(StringConstants.API_VERSION_KEY,
-                        StringConstants.API_VERSION);
+                OcHeaderOption apiVersion = new OcHeaderOption(API_VERSION_KEY,
+                        API_VERSION);
                 serverHeaderOptions.add(apiVersion);
                 try {
-                    if (request.getRequestHandlerFlagSet().contains(RequestHandlerFlag.REQUEST)) {
+                    if (ocResourceRequest.getRequestHandlerFlagSet().contains(RequestHandlerFlag.REQUEST)) {
                         OcResourceResponse response = new OcResourceResponse();
-                        response.setRequestHandle(request.getRequestHandle());
-                        response.setResourceHandle(request.getResourceHandle());
+                        response.setRequestHandle(ocResourceRequest.getRequestHandle());
+                        response.setResourceHandle(ocResourceRequest.getResourceHandle());
                         response.setHeaderOptions(serverHeaderOptions);
 
-                        switch (request.getRequestType()) {
+                        switch (ocResourceRequest.getRequestType()) {
                             case GET:
-                                response.setErrorCode(StringConstants.OK);
+                                response.setErrorCode(SUCCESS);
                                 response.setResponseResult(EntityHandlerResult.OK);
                                 updateRepresentationValues();
                                 response.setResourceRepresentation(mRepresentation);
                                 OcPlatform.sendResponse(response);
                                 break;
-                            case DELETE:
-                                deleteDeviceResource();
-                                response.setErrorCode(StringConstants.OK);
-                                response.setResponseResult(EntityHandlerResult.OK);
-                                break;
                         }
                         result = EntityHandlerResult.OK;
                     }
                 } catch (OcException e) {
-                    logMessage(TAG + e.getMessage());
+                    logMessage("Error in handleEntity of DeviceResource");
                     Log.e(TAG, e.getMessage());
                 }
             }
         }
+        logMessage("-----------------------------------------------------");
         return result;
     }
 
-    @Override
-    public void logMessage(String msg) {
-        logMsg(msg);
-        if (StringConstants.ENABLE_PRINTING) {
-            Log.i(TAG, msg);
+    /**
+     * update state of device
+     *
+     * @return device representation
+     */
+    private void updateRepresentationValues() {
+        try {
+            mRepresentation.setValue(DEVICE_NAME,
+                    "Intel Powered 3 door, 1 light refrigerator");
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
         }
     }
 
-    public void logMsg(final String text) {
-        Intent intent = new Intent(StringConstants.INTENT);
-        intent.putExtra("message", text);
+    //******************************************************************************
+    // End of the OIC specific code
+    //******************************************************************************
+    public void logMessage(String msg) {
+        Intent intent = new Intent(FridgeServer.INTENT);
+        intent.putExtra("message", msg);
         mContext.sendBroadcast(intent);
     }
 }

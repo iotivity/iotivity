@@ -8,6 +8,7 @@ target_os = env.get('TARGET_OS')
 transport = env.get('TARGET_TRANSPORT')
 build_sample = env.get('BUILD_SAMPLE')
 with_ra = env.get('WITH_RA')
+with_tcp = env.get('WITH_TCP')
 
 print "Given Transport is %s" % transport
 print "Given OS is %s" % target_os
@@ -24,6 +25,8 @@ if target_os in targets_disallow_multitransport:
 if 'ALL' in transport:
 	if with_ra == True:
 			env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
+	if with_tcp == True:
+			env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER'])
 	if target_os == 'linux':
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','LE_ADAPTER'])
 	elif target_os == 'tizen':
@@ -56,6 +59,16 @@ else:
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER'])
 
+	if with_tcp == True:
+		if target_os in['linux']:
+			env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER'])
+			print "CA Transport is TCP"
+		else:
+			print "CA Transport TCP is not supported "
+			Exit(1)
+	else:
+		env.AppendUnique(CPPDEFINES = ['NO_TCP_ADAPTER'])
+
 env.SConscript('./src/SConscript')
 
 if build_sample == 'ON':
@@ -64,7 +77,7 @@ if build_sample == 'ON':
 
 		if target_os == 'darwin':
 			target_path = 'linux'
-		#env.SConscript('./samples/' + target_path + '/SConscript')
+		env.SConscript('./samples/' + target_path + '/SConscript')
 
 	elif target_os in ['android']:
 		env.SConscript('./samples/' + target_os + '/SConscript')

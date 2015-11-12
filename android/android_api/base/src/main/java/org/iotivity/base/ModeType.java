@@ -22,10 +22,26 @@
 
 package org.iotivity.base;
 
+/**
+ * Host Mode of Operation.
+ */
 public enum ModeType {
+    /**
+     * Server mode.
+     */
     SERVER(0),
+    /**
+     * Client mode.
+     */
     CLIENT(1),
-    CLIENT_SERVER(2),;
+    /**
+     * Client/Server mode.
+     */
+    CLIENT_SERVER(2),
+    /**
+     * Client/Server mode along with Routing capabilities.
+     */
+    GATEWAY(3),;
 
     private int value;
 

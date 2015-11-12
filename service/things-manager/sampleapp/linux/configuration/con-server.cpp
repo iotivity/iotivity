@@ -51,7 +51,6 @@ std::string defaultLocationName;
 std::string defaultRegion;
 std::string defaultCurrency;
 
-//static ThingsManager* g_thingsmanager;
 static ThingsConfiguration* g_thingsConf;
 
 // Forward declaring the entityHandler (Configuration)
@@ -218,7 +217,7 @@ OCEntityHandlerResult entityHandlerForResource(std::shared_ptr< OCResourceReques
 }
 
 // callback handler on GET request
-void onBootstrap(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onBootstrap(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -239,7 +238,7 @@ void onBootstrap(const HeaderOptions& headerOptions, const OCRepresentation& rep
     defaultRegion = rep.getValue< std::string >("r");
     defaultCurrency = rep.getValue< std::string >("c");
 
-    std::cout << "\tSystemTime : " << defaultDeviceName << std::endl;
+    std::cout << "\tDeviceName : " << defaultDeviceName << std::endl;
     std::cout << "\tLocation : " << defaultLocation << std::endl;
     std::cout << "\tLocationName : " << defaultLocationName << std::endl;
     std::cout << "\tCurrency : " << defaultCurrency << std::endl;
@@ -257,7 +256,6 @@ int main()
 
     OCPlatform::Configure(cfg);
     g_thingsConf = new ThingsConfiguration();
-    //g_thingsDiag = new ThingsMaintenance();
     //**************************************************************
 
     if (getuid() != 0)
@@ -283,7 +281,7 @@ int main()
 
             std::cout << endl << endl << "(0) Quit" << std::endl;
             std::cout << "(1) Bootstrap" << std::endl;
-            std::cout << "(2) Create Configuration Resources" << std::endl;
+            std::cout << "(2) Create Configuration/Maintenance Resources" << std::endl;
 
             cin >> g_Steps;
 

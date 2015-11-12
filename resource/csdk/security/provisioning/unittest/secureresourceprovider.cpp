@@ -70,3 +70,41 @@ TEST(SRPProvisionCredentialsTest, InvalidKeySize)
                                                                 0, &pDev1, &pDev2,
                                                                 &provisioningCB));
 }
+
+TEST(SRPUnlinkDevicesTest, NullDevice1)
+{
+    OCProvisionDev_t dev2;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, NULL, &dev2, provisioningCB));
+}
+
+TEST(SRPUnlinkDevicesTest, NullDevice2)
+{
+    OCProvisionDev_t dev1;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, &dev1, NULL, provisioningCB));
+}
+
+TEST(SRPUnlinkDevicesTest, NullCallback)
+{
+    OCProvisionDev_t dev1;
+    OCProvisionDev_t dev2;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, &dev1, &dev2, NULL));
+}
+
+TEST(SRPRemoveDeviceTest, NullTargetDevice)
+{
+    unsigned short waitTime = 10 ;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPRemoveDevice(NULL, waitTime, NULL, provisioningCB));
+}
+
+TEST(SRPRemoveDeviceTest, NullResultCallback)
+{
+    unsigned short waitTime = 10;
+    OCProvisionDev_t dev1;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPRemoveDevice(NULL, waitTime, &dev1, NULL));
+}
+
+TEST(SRPRemoveDeviceTest, ZeroWaitTime)
+{
+    OCProvisionDev_t dev1;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPRemoveDevice(NULL, 0, &dev1, NULL));
+}

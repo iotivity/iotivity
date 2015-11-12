@@ -89,32 +89,7 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
 
 
 #ifndef ARDUINO
-#ifdef __TIZEN__
-
-int OCGetTizenLogLevel(LogLevel level)
-{
-    switch(level)
-    {
-        case DEBUG:
-            return DLOG_DEBUG;
-        case INFO:
-            return DLOG_INFO;
-        case WARNING:
-            return DLOG_WARN;
-        case ERROR:
-            return DLOG_ERROR;
-        case FATAL:
-            /*
-             * Temp fix to resolve DLOG_FATAL runtime crash in tizen binary.
-             * TODO: Revert back to DLOG_FATAL once logging issue is fixed in
-             * Tizen binary.
-             */
-            return DLOG_ERROR;
-    }
-    return DLOG_DEBUG;
-}
-
-#else
+#ifndef __TIZEN__
 void OCLogConfig(oc_log_ctx_t *ctx) {
     logCtx = ctx;
 }
@@ -157,7 +132,7 @@ static void osalGetTime(int *min,int *sec, int *ms)
     if (min && sec && ms)
     {
 #if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0
-        struct timespec when = {0};
+        struct timespec when = { .tv_sec = 0 };
         clockid_t clk = CLOCK_REALTIME;
 #ifdef CLOCK_REALTIME_COARSE
         clk = CLOCK_REALTIME_COARSE;
@@ -202,7 +177,6 @@ void OCLog(LogLevel level, const char * tag, const char * logStr) {
     }
     else
     {
-
         int min = 0;
         int sec = 0;
         int ms = 0;

@@ -19,6 +19,7 @@
  ******************************************************************/
 package com.tm.sample;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,13 +31,12 @@ import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
+import org.iotivity.base.ResourceProperty;
 import org.iotivity.base.OcResource.OnObserveListener;
 import org.iotivity.base.OcResourceHandle;
 import org.iotivity.service.tm.Action;
 import org.iotivity.service.tm.ActionSet;
 import org.iotivity.service.tm.Capability;
-import org.iotivity.service.tm.GroupSynchronization;
-import org.iotivity.service.tm.GroupSynchronization.*;
 import org.iotivity.service.tm.OCStackResult;
 import org.iotivity.service.tm.GroupManager;
 import org.iotivity.service.tm.GroupManager.*;
@@ -56,9 +56,9 @@ public class GroupClient {
     public String                      logMessage;
 
     private final String               groupResourceType   = "b.collection";
+    private final String               groupResourceURI    = "/b/collection";
 
     private final GroupManager         groupManagerObj;
-    private final GroupSynchronization groupSynObj;
     private final ActionListener       actionListener;
     private final ObserveListener      observeListener;
     private OcResource                 groupResource;
@@ -67,6 +67,7 @@ public class GroupClient {
     private static GroupApiActivity    groupApiActivityObj = null;
     public static Vector<String>       lights              = new Vector<String>();
     public static Vector<String>       bookmarks           = new Vector<String>();
+    public static boolean              groupFound          = false;
 
     /**
      * Listener for receiving observe notifications.
@@ -91,42 +92,7 @@ public class GroupClient {
     }
 
     /**
-     * Listener for receiving groups discovered in network.
-     */
-    private class FindGroupListener implements IFindGroupListener {
-        @Override
-        public void onGroupFindCallback(OcResource resource) {
-            Log.i(LOG_TAG, "onGroupFindCallback invoked");
-            if (resource != null) {
-                String uri = resource.getUri();
-                if (uri.equals("/b/collection") == true) {
-                    String hostAddress = resource.getHost();
-                    Log.d(LOG_TAG, "onGroupFindCallback URI : " + uri);
-                    Log.d(LOG_TAG, "onGroupFindCallback HOST : " + hostAddress);
-
-                    groupResource = resource;
-                    Message msg = Message.obtain();
-                    msg.what = 0;
-                    groupApiActivityObj.getHandler().sendMessage(msg);
-
-                    logMessage = "onGroupFind" + "\n";
-                    logMessage += "URI : " + uri + "\n";
-                    logMessage += "Host :" + hostAddress;
-                    GroupApiActivity.setMessageLog(logMessage);
-                    msg = Message.obtain();
-                    msg.what = 1;
-                    groupApiActivityObj.getHandler().sendMessage(msg);
-                } else {
-                    Log.d(LOG_TAG, "onGroupFindCallback URI : " + uri);
-                }
-            } else {
-                Log.i(LOG_TAG, "Resource is NULL");
-            }
-        }
-    };
-
-    /**
-     * Listener for receiving Light resource and Observe resources discovered in
+     * Listener for receiving group resource , Light resource and Observe resources discovered in
      * network.
      */
     private class FindCadidateResourceListener implements
@@ -151,8 +117,31 @@ public class GroupClient {
                     msg = Message.obtain();
                     msg.what = 1;
                     groupApiActivityObj.getHandler().sendMessage(msg);
+                    if (resourceURI.equals("/b/collection") == true) {
 
-                    if (resourceURI.equals("/a/light") == true) {
+                        if(!groupFound)
+                        {
+                            Log.d(LOG_TAG, "Group Found URI : " + resourceURI);
+                            Log.d(LOG_TAG, "Group Foundk HOST : " + hostAddress);
+
+                            groupResource = ocResource;
+                            groupFound = true;
+                            Message msg = Message.obtain();
+                            msg.what = 0;
+                            groupApiActivityObj.getHandler().sendMessage(msg);
+
+                            logMessage = "onGroupFind" + "\n";
+                            logMessage += "URI : " + resourceURI + "\n";
+                            logMessage += "Host :" + hostAddress;
+                            GroupApiActivity.setMessageLog(logMessage);
+                            msg = Message.obtain();
+                            msg.what = 1;
+                            groupApiActivityObj.getHandler().sendMessage(msg);
+                        }else{
+                            Log.d(LOG_TAG, "Group Already found ");
+                        }
+
+                    }else if (resourceURI.equals("/a/light") == true) {
                         if (lights.contains((hostAddress + resourceURI)) == false) {
                             lights.add((hostAddress + resourceURI));
                             if (groupApiActivityObj != null) {
@@ -167,13 +156,19 @@ public class GroupClient {
                                 groupApiActivityObj.getHandler().sendMessage(
                                         msg);
                                 try {
-                                    foundLightHandle = groupManagerObj
-                                            .bindResourceToGroup(ocResource,
-                                                    groupResourceHandle);
-
+                                    foundLightHandle = OcPlatform.registerResource(ocResource);
+                                    Log.d(LOG_TAG, "Platform registeration done");
                                 } catch (OcException e) {
-                                    Log.i(LOG_TAG,
-                                            "bindResourceToGroup Exception!");
+                                    // TODO Auto-generated catch block
+                                    e.printStackTrace();
+                                }
+
+                                try {
+                                    OcPlatform.bindResource(groupResourceHandle, foundLightHandle);
+                                    Log.d(LOG_TAG, "Bind resource done");
+                                } catch (OcException e) {
+                                    // TODO Auto-generated catch block
+                                    e.printStackTrace();
                                 }
                             }
                         } else {
@@ -204,17 +199,13 @@ public class GroupClient {
     };
 
     private final FindCadidateResourceListener findCandidateResourceListener;
-    private final FindGroupListener            findGroupListener;
 
     public GroupClient() {
         groupManagerObj = new GroupManager();
-        groupSynObj = GroupSynchronization.getInstance();
-        findGroupListener = new FindGroupListener();
         actionListener = new ActionListener();
         observeListener = new ObserveListener();
         findCandidateResourceListener = new FindCadidateResourceListener();
 
-        groupSynObj.setGroupListener(findGroupListener);
         groupManagerObj
                 .setFindCandidateResourceListener(findCandidateResourceListener);
         groupManagerObj.setActionListener(actionListener);
@@ -227,25 +218,30 @@ public class GroupClient {
      * resources.
      */
     public void createGroup() {
-        Map<String, OcResourceHandle> groupList = new HashMap<String, OcResourceHandle>();
-
-        // creating group of type b.collection
-        // OcPlatform.registerResource(ocResource);
-        OCStackResult result = groupSynObj.createGroup(groupResourceType);
-        if ((OCStackResult.OC_STACK_OK != result)) {
-            Log.e(LOG_TAG, "createGroup returned error: " + result.name());
-            return;
-        } else {
-            Log.e(LOG_TAG, "createGroup success: " + result.name());
+        groupFound = false;
+        try {
+            groupResourceHandle = OcPlatform.registerResource(
+                    groupResourceURI,
+                    groupResourceType,
+                    OcPlatform.BATCH_INTERFACE, null, EnumSet.of(
+                            ResourceProperty.DISCOVERABLE));
+        } catch (OcException e) {
+            Log.e(LOG_TAG, "go exception");
+            Log.e(LOG_TAG, "RegisterResource error. " + e.getMessage());
         }
 
-        // getting the Created group Handle
-        groupList = groupSynObj.getGroupList();
-        if (groupList.containsKey(groupResourceType)) {
-            groupResourceHandle = groupList.get(groupResourceType);
-        } else {
-            Log.e(LOG_TAG, "group does not contain groupResourceType: "
-                    + result.name());
+        try {
+            OcPlatform.bindInterfaceToResource(groupResourceHandle, OcPlatform.GROUP_INTERFACE);
+        } catch (OcException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        try {
+            OcPlatform.bindInterfaceToResource(groupResourceHandle, OcPlatform.DEFAULT_INTERFACE);
+        } catch (OcException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 
@@ -255,12 +251,12 @@ public class GroupClient {
     public void findGroup() {
         Log.d(LOG_TAG, "finding group");
 
-        Vector<String> resourceTypes = new Vector<String>();
-        resourceTypes.add(groupResourceType);
-        OCStackResult result = groupSynObj.findGroup(resourceTypes);
+        Vector<String> types = new Vector<String>();
+        types.add(groupResourceType);
+        OCStackResult result = groupManagerObj.findCandidateResources(types, 5);
         if (OCStackResult.OC_STACK_OK != result) {
-            Log.e(LOG_TAG, "findGroup returned error: " + result.name());
-            return;
+            Log.e(LOG_TAG,
+                    "findCandidateResources returned error: " + result.name());
         }
 
         logMessage = "API RESULT : " + result.toString();
@@ -689,33 +685,6 @@ public class GroupClient {
             resource.observe(ObserveType.OBSERVE, queryMap, observeListener);
         } catch (OcException e) {
             e.printStackTrace();
-        }
-    }
-
-    /**
-     * This method is for unbinding and unregister all the found resources and
-     * groups.
-     */
-    public void leaveGroup() {
-        groupSynObj.setGroupListener(null);
-        groupManagerObj.setFindCandidateResourceListener(null);
-        groupManagerObj.setActionListener(null);
-
-        if (null != foundLightHandle) {
-            try {
-                OcPlatform.unregisterResource(foundLightHandle);
-            } catch (OcException e) {
-                e.printStackTrace();
-                Log.i(LOG_TAG, "Resource Unregister Exception");
-            }
-        } else {
-            Log.i(LOG_TAG, "foundLightHandle is NULL");
-        }
-        if (null != groupResourceHandle) {
-
-            groupSynObj.deleteGroup(groupResourceType);
-        } else {
-            Log.i(LOG_TAG, "groupResourceHandle is NULL");
         }
     }
 

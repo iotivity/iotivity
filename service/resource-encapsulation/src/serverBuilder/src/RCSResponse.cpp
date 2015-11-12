@@ -30,16 +30,13 @@ namespace OIC
     {
         RCSGetResponse RCSGetResponse::defaultAction()
         {
-            static RCSGetResponse defaultRes { std::make_shared< RequestHandler >() };
-
-            return defaultRes;
+            return std::make_shared< RequestHandler >();
         }
 
-        RCSGetResponse RCSGetResponse::create(const OCEntityHandlerResult& result,
-                int errorCode)
+        RCSGetResponse RCSGetResponse::create(int errorCode)
         {
             return RCSGetResponse {
-                std::make_shared< RequestHandler >( result, errorCode) };
+                std::make_shared< RequestHandler >( errorCode) };
         }
 
         RCSGetResponse RCSGetResponse::create(const RCSResourceAttributes& attrs)
@@ -47,11 +44,9 @@ namespace OIC
             return RCSGetResponse { std::make_shared< RequestHandler >(attrs) };
         }
 
-        RCSGetResponse RCSGetResponse::create(const RCSResourceAttributes& attrs,
-                const OCEntityHandlerResult& result, int errorCode)
+        RCSGetResponse RCSGetResponse::create(const RCSResourceAttributes& attrs, int errorCode)
         {
-            return RCSGetResponse {
-                std::make_shared< RequestHandler >(attrs, result, errorCode) };
+            return RCSGetResponse { std::make_shared< RequestHandler >(attrs, errorCode) };
         }
 
         RCSGetResponse RCSGetResponse::create(RCSResourceAttributes&& result)
@@ -60,11 +55,10 @@ namespace OIC
                 std::make_shared< RequestHandler >(std::move(result)) };
         }
 
-        RCSGetResponse RCSGetResponse::create(RCSResourceAttributes&& attrs,
-                const OCEntityHandlerResult& result, int errorCode)
+        RCSGetResponse RCSGetResponse::create(RCSResourceAttributes&& attrs, int errorCode)
         {
             return RCSGetResponse { std::make_shared< RequestHandler >(
-                std::move(attrs), result, errorCode) };
+                std::move(attrs), errorCode) };
         }
 
         RCSGetResponse::RCSGetResponse(std::shared_ptr< RequestHandler >&& handler) :
@@ -89,10 +83,9 @@ namespace OIC
             return defaultAction().setAcceptanceMethod(AcceptanceMethod::ACCEPT);
         }
 
-        RCSSetResponse RCSSetResponse::accept(const OCEntityHandlerResult& result,
-                int errorCode)
+        RCSSetResponse RCSSetResponse::accept(int errorCode)
         {
-            return create(result, errorCode).setAcceptanceMethod(AcceptanceMethod::ACCEPT);
+            return create(errorCode).setAcceptanceMethod(AcceptanceMethod::ACCEPT);
         }
 
         RCSSetResponse RCSSetResponse::ignore()
@@ -100,16 +93,14 @@ namespace OIC
             return defaultAction().setAcceptanceMethod(AcceptanceMethod::IGNORE);
         }
 
-        RCSSetResponse RCSSetResponse::ignore(const OCEntityHandlerResult& result,
-                int errorCode)
+        RCSSetResponse RCSSetResponse::ignore(int errorCode)
         {
-            return create(result, errorCode).setAcceptanceMethod(AcceptanceMethod::IGNORE);
+            return create(errorCode).setAcceptanceMethod(AcceptanceMethod::IGNORE);
         }
 
-        RCSSetResponse RCSSetResponse::create(const OCEntityHandlerResult& result,
-                int errorCode)
+        RCSSetResponse RCSSetResponse::create(int errorCode)
         {
-            return std::make_shared< SetRequestHandler >(result, errorCode);
+            return std::make_shared< SetRequestHandler >(errorCode);
         }
 
         RCSSetResponse RCSSetResponse::create(const RCSResourceAttributes& attrs)
@@ -117,10 +108,9 @@ namespace OIC
             return std::make_shared< SetRequestHandler >(attrs);
         }
 
-        RCSSetResponse RCSSetResponse::create(const RCSResourceAttributes& attrs,
-                const OCEntityHandlerResult& result, int errorCode)
+        RCSSetResponse RCSSetResponse::create(const RCSResourceAttributes& attrs, int errorCode)
         {
-            return std::make_shared< SetRequestHandler >(attrs, result, errorCode);
+            return std::make_shared< SetRequestHandler >(attrs, errorCode);
         }
 
         RCSSetResponse RCSSetResponse::create(RCSResourceAttributes&& result)
@@ -128,10 +118,9 @@ namespace OIC
             return std::make_shared< SetRequestHandler >(std::move(result));
         }
 
-        RCSSetResponse RCSSetResponse::create(RCSResourceAttributes&& attrs,
-                const OCEntityHandlerResult& result, int errorCode)
+        RCSSetResponse RCSSetResponse::create(RCSResourceAttributes&& attrs, int errorCode)
         {
-            return std::make_shared< SetRequestHandler >(std::move(attrs), result, errorCode);
+            return std::make_shared< SetRequestHandler >(std::move(attrs), errorCode);
         }
 
         RCSSetResponse::RCSSetResponse(std::shared_ptr< SetRequestHandler >&& handler) :

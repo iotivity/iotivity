@@ -34,7 +34,7 @@ class JniListenerManager
 public:
     T* addListener(JNIEnv* env, jobject jListener, JniOcResource* owner)
     {
-        T *onEventListener = NULL;
+        T *onEventListener = nullptr;
 
         m_mapMutex.lock();
 

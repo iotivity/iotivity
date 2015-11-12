@@ -25,8 +25,8 @@
 // For POSIX.1-2001 base specification,
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
-#include "ocresource.h"
 #include <string.h>
+#include "ocresource.h"
 #include "ocresourcehandler.h"
 #include "ocobserve.h"
 #include "occollection.h"
@@ -35,10 +35,18 @@
 #include "logger.h"
 #include "cJSON.h"
 #include "ocpayload.h"
-
+#include "secureresourcemanager.h"
 #include "cacommon.h"
 #include "cainterface.h"
+#include "rdpayload.h"
 
+#ifdef WITH_RD
+#include "rd_server.h"
+#endif
+
+#ifdef ROUTING_GATEWAY
+#include "routingmanager.h"
+#endif
 
 /// Module Name
 #define TAG "ocresource"
@@ -163,6 +171,12 @@ static OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
     {
         return OC_RESOURCE_TYPES_URI;
     }
+#ifdef ROUTING_GATEWAY
+    else if (0 == strcmp(uriInRequest, OC_RSRVD_GATEWAY_URI))
+    {
+        return OC_GATEWAY_URI;
+    }
+#endif
 #ifdef WITH_PRESENCE
     else if (strcmp(uriInRequest, OC_RSRVD_PRESENCE_URI) == 0)
     {
@@ -274,6 +288,27 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
     return OC_STACK_OK;
 }
 
+OCStackResult BuildVirtualCollectionResourceResponse(const OCResourceCollectionPayload *resourcePtr,
+        OCDiscoveryPayload *payload, OCDevAddr *devAddr)
+{
+    if (!resourcePtr || !payload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (resourcePtr->tags && (resourcePtr->tags->bitmap & OC_SECURE))
+    {
+       if (GetSecurePortInfo(devAddr, &resourcePtr->tags->port) != OC_STACK_OK)
+       {
+           OC_LOG(ERROR, TAG, "Failed setting secure port.");
+       }
+    }
+    if (resourcePtr->tags && !resourcePtr->tags->baseURI)
+    {
+        resourcePtr->tags->baseURI = OICStrdup(devAddr->addr);
+    }
+    OCDiscoveryCollectionPayloadAddResource(payload, resourcePtr->tags, resourcePtr->setLinks);
+    return OC_STACK_OK;
+}
 
 uint8_t IsCollectionResource (OCResource *resource)
 {
@@ -340,8 +375,7 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
     }
     else
     {
-        OCResource *resourcePtr = NULL;
-        resourcePtr = FindResourceByUri((const char*)request->resourceUrl);
+        OCResource *resourcePtr = FindResourceByUri((const char*)request->resourceUrl);
         *resource = resourcePtr;
         if (!resourcePtr)
         {
@@ -533,6 +567,23 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
     return OCDoResponse(&response);
 }
 
+#ifdef WITH_RD
+static OCStackResult checkResourceExistsAtRD(const char *interfaceType, const char *resourceType,
+    OCResourceCollectionPayload **repPayload)
+{
+    if (OCRDCheckPublishedResource(interfaceType, resourceType, repPayload) == OC_STACK_OK)
+    {
+        return OC_STACK_OK;
+    }
+    else
+    {
+        OC_LOG_V(ERROR, TAG, "The resource type or interface type doe not exist \
+                             on the resource directory");
+    }
+    return OC_STACK_ERROR;
+}
+#endif
+
 static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource* resource)
 {
     if (!request || !resource)
@@ -564,17 +615,33 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
             if(payload)
             {
+                bool foundResourceAtRD = false;
                 for(;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                 {
-                    if(includeThisResourceInResponse(resource, filterOne, filterTwo))
+#ifdef WITH_RD
+                    if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
+                    {
+                        OCResourceCollectionPayload *repPayload;
+                        discoveryResult = checkResourceExistsAtRD(filterOne, filterTwo, &repPayload);
+                        if (discoveryResult != OC_STACK_OK)
+                        {
+                             break;
+                        }
+                        discoveryResult = BuildVirtualCollectionResourceResponse(repPayload,
+                                    (OCDiscoveryPayload*)payload,
+                                    &request->devAddr);
+                        foundResourceAtRD = true;
+                    }
+#endif
+                    if(!foundResourceAtRD && includeThisResourceInResponse(resource, filterOne, filterTwo))
                     {
                         discoveryResult = BuildVirtualResourceResponse(resource,
                                 (OCDiscoveryPayload*)payload,
                                 &request->devAddr);
                     }
                 }
-                // Set discoveryResult appropriately if no 'valid' resources are available.
-                if (((OCDiscoveryPayload*)payload)->resources == NULL)
+                // Set discoveryResult appropriately if no 'valid' resources are available
+                if (((OCDiscoveryPayload*)payload)->resources == NULL && !foundResourceAtRD)
                 {
                     discoveryResult = OC_STACK_NO_RESOURCE;
                 }
@@ -625,6 +692,15 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             discoveryResult = OC_STACK_OK;
         }
     }
+#ifdef ROUTING_GATEWAY
+    else if (OC_GATEWAY_URI == virtualUriInRequest)
+    {
+        // Received request for a gateway
+        OC_LOG(INFO, TAG, "Request is for Gateway Virtual Request");
+        discoveryResult = RMHandleGatewayRequest(request, resource);
+
+    }
+#endif
 
     /**
      * Step 2: Send the discovery response
@@ -640,7 +716,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
      *   request is unicast, it should send an error(RESOURCE_NOT_FOUND - 404) response.
      */
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     if ((virtualUriInRequest == OC_PRESENCE) &&
         (resource->resourceProperties & OC_ACTIVE))
     {
@@ -649,6 +725,10 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
     else
     #endif
+#ifdef ROUTING_GATEWAY
+    // Gateway uses the RMHandleGatewayRequest to respond to the request.
+    if (OC_GATEWAY != virtualUriInRequest)
+#endif
     {
         if(discoveryResult == OC_STACK_OK)
         {
@@ -692,6 +772,7 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
                                         request->method,
                                         &request->devAddr,
                                         (OCResourceHandle) NULL, request->query,
+                                        PAYLOAD_TYPE_REPRESENTATION,
                                         request->payload,
                                         request->payloadSize,
                                         request->numRcvdVendorSpecificHeaderOptions,
@@ -736,6 +817,18 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     OCEntityHandlerRequest ehRequest = {0};
 
     OC_LOG(INFO, TAG, "Entering HandleResourceWithEntityHandler");
+    OCPayloadType type = PAYLOAD_TYPE_REPRESENTATION;
+    // check the security resource
+    if (request && request->resourceUrl && SRMIsSecurityResourceURI(request->resourceUrl))
+    {
+        type = PAYLOAD_TYPE_SECURITY;
+
+    }
+
+    if (request && strcmp(request->resourceUrl, OC_RSRVD_RD_URI) == 0)
+    {
+        type = PAYLOAD_TYPE_RD;
+    }
 
     result = FormOCEntityHandlerRequest(&ehRequest,
                                         (OCRequestHandle)request,
@@ -743,6 +836,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
                                         &request->devAddr,
                                         (OCResourceHandle)resource,
                                         request->query,
+                                        type,
                                         request->payload,
                                         request->payloadSize,
                                         request->numRcvdVendorSpecificHeaderOptions,
@@ -760,13 +854,31 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     {
         OC_LOG(INFO, TAG, "Observation registration requested");
 
+        ResourceObserver *obs = GetObserverUsingToken (request->requestToken,
+                                    request->tokenLength);
+
+        if (obs)
+        {
+            OC_LOG (INFO, TAG, "Observer with this token already present");
+            OC_LOG (INFO, TAG, "Possibly re-transmitted CON OBS request");
+            OC_LOG (INFO, TAG, "Not adding observer. Not responding to client");
+            OC_LOG (INFO, TAG, "The first request for this token is already ACKED.");
+
+            // server requests are usually free'd when the response is sent out
+            // for the request in ocserverrequest.c : HandleSingleResponse()
+            // Since we are making an early return and not responding, the server request
+            // needs to be deleted.
+            FindAndDeleteServerRequest (request);
+            return OC_STACK_OK;
+        }
+
         result = GenerateObserverId(&ehRequest.obsInfo.obsId);
         VERIFY_SUCCESS(result, OC_STACK_OK);
 
         result = AddObserver ((const char*)(request->resourceUrl),
                 (const char *)(request->query),
                 ehRequest.obsInfo.obsId, request->requestToken, request->tokenLength,
-                resource, request->qos,
+                resource, request->qos, request->acceptFormat,
                 &request->devAddr);
 
         if(result == OC_STACK_OK)
@@ -858,6 +970,7 @@ HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
                                         &request->devAddr,
                                         (OCResourceHandle)resource,
                                         request->query,
+                                        PAYLOAD_TYPE_REPRESENTATION,
                                         request->payload,
                                         request->payloadSize,
                                         request->numRcvdVendorSpecificHeaderOptions,
@@ -1008,7 +1121,7 @@ OCStackResult SavePlatformInfo(OCPlatformInfo info)
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Platform info saved.");
+        OC_LOG(INFO, TAG, "Platform info saved.");
     }
 
     return res;
@@ -1055,8 +1168,7 @@ OCStackResult SaveDeviceInfo(OCDeviceInfo info)
     OC_LOG(INFO, TAG, "Device initialized successfully.");
     return OC_STACK_OK;
 
-    exit:
-        DeleteDeviceInfo();
-        return res;
-
+exit:
+    DeleteDeviceInfo();
+    return res;
 }

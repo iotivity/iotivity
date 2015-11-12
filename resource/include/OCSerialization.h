@@ -44,37 +44,65 @@ namespace OC
                     : m_clientWrapper(cw), m_devAddr(devAddr)
             {
                 OCResourcePayload* res = payload->resources;
-
-                while(res)
+                OCResourceCollectionPayload* colRes = payload->collectionResources;
+                if (res)
                 {
-                    char uuidString[UUID_STRING_SIZE];
-                    if(OCConvertUuidToString(res->sid, uuidString) != RAND_UUID_OK)
+                    while(res)
                     {
-                        uuidString[0]= '\0';
-                    }
+                        char uuidString[UUID_STRING_SIZE];
+                        if(OCConvertUuidToString(res->sid, uuidString) != RAND_UUID_OK)
+                        {
+                            uuidString[0]= '\0';
+                        }
 
-                    if (res->secure)
-                    {
-                        m_devAddr.flags =
-                              (OCTransportFlags)(OC_FLAG_SECURE | m_devAddr.flags);
-                    }
+                        if (res->secure)
+                        {
+                            m_devAddr.flags =
+                                  (OCTransportFlags)(OC_FLAG_SECURE | m_devAddr.flags);
+                        }
 
-                    if (res->port != 0)
-                    {
-                         m_devAddr.port = res->port;
-                    }
+                        if (res->port != 0)
+                        {
+                             m_devAddr.port = res->port;
+                        }
 
-                    m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                new OC::OCResource(m_clientWrapper, m_devAddr,
-                                    std::string(res->uri),
-                                    std::string(uuidString),
-                                    (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
-                                    StringLLToVector(res->types),
-                                    StringLLToVector(res->interfaces)
-                                    )));
-                    res = res->next;
+                        m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                                    new OC::OCResource(m_clientWrapper, m_devAddr,
+                                        std::string(res->uri),
+                                        std::string(uuidString),
+                                        (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
+                                        StringLLToVector(res->types),
+                                        StringLLToVector(res->interfaces)
+                                        )));
+                        res = res->next;
+                    }
                 }
+                else if (colRes)
+                {
+                    while(colRes)
+                    {
+                        if (colRes->tags->bitmap & OC_SECURE)
+                        {
+                            m_devAddr.flags =
+                                  (OCTransportFlags)(OC_FLAG_SECURE | m_devAddr.flags);
+                        }
 
+                        if (colRes->tags->port != 0)
+                        {
+                             m_devAddr.port = colRes->tags->port;
+                        }
+
+                        m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                                    new OC::OCResource(m_clientWrapper, m_devAddr,
+                                        std::string(colRes->setLinks->href),
+                                        std::string((char*)colRes->tags->di.id),
+                                        (colRes->tags->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
+                                        StringLLToVector(colRes->setLinks->rt),
+                                        StringLLToVector(colRes->setLinks->itf)
+                                        )));
+                        colRes = colRes->next;
+                    }
+                }
             }
 
             const std::vector<std::shared_ptr<OCResource>>& Resources() const

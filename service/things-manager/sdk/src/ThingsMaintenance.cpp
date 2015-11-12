@@ -315,8 +315,8 @@ namespace OIC
         }
     }
 
-    void ThingsMaintenance::onDeleteGroupAction(const HeaderOptions& headerOptions,
-            const OCRepresentation& rep, const int eCode, std::string mnt)
+    void ThingsMaintenance::onDeleteGroupAction(const HeaderOptions& /*headerOptions*/,
+            const OCRepresentation& /*rep*/, const int eCode, std::string mnt)
     {
         if (eCode != OC_STACK_OK)
         {

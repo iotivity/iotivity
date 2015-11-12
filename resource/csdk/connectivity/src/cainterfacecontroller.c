@@ -39,16 +39,18 @@
 #include "caraadapter.h"
 #endif
 
-#define TAG "CA_INTRFC_CNTRLR"
-#ifdef RA_ADAPTER
-#include "caraadapter.h"
+#ifdef TCP_ADAPTER
+#include "catcpadapter.h"
 #endif
 
+#define TAG "CA_INTRFC_CNTRLR"
 
 #define CA_MEMORY_ALLOC_CHECK(arg) {if (arg == NULL) \
     {OIC_LOG(ERROR, TAG, "memory error");goto memory_error_exit;} }
 
-#ifdef RA_ADAPTER
+#ifdef TCP_ADAPTER
+#define CA_TRANSPORT_TYPE_NUM   5
+#elif RA_ADAPTER
 #define CA_TRANSPORT_TYPE_NUM   4
 #else
 #define CA_TRANSPORT_TYPE_NUM   3
@@ -78,6 +80,11 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
             return 3;
 #endif
 
+#ifdef TCP_ADAPTER
+        case CA_ADAPTER_TCP:
+            return 4;
+#endif
+
         default:
             break;
     }
@@ -90,6 +97,7 @@ static void CARegisterCallback(CAConnectivityHandler_t handler, CATransportAdapt
 
     if(handler.startAdapter == NULL ||
         handler.startListenServer == NULL ||
+        handler.stopListenServer == NULL ||
         handler.startDiscoveryServer == NULL ||
         handler.sendData == NULL ||
         handler.sendDataToAll == NULL ||
@@ -193,7 +201,10 @@ void CAInitializeAdapters(ca_thread_pool_t handle)
                    handle);
 #endif /* RA_ADAPTER */
 
-
+#ifdef TCP_ADAPTER
+    CAInitializeTCP(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+                    CAAdapterErrorHandleCallback, handle);
+#endif /* TCP_ADAPTER */
 }
 
 void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback)
@@ -486,6 +497,44 @@ CAResult_t CAStartListeningServerAdapters()
         if (g_adapterHandler[index].startListenServer != NULL)
         {
             g_adapterHandler[index].startListenServer();
+        }
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAStopListeningServerAdapters()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    u_arraylist_t *list = CAGetSelectedNetworkList();
+    if (!list)
+    {
+        OIC_LOG(ERROR, TAG, "No selected network");
+        return CA_STATUS_FAILED;
+    }
+
+    for (uint32_t i = 0; i < u_arraylist_length(list); i++)
+    {
+        void* ptrType = u_arraylist_get(list, i);
+        if(ptrType == NULL)
+        {
+            continue;
+        }
+
+        CATransportAdapter_t connType = *(CATransportAdapter_t *)ptrType;
+
+        int index = CAGetAdapterIndex(connType);
+        if (index == -1)
+        {
+            OIC_LOG(ERROR, TAG, "unknown connectivity type!");
+            continue;
+        }
+
+        if (g_adapterHandler[index].stopListenServer != NULL)
+        {
+            g_adapterHandler[index].stopListenServer();
         }
     }
 

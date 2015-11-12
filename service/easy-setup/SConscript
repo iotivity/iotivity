@@ -1,6 +1,6 @@
 #******************************************************************
 #
-# Copyright 2014 Samsung Electronics All Rights Reserved.
+# Copyright 2015 Samsung Electronics All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
@@ -65,8 +65,9 @@ if target_os == 'arduino':
 			       '../../resource/csdk/stack/include',
 			       '../../extlibs/cjson',
 				   'sdk/enrollee/arduino/wifi',
-				   'sdk/enrollee/common/src',
-			       'sdk/enrollee/common/inc'])
+				   'sdk/enrollee/api',
+				   'sdk/enrollee/src',
+			       'sdk/enrollee/inc'])
 	easy_setup_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
 if target_os in ['android','linux']:					   
 	easy_setup_env.PrependUnique(CPPPATH = [
@@ -86,8 +87,8 @@ if target_os in ['android','linux']:
 
 if target_os == 'arduino':
 	es_sdk_static = easy_setup_env.StaticLibrary('ESSDKLibrary',
-					['sdk/enrollee/common/src/easysetup.cpp',
-					'sdk/enrollee/common/src/resourceHandler.cpp',
+					['sdk/enrollee/src/easysetup.cpp',
+					'sdk/enrollee/src/resourceHandler.cpp',
 					'sdk/enrollee/arduino/wifi/networkHandler.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_static, 'libESSDK')
 

@@ -53,6 +53,11 @@
             "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
         }
 	],
+	"amacl": [{
+		"rsrc" : ["/a/led"],
+		"amss" : ["MTkxOTE5MTkxOTE5MTkxOQ=="],
+		"ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	}],
 	"pstat":	{
 		"isop":	true,
 		"deviceid":	"ZGV2aWNlaWQAAAAAABhanw==",
@@ -65,6 +70,7 @@
 	"doxm":	{
 		"oxm":	[0],
 		"oxmsel": 0,
+		"sct": 1,
 		"owned": true,
 		"deviceid":	"MTExMTExMTExMTExMTExMQ==",
 		"ownr":	"YWRtaW5EZXZpY2VVVUlEAA=="
@@ -88,6 +94,20 @@
 	    "sub": "Nzc3Nzc3Nzc3Nzc3Nzc3Nw==",
 	    "credtyp": 1,
 	    "pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	},
+	{
+	    "credid": 4,
+	    "sub": "NDQ0NDMzMzMyMjIyMTExMQ==",
+	    "credtyp": 1,
+	    "pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	},
+	{
+	    "credid": 5,
+	    "sub": "MTkxOTE5MTkxOTE5MTkxOQ==",
+	    "credtyp": 1,
+	    "pvdata": "QkJCQkJCQkJCQkJCQkJCQg==",
         "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 	}]
 }

@@ -29,12 +29,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Message;
-import android.support.v4.content.LocalBroadcastManager;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.LinearLayout;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.iotivity.base.ModeType;
@@ -43,103 +42,91 @@ import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 
-import base.iotivity.org.examples.message.IMessageLogger;
-
 /**
  * FridgeServer
  * <p/>
  * This is the main fridgeServer class. This instantiates Refrigerator object
- * which has different resources (DeviceResource, LightResource, DoorResource).
+ * which has different resources (DeviceResource, LightResource, DoorResources).
  */
-public class FridgeServer extends Activity implements IMessageLogger {
-    private Context mContext;
-    private static String TAG = "FridgeServer: ";
-    private TextView mEventsTextView;
-    private MessageReceiver mMessageReceiver = new MessageReceiver();
+public class FridgeServer extends Activity {
     private Refrigerator refrigerator;
 
     /**
      * configure OIC platform and call findResource
      */
-    private void initOICStack() {
+    private void startFridgeServer() {
         //create platform config
         PlatformConfig cfg = new PlatformConfig(
-                this,
+                this, //context
                 ServiceType.IN_PROC,
                 ModeType.SERVER,
                 "0.0.0.0", // bind to all available interfaces
                 0,
                 QualityOfService.LOW);
+        logMessage("Configuring platform");
         OcPlatform.Configure(cfg);
-        logMessage(TAG + "Creating refrigerator resources");
-
-        refrigerator = new Refrigerator(mContext);
+        logMessage("Creating refrigerator resources");
+        refrigerator = new Refrigerator(this);
+        logMessage("-----------------------------------------------------");
     }
+
+    //******************************************************************************
+    // End of the OIC specific code
+    //******************************************************************************
+    private static String TAG = "FridgeServer: ";
+    public static final String MESSAGE = "message";
+    public static final String INTENT = "org.iotivity.base.examples.fridgeserver";
+    private TextView mConsoleTextView;
+    private ScrollView mScrollView;
+    private MessageReceiver mMessageReceiver = new MessageReceiver();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fridge_server);
-        registerReceiver(mMessageReceiver, new IntentFilter(StringConstants.INTENT));
+        registerReceiver(mMessageReceiver, new IntentFilter(INTENT));
 
-        mEventsTextView = new TextView(this);
-        mEventsTextView.setMovementMethod(new ScrollingMovementMethod());
-        LinearLayout layout = (LinearLayout) findViewById(R.id.linearLayout);
-        layout.addView(mEventsTextView, new LinearLayout.LayoutParams
-                (LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
-        mContext = this;
+        mConsoleTextView = (TextView) findViewById(R.id.consoleTextView);
+        mConsoleTextView.setMovementMethod(new ScrollingMovementMethod());
+        mScrollView = (ScrollView) findViewById(R.id.scrollView);
+        mScrollView.fullScroll(View.FOCUS_DOWN);
+        final Button button = (Button) findViewById(R.id.button);
 
-        initOICStack();
+        if (null == savedInstanceState) {
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    button.setEnabled(false);
+                    new Thread(new Runnable() {
+                        public void run() {
+                            startFridgeServer();
+                        }
+                    }).start();
+                }
+            });
+        } else {
+            String consoleOutput = savedInstanceState.getString("consoleOutputString");
+            mConsoleTextView.setText(consoleOutput);
+        }
     }
 
     public class MessageReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            final String message = intent.getStringExtra(StringConstants.MESSAGE);
+            final String message = intent.getStringExtra(MESSAGE);
             logMessage(message);
         }
     }
 
-    @Override
     public void logMessage(final String text) {
-        if (StringConstants.ENABLE_PRINTING) {
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    final Message msg = new Message();
-                    msg.obj = text;
-                    mEventsTextView.append("\n");
-                    mEventsTextView.append(text);
-                }
-            });
-            Log.i(TAG, text);
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_fridge_server, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        onStop();
-    }
-
-    @Override
-    protected void onStop() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
-        super.onStop();
+        runOnUiThread(new Runnable() {
+            public void run() {
+                final Message msg = new Message();
+                msg.obj = text;
+                mConsoleTextView.append("\n");
+                mConsoleTextView.append(text);
+            }
+        });
+        Log.i(TAG, text);
     }
 }

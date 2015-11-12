@@ -22,13 +22,16 @@
 Import('env')
 import os
 
+target_os = env.get('TARGET_OS')
+
 env.AppendUnique(CPPPATH = [
             os.path.join(Dir('.').abspath),
             os.path.join(Dir('.').abspath, 'oic_malloc/include'),
-            os.path.join(Dir('.').abspath, 'oic_string/include')
+            os.path.join(Dir('.').abspath, 'oic_string/include'),
+            os.path.join(Dir('.').abspath, 'oic_time/include')
         ])
 
-if env.get('TARGET_OS') == 'tizen':
+if target_os == 'tizen':
 	env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 else:
 	env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource/c_common')])
@@ -46,7 +49,8 @@ common_env = env.Clone()
 ######################################################################
 common_src = [
     'oic_string/src/oic_string.c',
-    'oic_malloc/src/oic_malloc.c'
+    'oic_malloc/src/oic_malloc.c',
+    'oic_time/src/oic_time.c'
     ]
 
 commonlib = common_env.StaticLibrary('c_common', common_src)

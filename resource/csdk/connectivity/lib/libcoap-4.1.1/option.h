@@ -82,7 +82,7 @@ size_t coap_opt_size(const coap_opt_t *opt);
  * @param pdu The PDU containing the options.
  * @return A pointer to the first option if available, or @c NULL otherwise.
  */
-coap_opt_t *options_start(coap_pdu_t *pdu);
+coap_opt_t *options_start(coap_pdu_t *pdu, coap_transport_type transport);
 
 /**
  * Interprets @p opt as pointer to a CoAP option and advances to
@@ -206,7 +206,7 @@ typedef struct
  * @return The iterator object @p oi on success, @c NULL otherwise.
  */
 coap_opt_iterator_t *coap_option_iterator_init(coap_pdu_t *pdu, coap_opt_iterator_t *oi,
-        const coap_opt_filter_t filter);
+        const coap_opt_filter_t filter, coap_transport_type transport);
 
 /**
  * Updates the iterator @p oi to point to the next option. This
@@ -293,9 +293,10 @@ unsigned short coap_opt_delta(const coap_opt_t *opt);
 #define COAP_OPT_DELTA(opt) coap_opt_delta(opt)
 
 /** @deprecated { Use coap_opt_encode() instead. } */
+#ifndef WITH_TCP
 #define COAP_OPT_SETDELTA(opt,val)          \
   coap_opt_encode((opt), COAP_MAX_PDU_SIZE, (val), NULL, 0)
-
+#endif
 /**
  * Returns the length of the given option. @p opt must point to an
  * option jump or the beginning of the option. This function returns

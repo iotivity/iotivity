@@ -27,7 +27,6 @@
 #include <vector>
 #include "OCPlatform.h"
 #include "OCApi.h"
-//#include "ThingsManager.h"
 #include "ThingsConfiguration.h"
 #include "ThingsMaintenance.h"
 #include "GroupManager.h"
@@ -41,7 +40,6 @@ pthread_mutex_t mutex_lock = PTHREAD_MUTEX_INITIALIZER;
 
 const int SUCCESS_RESPONSE = 0;
 
-//static ThingsManager* g_thingsmanager;
 static GroupManager* g_groupmanager;
 static ThingsConfiguration* g_thingsConf;
 static ThingsMaintenance* g_thingsMnt;
@@ -72,7 +70,7 @@ void timeCheck(int timeSec)
     pthread_mutex_unlock(&mutex_lock);
 }
 
-void onReboot(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onReboot(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -87,8 +85,7 @@ void onReboot(const HeaderOptions& headerOptions, const OCRepresentation& rep, c
     std::cout << "\t\tReboot:" << rep.getValue< std::string >("value") << std::endl;
 }
 
-void onFactoryReset(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-        const int eCode)
+void onFactoryReset(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -103,7 +100,7 @@ void onFactoryReset(const HeaderOptions& headerOptions, const OCRepresentation& 
     std::cout << "\t\tFactoryReset:" << rep.getValue< std::string >("value") << std::endl;
 }
 
-void onUpdate(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onUpdate(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -128,7 +125,7 @@ void onUpdate(const HeaderOptions& headerOptions, const OCRepresentation& rep, c
         std::cout << "\t\tRegion:" << rep.getValue< std::string >("r") << std::endl;
 }
 
-void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onGet(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -194,7 +191,9 @@ void onFoundCollectionResource(std::vector< std::shared_ptr< OCResource > > reso
         std::cout << "Exception: " << e.what() << std::endl;
     }
 
+    pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
+    pthread_mutex_unlock(&mutex_lock);
 }
 
 // Callback to found resources
@@ -242,7 +241,7 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
                             if (g_maintenanceResource == NULL)
                                 g_maintenanceResource = resource;
                         }
-                        else if (resource->uri() == "/factorySet")
+                        else if (resource->uri() == "/factoryset")
                         {
                             OCPlatform::bindResource(setCollectionHandle, foundResourceHandle);
                             if (g_setResource == NULL)
@@ -277,7 +276,7 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
     pthread_mutex_unlock(&mutex_lock);
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     std::string str_steps;
 
@@ -312,7 +311,7 @@ int main(int argc, char* argv[])
             cout << "(1) Find all resources(URI: /oic/con, /oic/mnt, /factoryset)" << std::endl;
             cout << "(2) Find all groups" << std::endl;
             cout << "(3) Get a Configuration resource" << std::endl;
-            cout << "(4) Update a region attribute value" << std::endl;
+            cout << "(4) Update a device name attribute value" << std::endl;
             cout << "(5) FactoryReset (for the group)" << std::endl;
             cout << "(6) Reboot (for the group)" << std::endl;
             cout << "(10) Show Configuration Units" << std::endl;
@@ -395,7 +394,7 @@ int main(int argc, char* argv[])
 
                 types.push_back("oic.wk.con");
                 types.push_back("oic.wk.mnt");
-                types.push_back("factorySet");
+                types.push_back("factoryset");
 
                 std::cout << "Finding Configuration Resource... " << std::endl;
                 std::cout << "Finding Maintenance Resource... " << std::endl;
@@ -459,7 +458,7 @@ int main(int argc, char* argv[])
                     continue;
                 }
 
-                std::cout << "For example, change region resource's value" << std::endl;
+                std::cout << "For example, change a device name" << std::endl;
                 std::cout << g_configurationCollection->uri() << std::endl;
 
                 std::map< ConfigurationName, ConfigurationValue > configurations;

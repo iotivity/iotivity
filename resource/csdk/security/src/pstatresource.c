@@ -195,7 +195,8 @@ exit:
  */
 static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    // Convert ACL data into JSON for transmission
+    OC_LOG (INFO, TAG, "HandlePstatGetRequest  processing GET request");
+   // Convert ACL data into JSON for transmission
     char* jsonStr = BinToPstatJSON(gPstat);
 
     // A device should always have a default pstat. Therefore, jsonStr should never be NULL.
@@ -217,6 +218,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     cJSON *postJson = NULL;
+    OC_LOG (INFO, TAG, "HandlePstatPutRequest  processing PUT request");
 
     if (ehRequest->resource)
     {

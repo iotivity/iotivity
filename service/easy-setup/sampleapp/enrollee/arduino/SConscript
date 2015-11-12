@@ -1,6 +1,6 @@
 #******************************************************************
 #
-# Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+# Copyright 2015 Samsung Electronics All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
@@ -33,8 +33,9 @@ enrollee_env.PrependUnique(CPPPATH = [
 	'../../../../../extlibs/cjson',
 	'../../../sdk/common',
 	'../../../sdk/enrollee/arduino/wifi',
-	'../../../sdk/enrollee/common/inc',
-	'../../../sdk/enrollee/common/src'
+	'../../../sdk/enrollee/api',
+	'../../../sdk/enrollee/inc',
+	'../../../sdk/enrollee/src'
 	])
 enrollee_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
 	

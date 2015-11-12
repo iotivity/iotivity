@@ -27,6 +27,7 @@
 
 #include "cacommon.h"
 #include "caadapterinterface.h"
+#include "cainterface.h"
 #include "cathreadpool.h"
 
 #ifdef __cplusplus
@@ -113,6 +114,12 @@ int32_t CASendRAMulticastData(const CAEndpoint_t *endpoint,
  * @return  ::CA_NOT_SUPPORTED.
  */
 CAResult_t CAStartRAListeningServer();
+
+/**
+ * Stops listening server from receiving search requests.
+ * @return  ::CA_NOT_SUPPORTED.
+ */
+CAResult_t CAStopRAListeningServer();
 
 /**
  * Start discovery servers for receiving advertisements.

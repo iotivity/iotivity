@@ -102,7 +102,9 @@ ValidateQuery (const char *query, OCResourceHandle resource,
     OC_LOG(INFO, TAG, "Entering ValidateQuery");
 
     if (!query)
+    {
         return OC_STACK_ERROR;
+    }
 
     if(!ifParam || !rtParam)
     {
@@ -161,6 +163,7 @@ ValidateQuery (const char *query, OCResourceHandle resource,
         }
         token = strtok_r (NULL, OC_QUERY_SEPARATOR, &endStr);
     }
+
     if (numFields > NUM_FIELDS_IN_QUERY)
     {
         // current release supports one IF value, one RT value and no other params
@@ -274,6 +277,11 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
 static OCStackResult
 HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 {
+    if (!ehRequest)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCStackResult stackRet = OC_STACK_OK;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     OCResource * collResource = (OCResource *) ehRequest->resource;
@@ -286,7 +294,10 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
     if(stackRet == OC_STACK_OK)
     {
-        OCRepPayloadSetUri(payload, collResource->uri);
+        if (collResource)
+        {
+            OCRepPayloadSetUri(payload, collResource->uri);
+        }
     }
 
     if(stackRet == OC_STACK_OK)
@@ -302,7 +313,7 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
     if (stackRet == OC_STACK_OK)
     {
-        for  (int i = 0; i < MAX_CONTAINED_RESOURCES; i++)
+        for  (uint8_t i = 0; i < MAX_CONTAINED_RESOURCES; i++)
         {
             OCResource* temp = collResource->rsrcResources[i];
             if (temp)
@@ -344,7 +355,7 @@ uint8_t GetNumOfResourcesInCollection (OCResource *resource)
     if(resource)
     {
         uint8_t num = 0;
-        for (int i = 0; i < MAX_CONTAINED_RESOURCES; i++)
+        for (uint8_t i = 0; i < MAX_CONTAINED_RESOURCES; i++)
         {
             if (resource->rsrcResources[i])
             {

@@ -49,6 +49,10 @@ const char * OIC_RSRC_TYPE_SEC_CRED = "oic.sec.cred";
 const char * OIC_RSRC_CRED_URI =  "/oic/sec/cred";
 const char * OIC_JSON_CRED_NAME = "cred";
 
+//CRL
+const char * OIC_RSRC_TYPE_SEC_CRL = "oic.sec.crl";
+const char * OIC_RSRC_CRL_URI =  "/oic/sec/crl";
+const char * OIC_JSON_CRL_NAME = "crl";
 //svc
 const char * OIC_RSRC_TYPE_SEC_SVC = "oic.sec.svc";
 const char * OIC_RSRC_SVC_URI =  "/oic/sec/svc";
@@ -84,6 +88,7 @@ const char * OIC_JSON_SERVICE_TYPE = "svct";
 const char * OIC_JSON_PERIOD_NAME = "prd";
 const char * OIC_JSON_PERIODS_NAME = "prds";
 const char * OIC_JSON_RECURRENCES_NAME = "recurs";
+const char * OIC_JSON_SUPPORTED_CRED_TYPE_NAME = "sct";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
 size_t WILDCARD_SUBJECT_ID_LEN = 1;
@@ -91,10 +96,8 @@ const char * WILDCARD_RESOURCE_URI = "*";
 
 //Ownership Transfer Methods
 const char * OXM_JUST_WORKS = "oic.sec.doxm.jw";
-const char * OXM_MODE_SWITCH = "oic.sec.doxm.ms";
 const char * OXM_RANDOM_DEVICE_PIN = "oic.sec.doxm.rdp";
-const char * OXM_PRE_PROVISIONED_DEVICE_PIN = "oic.sec.doxm.ppdp";
-const char * OXM_PRE_PROVISIONED_STRONG_CREDENTIAL = "oic.sec.doxm.ppsc";
+const char * OXM_MANUFACTURER_CERTIFICATE = "oic.sec.doxm.mfgcert";
 
 const char * OIC_SEC_TRUE = "true";
 const char * OIC_SEC_FALSE = "false";

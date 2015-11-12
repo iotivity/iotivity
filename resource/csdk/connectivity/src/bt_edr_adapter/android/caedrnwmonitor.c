@@ -128,6 +128,7 @@ Java_org_iotivity_ca_CaEdrInterface_caEdrStateChangedCallback(JNIEnv *env, jobje
     if (NULL == g_networkChangeCb)
     {
         OIC_LOG_V(DEBUG, TAG, "gNetworkChangeCb is null", status);
+        return;
     }
 
     jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADPATER);

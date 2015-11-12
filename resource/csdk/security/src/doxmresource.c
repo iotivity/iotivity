@@ -60,6 +60,7 @@ static OicSecDoxm_t gDefaultDoxm =
     &gOicSecDoxmJustWorks,  /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
     OIC_JUST_WORKS,         /* uint16_t oxmSel */
+    SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
     false,                  /* bool owned */
     {.id = {0}},            /* OicUuid_t deviceID */
     {.id = {0}},            /* OicUuid_t owner */
@@ -130,6 +131,9 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
 
     //OxmSel -- Mandatory
     cJSON_AddNumberToObject(jsonDoxm, OIC_JSON_OXM_SEL_NAME, (int)doxm->oxmSel);
+
+    //sct -- Mandatory
+    cJSON_AddNumberToObject(jsonDoxm, OIC_JSON_SUPPORTED_CRED_TYPE_NAME, (int)doxm->sct);
 
     //Owned -- Mandatory
     cJSON_AddBoolToObject(jsonDoxm, OIC_JSON_OWNED_NAME, doxm->owned);
@@ -244,6 +248,19 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
         doxm->oxmSel = gDoxm->oxmSel;
     }
 
+    //sct -- Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_SUPPORTED_CRED_TYPE_NAME);
+    if(jsonObj)
+    {
+        VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
+        doxm->sct = (OicSecCredType_t)jsonObj->valueint;
+    }
+    else // PUT/POST JSON may not have sct so set it to the gDoxm->sct
+    {
+        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        doxm->sct = gDoxm->sct;
+    }
+
     //Owned -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OWNED_NAME);
     if(jsonObj)
@@ -340,7 +357,7 @@ static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
     return bRet;
 }
 
-static bool ValidateQuery(unsigned char * query)
+static bool ValidateQuery(const char * query)
 {
     // Send doxm resource data if the state of doxm resource
     // matches with the query parameters.
@@ -350,33 +367,60 @@ static bool ValidateQuery(unsigned char * query)
     // access rules. Eventually, the PE and PM code will
     // not send a request to the /doxm Entity Handler at all
     // if it should not respond.
-    OC_LOG (INFO, TAG, "In ValidateQuery");
+    OC_LOG (DEBUG, TAG, "In ValidateQuery");
     if(NULL == gDoxm)
     {
         return false;
     }
 
+    bool bOwnedQry = false;         // does querystring contains 'owned' query ?
+    bool bOwnedMatch = false;       // does 'owned' query value matches with doxm.owned status?
+    bool bDeviceIDQry = false;      // does querystring contains 'deviceid' query ?
+    bool bDeviceIDMatch = false;    // does 'deviceid' query matches with doxm.deviceid ?
+
     OicParseQueryIter_t parseIter = {.attrPos = NULL};
 
-    ParseQueryIterInit(query, &parseIter);
+    ParseQueryIterInit((unsigned char*)query, &parseIter);
 
     while(GetNextQuery(&parseIter))
     {
         if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_OWNED_NAME, parseIter.attrLen) == 0)
         {
+            bOwnedQry = true;
             if((strncasecmp((char *)parseIter.valPos, OIC_SEC_TRUE, parseIter.valLen) == 0) &&
                     (gDoxm->owned))
             {
-                return true;
+                bOwnedMatch = true;
             }
             else if((strncasecmp((char *)parseIter.valPos, OIC_SEC_FALSE, parseIter.valLen) == 0)
                     && (!gDoxm->owned))
             {
-                return true;
+                bOwnedMatch = true;
+            }
+        }
+
+        if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_DEVICE_ID_NAME, parseIter.attrLen) == 0)
+        {
+            bDeviceIDQry = true;
+            OicUuid_t subject = {.id={0}};
+            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
+            uint32_t outLen = 0;
+            B64Result b64Ret = B64_OK;
+
+            b64Ret = b64Decode((char *)parseIter.valPos, parseIter.valLen, base64Buff,
+                                           sizeof(base64Buff), &outLen);
+
+            VERIFY_SUCCESS(TAG, (B64_OK == b64Ret && outLen <= sizeof(subject.id)), ERROR);
+                       memcpy(subject.id, base64Buff, outLen);
+            if(0 == memcmp(&gDoxm->deviceID.id, &subject.id, sizeof(gDoxm->deviceID.id)))
+            {
+                bDeviceIDMatch = true;
             }
         }
     }
-    return false;
+
+exit:
+    return ((bOwnedQry ? bOwnedMatch : true) && (bDeviceIDQry ? bDeviceIDMatch : true));
 }
 
 static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest * ehRequest)
@@ -384,13 +428,13 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     char* jsonStr = NULL;
     OCEntityHandlerResult ehRet = OC_EH_OK;
 
-    OC_LOG (INFO, TAG, "Doxm EntityHandle processing GET request");
+    OC_LOG (DEBUG, TAG, "Doxm EntityHandle processing GET request");
 
     //Checking if Get request is a query.
     if(ehRequest->query)
     {
-        OC_LOG (INFO, TAG, "HandleDoxmGetRequest processing query");
-        if(!ValidateQuery((unsigned char *)ehRequest->query))
+        OC_LOG (DEBUG, TAG, "HandleDoxmGetRequest processing query");
+        if(!ValidateQuery(ehRequest->query))
         {
             ehRet = OC_EH_ERROR;
         }
@@ -444,7 +488,7 @@ static OCEntityHandlerResult AddOwnerPSK(const CAEndpoint_t* endpoint,
                     sizeof(base64Buff), &outLen);
     VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
 
-    OC_LOG (INFO, TAG, "Doxm EntityHandle  generating Credential");
+    OC_LOG (DEBUG, TAG, "Doxm EntityHandle  generating Credential");
     cred = GenerateCredential(&ptDoxm->owner, SYMMETRIC_PAIR_WISE_KEY,
                               NULL, base64Buff, ownLen, &ptDoxm->owner);
     VERIFY_NON_NULL(TAG, cred, ERROR);
@@ -465,7 +509,7 @@ exit:
 
 static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    OC_LOG (INFO, TAG, "Doxm EntityHandle  processing PUT request");
+    OC_LOG (DEBUG, TAG, "Doxm EntityHandle  processing PUT request");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t emptyOwner = {.id = {0}};
 
@@ -543,20 +587,26 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                  * in owned state.
                  */
                 CAEnableAnonECDHCipherSuite(false);
+#ifdef __WITH_X509__
+#define TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 0xC0AE
+                CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+#endif //__WITH_X509__
 #endif //__WITH_DTLS__
             }
         }
         else if(OIC_RANDOM_DEVICE_PIN == newDoxm->oxmSel)
         {
+#ifdef __WITH_DTLS__
             //this temp Credential ID is used to track temporal Cred Id
             static OicUuid_t tmpCredId = {.id={0}};
             static bool tmpCredGenFlag = false;
+#endif //__WITH_DTLS__
 
             if ((false == gDoxm->owned) && (false == newDoxm->owned))
             {
 #ifdef __WITH_DTLS__
                 CAEnableAnonECDHCipherSuite(false);
-                OC_LOG(DEBUG, TAG, "ECDH_ANON CipherSuite is DISABLED");
+                OC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
                 CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256);
 
                 char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0,};
@@ -564,7 +614,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                 {
                     if(tmpCredGenFlag)
                     {
-                       OC_LOG(DEBUG, TAG, "Corrupted PSK is detected!!!");
+                       OC_LOG(INFO, TAG, "Corrupted PSK is detected!!!");
                        VERIFY_SUCCESS(TAG,
                                       OC_STACK_RESOURCE_DELETED == RemoveCredential(&tmpCredId),
                                       ERROR);
@@ -662,7 +712,7 @@ OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -753,7 +803,7 @@ static OCStackResult CheckDeviceID()
  */
 static OicSecDoxm_t* GetDoxmDefault()
 {
-    OC_LOG (INFO, TAG, "GetDoxmToDefault");
+    OC_LOG (DEBUG, TAG, "GetDoxmToDefault");
     return &gDefaultDoxm;
 }
 

@@ -25,13 +25,13 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion 21
     buildToolsVersion "20.0.0"
-    archivesBaseName = "iotivity"
+    archivesBaseName = "iotivity-base"
 
     libraryVariants.all { variant ->
         variant.outputs.each { output ->
             def outputFile = output.outputFile
             if (outputFile != null && outputFile.name.endsWith('.aar')) {
-                def fileName = "${archivesBaseName}-${TARGET_ARCH}-${outputFile.name}"
+                def fileName = "${archivesBaseName}-${TARGET_ARCH}-${RELEASE}.aar"
                 output.outputFile = new File(outputFile.parent, fileName)
             }
         }
@@ -41,7 +41,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 21
         versionCode 1
-        versionName "0.9"
+        versionName "1.0"
     }
     buildTypes {
         release {
@@ -50,7 +50,7 @@ android {
     }
 
     lintOptions {
-       abortOnError false
+        abortOnError false
     }
 
     sourceSets {
@@ -94,7 +94,7 @@ task buildNative(type: Exec) {
         //for windows use 'ndk-build.cmd'
         //def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build.cmd')
         def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build')
-        commandLine ndkBuild, "APP_ABI=$TARGET_ARCH", "APP_OPTIM=$RELEASE"
+        commandLine ndkBuild, "APP_ABI=$TARGET_ARCH", "APP_OPTIM=$RELEASE", "SECURE=$SECURED"
     } else {
         println '##################'
         println 'Skipping NDK build'
@@ -102,14 +102,3 @@ task buildNative(type: Exec) {
         println '##################'
     }
 }
-//
-//task (copyARR, type: Copy) {
-//    copy {
-//        from 'build/outputs/aar/'
-//        into '../../../out/android/'
-//        include '**/*.aar'
-//    }
-//}
-//build.finalizedBy(copyARR)
-
-

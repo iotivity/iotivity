@@ -34,6 +34,10 @@
 #include "caadapternetdtls.h"
 #endif
 
+#ifdef TCP_ADAPTER
+#include "catcpadapter.h"
+#endif
+
 CAGlobals_t caglobals = { 0 };
 
 #define TAG "CA_CONN_MGR"
@@ -43,7 +47,14 @@ static bool g_isInitialized = false;
 #ifdef __WITH_DTLS__
 // CAAdapterNetDTLS will register the callback.
 // Taking callback all the way through adapters not the right approach, hence calling here.
-extern void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
+extern void CADTLSSetCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback);
+#endif
+
+#ifdef __WITH_X509__
+// CAAdapterNetDTLS will register the callback.
+// Taking callback all the way through adapters not the right approach, hence calling here.
+extern void CADTLSSetX509CredentialsCallback(CAGetDTLSX509CredentialsHandler credCallback);
+extern void CADTLSSetCrlCallback(CAGetDTLSCrlHandler crlCallback);
 #endif
 
 CAResult_t CAInitialize()
@@ -88,6 +99,18 @@ CAResult_t CAStartListeningServer()
     return CAStartListeningServerAdapters();
 }
 
+CAResult_t CAStopListeningServer()
+{
+    OIC_LOG(DEBUG, TAG, "CAStopListeningServer");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    return CAStopListeningServerAdapters();
+}
+
 CAResult_t CAStartDiscoveryServer()
 {
     OIC_LOG(DEBUG, TAG, "CAStartDiscoveryServer");
@@ -115,7 +138,7 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 }
 
 #ifdef __WITH_DTLS__
-CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSCredentialsHandler)
+CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentialsHandler)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSCredentialsHandler");
 
@@ -128,6 +151,34 @@ CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSC
     return CA_STATUS_OK;
 }
 #endif //__WITH_DTLS__
+
+#ifdef __WITH_X509__
+CAResult_t CARegisterDTLSX509CredentialsHandler(CAGetDTLSX509CredentialsHandler GetDTLSX509CredentialsHandler)
+{
+    OIC_LOG(DEBUG, TAG, "CARegisterDTLSX509CredentialsHandler");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CADTLSSetX509CredentialsCallback(GetDTLSX509CredentialsHandler);
+    return CA_STATUS_OK;
+}
+
+CAResult_t CARegisterDTLSCrlHandler(CAGetDTLSCrlHandler GetDTLSCrlHandler)
+{
+    OIC_LOG(DEBUG, TAG, "CARegisterDTLSCrlHandler");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CADTLSSetCrlCallback(GetDTLSCrlHandler);
+    return CA_STATUS_OK;
+}
+#endif //__WITH_X509__
 
 CAResult_t CACreateEndpoint(CATransportFlags_t flags,
                             CATransportAdapter_t adapter,
@@ -197,18 +248,6 @@ CAResult_t CASendRequest(const CAEndpoint_t *object,const CARequestInfo_t *reque
     return CADetachRequestMessage(object, requestInfo);
 }
 
-CAResult_t CASendNotification(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
-{
-    OIC_LOG(DEBUG, TAG, "CASendNotification");
-
-    if(!g_isInitialized)
-    {
-        return CA_STATUS_NOT_INITIALIZED;
-    }
-
-    return CADetachResponseMessage(object, responseInfo);
-}
-
 CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
 {
     OIC_LOG(DEBUG, TAG, "CASendResponse");
@@ -256,6 +295,16 @@ CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
                   "CAAddNetworkType(CA_ADAPTER_REMOTE_ACCESS) function returns result : %d", res);
     }
 #endif
+
+#ifdef TCP_ADAPTER
+    else if (interestedNetwork & CA_ADAPTER_TCP)
+    {
+        res = CAAddNetworkType(CA_ADAPTER_TCP);
+        OIC_LOG_V(DEBUG, TAG,
+                  "CAAddNetworkType(CA_ADAPTER_TCP) function returns result : %d", res);
+    }
+#endif
+
     else
     {
         res = CA_NOT_SUPPORTED;
@@ -294,9 +343,20 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork)
     {
         res = CARemoveNetworkType(CA_ADAPTER_REMOTE_ACCESS);
         OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_ADAPTER_REMOTE_ACCESS) function returns result : %d",
-                                                res);
+                  res);
     }
 #endif
+
+
+#ifdef TCP_ADAPTER
+    else if (nonInterestedNetwork & CA_ADAPTER_TCP)
+    {
+        res = CARemoveNetworkType(CA_ADAPTER_TCP);
+        OIC_LOG_V(DEBUG, TAG, "CARemoveNetworkType(CA_ADAPTER_TCP) function returns result : %d",
+                  res);
+    }
+#endif
+
     else
     {
         res = CA_STATUS_FAILED;

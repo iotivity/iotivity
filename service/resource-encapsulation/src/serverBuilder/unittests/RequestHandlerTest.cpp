@@ -52,7 +52,7 @@ protected:
 
         mocks.OnCallFunc(OC::OCPlatform::unregisterResource).Return(OC_STACK_OK);
 
-        server = RCSResourceObject::Builder("a/test", "resourceType", "").build();
+        server = RCSResourceObject::Builder("a/test", "resourcetype", "").build();
 
         server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
         server->setAttribute(EXISTING, ORIGIN_VALUE);
@@ -61,11 +61,10 @@ protected:
 
 TEST_F(RequestHandlerTest, ResponseHasSameValuesPassedToHandlerConstructor)
 {
-    RequestHandler handler{ OC_EH_ERROR, -1000 };
+    RequestHandler handler{ -1000 };
 
     auto response = handler.buildResponse(*server);
 
-    ASSERT_EQ(OC_EH_ERROR, response->getResponseResult());
     ASSERT_EQ(-1000, response->getErrorCode());
 }
 

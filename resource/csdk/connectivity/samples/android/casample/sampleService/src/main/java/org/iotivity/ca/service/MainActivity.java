@@ -14,8 +14,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+import java.io.File;
 
 import org.iotivity.ca.sample_service.R;
+import org.iotivity.ca.service.FileChooser;
+import org.iotivity.ca.service.FileChooser.FileSelectedListener;
 
 public class MainActivity extends Activity {
 
@@ -33,12 +37,11 @@ public class MainActivity extends Activity {
             MsgType.NON.name(), MsgType.ACK.name(), MsgType.RESET.name() };
 
     private final CharSequence[] mResponseResultCheckBoxItems = {
-            ResponseResult.CA_SUCCESS.name(), ResponseResult.CA_CREATED.name(),
-            ResponseResult.CA_DELETED.name(), ResponseResult.CA_VALID.name(),
-            ResponseResult.CA_CHANGED.name(), ResponseResult.CA_CONTENT.name(),
-            ResponseResult.CA_EMPTY.name(), ResponseResult.CA_BAD_REQ.name(),
-            ResponseResult.CA_BAD_OPT.name(), ResponseResult.CA_NOT_FOUND.name(),
-            ResponseResult.CA_INTERNAL_SERVER_ERROR.name(),
+            ResponseResult.CA_CREATED.name(), ResponseResult.CA_DELETED.name(),
+            ResponseResult.CA_VALID.name(), ResponseResult.CA_CHANGED.name(),
+            ResponseResult.CA_CONTENT.name(), ResponseResult.CA_EMPTY.name(),
+            ResponseResult.CA_BAD_REQ.name(), ResponseResult.CA_BAD_OPT.name(),
+            ResponseResult.CA_NOT_FOUND.name(), ResponseResult.CA_INTERNAL_SERVER_ERROR.name(),
             ResponseResult.CA_RETRANSMIT_TIMEOUT.name() };
 
     private enum Mode {
@@ -58,7 +61,7 @@ public class MainActivity extends Activity {
     };
 
     private enum ResponseResult {
-        CA_SUCCESS, CA_CREATED, CA_DELETED, CA_VALID, CA_CHANGED, CA_CONTENT, CA_EMPTY,
+        CA_CREATED, CA_DELETED, CA_VALID, CA_CHANGED, CA_CONTENT, CA_EMPTY,
         CA_BAD_REQ, CA_BAD_OPT, CA_NOT_FOUND, CA_INTERNAL_SERVER_ERROR, CA_RETRANSMIT_TIMEOUT
     }
 
@@ -122,6 +125,8 @@ public class MainActivity extends Activity {
 
     private Button mRecv_btn = null;
 
+    private Button mBig_btn = null;
+
     private Handler mLogHandler = null;
 
     /**
@@ -144,6 +149,7 @@ public class MainActivity extends Activity {
     int uninterestedNetwork = 0;
     private boolean isSendResponseSetting = false;
     private boolean isSendRequestToAllSetting = false;
+    private boolean isBigData = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -195,6 +201,8 @@ public class MainActivity extends Activity {
         mResponse_Notify_setting_btn = (Button) findViewById(R.id.btn_Request_setting_for_server);
         mGetNetworkInfo_btn = (Button) findViewById(R.id.btn_get_network_info);
         mRecv_btn = (Button) findViewById(R.id.btn_receive);
+        mBig_btn = (Button) findViewById(R.id.btn_big_data);
+        mBig_btn.setOnClickListener(mSelectLargeDataButtonHandler);
 
         mResponse_btn.setOnClickListener(mSendResponseHandler);
         mNotify_btn.setOnClickListener(mNotifyHandler);
@@ -375,7 +383,7 @@ public class MainActivity extends Activity {
             DLog.v(TAG, "SendNotification click");
             if ( selectedNetwork != -1) {
                 RM.RMSendNotification(mNotification_ed.getText().toString(),
-                    null, selectedNetwork, isSecured, msgType, responseValue);
+                    null, selectedNetwork, isSecured, msgType);
             }
             else {
                 DLog.v(TAG, "Please Select Network Type");
@@ -391,7 +399,7 @@ public class MainActivity extends Activity {
             DLog.v(TAG, "SendRequest click");
             if ( selectedNetwork != -1) {
                 RM.RMSendRequest(mReqData_ed.getText().toString(), null,
-                    selectedNetwork, isSecured, msgType);
+                    selectedNetwork, isSecured, msgType, false);
             }
             else {
                 DLog.v(TAG, "Please Select Network Type");
@@ -454,6 +462,15 @@ public class MainActivity extends Activity {
         public void onClick(View v) {
 
             RM.RMHandleRequestResponse();
+        }
+    };
+
+    private OnClickListener mSelectLargeDataButtonHandler = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+            isBigData = true;
+            checkSendNetworkType("Select Send Network Type");
         }
     };
 
@@ -601,11 +618,7 @@ public class MainActivity extends Activity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
 
-                        if (selectedResponseValue == ResponseResult.CA_SUCCESS.ordinal()) {
-                            responseValue = 200;
-                            DLog.v(TAG, "Response Value is CA_SUCCESS");
-                        } else if (selectedResponseValue == ResponseResult.CA_CREATED
-                                .ordinal()) {
+                        if (selectedResponseValue == ResponseResult.CA_CREATED.ordinal()) {
                             responseValue = 201;
                             DLog.v(TAG, "Response Value is CA_CREATED");
                         } else if (selectedResponseValue == ResponseResult.CA_DELETED
@@ -675,7 +688,7 @@ public class MainActivity extends Activity {
 
                         if (selectedNetworkType == Network.IP.ordinal()) {
                             selectedNetwork = CA_IP;
-                            DLog.v(TAG, "Selected Network is CA_IP");
+                            DLog.v(TAG, "Selected Network is IP");
                         } else if (selectedNetworkType == Network.LE.ordinal()) {
                             selectedNetwork = CA_LE;
                             DLog.v(TAG, "Selected Network is LE");
@@ -687,10 +700,32 @@ public class MainActivity extends Activity {
                             selectedNetwork = -1;
                         }
 
-                        if (isSendRequestToAllSetting != true) {
-                            checkMsgSecured("Select DTLS Type");
+                        if (isBigData)
+                        {
+                            new FileChooser(MainActivity.this).setFileListener(new FileSelectedListener() {
+                                public void fileSelected(final File file) {
+                                    if (selectedNetwork != -1) {
+
+                                        String path = file.getAbsolutePath();
+                                        Log.d(TAG, "File Path: " + path);
+
+                                        RM.RMSendRequest(mReqData_ed.getText().toString(), path,
+                                                         selectedNetwork, isSecured, msgType, true);
+                                    } else {
+                                        Toast.makeText(getApplicationContext(),
+                                                       "Request Setting Fisrt!!", Toast.LENGTH_LONG).show();
+                                    }
+                                }
+                            } ).showDialog();
+                            isBigData = false;
+                        } else {
+                            if (isSendRequestToAllSetting != true) {
+                                checkMsgSecured("Select DTLS Type");
+                            }
                         }
+
                         isSendRequestToAllSetting = false;
+                        isBigData = false;
                     }
                 }).show();
     }

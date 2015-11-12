@@ -49,12 +49,15 @@ provisioning_env.AppendUnique(CPPPATH = [
 provisioning_env.AppendUnique(CFLAGS = ['-D__WITH_DTLS__','-std=c99'])
 provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread', '-fpermissive'])
 provisioning_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-provisioning_env.AppendUnique(LIBS = ['-lpthread'])
+provisioning_env.AppendUnique(LIBS = ['-lpthread','-ldl'])
 provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 provisioning_env.PrependUnique(LIBS = ['ocpmapi','oc', 'oc_logger', 'ocsrm','m', 'octbstack', 'connectivity_abstraction', 'coap'])
 
 if env.get('SECURED') == '1':
     provisioning_env.AppendUnique(LIBS = ['tinydtls'])
+if env.get('DTLS_WITH_X509') == '1':
+	provisioning_env.AppendUnique(LIBS = ['CKManager'])
+	provisioning_env.AppendUnique(LIBS = ['asn1'])
 provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
 
 provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

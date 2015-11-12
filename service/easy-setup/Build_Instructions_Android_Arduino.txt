@@ -1,3 +1,23 @@
+#******************************************************************
+#
+# Copyright 2015 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 === Prerequisites ===
 
 * 1. Scons
@@ -83,25 +103,26 @@ Steps to build and deploy Easysetup Mediator in Arduino platform
     c) Prerequisite exports for Arduino
          export ARDUINO_HOME=<ARDUINO_HOME_DIR>
     d) Start Arduino IDE. Select ""Tools->Port->Programming port"
-    e) scons TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI
+    e) scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI
         - With debug or logging
-            scons TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI RELEASE=0
+            scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI RELEASE=0
         - With installation to Arduino
-            scons TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI RELEASE=0 UPLOAD=true
-        NOTE: BOARD=arduino_due_x_dbg|arduino_due_x. Default is arduino_due_x_dbg.
+            scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI RELEASE=0 UPLOAD=true
+        NOTE: 1) BOARD=arduino_due_x_dbg|arduino_due_x. Default is arduino_due_x_dbg.
+              2) For Mega board, please use the following options. BOARD=mega & TARGET_ARCH=avr
 
        Possible values for <transport> are:
         -> IP :
-        $ scons TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI RELEASE=0
+        $ scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI RELEASE=0
         -> BLE :
-        $ scons TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI RELEASE=0
+        $ scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=BLE RELEASE=0
 
         Note :- Only single transport can be built at a time for Arduino
     f) The above command will build sample. The "enrollee.hex" can be found at "out/arduino/arm/release/service/easy-setup/sampleapp/enrollee/arduino"
     g) After building sample, script will try to install on "/dev/ttyACM0" port in 'sudo' mode.
         To skip installation, set command line argument 'UPLOAD=false' or without UPLOAD option
     h) To set BLE Shield Name, include the option DEVICE_NAME during scons build.
-        -> $ scons TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=BLE RELEASE=0 DEVICE_NAME=OIC
+        -> $ scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=BLE RELEASE=0 DEVICE_NAME=OIC
 
             Specified Device name length MUST be less than 10 characters. RBL Library has this limitation.
             By Default DEVICE_NAME=OIC-DEVICE, if device name option is not specified

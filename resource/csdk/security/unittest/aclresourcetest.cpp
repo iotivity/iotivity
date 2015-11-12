@@ -205,6 +205,35 @@ TEST(ACLResourceTest, GetACLResourceTests)
         OICFree(jsonStr);
     }
 }
+
+static OCStackResult  populateAcl(OicSecAcl_t *acl,  int numRsrc)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    memcpy(acl->subject.id, "2222222222222222", sizeof(acl->subject.id));
+    acl->resourcesLen = numRsrc;
+    acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
+    VERIFY_NON_NULL(TAG, acl->resources, ERROR);
+    acl->resources[0] = (char*)OICMalloc(strlen("/a/led")+1);
+    VERIFY_NON_NULL(TAG, acl->resources[0], ERROR);
+    OICStrcpy(acl->resources[0], sizeof(acl->resources[0]), "/a/led");
+    if(numRsrc == 2)
+    {
+        acl->resources[1] = (char*)OICMalloc(strlen("/a/fan")+1);
+        VERIFY_NON_NULL(TAG, acl->resources[1], ERROR);
+        OICStrcpy(acl->resources[1], sizeof(acl->resources[1]), "/a/fan");
+    }
+    acl->permission = 6;
+    acl->ownersLen = 1;
+    acl->owners = (OicUuid_t*)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
+    VERIFY_NON_NULL(TAG, acl->owners, ERROR);
+    memcpy(acl->owners->id, "1111111111111111", sizeof(acl->owners->id));
+
+    ret = OC_STACK_OK;
+exit:
+    return ret;
+
+}
+
 //'DELETE' ACL test
 TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 {
@@ -220,19 +249,8 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
 
     SetPersistentHandler(&ps, true);
 
-    //ACE to POST
-    memcpy(acl.subject.id, "2222222222222222", sizeof(acl.subject.id));
-    acl.resourcesLen = 1;
-    acl.resources = (char**)OICCalloc(acl.resourcesLen, sizeof(char*));
-    VERIFY_NON_NULL(TAG, acl.resources, ERROR);
-    acl.resources[0] = (char*)OICMalloc(strlen("/a/led")+1);
-    VERIFY_NON_NULL(TAG, acl.resources[0], ERROR);
-    OICStrcpy(acl.resources[0], sizeof(acl.resources[0]), "/a/led");
-    acl.permission = 6;
-    acl.ownersLen = 1;
-    acl.owners = (OicUuid_t*)OICCalloc(acl.ownersLen, sizeof(OicUuid_t));
-    VERIFY_NON_NULL(TAG, acl.owners, ERROR);
-    memcpy(acl.owners->id, "1111111111111111", sizeof(acl.owners->id));
+    //Populate ACL
+    VERIFY_SUCCESS(TAG, (OC_STACK_OK == populateAcl(&acl, 1)), ERROR);
 
     //GET json POST payload
     jsonStr = BinToAclJSON(&acl);
@@ -288,22 +306,10 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 
     SetPersistentHandler(&ps, true);
 
-    memcpy(acl.subject.id, "2222222222222222", sizeof(acl.subject.id));
-    acl.resourcesLen = 2;
-    acl.resources = (char**)OICCalloc(acl.resourcesLen, sizeof(char*));
-    VERIFY_NON_NULL(TAG, acl.resources, ERROR);
-    acl.resources[0] = (char*)OICMalloc(strlen("/a/led")+1);
-    VERIFY_NON_NULL(TAG, acl.resources[0], ERROR);
-    OICStrcpy(acl.resources[0], sizeof(acl.resources[0]), "/a/led");
-    acl.resources[1] = (char*)OICMalloc(strlen("/a/fan")+1);
-    VERIFY_NON_NULL(TAG, acl.resources[1], ERROR);
-    OICStrcpy(acl.resources[1], sizeof(acl.resources[1]), "/a/fan");
-    acl.permission = 6;
-    acl.ownersLen = 1;
-    acl.owners = (OicUuid_t*)OICCalloc(acl.ownersLen, sizeof(OicUuid_t));
-    VERIFY_NON_NULL(TAG, acl.owners, ERROR);
-    memcpy(acl.owners->id, "1111111111111111", sizeof(acl.owners->id));
+    //Populate ACL
+    VERIFY_SUCCESS(TAG, (OC_STACK_OK == populateAcl(&acl, 2)), ERROR);
 
+    //GET json POST payload
     jsonStr = BinToAclJSON(&acl);
     VERIFY_NON_NULL(TAG, jsonStr, ERROR);
 
@@ -345,3 +351,44 @@ exit:
     OICFree(jsonStr);
 }
 
+//'GET' with query ACL test
+
+TEST(ACLResourceTest, ACLGetWithQueryTest)
+{
+    OCEntityHandlerRequest ehReq = OCEntityHandlerRequest();
+    static OCPersistentStorage ps = OCPersistentStorage();
+    OicSecAcl_t acl = OicSecAcl_t();
+    char *jsonStr = NULL;
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+    char query[] = "sub=MjIyMjIyMjIyMjIyMjIyMg==;rsrc=/a/led";
+
+    SetPersistentHandler(&ps, true);
+
+    //Populate ACL
+    VERIFY_SUCCESS(TAG, (OC_STACK_OK == populateAcl(&acl, 1)), ERROR);
+
+    //GET json POST payload
+    jsonStr = BinToAclJSON(&acl);
+    VERIFY_NON_NULL(TAG, jsonStr, ERROR);
+
+    //Create Entity Handler POST request payload
+    ehReq.method = OC_REST_POST;
+    ehReq.payload = (OCPayload*)OCSecurityPayloadCreate(jsonStr);
+    ehRet = ACLEntityHandler(OC_REQUEST_FLAG, &ehReq);
+    EXPECT_TRUE(OC_EH_ERROR == ehRet);
+
+    //Create Entity Handler GET request wit query
+    ehReq.method =  OC_REST_GET;
+    ehReq.query = (char*)OICMalloc(strlen(query)+1);
+    VERIFY_NON_NULL(TAG, ehReq.query, ERROR);
+    OICStrcpy(ehReq.query, strlen(query)+1, query);
+
+    ehRet = ACLEntityHandler(OC_REQUEST_FLAG, &ehReq);
+    EXPECT_TRUE(OC_EH_OK == ehRet);
+
+exit:
+    // Perform cleanup
+    OCPayloadDestroy(ehReq.payload);
+    OICFree(ehReq.query);
+    OICFree(jsonStr);
+}

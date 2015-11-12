@@ -35,9 +35,9 @@ using namespace std;
 
 FactorySetResource::FactorySetResource()
 {
-    m_configurationUri = "/factorySet"; // URI of the resource
+    m_configurationUri = "/factoryset"; // URI of the resource
     m_configurationTypes.clear();
-    m_configurationTypes.push_back("factorySet"); // resource type name.
+    m_configurationTypes.push_back("factoryset"); // resource type name.
     m_configurationRep.setUri(m_configurationUri);
     m_configurationRep.setResourceTypes(m_configurationTypes);
 }

@@ -20,6 +20,7 @@
 package com.tm.sample;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +32,7 @@ import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.OcResourceHandle;
-import org.iotivity.service.tm.GroupSynchronization;
+import org.iotivity.base.ResourceProperty;
 import org.iotivity.service.tm.OCStackResult;
 import org.iotivity.service.tm.GroupManager;
 import org.iotivity.service.tm.ThingsMaintenance;
@@ -74,14 +75,17 @@ public class ConfigurationApiActivity extends Activity {
 
     private final String                     CONFIGURATION_COLLECTION_RESOURCE_URI  = "/core/configuration/resourceset";
     private final String                     CONFIGURATION_COLLECTION_RESOURCE_TYPE = "core.configuration.resourceset";
+    private final String                     CONFIGURATION_RESOURCE_TYPE            = "oic.wk.con";
     private final String                     MAINTENANCE_COLLECTION_RESOURCE_URI    = "/core/maintenance/resourceset";
     private final String                     MAINTENANCE_COLLECTION_RESOURCE_TYPE   = "core.maintenance.resourceset";
+    private final String                     MAINTENANCE_RESOURCE_TYPE              = "oic.wk.mnt";
     private final String                     FACTORYSET_COLLECTION_RESOURCE_URI     = "/core/factoryset/resourceset";
     private final String                     FACTORYSET_COLLECTION_RESOURCE_TYPE    = "core.factoryset.resourceset";
+    private final String                     FACTORYSET_RESOURCE_TYPE               = "factoryset";
 
     private final String                     CONFIGURATION_RESOURCE_URI             = "/oic/con";
     private final String                     MAINTENANCE_RESOURCE_URI               = "/oic/mnt";
-    private final String                     FACTORYSET_RESOURCE_URI                = "/factorySet";
+    private final String                     FACTORYSET_RESOURCE_URI                = "/factoryset";
 
     private ListView                         list;
     private ArrayAdapter<String>             configurationApis;
@@ -94,14 +98,13 @@ public class ConfigurationApiActivity extends Activity {
     private static Message                   msg;
 
     private GroupManager                     groupManager                           = null;
-    private GroupSynchronization             groupSyn                               = null;
     private ThingsConfiguration              thingsConfiguration                    = null;
     private ThingsMaintenance                thingsMaintenance                      = null;
     private Map<String, ResourceInformation> resourceList                           = null;
     private Map<String, ResourceInformation> collectionList                         = null;
 
     public boolean                           configurationResourceFlag              = false;
-    public boolean                           factorySetResourceFlag                 = false;
+    public boolean                           factorysetResourceFlag                 = false;
     public boolean                           maintenanceResourceFlag                = false;
 
     public static Context                    mcontext;
@@ -115,14 +118,13 @@ public class ConfigurationApiActivity extends Activity {
 
         mcontext = this;
         groupManager = new GroupManager();
-        groupSyn = new GroupSynchronization();
         thingsConfiguration = ThingsConfiguration.getInstance();
         thingsMaintenance = ThingsMaintenance.getInstance();
 
         // set the listeners
         setResourceListener();
         setConfigurationListener();
-        setDiagnosticsListener();
+        setMaintenanceListener();
 
         // Create API menu list
         configurationApisList = new ArrayList<String>();
@@ -151,7 +153,7 @@ public class ConfigurationApiActivity extends Activity {
                 // Find All Groups
                 if (position == 0) {
                     Vector<String> resourceTypes = new Vector<String>();
-                    resourceTypes.add("core.configuration.resourceset");
+                    resourceTypes.add(CONFIGURATION_COLLECTION_RESOURCE_TYPE);
                     findCandidateResources(resourceTypes);
 
                     logMessage = "";
@@ -159,13 +161,13 @@ public class ConfigurationApiActivity extends Activity {
                     messageCount++;
 
                     resourceTypes.clear();
-                    resourceTypes.add("core.diagnostics.resourceset");
+                    resourceTypes.add(MAINTENANCE_COLLECTION_RESOURCE_TYPE);
                     findCandidateResources(resourceTypes);
 
                     messageCount++;
 
                     resourceTypes.clear();
-                    resourceTypes.add("core.factoryset.resourceset");
+                    resourceTypes.add(FACTORYSET_COLLECTION_RESOURCE_TYPE);
                     findCandidateResources(resourceTypes);
 
                     messageCount++;
@@ -175,7 +177,7 @@ public class ConfigurationApiActivity extends Activity {
                         displayToastMessage("Configuration collection resource does not exist!");
                     } else {
                         Vector<String> resourceTypes = new Vector<String>();
-                        resourceTypes.add("oic.wk.con");
+                        resourceTypes.add(CONFIGURATION_RESOURCE_TYPE);
                         findCandidateResources(resourceTypes);
 
                         logMessage = "";
@@ -183,13 +185,13 @@ public class ConfigurationApiActivity extends Activity {
                         messageCount++;
 
                         resourceTypes.clear();
-                        resourceTypes.add("oic.wk.mnt");
+                        resourceTypes.add(MAINTENANCE_RESOURCE_TYPE);
                         findCandidateResources(resourceTypes);
 
                         messageCount++;
 
                         resourceTypes.clear();
-                        resourceTypes.add("factorySet");
+                        resourceTypes.add(FACTORYSET_RESOURCE_TYPE);
                         findCandidateResources(resourceTypes);
 
                         messageCount++;
@@ -432,7 +434,7 @@ public class ConfigurationApiActivity extends Activity {
                 });
     }
 
-    private void setDiagnosticsListener() {
+    private void setMaintenanceListener() {
         thingsMaintenance
                 .setThingsMaintenanceListener(new IThingsMaintenanceListener() {
 
@@ -555,16 +557,16 @@ public class ConfigurationApiActivity extends Activity {
      * to default.
      */
     private void factoryReset() {
-        ResourceInformation diagnosticsCollection = collectionList
+        ResourceInformation MaintenanceCollection = collectionList
                 .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
-        if (null == diagnosticsCollection
-                || null == diagnosticsCollection.resource) {
-            displayToastMessage("Diagnostic collection does not exist!");
+        if (null == MaintenanceCollection
+                || null == MaintenanceCollection.resource) {
+            displayToastMessage("Maintenance collection does not exist!");
             return;
         }
 
         if (false == maintenanceResourceFlag) {
-            displayToastMessage("Diagnostic resource does not exist!");
+            displayToastMessage("Maintenance resource does not exist!");
             return;
         }
 
@@ -572,7 +574,7 @@ public class ConfigurationApiActivity extends Activity {
 
         try {
             result = thingsMaintenance
-                    .factoryReset(diagnosticsCollection.resource);
+                    .factoryReset(MaintenanceCollection.resource);
         } catch (OcException e) {
             e.printStackTrace();
         }
@@ -594,21 +596,21 @@ public class ConfigurationApiActivity extends Activity {
      * This method send request to reboot server.
      */
     private void reboot() {
-        ResourceInformation diagnosticsCollection = collectionList
+        ResourceInformation MaintenanceCollection = collectionList
                 .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
-        if (null == diagnosticsCollection
-                || null == diagnosticsCollection.resource) {
-            displayToastMessage("Diagnostic collection does not exist!");
+        if (null == MaintenanceCollection
+                || null == MaintenanceCollection.resource) {
+            displayToastMessage("Maintenance collection does not exist!");
             return;
         }
         if (false == maintenanceResourceFlag) {
-            displayToastMessage("Diagnostic resource does not exist!");
+            displayToastMessage("Maintenance resource does not exist!");
             return;
         }
 
         OCStackResult result = OCStackResult.OC_STACK_ERROR;
         try {
-            result = thingsMaintenance.reboot(diagnosticsCollection.resource);
+            result = thingsMaintenance.reboot(MaintenanceCollection.resource);
         } catch (OcException e) {
             e.printStackTrace();
         }
@@ -696,10 +698,10 @@ public class ConfigurationApiActivity extends Activity {
             resourceList.put(uri + host, resourceInfo);
             configurationResourceFlag = true;
         } else if (uri.equalsIgnoreCase("/oic/mnt")) {
-            ResourceInformation diagnosticResource = collectionList
+            ResourceInformation maintenanceResource = collectionList
                     .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
-            if (null == diagnosticResource
-                    || null == diagnosticResource.resourceHandle) {
+            if (null == maintenanceResource
+                    || null == maintenanceResource.resourceHandle) {
                 Log.e(LOG_TAG, "Invalid Configuration collection!");
                 return;
             }
@@ -715,7 +717,7 @@ public class ConfigurationApiActivity extends Activity {
 
             resourceList.put(uri + host, resourceInfo);
             maintenanceResourceFlag = true;
-        } else if (uri.equalsIgnoreCase("/factorySet")) {
+        } else if (uri.equalsIgnoreCase("/factoryset")) {
             ResourceInformation factorysetResource = collectionList
                     .get(FACTORYSET_COLLECTION_RESOURCE_URI);
             if (null == factorysetResource
@@ -734,7 +736,7 @@ public class ConfigurationApiActivity extends Activity {
                     resource, handle);
 
             resourceList.put(uri + host, resourceInfo);
-            factorySetResourceFlag = true;
+            factorysetResourceFlag = true;
         } else {
             Log.e(LOG_TAG, "Resource is of different type: " + uri);
             return;
@@ -755,20 +757,27 @@ public class ConfigurationApiActivity extends Activity {
 
         OcResourceHandle resourceHandle = null;
 
-        // Crate group
-        OCStackResult result = groupSyn.createGroup(typename);
-        if ((OCStackResult.OC_STACK_OK != result)) {
-            Log.e(LOG_TAG, "createGroup returned error: " + result.name());
-            return;
-        } else {
-            Log.e(LOG_TAG, "createGroup returned: " + result.name());
+        try {
+            resourceHandle = OcPlatform.registerResource(uri, typename,
+                    OcPlatform.BATCH_INTERFACE, null,
+                    EnumSet.of(ResourceProperty.DISCOVERABLE));
+        } catch (OcException e) {
+            Log.e(LOG_TAG, "go exception");
+            Log.e(LOG_TAG, "RegisterResource error. " + e.getMessage());
         }
-        groupList = groupSyn.getGroupList();
-        if (groupList.containsKey(typename)) {
-            resourceHandle = groupList.get(typename);
-        } else {
-            Log.e(LOG_TAG, "group does not contain groupResourceType: "
-                    + result.name());
+        try {
+            OcPlatform.bindInterfaceToResource(resourceHandle,
+                    OcPlatform.GROUP_INTERFACE);
+        } catch (OcException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        try {
+            OcPlatform.bindInterfaceToResource(resourceHandle,
+                    OcPlatform.DEFAULT_INTERFACE);
+        } catch (OcException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
 
         if (null == resourceHandle) {
@@ -802,10 +811,10 @@ public class ConfigurationApiActivity extends Activity {
                         }
                     } else if (resource.resource.getUri().equalsIgnoreCase(
                             MAINTENANCE_RESOURCE_URI)) {
-                        ResourceInformation diagnosticResource = collectionList
+                        ResourceInformation maintenanceResource = collectionList
                                 .get(MAINTENANCE_COLLECTION_RESOURCE_URI);
-                        if (null != diagnosticResource
-                                && null != diagnosticResource.resourceHandle) {
+                        if (null != maintenanceResource
+                                && null != maintenanceResource.resourceHandle) {
                             OcPlatform
                                     .unregisterResource(resource.resourceHandle);
                             Log.i(LOG_TAG, "unregistered resource"
@@ -826,10 +835,6 @@ public class ConfigurationApiActivity extends Activity {
                 }
             }
 
-            // delete all the groups
-            groupSyn.deleteGroup(CONFIGURATION_COLLECTION_RESOURCE_TYPE);
-            groupSyn.deleteGroup(MAINTENANCE_COLLECTION_RESOURCE_TYPE);
-            groupSyn.deleteGroup(FACTORYSET_COLLECTION_RESOURCE_TYPE);
         } catch (OcException e) {
             Log.e(LOG_TAG, "OcException occured! " + e.toString());
         }

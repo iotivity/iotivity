@@ -28,6 +28,8 @@ namespace OC {
 
 static const char COAP[] = "coap://";
 static const char COAPS[] = "coaps://";
+static const char COAP_TCP[] = "coap+tcp://";
+
 using OC::nil_guard;
 using OC::result_guard;
 using OC::checked_guard;
@@ -64,7 +66,11 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri),
-    m_devAddr{ OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0 },
+    m_devAddr{ OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    , {0}
+#endif
+    },
     m_isObservable(observable), m_isCollection(false),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
@@ -96,11 +102,6 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
     // construct the devAddr from the pieces we have
     m_devAddr.adapter = static_cast<OCTransportAdapter>(connectivityType >> CT_ADAPTER_SHIFT);
     m_devAddr.flags = static_cast<OCTransportFlags>(connectivityType & CT_MASK_FLAGS);
-    size_t len = host.length();
-    if (len >= MAX_ADDR_STR_SIZE)
-    {
-        throw std::length_error("host address is too long.");
-    }
 
     this->setHost(host);
 }
@@ -122,13 +123,18 @@ void OCResource::setHost(const std::string& host)
         prefix_len = sizeof(COAPS) - 1;
         m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_SECURE);
     }
+    else if (host.compare(0, sizeof(COAP_TCP) - 1, COAP_TCP) == 0)
+    {
+        prefix_len = sizeof(COAP_TCP) - 1;
+        m_devAddr.adapter = static_cast<OCTransportAdapter>(m_devAddr.adapter & OC_ADAPTER_TCP);
+    }
     else
     {
         throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
             m_interfaces.empty(), m_clientWrapper.expired(), false, false);
     }
 
-    // removed coap:// or coaps://
+    // removed coap:// or coaps:// or coap+tcp://
     std::string host_token = host.substr(prefix_len);
 
     if(host_token[0] == '[')
@@ -144,6 +150,12 @@ void OCResource::setHost(const std::string& host)
         }
         // extract the ipaddress
         std::string ip6Addr = host_token.substr(1, found-1);
+
+        if (ip6Addr.length() >= MAX_ADDR_STR_SIZE)
+        {
+            throw std::length_error("host address is too long.");
+        }
+
         ip6Addr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
         m_devAddr.addr[ip6Addr.length()] = '\0';
         //skip ']' and ':' characters in host string
@@ -160,6 +172,12 @@ void OCResource::setHost(const std::string& host)
         }
 
         std::string addrPart = host_token.substr(0, found);
+
+        if (addrPart.length() >= MAX_ADDR_STR_SIZE)
+        {
+            throw std::length_error("host address is too long.");
+        }
+
         addrPart.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
         m_devAddr.addr[addrPart.length()] = '\0';
         //skip ':' character in host string
@@ -388,12 +406,26 @@ OCStackResult OCResource::cancelObserve(QualityOfService QoS)
     return result;
 }
 
+void OCResource::setHeaderOptions(const HeaderOptions& headerOptions)
+{
+    m_headerOptions = headerOptions;
+}
+
+void OCResource::unsetHeaderOptions()
+{
+    m_headerOptions.clear();
+}
+
 std::string OCResource::host() const
 {
     std::ostringstream ss;
     if (m_devAddr.flags & OC_SECURE)
     {
         ss << COAPS;
+    }
+    else if (m_devAddr.adapter & OC_ADAPTER_TCP)
+    {
+        ss << COAP_TCP;
     }
     else
     {
@@ -428,6 +460,16 @@ OCConnectivityType OCResource::connectivityType() const
 bool OCResource::isObservable() const
 {
     return m_isObservable;
+}
+
+std::vector<std::string> OCResource::getResourceTypes() const
+{
+    return m_resourceTypes;
+}
+
+std::vector<std::string> OCResource::getResourceInterfaces(void) const
+{
+    return m_interfaces;
 }
 
 OCResourceIdentifier OCResource::uniqueIdentifier() const
@@ -517,4 +559,3 @@ bool OCResourceIdentifier::operator>=(const OCResourceIdentifier &other) const
 }
 
 } // namespace OC
-

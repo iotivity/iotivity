@@ -21,16 +21,12 @@
 #include "reclient.h"
 
 #include<iostream>
-#include "mutex"
-#include "condition_variable"
 
 #include "reclientmain.h"
-
 #include "RCSDiscoveryManager.h"
 #include "RCSRemoteResourceObject.h"
 #include "RCSResourceAttributes.h"
 #include "RCSAddress.h"
-
 #include "OCPlatform.h"
 
 # define checkResource nullptr == resource?false:true
@@ -39,18 +35,13 @@ using namespace std;
 using namespace OC;
 using namespace OIC::Service;
 
-constexpr int CORRECT_INPUT = 1;
-constexpr int INCORRECT_INPUT = 2;
-constexpr int QUIT_INPUT = 3;
-
 std::shared_ptr<RCSRemoteResourceObject>  resource;
+std::vector<RCSRemoteResourceObject::Ptr> resourceList;
+std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
 
-const std::string defaultKey = "Temperature";
-const std::string resourceType = "?rt=core.TemperatureSensor";
-const std::string targetUri = OC_RSRVD_WELL_KNOWN_URI + resourceType;
-
-std::mutex mtx;
-std::condition_variable cond;
+std::string g_resourceUri;
+std::string g_resourceType;
+std::string g_attributeKey;
 
 static Evas_Object *log_entry = NULL;
 static Evas_Object *list = NULL;
@@ -75,6 +66,7 @@ void *updateGroupLog(void *data)
 static void onDestroy()
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### Destroy sequence called");
+    resourceList.clear();
     resource = nullptr;
 }
 
@@ -85,21 +77,19 @@ void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource
     std::string resourceURI = foundResource->getUri();
     std::string hostAddress = foundResource->getAddress();
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### Resource URI :  %s", resourceURI.c_str());
-    dlog_print(DLOG_INFO, LOG_TAG, "#### Resource Host : %S", hostAddress.c_str());
-
-    string logMessage = "Resource Found <br>";
+    int resourceSize = resourceList.size() + 1;
+    string logMessage = "Resource Found : " + std::to_string(resourceSize) + "<br>";
     logMessage = logMessage + "URI: " + resourceURI + "<br>";
     logMessage = logMessage + "Host:" + hostAddress + "<br>";
     logMessage += "----------------------<br>";
-    dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                           &logMessage);
 
-    resource = foundResource;
+    resourceList.push_back(foundResource);
 
-    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))showGroupAPIs, NULL);
-    cond.notify_all();
+    if (g_resourceUri == resourceURI)
+        resource = foundResource;
 }
 
 void onResourceStateChanged(const ResourceState &resourceState)
@@ -159,9 +149,9 @@ void onCacheUpdated(const RCSResourceAttributes &attributes)
                                           &logMessage);
 }
 
-void onRemoteAttributesReceivedCallback(const RCSResourceAttributes &attributes)
+void onRemoteAttributesReceived(const RCSResourceAttributes &attributes, int)
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### onRemoteAttributesReceivedCallback callback");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### onRemoteAttributesReceived entry");
 
     string logMessage = "Remote Attribute Updated : <br> ";
 
@@ -195,12 +185,12 @@ static void startMonitoring(void *data, Evas_Object *obj, void *event_info)
                 logMessage = logMessage + "Started Monitoring <br>";
                 resource->startMonitoring(&onResourceStateChanged);
             }
-            catch (const BadRequestException &e)
+            catch (const RCSBadRequestException &e)
             {
                 logMessage = logMessage + "Exception BadRequest<br>";
                 dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in isMonitoring : %s", e.what());
             }
-            catch (const InvalidParameterException &e)
+            catch (const RCSInvalidParameterException &e)
             {
                 logMessage = logMessage + "Exception Invalid Param<br>";
                 dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in isMonitoring : %s", e.what());
@@ -257,7 +247,7 @@ static void getAttributeFromRemoteServer(void *data, Evas_Object *obj, void *eve
 {
     if (checkResource)
     {
-        resource->getRemoteAttributes(&onRemoteAttributesReceivedCallback);
+        resource->getRemoteAttributes(&onRemoteAttributesReceived);
     }
     else
     {
@@ -265,18 +255,17 @@ static void getAttributeFromRemoteServer(void *data, Evas_Object *obj, void *eve
     }
 }
 
-static void setAttributeToRemoteServer(int setTemperature)
+static void setAttributeToRemoteServer(int setValue)
 {
-    string key = "Temperature";
     string logMessage = "";
 
     RCSResourceAttributes setAttribute;
-    setAttribute[key] = setTemperature;
+    setAttribute[g_attributeKey] = setValue;
 
     if (checkResource)
     {
         resource->setRemoteAttributes(setAttribute,
-                                      &onRemoteAttributesReceivedCallback);
+                                      &onRemoteAttributesReceived);
     }
     else
     {
@@ -303,7 +292,7 @@ static void startCaching(std::function <void (const RCSResourceAttributes &)>cb)
                     logMessage = logMessage + "Caching with callback <br>";
                     resource->startCaching(&onCacheUpdated);
                 }
-                catch (const BadRequestException &e)
+                catch (const RCSBadRequestException &e)
                 {
                     logMessage = logMessage + "Exception BadRequest<br>";
                     dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in startCaching : %s", e.what());
@@ -317,7 +306,7 @@ static void startCaching(std::function <void (const RCSResourceAttributes &)>cb)
                     logMessage = logMessage + "Caching without callback <br>";
                     resource->startCaching();
                 }
-                catch (const BadRequestException &e)
+                catch (const RCSBadRequestException &e)
                 {
                     logMessage = logMessage + "Exception BadRequest<br>";
                     dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in startCaching : %s", e.what());
@@ -401,7 +390,7 @@ static void getCachedAttributes(void *data, Evas_Object *obj, void *event_info)
                 }
             }
         }
-        catch (const BadRequestException &e)
+        catch (const RCSBadRequestException &e)
         {
             logMessage = "Exception Received<br>";
             dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in getCachedAttributes : %s", e.what());
@@ -426,16 +415,16 @@ static void getCachedAttribute(void *data, Evas_Object *obj, void *event_info)
     {
         try
         {
-            logMessage = logMessage + "KEY:" + defaultKey.c_str() + "<br>";
-            int attrValue = resource->getCachedAttribute(defaultKey).get< int >();
+            logMessage = logMessage + "KEY:" + g_attributeKey.c_str() + "<br>";
+            int attrValue = resource->getCachedAttribute(g_attributeKey).get< int >();
             logMessage = logMessage + "VALUE:" + to_string(attrValue) + "<br>";
         }
-        catch (const BadRequestException &e)
+        catch (const RCSBadRequestException &e)
         {
             logMessage = logMessage + "Exception BadRequest<br>";
             dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in getCachedAttribute : %s", e.what());
         }
-        catch (const BadGetException &e)
+        catch (const RCSBadGetException &e)
         {
             logMessage = logMessage + "Exception BadGet<br>";
             dlog_print(DLOG_INFO, LOG_TAG, "#### Exception in getCachedAttribute : %s", e.what());
@@ -479,15 +468,58 @@ static void stopCaching(void *data, Evas_Object *obj, void *event_info)
 
 void discoverResource()
 {
-    dlog_print(DLOG_INFO, LOG_TAG, "#### Wait 2 seconds until discovered");
+    dlog_print(DLOG_INFO, LOG_TAG, "#### discovery started");
 
-    RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(), targetUri,
-            &onResourceDiscovered);
-
-    std::unique_lock<std::mutex> lck(mtx);
-    cond.wait_for(lck, std::chrono::seconds(2));
+    while (!discoveryTask)
+    {
+        resourceList.clear();
+        resource = nullptr;
+        try
+        {
+            discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
+                                RCSAddress::multicast(), g_resourceType, &onResourceDiscovered);
+        }
+        catch (const RCSPlatformException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+    }
 
     dlog_print(DLOG_INFO, LOG_TAG, "#### Discovery over");
+}
+
+void cancelDiscoverResource()
+{
+    dlog_print(DLOG_INFO, LOG_TAG, "#### cancelDiscoverResource entry");
+    string logMessage = "";
+
+    if (!discoveryTask)
+    {
+        logMessage += "There is no discovery request <br>";
+    }
+    else
+    {
+        discoveryTask->cancel();
+        discoveryTask = nullptr;
+
+        logMessage += "Discovery canceled <br>";
+
+        int resourceSize = resourceList.size();
+        if (!resourceSize)
+        {
+            logMessage += "No Resource Discovered <br>";
+        }
+        else
+        {
+            logMessage += std::to_string(resourceSize) + " : Resource Discovered <br>";
+            ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))showClientAPIs, NULL);
+        }
+
+    }
+
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
+                                          &logMessage);
 }
 
 static void
@@ -503,31 +535,31 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
 {
     temperature_popup_fields *popup_fields = (temperature_popup_fields *)data;
     Evas_Object *entry = popup_fields->entry;
-    const char *temperatureString = elm_entry_entry_get(entry);
+    const char *attributeString = elm_entry_entry_get(entry);
     // Remove white spaces(if any) at the beginning
     int beginning = 0;
-    while (temperatureString[beginning] == ' ')
+    while (attributeString[beginning] == ' ')
     {
         (beginning)++;
     }
 
-    int len = strlen(temperatureString);
-    if (NULL == temperatureString || 1 > len)
+    int len = strlen(attributeString);
+    if (NULL == attributeString || 1 > len)
     {
-        dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL Temperature Value");
-        string logMessage = "Temperature Cannot be NULL<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL attribute Value");
+        string logMessage = g_attributeKey + " Cannot be NULL<br>";
         logMessage += "----------------------<br>";
         dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog, &logMessage);
     }
     else
     {
-        int temperate = atoi(temperatureString);
-        string tempString(temperatureString);
-        setAttributeToRemoteServer(temperate);
-        dlog_print(DLOG_INFO, LOG_TAG, "#### Temperature to set : %d", temperate);
+        int attributeValue = atoi(attributeString);
+        string attrString(attributeString);
+        setAttributeToRemoteServer(attributeValue);
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Attribute to set : %d", attributeValue);
 
-        string logMessage = "Temperature to set : " + tempString + "<br>";
+        string logMessage = g_attributeKey + " to set : " + attrString + "<br>";
         logMessage += "----------------------<br>";
         dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
         ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
@@ -538,7 +570,7 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
 }
 
 static void
-list_scheduled_actionset_cb(void *data, Evas_Object *obj, void *event_info)
+list_get_attribute_value_cb(void *data, Evas_Object *obj, void *event_info)
 {
     Evas_Object *popup, *btn;
     Evas_Object *nf = naviframe;
@@ -550,7 +582,14 @@ list_scheduled_actionset_cb(void *data, Evas_Object *obj, void *event_info)
     elm_popup_align_set(popup, ELM_NOTIFY_ALIGN_FILL, 1.0);
     eext_object_event_callback_add(popup, EEXT_CALLBACK_BACK, eext_popup_back_cb, NULL);
     evas_object_size_hint_weight_set(popup, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    elm_object_part_text_set(popup, "title,text", "Enter the temperature");
+    if (LIGHT_RT == g_resourceType)
+    {
+        elm_object_part_text_set(popup, "title,text", "Enter the brightness");
+    }
+    else
+    {
+        elm_object_part_text_set(popup, "title,text", "Enter the temperature");
+    }
 
     layout = elm_layout_add(popup);
     elm_layout_file_set(layout, ELM_DEMO_EDJ, "popup_datetime_text");
@@ -563,7 +602,14 @@ list_scheduled_actionset_cb(void *data, Evas_Object *obj, void *event_info)
     evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
     evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
     eext_entry_selection_back_event_allow_set(entry, EINA_TRUE);
-    elm_object_part_text_set(entry, "elm.guide", "in degree celsius");
+    if (LIGHT_RT == g_resourceType)
+    {
+        elm_object_part_text_set(entry, "elm.guide", "RANGE (0 - 50)");
+    }
+    else
+    {
+        elm_object_part_text_set(entry, "elm.guide", "in degree celsius");
+    }
     elm_entry_input_panel_layout_set(entry, ELM_INPUT_PANEL_LAYOUT_NUMBER);
     elm_object_part_content_set(layout, "elm.swallow.content", entry);
 
@@ -596,7 +642,35 @@ list_scheduled_actionset_cb(void *data, Evas_Object *obj, void *event_info)
     evas_object_show(popup);
 }
 
-void *showGroupAPIs(void *data)
+// Method to be called when the Start Discovery UI Button is selected
+static void
+find_resource_cb(void *data, Evas_Object *obj, void *event_info)
+{
+    if (NULL != list)
+    {
+        discoverResource();
+    }
+    else
+    {
+        dlog_print(DLOG_ERROR, "find_resource_cb", "list is NULL - So unable to add items!!!");
+    }
+}
+
+// Method to be called when the Cancel Discovery UI Button is selected
+static void
+cancel_resource_cb(void *data, Evas_Object *obj, void *event_info)
+{
+    if (NULL != list)
+    {
+        cancelDiscoverResource();
+    }
+    else
+    {
+        dlog_print(DLOG_ERROR, "cancel_resource_cb", "list is NULL - So unable to add items!!!");
+    }
+}
+
+void *showClientAPIs(void *data)
 {
     // Add items to the list only if the list is empty
     const Eina_List *eina_list = elm_list_items_get(list);
@@ -613,7 +687,7 @@ void *showGroupAPIs(void *data)
                              getAttributeFromRemoteServer, NULL);
 
         elm_list_item_append(list, "4. Set Attribute", NULL, NULL,
-                             list_scheduled_actionset_cb, NULL);
+                             list_get_attribute_value_cb, NULL);
 
         elm_list_item_append(list, "5. Start Caching - No update", NULL, NULL,
                              startCachingWithoutCallback, NULL);
@@ -653,12 +727,13 @@ naviframe_pop_cb(void *data, Elm_Object_Item *it)
     return EINA_TRUE;
 }
 
-// Method to be called when the Group APIs UI Button is selected
-void group_cb(void *data, Evas_Object *obj, void *event_info)
+void client_cb(void *data)
 {
     Evas_Object *layout;
     Evas_Object *scroller;
     Evas_Object *nf = (Evas_Object *)data;
+    Evas_Object *button1;
+    Evas_Object *button2;
     Elm_Object_Item *nf_it;
 
     naviframe = nf;
@@ -674,6 +749,18 @@ void group_cb(void *data, Evas_Object *obj, void *event_info)
     evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 
     elm_object_content_set(scroller, layout);
+
+    // Start Discovery Button
+    button1 = elm_button_add(layout);
+    elm_object_part_content_set(layout, "button1", button1);
+    elm_object_text_set(button1, "Start Discovery");
+    evas_object_smart_callback_add(button1, "clicked", find_resource_cb, NULL);
+
+    // Cancel Discovery Button
+    button2 = elm_button_add(layout);
+    elm_object_part_content_set(layout, "button2", button2);
+    elm_object_text_set(button2, "Cancel Discovery");
+    evas_object_smart_callback_add(button2, "clicked", cancel_resource_cb, NULL);
 
     // List
     list = elm_list_add(layout);
@@ -693,6 +780,22 @@ void group_cb(void *data, Evas_Object *obj, void *event_info)
 
     nf_it = elm_naviframe_item_push(nf, "Resource Encapsulation", NULL, NULL, scroller, NULL);
     elm_naviframe_item_pop_cb_set(nf_it, naviframe_pop_cb, NULL);
+}
 
-    discoverResource();
+void discoverTempSensor(void *data, Evas_Object *obj, void *event_info)
+{
+    g_resourceUri = TEMPERATURE_URI;
+    g_resourceType = TEMPERATURE_RT;
+    g_attributeKey = TEMPERATURE_AK;
+
+    client_cb(data);
+}
+
+void discoverLight(void *data, Evas_Object *obj, void *event_info)
+{
+    g_resourceUri = LIGHT_URI;
+    g_resourceType = LIGHT_RT;
+    g_attributeKey = LIGHT_AK;
+
+    client_cb(data);
 }

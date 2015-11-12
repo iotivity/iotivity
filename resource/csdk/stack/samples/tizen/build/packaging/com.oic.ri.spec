@@ -35,7 +35,7 @@ SLP oicri application
 echo %{ROOTDIR}
 
 scons TARGET_OS=tizen -c
-scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} LOGGING=%{LOGGING}
+scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} LOGGING=%{LOGGING} ROUTING=%{ROUTING}
 
 %install
 mkdir -p %{DEST_INC_DIR}
@@ -64,6 +64,9 @@ cp resource/oc_logger/include/targets/oc_ostream_logger.h %{DEST_INC_DIR}
 cp resource/csdk/stack/include/ocpresence.h %{DEST_INC_DIR}
 cp resource/csdk/stack/include/ocpayload.h %{DEST_INC_DIR}
 cp resource/c_common/platform_features.h %{DEST_INC_DIR}
+cp resource/csdk/stack/include/payload_logging.h %{DEST_INC_DIR}
+cp resource/csdk/stack/include/rdpayload.h %{DEST_INC_DIR}
+cp extlibs/tinycbor/tinycbor/src/cbor.h %{DEST_INC_DIR}
 cp extlibs/cjson/cJSON.h %{DEST_INC_DIR}
 cp -rf %{ROOTDIR}/com.oic.ri.pc %{DEST_LIB_DIR}/pkgconfig/
 

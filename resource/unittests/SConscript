@@ -69,6 +69,7 @@ if env.get('LOGGING'):
 unittests = unittests_env.Program('unittests', ['ConstructResourceTest.cpp',
                                                 'OCPlatformTest.cpp',
                                                 'OCRepresentationTest.cpp',
+                                                'OCRepresentationEncodingTest.cpp',
                                                 'OCResourceTest.cpp',
                                                 'OCExceptionTest.cpp',
                                                 'OCResourceResponseTest.cpp',

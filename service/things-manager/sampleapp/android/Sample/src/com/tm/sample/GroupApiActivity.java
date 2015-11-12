@@ -235,8 +235,6 @@ public class GroupApiActivity extends Activity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        // unregister the resource and set callback listener to null
-        groupClientObj.leaveGroup();
     }
 
     // for update UI these functions will be called from GroupClient Class

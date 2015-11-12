@@ -244,6 +244,12 @@ jobject CALEClientGetUUIDObject(JNIEnv *env, const char *uuid);
 CAResult_t CALEClientStopScan();
 
 /**
+ * set ble scanning flag.
+ * @param[in]   flag        scan flag.
+ */
+void CALEClientSetScanFlag(bool flag);
+
+/**
  * stop scan (implement).
  * @param[in]   env                   JNI interface pointer.
  * @param[in]   callback              callback to receive device object by scanning.

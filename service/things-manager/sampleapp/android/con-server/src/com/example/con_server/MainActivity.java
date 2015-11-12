@@ -64,6 +64,7 @@ public class MainActivity extends Activity {
         mainActivityObj = this;
         Button doBootStrap = (Button) findViewById(R.id.button1);
         final Button createConfig = (Button) findViewById(R.id.button2);
+        createConfig.setEnabled(false);
         editText = (EditText) findViewById(R.id.EditText);
         conServerObj = new ConfigurationServer();
 
