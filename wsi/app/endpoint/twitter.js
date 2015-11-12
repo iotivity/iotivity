@@ -37,9 +37,9 @@ module.exports = {
                     "cid": "com.twitter.post",
                     "isauthrequired": "true",
                     "description": "Post Message to Twiiter.",
-                    "endpoint": "https://api.twitter.com/1.1/direct_messages/new.json?text={{text}}&screen_name={{screen_name}}",
+                    "endpoint": "statuses/update",
                     "endpointtype": "twitter",
-                    "operation": "POST",
+                    "operation": "POSTTWEET",
                     "params": {
                         "text": "Message to post",
                         "screen_name" : "oicdemo",
@@ -52,7 +52,28 @@ module.exports = {
                         "share",
                         "post"
                     ]
+                },
+                {
+                    "cid": "com.twitter.read",
+                    "isauthrequired": "true",
+                    "description": "Get Latest Message from Twiiter.",
+                    "endpoint": "statuses/user_timeline",
+                    "endpointtype": "twitter",
+                    "operation": "READTWEET",
+                    "params": {
+                        "text": "Get message from twitter",
+                        "screen_name" : "oicdemo",
+                        "consumerKey": "U5ofpxyQWPvcWUn8nMLr55vuJ",
+                        "consumerSecret": "0bkHEoXMP2e51JSCrOl6Za3S4ZoWGHaIT4YdgIIJceWHnmLM2I",
+                        "token": "",
+                        "secret": ""
+                    },
+                    "tags": [
+                        "share",
+                        "post"
+                    ]
                 }
+                
             ]
         };
         console.log("Twitter description found " + template.auth[0].endpoint+ " " + template.auth[0].callbackURL);
@@ -107,7 +128,7 @@ module.exports = {
     },
     request: function (cap, res) {
         console.log("Trying to perform rest request : "+ JSON.stringify(cap));
-        if (cap.operation == "POST") {
+        if (cap.cid == "com.twitter.post") {
             var ep = cap.endpoint;
             var uri = mustache.render(cap.endpoint, cap.params);
             console.log("Final URL = " + uri + " " + JSON.stringify(cap.params));
@@ -121,7 +142,7 @@ module.exports = {
             
             console.log("Config : " + JSON.stringify(config));
             var client = new Twit(config);
-            client.post('statuses/update', { status: 'hello world!' }, function(err, data, response) {
+            client.post(cap.endpoint, { status: cap.params.text }, function(err, data, response) {
               if(err) {
                 console.log(JSON.stringify(err));
                 res.sendStatus(500);
@@ -129,7 +150,32 @@ module.exports = {
               }
               console.log(JSON.stringify(data));  // Tweet body. 
               console.log(response);  // Raw response object. 
-              res.sendStatus(200);
+              res.json(response);
+            });
+        }
+        if (cap.cid == "com.twitter.read") {
+            var ep = cap.endpoint;
+            //var uri = mustache.render(cap.endpoint, cap.params);
+            //console.log("Final URL = " + uri + " " + JSON.stringify(cap.params));
+            
+            var config = {
+                    consumer_key:         cap.params.consumerKey
+                  , consumer_secret:      cap.params.consumerSecret
+                  , access_token:         cap.params.token
+                  , access_token_secret:  cap.params.secret
+            };
+            
+            console.log("Config : " + JSON.stringify(config));
+            var client = new Twit(config);
+            client.get(cap.endpoint, { count: 1 }, function(err, data, response) {
+              if(err) {
+                console.log(JSON.stringify(err));
+                res.json(500, err);
+                return;
+              }
+              console.log(JSON.stringify(data));  // Tweet body. 
+              console.log(response);  // Raw response object. 
+              res.json(response);
             });
         }
     }
