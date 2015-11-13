@@ -27,40 +27,40 @@
 template < typename T >
 class JavaLocalRef
 {
-    public:
+public:
     JavaLocalRef(JNIEnv *env, T obj) noexcept :
         m_env { env },
         m_obj { obj }
         {
-            assert(env  &&"JNIEnv is nullptr");
+            assert(env && "JNIEnv is nullptr");
         }
 
-        template< typename ENV >
+    template< typename ENV >
     JavaLocalRef(ENV *env, T obj) noexcept :
-        m_env { env->get() },
-        m_obj { obj }
-        {
-            assert(env  &&"JNIEnv is nullptr");
-        }
+    m_env { env->get() },
+    m_obj { obj }
+    {
+        assert(env  && "JNIEnv is nullptr");
+    }
 
-        ~JavaLocalRef()
-        {
-            if (m_obj) m_env->DeleteLocalRef(m_obj);
-        }
+    ~JavaLocalRef()
+    {
+        if (m_obj) m_env->DeleteLocalRef(m_obj);
+    }
 
-        operator bool() const noexcept { return m_obj; }
-        operator T() const noexcept { return m_obj; }
+    operator bool() const noexcept { return m_obj; }
+    operator T() const noexcept { return m_obj; }
 
-        jobject get() const noexcept { return m_obj; }
+    jobject get() const noexcept { return m_obj; }
 
-        JavaLocalRef(const JavaLocalRef &) = delete;
-        JavaLocalRef &operator=(const JavaLocalRef &) = delete;
+    JavaLocalRef(const JavaLocalRef &) = delete;
+    JavaLocalRef &operator=(const JavaLocalRef &) = delete;
 
-        JavaLocalRef &operator=(JavaLocalRef && ) = delete;
+    JavaLocalRef &operator=(JavaLocalRef && ) = delete;
 
-    private:
-        JNIEnv *m_env;
-        T m_obj;
+private:
+    JNIEnv *m_env;
+    T m_obj;
 };
 
 typedef JavaLocalRef< jobject > JavaLocalObject;

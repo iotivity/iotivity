@@ -30,9 +30,8 @@
 #include <mutex>
 #include <thread>
 
-#include <RCSResourceAttributes.h>
-#include <RCSResponse.h>
-#include <RCSRequest.h>
+#include "RCSResourceAttributes.h"
+#include "RCSResponse.h"
 
 namespace OC
 {
@@ -43,6 +42,8 @@ namespace OIC
 {
     namespace Service
     {
+
+        class RCSRequest;
 
         /**
          * @brief Thrown when lock has not been acquired.
@@ -443,12 +444,12 @@ namespace OIC
         private:
             RCSResourceObject(uint8_t, RCSResourceAttributes&&);
 
-            OCEntityHandlerResult entityHandler(std::shared_ptr< OC::OCResourceRequest >);
+            OCEntityHandlerResult entityHandler(const std::shared_ptr< OC::OCResourceRequest >&);
 
-            OCEntityHandlerResult handleRequest(std::shared_ptr< OC::OCResourceRequest >);
-            OCEntityHandlerResult handleRequestGet(std::shared_ptr< OC::OCResourceRequest >);
-            OCEntityHandlerResult handleRequestSet(std::shared_ptr< OC::OCResourceRequest >);
-            OCEntityHandlerResult handleObserve(std::shared_ptr< OC::OCResourceRequest >);
+            OCEntityHandlerResult handleRequest(const std::shared_ptr< OC::OCResourceRequest >&);
+            OCEntityHandlerResult handleRequestGet(const std::shared_ptr< OC::OCResourceRequest >&);
+            OCEntityHandlerResult handleRequestSet(const std::shared_ptr< OC::OCResourceRequest >&);
+            OCEntityHandlerResult handleObserve(const std::shared_ptr< OC::OCResourceRequest >&);
 
             void expectOwnLock() const;
 
@@ -473,8 +474,8 @@ namespace OIC
 
             RCSResourceAttributes m_resourceAttributes;
 
-            GetRequestHandler m_getRequestHandler;
-            SetRequestHandler m_setRequestHandler;
+            std::shared_ptr< GetRequestHandler > m_getRequestHandler;
+            std::shared_ptr< SetRequestHandler > m_setRequestHandler;
 
             AutoNotifyPolicy m_autoNotifyPolicy;
             SetRequestHandlerPolicy m_setRequestHandlerPolicy;
@@ -495,8 +496,10 @@ namespace OIC
          * the RCSResourceObject it is given. When control leaves the scope in which the LockGuard
          * object was created, the LockGuard is destructed and the attributes is unlocked.
          *
-         * Additionally when this is destructed, it tries to notify depending on AutoNotifyPolicy
-         * of the RCSResourceObject.
+         * Additionally when it is destructed and only when destructed not by stack unwinding
+         * caused by an exception, it tries to notify depending on AutoNotifyPolicy.
+         *
+         * @note The destrcutor can throw an exception if auto notify failed.
          */
         class RCSResourceObject::LockGuard
         {
@@ -519,7 +522,13 @@ namespace OIC
             * @overload
             */
             LockGuard(const RCSResourceObject::Ptr, AutoNotifyPolicy);
-            ~LockGuard();
+
+            /**
+             * @throws RCSPlatformException If auto notify operation failed.
+             *
+             * @note The exception will never be thrown while stack unwinding.
+             */
+            ~LockGuard() noexcept(false);
 
             LockGuard(const LockGuard&) = delete;
             LockGuard(LockGuard&&) = delete;

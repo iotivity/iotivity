@@ -713,11 +713,6 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
             {
                 OC_LOG(INFO, TAG, "Build OCAction Instance.");
 
-                if(action)
-                {
-                    OICFree(action->resourceUri);
-                    OICFree(action);
-                }
                 action = (OCAction*) OICMalloc(sizeof(OCAction));
                 VARIFY_POINTER_NULL(action, result, exit)
                 memset(action, 0, sizeof(OCAction));
@@ -1334,7 +1329,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
 #endif
                             if (delay > 0)
                             {
-                                OC_LOG_V(INFO, TAG, "delay_time is %lf seconds.",
+                                OC_LOG_V(INFO, TAG, "delay_time is %ld seconds.",
                                         actionset->timesteps);
 #ifndef WITH_ARDUINO
                                 pthread_mutex_lock(&lock);

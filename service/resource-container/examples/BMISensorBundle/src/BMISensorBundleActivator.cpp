@@ -25,7 +25,7 @@
 #include "BMISensorResource.h"
 
 
-BMISensorBundleActivator *bundle;
+BMISensorBundleActivator *g_bundleBMI;
 
 BMISensorBundleActivator::BMISensorBundleActivator()
 {
@@ -105,22 +105,22 @@ void BMISensorBundleActivator::destroyResource(BundleResource::Ptr resource)
 extern "C" void bmisensor_externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
         std::string bundleId)
 {
-    bundle = new BMISensorBundleActivator();
-    bundle->activateBundle(resourceContainer, bundleId);
+    g_bundleBMI = new BMISensorBundleActivator();
+    g_bundleBMI->activateBundle(resourceContainer, bundleId);
 }
 
 extern "C" void bmisensor_externalDeactivateBundle()
 {
-    bundle->deactivateBundle();
-    delete bundle;
+    g_bundleBMI->deactivateBundle();
+    delete g_bundleBMI;
 }
 
 extern "C" void bmisensor_externalCreateResource(resourceInfo resourceInfo)
 {
-    bundle->createResource(resourceInfo);
+    g_bundleBMI->createResource(resourceInfo);
 }
 
 extern "C" void bmisensor_externalDestroyResource(BundleResource::Ptr pBundleResource)
 {
-    bundle->destroyResource(pBundleResource);
+    g_bundleBMI->destroyResource(pBundleResource);
 }

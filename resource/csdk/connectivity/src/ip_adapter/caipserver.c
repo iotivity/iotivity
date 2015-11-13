@@ -120,7 +120,6 @@ static void CAReceiveHandler(void *data)
 {
     (void)data;
     OIC_LOG(DEBUG, TAG, "IN");
-
     while (!caglobals.ip.terminate)
     {
         CAFindReadyMessage();
@@ -196,14 +195,20 @@ static void CASelectReturned(fd_set *readFds, int ret)
             CAHandleNetlink();
             break;
         }
-        else
+        else if (FD_ISSET(caglobals.ip.shutdownFds[0], readFds))
         {
+            char buf[10] = {0};
+            (void)read(caglobals.ip.shutdownFds[0], buf, sizeof (buf));
             CAInterface_t *ifchanged = CAFindInterfaceChange();
             if (ifchanged)
             {
                 CAProcessNewInterface(ifchanged);
                 OICFree(ifchanged);
             }
+            break;
+        }
+        else
+        {
             break;
         }
 
@@ -667,6 +672,7 @@ static void applyMulticastToInterface6(uint32_t interface)
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressSit, interface);
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressOrg, interface);
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressGlb, interface);
+
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressInt, interface);
     applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressLnk, interface);
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressRlm, interface);

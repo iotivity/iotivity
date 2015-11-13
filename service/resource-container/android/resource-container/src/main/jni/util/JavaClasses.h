@@ -25,13 +25,8 @@
 
 #include <string>
 
-#define PACKAGE_NAME "org/iotivity/service"
-
 #define CLS_NAME_OBJECT "java/lang/Object"
 #define CLS_NAME_STRING "java/lang/String"
-#define CLS_NAME_INTEGER "java/lang/Integer"
-#define CLS_NAME_DOUBLE "java/lang/Double"
-#define CLS_NAME_BOOLEAN "java/lang/Boolean"
 
 #define CLS_NAME_COLLECTION "java/util/Collection"
 #define CLS_NAME_ARRAY_LIST "java/util/ArrayList"
@@ -40,28 +35,15 @@
 #define CLS_NAME_MAP_ENTRY "java/util/Map$Entry"
 #define CLS_NAME_ITERATOR "java/util/Iterator"
 
-#define EXC_NAME_RCS PACKAGE_NAME "/utils/RcsException"
-#define EXC_NAME_PLATFORM PACKAGE_NAME "/utils/RcsPlatformException"
-#define EXC_NAME_ILLEGAL_STATE PACKAGE_NAME "/utils/RcsIllegalStateException"
-
 #define AS_SIG(CLS_NAME) "L" CLS_NAME ";"
 
 class JNIEnvWrapper;
-
-extern jclass g_cls_Integer;
-extern jclass g_cls_Double;
-extern jclass g_cls_Boolean;
-extern jclass g_cls_String;
 
 extern jclass g_cls_ArrayList;
 extern jclass g_cls_Set;
 extern jclass g_cls_Map;
 extern jclass g_cls_MapEntry;
 extern jclass g_cls_Iterator;
-
-extern jmethodID g_method_Boolean_booleanValue;
-extern jmethodID g_method_Integer_intValue;
-extern jmethodID g_method_Double_doubleValue;
 
 extern jmethodID g_method_Collection_add;
 
@@ -76,32 +58,10 @@ extern jmethodID g_method_MapEntry_getValue;
 extern jmethodID g_method_Iterator_hasNext;
 extern jmethodID g_method_Iterator_next;
 
-extern jmethodID g_ctor_Boolean;
-extern jmethodID g_ctor_Integer;
-extern jmethodID g_ctor_Double;
-
 extern jmethodID g_ctor_ArrayList;
 
 void initJavaClasses(JNIEnvWrapper *);
 void clearJavaClasses(JNIEnvWrapper *);
-
-template< typename ENV >
-inline jobject newBooleanObject(ENV *env, bool value)
-{
-    return env->NewObject(g_cls_Boolean, g_ctor_Boolean, value);
-}
-
-template< typename ENV >
-inline jobject newIntegerObject(ENV *env, int value)
-{
-    return env->NewObject(g_cls_Integer, g_ctor_Integer, value);
-}
-
-template< typename ENV >
-inline jobject newDoubleObject(ENV *env, double value)
-{
-    return env->NewObject(g_cls_Double, g_ctor_Double, value);
-}
 
 template< typename ENV >
 inline jstring newStringObject(ENV *env, const std::string &value)
@@ -135,24 +95,6 @@ template< typename ENV >
 inline jobject newArrayList(ENV *env)
 {
     return env->NewObject(g_cls_ArrayList, g_ctor_ArrayList);
-}
-
-template< typename ENV >
-inline bool invoke_Boolean_booleanValue(ENV *env, jobject obj)
-{
-    return env->CallBooleanMethod(obj, g_method_Boolean_booleanValue);
-}
-
-template< typename ENV >
-inline int invoke_Integer_intValue(ENV *env, jobject obj)
-{
-    return env->CallIntMethod(obj, g_method_Integer_intValue);
-}
-
-template< typename ENV >
-inline double invoke_Double_doubleValue(ENV *env, jobject obj)
-{
-    return env->CallDoubleMethod(obj, g_method_Double_doubleValue);
 }
 
 template< typename ENV >

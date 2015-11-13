@@ -4,6 +4,6 @@
 /.idea/libraries
 .DS_Store
 /build/*
-/service/build/*
-/service/src/main/obj/*
-/service/src/main/libs/*
+/resource-container/build/*
+/resource-container/src/main/obj/*
+/resource-container/src/main/libs/*

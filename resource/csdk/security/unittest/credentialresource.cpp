@@ -131,10 +131,10 @@ static void printCred(const OicSecCred_t * cred)
         {
            OC_LOG_V(INFO, TAG, "cred->publicData.data = %s", credTmp1->publicData.data);
         }
-        OC_LOG_V(INFO, TAG, "cred->ownersLen = %zd", credTmp1->ownersLen);
+        OC_LOG_V(INFO, TAG, "cred->ownersLen = %zu", credTmp1->ownersLen);
         for(size_t i = 0; i < cred->ownersLen; i++)
         {
-            OC_LOG_V(INFO, TAG, "cred->owners[%zd].id = %s", i, credTmp1->owners[i].id);
+            OC_LOG_V(INFO, TAG, "cred->owners[%zu].id = %s", i, credTmp1->owners[i].id);
         }
     }
 }

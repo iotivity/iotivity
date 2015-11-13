@@ -60,8 +60,6 @@ static std::string coapServerResource = "/a/light";
 
 void StripNewLineChar(char* str);
 
-// The handle for the observe registration
-OCDoHandle gObserveDoHandle;
 #ifdef WITH_PRESENCE
 // The handle for observe registration
 OCDoHandle gPresenceHandle;
@@ -161,10 +159,6 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     if (ret != OC_STACK_OK)
     {
         OC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d", ret, method);
-    }
-    else if (method == OC_REST_OBSERVE || method == OC_REST_OBSERVE_ALL)
-    {
-        gObserveDoHandle = handle;
     }
 #ifdef WITH_PRESENCE
     else if (method == OC_REST_PRESENCE)
@@ -279,7 +273,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle /*handle*/,
+OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle,
                                   OCClientResponse * clientResponse)
 {
     if (ctx == (void*)DEFAULT_CONTEXT_VALUE)
@@ -296,11 +290,12 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle /*handle*/,
         OC_LOG_PAYLOAD(INFO, clientResponse->payload);
         OC_LOG(INFO, TAG, ("=============> Obs Response"));
         gNumObserveNotifies++;
-        if (gNumObserveNotifies == 15) //large number to test observing in DELETE case.
+        if (gNumObserveNotifies > 15) //large number to test observing in DELETE case.
         {
             if (TestCase == TEST_OBS_REQ_NON || TestCase == TEST_OBS_REQ_CON)
             {
-                if (OCCancel (gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+                OC_LOG(ERROR, TAG, "Cancelling with LOW QOS");
+                if (OCCancel (handle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
                 {
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
@@ -308,7 +303,8 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle /*handle*/,
             }
             else if (TestCase == TEST_OBS_REQ_NON_CANCEL_IMM)
             {
-                if (OCCancel (gObserveDoHandle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                OC_LOG(ERROR, TAG, "Cancelling with HIGH QOS");
+                if (OCCancel (handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
                 {
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }

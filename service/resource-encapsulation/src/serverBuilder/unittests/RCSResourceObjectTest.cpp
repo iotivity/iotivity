@@ -18,11 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <UnitTestHelper.h>
+#include "UnitTestHelper.h"
 
-#include <RCSResourceObject.h>
+#include "RCSResourceObject.h"
 
-#include <OCPlatform.h>
+#include "OCPlatform.h"
 
 using namespace std;
 using namespace std::placeholders;
@@ -36,9 +36,9 @@ typedef OCStackResult (*registerResource)(OCResourceHandle&, string&, const stri
 typedef OCStackResult (*NotifyAllObservers)(OCResourceHandle);
 
 constexpr char RESOURCE_URI[]{ "a/test" };
-constexpr char RESOURCE_TYPE[]{ "resourceType" };
+constexpr char RESOURCE_TYPE[]{ "resourcetype" };
 constexpr char KEY[]{ "key" };
-constexpr int value{ 100 };
+constexpr int VALUE{ 100 };
 
 TEST(ResourceObjectBuilderCreateTest, ThrowIfUriIsInvalid)
 {
@@ -122,10 +122,10 @@ TEST_F(ResourceObjectTest, AccessAttributesWithLock)
     {
         RCSResourceObject::LockGuard lock{ server };
         auto& attr = server->getAttributes();
-        attr[KEY] = value;
+        attr[KEY] = VALUE;
     }
 
-    ASSERT_EQ(value, server->getAttribute<int>(KEY));
+    ASSERT_EQ(VALUE, server->getAttribute<int>(KEY));
 }
 
 TEST_F(ResourceObjectTest, ThrowIfTryToAccessAttributesWithoutGuard)
@@ -137,10 +137,10 @@ TEST_F(ResourceObjectTest, SettingAttributesWithinGuardDoesntCauseDeadLock)
 {
     {
         RCSResourceObject::LockGuard guard{ server };
-        server->setAttribute(KEY, value);
+        server->setAttribute(KEY, VALUE);
     }
 
-    ASSERT_EQ(value, server->getAttribute<int>(KEY));
+    ASSERT_EQ(VALUE, server->getAttribute<int>(KEY));
 }
 
 TEST_F(ResourceObjectTest, SettingNestedAttributesIsSameToGettingNestedAttributes)
@@ -197,23 +197,23 @@ TEST_F(AutoNotifyTest, AutoNotifyPolicyCanBeSet)
 TEST_F(AutoNotifyTest, WithUpdatedPolicy_NeverBeNotifiedIfAttributeIsNotChanged)
 {
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
-    server->setAttribute(KEY, value);
+    server->setAttribute(KEY, VALUE);
 
     mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
             OC::OCPlatform::notifyAllObservers));
 
-    server->setAttribute(KEY, value);
+    server->setAttribute(KEY, VALUE);
 }
 
 TEST_F(AutoNotifyTest, WithUpdatedPolicy_WillBeNotifiedIfAttributeIsChanged)
 {
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
-    server->setAttribute(KEY, value);
+    server->setAttribute(KEY, VALUE);
 
     mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
             OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
 
-    server->setAttribute(KEY, value + 1);
+    server->setAttribute(KEY, VALUE + 1);
 }
 
 TEST_F(AutoNotifyTest, WithUpdatedPolicy_WillBeNotifiedIfValueIsAdded)
@@ -224,7 +224,7 @@ TEST_F(AutoNotifyTest, WithUpdatedPolicy_WillBeNotifiedIfValueIsAdded)
     mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
             OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
 
-    server->setAttribute(newKey, value);
+    server->setAttribute(newKey, VALUE);
 }
 
 TEST_F(AutoNotifyTest, WithNeverPolicy_NeverBeNotifiedEvenIfAttributeIsChanged)
@@ -235,13 +235,13 @@ TEST_F(AutoNotifyTest, WithNeverPolicy_NeverBeNotifiedEvenIfAttributeIsChanged)
             OC::OCPlatform::notifyAllObservers));
 
     RCSResourceObject::LockGuard lock{ server };
-    server->setAttribute(KEY, value);
+    server->setAttribute(KEY, VALUE);
 }
 
 TEST_F(AutoNotifyTest, WithUpdatePolicy_WillBeNotifiedIfAttributeIsDeleted)
 {
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
-    server->setAttribute(KEY, value);
+    server->setAttribute(KEY, VALUE);
 
     mocks.ExpectCallFuncOverload(static_cast< NotifyAllObservers >(
             OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
@@ -261,7 +261,7 @@ TEST_F(AutoNotifyWithGuardTest, GuardFollowsServerPolicyByDefault)
             OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
 
     RCSResourceObject::LockGuard guard{ server };
-    server->setAttribute(KEY, value);
+    server->setAttribute(KEY, VALUE);
 }
 
 TEST_F(AutoNotifyWithGuardTest, GuardCanOverridePolicy)
@@ -272,7 +272,7 @@ TEST_F(AutoNotifyWithGuardTest, GuardCanOverridePolicy)
             OC::OCPlatform::notifyAllObservers));
 
     RCSResourceObject::LockGuard guard{ server, RCSResourceObject::AutoNotifyPolicy::NEVER };
-    server->getAttributes()[KEY] = value;
+    server->getAttributes()[KEY] = VALUE;
 }
 
 TEST_F(AutoNotifyWithGuardTest, GuardInvokesNotifyWhenDestroyed)
@@ -284,13 +284,13 @@ TEST_F(AutoNotifyWithGuardTest, GuardInvokesNotifyWhenDestroyed)
 
     {
         RCSResourceObject::LockGuard guard{ server, RCSResourceObject::AutoNotifyPolicy::ALWAYS };
-        server->setAttribute(KEY, value);
+        server->setAttribute(KEY, VALUE);
     }
 
     mocks.NeverCallFuncOverload(static_cast< NotifyAllObservers >(
                OC::OCPlatform::notifyAllObservers)).Return(OC_STACK_OK);
 
-    server->setAttribute(KEY, value);
+    server->setAttribute(KEY, VALUE);
 }
 
 
@@ -396,7 +396,7 @@ TEST_F(ResourceObjectHandlingRequestTest, SendResponseWithRCSResponseResults)
 TEST_F(ResourceObjectHandlingRequestTest, SendSetResponseWithCustomAttrs)
 {
     constexpr int errorCode{ 1999 };
-    constexpr char value[]{ "value" };
+    constexpr char value[]{ "VALUE" };
 
     server->setSetRequestHandler(
             [](const RCSRequest&, RCSResourceAttributes&) -> RCSSetResponse
@@ -419,6 +419,7 @@ TEST_F(ResourceObjectHandlingRequestTest, SendSetResponseWithCustomAttrs)
 }
 
 
+
 class SetRequestHandlerPolicyTest: public ResourceObjectHandlingRequestTest
 {
 public:
@@ -428,14 +429,7 @@ public:
     OCRepresentation createOCRepresentation()
     {
         OCRepresentation ocRep;
-
-        vector<string> interface{"oic.if.baseline"};
-        vector<string> type{"core.light"};
-
-        ocRep.setUri(RESOURCE_URI);
-        ocRep.setResourceInterfaces(interface);
-        ocRep.setResourceTypes(type);
-
+        ocRep[KEY] = VALUE;
         return ocRep;
     }
 
@@ -460,29 +454,26 @@ TEST_F(SetRequestHandlerPolicyTest, SetRequestHandlerPolicyCanBeSet)
                 server->getSetRequestHandlerPolicy());
 }
 
-TEST_F(SetRequestHandlerPolicyTest, WithNeverPolicy_NotAddedIfReceivedNewKeyValuePair)
+TEST_F(SetRequestHandlerPolicyTest, WithNeverPolicy_DeniedIfKeyIsNew)
 {
-    OCRepresentation ocRep = createOCRepresentation();
-    ocRep.setValue("NewKey", value);
     server->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::NEVER);
 
-    handler(createRequest(OC_REST_PUT, ocRep));
+    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
 
     RCSResourceObject::LockGuard guard{ server };
-    ASSERT_FALSE((server->getAttributes()).contains("NewKey"));
+    ASSERT_FALSE(server->getAttributes().contains(KEY));
 }
 
-TEST_F(SetRequestHandlerPolicyTest, WithAcceptancePolicy_WillBeAddedIfReceivedNewKeyValuePair)
+TEST_F(SetRequestHandlerPolicyTest, WithAcceptancePolicy_AcceptedEvenIfKeyIsNew)
 {
-    OCRepresentation ocRep = createOCRepresentation();
-    ocRep.setValue("NewKey", value);
     server->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
 
-    handler(createRequest(OC_REST_PUT, ocRep));
+    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
 
     RCSResourceObject::LockGuard guard{ server };
-    ASSERT_TRUE((server->getAttributes()).contains("NewKey"));
+    ASSERT_TRUE(server->getAttributes().contains(KEY));
 }
+
 
 
 class ResourceObjectSynchronizationTest: public ResourceObjectHandlingRequestTest
@@ -580,6 +571,7 @@ TEST_F(ResourceObjectSynchronizationTest, MultipleAccessToServerResourceWithRequ
 }
 
 
+
 class AttributeUpdatedListenerTest: public ResourceObjectHandlingRequestTest
 {
 public:
@@ -589,98 +581,80 @@ public:
     OCRepresentation createOCRepresentation(void)
     {
         OCRepresentation ocRep;
-
-        vector<string> interface{"oic.if.baseline"};
-        vector<string> type{"core.light"};
-
-        ocRep.setUri(RESOURCE_URI);
-        ocRep.setResourceInterfaces(interface);
-        ocRep.setResourceTypes(type);
-        ocRep[KEY] = value;
-
+        ocRep[KEY] = VALUE;
         return ocRep;
     }
 
-    void initMocks()
+protected:
+    void SetUp()
     {
-        ResourceObjectHandlingRequestTest::initMocks();
+        ResourceObjectHandlingRequestTest::SetUp();
         mocks.OnCallFunc(OCPlatform::sendResponse).Return(OC_STACK_OK);
+
+        server->setAttribute(KEY, 0);
     }
 };
 
-class FunctionsForAttributeUpdatedListener
+class AttributeUpdatedListener
 {
 public:
-    virtual void fCalled(const OIC::Service::RCSResourceAttributes::Value&,
-        const OIC::Service::RCSResourceAttributes::Value&)=0;
-    virtual void fNotCalled(const OIC::Service::RCSResourceAttributes::Value&,
+    virtual void onUpdated(const OIC::Service::RCSResourceAttributes::Value&,
         const OIC::Service::RCSResourceAttributes::Value&)=0;
 };
 
-TEST_F(AttributeUpdatedListenerTest, AddListenerRunsAddedFunction)
-{
-    FunctionsForAttributeUpdatedListener *ptrMock =
-        mocks.Mock<FunctionsForAttributeUpdatedListener>();
 
-    server->setAttribute(KEY, 0);
-
-    mocks.ExpectCall(ptrMock, FunctionsForAttributeUpdatedListener::fCalled);
-
-    server->addAttributeUpdatedListener(KEY,
-        (std::bind(&FunctionsForAttributeUpdatedListener::fCalled, ptrMock, _1, _2)));
-
-    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
-}
-
-TEST_F(AttributeUpdatedListenerTest, AddListenerRunsAccordingToLastAddedFunction)
-{
-    FunctionsForAttributeUpdatedListener *ptrMock =
-        mocks.Mock<FunctionsForAttributeUpdatedListener>();
-
-    string duplicateKEY(KEY);
-    server->setAttribute(KEY, 0);
-
-    mocks.ExpectCall(ptrMock, FunctionsForAttributeUpdatedListener::fCalled);
-    mocks.NeverCall(ptrMock, FunctionsForAttributeUpdatedListener::fNotCalled);
-
-    server->addAttributeUpdatedListener(duplicateKEY,
-        (std::bind(&FunctionsForAttributeUpdatedListener::fNotCalled, ptrMock, _1, _2)));
-    server->addAttributeUpdatedListener(KEY,
-        (std::bind(&FunctionsForAttributeUpdatedListener::fCalled, ptrMock, _1, _2)));
-
-    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
-}
-
-TEST_F(AttributeUpdatedListenerTest, RemoveListenerReturnsTrueIfListenerIsNotAdded)
+TEST_F(AttributeUpdatedListenerTest, RemoveListenerReturnsFalseIfListenerIsNotAdded)
 {
     ASSERT_FALSE(server->removeAttributeUpdatedListener(KEY));
 }
 
 TEST_F(AttributeUpdatedListenerTest, RemoveListenerReturnsTrueIfListenerIsAdded)
 {
-    FunctionsForAttributeUpdatedListener *ptrMock =
-        mocks.Mock<FunctionsForAttributeUpdatedListener>();
+    auto listener = mocks.Mock< AttributeUpdatedListener >();
 
     server->addAttributeUpdatedListener(KEY,
-        (std::bind(&FunctionsForAttributeUpdatedListener::fNotCalled, ptrMock, _1, _2)));
+            std::bind(&AttributeUpdatedListener::onUpdated, listener, _1, _2));
 
     ASSERT_TRUE(server->removeAttributeUpdatedListener(KEY));
 }
 
-TEST_F(AttributeUpdatedListenerTest, RemoveListenerNeverRunsRemovedFunc)
+TEST_F(AttributeUpdatedListenerTest, AddListenerRunsAddedFunction)
 {
-    FunctionsForAttributeUpdatedListener *ptrMock =
-        mocks.Mock<FunctionsForAttributeUpdatedListener>();
+    auto listener = mocks.Mock< AttributeUpdatedListener >();
 
-    mocks.NeverCall(ptrMock, FunctionsForAttributeUpdatedListener::fNotCalled);
-
-    server->setAttribute(KEY, 0);
     server->addAttributeUpdatedListener(KEY,
-        (std::bind(&FunctionsForAttributeUpdatedListener::fNotCalled, ptrMock, _1, _2)));
-    server->removeAttributeUpdatedListener(KEY);
+            std::bind(&AttributeUpdatedListener::onUpdated, listener, _1, _2));
+
+    mocks.ExpectCall(listener, AttributeUpdatedListener::onUpdated);
 
     handler(createRequest(OC_REST_PUT, createOCRepresentation()));
 }
 
+TEST_F(AttributeUpdatedListenerTest, ListenerWithSameKeyOverridesPreviousOne)
+{
+    auto first = mocks.Mock< AttributeUpdatedListener >();
+    auto second = mocks.Mock< AttributeUpdatedListener >();
 
+    mocks.NeverCall(first, AttributeUpdatedListener::onUpdated);
+    mocks.ExpectCall(second, AttributeUpdatedListener::onUpdated);
 
+    server->addAttributeUpdatedListener(KEY,
+            std::bind(&AttributeUpdatedListener::onUpdated, first, _1, _2));
+    server->addAttributeUpdatedListener(KEY,
+            std::bind(&AttributeUpdatedListener::onUpdated, second, _1, _2));
+
+    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
+}
+
+TEST_F(AttributeUpdatedListenerTest, RemovedListenerNotBeInvoked)
+{
+    auto listener = mocks.Mock< AttributeUpdatedListener >();
+    server->addAttributeUpdatedListener(KEY,
+            std::bind(&AttributeUpdatedListener::onUpdated, listener, _1, _2));
+
+    mocks.NeverCall(listener, AttributeUpdatedListener::onUpdated);
+
+    server->removeAttributeUpdatedListener(KEY);
+
+    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
+}

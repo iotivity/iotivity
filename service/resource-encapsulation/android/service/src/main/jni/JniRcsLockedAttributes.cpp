@@ -25,6 +25,7 @@
 #include "JniRcsValue.h"
 #include "Log.h"
 #include "Verify.h"
+#include "JavaExceptions.h"
 
 #include "RCSResourceObject.h"
 
@@ -153,7 +154,15 @@ Java_org_iotivity_service_server_RcsLockedAttributes_nativeApply
     auto res = getResource(env, resourceObject);
     VERIFY_NO_EXC(env);
 
-    writeNativeAttributesFromMap(env, cacheObj, res->getAttributes());
+    try
+    {
+        RCSResourceObject::LockGuard lock(res);
+        writeNativeAttributesFromMap(env, cacheObj, res->getAttributes());
+    }
+    catch (const RCSPlatformException& e)
+    {
+        throwPlatformException(env, e);
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -163,7 +172,8 @@ Java_org_iotivity_service_server_RcsLockedAttributes_nativeLock
     auto res = getResource(env, resourceObject);
     VERIFY_NO_EXC(env);
 
-    setSafeNativeHandle< RCSResourceObject::LockGuard >(env, obj, res);
+    setSafeNativeHandle< RCSResourceObject::LockGuard >(env, obj,
+            res, RCSResourceObject::AutoNotifyPolicy::NEVER);
 }
 
 JNIEXPORT void JNICALL

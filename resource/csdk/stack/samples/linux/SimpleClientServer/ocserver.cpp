@@ -317,7 +317,7 @@ OCEntityHandlerResult ProcessDeleteRequest (OCEntityHandlerRequest *ehRequest)
     }
     OCEntityHandlerResult ehResult = OC_EH_OK;
 
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s for resource %d ", __func__, ehRequest->resource);
+    OC_LOG_V(INFO, TAG, "\n\nExecuting %s for resource %p ", __func__, ehRequest->resource);
 
     /*
      * In the sample below, the application will:

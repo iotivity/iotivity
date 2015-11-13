@@ -197,6 +197,10 @@ static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
     {
         OICFree(val->str);
     }
+    else if(val->type == OCREP_PROP_BYTE_STRING)
+    {
+        OICFree(val->ocByteStr.bytes);
+    }
     else if (val->type == OCREP_PROP_OBJECT)
     {
         OCRepPayloadDestroy(val->obj);
@@ -219,6 +223,13 @@ static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
                     OICFree(val->arr.strArray[i]);
                 }
                 OICFree(val->arr.strArray);
+                break;
+            case OCREP_PROP_BYTE_STRING:
+                for (size_t i = 0; i< dimTotal; ++i)
+                {
+                    OICFree(val->arr.ocByteStrArray[i].bytes);
+                }
+                OICFree(val->arr.ocByteStrArray);
                 break;
             case OCREP_PROP_OBJECT:
                 for(size_t i = 0; i< dimTotal;++i)
@@ -479,6 +490,9 @@ static bool OCRepPayloadSetProp(OCRepPayload* payload, const char* name,
         case OCREP_PROP_STRING:
                val->str = (char*)value;
                return val->str != NULL;
+        case OCREP_PROP_BYTE_STRING:
+               val->ocByteStr = *(OCByteString*)value;
+               break;
         case OCREP_PROP_NULL:
                return val != NULL;
         case OCREP_PROP_ARRAY:
@@ -562,6 +576,62 @@ bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, ch
     return *value != NULL;
 }
 
+bool OCRepPayloadSetPropByteString(OCRepPayload* payload, const char* name, OCByteString value)
+{
+    if (!value.bytes || !value.len)
+    {
+        return false;
+    }
+
+    OCByteString ocByteStr = {
+                    .bytes = (uint8_t*)OICMalloc(value.len * sizeof(uint8_t)),
+                    .len = value.len };
+
+    if(!ocByteStr.bytes)
+    {
+        return false;
+    }
+    memcpy(ocByteStr.bytes, value.bytes, ocByteStr.len);
+
+    bool b = OCRepPayloadSetPropByteStringAsOwner(payload, name, &ocByteStr);
+
+    if(!b)
+    {
+        OICFree(ocByteStr.bytes);
+    }
+    return b;
+}
+
+bool OCRepPayloadSetPropByteStringAsOwner(OCRepPayload* payload, const char* name, OCByteString* value)
+{
+    return OCRepPayloadSetProp(payload, name, value, OCREP_PROP_BYTE_STRING);
+}
+
+bool OCRepPayloadGetPropByteString(const OCRepPayload* payload, const char* name, OCByteString* value)
+{
+    OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
+
+    if (!val || val->type != OCREP_PROP_BYTE_STRING)
+    {
+        return false;
+    }
+
+    if (!value)
+    {
+        return false;
+    }
+
+    value->bytes = (uint8_t*)OICMalloc(val->ocByteStr.len * sizeof(uint8_t));
+    if (!value->bytes)
+    {
+        return false;
+    }
+    value->len = val->ocByteStr.len;
+    memcpy(value->bytes, val->ocByteStr.bytes, value->len);
+
+    return true;
+}
+
 bool OCRepPayloadSetPropBool(OCRepPayload* payload,
         const char* name, bool value)
 {
@@ -625,6 +695,123 @@ size_t calcDimTotal(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
     }
     return total;
 }
+
+
+bool OCRepPayloadSetByteStringArrayAsOwner(OCRepPayload* payload, const char* name,
+        OCByteString* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
+{
+    OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_ARRAY);
+
+    if (!val)
+    {
+        return false;
+    }
+
+    val->arr.type = OCREP_PROP_BYTE_STRING;
+    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
+    val->arr.ocByteStrArray = array;
+
+    return true;
+}
+
+bool OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char* name,
+        const OCByteString* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
+{
+    if (!array)
+    {
+        return NULL;
+    }
+
+    size_t dimTotal = calcDimTotal(dimensions);
+    if (dimTotal == 0)
+    {
+        return false;
+    }
+
+    OCByteString* newArray = (OCByteString*)OICCalloc(dimTotal, sizeof(OCByteString));
+
+    if (!newArray)
+    {
+        return false;
+    }
+
+    for (size_t i = 0; i < dimTotal; ++i)
+    {
+        newArray[i].bytes = (uint8_t*)OICMalloc(array[i].len * sizeof(uint8_t));
+        if (NULL == newArray[i].bytes)
+        {
+            for (size_t j = 0; j < i; ++j)
+            {
+                OICFree(newArray[j].bytes);
+            }
+
+            OICFree(newArray);
+            return false;
+        }
+        newArray[i].len = array[i].len;
+        memcpy(newArray[i].bytes, array[i].bytes, newArray[i].len);
+    }
+
+    bool b = OCRepPayloadSetByteStringArrayAsOwner(payload, name, newArray, dimensions);
+    if (!b)
+    {
+        for (size_t i = 0; i < dimTotal; ++i)
+        {
+            OICFree(newArray[i].bytes);
+        }
+
+        OICFree(newArray);
+    }
+    return b;
+}
+
+bool OCRepPayloadGetByteStringArray(const OCRepPayload* payload, const char* name,
+        OCByteString** array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
+{
+    OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
+
+    if (!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_BYTE_STRING
+            || !val->arr.ocByteStrArray)
+    {
+        return false;
+    }
+
+    size_t dimTotal = calcDimTotal(val->arr.dimensions);
+    if (dimTotal == 0)
+    {
+        return false;
+    }
+
+    *array = (OCByteString*)OICCalloc(dimTotal, sizeof(OCByteString));
+    if (!*array)
+    {
+        return false;
+    }
+
+    for (size_t i = 0; i < dimTotal; ++i)
+    {
+        OCByteString* tmp = &(*array)[i];
+        tmp->bytes = (uint8_t*)OICMalloc(val->arr.ocByteStrArray[i].len * sizeof(uint8_t));
+        if (NULL == tmp->bytes)
+        {
+            for (size_t j = 0; j < i; ++j)
+            {
+                OCByteString* tmp = &(*array)[j];
+                OICFree(tmp->bytes);
+            }
+            OICFree(*array);
+            *array = NULL;
+
+            return false;
+        }
+        tmp->len = val->arr.ocByteStrArray[i].len;
+        memcpy(tmp->bytes, val->arr.ocByteStrArray[i].bytes, tmp->len);
+    }
+
+    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
+    return true;
+}
+
 
 bool OCRepPayloadSetIntArrayAsOwner(OCRepPayload* payload, const char* name,
         int64_t* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])

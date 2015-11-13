@@ -18,22 +18,24 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <RCSResourceAttributes.h>
+#include "RCSResourceAttributes.h"
 
-#include <ResourceAttributesUtils.h>
-#include <ResourceAttributesConverter.h>
+#include <sstream>
 
-#include <boost/lexical_cast.hpp>
-#include <boost/mpl/advance.hpp>
-#include <boost/mpl/size.hpp>
-#include <boost/mpl/deref.hpp>
+#include "ResourceAttributesUtils.h"
+#include "ResourceAttributesConverter.h"
+
+#include "boost/lexical_cast.hpp"
+#include "boost/mpl/advance.hpp"
+#include "boost/mpl/size.hpp"
+#include "boost/mpl/deref.hpp"
 
 namespace
 {
 
     using namespace OIC::Service;
 
-    class ToStringVisitor: public boost::static_visitor< std::string >
+    class ToStringVisitor: public boost::static_visitor<>
     {
     public:
         ToStringVisitor() = default;
@@ -43,37 +45,56 @@ namespace
         ToStringVisitor& operator=(const ToStringVisitor&) = delete;
         ToStringVisitor& operator=(ToStringVisitor&&) = delete;
 
-        template < typename T >
-        std::string operator()(const T& value) const
+        template< typename T >
+        void operator()(const T& value)
         {
-            return boost::lexical_cast<std::string>(value);
+            m_stream << boost::lexical_cast< std::string >(value);
         }
 
         template< typename T >
-        std::string operator()(const std::vector< T >&) const
+        void operator()(const std::vector< T >& v)
         {
-            return "Vector";
+            m_stream << "[";
+            for (auto it = v.begin(); it != v.end(); ++it)
+            {
+                if (it != v.begin()) m_stream << ", ";
+                (*this)(*it);
+            }
+            m_stream << "]";
         }
 
-        std::string operator()(std::nullptr_t) const
+        void operator()(std::nullptr_t)
         {
-            return "";
+            m_stream << "";
         }
 
-        std::string operator()(bool value) const
+        void operator()(bool value)
         {
-            return value ? "true" : "false";
+            m_stream << (value ? "true" : "false");
         }
 
-        std::string operator()(const std::string& value) const
+        void operator()(const std::string& value)
         {
-            return value;
+            m_stream << "\"" + value + "\"";
         }
 
-        std::string operator()(const OIC::Service::RCSResourceAttributes&) const
+        void operator()(const RCSResourceAttributes& attrs)
         {
-            return "Attributes";
+            m_stream << "{";
+            for (auto it = attrs.begin(); it != attrs.end(); ++it)
+            {
+                if (it != attrs.begin()) m_stream << ", ";
+                m_stream << "\"" << it->key() << "\" : " << it->value().toString();
+            }
+            m_stream << "}";
         }
+
+        std::string get() const {
+            return m_stream.str();
+        }
+
+    private:
+        std::ostringstream m_stream;
     };
 
     class TypeVisitor: public boost::static_visitor< RCSResourceAttributes::Type >
@@ -333,7 +354,9 @@ namespace OIC
 
         std::string RCSResourceAttributes::Value::toString() const
         {
-            return boost::apply_visitor(ToStringVisitor(), *m_data);
+            ToStringVisitor visitor;
+            boost::apply_visitor(visitor, *m_data);
+            return visitor.get();
         }
 
         void RCSResourceAttributes::Value::swap(Value& rhs) noexcept

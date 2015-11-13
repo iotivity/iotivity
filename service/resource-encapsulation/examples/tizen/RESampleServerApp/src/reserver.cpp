@@ -33,6 +33,7 @@ using namespace OIC::Service;
 # define checkServer NULL!=server?true:false
 
 RCSResourceObject::Ptr server;
+static bool serverStarted = false;
 static bool serverCallback = false;
 int isPresenceOn = PRESENCE_ON;
 
@@ -75,17 +76,18 @@ void printAttribute(const RCSResourceAttributes &attrs)
 
 static void onDestroy()
 {
-    server = NULL;
     string logMessage = "SERVER DESTROYED";
 
-    if (isPresenceOn == PRESENCE_ON)
+    if(true == serverStarted)
     {
-        OCPlatform::stopPresence();
-    }
+        server = nullptr;
+        if(isPresenceOn == PRESENCE_ON)
+        {
+            OCPlatform::stopPresence();
+        }
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
-    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
-                                          &logMessage);
+        serverStarted = false;
+    }
 }
 
 //hander for get request (if developer choose second option for resource Creation)
@@ -443,6 +445,7 @@ void serverCreateUI(void *data, Evas_Object *obj, void *event_info)
 void start_server(void *data, Evas_Object *obj, void *event_info)
 {
     server = NULL;
+    serverStarted = true;
     string logMessage = "SERVER WITHOUT CALLBACK<br>";
 
     serverCallback = false;
@@ -456,6 +459,7 @@ void start_server(void *data, Evas_Object *obj, void *event_info)
 void start_server_cb(void *data, Evas_Object *obj, void *event_info)
 {
     server = NULL;
+    serverStarted = true;
     string logMessage = "SERVER WITH CALLBACK<br>";
 
     serverCallback = true;

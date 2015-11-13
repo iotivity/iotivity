@@ -128,6 +128,10 @@ public class ResourceClientActivity extends Activity
             }
 
             mResourceObj.startMonitoring(mOnStateChangedListener);
+
+            if (mResourceObj.isMonitoring()) {
+                printLog("Monitoring started successfully");
+            }
         }
     };
 
@@ -135,8 +139,13 @@ public class ResourceClientActivity extends Activity
         @Override
         public void execute() throws RcsException {
             if (mResourceObj.isMonitoring()) {
+
                 mResourceObj.stopMonitoring();
-                printLog("Stopped Resource Monitoring");
+
+                if (!mResourceObj.isMonitoring()) {
+                    printLog("Monitoring stopped successfully");
+                }
+
             } else {
                 printLog("Monitoring not started");
             }
@@ -168,6 +177,11 @@ public class ResourceClientActivity extends Activity
             }
 
             mResourceObj.startCaching(mOnCacheUpdatedListener);
+
+            if (mResourceObj.isCaching()) {
+                printLog("Caching started successfully");
+            }
+
         }
     };
 
@@ -197,8 +211,21 @@ public class ResourceClientActivity extends Activity
     private Item mStopCaching = new Item("9. Stop Caching") {
         @Override
         public void execute() throws RcsException {
-            mResourceObj.stopCaching();
+            if (mResourceObj.isCaching()) {
+
+                mResourceObj.stopCaching();
+
+                if (!mResourceObj.isCaching()) {
+                    printLog("Caching stopped successfully");
+                } else {
+                    printLog("Stopping caching unsuccessful");
+                }
+
+            } else {
+                printLog("Caching not started");
+            }
         }
+
     };
 
     @Override
@@ -219,10 +246,8 @@ public class ResourceClientActivity extends Activity
     protected void onDestroy() {
         super.onDestroy();
 
-        if (mDiscoveryTask != null)
-            mDiscoveryTask.cancel();
-        if (mResourceObj != null)
-            mResourceObj.destroy();
+        if (mDiscoveryTask != null) mDiscoveryTask.cancel();
+        if (mResourceObj != null) mResourceObj.destroy();
     }
 
     private void initMenuList() {
@@ -414,8 +439,7 @@ public class ResourceClientActivity extends Activity
             super.handleMessage(msg);
 
             ResourceClientActivity activity = mActivityRef.get();
-            if (activity == null)
-                return;
+            if (activity == null) return;
 
             switch (msg.what) {
                 case MSG_ID_RESOURCE_DISCOVERED:

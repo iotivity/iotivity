@@ -166,7 +166,7 @@ static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload
     }
     else if (err != 0)
     {
-        OC_LOG_V(ERROR, TAG, "Convert Payload failed", err);
+        OC_LOG_V(ERROR, TAG, "Convert Payload failed : %zd", err);
         return err;
     }
     else
@@ -175,6 +175,7 @@ static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload
         return 0;
     }
 }
+
 static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* outPayload,
         size_t* size)
 {
@@ -200,7 +201,6 @@ static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* out
 
     err = err | cbor_encoder_close_container(&encoder, &rootArray);
     return checkError(err, &encoder, outPayload, size);
-
 }
 
 static char* OCStringLLJoin(OCStringLL* val)
@@ -578,6 +578,17 @@ static int64_t OCConvertArrayItem(CborEncoder* array, const OCRepPayloadValueArr
                         strlen(valArray->strArray[index]));
             }
             break;
+        case OCREP_PROP_BYTE_STRING:
+            if (!valArray->strArray[index])
+            {
+                err = err | cbor_encode_null(array);
+            }
+            else
+            {
+                err = err | cbor_encode_byte_string(array, valArray->ocByteStrArray[index].bytes,
+                        valArray->ocByteStrArray[index].len);
+            }
+            break;
         case OCREP_PROP_OBJECT:
             if (!valArray->objArray[index])
             {
@@ -734,6 +745,10 @@ static int64_t OCConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload
                 case OCREP_PROP_STRING:
                     err = err | cbor_encode_text_string(&repMap,
                             value->str, strlen(value->str));
+                    break;
+                case OCREP_PROP_BYTE_STRING:
+                    err = err | cbor_encode_byte_string(&repMap,
+                            value->ocByteStr.bytes, value->ocByteStr.len);
                     break;
                 case OCREP_PROP_OBJECT:
                     err = err | OCConvertSingleRepPayload(&repMap, value->obj);

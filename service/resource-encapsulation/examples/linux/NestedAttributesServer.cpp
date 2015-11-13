@@ -18,7 +18,6 @@
  *
  ******************************************************************/
 
-#include "PrimitiveResource.h"
 #include "RCSResourceObject.h"
 #include "OCPlatform.h"
 #include "OCApi.h"
@@ -210,8 +209,8 @@ void changeSpeedAttribute(int state)
 }
 
 //hander for get request (if developer choose second option for resource Creation)
-RCSGetResponse requestHandlerForGet(const RCSRequest &request,
-                                    RCSResourceAttributes &attrs)
+RCSGetResponse requestHandlerForGet(const RCSRequest& /*request*/,
+                                    RCSResourceAttributes& /*attrs*/)
 {
     std::cout << "Recieved a Get request from Client" << std::endl;
 
@@ -225,7 +224,7 @@ RCSGetResponse requestHandlerForGet(const RCSRequest &request,
 }
 
 //hander for set request (if developer choose second option for resource Creation)
-RCSSetResponse requestHandlerForSet(const RCSRequest &request,
+RCSSetResponse requestHandlerForSet(const RCSRequest& /*request*/,
                                     RCSResourceAttributes &attrs)
 {
     std::cout << "Recieved a Set request from Client" << std::endl;

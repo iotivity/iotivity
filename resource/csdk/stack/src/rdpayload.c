@@ -1086,6 +1086,10 @@ void OCTagsLog(const LogLevel level, const OCTagsPayload *tags)
             OC_LOG_V(level, TAG, " DREL : %s ",tags->drel);
         }
     }
+    else
+    {
+        (void) level;
+    }
 }
 
 void OCLinksLog(const LogLevel level, const OCLinksPayload *links)
@@ -1141,5 +1145,9 @@ void OCLinksLog(const LogLevel level, const OCLinksPayload *links)
             OC_LOG_V(level, TAG, " URI: %s", links->uri);
         }
         links = links->next;
+    }
+    if (!links)
+    {
+        (void) level;
     }
 }

@@ -96,7 +96,7 @@ char * GetSVRDatabase()
             size_t bytesRead = ps->read(jsonStr, 1, size, fp);
             jsonStr[bytesRead] = '\0';
 
-            OC_LOG_V(DEBUG, TAG, "Read %d bytes from SVR database file", bytesRead);
+            OC_LOG_V(DEBUG, TAG, "Read %zu bytes from SVR database file", bytesRead);
             ps->close(fp);
             fp = NULL;
         }
@@ -190,7 +190,7 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
             {
                 ret = OC_STACK_OK;
             }
-            OC_LOG_V(DEBUG, TAG, "Written %d bytes into SVR database file", bytesWritten);
+            OC_LOG_V(DEBUG, TAG, "Written %zu bytes into SVR database file", bytesWritten);
             ps->close(fp);
             fp = NULL;
         }

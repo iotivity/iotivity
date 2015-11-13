@@ -124,8 +124,8 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* /*ctx*/, OCDoHandle /*h
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    char *tnn;
-    char *cd;
+    char *tnn = NULL;
+    char *cd = NULL;
 
     OCRepPayload *input = (OCRepPayload * )(clientResponse->payload);
 
@@ -284,7 +284,7 @@ void LogProvisioningResponse(OCRepPayloadValue * val) {
             OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s: NULL", val->name);
             break;
         case OCREP_PROP_INT:
-            OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(int):%lld", val->name, val->i);
+            OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(int):%ld", val->name, val->i);
             break;
         case OCREP_PROP_DOUBLE:
             OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(double):%f", val->name, val->d);
@@ -303,31 +303,31 @@ void LogProvisioningResponse(OCRepPayloadValue * val) {
         case OCREP_PROP_ARRAY:
             switch (val->arr.type) {
                 case OCREP_PROP_INT:
-                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(int array):%d x %d x %d",
+                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(int array):%zu x %zu x %zu",
                               val->name,
                               val->arr.dimensions[0], val->arr.dimensions[1],
                               val->arr.dimensions[2]);
                     break;
                 case OCREP_PROP_DOUBLE:
-                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(double array):%d x %d x %d",
+                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(double array):%zu x %zu x %zu",
                               val->name,
                               val->arr.dimensions[0], val->arr.dimensions[1],
                               val->arr.dimensions[2]);
                     break;
                 case OCREP_PROP_BOOL:
-                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(bool array):%d x %d x %d",
+                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(bool array):%zu x %zu x %zu",
                               val->name,
                               val->arr.dimensions[0], val->arr.dimensions[1],
                               val->arr.dimensions[2]);
                     break;
                 case OCREP_PROP_STRING:
-                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(string array):%d x %d x %d",
+                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(string array):%zu x %zu x %zu",
                               val->name,
                               val->arr.dimensions[0], val->arr.dimensions[1],
                               val->arr.dimensions[2]);
                     break;
                 case OCREP_PROP_OBJECT:
-                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(OCRep array):%d x %d x %d",
+                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(OCRep array):%zu x %zu x %zu",
                               val->name,
                               val->arr.dimensions[0], val->arr.dimensions[1],
                               val->arr.dimensions[2]);
@@ -572,5 +572,3 @@ OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char *query, const
 bool IsSetupStopped() {
     return (cbData == NULL) ? true : false;
 }
-
-

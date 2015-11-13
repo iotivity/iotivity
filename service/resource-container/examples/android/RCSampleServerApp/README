@@ -23,3 +23,8 @@ To build the app
       compile(name:'iotivity-x86-resource-container-debug', ext:'aar')
    }
 
+4. In the app/src/main/assets/lib folder copy the following libs:
+   - libBMISensorBundle.so
+   - libDISensorBundle.so
+   From : {Iotivity_root}/out/android/{TARGET_ARCH}/{MODE}/
+   
