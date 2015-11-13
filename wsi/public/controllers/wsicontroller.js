@@ -28,7 +28,12 @@
         dbfactory.get()
                 .success(function (data) {
                     $scope.services = data;
+                    $scope.exampleServices = data;
                 });
+
+        $scope.getExampleServices = function(){
+            return $scope.exampleServices;
+        }
 
         //CRUDN for Services.
         $scope.createService = function () {

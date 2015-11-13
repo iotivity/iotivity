@@ -45,8 +45,9 @@ require('fs').readdirSync(normalizedPath).forEach(function(file) {
     strategy[svc] = require(normalizedPath + "/" + svc);
     console.log("Initializing Web Service : " + svc);
     var template = strategy[svc].init(app, passport);
-    if(Object.keys(template).length > 0)
+    if(Object.keys(template).length > 0){
         servicedb.update({sid: template.sid}, {$setOnInsert : template}, {upsert : true}, function(err, num){console.log("Added " + num + " record");});
+    }
     console.log(svc + " Initialized");
 });
 
