@@ -70,7 +70,8 @@ class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
         std::shared_ptr<OC::OCResourceResponse> requestOnBatchInterface(
             std::shared_ptr<OC::OCResourceRequest> request);
         void sendNotification(OC::ObservationIds &observers);
-        OC::OCRepresentation prepareRepresentation();
+        void addLink(SimulatorResourceSP &resource);
+        void removeLink(std::string uri);
 
         SimulatorResource::Type m_type;
         std::string m_name;

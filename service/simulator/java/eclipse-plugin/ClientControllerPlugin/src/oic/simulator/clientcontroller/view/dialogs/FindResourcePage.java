@@ -53,7 +53,6 @@ public class FindResourcePage extends WizardPage {
 
     @Override
     public void createControl(Composite parent) {
-        setPageComplete(false);
         setTitle(Constants.FIND_PAGE_TITLE);
         setMessage(Constants.FIND_PAGE_MESSAGE);
 
@@ -79,6 +78,7 @@ public class FindResourcePage extends WizardPage {
         gd = new GridData();
         gd.horizontalSpan = 2;
         allRbtn.setLayoutData(gd);
+        allRbtn.setSelection(true);
 
         resTypeRbtn = new Button(configGroup, SWT.RADIO);
         resTypeRbtn.setText("Specific Resource types (seperated by commas)");

@@ -23,6 +23,7 @@
 
 #include "simulator_single_resource.h"
 #include "simulator_collection_resource.h"
+#include "RamlParser.h"
 
 namespace RAML
 {
@@ -89,6 +90,10 @@ class SimulatorResourceFactory
         SimulatorResourceModel::Attribute buildAttribute(
             std::shared_ptr<RAML::Properties> propertyElement);
         SimulatorResourceModel buildResourceModel(std::shared_ptr<RAML::Items> item);
+        SimulatorResourceModel buildModelFromResponseBody(
+            RAML::RequestResponseBodyPtr responseBody, std::string &resourceType, std::vector<std::string> &interfaceType);
+        RAML::RequestResponseBodyPtr getRAMLResponseBody(
+            std::shared_ptr<RAML::RamlResource> ramlResource, RAML::ActionType type, std::string responseCode);
         std::shared_ptr<SimulatorResource> buildResource(
             std::shared_ptr<RAML::RamlResource> ramlResource);
 

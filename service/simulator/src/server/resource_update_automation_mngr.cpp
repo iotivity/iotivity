@@ -65,7 +65,7 @@ int UpdateAutomationMngr::startAttributeAutomation(SimulatorSingleResource *reso
     SimulatorResourceModel::Attribute attribute;
     if (false == resource->getAttribute(attrName, attribute))
     {
-        OC_LOG_V(ERROR, ATAG, "Attribute:%s not present in resource!", m_attrName.c_str());
+        OC_LOG_V(ERROR, TAG, "Attribute:%s not present in resource!", attrName.c_str());
         throw SimulatorException(SIMULATOR_ERROR, "Attribute is not present in resource!");
     }
 

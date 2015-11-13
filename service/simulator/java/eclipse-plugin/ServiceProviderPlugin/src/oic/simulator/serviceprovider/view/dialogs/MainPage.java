@@ -139,7 +139,7 @@ public class MainPage extends WizardPage {
                 description
                         .setText("Create a logical device that acts as a top-level logical classification.\n"
                                 + "\t1. Takes a device name for identication.\n"
-                                + "\t2. One or more single and collection resources can be added to it.");
+                                + "\t2. One or more simple and collection resources can be added to it.");
                 resOption = ResourceOption.DEVICE;
                 getWizard().getContainer().updateButtons();
             }

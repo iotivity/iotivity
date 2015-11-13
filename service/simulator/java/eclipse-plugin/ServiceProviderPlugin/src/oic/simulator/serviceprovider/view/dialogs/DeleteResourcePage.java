@@ -109,7 +109,7 @@ public class DeleteResourcePage extends WizardPage {
         singleContainer.setLayout(layout);
 
         Label lbl = new Label(singleContainer, SWT.NONE);
-        lbl.setText("Single Resources:");
+        lbl.setText("Simple Resources:");
         gd = new GridData(SWT.FILL, SWT.FILL, true, true);
         // gd.grabExcessHorizontalSpace = true;
         // gd.horizontalAlignment = SWT.FILL;
@@ -229,7 +229,7 @@ public class DeleteResourcePage extends WizardPage {
         innerComp.setLayoutData(gd);
 
         selectAllSingle = new Button(innerComp, SWT.PUSH);
-        selectAllSingle.setText("Select All Single");
+        selectAllSingle.setText("Select All Simple");
         gd = new GridData();
         gd.grabExcessHorizontalSpace = true;
         gd.horizontalAlignment = SWT.FILL;
@@ -257,7 +257,7 @@ public class DeleteResourcePage extends WizardPage {
         });
 
         deselectAllSingle = new Button(innerComp, SWT.PUSH);
-        deselectAllSingle.setText("Deselect All Single");
+        deselectAllSingle.setText("Deselect All Simple");
         gd = new GridData();
         gd.grabExcessHorizontalSpace = true;
         gd.horizontalAlignment = SWT.FILL;

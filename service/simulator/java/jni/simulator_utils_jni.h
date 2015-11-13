@@ -45,6 +45,7 @@ typedef struct
     jclass simulatorCollectionResourceCls;
     jclass simulatorResourceModelCls;
     jclass simulatorResourceAttributeCls;
+    jclass automationTypeCls;
     jclass attributeValueCls;
     jclass attributeValueTypeCls;
     jclass attributeTypeInfoCls;

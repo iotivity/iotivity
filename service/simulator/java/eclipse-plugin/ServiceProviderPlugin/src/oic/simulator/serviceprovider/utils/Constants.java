@@ -99,7 +99,7 @@ public class Constants {
     public static final String         NOTIFY_BUTTON_UNSELECTED                             = "Notify_Unselected";
 
     public static final String         CREATE_PAGE_TITLE                                    = "Create Resource";
-    public static final String         CREATE_PAGE_MESSAGE                                  = "Create a simple resource from RAML file";
+    public static final String         CREATE_PAGE_MESSAGE                                  = "Create a resource from RAML file";
 
     public static final String         DELETE_PAGE_TITLE                                    = "Delete Resource";
     public static final String         DELETE_PAGE_MESSAGE                                  = "Select the resource(s) to be deleted";

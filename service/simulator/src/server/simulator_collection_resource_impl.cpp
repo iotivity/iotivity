@@ -275,6 +275,12 @@ void SimulatorCollectionResourceImpl::addChildResource(SimulatorResourceSP &reso
     }
 
     m_childResources[resource->getURI()] = resource;
+    addLink(resource);
+
+    // Notify application and observers
+    if (m_modelCallback)
+        m_modelCallback(m_uri, m_resModel);
+    notifyAll();
 }
 
 void SimulatorCollectionResourceImpl::removeChildResource(SimulatorResourceSP &resource)
@@ -287,7 +293,13 @@ void SimulatorCollectionResourceImpl::removeChildResource(SimulatorResourceSP &r
         throw SimulatorException(SIMULATOR_ERROR, "Child resource not found in collection!");
     }
 
+    removeLink(resource->getURI());
     m_childResources.erase(m_childResources.find(resource->getURI()));
+
+    // Notify application and observers
+    if (m_modelCallback)
+        m_modelCallback(m_uri, m_resModel);
+    notifyAll();
 }
 
 void SimulatorCollectionResourceImpl::removeChildResource(const std::string &uri)
@@ -300,7 +312,13 @@ void SimulatorCollectionResourceImpl::removeChildResource(const std::string &uri
         throw SimulatorException(SIMULATOR_ERROR, "Child resource not found in collection!");
     }
 
+    removeLink(uri);
     m_childResources.erase(m_childResources.find(uri));
+
+    // Notify application and observers
+    if (m_modelCallback)
+        m_modelCallback(m_uri, m_resModel);
+    notifyAll();
 }
 
 std::vector<SimulatorResourceSP> SimulatorCollectionResourceImpl::getChildResources()
@@ -411,7 +429,7 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
     if ("GET" == request->getRequestType())
     {
         // Construct the representation
-        OC::OCRepresentation ocRep = prepareRepresentation();
+        OC::OCRepresentation ocRep = m_resModel.getOCRepresentation();
         response = std::make_shared<OC::OCResourceResponse>();
         response->setErrorCode(200);
         response->setResponseResult(OC_EH_OK);
@@ -442,12 +460,13 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
         // Construct the representation
         OC::OCRepresentation ocRep;
         std::vector<OC::OCRepresentation> links;
-        int index = 0;
         for (auto &entry : m_childResources)
         {
-            links[index].setValue("href", entry.second->getURI());
-            links[index].setValue("rt", entry.second->getResourceType());
-            links[index].setValue("if", entry.second->getInterface()[0]);
+            OC::OCRepresentation oicLink;
+            oicLink.setValue("href", entry.second->getURI());
+            oicLink.setValue("rt", entry.second->getResourceType());
+            oicLink.setValue("if", entry.second->getInterface()[0]);
+            links.push_back(oicLink);
         }
 
         ocRep.setValue("links", links);
@@ -479,7 +498,9 @@ void SimulatorCollectionResourceImpl::sendNotification(OC::ObservationIds &obser
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse());
     response->setErrorCode(200);
     response->setResponseResult(OC_EH_OK);
-    response->setResourceRepresentation(prepareRepresentation(), OC::DEFAULT_INTERFACE);
+
+    OC::OCRepresentation ocRep = m_resModel.getOCRepresentation();
+    response->setResourceRepresentation(ocRep, OC::DEFAULT_INTERFACE);
 
     typedef OCStackResult (*NotifyListOfObservers)(OCResourceHandle, OC::ObservationIds &,
             const std::shared_ptr<OC::OCResourceResponse>);
@@ -488,35 +509,54 @@ void SimulatorCollectionResourceImpl::sendNotification(OC::ObservationIds &obser
                      m_resourceHandle, observers, response);
 }
 
-OC::OCRepresentation SimulatorCollectionResourceImpl::prepareRepresentation()
+void SimulatorCollectionResourceImpl::addLink(SimulatorResourceSP &resource)
 {
-    OC::OCRepresentation ocRep;
+    std::lock_guard<std::mutex> lock(m_modelLock);
+    if (!m_resModel.containsAttribute("links"))
+        return;
 
-    ocRep.setValue("n", getName());
-    ocRep.setResourceTypes({m_resourceType});
-    ocRep.setResourceInterfaces(m_interfaces);
+    // Create new OIC Link
+    SimulatorResourceModel newLink;
+    newLink.add("href", resource->getURI());
+    newLink.add("rt", resource->getResourceType());
+    newLink.add("if", resource->getInterface()[0]);
 
-    // Add "rts" attribute
-    std::ostringstream supportedTypes;
-    for (auto &type : m_supportedTypes)
+    // Add OIC Link if it is not present
+    bool found = false;
+    std::vector<SimulatorResourceModel> links = m_resModel.get<std::vector<SimulatorResourceModel>>("links");
+    for (auto &link : links)
     {
-        if (!supportedTypes.str().empty())
-            supportedTypes << " ,";
-        supportedTypes << type;
-    }
-    ocRep.setValue("rts", supportedTypes.str());
-
-    // Add "links" attribute
-    std::vector<OC::OCRepresentation> links;
-    int index = 0;
-    for (auto &entry : m_childResources)
-    {
-        links[index].setValue("href", entry.second->getURI());
-        links[index].setValue("rt", entry.second->getResourceType());
-        links[index].setValue("if", entry.second->getInterface()[0]);
+        std::string linkURI = link.get<std::string>("href");
+        if (linkURI == resource->getURI())
+        {
+            break;
+            found = true;
+        }
     }
 
-    ocRep.setValue("links", links);
+    if (false ==  found)
+    {
+        links.push_back(newLink);
+        m_resModel.updateValue("links", links);
+    }
+}
 
-    return ocRep;
+void SimulatorCollectionResourceImpl::removeLink(std::string uri)
+{
+    std::lock_guard<std::mutex> lock(m_modelLock);
+    if (!m_resModel.containsAttribute("links"))
+        return;
+
+    // Add OIC Link if it is not present
+    std::vector<SimulatorResourceModel> links = m_resModel.get<std::vector<SimulatorResourceModel>>("links");
+    for (size_t i = 0; i < links.size(); i++)
+    {
+        std::string linkURI = links[i].get<std::string>("href");
+        if (linkURI == uri)
+        {
+            links.erase(links.begin()+i);
+            m_resModel.updateValue("links", links);
+            break;
+        }
+    }
 }

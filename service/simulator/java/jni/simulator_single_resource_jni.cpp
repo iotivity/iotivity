@@ -40,6 +40,15 @@ SimulatorSingleResourceSP simulatorSingleResourceToCpp(JNIEnv *env, jobject obje
     return nullptr;
 }
 
+static AutomationType AutomationTypeToCpp(JNIEnv *env, jobject jType)
+{
+    static jmethodID ordinalMID = env->GetMethodID(
+                                      gSimulatorClassRefs.automationTypeCls, "ordinal", "()I");
+
+    int ordinal = env->CallIntMethod(jType, ordinalMID);
+    return AutomationType(ordinal);
+}
+
 static void onAutoUpdationComplete(jobject listener, const std::string &uri, const int id)
 {
     JNIEnv *env = getEnv();
@@ -180,7 +189,7 @@ Java_org_oic_simulator_server_SimulatorSingleResource_startResourceUpdation
 
 JNIEXPORT jint JNICALL
 Java_org_oic_simulator_server_SimulatorSingleResource_startAttributeUpdation
-(JNIEnv *env, jobject object, jstring attrName, jint type, jint interval, jobject listener)
+(JNIEnv *env, jobject object, jstring attrName, jobject type, jint interval, jobject listener)
 {
     VALIDATE_INPUT_RET(env, !attrName, "Attribute name is null!", -1)
     VALIDATE_CALLBACK_RET(env, listener, -1)
@@ -195,11 +204,11 @@ Java_org_oic_simulator_server_SimulatorSingleResource_startAttributeUpdation
     };
 
     JniString jniAttrName(env, attrName);
+    AutomationType automationType = AutomationTypeToCpp(env, type);
 
     try
     {
-        int id = singleResource->startAttributeUpdation(jniAttrName.get(),
-                 (1 == type) ? AutomationType::RECURRENT : AutomationType::NORMAL,
+        int id = singleResource->startAttributeUpdation(jniAttrName.get(), automationType,
                  interval, callback);
         return id;
     }

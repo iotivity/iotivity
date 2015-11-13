@@ -67,7 +67,7 @@ public class RemoveResourceFromCollections extends TitleAreaDialog {
     public void create() {
         super.create();
         setTitle("Remove from Collections");
-        setMessage("Select one or more collection resources from which the single resource will be removed.");
+        setMessage("Select one or more collection resources from which the simple resource will be removed.");
     }
 
     @Override

@@ -66,7 +66,7 @@ public class RemoveResourceFromDevices extends TitleAreaDialog {
     public void create() {
         super.create();
         setTitle("Remove from Device");
-        setMessage("Select one or more devices from which the single resource will be removed.");
+        setMessage("Select one or more devices from which the simple resource will be removed.");
     }
 
     @Override

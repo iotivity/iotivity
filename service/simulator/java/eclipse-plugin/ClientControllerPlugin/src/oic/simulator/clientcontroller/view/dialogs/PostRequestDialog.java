@@ -70,7 +70,6 @@ public class PostRequestDialog extends TitleAreaDialog {
             List<PutPostAttributeModel> modelList) {
         super(parentShell);
         this.modelList = modelList;
-        resourceManager = Activator.getDefault().getResourceManager();
     }
 
     @Override

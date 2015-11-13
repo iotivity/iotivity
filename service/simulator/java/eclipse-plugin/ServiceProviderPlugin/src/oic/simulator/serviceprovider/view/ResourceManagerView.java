@@ -294,7 +294,7 @@ public class ResourceManagerView extends ViewPart {
 
     private void createSimpleResourcesArea() {
         singleResTab = new CTabItem(folder, SWT.NULL);
-        singleResTab.setText("Single Resources");
+        singleResTab.setText("Simple Resources");
 
         // Create a group to show all the discovered resources.
         // Adding the group to the folder.
@@ -770,7 +770,7 @@ public class ResourceManagerView extends ViewPart {
         addResources.setMenu(addSubMenu);
 
         MenuItem simpleResources = new MenuItem(addSubMenu, SWT.NONE);
-        simpleResources.setText("Single");
+        simpleResources.setText("Simple");
         simpleResources.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -781,7 +781,7 @@ public class ResourceManagerView extends ViewPart {
                     MessageDialog
                             .openError(Display.getDefault().getActiveShell(),
                                     "No possible candidates",
-                                    "There are no possible single resources that can be added.");
+                                    "There are no possible simple resources that can be added.");
                     return;
                 }
 
@@ -873,7 +873,7 @@ public class ResourceManagerView extends ViewPart {
         removeResources.setMenu(removeSubMenu);
 
         simpleResources = new MenuItem(removeSubMenu, SWT.NONE);
-        simpleResources.setText("Single");
+        simpleResources.setText("Simple");
         simpleResources.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -883,7 +883,7 @@ public class ResourceManagerView extends ViewPart {
                     MessageDialog
                             .openError(Display.getDefault().getActiveShell(),
                                     "No possible candidates",
-                                    "There are no possible single resources which can be removed.");
+                                    "There are no possible simple resources which can be removed.");
                     return;
                 }
 
@@ -1224,7 +1224,7 @@ public class ResourceManagerView extends ViewPart {
         addResources.setMenu(addSubMenu);
 
         MenuItem simpleResources = new MenuItem(addSubMenu, SWT.NONE);
-        simpleResources.setText("Single");
+        simpleResources.setText("Simple");
         simpleResources.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -1235,7 +1235,7 @@ public class ResourceManagerView extends ViewPart {
                     MessageDialog
                             .openError(Display.getDefault().getActiveShell(),
                                     "No possible candidates",
-                                    "There are no possible single resources that can be added.");
+                                    "There are no possible simple resources that can be added.");
                     return;
                 }
 
@@ -1305,7 +1305,7 @@ public class ResourceManagerView extends ViewPart {
         removeResources.setMenu(removeSubMenu);
 
         simpleResources = new MenuItem(removeSubMenu, SWT.NONE);
-        simpleResources.setText("Single");
+        simpleResources.setText("Simple");
         simpleResources.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -1315,7 +1315,7 @@ public class ResourceManagerView extends ViewPart {
                     MessageDialog
                             .openError(Display.getDefault().getActiveShell(),
                                     "No possible candidates",
-                                    "There are no possible single resources which can be removed.");
+                                    "There are no possible simple resources which can be removed.");
                     return;
                 }
 

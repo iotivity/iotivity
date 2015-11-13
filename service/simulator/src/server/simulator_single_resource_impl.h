@@ -72,6 +72,8 @@ class SimulatorSingleResourceImpl : public SimulatorSingleResource
         std::vector<int> getAttributeUpdationIds();
         void stopUpdation(const int id);
         void setResourceModel(const SimulatorResourceModel &resModel);
+        void setPutErrorResponseModel(const SimulatorResourceModel &resModel);
+        void setPostErrorResponseModel(const SimulatorResourceModel &resModel);
         void notifyApp();
         void notifyApp(SimulatorResourceModel &resModel);
 
@@ -92,6 +94,8 @@ class SimulatorSingleResourceImpl : public SimulatorSingleResource
         std::recursive_mutex m_objectLock;
         std::mutex m_modelLock;
         SimulatorResourceModel m_resModel;
+        SimulatorResourceModel m_putErrorResModel;
+        SimulatorResourceModel m_postErrorResModel;
         ResourceModelChangedCallback m_modelCallback;
         ObserverCallback m_observeCallback;
         UpdateAutomationMngr m_updateAutomationMgr;

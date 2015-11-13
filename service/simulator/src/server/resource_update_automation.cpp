@@ -78,7 +78,7 @@ void AttributeUpdateAutomation::updateAttribute()
             {
                 if (false == m_resource->updateAttributeValue(attribute))
                 {
-                    OC_LOG_V(ERROR, TAG, "Failed to update the attribute![%s]", attribute.getName());
+                    OC_LOG_V(ERROR, ATAG, "Failed to update the attribute![%s]", attribute.getName().c_str());
                     continue;
                 }
                 resourceImpl->notifyApp();

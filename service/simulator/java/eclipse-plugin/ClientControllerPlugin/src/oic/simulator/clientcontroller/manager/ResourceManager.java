@@ -42,6 +42,7 @@ import oic.simulator.clientcontroller.remoteresource.MetaProperty;
 import oic.simulator.clientcontroller.remoteresource.PutPostAttributeModel;
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
 import oic.simulator.clientcontroller.remoteresource.RemoteResourceAttribute;
+import oic.simulator.clientcontroller.utils.AttributeValueBuilder;
 import oic.simulator.clientcontroller.utils.Constants;
 import oic.simulator.clientcontroller.utils.Utility;
 
@@ -1496,47 +1497,16 @@ public class ResourceManager {
     private SimulatorResourceModel getUpdatedResourceModel(
             Map<String, RemoteResourceAttribute> attMap,
             List<PutPostAttributeModel> putPostModelList) throws Exception {
-        String attName;
         SimulatorResourceModel resourceModel = new SimulatorResourceModel();
-        PutPostAttributeModel model;
-        RemoteResourceAttribute attribute;
-        ValueType attType;
-        Iterator<PutPostAttributeModel> itr = putPostModelList.iterator();
-        while (itr.hasNext()) {
-            model = itr.next();
-            attName = model.getAttName();
-            attribute = attMap.get(attName);
-            if (null == attribute) {
-                continue;
-            }
-            attType = attribute.getAttValBaseType();
-            if (attType == ValueType.INTEGER) {
-                int attValue;
-                attValue = Integer.parseInt(model.getAttValue());
-                resourceModel.addAttribute(attName,
-                        new AttributeValue(attValue));
-            } else if (attType == ValueType.DOUBLE) {
-                double attValue;
-                attValue = Double.parseDouble(model.getAttValue());
-                resourceModel.addAttribute(attName,
-                        new AttributeValue(attValue));
-            } else if (attType == ValueType.BOOLEAN) {
-                String attValue = model.getAttValue();
-                if (null != attValue && attValue.length() > 0) {
-                    attValue = attValue.toLowerCase();
-                    if (!(attValue.equals("true") || attValue.equals("false"))) {
-                        throw new Exception("Invalid attribute value");
-                    }
-                }
-                resourceModel.addAttribute(attName,
-                        new AttributeValue(attValue));
-            } else if (attType == ValueType.STRING) {
-                String attValue;
-                attValue = model.getAttValue();
-                resourceModel.addAttribute(attName,
-                        new AttributeValue(attValue));
-            }
+        for (PutPostAttributeModel putPostAttribute : putPostModelList)
+        {
+            String attributeName = putPostAttribute.getAttName();
+            RemoteResourceAttribute resourceAttribute = attMap.get(attributeName);
+            AttributeValue attributeValue = AttributeValueBuilder.build(
+                    putPostAttribute.getAttValue(), resourceAttribute.getAttValBaseType());
+            resourceModel.addAttribute(attributeName, attributeValue);
         }
+
         return resourceModel;
     }
 

@@ -44,6 +44,7 @@
 #define ATTRIBUTE_TYPE_INFO_CLS "org/oic/simulator/AttributeValue$TypeInfo"
 #define ATTRIBUTE_PROPERTY_CLS "org/oic/simulator/AttributeProperty"
 #define ATTRIBUTE_PROPERTY_TYPE_CLS "org/oic/simulator/AttributeProperty$Type"
+#define AUTOMATION_TYPE_CLS "org/oic/simulator/server/SimulatorResource$AutoUpdateType"
 
 #define SIMULATOR_REMOTE_RESOURCE_CLS "org/oic/simulator/client/SimulatorRemoteResource"
 #define OBSERVER_CLS "org/oic/simulator/server/Observer"
@@ -152,6 +153,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     getClassRef(env, ATTRIBUTE_TYPE_INFO_CLS, gSimulatorClassRefs.attributeTypeInfoCls);
     getClassRef(env, ATTRIBUTE_PROPERTY_CLS, gSimulatorClassRefs.attributePropertyCls);
     getClassRef(env, ATTRIBUTE_PROPERTY_TYPE_CLS, gSimulatorClassRefs.attributePropertyTypeCls);
+    getClassRef(env, AUTOMATION_TYPE_CLS, gSimulatorClassRefs.automationTypeCls);
     getClassRef(env, OBSERVER_CLS, gSimulatorClassRefs.observerCls);
     getClassRef(env, DEVICE_INFO_CLS, gSimulatorClassRefs.deviceInfoCls);
     getClassRef(env, PLATFORM_INFO_CLS, gSimulatorClassRefs.platformInfoCls);
@@ -215,6 +217,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     env->DeleteGlobalRef(gSimulatorClassRefs.attributeTypeInfoCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.attributePropertyCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.attributePropertyTypeCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.automationTypeCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.simulatorRemoteResourceCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.observerCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.deviceInfoCls);

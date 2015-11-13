@@ -139,7 +139,7 @@ class OCRepresentationBuilder
 
                 void operator ()(const std::vector<SimulatorResourceModel> &values)
                 {
-                    std::vector<OC::OCRepresentation> ocRepArray;
+                    std::vector<OC::OCRepresentation> ocRepArray(values.size());
                     for (size_t i = 0; i < values.size(); i++)
                     {
                         for (auto &element : values[i].getValues())
@@ -306,10 +306,10 @@ class SimulatorResourceModelBuilder
             }
             else if (OC::AttributeType::OCRepresentation == ocAttribute.base_type())
             {
-                std::vector<SimulatorResourceModel> subResModelArray;
                 std::vector<OC::OCRepresentation> ocSubRepArray =
                     ocAttribute.getValue<std::vector<OC::OCRepresentation>>();
 
+                std::vector<SimulatorResourceModel> subResModelArray(ocSubRepArray.size());
                 for  (size_t i = 0; i < ocSubRepArray.size(); i++)
                 {
                     handleRepresentationType(subResModelArray[i], ocSubRepArray[i]);
@@ -340,16 +340,16 @@ class SimulatorResourceModelBuilder
             }
             else if (OC::AttributeType::OCRepresentation == ocAttribute.base_type())
             {
-                std::vector<std::vector<SimulatorResourceModel>> subResModelArray;
                 std::vector<std::vector<OC::OCRepresentation>> ocSubRepArray =
                             ocAttribute.getValue<std::vector<std::vector<OC::OCRepresentation>>>();
 
+                std::vector<std::vector<SimulatorResourceModel>> subResModelArray(ocSubRepArray.size());
                 for  (size_t i = 0; i < ocSubRepArray.size(); i++)
                 {
+                    std::vector<SimulatorResourceModel> innerArray1(ocSubRepArray[i].size());
                     for  (size_t j = 0; j < ocSubRepArray[i].size(); j++)
-                    {
-                        handleRepresentationType(subResModelArray[i][j], ocSubRepArray[i][j]);
-                    }
+                        handleRepresentationType(innerArray1[j], ocSubRepArray[i][j]);
+                    subResModelArray[i] = innerArray1;
                 }
 
                 resModel.add<std::vector<std::vector<SimulatorResourceModel>>>(
@@ -382,19 +382,23 @@ class SimulatorResourceModelBuilder
             }
             else if (OC::AttributeType::OCRepresentation == ocAttribute.base_type())
             {
-                std::vector<std::vector<std::vector<SimulatorResourceModel>>> subResModelArray;
                 std::vector<std::vector<std::vector<OC::OCRepresentation>>> ocSubRepArray =
                     ocAttribute.getValue<std::vector<std::vector<std::vector<OC::OCRepresentation>>>>();
 
+                std::vector<std::vector<std::vector<SimulatorResourceModel>>> subResModelArray(ocSubRepArray.size());
                 for  (size_t i = 0; i < ocSubRepArray.size(); i++)
                 {
+                    std::vector<std::vector<SimulatorResourceModel>> innerArray1(ocSubRepArray[i].size());
                     for  (size_t j = 0; j < ocSubRepArray[i].size(); j++)
                     {
-                        for  (size_t k = 0; k < ocSubRepArray[i].size(); k++)
+                        std::vector<SimulatorResourceModel> innerArray2(ocSubRepArray[i][j].size());
+                        for  (size_t k = 0; k < ocSubRepArray[i][j].size(); k++)
                         {
-                            handleRepresentationType(subResModelArray[i][j][k], ocSubRepArray[i][j][k]);
+                            handleRepresentationType(innerArray2[k], ocSubRepArray[i][j][k]);
                         }
+                        innerArray1[j] = innerArray2;
                     }
+                    subResModelArray[i] = innerArray1;
                 }
 
                 resModel.add<std::vector<std::vector<std::vector<SimulatorResourceModel>>>>(
@@ -781,8 +785,7 @@ void SimulatorResourceModel::AttributeProperty::setChildProperty(AttributeProper
     m_childProperty.reset(new SimulatorResourceModel::AttributeProperty(childProperty));
 }
 
-std::shared_ptr<SimulatorResourceModel::AttributeProperty>
-SimulatorResourceModel::AttributeProperty::getChildProperty()
+std::shared_ptr<SimulatorResourceModel::AttributeProperty> SimulatorResourceModel::AttributeProperty::getChildProperty()
 {
     return m_childProperty;
 }

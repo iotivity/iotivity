@@ -409,6 +409,16 @@ void SimulatorSingleResourceImpl::setResourceModel(const SimulatorResourceModel 
     m_resModel = resModel;
 }
 
+void SimulatorSingleResourceImpl::setPutErrorResponseModel(const SimulatorResourceModel &resModel)
+{
+    m_putErrorResModel = resModel;
+}
+
+void SimulatorSingleResourceImpl::setPostErrorResponseModel(const SimulatorResourceModel &resModel)
+{
+    m_postErrorResModel = resModel;
+}
+
 void SimulatorSingleResourceImpl::notifyApp(SimulatorResourceModel &resModel)
 {
     if (m_modelCallback)
@@ -524,11 +534,12 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorSingleResourceImpl::requestOnBa
     std::shared_ptr<OC::OCResourceResponse> response;
     if ("GET" == request->getRequestType())
     {
+        OC::OCRepresentation ocRep = m_resModel.getOCRepresentation();
         response = std::make_shared<OC::OCResourceResponse>();
         response->setErrorCode(200);
         response->setResponseResult(OC_EH_OK);
-        response->setResourceRepresentation(m_resModel.getOCRepresentation());
-        std::string resPayload = getPayloadString(m_resModel.getOCRepresentation());
+        response->setResourceRepresentation(ocRep);
+        std::string resPayload = getPayloadString(ocRep);
         SIM_LOG(ILogger::INFO, "[" << m_uri <<
                 "] Sending response for GET request. \n**Payload details**" << resPayload)
     }
@@ -556,6 +567,20 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorSingleResourceImpl::requestOnBa
             response = std::make_shared<OC::OCResourceResponse>();
             response->setErrorCode(400);
             response->setResponseResult(OC_EH_ERROR);
+            if ("PUT" == request->getRequestType())
+            {
+                if (m_putErrorResModel.getOCRepresentation().empty())
+                    response->setResourceRepresentation(m_resModel.getOCRepresentation());
+                else
+                    response->setResourceRepresentation(m_putErrorResModel.getOCRepresentation());
+            }
+            else
+            {
+                if (m_postErrorResModel.getOCRepresentation().empty())
+                    response->setResourceRepresentation(m_resModel.getOCRepresentation());
+                else
+                    response->setResourceRepresentation(m_postErrorResModel.getOCRepresentation());
+            }
         }
     }
     else if ("DELETE" == request->getRequestType())

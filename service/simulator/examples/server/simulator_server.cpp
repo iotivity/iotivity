@@ -157,7 +157,7 @@ void displayResource()
     std::cout << "Resource type: " << resource->getResourceType() << std::endl;
     std::cout << "Interface type:";
     for (auto &interfaceType : resource->getInterface())
-        std::cout << " " << interfaceType;
+        std::cout << " " << interfaceType << std::endl;
 
     // Attributes
     SimulatorResourceModel resModel = resource->getResourceModel();
