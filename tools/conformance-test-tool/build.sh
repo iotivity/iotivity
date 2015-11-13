@@ -60,10 +60,16 @@ mkdir -p bin/linux/ConformanceTestTool/libs
 mkdir -p bin/linux/ConformanceTestTool/testsuite
 mkdir -p bin/linux/ConformanceSimulator
 
-cd res/ConformanceSimulator/bin/linux
-RunCommand "find . -type f -not -iname '*.o' -exec cp '{}' '../../../../bin/linux/ConformanceSimulator/{}' ';'" "Conformance Simulator Installation"
-cd ../../../../
-RunCommand "cp -r res/ConformanceTestTool/bin/ConformanceTestTool/* res/ConformanceTestTool/provisioning res/ConformanceTestTool/testsuite bin/linux/ConformanceTestTool" "Required Files Installation"
+if [ ! -e res/ConformanceTestTool/bin/ConformanceTestTool ]; then
+	echo $bold$red'GUI Binary not found, only CLI will be supported!'$reset
+	mkdir -p bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs
+	RunCommand "cp -r res/ConformanceTestTool/provisioning res/ConformanceTestTool/testsuite bin/linux/ConformanceTestTool" "Required Files Installation"
+else
+	echo $bold$green'GUI Binary found, Both GUI and CLI will be supported!'$reset
+	RunCommand "cp -r res/ConformanceTestTool/bin/ConformanceTestTool/* res/ConformanceTestTool/provisioning res/ConformanceTestTool/testsuite bin/linux/ConformanceTestTool" "Required Files Installation"
+fi
+
+RunCommand "cp -r res/ConformanceSimulator/bin/linux/* bin/linux/ConformanceSimulator" "Conformance Simulator Installation"
 RunCommand "cp -r res/ConformanceTestTool/libs/* bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/" "Dependent Jars Installation"
 
 # Buiding JCOAP
