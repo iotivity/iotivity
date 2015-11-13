@@ -132,6 +132,16 @@ namespace OIC
                 void setAttribute(const std::string &key, RCSResourceAttributes::Value &&value);
 
                 /**
+                * Sends a notification to all observers.
+                *
+                * Calling this is not needed when setAttribute() was called
+                * with notify == true.
+                *
+                * @return void
+                */
+                void sendNotification();
+
+                /**
                 * This function should be implemented by the according bundle resource
                 * and execute the according business logic (e.g., light switch or sensor resource)
                 * to retrieve a sensor value. If a new sensor value is retrieved, the
