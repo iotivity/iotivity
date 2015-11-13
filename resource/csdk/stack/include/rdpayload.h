@@ -38,32 +38,10 @@ extern "C" {
  * structure.
  * @param size Length of the payload.
  *
- * @return ::OC_STACK_OK returns if successful and OC_STACK_ERROR returns if
+ * @return ::CborNoError returns if successful and other Cbor error in  case of error.
  * failed in creating CBOR.
  */
-int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, size_t *size);
-
-/**
- * Converts tags structure to the tags cbor payload.
- *
- * @param tags Allocated Tag structure
- * @param setMap The cbor map where result will be stored.
- *
- * @return ::OC_STACK_OK returns if successful and OC_STACK_ERROR returns if
- * failed in creating CBOR.
- */
-OCStackResult OCTagsPayloadToCbor(OCTagsPayload *tags, CborEncoder *setMap);
-
-/**
- * Converts links structure to cbor map structure
- *
- * @param links Allocated links structure.
- * @param setMap The cbor map where result will be stored.
- *
- * @return ::OC_STACK_OK returns if successful and OC_STACK_ERROR returns if
- * failed in creating CBOR.
- */
-OCStackResult OCLinksPayloadToCbor(OCLinksPayload *rtPtr, CborEncoder *setMap);
+CborError OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, size_t *size);
 
 /**
  * Converts CBOR to OCRDPayload.
@@ -75,28 +53,6 @@ OCStackResult OCLinksPayloadToCbor(OCLinksPayload *rtPtr, CborEncoder *setMap);
  * failed in parsing CBOR.
  */
 OCStackResult OCRDCborToPayload(const CborValue *cborPayload, OCPayload **outPayload);
-
-/**
- * Converts cbor map payload to OCTags payload.
- *
- * @param tagstMap CborValue holding tags structure.
- * @param tagsPayload Allocated tags payload.
- *
- * @return ::OC_STACK_OK returns if successful and OC_STACK_ERROR returns if
- * failed in creating CBOR.
- */
-OCStackResult OCTagsCborToPayload(CborValue *tagsMap, OCTagsPayload **tagsPayload);
-
-/**
- * Converts cbor map payload to OCLinks payload.
- *
- * @param tagstMap CborValue holding links structure.
- * @param tagsPayload Allocated links payload.
- *
- * @return ::OC_STACK_OK returns if successful and OC_STACK_ERROR returns if
- * failed in creating CBOR.
- */
-OCStackResult OCLinksCborToPayload(CborValue *linksArray, OCLinksPayload **linksPayload);
 
 /**
  * Initializes RD payload structure.
@@ -174,20 +130,6 @@ OCLinksPayload* OCCopyLinksResources(const char *href, OCStringLL *rt, OCStringL
  * @return Memory allocation for OCResourceCollectionPayload, else NULL.
  */
 OCResourceCollectionPayload* OCCopyCollectionResource(OCTagsPayload *tags, OCLinksPayload *links);
-
-/**
- * Adds discocvery collection in discovery payload.
- *
- * @param payload Pointer to the discovery payload. It adds allocated collection resource.
- * @param tags Pointer to the tags payload.
- * @param links Pointer to the links payload.
- *
- * @return ::OC_STACK_OK returns if successful and OC_STACK_ERROR returns if
- * failed in creating CBOR.
- */
-
-OCStackResult OCDiscoveryCollectionPayloadAddResource(OCDiscoveryPayload *payload,  OCTagsPayload *tags,
-    OCLinksPayload *links);
 
 /**
  * Destroys tags payload including internal structure allocated

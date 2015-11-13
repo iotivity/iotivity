@@ -26,6 +26,7 @@
 #include <ocpayloadcbor.h>
 #include <oic_malloc.h>
 #include <oic_string.h>
+#include "payload_logging.h"
 
 namespace OC
 {
@@ -682,8 +683,9 @@ namespace OCRepresentationEncodingTest
         payload->sid = (uint8_t*)OICMalloc(16);
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "rt.singleitem");
-        OCResourcePayloadAddInterface(resource, "if.singleitem");
+        EXPECT_TRUE(OCResourcePayloadAddStringLL(&resource->types, "rt.singleitem"));
+        EXPECT_TRUE(OCResourcePayloadAddStringLL(&resource->interfaces, "if.singleitem"));
+
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -698,9 +700,8 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
 
         EXPECT_EQ(NULL, parsedResource->next);
-
-        EXPECT_EQ(NULL, parsedResource->types->next);
         EXPECT_STREQ("rt.singleitem", parsedResource->types->value);
+        EXPECT_EQ(NULL, parsedResource->types->next);
         EXPECT_EQ(NULL, parsedResource->interfaces->next);
         EXPECT_STREQ("if.singleitem", parsedResource->interfaces->value);
 
@@ -716,8 +717,8 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "    rt.singleitem");
-        OCResourcePayloadAddInterface(resource, "    if.singleitem");
+        EXPECT_TRUE(OCResourcePayloadAddStringLL(&resource->types, "    rt.singleitem"));
+        EXPECT_TRUE(OCResourcePayloadAddStringLL(&resource->interfaces, "    if.singleitem"));
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -742,6 +743,7 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(cparsed);
         OCDiscoveryPayloadDestroy(payload);
     }
+
     TEST(DiscoveryRTandIF, SingleItemBackTrim)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
@@ -749,8 +751,8 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "rt.singleitem    ");
-        OCResourcePayloadAddInterface(resource, "if.singleitem    ");
+        OCResourcePayloadAddStringLL(&resource->types, "rt.singleitem    ");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "if.singleitem    ");
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -782,8 +784,8 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "    rt.singleitem    ");
-        OCResourcePayloadAddInterface(resource, "    if.singleitem     ");
+        OCResourcePayloadAddStringLL(&resource->types, "    rt.singleitem    ");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "    if.singleitem     ");
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -815,10 +817,10 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "rt.firstitem");
-        OCResourcePayloadAddResourceType(resource, "rt.seconditem");
-        OCResourcePayloadAddInterface(resource, "if.firstitem");
-        OCResourcePayloadAddInterface(resource, "if.seconditem");
+        OCResourcePayloadAddStringLL(&resource->types, "rt.firstitem");
+        OCResourcePayloadAddStringLL(&resource->types, "rt.seconditem");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "if.firstitem");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "if.seconditem");
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -852,10 +854,10 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "  rt.firstitem");
-        OCResourcePayloadAddResourceType(resource, "  rt.seconditem");
-        OCResourcePayloadAddInterface(resource, "  if.firstitem");
-        OCResourcePayloadAddInterface(resource, "  if.seconditem");
+        OCResourcePayloadAddStringLL(&resource->types, "  rt.firstitem");
+        OCResourcePayloadAddStringLL(&resource->types, "  rt.seconditem");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "  if.firstitem");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "  if.seconditem");
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -889,10 +891,10 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "rt.firstitem  ");
-        OCResourcePayloadAddResourceType(resource, "rt.seconditem  ");
-        OCResourcePayloadAddInterface(resource, "if.firstitem  ");
-        OCResourcePayloadAddInterface(resource, "if.seconditem  ");
+        OCResourcePayloadAddStringLL(&resource->types, "rt.firstitem  ");
+        OCResourcePayloadAddStringLL(&resource->types, "rt.seconditem  ");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "if.firstitem  ");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "if.seconditem  ");
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -926,10 +928,10 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "  rt.firstitem  ");
-        OCResourcePayloadAddResourceType(resource, "  rt.seconditem  ");
-        OCResourcePayloadAddInterface(resource, "  if.firstitem  ");
-        OCResourcePayloadAddInterface(resource, "  if.seconditem  ");
+        OCResourcePayloadAddStringLL(&resource->types, "  rt.firstitem  ");
+        OCResourcePayloadAddStringLL(&resource->types, "  rt.seconditem  ");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "  if.firstitem  ");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "  if.seconditem  ");
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -976,7 +978,6 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(NULL, parsedPayload->types->next);
         EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
         EXPECT_EQ(NULL, parsedPayload->interfaces->next);
-
 
         OICFree(cborData);
         OCRepPayloadDestroy(payload);
