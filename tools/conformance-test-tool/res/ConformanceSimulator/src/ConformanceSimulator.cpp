@@ -46,6 +46,7 @@
 #define SERVER_IP_V6 ":::::"
 #define SERVER_PORT 0
 #define MAX_LIGHT_RESOURCE_COUNT 100
+#define MAX_ATTRIBUTE_VALUE_LENGTH 2048
 
 using namespace OC;
 using namespace std;
@@ -107,6 +108,7 @@ void discoverPlatform(void);
 void sendGetRequest();
 void sendPutRequestUpdate(void);
 void sendPostRequestUpdate(void);
+void sendPostRequestUpdateUserInput(void);
 void sendPutRequestCreate(void);
 void sendPostRequestCreate(void);
 void sendDeleteRequest(void);
@@ -1150,7 +1152,7 @@ void sendPutRequestUpdate()
     {
         OCRepresentation rep;
 
-        std::cout << "Sending Create Resource Message(PUT)..." << std::endl;
+        cout << "Sending Create Resource Message(PUT)..." << endl;
 
         string key = "region";
         string value = "Rajshahi, Bangladesh";
@@ -1184,7 +1186,7 @@ void sendPutRequestCreate()
     {
         OCRepresentation rep;
 
-        std::cout << "Sending Complete Update Message(PUT)..." << std::endl;
+        cout << "Sending Complete Update Message(PUT)..." << endl;
 
         vector< string > resourceTypes;
         string key = "href";
@@ -1219,7 +1221,7 @@ void sendPostRequestUpdate()
     {
         OCRepresentation rep;
 
-        std::cout << "Sending Partial Update Message(POST)..." << std::endl;
+        cout << "Sending Partial Update Message(POST)..." << endl;
 
         string key = REGION_KEY;
         string value = "Rajshahi, Bangladesh";
@@ -1241,6 +1243,90 @@ void sendPostRequestUpdate()
     }
 }
 
+void sendPostRequestUpdateUserInput()
+{
+    int selection = selectResource();
+    if (selection != -1)
+    {
+        OCRepresentation rep;
+        string key = "";
+        string valueString = "";
+        bool valueBool = false;
+        int valueInt = 0;
+        double valueDouble = 0.0;
+        string valueArray = "";
+        string userInput = "";
+        char value[MAX_ATTRIBUTE_VALUE_LENGTH];
+        long int choice = 0;
+        bool validChoice = false;
+
+        cout << "Please input Attribute Key: ";
+        cin >> key;
+
+        do
+        {
+            cout << "Please select attribute data type and press Enter: " << endl;
+            cout << "\t\t 1. Integer" << endl;
+            cout << "\t\t 2. Floating Point" << endl;
+            cout << "\t\t 3. Boolean" << endl;
+            cout << "\t\t 4. String" << endl;
+            cout << "\t\t 5. Array" << endl;
+
+            cin >> userInput;
+
+            choice = strtol(userInput.c_str(), NULL, 10);
+            if (choice > 0 && choice <6)
+            {
+                validChoice = true;
+            }
+            else
+            {
+                validChoice = false;
+                cout << "Invalid input for attribute data type. Please select between 1 and 5" << endl;
+            }
+
+        }while(!validChoice);
+
+        cout << "Please input Attribute Value: ";
+        switch(choice)
+        {
+            case 1:
+                cin >> valueInt;
+                rep.setValue(key, valueInt);
+                break;
+            case 2:
+                cin >> valueDouble;
+                rep.setValue(key, valueDouble);
+                break;
+            case 3:
+                cin >> valueBool;
+                rep.setValue(key, valueBool);
+                break;
+            case 4:
+                cin.getline(value, sizeof(value));
+                getline(cin, valueString);
+                rep.setValue(key, valueString);
+                break;
+            case 5:
+                cin.getline(value, sizeof(value));
+                getline(cin, valueArray);
+                rep.setValue(key, valueArray);
+                break;
+        }
+
+        // Invoke resource's put API with rep, query map and the callback parameter
+        cout << "Sending Partial Update Message(POST)..." << endl;
+        foundResourceList.at(selection)->post(rep, QueryParamsMap(), &onPost, qos);
+        cout << "POST request sent!!" << endl;
+        waitForCallback();
+
+    }
+    else
+    {
+        cout << "No resource to send POST!!" << endl;
+    }
+}
+
 void sendPostRequestCreate()
 {
     int selection = selectResource();
@@ -1248,7 +1334,7 @@ void sendPostRequestCreate()
     {
         OCRepresentation rep;
 
-        std::cout << "Sending Subordinate Create Message(POST)..." << std::endl;
+        cout << "Sending Subordinate Create Message(POST)..." << endl;
 
         vector< string > resourceTypes;
         string key = "href";
@@ -1283,7 +1369,7 @@ void sendDeleteRequest()
     {
         OCRepresentation rep;
 
-        std::cout << "Putting region representation..." << std::endl;
+        cout << "Putting region representation..." << endl;
 
         // Invoke resource's delete API with the callback parameter
         shared_ptr< OCResource > resource = foundResourceList.at(selection);
@@ -1309,7 +1395,7 @@ void observeResource()
     {
         OCRepresentation rep;
 
-        std::cout << "Observing resource..." << std::endl;
+        cout << "Observing resource..." << endl;
 
         shared_ptr< OCResource > resource = foundResourceList.at(selection);
         resource->observe(ObserveType::Observe, QueryParamsMap(), &onObserve, qos);
@@ -1333,7 +1419,7 @@ void cancelObserveResource()
         {
             OCRepresentation rep;
 
-            std::cout << "Canceling Observe resource..." << std::endl;
+            cout << "Canceling Observe resource..." << endl;
 
             shared_ptr< OCResource > resource = foundResourceList.at(selection);
             resource->cancelObserve(qos);
@@ -1389,7 +1475,7 @@ void cancelObservePassively()
         {
             OCRepresentation rep;
 
-            std::cout << "Canceling Observe passively..." << std::endl;
+            cout << "Canceling Observe passively..." << endl;
 
             // Currently, there is no api to cancel observe passively
             shared_ptr< OCResource > resource = foundResourceList.at(selection);
@@ -1464,6 +1550,7 @@ int selectResource()
 void showMenu()
 {
     cout << "Please Select an option from the menu and press Enter" << endl;
+    cout << "\t\t 0. Quit Conformance Simulator App" << endl;
     cout << "\t Server Operations:" << endl;
     cout << "\t\t 1. Create Normal Resource" << endl;
     cout << "\t\t 2. Create Invisible Resource" << endl;
@@ -1484,18 +1571,19 @@ void showMenu()
     cout << "\t\t 17. Send GET Request" << endl;
     cout << "\t\t 18. Send PUT Request - Create Resource" << endl;
     cout << "\t\t 19. Send PUT Request - Complete Update" << endl;
-    cout << "\t\t 20. Send POST Request - Partial Update" << endl;
-    cout << "\t\t 21. Send POST Request - Create Sub-Ordinate Resource" << endl;
-    cout << "\t\t 22. Send Delete Request" << endl;
-    cout << "\t\t 23. Observe Resource - Retrieve Request with Observe" << endl;
-    cout << "\t\t 24. Cancel Observing Resource" << endl;
-    cout << "\t\t 25. Cancel Observing Resource Passively" << endl;
-    cout << "\t\t 26. Discover Device - Unicast" << endl;
-    cout << "\t\t 27. Discover Device - Multicast" << endl;
-    cout << "\t\t 28. Discover Platform - Unicast" << endl;
-    cout << "\t\t 29. Find Group" << endl;
-    cout << "\t\t 30. Join Found Resource To Found Group" << endl;
-    cout << "\t\t 31. Quit Conformance Simulator App" << endl;
+    cout << "\t\t 20. Send POST Request - Partial Update - Default" << endl;
+    cout << "\t\t 21. Send POST Request - Partial Update - User Input" << endl;
+    cout << "\t\t 22. Send POST Request - Create Sub-Ordinate Resource" << endl;
+    cout << "\t\t 23. Send Delete Request" << endl;
+    cout << "\t\t 24. Observe Resource - Retrieve Request with Observe" << endl;
+    cout << "\t\t 25. Cancel Observing Resource" << endl;
+    cout << "\t\t 26. Cancel Observing Resource Passively" << endl;
+    cout << "\t\t 27. Discover Device - Unicast" << endl;
+    cout << "\t\t 28. Discover Device - Multicast" << endl;
+    cout << "\t\t 29. Discover Platform - Unicast" << endl;
+    cout << "\t\t 30. Find Group" << endl;
+    cout << "\t\t 31. Join Found Resource To Found Group" << endl;
+
     hasCallbackArrived = false;
     handleMenu();
 }
@@ -1512,7 +1600,7 @@ void handleMenu()
     cin >> userInput;
 
     long int choice = strtol(userInput.c_str(), NULL, 10);
-    if (choice > 31 || choice < 1 || (choice > 8 && choice < 10))
+    if (choice > 31 || choice < 0 || (choice > 8 && choice < 10))
     {
         cout << "Invalid Input. Please input your choice again" << endl;
     }
@@ -1628,40 +1716,44 @@ void handleMenu()
                 break;
 
             case 21:
-                sendPostRequestCreate();
+                sendPostRequestUpdateUserInput();
                 break;
 
             case 22:
-                sendDeleteRequest();
+                sendPostRequestCreate();
                 break;
 
             case 23:
-                observeResource();
+                sendDeleteRequest();
                 break;
 
             case 24:
-                cancelObserveResource();
+                observeResource();
                 break;
 
             case 25:
-                cancelObservePassively();
+                cancelObserveResource();
                 break;
 
             case 26:
+                cancelObservePassively();
+                break;
+
+            case 27:
                 isMulticast = false;
                 discoverDevice(isMulticast);
                 break;
 
-            case 27:
+            case 28:
                 isMulticast = true;
                 discoverDevice(isMulticast);
                 break;
 
-            case 28:
+            case 29:
                 discoverPlatform();
                 break;
 
-            case 29:
+            case 30:
                 collectionType = GROUP_TYPE_ROOM;
                 findCollection(collectionType);
                 if (foundCollectionList.size() == 0)
@@ -1670,7 +1762,7 @@ void handleMenu()
                 }
                 break;
 
-            case 30:
+            case 31:
                 collectionType = GROUP_TYPE_ROOM;
                 if (foundCollectionList.size() == 0)
                 {
@@ -1699,9 +1791,6 @@ void handleMenu()
                 else
                 {
                     cout << "link is not available. creating link..." << endl;
-//                	linkRep["links"] = createLinkRepresentation();
-//                	conformanceHelper->printRepresentation(linkRep);
-//                	cout << linkRep << endl;
                     linkRep.setValue("links",
                             (string) "[{\"href\":\"/device/light-1\",\"rt\":\"core.light\",\"if\":\"oic.if.baseline\",\"ins\":\"123\",\"p\":{\"bm\":3}}]");
                 }
@@ -1711,7 +1800,7 @@ void handleMenu()
 
                 break;
 
-            case 31:
+            case 0:
                 if (createdResourceList.size() > 0 || createdInvisibleResourceList.size() > 0
                         || isSecuredResourceCreated)
                 {

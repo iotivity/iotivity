@@ -4,7 +4,7 @@
         {
             "href": "/device/light-1",
             "rt": ["core.light"],
-            "if": "oic.if.baseline",
+            "if": "oic.if.baseline oic.if.a",
             "dis": "1",
             "obs": "1",
             "CcCsRUcUpD": [true, true,true,true, true,true],
@@ -19,7 +19,7 @@
         {
             "href": "/device/fan-1",
             "rt": "core.fan",
-            "if": "oic.if.baseline",
+            "if": "oic.if.baseline oic.if.a",
             "dis": "1",
             "obs": "0",
             "CcCsRUcUpD": [true, true,true,true, true,true],
@@ -34,7 +34,7 @@
         {
             "href": "/device/fan-invisible",
             "rt": "core.fan",
-            "if": "oic.if.baseline",
+            "if": "oic.if.baseline oic.if.a",
             "dis": "0",
             "obs": "0",
             "CcCsRUcUpD": [true, true,true,true, true,true],
@@ -49,7 +49,7 @@
         {
             "href": "/device/light-invisible",
             "rt": "core.light",
-            "if": "oic.if.baseline",
+            "if": "oic.if.baseline oic.if.a",
             "dis": "0",
             "obs": "0",
             "CcCsRUcUpD": [true, true,true,true, true,true],
