@@ -403,6 +403,7 @@ dtls_cbc_decrypt(aes128_t *aes_ctx,
     int i, j;
     int blocks;
     int depaddinglen = 0;
+    uint8_t wrongpadding_flag = 0;
     dtls_hmac_context_t* hmac_ctx = NULL;
 
     pos = buf;
@@ -429,6 +430,17 @@ dtls_cbc_decrypt(aes128_t *aes_ctx,
     //de-padding
     depaddinglen = buf[srclen -1];
 
+    /**
+     * message validation check in case of wrong key.
+     * In case of wrong padding legnth was detected
+     * set depadding length to zero in order to resist the padding oracle attack
+     * and prevent invalid memory access.
+     */
+    if(srclen <= DTLS_HMAC_DIGEST_SIZE + depaddinglen + 1) {
+        depaddinglen = 0;
+        wrongpadding_flag = 1;
+    }
+
     //Calculate MAC
     hmac_ctx = dtls_hmac_new(key, keylen);
     if(!hmac_ctx) {
@@ -449,7 +461,7 @@ dtls_cbc_decrypt(aes128_t *aes_ctx,
     //verify the MAC
     if(memcmp(mac_buf,
               buf + (srclen - DTLS_HMAC_DIGEST_SIZE - depaddinglen - 1),
-              DTLS_HMAC_DIGEST_SIZE) != 0)
+              DTLS_HMAC_DIGEST_SIZE) != 0 || wrongpadding_flag)
     {
         dtls_crit("Failed to verification of MAC\n");
         return -1;
