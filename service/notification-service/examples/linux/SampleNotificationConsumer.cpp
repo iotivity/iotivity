@@ -107,9 +107,9 @@ void discoverResource()
 
 int checkNotificationList(NotificationObject *m_notificationObjectPtr)
 {
-    for(unsigned int i=0;i<notificationList.size();i++)
+    for (unsigned int i = 0; i < notificationList.size(); i++)
     {
-        if(m_notificationObjectPtr->mNotificationId == notificationList[i])
+        if (m_notificationObjectPtr->mNotificationId == notificationList[i])
         {
             return 1;
         }
@@ -124,13 +124,13 @@ void sendNotificationAcknowledgement(int notificationId, std::string hostAddress
 
 void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
 {
-    if(m_notificationObjectPtr == NULL)
+    if (m_notificationObjectPtr == NULL)
     {
         std::cout << "ERROR: notification object pointer is NULL" << std::endl;
         return;
     }
 
-    if(checkNotificationList(m_notificationObjectPtr))
+    if (checkNotificationList(m_notificationObjectPtr))
     {
         return;
     }
@@ -160,7 +160,7 @@ void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
 
         notificationList.push_back(textNotificationPtr->mNotificationId);
         sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
-                        selectedResource->getAddress());
+                                        selectedResource->getAddress());
     }
 
     if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Image)
@@ -189,7 +189,7 @@ void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
 
         notificationList.push_back(imageNotificationPtr->mNotificationId);
         sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
-                        selectedResource->getAddress());
+                                        selectedResource->getAddress());
     }
 
     if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Video)
@@ -216,7 +216,7 @@ void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
 
         notificationList.push_back(videoNotificationPtr->mNotificationId);
         sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
-                        selectedResource->getAddress());
+                                        selectedResource->getAddress());
     }
 }
 

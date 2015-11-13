@@ -31,7 +31,7 @@ std::string resourceType = "oic.r.notify";
 std::string resourceInterface = "oic.if.";
 std::string notificationSender;
 std::string space;
-std::vector<std::pair<int, std::pair<std::string,int>>> notificationList;
+std::vector<std::pair<int, std::pair<std::string, int>>> notificationList;
 #define notify_ttl 20
 
 NotificationProducer notificationProducer(resourceUri, resourceType, resourceInterface);
@@ -95,7 +95,7 @@ void notificationIdListener(int notificationId, std::string hostAddressValue)
     {
         if (notificationList[i].first == notificationId)
         {
-            if(notificationList[i].second.first != hostAddressValue)
+            if (notificationList[i].second.first != hostAddressValue)
             {
                 notificationList[i].second.second++;
             }
@@ -148,7 +148,7 @@ void sendNotification()
                         notificationTtl);
 
                 notificationObjectPtr = &textNotificationObject;
-                notificationList.push_back(std::make_pair(notificationId, std::make_pair(" ",0)));
+                notificationList.push_back(std::make_pair(notificationId, std::make_pair(" ", 0)));
 
                 notificationProducer.sendNotification(nText, notificationObjectPtr);
                 break;
@@ -171,7 +171,7 @@ void sendNotification()
                         notificationTtl);
 
                 notificationObjectPtr = &imageNotificationObject;
-                notificationList.push_back(std::make_pair(notificationId, std::make_pair(" ",0)));
+                notificationList.push_back(std::make_pair(notificationId, std::make_pair(" ", 0)));
 
                 notificationProducer.sendNotification(nImage, notificationObjectPtr);
                 break;
@@ -191,7 +191,7 @@ void sendNotification()
 
                 notificationObjectPtr = &videoNotificationObject;
 
-                notificationList.push_back(std::make_pair(notificationId, std::make_pair(" ",0)));
+                notificationList.push_back(std::make_pair(notificationId, std::make_pair(" ", 0)));
 
                 notificationProducer.sendNotification(nVideo, notificationObjectPtr);
                 break;

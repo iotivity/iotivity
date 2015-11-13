@@ -47,6 +47,7 @@ const int32_t myVideoURLLength = 11;
 
 
 std::shared_ptr<NotificationConsumer>  selectedResource;
+std::vector<int> notificationList;
 std::vector<std::shared_ptr<NotificationConsumer>> notificationResourceList;
 
 const std::string defaultKey = "Temperature";
@@ -146,9 +147,9 @@ char *download(char *url)
 
 int checkNotificationList(NotificationObject *m_notificationObjectPtr)
 {
-    for(unsigned int i=0;i<notificationList.size();i++)
+    for (unsigned int i = 0; i < notificationList.size(); i++)
     {
-        if(m_notificationObjectPtr->mNotificationId == notificationList[i])
+        if (m_notificationObjectPtr->mNotificationId == notificationList[i])
         {
             return 1;
         }
@@ -163,194 +164,192 @@ void sendNotificationAcknowledgement(int notificationId, std::string hostAddress
 
 void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
 {
-	if (m_notificationObjectPtr == NULL)
+    if (m_notificationObjectPtr == NULL)
     {
-		return;
-	}
-	
-	if(checkNotificationList(m_notificationObjectPtr))
-	{
-	    return;
-	}
-	else
-	{
-		dlog_print(DLOG_INFO, LOG_TAG, "#### onResourceUpdated callback..........");
-		string logMessage;
+        return;
+    }
 
-		static notification_h notification = NULL;
-		int noti_err = NOTIFICATION_ERROR_NONE;
-		char *full_icon_path ;
+    if (checkNotificationList(m_notificationObjectPtr))
+    {
+        return;
+    }
 
-		if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Text)
-		{
-			TextNotification *textNotificationPtr = (TextNotification *) m_notificationObjectPtr;
+    dlog_print(DLOG_INFO, LOG_TAG, "#### onResourceUpdated callback..........");
+    string logMessage;
 
-			std::string nObjType = "text";
+    static notification_h notification = NULL;
+    int noti_err = NOTIFICATION_ERROR_NONE;
+    char *full_icon_path ;
 
-			logMessage = "============= NOTIFICATION RECIEVED ============<br>";
-			logMessage = logMessage + "Type                       : " + nObjType + "<br>";
-			logMessage = logMessage + "Time                        : " + textNotificationPtr->mNotificationTime
-					+ "<br>";
-			logMessage = logMessage + "Sender                     : " + textNotificationPtr->mNotificationSender
-					+ "<br>";
-			logMessage = logMessage + "TTL                         : " + std::to_string(
-					textNotificationPtr->mNotificationTtl) + "<br>";
-			logMessage = logMessage + "Message                  : " + textNotificationPtr->mNotificationMessage
-					+ "<br>";
-			logMessage = logMessage + "ID                  : " + std::to_string(
-					textNotificationPtr->mNotificationId) + "<br>";
-			logMessage = logMessage +  "==========================================" + "<br>";
+    if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Text)
+    {
+        TextNotification *textNotificationPtr = (TextNotification *) m_notificationObjectPtr;
 
-			dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
-			ecore_main_loop_thread_safe_call_sync((void *( *)(void *))updateGroupLog,
-					&logMessage);
+        std::string nObjType = "text";
 
-			notificationList.push_back(textNotificationPtr->mNotificationId);
-			sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
-					selectedResource->getAddress());
+        logMessage = "============= NOTIFICATION RECIEVED ============<br>";
+        logMessage = logMessage + "Type                       : " + nObjType + "<br>";
+        logMessage = logMessage + "Time                        : " + textNotificationPtr->mNotificationTime
+                     + "<br>";
+        logMessage = logMessage + "Sender                     : " + textNotificationPtr->mNotificationSender
+                     + "<br>";
+        logMessage = logMessage + "TTL                         : " + std::to_string(
+                         textNotificationPtr->mNotificationTtl) + "<br>";
+        logMessage = logMessage + "Message                  : " + textNotificationPtr->mNotificationMessage
+                     + "<br>";
+        logMessage = logMessage + "ID                  : " + std::to_string(
+                         textNotificationPtr->mNotificationId) + "<br>";
+        logMessage = logMessage +  "==========================================" + "<br>";
 
-			notification = notification_create(NOTIFICATION_TYPE_NOTI);
-			if (notification == NULL)
-			{
-				return;
-			}
+        dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void *( *)(void *))updateGroupLog,
+                                              &logMessage);
 
-			notification_set_text(notification, NOTIFICATION_TEXT_TYPE_TITLE,
-					&textNotificationPtr->mNotificationSender[0],
-					NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+        notificationList.push_back(textNotificationPtr->mNotificationId);
+        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
+                                        selectedResource->getAddress());
 
-			notification_set_text(notification, NOTIFICATION_TEXT_TYPE_CONTENT,
-					&textNotificationPtr->mNotificationMessage[0],
-					NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+        notification = notification_create(NOTIFICATION_TYPE_NOTI);
+        if (notification == NULL)
+        {
+            return;
+        }
 
-			notification_post(notification);
+        notification_set_text(notification, NOTIFICATION_TEXT_TYPE_TITLE,
+                              &textNotificationPtr->mNotificationSender[0],
+                              NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
 
-			noti_err = notification_free(notification);
-			if (noti_err != NOTIFICATION_ERROR_NONE)
-			{
-				return;
-			}
-			notification = NULL;
-		}
+        notification_set_text(notification, NOTIFICATION_TEXT_TYPE_CONTENT,
+                              &textNotificationPtr->mNotificationMessage[0],
+                              NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
 
-		if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Image)
-		{
-			ImageNotification *imageNotificationPtr = (ImageNotification *) m_notificationObjectPtr;
+        notification_post(notification);
 
-			std::string nObjType = "image";
+        noti_err = notification_free(notification);
+        if (noti_err != NOTIFICATION_ERROR_NONE)
+        {
+            return;
+        }
+        notification = NULL;
+    }
 
-			logMessage = "============= NOTIFICATION RECIEVED ============<br>";
-			logMessage = logMessage + "Type                       : " + nObjType + "<br>";
-			logMessage = logMessage + "Time                        : " + imageNotificationPtr->mNotificationTime
-					+ "<br>";
-			logMessage = logMessage + "Sender                     : " +
-					imageNotificationPtr->mNotificationSender + "<br>";
-			logMessage = logMessage + "TTL                         : " + std::to_string(
-					imageNotificationPtr->mNotificationTtl) + "<br>";
-			logMessage = logMessage + "Icon                  : " + imageNotificationPtr->mNotificationIconUrl +
-					"<br>";
-			logMessage = logMessage + "Message                  : " + imageNotificationPtr->mNotificationMessage
-					+ "<br>";
-			logMessage = logMessage + "ID                  : " + std::to_string(
-					imageNotificationPtr->mNotificationId) + "<br>";
-			logMessage = logMessage +  "==========================================" + "<br>";
+    if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Image)
+    {
+        ImageNotification *imageNotificationPtr = (ImageNotification *) m_notificationObjectPtr;
 
-			dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
-			ecore_main_loop_thread_safe_call_sync((void *( *)(void *))updateGroupLog,
-					&logMessage);
+        std::string nObjType = "image";
 
-			notificationList.push_back(imageNotificationPtr->mNotificationId);
-			sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
-					selectedResource->getAddress());
+        logMessage = "============= NOTIFICATION RECIEVED ============<br>";
+        logMessage = logMessage + "Type                       : " + nObjType + "<br>";
+        logMessage = logMessage + "Time                        : " + imageNotificationPtr->mNotificationTime
+                     + "<br>";
+        logMessage = logMessage + "Sender                     : " +
+                     imageNotificationPtr->mNotificationSender + "<br>";
+        logMessage = logMessage + "TTL                         : " + std::to_string(
+                         imageNotificationPtr->mNotificationTtl) + "<br>";
+        logMessage = logMessage + "Icon                  : " + imageNotificationPtr->mNotificationIconUrl +
+                     "<br>";
+        logMessage = logMessage + "Message                  : " + imageNotificationPtr->mNotificationMessage
+                     + "<br>";
+        logMessage = logMessage + "ID                  : " + std::to_string(
+                         imageNotificationPtr->mNotificationId) + "<br>";
+        logMessage = logMessage +  "==========================================" + "<br>";
 
-			full_icon_path = download(&imageNotificationPtr->mNotificationIconUrl[0]);
+        dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void *( *)(void *))updateGroupLog,
+                                              &logMessage);
 
-			notification = notification_create(NOTIFICATION_TYPE_NOTI);
-			if (notification == NULL)
-			{
-				return;
-			}
+        notificationList.push_back(imageNotificationPtr->mNotificationId);
+        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
+                                        selectedResource->getAddress());
 
-			notification_set_layout(notification, NOTIFICATION_LY_NOTI_THUMBNAIL);
-			notification_set_display_applist(notification,
-					NOTIFICATION_DISPLAY_APP_NOTIFICATION_TRAY |
-					NOTIFICATION_DISPLAY_APP_TICKER);
+        full_icon_path = download(&imageNotificationPtr->mNotificationIconUrl[0]);
 
-			notification_set_text(notification, NOTIFICATION_TEXT_TYPE_TITLE,
-					&imageNotificationPtr->mNotificationSender[0],
-					NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+        notification = notification_create(NOTIFICATION_TYPE_NOTI);
+        if (notification == NULL)
+        {
+            return;
+        }
 
-			notification_set_text(notification, NOTIFICATION_TEXT_TYPE_CONTENT,
-					&imageNotificationPtr->mNotificationMessage[0],
-					NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+        notification_set_layout(notification, NOTIFICATION_LY_NOTI_THUMBNAIL);
+        notification_set_display_applist(notification,
+                                         NOTIFICATION_DISPLAY_APP_NOTIFICATION_TRAY |
+                                         NOTIFICATION_DISPLAY_APP_TICKER);
 
-			noti_err = notification_set_image(notification, NOTIFICATION_IMAGE_TYPE_ICON,
-					full_icon_path);
+        notification_set_text(notification, NOTIFICATION_TEXT_TYPE_TITLE,
+                              &imageNotificationPtr->mNotificationSender[0],
+                              NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
 
-			notification_post(notification);
-			notification = NULL;
-		}
+        notification_set_text(notification, NOTIFICATION_TEXT_TYPE_CONTENT,
+                              &imageNotificationPtr->mNotificationMessage[0],
+                              NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
 
-		if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Video)
-		{
-			VideoNotification *videoNotificationPtr = (VideoNotification *) m_notificationObjectPtr;
+        noti_err = notification_set_image(notification, NOTIFICATION_IMAGE_TYPE_ICON,
+                                          full_icon_path);
 
-			std::string nObjType = "video";
+        notification_post(notification);
+        notification = NULL;
+    }
 
-			logMessage = "============= NOTIFICATION RECIEVED ============<br>";
-			logMessage = logMessage + "Type                       : " + nObjType + "<br>";
-			logMessage = logMessage + "Time                        : " + videoNotificationPtr->mNotificationTime
-					+ "<br>";
-			logMessage = logMessage + "Sender                     : " +
-					videoNotificationPtr->mNotificationSender + "<br>";
-			logMessage = logMessage + "TTL                         : " + std::to_string(
-					videoNotificationPtr->mNotificationTtl) + "<br>";
-			logMessage = logMessage + "Video                  : " + videoNotificationPtr->mNotificationVideoUrl
-					+ "<br>";
-			logMessage = logMessage + "ID                  : " + std::to_string(
-					videoNotificationPtr->mNotificationId) + "<br>";
-			logMessage = logMessage +  "==========================================" + "<br>";
+    if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Video)
+    {
+        VideoNotification *videoNotificationPtr = (VideoNotification *) m_notificationObjectPtr;
 
-			dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
-			ecore_main_loop_thread_safe_call_sync((void *( *)(void *))updateGroupLog,
-					&logMessage);
+        std::string nObjType = "video";
 
-			notificationList.push_back(videoNotificationPtr->mNotificationId);
-			sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
-					selectedResource->getAddress());
+        logMessage = "============= NOTIFICATION RECIEVED ============<br>";
+        logMessage = logMessage + "Type                       : " + nObjType + "<br>";
+        logMessage = logMessage + "Time                        : " + videoNotificationPtr->mNotificationTime
+                     + "<br>";
+        logMessage = logMessage + "Sender                     : " +
+                     videoNotificationPtr->mNotificationSender + "<br>";
+        logMessage = logMessage + "TTL                         : " + std::to_string(
+                         videoNotificationPtr->mNotificationTtl) + "<br>";
+        logMessage = logMessage + "Video                  : " + videoNotificationPtr->mNotificationVideoUrl
+                     + "<br>";
+        logMessage = logMessage + "ID                  : " + std::to_string(
+                         videoNotificationPtr->mNotificationId) + "<br>";
+        logMessage = logMessage +  "==========================================" + "<br>";
 
-			std::string url = videoNotificationPtr->mNotificationVideoUrl;
-			std::string vid = url.substr(myVideoURLStartPos, myVideoURLLength );
-			std::string videoUrl = "http://img.youtube.com/vi/" + vid + "/0.jpg";
+        dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void *( *)(void *))updateGroupLog,
+                                              &logMessage);
 
-			full_icon_path = download(&videoUrl[0]);
+        notificationList.push_back(videoNotificationPtr->mNotificationId);
+        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
+                                        selectedResource->getAddress());
 
-			notification = notification_create(NOTIFICATION_TYPE_NOTI);
-			if (notification == NULL)
-			{
-				return;
-			}
+        std::string url = videoNotificationPtr->mNotificationVideoUrl;
+        std::string vid = url.substr(myVideoURLStartPos, myVideoURLLength );
+        std::string videoUrl = "http://img.youtube.com/vi/" + vid + "/0.jpg";
 
-			notification_set_layout(notification, NOTIFICATION_LY_NOTI_THUMBNAIL);
-			notification_set_display_applist(notification,
-					NOTIFICATION_DISPLAY_APP_NOTIFICATION_TRAY | NOTIFICATION_DISPLAY_APP_TICKER);
+        full_icon_path = download(&videoUrl[0]);
 
-			notification_set_text(notification, NOTIFICATION_TEXT_TYPE_TITLE,
-					&videoNotificationPtr->mNotificationSender[0],
-					NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+        notification = notification_create(NOTIFICATION_TYPE_NOTI);
+        if (notification == NULL)
+        {
+            return;
+        }
 
-			noti_err = notification_set_image(notification, NOTIFICATION_IMAGE_TYPE_ICON, full_icon_path);
+        notification_set_layout(notification, NOTIFICATION_LY_NOTI_THUMBNAIL);
+        notification_set_display_applist(notification,
+                                         NOTIFICATION_DISPLAY_APP_NOTIFICATION_TRAY | NOTIFICATION_DISPLAY_APP_TICKER);
 
-			if (noti_err != NOTIFICATION_ERROR_NONE)
-			{
-				notification_free(notification);
-				return;
-			}
+        notification_set_text(notification, NOTIFICATION_TEXT_TYPE_TITLE,
+                              &videoNotificationPtr->mNotificationSender[0],
+                              NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
 
-			notification_post(notification);
-			notification = NULL;
-		}
-	}
+        noti_err = notification_set_image(notification, NOTIFICATION_IMAGE_TYPE_ICON, full_icon_path);
+
+        if (noti_err != NOTIFICATION_ERROR_NONE)
+        {
+            notification_free(notification);
+            return;
+        }
+
+        notification_post(notification);
+        notification = NULL;
+    }
 }
 
 static void list_selected_cb(void *data, Evas_Object *obj, void *event_info)

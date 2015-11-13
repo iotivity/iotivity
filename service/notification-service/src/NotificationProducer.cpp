@@ -106,8 +106,9 @@ namespace OIC
             std::string ack(jsonResponse);
             mNotificationResource->setAttribute(notification_ack, ack);
 
-             mNotificationResource->addAttributeUpdatedListener(notification_ack, std::bind(IdAttributeUpdatedListener,
-                    std::placeholders::_1, std::placeholders::_2, std::move(cb)));
+            mNotificationResource->addAttributeUpdatedListener(notification_ack,
+                    std::bind(IdAttributeUpdatedListener,
+                              std::placeholders::_1, std::placeholders::_2, std::move(cb)));
 
             return NULL;
         }

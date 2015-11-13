@@ -37,40 +37,41 @@ std::string resourceInterface = "oic.if.";
 
 NotificationProducer notificationProducer(resourceUri, resourceType, resourceInterface);
 
-void SendAcknowledgementCallback(int notificationId,int readStatus)
+void SendAcknowledgementCallback(int notificationId, int readStatus)
 {
 
-	LOGI("sending callback to android");
+    LOGI("sending callback to android");
     JNIEnv *m_env = NotificationManagerJVM::getEnv();
     if (m_env == NULL)
     {
-		LOGE("jvm is null");
-		return;
-	}
+        LOGE("jvm is null");
+        return;
+    }
 
     jclass NMCallbacks = GetJClass(NM_CALLBACK_NATIVE_API_CLASS_PATH);
     if (NMCallbacks == NULL)
     {
-		LOGE("jclass is null");
-		return;
-	}
+        LOGE("jclass is null");
+        return;
+    }
 
     jobject g_callback_obj = GetJObjectInstance(NM_CALLBACK_NATIVE_API_CLASS_PATH);
     if (g_callback_obj == NULL)
     {
-		LOGE("jobj is null");
-		return;
-	}
+        LOGE("jobj is null");
+        return;
+    }
 
-	jmethodID g_AckCallback = m_env->GetMethodID(NMCallbacks, "onNotificationAcknowledgementReceievedCallback",
-                                    "(II)V");
+    jmethodID g_AckCallback = m_env->GetMethodID(NMCallbacks,
+                              "onNotificationAcknowledgementReceievedCallback",
+                              "(II)V");
     if (g_AckCallback == NULL)
         LOGE("couldn't register callback");
     else LOGI("registered callback");
 
-    m_env->CallVoidMethod(g_callback_obj, g_AckCallback,notificationId,readStatus);
+    m_env->CallVoidMethod(g_callback_obj, g_AckCallback, notificationId, readStatus);
 
-	//remove this comment
+    //remove this comment
     NotificationManagerJVM::releaseEnv();
 
 }
@@ -78,7 +79,7 @@ void SendAcknowledgementCallback(int notificationId,int readStatus)
 void notificationIdListener(int notificationId, std::string hostAddressValue)
 {
     LOGI("Received ACK");
-	SendAcknowledgementCallback(notificationId,1);
+    SendAcknowledgementCallback(notificationId, 1);
 }
 
 JNIEXPORT void JNICALL  JNIStartNotificationProducer(JNIEnv *env, jobject thisObj,
@@ -86,17 +87,17 @@ JNIEXPORT void JNICALL  JNIStartNotificationProducer(JNIEnv *env, jobject thisOb
 {
     LOGI("JNI JNIstartNotificationProducer: Enter");
     std::string deviceName = env->GetStringUTFChars(notifyDeviceName, NULL);
-    notificationProducer.startNotificationManager(deviceName,&notificationIdListener);
+    notificationProducer.startNotificationManager(deviceName, &notificationIdListener);
 
 
 }
 
 JNIEXPORT jint JNICALL  JNISendNotification(JNIEnv *env, jobject thisObj, jstring URL,
-        jstring Message, jstring Sender, jint MessageType)
+        jstring jMessage, jstring jSender, jint MessageType)
 {
     LOGI("JNISendNotification %d", MessageType);
 
-    NotificationObject *notificationObjectPtr=new NotificationObject();
+    NotificationObject *notificationObjectPtr = new NotificationObject();
 
     time_t now = time(0);
     char *dt = ctime(&now);
@@ -109,7 +110,7 @@ JNIEXPORT jint JNICALL  JNISendNotification(JNIEnv *env, jobject thisObj, jstrin
     std::string notificationTime = notificationObjectPtr->mNotificationTime;
     std::string notificationSender;
     int notificationTtl = 9;
-    int notificationId =notificationObjectPtr->mNotificationId;
+    int notificationId = notificationObjectPtr->mNotificationId;
 
     NotificationObjectType nText = NotificationObjectType::Text;
     NotificationObjectType nImage = NotificationObjectType::Image;
@@ -119,8 +120,8 @@ JNIEXPORT jint JNICALL  JNISendNotification(JNIEnv *env, jobject thisObj, jstrin
     {
 
         TextNotification textNotificationObject;
-        notificationMessage = env->GetStringUTFChars(Message, NULL);
-        notificationSender = env->GetStringUTFChars(Sender, NULL);
+        notificationMessage = env->GetStringUTFChars(jMessage, NULL);
+        notificationSender = env->GetStringUTFChars(jSender, NULL);
         textNotificationObject.setTextAttributes(notificationMessage, nText ,
                 notificationTime, notificationSender,
                 notificationId,
@@ -137,8 +138,8 @@ JNIEXPORT jint JNICALL  JNISendNotification(JNIEnv *env, jobject thisObj, jstrin
 
         ImageNotification imageNotificationObject;
         notificationIconUrl = env->GetStringUTFChars(URL, NULL);
-        notificationMessage = env->GetStringUTFChars(Message, NULL);
-        notificationSender = env->GetStringUTFChars(Sender, NULL);
+        notificationMessage = env->GetStringUTFChars(jMessage, NULL);
+        notificationSender = env->GetStringUTFChars(jSender, NULL);
 
         imageNotificationObject.setImageAttributes(notificationIconUrl, notificationMessage,
                 nImage, //notificationMessageType ,
@@ -158,7 +159,7 @@ JNIEXPORT jint JNICALL  JNISendNotification(JNIEnv *env, jobject thisObj, jstrin
 
         VideoNotification videoNotificationObject;
         notificationVideoUrl = env->GetStringUTFChars(URL, NULL);
-        notificationSender = env->GetStringUTFChars(Sender, NULL);
+        notificationSender = env->GetStringUTFChars(jSender, NULL);
 
         videoNotificationObject.setVideoAttributes(notificationVideoUrl, nVideo,
                 //notificationMessageType,
@@ -171,6 +172,6 @@ JNIEXPORT jint JNICALL  JNISendNotification(JNIEnv *env, jobject thisObj, jstrin
         notificationProducer.sendNotification(nVideo, notificationObjectPtr);
     }
 
-	return (jint)notificationId;
+    return (jint)notificationId;
 }
 

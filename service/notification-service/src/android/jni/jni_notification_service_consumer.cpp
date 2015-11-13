@@ -92,10 +92,6 @@ void SendCallback(NotificationObject *m_notificationObjectPtr)
         jstring sender = m_env->NewStringUTF(textNotification->mNotificationSender.c_str());
         jint ttl = textNotification->mNotificationTtl;
 
-        notificationList.push_back(textNotification->mNotificationId);
-        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
-            selectedResource->getAddress());
-
         LOGI("ID and ttl=%d %d", id, ttl);
         m_env->CallVoidMethod(g_callback_obj, g_notificationcallback, NULL, message, sender, time, 0, ttl,
                               id);
@@ -109,10 +105,6 @@ void SendCallback(NotificationObject *m_notificationObjectPtr)
         jstring sender = m_env->NewStringUTF(imageNotificationPtr->mNotificationSender.c_str());
         int ttl = imageNotificationPtr->mNotificationTtl;
 
-         notificationList.push_back(imageNotificationPtr->mNotificationId);
-        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
-            selectedResource->getAddress());
-
         m_env->CallVoidMethod(g_callback_obj, g_notificationcallback, url, message, sender, time, 1, ttl,
                               id);
     }
@@ -123,10 +115,6 @@ void SendCallback(NotificationObject *m_notificationObjectPtr)
         jstring time = m_env->NewStringUTF(videoNotificationPtr->mNotificationTime.c_str());
         jstring sender = m_env->NewStringUTF(videoNotificationPtr->mNotificationSender.c_str());
         int ttl = videoNotificationPtr->mNotificationTtl;
-
-        notificationList.push_back(videoNotificationPtr->mNotificationId);
-        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
-            selectedResource->getAddress());
 
         m_env->CallVoidMethod(g_callback_obj, g_notificationcallback, url, NULL, sender, time, 2, ttl, id);
     }
@@ -198,28 +186,33 @@ void onResourceDiscovered(std::shared_ptr<NotificationConsumer> foundResource)
 
 int checkNotificationList(NotificationObject *m_notificationObjectPtr)
 {
-    for(unsigned int i=0;i<notificationList.size();i++)
+    for (unsigned int i = 0; i < notificationList.size(); i++)
     {
-        if(m_notificationObjectPtr->mNotificationId == notificationList[i])
+        if (m_notificationObjectPtr->mNotificationId == notificationList[i])
         {
             return 1;
-         }
-     }
+        }
+    }
     return 0;
 }
 void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
 {
-    if(m_notificationObjectPtr == NULL)
+    if (m_notificationObjectPtr == NULL)
     {
         std::cout << "ERROR: notification object pointer is NULL" << std::endl;
         return;
     }
-    if(checkNotificationList(m_notificationObjectPtr))
+    if (checkNotificationList(m_notificationObjectPtr))
     {
         return;
     }
     LOGI("onResourceUpdated callback");
     SendCallback(m_notificationObjectPtr);
+
+    notificationList.push_back(m_notificationObjectPtr->mNotificationId);
+    sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
+                                    selectedResource->getAddress());
+
     //notificationAcknowledgement(m_notificationObjectPtr);
 
 }
