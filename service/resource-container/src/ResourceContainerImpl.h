@@ -65,7 +65,7 @@ namespace OIC
                 void unregisterBundleSo(const std::string &id);
 
                 // methods from ResourceContainerBundleAPI
-                void registerResource(BundleResource::Ptr resource);
+                int registerResource(BundleResource::Ptr resource);
                 void unregisterResource(BundleResource::Ptr resource);
 
                 void getBundleConfiguration(const std::string &bundleId, configInfo *configOutput);

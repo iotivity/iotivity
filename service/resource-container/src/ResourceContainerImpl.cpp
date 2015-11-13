@@ -258,11 +258,12 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::registerResource(BundleResource::Ptr resource)
+        int ResourceContainerImpl::registerResource(BundleResource::Ptr resource)
         {
             string strUri = resource->m_uri;
             string strResourceType = resource->m_resourceType;
             RCSResourceObject::Ptr server = nullptr;
+            int ret = EINVAL;
 
             OC_LOG_V(INFO, CONTAINER_TAG, "Registration of resource (%s)" ,
                      std::string(strUri + ", " + strResourceType).c_str());
@@ -297,14 +298,18 @@ namespace OIC
 
                     // to get notified if bundle resource attributes are updated
                     resource->registerObserver((NotificationReceiver *) this);
+                    ret = 0;
                 }
             }
             else
             {
                 OC_LOG_V(ERROR, CONTAINER_TAG, "resource with (%s)",
                          std::string(strUri + " already exists.").c_str());
+                ret = -EEXIST;
             }
             registrationLock.unlock();
+
+            return ret;
         }
 
         void ResourceContainerImpl::unregisterResource(BundleResource::Ptr resource)
