@@ -53,6 +53,13 @@ public class PutPostAttributeModel {
         this.values = values;
     }
 
+    public void prependNewValue(String customValue) {
+        if (values.contains(customValue)) {
+            values.remove(customValue);
+        }
+        values.add(0, customValue);
+    }
+
     public boolean isModified() {
         return modified;
     }
@@ -79,5 +86,4 @@ public class PutPostAttributeModel {
     public String toString() {
         return attName + "," + attValue + "\n";
     }
-
 }

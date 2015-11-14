@@ -19,8 +19,8 @@
  ******************************************************************/
 
 #include "simulator_manager.h"
-#include "resource_manager.h"
-#include "simulator_client.h"
+#include "simulator_resource_factory.h"
+#include "simulator_remote_resource_impl.h"
 #include "simulator_utils.h"
 
 SimulatorManager *SimulatorManager::getInstance()
@@ -43,54 +43,102 @@ SimulatorManager::SimulatorManager()
     OC::OCPlatform::Configure(conf);
 }
 
-std::shared_ptr<SimulatorResourceServer> SimulatorManager::createResource(
-    const std::string &configPath,
-    SimulatorResourceServer::ResourceModelChangedCB callback)
+std::shared_ptr<SimulatorResource> SimulatorManager::createResource(
+    const std::string &configPath)
 {
-    return ResourceManager::getInstance()->createResource(configPath, callback);
+    VALIDATE_INPUT(configPath.empty(), "Empty path!")
+
+    std::shared_ptr<SimulatorResource> resource =
+            SimulatorResourceFactory::getInstance()->createResource(configPath);
+    if (!resource)
+        throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
+    return resource;
 }
 
-std::vector<std::shared_ptr<SimulatorResourceServer>> SimulatorManager::createResource(
-            const std::string &configPath, unsigned short count,
-            SimulatorResourceServer::ResourceModelChangedCB callback)
+std::vector<std::shared_ptr<SimulatorResource>> SimulatorManager::createResource(
+            const std::string &configPath, unsigned int count)
 {
-    return ResourceManager::getInstance()->createResource(configPath, count, callback);
+    VALIDATE_INPUT(configPath.empty(), "Empty path!")
+    VALIDATE_INPUT(!count, "Count is zero!")
+
+    std::vector<std::shared_ptr<SimulatorResource>> resources =
+            SimulatorResourceFactory::getInstance()->createResource(configPath, count);
+    if (!resources.size())
+        throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
+    return resources;
 }
 
-std::vector<std::shared_ptr<SimulatorResourceServer>> SimulatorManager::getResources(
-            const std::string &resourceType)
+std::shared_ptr<SimulatorSingleResource> SimulatorManager::createSingleResource(
+    const std::string &name, const std::string &uri, const std::string &resourceType)
 {
-    return ResourceManager::getInstance()->getResources(resourceType);
+    VALIDATE_INPUT(name.empty(), "Empty resource name!")
+    VALIDATE_INPUT(resourceType.empty(), "Empty resource type!")
+
+    return SimulatorResourceFactory::getInstance()->createSingleResource(name, uri, resourceType);
 }
 
-void SimulatorManager::deleteResource(
-    const std::shared_ptr<SimulatorResourceServer> &resource)
+std::shared_ptr<SimulatorCollectionResource> SimulatorManager::createCollectionResource(
+    const std::string &name, const std::string &uri, const std::string &resourceType)
 {
-    ResourceManager::getInstance()->deleteResource(resource);
-}
+    VALIDATE_INPUT(name.empty(), "Empty resource name!")
+    VALIDATE_INPUT(resourceType.empty(), "Empty resource type!")
 
-void SimulatorManager::deleteResource(const std::string &resourceType)
-{
-    ResourceManager::getInstance()->deleteResources(resourceType);
+    return SimulatorResourceFactory::getInstance()->createCollectionResource(name, uri, resourceType);
 }
 
 void SimulatorManager::findResource(ResourceFindCallback callback)
 {
-    SimulatorClient::getInstance()->findResources(callback);
+    VALIDATE_CALLBACK(callback)
+
+    OC::FindCallback findCallback = std::bind(
+                                        [](std::shared_ptr<OC::OCResource> ocResource, ResourceFindCallback callback)
+    {
+        if (!ocResource)
+            return;
+
+        SimulatorRemoteResourceSP simulatorResource(new SimulatorRemoteResourceImpl(ocResource));
+        callback(simulatorResource);
+    }, std::placeholders::_1, callback);
+
+    typedef OCStackResult (*FindResource)(const std::string &, const std::string &,
+                                          OCConnectivityType, OC::FindCallback);
+
+    invokeocplatform(static_cast<FindResource>(OC::OCPlatform::findResource), "",
+                     OC_MULTICAST_DISCOVERY_URI, CT_DEFAULT, findCallback);
 }
 
 void SimulatorManager::findResource(const std::string &resourceType,
-                                     ResourceFindCallback callback)
+                                    ResourceFindCallback callback)
 {
-    SimulatorClient::getInstance()->findResources(resourceType, callback);
+    VALIDATE_INPUT(resourceType.empty(), "Empty resource type!")
+    VALIDATE_CALLBACK(callback)
+
+    OC::FindCallback findCallback = std::bind(
+                                        [](std::shared_ptr<OC::OCResource> ocResource, ResourceFindCallback callback)
+    {
+        if (!ocResource)
+            return;
+
+        SimulatorRemoteResourceSP simulatorResource(new SimulatorRemoteResourceImpl(ocResource));
+        callback(simulatorResource);
+    }, std::placeholders::_1, callback);
+
+    std::ostringstream query;
+    query << OC_MULTICAST_DISCOVERY_URI << "?rt=" << resourceType;
+
+    typedef OCStackResult (*FindResource)(const std::string &, const std::string &,
+                                          OCConnectivityType, OC::FindCallback);
+
+    invokeocplatform(static_cast<FindResource>(OC::OCPlatform::findResource), "", query.str(),
+                     CT_DEFAULT, findCallback);
 }
 
 void SimulatorManager::getDeviceInfo(DeviceInfoCallback callback)
 {
-    if (!callback)
-        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
+    VALIDATE_CALLBACK(callback)
 
-    OC::FindDeviceCallback deviceCallback = [this, callback](const OC::OCRepresentation & rep)
+    OC::FindDeviceCallback deviceCallback = std::bind(
+            [](const OC::OCRepresentation & rep, DeviceInfoCallback callback)
     {
         std::string deviceName = rep.getValue<std::string>("n");
         std::string deviceID = rep.getValue<std::string>("di");
@@ -99,7 +147,7 @@ void SimulatorManager::getDeviceInfo(DeviceInfoCallback callback)
 
         DeviceInfo deviceInfo(deviceName, deviceID, deviceSpecVersion, deviceDMV);
         callback(deviceInfo);
-    };
+    }, std::placeholders::_1, callback);
 
     std::ostringstream uri;
     uri << OC_MULTICAST_PREFIX << OC_RSRVD_DEVICE_URI;
@@ -108,16 +156,12 @@ void SimulatorManager::getDeviceInfo(DeviceInfoCallback callback)
                                            OCConnectivityType, OC::FindDeviceCallback);
 
     invokeocplatform(static_cast<GetDeviceInfo>(OC::OCPlatform::getDeviceInfo), "",
-                     uri.str(),
-                     CT_DEFAULT,
-                     deviceCallback);
+                     uri.str(), CT_DEFAULT, deviceCallback);
 }
 
 void SimulatorManager::setDeviceInfo(const std::string &deviceName)
 {
-    if (deviceName.empty())
-        throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Device name is empty!");
-
+    VALIDATE_INPUT(deviceName.empty(), "Empty resource type!")
 
     typedef OCStackResult (*RegisterDeviceInfo)(const OCDeviceInfo);
 
@@ -129,10 +173,10 @@ void SimulatorManager::setDeviceInfo(const std::string &deviceName)
 
 void SimulatorManager::getPlatformInfo(PlatformInfoCallback callback)
 {
-    if (!callback)
-        throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
+    VALIDATE_CALLBACK(callback)
 
-    OC::FindPlatformCallback platformCallback = [this, callback](const OC::OCRepresentation & rep)
+    OC::FindPlatformCallback platformCallback = std::bind(
+                [](const OC::OCRepresentation & rep, PlatformInfoCallback callback)
     {
         PlatformInfo platformInfo;
         platformInfo.setPlatformID(rep.getValue<std::string>("pi"));
@@ -148,7 +192,7 @@ void SimulatorManager::getPlatformInfo(PlatformInfoCallback callback)
         platformInfo.setSystemTime(rep.getValue<std::string>("st"));
 
         callback(platformInfo);
-    };
+    }, std::placeholders::_1, callback);
 
     std::ostringstream uri;
     uri << OC_MULTICAST_PREFIX << OC_RSRVD_PLATFORM_URI;
@@ -157,9 +201,7 @@ void SimulatorManager::getPlatformInfo(PlatformInfoCallback callback)
             OCConnectivityType, OC::FindPlatformCallback);
 
     invokeocplatform(static_cast<GetPlatformInfo>(OC::OCPlatform::getPlatformInfo), "",
-                     uri.str(),
-                     CT_DEFAULT,
-                     platformCallback);
+                     uri.str(), CT_DEFAULT, platformCallback);
 }
 
 void SimulatorManager::setPlatformInfo(PlatformInfo &platformInfo)

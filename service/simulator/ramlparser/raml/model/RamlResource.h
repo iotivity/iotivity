@@ -33,7 +33,7 @@
 #include "UriParameter.h"
 #include "ActionType.h"
 #include "Action.h"
-#include "Utils.h"
+#include "RamlUtils.h"
 #include "IncludeResolver.h"
 
 namespace RAML

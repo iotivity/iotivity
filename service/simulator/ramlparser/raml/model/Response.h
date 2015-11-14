@@ -32,7 +32,7 @@
 #include <string>
 #include "RequestResponseBody.h"
 #include "Header.h"
-#include "Utils.h"
+#include "RamlUtils.h"
 #include "IncludeResolver.h"
 
 namespace RAML

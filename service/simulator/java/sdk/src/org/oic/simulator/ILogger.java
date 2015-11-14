@@ -28,8 +28,7 @@ public interface ILogger {
     }
 
     /**
-     * This callback method will be called to notify the application about the
-     * status or problems along with their severity.
+     * This method will be used to deliver the log messages from native layer.
      *
      * @param time
      *            Local time information when action/event logged.

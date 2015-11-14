@@ -24,6 +24,19 @@
 #include <iostream>
 #include <functional>
 
+enum class ObservationStatus
+{
+    REGISTER,
+    UNREGISTER
+};
+
+typedef struct
+{
+    uint8_t id;
+    std::string address;
+    uint16_t port;
+} ObserverInfo;
+
 enum class AutomationType
 {
     NORMAL,

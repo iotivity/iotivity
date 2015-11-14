@@ -29,7 +29,7 @@
 
 #include "yaml-cpp/yaml.h"
 #include "Raml.h"
-#include "Utils.h"
+#include "RamlUtils.h"
 #include "RequestResponseBody.h"
 #include "RamlResource.h"
 #include "Action.h"

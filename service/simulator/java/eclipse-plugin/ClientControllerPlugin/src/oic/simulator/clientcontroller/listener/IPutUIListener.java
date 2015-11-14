@@ -23,6 +23,4 @@ import oic.simulator.clientcontroller.remoteresource.RemoteResource;
  */
 public interface IPutUIListener {
     public void onPutCompleted(RemoteResource resource);
-
-    public void onPutFailed(RemoteResource resource);
 }

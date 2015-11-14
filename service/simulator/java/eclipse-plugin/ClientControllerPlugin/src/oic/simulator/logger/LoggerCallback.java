@@ -58,7 +58,7 @@ public class LoggerCallback implements ILogger {
 
                 Calendar calendar;
                 calendar = Calendar.getInstance();
-                calendar.set(Calendar.HOUR, h);
+                calendar.set(Calendar.HOUR_OF_DAY, h);
                 calendar.set(Calendar.MINUTE, m);
                 calendar.set(Calendar.SECOND, s);
 

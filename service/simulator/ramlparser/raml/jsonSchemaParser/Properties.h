@@ -50,7 +50,7 @@ namespace RAML
             /**
                   * Constructor of Properties.
                   */
-            Properties(): m_min(INT_MAX), m_max(INT_MAX), m_doubleMin(INT_MAX), m_doubleMax(INT_MAX),
+            Properties(): m_min(INT_MAX), m_max(INT_MAX),
                 m_multipleOf(INT_MAX), m_unique(false), m_additionalItems(false) {}
 
             /**
@@ -59,7 +59,7 @@ namespace RAML
                   * @param name - Properties name as string.
                   */
             Properties(const std::string &name) : m_name(name), m_min(INT_MAX), m_max(INT_MAX),
-                m_doubleMin(INT_MAX), m_doubleMax(INT_MAX), m_multipleOf(INT_MAX),
+                m_multipleOf(INT_MAX),
                 m_unique(false), m_additionalItems(false) {}
 
             /**
@@ -188,7 +188,7 @@ namespace RAML
                  * @param max -  reference to hold Maximum value of Properties.
                  * @param multipleOf -  reference to hold multipleOf value of Properties.
                  */
-            inline void getRange(int &min, int &max, int &multipleOf) const
+            inline void getRange(double &min, double &max, int &multipleOf) const
             {
                 min = m_min;
                 max = m_max;
@@ -196,24 +196,11 @@ namespace RAML
             }
 
             /**
-                 * This method is for getting Range from Properties.
-                 *
-                 * @param min - reference to hold Minimum value of Properties.
-                 * @param max -  reference to hold Maximum value of Properties.
-                 * @param multipleOf -  reference to hold multipleOf value of Properties.
-                 */
-            inline void getRangeDouble(double &min, double &max, int &multipleOf) const
-            {
-                min = m_doubleMin;
-                max = m_doubleMax;
-                multipleOf = m_multipleOf;
-            }
-            /**
-                 * This method is for setting Minimum to Properties
+                 * This method is for setting Minimum to Properties.
                  *
                  * @param min - Minimum value of Properties.
                  */
-            inline void setMin(const int &min)
+            inline void setMin(double min)
             {
                 m_min = min;
             }
@@ -223,29 +210,9 @@ namespace RAML
                  *
                  * @param max - Maximum value of Properties.
                  */
-            inline void setMax(const int &max)
+            inline void setMax(double max)
             {
                 m_max = max;
-            }
-
-            /**
-                 * This method is for setting Minimum to Properties
-                 *
-                 * @param min - Minimum value of Properties.
-                 */
-            inline void setMinDouble(const double &min)
-            {
-                m_doubleMin = min;
-            }
-
-            /**
-                 * This method is for setting Maximum to Properties
-                 *
-                 * @param max - Maximum value of Properties.
-                 */
-            inline void setMaxDouble(const double &max)
-            {
-                m_doubleMax = max;
             }
             /**
                  * This method is for setting multipleOf to Properties
@@ -480,10 +447,8 @@ namespace RAML
         private:
             std::string m_name;
             ValueVariant m_value;
-            int m_min;
-            int m_max;
-            double m_doubleMin;
-            double m_doubleMax;
+            double m_min;
+            double m_max;
             int m_multipleOf;
             AllowedValues m_allowedValues;
             std::string m_type;
