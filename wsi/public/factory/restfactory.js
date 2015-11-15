@@ -5,13 +5,9 @@
                 console.log("restfactory - auth  " + authbody.sid );
                 return $http.post('/wsi/cap/auth', authbody);
             },
-            get : function(cap) {
-                console.log("restfactory - GET " + cap.cid);
-                return $http.post('/wsi/cap/get', cap);
-            },
-            post : function(cap) {
+            post : function(sid, cap) {
                 console.log("restfactory - post " + cap.cid );
-                return $http.post('/wsi/cap/post',cap);
+                return $http.post('/wsi/cap/post/' + sid, cap);
             }
         }
     }

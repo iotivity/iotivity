@@ -46,16 +46,16 @@
                         });
             }
         };
-        $scope.readService = function (_id) {
-            console.log("Read Service : " + _id);
+        $scope.readService = function (serviceid) {
+            console.log("Read Service : " + serviceid);
             document.getElementById("create").disabled = true;
             document.getElementById("save").disabled = false;
-            dbfactory.read(_id)
+            dbfactory.read(serviceid)
                     .success(function (data) {
                         editor.set(data);
                         preview.set(data);
                         preview.expandAll();
-                        $scope.selService = _id;
+                        $scope.selService = serviceid;
                     });
         };
 

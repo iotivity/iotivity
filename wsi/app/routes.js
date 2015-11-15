@@ -35,7 +35,7 @@ module.exports = function(app, passport) {
 
     app.delete('/wsi/service/:id', function(req, res) {
         console.log("Delete this ID : " + req.params.id);
-        servicedb.find({_id:req.params.id}).remove({}, function(err, service) {
+        servicedb.find({'sid':req.params.id}).remove({}, function(err, service) {
             if (err)
                 res.send(err);
             getServices(res);
@@ -44,7 +44,7 @@ module.exports = function(app, passport) {
 
     app.get('/wsi/service/:id', function(req, res) {
         console.log('GET req......query:' + req.params.id);
-        servicedb.find({_id:req.params.id}, function(err, service) {
+        servicedb.find({'sid':req.params.id}, function(err, service) {
             if (err){
                 console.log('Response Service Error: ' + err);
                 res.send(err);
@@ -62,7 +62,7 @@ module.exports = function(app, passport) {
         var jsonObj = req.body[0];
         console.log('PUT BODY (' + req.body[0] + '):');
         delete jsonObj._id;
-        servicedb.findByIdAndUpdate(req.params.id, jsonObj, options, function(err, model) {
+        servicedb.update({sid : req.params.id}, jsonObj, options, function(err, model) {
             if (err) {
                 console.log(err);
                 return res.status(500).send(err);
@@ -79,16 +79,19 @@ module.exports = function(app, passport) {
         res.send(200);
     });
     
-    app.post('/wsi/cap/get', function(req, res) {
+    app.post('/wsi/cap/post/:id', function(req, res) {
         var cap = req.body;
-        console.log("WSI GET " + JSON.stringify(cap));
-        app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap, res);
-        
-    });
-    app.post('/wsi/cap/post', function(req, res) {
-        var cap = req.body;
-        console.log("WSI GET " + JSON.stringify(cap));
-        app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap, res);
+        console.log("WSI POST " + JSON.stringify(cap));
+        servicedb.find({'sid':req.params.id}, function(err, service) {
+            if (err){
+                console.log('Response Service Error: ' + err);
+                res.send(err);
+            }
+            
+            console.log('Response Service Auth : ' + service);
+            auth = service[0].auth[0];
+            app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap, auth, res);
+        });
     });
 
     app.get('*', function(req, res) {

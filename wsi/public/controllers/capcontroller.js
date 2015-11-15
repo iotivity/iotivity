@@ -29,14 +29,7 @@
                         for (var i = 0; i < jsonObj.capability.length; i++) {
                             var obj = jsonObj.capability[i];
                             if (obj.cid == capid) {
-                                if (obj.operation.toUpperCase() == "GET")
-                                {
-                                    restfactory.get(obj);
-                                }
-                                if (obj.operation.toUpperCase() == "POST")
-                                {
-                                    restfactory.post(obj);
-                                }
+                                restfactory.post($scope.selService, obj);
                             }
                         }
                         return;

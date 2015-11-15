@@ -6,7 +6,7 @@ module.exports = {
         //dummy
         return {};
     },
-    request: function (cap, res) {
+    request: function (cap, auth, res) {
         console.log("Trying to perform rest request : "+ JSON.stringify(cap));
         if (cap.operation == "GET") {
             var ep = cap.endpoint;

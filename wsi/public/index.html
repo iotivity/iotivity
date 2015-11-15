@@ -221,8 +221,8 @@
                                                 <ul style="list-style-type:none; align=left;">
 
                                                     <li>
-                                                        <img ng-click="deleteService(service._id)" src="assets/images/delete.png" style="width:15px;height:15px;border:0">
-                                                        <input name = "serviceradio" type="radio" ng-click="readService(service._id)">
+                                                        <img ng-click="deleteService(service.sid)" src="assets/images/delete.png" style="width:15px;height:15px;border:0">
+                                                        <input name = "serviceradio" type="radio" ng-click="readService(service.sid)">
                                                         {{ service.handler}}
                                                     </li>
                                                 </ul>
@@ -318,20 +318,6 @@
             <script src="assets/js/plugins/morris/raphael.min.js"></script>
             <script src="assets/js/plugins/morris/morris.min.js"></script>
             <script src="assets/js/plugins/morris/morris-data.js"></script>
-            
-            <script>
-                jQuery(function(){
-                         jQuery('#showall').click(function(){
-                               jQuery('.targetDiv').show();
-                        });
-                        jQuery('.showSingle').click(function(){
-                              jQuery('.targetDiv').hide();
-                              jQuery('#div'+$(this).attr('target')).show();
-                        });
-                });                
-            </script>
-            
-
     </body>
 
 </html>

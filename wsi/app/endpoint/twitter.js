@@ -42,11 +42,7 @@ module.exports = {
                     "operation": "POSTTWEET",
                     "params": {
                         "text": "Message to post",
-                        "screen_name" : "oicdemo",
-                        "consumerKey": "U5ofpxyQWPvcWUn8nMLr55vuJ",
-                        "consumerSecret": "0bkHEoXMP2e51JSCrOl6Za3S4ZoWGHaIT4YdgIIJceWHnmLM2I",
-                        "token": "",
-                        "secret": ""
+                        "screen_name" : "oicdemo"
                     },
                     "tags": [
                         "share",
@@ -62,11 +58,7 @@ module.exports = {
                     "operation": "READTWEET",
                     "params": {
                         "text": "Get message from twitter",
-                        "screen_name" : "oicdemo",
-                        "consumerKey": "U5ofpxyQWPvcWUn8nMLr55vuJ",
-                        "consumerSecret": "0bkHEoXMP2e51JSCrOl6Za3S4ZoWGHaIT4YdgIIJceWHnmLM2I",
-                        "token": "",
-                        "secret": ""
+                        "screen_name" : "oicdemo"
                     },
                     "tags": [
                         "share",
@@ -112,9 +104,7 @@ module.exports = {
                                             servicedb.update({sid:service.sid, 'auth.type':'oauth2.0'},
                                                                 {$set:
                                                                     {"auth.$.token":token,
-                                                                     "auth.$.secret":secret,
-                                                                     "capability.$.params.token": token,
-                                                                     "capability.$.params.secret": secret
+                                                                     "auth.$.secret":secret
                                                                     }
                                                                 }
                                                             ).exec(function(err, model){
@@ -126,19 +116,21 @@ module.exports = {
                                     });
                                 }));
     },
-    request: function (cap, res) {
+    request: function (cap, auth, res) {
+        
         console.log("Trying to perform rest request : "+ JSON.stringify(cap));
+        
+        var config = {
+                consumer_key:         auth.consumerKey
+              , consumer_secret:      auth.consumerSecret
+              , access_token:         auth.token
+              , access_token_secret:  auth.secret
+        };
+
         if (cap.cid == "com.twitter.post") {
             var ep = cap.endpoint;
             var uri = mustache.render(cap.endpoint, cap.params);
             console.log("Final URL = " + uri + " " + JSON.stringify(cap.params));
-            
-            var config = {
-                    consumer_key:         cap.params.consumerKey
-                  , consumer_secret:      cap.params.consumerSecret
-                  , access_token:         cap.params.token
-                  , access_token_secret:  cap.params.secret
-            };
             
             console.log("Config : " + JSON.stringify(config));
             var client = new Twit(config);
@@ -155,16 +147,6 @@ module.exports = {
         }
         if (cap.cid == "com.twitter.read") {
             var ep = cap.endpoint;
-            //var uri = mustache.render(cap.endpoint, cap.params);
-            //console.log("Final URL = " + uri + " " + JSON.stringify(cap.params));
-            
-            var config = {
-                    consumer_key:         cap.params.consumerKey
-                  , consumer_secret:      cap.params.consumerSecret
-                  , access_token:         cap.params.token
-                  , access_token_secret:  cap.params.secret
-            };
-            
             console.log("Config : " + JSON.stringify(config));
             var client = new Twit(config);
             client.get(cap.endpoint, { count: 1 }, function(err, data, response) {

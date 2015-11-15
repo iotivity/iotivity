@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html ng-app="wsi">
     <head>
-
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -31,7 +30,7 @@
 
     </head>
 
-    <body ng-controller="wsicontroller">
+    <body ng-controller="scene1controller">
 
         <div id="wrapper">
 
@@ -181,10 +180,10 @@
                         <div class="jumbotron">
                             <h1>Scenario 1</h1>
                             <p>
-                            Read from &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=50px width=230px src="assets/images/twitter.png"/> 
+                            Read from &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img height=50 width=230 src="assets/images/twitter.png"/> 
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and change the&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                            <img vertical-align="top" height=70px width=200px src="assets/images/iotivity.png"/>
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=70px width=70px src="assets/images/on.png"/>
+                            <img height=70 width=200 src="assets/images/iotivity.png"/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img height=70 width=70 src="assets/images/on.png"/>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;status.
                             </p>
                         </div>
@@ -194,14 +193,14 @@
                             
                             <form role="form">
                                 <div class="form-group">
-                                    <button type="button" class="btn btn-primary">1. Initialize Twitter</button>
+                                    <button ng-click="initScene1()" type="button" class="btn btn-primary">1. Initialize Scenario</button>
                                     <button type="button" class="btn btn-success">2. Authorize WSI for Twitter</button>
                                     <button type="button" class="btn btn-info">3. Read Latest Tweet</button>
                                 </div>
 
                                 <div class="form-group">
                                     <label>Twitter Message Body</label>
-                                    <textarea class="form-control" rows="10"></textarea>
+                                    <textarea id="twittersd" class="form-control" rows="10"></textarea>
                                     <button type="button" class="btn btn-sm btn-danger">3. Post a tweet</button>
                                 </div>
 
@@ -224,33 +223,17 @@
                             </div>
                         </div>
                     </div>
-                    <!-- /.row -->
-                    <!-- /.container-fluid -->
                 </div>
-                <!-- /#page-wrapper -->
-
             </div>
-            <!-- /#wrapper -->
+        </div>
+    </div>
 
-            <script src="assets/js/angular.js"></script>
-            <script src="app.js"></script>
-            <script src="factory/dbfactory.js"></script>
-            <script src="factory/restfactory.js"></script>
-            <script src="controllers/capcontroller.js"></script>
-            <script src="controllers/wsicontroller.js"></script>
-            <script src="assets/jsoneditor/jsoneditor.min.js"></script>
-            <link rel="stylesheet" type="text/css" href="assets/jsoneditor/jsoneditor.min.css">
+    <script src="assets/js/angular/angular.js"></script>
+    <script src="app.js"></script>
+    <script src="scenes/scene1controller.js"></script>
+    <script src="assets/js/jquery.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
 
-            <!-- jQuery -->
-            <script src="assets/js/jquery.js"></script>
-
-            <!-- Bootstrap Core JavaScript -->
-            <script src="assets/js/bootstrap.min.js"></script>
-
-            <!-- Morris Charts JavaScript -->
-            <script src="assets/js/plugins/morris/raphael.min.js"></script>
-            <script src="assets/js/plugins/morris/morris.min.js"></script>
-            <script src="assets/js/plugins/morris/morris-data.js"></script>
-    </body>
+</body>
 
 </html>
