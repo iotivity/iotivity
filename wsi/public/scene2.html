@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="wsi">
     <head>
-
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -31,7 +30,7 @@
 
     </head>
 
-    <body>
+    <body ng-controller="scene2controller">
 
         <div id="wrapper">
 
@@ -187,44 +186,35 @@
                         <div class="col-lg-6">
                             <form role="form">
                                 <div class="form-group">
-                                    <button type="button" class="btn btn-primary">1. Initialize Facebook</button>
-                                    <button type="button" class="btn btn-success">2. Authorize WSI for Facebook</button>
-                                    <button type="button" class="btn btn-info">3. Read Facebook Message</button>
+                                    <button ng-click="postFB()" type="button" class="btn btn-success">Post to Facebook</button>
                                 </div>
 
                                 <div class="form-group">
                                     <label>Facebook Message Body</label>
-                                    <textarea class="form-control" rows="10"></textarea>
-                                    <button type="button" class="btn btn-sm btn-danger">3. Post Facebook message</button>
+                                    <textarea id ="fbcap" class="form-control" rows="10"></textarea>
+                                    <button ng-click="executeFbCap()" type="button" class="btn btn-sm btn-danger">Submit</button>
                                 </div>
 
                             </form>
 
                         </div>
-                        <div class="col-lg-6">
+                        <div id = "scene2updates" class="col-lg-6" style='height:10;overflow-y: scroll;'>
                             <h1>Alerts</h1>
-                            <div class="alert alert-success">
-                                <strong>Well done!</strong> You successfully read this important alert message.
-                            </div>
-                            <div class="alert alert-info">
-                                <strong>Heads up!</strong> This alert needs your attention, but it's not super important.
-                            </div>
-                            <div class="alert alert-warning">
-                                <strong>Warning!</strong> Best check yo self, you're not looking too good.
-                            </div>
-                            <div class="alert alert-danger">
-                                <strong>Oh snap!</strong> Change a few things up and try submitting again.
-                            </div>
+                            <div ng-class="scene2update.title == 'Success' ? 'alert alert-success' : 'alert alert-danger'" ng-repeat="scene2update in scene2updates">
+                                <strong>{{scene2update.title}}</strong> 
+                                <p>{{scene2update.content}}</p>
+                            </div>                            
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <script src="assets/js/angular.js"></script>
-        <script src="app.js"></script>
-        <script src="assets/js/jquery.js"></script>
-        <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/angular/angular.js"></script>
+    <script src="app.js"></script>
+    <script src="controllers/scene2controller.js"></script>
+    <script src="assets/js/jquery.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
 
-    </body>
+</body>
 
 </html>

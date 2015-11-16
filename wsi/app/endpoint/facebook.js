@@ -1,5 +1,7 @@
 var FacebookStrategy = require('passport-facebook').Strategy;
 var servicedb = require('../models/service');
+var mustache = require('mustache');
+var request = require('request');
 
 module.exports = {
 
@@ -36,11 +38,10 @@ module.exports = {
                     "isauthrequired": "true",
                     "description": "Post Message to Facebook.",
                     "endpoint": "https://graph.facebook.com/me/feed?message={{message}}&access_token={{access_token}}",
-                    "endpointtype": "REST",
-                    "operation": "POST",
+                    "endpointtype": "facebook",
+                    "operation": "POSTTOFB",
                     "params": {
-                        "message": "Message to post",
-                        "access_token" : "access token"
+                        "message": "Message to post"
                     },
                     "tags": [
                         "share",
@@ -96,6 +97,30 @@ module.exports = {
                                         });
                                     });
                                 }));
-    }
+    },
+    request: function (cap, auth, res) {
+        console.log("Facebook Module : "+ JSON.stringify(cap));
+        if (cap.operation == "POSTTOFB") {
+            console.log("Making a POST HTTP Request");
+            var params = {
+                "message": cap.params.message,
+                "access_token" : auth.access_token
+            };
+            var uri = mustache.render(cap.endpoint, params);
+            console.log("Final URL = " + uri + " " + cap.params);
+            
+            request.post({
+                url: uri,
+            },function (error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    console.log("Success = " + error + "Response = " + response + "Body = " + body);
+                    res.send(response.statusCode);
+                }else{
+                    console.log("Error = " + error + "Response = " + response + "Body = " + body);
+                    res.send(response.statusCode);
+                }
+            });
+        }
+    }    
 }
 console.log("Facebook initialized");

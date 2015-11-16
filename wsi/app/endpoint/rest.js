@@ -28,6 +28,8 @@ module.exports = {
         } else if (cap.operation == "POST") {
             console.log("Making a POST HTTP Request");
             var uri = mustache.render(cap.endpoint, cap.params);
+            console.log("URL = " + uri + " " + cap.params);
+            uri = mustache.render(cap.endpoint, auth.access_token);
             console.log("Final URL = " + uri + " " + cap.params);
             
             request.post({
