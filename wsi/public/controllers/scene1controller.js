@@ -51,8 +51,8 @@
             document.getElementById('tweetcap').value = JSON.stringify(posttweet);
         };
         $scope.executeTweetCap = function(){
-            var uri = "http://localhost:8080/wsi/cap/post/com.twitter";
-            console.log("Making a POST HTTP Request");
+            var uri = location.origin + "/wsi/cap/post/com.twitter";
+            console.log("Making a POST HTTP Request " + uri);
             reqbody = JSON.parse(document.getElementById('tweetcap').value);
             
             var res = $http.post(uri, reqbody);
