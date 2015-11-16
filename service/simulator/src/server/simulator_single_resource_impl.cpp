@@ -205,6 +205,13 @@ void SimulatorSingleResourceImpl::stop()
     if (!m_resourceHandle)
         return;
 
+    // Stop all the update automation of this resource
+    m_updateAutomationMgr.stopAll();
+
+    // Clear all the observers
+    removeAllObservers();
+
+    // Unregister the resource from stack
     typedef OCStackResult (*UnregisterResource)(const OCResourceHandle &);
 
     invokeocplatform(static_cast<UnregisterResource>(OC::OCPlatform::unregisterResource),
@@ -498,29 +505,12 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleRequests(
         if (OC::ObserveAction::ObserveRegister == observationInfo.action)
         {
             SIM_LOG(ILogger::INFO, "[" << m_uri << "] OBSERVE REGISTER request received");
-
-            ObserverInfo info {observationInfo.obsId, observationInfo.address, observationInfo.port};
-            m_observersList.push_back(info);
-
-            if (m_observeCallback)
-                m_observeCallback(m_uri, ObservationStatus::REGISTER, info);
+            addObserver(observationInfo);
         }
         else if (OC::ObserveAction::ObserveUnregister == observationInfo.action)
         {
             SIM_LOG(ILogger::INFO, "[" << m_uri << "] OBSERVE UNREGISTER request received");
-
-            ObserverInfo info;
-            for (auto iter = m_observersList.begin(); iter != m_observersList.end(); iter++)
-            {
-                if ((info = *iter), info.id == observationInfo.obsId)
-                {
-                    m_observersList.erase(iter);
-                    break;
-                }
-            }
-
-            if (m_observeCallback)
-                m_observeCallback(m_uri, ObservationStatus::UNREGISTER, info);
+            removeObserver(observationInfo);
         }
         errCode = OC_EH_OK;
     }
@@ -595,4 +585,40 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorSingleResourceImpl::requestOnBa
     }
 
     return response;
+}
+
+void SimulatorSingleResourceImpl::addObserver(OC::ObservationInfo ocObserverInfo)
+{
+    ObserverInfo info {ocObserverInfo.obsId, ocObserverInfo.address, ocObserverInfo.port};
+    m_observersList.push_back(info);
+
+    if (m_observeCallback)
+        m_observeCallback(m_uri, ObservationStatus::REGISTER, info);
+}
+
+void SimulatorSingleResourceImpl::removeObserver(OC::ObservationInfo ocObserverInfo)
+{
+    ObserverInfo info;
+    for (auto iter = m_observersList.begin(); iter != m_observersList.end(); iter++)
+    {
+        if ((info = *iter), info.id == ocObserverInfo.obsId)
+        {
+            m_observersList.erase(iter);
+            break;
+        }
+    }
+
+    if (m_observeCallback)
+        m_observeCallback(m_uri, ObservationStatus::UNREGISTER, info);
+}
+
+void SimulatorSingleResourceImpl::removeAllObservers()
+{
+    std::vector<ObserverInfo> observerList = m_observersList;
+    m_observersList.clear();
+    for (int index = 0; index < observerList.size(); index++)
+    {
+        if (m_observeCallback)
+            m_observeCallback(m_uri, ObservationStatus::UNREGISTER, observerList[index]);
+    }
 }

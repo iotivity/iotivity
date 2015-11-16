@@ -84,6 +84,9 @@ class SimulatorSingleResourceImpl : public SimulatorSingleResource
             std::shared_ptr<OC::OCResourceRequest> request);
         void resourceModified();
         bool updateResourceModel(OC::OCRepresentation &ocRep, SimulatorResourceModel &resModel);
+        void addObserver(OC::ObservationInfo ocObserverInfo);
+        void removeObserver(OC::ObservationInfo ocObserverInfo);
+        void removeAllObservers();
 
         SimulatorResource::Type m_type;
         std::string m_name;

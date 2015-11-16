@@ -523,7 +523,8 @@ void SimulatorCollectionResourceImpl::addLink(SimulatorResourceSP &resource)
 
     // Add OIC Link if it is not present
     bool found = false;
-    std::vector<SimulatorResourceModel> links = m_resModel.get<std::vector<SimulatorResourceModel>>("links");
+    std::vector<SimulatorResourceModel> links =
+        m_resModel.get<std::vector<SimulatorResourceModel>>("links");
     for (auto &link : links)
     {
         std::string linkURI = link.get<std::string>("href");
@@ -548,13 +549,14 @@ void SimulatorCollectionResourceImpl::removeLink(std::string uri)
         return;
 
     // Add OIC Link if it is not present
-    std::vector<SimulatorResourceModel> links = m_resModel.get<std::vector<SimulatorResourceModel>>("links");
+    std::vector<SimulatorResourceModel> links =
+        m_resModel.get<std::vector<SimulatorResourceModel>>("links");
     for (size_t i = 0; i < links.size(); i++)
     {
         std::string linkURI = links[i].get<std::string>("href");
         if (linkURI == uri)
         {
-            links.erase(links.begin()+i);
+            links.erase(links.begin() + i);
             m_resModel.updateValue("links", links);
             break;
         }

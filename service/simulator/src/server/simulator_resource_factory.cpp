@@ -239,7 +239,8 @@ RAML::RequestResponseBodyPtr SimulatorResourceFactory::getRAMLResponseBody(
 }
 
 SimulatorResourceModel SimulatorResourceFactory::buildModelFromResponseBody(
-    RAML::RequestResponseBodyPtr responseBody, std::string &resourceType, std::vector<std::string> &interfaceType)
+    RAML::RequestResponseBodyPtr responseBody, std::string &resourceType,
+    std::vector<std::string> &interfaceType)
 {
     SimulatorResourceModel resModel;
 
@@ -332,18 +333,18 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
     uri = ramlResource->getResourceUri();
 
     RAML::RequestResponseBodyPtr successResponseBody = getRAMLResponseBody(
-        ramlResource, RAML::ActionType::GET, "200");
+                ramlResource, RAML::ActionType::GET, "200");
     RAML::RequestResponseBodyPtr putErrorResponseBody = getRAMLResponseBody(
-        ramlResource, RAML::ActionType::PUT, "403");
+                ramlResource, RAML::ActionType::PUT, "403");
     RAML::RequestResponseBodyPtr postErrorResponseBody = getRAMLResponseBody(
-        ramlResource, RAML::ActionType::POST, "403");
+                ramlResource, RAML::ActionType::POST, "403");
 
     SimulatorResourceModel successResponseModel = buildModelFromResponseBody(
-        successResponseBody, resourceType, interfaceType);
+                successResponseBody, resourceType, interfaceType);
     SimulatorResourceModel putErrorResponseModel = buildModelFromResponseBody(
-        putErrorResponseBody, rt, ifType);
+                putErrorResponseBody, rt, ifType);
     SimulatorResourceModel postErrorResponseModel = buildModelFromResponseBody(
-        postErrorResponseBody, rt, ifType);
+                postErrorResponseBody, rt, ifType);
 
     // Create simple/collection resource
     std::shared_ptr<SimulatorResource> simResource;
