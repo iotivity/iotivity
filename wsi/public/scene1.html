@@ -193,34 +193,24 @@
                             
                             <form role="form">
                                 <div class="form-group">
-                                    <button ng-click="initScene1()" type="button" class="btn btn-primary">1. Initialize Scenario</button>
-                                    <button type="button" class="btn btn-success">2. Authorize WSI for Twitter</button>
-                                    <button type="button" class="btn btn-info">3. Read Latest Tweet</button>
+                                    <button ng-click="readTweet()" type="button" class="btn btn-info">1. Read New Tweet</button>
+                                    <button ng-click="postTweet()" type="button" class="btn btn-primary">2. Post New Tweet</button>
                                 </div>
-
                                 <div class="form-group">
-                                    <label>Twitter Message Body</label>
-                                    <textarea id="twittersd" class="form-control" rows="10"></textarea>
-                                    <button type="button" class="btn btn-sm btn-danger">3. Post a tweet</button>
+                                    <label>Twitter Capability</label>
+                                    <textarea id="tweetcap" class="form-control" rows="10"></textarea>
+                                    <button ng-click="executeTweetCap()" type="button" class="btn btn-primary">Submit</button>
                                 </div>
 
                             </form>
 
                         </div>
-                        <div class="col-lg-6">
+                        <div id = "scene1updates" class="col-lg-6" style='height:10;overflow-y: scroll;'>
                             <h1>Alerts</h1>
-                            <div class="alert alert-success">
-                                <strong>Well done!</strong> You successfully read this important alert message.
-                            </div>
-                            <div class="alert alert-info">
-                                <strong>Heads up!</strong> This alert needs your attention, but it's not super important.
-                            </div>
-                            <div class="alert alert-warning">
-                                <strong>Warning!</strong> Best check yo self, you're not looking too good.
-                            </div>
-                            <div class="alert alert-danger">
-                                <strong>Oh snap!</strong> Change a few things up and try submitting again.
-                            </div>
+                            <div ng-class="scene1update.title == 'Success' ? 'alert alert-success' : 'alert alert-danger'" ng-repeat="scene1update in scene1updates">
+                                <strong>{{scene1update.title}}</strong> 
+                                <p>{{scene1update.content}}</p>
+                            </div>                            
                         </div>
                     </div>
                 </div>
@@ -230,7 +220,7 @@
 
     <script src="assets/js/angular/angular.js"></script>
     <script src="app.js"></script>
-    <script src="scenes/scene1controller.js"></script>
+    <script src="controllers/scene1controller.js"></script>
     <script src="assets/js/jquery.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
 
