@@ -62,11 +62,7 @@ module.exports = {
 
         if(cap.cid == "org.iotivity.findresource"){
             setTimeout(function(){          
-              res.writeHead(200, {"Content-Type": "application/json"});
-              var json = JSON.stringify({             
-                "resourceID": resourceID            
-              });
-              res.end(json);
+              res.status(200).json(resourceID);
               return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
             },7000);
             if( cap.resourceType == "all"){                
