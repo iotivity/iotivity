@@ -193,17 +193,31 @@
                             
                             <form role="form">
                                 <div class="form-group">
-                                    <button ng-click="readTweet()" type="button" class="btn btn-info">1. Read New Tweet</button>
+                                    <button ng-click="readTweet()" type="button" class="btn btn-info">1. Read Latest Tweet</button>
                                     <button ng-click="postTweet()" type="button" class="btn btn-primary">2. Post New Tweet</button>
                                 </div>
                                 <div class="form-group">
                                     <label>Twitter Capability</label>
-                                    <textarea id="tweetcap" class="form-control" rows="10"></textarea>
+                                    <textarea id="tweetcap" class="form-control" rows="5"></textarea>
                                     <button ng-click="executeTweetCap()" type="button" class="btn btn-primary">Submit</button>
                                 </div>
 
                             </form>
 
+                            <form role="form">
+                                <div class="form-group">
+                                    <button ng-click="findIoTivityDevices()" type="button" class="btn btn-info">1. Find IoTivity Light</button>
+                                    <button ng-click="getLightColor()" type="button" class="btn btn-primary">2. Get Light Color</button>
+                                    <button ng-click="setLightColor()" type="button" class="btn btn-success">3. Set Light Color</button>
+                                </div>
+                                <div class="form-group">
+                                    <label>IoTivity Capability</label>
+                                    <textarea id="iotivitycap" class="form-control" rows="5"></textarea>
+                                    <button ng-click="executeIoTivityCap()" type="button" class="btn btn-primary">Submit</button>
+                                </div>
+                            </form>
+                            
+                            
                         </div>
                         <div id = "scene1updates" class="col-lg-6" style='height:10;overflow-y: scroll;'>
                             <h1>Alerts</h1>
