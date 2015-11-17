@@ -141,8 +141,11 @@ module.exports = {
                 return;
               }
               console.log(JSON.stringify(data));  // Tweet body. 
-              console.log(response);  // Raw response object. 
-              res.json(response);
+              //console.log(response);  // Raw response object. 
+              if(data!=null)
+                res.status(200).send(data.text);
+              else
+                res.status(500).send("Sorry could not post for now.");
             });
         }
         if (cap.cid == "com.twitter.read") {
@@ -155,9 +158,13 @@ module.exports = {
                 res.json(500, err);
                 return;
               }
-              console.log(JSON.stringify(data));  // Tweet body. 
-              console.log(response);  // Raw response object. 
-              res.json(response);
+              console.log(JSON.stringify(data));  // Tweet body.
+              console.log("-----------------------");
+              //console.log(response);  // Raw response object. 
+              if(data!=null)
+                res.status(200).send(data[0].text);
+              else
+                res.status(500).send("No tweets for now");
             });
         }
     }
