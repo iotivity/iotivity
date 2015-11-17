@@ -8,82 +8,197 @@ module.exports = {
     // Start iotivity and set up the processing loop
         iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT);
         var template = {
-            "handler": "iotivity",
-            "sid": "org.iotivity",
-            "capability": [
+              "handler": "iotivity",
+              "sid": "org.iotivity",
+              "capability": [
                 {
-                    "cid": "org.iotivity.getresource",
-                    "isauthrequired": false,
-                    "endpoint": "/wsi/iotivity/getresource",
-                    "endpointtype": "IOTIVITY",
-                    "operation": "GET",
-                    "params": {
-                        "sampleUri": "/a/light"
-                    },
-                    "tags": [
-                        "get reosurce properties"
-                    ]
+                  "cid": "org.iotivity.findresource",                    
+                  "endpointtype": "IOTIVITY",
+                  "operation": "GET",
+                  "resourceType" : "resourceType or all"                                    
+                },
+                {
+                  "cid": "org.iotivity.getresource",
+                  "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
+                  "endpointtype": "IOTIVITY",
+                  "operation": "GET",
+                  "resourceID" : "",
+                  "params": 
+                   {
+                        "address": "server ip address",
+                        "port": "server port",
+                        "uri": "server's uri"
+                   }
+                },
+                {
+                  "cid": "org.iotivity.putresource",
+                  "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
+                  "endpointtype": "IOTIVITY",
+                  "operation": "PUT",
+                  "resourceID" : "",
+                  "params": {
+                        "address": "server ip address",
+                        "port": "server port",
+                        "uri": "server's uri"
+                   },
+                  "payload":
+                   {
+
+                   },
+                  "tags": [
+                    "put reosurce properties and value"
+                  ]
                 }
-            ]
+              ]
         };
         return template;
     },
     request: function (cap, res) {
         intervalId = setInterval(function () {
             iotivity.OCProcess();
-        }, 1000);
+        }, 1000);        
 
-        var sampleUri = cap.endpoint;
-        // Discover resources and list them
-        iotivity.OCDoResource(
-            // The bindings fill in this object
-            handleReceptacle,
-            iotivity.OCMethod.OC_REST_DISCOVER,
-            // Standard path for discovering resources
-            iotivity.OC_MULTICAST_DISCOVERY_URI,
-            // There is no destination
-            null,
-            // There is no payload
+        var resourceID = [];        
+
+        if(cap.cid == "org.iotivity.findresource"){
+            setTimeout(function(){          
+              res.writeHead(200, {"Content-Type": "application/json"});
+              var json = JSON.stringify({             
+                "resourceID": resourceID            
+              });
+              res.end(json);
+              return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
+            },7000);
+            if( cap.resourceType == "all"){                
+                /*console.log("findresource resource : " + cap.resourceType);*/
+                iotivity.OCDoResource(
+                // The bindings fill in this object
+                handleReceptacle,
+                iotivity.OCMethod.OC_REST_DISCOVER,
+                // Standard path for discovering resources
+                iotivity.OC_MULTICAST_DISCOVERY_URI,
+                // There is no destination
+                null,
+                // There is no payload
+                null,
+                iotivity.OCConnectivityType.CT_DEFAULT,
+                iotivity.OCQualityOfService.OC_HIGH_QOS,
+                function (handle, response) {
+                    console.log("Received response to DISCOVER request:");
+                    console.log(JSON.stringify(response, null, 4));
+                    var index,
+                    destination = response.addr,
+                    getHandleReceptacle = {},
+                    resources = response && response.payload && response.payload.resources;
+                    if(resources){
+                        resourceCount = resources.length ? resources.length : 0;                                                       
+                        for (index = 0; index < resourceCount; index++) {                                                    
+                            var destString = JSON.stringify(destination);                   
+                            resourceID.push(destString + ";"+ resources[ index ].uri);
+                        }                        
+                    }
+                    return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
+                },
+                // There are no header options
+                null);                
+            }else{
+                console.log("findresource resource : " + cap.resourceType);
+                iotivity.OCDoResource(
+                // The bindings fill in this object
+                handleReceptacle,
+                iotivity.OCMethod.OC_REST_DISCOVER,
+                // Standard path for discovering resources
+                iotivity.OC_MULTICAST_DISCOVERY_URI,
+                // There is no destination
+                null,
+                // There is no payload
+                null,
+                iotivity.OCConnectivityType.CT_DEFAULT,
+                iotivity.OCQualityOfService.OC_HIGH_QOS,
+                function (handle, response) {
+                    console.log("Received response to DISCOVER request:");
+                    console.log(JSON.stringify(response, null, 4));          
+                    var index,
+                    destination = response.addr,
+                    getHandleReceptacle = {},                                    
+                    resources = response && response.payload && response.payload.resources;
+                    if(resources){
+                        var resourceCount = resources.length ? resources.length : 0;
+                        console.log("resourceCount URI : " + resourceCount);        
+
+                        // If the sample URI is among the resources, issue the GET request to it
+                        for (index = 0; index < resourceCount; index++) {
+                            console.log("Resource Type : ");                        
+                            console.log(resources[ index ].types[0]);                            
+
+                            if (resources[ index ].types[0] === cap.resourceType) {                                                                              
+                               var destString = JSON.stringify(destination);                   
+                               resourceID.push(destString + ";"+ resources[ index ].uri);
+                            }                     
+                        }                        
+                    }
+                    return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
+                },
+                // There are no header options
+                null);                                
+            }
+        }
+        else if(cap.cid == "org.iotivity.getresource"){         
+            var resourceID = cap.resourceID.split(";");         
+            var address = JSON.parse(resourceID[0]);
+            var uri = resourceID[1];
+
+            getResponseHandler = function (handle, response) {
+                console.log("Received response to GET request:");
+                console.log(JSON.stringify(response, null, 4));                                    
+                var getResult = JSON.stringify(response.payload);                
+                res.writeHead(200, {"Content-Type": "application/json"});                
+                res.end(getResult);
+                return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
+            };
+            var getHandleReceptacle = {};
+
+            iotivity.OCDoResource(
+            getHandleReceptacle,
+            iotivity.OCMethod.OC_REST_GET,
+            uri,
+            address,
             null,
             iotivity.OCConnectivityType.CT_DEFAULT,
             iotivity.OCQualityOfService.OC_HIGH_QOS,
-            function (handle, response) {
-                console.log("Received response to DISCOVER request:");
-                console.log(JSON.stringify(response, null, 4));
-                var index,
-                    destination = response.addr,
-                    getHandleReceptacle = {},
-                    resources = response && response.payload && response.payload.resources,
-                        resourceCount = resources && resources.length ? resources.length : 0,
-                            getResponseHandler = function (handle, response) {
-                                console.log("Received response to GET request:");
-                                console.log(JSON.stringify(response, null, 4));
-                                res.send(200, response);
-                                return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
-                            };
-                // If the sample URI is among the resources, issue the GET request to it
-                for (index = 0; index < resourceCount; index++) {
-                    if (resources[ index ].uri === sampleUri) {
-                        iotivity.OCDoResource(
-                                getHandleReceptacle,
-                                iotivity.OCMethod.OC_REST_GET,
-                                sampleUri,
-                                destination,
-                                {
-                                    type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
-                                        values: {
-                                        question: "How many angels can dance on the head of a pin?"
-                                        }
-                                },
-                                iotivity.OCConnectivityType.CT_DEFAULT,
-                                iotivity.OCQualityOfService.OC_HIGH_QOS,
-                                getResponseHandler,
-                                null);
-                    }
-                }
-                return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
+            getResponseHandler,
+            null);
+        }
+        else if(cap.cid == "org.iotivity.putresource"){
+            var resourceID = cap.resourceID.split(";");         
+            var address = JSON.parse(resourceID[0]);
+            var uri = resourceID[1];
+
+            putResponseHandler = function( handle, response ) {
+                console.log("Received response to PUT request:");
+                console.log(JSON.stringify(response, null, 4));                                    
+                var putResult = JSON.stringify(response.payload);
+                console.log(JSON.stringify(response.payload));                                    
+                res.writeHead(200, {"Content-Type": "application/json"});                
+                res.end(putResult);                                
+                return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
+            }
+            
+            var payload = cap.payload;
+            
+            iotivity.OCDoResource(
+            handleReceptacle,
+            iotivity.OCMethod.OC_REST_PUT,
+            uri,
+            address,
+            {
+                type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
+                values: payload
             },
-            // There are no header options
-        null);
+            iotivity.OCConnectivityType.CT_DEFAULT,
+            iotivity.OCQualityOfService.OC_HIGH_QOS,
+            putResponseHandler,
+            null );                        
+        }
     }
 }
