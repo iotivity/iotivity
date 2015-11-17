@@ -15,7 +15,7 @@ module.exports = {
                   "cid": "org.iotivity.findresource",                    
                   "endpointtype": "IOTIVITY",
                   "operation": "GET",
-                  "resourceType" : "resourceType or all"                                    
+                  "resourceType" : "all"
                 },
                 {
                   "cid": "org.iotivity.getresource",
@@ -34,7 +34,7 @@ module.exports = {
                   "cid": "org.iotivity.putresource",
                   "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
                   "endpointtype": "IOTIVITY",
-                  "operation": "PUT",
+                  "operation": "POST",
                   "resourceID" : "",
                   "params": {
                         "address": "server ip address",
@@ -43,7 +43,7 @@ module.exports = {
                    },
                   "payload":
                    {
-
+                       "property" : "value"
                    },
                   "tags": [
                     "put reosurce properties and value"
@@ -53,7 +53,7 @@ module.exports = {
         };
         return template;
     },
-    request: function (cap, res) {
+    request: function (cap, auth, res) {
         intervalId = setInterval(function () {
             iotivity.OCProcess();
         }, 1000);        
@@ -93,7 +93,7 @@ module.exports = {
                     if(resources){
                         resourceCount = resources.length ? resources.length : 0;                                                       
                         for (index = 0; index < resourceCount; index++) {                                                    
-                            var destString = JSON.stringify(destination);                   
+                            var destString = JSON.stringify(destination); 
                             resourceID.push(destString + ";"+ resources[ index ].uri);
                         }                        
                     }
@@ -144,9 +144,12 @@ module.exports = {
             }
         }
         else if(cap.cid == "org.iotivity.getresource"){         
-            var resourceID = cap.resourceID.split(";");         
+            var resourceID = cap.resourceID.split(";");
+            console.log("Resource ID " + resourceID)
+            
             var address = JSON.parse(resourceID[0]);
             var uri = resourceID[1];
+            console.log("uri " + uri)
 
             getResponseHandler = function (handle, response) {
                 console.log("Received response to GET request:");
@@ -154,7 +157,7 @@ module.exports = {
                 var getResult = JSON.stringify(response.payload);                
                 res.writeHead(200, {"Content-Type": "application/json"});                
                 res.end(getResult);
-                return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
+                return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
             };
             var getHandleReceptacle = {};
 
@@ -176,15 +179,17 @@ module.exports = {
 
             putResponseHandler = function( handle, response ) {
                 console.log("Received response to PUT request:");
-                console.log(JSON.stringify(response, null, 4));                                    
+                console.log("TEST 2" + JSON.stringify(response, null, 4));                                    
                 var putResult = JSON.stringify(response.payload);
-                console.log(JSON.stringify(response.payload));                                    
-                res.writeHead(200, {"Content-Type": "application/json"});                
-                res.end(putResult);                                
-                return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
+                console.log("TEST 3" + JSON.stringify(response.payload));                                    
+                res.status(200).json(putResult);
+                return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
             }
             
             var payload = cap.payload;
+            
+            console.log("Payload = " + JSON.stringify(payload));
+            
             
             iotivity.OCDoResource(
             handleReceptacle,
