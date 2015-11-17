@@ -38,6 +38,9 @@
 #include "catcpadapter.h"
 #endif
 
+#include "ocrandom.h"
+
+
 CAGlobals_t caglobals = { 0 };
 
 #define TAG "CA_CONN_MGR"
