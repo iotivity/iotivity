@@ -42,7 +42,6 @@ extern "C"
 #ifdef TB_LOG
     #define OC_LOG_PAYLOAD(level, payload) OCPayloadLog((level),(payload))
     #define UUID_SIZE (16)
-    #define UUID_LENGTH (37)
 const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
@@ -131,7 +130,7 @@ static inline void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
                                     val->arr.dimensions[2]);
                             break;
                         case OCREP_PROP_BYTE_STRING:
-                            OC_LOG_V(level, PL_TAG, "\t\t%s(byte array):%lld x %lld x %lld",
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(byte array):%zu x %zu x %zu",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);

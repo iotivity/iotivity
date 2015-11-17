@@ -394,6 +394,11 @@ void queryResource()
 void collectUniqueResource(const OCClientResponse * clientResponse)
 {
     OCResourcePayload* res = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
+
+    // Including the NUL terminator, length of UUID string of the form:
+    //   "a62389f7-afde-00b6-cd3e-12b97d2fcf09"
+#   define UUID_LENGTH 37
+
     char sidStr[UUID_LENGTH];
 
     while(res) {
