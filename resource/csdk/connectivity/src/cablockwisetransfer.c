@@ -2667,8 +2667,6 @@ void CADestroyDataSet(CAData_t* data)
 CABlockDataID_t* CACreateBlockDatablockId(const CAToken_t token, uint8_t tokenLength,
                                           uint16_t portNumber)
 {
-    VERIFY_NON_NULL_RET(token, TAG, "token", NULL);
-
     char port[PORT_LENGTH] = {0,};
     port[0] = (char)((portNumber>>8) & 0xFF);
     port[1] = (char)(portNumber & 0xFF);
@@ -2688,7 +2686,11 @@ CABlockDataID_t* CACreateBlockDatablockId(const CAToken_t token, uint8_t tokenLe
         return NULL;
     }
 
-    memcpy(blockDataID->id, token, tokenLength);
+    if (token)
+    {
+        memcpy(blockDataID->id, token, tokenLength);
+    }
+
     memcpy(blockDataID->id + tokenLength, port, sizeof(port));
 
     OIC_LOG(DEBUG, TAG, "BlockID is ");
