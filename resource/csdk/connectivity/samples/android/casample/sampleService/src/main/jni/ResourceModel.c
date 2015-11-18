@@ -43,7 +43,7 @@ static void response_handler(const CAEndpoint_t* object, const CAResponseInfo_t*
 static void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
 static void get_resource_uri(const char *URI, char *resourceURI, int32_t length);
 static uint32_t get_secure_information(CAPayload_t payLoad);
-static CAResult_t get_network_type(uint32_t selectedNetwork);
+static CAResult_t get_network_type(uint32_t selectedNetwork, CATransportFlags_t *flags);
 static void callback(char *subject, char *receivedData);
 static CAResult_t get_remote_address(const char *address);
 static void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags);
@@ -297,7 +297,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
         return;
     }
 
-    CAResult_t res = get_network_type(selectedNetwork);
+    CATransportFlags_t flags = CA_DEFAULT_FLAGS;
+    CAResult_t res = get_network_type(selectedNetwork, &flags);
     if (CA_STATUS_OK != res)
     {
         return;
@@ -306,7 +307,6 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
     LOGI("RMSendRequest - %s", strUri);
 
-    CATransportFlags_t flags;
     addressSet_t address = {{0}, 0};
     parsing_coap_uri(strUri, &address, &flags);
 
@@ -465,7 +465,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
         return;
     }
 
-    CAResult_t res = get_network_type(selectedNetwork);
+    CATransportFlags_t flags = CA_DEFAULT_FLAGS;
+    CAResult_t res = get_network_type(selectedNetwork, &flags);
     if (CA_STATUS_OK != res)
     {
         return;
@@ -473,7 +474,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
 
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
-    res = CACreateEndpoint(CA_IPV4, g_selectedNwType, NULL, 0, &endpoint);
+    res = CACreateEndpoint(flags, g_selectedNwType, NULL, 0, &endpoint);
 
     if (CA_STATUS_OK != res)
     {
@@ -575,7 +576,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
 
     LOGI("selectedNetwork - %d", selectedNetwork);
 
-    CAResult_t res = get_network_type(selectedNetwork);
+    CATransportFlags_t flags = CA_DEFAULT_FLAGS;
+    CAResult_t res = get_network_type(selectedNetwork, &flags);
     if (CA_STATUS_OK != res)
     {
         LOGE("Not supported network type");
@@ -668,7 +670,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
         return;
     }
 
-    CAResult_t res = get_network_type(selectedNetwork);
+    CATransportFlags_t flags = CA_DEFAULT_FLAGS;
+    CAResult_t res = get_network_type(selectedNetwork, &flags);
     if (CA_STATUS_OK != res)
     {
         LOGE("Not supported network type");
@@ -678,7 +681,6 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
     const char* strUri = (*env)->GetStringUTFChars(env, uri, NULL);
     LOGI("RMSendNotification - %s", strUri);
 
-    CATransportFlags_t flags;
     addressSet_t address = {{0}, 0};
     parsing_coap_uri(strUri, &address, &flags);
 
@@ -1373,7 +1375,7 @@ uint32_t get_secure_information(CAPayload_t payLoad)
     return atoi(portStr);
 }
 
-CAResult_t get_network_type(uint32_t selectedNetwork)
+CAResult_t get_network_type(uint32_t selectedNetwork, CATransportFlags_t *flags)
 {
 
     uint32_t number = selectedNetwork;
@@ -1384,6 +1386,7 @@ CAResult_t get_network_type(uint32_t selectedNetwork)
     }
     if (number & CA_ADAPTER_IP)
     {
+        *flags = CA_IPV4;
         g_selectedNwType = CA_ADAPTER_IP;
         return CA_STATUS_OK;
     }
@@ -1503,7 +1506,6 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     {
         LOGI("uri has '%s' prefix", COAP_PREFIX);
         startIndex = COAP_PREFIX_LEN;
-        *flags = CA_IPV4;
     }
 
     // #2. copy uri for parse

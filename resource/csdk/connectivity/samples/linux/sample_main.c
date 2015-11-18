@@ -64,7 +64,7 @@ typedef struct
 
 char get_menu();
 void process();
-CAResult_t get_network_type();
+CAResult_t get_network_type(CATransportFlags_t *flags);
 CAResult_t get_input_data(char *buf, int32_t length);
 
 bool select_payload_type();
@@ -378,7 +378,8 @@ CAPayload_t get_binary_payload(size_t *payloadLength)
 
 void send_request()
 {
-    CAResult_t res = get_network_type();
+    CATransportFlags_t flags = CA_DEFAULT_FLAGS;
+    CAResult_t res = get_network_type(&flags);
     if (CA_STATUS_OK != res)
     {
         return;
@@ -418,7 +419,6 @@ void send_request()
 
     // create remote endpoint
     CAEndpoint_t *endpoint = NULL;
-    CATransportFlags_t flags;
 
     printf("URI : %s\n", uri);
     addressSet_t address = {{}, 0};
@@ -628,7 +628,8 @@ exit:
 
 void send_request_all()
 {
-    CAResult_t res = get_network_type();
+    CATransportFlags_t flags = CA_DEFAULT_FLAGS;
+    CAResult_t res = get_network_type(&flags);
     if (CA_STATUS_OK != res)
     {
         return;
@@ -646,7 +647,7 @@ void send_request_all()
 
     // create remote endpoint
     CAEndpoint_t *group = NULL;
-    res = CACreateEndpoint(CA_IPV4, g_selected_nw_type, NULL, 0, &group);
+    res = CACreateEndpoint(flags, g_selected_nw_type, NULL, 0, &group);
     if (CA_STATUS_OK != res)
     {
         printf("Create remote endpoint error, error code: %d\n", res);
@@ -713,7 +714,8 @@ void send_request_all()
 
 void send_notification()
 {
-    CAResult_t res = get_network_type();
+    CATransportFlags_t flags = CA_DEFAULT_FLAGS;
+    CAResult_t res = get_network_type(&flags);
     if (CA_STATUS_OK != res)
     {
         return;
@@ -748,7 +750,6 @@ void send_notification()
 
     int messageType = messageTypeBuf[0] - '0';
 
-    CATransportFlags_t flags;
     addressSet_t address = {{}, 0};
     parsing_coap_uri(uri, &address, &flags);
 
@@ -1380,7 +1381,7 @@ void get_resource_uri(char *URI, char *resourceURI, int length)
     printf("URI: %s, ResourceURI:%s\n", URI, resourceURI);
 }
 
-CAResult_t get_network_type()
+CAResult_t get_network_type(CATransportFlags_t *flags)
 {
     char buf[MAX_BUF_LEN] = { 0 };
 
@@ -1404,6 +1405,7 @@ CAResult_t get_network_type()
     switch (number)
     {
         case CA_ADAPTER_IP:
+            *flags = CA_IPV4;
         case CA_ADAPTER_GATT_BTLE:
         case CA_ADAPTER_RFCOMM_BTEDR:
         case CA_ADAPTER_TCP:
@@ -1515,13 +1517,11 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
     {
         printf("uri has '%s' prefix\n", COAP_PREFIX);
         startIndex = COAP_PREFIX_LEN;
-        *flags = CA_IPV4;
     }
     else if (strncmp(COAP_TCP_PREFIX, uri, COAP_TCP_PREFIX_LEN) == 0)
     {
         printf("uri has '%s' prefix\n", COAP_TCP_PREFIX);
         startIndex = COAP_TCP_PREFIX_LEN;
-        *flags = CA_IPV4;
     }
 
     // #2. copy uri for parse
