@@ -6,7 +6,7 @@
                 title : "Success",
                 content : "Twitter Service Initialized"
             }
-        ]
+        ];
         
         var findresource = {
             "cid": "org.iotivity.findresource",                    

@@ -186,6 +186,19 @@
                         <div class="col-lg-6">
                             <form role="form">
                                 <div class="form-group">
+                                    <button ng-click="findIoTivityDevices()" type="button" class="btn btn-info">1. Find IoTivity Light</button>
+                                    <button ng-click="getLightColor()" type="button" class="btn btn-primary">2. Get Light Color</button>
+                                    <button ng-click="setLightColor()" type="button" class="btn btn-success">3. Set Light Color</button>
+                                </div>
+                                <div class="form-group">
+                                    <label>IoTivity Capability</label>
+                                    <textarea id="iotivitycap" class="form-control" rows="5"></textarea>
+                                    <button ng-click="executeIoTivityCap()" type="button" class="btn btn-primary">Submit</button>
+                                </div>
+                            </form>
+                            
+                            <form role="form">
+                                <div class="form-group">
                                     <button ng-click="postFB()" type="button" class="btn btn-success">Post to Facebook</button>
                                 </div>
 
