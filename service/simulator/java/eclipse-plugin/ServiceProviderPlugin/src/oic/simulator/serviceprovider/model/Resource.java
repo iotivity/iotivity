@@ -30,6 +30,7 @@ public abstract class Resource {
     // Java SDK object reference
     SimulatorResource                           simulatorResource;
     private SimulatorResourceModel              resourceModel;
+    private ResourceRepresentation              mResourceRepresentation;
 
     private String                              resourceURI;
     private String                              resourceName;
@@ -243,18 +244,14 @@ public abstract class Resource {
         this.attributes = attributes;
     }
 
-    // Added for debugging purpose
-    public void printResourceInfo() {
-        System.out.println("Resource URI: " + getResourceURI());
-        System.out.println("Resource Name: " + getResourceName());
-        System.out.println("Resource types: " + getResourceTypes());
-        System.out.println("Resource Interfaces: " + getResourceInterfaces());
-        System.out.println("Resource Attributes:-");
-        /*
-         * if (null != resourceAttributesMap) { Iterator<String> attItr =
-         * resourceAttributesMap.keySet().iterator(); while (attItr.hasNext()) {
-         * resourceAttributesMap.get(attItr.next()) .printAttributeDetails();; }
-         * }
-         */
+    public void setResourceRepresentation(SimulatorResourceModel resModel) {
+        if (mResourceRepresentation == null)
+            mResourceRepresentation = new ResourceRepresentation(resModel);
+        else
+            mResourceRepresentation.update(resModel);
+    }
+
+    public ResourceRepresentation getResourceRepresentation() {
+        return mResourceRepresentation;
     }
 }

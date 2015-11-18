@@ -124,7 +124,7 @@ class SimulatorManager
          *
          * NOTE: API throws @InvalidArgsException and @SimulatorException on error.
          */
-        void getDeviceInfo(DeviceInfoCallback callback);
+        void getDeviceInfo(const std::string &host, DeviceInfoCallback callback);
 
         /**
          * API for registering device information with stack.
@@ -145,7 +145,7 @@ class SimulatorManager
          *
          * NOTE: API throws @InvalidArgsException and @SimulatorException on error.
          */
-        void getPlatformInfo(PlatformInfoCallback callback);
+        void getPlatformInfo(const std::string &host, PlatformInfoCallback callback);
 
         /**
          * API for registering platform information with stack.

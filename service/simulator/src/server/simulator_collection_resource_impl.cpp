@@ -31,6 +31,9 @@ SimulatorCollectionResourceImpl::SimulatorCollectionResourceImpl()
         m_resourceHandle(NULL)
 {
     m_property = static_cast<OCResourceProperty>(OC_DISCOVERABLE | OC_OBSERVABLE);
+
+    std::vector<SimulatorResourceModel> links;
+    m_resModel.add("links", links);
 }
 
 std::string SimulatorCollectionResourceImpl::getName() const
@@ -227,6 +230,11 @@ void SimulatorCollectionResourceImpl::setResourceModel(const SimulatorResourceMo
 {
     std::lock_guard<std::mutex> lock(m_modelLock);
     m_resModel = resModel;
+}
+
+void SimulatorCollectionResourceImpl::setActionType(std::map<RAML::ActionType, RAML::ActionPtr> &actionType)
+{
+    m_actionTypes = actionType;
 }
 
 void SimulatorCollectionResourceImpl::setActionType(std::map<RAML::ActionType, RAML::ActionPtr> &actionType)

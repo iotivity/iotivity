@@ -16,7 +16,6 @@
 
 package oic.simulator.clientcontroller.view;
 
-import java.util.List;
 import java.util.Map;
 
 import oic.simulator.clientcontroller.Activator;
@@ -28,35 +27,39 @@ import oic.simulator.clientcontroller.listener.IPutUIListener;
 import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
 import oic.simulator.clientcontroller.listener.IVerificationUIListener;
 import oic.simulator.clientcontroller.manager.ResourceManager;
-import oic.simulator.clientcontroller.remoteresource.PutPostAttributeModel;
+import oic.simulator.clientcontroller.remoteresource.AttributeElement;
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
-import oic.simulator.clientcontroller.remoteresource.RemoteResourceAttribute;
+import oic.simulator.clientcontroller.remoteresource.ResourceRepresentation;
 import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.utils.Utility;
 import oic.simulator.clientcontroller.view.dialogs.PostRequestDialog;
 import oic.simulator.clientcontroller.view.dialogs.PutRequestDialog;
 import oic.simulator.clientcontroller.view.dialogs.VerificationDialog;
 
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
-import org.eclipse.jface.viewers.StyledCellLabelProvider;
-import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.ILabelProviderListener;
+import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
+import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.client.SimulatorRemoteResource.VerificationType;
 
 /**
@@ -66,7 +69,7 @@ public class AttributeView extends ViewPart {
 
     public static final String                  VIEW_ID        = "oic.simulator.clientcontroller.view.attribute";
 
-    private TableViewer                         attTblViewer;
+    private TreeViewer                          attViewer;
 
     private Button                              getButton;
     private Button                              putButton;
@@ -107,9 +110,9 @@ public class AttributeView extends ViewPart {
                         setVisibility((resource == null) ? false : true);
 
                         // Update the attribute table
-                        if (null != attTblViewer
-                                && !attTblViewer.getControl().isDisposed()) {
-                            updateViewer(getData(resource));
+                        if (null != attViewer
+                                && !attViewer.getControl().isDisposed()) {
+                            updateViewer(resource);
                         }
 
                         // Update the observe status
@@ -134,7 +137,7 @@ public class AttributeView extends ViewPart {
                         if (resourceInSelection != resource) {
                             return;
                         }
-                        updateViewer(getData(resource));
+                        updateViewer(resource);
 
                         // Update the observe status
                         updateObserve(resource);
@@ -158,7 +161,7 @@ public class AttributeView extends ViewPart {
                         if (resourceInSelection != resource) {
                             return;
                         }
-                        updateViewer(getData(resource));
+                        updateViewer(resource);
 
                         // Update the observe status
                         updateObserve(resource);
@@ -182,7 +185,7 @@ public class AttributeView extends ViewPart {
                         if (resourceInSelection != resource) {
                             return;
                         }
-                        updateViewer(getData(resource));
+                        updateViewer(resource);
 
                         // Update the observe status
                         updateObserve(resource);
@@ -206,7 +209,7 @@ public class AttributeView extends ViewPart {
                         if (resourceInSelection != resource) {
                             return;
                         }
-                        updateViewer(getData(resource));
+                        updateViewer(resource);
 
                         // Update the observe status
                         updateObserve(resource);
@@ -293,28 +296,20 @@ public class AttributeView extends ViewPart {
         }
     }
 
-    private Map<String, RemoteResourceAttribute> getData(RemoteResource resource) {
-        if (null == resource) {
-            return null;
+    private void updateViewer(RemoteResource resource) {
+        if (null == attViewer) {
+            return;
         }
-        Map<String, RemoteResourceAttribute> attMap = resource
-                .getResourceAttributesMap();
-        return attMap;
-    }
-
-    private void updateViewer(Map<String, RemoteResourceAttribute> attMap) {
-        if (null != attTblViewer) {
-            Table tbl = attTblViewer.getTable();
-            if (null != attMap) {
-                attTblViewer.setInput(attMap.entrySet().toArray());
-                if (!tbl.isDisposed()) {
-                    tbl.setLinesVisible(true);
-                }
-            } else {
-                if (!tbl.isDisposed()) {
-                    tbl.removeAll();
-                    tbl.setLinesVisible(false);
-                }
+        Tree tree = attViewer.getTree();
+        if (null != resource) {
+            attViewer.setInput(resource.getResourceRepresentation());
+            if (!tree.isDisposed()) {
+                tree.setLinesVisible(true);
+            }
+        } else {
+            if (!tree.isDisposed()) {
+                tree.removeAll();
+                tree.setLinesVisible(false);
             }
         }
     }
@@ -363,9 +358,8 @@ public class AttributeView extends ViewPart {
         setVisibility(false);
 
         // Updating the data in the UI as per the resource in selection.
-        if (null != attTblViewer && !attTblViewer.getControl().isDisposed()) {
-            updateViewer(getData(resourceManager
-                    .getCurrentResourceInSelection()));
+        if (null != attViewer && !attViewer.getControl().isDisposed()) {
+            updateViewer(resourceManager.getCurrentResourceInSelection());
         }
     }
 
@@ -421,57 +415,34 @@ public class AttributeView extends ViewPart {
     }
 
     private void setupAttributeTable(Group attGroup) {
-        attTblViewer = new TableViewer(attGroup, SWT.SINGLE | SWT.H_SCROLL
-                | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
+        Tree addressTree = new Tree(attGroup, SWT.SINGLE | SWT.BORDER
+                | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+        addressTree.setHeaderVisible(true);
 
-        createAttributeColumns(attTblViewer);
+        attViewer = new TreeViewer(addressTree);
+
+        createAttributeColumns(attViewer);
 
         // make lines and header visible
-        Table table = attTblViewer.getTable();
-        table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        table.setHeaderVisible(true);
-        table.setLinesVisible(true);
+        Tree tree = attViewer.getTree();
+        tree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        tree.setHeaderVisible(true);
+        tree.setLinesVisible(true);
 
-        attTblViewer.setContentProvider(new AttributeContentProvider());
+        attViewer.setContentProvider(new AttributeContentProvider());
+        attViewer.setLabelProvider(new AttributeLabelProvider());
     }
 
-    public void createAttributeColumns(TableViewer tableViewer) {
+    public void createAttributeColumns(TreeViewer viewer) {
+        Tree tree = viewer.getTree();
 
-        TableViewerColumn attName = new TableViewerColumn(tableViewer, SWT.NONE);
-        attName.getColumn().setWidth(attTblColWidth[0]);
-        attName.getColumn().setText(attTblHeaders[0]);
-        attName.setLabelProvider(new StyledCellLabelProvider() {
-            @Override
-            public void update(ViewerCell cell) {
-                Object element = cell.getElement();
-                if (element instanceof Map.Entry) {
-                    @SuppressWarnings("unchecked")
-                    Map.Entry<String, RemoteResourceAttribute> entry = (Map.Entry<String, RemoteResourceAttribute>) element;
-                    cell.setText(entry.getKey());
-                }
-            }
-        });
+        TreeColumn attName = new TreeColumn(tree, SWT.NONE);
+        attName.setWidth(attTblColWidth[0]);
+        attName.setText(attTblHeaders[0]);
 
-        TableViewerColumn attValue = new TableViewerColumn(tableViewer,
-                SWT.NONE);
-        attValue.getColumn().setWidth(attTblColWidth[1]);
-        attValue.getColumn().setText(attTblHeaders[1]);
-        attValue.setLabelProvider(new StyledCellLabelProvider() {
-            @Override
-            public void update(ViewerCell cell) {
-                Object element = cell.getElement();
-                if (element instanceof Map.Entry) {
-                    @SuppressWarnings("unchecked")
-                    Map.Entry<String, RemoteResourceAttribute> entry = (Map.Entry<String, RemoteResourceAttribute>) element;
-                    Object value = entry.getValue().getAttributeValue();
-                    if (null == value) {
-                        cell.setText("");
-                    } else {
-                        cell.setText(String.valueOf(value));
-                    }
-                }
-            }
-        });
+        TreeColumn attValue = new TreeColumn(tree, SWT.NONE);
+        attValue.setWidth(attTblColWidth[1]);
+        attValue.setText(attTblHeaders[1]);
     }
 
     private void setUIListeners() {
@@ -503,10 +474,8 @@ public class AttributeView extends ViewPart {
                                             "PUT Automation is in progress. Please wait or stop the automation.");
                             return;
                         }
-                        List<PutPostAttributeModel> putPostModelList;
-                        putPostModelList = resourceInSelection
-                                .getPutPostModel();
-                        if (null == putPostModelList) {
+                        if (resourceInSelection.getResourceRepresentation()
+                                .getAttributes().size() < 1) {
                             MessageDialog
                                     .openInformation(Display.getDefault()
                                             .getActiveShell(), "PUT Request",
@@ -514,12 +483,12 @@ public class AttributeView extends ViewPart {
                             return;
                         }
                         PutRequestDialog putDialog = new PutRequestDialog(
-                                Display.getDefault().getActiveShell(),
-                                putPostModelList);
+                                Display.getDefault().getActiveShell());
                         if (putDialog.open() == Window.OK) {
                             // Call the native PUT method
                             resourceManager.sendPutRequest(resourceInSelection,
-                                    putPostModelList);
+                                    putDialog.getUpdatedRepresentation()
+                                            .getModel());
                         }
                     }
                 });
@@ -539,24 +508,24 @@ public class AttributeView extends ViewPart {
                                             "POST Automation is in progress. Please wait or stop the automation.");
                             return;
                         }
-                        List<PutPostAttributeModel> putPostModelList;
-                        putPostModelList = resourceInSelection
-                                .getPutPostModel();
-                        if (null == putPostModelList) {
+                        if (resourceInSelection.getResourceRepresentation()
+                                .getAttributes().size() < 1) {
                             MessageDialog
                                     .openInformation(Display.getDefault()
-                                            .getActiveShell(), "PUT Request",
+                                            .getActiveShell(), "POST Request",
                                             "No attributes exist in the resource model.");
                             return;
                         }
 
                         PostRequestDialog postDialog = new PostRequestDialog(
-                                Display.getDefault().getActiveShell(),
-                                putPostModelList);
+                                Display.getDefault().getActiveShell());
                         if (postDialog.open() == Window.OK) {
                             // Call the native POST method
+                            ResourceRepresentation representation = postDialog
+                                    .getUpdatedRepresentation();
                             resourceManager.sendPostRequest(
-                                    resourceInSelection, putPostModelList);
+                                    resourceInSelection,
+                                    representation.getSelectedModel());
                         }
                     }
                 });
@@ -756,21 +725,103 @@ public class AttributeView extends ViewPart {
             observeResButton.setEnabled(visibility);
     }
 
-    class AttributeContentProvider implements IStructuredContentProvider {
+    class AttributeContentProvider implements ITreeContentProvider {
 
         @Override
         public void dispose() {
         }
 
         @Override
-        public void inputChanged(Viewer viewer, Object arg1, Object arg2) {
+        public void inputChanged(Viewer viewer, Object oldAttribute,
+                Object newAttribute) {
         }
 
         @Override
-        public Object[] getElements(Object element) {
-            return (Object[]) element;
+        public Object[] getChildren(Object attribute) {
+            if (attribute instanceof AttributeElement) {
+                return ((AttributeElement) attribute).getChildren().values()
+                        .toArray();
+            }
+
+            return new Object[0];
         }
 
+        @Override
+        public Object getParent(Object attribute) {
+            if (attribute instanceof AttributeElement)
+                return ((AttributeElement) attribute).getParent();
+            return null;
+        }
+
+        @Override
+        public boolean hasChildren(Object attribute) {
+            if (attribute instanceof AttributeElement)
+                return ((AttributeElement) attribute).hasChildren();
+            return false;
+        }
+
+        @Override
+        public Object[] getElements(Object resourceModel) {
+            if (resourceModel instanceof ResourceRepresentation) {
+                return ((ResourceRepresentation) resourceModel).getAttributes()
+                        .values().toArray();
+            }
+
+            return new Object[0];
+        }
+    }
+
+    class AttributeLabelProvider implements ITableLabelProvider {
+
+        @Override
+        public void addListener(ILabelProviderListener arg0) {
+        }
+
+        @Override
+        public void dispose() {
+        }
+
+        @Override
+        public boolean isLabelProperty(Object arg0, String arg1) {
+            return false;
+        }
+
+        @Override
+        public void removeListener(ILabelProviderListener arg0) {
+
+        }
+
+        @Override
+        public Image getColumnImage(Object element, int col) {
+            return null;
+        }
+
+        @Override
+        public String getColumnText(Object element, int column) {
+            if (element instanceof AttributeElement) {
+                AttributeElement attrElement = (AttributeElement) element;
+                switch (column) {
+                    case 0: // Attribute name column
+                    {
+                        SimulatorResourceAttribute attribute = attrElement
+                                .getSimulatorResourceAttribute();
+                        return attribute.name();
+                    }
+
+                    case 1: // Attribute value column
+                    {
+                        SimulatorResourceAttribute attribute = attrElement
+                                .getSimulatorResourceAttribute();
+
+                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL)
+                            return Utility.getAttributeValueAsString(attribute
+                                    .value());
+                        return null;
+                    }
+                }
+            }
+            return null;
+        }
     }
 
     @Override

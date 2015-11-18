@@ -16,60 +16,52 @@
 
 package oic.simulator.clientcontroller.view.dialogs;
 
-import java.util.Iterator;
-import java.util.List;
-
 import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.manager.ResourceManager;
-import oic.simulator.clientcontroller.remoteresource.PutPostAttributeModel;
+import oic.simulator.clientcontroller.remoteresource.AttributeElement;
+import oic.simulator.clientcontroller.remoteresource.RemoteResource;
+import oic.simulator.clientcontroller.remoteresource.ResourceRepresentation;
 import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.utils.Utility;
+import oic.simulator.clientcontroller.view.AttributeEditingSupport;
 
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
-import org.eclipse.jface.viewers.CellEditor;
-import org.eclipse.jface.viewers.CheckboxCellEditor;
-import org.eclipse.jface.viewers.ColumnLabelProvider;
-import org.eclipse.jface.viewers.ComboBoxCellEditor;
-import org.eclipse.jface.viewers.EditingSupport;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.StyledCellLabelProvider;
-import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.ILabelProviderListener;
+import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.CCombo;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeColumn;
+import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.SimulatorResourceAttribute;
 
 /**
  * This dialog is used for generating a POST request.
  */
 public class PostRequestDialog extends TitleAreaDialog {
 
-    private TableViewer                 attTblViewer;
+    private TreeViewer              attViewer;
 
-    private final String[]              attTblHeaders  = { "Name", "Value",
-            "Select"                                  };
-    private final Integer[]             attTblColWidth = { 200, 200, 50 };
+    private AttributeEditingSupport attributeEditor;
 
-    private List<PutPostAttributeModel> modelList      = null;
+    private ResourceRepresentation  updatedRepresentation;
 
-    public PostRequestDialog(Shell parentShell,
-            List<PutPostAttributeModel> modelList) {
+    private final String[]          attTblHeaders  = { "Name", "Value",
+            "Select"                              };
+    private final Integer[]         attTblColWidth = { 200, 200, 50 };
+
+    public PostRequestDialog(Shell parentShell) {
         super(parentShell);
-        this.modelList = modelList;
     }
 
     @Override
@@ -89,85 +81,181 @@ public class PostRequestDialog extends TitleAreaDialog {
         layout.marginTop = 10;
         container.setLayout(layout);
 
-        createTableViewer(container);
+        createTreeViewer(container);
 
-        attTblViewer.setInput(modelList.toArray());
+        RemoteResource resource = Activator.getDefault().getResourceManager()
+                .getCurrentResourceInSelection();
+
+        updatedRepresentation = new ResourceRepresentation(
+                resource.getResourceModelRef());
+
+        attViewer.setInput(updatedRepresentation);
 
         return compLayout;
     }
 
-    private void createTableViewer(Composite parent) {
-        attTblViewer = new TableViewer(parent, SWT.SINGLE | SWT.H_SCROLL
-                | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
+    private void createTreeViewer(Composite parent) {
+        Tree addressTree = new Tree(parent, SWT.SINGLE | SWT.BORDER
+                | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
+        addressTree.setHeaderVisible(true);
 
-        createAttributeColumns(attTblViewer);
+        attViewer = new TreeViewer(addressTree);
+
+        createAttributeColumns(attViewer);
 
         // make lines and header visible
-        Table table = attTblViewer.getTable();
-        table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        table.setHeaderVisible(true);
-        table.setLinesVisible(true);
+        Tree tree = attViewer.getTree();
+        tree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        tree.setHeaderVisible(true);
+        tree.setLinesVisible(true);
 
-        attTblViewer.setContentProvider(new AttributeContentProvider());
+        attViewer.setContentProvider(new AttributeContentProvider());
+        attViewer.setLabelProvider(new AttributeLabelProvider());
     }
 
-    public void createAttributeColumns(TableViewer tableViewer) {
+    public void createAttributeColumns(TreeViewer viewer) {
+        Tree tree = viewer.getTree();
 
-        // attributeEditor = new AttributeEditingSupport();
+        attributeEditor = new AttributeEditingSupport();
 
-        TableViewerColumn attName = new TableViewerColumn(tableViewer, SWT.NONE);
-        attName.getColumn().setWidth(attTblColWidth[0]);
-        attName.getColumn().setText(attTblHeaders[0]);
-        attName.setLabelProvider(new StyledCellLabelProvider() {
-            @Override
-            public void update(ViewerCell cell) {
-                Object element = cell.getElement();
-                if (element instanceof PutPostAttributeModel) {
-                    PutPostAttributeModel entry = (PutPostAttributeModel) element;
-                    cell.setText(entry.getAttName());
+        TreeColumn attName = new TreeColumn(tree, SWT.NONE);
+        attName.setWidth(attTblColWidth[0]);
+        attName.setText(attTblHeaders[0]);
+
+        TreeColumn attValue = new TreeColumn(tree, SWT.NONE);
+        attValue.setWidth(attTblColWidth[1]);
+        attValue.setText(attTblHeaders[1]);
+        TreeViewerColumn attValueVwrCol = new TreeViewerColumn(attViewer,
+                attValue);
+        attValueVwrCol.setEditingSupport(attributeEditor
+                .createAttributeValueEditor(attViewer, this));
+
+        TreeColumn updateColumn = new TreeColumn(tree, SWT.NONE);
+        updateColumn.setWidth(attTblColWidth[2]);
+        updateColumn.setText(attTblHeaders[2]);
+        TreeViewerColumn updateVwrCol = new TreeViewerColumn(attViewer,
+                updateColumn);
+        updateVwrCol.setEditingSupport(attributeEditor
+                .createAutomationEditor(attViewer));
+    }
+
+    class AttributeContentProvider implements ITreeContentProvider {
+
+        @Override
+        public void dispose() {
+        }
+
+        @Override
+        public void inputChanged(Viewer viewer, Object oldAttribute,
+                Object newAttribute) {
+        }
+
+        @Override
+        public Object[] getChildren(Object attribute) {
+            if (attribute instanceof AttributeElement) {
+                return ((AttributeElement) attribute).getChildren().values()
+                        .toArray();
+            }
+
+            return new Object[0];
+        }
+
+        @Override
+        public Object getParent(Object attribute) {
+            if (attribute instanceof AttributeElement)
+                return ((AttributeElement) attribute).getParent();
+            return null;
+        }
+
+        @Override
+        public boolean hasChildren(Object attribute) {
+            if (attribute instanceof AttributeElement)
+                return ((AttributeElement) attribute).hasChildren();
+            return false;
+        }
+
+        @Override
+        public Object[] getElements(Object resourceModel) {
+            if (resourceModel instanceof ResourceRepresentation) {
+                return ((ResourceRepresentation) resourceModel).getAttributes()
+                        .values().toArray();
+            }
+
+            return new Object[0];
+        }
+    }
+
+    class AttributeLabelProvider implements ITableLabelProvider {
+
+        @Override
+        public void addListener(ILabelProviderListener arg0) {
+        }
+
+        @Override
+        public void dispose() {
+        }
+
+        @Override
+        public boolean isLabelProperty(Object arg0, String arg1) {
+            return false;
+        }
+
+        @Override
+        public void removeListener(ILabelProviderListener arg0) {
+
+        }
+
+        @Override
+        public Image getColumnImage(Object element, int col) {
+            if (col == 2) {
+                if (element instanceof AttributeElement) {
+
+                    AttributeElement attrElement = (AttributeElement) element;
+                    if (attrElement.isPostSupported()) {
+                        if (attrElement.getPostState()) {
+                            return Activator.getDefault().getImageRegistry()
+                                    .get(Constants.CHECKED);
+                        } else {
+                            return Activator.getDefault().getImageRegistry()
+                                    .get(Constants.UNCHECKED);
+                        }
+                    }
                 }
             }
-        });
 
-        TableViewerColumn attValue = new TableViewerColumn(tableViewer,
-                SWT.NONE);
-        attValue.getColumn().setWidth(attTblColWidth[1]);
-        attValue.getColumn().setText(attTblHeaders[1]);
-        attValue.setLabelProvider(new StyledCellLabelProvider() {
-            @Override
-            public void update(ViewerCell cell) {
-                Object element = cell.getElement();
-                if (element instanceof PutPostAttributeModel) {
-                    PutPostAttributeModel entry = (PutPostAttributeModel) element;
-                    cell.setText(entry.getAttValue());
+            return null;
+        }
+
+        @Override
+        public String getColumnText(Object element, int column) {
+            if (element instanceof AttributeElement) {
+                AttributeElement attrElement = (AttributeElement) element;
+                switch (column) {
+                    case 0: // Attribute name column
+                    {
+                        SimulatorResourceAttribute attribute = attrElement
+                                .getSimulatorResourceAttribute();
+                        return attribute.name();
+                    }
+
+                    case 1: // Attribute value column
+                    {
+                        SimulatorResourceAttribute attribute = attrElement
+                                .getSimulatorResourceAttribute();
+
+                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL)
+                            return Utility.getAttributeValueAsString(attribute
+                                    .value());
+                        return null;
+                    }
+
+                    case 2: {
+                        return "";
+                    }
                 }
             }
-        });
-
-        attValue.setEditingSupport(new AttributeValueEditor(attTblViewer));
-
-        TableViewerColumn updateColumn = new TableViewerColumn(tableViewer,
-                SWT.NONE);
-        updateColumn.getColumn().setWidth(attTblColWidth[2]);
-        updateColumn.getColumn().setText(attTblHeaders[2]);
-        updateColumn.setLabelProvider(new ColumnLabelProvider() {
-            @Override
-            public String getText(Object element) {
-                return "";
-            }
-
-            @Override
-            public Image getImage(Object element) {
-                PutPostAttributeModel model = (PutPostAttributeModel) element;
-                if (model.isModified()) {
-                    return Activator.getDefault().getImageRegistry()
-                            .get(Constants.CHECKED);
-                }
-                return Activator.getDefault().getImageRegistry()
-                        .get(Constants.UNCHECKED);
-            }
-        });
-        updateColumn.setEditingSupport(new UpdateEditor(attTblViewer));
+            return null;
+        }
     }
 
     @Override
@@ -189,170 +277,7 @@ public class PostRequestDialog extends TitleAreaDialog {
         return super.createButton(parent, id, label, defaultButton);
     }
 
-    class AttributeContentProvider implements IStructuredContentProvider {
-
-        @Override
-        public void dispose() {
-        }
-
-        @Override
-        public void inputChanged(Viewer arg0, Object arg1, Object arg2) {
-        }
-
-        @Override
-        public Object[] getElements(Object element) {
-            return (Object[]) element;
-        }
-
-    }
-
-    class AttributeValueEditor extends EditingSupport {
-        private final TableViewer viewer;
-        private CCombo            comboBox;
-
-        public AttributeValueEditor(TableViewer viewer) {
-            super(viewer);
-            this.viewer = viewer;
-        }
-
-        @Override
-        protected boolean canEdit(Object arg0) {
-            return true;
-        }
-
-        @Override
-        protected CellEditor getCellEditor(Object element) {
-            PutPostAttributeModel attributeInSelection = (PutPostAttributeModel) element;
-
-            String values[] = null;
-            List<String> valueSet = attributeInSelection.getValues();
-            values = convertListToStringArray(valueSet);
-
-            ComboBoxCellEditor comboEditor = new ComboBoxCellEditor(
-                    viewer.getTable(), values);
-            comboBox = (CCombo) comboEditor.getControl();
-            if (null != comboBox) {
-                comboBox.addModifyListener(new ModifyListener() {
-                    @Override
-                    public void modifyText(ModifyEvent e) {
-                        IStructuredSelection selection = (IStructuredSelection) AttributeValueEditor.this.viewer
-                                .getSelection();
-                        PutPostAttributeModel att = (PutPostAttributeModel) selection
-                                .getFirstElement();
-                        if (null == att) {
-                            return;
-                        }
-                        String newValue = comboBox.getText();
-                        if (null != newValue && !newValue.isEmpty()) {
-                            att.setModified(true);
-                        } else {
-                            att.setModified(false);
-                        }
-                        AttributeValueEditor.this.viewer.update(att, null);
-                    }
-                });
-            }
-            return comboEditor;
-        }
-
-        @Override
-        protected Object getValue(Object element) {
-            int indexOfItem = 0;
-            PutPostAttributeModel att = (PutPostAttributeModel) element;
-            String valueString = att.getAttValue();
-            List<String> valueSet = att.getValues();
-            if (null != valueSet) {
-                indexOfItem = valueSet.indexOf(valueString);
-            }
-            if (indexOfItem == -1) {
-                indexOfItem = 0;
-            }
-            return indexOfItem;
-        }
-
-        @Override
-        protected void setValue(Object element, Object value) {
-            PutPostAttributeModel att = (PutPostAttributeModel) element;
-            int index;
-            try {
-                index = Integer.parseInt(String.valueOf(value));
-            } catch (NumberFormatException nfe) {
-                index = -1;
-            }
-            String newValue;
-            if (index == -1) {
-                newValue = comboBox.getText();
-                att.prependNewValue(newValue);
-            } else {
-                newValue = att.getValues().get(index);
-            }
-            att.setAttValue(newValue);
-            viewer.update(element, null);
-        }
-
-        public String[] convertListToStringArray(List<String> valueList) {
-            String[] strArr;
-            if (null != valueList && valueList.size() > 0) {
-                strArr = valueList.toArray(new String[1]);
-            } else {
-                strArr = new String[1];
-            }
-            return strArr;
-        }
-    }
-
-    class UpdateEditor extends EditingSupport {
-
-        private final TableViewer viewer;
-
-        public UpdateEditor(TableViewer viewer) {
-            super(viewer);
-            this.viewer = viewer;
-        }
-
-        @Override
-        protected boolean canEdit(Object arg0) {
-            return true;
-        }
-
-        @Override
-        protected CellEditor getCellEditor(Object element) {
-            return new CheckboxCellEditor(null, SWT.CHECK | SWT.READ_ONLY);
-        }
-
-        @Override
-        protected Object getValue(Object element) {
-            PutPostAttributeModel model = (PutPostAttributeModel) element;
-            return model.isModified();
-        }
-
-        @Override
-        protected void setValue(Object element, Object value) {
-            PutPostAttributeModel model = (PutPostAttributeModel) element;
-            boolean status = (Boolean) value;
-            model.setModified(status);
-            viewer.update(element, null);
-        }
-    }
-
-    @Override
-    protected void okPressed() {
-        String value;
-        PutPostAttributeModel attModel;
-        Iterator<PutPostAttributeModel> itr;
-        itr = modelList.iterator();
-        while (itr.hasNext()) {
-            attModel = itr.next();
-            if (null == attModel) {
-                return;
-            }
-            value = attModel.getAttValue();
-            if (null == value || value.isEmpty()) {
-                MessageDialog.openError(Display.getDefault().getActiveShell(),
-                        "Empty value", "Attribute value should not be empty.");
-                return;
-            }
-        }
-        close();
+    public ResourceRepresentation getUpdatedRepresentation() {
+        return updatedRepresentation;
     }
 }

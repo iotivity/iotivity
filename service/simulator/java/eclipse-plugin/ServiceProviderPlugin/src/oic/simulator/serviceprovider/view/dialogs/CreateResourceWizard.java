@@ -500,7 +500,6 @@ public class CreateResourceWizard extends Wizard {
                     .createSingleResource(resource);
             if (result) {
                 status = "Resource created.";
-                resource.printResourceInfo();
             } else {
                 status = "Failed to create resource.";
             }
@@ -532,7 +531,6 @@ public class CreateResourceWizard extends Wizard {
 
             if (result) {
                 status = "Resource created.";
-                loadRamlPage.getResource().printResourceInfo();
             } else {
                 status = "Failed to create resource.";
             }

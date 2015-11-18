@@ -362,7 +362,7 @@ public class Utility {
             return null;
         }
         Set<Object> resultSet = new HashSet<Object>();
-        if (type.equals(Constants.INT)) {
+        if (AttributeValue.ValueType.INTEGER == type) {
             int val;
             Iterator<String> itr = values.iterator();
             while (itr.hasNext()) {
@@ -373,7 +373,7 @@ public class Utility {
                     // Added for safety. Nothing to do.
                 }
             }
-        } else if (type.equals(Constants.DOUBLE)) {
+        } else if (AttributeValue.ValueType.DOUBLE == type) {
             double val;
             Iterator<String> itr = values.iterator();
             while (itr.hasNext()) {
@@ -384,10 +384,10 @@ public class Utility {
                     // Added for safety. Nothing to do.
                 }
             }
-        } else if (type.equals(Constants.BOOL)) {
+        } else if (AttributeValue.ValueType.BOOLEAN == type) {
             resultSet.add(true);
             resultSet.add(false);
-        } else {
+        } else if (AttributeValue.ValueType.STRING == type) {
             Iterator<String> itr = values.iterator();
             while (itr.hasNext()) {
                 resultSet.add(itr.next());

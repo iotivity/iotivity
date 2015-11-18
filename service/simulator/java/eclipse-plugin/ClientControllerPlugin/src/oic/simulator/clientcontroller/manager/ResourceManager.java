@@ -39,10 +39,7 @@ import oic.simulator.clientcontroller.listener.IPutUIListener;
 import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
 import oic.simulator.clientcontroller.listener.IVerificationUIListener;
 import oic.simulator.clientcontroller.remoteresource.MetaProperty;
-import oic.simulator.clientcontroller.remoteresource.PutPostAttributeModel;
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
-import oic.simulator.clientcontroller.remoteresource.RemoteResourceAttribute;
-import oic.simulator.clientcontroller.utils.AttributeValueBuilder;
 import oic.simulator.clientcontroller.utils.Constants;
 import oic.simulator.clientcontroller.utils.Utility;
 
@@ -215,9 +212,12 @@ public class ResourceManager {
 
                         // Get the device and platform information
                         try {
-                            SimulatorManager.findDevices(deviceListener);
-                            SimulatorManager
-                                    .getPlatformInformation(platformListener);
+                            SimulatorManager.findDevices(resource
+                                    .getRemoteResourceRef().getHost(),
+                                    deviceListener);
+                            SimulatorManager.getPlatformInformation(resource
+                                    .getRemoteResourceRef().getHost(),
+                                    platformListener);
                         } catch (SimulatorException e) {
                             Activator
                                     .getDefault()
@@ -473,57 +473,18 @@ public class ResourceManager {
             return null;
         }
 
-        resource.setResourceModelRef(resourceModelN);
-        Map<String, RemoteResourceAttribute> attributeMap = fetchResourceAttributesFromModel(resourceModelN);
-        if (resource.isConfigUploaded()) {
-            updateResourceAttributesFromResponse(resource, attributeMap);
+        // if(!resource.isConfigUploaded() || null ==
+        // resource.getResourceModelRef())
+        SimulatorResourceModel resourceModel = resource.getResourceModelRef();
+        if (null == resourceModel) {
+            resource.setResourceModelRef(resourceModelN);
         } else {
-            resource.setResourceAttributesMap(attributeMap);
+            resourceModel.update(resourceModelN);
         }
-        // TODO: Printing the values for debugging
-        if (null != attributeMap) {
-            RemoteResourceAttribute.printAttributes(attributeMap);
-        }
-        return resource;
-    }
 
-    private void updateResourceAttributesFromResponse(RemoteResource res,
-            Map<String, RemoteResourceAttribute> newAttributeMap) {
-        if (null == res || null == newAttributeMap) {
-            return;
-        }
-        Map<String, RemoteResourceAttribute> oldAttributeMap = res
-                .getResourceAttributesMap();
-        if (null == oldAttributeMap) {
-            return;
-        }
-        Iterator<String> itr = oldAttributeMap.keySet().iterator();
-        String attName;
-        RemoteResourceAttribute newAtt;
-        RemoteResourceAttribute oldAtt;
-        while (itr.hasNext()) {
-            attName = itr.next();
-            newAtt = newAttributeMap.get(attName);
-            if (null == newAtt) {
-                // Attribute does not exist in the received model. Hence
-                // removing it from local model.
-                itr.remove();
-            } else {
-                oldAtt = oldAttributeMap.get(attName);
-                if (null != oldAtt) {
-                    oldAtt.setAttributeValue(newAtt.getAttributeValue());
-                } else {
-                    itr.remove();
-                }
-                newAttributeMap.remove(attName);
-            }
-        }
-        // Adding new attributes in the received model.
-        itr = newAttributeMap.keySet().iterator();
-        while (itr.hasNext()) {
-            attName = itr.next();
-            oldAttributeMap.put(attName, newAttributeMap.get(attName));
-        }
+        resource.setResourceRepresentation(resourceModelN, false);
+
+        return resource;
     }
 
     public synchronized DeviceInfo getDeviceInfo() {
@@ -729,7 +690,8 @@ public class ResourceManager {
 
     public void addObservedResourceURI(String resourceURI) {
         synchronized (observedResourceURIList) {
-            observedResourceURIList.add(resourceURI);
+            if (!observedResourceURIList.contains(resourceURI))
+                observedResourceURIList.add(resourceURI);
         }
     }
 
@@ -800,75 +762,6 @@ public class ResourceManager {
             resource = resourceMap.get(uid);
         }
         return resource;
-    }
-
-    private Map<String, RemoteResourceAttribute> fetchResourceAttributesFromModel(
-            SimulatorResourceModel resourceModelN) {
-        Map<String, RemoteResourceAttribute> resourceAttributeMap = null;
-        if (null != resourceModelN) {
-            Map<String, SimulatorResourceAttribute> attributeMapN;
-            attributeMapN = resourceModelN.getAttributes();
-            if (null != attributeMapN) {
-                resourceAttributeMap = new HashMap<String, RemoteResourceAttribute>();
-
-                Set<String> attNameSet = attributeMapN.keySet();
-                String attName;
-                Object attValueObj;
-                AttributeValue attValueN;
-                AttributeProperty attPropN;
-                TypeInfo typeInfo;
-                Type valuesType;
-                SimulatorResourceAttribute attributeN;
-                RemoteResourceAttribute attribute;
-                Iterator<String> attNameItr = attNameSet.iterator();
-                while (attNameItr.hasNext()) {
-                    attName = attNameItr.next();
-                    attributeN = attributeMapN.get(attName);
-                    if (null != attributeN) {
-                        attribute = new RemoteResourceAttribute();
-                        attribute.setResourceAttributeRef(attributeN);
-                        attribute.setAttributeName(attName);
-
-                        attValueN = attributeN.value();
-                        if (null != attValueN) {
-                            attValueObj = attValueN.get();
-                            if (null != attValueObj) {
-                                attribute.setAttributeValue(attValueObj);
-                            }
-
-                            // Set the attribute type
-                            typeInfo = attValueN.typeInfo();
-                            if (null != typeInfo) {
-                                attribute.setAttValBaseType(typeInfo.mBaseType);
-                                attribute.setAttValType(typeInfo.mType);
-                                attribute.setDepth(typeInfo.mDepth);
-                            }
-
-                        }
-
-                        // Set the range and allowed values
-                        attPropN = attributeN.property();
-                        valuesType = attPropN.type();
-                        attribute.setValuesType(valuesType);
-                        if (valuesType == Type.RANGE) {
-                            attribute.setMinValue(attPropN.min());
-                            attribute.setMaxValue(attPropN.max());
-                        } else if (valuesType == Type.VALUESET) {
-                            Object[] values = attPropN.valueSet();
-                            if (null != values && values.length > 0) {
-                                List<Object> valueList = new ArrayList<Object>();
-                                for (Object obj : values) {
-                                    valueList.add(((AttributeValue) obj).get());
-                                }
-                                attribute.setAllowedValues(valueList);
-                            }
-                        }
-                        resourceAttributeMap.put(attName, attribute);
-                    }
-                }
-            }
-        }
-        return resourceAttributeMap;
     }
 
     private void newResourceFoundNotification(RemoteResource resource) {
@@ -1401,13 +1294,135 @@ public class ResourceManager {
         return resourceList;
     }
 
-    public String getAttributeValue(RemoteResource res, String attName) {
-        if (null == res || null == attName) {
+    public List<String> getAllValuesOfAttribute(SimulatorResourceAttribute att) {
+        if (null == att) {
             return null;
         }
-        return res.getAttributeValue(attName);
+
+        AttributeValue val = att.value();
+        if (null == val) {
+            return null;
+        }
+
+        List<String> values = new ArrayList<String>();
+
+        TypeInfo type = val.typeInfo();
+
+        AttributeProperty prop = att.property();
+        if (null == prop || prop.type().ordinal() == Type.UNKNOWN.ordinal()) {
+            values.add(Utility.getAttributeValueAsString(val));
+            return values;
+        }
+
+        Type valuesType = prop.type();
+
+        if (type.mType != ValueType.RESOURCEMODEL) {
+            if (type.mType == ValueType.ARRAY) {
+                if (type.mDepth == 1) {
+                    AttributeProperty childProp = prop.getChildProperty();
+                    if (null != childProp) {
+                        valuesType = childProp.type();
+                        if (valuesType.ordinal() == Type.RANGE.ordinal()) {
+                            List<String> list = getRangeForPrimitiveNonArrayAttributes(
+                                    childProp, type.mBaseType);
+                            if (null != list) {
+                                values.addAll(list);
+                            }
+                        } else if (valuesType.ordinal() == Type.VALUESET
+                                .ordinal()) {
+                            List<String> list = getAllowedValuesForPrimitiveNonArrayAttributes(
+                                    childProp.valueSet(), type.mBaseType);
+                            if (null != list) {
+                                values.addAll(list);
+                            }
+                        }
+                    }
+                }
+            } else {
+                if (valuesType.ordinal() == Type.RANGE.ordinal()) {
+                    List<String> list = getRangeForPrimitiveNonArrayAttributes(
+                            prop, type.mType);
+                    if (null != list) {
+                        values.addAll(list);
+                    }
+                } else if (valuesType.ordinal() == Type.VALUESET.ordinal()) {
+                    List<String> list = getAllowedValuesForPrimitiveNonArrayAttributes(
+                            prop.valueSet(), type.mType);
+                    if (null != list) {
+                        values.addAll(list);
+                    }
+                }
+            }
+        }
+
+        if (values.isEmpty()) {
+            values.add(Utility.getAttributeValueAsString(val));
+        }
+
+        return values;
     }
 
+    public List<String> getRangeForPrimitiveNonArrayAttributes(
+            AttributeProperty prop, ValueType type) {
+        if (null == prop) {
+            return null;
+        }
+
+        if (type == ValueType.ARRAY || type == ValueType.RESOURCEMODEL) {
+            return null;
+        }
+
+        List<String> values = new ArrayList<String>();
+        switch (type) {
+            case INTEGER:
+                int min = (int) prop.min();
+                int max = (int) prop.max();
+                for (int iVal = min; iVal <= max; iVal++) {
+                    values.add(String.valueOf(iVal));
+                }
+                break;
+            case DOUBLE:
+                double minD = (double) prop.min();
+                double maxD = (double) prop.max();
+                for (double iVal = minD; iVal <= maxD; iVal = iVal + 1.0) {
+                    values.add(String.valueOf(iVal));
+                }
+                break;
+            default:
+        }
+        return values;
+    }
+
+    public List<String> getAllowedValuesForPrimitiveNonArrayAttributes(
+            AttributeValue[] attValues, ValueType type) {
+        if (null == attValues || attValues.length < 1) {
+            return null;
+        }
+
+        if (type == ValueType.ARRAY || type == ValueType.RESOURCEMODEL) {
+            return null;
+        }
+
+        Object obj;
+        List<String> values = new ArrayList<String>();
+        for (AttributeValue val : attValues) {
+            if (null == val) {
+                continue;
+            }
+            obj = val.get();
+            if (null == obj) {
+                continue;
+            }
+            values.add(String.valueOf(obj));
+        }
+        return values;
+    }
+
+    /*
+     * public String getAttributeValue(RemoteResource res, String attName) { if
+     * (null == res || null == attName) { return null; } return
+     * res.getAttributeValue(attName); }
+     */
     public void sendGetRequest(RemoteResource resource) {
         if (null == resource) {
             return;
@@ -1428,23 +1443,16 @@ public class ResourceManager {
     }
 
     public void sendPutRequest(RemoteResource resource,
-            List<PutPostAttributeModel> putPostModelList) {
-        if (null == resource) {
+            SimulatorResourceModel model) {
+        if (null == resource || null == model) {
             return;
         }
         SimulatorRemoteResource resourceN = resource.getRemoteResourceRef();
         if (null == resourceN) {
             return;
         }
-        Map<String, RemoteResourceAttribute> attMap = resource
-                .getResourceAttributesMap();
-        if (null == attMap || attMap.size() < 1) {
-            return;
-        }
         try {
-            SimulatorResourceModel resourceModel = getUpdatedResourceModel(
-                    attMap, putPostModelList);
-            resourceN.put(null, resourceModel, putListener);
+            resourceN.put(null, model, putListener);
         } catch (Exception e) {
             String addlInfo;
             addlInfo = "Invalid Attribute Value. Cannot send PUT request.";
@@ -1457,32 +1465,16 @@ public class ResourceManager {
     }
 
     public void sendPostRequest(RemoteResource resource,
-            List<PutPostAttributeModel> putPostModelList) {
-        if (null == resource) {
+            SimulatorResourceModel model) {
+        if (null == resource || null == model) {
             return;
         }
         SimulatorRemoteResource resourceN = resource.getRemoteResourceRef();
         if (null == resourceN) {
             return;
         }
-        Map<String, RemoteResourceAttribute> attMap = resource
-                .getResourceAttributesMap();
-        if (null == attMap || attMap.size() < 1) {
-            return;
-        }
-        // Filter out the attributes whose modification status is true.
-        Iterator<PutPostAttributeModel> itr = putPostModelList.iterator();
-        PutPostAttributeModel model;
-        while (itr.hasNext()) {
-            model = itr.next();
-            if (!model.isModified()) {
-                itr.remove();
-            }
-        }
         try {
-            SimulatorResourceModel resourceModel = getUpdatedResourceModel(
-                    attMap, putPostModelList);
-            resourceN.post(null, resourceModel, postListener);
+            resourceN.post(null, model, postListener);
         } catch (Exception e) {
             String addlInfo;
             addlInfo = "Invalid Attribute Value. Cannot send POST request.";
@@ -1492,22 +1484,6 @@ public class ResourceManager {
                     .log(Level.ERROR.ordinal(), new Date(),
                             Utility.getSimulatorErrorString(e, addlInfo));
         }
-    }
-
-    private SimulatorResourceModel getUpdatedResourceModel(
-            Map<String, RemoteResourceAttribute> attMap,
-            List<PutPostAttributeModel> putPostModelList) throws Exception {
-        SimulatorResourceModel resourceModel = new SimulatorResourceModel();
-        for (PutPostAttributeModel putPostAttribute : putPostModelList)
-        {
-            String attributeName = putPostAttribute.getAttName();
-            RemoteResourceAttribute resourceAttribute = attMap.get(attributeName);
-            AttributeValue attributeValue = AttributeValueBuilder.build(
-                    putPostAttribute.getAttValue(), resourceAttribute.getAttValBaseType());
-            resourceModel.addAttribute(attributeName, attributeValue);
-        }
-
-        return resourceModel;
     }
 
     public boolean sendObserveRequest(RemoteResource resource) {
@@ -1640,21 +1616,19 @@ public class ResourceManager {
             return false;
         }
         try {
-            SimulatorResourceModel resourceModel;
-            resourceModel = resourceN.setConfigInfo(configFilePath);
-            if (null == resourceModel) {
+            SimulatorResourceModel configuredResourceModel;
+            configuredResourceModel = resourceN.setConfigInfo(configFilePath);
+            if (null == configuredResourceModel) {
                 return false;
             }
-            // Store the resource model in the local cache
-            resource.setResourceModelRef(resourceModel);
 
-            // Fetching the allowed values and range for all the attributes
-            Map<String, RemoteResourceAttribute> attributeMap = fetchResourceAttributesFromModel(resourceModel);
-            resource.setResourceAttributesMap(attributeMap);
-            // TODO: Printing the values for debugging
-            if (null != attributeMap) {
-                RemoteResourceAttribute.printAttributes(attributeMap);
+            // Store the resource model in the local cache
+            SimulatorResourceModel resourceModel = resource
+                    .getResourceModelRef();
+            if (null != resourceModel) {
+                configuredResourceModel.update(resourceModel);
             }
+            resource.setResourceModelRef(configuredResourceModel);
         } catch (SimulatorException e) {
             Activator
                     .getDefault()

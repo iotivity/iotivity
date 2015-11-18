@@ -492,18 +492,58 @@ class ValueConverterCpp
 
         void getValue(jobject &jValue, SimulatorResourceModel &value)
         {
+            simulatorResourceModelToCpp(m_env, jValue, value);
         }
 
         void getValue(jobject &jValue, std::vector<SimulatorResourceModel> &value)
         {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            std::vector<SimulatorResourceModel> result(length);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                SimulatorResourceModel element;
+                getValue(jElement, element);
+                result[i] = element;
+            }
+
+            value = result;
         }
 
         void getValue(jobject &jValue, std::vector<std::vector<SimulatorResourceModel>> &value)
         {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            std::vector<std::vector<SimulatorResourceModel>> result(length);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::vector<SimulatorResourceModel> childArray;
+                getValue(jElement, childArray);
+                value[i] = childArray;
+            }
+
+            value = result;
         }
 
         void getValue(jobject &jValue, std::vector<std::vector<std::vector<SimulatorResourceModel>>> &value)
         {
+            jobjectArray array = (jobjectArray) jValue;
+            size_t length = m_env->GetArrayLength(array);
+            std::vector<std::vector<std::vector<SimulatorResourceModel>>> result(length);
+            for (size_t i = 0; i < length; i++)
+            {
+                jobject jElement = m_env->GetObjectArrayElement(array, i);
+
+                std::vector<std::vector<SimulatorResourceModel>> childArray;
+                getValue(jElement, childArray);
+                value[i] = childArray;
+            }
+
+            value = result;
         }
 
         JNIEnv *m_env;
@@ -561,7 +601,7 @@ class JniAttributeProperty
                 jAttributeProperty = env->NewObject(gSimulatorClassRefs.attributePropertyCls, propertyCtor,
                                                     property.min(), property.max());
             }
-            else
+            else if (SimulatorResourceModel::AttributeProperty::Type::VALUE_SET == property.type())
             {
                 static jmethodID propertyCtor = env->GetMethodID(
                                                     gSimulatorClassRefs.attributePropertyCls, "<init>", "([Lorg/oic/simulator/AttributeValue;)V");
@@ -577,6 +617,10 @@ class JniAttributeProperty
 
                 jAttributeProperty = env->NewObject(gSimulatorClassRefs.attributePropertyCls, propertyCtor,
                                                     jValueSet);
+            }
+            else
+            {
+                return jAttributeProperty;
             }
 
             // Add child property
@@ -684,7 +728,8 @@ jobject simulatorResourceModelToJava(JNIEnv *env, SimulatorResourceModel &resMod
         addEntryToHashMap(env, attributesMap, jAttrName, jAttributeValue);
 
         jobject jAttributeProperty = JniAttributeProperty::toJava(env, attributeEntry.second.getProperty());
-        addEntryToHashMap(env, propertiesMap, jAttrName, jAttributeProperty);
+        if (jAttributeProperty)
+            addEntryToHashMap(env, propertiesMap, jAttrName, jAttributeProperty);
     }
 
     static jmethodID simulatorResourceModelCtor = env->GetMethodID(

@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.oic.simulator.AttributeProperty.Type;
-import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.SimulatorResourceAttribute;
 

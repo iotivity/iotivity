@@ -270,7 +270,7 @@ Java_org_oic_simulator_SimulatorManager_setDeviceInfo
 
 JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorManager_findDevices
-(JNIEnv *env, jobject object, jobject listener)
+(JNIEnv *env, jobject object, jstring hostUri, jobject listener)
 {
     VALIDATE_CALLBACK(env, listener)
 
@@ -282,7 +282,8 @@ Java_org_oic_simulator_SimulatorManager_findDevices
 
     try
     {
-        SimulatorManager::getInstance()->getDeviceInfo(callback);
+        JniString jniHostUri(env, hostUri);
+        SimulatorManager::getInstance()->getDeviceInfo(jniHostUri.get(), callback);
     }
     catch (InvalidArgsException &e)
     {
@@ -314,7 +315,7 @@ Java_org_oic_simulator_SimulatorManager_setPlatformInfo
 
 JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorManager_getPlatformInformation
-(JNIEnv *env, jobject object, jobject listener)
+(JNIEnv *env, jobject object, jstring hostUri, jobject listener)
 {
     VALIDATE_CALLBACK(env, listener)
 
@@ -326,7 +327,8 @@ Java_org_oic_simulator_SimulatorManager_getPlatformInformation
 
     try
     {
-        SimulatorManager::getInstance()->getPlatformInfo(callback);
+        JniString jniHostUri(env, hostUri);
+        SimulatorManager::getInstance()->getPlatformInfo(jniHostUri.get(), callback);
     }
     catch (InvalidArgsException &e)
     {
