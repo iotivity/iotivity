@@ -632,6 +632,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         }
     }
 
+    OCPayloadDestroy(response.payload);
     return ehResult;
 }
 
@@ -711,7 +712,7 @@ void *ChangeLightRepresentation (void *param)
 #ifdef WITH_PRESENCE
 void *presenceNotificationGenerator(void *param)
 {
-    sleep(10);
+    sleep(20);
     (void)param;
     OCDoHandle presenceNotificationHandles[numPresenceResources];
     OCStackResult res = OC_STACK_OK;
@@ -727,7 +728,7 @@ void *presenceNotificationGenerator(void *param)
     {
         if(res == OC_STACK_OK)
         {
-            sleep(1);
+            sleep(2);
             res = OCCreateResource(&presenceNotificationHandles[i],
                     presenceNotificationResources.at(i).c_str(),
                     OC_RSRVD_INTERFACE_DEFAULT,
@@ -1039,8 +1040,9 @@ int main(int argc, char* argv[])
             cout << "\nOCStack process error";
             return 0;
         }
-
-        sleep(2);
+#ifndef ROUTING_GATEWAY
+        sleep(1);
+#endif
     }
 
     /*

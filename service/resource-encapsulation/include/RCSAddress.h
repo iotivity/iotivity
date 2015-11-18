@@ -18,6 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+/**
+ * @file
+ *
+ * This file contains the declaration of classes and its members related to RCSAddress
+ */
 #ifndef OIC_SERVICE_RCSADDRESS_H
 #define OIC_SERVICE_RCSADDRESS_H
 
@@ -30,11 +35,30 @@ namespace OIC
     {
         class RCSAddressDetail;
 
+        /**
+         * This is to specify a target address to discover.
+         *
+         * @see RCSDiscoveryManager
+         */
         class RCSAddress
         {
         public:
+            /**
+             * Factory method for multicast.
+             *
+             */
             static RCSAddress multicast();
+
+            /**
+             * Factory method for unicast.
+             *
+             * @param address A physical address for the target.
+             */
             static RCSAddress unicast(const std::string& address);
+
+            /**
+             * @overload
+             */
             static RCSAddress unicast(std::string&& address);
 
         private:

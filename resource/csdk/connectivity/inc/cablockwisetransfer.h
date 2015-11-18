@@ -303,8 +303,8 @@ CAResult_t CAGetMoreBitFromBlock(size_t payloadLen, coap_block_t *block);
  * @param[in]   endpoint    port of transport.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t info,
-                            const CAEndpoint_t *endpoint);
+CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
+                            const CAEndpoint_t *endpoint, coap_list_t **options);
 
 /**
  * Write the block option2 in pdu binary data.
@@ -314,8 +314,8 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t info,
  * @param[in]   blockID     ID set of CABlockData.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t info, size_t dataLength,
-                             const CABlockDataID_t *blockID);
+CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t *info, size_t dataLength,
+                             const CABlockDataID_t *blockID, coap_list_t **options);
 
 /**
  * Write the block option1 in pdu binary data.
@@ -325,8 +325,8 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t info, size_t dataL
  * @param[in]   blockID     ID set of CABlockData.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t info, size_t dataLength,
-                             const CABlockDataID_t *blockID);
+CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t dataLength,
+                             const CABlockDataID_t *blockID, coap_list_t **options);
 
 /**
  * Add the block option in pdu data.
@@ -335,7 +335,8 @@ CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t info, size_t dataL
  * @param[in]   blockType   block option type.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAAddBlockOptionImpl(coap_pdu_t *pdu, coap_block_t *block, uint8_t blockType);
+CAResult_t CAAddBlockOptionImpl(coap_pdu_t *pdu, coap_block_t *block, uint8_t blockType,
+                                coap_list_t **options);
 
 /**
  * Add the size option in pdu data.
@@ -344,7 +345,8 @@ CAResult_t CAAddBlockOptionImpl(coap_pdu_t *pdu, coap_block_t *block, uint8_t bl
  * @param[in]   dataLength the total payload length to be sent.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAAddBlockSizeOption(coap_pdu_t *pdu, uint16_t sizeType, size_t dataLength);
+CAResult_t CAAddBlockSizeOption(coap_pdu_t *pdu, uint16_t sizeType, size_t dataLength,
+                                coap_list_t **options);
 
 /**
  * Get the size option from pdu data.

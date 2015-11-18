@@ -22,13 +22,17 @@
 
 package org.iotivity.base;
 
+/**
+ * Possible returned values from entity handler.
+ */
 public enum EntityHandlerResult {
     OK(0),
     ERROR(1),
     RESOURCE_CREATED(2),
     RESOURCE_DELETED(3),
     SLOW(4),
-    FORBIDDEN(5);
+    FORBIDDEN(5),
+    RESOURCE_NOT_FOUND(6);
 
     private int value;
 

@@ -89,27 +89,7 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2
 
 
 #ifndef ARDUINO
-#ifdef __TIZEN__
-
-int OCGetTizenLogLevel(LogLevel level)
-{
-    switch(level)
-    {
-        case DEBUG:
-            return DLOG_DEBUG;
-        case INFO:
-            return DLOG_INFO;
-        case WARNING:
-            return DLOG_WARN;
-        case ERROR:
-            return DLOG_ERROR;
-        case FATAL:
-            return DLOG_FATAL;
-    }
-    return DLOG_DEBUG;
-}
-
-#else
+#ifndef __TIZEN__
 void OCLogConfig(oc_log_ctx_t *ctx) {
     logCtx = ctx;
 }
@@ -152,7 +132,7 @@ static void osalGetTime(int *min,int *sec, int *ms)
     if (min && sec && ms)
     {
 #if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0
-        struct timespec when = {0};
+        struct timespec when = { .tv_sec = 0 };
         clockid_t clk = CLOCK_REALTIME;
 #ifdef CLOCK_REALTIME_COARSE
         clk = CLOCK_REALTIME_COARSE;
@@ -197,7 +177,6 @@ void OCLog(LogLevel level, const char * tag, const char * logStr) {
     }
     else
     {
-
         int min = 0;
         int sec = 0;
         int ms = 0;
@@ -356,7 +335,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
      * @param tag    - Module name
      * @param format - variadic log string
      */
-    void OCLogv(LogLevel level, PROGMEM const char * tag, const char * format, ...)
+    void OCLogv(LogLevel level, PROGMEM const char * tag, PROGMEM const char * format, ...)
     {
         char buffer[LINE_BUFFER_SIZE];
         va_list ap;
@@ -374,7 +353,11 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         }
         Serial.print(F(": "));
 
+#ifdef __AVR__
+        vsnprintf_P(buffer, sizeof(buffer), format, ap);
+#else
         vsnprintf(buffer, sizeof(buffer), format, ap);
+#endif
         for(char *p = &buffer[0]; *p; p++) // emulate cooked mode for newlines
         {
             if(*p == '\n')
@@ -386,51 +369,5 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
         Serial.println();
         va_end(ap);
     }
-    /**
-     * Output a variable argument list log string with the specified priority level.
-     * Only defined for Arduino as depicted below.
-     *
-     * @param level  - DEBUG, INFO, WARNING, ERROR, FATAL
-     * @param tag    - Module name
-     * @param format - variadic log string
-     */
-    void OCLogv(LogLevel level, PROGMEM const char * tag, const __FlashStringHelper *format, ...)
-    {
-        char buffer[LINE_BUFFER_SIZE];
-        va_list ap;
-        va_start(ap, format);
-
-        GET_PROGMEM_BUFFER(buffer, &(LEVEL[level]));
-        Serial.print(buffer);
-
-        char c;
-        Serial.print(F(": "));
-
-        while ((c = pgm_read_byte(tag))) {
-          Serial.write(c);
-          tag++;
-        }
-        Serial.print(F(": "));
-
-        #ifdef __AVR__
-            vsnprintf_P(buffer, sizeof(buffer), (const char *)format, ap); // progmem for AVR
-        #else
-            vsnprintf(buffer, sizeof(buffer), (const char *)format, ap); // for the rest of the world
-        #endif
-        for(char *p = &buffer[0]; *p; p++) // emulate cooked mode for newlines
-        {
-            if(*p == '\n')
-            {
-                Serial.write('\r');
-            }
-            Serial.write(*p);
-        }
-        Serial.println();
-        va_end(ap);
-    }
-
 
 #endif
-
-
-

@@ -44,7 +44,7 @@ OCResourceHandle foundResourceHandle = NULL;
 shared_ptr< OCResource > g_resource ;
 std::vector< string > lights;
 
-ThingsManager *groupThingsMgr = new ThingsManager();
+GroupManager *groupMgr = NULL;
 
 typedef struct datetime_popup
 {
@@ -92,7 +92,7 @@ void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, con
         string plainText;
         if (rep.getValue("ActionSet", plainText))
         {
-            ActionSet *actionset = groupThingsMgr->getActionSetfromString(plainText);
+            ActionSet *actionset = groupMgr->getActionSetfromString(plainText);
             if (NULL != actionset)
             {
                 dlog_print(DLOG_INFO, LOG_TAG, "#### ACTIONSET NAME :: (%s)",
@@ -174,7 +174,7 @@ static void createActionSet_AllBulbOff()
     {
         if (g_resource)
         {
-            groupThingsMgr->addActionSet(g_resource, actionSet, onPut);
+            groupMgr->addActionSet(g_resource, actionSet, onPut);
         }
     }
     catch (std::exception &e)
@@ -232,7 +232,7 @@ static void createActionSet_AllBulbOn()
     {
         if (g_resource)
         {
-            groupThingsMgr->addActionSet(g_resource, actionSet, onPut);
+            groupMgr->addActionSet(g_resource, actionSet, onPut);
         }
     }
     catch (std::exception &e)
@@ -279,7 +279,7 @@ static void createRecursiveActionSet_AllBulbOn(void *data, Evas_Object *obj, voi
     }
     if (g_resource)
     {
-        groupThingsMgr->addActionSet(g_resource, allBulbOn, onPut);
+        groupMgr->addActionSet(g_resource, allBulbOn, onPut);
     }
 
     delete allBulbOn;
@@ -329,7 +329,7 @@ static void createScheduledActionSet_AllBulbOff(int date, int month, int year,
     }
     if (g_resource)
     {
-        groupThingsMgr->addActionSet(g_resource, allBulbOff, onPut);
+        groupMgr->addActionSet(g_resource, allBulbOff, onPut);
     }
 
     delete allBulbOff;
@@ -338,33 +338,33 @@ static void createScheduledActionSet_AllBulbOff(int date, int month, int year,
 
 static void scheduled_AllbulbOff(void *data, Evas_Object *obj, void *event_info)
 {
-    groupThingsMgr->executeActionSet(g_resource, "AllBulbOffScheduledCall", &onPost);
+    groupMgr->executeActionSet(g_resource, "AllBulbOffScheduledCall", &onPost);
 }
 
 static void scheduled_AllbulbOffEx(void *data, Evas_Object *obj, void *event_info)
 {
-    groupThingsMgr->executeActionSet(g_resource, "AllBulbOffScheduledCall", 10, &onPost);
+    groupMgr->executeActionSet(g_resource, "AllBulbOffScheduledCall", 10, &onPost);
 }
 
 static void cancelScheduled_AllBulbOff(void *data, Evas_Object *obj, void *event_info)
 {
-    groupThingsMgr->cancelActionSet(g_resource, "AllBulbOffScheduledCall", &onPost);
+    groupMgr->cancelActionSet(g_resource, "AllBulbOffScheduledCall", &onPost);
 }
 
 static void recursive_allBulbOn(void *data, Evas_Object *obj, void *event_info)
 {
-    groupThingsMgr->executeActionSet(g_resource, "AllBulbOnRecursiveCall", &onPost);
+    groupMgr->executeActionSet(g_resource, "AllBulbOnRecursiveCall", &onPost);
 }
 
 static void recursive_allBulbOnEx(void *data, Evas_Object *obj, void *event_info)
 {
-    groupThingsMgr->executeActionSet(g_resource, "AllBulbOnRecursiveCall", 10, &onPost);
+    groupMgr->executeActionSet(g_resource, "AllBulbOnRecursiveCall", 10, &onPost);
 }
 
 static void cancelRecursive_allBulbOn(void *data, Evas_Object *obj, void *event_info)
 {
 
-    groupThingsMgr->cancelActionSet(g_resource, "AllBulbOnRecursiveCall", &onPost);
+    groupMgr->cancelActionSet(g_resource, "AllBulbOnRecursiveCall", &onPost);
 }
 
 /* Method for executing the action Set AllBulbOff that we have created using
@@ -387,7 +387,7 @@ static void executeActionSetOff(void *data, Evas_Object *obj, void *event_info)
     {
         if (g_resource)
         {
-            groupThingsMgr->executeActionSet(g_resource, BULBOFF, &onPost);
+            groupMgr->executeActionSet(g_resource, BULBOFF, &onPost);
         }
     }
     catch (std::exception &e)
@@ -422,7 +422,7 @@ static void executeActionSetOn(void *data, Evas_Object *obj, void *event_info)
     {
         if (g_resource)
         {
-            groupThingsMgr->executeActionSet(g_resource, BULBON, &onPost);
+            groupMgr->executeActionSet(g_resource, BULBON, &onPost);
         }
     }
     catch (std::exception &e)
@@ -457,7 +457,7 @@ static void getActionSetOff(void *data, Evas_Object *obj, void *event_info)
     {
         if (g_resource)
         {
-            groupThingsMgr->getActionSet(g_resource, BULBOFF, &onPost);
+            groupMgr->getActionSet(g_resource, BULBOFF, &onPost);
         }
     }
     catch (std::exception &e)
@@ -488,7 +488,7 @@ static void getActionSetOn(void *data, Evas_Object *obj, void *event_info)
     {
         if (g_resource)
         {
-            groupThingsMgr->getActionSet(g_resource, BULBON, &onPost);
+            groupMgr->getActionSet(g_resource, BULBON, &onPost);
         }
     }
     catch (std::exception &e)
@@ -519,7 +519,7 @@ static void deleteActionSetOff(void *data, Evas_Object *obj, void *event_info)
     {
         if (g_resource)
         {
-            groupThingsMgr->deleteActionSet(g_resource, BULBOFF, &onPost);
+            groupMgr->deleteActionSet(g_resource, BULBOFF, &onPost);
         }
     }
     catch (std::exception &e)
@@ -554,7 +554,7 @@ static void deleteActionSetOn(void *data, Evas_Object *obj, void *event_info)
     {
         if (g_resource)
         {
-            groupThingsMgr->deleteActionSet(g_resource, BULBON, &onPost);
+            groupMgr->deleteActionSet(g_resource, BULBON, &onPost);
         }
     }
     catch (std::exception &e)
@@ -686,13 +686,16 @@ void foundResources(std::vector< std::shared_ptr< OC::OCResource > > listOfResou
 
 static void create_group()
 {
-    if (NULL != groupThingsMgr)
+
+    groupMgr = new GroupManager();
+
+    if (NULL != groupMgr)
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### calling findCandidateResources from "
                    "create_group!!!!");
         vector< string > types;
         types.push_back("core.light");
-        groupThingsMgr->findCandidateResources(types, &foundResources, 5);
+        groupMgr->findCandidateResources(types, &foundResources, FINDRESOURCE_TIMEOUT);
     }
 
     try
@@ -721,11 +724,12 @@ static void create_group()
 void findLightResource(void *data, Evas_Object *obj, void *event_info)
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### findLightResource ENTRY");
-    if (NULL != groupThingsMgr)
+    if (NULL != groupMgr)
     {
         vector< string > types;
         types.push_back("core.light");
-        OCStackResult result = groupThingsMgr->findCandidateResources(types, &foundResources, 5);
+        OCStackResult result = groupMgr->findCandidateResources(types, &foundResources,
+                               FINDRESOURCE_TIMEOUT);
         if (result == OC_STACK_OK)
         {
             dlog_print(DLOG_INFO, LOG_TAG, "#### create_group -- findCandidateResources :: "
@@ -743,11 +747,12 @@ void findLightResource(void *data, Evas_Object *obj, void *event_info)
 void observeBookMark(void *data, Evas_Object *obj, void *event_info)
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### observeBookMark ENTRY");
-    if (NULL != groupThingsMgr)
+    if (NULL != groupMgr)
     {
         vector< string > types;
         types.push_back("core.bookmark");
-        OCStackResult result = groupThingsMgr->findCandidateResources(types, &foundResources, 5);
+        OCStackResult result = groupMgr->findCandidateResources(types, &foundResources,
+                               FINDRESOURCE_TIMEOUT);
         if (OC_STACK_OK == result)
         {
             dlog_print(DLOG_INFO, LOG_TAG, "#### create_group - findCandidateResources :: "
@@ -805,6 +810,8 @@ static void onDestroy()
     {
         dlog_print(DLOG_ERROR, LOG_TAG, "Exception occured! (%s)", e.what());
     }
+
+    delete groupMgr;
 }
 
 static void createActionSet(void *data, Evas_Object *obj, void *event_info)
@@ -1066,17 +1073,12 @@ static void list_selected_cb(void *data, Evas_Object *obj, void *event_info)
 static void find_group()
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### findGroup ENTRY");
-    vector< string > resourceTypes;
-    resourceTypes.push_back(resourceTypeName);
-    OCStackResult result = groupThingsMgr->findGroup(resourceTypes, &foundResource);
-    if (OC_STACK_OK == result)
-    {
-        dlog_print(DLOG_INFO, LOG_TAG, "#### findGroup returned OC_STACK_OK");
-    }
-    else
-    {
-        dlog_print(DLOG_INFO, LOG_TAG, "#### findGroup failed");
-    }
+    std::string query = OC_RSRVD_WELL_KNOWN_URI;
+    query.append("?rt=");
+    query.append(resourceTypeName);
+
+    OCPlatform::findResource("", query, CT_DEFAULT, &foundResource);
+
     dlog_print(DLOG_INFO, LOG_TAG, "#### findGroup EXIT");
 }
 

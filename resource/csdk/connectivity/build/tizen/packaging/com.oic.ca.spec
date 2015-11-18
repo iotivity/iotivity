@@ -20,6 +20,7 @@ BuildRequires: boost-thread
 BuildRequires: boost-system
 BuildRequires: boost-filesystem
 BuildRequires: scons
+BuildRequires: pkgconfig(uuid)
 
 
 %description
@@ -52,6 +53,7 @@ cp -rf %{ROOTDIR}/con/inc/caipadapter.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caedradapter.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caleadapter.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/api/cainterface.h* %{DEST_INC_DIR}/
+cp -rf %{ROOTDIR}/con/api/casecurityinterface.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/com.oic.ca.pc %{DEST_LIB_DIR}/pkgconfig/
 
 

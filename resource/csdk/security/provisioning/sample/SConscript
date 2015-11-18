@@ -32,8 +32,10 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../../logger/include',
 		'../../../stack/include',
 		'../../../security/include',
+		'../../../security/provisioning/include/internal',
 		'../../../../oc_logger/include',
 		'../include',
+		'../include/oxm',
 		'../../include',
 		'../../../../../extlibs/tinydtls',
 		'../../../../../extlibs/cjson',
@@ -47,12 +49,15 @@ provisioning_env.AppendUnique(CPPPATH = [
 provisioning_env.AppendUnique(CFLAGS = ['-D__WITH_DTLS__','-std=c99'])
 provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread', '-fpermissive'])
 provisioning_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-provisioning_env.AppendUnique(LIBS = ['-lpthread'])
+provisioning_env.AppendUnique(LIBS = ['-lpthread','-ldl'])
 provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-provisioning_env.PrependUnique(LIBS = ['ocspapi','oc', 'oc_logger', 'ocsrm','m', 'octbstack', 'connectivity_abstraction', 'coap'])
+provisioning_env.PrependUnique(LIBS = ['ocpmapi','oc', 'oc_logger', 'ocsrm','m', 'octbstack', 'connectivity_abstraction', 'coap'])
 
 if env.get('SECURED') == '1':
     provisioning_env.AppendUnique(LIBS = ['tinydtls'])
+if env.get('DTLS_WITH_X509') == '1':
+	provisioning_env.AppendUnique(LIBS = ['CKManager'])
+	provisioning_env.AppendUnique(LIBS = ['asn1'])
 provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
 
 provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
@@ -62,8 +67,10 @@ provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 ######################################################################
 
 provisioningclient = provisioning_env.Program('provisioningclient', 'provisioningclient.c')
+sampleserver_justworks = provisioning_env.Program('sampleserver_justworks', 'sampleserver_justworks.cpp')
+sampleserver_randompin = provisioning_env.Program('sampleserver_randompin', 'sampleserver_randompin.cpp')
 
-Alias("sample", [provisioningclient])
+Alias("samples", [provisioningclient, sampleserver_justworks, sampleserver_randompin])
 
 provisioning_env.AppendTarget('samples')
 
@@ -72,6 +79,8 @@ sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sampl
 sec_provisioning_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/sample/'
 
 provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_prov_tool.json'))
+    sec_provisioning_src_dir + 'oic_svr_db_client.json'))
 provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
-    sec_provisioning_src_dir + 'oic_svr_db_unowned_server.json'))
+    sec_provisioning_src_dir + 'oic_svr_db_server_justworks.json'))
+provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
+    sec_provisioning_src_dir + 'oic_svr_db_server_randompin.json'))

@@ -31,11 +31,12 @@ JniOcResource::JniOcResource(std::shared_ptr<OCResource> resource)
 JniOcResource::~JniOcResource()
 {
     LOGD("~JniOcResource()");
-    m_sharedResource = NULL;
+
+    m_sharedResource = nullptr;
 
     jint envRet;
     JNIEnv *env = GetJNIEnv(envRet);
-    if (NULL == env) return;
+    if (nullptr == env) return;
 
     m_onGetManager.removeAllListeners(env);
     m_onPutManager.removeAllListeners(env);
@@ -519,12 +520,12 @@ jobject jQueryParamsMap, jobject jListener)
     std::string resourceType;
     if (jResourceType)
     {
-        resourceType = env->GetStringUTFChars(jResourceType, NULL);
+        resourceType = env->GetStringUTFChars(jResourceType, nullptr);
     }
     std::string resourceInterface;
     if (jResourceInterface)
     {
-        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
+        resourceInterface = env->GetStringUTFChars(jResourceInterface, nullptr);
     }
     if (!jQueryParamsMap)
     {
@@ -586,12 +587,12 @@ jobject jQueryParamsMap, jobject jListener, jint jQoS)
     std::string resourceType;
     if (jResourceType)
     {
-        resourceType = env->GetStringUTFChars(jResourceType, NULL);
+        resourceType = env->GetStringUTFChars(jResourceType, nullptr);
     }
     std::string resourceInterface;
     if (jResourceInterface)
     {
-        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
+        resourceInterface = env->GetStringUTFChars(jResourceInterface, nullptr);
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
     if (!resource) return;
@@ -745,12 +746,12 @@ jobject jRepresentation, jobject jQueryParamsMap, jobject jListener)
     std::string resourceType;
     if (jResourceType)
     {
-        resourceType = env->GetStringUTFChars(jResourceType, NULL);
+        resourceType = env->GetStringUTFChars(jResourceType, nullptr);
     }
     std::string resourceInterface;
     if (jResourceInterface)
     {
-        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
+        resourceInterface = env->GetStringUTFChars(jResourceInterface, nullptr);
     }
     if (!jRepresentation)
     {
@@ -827,12 +828,12 @@ jobject jQueryParamsMap, jobject jListener, jint jQoS)
     std::string resourceType;
     if (jResourceType)
     {
-        resourceType = env->GetStringUTFChars(jResourceType, NULL);
+        resourceType = env->GetStringUTFChars(jResourceType, nullptr);
     }
     std::string resourceInterface;
     if (jResourceInterface)
     {
-        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
+        resourceInterface = env->GetStringUTFChars(jResourceInterface, nullptr);
     }
 
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
@@ -1003,12 +1004,12 @@ jobject jRepresentation, jobject jQueryParamsMap, jobject jListener)
     std::string resourceType;
     if (jResourceType)
     {
-        resourceType = env->GetStringUTFChars(jResourceType, NULL);
+        resourceType = env->GetStringUTFChars(jResourceType, nullptr);
     }
     std::string resourceInterface;
     if (jResourceInterface)
     {
-        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
+        resourceInterface = env->GetStringUTFChars(jResourceInterface, nullptr);
     }
 
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
@@ -1071,12 +1072,12 @@ jobject jRepresentation, jobject jQueryParamsMap, jobject jListener, jint jQoS)
     std::string resourceType;
     if (jResourceType)
     {
-        resourceType = env->GetStringUTFChars(jResourceType, NULL);
+        resourceType = env->GetStringUTFChars(jResourceType, nullptr);
     }
     std::string resourceInterface;
     if (jResourceInterface)
     {
-        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
+        resourceInterface = env->GetStringUTFChars(jResourceInterface, nullptr);
     }
 
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);

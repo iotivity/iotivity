@@ -22,18 +22,19 @@
 
 #include <functional>
 #include <dlog.h>
+#include <string.h>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "ThingsManager.h"
+#include "configurationresource.h"
 
 using namespace OC;
 
 FactorySetResource::FactorySetResource()
 {
-    m_configurationUri = "/factorySet"; // URI of the resource
+    m_configurationUri = "/factoryset"; // URI of the resource
     m_configurationTypes.clear();
-    m_configurationTypes.push_back("factorySet"); // resource type name.
+    m_configurationTypes.push_back("factoryset"); // resource type name.
     m_configurationRep.setUri(m_configurationUri);
     m_configurationRep.setResourceTypes(m_configurationTypes);
 }
@@ -68,29 +69,37 @@ void FactorySetResource::createResource(ResourceEntityHandler callback)
 
 void FactorySetResource::setFactorySetRepresentation(OCRepresentation &rep)
 {
-    string value;
+    std::string value;
 
-    if (rep.getValue("loc", value))
+    if (rep.getValue(DEFAULT_DEVICENAME, value))
+    {
+        m_deviceName = value;
+        dlog_print(DLOG_INFO, "FactorySetResource", "#### m_deviceName: %s",
+                   m_deviceName.c_str());
+    }
+
+    if (rep.getValue(DEFAULT_LOCATION, value))
     {
         m_location = value;
         dlog_print(DLOG_INFO, "FactorySetResource", "#### m_location: %s",
                    m_location.c_str());
     }
 
-    if (rep.getValue("st", value))
+    if (rep.getValue(DEFAULT_LOCATIONNAME, value))
     {
-        dlog_print(DLOG_INFO, "FactorySetResource", "#### SystemTime is not"
-                   "allowed to be written");
+        m_locationName = value;
+        dlog_print(DLOG_INFO, "FactorySetResource", "#### m_locationName: %s",
+                   m_locationName.c_str());
     }
 
-    if (rep.getValue("c", value))
+    if (rep.getValue(DEFAULT_CURRENCY, value))
     {
         m_currency = value;
         dlog_print(DLOG_INFO, "FactorySetResource", "#### m_currency: %s",
                    m_currency.c_str());
     }
 
-    if (rep.getValue("r", value))
+    if (rep.getValue(DEFAULT_REGION, value))
     {
         m_region = value;
         dlog_print(DLOG_INFO, "FactorySetResource", "#### m_region: %s",
@@ -100,10 +109,11 @@ void FactorySetResource::setFactorySetRepresentation(OCRepresentation &rep)
 
 OCRepresentation FactorySetResource::getFactorySetRepresentation()
 {
-    m_configurationRep.setValue("loc", m_location);
-    m_configurationRep.setValue("st", m_systemTime);
-    m_configurationRep.setValue("c", m_currency);
-    m_configurationRep.setValue("r", m_region);
+    m_configurationRep.setValue(DEFAULT_DEVICENAME, m_deviceName);
+    m_configurationRep.setValue(DEFAULT_LOCATION, m_location);
+    m_configurationRep.setValue(DEFAULT_LOCATIONNAME, m_locationName);
+    m_configurationRep.setValue(DEFAULT_CURRENCY, m_currency);
+    m_configurationRep.setValue(DEFAULT_REGION, m_region);
 
     return m_configurationRep;
 }

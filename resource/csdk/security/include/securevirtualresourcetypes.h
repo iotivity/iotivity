@@ -43,6 +43,9 @@
 
 #include <stdint.h> // for uint8_t typedef
 #include <stdbool.h>
+#ifdef __WITH_X509__
+#include "byte_array.h"
+#endif /* __WITH_X509__ */
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,7 +61,11 @@ extern "C" {
 #define SUBJECT_NOT_FOUND_DEF         (1 << 3)
 #define RESOURCE_NOT_FOUND_DEF        (1 << 4)
 #define POLICY_ENGINE_ERROR_DEF       (1 << 5)
+#define INVALID_PERIOD_DEF            (1 << 6)
+#define ACCESS_WAITING_DEF            (1 << 7)
+#define AMS_SERVICE_DEF               (1 << 8)
 #define REASON_MASK_DEF               (INSUFFICIENT_PERMISSION_DEF | \
+                                       INVALID_PERIOD_DEF | \
                                        SUBJECT_NOT_FOUND_DEF | \
                                        RESOURCE_NOT_FOUND_DEF | \
                                        POLICY_ENGINE_ERROR_DEF)
@@ -102,6 +109,8 @@ typedef enum
 {
     ACCESS_GRANTED = ACCESS_GRANTED_DEF,
     ACCESS_DENIED = ACCESS_DENIED_DEF,
+    ACCESS_DENIED_INVALID_PERIOD = ACCESS_DENIED_DEF
+        | INVALID_PERIOD_DEF,
     ACCESS_DENIED_INSUFFICIENT_PERMISSION = ACCESS_DENIED_DEF
         | INSUFFICIENT_PERMISSION_DEF,
     ACCESS_DENIED_SUBJECT_NOT_FOUND = ACCESS_DENIED_DEF
@@ -110,6 +119,10 @@ typedef enum
         | RESOURCE_NOT_FOUND_DEF,
     ACCESS_DENIED_POLICY_ENGINE_ERROR = ACCESS_DENIED_DEF
         | POLICY_ENGINE_ERROR_DEF,
+    ACCESS_WAITING_FOR_AMS = ACCESS_WAITING_DEF
+        | AMS_SERVICE_DEF,
+    ACCESS_DENIED_AMS_SERVICE_ERROR = ACCESS_DENIED
+        | AMS_SERVICE_DEF
 } SRMAccessResponse_t;
 
 /**
@@ -156,18 +169,6 @@ typedef struct OicSecAmacl OicSecAmacl_t;
 typedef struct OicSecCred OicSecCred_t;
 
 /**
- * @brief   /oic/sec/credtype (Credential Type) data type.
- *          Derived from OIC Security Spec /oic/sec/cred; see Spec for details.
- *              0:  no security mode
- *              1:  symmetric pair-wise key
- *              2:  symmetric group key
- *              4:  asymmetric key
- *              8:  signed asymmetric key (aka certificate)
- *              16: PIN /password
- */
-typedef uint16_t OicSecCredType_t;
-
-/**
  * Aid for assigning/testing vals with OicSecCredType_t.
  * Example:
  *  OicSecCredType_t ct = PIN_PASSWORD | ASYMMETRIC_KEY;
@@ -184,7 +185,20 @@ typedef enum OSCTBitmask
     ASYMMETRIC_KEY                  = (0x1 << 2),
     SIGNED_ASYMMETRIC_KEY           = (0x1 << 3),
     PIN_PASSWORD                    = (0x1 << 4),
+    ASYMMETRIC_ENCRYPTION_KEY       = (0x1 << 5),
 } OSCTBitmask_t;
+
+/**
+ * @brief   /oic/sec/credtype (Credential Type) data type.
+ *          Derived from OIC Security Spec /oic/sec/cred; see Spec for details.
+ *              0:  no security mode
+ *              1:  symmetric pair-wise key
+ *              2:  symmetric group key
+ *              4:  asymmetric key
+ *              8:  signed asymmetric key (aka certificate)
+ *              16: PIN /password
+ */
+typedef OSCTBitmask_t OicSecCredType_t;
 
 typedef struct OicSecDoxm OicSecDoxm_t;
 
@@ -208,6 +222,13 @@ typedef enum OicSecDpom
     SINGLE_SERVICE_CLIENT_DRIVEN    = 0x3,
 } OicSecDpom_t;
 
+typedef enum OicSecSvcType
+{
+    SERVICE_UNKNOWN                 = 0x0,
+    ACCESS_MGMT_SERVICE             = 0x1,  //urn:oic.sec.ams
+} OicSecSvcType_t;
+
+
 //TODO: Need more clarification on deviceIDFormat field type.
 #if 0
 typedef enum
@@ -219,10 +240,9 @@ typedef enum
 typedef enum
 {
     OIC_JUST_WORKS                          = 0x0,
-    OIC_MODE_SWITCH                         = 0x1,
-    OIC_RANDOM_DEVICE_PIN                   = 0x2,
-    OIC_PRE_PROVISIONED_DEVICE_PIN          = 0x3,
-    OIC_PRE_PROVISION_STRONG_CREDENTIAL     = 0x4
+    OIC_RANDOM_DEVICE_PIN                   = 0x1,
+    OIC_MANUFACTURER_CERTIFICATE           = 0x2,
+    OIC_OXM_COUNT
 }OicSecOxm_t;
 
 typedef struct OicSecJwk OicSecJwk_t;
@@ -239,6 +259,10 @@ typedef char *OicUrn_t; //TODO is URN type defined elsewhere?
 
 typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
 
+
+#ifdef __WITH_X509__
+typedef struct OicSecCrl OicSecCrl_t;
+#endif /* __WITH_X509__ */
 
 /**
  * @brief   /oic/uuid (Universal Unique Identifier) data type.
@@ -279,9 +303,9 @@ struct OicSecAcl
     size_t              resourcesLen;   // the number of elts in Resources
     char                **resources;    // 1:R:M:Y:String
     uint16_t            permission;     // 2:R:S:Y:UINT16
-    size_t              periodsLen;     // the number of elts in Periods
-    char                **periods;      // 3:R:M*:N:String (<--M*; see Spec)
-    char                *recurrences;   // 5:R:M:N:String
+    size_t              prdRecrLen;     // the number of elts in Periods
+    char                **periods;       // 3:R:M*:N:String (<--M*; see Spec)
+    char                **recurrences;   // 5:R:M:N:String
     size_t              ownersLen;      // the number of elts in Owners
     OicUuid_t           *owners;        // 8:R:M:Y:oic.uuid
     // NOTE: we are using UUID for Owners instead of Svc type for mid-April
@@ -302,13 +326,14 @@ struct OicSecAmacl
     size_t              resourcesLen;   // the number of elts in Resources
     char                **resources;    // 0:R:M:Y:String
     size_t              amssLen;        // the number of elts in Amss
-    OicSecSvc_t         *amss;          // 1:R:M:Y:acl
+    OicUuid_t           *amss;          // 1:R:M:Y:acl
     size_t              ownersLen;      // the number of elts in Owners
     OicUuid_t           *owners;        // 2:R:M:Y:oic.uuid
     // NOTE: we are using UUID for Owners instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
     //TODO change Owners type to oic.sec.svc
     //OicSecSvc_t         *Owners;        // 2:R:M:Y:oic.sec.svc
+    OicSecAmacl_t         *next;
 };
 
 /**
@@ -349,14 +374,16 @@ struct OicSecDoxm
     OicSecOxm_t         *oxm;           // 1:R:M:N:UINT16
     size_t              oxmLen;         // the number of elts in Oxm
     OicSecOxm_t         oxmSel;         // 2:R/W:S:Y:UINT16
-    bool                owned;          // 3:R:S:Y:Boolean
+    OicSecCredType_t    sct;            // 3:R:S:Y:oic.sec.credtype
+    bool                owned;          // 4:R:S:Y:Boolean
     //TODO: Need more clarification on deviceIDFormat field type.
-    //OicSecDvcIdFrmt_t   deviceIDFormat; // 4:R:S:Y:UINT8
-    OicUuid_t           deviceID;       // 5:R:S:Y:oic.uuid
-    OicUuid_t           owner;         // 6:R:S:Y:oic.uuid
+    //OicSecDvcIdFrmt_t   deviceIDFormat; // 5:R:S:Y:UINT8
+    OicUuid_t           deviceID;       // 6:R:S:Y:oic.uuid
+    OicUuid_t           owner;         // 7:R:S:Y:oic.uuid
     // NOTE: we are using UUID for Owner instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
-    //OicSecSvc_t       Owner;        // 5:R:S:Y:oic.sec.svc
+    //OicSecSvc_t       devOwner;        // 7:R:S:Y:oic.sec.svc
+    //OicSecSvc_t       rOwner;        // 8:R:S:Y:oic.sec.svc
     //TODO change Owner type to oic.sec.svc
 };
 
@@ -408,8 +435,21 @@ struct OicSecSacl
 struct OicSecSvc
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    //TODO fill in from OIC Security Spec
+    OicUuid_t               svcdid;                 //0:R:S:Y:oic.uuid
+    OicSecSvcType_t         svct;                   //1:R:M:Y:OIC Service Type
+    size_t                  ownersLen;              //2:the number of elts in Owners
+    OicUuid_t               *owners;                //3:R:M:Y:oic.uuid
+    OicSecSvc_t             *next;
 };
+
+#ifdef __WITH_X509__
+struct OicSecCrl
+{
+    uint16_t CrlId;
+    ByteArray ThisUpdate;
+    ByteArray CrlData;
+};
+#endif /* __WITH_X509__ */
 
 #ifdef __cplusplus
 }

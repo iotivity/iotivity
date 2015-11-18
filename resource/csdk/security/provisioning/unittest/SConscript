@@ -35,17 +35,19 @@ sptest_env.PrependUnique(CPPPATH = [
 		'../../include',
 		'../../../../../extlibs/tinydtls',
 		'../include/internal',
+		'../include/oxm',
 		'../../../logger/include',
 		'../../../stack/include',
 		'../../../../oc_logger/include',
 		'../../../../../extlibs/gtest/gtest-1.7.0/include',
-		'../include'
+		'../include',
+		'../include/internal'
 		])
 sptest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-sptest_env.AppendUnique(LIBS = ['-lpthread'])
+sptest_env.AppendUnique(LIBS = ['-lpthread','-ldl'])
 sptest_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 sptest_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
-sptest_env.PrependUnique(LIBS = [   'ocspapi',
+sptest_env.PrependUnique(LIBS = [   'ocpmapi',
                                     'ocsrm',
                                     'octbstack',
                                     'oc_logger',
@@ -56,6 +58,9 @@ sptest_env.PrependUnique(LIBS = [   'ocspapi',
 
 if env.get('SECURED') == '1':
     sptest_env.AppendUnique(LIBS = ['tinydtls'])
+if env.get('DTLS_WITH_X509') == '1':
+	sptest_env.AppendUnique(LIBS = ['CKManager'])
+	sptest_env.AppendUnique(LIBS = ['asn1'])
 
 if not env.get('RELEASE'):
 	sptest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
@@ -63,7 +68,10 @@ if not env.get('RELEASE'):
 ######################################################################
 # Source files and Targets
 ######################################################################
-unittest = sptest_env.Program('unittest', ['provisioningmanager.cpp'])
+unittest = sptest_env.Program('unittest', ['pmutilitytest.cpp', 'otmunittest.cpp',
+                                           'secureresourceprovider.cpp',
+                                           'provisioningdatabasemanager.cpp',
+                                           'ocprovisioningmanager.cpp' ])
 
 Alias("test", [unittest])
 

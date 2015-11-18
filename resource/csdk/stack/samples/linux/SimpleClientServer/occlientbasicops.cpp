@@ -138,8 +138,8 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle /*handle*/,
 
     if(clientResponse)
     {
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Put Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Put Response"));
     }
     else
     {
@@ -162,8 +162,8 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle /*handle*/,
 
     if(clientResponse)
     {
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Post Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Post Response"));
     }
     else
     {
@@ -189,8 +189,8 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
     {
         OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
-        OC_LOG(INFO, TAG, PCF("=============> Get Response"));
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OC_LOG(INFO, TAG, ("=============> Get Response"));
 
         if (clientResponse->numRcvdVendorSpecificHeaderOptions > 0 )
         {
@@ -239,7 +239,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
                 "Device =============> Discovered @ %s:%d",
                 clientResponse->devAddr.addr,
                 clientResponse->devAddr.port);
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
         collectUniqueResource(clientResponse);
     }
@@ -394,6 +394,11 @@ void queryResource()
 void collectUniqueResource(const OCClientResponse * clientResponse)
 {
     OCResourcePayload* res = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
+
+    // Including the NUL terminator, length of UUID string of the form:
+    //   "a62389f7-afde-00b6-cd3e-12b97d2fcf09"
+#   define UUID_LENGTH 37
+
     char sidStr[UUID_LENGTH];
 
     while(res) {

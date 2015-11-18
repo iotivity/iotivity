@@ -26,6 +26,11 @@
 extern const char * SVR_DB_FILE_NAME;
 extern const char * OIC_MI_DEF;
 
+//AMACL
+extern const char * OIC_RSRC_TYPE_SEC_AMACL;
+extern const char * OIC_RSRC_AMACL_URI;
+extern const char * OIC_JSON_AMACL_NAME;
+
 //ACL
 extern const char * OIC_RSRC_TYPE_SEC_ACL;
 extern const char * OIC_RSRC_ACL_URI;
@@ -47,8 +52,19 @@ extern const char * OIC_RSRC_TYPE_SEC_CRED;
 extern const char * OIC_RSRC_CRED_URI;
 extern const char * OIC_JSON_CRED_NAME;
 
+//CRL
+extern const char * OIC_RSRC_TYPE_SEC_CRL;
+extern const char * OIC_RSRC_CRL_URI;
+extern const char * OIC_JSON_CRL_NAME;
+
+//SVC
+extern const char * OIC_RSRC_TYPE_SEC_SVC;
+extern const char * OIC_RSRC_SVC_URI;
+extern const char * OIC_JSON_SVC_NAME;
+
 extern const char * OIC_JSON_SUBJECT_NAME;
 extern const char * OIC_JSON_RESOURCES_NAME;
+extern const char * OIC_JSON_AMSS_NAME;
 extern const char * OIC_JSON_PERMISSION_NAME;
 extern const char * OIC_JSON_OWNERS_NAME;
 extern const char * OIC_JSON_OWNER_NAME;
@@ -63,6 +79,8 @@ extern const char * OIC_JSON_CREDTYPE_NAME;
 extern const char * OIC_JSON_PUBLICDATA_NAME;
 extern const char * OIC_JSON_PRIVATEDATA_NAME;
 extern const char * OIC_JSON_PERIOD_NAME;
+extern const char * OIC_JSON_PERIODS_NAME;
+extern const char * OIC_JSON_RECURRENCES_NAME;
 extern const char * OIC_JSON_ISOP_NAME;
 extern const char * OIC_JSON_COMMIT_HASH_NAME;
 extern const char * OIC_JSON_DEVICE_ID_NAME;
@@ -70,6 +88,9 @@ extern const char * OIC_JSON_CM_NAME;
 extern const char * OIC_JSON_TM_NAME;
 extern const char * OIC_JSON_OM_NAME;
 extern const char * OIC_JSON_SM_NAME;
+extern const char * OIC_JSON_SERVICE_DEVICE_ID;
+extern const char * OIC_JSON_SERVICE_TYPE;
+extern const char * OIC_JSON_SUPPORTED_CRED_TYPE_NAME;
 
 extern OicUuid_t WILDCARD_SUBJECT_ID;
 extern size_t WILDCARD_SUBJECT_ID_LEN;
@@ -77,10 +98,8 @@ extern const char * WILDCARD_RESOURCE_URI;
 
 //Ownership Transfer Methods
 extern const char * OXM_JUST_WORKS;
-extern const char * OXM_MODE_SWITCH;
-extern const char * RANDOM_DEVICE_PIN;
-extern const char * PRE_PROVISIONED_DEVICE_PIN;
-extern const char * PRE_PROVISIONED_STRONG_CREDENTIAL;
+extern const char * OXM_RANDOM_DEVICE_PIN;
+extern const char * OXM_MANUFACTURER_CERTIFICATE;
 
 extern const char * OIC_SEC_TRUE;
 extern const char * OIC_SEC_FALSE;

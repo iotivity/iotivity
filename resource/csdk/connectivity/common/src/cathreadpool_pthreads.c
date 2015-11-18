@@ -165,13 +165,13 @@ CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func 
     }
 
     ca_mutex_lock(thread_pool->details->list_lock);
-    CAResult_t addResult = u_arraylist_add(thread_pool->details->threads_list, (void*)threadHandle);
+    bool addResult = u_arraylist_add(thread_pool->details->threads_list, (void*)threadHandle);
     ca_mutex_unlock(thread_pool->details->list_lock);
 
-    if(addResult != CA_STATUS_OK)
+    if(!addResult)
     {
         OIC_LOG_V(ERROR, TAG, "Arraylist Add failed, may not be properly joined: %d", addResult);
-        return addResult;
+        return CA_STATUS_FAILED;
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -200,11 +200,7 @@ void ca_thread_pool_free(ca_thread_pool_t thread_pool)
         }
     }
 
-    CAResult_t freeres = u_arraylist_free(&(thread_pool->details->threads_list));
-    if(CA_STATUS_OK != freeres)
-    {
-        OIC_LOG_V(ERROR, TAG, "Failed to free array list, error was: %d", freeres);
-    }
+    u_arraylist_free(&(thread_pool->details->threads_list));
 
     ca_mutex_unlock(thread_pool->details->list_lock);
     ca_mutex_free(thread_pool->details->list_lock);

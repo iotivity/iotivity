@@ -59,6 +59,17 @@ typedef CAResult_t (*CAAdapterStart)();
 typedef CAResult_t (*CAAdapterStartListeningServer)();
 
 /**
+ * Stopping listening server to not receive multicast search requests
+ * Transport Specific Behavior:
+ * WIFI/ETH Stops multicast server on  all available IPs. This is required for the
+ * thin device that call this function once all local resources are pushed to the
+ * resource directory.
+ * @return ::CA_STATUS_OK or ::CA_STATUS_FAILED
+ * ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+typedef CAResult_t (*CAAdapterStopListeningServer)();
+
+/**
  * for starting discovery servers for receiving multicast advertisements
  * Transport Specific Behavior:
  * WIFI/ETH Starts multicast server on all available IPs and defined port
@@ -133,6 +144,9 @@ typedef struct
 
     /** Listening Server function address. */
     CAAdapterStartListeningServer startListenServer;
+
+    /** Stops receiving the multicast traffic. */
+    CAAdapterStopListeningServer stopListenServer;
 
     /** Discovery Server function address. **/
     CAAdapterStartDiscoveryServer startDiscoveryServer;

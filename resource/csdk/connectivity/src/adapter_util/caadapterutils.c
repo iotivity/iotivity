@@ -53,20 +53,6 @@ static jobject g_Context = NULL;
 static jobject g_activity = NULL;
 #endif
 
-void CALogPDUData(coap_pdu_t *pdu)
-{
-    VERIFY_NON_NULL_VOID(pdu, CA_ADAPTER_UTILS_TAG, "pdu");
-    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "PDU Maker - payload : %s", pdu->data);
-
-    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "PDU Maker - type : %d", pdu->hdr->type);
-
-    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "PDU Maker - code : %d", pdu->hdr->code);
-
-    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "PDU Maker - id : %d", pdu->hdr->id);
-
-    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "PDU Maker - token : %s", pdu->hdr->token);
-}
-
 #ifdef WITH_ARDUINO
 CAResult_t CAParseIPv4AddressInternal(const char *ipAddrStr, uint8_t *ipAddr,
                                    size_t ipAddrLen, uint16_t *port)

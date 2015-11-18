@@ -196,7 +196,7 @@ bool CASetBlueZObjectProperty(GDBusProxy * proxy,
                   TAG,
                   "Attempt to set \"%s\" property for "
                   "\"%s\" interface failed.: %s",
-                  error->message);
+                  property, interface, error->message);
 
         g_error_free(error);
 

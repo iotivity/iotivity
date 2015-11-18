@@ -181,6 +181,8 @@ namespace OC
         {
             root_size_calc<T>();
             dimensions[0] = arr.size();
+            dimensions[1] = 0;
+            dimensions[2] = 0;
             dimTotal = calcDimTotal(dimensions);
 
             array = (void*)OICMalloc(dimTotal * root_size);
@@ -196,6 +198,8 @@ namespace OC
         {
             root_size_calc<T>();
             dimensions[0] = arr.size();
+            dimensions[1] = 0;
+            dimensions[2] = 0;
             for(size_t i = 0; i < arr.size(); ++i)
             {
                 dimensions[1] = std::max(dimensions[1], arr[i].size());
@@ -216,6 +220,8 @@ namespace OC
         {
             root_size_calc<T>();
             dimensions[0] = arr.size();
+            dimensions[1] = 0;
+            dimensions[2] = 0;
             for(size_t i = 0; i < arr.size(); ++i)
             {
                 dimensions[1] = std::max(dimensions[1], arr[i].size());
@@ -290,6 +296,18 @@ namespace OC
     void get_payload_array::copy_to_array(std::_Bit_reference br, void* array, size_t pos)
     {
         ((bool*)array)[pos] = static_cast<bool>(br);
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(std::string item, void* array, size_t pos)
+    {
+        ((char**)array)[pos] = OICStrdup(item.c_str());
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(std::string& item, void* array, size_t pos)
+    {
+        ((char**)array)[pos] = OICStrdup(item.c_str());
     }
 
     template<>
@@ -445,14 +463,24 @@ namespace OC
     std::string OCRepresentation::payload_array_helper_copy<std::string>(
             size_t index, const OCRepPayloadValue* pl)
     {
-        return std::string(pl->arr.strArray[index]);
+        if (pl->arr.strArray[index])
+        {
+            return std::string(pl->arr.strArray[index]);
+        }
+        else
+        {
+            return std::string{};
+        }
     }
     template<>
     OCRepresentation OCRepresentation::payload_array_helper_copy<OCRepresentation>(
             size_t index, const OCRepPayloadValue* pl)
     {
         OCRepresentation r;
-        r.setPayload(pl->arr.objArray[index]);
+        if (pl->arr.objArray[index])
+        {
+            r.setPayload(pl->arr.objArray[index]);
+        }
         return r;
     }
 
@@ -474,7 +502,7 @@ namespace OC
             std::vector<std::vector<T>> val(pl->arr.dimensions[0]);
             for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
             {
-                val[i].reserve(pl->arr.dimensions[1]);
+                val[i].resize(pl->arr.dimensions[1]);
                 for(size_t j = 0; j < pl->arr.dimensions[1]; ++j)
                 {
                     val[i][j] = payload_array_helper_copy<T>(
@@ -485,13 +513,13 @@ namespace OC
         }
         else if (depth == 3)
         {
-            std::vector<std::vector<std::vector<T>>> val;
+            std::vector<std::vector<std::vector<T>>> val(pl->arr.dimensions[0]);
             for(size_t i = 0; i < pl->arr.dimensions[0]; ++i)
             {
-                val[i].reserve(pl->arr.dimensions[1]);
+                val[i].resize(pl->arr.dimensions[1]);
                 for(size_t j = 0; j < pl->arr.dimensions[1]; ++j)
                 {
-                    val[i][j].reserve(pl->arr.dimensions[2]);
+                    val[i][j].resize(pl->arr.dimensions[2]);
                     for(size_t k = 0; k < pl->arr.dimensions[2]; ++k)
                     {
                         val[i][j][k] = payload_array_helper_copy<T>(

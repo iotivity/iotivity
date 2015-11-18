@@ -150,6 +150,7 @@ char *coap_response_phrase(unsigned char code);
 #define COAP_MEDIATYPE_APPLICATION_RDF_XML           43 /* application/rdf+xml */
 #define COAP_MEDIATYPE_APPLICATION_EXI               47 /* application/exi  */
 #define COAP_MEDIATYPE_APPLICATION_JSON              50 /* application/json  */
+#define COAP_MEDIATYPE_APPLICATION_CBOR              60 /* application/cbor  */
 
 /* Note that identifiers for registered media types are in the range 0-65535. We
  * use an unallocated type here and hope for the best. */
@@ -160,32 +161,118 @@ char *coap_response_phrase(unsigned char code);
 typedef int coap_tid_t;
 #define COAP_INVALID_TID -1
 
+#define COAP_TCP_HEADER_NO_FIELD    2
+#define COAP_TCP_HEADER_8_BIT       3
+#define COAP_TCP_HEADER_16_BIT      4
+#define COAP_TCP_HEADER_32_BIT      6
+
+#define COAP_TCP_LENGTH_FIELD_8_BIT      13
+#define COAP_TCP_LENGTH_FIELD_16_BIT     269
+#define COAP_TCP_LENGTH_FIELD_32_BIT     65805
+
+#define COAP_TCP_LENGTH_LIMIT_8_BIT      13
+#define COAP_TCP_LENGTH_LIMIT_16_BIT     256
+#define COAP_TCP_LENGTH_LIMIT_32_BIT     65536
+
+#define COAP_TCP_LENGTH_FIELD_NUM_8_BIT      13
+#define COAP_TCP_LENGTH_FIELD_NUM_16_BIT     14
+#define COAP_TCP_LENGTH_FIELD_NUM_32_BIT     15
+
+#define COAP_OPTION_FIELD_8_BIT      12
+#define COAP_OPTION_FIELD_16_BIT     256
+#define COAP_OPTION_FIELD_32_BIT     65536
+
+typedef enum
+{
+    coap_udp = 0,
+    coap_tcp,
+    coap_tcp_8bit,
+    coap_tcp_16bit,
+    coap_tcp_32bit
+} coap_transport_type;
+
 #ifdef WORDS_BIGENDIAN
-typedef struct
+typedef union
 {
-    unsigned int version:2; /* protocol version */
-    unsigned int type:2; /* type flag */
-    unsigned int token_length:4; /* length of Token */
-    unsigned int code:8; /* request method (value 1--10) or response code (value 40-255) */
-    unsigned short id; /* message id */
-    unsigned char token[]; /* the actual token, if any */
-}coap_hdr_t;
+    typedef struct
+    {
+        unsigned int version:2; /* protocol version */
+        unsigned int type:2; /* type flag */
+        unsigned int token_length:4; /* length of Token */
+        unsigned int code:8; /* request method (value 1--10) or response code (value 40-255) */
+        unsigned short id; /* message id */
+        unsigned char token[]; /* the actual token, if any */
+    } coap_hdr_udp_t;
+
+    struct
+    {
+        unsigned char header_data[COAP_TCP_HEADER_NO_FIELD];
+        unsigned char token[]; /* the actual token, if any */
+    } coap_hdr_tcp_t;
+
+    struct
+    {
+        unsigned char header_data[COAP_TCP_HEADER_8_BIT];
+        unsigned char token[]; /* the actual token, if any */
+    } coap_hdr_tcp_8bit_t;
+
+    struct
+    {
+        unsigned char header_data[COAP_TCP_HEADER_16_BIT];
+        unsigned char token[]; /* the actual token, if any */
+    } coap_hdr_tcp_16bit_t;
+
+    struct
+    {
+        unsigned char header_data[6];
+        unsigned char token[]; /* the actual token, if any */
+    } coap_hdr_tcp_32bit_t;
+
+} coap_hdr_t;
 #else
-typedef struct
+typedef union
 {
-    unsigned int token_length :4; /* length of Token */
-    unsigned int type :2; /* type flag */
-    unsigned int version :2; /* protocol version */
-    unsigned int code :8; /* request method (value 1--10) or response code (value 40-255) */
-    unsigned short id; /* transaction id (network byte order!) */
-    unsigned char token[]; /* the actual token, if any */
+    struct
+    {
+        unsigned int token_length :4; /* length of Token */
+        unsigned int type :2; /* type flag */
+        unsigned int version :2; /* protocol version */
+        unsigned int code :8; /* request method (value 1--10) or response code (value 40-255) */
+        unsigned short id; /* transaction id (network byte order!) */
+        unsigned char token[]; /* the actual token, if any */
+    } coap_hdr_udp_t;
+
+    struct
+    {
+        unsigned char header_data[COAP_TCP_HEADER_NO_FIELD];
+        unsigned char token[]; /* the actual token, if any */
+    } coap_hdr_tcp_t;
+
+    struct
+    {
+        unsigned char header_data[COAP_TCP_HEADER_8_BIT];
+        unsigned char token[]; /* the actual token, if any */
+    } coap_hdr_tcp_8bit_t;
+
+    struct
+    {
+        unsigned char header_data[COAP_TCP_HEADER_16_BIT];
+        unsigned char token[]; /* the actual token, if any */
+    } coap_hdr_tcp_16bit_t;
+
+    struct
+    {
+        unsigned char header_data[COAP_TCP_HEADER_32_BIT];
+        unsigned char token[]; /* the actual token, if any */
+    } coap_hdr_tcp_32bit_t;
+
 } coap_hdr_t;
 #endif
 
-#define COAP_MESSAGE_IS_EMPTY(MSG)    ((MSG)->code == 0)
+#define COAP_MESSAGE_IS_EMPTY(MSG)    ((MSG).code == 0)
 #define COAP_MESSAGE_IS_REQUEST(MSG)  (!COAP_MESSAGE_IS_EMPTY(MSG)  \
-                       && ((MSG)->code < 32))
-#define COAP_MESSAGE_IS_RESPONSE(MSG) ((MSG)->code >= 64 && (MSG)->code <= 191)
+                       && ((MSG).code < 32))
+#define COAP_MESSAGE_IS_RESPONSE(MSG) ((MSG).code >= 64 && (MSG).code <= 191)
 
 #define COAP_OPT_LONG 0x0F  /* OC == 0b1111 indicates that the option list in a
                  * CoAP message is limited by 0b11110000 marker */
@@ -217,7 +304,7 @@ typedef struct
 
     coap_hdr_t *hdr;
     unsigned short max_delta; /**< highest option number */
-    unsigned short length; /**< PDU length (including header, options, data)  */
+    unsigned int length; /**< PDU length (including header, options, data)  */
     unsigned char *data; /**< payload */
 
 #ifdef WITH_LWIP
@@ -262,11 +349,13 @@ coap_pdu_t * coap_pdu_from_pbuf(struct pbuf *pbuf);
  * @param code The message code.
  * @param id   The message id to set or COAP_INVALID_TID if unknown.
  * @param size The number of bytes to allocate for the actual message.
+ * @param transport The transport type.
  *
  * @return A pointer to the new PDU object or @c NULL on error.
  */
 coap_pdu_t *
-coap_pdu_init(unsigned char type, unsigned char code, unsigned short id, size_t size);
+coap_pdu_init(unsigned char type, unsigned char code, unsigned short id,
+              size_t size, coap_transport_type transport);
 
 /**
  * Clears any contents from @p pdu and resets @c version field, @c
@@ -274,7 +363,8 @@ coap_pdu_init(unsigned char type, unsigned char code, unsigned short id, size_t 
  * other field is set to @c 0. Note that @p pdu must be a valid
  * pointer to a coap_pdu_t object created e.g. by coap_pdu_init().
  */
-void coap_pdu_clear(coap_pdu_t *pdu, size_t size);
+void coap_pdu_clear(coap_pdu_t *pdu, size_t size, coap_transport_type transport,
+                    unsigned int length);
 
 /**
  * Creates a new CoAP PDU. The object is created on the heap and must be released
@@ -283,7 +373,7 @@ void coap_pdu_clear(coap_pdu_t *pdu, size_t size);
  * @deprecated This function allocates the maximum storage for each
  * PDU. Use coap_pdu_init() instead.
  */
-coap_pdu_t *coap_new_pdu();
+coap_pdu_t *coap_new_pdu(coap_transport_type transport, unsigned int size);
 
 void coap_delete_pdu(coap_pdu_t *);
 
@@ -297,10 +387,100 @@ void coap_delete_pdu(coap_pdu_t *);
  * @param result The PDU structure to fill. Note that the structure must
  *               provide space for at least @p length bytes to hold the
  *               entire CoAP PDU.
+ * @param transport The transport type.
  * @return A value greater than zero on success or @c 0 on error.
  */
-int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *result);
+int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu,
+                   coap_transport_type transport);
 
+#ifdef WITH_TCP
+/**
+ * Get transport type of coap header for coap over tcp through payload size.
+ *
+ * @param size   payload size of pdu.
+ * @return The transport type.
+ */
+coap_transport_type coap_get_tcp_header_type_from_size(unsigned int size);
+
+/**
+ * Get transport type of coap header for coap over tcp through init-byte.
+ *
+ * @param legnth   length value of init byte.
+* @return The transport type.
+ */
+coap_transport_type coap_get_tcp_header_type_from_initbyte(unsigned int length);
+
+/**
+ * Add length value in field of coap header for coap over tcp.
+ *
+ * @param pdu  The pdu pointer.
+ * @param transport The transport type.
+ * @param length  length value of init byte.
+ */
+void coap_add_length(const coap_pdu_t *pdu, coap_transport_type transport,
+                     unsigned int length);
+
+/**
+ * Get the value of length field of coap header for coap over tcp.
+ *
+ * @param pdu  The pdu pointer.
+ * @param transport The transport type.
+ * @return length value of init byte.
+ */
+unsigned int coap_get_length(const coap_pdu_t *pdu, coap_transport_type transport);
+
+/**
+ * Get pdu length from header of coap over tcp.
+ *
+ * @param header   The header to parse.
+ * @return transport The transport type.
+ */
+unsigned int coap_get_length_from_header(const unsigned char *header, coap_transport_type transport);
+
+/**
+ * Get length of header for coap over tcp.
+ *
+ * @param data   The raw data to parse as CoAP PDU
+ * @return header length + token length
+ */
+unsigned int coap_get_tcp_header_length(unsigned char *data);
+
+/**
+ * Get length of header without token length for coap over tcp.
+ *
+ * @param transport The transport type.
+ * @return header length.
+ */
+unsigned int coap_get_tcp_header_length_for_transport(coap_transport_type transport);
+
+/**
+ * Get option length.
+ *
+ * @param key      delta of option
+ * @param length   length of option
+ * @return total option length
+ */
+size_t coap_get_opt_header_length(unsigned short key, size_t length);
+#endif
+
+/**
+ * Add code in coap header.
+ *
+ * @param pdu  The pdu pointer.
+ * @param transport The transport type.
+ * @param code  The message code.
+ */
+void coap_add_code(const coap_pdu_t *pdu, coap_transport_type transport,
+                   unsigned int code);
+
+/**
+ * Get message code from coap header
+ *
+ * @param pdu  The pdu pointer.
+ * @param transport The transport type.
+ * @return The message code.
+ */
+unsigned int coap_get_code(const coap_pdu_t *pdu, coap_transport_type transport);
 /**
  * Adds token of length @p len to @p pdu. Adding the token destroys
  * any following contents of the pdu. Hence options and data must be
@@ -308,12 +488,25 @@ int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *result);
  * set to @p len + @c 4, and max_delta is set to @c 0.  This funtion
  * returns @c 0 on error or a value greater than zero on success.
  *
- * @param pdu  The PDU where the token is to be added.
+ * @param pdu  The pdu pointer.
  * @param len  The length of the new token.
  * @param data The token to add.
+ * @param transport The transport type.
  * @return A value greater than zero on success, or @c 0 on error.
  */
-int coap_add_token(coap_pdu_t *pdu, size_t len, const unsigned char *data);
+int coap_add_token(coap_pdu_t *pdu, size_t len, const unsigned char *data,
+                   coap_transport_type transport);
+
+/**
+ * Get token from coap header base on transport type
+ *
+ * @param pdu_hdr  The header pointer of PDU.
+ * @param transport The transport type.
+ * @param token  out parameter to get token.
+ * @param token_length  out parameter to get token length.
+ */
+void coap_get_token(const coap_hdr_t *pdu_hdr, coap_transport_type transport,
+                    unsigned char **token, unsigned int *token_length);
 
 /**
  * Adds option of given type to pdu that is passed as first
@@ -324,11 +517,11 @@ int coap_add_token(coap_pdu_t *pdu, size_t len, const unsigned char *data);
  * This function returns the number of bytes written or @c 0 on error.
  */
 size_t coap_add_option(coap_pdu_t *pdu, unsigned short type, unsigned int len,
-        const unsigned char *data);
+        const unsigned char *data, coap_transport_type transport);
 
 /**
  * Adds option of given type to pdu that is passed as first
- * parameter, but does not write a value. It works like coap_add_option with
+ * parameter, but does not write a val13ue. It works like coap_add_option with
  * respect to calling sequence (i.e. after token and before data).
  * This function returns a memory address to which the option data has to be
  * written before the PDU can be sent, or @c NULL on error.

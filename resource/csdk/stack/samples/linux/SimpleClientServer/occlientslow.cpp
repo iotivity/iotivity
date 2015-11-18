@@ -109,7 +109,8 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     return ret;
 }
 
-OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse * clientResponse)
+OCStackApplicationResult getReqCB(void* ctx,
+        OCDoHandle /*handle*/, OCClientResponse * clientResponse)
 {
     if(clientResponse == NULL)
     {
@@ -124,7 +125,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
     OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
     OC_LOG(INFO, TAG, "Get Response =============> ");
-    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
     if(clientResponse->rcvdVendorSpecificHeaderOptions &&
             clientResponse->numRcvdVendorSpecificHeaderOptions)
@@ -148,7 +149,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle, OCClientResponse
 }
 
 // This is a function called back when a device is discovered
-OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
+OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
@@ -162,7 +163,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
 
         OC_LOG_V(INFO, TAG, "Discovered @ %s:%u =============> ",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
-        OC_LOG_PAYLOAD (INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD (INFO, clientResponse->payload);
 
         endpoint = clientResponse->devAddr;
 
@@ -324,7 +325,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-std::string getQueryStrForGetPut(OCClientResponse * clientResponse)
+std::string getQueryStrForGetPut(OCClientResponse * /*clientResponse*/)
 {
     return "/a/led";
 }

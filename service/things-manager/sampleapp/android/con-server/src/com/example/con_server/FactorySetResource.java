@@ -37,9 +37,9 @@ public class FactorySetResource extends ConfigurationResource {
     public FactorySetResource() {
         Log.i(LOG_TAG, "FactorySetCollection: enter");
 
-        configurationUri = "/factorySet"; // uri of the resource
+        configurationUri = "/factoryset"; // uri of the resource
         configurationTypes.clear();
-        configurationTypes.add("factorySet");
+        configurationTypes.add("factoryset");
         configurationRep.setUri(configurationUri);
         configurationRep.setResourceTypes(configurationTypes);
     }
@@ -70,41 +70,50 @@ public class FactorySetResource extends ConfigurationResource {
     public void setFactorySetRepresentation(OcRepresentation rep) {
         Log.i(LOG_TAG, "setFactorySetRepresentation: enter");
 
-        String loc;
-        String st;
-        String cur;
-        String reg;
-        loc = rep.getValueString("loc");
-        st = rep.getValueString("st");
-        cur = rep.getValueString("c");
-        reg = rep.getValueString("r");
-        if (null != loc) {
+        String dName = rep.getValueString("n");
+        String loc = rep.getValueString("loc");
+        String locn = rep.getValueString("locn");
+        String cur = rep.getValueString("c");
+        String reg = rep.getValueString("r");
+
+        if (!(dName.equalsIgnoreCase(""))) {
+            deviceName = dName;
+            Log.i(LOG_TAG,
+                    "setConfigurationRepresentation: New value(deviceName): "
+                            + deviceName);
+        }
+        if (!(loc.equalsIgnoreCase(""))) {
             location = loc;
-            Log.i(LOG_TAG, "setConfigurationRepresentation: New value: "
-                    + location);
+            Log.i(LOG_TAG,
+                    "setConfigurationRepresentation: New value(location): "
+                            + location);
         }
-        if (null != st) {
-            // systemTime = st;
-            Log.i(LOG_TAG, "setConfigurationRepresentation: New value: "
-                    + systemTime);
+        if (!(locn.equalsIgnoreCase(""))) {
+            locationName = locn;
+            Log.i(LOG_TAG,
+                    "setConfigurationRepresentation: New value(locationName): "
+                            + locationName);
         }
-        if (null != cur) {
+        if (!(cur.equalsIgnoreCase(""))) {
             currency = cur;
-            Log.i(LOG_TAG, "setConfigurationRepresentation: New value: "
-                    + currency);
+            Log.i(LOG_TAG,
+                    "setConfigurationRepresentation: New value(currency): "
+                            + currency);
         }
-        if (null != reg) {
+        if (!(reg.equalsIgnoreCase(""))) {
             region = reg;
-            Log.i(LOG_TAG, "setConfigurationRepresentation: New value: "
-                    + region);
+            Log.i(LOG_TAG,
+                    "setConfigurationRepresentation: New value(region): "
+                            + region);
         }
         Log.i(LOG_TAG, "setFactorySetRepresentation: exit");
     }
 
     OcRepresentation getFactorySetRepresentation() {
 
+        configurationRep.setValueString("n", deviceName);
         configurationRep.setValueString("loc", location);
-        configurationRep.setValueString("st", systemTime);
+        configurationRep.setValueString("locn", locationName);
         configurationRep.setValueString("c", currency);
         configurationRep.setValueString("r", region);
         return configurationRep;

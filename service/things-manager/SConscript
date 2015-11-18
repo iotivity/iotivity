@@ -53,6 +53,7 @@ if target_os == 'android':
 ######################################################################
 # Source files and Targets
 ######################################################################
+
 tgm_src = env.Glob('sdk/src/*.cpp', '../../extlibs/timer/timer.c')
 tgmsdk_static = things_manager_env.StaticLibrary('TGMSDKLibrary', tgm_src)
 tgmsdk_shared = things_manager_env.SharedLibrary('TGMSDKLibrary', tgm_src)
@@ -67,4 +68,9 @@ things_manager_env.UserInstallTargetLib([tgmsdk_static,tgmsdk_shared], 'libTGMSD
 #Go to build sample apps
 SConscript('sampleapp/SConscript')
 
+######################################################################
+# Build UnitTests Things Manager
+################################################ ######################
+if target_os == 'linux':
+    SConscript('unittests/SConscript')
 

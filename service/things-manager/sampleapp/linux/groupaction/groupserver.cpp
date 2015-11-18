@@ -27,7 +27,7 @@
 
 #include "timer.h"
 
-#include <ThingsManager.h>
+#include <GroupManager.h>
 
 using namespace std;
 using namespace OC;
@@ -42,7 +42,7 @@ std::vector<OCResourceHandle> resourceHandleVector;
 shared_ptr<OCResource> g_resource;
 vector<string> lights;
 
-ThingsManager *thingsMgr = new ThingsManager();
+GroupManager *groupMgr = new GroupManager();
 
 void onGet(const HeaderOptions& opt, const OCRepresentation &rep,
         const int eCode);
@@ -134,7 +134,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
 }
 
-void onGet(const HeaderOptions& opt, const OCRepresentation &rep,
+void onGet(const HeaderOptions& /*opt*/, const OCRepresentation &/*rep*/,
         const int eCode)
 {
     cout << "\nonGet" << endl;
@@ -144,7 +144,7 @@ void onGet(const HeaderOptions& opt, const OCRepresentation &rep,
         cout << "\tInvalid parameter." << endl;
 }
 
-void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+void onPut(const HeaderOptions& /*opt*/, const OCRepresentation &/*rep*/,
         const int eCode)
 {
     cout << "\nonPut" << endl;
@@ -154,8 +154,8 @@ void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep,
         cout << "\tInvalid parameter." << endl;
 }
 
-void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-        const int eCode)
+void onPost(const HeaderOptions& /*opt*/, const OCRepresentation &rep,
+        const int /*eCode*/)
 {
     printf("\nonPost\n");
 
@@ -165,7 +165,7 @@ void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep,
 
         if (rep.getValue("ActionSet", plainText))
         {
-            ActionSet *actionset = thingsMgr->getActionSetfromString(plainText);
+            ActionSet *actionset = groupMgr->getActionSetfromString(plainText);
             if (actionset != NULL)
             {
                 cout << endl << "\tACTIONSET NAME :: "
@@ -234,32 +234,32 @@ void allBulbOn()
 
 void Scheduled_AllbulbOff()
 {
-    thingsMgr->executeActionSet(g_resource, "AllBulbOffScheduledCall", &onPost);
+    groupMgr->executeActionSet(g_resource, "AllBulbOffScheduledCall", &onPost);
 }
 void Scheduled_AllbulbOffEx()
 {
-    thingsMgr->executeActionSet(g_resource, "AllBulbOffScheduledCall", 10, &onPost);
+    groupMgr->executeActionSet(g_resource, "AllBulbOffScheduledCall", 10, &onPost);
 }
 void CancelScheduled_AllBulbOff()
 {
-    thingsMgr->cancelActionSet(g_resource, "AllBulbOffScheduledCall", &onPost);
+    groupMgr->cancelActionSet(g_resource, "AllBulbOffScheduledCall", &onPost);
 }
 void Recursive_allBulbOn()
 {
-    thingsMgr->executeActionSet(g_resource, "AllBulbOnRecursiveCall", &onPost);
+    groupMgr->executeActionSet(g_resource, "AllBulbOnRecursiveCall", &onPost);
 }
 void Recursive_allBulbOnEx()
 {
-    thingsMgr->executeActionSet(g_resource, "AllBulbOnRecursiveCall", 10, &onPost);
+    groupMgr->executeActionSet(g_resource, "AllBulbOnRecursiveCall", 10, &onPost);
 }
 
 void CancelRecursive_allBulbOn()
 {
 
-    thingsMgr->cancelActionSet(g_resource, "AllBulbOnRecursiveCall", &onPost);
+    groupMgr->cancelActionSet(g_resource, "AllBulbOnRecursiveCall", &onPost);
 }
 
-void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
+void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& rep,
         const int& eCode, const int& sequenceNumber)
 {
     if (eCode == OC_STACK_OK)
@@ -309,7 +309,7 @@ void createActionSet_AllBulbOff()
     }
     if (g_resource)
     {
-        thingsMgr->addActionSet(g_resource, allBulbOff, onPut);
+        groupMgr->addActionSet(g_resource, allBulbOff, onPut);
     }
 
     delete allBulbOff;
@@ -335,7 +335,7 @@ void createActionSet_AllBulbOn()
     }
     if (g_resource)
     {
-        thingsMgr->addActionSet(g_resource, allBulbOff, onPut);
+        groupMgr->addActionSet(g_resource, allBulbOff, onPut);
     }
 
     delete allBulbOff;
@@ -377,7 +377,7 @@ void createScheduledActionSet_AllBulbOff()
     }
     if (g_resource)
     {
-        thingsMgr->addActionSet(g_resource, allBulbOff, onPut);
+        groupMgr->addActionSet(g_resource, allBulbOff, onPut);
     }
 
     delete allBulbOff;
@@ -413,7 +413,7 @@ void createRecursiveActionSet_AllBulbOn()
     }
     if (g_resource)
     {
-        thingsMgr->addActionSet(g_resource, allBulbOn, onPut);
+        groupMgr->addActionSet(g_resource, allBulbOn, onPut);
     }
 
     delete allBulbOn;
@@ -435,7 +435,7 @@ int main()
         // Find lights for group creation.
         vector<string> types;
         types.push_back("core.light");
-        thingsMgr->findCandidateResources(types, &foundResources, 5);
+        groupMgr->findCandidateResources(types, &foundResources, 5);
 
         OCStackResult res = OCPlatform::registerResource(resourceHandle, resourceURI,
                 resourceTypeName, resourceInterface, NULL, OC_DISCOVERABLE);
@@ -556,11 +556,11 @@ int main()
                 }
                 else if (n == 6)
                 {
-                    thingsMgr->getActionSet(g_resource, "AllBulbOff", onPost);
+                    groupMgr->getActionSet(g_resource, "AllBulbOff", onPost);
                 }
                 else if (n == 7)
                 {
-                    thingsMgr->deleteActionSet(g_resource, "AllBulbOff", onPut);
+                    groupMgr->deleteActionSet(g_resource, "AllBulbOff", onPut);
                 }
                 else if (n == 8)
                 {

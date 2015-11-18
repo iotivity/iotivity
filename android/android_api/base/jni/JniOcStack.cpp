@@ -25,70 +25,85 @@
 #include "OCRepresentation.h"
 #include "JniUtils.h"
 
-JavaVM* g_jvm = NULL;
+JavaVM* g_jvm = nullptr;
 
-jclass g_cls_Integer = NULL;
-jclass g_cls_int1DArray = NULL;
-jclass g_cls_int2DArray = NULL;
-jclass g_cls_Double = NULL;
-jclass g_cls_double1DArray = NULL;
-jclass g_cls_double2DArray = NULL;
-jclass g_cls_Boolean = NULL;
-jclass g_cls_boolean1DArray = NULL;
-jclass g_cls_boolean2DArray = NULL;
-jclass g_cls_String = NULL;
-jclass g_cls_String1DArray = NULL;
-jclass g_cls_String2DArray = NULL;
-jclass g_cls_LinkedList = NULL;
-jclass g_cls_Map = NULL;
-jclass g_cls_MapEntry = NULL;
-jclass g_cls_Set = NULL;
-jclass g_cls_Iterator = NULL;
-jclass g_cls_HashMap = NULL;
-jclass g_cls_OcException = NULL;
-jclass g_cls_OcResource = NULL;
-jclass g_cls_OcRepresentation = NULL;
-jclass g_cls_OcRepresentation1DArray = NULL;
-jclass g_cls_OcRepresentation2DArray = NULL;
-jclass g_cls_OcResourceRequest = NULL;
-jclass g_cls_OcResourceResponse = NULL;
-jclass g_cls_OcResourceHandle = NULL;
-jclass g_cls_OcPresenceHandle = NULL;
-jclass g_cls_OcRequestHandle = NULL;
-jclass g_cls_OcPresenceStatus = NULL;
-jclass g_cls_OcHeaderOption = NULL;
-jclass g_cls_ObservationInfo = NULL;
-jclass g_cls_OcResourceIdentifier = NULL;
+jclass g_cls_Integer = nullptr;
+jclass g_cls_int1DArray = nullptr;
+jclass g_cls_int2DArray = nullptr;
+jclass g_cls_Double = nullptr;
+jclass g_cls_double1DArray = nullptr;
+jclass g_cls_double2DArray = nullptr;
+jclass g_cls_Boolean = nullptr;
+jclass g_cls_boolean1DArray = nullptr;
+jclass g_cls_boolean2DArray = nullptr;
+jclass g_cls_String = nullptr;
+jclass g_cls_String1DArray = nullptr;
+jclass g_cls_String2DArray = nullptr;
+jclass g_cls_LinkedList = nullptr;
+jclass g_cls_Map = nullptr;
+jclass g_cls_MapEntry = nullptr;
+jclass g_cls_Set = nullptr;
+jclass g_cls_Iterator = nullptr;
+jclass g_cls_HashMap = nullptr;
+jclass g_cls_OcException = nullptr;
+jclass g_cls_OcResource = nullptr;
+jclass g_cls_OcRepresentation = nullptr;
+jclass g_cls_OcRepresentation1DArray = nullptr;
+jclass g_cls_OcRepresentation2DArray = nullptr;
+jclass g_cls_OcResourceRequest = nullptr;
+jclass g_cls_OcResourceResponse = nullptr;
+jclass g_cls_OcResourceHandle = nullptr;
+jclass g_cls_OcPresenceHandle = nullptr;
+jclass g_cls_OcRequestHandle = nullptr;
+jclass g_cls_OcPresenceStatus = nullptr;
+jclass g_cls_OcHeaderOption = nullptr;
+jclass g_cls_ObservationInfo = nullptr;
+jclass g_cls_OcResourceIdentifier = nullptr;
+jclass g_cls_OcProvisionResult = nullptr;
+jclass g_cls_OcSecureResource = nullptr;
+jclass g_cls_OcOicSecAcl = nullptr;
 
-jmethodID g_mid_Integer_ctor = NULL;
-jmethodID g_mid_Double_ctor = NULL;
-jmethodID g_mid_Boolean_ctor = NULL;
-jmethodID g_mid_LinkedList_ctor = NULL;
-jmethodID g_mid_LinkedList_add_object = NULL;
-jmethodID g_mid_Map_entrySet = NULL;
-jmethodID g_mid_MapEntry_getKey = NULL;
-jmethodID g_mid_MapEntry_getValue = NULL;
-jmethodID g_mid_Set_iterator = NULL;
-jmethodID g_mid_Iterator_hasNext = NULL;
-jmethodID g_mid_Iterator_next = NULL;
-jmethodID g_mid_HashMap_ctor = NULL;
-jmethodID g_mid_HashMap_put = NULL;
-jmethodID g_mid_OcException_ctor = NULL;
-jmethodID g_mid_OcException_setNativeExceptionLocation = NULL;
-jmethodID g_mid_OcResource_ctor = NULL;
-jmethodID g_mid_OcRepresentation_N_ctor = NULL;
-jmethodID g_mid_OcRepresentation_N_ctor_bool = NULL;
-jmethodID g_mid_OcResourceRequest_N_ctor = NULL;
-jmethodID g_mid_OcResourceResponse_N_ctor = NULL;
-jmethodID g_mid_OcResourceHandle_N_ctor = NULL;
-jmethodID g_mid_OcPresenceHandle_N_ctor = NULL;
-jmethodID g_mid_OcRequestHandle_N_ctor = NULL;
-jmethodID g_mid_OcHeaderOption_ctor = NULL;
-jmethodID g_mid_OcHeaderOption_get_id = NULL;
-jmethodID g_mid_OcHeaderOption_get_data = NULL;
-jmethodID g_mid_ObservationInfo_N_ctor = NULL;
-jmethodID g_mid_OcPresenceStatus_get = NULL;
-jmethodID g_mid_OcResourceIdentifier_N_ctor = NULL;
+jmethodID g_mid_Integer_ctor = nullptr;
+jmethodID g_mid_Double_ctor = nullptr;
+jmethodID g_mid_Boolean_ctor = nullptr;
+jmethodID g_mid_LinkedList_ctor = nullptr;
+jmethodID g_mid_LinkedList_add_object = nullptr;
+jmethodID g_mid_Map_entrySet = nullptr;
+jmethodID g_mid_MapEntry_getKey = nullptr;
+jmethodID g_mid_MapEntry_getValue = nullptr;
+jmethodID g_mid_Set_iterator = nullptr;
+jmethodID g_mid_Iterator_hasNext = nullptr;
+jmethodID g_mid_Iterator_next = nullptr;
+jmethodID g_mid_HashMap_ctor = nullptr;
+jmethodID g_mid_HashMap_put = nullptr;
+jmethodID g_mid_OcException_ctor = nullptr;
+jmethodID g_mid_OcException_setNativeExceptionLocation = nullptr;
+jmethodID g_mid_OcResource_ctor = nullptr;
+jmethodID g_mid_OcRepresentation_N_ctor = nullptr;
+jmethodID g_mid_OcRepresentation_N_ctor_bool = nullptr;
+jmethodID g_mid_OcResourceRequest_N_ctor = nullptr;
+jmethodID g_mid_OcResourceResponse_N_ctor = nullptr;
+jmethodID g_mid_OcResourceHandle_N_ctor = nullptr;
+jmethodID g_mid_OcPresenceHandle_N_ctor = nullptr;
+jmethodID g_mid_OcRequestHandle_N_ctor = nullptr;
+jmethodID g_mid_OcHeaderOption_ctor = nullptr;
+jmethodID g_mid_OcHeaderOption_get_id = nullptr;
+jmethodID g_mid_OcHeaderOption_get_data = nullptr;
+jmethodID g_mid_ObservationInfo_N_ctor = nullptr;
+jmethodID g_mid_OcPresenceStatus_get = nullptr;
+jmethodID g_mid_OcResourceIdentifier_N_ctor = nullptr;
+jmethodID g_mid_OcProvisionResult_ctor = nullptr;
+jmethodID g_mid_OcSecureResource_ctor = nullptr;
+
+jmethodID g_mid_OcOicSecAcl_get_subject = nullptr;
+jmethodID g_mid_OcOicSecAcl_get_resources_cnt = nullptr;
+jmethodID g_mid_OcOicSecAcl_get_resources = nullptr;
+jmethodID g_mid_OcOicSecAcl_get_permission = nullptr;
+jmethodID g_mid_OcOicSecAcl_get_periods_cnt = nullptr;
+jmethodID g_mid_OcOicSecAcl_get_periods = nullptr;
+jmethodID g_mid_OcOicSecAcl_get_recurrences = nullptr;
+jmethodID g_mid_OcOicSecAcl_get_owners_cnt = nullptr;
+jmethodID g_mid_OcOicSecAcl_get_owners = nullptr;
 
 jobject getOcException(JNIEnv* env, const char* file, const char* functionName,
     const int line, const int code, const char* message)
@@ -400,6 +415,55 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     g_mid_OcResourceIdentifier_N_ctor = env->GetMethodID(g_cls_OcResourceIdentifier, "<init>", "(J)V");
     if (!g_mid_OcResourceIdentifier_N_ctor) return JNI_ERR;
 
+    //OcSecureResource
+    clazz = env->FindClass("org/iotivity/base/OcSecureResource");
+    if (!clazz) return JNI_ERR;
+    g_cls_OcSecureResource =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+    g_mid_OcSecureResource_ctor = env->GetMethodID(g_cls_OcSecureResource, "<init>", "(J)V");
+    if (!g_mid_OcSecureResource_ctor) return JNI_ERR;
+
+    //ProvisionResult
+    clazz = env->FindClass("org/iotivity/base/ProvisionResult");
+    if (!clazz) return JNI_ERR;
+    g_cls_OcProvisionResult =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+    g_mid_OcProvisionResult_ctor = env->GetMethodID(g_cls_OcProvisionResult, "<init>", "(Ljava/lang/String;I)V");
+    if (!g_mid_OcProvisionResult_ctor) return JNI_ERR;
+
+    //OicSecAcl
+    clazz = env->FindClass("org/iotivity/base/OicSecAcl");
+    if (!clazz) return JNI_ERR;
+    g_cls_OcOicSecAcl =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    g_mid_OcOicSecAcl_get_subject = env->GetMethodID(g_cls_OcOicSecAcl, "getSubject", "()Ljava/lang/String;");
+    if (!g_mid_OcOicSecAcl_get_subject) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_resources_cnt = env->GetMethodID(g_cls_OcOicSecAcl, "getResourcesCount", "()I");
+    if (!g_mid_OcOicSecAcl_get_resources_cnt) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_resources = env->GetMethodID(g_cls_OcOicSecAcl, "getResources", "(I)Ljava/lang/String;");
+    if (!g_mid_OcOicSecAcl_get_resources) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_permission = env->GetMethodID(g_cls_OcOicSecAcl, "getPermission", "()I");
+    if (!g_mid_OcOicSecAcl_get_permission) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_periods_cnt = env->GetMethodID(g_cls_OcOicSecAcl, "getPeriodsCount", "()I");
+    if (!g_mid_OcOicSecAcl_get_periods_cnt) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_periods = env->GetMethodID(g_cls_OcOicSecAcl, "getPeriods", "(I)Ljava/lang/String;");
+    if (!g_mid_OcOicSecAcl_get_periods) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_recurrences = env->GetMethodID(g_cls_OcOicSecAcl, "getRecurrences", "(I)Ljava/lang/String;");
+    if (!g_mid_OcOicSecAcl_get_recurrences) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_owners_cnt = env->GetMethodID(g_cls_OcOicSecAcl, "getOwnersCount", "()I");
+    if (!g_mid_OcOicSecAcl_get_owners_cnt) return JNI_ERR;
+
+    g_mid_OcOicSecAcl_get_owners = env->GetMethodID(g_cls_OcOicSecAcl, "getOwners", "(I)Ljava/lang/String;");
+    if (!g_mid_OcOicSecAcl_get_owners) return JNI_ERR;
+
     return JNI_CURRENT_VERSION;
 }
 
@@ -408,7 +472,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     LOGI("JNI_OnUnload");
     JNIEnv* env;
 
-    if (g_jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION) != JNI_OK)
+    if (vm->GetEnv((void **)&env, JNI_CURRENT_VERSION) != JNI_OK)
     {
         LOGE("Failed to get the environment using GetEnv()");
         return;
@@ -446,4 +510,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     env->DeleteGlobalRef(g_cls_OcHeaderOption);
     env->DeleteGlobalRef(g_cls_ObservationInfo);
     env->DeleteGlobalRef(g_cls_OcResourceIdentifier);
+    env->DeleteGlobalRef(g_cls_OcSecureResource);
+    env->DeleteGlobalRef(g_cls_OcProvisionResult);
+    env->DeleteGlobalRef(g_cls_OcOicSecAcl);
 }

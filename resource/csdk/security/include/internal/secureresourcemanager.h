@@ -21,6 +21,8 @@
 #ifndef SECURITYRESOURCEMANAGER_H_
 #define SECURITYRESOURCEMANAGER_H_
 
+#include "securevirtualresourcetypes.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -93,6 +95,21 @@ typedef bool (*SPResponseCallback) (const CAEndpoint_t *object,
  * @param respHandler response handler callback.
  */
 void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler);
+
+/**
+ * @brief   Check the security resource URI.
+ * @param   uri [IN] Pointers to security resource URI.
+ * @return  true if the URI is one of security resources, otherwise false.
+ */
+bool SRMIsSecurityResourceURI(const char* uri);
+
+/**
+ * @brief   Sends Response
+ * @param   resposeVal       SRMAccessResponse_t value
+ * @return  NONE
+ */
+void SRMSendResponse(SRMAccessResponse_t responseVal);
+
 
 #ifdef __cplusplus
 }

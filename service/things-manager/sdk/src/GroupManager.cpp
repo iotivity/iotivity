@@ -277,7 +277,7 @@ std::map< std::string, CollectionPresenceCallback > presenceCallbacks;
 
 // Callback to presence
 void GroupManager::collectionPresenceHandler(OCStackResult result, const unsigned int nonce,
-        const std::string& hostAddress, std::string host, std::string uri)
+        const std::string& /*hostAddress*/, std::string host, std::string uri)
 {
     std::cout << "uri : " << uri << std::endl;
     std::cout << "host : " << host << std::endl;
@@ -385,7 +385,7 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
     }
 }
 
-void GroupManager::onGetForPresence(const HeaderOptions& headerOptions,
+void GroupManager::onGetForPresence(const HeaderOptions& /*headerOptions*/,
         const OCRepresentation& rep, const int eCode, CollectionPresenceCallback callback)
 {
     if (eCode == OC_STACK_OK)

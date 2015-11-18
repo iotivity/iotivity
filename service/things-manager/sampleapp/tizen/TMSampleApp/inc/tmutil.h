@@ -22,9 +22,9 @@
 
 using namespace std;
 
-#ifndef __TMUTIL_H__
-#define __TMUTIL_H__
+#ifndef TMUTIL_H__
+#define TMUTIL_H__
 
 extern std::string getOCStackResultStringFromInt(int result);
 
-#endif // __TMUTIL_H__
+#endif // TMUTIL_H__

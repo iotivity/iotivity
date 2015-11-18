@@ -31,11 +31,10 @@
 #include "payload_logging.h"
 #include "ocremoteaccessclient.h"
 
+#define SET_BUT_NOT_USED(x) (void) x
 // Tracking user input
 static int TEST_CASE = 0;
 
-static const char * MULTICAST_DEVICE_DISCOVERY_QUERY = "/oic/d";
-static const char * MULTICAST_PLATFORM_DISCOVERY_QUERY = "/oic/p";
 static const char * MULTICAST_RESOURCE_DISCOVERY_QUERY = "/oic/res";
 
 static std::string coapServerIP = "255.255.255.255";
@@ -156,12 +155,13 @@ OCStackApplicationResult restRequestCB(void* ctx,
 
     OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
     OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
     if(clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
     {
         OC_LOG (INFO, TAG, "Received vendor specific options. Ignoring");
     }
+    SET_BUT_NOT_USED(handle);
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -178,7 +178,7 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
     OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
     OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
     OC_LOG_V(INFO, TAG, "OBSERVE notification %d recvd", gNumObserveNotifies);
-    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
     gNumObserveNotifies++;
     if (gNumObserveNotifies == maxNotification)
@@ -211,6 +211,7 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle, OCClientResponse
         return OC_STACK_DELETE_TRANSACTION;
     }
 
+    SET_BUT_NOT_USED(handle);
     return OC_STACK_KEEP_TRANSACTION;
 }
 #ifdef WITH_PRESENCE
@@ -227,7 +228,7 @@ OCStackApplicationResult presenceCB(void* ctx,
         OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
         OC_LOG_V(INFO, TAG, "NONCE NUMBER: %u", clientResponse->sequenceNumber);
         OC_LOG_V(INFO, TAG, "PRESENCE notification %d recvd", gNumPresenceNotifies);
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
         gNumPresenceNotifies++;
         if (gNumPresenceNotifies == maxNotification)
@@ -243,6 +244,7 @@ OCStackApplicationResult presenceCB(void* ctx,
     {
         OC_LOG_V(INFO, TAG, "presenceCB received Null clientResponse");
     }
+    SET_BUT_NOT_USED(handle);
     return OC_STACK_KEEP_TRANSACTION;
 }
 #endif
@@ -262,7 +264,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     }
 
     OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
-    OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
     responseAddr = clientResponse->devAddr;
 
@@ -289,6 +291,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
             PrintUsage();
             break;
     }
+    SET_BUT_NOT_USED(handle);
     return OC_STACK_KEEP_TRANSACTION;
 }
 
@@ -302,13 +305,14 @@ OCStackApplicationResult PlatformDiscoveryReqCB (void* ctx, OCDoHandle handle,
 
     if(clientResponse)
     {
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
     }
     else
     {
         OC_LOG_V(INFO, TAG, "PlatformDiscoveryReqCB received Null clientResponse");
     }
 
+    SET_BUT_NOT_USED(handle);
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -322,13 +326,14 @@ OCStackApplicationResult DeviceDiscoveryReqCB (void* ctx, OCDoHandle handle,
 
     if(clientResponse)
     {
-        OC_LOG_PAYLOAD(INFO, TAG, clientResponse->payload);
+        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
     }
     else
     {
         OC_LOG_V(INFO, TAG, "PlatformDiscoveryReqCB received Null clientResponse");
     }
 
+    SET_BUT_NOT_USED(handle);
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -438,30 +443,56 @@ int InitDiscovery(OCQualityOfService qos)
     return ret;
 }
 
-OCStackResult initRemoteAccessAdapter ()
+static void jidbound(char *jid)
 {
-    OCRAInfo_t rainfo;
-    rainfo.hostname = "localhost";
-    rainfo.port = 5222;
-    rainfo.xmpp_domain = "localhost";
-    rainfo.username = "test1";
-    rainfo.password = "intel123";
-    rainfo.resource = "";
-    rainfo.user_jid = "";
-
-    return OCSetRAInfo(&rainfo);
+    OC_LOG_V(INFO, TAG, "\n\n    Bound JID: %s\n\n", jid);
 }
 
 int main(int argc, char* argv[])
 {
-    int opt;
+    char host[] = "localhost";
+    char user[] = "test1";
+    char pass[] = "intel123";
+    char empstr[] = "";
+    OCRAInfo_t rainfo = {};
 
-    while ((opt = getopt(argc, argv, "t:")) != -1)
+    rainfo.hostname = host;
+    rainfo.port = 5222;
+    rainfo.xmpp_domain = host;
+    rainfo.username = user;
+    rainfo.password = pass;
+    rainfo.resource = empstr;
+    rainfo.user_jid = empstr;
+    rainfo.jidbound = jidbound;
+
+    int opt = 0;
+    while ((opt = getopt(argc, argv, "t:s:p:d:u:w:r:j:")) != -1)
     {
         switch(opt)
         {
             case 't':
                 TEST_CASE = atoi(optarg);
+                break;
+            case 's':
+                rainfo.hostname = optarg;
+                break;
+            case 'p':
+                rainfo.port = atoi(optarg);
+                break;
+            case 'd':
+                rainfo.xmpp_domain = optarg;
+                break;
+            case 'u':
+                rainfo.username = optarg;
+                break;
+            case 'w':
+                rainfo.password = optarg;
+                break;
+            case 'j':
+                rainfo.user_jid = optarg;
+                break;
+            case 'r':
+                rainfo.resource = optarg;
                 break;
             default:
                 PrintUsage();
@@ -469,7 +500,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (initRemoteAccessAdapter() != OC_STACK_OK)
+    if (OCSetRAInfo(&rainfo) != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "Error initiating remote access adapter");
         return 0;

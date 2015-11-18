@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -19,25 +19,26 @@
  ******************************************************************/
 
 /**
-  * @file   jni_things_manager_jvm.h
-  *
-  * @brief  This file contains the essential declarations and functions required
-  *            for JNI implementation
+  * @file
+  * This file contains the essential declarations and functions required
+  * for JNI implementation.
   */
 
-#ifndef __JNI_THINGS_MANAGER_JVM_H_
-#define __JNI_THINGS_MANAGER_JVM_H_
-
+#ifndef JNI_THINGS_MANAGER_JVM_H_
+#define JNI_THINGS_MANAGER_JVM_H_
 
 #include <jni.h>
 #include <thread>
 #include <mutex>
 
-#define TM_SERVICE_NATIVE_API_CLASS_PATH    "org/iotivity/service/tm/ThingsManagerNativeInterface"
-#define TM_SERVICE_NATIVE_API_CLASS_TYPE    "Lorg/iotivity/service/tm/ThingsManagerNativeInterface;"
+#define TM_SERVICE_GROUP_MANAGER_CLASS_PATH    "org/iotivity/service/tm/GroupManager"
+#define TM_SERVICE_GROUP_MANAGER_CLASS_TYPE    "Lorg/iotivity/service/tm/GroupManager;"
 
-#define TM_SERVICE_CALLBACK_CLASS_PATH    "org/iotivity/service/tm/ThingsManagerCallback"
-#define TM_SERVICE_CALLBACK_CLASS_TYPE    "Lorg/iotivity/service/tm/ThingsManagerCallback;"
+#define TM_SERVICE_THINGS_CONFIGURATION_CLASS_PATH    "org/iotivity/service/tm/ThingsConfiguration"
+#define TM_SERVICE_THINGS_CONFIGURATION_CLASS_TYPE    "Lorg/iotivity/service/tm/ThingsConfigurationn;"
+
+#define TM_SERVICE_THINGS_MAINTENANCE_CLASS_PATH    "org/iotivity/service/tm/ThingsMaintenance"
+#define TM_SERVICE_THINGS_MAINTENANCE_CLASS_TYPE    "Lorg/iotivity/service/tm/ThingsMaintenance;"
 
 #define TM_SERVICE_PLATFORM_CLASS_PATH    "org/iotivity/base/OcPlatform"
 #define TM_SERVICE_PLATFORM_CLASS_TYPE    "Lorg/iotivity/base/OcPlatform;"
@@ -74,25 +75,23 @@
 #define TM_JAVA_STRING_TYPE "Ljava/lang/String;"
 
 /**
- * @class   ThingsManagerJVM
- * @brief   This class provides functions related to JNI Environment.
- *
+ * This class provides functions related to JNI Environment.
  */
 class ThingsManagerJVM
 {
     public:
         /**
-         * @brief destructor
+         * destructor
          */
         ~ThingsManagerJVM() {};
 
         /**
-         * @brief  Get JVM instance
+         * Get JVM instance
          */
         static JNIEnv *getEnv();
 
         /**
-         * @brief  Release aquired JVM instance
+         * Release aquired JVM instance.
          */
         static void releaseEnv();
 
@@ -104,12 +103,12 @@ class ThingsManagerJVM
 
     private:
         /**
-         * @brief constructor
+         * constructor
          */
         ThingsManagerJVM();
 
         /**
-         *  Mutex for thread synchronization
+         *  Mutex for thread synchronization.
          */
         static std::mutex m_currentThreadMutex;
 };
@@ -122,4 +121,4 @@ jobject GetJObjectInstance(const char *szClassPath);
 #ifdef __cplusplus
 }
 #endif
-#endif //__JNI_THINGS_MANAGER_JVM_H_
+#endif //JNI_THINGS_MANAGER_JVM_H_

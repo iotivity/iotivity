@@ -54,6 +54,22 @@
  */
 #define TAG PCF("UMUTEX")
 
+#ifdef __ANDROID__
+/**
+ * Android has pthread_condattr_setclock() only in version >= 5.0, older
+ * version do have a function called __pthread_cond_timedwait_relative()
+ * which waits *for* the given timespec, this function is not visible in
+ * android version >= 5.0 anymore. This is the same way as it is handled in
+ * QT 5.5.0 in
+ * http://code.qt.io/cgit/qt/qtbase.git/tree/src/corelib/thread/qwaitcondition_unix.cpp?h=v5.5.0#n54
+ */
+static int camutex_condattr_setclock(pthread_condattr_t *, clockid_t)
+        __attribute__ ((weakref("pthread_condattr_setclock")));
+
+static int camutex_cond_timedwait_relative(pthread_cond_t*, pthread_mutex_t*, const struct timespec*)
+        __attribute__ ((weakref("__pthread_cond_timedwait_relative")));
+#endif /* __ANDROID__ */
+
 static const uint64_t USECS_PER_SEC         = 1000000;
 static const uint64_t NANOSECS_PER_USECS    = 1000;
 static const uint64_t NANOSECS_PER_SEC      = 1000000000L;
@@ -206,17 +222,23 @@ ca_cond ca_cond_new(void)
         }
 
 #if defined(__ANDROID__) || _POSIX_TIMERS > 0
-        ret = pthread_condattr_setclock(&(eventInfo->condattr), CLOCK_MONOTONIC);
-
-        if(0 != ret)
+#ifdef __ANDROID__
+        if (camutex_condattr_setclock) {
+            ret = camutex_condattr_setclock(&(eventInfo->condattr), CLOCK_MONOTONIC);
+#else
         {
-            OIC_LOG_V(ERROR, TAG, "%s: Failed to set condition variable clock %d!",
-                    __func__, ret);
-            pthread_condattr_destroy(&(eventInfo->condattr));
-            OICFree(eventInfo);
-            return retVal;
+            ret = pthread_condattr_setclock(&(eventInfo->condattr), CLOCK_MONOTONIC);
+#endif /*  __ANDROID__ */
+            if(0 != ret)
+            {
+                OIC_LOG_V(ERROR, TAG, "%s: Failed to set condition variable clock %d!",
+                        __func__, ret);
+                pthread_condattr_destroy(&(eventInfo->condattr));
+                OICFree(eventInfo);
+                return retVal;
+            }
         }
-#endif
+#endif /* defined(__ANDROID__) || _POSIX_TIMERS > 0 */
         ret = pthread_cond_init(&(eventInfo->cond), &(eventInfo->condattr));
         if (0 == ret)
         {
@@ -342,11 +364,25 @@ CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseco
 
     if (microseconds > 0)
     {
-        struct timespec abstime = ca_get_current_time();
-        ca_add_microseconds_to_timespec(&abstime, microseconds);
+        int ret;
+        struct timespec abstime;
 
-        //Wait for the given time
-        int ret = pthread_cond_timedwait(&(eventInfo->cond), &(mutexInfo->mutex), &abstime);
+#ifdef __ANDROID__
+        if (camutex_cond_timedwait_relative) {
+            abstime.tv_sec = microseconds / USECS_PER_SEC;
+            abstime.tv_nsec = (microseconds % USECS_PER_SEC) * NANOSECS_PER_USECS;
+            //Wait for the given time
+            ret = camutex_cond_timedwait_relative(&(eventInfo->cond), &(mutexInfo->mutex), &abstime);
+        } else
+#endif
+        {
+             abstime = ca_get_current_time();
+            ca_add_microseconds_to_timespec(&abstime, microseconds);
+
+            //Wait for the given time
+            ret = pthread_cond_timedwait(&(eventInfo->cond), &(mutexInfo->mutex), &abstime);
+        }
+
         switch (ret)
         {
             case 0:

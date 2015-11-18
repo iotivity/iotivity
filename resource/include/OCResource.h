@@ -118,8 +118,8 @@ namespace OC
         *        The callback function will be invoked with a map of attribute name and values.
         *        The callback function will also have the result from this Get operation
         *        This will have error codes
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        * NOTE: OCStackResult is defined in ocstack.h.
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
         */
         OCStackResult get(const QueryParamsMap& queryParametersMap, GetCallback attributeHandler);
         /**
@@ -130,8 +130,8 @@ namespace OC
         *        The callback function will also have the result from this Get operation
         *        This will have error codes
         * @param QoS the quality of communication
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        * NOTE: OCStackResult is defined in ocstack.h.
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
         */
         OCStackResult get(const QueryParamsMap& queryParametersMap, GetCallback attributeHandler,
                           QualityOfService QoS);
@@ -148,23 +148,25 @@ namespace OC
         *        resource container (list will be empty if not a container)
         *        The callback function will also have the result from this Get operation. This will
         *        have error codes
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
-        * NOTE: OCStackResult is defined in ocstack.h.<br>
-        * <b>Example:</b><br>
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        * @par Example:
         * Consider resource "a/home" (with link interface and resource type as home) contains links
         *  to "a/kitchen" and "a/room".
-        * Step 1: get("home", Link_Interface, &onGet)<br>
+        * -# get("home", Link_Interface, &onGet)
+        * @par
         * Callback onGet will receive a) Empty attribute map because there are no attributes for
         * a/home b) list with
         * full URI of "a/kitchen" and "a/room" resources and their properties c) error code for GET
-        * operation<br>
-        * NOTE: A resource may contain single or multiple resource types. Also, a resource may
-        * contain single or multiple interfaces.<br>
+        * operation
+        * @note A resource may contain single or multiple resource types. Also, a resource may
+        * contain single or multiple interfaces.
         * Currently, single GET request is allowed to do operate on single resource type or resource
-        * interface. In future, a single GET <br>
-        * can operate on multiple resource types and interfaces. <br>
-        * NOTE: A client can traverse a tree or graph by doing successive GETs on the returned
-        * resources at a node.<br>
+        * interface. In future, a single GET
+        * can operate on multiple resource types and interfaces.
+        * @note A client can traverse a tree or graph by doing successive GETs on the returned
+        * resources at a node.
+        *
         */
         OCStackResult get(const std::string& resourceType, const std::string& resourceInterface,
                         const QueryParamsMap& queryParametersMap, GetCallback attributeHandler);
@@ -181,23 +183,25 @@ namespace OC
         *        The callback function will also have the result from this Get operation. This will
         *        have error codes
         * @param QoS the quality of communication
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
-        * NOTE: OCStackResult is defined in ocstack.h.<br>
-        * <b>Example:</b><br>
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * note OCStackResult is defined in ocstack.h.
+        * @par Example:
         * Consider resource "a/home" (with link interface and resource type as home) contains links
         *  to "a/kitchen" and "a/room".
-        * Step 1: get("home", Link_Interface, &onGet)<br>
+        * -# get("home", Link_Interface, &onGet)
+        * @par
         * Callback onGet will receive a) Empty attribute map because there are no attributes for
         * a/home b) list with
         * full URI of "a/kitchen" and "a/room" resources and their properties c) error code for GET
-        * operation<br>
-        * NOTE: A resource may contain single or multiple resource types. Also, a resource may
-        * contain single or multiple interfaces.<br>
+        * operation
+        * @note A resource may contain single or multiple resource types. Also, a resource may
+        * contain single or multiple interfaces.
         * Currently, single GET request is allowed to do operate on single resource type or resource
-        * interface. In future, a single GET <br>
-        * can operate on multiple resource types and interfaces. <br>
-        * NOTE: A client can traverse a tree or graph by doing successive GETs on the returned
-        * resources at a node.<br>
+        * interface. In future, a single GET
+        * can operate on multiple resource types and interfaces.
+        * @note A client can traverse a tree or graph by doing successive GETs on the returned
+        * resources at a node.
+        *
         */
         OCStackResult get(const std::string& resourceType, const std::string& resourceInterface,
                         const QueryParamsMap& queryParametersMap, GetCallback attributeHandler,
@@ -205,6 +209,7 @@ namespace OC
 
         /**
         * Function to set the representation of a resource (via PUT)
+        *
         * @param representation which can either have all the attribute names and values
                  (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
@@ -213,13 +218,15 @@ namespace OC
         *        This will have error codes
         * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler attribute handler
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        * NOTE: OCStackResult is defined in ocstack.h.
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
         */
         OCStackResult put(const OCRepresentation& representation,
                         const QueryParamsMap& queryParametersMap, PutCallback attributeHandler);
         /**
         * Function to set the representation of a resource (via PUT)
+        *
         * @param representation which can either have all the attribute names and values
                  (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
@@ -229,8 +236,9 @@ namespace OC
         * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler attribute handler
         * @param QoS the quality of communication
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        * NOTE: OCStackResult is defined in ocstack.h.
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
         */
         OCStackResult put(const OCRepresentation& representation,
                         const QueryParamsMap& queryParametersMap, PutCallback attributeHandler,
@@ -238,6 +246,7 @@ namespace OC
 
         /**
         * Function to set the attributes of a resource (via PUT)
+        *
         * @param resourceType resource type of the resource to operate on
         * @param resourceInterface interface type of the resource to operate on
         * @param representation representation of the resource
@@ -250,8 +259,9 @@ namespace OC
         *        and values
         *        (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
-        * NOTE: OCStackResult is defined in ocstack.h. <br>
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
         */
         OCStackResult put(const std::string& resourceType, const std::string& resourceInterface,
                         const OCRepresentation& representation, const QueryParamsMap& queryParametersMap,
@@ -271,8 +281,9 @@ namespace OC
         *        (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
         * @param QoS the quality of communication
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
-        * NOTE: OCStackResult is defined in ocstack.h. <br>
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
         */
         OCStackResult put(const std::string& resourceType, const std::string& resourceInterface,
                         const OCRepresentation& representation, const QueryParamsMap& queryParametersMap,
@@ -280,6 +291,7 @@ namespace OC
 
         /**
         * Function to post on a resource
+        *
         * @param representation which can either have all the attribute names and values
         *        (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
@@ -288,13 +300,14 @@ namespace OC
         *        This will have error codes
         * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler attribute handler
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        * NOTE: OCStackResult is defined in ocstack.h.
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
         */
         OCStackResult post(const OCRepresentation& representation,
                         const QueryParamsMap& queryParametersMap, PostCallback attributeHandler);
         /**
         * Function to post on a resource
+        *
         * @param representation which can either have all the attribute names and values
         *        (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
@@ -304,8 +317,8 @@ namespace OC
         * @param queryParametersMap map which can have the query parameter name and value
         * @param attributeHandler attribute handler
         * @param QoS the quality of communication
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        * NOTE: OCStackResult is defined in ocstack.h.
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
         */
         OCStackResult post(const OCRepresentation& representation,
                         const QueryParamsMap& queryParametersMap, PostCallback attributeHandler,
@@ -313,6 +326,7 @@ namespace OC
 
         /**
         * Function to post on a resource
+        *
         * @param resourceType resource type of the resource to operate on
         * @param resourceInterface interface type of the resource to operate on
         * @param representation representation of the resource
@@ -325,14 +339,16 @@ namespace OC
         *        and values
         *        (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
-        * NOTE: OCStackResult is defined in ocstack.h. <br>
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
         */
         OCStackResult post(const std::string& resourceType, const std::string& resourceInterface,
                         const OCRepresentation& representation, const QueryParamsMap& queryParametersMap,
                         PostCallback attributeHandler);
         /**
         * Function to post on a resource
+        *
         * @param resourceType resource type of the resource to operate on
         * @param resourceInterface interface type of the resource to operate on
         * @param representation representation of the resource
@@ -346,8 +362,9 @@ namespace OC
         *        (which will represent entire state of the resource) or a
         *        set of attribute names and values which needs to be modified
         * @param QoS the quality of communication
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success. <br>
-        * NOTE: OCStackResult is defined in ocstack.h. <br>
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
         */
         OCStackResult post(const std::string& resourceType, const std::string& resourceInterface,
                         const OCRepresentation& representation, const QueryParamsMap& queryParametersMap,
@@ -355,30 +372,35 @@ namespace OC
 
         /**
         * Function to perform DELETE operation
+        *
         * @param deleteHandler handles callback
         *        The callback function will have headerOptions and result from this Delete
         *        operation. This will have error codes
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        * NOTE: OCStackResult is defined in ocstack.h.
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
         */
         OCStackResult deleteResource(DeleteCallback deleteHandler);
         OCStackResult deleteResource(DeleteCallback deleteHandler, QualityOfService QoS);
 
         /**
         * Function to set observation on the resource
+        *
         * @param observeType allows the client to specify how it wants to observe.
         * @param queryParametersMap map which can have the query parameter name and value
         * @param observeHandler handles callback
         *        The callback function will be invoked with a map of attribute name and values.
         *        The callback function will also have the result from this observe operation
         *        This will have error codes
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        * NOTE: OCStackResult is defined in ocstack.h.
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
         */
         OCStackResult observe(ObserveType observeType, const QueryParamsMap& queryParametersMap,
                         ObserveCallback observeHandler);
         /**
         * Function to set observation on the resource
+        *
         * @param observeType allows the client to specify how it wants to observe.
         * @param queryParametersMap map which can have the query parameter name and value
         * @param observeHandler handles callback
@@ -386,16 +408,19 @@ namespace OC
         *        The callback function will also have the result from this observe operation
         *        This will have error codes
         * @param qos the quality of communication
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        * NOTE: OCStackResult is defined in ocstack.h.
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
         */
         OCStackResult observe(ObserveType observeType, const QueryParamsMap& queryParametersMap,
                         ObserveCallback observeHandler, QualityOfService qos);
 
         /**
         * Function to cancel the observation on the resource
-        * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
-        * NOTE: OCStackResult is defined in ocstack.h.
+        *
+        * @return Returns  ::OC_STACK_OK on success, some other value upon failure.
+        * @note OCStackResult is defined in ocstack.h.
+        *
         */
         OCStackResult cancelObserve();
         OCStackResult cancelObserve(QualityOfService qos);
@@ -405,31 +430,25 @@ namespace OC
         * @param headerOptions std::vector where header information(header optionID and optionData
         * is passed
         *
-        * NOTE: Once the headers information is set, it will be applicable to GET, PUT and observe
-        * request. <br>
+        * @note Once the headers information is set, it will be applicable to GET, PUT and observe
+        * request.
         * setHeaderOptions can be used multiple times if headers need to be modifed by the client.
         * Latest headers will be used to send in the request. <br>
-        * NOTE: Initial support is only for two headers. If headerMap consists of more than two
+        * @note Initial support is only for two headers. If headerMap consists of more than two
         * header options, they will be ignored. <br>
         * Use unsetHeaderOptions API to clear the header information.
         */
-        void setHeaderOptions(const HeaderOptions& headerOptions)
-        {
-            m_headerOptions = headerOptions;
-        }
+        void setHeaderOptions(const HeaderOptions& headerOptions);
 
         /**
         * Function to unset header options.
         */
-        void unsetHeaderOptions()
-        {
-            m_headerOptions.clear();
-        }
+        void unsetHeaderOptions();
 
         /**
         * Function to get the host address of this resource
         * @return std::string host address
-        * NOTE: This might or might not be exposed in future due to security concerns
+        * @note This might or might not be exposed in future due to security concerns
         */
         std::string host() const;
 
@@ -456,19 +475,13 @@ namespace OC
         * Function to get the list of resource types
         * @return vector of resource types
         */
-        std::vector<std::string> getResourceTypes() const
-        {
-            return m_resourceTypes;
-        }
+        std::vector<std::string> getResourceTypes() const;
 
         /**
         * Function to get the list of resource interfaces
         * @return vector of resource interface
         */
-        std::vector<std::string> getResourceInterfaces(void) const
-        {
-            return m_interfaces;
-        }
+        std::vector<std::string> getResourceInterfaces(void) const;
 
         // TODO-CA Revisit this since we are exposing two identifiers
         /**
@@ -484,7 +497,7 @@ namespace OC
         /**
         * Function to get a string representation of the resource's server ID.
         * This is unique per- server independent on how it was discovered.
-        * Note: The format of the return value is subject to change and will
+        * @note The format of the return value is subject to change and will
         * likely change both in size and contents in the future.
         */
         std::string sid() const;

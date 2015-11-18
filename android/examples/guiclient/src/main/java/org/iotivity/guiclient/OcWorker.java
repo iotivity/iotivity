@@ -449,6 +449,7 @@ public class OcWorker extends Thread
         if (LOCAL_LOGV) Log.v(TAG, "configurePlatform()");
 
         PlatformConfig cfg = new PlatformConfig(
+                this,
                 mContext,
                 ServiceType.IN_PROC,
                 ModeType.CLIENT_SERVER,

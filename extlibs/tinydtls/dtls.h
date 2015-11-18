@@ -56,6 +56,10 @@
 #define DTLS_VERSION 0xfefd	/* DTLS v1.2 */
 #endif
 
+#ifdef DTLS_X509
+#define DTLS_MAX_CERT_SIZE       1400
+#endif
+
 typedef enum dtls_credentials_type_t {
   DTLS_PSK_HINT, DTLS_PSK_IDENTITY, DTLS_PSK_KEY
 } dtls_credentials_type_t;
@@ -181,14 +185,15 @@ typedef struct {
    *                session.
    * @return @c 0 if result is set, or less than zero on error.
    */
-  int (*get_ecdsa_key)(struct dtls_context_t *ctx, 
+  int (*get_ecdsa_key)(struct dtls_context_t *ctx,
 		       const session_t *session,
 		       const dtls_ecc_key_t **result);
+
 
   /**
    * Called during handshake to check the peer's pubic key in this
    * session. If the public key matches the session and should be
-   * considerated valid the return value must be @c 0. If not valid,
+   * considered valid the return value must be @c 0. If not valid,
    * the return value must be less than zero.
    *
    * If ECDSA should not be supported, set this pointer to NULL.
@@ -211,12 +216,112 @@ typedef struct {
    *   return dtls_alert_fatal_create(DTLS_ALERT_CERTIFICATE_UNKNOWN);
    *   return dtls_alert_fatal_create(DTLS_ALERT_UNKNOWN_CA);
    */
-  int (*verify_ecdsa_key)(struct dtls_context_t *ctx, 
+  int (*verify_ecdsa_key)(struct dtls_context_t *ctx,
 			  const session_t *session,
 			  const unsigned char *other_pub_x,
 			  const unsigned char *other_pub_y,
 			  size_t key_size);
 #endif /* DTLS_ECC */
+#ifdef DTLS_X509
+  /**
+   * Called during handshake to get the server's or client's ecdsa
+   * key used to authenticate this server or client in this
+   * session. If found, the key must be stored in @p result and
+   * the return value must be @c 0. If not found, @p result is
+   * undefined and the return value must be less than zero.
+   *
+   * If ECDSA should not be supported, set this pointer to NULL.
+   *
+   * Implement this if you want to provide your own certificate to
+   * the other peer. This is mandatory for a server providing X.509
+   * support and optional for a client. A client doing DTLS client
+   * authentication has to implementing this callback.
+   *
+   * @param ctx     The current dtls context.
+   * @param session The session where the key will be used.
+   * @param result  Must be set to the key object to used for the given
+   *                session.
+   * @return @c 0 if result is set, or less than zero on error.
+   */
+  int (*get_x509_key)(struct dtls_context_t *ctx,
+               const session_t *session,
+               const dtls_ecc_key_t **result);
+  /**
+   * Called during handshake to get the server's or client's
+   * certificate used to authenticate this server or client in this
+   * session. If found, the certificate must be stored in @p cert and
+   * the return value must be @c 0. If not found, @p cert is
+   * undefined and the return value must be less than zero.
+   *
+   * If X.509 should not be supported, set this pointer to NULL.
+   *
+   * Implement this if you want to provide your own certificate to
+   * the other peer. This is mandatory for a server providing X.509
+   * support and optional for a client. A client doing DTLS client
+   * authentication has to implementing this callback.
+   *
+   * @param ctx       The current dtls context.
+   * @param session   The session where the certificate will be used.
+   * @param cert      Must be set to the certificate object to used for
+   *                  the given session.
+   * @param cert_size Size of certificate in bytes.
+   * @return @c 0 if result is set, or less than zero on error.
+   */
+  int (*get_x509_cert)(struct dtls_context_t *ctx,
+			const session_t *session,
+			const unsigned char **cert,
+			size_t *cert_size);
+
+  /**
+   * Called during handshake to check the peer's certificate in this
+   * session. If the certificate matches the session and is valid the
+   * return value must be @c 0. If not valid, the return value must be
+   * less than zero.
+   *
+   * If X.509 should not be supported, set this pointer to NULL.
+   *
+   * Implement this if you want to verify the other peers certificate.
+   * This is mandatory for a DTLS client doing based X.509
+   * authentication. A server implementing this will request the
+   * client to do DTLS client authentication.
+   *
+   * @param ctx       The current dtls context.
+   * @param session   The session where the key will be used.
+   * @param cert      Peer's certificate to check.
+   * @param cert_size Size of certificate in bytes.
+   * @param x         Allocated memory to store peer's public key part x.
+   * @param x_size    Size of allocated memory to store peer's public key part x.
+   * @param y         Allocated memory to store peer's public key part y.
+   * @param y_size    Size of allocated memory to store peer's public key part y.
+   * @return @c 0 if public key matches, or less than zero on error.
+   * error codes:
+   *   return dtls_alert_fatal_create(DTLS_ALERT_BAD_CERTIFICATE);
+   *   return dtls_alert_fatal_create(DTLS_ALERT_UNSUPPORTED_CERTIFICATE);
+   *   return dtls_alert_fatal_create(DTLS_ALERT_CERTIFICATE_REVOKED);
+   *   return dtls_alert_fatal_create(DTLS_ALERT_CERTIFICATE_EXPIRED);
+   *   return dtls_alert_fatal_create(DTLS_ALERT_CERTIFICATE_UNKNOWN);
+   *   return dtls_alert_fatal_create(DTLS_ALERT_UNKNOWN_CA);
+   */
+  int (*verify_x509_cert)(struct dtls_context_t *ctx,
+			   const session_t *session,
+			   const unsigned char *cert,
+			   size_t cert_size,
+               unsigned char *x,
+			   size_t x_size,
+               unsigned char *y,
+			   size_t y_size);
+
+  /**
+   * Called during handshake to check if certificate format should be X.509
+   *
+   * If X.509 should not be supported, set this pointer to NULL.
+   *
+   * @param ctx       The current dtls context.
+   * @return @c 0 if certificate format should be X.509, or less than zero on error.
+   */
+  int (*is_x509_active)(struct dtls_context_t *ctx);
+#endif /* DTLS_X509 */
+
 } dtls_handler_t;
 
 /** Holds global information of the DTLS engine. */
@@ -238,7 +343,7 @@ typedef struct dtls_context_t {
 
   dtls_handler_t *h;		/**< callback handlers */
 
-  dtls_cipher_enable_t is_anon_ecdh_eabled;    /**< enable/disable the TLS_ECDH_anon_WITH_AES_128_CBC_SHA */
+  dtls_cipher_enable_t is_anon_ecdh_eabled;    /**< enable/disable the TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 */
 
   dtls_cipher_t selected_cipher; /**< selected ciper suite for handshake */
 
@@ -268,7 +373,7 @@ static inline void dtls_set_handler(dtls_context_t *ctx, dtls_handler_t *h) {
 }
 
  /**
-  * @brief Enabling the TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+  * @brief Enabling the TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256
   *
   * @param ctx              The DTLS context to use.
   * @param is_enable    DTLS_CIPHER_ENABLE(1) or DTLS_CIPHER_DISABLE(0)
@@ -279,7 +384,7 @@ void dtls_enables_anon_ecdh(dtls_context_t* ctx, dtls_cipher_enable_t is_enable)
  * @brief Select the cipher suite for handshake
  *
  * @param ctx              The DTLS context to use.
- * @param cipher         TLS_ECDH_anon_WITH_AES_128_CBC_SHA (0xC018)
+ * @param cipher         TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 (0xC018)
  *                                  TLS_PSK_WITH_AES_128_CCM_8 (0xX0A8)
  *                                  TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 (0xC0AE)
  */

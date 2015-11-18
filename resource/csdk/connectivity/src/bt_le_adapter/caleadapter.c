@@ -844,9 +844,17 @@ static void CALEDataReceiverHandler(void *threadData)
                 ca_mutex_unlock(g_bleReceiveDataMutex);
                 return;
             }
+
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending data up !");
-            g_networkPacketReceivedCallback(senderInfo->remoteEndpoint,
-                                                senderInfo->defragData, senderInfo->recvDataLen);
+
+            const CASecureEndpoint_t tmp =
+                {
+                    .endpoint = *senderInfo->remoteEndpoint
+                };
+
+            g_networkPacketReceivedCallback(&tmp,
+                                            senderInfo->defragData,
+                                            senderInfo->recvDataLen);
             ca_mutex_unlock(g_bleAdapterReqRespCbMutex);
             u_arraylist_remove(g_senderInfo, senderIndex);
             senderInfo->remoteEndpoint = NULL;
@@ -1439,6 +1447,16 @@ static CAResult_t CAStartLE();
 static CAResult_t CAStartLEListeningServer();
 
 /**
+ * Stops listening server from receiving multicast search requests.
+ *
+ * Transport Specific Behavior:
+ *   LE  Starts GATT Server with prefixed UUID and Characteristics
+ *   per OIC Specification.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ */
+static CAResult_t CAStopLEListeningServer();
+
+/**
  * Sarting discovery of servers for receiving multicast
  * advertisements.
  *
@@ -1653,6 +1671,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
             .startAdapter = CAStartLE,
             .stopAdapter = CAStopLE,
             .startListenServer = CAStartLEListeningServer,
+            .stopListenServer = CAStopLEListeningServer,
             .startDiscoveryServer = CAStartLEDiscoveryServer,
             .sendData = CASendLEUnicastData,
             .sendDataToAll = CASendLEMulticastData,
@@ -1731,6 +1750,7 @@ static void CATerminateLE()
 static CAResult_t CAStartLEListeningServer()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
+#ifndef ROUTING_GATEWAY
     CAResult_t result = CA_STATUS_OK;
 #ifndef SINGLE_THREAD
     result = CAInitLEServerQueues();
@@ -1763,6 +1783,17 @@ static CAResult_t CAStartLEListeningServer()
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
+#else
+    // Routing Gateway only supports BLE client mode.
+    OIC_LOG(ERROR, CALEADAPTER_TAG, "LE server not supported in Routing Gateway");
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+static CAResult_t CAStopLEListeningServer()
+{
+    OIC_LOG(ERROR, CALEADAPTER_TAG, "Listen server stop not supported.");
+    return CA_NOT_SUPPORTED;
 }
 
 static CAResult_t CAStartLEDiscoveryServer()
@@ -2181,11 +2212,12 @@ static CAResult_t CALEAdapterServerReceivedData(const char *remoteAddress,
 #ifdef SINGLE_THREAD
     if(g_networkPacketReceivedCallback)
     {
-        CAEndpoint_t endPoint =
-            { .adapter = CA_ADAPTER_GATT_BTLE };  // will be filled by
-                                                  // upper layer
+        // will be filled by upper layer
+        const CASecureEndpoint_t endpoint =
+            { .endpoint = { .adapter = CA_ADAPTER_GATT_BTLE } };
 
-        g_networkPacketReceivedCallback(&endPoint, data, dataLength);
+
+        g_networkPacketReceivedCallback(&endpoint, data, dataLength);
     }
 #else
     VERIFY_NON_NULL_RET(g_bleReceiverQueue,

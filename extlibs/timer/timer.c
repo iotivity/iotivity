@@ -105,6 +105,13 @@ long int getRelativeIntervalOfWeek(struct tm* tp)
     time(&current_time);
     current = localtime(&current_time);
     midnight = (struct tm* )malloc(sizeof(struct tm));
+
+    if(midnight == NULL)
+    {
+        printf("ERROR; Memory allocation fails\n");
+        return 0;
+    }
+
     memcpy(midnight, current, sizeof(struct tm));
 
     midnight->tm_hour = 0;
@@ -116,6 +123,8 @@ long int getRelativeIntervalOfWeek(struct tm* tp)
     delayed_time = current_time - mktime(midnight);
     delayed_time = getRelativeSecondsOfDayofweek(current->tm_wday, tp->tm_wday) - delayed_time;
     delayed_time = delayed_time + getSeconds(tp);
+
+    free(midnight);
 
     return delayed_time;
 }
@@ -193,7 +202,7 @@ time_t registerTimer(const time_t seconds, int *id, void *cb)
 
 void unregisterTimer(int idx)
 {
-    if( 0 <= idx && idx <= TIMEOUTS)
+    if( 0 <= idx && idx < TIMEOUTS)
         timeout_list[idx].timeout_state = TIMEOUT_UNUSED;
 }
 
@@ -318,7 +327,7 @@ time_t registerTimer(const time_t seconds, int *id,  void (*cb)())
 
 void unregisterTimer(int idx)
 {
-    if( 0 <= idx && idx <= TIMEOUTS)
+    if( 0 <= idx && idx < TIMEOUTS)
         timeout_list[idx].timeout_state = TIMEOUT_UNUSED;
 }
 

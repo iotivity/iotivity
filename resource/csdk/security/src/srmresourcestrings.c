@@ -24,6 +24,11 @@
 const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
 const char * OIC_MI_DEF = "oic.mi.def";
 
+//AMACL
+const char * OIC_RSRC_TYPE_SEC_AMACL = "oic.sec.amacl";
+const char * OIC_RSRC_AMACL_URI =  "/oic/sec/amacl";
+const char * OIC_JSON_AMACL_NAME = "amacl";
+
 //ACL
 const char * OIC_RSRC_TYPE_SEC_ACL = "oic.sec.acl";
 const char * OIC_RSRC_ACL_URI =  "/oic/sec/acl";
@@ -44,8 +49,19 @@ const char * OIC_RSRC_TYPE_SEC_CRED = "oic.sec.cred";
 const char * OIC_RSRC_CRED_URI =  "/oic/sec/cred";
 const char * OIC_JSON_CRED_NAME = "cred";
 
+//CRL
+const char * OIC_RSRC_TYPE_SEC_CRL = "oic.sec.crl";
+const char * OIC_RSRC_CRL_URI =  "/oic/sec/crl";
+const char * OIC_JSON_CRL_NAME = "crl";
+//svc
+const char * OIC_RSRC_TYPE_SEC_SVC = "oic.sec.svc";
+const char * OIC_RSRC_SVC_URI =  "/oic/sec/svc";
+const char * OIC_JSON_SVC_NAME = "svc";
+
+
 const char * OIC_JSON_SUBJECT_NAME = "sub";
 const char * OIC_JSON_RESOURCES_NAME = "rsrc";
+const char * OIC_JSON_AMSS_NAME = "amss";
 const char * OIC_JSON_PERMISSION_NAME = "perms";
 const char * OIC_JSON_OWNERS_NAME = "ownrs";
 const char * OIC_JSON_OWNER_NAME = "ownr";
@@ -67,7 +83,12 @@ const char * OIC_JSON_ROLEIDS_NAME = "roleid";
 const char * OIC_JSON_CREDTYPE_NAME = "credtyp";
 const char * OIC_JSON_PUBLICDATA_NAME = "pbdata";
 const char * OIC_JSON_PRIVATEDATA_NAME = "pvdata";
-const char * OIC_JSON_PERIOD_NAME = "period";
+const char * OIC_JSON_SERVICE_DEVICE_ID = "svcdid";
+const char * OIC_JSON_SERVICE_TYPE = "svct";
+const char * OIC_JSON_PERIOD_NAME = "prd";
+const char * OIC_JSON_PERIODS_NAME = "prds";
+const char * OIC_JSON_RECURRENCES_NAME = "recurs";
+const char * OIC_JSON_SUPPORTED_CRED_TYPE_NAME = "sct";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
 size_t WILDCARD_SUBJECT_ID_LEN = 1;
@@ -75,13 +96,12 @@ const char * WILDCARD_RESOURCE_URI = "*";
 
 //Ownership Transfer Methods
 const char * OXM_JUST_WORKS = "oic.sec.doxm.jw";
-const char * OXM_MODE_SWITCH = "oic.sec.doxm.ms";
 const char * OXM_RANDOM_DEVICE_PIN = "oic.sec.doxm.rdp";
-const char * OXM_PRE_PROVISIONED_DEVICE_PIN = "oic.sec.doxm.ppdp";
-const char * OXM_PRE_PROVISIONED_STRONG_CREDENTIAL = "oic.sec.doxm.ppsc";
+const char * OXM_MANUFACTURER_CERTIFICATE = "oic.sec.doxm.mfgcert";
 
 const char * OIC_SEC_TRUE = "true";
 const char * OIC_SEC_FALSE = "false";
 
-const char * OIC_SEC_REST_QUERY_SEPARATOR = "&";
+const char * OIC_SEC_REST_QUERY_SEPARATOR = ";";
 char OIC_SEC_REST_QUERY_DELIMETER = '=';
+

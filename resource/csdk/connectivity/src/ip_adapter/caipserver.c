@@ -18,7 +18,8 @@
  *
  ******************************************************************/
 
-#include "caipinterface.h"
+#define __APPLE_USE_RFC_3542 // for PKTINFO
+#define _GNU_SOURCE // for in6_pktinfo
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -37,6 +38,7 @@
 #endif
 
 #include "pdu.h"
+#include "caipinterface.h"
 #include "caadapterutils.h"
 #ifdef __WITH_DTLS__
 #include "caadapternetdtls.h"
@@ -96,7 +98,6 @@ static CAIPExceptionCallback g_exceptionCallback;
 static CAIPPacketReceivedCallback g_packetReceivedCallback;
 
 static void CAHandleNetlink();
-static void CAApplyInterfaces();
 static void CAFindReadyMessage();
 static void CASelectReturned(fd_set *readFds, int ret);
 static void CAProcessNewInterface(CAInterface_t *ifchanged);
@@ -119,7 +120,6 @@ static void CAReceiveHandler(void *data)
 {
     (void)data;
     OIC_LOG(DEBUG, TAG, "IN");
-
     while (!caglobals.ip.terminate)
     {
         CAFindReadyMessage();
@@ -195,13 +195,20 @@ static void CASelectReturned(fd_set *readFds, int ret)
             CAHandleNetlink();
             break;
         }
-        else
+        else if (FD_ISSET(caglobals.ip.shutdownFds[0], readFds))
         {
+            char buf[10] = {0};
+            (void)read(caglobals.ip.shutdownFds[0], buf, sizeof (buf));
             CAInterface_t *ifchanged = CAFindInterfaceChange();
             if (ifchanged)
             {
                 CAProcessNewInterface(ifchanged);
+                OICFree(ifchanged);
             }
+            break;
+        }
+        else
+        {
             break;
         }
 
@@ -214,29 +221,89 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags)
 {
     char recvBuffer[COAP_MAX_PDU_SIZE];
 
+    size_t len;
+    int level, type;
     struct sockaddr_storage srcAddr;
-    socklen_t srcAddrLen = sizeof (srcAddr);
+    unsigned char *pktinfo = NULL;
+    struct msghdr msg = { 0 };
+    struct cmsghdr *cmp;
+    struct iovec iov = { recvBuffer, sizeof (recvBuffer) };
+    union control
+    {
+        struct cmsghdr cmsg;
+        unsigned char data[CMSG_SPACE(sizeof (struct in6_pktinfo))];
+    } cmsg;
 
-    ssize_t recvLen = recvfrom(fd,
-                               recvBuffer,
-                               sizeof (recvBuffer),
-                               0,
-                               (struct sockaddr *)&srcAddr,
-                               &srcAddrLen);
+    if (flags & CA_IPV6)
+    {
+        msg.msg_namelen = sizeof (struct sockaddr_in6);
+        level = IPPROTO_IPV6;
+        type = IPV6_PKTINFO;
+        len = sizeof (struct in6_pktinfo);
+    }
+    else
+    {
+        msg.msg_namelen = sizeof (struct sockaddr_in);
+        level = IPPROTO_IP;
+        type = IP_PKTINFO;
+        len = sizeof (struct in6_pktinfo);
+    }
+
+    msg.msg_name = &srcAddr;
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = &cmsg;
+    msg.msg_controllen = CMSG_SPACE(len);
+
+    ssize_t recvLen = recvmsg(fd, &msg, flags);
     if (-1 == recvLen)
     {
         OIC_LOG_V(ERROR, TAG, "Recvfrom failed %s", strerror(errno));
         return CA_STATUS_FAILED;
     }
 
-    CASecureEndpoint_t sep =
-    {.endpoint = {.adapter = CA_ADAPTER_IP, .flags = flags}};
+    if (flags & CA_MULTICAST)
+    {
+        for (cmp = CMSG_FIRSTHDR(&msg); cmp != NULL; cmp = CMSG_NXTHDR(&msg, cmp))
+        {
+            if (cmp->cmsg_level == level && cmp->cmsg_type == type)
+            {
+                pktinfo = CMSG_DATA(cmp);
+            }
+        }
+    }
+
+    CASecureEndpoint_t sep = {.endpoint = {.adapter = CA_ADAPTER_IP, .flags = flags}};
 
     if (flags & CA_IPV6)
     {
         sep.endpoint.interface = ((struct sockaddr_in6 *)&srcAddr)->sin6_scope_id;
         ((struct sockaddr_in6 *)&srcAddr)->sin6_scope_id = 0;
+
+        if ((flags & CA_MULTICAST) && pktinfo)
+        {
+            struct in6_addr *addr = &(((struct in6_pktinfo *)pktinfo)->ipi6_addr);
+            unsigned char topbits = ((unsigned char *)addr)[0];
+            if (topbits != 0xff)
+            {
+                sep.endpoint.flags &= ~CA_MULTICAST;
+            }
+        }
     }
+    else
+    {
+        if ((flags & CA_MULTICAST) && pktinfo)
+        {
+            struct in_addr *addr = &((struct in_pktinfo *)pktinfo)->ipi_addr;
+            uint32_t host = ntohl(addr->s_addr);
+            unsigned char topbits = ((unsigned char *)&host)[3];
+            if (topbits < 224 || topbits > 239)
+            {
+                sep.endpoint.flags &= ~CA_MULTICAST;
+            }
+        }
+    }
+
     CAConvertAddrToName(&srcAddr, sep.endpoint.addr, &sep.endpoint.port);
 
     if (flags & CA_SECURE)
@@ -294,15 +361,34 @@ static int CACreateSocket(int family, uint16_t *port)
     if (family == AF_INET6)
     {
         int on = 1;
+
         if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof (on)))
         {
             OIC_LOG_V(ERROR, TAG, "IPV6_V6ONLY failed: %s", strerror(errno));
         }
+
+        if (*port)      // only do this for multicast ports
+        {
+            if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on, sizeof (on)))
+            {
+                OIC_LOG_V(ERROR, TAG, "IPV6_RECVPKTINFO failed: %s", strerror(errno));
+            }
+        }
+
         ((struct sockaddr_in6 *)&sa)->sin6_port = htons(*port);
         socklen = sizeof (struct sockaddr_in6);
     }
     else
     {
+        if (*port)      // only do this for multicast ports
+        {
+            int on = 1;
+            if (-1 == setsockopt(fd, IPPROTO_IP, IP_PKTINFO, &on, sizeof (on)))
+            {
+                OIC_LOG_V(ERROR, TAG, "IP_PKTINFO failed: %s", strerror(errno));
+            }
+        }
+
         ((struct sockaddr_in *)&sa)->sin_port = htons(*port);
         socklen = sizeof (struct sockaddr_in);
     }
@@ -459,11 +545,15 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
 
     OIC_LOG_V(DEBUG, TAG,
               "socket summary: u6=%d, u6s=%d, u4=%d, u4s=%d, m6=%d, m6s=%d, m4=%d, m4s=%d",
-                             caglobals.ip.u6.fd, caglobals.ip.u6s.fd,
-                             caglobals.ip.u4.fd, caglobals.ip.u4s.fd,
-                             caglobals.ip.m6.fd, caglobals.ip.m6s.fd,
-                             caglobals.ip.m4.fd, caglobals.ip.m4s.fd);
+              caglobals.ip.u6.fd, caglobals.ip.u6s.fd, caglobals.ip.u4.fd, caglobals.ip.u4s.fd,
+              caglobals.ip.m6.fd, caglobals.ip.m6s.fd, caglobals.ip.m4.fd, caglobals.ip.m4s.fd);
 
+    OIC_LOG_V(DEBUG, TAG,
+              "port summary: u6 port=%d, u6s port=%d, u4 port=%d, u4s port=%d, m6 port=%d,"
+              "m6s port=%d, m4 port=%d, m4s port=%d",
+              caglobals.ip.u6.port, caglobals.ip.u6s.port, caglobals.ip.u4.port,
+              caglobals.ip.u4s.port, caglobals.ip.m6.port, caglobals.ip.m6s.port,
+              caglobals.ip.m4.port, caglobals.ip.m4s.port);
     // create pipe for fast shutdown
     CAInitializePipe();
     CHECKFD(caglobals.ip.shutdownFds[0]);
@@ -474,7 +564,12 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
 
     caglobals.ip.selectTimeout = CAGetPollingInterval(caglobals.ip.selectTimeout);
 
-    CAApplyInterfaces();
+    res = CAIPStartListenServer();
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to start listening server![%d]", res);
+        return res;
+    }
 
     caglobals.ip.terminate = false;
     res = ca_thread_pool_add_task(threadPool, CAReceiveHandler, NULL);
@@ -493,6 +588,7 @@ void CAIPStopServer()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
+    caglobals.ip.started = false;
     caglobals.ip.terminate = true;
 
     if (caglobals.ip.shutdownFds[1] != -1)
@@ -512,7 +608,15 @@ void CAWakeUpForChange()
 {
     if (caglobals.ip.shutdownFds[1] != -1)
     {
-        write(caglobals.ip.shutdownFds[1], "w", 1);
+        ssize_t len = 0;
+        do
+        {
+            len = write(caglobals.ip.shutdownFds[1], "w", 1);
+        } while ((len == -1) && (errno == EINTR));
+        if ((len == -1) && (errno != EINTR) && (errno != EPIPE))
+        {
+            OIC_LOG_V(DEBUG, TAG, "write failed: %s", strerror(errno));
+        }
     }
 }
 
@@ -568,6 +672,7 @@ static void applyMulticastToInterface6(uint32_t interface)
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressSit, interface);
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressOrg, interface);
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressGlb, interface);
+
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressInt, interface);
     applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressLnk, interface);
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressRlm, interface);
@@ -577,13 +682,13 @@ static void applyMulticastToInterface6(uint32_t interface)
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressGlb, interface);
 }
 
-static void CAApplyInterfaces()
+CAResult_t CAIPStartListenServer()
 {
     u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
     if (!iflist)
     {
         OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
-        return;
+        return CA_STATUS_FAILED;
     }
 
     uint32_t len = u_arraylist_length(iflist);
@@ -616,6 +721,53 @@ static void CAApplyInterfaces()
     }
 
     u_arraylist_destroy(iflist);
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAIPStopListenServer()
+{
+    u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
+    if (!iflist)
+    {
+        OIC_LOG_V(ERROR, TAG, "Get interface info failed: %s", strerror(errno));
+        return CA_STATUS_FAILED;
+    }
+
+    uint32_t len = u_arraylist_length(iflist);
+    OIC_LOG_V(DEBUG, TAG, "IP network interfaces found: %d", len);
+
+    for (uint32_t i = 0; i < len; i++)
+    {
+        CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+
+        if (!ifitem)
+        {
+            continue;
+        }
+
+        if ((ifitem->flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
+        {
+            continue;
+        }
+        if (ifitem->family == AF_INET)
+        {
+            close(caglobals.ip.m4.fd);
+            close(caglobals.ip.m4s.fd);
+            caglobals.ip.m4.fd = -1;
+            caglobals.ip.m4s.fd = -1;
+            OIC_LOG_V(DEBUG, TAG, "IPv4 network interface: %s cloed", ifitem->name);
+        }
+        if (ifitem->family == AF_INET6)
+        {
+            close(caglobals.ip.m6.fd);
+            close(caglobals.ip.m6s.fd);
+            caglobals.ip.m6.fd = -1;
+            caglobals.ip.m6s.fd = -1;
+            OIC_LOG_V(DEBUG, TAG, "IPv6 network interface: %s", ifitem->name);
+        }
+    }
+    u_arraylist_destroy(iflist);
+    return CA_STATUS_OK;
 }
 
 static void CAProcessNewInterface(CAInterface_t *ifitem)
@@ -625,7 +777,6 @@ static void CAProcessNewInterface(CAInterface_t *ifitem)
     inaddr.s_addr = ifitem->ipv4addr;
     applyMulticastToInterface4(inaddr);
 }
-
 static void CAHandleNetlink()
 {
 #ifdef __linux__
@@ -735,7 +886,7 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
     }
     else
     {
-        OIC_LOG_V(INFO, TAG, "%s%s %s sendTo is successful: %d bytes", secure, cast, fam, len);
+        OIC_LOG_V(INFO, TAG, "%s%s %s sendTo is successful: %ld bytes", secure, cast, fam, len);
     }
 }
 
@@ -889,8 +1040,14 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     }
 
     uint32_t len = u_arraylist_length(iflist);
+    uint32_t length = len;
 
-    CAEndpoint_t *eps = (CAEndpoint_t *)OICCalloc(len, sizeof (CAEndpoint_t));
+#ifdef __WITH_DTLS__
+    //If DTLS is supported, each interface can support secure port as well
+    length = len * 2;
+#endif
+
+    CAEndpoint_t *eps = (CAEndpoint_t *)OICCalloc(length, sizeof (CAEndpoint_t));
     if (!eps)
     {
         OIC_LOG(ERROR, TAG, "Malloc Failed");
@@ -906,11 +1063,45 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
             continue;
         }
 
-        OICStrcpy(eps[j].addr, CA_INTERFACE_NAME_SIZE, ifitem->name);
-        eps[j].flags = ifitem->family == AF_INET6 ? CA_IPV6 : CA_IPV4;
         eps[j].adapter = CA_ADAPTER_IP;
         eps[j].interface = 0;
-        eps[j].port = 0;
+
+        if (ifitem->family == AF_INET6)
+        {
+            eps[j].flags = CA_IPV6;
+            eps[j].port = caglobals.ip.u6.port;
+        }
+        else
+        {
+            eps[j].flags = CA_IPV4;
+            eps[j].port = caglobals.ip.u4.port;
+
+            unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
+            snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d",
+                     addr[0], addr[1], addr[2], addr[3]);
+        }
+
+#ifdef __WITH_DTLS__
+        j++;
+
+        eps[j].adapter = CA_ADAPTER_IP;
+        eps[j].interface = 0;
+
+        if (ifitem->family == AF_INET6)
+        {
+            eps[j].flags = CA_IPV6 | CA_SECURE;
+            eps[j].port = caglobals.ip.u6s.port;
+        }
+        else
+        {
+            eps[j].flags = CA_IPV4 | CA_SECURE;
+            eps[j].port = caglobals.ip.u4s.port;
+
+            unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
+            snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d",
+                     addr[0], addr[1], addr[2], addr[3]);
+        }
+#endif
         j++;
     }
 
@@ -922,4 +1113,3 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
-

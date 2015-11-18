@@ -21,112 +21,134 @@
 #ifndef PAYLOAD_LOGGING_H_
 #define PAYLOAD_LOGGING_H_
 
+#include "logger.h"
+#ifdef __TIZEN__
+#include <dlog.h>
+#endif
+
+#define __STDC_FORMAT_MACROS
+#define __STDC_LIMIT_MACROS
+#include <inttypes.h>
+#include "rdpayload.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+// PL_TAG is made as generic predefined tag because of build problems in arduino for using logging
+#define PL_TAG "PayloadLog"
+
 #ifdef TB_LOG
-    #define OC_LOG_PAYLOAD(level, tag, payload) OCPayloadLog((level),(tag),(payload))
+    #define OC_LOG_PAYLOAD(level, payload) OCPayloadLog((level),(payload))
     #define UUID_SIZE (16)
-    #define UUID_LENGTH (37)
 const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
-static inline void OCPayloadLogRep(LogLevel level, const char* tag, OCRepPayload* payload)
+static inline void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
 {
-    OC_LOG(level, tag, PCF("Payload Type: Representation"));
+    OC_LOG(level, (PL_TAG), "Payload Type: Representation");
     OCRepPayload* rep = payload;
     int i = 1;
     while(rep)
     {
-        OC_LOG_V(level, tag, "\tResource #%d", i);
-        OC_LOG_V(level, tag, "\tURI:%s", rep->uri);
-        OC_LOG(level, tag, PCF("\tResource Types:"));
+        OC_LOG_V(level, PL_TAG, "\tResource #%d", i);
+        OC_LOG_V(level, PL_TAG, "\tURI:%s", rep->uri);
+        OC_LOG(level, PL_TAG, "\tResource Types:");
         OCStringLL* strll =  rep->types;
         while(strll)
         {
-            OC_LOG_V(level, tag, "\t\t%s", strll->value);
+            OC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
             strll = strll->next;
         }
-        OC_LOG(level, tag, PCF("\tInterfaces:"));
+        OC_LOG(level, PL_TAG, "\tInterfaces:");
         strll =  rep->interfaces;
         while(strll)
         {
-            OC_LOG_V(level, tag, "\t\t%s", strll->value);
+            OC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
             strll = strll->next;
         }
 
         // TODO Finish Logging: Values
         OCRepPayloadValue* val = rep->values;
 
-        OC_LOG(level, tag, PCF("\tValues:"));
+        OC_LOG(level, PL_TAG, "\tValues:");
 
         while(val)
         {
             switch(val->type)
             {
                 case OCREP_PROP_NULL:
-                    OC_LOG_V(level, tag, "\t\t%s: NULL", val->name);
+                    OC_LOG_V(level, PL_TAG, "\t\t%s: NULL", val->name);
                     break;
                 case OCREP_PROP_INT:
-                    OC_LOG_V(level, tag, "\t\t%s(int):%lld", val->name, val->i);
+                    OC_LOG_V(level, PL_TAG, "\t\t%s(int):%zd", val->name, val->i);
                     break;
                 case OCREP_PROP_DOUBLE:
-                    OC_LOG_V(level, tag, "\t\t%s(double):%f", val->name, val->d);
+                    OC_LOG_V(level, PL_TAG, "\t\t%s(double):%f", val->name, val->d);
                     break;
                 case OCREP_PROP_BOOL:
-                    OC_LOG_V(level, tag, "\t\t%s(bool):%s", val->name, val->b ? "true" : "false");
+                    OC_LOG_V(level, PL_TAG, "\t\t%s(bool):%s", val->name, val->b ? "true" : "false");
                     break;
                 case OCREP_PROP_STRING:
-                    OC_LOG_V(level, tag, "\t\t%s(string):%s", val->name, val->str);
+                    OC_LOG_V(level, PL_TAG, "\t\t%s(string):%s", val->name, val->str);
+                    break;
+                case OCREP_PROP_BYTE_STRING:
+                    OC_LOG_V(level, PL_TAG, "\t\t%s(binary):", val->name);
+                    OC_LOG_BUFFER(level, PL_TAG, val->ocByteStr.bytes, val->ocByteStr.len);
                     break;
                 case OCREP_PROP_OBJECT:
                     // Note: Only prints the URI (if available), to print further, you'll
                     // need to dig into the object better!
-                    OC_LOG_V(level, tag, "\t\t%s(OCRep):%s", val->name, val->obj->uri);
+                    OC_LOG_V(level, PL_TAG, "\t\t%s(OCRep):%s", val->name, val->obj->uri);
                     break;
                 case OCREP_PROP_ARRAY:
                     switch(val->arr.type)
                     {
                         case OCREP_PROP_INT:
-                            OC_LOG_V(level, tag, "\t\t%s(int array):%lld x %lld x %lld",
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(int array):%zu x %zu x %zu",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);
                             break;
                         case OCREP_PROP_DOUBLE:
-                            OC_LOG_V(level, tag, "\t\t%s(double array):%lld x %lld x %lld",
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(double array):%zu x %zu x %zu",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);
                             break;
                         case OCREP_PROP_BOOL:
-                            OC_LOG_V(level, tag, "\t\t%s(bool array):%lld x %lld x %lld",
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(bool array):%zu x %zu x %zu",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);
                             break;
                         case OCREP_PROP_STRING:
-                            OC_LOG_V(level, tag, "\t\t%s(string array):%lld x %lld x %lld",
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(string array):%zu x %zu x %zu",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        case OCREP_PROP_BYTE_STRING:
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(byte array):%zu x %zu x %zu",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);
                             break;
                         case OCREP_PROP_OBJECT:
-                            OC_LOG_V(level, tag, "\t\t%s(OCRep array):%lld x %lld x %lld",
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(OCRep array):%zu x %zu x %zu",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);
                             break;
                         default:
-                            OC_LOG_V(ERROR, tag, "\t\t%s <-- Unknown/unsupported array type!",
+                            OC_LOG_V(ERROR, PL_TAG, "\t\t%s <-- Unknown/unsupported array type!",
                                     val->name);
                             break;
                     }
                     break;
                 default:
-                    OC_LOG_V(ERROR, tag, "\t\t%s <-- Unknown type!", val->name);
+                    OC_LOG_V(ERROR, PL_TAG, "\t\t%s <-- Unknown type!", val->name);
                     break;
             }
             val = val -> next;
@@ -138,15 +160,14 @@ static inline void OCPayloadLogRep(LogLevel level, const char* tag, OCRepPayload
 
 }
 
-static inline void OCPayloadLogDiscovery(LogLevel level, const char* tag,
-        OCDiscoveryPayload* payload)
+static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payload)
 {
-    OC_LOG(level, tag, PCF("Payload Type: Discovery"));
+    OC_LOG(level, PL_TAG, "Payload Type: Discovery");
     int i = 1;
 
     if(!payload->resources)
     {
-        OC_LOG(level, tag, PCF("\tNO Resources"));
+        OC_LOG(level, PL_TAG, "\tNO Resources");
         return;
     }
 
@@ -154,112 +175,137 @@ static inline void OCPayloadLogDiscovery(LogLevel level, const char* tag,
 
     while(res)
     {
-        OC_LOG_V(level, tag, "\tResource #%d", i);
-        OC_LOG_V(level, tag, "\tURI:%s", res->uri);
-        OC_LOG(level, tag, PCF("\tSID:"));
-        OC_LOG_BUFFER(level, tag, res->sid, UUID_SIZE);
-        OC_LOG(level, tag, PCF("\tResource Types:"));
+        OC_LOG_V(level, PL_TAG, "\tResource #%d", i);
+        OC_LOG_V(level, PL_TAG, "\tURI:%s", res->uri);
+        OC_LOG(level, PL_TAG, "\tSID:");
+        OC_LOG_BUFFER(level, PL_TAG, res->sid, UUID_SIZE);
+        OC_LOG(level, PL_TAG, "\tResource Types:");
         OCStringLL* strll =  res->types;
         while(strll)
         {
-            OC_LOG_V(level, tag, "\t\t%s", strll->value);
+            OC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
             strll = strll->next;
         }
-        OC_LOG(level, tag, PCF("\tInterfaces:"));
+        OC_LOG(level, PL_TAG, "\tInterfaces:");
         strll =  res->interfaces;
         while(strll)
         {
-            OC_LOG_V(level, tag, "\t\t%s", strll->value);
+            OC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
             strll = strll->next;
         }
 
-        OC_LOG_V(level, tag, "\tBitmap: %u", res->bitmap);
-        OC_LOG_V(level, tag, "\tSecure?: %s", res->secure ? "true" : "false");
-        OC_LOG_V(level, tag, "\tPort: %u", res->port);
-        OC_LOG(level, tag, PCF(""));
+        OC_LOG_V(level, PL_TAG, "\tBitmap: %u", res->bitmap);
+        OC_LOG_V(level, PL_TAG, "\tSecure?: %s", res->secure ? "true" : "false");
+        OC_LOG_V(level, PL_TAG, "\tPort: %u", res->port);
+        OC_LOG(level, PL_TAG, "");
         res = res->next;
         ++i;
     }
 }
 
-static inline void OCPayloadLogDevice(LogLevel level, const char* tag, OCDevicePayload* payload)
+static inline void OCPayloadLogDevice(LogLevel level, OCDevicePayload* payload)
 {
-    OC_LOG(level, tag, PCF("Payload Type: Device"));
-    OC_LOG_V(level, tag, "\tURI:%s", payload->uri);
-    OC_LOG(level, tag, PCF("\tSID:"));
-    OC_LOG_BUFFER(level, tag, payload->sid, UUID_SIZE);
-    OC_LOG_V(level, tag, "\tDevice Name:%s", payload->deviceName);
-    OC_LOG_V(level, tag, "\tSpec Version%s", payload->specVersion);
-    OC_LOG_V(level, tag, "\tData Model Version:%s", payload->dataModelVersion);
+    OC_LOG(level, PL_TAG, "Payload Type: Device");
+    OC_LOG_V(level, PL_TAG, "\tURI:%s", payload->uri);
+    OC_LOG(level, PL_TAG, "\tSID:");
+    OC_LOG_BUFFER(level, PL_TAG, payload->sid, UUID_SIZE);
+    OC_LOG_V(level, PL_TAG, "\tDevice Name:%s", payload->deviceName);
+    OC_LOG_V(level, PL_TAG, "\tSpec Version%s", payload->specVersion);
+    OC_LOG_V(level, PL_TAG, "\tData Model Version:%s", payload->dataModelVersion);
 }
 
-static inline void OCPayloadLogPlatform(LogLevel level, const char* tag, OCPlatformPayload* payload)
+static inline void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* payload)
 {
-    OC_LOG(level, tag, PCF("Payload Type: Platform"));
-    OC_LOG_V(level, tag, "\tURI:%s", payload->uri);
-    OC_LOG_V(level, tag, "\tPlatform ID:%s", payload->info.platformID);
-    OC_LOG_V(level, tag, "\tMfg Name:%s", payload->info.manufacturerName);
-    OC_LOG_V(level, tag, "\tMfg URL:%s", payload->info.manufacturerUrl);
-    OC_LOG_V(level, tag, "\tModel Number:%s", payload->info.modelNumber);
-    OC_LOG_V(level, tag, "\tDate of Mfg:%s", payload->info.dateOfManufacture);
-    OC_LOG_V(level, tag, "\tPlatform Version:%s", payload->info.platformVersion);
-    OC_LOG_V(level, tag, "\tOS Version:%s", payload->info.operatingSystemVersion);
-    OC_LOG_V(level, tag, "\tHardware Version:%s", payload->info.hardwareVersion);
-    OC_LOG_V(level, tag, "\tFirmware Version:%s", payload->info.firmwareVersion);
-    OC_LOG_V(level, tag, "\tSupport URL:%s", payload->info.supportUrl);
-    OC_LOG_V(level, tag, "\tSystem Time:%s", payload->info.systemTime);
+    OC_LOG(level, PL_TAG, "Payload Type: Platform");
+    OC_LOG_V(level, PL_TAG, "\tURI:%s", payload->uri);
+    OC_LOG_V(level, PL_TAG, "\tPlatform ID:%s", payload->info.platformID);
+    OC_LOG_V(level, PL_TAG, "\tMfg Name:%s", payload->info.manufacturerName);
+    OC_LOG_V(level, PL_TAG, "\tMfg URL:%s", payload->info.manufacturerUrl);
+    OC_LOG_V(level, PL_TAG, "\tModel Number:%s", payload->info.modelNumber);
+    OC_LOG_V(level, PL_TAG, "\tDate of Mfg:%s", payload->info.dateOfManufacture);
+    OC_LOG_V(level, PL_TAG, "\tPlatform Version:%s", payload->info.platformVersion);
+    OC_LOG_V(level, PL_TAG, "\tOS Version:%s", payload->info.operatingSystemVersion);
+    OC_LOG_V(level, PL_TAG, "\tHardware Version:%s", payload->info.hardwareVersion);
+    OC_LOG_V(level, PL_TAG, "\tFirmware Version:%s", payload->info.firmwareVersion);
+    OC_LOG_V(level, PL_TAG, "\tSupport URL:%s", payload->info.supportUrl);
+    OC_LOG_V(level, PL_TAG, "\tSystem Time:%s", payload->info.systemTime);
 }
 
-static inline void OCPayloadLogPresence(LogLevel level, const char* tag, OCPresencePayload* payload)
+static inline void OCPayloadLogPresence(LogLevel level, OCPresencePayload* payload)
 {
-    OC_LOG(level, tag, PCF("Payload Type: Presence"));
-    OC_LOG_V(level, tag, "\tSequence Number:%u", payload->sequenceNumber);
-    OC_LOG_V(level, tag, "\tMax Age:%d", payload->maxAge);
-    OC_LOG_V(level, tag, "\tTrigger:%s", convertTriggerEnumToString(payload->trigger));
-    OC_LOG_V(level, tag, "\tResource Type:%s", payload->resourceType);
+    OC_LOG(level, PL_TAG, "Payload Type: Presence");
+    OC_LOG_V(level, PL_TAG, "\tSequence Number:%u", payload->sequenceNumber);
+    OC_LOG_V(level, PL_TAG, "\tMax Age:%d", payload->maxAge);
+    OC_LOG_V(level, PL_TAG, "\tTrigger:%s", convertTriggerEnumToString(payload->trigger));
+    OC_LOG_V(level, PL_TAG, "\tResource Type:%s", payload->resourceType);
 }
 
-static inline void OCPayloadLogSecurity(LogLevel level, const char* tag,
-                                        OCSecurityPayload* payload)
+static inline void OCPayloadLogSecurity(LogLevel level, OCSecurityPayload* payload)
 {
-    OC_LOG(level, tag, PCF("Payload Type: Security"));
-    OC_LOG_V(level, tag, "\tSecurity Data: %s", payload->securityData);
+    OC_LOG(level, PL_TAG, "Payload Type: Security");
+    OC_LOG_V(level, PL_TAG, "\tSecurity Data: %s", payload->securityData);
 }
 
-static inline void OCPayloadLog(LogLevel level, const char* tag, OCPayload* payload)
+static inline void OCRDPayloadLog(const LogLevel level, const OCRDPayload *payload)
+{
+    if (!payload)
+    {
+        return;
+    }
+
+    if (payload->rdDiscovery)
+    {
+        OC_LOG(level, PL_TAG, "RD Discovery");
+        OC_LOG_V(level, PL_TAG, "  Device Name : %s", payload->rdDiscovery->n.deviceName);
+        OC_LOG_V(level, PL_TAG, "  Device Identity : %s", payload->rdDiscovery->di.id);
+        OC_LOG_V(level, PL_TAG, "  Bias: %d", payload->rdDiscovery->sel);
+    }
+    if (payload->rdPublish)
+    {
+        OC_LOG(level, PL_TAG, "RD Publish");
+        OCResourceCollectionPayload *rdPublish = payload->rdPublish;
+        OCTagsLog(level, rdPublish->tags);
+        OCLinksLog(level, rdPublish->setLinks);
+    }
+}
+
+static inline void OCPayloadLog(LogLevel level, OCPayload* payload)
 {
     if(!payload)
     {
-        OC_LOG(level, tag, PCF("NULL Payload"));
+        OC_LOG(level, PL_TAG, "NULL Payload");
         return;
     }
     switch(payload->type)
     {
         case PAYLOAD_TYPE_REPRESENTATION:
-            OCPayloadLogRep(level, tag, (OCRepPayload*)payload);
+            OCPayloadLogRep(level, (OCRepPayload*)payload);
             break;
         case PAYLOAD_TYPE_DISCOVERY:
-            OCPayloadLogDiscovery(level, tag, (OCDiscoveryPayload*)payload);
+            OCPayloadLogDiscovery(level, (OCDiscoveryPayload*)payload);
             break;
         case PAYLOAD_TYPE_DEVICE:
-            OCPayloadLogDevice(level, tag, (OCDevicePayload*)payload);
+            OCPayloadLogDevice(level, (OCDevicePayload*)payload);
             break;
         case PAYLOAD_TYPE_PLATFORM:
-            OCPayloadLogPlatform(level, tag, (OCPlatformPayload*)payload);
+            OCPayloadLogPlatform(level, (OCPlatformPayload*)payload);
             break;
         case PAYLOAD_TYPE_PRESENCE:
-            OCPayloadLogPresence(level, tag, (OCPresencePayload*)payload);
+            OCPayloadLogPresence(level, (OCPresencePayload*)payload);
             break;
         case PAYLOAD_TYPE_SECURITY:
-            OCPayloadLogSecurity(level, tag, (OCSecurityPayload*)payload);
+            OCPayloadLogSecurity(level, (OCSecurityPayload*)payload);
+            break;
+        case PAYLOAD_TYPE_RD:
+            OCRDPayloadLog(level, (OCRDPayload*)payload);
             break;
         default:
-            OC_LOG_V(level, tag, "Unknown Payload Type: %d", payload->type);
+            OC_LOG_V(level, PL_TAG, "Unknown Payload Type: %d", payload->type);
             break;
     }
 }
 #else
-    #define OC_LOG_PAYLOAD(level, tag, payload)
+    #define OC_LOG_PAYLOAD(level, payload)
 #endif
 
 #ifdef __cplusplus

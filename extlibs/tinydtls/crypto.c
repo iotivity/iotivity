@@ -58,6 +58,7 @@
 #include "sha2/sha2.h"
 #include "prng.h"
 #include "netq.h"
+#include "hmac.h"
 
 #ifndef WITH_CONTIKI
 #include <pthread.h>
@@ -329,6 +330,7 @@ dtls_ccm_decrypt(aes128_t *ccm_ctx, const unsigned char *src,
 
 static size_t
 dtls_cbc_encrypt(aes128_t *aes_ctx,
+                 unsigned char *mac_key, size_t mac_keylen,
                  const unsigned char *iv,
                  const unsigned char *src, size_t srclen,
                  unsigned char *buf) {
@@ -336,18 +338,35 @@ dtls_cbc_encrypt(aes128_t *aes_ctx,
     unsigned char cbc[DTLS_BLK_LENGTH];
     unsigned char tmp[DTLS_BLK_LENGTH];
     unsigned char *pos;
-    dtls_hash_ctx shactx;
+    const unsigned char *dtls_hdr = NULL;
     int i, j;
     int blocks;
+    dtls_hmac_context_t* hmac_ctx = NULL;
+    int paddinglen = 0;
 
     pos = buf;
 
-    dtls_hash_init(&shactx);
-    dtls_hash_update(&shactx, src, srclen);
-    dtls_hash_finalize(pos + srclen, &shactx);
+    dtls_hdr = src - DTLS_CBC_IV_LENGTH - sizeof(dtls_record_header_t);
+
+    //Calculate MAC : Append the MAC code to end of content
+    hmac_ctx = dtls_hmac_new(mac_key, mac_keylen);
+    dtls_mac(hmac_ctx,
+             dtls_hdr,
+             src, srclen,
+             buf + srclen);
+    dtls_hmac_free(hmac_ctx);
+    
+    dtls_debug_dump("[MAC]",
+                    buf + srclen,
+                    DTLS_HMAC_DIGEST_SIZE);
+
+    paddinglen = DTLS_BLK_LENGTH - ((srclen + DTLS_HMAC_DIGEST_SIZE) % DTLS_BLK_LENGTH);
+    
+    //TLS padding
+    memset(buf + (srclen + DTLS_HMAC_DIGEST_SIZE), paddinglen - 1, paddinglen);
 
     memcpy(cbc, iv, DTLS_BLK_LENGTH);
-    blocks = (srclen + SHA256_DIGEST_LENGTH) / DTLS_BLK_LENGTH;
+    blocks = (srclen + DTLS_HMAC_DIGEST_SIZE + paddinglen) / DTLS_BLK_LENGTH;
 
     for (i = 0; i < blocks; i++) {
         for (j = 0; j < DTLS_BLK_LENGTH; j++) {
@@ -360,14 +379,17 @@ dtls_cbc_encrypt(aes128_t *aes_ctx,
         pos += DTLS_BLK_LENGTH;
     }
 
-    dtls_debug_dump("Encrypted Data:", buf, srclen + SHA256_DIGEST_LENGTH);
-
-    return srclen + SHA256_DIGEST_LENGTH;
+    dtls_debug_dump("[Encrypted Data]",
+                    buf,
+                    srclen + DTLS_HMAC_DIGEST_SIZE + paddinglen);
+    
+    return srclen + DTLS_HMAC_DIGEST_SIZE + paddinglen;
 }
 
 
 static size_t
 dtls_cbc_decrypt(aes128_t *aes_ctx,
+                 unsigned char *mac_key, size_t mac_keylen,
                  const unsigned char *iv,
                  const unsigned char *src, size_t srclen,
                  unsigned char *buf) {
@@ -375,14 +397,18 @@ dtls_cbc_decrypt(aes128_t *aes_ctx,
     unsigned char cbc[DTLS_BLK_LENGTH];
     unsigned char tmp[DTLS_BLK_LENGTH];
     unsigned char tmp2[DTLS_BLK_LENGTH];
-    unsigned char msg_hash[SHA256_DIGEST_LENGTH];
+    unsigned char mac_buf[DTLS_HMAC_DIGEST_SIZE] = {0,};
+    const unsigned char *dtls_hdr = NULL;
     unsigned char *pos;
-    dtls_hash_ctx shactx;
     int i, j;
     int blocks;
+    int depaddinglen = 0;
+    uint8_t wrongpadding_flag = 0;
+    dtls_hmac_context_t* hmac_ctx = NULL;
 
     pos = buf;
-    memcpy(pos, src, srclen);
+
+    dtls_hdr = src - DTLS_CBC_IV_LENGTH - sizeof(dtls_record_header_t);
 
     memcpy(cbc, iv, DTLS_BLK_LENGTH);
     blocks = srclen / DTLS_BLK_LENGTH;
@@ -401,19 +427,57 @@ dtls_cbc_decrypt(aes128_t *aes_ctx,
         pos += DTLS_BLK_LENGTH;
     }
 
-    dtls_hash_init(&shactx);
-    dtls_hash_update(&shactx, buf, srclen - SHA256_DIGEST_LENGTH);
-    dtls_hash_finalize(msg_hash, &shactx);
+    //de-padding
+    depaddinglen = buf[srclen -1];
 
-    dtls_debug_dump("decrypted data:", buf, srclen);
+    /**
+     * message validation check in case of wrong key.
+     * In case of wrong padding legnth was detected
+     * set depadding length to zero in order to resist the padding oracle attack
+     * and prevent invalid memory access.
+     */
+    if(srclen <= DTLS_HMAC_DIGEST_SIZE + depaddinglen + 1) {
+        depaddinglen = 0;
+        wrongpadding_flag = 1;
+    }
 
-    if(memcmp(msg_hash, buf + (srclen - SHA256_DIGEST_LENGTH), SHA256_DIGEST_LENGTH) != 0)
+    //Calculate MAC
+    hmac_ctx = dtls_hmac_new(mac_key, mac_keylen);
+    if(!hmac_ctx) {
+        return -1;
+    }
+    dtls_mac(hmac_ctx, dtls_hdr, buf,
+             srclen - DTLS_HMAC_DIGEST_SIZE - depaddinglen - 1,
+             mac_buf);
+    dtls_hmac_free(hmac_ctx);
+
+    dtls_debug_dump("[MAC]",
+                    mac_buf,
+                    DTLS_HMAC_DIGEST_SIZE);
+    dtls_debug_dump("[Decrypted data]",
+                    buf,
+                    srclen - DTLS_HMAC_DIGEST_SIZE - depaddinglen - 1);
+
+    //verify the MAC
+    if(memcmp(mac_buf,
+              buf + (srclen - DTLS_HMAC_DIGEST_SIZE - depaddinglen - 1),
+              DTLS_HMAC_DIGEST_SIZE) != 0 || wrongpadding_flag)
     {
-        dtls_warn("message is broken\n");
+        dtls_crit("Failed to verification of MAC\n");
         return -1;
     }
 
-    return srclen - SHA256_DIGEST_LENGTH;
+    //verify the padding bytes
+    for (i =0; i < depaddinglen; i++)
+    {
+        if (buf[srclen - depaddinglen - 1 + i] != depaddinglen)
+        {
+            dtls_crit("Failed to verify padding bytes\n");
+            return -1;
+        }
+    }
+
+    return srclen - DTLS_HMAC_DIGEST_SIZE - depaddinglen - 1;
 }
 
 #ifdef DTLS_PSK
@@ -441,7 +505,7 @@ dtls_psk_pre_master_secret(unsigned char *key, size_t keylen,
 }
 #endif /* DTLS_PSK */
 
-#ifdef DTLS_ECC
+#if defined(DTLS_ECC) || defined(DTLS_X509)
 
 int dtls_ec_key_from_uint32_asn1(const uint32_t *key, size_t key_size,
 				 unsigned char *buf) {
@@ -521,18 +585,25 @@ dtls_ecdsa_generate_key(unsigned char *priv_key,
 /* rfc4492#section-5.4 */
 void
 dtls_ecdsa_create_sig_hash(const unsigned char *priv_key, size_t key_size,
-			   const unsigned char *sign_hash, size_t sign_hash_size,
-			   uint32_t point_r[9], uint32_t point_s[9]) {
-  int ret;
+                           const unsigned char *sign_hash, size_t sign_hash_size,
+                           uint32_t point_r[9], uint32_t point_s[9])
+{
+    uint8_t sign[64];
 
-  uint8_t privateKey[32];
-  uint8_t hashValue[32];
-  uint8_t sign[64];
+    // Check the buffers
+    if (priv_key == NULL || key_size < 32)
+        return 0;
+    if (sign_hash == NULL || sign_hash_size < 32)
+        return 0;
 
+    uECC_sign(priv_key, sign_hash, sign);
 
-  uECC_sign(privateKey, hashValue, sign);
-  memcpy(point_r, sign, 32);
-  memcpy(point_s, sign + 32, 32);
+    int i;
+    for (i = 0; i < 32; i++)
+    {
+        ((uint8_t *) point_r)[i] = sign[31 - i];
+        ((uint8_t *) point_s)[i] = sign[63 - i];
+    }
 }
 
 void
@@ -557,17 +628,30 @@ dtls_ecdsa_create_sig(const unsigned char *priv_key, size_t key_size,
 /* rfc4492#section-5.4 */
 int
 dtls_ecdsa_verify_sig_hash(const unsigned char *pub_key_x,
-			   const unsigned char *pub_key_y, size_t key_size,
-			   const unsigned char *sign_hash, size_t sign_hash_size,
-			   unsigned char *result_r, unsigned char *result_s) {
+                           const unsigned char *pub_key_y, size_t key_size,
+                           const unsigned char *sign_hash, size_t sign_hash_size,
+                           unsigned char *result_r, unsigned char *result_s)
+{
+    uint8_t publicKey[64];
+    uint8_t sign[64];
 
-  uint8_t publicKey[64];
-  uint8_t hashValue[32];
-  uint8_t sign[64];
+    // Check the buffers
+    if (pub_key_x == NULL || pub_key_y == NULL || key_size < 32)
+        return 0;
+    if (sign_hash == NULL || sign_hash_size < 32)
+        return 0;
+    if (result_r == NULL || result_s == NULL)
+        return 0;
 
-  memcpy(publicKey, pub_key_x, 32);
-  memcpy(publicKey + 32, pub_key_y, 32);
-  return uECC_verify(publicKey, hashValue, sign);
+    // Copy the public key into a single buffer
+    memcpy(publicKey, pub_key_x, 32);
+    memcpy(publicKey + 32, pub_key_y, 32);
+
+    // Copy the signature into a single buffer
+    memcpy(sign, result_r, 32);
+    memcpy(sign + 32, result_s, 32);
+
+    return uECC_verify(publicKey, sign_hash, sign);
 }
 
 int
@@ -591,11 +675,47 @@ dtls_ecdsa_verify_sig(const unsigned char *pub_key_x,
 }
 #endif /* DTLS_ECC */
 
+#if defined(DTLS_PSK) && defined(DTLS_ECC)
+int dtls_ecdhe_psk_pre_master_secret(unsigned char *psk, size_t psklen,
+                                     unsigned char *ecc_priv_key,
+                                     unsigned char *ecc_pub_key_x,
+                                     unsigned char *ecc_pub_key_y,
+                                     size_t ecc_key_size,
+                                     unsigned char *result,
+                                     size_t result_len)
+{
+  uint8_t eccPublicKey[64];
+  uint8_t eccPrivateKey[32];
+  unsigned char *p = result;
+
+  if (result_len < uECC_BYTES + psklen + (sizeof(uint16) * 2)) {
+    return -1;
+  }
+
+  dtls_int_to_uint16(p, uECC_BYTES);
+  p += sizeof(uint16);
+
+  memcpy(eccPublicKey, ecc_pub_key_x, 32);
+  memcpy(eccPublicKey + 32, ecc_pub_key_y, 32);
+  memcpy(eccPrivateKey, ecc_priv_key, 32);
+  uECC_shared_secret(eccPublicKey, eccPrivateKey, p);
+  p += uECC_BYTES;
+
+  dtls_int_to_uint16(p, psklen);
+  p += sizeof(uint16);
+
+  memcpy(p, psk, psklen);
+
+  return uECC_BYTES + psklen + (sizeof(uint16) * 2);
+}
+#endif /* defined(DTLS_PSK) && defined(DTLS_ECC) */
+
 int
 dtls_encrypt(const unsigned char *src, size_t length,
 	     unsigned char *buf,
 	     unsigned char *nounce,
-	     unsigned char *key, size_t keylen,
+	     unsigned char *write_key, size_t write_keylen,
+	     unsigned char *mac_key, size_t mac_keylen,
 	     const unsigned char *aad, size_t la,
 	     const dtls_cipher_t cipher)
 {
@@ -604,7 +724,7 @@ dtls_encrypt(const unsigned char *src, size_t length,
 
   if(cipher == TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 ||
      cipher == TLS_PSK_WITH_AES_128_CCM_8) {
-      ret = rijndael_set_key_enc_only(&ctx->data.ctx, key, 8 * keylen);
+      ret = rijndael_set_key_enc_only(&ctx->data.ctx, write_key, 8 * write_keylen);
       if (ret < 0) {
         /* cleanup everything in case the key has the wrong size */
         dtls_warn("cannot set rijndael key\n");
@@ -615,8 +735,9 @@ dtls_encrypt(const unsigned char *src, size_t length,
         memmove(buf, src, length);
       ret = dtls_ccm_encrypt(&ctx->data, src, length, buf, nounce, aad, la);
   }
-  if(cipher == TLS_ECDH_anon_WITH_AES_128_CBC_SHA) {
-      ret = rijndael_set_key(&ctx->data.ctx, key, 8 * keylen);
+  if(cipher == TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 ||
+     cipher == TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256) {
+      ret = rijndael_set_key(&ctx->data.ctx, write_key, 8 * write_keylen);
       if (ret < 0) {
         /* cleanup everything in case the key has the wrong size */
         dtls_warn("cannot set rijndael key\n");
@@ -625,7 +746,7 @@ dtls_encrypt(const unsigned char *src, size_t length,
 
       if (src != buf)
         memmove(buf, src, length);
-      ret = dtls_cbc_encrypt(&ctx->data, nounce, src, length, buf);
+      ret = dtls_cbc_encrypt(&ctx->data, mac_key, mac_keylen, nounce, src, length, buf);
   }
 
 error:
@@ -637,7 +758,8 @@ int
 dtls_decrypt(const unsigned char *src, size_t length,
 	     unsigned char *buf,
 	     unsigned char *nounce,
-	     unsigned char *key, size_t keylen,
+    	     unsigned char *read_key, size_t read_keylen,
+	     unsigned char *mac_key, size_t mac_keylen,
 	     const unsigned char *aad, size_t la,
 	     const dtls_cipher_t cipher)
 {
@@ -646,7 +768,7 @@ dtls_decrypt(const unsigned char *src, size_t length,
 
   if(cipher == TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 ||
      cipher == TLS_PSK_WITH_AES_128_CCM_8) {
-      ret = rijndael_set_key_enc_only(&ctx->data.ctx, key, 8 * keylen);
+      ret = rijndael_set_key_enc_only(&ctx->data.ctx, read_key, 8 * read_keylen);
       if (ret < 0) {
         /* cleanup everything in case the key has the wrong size */
         dtls_warn("cannot set rijndael key\n");
@@ -658,8 +780,9 @@ dtls_decrypt(const unsigned char *src, size_t length,
       ret = dtls_ccm_decrypt(&ctx->data, src, length, buf, nounce, aad, la);
   }
 
-  if(cipher == TLS_ECDH_anon_WITH_AES_128_CBC_SHA) {
-      ret = rijndael_set_key(&ctx->data.ctx, key, 8 * keylen);
+  if(cipher == TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 ||
+     cipher == TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256) {
+      ret = rijndael_set_key(&ctx->data.ctx, read_key, 8 * read_keylen);
       if (ret < 0) {
         /* cleanup everything in case the key has the wrong size */
         dtls_warn("cannot set rijndael key\n");
@@ -668,7 +791,7 @@ dtls_decrypt(const unsigned char *src, size_t length,
 
       if (src != buf)
         memmove(buf, src, length);
-      ret = dtls_cbc_decrypt(&ctx->data, nounce, src, length, buf);
+      ret = dtls_cbc_decrypt(&ctx->data, mac_key, mac_keylen, nounce, src, length, buf);
     }
 
 error:

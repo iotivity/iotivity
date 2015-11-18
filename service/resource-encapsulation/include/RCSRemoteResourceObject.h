@@ -21,7 +21,7 @@
 /**
  * @file
  *
- * This file contains the Resource Client APIs provided to the developers.
+ * This file contains the declaration of classes and its members related to RCSRemoteResourceObject
  */
 
 #ifndef RCSREMOTERESOURCEOBJECT_H
@@ -70,10 +70,11 @@ namespace OIC
 
         /**
          *
-         * The resource can be discovered with discoverResource.
-         * This class is an interaction point between Resource
-         * and the developers. Developer will get the RCSRemoteResourceObject
-         * by calling RCSDiscoveryManager::discoverResource.
+         * This represents a remote resource and provides simple ways to interact with it.
+         * Basically this is a client of a remote resource that runs on other device.
+         *
+         * The class supports features to help get information of a remote resource
+         * such as monitoring and caching.
          *
          * @see RCSDiscoveryManager
          *
@@ -84,33 +85,42 @@ namespace OIC
             typedef std::shared_ptr< RCSRemoteResourceObject > Ptr;
 
             /**
-             * Typedef for callback of startMonitoring API
+             * Callback definition to be invoked when monitoring state is changed.
              *
+             * @see startMonitioring
              * @see ResourceState
              */
             typedef std::function< void(ResourceState) > StateChangedCallback;
 
             /**
-             * Typedef for callback of startCaching API
+             * Callback definition to be invoked when cache is updated.
              *
-             * @see RCSResourceAttributes
+             * @param attrs the updated attributes
              */
-            typedef std::function< void(const RCSResourceAttributes&) > CacheUpdatedCallback;
+            typedef std::function< void(const RCSResourceAttributes& attrs) > CacheUpdatedCallback;
 
             /**
-             * Typedef for callback of getRemoteAttributes API
+             * Callback definition to be invoked when the response of getRemoteAttributes is
+             * received.
              *
-             * @see RCSResourceAttributes
+             * @param attrs the result attributes
+             * @param eCode the error code received from the resource
+             *
+             * @see getRemoteAttributes
              */
-            typedef std::function< void(const RCSResourceAttributes&) >
+            typedef std::function< void(const RCSResourceAttributes& attrs, int eCode) >
                 RemoteAttributesGetCallback;
 
             /**
-             * Typedef for callback of setRemoteAttributes API
+             * Callback definition to be invoked when the response of setRemoteAttributes is
+             * received.
              *
-             * @see RCSResourceAttributes
+             * @param attrs the result attributes
+             * @param eCode the error code received from the resource
+             *
+             * @see setRemoteAttributes
              */
-            typedef std::function< void(const RCSResourceAttributes&) >
+            typedef std::function< void(const RCSResourceAttributes&, int) >
                 RemoteAttributesSetCallback;
 
         private:
@@ -186,7 +196,7 @@ namespace OIC
             /**
              * Starts caching attributes of the resource.
              *
-             * This will start data caching for the resource.
+             * This will start caching for the resource.
              * Once caching started it will look for the data updation on the resource
              * and updates the cache data accordingly.
              *
@@ -242,8 +252,8 @@ namespace OIC
             /**
              * Returns whether cached data is available.
              *
-             * Cache will be available always after CacheState::READY even if current state is
-             * CacheState::LOST_SIGNAL.
+             * Cache will be available always once cache state had been CacheState::READY
+             * even if current state is CacheState::LOST_SIGNAL.
              *
              * @see getCacheState()
              */
@@ -290,7 +300,8 @@ namespace OIC
              * This API send a get request to the resource of interest and provides
              * the attributes to the caller in the RemoteAttributesReceivedCallback.
              *
-             * @throw InvalidParameterException If cb is an empty function or null.
+             * @throws PlatformException If the operation failed
+             * @throws InvalidParameterException If cb is an empty function or null.
              *
              * @see RCSResourceAttributes::Value
              *
@@ -306,7 +317,8 @@ namespace OIC
              * @param attributes Attributes to set
              * @param cb A callback to receive the response.
              *
-             * @throw InvalidParameterException If cb is an empty function or null.
+             * @throws PlatformException If the operation failed
+             * @throws InvalidParameterException If cb is an empty function or null.
              *
              * @see RCSResourceObject
              * @see RCSResourceObject::SetRequestHandlerPolicy

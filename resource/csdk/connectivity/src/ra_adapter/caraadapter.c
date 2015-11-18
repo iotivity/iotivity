@@ -31,9 +31,574 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "ra_xmpp.h"
 #include "caremotehandler.h"
 #include "cacommon.h"
+
+#ifdef RA_ADAPTER_IBB
+#include "caprotocolmessage.h"
+#include "xmpp_helper.h"
+#include "xmpp_utils.h"
+#include "xmpp_ibb.h"
+#include "xmpp_utils.h"
+#else
+#include "ra_xmpp.h"
+#endif
+
+#ifdef RA_ADAPTER_IBB
+#define SET_BUT_NOT_USED(x) (void) x
+/**
+ * Logging tag for module name.
+ */
+#define RA_ADAPTER_TAG "RA_ADAP_IBB"
+
+/**
+ * Network Packet Received Callback to CA.
+ */
+static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
+
+/**
+ * Network Changed Callback to CA.
+ */
+static CANetworkChangeCallback g_networkChangeCallback = NULL;
+
+/**
+ * Holds XMPP data information.
+ */
+#define RA_MAX_HOSTNAME_LENGTH 256
+#define RA_MAX_PASSWORD_LENGTH 64
+typedef struct
+{
+    xmpp_t     *xmpp;
+    int         port;
+    char        hostName[RA_MAX_HOSTNAME_LENGTH];
+    char        password[RA_MAX_PASSWORD_LENGTH];
+    char        jid[CA_RAJABBERID_SIZE];
+    CANetworkStatus_t connectionStatus;
+    CAJidBoundCallback jidBoundCallback;
+} CARAXmppData_t;
+
+static ca_mutex g_raadapterMutex = NULL;
+
+static CARAXmppData_t g_xmppData = {.xmpp = NULL, .port = 5222, .hostName = {0},
+    .password = {0}, .jid = {0}, .connectionStatus = CA_INTERFACE_DOWN,
+    .jidBoundCallback = NULL};
+
+static void CARANotifyNetworkChange(const char *address, CANetworkStatus_t status);
+
+void CARANotifyNetworkChange(const char *address, CANetworkStatus_t status)
+{
+    OIC_LOG(DEBUG, RA_ADAPTER_TAG, "CARANotifyNetworkChange IN");
+
+    g_xmppData.connectionStatus = status;
+
+    CAEndpoint_t *localEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
+                                CA_ADAPTER_REMOTE_ACCESS,
+                                address, 0);
+    if (!localEndpoint)
+    {
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "localEndpoint creation failed!");
+        return;
+    }
+    CANetworkChangeCallback networkChangeCallback = g_networkChangeCallback;
+    if (networkChangeCallback)
+    {
+        networkChangeCallback(localEndpoint, status);
+    }
+    else
+    {
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "g_networkChangeCallback is NULL");
+    }
+
+    CAFreeEndpoint(localEndpoint);
+
+    OIC_LOG(DEBUG, RA_ADAPTER_TAG, "CARANotifyNetworkChange OUT");
+}
+
+#define MAX_IBB_SESSION_ID_LENGTH 32
+/* Ref. octypes.h */
+#define OBSERVE_REGISTER    0
+#define OBSERVE_DEREGISTER  1
+/* Ref. octypes.h */
+
+static ilist_t * g_observerList = NULL;
+
+typedef struct _obs_item_t
+{
+    char sessid[MAX_IBB_SESSION_ID_LENGTH + 1];
+    int  option;
+} obs_item_t;
+
+static bool CARAFindSessID(obs_item_t *item, char *key)
+{
+    if (item == NULL || key == NULL)
+    {
+        return false;
+    }
+    if (strcmp(item->sessid, key) == 0)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+static bool CARAPDUIsRequest(uint32_t x)
+{
+    return (x == CA_GET || x == CA_POST || x == CA_PUT || x == CA_DELETE);
+}
+
+static void CARAUpdateObsList(int option, char *sid)
+{
+    if (option == OBSERVE_REGISTER)
+    {
+        obs_item_t *item = (obs_item_t *) OICMalloc(sizeof(*item));
+        OICStrcpy(item->sessid, sizeof(item->sessid), sid);
+        item->option = OBSERVE_REGISTER;
+        ilist_add(g_observerList, item);
+    }
+    else if (option == OBSERVE_DEREGISTER)
+    {
+        obs_item_t *item = ilist_finditem_func(g_observerList, (find_fp) CARAFindSessID, sid);
+        if (item != NULL)
+        {
+            item->option = OBSERVE_DEREGISTER;
+        }
+    }
+}
+
+static int CARAGetReqObsOption(coap_pdu_t *pdu, const CAEndpoint_t *endPoint)
+{
+    uint32_t obsopt = -1;
+
+    CARequestInfo_t *reqInfo = (CARequestInfo_t *) OICMalloc(sizeof(*reqInfo));
+    VERIFY_NON_NULL_RET(reqInfo, RA_ADAPTER_TAG, "Memory alloc of CARequestInfo_t failed!", -1);
+
+    CAResult_t result = CAGetRequestInfoFromPDU(pdu, endPoint, reqInfo);
+    if (CA_STATUS_OK != result)
+    {
+        OICFree(reqInfo);
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "Get Request Info failed!");
+        return -1;
+    }
+    if (!CARAPDUIsRequest(reqInfo->method))
+    {
+        OICFree(reqInfo);
+        OIC_LOG(DEBUG, RA_ADAPTER_TAG, "It is not a request data.");
+        return -1;
+    }
+
+    uint8_t numOpt = reqInfo->info.numOptions;
+    CAHeaderOption_t *options = reqInfo->info.options;
+    for (uint8_t i = 0; i < numOpt; i++)
+    {
+        if(options[i].protocolID == CA_COAP_ID &&
+                options[i].optionID == COAP_OPTION_OBSERVE)
+        {
+            obsopt = options[i].optionData[0];
+            break;
+        }
+    }
+    OICFree(reqInfo);
+    return obsopt;
+}
+
+static int CARAErrorCB(xmpp_ibb_session_t *sess, xmpperror_t *xerr)
+{
+    OIC_LOG_V(ERROR, RA_ADAPTER_TAG, "%s(): code(%d) tyep'%s' mesg'%s'",
+            __FUNCTION__, xerr->code, xerr->type, xerr->mesg);
+    SET_BUT_NOT_USED(sess);
+    SET_BUT_NOT_USED(xerr);
+    return 0;
+}
+
+static int CARAOpenCB(xmpp_ibb_session_t *sess, char *type)
+{
+    OIC_LOG_V(DEBUG, RA_ADAPTER_TAG, "%s(): set type '%s'", __FUNCTION__, type);
+    SET_BUT_NOT_USED(sess);
+    SET_BUT_NOT_USED(type);
+    return 0;
+}
+
+static int CARACloseCB(xmpp_ibb_session_t *sess, char *type)
+{
+    OIC_LOG_V(DEBUG, RA_ADAPTER_TAG, "%s(): set type '%s'", __FUNCTION__, type);
+    char *sid = xmpp_ibb_get_sid(sess);
+    obs_item_t *item = ilist_finditem_func(g_observerList, (find_fp) CARAFindSessID, sid);
+    if (item != NULL)
+    {
+        ilist_remove(g_observerList, item);
+        OICFree(item);
+    }
+    SET_BUT_NOT_USED(type);
+    return 0;
+}
+
+static char *CARAGetSIDFromPDU(coap_pdu_t *pdu)
+{
+    static char s_sid[MAX_IBB_SESSION_ID_LENGTH + 1] = {0};
+
+    VERIFY_NON_NULL_RET(pdu, RA_ADAPTER_TAG, "Invalid parameter!", NULL);
+
+    if (pdu->hdr->coap_hdr_udp_t.token_length * 2 > MAX_IBB_SESSION_ID_LENGTH)
+    {
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "Token length more than expected!");
+        return NULL;
+    }
+
+    char hex[3] = {0};
+    for (int i = 0; i < pdu->hdr->coap_hdr_udp_t.token_length; i++)
+    {
+        snprintf(hex, 3, "%02x", pdu->hdr->coap_hdr_udp_t.token[i]);
+        OICStrcat(s_sid, sizeof(s_sid), hex);
+    }
+
+    return s_sid;
+}
+
+static int CARARecvCB(xmpp_ibb_session_t *sess, xmppdata_t *xdata)
+{
+    if (xdata == NULL)
+    {
+        /* xdata == NULL, send ack result */
+        return 0;
+    }
+
+    char *msg = xdata->data;
+    char *from = xmpp_ibb_get_remote_jid(sess);
+    if (g_networkPacketCallback)
+    {
+        VERIFY_NON_NULL_RET(from, RA_ADAPTER_TAG, "from sender is NULL", -1);
+        VERIFY_NON_NULL_RET(msg, RA_ADAPTER_TAG, "message is NULL", -1);
+
+        OIC_LOG_V (DEBUG, RA_ADAPTER_TAG, "Message received from %s", from);
+
+        CAEndpoint_t *endPoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
+                        CA_ADAPTER_REMOTE_ACCESS, from, 0);
+        if (!endPoint)
+        {
+            OIC_LOG(ERROR, RA_ADAPTER_TAG, "EndPoint creation failed!");
+            return -1;
+        }
+        uint32_t code = CA_NOT_FOUND;
+        coap_pdu_t *pdu = (coap_pdu_t *) CAParsePDU(xdata->data, xdata->size, &code,
+            endPoint);
+        char *sid = CARAGetSIDFromPDU(pdu);
+        int obsopt = CARAGetReqObsOption(pdu, endPoint);
+        coap_delete_pdu(pdu);
+
+        if (CARAPDUIsRequest(code))
+        {
+            OIC_LOG(DEBUG, RA_ADAPTER_TAG, "this is a request data");
+            if (obsopt == OBSERVE_DEREGISTER || obsopt == OBSERVE_REGISTER)
+            {
+                CARAUpdateObsList(obsopt, sid);
+            }
+        }
+        else
+        {
+            OIC_LOG(DEBUG, RA_ADAPTER_TAG, "this is a response data");
+            obs_item_t *item = ilist_finditem_func(g_observerList, (find_fp) CARAFindSessID, sid);
+            if (item != NULL)
+            {
+                if (item->option == OBSERVE_DEREGISTER)
+                {
+                    xmpp_ibb_close(sess);
+                    ilist_remove(g_observerList, item);
+                    OICFree(item);
+                }
+            }
+            else
+            {
+                xmpp_ibb_close(sess);
+            }
+        }
+
+        void *buf = NULL;
+        xmpp_ibb_userdata_alloc(sess, &buf, xdata->size);
+        if (!buf)
+        {
+            OIC_LOG(ERROR, RA_ADAPTER_TAG, "Memory alloc of message failed!");
+            CAFreeEndpoint(endPoint);
+            return -1;
+        }
+        memcpy(buf, xdata->data, xdata->size);
+        CASecureEndpoint_t sep =
+        {.endpoint = {.adapter = CA_ADAPTER_IP, .flags = CA_DEFAULT_FLAGS}};
+        memcpy(&sep.endpoint, endPoint, sizeof(sep.endpoint));
+        g_networkPacketCallback(&sep, buf, xdata->size);
+
+        CAFreeEndpoint (endPoint);
+    }
+    else
+    {
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "No callback for RA received message found");
+    }
+    return 0;
+}
+
+static int CARAConnHandler(xmpp_t *xmpp, xmppconn_info_t *conninfo, void *udata)
+{
+    if (conninfo->connevent != 0)
+    {
+        OIC_LOG_V(ERROR, RA_ADAPTER_TAG, " status(%d) error(%d) errorType(%d) errorText '%s'\n",
+                conninfo->connevent, conninfo->error, conninfo->errortype,
+                conninfo->errortext);
+        CARANotifyNetworkChange(g_xmppData.jid, CA_INTERFACE_DOWN);
+        return -1;
+    }
+    OIC_LOG_V(DEBUG, RA_ADAPTER_TAG, "Bound JID: '%s'", xmpphelper_get_bound_jid(xmpp));
+    if (g_xmppData.jidBoundCallback != NULL)
+    {
+        g_xmppData.jidBoundCallback((char *) xmpphelper_get_bound_jid(xmpp));
+    }
+    CARANotifyNetworkChange(xmpphelper_get_bound_jid(xmpp), CA_INTERFACE_UP);
+    VERIFY_NON_NULL_RET(udata, RA_ADAPTER_TAG, "Invalid parameter!", 0);
+    return 0;
+}
+
+CAResult_t CAInitializeRA(CARegisterConnectivityCallback registerCallback,
+                                CANetworkPacketReceivedCallback networkPacketCallback,
+                                CANetworkChangeCallback netCallback, ca_thread_pool_t handle)
+{
+    OIC_LOG(DEBUG, RA_ADAPTER_TAG, "CAInitializeRA IN");
+    if (!registerCallback || !networkPacketCallback || !netCallback || !handle)
+    {
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "Invalid parameter!");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    g_networkChangeCallback = netCallback;
+    g_networkPacketCallback = networkPacketCallback;
+
+    CAConnectivityHandler_t raHandler = {
+        .startAdapter = CAStartRA,
+        .startListenServer = CAStartRAListeningServer,
+        .startDiscoveryServer = CAStartRADiscoveryServer,
+        .sendData = CASendRAUnicastData,
+        .sendDataToAll = CASendRAMulticastData,
+        .GetnetInfo = CAGetRAInterfaceInformation,
+        .readData = CAReadRAData,
+        .stopAdapter = CAStopRA,
+        .terminate = CATerminateRA};
+    registerCallback(raHandler, CA_ADAPTER_REMOTE_ACCESS);
+#ifdef NDEBUG
+    xmpp_log_t *log = xmpp_get_default_logger(XMPP_LEVEL_ERROR);
+#else
+    xmpp_log_t *log = xmpp_get_default_logger(XMPP_LEVEL_DEBUG);
+#endif
+    g_xmppData.xmpp = xmpphelper_new(CARAConnHandler, NULL, log, NULL);
+    xmpphelper_force_tls(g_xmppData.xmpp);
+    g_observerList = ilist_new();
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo)
+{
+    if (!caraInfo)
+    {
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "Invalid parameter!");
+        return CA_STATUS_INVALID_PARAM;
+    }
+    if (caraInfo->hostName != NULL)
+    {
+        OICStrcpy(g_xmppData.hostName, sizeof(g_xmppData.hostName), caraInfo->hostName);
+    }
+    else
+    {
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "Invalid parameter!");
+        return CA_STATUS_INVALID_PARAM;
+    }
+    if (caraInfo->userName != NULL && strlen(caraInfo->userName) != 0)
+    {
+        OICStrcpy(g_xmppData.jid, sizeof(g_xmppData.jid), caraInfo->userName);
+    }
+    else
+    {
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "Invalid parameter!");
+        return CA_STATUS_INVALID_PARAM;
+    }
+    if (caraInfo->xmppDomain != NULL && strlen(caraInfo->xmppDomain) != 0)
+    {
+        OICStrcat(g_xmppData.jid, sizeof(g_xmppData.jid), "@");
+        OICStrcat(g_xmppData.jid, sizeof(g_xmppData.jid), caraInfo->xmppDomain);
+        if (caraInfo->resource != NULL && strlen(caraInfo->resource) != 0)
+        {
+            OICStrcat(g_xmppData.jid, sizeof(g_xmppData.jid), "/");
+            OICStrcat(g_xmppData.jid, sizeof(g_xmppData.jid), caraInfo->resource);
+        }
+    }
+    if (caraInfo->password != NULL)
+    {
+        OICStrcpy(g_xmppData.password, sizeof(g_xmppData.password), caraInfo->password);
+    }
+    g_xmppData.port = caraInfo->port;
+    g_xmppData.jidBoundCallback = caraInfo->jidBoundCallback;
+
+    return CA_STATUS_OK;
+}
+
+void CATerminateRA()
+{
+    CAStopRA();
+    ilist_destroy(g_observerList);
+    xmpphelper_join(g_xmppData.xmpp);
+    xmpphelper_release(g_xmppData.xmpp);
+    g_xmppData.xmpp = NULL;
+}
+
+CAResult_t CAStartRA()
+{
+    OIC_LOG(DEBUG, RA_ADAPTER_TAG, PCF("Starting RA adapter"));
+
+    if (!g_xmppData.xmpp)
+    {
+        OIC_LOG (ERROR, RA_ADAPTER_TAG, "CAStartRA(): g_xmppData.xmpp == NULL");
+        return CA_STATUS_FAILED;
+    }
+
+    g_raadapterMutex = ca_mutex_new ();
+    if (!g_raadapterMutex)
+    {
+        OIC_LOG (ERROR, RA_ADAPTER_TAG, PCF("Memory allocation for mutex failed."));
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    ca_mutex_lock (g_raadapterMutex);
+
+    xmpphelper_connect(g_xmppData.xmpp, g_xmppData.hostName, g_xmppData.port,
+                    g_xmppData.jid, g_xmppData.password);
+    xmpp_ibb_reg_funcs_t regfuncs;
+    regfuncs.open_cb = CARAOpenCB;
+    regfuncs.close_cb = CARACloseCB;
+    regfuncs.recv_cb = CARARecvCB;
+    regfuncs.error_cb = CARAErrorCB;
+    xmpp_ibb_register(xmpphelper_get_conn(g_xmppData.xmpp), &regfuncs);
+
+    xmpphelper_run(g_xmppData.xmpp);
+
+    ca_mutex_unlock (g_raadapterMutex);
+
+    OIC_LOG(DEBUG, RA_ADAPTER_TAG, "RA adapter started succesfully");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAStopRA()
+{
+    OIC_LOG(DEBUG, RA_ADAPTER_TAG, PCF("Stopping RA adapter"));
+
+    xmpphelper_stop(g_xmppData.xmpp);
+    xmpp_ibb_unregister(xmpphelper_get_conn(g_xmppData.xmpp));
+    if (!g_raadapterMutex)
+    {
+        ca_mutex_free (g_raadapterMutex);
+        g_raadapterMutex = NULL;
+    }
+    OIC_LOG(DEBUG, RA_ADAPTER_TAG, PCF("Stopped RA adapter successfully"));
+    return CA_STATUS_OK;
+}
+
+int32_t CASendRAUnicastData(const CAEndpoint_t *remoteEndpoint, const void *data,
+                                  uint32_t dataLength)
+{
+    if (!remoteEndpoint || !data)
+    {
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "Invalid parameter!");
+        return -1;
+    }
+
+    if (0 == dataLength)
+    {
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "Data length is 0!");
+        return 0;
+    }
+    OIC_LOG_V(DEBUG, RA_ADAPTER_TAG, "Sending unicast data to %s", remoteEndpoint->addr);
+
+    uint32_t code = CA_NOT_FOUND;
+    coap_pdu_t *pdu = (coap_pdu_t *) CAParsePDU(data, dataLength, &code, remoteEndpoint);
+    char *sid = CARAGetSIDFromPDU(pdu);
+    int obsopt = CARAGetReqObsOption(pdu, remoteEndpoint);
+    coap_delete_pdu(pdu);
+
+    ca_mutex_lock (g_raadapterMutex);
+    if (CA_INTERFACE_UP != g_xmppData.connectionStatus)
+    {
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "Unable to send XMPP message, RA not connected");
+        ca_mutex_unlock (g_raadapterMutex);
+        return -1;
+    }
+
+    xmpp_ibb_session_t *sess = xmpp_ibb_get_session_by_sid(sid);
+    if (sess == NULL)
+    {
+        sess = xmpp_ibb_open(xmpphelper_get_conn(g_xmppData.xmpp), (char * const) remoteEndpoint->addr, sid);
+        if (sess == NULL)
+        {
+            OIC_LOG(ERROR, RA_ADAPTER_TAG, "IBB session establish failed!");
+            ca_mutex_unlock (g_raadapterMutex);
+            return -1;
+        }
+    }
+    if (CARAPDUIsRequest(code))
+    {
+        if (obsopt == OBSERVE_REGISTER || obsopt == OBSERVE_DEREGISTER)
+        {
+            CARAUpdateObsList(obsopt, sid);
+        }
+    }
+    xmppdata_t xdata = {.data = (char *) data, .size = dataLength};
+    int rc = xmpp_ibb_send_data(sess, &xdata);
+    ca_mutex_unlock (g_raadapterMutex);
+    if (rc < 0)
+    {
+        OIC_LOG(ERROR, RA_ADAPTER_TAG, "IBB send data failed!");
+        return -1;
+    }
+
+    OIC_LOG_V(INFO, RA_ADAPTER_TAG, "Successfully dispatched bytes[%d] to addr[%s]",
+            dataLength, remoteEndpoint->addr);
+
+    return dataLength;
+}
+
+CAResult_t CAGetRAInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
+{
+    VERIFY_NON_NULL(info, RA_ADAPTER_TAG, "info is NULL");
+    VERIFY_NON_NULL(size, RA_ADAPTER_TAG, "size is NULL");
+    return CA_STATUS_OK;
+}
+
+int32_t CASendRAMulticastData(const CAEndpoint_t *endpoint,
+                    const void *data, uint32_t dataLength)
+{
+    OIC_LOG(INFO, RA_ADAPTER_TAG, "RA adapter does not support sending multicast data");
+    SET_BUT_NOT_USED(endpoint);
+    SET_BUT_NOT_USED(data);
+    SET_BUT_NOT_USED(dataLength);
+    return 0;
+}
+
+CAResult_t CAStartRAListeningServer()
+{
+    OIC_LOG(INFO, RA_ADAPTER_TAG, "RA adapter does not support listening for multicast data");
+    return CA_NOT_SUPPORTED;
+}
+
+CAResult_t CAStartRADiscoveryServer()
+{
+    OIC_LOG(INFO, RA_ADAPTER_TAG, "RA adapter does not support discovery of multicast servers");
+    return CA_NOT_SUPPORTED;
+}
+
+CAResult_t CAReadRAData()
+{
+    OIC_LOG(INFO, RA_ADAPTER_TAG, "Read data is not implemented for the RA adapter");
+    return CA_NOT_SUPPORTED;
+}
+
+#else /* #ifdef RA_ADAPTER_IBB */
 
 /**
  * Logging tag for module name.
@@ -231,6 +796,7 @@ CAResult_t CAInitializeRA(CARegisterConnectivityCallback registerCallback,
     CAConnectivityHandler_t raHandler = {};
     raHandler.startAdapter = CAStartRA;
     raHandler.startListenServer = CAStartRAListeningServer;
+    raHandler.stopListenServer = CAStopRAListeningServer;
     raHandler.startDiscoveryServer = CAStartRADiscoveryServer;
     raHandler.sendData = CASendRAUnicastData;
     raHandler.sendDataToAll = CASendRAMulticastData;
@@ -411,6 +977,12 @@ CAResult_t CAStartRAListeningServer()
     return CA_NOT_SUPPORTED;
 }
 
+CAResult_t CAStopRAListeningServer()
+{
+    OIC_LOG(INFO, RA_ADAPTER_TAG, "RA adapter does not support listening for multicast data");
+    return CA_NOT_SUPPORTED;
+}
+
 CAResult_t CAStartRADiscoveryServer()
 {
     OIC_LOG(INFO, RA_ADAPTER_TAG, "RA adapter does not support discovery of multicast servers");
@@ -422,3 +994,4 @@ CAResult_t CAReadRAData()
     OIC_LOG(INFO, RA_ADAPTER_TAG, "Read data is not implemented for the RA adapter");
     return CA_NOT_SUPPORTED;
 }
+#endif

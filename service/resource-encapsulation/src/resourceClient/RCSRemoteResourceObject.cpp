@@ -99,20 +99,20 @@ namespace
         return OC_STACK_OK;
     }
 
-    void setCallback(const HeaderOptions&, const ResponseStatement& response, int,
+    void setCallback(const HeaderOptions&, const ResponseStatement& response, int eCode,
             RCSRemoteResourceObject::RemoteAttributesSetCallback onRemoteAttributesSet)
     {
         SCOPE_LOG_F(DEBUG, TAG);
 
-        onRemoteAttributesSet(response.getAttributes());
+        onRemoteAttributesSet(response.getAttributes(), eCode);
     }
 
-    void getCallback(const HeaderOptions&, const ResponseStatement& response, int,
+    void getCallback(const HeaderOptions&, const ResponseStatement& response, int eCode,
             RCSRemoteResourceObject::RemoteAttributesGetCallback onRemoteAttributesReceived)
     {
         SCOPE_LOG_F(DEBUG, TAG);
 
-        onRemoteAttributesReceived(response.getAttributes());
+        onRemoteAttributesReceived(response.getAttributes(), eCode);
     }
 }
 
@@ -157,13 +157,13 @@ namespace OIC
 
             if (!cb)
             {
-                throw InvalidParameterException{ "startMonitoring : Callback is NULL" };
+                throw RCSInvalidParameterException{ "startMonitoring : Callback is NULL" };
             }
 
             if (isMonitoring())
             {
                 OC_LOG(DEBUG, TAG, "startMonitoring : already started");
-                throw BadRequestException{ "Monitoring already started." };
+                throw RCSBadRequestException{ "Monitoring already started." };
             }
 
             m_brokerId = ResourceBroker::getInstance()->hostResource(m_primitiveResource,
@@ -209,7 +209,7 @@ namespace OIC
             if (isCaching())
             {
                 OC_LOG(DEBUG, TAG, "startCaching : already Started");
-                throw BadRequestException{ "Caching already started." };
+                throw RCSBadRequestException{ "Caching already started." };
             }
 
             if (cb)
@@ -271,12 +271,12 @@ namespace OIC
 
             if (!isCaching())
             {
-                throw BadRequestException{ "Caching not started." };
+                throw RCSBadRequestException{ "Caching not started." };
             }
 
             if (!isCachedAvailable())
             {
-                throw BadRequestException{ "Cache data is not available." };
+                throw RCSBadRequestException{ "Cache data is not available." };
             }
 
             return ResourceCacheManager::getInstance()->getCachedData(m_primitiveResource);
@@ -316,7 +316,7 @@ namespace OIC
 
             if (!cb)
             {
-                throw InvalidParameterException{ "getRemoteAttributes : Callback is empty" };
+                throw RCSInvalidParameterException{ "getRemoteAttributes : Callback is empty" };
             }
 
             m_primitiveResource->requestGet(
@@ -331,7 +331,7 @@ namespace OIC
 
             if (!cb)
             {
-                throw InvalidParameterException{ "setRemoteAttributes : Callback is empty" };
+                throw RCSInvalidParameterException{ "setRemoteAttributes : Callback is empty" };
             }
 
             m_primitiveResource->requestSet(attribute,

@@ -341,6 +341,7 @@ void SendRequest()
     if (res != CA_STATUS_OK || (!token))
     {
         Serial.println("token error");
+        CADestroyEndpoint(endpoint);
         return;
     }
 
@@ -425,6 +426,7 @@ void SendRequestAll()
     if (res != CA_STATUS_OK || (!token))
     {
         Serial.println("token error");
+        CADestroyEndpoint(endpoint);
         return;
     }
 
@@ -508,23 +510,24 @@ void SendNotification()
     if (res != CA_STATUS_OK || (!token))
     {
         Serial.println("token error");
+        CADestroyEndpoint(endpoint);
         return;
     }
 
-    CAInfo_t respondData = {CA_MSG_NONCONFIRM};
-    respondData.token = token;
-    respondData.tokenLength = tokenLength;
-    respondData.payload = (CAPayload_t)"Notification Data";
-    respondData.payloadSize = strlen((const char *) respondData.payload);
-    respondData.resourceUri = (char *)OICMalloc(strlen(resourceUri) + 1);
-    strcpy(respondData.resourceUri, resourceUri);
+    CAInfo_t requestData = {CA_MSG_NONCONFIRM};
+    requestData.token = token;
+    requestData.tokenLength = tokenLength;
+    requestData.payload = (CAPayload_t)"Notification Data";
+    requestData.payloadSize = strlen((const char *) requestData.payload);
+    requestData.resourceUri = (char *)OICMalloc(strlen(resourceUri) + 1);
+    strcpy(requestData.resourceUri, resourceUri);
 
-    CAResponseInfo_t responseInfo = {CA_BAD_REQ, {CA_MSG_RESET}};
-    responseInfo.result = CA_CONTENT;
-    responseInfo.info = respondData;
+    CARequestInfo_t requestInfo = {CA_GET, {CA_MSG_RESET}};
+    requestInfo.method = CA_GET;
+    requestInfo.info = requestData;
 
     // send request
-    CASendNotification(endpoint, &responseInfo);
+    CASendRequest(endpoint, &requestInfo);
     // destroy remote endpoint
     if (NULL != endpoint)
     {
@@ -811,7 +814,6 @@ void SendResponse(CAEndpoint_t *endpoint, const CAInfo_t* info)
         Serial.println("============");
         Serial.println("Enter Resp Code:");
         Serial.println("For Ex: Empty  : 0");
-        Serial.println("Success: 200");
         Serial.println("Created: 201");
         Serial.println("Deleted: 202");
         Serial.println("Valid  : 203");

@@ -19,19 +19,20 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "UnitTestHelper.h"
+
 #include "RCSRemoteResourceObject.h"
 #include "RCSDiscoveryManager.h"
 #include "RCSResourceObject.h"
-#include "PrimitiveResource.h"
-#include <condition_variable>
+#include "RCSAddress.h"
 
+#include <condition_variable>
 #include <mutex>
 
 using namespace OIC::Service;
 using namespace OC;
 
 constexpr char RESOURCEURI[]{ "/a/TemperatureSensor" };
-constexpr char RESOURCETYPE[]{ "Resource.Hosting" };
+constexpr char RESOURCETYPE[]{ "resource.type" };
 constexpr char RESOURCEINTERFACE[]{ "oic.if.baseline" };
 
 constexpr char ATTR_KEY[]{ "Temperature" };
@@ -39,8 +40,8 @@ constexpr int ATTR_VALUE{ 0 };
 
 constexpr int DEFAULT_WAITING_TIME_IN_MILLIS = 3000;
 
-void getRemoteAttributesCallback(const RCSResourceAttributes&) {}
-void setRemoteAttributesCallback(const RCSResourceAttributes&) {}
+void getRemoteAttributesCallback(const RCSResourceAttributes&, int) {}
+void setRemoteAttributesCallback(const RCSResourceAttributes&, int) {}
 void resourceStateChanged(ResourceState) { }
 void cacheUpdatedCallback(const RCSResourceAttributes&) {}
 
@@ -49,7 +50,6 @@ class RemoteResourceObjectTest: public TestWithMock
 public:
     RCSResourceObject::Ptr server;
     RCSRemoteResourceObject::Ptr object;
-    std::shared_ptr< bool > finished;
 
 public:
     void Proceed()
@@ -68,11 +68,11 @@ protected:
     {
         TestWithMock::SetUp();
 
-        finished = std::make_shared< bool >(false);
-
         CreateResource();
 
         WaitUntilDiscovered();
+
+        ASSERT_NE(object, nullptr);
     }
 
     void TearDown()
@@ -81,8 +81,6 @@ protected:
 
         // This method is to make sure objects disposed.
         WaitForPtrBeingUnique();
-
-        *finished = true;
     }
 
 private:
@@ -92,21 +90,15 @@ private:
         server->setAttribute(ATTR_KEY, ATTR_VALUE);
     }
 
-    bool checkObject()
-    {
-        std::lock_guard<std::mutex> lock{ mutexForObject };
-        return object == nullptr;
-    }
-
     void WaitUntilDiscovered()
     {
-        while (checkObject())
+        for (int i=0; i<10 && !object; ++i)
         {
             const std::string uri  = "/oic/res";
-            const std::string type = "Resource.Hosting";
-            RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
-                     uri, type, std::bind(resourceDiscovered, this, finished,
-                           std::placeholders::_1));
+            auto discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
+                    RCSAddress::multicast(), uri, RESOURCETYPE,
+                    std::bind(&RemoteResourceObjectTest::resourceDiscovered, this,
+                            std::placeholders::_1));
             Wait(1000);
         }
     }
@@ -119,43 +111,32 @@ private:
         }
     }
 
-    // This callback is to protect crash from crashes caused by delayed callbacks
-    static void resourceDiscovered(RemoteResourceObjectTest* test,
-            std::shared_ptr< bool > finished, RCSRemoteResourceObject::Ptr resourceObject)
+    void resourceDiscovered(RCSRemoteResourceObject::Ptr resourceObject)
     {
-        if (*finished) return;
+        object = resourceObject;
 
-        {
-            std::lock_guard< std::mutex > lock{ test->mutexForObject };
-
-            if (test->object) return;
-
-            test->object = resourceObject;
-        }
-
-        test->Proceed();
+        Proceed();
     }
 
 private:
     std::condition_variable cond;
     std::mutex mutex;
-    std::mutex mutexForObject;
 };
 
 TEST_F(RemoteResourceObjectTest, GetRemoteAttributesDoesNotAllowEmptyFunction)
 {
-    ASSERT_THROW(object->getRemoteAttributes({ }), InvalidParameterException);
+    ASSERT_THROW(object->getRemoteAttributes({ }), RCSInvalidParameterException);
 }
 
 TEST_F(RemoteResourceObjectTest, GetRemoteAttributesGetsAttributesOfServer)
 {
     mocks.ExpectCallFunc(getRemoteAttributesCallback).Match(
-            [this](const RCSResourceAttributes& attrs)
+            [this](const RCSResourceAttributes& attrs, int)
             {
                 RCSResourceObject::LockGuard lock{ server };
                 return attrs == server->getAttributes();
             }
-    ).Do([this](const RCSResourceAttributes&){ Proceed(); });
+    ).Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
     object->getRemoteAttributes(getRemoteAttributesCallback);
 
@@ -164,7 +145,7 @@ TEST_F(RemoteResourceObjectTest, GetRemoteAttributesGetsAttributesOfServer)
 
 TEST_F(RemoteResourceObjectTest, SetRemoteAttributesDoesNotAllowEmptyFunction)
 {
-    ASSERT_THROW(object->setRemoteAttributes({ }, { }), InvalidParameterException);
+    ASSERT_THROW(object->setRemoteAttributes({ }, { }), RCSInvalidParameterException);
 }
 
 TEST_F(RemoteResourceObjectTest, SetRemoteAttributesSetsAttributesOfServer)
@@ -174,7 +155,7 @@ TEST_F(RemoteResourceObjectTest, SetRemoteAttributesSetsAttributesOfServer)
     newAttrs[ATTR_KEY] = newValue;
 
     mocks.ExpectCallFunc(setRemoteAttributesCallback).
-            Do([this](const RCSResourceAttributes&){ Proceed(); });
+            Do([this](const RCSResourceAttributes&, int){ Proceed(); });
 
     object->setRemoteAttributes(newAttrs, setRemoteAttributesCallback);
     Wait();
@@ -189,7 +170,7 @@ TEST_F(RemoteResourceObjectTest, MonitoringIsNotStartedByDefault)
 
 TEST_F(RemoteResourceObjectTest, StartMonitoringThrowsIfFunctionIsEmpty)
 {
-    ASSERT_THROW(object->startMonitoring({ }), InvalidParameterException);
+    ASSERT_THROW(object->startMonitoring({ }), RCSInvalidParameterException);
 }
 
 TEST_F(RemoteResourceObjectTest, IsMonitoringReturnsTrueAfterStartMonitoring)
@@ -203,7 +184,7 @@ TEST_F(RemoteResourceObjectTest, StartMonitoringThrowsIfTryingToStartAgain)
 {
     object->startMonitoring(resourceStateChanged);
 
-    ASSERT_THROW(object->startMonitoring(resourceStateChanged), BadRequestException);
+    ASSERT_THROW(object->startMonitoring(resourceStateChanged), RCSBadRequestException);
 }
 
 TEST_F(RemoteResourceObjectTest, DefaultStateIsNone)
@@ -227,7 +208,7 @@ TEST_F(RemoteResourceObjectTest, StartCachingThrowsIfTryingToStartAgain)
 {
     object->startCaching(cacheUpdatedCallback);
 
-    ASSERT_THROW(object->startCaching(), BadRequestException);
+    ASSERT_THROW(object->startCaching(), RCSBadRequestException);
 }
 
 TEST_F(RemoteResourceObjectTest, DefaultCacheStateIsNone)
@@ -301,7 +282,7 @@ TEST_F(RemoteResourceObjectTest, DISABLED_CacheUpdatedCallbackBeCalledWithUpdate
 
 TEST_F(RemoteResourceObjectTest, GetCachedAttributesThrowsIfCachingIsNotStarted)
 {
-    ASSERT_THROW(object->getCachedAttributes(), BadRequestException);
+    ASSERT_THROW(object->getCachedAttributes(), RCSBadRequestException);
 }
 
 TEST_F(RemoteResourceObjectTest, CachedAttributesHasSameAttributesWithServer)
@@ -318,7 +299,7 @@ TEST_F(RemoteResourceObjectTest, CachedAttributesHasSameAttributesWithServer)
 
 TEST_F(RemoteResourceObjectTest, GetCachedAttributeThrowsIfCachingIsNotStarted)
 {
-    ASSERT_THROW(object->getCachedAttribute(ATTR_KEY), BadRequestException);
+    ASSERT_THROW(object->getCachedAttribute(ATTR_KEY), RCSBadRequestException);
 }
 
 TEST_F(RemoteResourceObjectTest, GetCachedAttributeThrowsIfKeyIsInvalid)
@@ -328,7 +309,7 @@ TEST_F(RemoteResourceObjectTest, GetCachedAttributeThrowsIfKeyIsInvalid)
     object->startCaching(cacheUpdatedCallback);
     Wait();
 
-    ASSERT_THROW(object->getCachedAttribute(""), InvalidKeyException);
+    ASSERT_THROW(object->getCachedAttribute(""), RCSInvalidKeyException);
 }
 
 TEST_F(RemoteResourceObjectTest, HasSameUriWithServer)

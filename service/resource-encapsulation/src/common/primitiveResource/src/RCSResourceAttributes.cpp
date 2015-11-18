@@ -18,22 +18,24 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <RCSResourceAttributes.h>
+#include "RCSResourceAttributes.h"
 
-#include <ResourceAttributesUtils.h>
-#include <ResourceAttributesConverter.h>
+#include <sstream>
 
-#include <boost/lexical_cast.hpp>
-#include <boost/mpl/advance.hpp>
-#include <boost/mpl/size.hpp>
-#include <boost/mpl/deref.hpp>
+#include "ResourceAttributesUtils.h"
+#include "ResourceAttributesConverter.h"
+
+#include "boost/lexical_cast.hpp"
+#include "boost/mpl/advance.hpp"
+#include "boost/mpl/size.hpp"
+#include "boost/mpl/deref.hpp"
 
 namespace
 {
 
     using namespace OIC::Service;
 
-    class ToStringVisitor: public boost::static_visitor< std::string >
+    class ToStringVisitor: public boost::static_visitor<>
     {
     public:
         ToStringVisitor() = default;
@@ -43,31 +45,56 @@ namespace
         ToStringVisitor& operator=(const ToStringVisitor&) = delete;
         ToStringVisitor& operator=(ToStringVisitor&&) = delete;
 
-        template < typename T >
-        std::string operator()(const T& value) const
+        template< typename T >
+        void operator()(const T& value)
         {
-            return boost::lexical_cast<std::string>(value);
+            m_stream << boost::lexical_cast< std::string >(value);
         }
 
-        std::string operator()(std::nullptr_t) const
+        template< typename T >
+        void operator()(const std::vector< T >& v)
         {
-            return "";
+            m_stream << "[";
+            for (auto it = v.begin(); it != v.end(); ++it)
+            {
+                if (it != v.begin()) m_stream << ", ";
+                (*this)(*it);
+            }
+            m_stream << "]";
         }
 
-        std::string operator()(bool value) const
+        void operator()(std::nullptr_t)
         {
-            return value ? "true" : "false";
+            m_stream << "";
         }
 
-        std::string operator()(const std::string& value) const
+        void operator()(bool value)
         {
-            return value;
+            m_stream << (value ? "true" : "false");
         }
 
-        std::string operator()(const OIC::Service::RCSResourceAttributes&) const
+        void operator()(const std::string& value)
         {
-            return "Attributes";
+            m_stream << "\"" + value + "\"";
         }
+
+        void operator()(const RCSResourceAttributes& attrs)
+        {
+            m_stream << "{";
+            for (auto it = attrs.begin(); it != attrs.end(); ++it)
+            {
+                if (it != attrs.begin()) m_stream << ", ";
+                m_stream << "\"" << it->key() << "\" : " << it->value().toString();
+            }
+            m_stream << "}";
+        }
+
+        std::string get() const {
+            return m_stream.str();
+        }
+
+    private:
+        std::ostringstream m_stream;
     };
 
     class TypeVisitor: public boost::static_visitor< RCSResourceAttributes::Type >
@@ -134,33 +161,54 @@ namespace
                 RCSResourceAttributes::TypeId::ATTRIBUTES;
     };
 
+    template< typename T >
+    struct TypeInfoConverter< std::vector< T > >
+    {
+        static constexpr RCSResourceAttributes::TypeId typeId =
+                RCSResourceAttributes::TypeId::VECTOR;
+    };
+
+    template< typename T >
+    struct SequenceTraits
+    {
+        static constexpr size_t depth = 0;
+        typedef T base_type;
+    };
+
+    template< typename T >
+    struct SequenceTraits< std::vector< T > >
+    {
+        static constexpr size_t depth = SequenceTraits< T >::depth + 1;
+        typedef typename SequenceTraits< T >::base_type base_type;
+    };
+
     struct TypeInfo
     {
-        RCSResourceAttributes::TypeId typeId;
+        RCSResourceAttributes::TypeId m_typeId;
+        RCSResourceAttributes::Type m_baseType;
+        size_t m_depth;
 
-        template< typename TRAIT >
-        constexpr TypeInfo(TRAIT) :
-                typeId{ TRAIT::typeId }
+        template< typename T, typename ST = SequenceTraits < T > >
+        constexpr static TypeInfo get()
         {
+            return { TypeInfoConverter< T >::typeId ,
+                    RCSResourceAttributes::Type::typeOf< typename ST::base_type >(), ST::depth };
         }
 
         template< typename VARIANT, int POS >
-        static constexpr TypeInfo get()
+        constexpr static TypeInfo get()
         {
-            return TypeInfo(TypeInfoConverter<
-                        typename boost::mpl::deref<
-                            typename boost::mpl::advance<
-                                typename boost::mpl::begin< typename VARIANT::types>::type,
-                                boost::mpl::int_< POS >
-                            >::type
-                        >::type >{ });
+            typedef typename boost::mpl::begin< typename VARIANT::types >::type mpl_begin;
+            typedef typename boost::mpl::advance< mpl_begin, boost::mpl::int_< POS > >::type iter;
+
+            return get< typename boost::mpl::deref< iter >::type >();
         }
     };
 
     template< typename VARIANT, int POS >
     constexpr inline std::vector< TypeInfo > getTypeInfo(Int2Type< POS >) noexcept
     {
-        auto&& vec = getTypeInfo< VARIANT >(Int2Type< POS - 1 >{ });
+        auto vec = getTypeInfo< VARIANT >(Int2Type< POS - 1 >{ });
         vec.push_back(TypeInfo::get< VARIANT, POS >());
         return vec;
     }
@@ -174,9 +222,12 @@ namespace
     template< typename VARIANT >
     inline TypeInfo getTypeInfo(int which) noexcept
     {
-        static constexpr int variantEnd = boost::mpl::size< typename VARIANT::types >::value - 1;
+        static constexpr size_t variantSize = boost::mpl::size< typename VARIANT::types >::value;
+        static constexpr size_t variantEnd = variantSize - 1;
         static const std::vector< TypeInfo > typeInfos = getTypeInfo< VARIANT >(
                 Int2Type< variantEnd >{ });
+
+        static_assert(variantSize > 0, "Variant has no type!");
 
         return typeInfos[which];
     }
@@ -236,8 +287,19 @@ namespace OIC
 
         auto RCSResourceAttributes::Type::getId() const noexcept -> TypeId
         {
-            return ::getTypeInfo< ValueVariant >(m_which).typeId;
+            return ::getTypeInfo< ValueVariant >(m_which).m_typeId;
         }
+
+        auto RCSResourceAttributes::Type::getBaseTypeId(const Type& t) noexcept -> TypeId
+        {
+            return ::getTypeInfo< ValueVariant >(t.m_which).m_baseType.getId();
+        }
+
+        size_t RCSResourceAttributes::Type::getDepth(const Type& t) noexcept
+        {
+            return ::getTypeInfo< ValueVariant >(t.m_which).m_depth;
+        }
+
 
         RCSResourceAttributes::Value::Value() :
                 m_data{ new ValueVariant{} }
@@ -292,7 +354,9 @@ namespace OIC
 
         std::string RCSResourceAttributes::Value::toString() const
         {
-            return boost::apply_visitor(ToStringVisitor(), *m_data);
+            ToStringVisitor visitor;
+            boost::apply_visitor(visitor, *m_data);
+            return visitor.get();
         }
 
         void RCSResourceAttributes::Value::swap(Value& rhs) noexcept
@@ -322,7 +386,7 @@ namespace OIC
                 -> result_type
         {
             // should not reach here.
-            throw BadGetException("");
+            throw RCSBadGetException("");
         }
 
         auto RCSResourceAttributes::KeyValuePair::ConstValueVisitor::operator()(
@@ -510,7 +574,7 @@ namespace OIC
             }
             catch (const std::out_of_range&)
             {
-                throw InvalidKeyException{ "No attribute named '" + key + "'" };
+                throw RCSInvalidKeyException{ "No attribute named '" + key + "'" };
             }
         }
 
@@ -522,7 +586,7 @@ namespace OIC
             }
             catch (const std::out_of_range&)
             {
-                throw InvalidKeyException{ "No attribute named '" + key + "'" };
+                throw RCSInvalidKeyException{ "No attribute named '" + key + "'" };
             }
         }
 

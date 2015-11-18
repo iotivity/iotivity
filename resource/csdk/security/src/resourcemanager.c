@@ -24,13 +24,19 @@
 #include "pstatresource.h"
 #include "doxmresource.h"
 #include "credresource.h"
+#include "svcresource.h"
+#include "amaclresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
 #include "utlist.h"
 #include <string.h>
 
-#define TAG PCF("SRM-RM")
+#define TAG "SRM-RM"
+
+#ifdef __WITH_X509__
+#include "crlresource.h"
+#endif // __WITH_X509__
 
 /**
  * This method is used by all secure resource modules to send responses to REST queries.
@@ -44,8 +50,8 @@
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, const char *rspPayload)
 {
-    OC_LOG (INFO, TAG, PCF("SRM sending SRM response"));
-    OCEntityHandlerResponse response = {0};
+    OC_LOG (DEBUG, TAG, "SRM sending SRM response");
+    OCEntityHandlerResponse response = {.requestHandle = NULL};
     if (ehRequest)
     {
         OCSecurityPayload ocPayload = {.base = {.type = PAYLOAD_TYPE_INVALID}};
@@ -91,6 +97,20 @@ OCStackResult InitSecureResources( )
     {
         ret = InitCredResource();
     }
+#ifdef __WITH_X509__
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitCRLResource();
+    }
+#endif // __WITH_X509__
+    if(OC_STACK_OK == ret)
+    {
+        ret = InitSVCResource();
+	}
+	if(OC_STACK_OK == ret)
+    {
+        ret = InitAmaclResource();
+    }
     if(OC_STACK_OK != ret)
     {
         //TODO: Update the default behavior if one of the SVR fails
@@ -110,6 +130,11 @@ OCStackResult DestroySecureResources( )
     DeInitCredResource();
     DeInitDoxmResource();
     DeInitPstatResource();
+#ifdef __WITH_X509__
+    DeInitCRLResource();
+#endif // __WITH_X509__
+    DeInitSVCResource();
+    DeInitAmaclResource();
 
     return OC_STACK_OK;
 }

@@ -27,7 +27,7 @@ namespace OIC
     {
         DevicePresence::DevicePresence()
         {
-            state = DEVICE_STATE::REQUESTED;
+            setDeviceState(DEVICE_STATE::REQUESTED);
 
             presenceTimerHandle = 0;
             isRunningTimeOut = false;
@@ -60,7 +60,7 @@ namespace OIC
                 OC_LOG_V(DEBUG, BROKER_TAG, "subscribe Presence");
                 presenceSubscriber
                 = PresenceSubscriber(address, BROKER_TRANSPORT, pSubscribeRequestCB);
-            } catch(PlatformException &e)
+            } catch(RCSPlatformException &e)
             {
                 OC_LOG_V(DEBUG, BROKER_TAG,
                         "exception in subscribe Presence %s", e.getReason().c_str());
@@ -69,10 +69,17 @@ namespace OIC
             presenceTimerHandle
             = presenceTimer.post(BROKER_DEVICE_PRESENCE_TIMEROUT, pTimeoutCB);
         }
-        DEVICE_STATE DevicePresence::getDeviceState() const
+
+        DEVICE_STATE DevicePresence::getDeviceState() const noexcept
         {
-            return state;
+            return static_cast< DEVICE_STATE >(state.load());
         }
+
+        void DevicePresence::setDeviceState(DEVICE_STATE newState)
+        {
+            state = static_cast< int >(newState);
+        }
+
         const std::string DevicePresence::getAddress() const
         {
             OC_LOG_V(DEBUG, BROKER_TAG, "getAddress()");
@@ -130,9 +137,9 @@ namespace OIC
                 case OC_STACK_CONTINUE:
                 {
                     OC_LOG_V(DEBUG, BROKER_TAG, "SEQ# %d",seq);
-                    state = DEVICE_STATE::ALIVE;
+                    setDeviceState(DEVICE_STATE::ALIVE);
                     OC_LOG_V(DEBUG, BROKER_TAG, "device state : %d",
-                            (int)(state.load(boost::memory_order_consume)));
+                            (int)getDeviceState());
                     changeAllPresenceMode(BROKER_MODE::DEVICE_PRESENCE_MODE);
                     presenceTimerHandle
                     = presenceTimer.post(BROKER_DEVICE_PRESENCE_TIMEROUT, pTimeoutCB);
@@ -146,14 +153,14 @@ namespace OIC
                 case OC_STACK_PRESENCE_TIMEOUT:
                 case OC_STACK_PRESENCE_DO_NOT_HANDLE:
                 {
-                    state = DEVICE_STATE::LOST_SIGNAL;
+                    setDeviceState(DEVICE_STATE::LOST_SIGNAL);
                     changeAllPresenceMode(BROKER_MODE::NON_PRESENCE_MODE);
                     break;
                 }
                 default:
                 {
                     OC_LOG_V(DEBUG, BROKER_TAG, "Presence Lost Signal because unknown type");
-                    state = DEVICE_STATE::LOST_SIGNAL;
+                    setDeviceState(DEVICE_STATE::LOST_SIGNAL);
                     changeAllPresenceMode(BROKER_MODE::NON_PRESENCE_MODE);
                     break;
                 }
@@ -168,7 +175,7 @@ namespace OIC
 
             OC_LOG_V(DEBUG, BROKER_TAG,
                     "Timeout execution. will be discard after receiving cb message");
-            state = DEVICE_STATE::LOST_SIGNAL;
+            setDeviceState(DEVICE_STATE::LOST_SIGNAL);
             changeAllPresenceMode(BROKER_MODE::NON_PRESENCE_MODE);
 
             isRunningTimeOut = false;

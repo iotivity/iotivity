@@ -31,59 +31,62 @@ import org.iotivity.base.OcResourceRequest;
 import org.iotivity.base.OcResourceResponse;
 import org.iotivity.base.RequestHandlerFlag;
 import org.iotivity.base.RequestType;
-import org.iotivity.service.tm.IConfigurationListener;
-import org.iotivity.service.tm.IDiagnosticsListener;
 import org.iotivity.service.tm.OCStackResult;
-import org.iotivity.service.tm.ThingsManager;
+import org.iotivity.service.tm.GroupManager;
+import org.iotivity.service.tm.ThingsConfiguration;
+import org.iotivity.service.tm.ThingsConfiguration.*;
+import org.iotivity.service.tm.ThingsMaintenance;
+import org.iotivity.service.tm.ThingsMaintenance.*;
 
 import android.os.Message;
 import android.util.Log;
 
 /*
- * For Creating the Resources [configurtion, Diagnostic & FactoryRest]  &
+ * For Creating the Resources [configuration, Maintenance & FactoryRest]  &
  * for Handling of the Client's Request
  */
-public class ConfigurationServer implements IDiagnosticsListener,
-        IConfigurationListener, OcPlatform.EntityHandler {
-    private final String          LOG_TAG            = "[CON-SERVER]"
-                                                             + this.getClass()
-                                                                     .getSimpleName();
-    private ThingsManager         thingsmanager      = null;
-    private ConfigurationResource conResource        = null;
-    private DiagnosticsResource   diagResource       = null;
-    private FactorySetResource    factorySetResource = null;
+public class ConfigurationServer {
+    private final String                      LOG_TAG            = "[CON-SERVER]"
+                                                                         + this.getClass()
+                                                                                 .getSimpleName();
+    private GroupManager                      groupmanager       = null;
+    private ThingsConfiguration               thingsconfig       = null;
+    private ThingsMaintenance                 thingsmnt          = null;
+    private ConfigurationResource             conResource        = null;
+    private MaintenanceResource               mntResource        = null;
+    private FactorySetResource                factorysetResource = null;
+
+    private final ThingsConfigurationListener thingConfigurationListener;
+    private final ThingsMaintenanceListener   thingsMaintenanceListener;
+    private final RequestHandler              requestHandler;
 
     // constructor
     public ConfigurationServer() {
-        thingsmanager = new ThingsManager();
-        thingsmanager.setDiagnosticsListener(this);
-        thingsmanager.setConfigurationListener(this);
+        groupmanager = new GroupManager();
+        thingsconfig = ThingsConfiguration.getInstance();
+        thingsmnt = ThingsMaintenance.getInstance();
+        thingConfigurationListener = new ThingsConfigurationListener();
+        thingsMaintenanceListener = new ThingsMaintenanceListener();
+        requestHandler = new RequestHandler();
+
+        thingsconfig.setConfigurationListener(thingConfigurationListener);
+        thingsmnt.setThingsMaintenanceListener(thingsMaintenanceListener);
+
     }
 
-    public void DoBootStrap() {
-        Log.i(LOG_TAG, "DoBootStrap: enter");
-
-        OCStackResult result = thingsmanager.doBootstrap();
-        if (OCStackResult.OC_STACK_ERROR == result) {
-            Log.e(LOG_TAG, "doBootStrap returned error: "
-                    + OCStackResult.OC_STACK_ERROR.name());
-        }
-        Log.i(LOG_TAG, "DoBootStrap: exit");
-    }
-
-    // Creating resources : configuration, diagnostics, factoryReset
+    // Creating resources : configuration, maintenance, factoryReset
     public void CreateConfigurationResource() {
         Log.i(LOG_TAG, "CreateConfigurationResource: enter");
 
         try {
             conResource = new ConfigurationResource();
-            conResource.createResource(this);
+            conResource.createResource(requestHandler);
 
-            diagResource = new DiagnosticsResource();
-            diagResource.createResource(this);
+            mntResource = new MaintenanceResource();
+            mntResource.createResource(requestHandler);
 
-            factorySetResource = new FactorySetResource();
-            factorySetResource.createResource(this);
+            factorysetResource = new FactorySetResource();
+            factorysetResource.createResource(requestHandler);
         } catch (OcException e) {
             Log.e(LOG_TAG, "OcException occured: " + e.toString());
         }
@@ -97,123 +100,167 @@ public class ConfigurationServer implements IDiagnosticsListener,
         MainActivity mainActivityObj = MainActivity.getMainActivityObject();
         MainActivity.setmessage(message);
         mainActivityObj.getmHandler().sendMessage(msg);
+    }
 
+    public void DoBootStrap() {
+        Log.i(LOG_TAG, "DoBootStrap: enter");
+
+        OCStackResult result = thingsconfig.doBootstrap();
+        if (OCStackResult.OC_STACK_ERROR == result) {
+            Log.e(LOG_TAG, "doBootStrap returned error: "
+                    + OCStackResult.OC_STACK_ERROR.name());
+        }
+        Log.i(LOG_TAG, "DoBootStrap: exit");
+    }
+
+    private class ThingsConfigurationListener implements IConfigurationListener {
+
+        @Override
+        public void onBootStrapCallback(Vector<OcHeaderOption> headerOptions,
+                OcRepresentation rep, int errorValue) {
+
+            String message;
+            Log.i(LOG_TAG, "onBootStrapCallback");
+
+            // setting the default values received from bootstrap Server
+            ConfigurationDefaultValues.defaultDeviceName = rep
+                    .getValueString("n");
+            ConfigurationDefaultValues.defaultLocation = rep
+                    .getValueString("loc");
+            ConfigurationDefaultValues.defaultLocationName = rep
+                    .getValueString("locn");
+            ConfigurationDefaultValues.defaultCurrency = rep
+                    .getValueString("c");
+            ConfigurationDefaultValues.defaultRegion = rep.getValueString("r");
+
+            // forming the message to display on UI
+            message = "URI : " + rep.getUri() + "\n";
+            message += "Device Name : "
+                    + ConfigurationDefaultValues.defaultDeviceName + "\n";
+            message += "Location : "
+                    + ConfigurationDefaultValues.defaultLocation + "\n";
+            message += "Location Name : "
+                    + ConfigurationDefaultValues.defaultLocationName + "\n";
+            message += "Currency : "
+                    + ConfigurationDefaultValues.defaultCurrency + "\n";
+            message += "Region : " + ConfigurationDefaultValues.defaultRegion
+                    + "\n";
+
+            Log.i(LOG_TAG, "Resource URI: " + rep.getUri());
+            Log.i(LOG_TAG, "Region: "
+                    + ConfigurationDefaultValues.defaultRegion);
+            Log.i(LOG_TAG, "Device Name: "
+                    + ConfigurationDefaultValues.defaultDeviceName);
+            Log.i(LOG_TAG, "Location: "
+                    + ConfigurationDefaultValues.defaultLocation);
+            Log.i(LOG_TAG, "Location Name: "
+                    + ConfigurationDefaultValues.defaultLocationName);
+            Log.i(LOG_TAG, "Currency: "
+                    + ConfigurationDefaultValues.defaultCurrency);
+
+            // showing the formed message on the UI
+            Message msg = Message.obtain();
+            msg.what = 0;
+            MainActivity mainActivityObj = MainActivity.getMainActivityObject();
+            MainActivity.setmessage(message);
+            mainActivityObj.getmHandler().sendMessage(msg);
+            // TODO Auto-generated method stub
+        }
+
+        @Override
+        public void onUpdateConfigurationsCallback(
+                Vector<OcHeaderOption> headerOptions, OcRepresentation rep,
+                int errorValue) {
+            Log.i(LOG_TAG, "onUpdateConfigurationsCallback");
+        }
+
+        @Override
+        public void onGetConfigurationsCallback(
+                Vector<OcHeaderOption> headerOptions, OcRepresentation rep,
+                int errorValue) {
+            Log.i(LOG_TAG, "onGetConfigurationsCallback");
+        }
+    }
+
+    private class ThingsMaintenanceListener implements
+            IThingsMaintenanceListener {
+
+        // Callback Function for Reboot
+        @Override
+        public void onRebootCallback(Vector<OcHeaderOption> headerOptions,
+                OcRepresentation rep, int errorValue) {
+            Log.i(LOG_TAG, "onRebootCallback");
+        }
+
+        // Callback Function for FactoryReset
+        @Override
+        public void onFactoryResetCallback(
+                Vector<OcHeaderOption> headerOptions, OcRepresentation rep,
+                int errorValue) {
+            Log.i(LOG_TAG, "onFactoryResetCallback");
+        }
     }
 
     // For deleting all the resources
     public void deleteResources() {
         if (null != conResource)
             conResource.deleteResource();
-        if (null != diagResource)
-            diagResource.deleteResource();
-        if (null != factorySetResource)
-            factorySetResource.deleteResource();
+        if (null != mntResource)
+            mntResource.deleteResource();
+        if (null != factorysetResource)
+            factorysetResource.deleteResource();
     }
 
-    // Callback Function for doBootStrap
-    @Override
-    public void onBootStrapCallback(Vector<OcHeaderOption> headerOptions,
-            OcRepresentation rep, int errorValue) {
-        String message;
-        Log.i(LOG_TAG, "onBootStrapCallback");
+    private class RequestHandler implements OcPlatform.EntityHandler {
 
-        // setting the default values received from bootstrap Server
+        @Override
+        public EntityHandlerResult handleEntity(OcResourceRequest request) {
+            Log.i(LOG_TAG, "handleEntity: enter");
 
-        ConfigurationDefaultValues.defaultRegion = rep.getValueString("r");
-        ConfigurationDefaultValues.defaultSystemTime = rep.getValueString("st");
-        ConfigurationDefaultValues.defaultCurrency = rep.getValueString("c");
-        ConfigurationDefaultValues.defaultLocation = rep.getValueString("loc");
+            EntityHandlerResult result = EntityHandlerResult.ERROR;
+            if (null == request) {
+                Log.e(LOG_TAG, "handleEntity: Invalid OcResourceRequest!");
+                return result;
+            }
 
-        // forming the message to display on UI
-        message = "URI : " + rep.getUri() + "\n";
-        message = message + "Region : "
-                + ConfigurationDefaultValues.defaultRegion + "\n";
-        message = message + "System Time : "
-                + ConfigurationDefaultValues.defaultSystemTime + "\n";
-        message = message + "Currency : "
-                + ConfigurationDefaultValues.defaultCurrency + "\n";
-        message = message + "Location : "
-                + ConfigurationDefaultValues.defaultLocation + "\n";
+            RequestType requestType = request.getRequestType();
+            EnumSet<RequestHandlerFlag> requestHandlerFlag = request
+                    .getRequestHandlerFlagSet();
+            Log.i(LOG_TAG, "prepareResponseForResource: request type: "
+                    + requestType.name());
+            Log.i(LOG_TAG, "prepareResponseForResource: request for resource: "
+                    + request.getResourceUri());
 
-        Log.i(LOG_TAG, "Resource URI: " + rep.getUri());
-        Log.i(LOG_TAG, "Region: " + ConfigurationDefaultValues.defaultRegion);
-        Log.i(LOG_TAG, "System Time: "
-                + ConfigurationDefaultValues.defaultSystemTime);
-        Log.i(LOG_TAG, "Currency: "
-                + ConfigurationDefaultValues.defaultCurrency);
-        Log.i(LOG_TAG, "Location: "
-                + ConfigurationDefaultValues.defaultLocation);
+            if (requestHandlerFlag.contains(RequestHandlerFlag.REQUEST)) {
+                if (RequestType.GET == requestType) {
+                    sendResponse(request);
+                } else if (RequestType.PUT == requestType) {
+                    OcRepresentation rep = request.getResourceRepresentation();
+                    if (null == rep) {
+                        Log.e(LOG_TAG,
+                                "handleEntity: Invalid resource representation!");
+                        return result;
+                    }
 
-        // showing the formed message on the UI
-        Message msg = Message.obtain();
-        msg.what = 0;
-        MainActivity mainActivityObj = MainActivity.getMainActivityObject();
-        MainActivity.setmessage(message);
-        mainActivityObj.getmHandler().sendMessage(msg);
-    }
+                    if (request.getResourceUri().equalsIgnoreCase(
+                            conResource.getUri())) {
+                        conResource.setConfigurationRepresentation(rep);
+                    } else if (request.getResourceUri().equalsIgnoreCase(
+                            mntResource.getUri())) {
 
-    // Callback Function for Reboot
-    @Override
-    public void onRebootCallback(Vector<OcHeaderOption> headerOptions,
-            OcRepresentation rep, int errorValue) {
-        Log.i(LOG_TAG, "onRebootCallback");
-    }
+                        String factorysetAtt = rep.getValueString("fr");
+                        if (factorysetAtt.equalsIgnoreCase("true")) {
+                            conResource.factoryReset();
+                        }
+                        mntResource.setDiagnosticsRepresentation(rep);
+                    }
+                    sendResponse(request);
+                }
+            }
 
-    // Callback Function for FactoryReset
-    @Override
-    public void onFactoryResetCallback(Vector<OcHeaderOption> headerOptions,
-            OcRepresentation rep, int errorValue) {
-        Log.i(LOG_TAG, "onFactoryResetCallback");
-    }
-
-    // For Handling the Client's Request
-    @Override
-    public EntityHandlerResult handleEntity(OcResourceRequest request) {
-        Log.i(LOG_TAG, "handleEntity: enter");
-
-        EntityHandlerResult result = EntityHandlerResult.ERROR;
-        if (null == request) {
-            Log.e(LOG_TAG, "handleEntity: Invalid OcResourceRequest!");
+            Log.i(LOG_TAG, "handleEntity: exit");
             return result;
         }
-
-        RequestType requestType = request.getRequestType();
-        EnumSet<RequestHandlerFlag> requestHandlerFlag = request
-                .getRequestHandlerFlagSet();
-        Log.i(LOG_TAG, "prepareResponseForResource: request type: "
-                + requestType.name());
-        Log.i(LOG_TAG, "prepareResponseForResource: request for resource: "
-                + request.getResourceUri());
-
-        if (requestHandlerFlag.contains(RequestHandlerFlag.REQUEST)) {
-            if (RequestType.GET == requestType) {
-                sendResponse(request);
-            } else if (RequestType.PUT == requestType) {
-                OcRepresentation rep = request.getResourceRepresentation();
-                if (null == rep) {
-                    Log.e(LOG_TAG,
-                            "handleEntity: Invalid resource representation!");
-                    return result;
-                }
-
-                if (request.getResourceUri().equalsIgnoreCase(
-                        conResource.getUri())) {
-                    conResource.setConfigurationRepresentation(rep);
-                } else if (request.getResourceUri().equalsIgnoreCase(
-                        diagResource.getUri())) {
-
-                    String factorySetAtt = rep.getValueString("fr");
-                    if (factorySetAtt.equalsIgnoreCase("true")) {
-                        conResource.factoryReset();
-                    }
-                    diagResource.setDiagnosticsRepresentation(rep);
-                }
-                sendResponse(request);
-            }
-        }
-
-        Log.i(LOG_TAG, "handleEntity: exit");
-        return result;
     }
 
     // For sending response to the client
@@ -229,8 +276,8 @@ public class ConfigurationServer implements IDiagnosticsListener,
         if (request.getResourceUri().equalsIgnoreCase(conResource.getUri())) {
             rep = conResource.getConfigurationRepresentation();
         } else if (request.getResourceUri().equalsIgnoreCase(
-                diagResource.getUri())) {
-            rep = diagResource.getDiagnosticsRepresentation();
+                mntResource.getUri())) {
+            rep = mntResource.getDiagnosticsRepresentation();
         }
         response.setResourceRepresentation(rep, OcPlatform.DEFAULT_INTERFACE);
         response.setErrorCode(200);
@@ -242,38 +289,25 @@ public class ConfigurationServer implements IDiagnosticsListener,
         }
         Log.i(LOG_TAG, "sendResponse: exit");
     }
-
-    @Override
-    public void onUpdateConfigurationsCallback(
-            Vector<OcHeaderOption> headerOptions, OcRepresentation rep,
-            int errorValue) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void onGetConfigurationsCallback(
-            Vector<OcHeaderOption> headerOptions, OcRepresentation rep,
-            int errorValue) {
-        // TODO Auto-generated method stub
-
-    }
 }
 
 // Default values for Resources
 class ConfigurationDefaultValues {
 
     // configuration Resource default values
+
+    public static String defaultDeviceName      = new String();
     public static String defaultLocation        = new String();
-    public static String defaultRegion          = new String();
-    public static String defaultSystemTime      = new String();
+    public static String defaultLocationName    = new String();
     public static String defaultCurrency        = new String();
+    public static String defaultRegion          = new String();
+
     public static String ConURIPrefix           = "/oic/con";
-    public static String ConResourceTypePrefix  = "oic.con";
+    public static String ConResourceTypePrefix  = "oic.wk.con";
 
     // Diagnostics Resource default values
-    public static String diagURIPrefix          = "/oic/diag";
-    public static String diagResourceTypePrefix = "oic.diag";
+    public static String diagURIPrefix          = "/oic/mnt";
+    public static String diagResourceTypePrefix = "oic.wk.mnt";
     public static String diagnosticsValue       = "false";
     public static String defaultFactoryReset    = "false";
     public static String defaultReboot          = "false";

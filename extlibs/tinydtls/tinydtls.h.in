@@ -41,4 +41,10 @@
 /** Defined to 1 if tinydtls is built for Contiki OS */
 #undef WITH_CONTIKI
 
+/** Define to 1 if building with X.509 support */
+#undef DTLS_X509
+
+/** Define to 1 if building with crypto hardware abstraction support */
+#undef DTLS_CRYPTO_HAL
+
 #endif /* _DTLS_TINYDTLS_H_ */

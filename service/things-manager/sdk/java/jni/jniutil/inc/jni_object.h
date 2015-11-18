@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -19,45 +19,40 @@
  ******************************************************************/
 
 /**
-  * @file   jni_object.h
-  *
-  * @brief  This file contains the JObject class  declarations and its functions required
-  *            for getting and setting basic data types in C++ and Java
+  * @file
+  * This file contains the JObject class  declarations and its functions required
+  * for getting and setting basic data types in C++ and Java.
   */
 
-#ifndef __JNI_OBJECT_H_
-#define __JNI_OBJECT_H_
-
+#ifndef JNI_OBJECT_H_
+#define JNI_OBJECT_H_
 
 #include <jni.h>
 #include "JniOcResource.h"
 
 /**
- * @class   JObject
- * @brief   This class provides a set of functions for JNI object.
- *
+ * This class provides a set of functions for JNI object.
  */
 class JObject
 {
     public:
         /**
-         * @brief constructor
+         * constructor
          */
         JObject(JNIEnv *env);
 
         /**
-         * @brief constructor
+         * constructor
          */
         JObject(JNIEnv *env, jobject obj);
 
         /**
-         * @brief constructor
+         * constructor
          */
         JObject(JNIEnv *env, const char *classPath);
 
         /**
-         * @brief destructor
-         *
+         * destructor
          */
         virtual ~JObject();
 
@@ -65,15 +60,11 @@ class JObject
          * Function to get the jobject.
          *
          * @return jobject, returns a new JNI object or NULL otherwise.
-         *
          */
         virtual jobject getObject() const;
 
         /**
          * Function to detach the jobject.
-         *
-         * @return void
-         *
          */
         void detachObject();
 
@@ -91,8 +82,8 @@ class JObject
          */
         jclass  m_pClazz;
         /**
-         *  Boolean variable to check if an object is new
+         *  Boolean variable to check if an object is new.
          */
         bool m_fIsNewObject;
 };
-#endif //__JNI_OBJECT_H_
+#endif //JNI_OBJECT_H_

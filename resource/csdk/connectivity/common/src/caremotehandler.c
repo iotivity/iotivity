@@ -90,7 +90,6 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
     switch (rep->result)
     {
         case CA_EMPTY:
-        case CA_SUCCESS:
         case CA_CREATED:
         case CA_DELETED:
         case CA_VALID:
@@ -102,12 +101,12 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         case CA_BAD_OPT:
         case CA_FORBIDDEN_REQ:
         case CA_NOT_FOUND:
+        case CA_NOT_ACCEPTABLE:
         case CA_REQUEST_ENTITY_INCOMPLETE:
         case CA_REQUEST_ENTITY_TOO_LARGE:
         case CA_INTERNAL_SERVER_ERROR:
         case CA_RETRANSMIT_TIMEOUT:
             break;
-
         default:
             OIC_LOG_V(ERROR, TAG, "Response code  %u is invalid", rep->result);
             return NULL;
@@ -129,6 +128,7 @@ CAResponseInfo_t *CACloneResponseInfo(const CAResponseInfo_t *rep)
         return NULL;
     }
 
+    clone->isMulticast = rep->isMulticast;
     clone->result = rep->result;
     return clone;
 }
@@ -283,6 +283,8 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         clone->payload = temp;
         clone->payloadSize = info->payloadSize;
     }
+    clone->payloadFormat = info->payloadFormat;
+    clone->acceptFormat = info->acceptFormat;
 
     if (info->resourceUri)
     {
@@ -298,6 +300,10 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         // save the resourceUri
         clone->resourceUri = temp;
     }
+
+#ifdef ROUTING_GATEWAY
+    clone->skipRetransmission = info->skipRetransmission;
+#endif
 
     clone->messageId = info->messageId;
     clone->type = info->type;

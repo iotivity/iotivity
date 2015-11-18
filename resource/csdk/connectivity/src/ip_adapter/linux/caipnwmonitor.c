@@ -36,12 +36,12 @@
 
 #define TAG "IP_MONITOR"
 
-CAResult_t CAIPInitializeNetworkMonitor()
+CAResult_t CAIPStartNetworkMonitor()
 {
     return CA_STATUS_OK;
 }
 
-CAResult_t CAIPTerminateNetworkMonitor()
+CAResult_t CAIPStopNetworkMonitor()
 {
     return CA_STATUS_OK;
 }
@@ -131,14 +131,14 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         ifitem->ipv4addr = ((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr.s_addr;
         ifitem->flags = ifa->ifa_flags;
 
-        CAResult_t result = u_arraylist_add(iflist, ifitem);
-        if (CA_STATUS_OK != result)
+        bool result = u_arraylist_add(iflist, ifitem);
+        if (!result)
         {
             OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
             goto exit;
         }
 
-        OIC_LOG_V(ERROR, TAG, "Added interface: %s (%d)", ifitem->name, family);
+        OIC_LOG_V(DEBUG, TAG, "Added interface: %s (%d)", ifitem->name, family);
     }
 
     freeifaddrs(ifp);

@@ -24,7 +24,6 @@
 #include "uarraylist.h"
 #include "camutex.h"
 #include "caadapterutils.h"
-#include "ocsecurityconfig.h"
 #include "cainterface.h"
 #include "cacommon.h"
 
@@ -32,11 +31,6 @@
  * Currently DTLS supported adapters(2) WIFI and ETHENET for linux platform.
  */
 #define MAX_SUPPORTED_ADAPTERS 2
-
-/**
- * The implementation will be provided by OIC RI layer.
- */
-extern void OCGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
 
 typedef void (*CAPacketReceivedCallback)(const CASecureEndpoint_t *sep,
                                          const void *data, uint32_t dataLength);
@@ -130,15 +124,15 @@ void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
 
 /**
  * Register callback to get DTLS PSK credentials.
- * @param[in]  credCallback    callback to get DTLS credentials.
+ * @param[in]  credCallback    callback to get DTLS PSK credentials.
  */
-void CADTLSSetCredentialsCallback(CAGetDTLSCredentialsHandler credCallback);
+void CADTLSSetCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback);
 
 /**
  * Select the cipher suite for dtls handshake
  *
  * @param[in] cipher    cipher suite
- *                             0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+ *                             0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256
  *                             0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
  *                             0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
  *

@@ -99,6 +99,23 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool);
 void CAIPStopServer();
 
 /**
+ * Starts receiving the multicast traffic.
+ *
+ * This will be used in case sleepy device wants to start back receiving the multicast
+ * traffic.
+ */
+CAResult_t CAIPStartListenServer();
+
+/**
+ * Stops the multicast traffic.
+ *
+ * This is to be used by the sleeping device to stop receiving multicast traffic.
+ * Once this is set no multicast traffic will be received. Device can still receive
+ * the unicast traffic.
+ */
+CAResult_t CAIPStopListenServer();
+
+/**
  * Set this callback for receiving data packets from peer devices.
  *
  * @param[in]  callback    Callback to be notified on reception of unicast/multicast data packets.
@@ -193,18 +210,18 @@ int CAGetPollingInterval(int interval);
 void CAWakeUpForChange();
 
 /**
- * @brief   Initializes network monitor.
+ * Start network monitor.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAIPInitializeNetworkMonitor();
+CAResult_t CAIPStartNetworkMonitor();
 
 /**
- * @brief   Terminates network monitor.
+ * Stops network monitor.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAIPTerminateNetworkMonitor();
+CAResult_t CAIPStopNetworkMonitor();
 
 /**
  * @brief  Set callback for error handling.

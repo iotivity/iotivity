@@ -9,6 +9,7 @@ if env.get('RELEASE'):
 	ANDROID_RELEASE="release"
 else:
 	ANDROID_RELEASE="debug"
+ANDROID_SECURED = env.get('SECURED')
 
 os.environ['ANDROID_HOME'] = env.get('ANDROID_HOME')
 os.environ['ANDROID_NDK_HOME'] = env.get('ANDROID_NDK')
@@ -42,7 +43,18 @@ if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exi
 '''
     os.system(android_home + '/tools/android')
 
+def ensure_libs(target, source, env):
+    return target, [source, env.get('BUILD_DIR') + 'liboc.so', env.get('BUILD_DIR') + 'liboc_logger.so']
+
+# build android_api
 jdk_env = Environment(ENV=os.environ)
-jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + os.getcwd()+'/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE))
-jdk_env.Gradle(target="base/objs", source="base/src/main/java/org/iotivity/base/OcResource.java")
+jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + os.getcwd()+'/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED), emitter = ensure_libs)
+jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
+cmdBuildApi=jdk_env.Gradle(target="base/objs", source="base/src/main/java/org/iotivity/base/OcResource.java")
+
+jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED))
+cmdBuildExamples=jdk_env.Gradle(target="../examples/devicediscoveryclient/apk", source="../examples/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java")
+
+# android examples require android api to be built before being invoked
+Depends(cmdBuildExamples, cmdBuildApi)
 

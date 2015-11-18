@@ -23,6 +23,7 @@
 #include "ocstack.h"
 #include "logger.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "cJSON.h"
 #include "base64.h"
 #include "resourcemanager.h"
@@ -32,13 +33,64 @@
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
 #include "srmutility.h"
+#include "ocserverrequest.h"
 #include <stdlib.h>
+#ifdef WITH_ARDUINO
 #include <string.h>
+#else
+#include <strings.h>
+#endif
 
-#define TAG  PCF("SRM-ACL")
+#define TAG  "SRM-ACL"
 
-OicSecAcl_t        *gAcl = NULL;
+OicSecAcl_t               *gAcl = NULL;
 static OCResourceHandle    gAclHandle = NULL;
+
+/**
+ * This function frees OicSecAcl_t object's fields and object itself.
+ */
+static void FreeACE(OicSecAcl_t *ace)
+{
+    size_t i;
+    if(NULL == ace)
+    {
+        OC_LOG (ERROR, TAG, "Invalid Parameter");
+        return;
+    }
+
+    // Clean Resources
+    for (i = 0; i < ace->resourcesLen; i++)
+    {
+        OICFree(ace->resources[i]);
+    }
+    OICFree(ace->resources);
+
+    //Clean Period
+    if(ace->periods)
+    {
+        for(i = 0; i < ace->prdRecrLen; i++)
+        {
+            OICFree(ace->periods[i]);
+        }
+        OICFree(ace->periods);
+    }
+
+    //Clean Recurrence
+    if(ace->recurrences)
+    {
+        for(i = 0; i < ace->prdRecrLen; i++)
+        {
+            OICFree(ace->recurrences[i]);
+        }
+        OICFree(ace->recurrences);
+    }
+
+    // Clean Owners
+    OICFree(ace->owners);
+
+    // Clean ACL node itself
+    OICFree(ace);
+}
 
 void DeleteACLList(OicSecAcl_t* acl)
 {
@@ -49,19 +101,7 @@ void DeleteACLList(OicSecAcl_t* acl)
         LL_FOREACH_SAFE(acl, aclTmp1, aclTmp2)
         {
             LL_DELETE(acl, aclTmp1);
-
-            // Clean Resources
-            for (size_t i = 0; i < aclTmp1->resourcesLen; i++)
-            {
-                OICFree(aclTmp1->resources[i]);
-            }
-            OICFree(aclTmp1->resources);
-
-            // Clean Owners
-            OICFree(aclTmp1->owners);
-
-            // Clean ACL node itself
-            OICFree(aclTmp1);
+            FreeACE(aclTmp1);
         }
     }
 }
@@ -121,6 +161,34 @@ char * BinToAclJSON(const OicSecAcl_t * acl)
 
             // Permissions -- Mandatory
             cJSON_AddNumberToObject (jsonAcl, OIC_JSON_PERMISSION_NAME, acl->permission);
+
+            //Period & Recurrence -- Not Mandatory
+            if(0 != acl->prdRecrLen)
+            {
+                cJSON *jsonPeriodArray = NULL;
+                cJSON_AddItemToObject (jsonAcl, OIC_JSON_PERIODS_NAME,
+                        jsonPeriodArray = cJSON_CreateArray());
+                VERIFY_NON_NULL(TAG, jsonPeriodArray, ERROR);
+                for (size_t i = 0; i < acl->prdRecrLen; i++)
+                {
+                    cJSON_AddItemToArray (jsonPeriodArray,
+                            cJSON_CreateString(acl->periods[i]));
+                }
+            }
+
+            //Recurrence -- Not Mandatory
+            if(0 != acl->prdRecrLen && acl->recurrences)
+            {
+                cJSON *jsonRecurArray  = NULL;
+                cJSON_AddItemToObject (jsonAcl, OIC_JSON_RECURRENCES_NAME,
+                        jsonRecurArray = cJSON_CreateArray());
+                VERIFY_NON_NULL(TAG, jsonRecurArray, ERROR);
+                for (size_t i = 0; i < acl->prdRecrLen; i++)
+                {
+                    cJSON_AddItemToArray (jsonRecurArray,
+                            cJSON_CreateString(acl->recurrences[i]));
+                }
+            }
 
             // Owners -- Mandatory
             cJSON *jsonOwnrArray = NULL;
@@ -228,14 +296,72 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
                 jsonObjLen = strlen(jsonRsrc->valuestring) + 1;
                 acl->resources[idxx] = (char*)OICMalloc(jsonObjLen);
                 VERIFY_NON_NULL(TAG, (acl->resources[idxx]), ERROR);
-                strncpy(acl->resources[idxx], jsonRsrc->valuestring, jsonObjLen);
+                OICStrcpy(acl->resources[idxx], jsonObjLen, jsonRsrc->valuestring);
             } while ( ++idxx < acl->resourcesLen);
 
             // Permissions -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_PERMISSION_NAME);
+            jsonObj = cJSON_GetObjectItem(jsonAcl,
+                                OIC_JSON_PERMISSION_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
             acl->permission = jsonObj->valueint;
+
+            //Period -- Not Mandatory
+            cJSON *jsonPeriodObj = cJSON_GetObjectItem(jsonAcl,
+                    OIC_JSON_PERIODS_NAME);
+            if(jsonPeriodObj)
+            {
+                VERIFY_SUCCESS(TAG, cJSON_Array == jsonPeriodObj->type,
+                               ERROR);
+                acl->prdRecrLen = cJSON_GetArraySize(jsonPeriodObj);
+                if(acl->prdRecrLen > 0)
+                {
+                    acl->periods = (char**)OICCalloc(acl->prdRecrLen,
+                                    sizeof(char*));
+                    VERIFY_NON_NULL(TAG, acl->periods, ERROR);
+
+                    cJSON *jsonPeriod = NULL;
+                    for(size_t i = 0; i < acl->prdRecrLen; i++)
+                    {
+                        jsonPeriod = cJSON_GetArrayItem(jsonPeriodObj, i);
+                        VERIFY_NON_NULL(TAG, jsonPeriod, ERROR);
+
+                        jsonObjLen = strlen(jsonPeriod->valuestring) + 1;
+                        acl->periods[i] = (char*)OICMalloc(jsonObjLen);
+                        VERIFY_NON_NULL(TAG, acl->periods[i], ERROR);
+                        OICStrcpy(acl->periods[i], jsonObjLen,
+                                  jsonPeriod->valuestring);
+                    }
+                }
+            }
+
+            //Recurrence -- Not mandatory
+            cJSON *jsonRecurObj = cJSON_GetObjectItem(jsonAcl,
+                                        OIC_JSON_RECURRENCES_NAME);
+            if(jsonRecurObj)
+            {
+                VERIFY_SUCCESS(TAG, cJSON_Array == jsonRecurObj->type,
+                               ERROR);
+
+                if(acl->prdRecrLen > 0)
+                {
+                    acl->recurrences = (char**)OICCalloc(acl->prdRecrLen,
+                                             sizeof(char*));
+                    VERIFY_NON_NULL(TAG, acl->recurrences, ERROR);
+
+                    cJSON *jsonRecur = NULL;
+                    for(size_t i = 0; i < acl->prdRecrLen; i++)
+                    {
+                        jsonRecur = cJSON_GetArrayItem(jsonRecurObj, i);
+                        VERIFY_NON_NULL(TAG, jsonRecur, ERROR);
+                        jsonObjLen = strlen(jsonRecur->valuestring) + 1;
+                        acl->recurrences[i] = (char*)OICMalloc(jsonObjLen);
+                        VERIFY_NON_NULL(TAG, acl->recurrences[i], ERROR);
+                        OICStrcpy(acl->recurrences[i], jsonObjLen,
+                              jsonRecur->valuestring);
+                    }
+                }
+            }
 
             // Owners -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_OWNERS_NAME);
@@ -279,23 +405,261 @@ exit:
     return headAcl;
 }
 
+static bool UpdatePersistentStorage(const OicSecAcl_t *acl)
+{
+    // Convert ACL data into JSON for update to persistent storage
+    char *jsonStr = BinToAclJSON(acl);
+    if (jsonStr)
+    {
+        cJSON *jsonAcl = cJSON_Parse(jsonStr);
+        OICFree(jsonStr);
+
+        if ((jsonAcl) && (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl)))
+        {
+            return true;
+        }
+        cJSON_Delete(jsonAcl);
+    }
+    return false;
+}
+
+/*
+ * This method removes ACE for the subject and resource from the ACL
+ *
+ * @param subject  - subject of the ACE
+ * @param resource - resource of the ACE
+ *
+ * @return
+ *     OC_STACK_RESOURCE_DELETED on success
+ *     OC_STACK_NO_RESOURC on failure to find the appropriate ACE
+ *     OC_STACK_INVALID_PARAM on invalid parameter
+ */
+static OCStackResult RemoveACE(const OicUuid_t * subject,
+                               const char * resource)
+{
+    OC_LOG(DEBUG, TAG, "IN RemoveACE");
+
+    OicSecAcl_t *acl = NULL;
+    OicSecAcl_t *tempAcl = NULL;
+    bool deleteFlag = false;
+    OCStackResult ret = OC_STACK_NO_RESOURCE;
+
+    if(memcmp(subject->id, &WILDCARD_SUBJECT_ID, sizeof(subject->id)) == 0)
+    {
+        OC_LOG_V (ERROR, TAG, "%s received invalid parameter", __func__ );
+        return  OC_STACK_INVALID_PARAM;
+    }
+
+    //If resource is NULL then delete all the ACE for the subject.
+    if(NULL == resource || resource[0] == '\0')
+    {
+        LL_FOREACH_SAFE(gAcl, acl, tempAcl)
+        {
+            if(memcmp(acl->subject.id, subject->id, sizeof(subject->id)) == 0)
+            {
+                LL_DELETE(gAcl, acl);
+                FreeACE(acl);
+                deleteFlag = true;
+            }
+        }
+    }
+    else
+    {
+        //Looping through ACL to find the right ACE to delete. If the required resource is the only
+        //resource in the ACE for the subject then delete the whole ACE. If there are more resources
+        //than the required resource in the ACE, for the subject then just delete the resource from
+        //the resource array
+        LL_FOREACH_SAFE(gAcl, acl, tempAcl)
+        {
+            if(memcmp(acl->subject.id, subject->id, sizeof(subject->id)) == 0)
+            {
+                if(1 == acl->resourcesLen && strcmp(acl->resources[0],  resource) == 0)
+                {
+                    LL_DELETE(gAcl, acl);
+                    FreeACE(acl);
+                    deleteFlag = true;
+                    break;
+                }
+                else
+                {
+                    int resPos = -1;
+                    size_t i;
+                    for(i = 0; i < acl->resourcesLen; i++)
+                    {
+                        if(strcmp(acl->resources[i],  resource) == 0)
+                        {
+                            resPos = i;
+                            break;
+                        }
+                    }
+                    if((0 <= resPos))
+                    {
+                        OICFree(acl->resources[resPos]);
+                        acl->resources[resPos] = NULL;
+                        acl->resourcesLen -= 1;
+                        for(i = resPos; i < acl->resourcesLen; i++)
+                        {
+                            acl->resources[i] = acl->resources[i+1];
+                        }
+                        deleteFlag = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if(deleteFlag)
+    {
+        if(UpdatePersistentStorage(gAcl))
+        {
+            ret = OC_STACK_RESOURCE_DELETED;
+        }
+    }
+    return ret;
+}
+
+/*
+ * This method parses the query string received for REST requests and
+ * retrieves the 'subject' field.
+ *
+ * @param query querystring passed in REST request
+ * @param subject subject UUID parsed from query string
+ *
+ * @return true if query parsed successfully and found 'subject', else false.
+ */
+static bool GetSubjectFromQueryString(const char *query, OicUuid_t *subject)
+{
+    OicParseQueryIter_t parseIter = {.attrPos=NULL};
+
+    ParseQueryIterInit((unsigned char *)query, &parseIter);
+
+
+    while(GetNextQuery(&parseIter))
+    {
+        if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECT_NAME, parseIter.attrLen) == 0)
+        {
+            VERIFY_SUCCESS(TAG, 0 != parseIter.valLen, ERROR);
+            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
+            uint32_t outLen = 0;
+            B64Result b64Ret = B64_OK;
+            b64Ret = b64Decode((char *)parseIter.valPos, parseIter.valLen, base64Buff,
+                    sizeof(base64Buff), &outLen);
+            VERIFY_SUCCESS(TAG, (B64_OK == b64Ret && outLen <= sizeof(subject->id)), ERROR);
+            memcpy(subject->id, base64Buff, outLen);
+
+            return true;
+        }
+    }
+
+exit:
+   return false;
+}
+
+/*
+ * This method parses the query string received for REST requests and
+ * retrieves the 'resource' field.
+ *
+ * @param query querystring passed in REST request
+ * @param resource resource parsed from query string
+ * @param resourceSize size of the memory pointed to resource
+ *
+ * @return true if query parsed successfully and found 'resource', else false.
+ */
+static bool GetResourceFromQueryString(const char *query, char *resource, size_t resourceSize)
+{
+    OicParseQueryIter_t parseIter = {.attrPos=NULL};
+
+    ParseQueryIterInit((unsigned char *)query, &parseIter);
+
+    while(GetNextQuery(&parseIter))
+    {
+        if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_RESOURCES_NAME, parseIter.attrLen) == 0)
+        {
+            VERIFY_SUCCESS(TAG, 0 != parseIter.valLen, ERROR);
+            OICStrcpy(resource, resourceSize, (char *)parseIter.valPos);
+
+            return true;
+        }
+    }
+
+exit:
+   return false;
+}
+
+
+
 static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    // Convert ACL data into JSON for transmission
-    char* jsonStr = BinToAclJSON(gAcl);
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+    char* jsonStr = NULL;
 
-    /*
-     * A device should 'always' have a default ACL. Therefore,
-     * jsonStr should never be NULL.
-     */
-    OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
+    // Process the REST querystring parameters
+    if(ehRequest->query)
+    {
+        OC_LOG (DEBUG, TAG, "HandleACLGetRequest processing query");
+
+        OicUuid_t subject = {.id={0}};
+        char resource[MAX_URI_LENGTH] = {0};
+
+        OicSecAcl_t *savePtr = NULL;
+        const OicSecAcl_t *currentAce = NULL;
+
+        // 'Subject' field is MUST for processing a querystring in REST request.
+        VERIFY_SUCCESS(TAG,
+                       true == GetSubjectFromQueryString(ehRequest->query, &subject),
+                       ERROR);
+
+        GetResourceFromQueryString(ehRequest->query, resource, sizeof(resource));
+
+        /*
+         * TODO : Currently, this code only provides one ACE for a Subject.
+         * Below code needs to be updated for scenarios when Subject have
+         * multiple ACE's in ACL resource.
+         */
+        while((currentAce = GetACLResourceData(&subject, &savePtr)))
+        {
+            /*
+             * If REST querystring contains a specific resource, we need
+             * to search for that resource in ACE.
+             */
+            if (resource[0] != '\0')
+            {
+                for(size_t n = 0; n < currentAce->resourcesLen; n++)
+                {
+                    if((currentAce->resources[n]) &&
+                            (0 == strcmp(resource, currentAce->resources[n]) ||
+                             0 == strcmp(WILDCARD_RESOURCE_URI, currentAce->resources[n])))
+                    {
+                        // Convert ACL data into JSON for transmission
+                        jsonStr = BinToAclJSON(currentAce);
+                        goto exit;
+                    }
+                }
+            }
+            else
+            {
+                // Convert ACL data into JSON for transmission
+                jsonStr = BinToAclJSON(currentAce);
+                goto exit;
+            }
+        }
+    }
+    else
+    {
+        // Convert ACL data into JSON for transmission
+        jsonStr = BinToAclJSON(gAcl);
+    }
+
+exit:
+    ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
 
     // Send response payload to request originator
     SendSRMResponse(ehRequest, ehRet, jsonStr);
 
     OICFree(jsonStr);
 
-    OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
+    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -311,26 +675,44 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
         // Append the new ACL to existing ACL
         LL_APPEND(gAcl, newAcl);
 
-        // Convert ACL data into JSON for update to persistent storage
-        char *jsonStr = BinToAclJSON(gAcl);
-        if (jsonStr)
+        if(UpdatePersistentStorage(gAcl))
         {
-            cJSON *jsonAcl = cJSON_Parse(jsonStr);
-            OICFree(jsonStr);
-
-            if ((jsonAcl) &&
-                (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl)))
-            {
-                ehRet = OC_EH_RESOURCE_CREATED;
-            }
-            cJSON_Delete(jsonAcl);
+            ehRet = OC_EH_RESOURCE_CREATED;
         }
     }
 
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
-    OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
+    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
+    return ehRet;
+}
+
+static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest *ehRequest)
+{
+    OC_LOG (DEBUG, TAG, "Processing ACLDeleteRequest");
+    OCEntityHandlerResult ehRet = OC_EH_ERROR;
+    OicUuid_t subject = {.id={0}};
+    char resource[MAX_URI_LENGTH] = {0};
+
+    VERIFY_NON_NULL(TAG, ehRequest->query, ERROR);
+
+    // 'Subject' field is MUST for processing a querystring in REST request.
+    VERIFY_SUCCESS(TAG,
+            true == GetSubjectFromQueryString(ehRequest->query, &subject),
+            ERROR);
+
+    GetResourceFromQueryString(ehRequest->query, resource, sizeof(resource));
+
+    if(OC_STACK_RESOURCE_DELETED == RemoveACE(&subject, resource))
+    {
+        ehRet = OC_EH_RESOURCE_DELETED;
+    }
+
+exit:
+    // Send payload to request originator
+    SendSRMResponse(ehRequest, ehRet, NULL);
+
     return ehRet;
 }
 
@@ -342,6 +724,7 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParameter)
 {
+    OC_LOG(DEBUG, TAG, "Received request ACLEntityHandler");
     (void)callbackParameter;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
@@ -352,8 +735,8 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        // TODO :  Handle PUT and DEL methods
-        OC_LOG (INFO, TAG, PCF("Flag includes OC_REQUEST_FLAG"));
+        // TODO :  Handle PUT method
+        OC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -362,6 +745,10 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
 
             case OC_REST_POST:
                 ehRet = HandleACLPostRequest(ehRequest);
+                break;
+
+            case OC_REST_DELETE:
+                ehRet = HandleACLDeleteRequest(ehRequest);
                 break;
 
             default:
@@ -390,7 +777,7 @@ OCStackResult CreateACLResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (FATAL, TAG, PCF("Unable to instantiate ACL resource"));
+        OC_LOG (FATAL, TAG, "Unable to instantiate ACL resource");
         DeInitACLResource();
     }
     return ret;
@@ -450,11 +837,11 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
         size_t len = strlen(rsrcs[i]) + 1;
         acl->resources[i] = (char*)OICMalloc(len * sizeof(char));
         VERIFY_NON_NULL(TAG, (acl->resources[i]), ERROR);
-        strncpy(acl->resources[i], rsrcs[i], len);
+        OICStrcpy(acl->resources[i], len, rsrcs[i]);
     }
 
     acl->permission = PERMISSION_READ;
-    acl->periodsLen = 0;
+    acl->prdRecrLen = 0;
     acl->periods = NULL;
     acl->recurrences = NULL;
 
@@ -596,4 +983,35 @@ const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **
     // Cleanup in case no ACL is found
     *savePtr = NULL;
     return NULL;
+}
+
+
+OCStackResult InstallNewACL(const char* newJsonStr)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    // Convert JSON ACL data into binary. This will also validate the ACL data received.
+    OicSecAcl_t* newAcl = JSONToAclBin(newJsonStr);
+
+    if (newAcl)
+    {
+        // Append the new ACL to existing ACL
+        LL_APPEND(gAcl, newAcl);
+
+        // Convert ACL data into JSON for update to persistent storage
+        char *jsonStr = BinToAclJSON(gAcl);
+        if (jsonStr)
+        {
+            cJSON *jsonAcl = cJSON_Parse(jsonStr);
+            OICFree(jsonStr);
+
+            if (jsonAcl)
+            {
+                ret = UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl);
+            }
+            cJSON_Delete(jsonAcl);
+        }
+    }
+
+    return ret;
 }

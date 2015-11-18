@@ -34,7 +34,7 @@ oclib_env = lib_env.Clone()
 oclib_env.AppendUnique(CPPPATH = [
 		'../include/',
 		'../csdk/stack/include',
-		'../csdk/ocrandom/include',
+		'../c_common/ocrandom/include',
 		'../csdk/logger/include',
 		'../oc_logger/include',
 		'../csdk/connectivity/lib/libcoap-4.1.1'
@@ -58,6 +58,9 @@ if target_os == 'android':
 	oclib_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	oclib_env.AppendUnique(LIBS = ['boost_thread', 'gnustl_shared', 'log'])
 
+if target_os == 'tizen':
+	oclib_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -77,3 +80,15 @@ oclib = oclib_env.SharedLibrary('oc', oclib_src)
 oclib_env.InstallTarget(oclib, 'liboc')
 oclib_env.UserInstallTargetLib(oclib, 'liboc')
 
+src_dir = env.get('SRC_DIR')
+
+oclib_env.UserInstallTargetHeader(src_dir + '/resource/include/OCApi.h', 'resource', 'OCApi.h')
+oclib_env.UserInstallTargetHeader(src_dir + '/resource/include/OCPlatform.h', 'resource', 'OCPlatform.h')
+oclib_env.UserInstallTargetHeader(src_dir + '/resource/include/OCRepresentation.h', 'resource', 'OCRepresentation.h')
+oclib_env.UserInstallTargetHeader(src_dir + '/resource/include/OCResource.h', 'resource', 'OCResource.h')
+oclib_env.UserInstallTargetHeader(src_dir + '/resource/include/OCResourceRequest.h', 'resource', 'OCResourceRequest.h')
+oclib_env.UserInstallTargetHeader(src_dir + '/resource/include/OCResourceResponse.h', 'resource', 'OCResourceResponse.h')
+
+# Add Provisioning library
+if target_os in ['linux', 'android'] and env.get('SECURED') == '1':
+        SConscript('../provisioning/SConscript')

@@ -18,31 +18,43 @@
  *
  * *****************************************************************/
 
-#ifndef SP_CREDENTIAL_GENERATOR_H
-#define SP_CREDENTIAL_GENERATOR_H
+#ifndef PM_CREDENTIAL_GENERATOR_H
+#define PM_CREDENTIAL_GENERATOR_H
 
 #include "ocstack.h"
 #include "securevirtualresourcetypes.h"
-#include "provisioningmanager.h"
 
 /**
  * Function to generate credentials according to the type.
  *
  * @param[in]  type           Type of credential.
+ * @param[in]  keysize        size of key.
  * @param[in]  ptDeviceId     Device ID of provisioning tool.
  * @param[in]  firstDeviceId  DeviceID of the first device.
  * @param[in]  secondDeviceId DeviceID of the second device.
  * @param[out] firstCred      Generated credential for first device.
  * @param[out] secondCred     Generated credential for second device.
- * @return  SP_SUCCESS on success
+ * @return  OC_STACK_OK on success
  */
-SPResult SPGeneratePairWiseCredentials(OicSecCredType_t type, const OicUuid_t *ptDeviceId,
+OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySize,
+                                       const OicUuid_t *ptDeviceId,
                                        const OicUuid_t *firstDeviceId,
                                        const OicUuid_t *secondDeviceId,
                                        OicSecCred_t **firstCred,
                                        OicSecCred_t **secondCred);
 
+/**
+ * Function to generate certificate credentials.
+ *
+ * @param[in]  ptDeviceId     Device ID of provisioning tool.
+ * @param[in]  deviceId       DeviceID of the device.
+ * @param[out] cred           Generated credential for device.
+ * @return  OC_STACK_OK on success
+ */
+OCStackResult PMGenerateCertificateCredentials(const OicUuid_t *ptDeviceId,
+                                          const OicUuid_t *deviceId, OicSecCred_t **cred);
+
 #ifdef __cplusplus
 }
 #endif
-#endif //SP_CREDENTIAL_GENERATOR_H
+#endif //PM_CREDENTIAL_GENERATOR_H

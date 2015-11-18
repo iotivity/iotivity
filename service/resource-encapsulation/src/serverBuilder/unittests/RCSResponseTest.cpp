@@ -43,10 +43,9 @@ typedef OCStackResult (*registerResourceSig)(OCResourceHandle&,
 static constexpr char KEY[] = "key";
 
 
-void EXPECT_RESPONSE(shared_ptr< OCResourceResponse > ocResponse,
-        const OCEntityHandlerResult& result, int errorCode, const RCSResourceAttributes& attrs)
+void EXPECT_RESPONSE(shared_ptr< OCResourceResponse > ocResponse, int errorCode,
+        const RCSResourceAttributes& attrs)
 {
-    EXPECT_EQ(ocResponse->getResponseResult(), result);
     EXPECT_EQ(ocResponse->getErrorCode(), errorCode);
     EXPECT_EQ(ResourceAttributesConverter::fromOCRepresentation(
                     ocResponse->getResourceRepresentation()), attrs);
@@ -80,34 +79,29 @@ protected:
 TEST_F(RCSResponseTest, GetDefaultActionHasEmptyAttrs)
 {
     EXPECT_RESPONSE(buildResponse(RCSGetResponse::defaultAction()),
-            RequestHandler::DEFAULT_RESULT, RequestHandler::DEFAULT_ERROR_CODE,
-            RCSResourceAttributes());
+            RequestHandler::DEFAULT_ERROR_CODE, RCSResourceAttributes());
 }
 
 TEST_F(RCSResponseTest, GetResponseHasResultsPassedCodes)
 {
-    constexpr OCEntityHandlerResult result{ OC_EH_ERROR };
     constexpr int errorCode{ -10 };
 
-    EXPECT_RESPONSE(buildResponse(RCSGetResponse::create(result, errorCode)),
-            result, errorCode, RCSResourceAttributes());
+    EXPECT_RESPONSE(buildResponse(RCSGetResponse::create(errorCode)),
+            errorCode, RCSResourceAttributes());
 }
 
 TEST_F(RCSResponseTest, GetResponseHasAttrsAndResultsPassedCodes)
 {
-    constexpr OCEntityHandlerResult result{ OC_EH_ERROR };
     constexpr int errorCode{ -10 };
 
     RCSResourceAttributes attrs;
     attrs[KEY] = 100;
 
-    EXPECT_RESPONSE(buildResponse(RCSGetResponse::create(attrs, result, errorCode)),
-            result, errorCode, attrs);
+    EXPECT_RESPONSE(buildResponse(RCSGetResponse::create(attrs, errorCode)), errorCode, attrs);
 }
 
 TEST_F(RCSResponseTest, GetResponseCanMoveAttrs)
 {
-    constexpr OCEntityHandlerResult result{ OC_EH_ERROR };
     constexpr int errorCode{ -10 };
 
     RCSResourceAttributes attrs;
@@ -117,8 +111,8 @@ TEST_F(RCSResponseTest, GetResponseCanMoveAttrs)
     attrsClone[KEY] = 100;
 
     EXPECT_RESPONSE(
-            buildResponse(RCSGetResponse::create(std::move(attrs), result, errorCode)),
-            result, errorCode, attrsClone);
+            buildResponse(RCSGetResponse::create(std::move(attrs), errorCode)),
+            errorCode, attrsClone);
 
     EXPECT_TRUE(attrs.empty());
 }
@@ -126,34 +120,30 @@ TEST_F(RCSResponseTest, GetResponseCanMoveAttrs)
 TEST_F(RCSResponseTest, SetDefaultActionHasEmptyAttrs)
 {
     EXPECT_RESPONSE(buildResponse(RCSSetResponse::defaultAction()),
-            RequestHandler::DEFAULT_RESULT, RequestHandler::DEFAULT_ERROR_CODE,
-            RCSResourceAttributes());
+            RequestHandler::DEFAULT_ERROR_CODE, RCSResourceAttributes());
 }
 
 TEST_F(RCSResponseTest, SetResponseHasResultsPassedCodes)
 {
-    constexpr OCEntityHandlerResult result{ OC_EH_ERROR };
     constexpr int errorCode{ -10 };
 
-    EXPECT_RESPONSE(buildResponse(RCSSetResponse::create(result, errorCode)),
-            result, errorCode, RCSResourceAttributes());
+    EXPECT_RESPONSE(buildResponse(RCSSetResponse::create(errorCode)),
+            errorCode, RCSResourceAttributes());
 }
 
 TEST_F(RCSResponseTest, SetResponseHasAttrsAndResultsPassedCodes)
 {
-    constexpr OCEntityHandlerResult result{ OC_EH_ERROR };
     constexpr int errorCode{ -10 };
 
     RCSResourceAttributes attrs;
     attrs[KEY] = 100;
 
-    EXPECT_RESPONSE(buildResponse(RCSSetResponse::create(attrs, result, errorCode)),
-            result, errorCode, attrs);
+    EXPECT_RESPONSE(buildResponse(RCSSetResponse::create(attrs, errorCode)),
+            errorCode, attrs);
 }
 
 TEST_F(RCSResponseTest, SetResponseCanMoveAttrs)
 {
-    constexpr OCEntityHandlerResult result{ OC_EH_ERROR };
     constexpr int errorCode{ -10 };
 
     RCSResourceAttributes attrs;
@@ -162,9 +152,8 @@ TEST_F(RCSResponseTest, SetResponseCanMoveAttrs)
     RCSResourceAttributes attrsClone;
     attrsClone[KEY] = 100;
 
-    EXPECT_RESPONSE(
-            buildResponse(RCSSetResponse::create(std::move(attrs), result, errorCode)),
-            result, errorCode, attrsClone);
+    EXPECT_RESPONSE(buildResponse(RCSSetResponse::create(std::move(attrs), errorCode)),
+            errorCode, attrsClone);
 
     EXPECT_TRUE(attrs.empty());
 }

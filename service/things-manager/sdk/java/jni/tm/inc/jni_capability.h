@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -19,15 +19,13 @@
  ******************************************************************/
 
 /**
-  * @file   jni_capability.h
-  *
-  * @brief  This file contains the utility functions for conversions from java to CPP
-  * and viceversa
+  * @file
+  * This file contains the utility functions for conversions from java to CPP
+  * and viceversa.
   */
 
-#ifndef __JNI_CAPABILITY_H_
-#define __JNI_CAPABILITY_H_
-
+#ifndef JNI_CAPABILITY_H_
+#define JNI_CAPABILITY_H_
 
 #include <string>
 
@@ -35,59 +33,54 @@
 #include "jni_object.h"
 
 /**
- * @class   JniCapability
- * @brief   This class provides a set of functions to get and set Capability Class member variables
- *
+ * This class provides a set of functions to get and
+ * set Capability Class member variables.
  */
 class JniCapability : public JObject
 {
     public:
         /**
-         * @brief constructor
+         * constructor
          */
         JniCapability(JNIEnv *env, jobject obj);
 
         /**
-         * @brief constructor
+         * constructor
          */
         JniCapability(JNIEnv *env);
 
         /**
-         * @brief destructor
-         *
+         * destructor
          */
         ~JniCapability();
 
         /**
-         * Retrieves Capability value from JniCapability class object
+         * Retrieves Capability value from JniCapability class object.
          *
          * @param   capability
          *              [OUT] capability value
          *
          * @return  Boolean, true on success, otherwise false
-         *
          */
         bool getJniCapabilityValue(std::string &capability);
 
         /**
-         * Sets Capability value of JniCapability class object
+         * Sets Capability value of JniCapability class object.
          *
          * @param   capability
          *              [IN] capability value
          *
          * @return  Boolean, true on success, otherwise false
-         *
          */
         bool setJniCapabilityValue(const std::string capability);
 
         /**
-         * Retrieves status of JniCapability class object
+         * Retrieves status of JniCapability class object.
          *
          * @param   status
          *              [OUT] status
          *
          * @return  Boolean, true on success, otherwise false
-         *
          */
         bool getJniCapabilityStatus(std::string &status);
 
@@ -97,9 +90,8 @@ class JniCapability : public JObject
          * @param   status
          *              [IN] status
          *
-         * @return  Boolean, true on success, otherwise false
-         *
+         * @return  Boolean, true on success, otherwise false.
          */
         bool setJniCapabilityStatus(const std::string status);
 };
-#endif  //__JNI_CAPABILITY_H_
+#endif  //JNI_CAPABILITY_H_

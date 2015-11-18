@@ -22,6 +22,8 @@
 #define IOTVT_SRM_UTILITY_H
 
 #include "ocstack.h"
+#include "cJSON.h"
+#include "securevirtualresourcetypes.h"
 #ifdef __cplusplus
 extern "C"
 {
@@ -62,8 +64,8 @@ struct OicParseQueryIter
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  *
  */
-#define VERIFY_SUCCESS(tag, op, logLevel) { if (!(op)) \
-            {OC_LOG((logLevel), tag, PCF(#op " failed!!")); goto exit;} }
+#define VERIFY_SUCCESS(tag, op, logLevel) do{ if (!(op)) \
+            {OC_LOG((logLevel), tag, #op " failed!!"); goto exit; } }while(0)
 
 /**
  * @def VERIFY_NON_NULL
@@ -72,8 +74,8 @@ struct OicParseQueryIter
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  *
  */
-#define VERIFY_NON_NULL(tag, arg, logLevel) { if (NULL == (arg)) \
-            { OC_LOG((logLevel), tag, PCF(#arg " is NULL")); goto exit; } }
+#define VERIFY_NON_NULL(tag, arg, logLevel) do{ if (NULL == (arg)) \
+            { OC_LOG((logLevel), tag, #arg " is NULL"); goto exit; } }while(0)
 
 /**
  * This method initializes the OicParseQueryIter_t struct
@@ -96,6 +98,21 @@ void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter);
  *     NULL                   - has no query to parse
  */
 OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter);
+
+
+
+/**
+ * This method acts as a helper funtion for JSON unmarshalling by various SVR's.
+ *
+ * @param jsonRoot  - root JSON node containing the OicUuid array
+ * @param arrayItem - name of the JSON OicUuid array item
+ * @param numUuids  - pointer to the number of OicUuid's available in JSON array
+ * @param uuids     - pointer to the array of OicUuid's
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult AddUuidArray(cJSON* jsonRoot, const char* arrayItem,
+                           size_t *numUuids, OicUuid_t** uuids );
 
 #ifdef __cplusplus
 }

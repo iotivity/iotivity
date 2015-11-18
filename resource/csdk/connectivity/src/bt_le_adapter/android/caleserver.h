@@ -129,6 +129,11 @@ CAResult_t CALEServerCreateJniInterfaceObject();
 
 /**
  * start advertise in gatt server.
+ */
+CAResult_t CALEStartAdvertise();
+
+/**
+ * start advertise in gatt server.
  * @param[in]   env                JNI interface pointer.
  * @param[in]   advertiseCallback  callback to be notified on reception of
  *                                 advertisement result.

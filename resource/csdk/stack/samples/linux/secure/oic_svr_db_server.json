@@ -8,7 +8,8 @@
                 "/oic/p",
                 "/oic/res/types/d",
                 "/oic/ad",
-                "/oic/sec/acl"
+                "/oic/sec/acl",
+                "/oic/sec/amacl"
 			],
 			"perms": 2,
 			"ownrs" : ["MTExMTExMTExMTExMTExMQ=="]
@@ -24,11 +25,39 @@
         },
         {
             "sub": "MjIyMjIyMjIyMjIyMjIyMg==",
+            "rsrc": ["/oic/sec/acl",
+                      "/oic/sec/cred"],
+            "perms": 8,
+            "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+        },
+        {
+            "sub": "MjIyMjIyMjIyMjIyMjIyMg==",
             "rsrc": ["/a/led"],
             "perms": 6,
             "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+        },
+        {
+            "sub": "MTExMTIyMjIzMzMzNDQ0NA==",
+            "rsrc": ["/a/led"],
+            "perms": 6,
+            "prds" : ["20150630T060000/20150630T220000", "20150630T060000/20150630T200000"],
+            "recurs" : ["FREQ=DAILY; BYDAY=MO, WE, FR", "FREQ=DAILY; BYDAY=TU, TH; UNTIL=20160630"],
+            "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+        },
+        {
+            "sub": "Nzc3Nzc3Nzc3Nzc3Nzc3Nw==",
+            "rsrc": ["/a/led"],
+            "perms": 6,
+            "prds" : ["20150630T060000/20150630T220000"],
+            "recurs" : ["FREQ=DAILY; UNTIL=20150630"],
+            "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
         }
 	],
+	"amacl": [{
+		"rsrc" : ["/a/led"],
+		"amss" : ["MTkxOTE5MTkxOTE5MTkxOQ=="],
+		"ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	}],
 	"pstat":	{
 		"isop":	true,
 		"deviceid":	"ZGV2aWNlaWQAAAAAABhanw==",
@@ -41,15 +70,44 @@
 	"doxm":	{
 		"oxm":	[0],
 		"oxmsel": 0,
+		"sct": 1,
 		"owned": true,
 		"deviceid":	"MTExMTExMTExMTExMTExMQ==",
-		"ownr":	"MjIyMjIyMjIyMjIyMjIyMg=="
+		"ownr":	"YWRtaW5EZXZpY2VVVUlEAA=="
 	},
     "cred":	[{
 		"credid": 1,
 		"sub": "MjIyMjIyMjIyMjIyMjIyMg==",
 		"credtyp": 1,
 		"pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	},
+	{
+	    "credid": 2,
+	    "sub": "MTExMTIyMjIzMzMzNDQ0NA==",
+	    "credtyp": 1,
+	    "pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	},
+	{
+	    "credid": 3,
+	    "sub": "Nzc3Nzc3Nzc3Nzc3Nzc3Nw==",
+	    "credtyp": 1,
+	    "pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	},
+	{
+	    "credid": 4,
+	    "sub": "NDQ0NDMzMzMyMjIyMTExMQ==",
+	    "credtyp": 1,
+	    "pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	},
+	{
+	    "credid": 5,
+	    "sub": "MTkxOTE5MTkxOTE5MTkxOQ==",
+	    "credtyp": 1,
+	    "pvdata": "QkJCQkJCQkJCQkJCQkJCQg==",
         "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 	}]
 }

@@ -4,10 +4,12 @@
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "cainterface.h"
 #include "cacommon.h"
 #include "caadapterutils.h"
+#include "oic_string.h"
 
 #include "org_iotivity_ca_service_RMInterface.h"
 
@@ -15,21 +17,20 @@
 #define  LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define  LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
-/**
- * @def RS_IDENTITY
- * @brief
- */
-#define IDENTITY     ("1111111111111111")
-/* @def RS_CLIENT_PSK
- * @brief
- */
-#define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
+// Iotivity Device Identity.
+const unsigned char IDENTITY[] = ("1111111111111111");
+
+// PSK between this device and peer device.
+const unsigned char RS_CLIENT_PSK[] = ("AAAAAAAAAAAAAAAA");
 
 #define PORT_LENGTH 5
 #define SECURE_DEFAULT_PORT 5684
 #define RESOURCE_URI_LENGTH 14
 #define OPTION_INFO_LENGTH 1024
 #define NETWORK_INFO_LENGTH 1024
+#define BIG_PAYLOAD_LENGTH 1024
+#define RECEIVED_FILE_NAME_PREFIX_LENGTH 7
+#define RECEIVED_FILE_NAME_LENGTH 14
 
 typedef struct
 {
@@ -48,6 +49,9 @@ static CAResult_t get_remote_address(const char *address);
 static void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *flags);
 static void delete_global_references(JNIEnv *env, jobject obj);
 static int get_address_set(const char *pAddress, addressSet_t* outAddress);
+bool read_file(const char* name, char** bytes, size_t* length);
+uint32_t gettodaydate();
+void saveFile(const char *payload, size_t payloadSize);
 
 uint16_t g_localSecurePort = SECURE_DEFAULT_PORT;
 CATransportAdapter_t g_selectedNwType = CA_ADAPTER_IP;
@@ -58,6 +62,8 @@ static const char COAP_PREFIX[] =  "coap://";
 static const char COAPS_PREFIX[] = "coaps://";
 static const uint16_t COAP_PREFIX_LEN = sizeof(COAP_PREFIX) - 1;
 static const uint16_t COAPS_PREFIX_LEN = sizeof(COAPS_PREFIX) - 1;
+
+static const char RECEIVED_FILE_PATH[] = "/storage/emulated/0/Download/%d%s.txt";
 
 static const char SECURE_INFO_DATA[]
                                    = "{\"oc\":[{\"href\":\"%s\",\"prop\":{\"rt\":[\"core.led\"],"
@@ -94,85 +100,67 @@ Java_org_iotivity_ca_service_RMInterface_setNativeResponseListener(JNIEnv *env, 
 }
 
 #ifdef __WITH_DTLS__
-static CADtlsPskCredsBlob_t *pskCredsBlob = NULL;
-
-void clearDtlsCredentialInfo()
-{
-    LOGI("clearDtlsCredentialInfo IN");
-    if (pskCredsBlob)
-    {
-        // Initialize sensitive data to zeroes before freeing.
-        if (NULL != pskCredsBlob->creds)
-        {
-            memset(pskCredsBlob->creds, 0, sizeof(OCDtlsPskCreds)*(pskCredsBlob->num));
-            free(pskCredsBlob->creds);
-        }
-
-        memset(pskCredsBlob, 0, sizeof(CADtlsPskCredsBlob_t));
-        free(pskCredsBlob);
-        pskCredsBlob = NULL;
-    }
-    LOGI("clearDtlsCredentialInfo OUT");
-}
-
 // Internal API. Invoked by OC stack to retrieve credentials from this module
-void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
+int32_t CAGetDtlsPskCredentials( CADtlsPskCredType_t type,
+              const unsigned char *desc, size_t desc_len,
+              unsigned char *result, size_t result_length)
 {
     LOGI("CAGetDtlsPskCredentials IN");
-    *credInfo = (CADtlsPskCredsBlob_t *) malloc(sizeof(CADtlsPskCredsBlob_t));
-    if (NULL == *credInfo)
+
+    int32_t ret = -1;
+
+    if (NULL == result)
     {
-        LOGE("Failed to allocate credential blob.");
-        return;
+        return ret;
     }
 
-    int16_t credLen = sizeof(OCDtlsPskCreds) * (pskCredsBlob->num);
-    (*credInfo)->creds = (OCDtlsPskCreds *) malloc(credLen);
-    if (NULL == (*credInfo)->creds)
+    switch (type)
     {
-        LOGE("Failed to allocate crentials.");
-        free(*credInfo);
-        *credInfo = NULL;
-        return;
+        case CA_DTLS_PSK_HINT:
+        case CA_DTLS_PSK_IDENTITY:
+
+            if (result_length < sizeof(IDENTITY))
+            {
+                LOGE("ERROR : Wrong value for result for storing IDENTITY");
+                return ret;
+            }
+
+            memcpy(result, IDENTITY, sizeof(IDENTITY));
+            ret = sizeof(IDENTITY);
+            break;
+
+        case CA_DTLS_PSK_KEY:
+
+            if ((desc_len == sizeof(IDENTITY)) &&
+                memcmp(desc, IDENTITY, sizeof(IDENTITY)) == 0)
+            {
+                if (result_length < sizeof(RS_CLIENT_PSK))
+                {
+                    LOGE("ERROR : Wrong value for result for storing RS_CLIENT_PSK");
+                    return ret;
+                }
+
+                memcpy(result, RS_CLIENT_PSK, sizeof(RS_CLIENT_PSK));
+                ret = sizeof(RS_CLIENT_PSK);
+            }
+            break;
+
+        default:
+
+            LOGE("Wrong value passed for PSK_CRED_TYPE.");
+            ret = -1;
     }
 
-    memcpy((*credInfo)->identity, pskCredsBlob->identity, DTLS_PSK_ID_LEN);
-    (*credInfo)->num = pskCredsBlob->num;
-    memcpy((*credInfo)->creds, pskCredsBlob->creds, credLen);
-
-    LOGI("CAGetDtlsPskCredentials OUT");
+    LOGI("CAGetDtlsPskCredentials OUT\n");
+    return ret;
 }
 
-CAResult_t SetCredentials()
-{
-    LOGI("SetCredentials IN");
-    pskCredsBlob = (CADtlsPskCredsBlob_t *)malloc(sizeof(CADtlsPskCredsBlob_t));
-    if (NULL == pskCredsBlob)
-    {
-        LOGE("Memory allocation failed!");
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-    memcpy(pskCredsBlob->identity, IDENTITY, DTLS_PSK_ID_LEN);
-
-    pskCredsBlob->num = 1;
-
-    pskCredsBlob->creds = (OCDtlsPskCreds *)malloc(sizeof(OCDtlsPskCreds) *(pskCredsBlob->num));
-    if (NULL == pskCredsBlob->creds)
-    {
-        LOGE("Memory allocation failed!");
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-    memcpy(pskCredsBlob->creds[0].id, IDENTITY, DTLS_PSK_ID_LEN);
-    memcpy(pskCredsBlob->creds[0].psk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
-
-    LOGI("SetCredentials OUT");
-    return CA_STATUS_OK;
-}
 #endif
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
     LOGI("JNI_OnLoad");
+    (void)reserved;
 
     JNIEnv* env;
     if (JNI_OK != (*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6))
@@ -189,6 +177,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *jvm, void *reserved)
 void JNI_OnUnload(JavaVM *jvm, void *reserved)
 {
     LOGI("JNI_OnUnload");
+    (void)reserved;
 
     JNIEnv* env;
     if (JNI_OK != (*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6))
@@ -222,12 +211,6 @@ Java_org_iotivity_ca_service_RMInterface_RMInitialize(JNIEnv *env, jobject obj, 
     }
 
 #ifdef __WITH_DTLS__
-    if (CA_STATUS_OK != SetCredentials())
-    {
-        LOGE("SetCredentials failed");
-        return;
-    }
-
     res = CARegisterDTLSCredentialsHandler(CAGetDtlsPskCredentials);
     if(CA_STATUS_OK != res)
     {
@@ -300,18 +283,14 @@ Java_org_iotivity_ca_service_RMInterface_RMRegisterHandler(JNIEnv *env, jobject 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj, jstring uri,
                                                        jstring payload, jint selectedNetwork,
-                                                       jint isSecured, jint msgType)
+                                                       jint isSecured, jint msgType,
+                                                       jboolean isBigData)
 {
     LOGI("selectedNetwork - %d", selectedNetwork);
     if (!env || !obj)
     {
         LOGI("Invalid input parameter");
         return;
-    }
-
-    if (!payload)
-    {
-        LOGE("payload is NULL");
     }
 
     if (!uri)
@@ -369,37 +348,77 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
     requestData.token = token;
     requestData.tokenLength = tokenLength;
 
-    if (1 == isSecured)
+    size_t payloadLength = 0;
+    if (isBigData)
     {
-        uint32_t length = sizeof(SECURE_INFO_DATA) + strlen(resourceURI);
-        requestData.payload = (CAPayload_t) malloc(length);
-        if (NULL == requestData.payload)
+        const char* path = NULL;
+        if (payload)
         {
-            LOGE("Memory allocation failed!");
-            // destroy token
-            CADestroyToken(token);
-            // destroy remote endpoint
-            CADestroyEndpoint(endpoint);
-            return;
+            path = (*env)->GetStringUTFChars(env, payload, NULL);
+            if(path)
+            {
+                char* bigData = NULL;
+                bool result = read_file(path, &bigData, &payloadLength);
+                if (!result)
+                {
+                    LOGE("read has failed");
+                    (*env)->ReleaseStringUTFChars(env, payload, path);
+                    CADestroyToken(token);
+                    CADestroyEndpoint(endpoint);
+                    return;
+                }
+                (*env)->ReleaseStringUTFChars(env, payload, path);
+
+                requestData.payload = (CAPayload_t) malloc(payloadLength);
+                if (NULL == requestData.payload)
+                {
+                    LOGE("Memory allocation failed!");
+                    // destroy token
+                    CADestroyToken(token);
+                    // destroy remote endpoint
+                    CADestroyEndpoint(endpoint);
+                    return;
+                }
+                memcpy(requestData.payload, bigData, payloadLength);
+                requestData.payloadSize = payloadLength;
+            }
         }
-        snprintf((char *) requestData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
-        requestData.payloadSize = length;
     }
     else
     {
-        uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(resourceURI);
-        requestData.payload = (CAPayload_t) malloc(length);
-        if (NULL == requestData.payload)
+        if (isSecured)
         {
-            LOGE("Memory allocation failed!");
-            // destroy token
-            CADestroyToken(token);
-            // destroy remote endpoint
-            CADestroyEndpoint(endpoint);
-            return;
+            payloadLength = sizeof(SECURE_INFO_DATA) + strlen(resourceURI);
+            requestData.payload = (CAPayload_t) malloc(payloadLength);
+            if (NULL == requestData.payload)
+            {
+                LOGE("Memory allocation failed!");
+                // destroy token
+                CADestroyToken(token);
+                // destroy remote endpoint
+                CADestroyEndpoint(endpoint);
+                return;
+            }
+            snprintf((char *) requestData.payload, payloadLength, SECURE_INFO_DATA,
+                     resourceURI, g_localSecurePort);
+            requestData.payloadSize = payloadLength;
         }
-        snprintf((char *) requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
-        requestData.payloadSize = length;
+        else
+        {
+            payloadLength = sizeof(NORMAL_INFO_DATA) + strlen(resourceURI);
+            requestData.payload = (CAPayload_t) malloc(payloadLength);
+            if (NULL == requestData.payload)
+            {
+                LOGE("Memory allocation failed!");
+                // destroy token
+                CADestroyToken(token);
+                // destroy remote endpoint
+                CADestroyEndpoint(endpoint);
+                return;
+            }
+            snprintf((char *) requestData.payload, payloadLength, NORMAL_INFO_DATA, resourceURI);
+            requestData.payloadSize = payloadLength;
+        }
     }
 
     requestData.type = messageType;
@@ -632,8 +651,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendResponse(JNIEnv *env, jobject obj
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject obj, jstring uri,
                                                             jstring payload, jint selectedNetwork,
-                                                            jint isSecured, jint msgType,
-                                                            jint responseValue)
+                                                            jint isSecured, jint msgType)
 {
     LOGI("selectedNetwork - %d", selectedNetwork);
     if (!env || !obj)
@@ -699,11 +717,11 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
         return;
     }
 
-    CAInfo_t responseData = { 0 };
-    responseData.token = token;
-    responseData.tokenLength = tokenLength;
-    responseData.resourceUri = (CAURI_t) malloc(sizeof(resourceURI));
-    if (NULL == responseData.resourceUri)
+    CAInfo_t requestData = { 0 };
+    requestData.token = token;
+    requestData.tokenLength = tokenLength;
+    requestData.resourceUri = (CAURI_t) malloc(sizeof(resourceURI));
+    if (NULL == requestData.resourceUri)
     {
         LOGE("Memory allocation failed!");
         // destroy token
@@ -712,13 +730,13 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
         CADestroyEndpoint(endpoint);
         return;
     }
-    memcpy(responseData.resourceUri, resourceURI, sizeof(resourceURI));
+    memcpy(requestData.resourceUri, resourceURI, sizeof(resourceURI));
 
     if (1 == isSecured)
     {
         uint32_t length = sizeof(SECURE_INFO_DATA) + strlen(resourceURI);
-        responseData.payload = (CAPayload_t) malloc(length);
-        if (NULL == responseData.payload)
+        requestData.payload = (CAPayload_t) malloc(length);
+        if (NULL == requestData.payload)
         {
             LOGE("Memory allocation failed!");
             // destroy token
@@ -726,17 +744,17 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
             // destroy remote endpoint
             CADestroyEndpoint(endpoint);
 
-            free(responseData.resourceUri);
+            free(requestData.resourceUri);
             return;
         }
-        snprintf((char *) responseData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
-        responseData.payloadSize = length;
+        snprintf((char *) requestData.payload, length, SECURE_INFO_DATA, resourceURI, g_localSecurePort);
+        requestData.payloadSize = length;
     }
     else
     {
         uint32_t length = sizeof(NORMAL_INFO_DATA) + strlen(resourceURI);
-        responseData.payload = (CAPayload_t) malloc(length);
-        if (NULL == responseData.payload)
+        requestData.payload = (CAPayload_t) malloc(length);
+        if (NULL == requestData.payload)
         {
             LOGE("Memory allocation failed!");
             // destroy token
@@ -744,21 +762,21 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
             // destroy remote endpoint
             CADestroyEndpoint(endpoint);
 
-            free(responseData.resourceUri);
+            free(requestData.resourceUri);
             return;
         }
-        snprintf((char *) responseData.payload, length, NORMAL_INFO_DATA, resourceURI);
-        responseData.payloadSize = length;
+        snprintf((char *) requestData.payload, length, NORMAL_INFO_DATA, resourceURI);
+        requestData.payloadSize = length;
     }
 
-    responseData.type = messageType;
+    requestData.type = messageType;
 
-    CAResponseInfo_t responseInfo = { 0 };
-    responseInfo.result = responseValue;
-    responseInfo.info = responseData;
+    CARequestInfo_t requestInfo = { 0 };
+    requestInfo.method = CA_GET;
+    requestInfo.info = requestData;
 
     // send notification
-    if (CA_STATUS_OK != CASendNotification(endpoint, &responseInfo))
+    if (CA_STATUS_OK != CASendRequest(endpoint, &requestInfo))
     {
         LOGE("Could not send notification");
     }
@@ -771,8 +789,8 @@ Java_org_iotivity_ca_service_RMInterface_RMSendNotification(JNIEnv *env, jobject
     // destroy remote endpoint
     CADestroyEndpoint(endpoint);
 
-    free(responseData.payload);
-    free(responseData.resourceUri);
+    free(requestData.payload);
+    free(requestData.resourceUri);
 }
 
 JNIEXPORT void JNICALL
@@ -1027,7 +1045,14 @@ void request_handler(const CAEndpoint_t* object, const CARequestInfo_t* requestI
             memcpy(clonePayload, requestInfo->info.payload, len);
             clonePayload[len] = '\0';
 
-            callback("Data: ", clonePayload);
+            if (len > BIG_PAYLOAD_LENGTH)
+            {
+                saveFile(clonePayload, len);
+            }
+            else
+            {
+                callback("Data: ", clonePayload);
+            }
             free(clonePayload);
         }
     }
@@ -1172,7 +1197,14 @@ void response_handler(const CAEndpoint_t* object, const CAResponseInfo_t* respon
             memcpy(clonePayload, responseInfo->info.payload, len);
             clonePayload[len] = '\0';
 
-            callback("Data: ", clonePayload);
+            if (len > BIG_PAYLOAD_LENGTH)
+            {
+                saveFile(clonePayload, len);
+            }
+            else
+            {
+                callback("Data: ", clonePayload);
+            }
             free(clonePayload);
         }
     }
@@ -1592,4 +1624,113 @@ void delete_global_references(JNIEnv *env, jobject obj)
 
     CADeleteGlobalReferences(env);
     (*env)->DeleteGlobalRef(env, g_responseListenerObject);
+}
+
+
+bool read_file(const char* name, char** bytes, size_t* length)
+{
+    if (NULL == name)
+    {
+        LOGE("parameter is null");
+        return false;
+    }
+
+    FILE* file;
+    char* buffer;
+    size_t fileLen;
+
+    // Open file
+    file = fopen(name, "rt");
+    if (!file)
+    {
+        fprintf(stderr, "Unable to open file %s", name);
+        return false;
+    }
+
+    // Get file length
+    fseek(file, 0, SEEK_END);
+    fileLen = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    LOGI("file size: %d", fileLen);
+
+    // Allocate memory
+    buffer = calloc(1, sizeof(char) * fileLen + 1);
+    if (!buffer)
+    {
+        fprintf(stderr, "Memory error!");
+        fclose(file);
+        return false;
+    }
+
+    // Read file contents into buffer
+    size_t ret = fread(buffer, fileLen, 1, file);
+    if (ret != 1)
+    {
+        printf("Failed to read data from file, %s\n", name);
+        fclose(file);
+        free(buffer);
+        return false;
+    }
+
+    fclose(file);
+
+    LOGI("file bytes: %s", buffer);
+
+    *bytes = buffer;
+    *length = fileLen;
+
+    return true;
+}
+
+void saveFile(const char *payload, size_t payloadSize)
+{
+    // 1. get day
+    uint32_t day = gettodaydate();
+
+    // 2. get time
+    time_t current_time;
+    struct tm * time_info;
+    char timeString[RECEIVED_FILE_NAME_PREFIX_LENGTH];
+
+    time(&current_time);
+    time_info = localtime(&current_time);
+
+    strftime(timeString, sizeof(timeString), "%H%M%S", time_info);
+
+    uint32_t path_length = strlen(RECEIVED_FILE_PATH) + RECEIVED_FILE_NAME_LENGTH + 1;
+    char* path = calloc(1, sizeof(char) * path_length);
+    if (path != NULL)
+    {
+        sprintf(path, RECEIVED_FILE_PATH, day, timeString);
+        LOGI("received file path: %s", path);
+
+        FILE *fp = fopen(path, "wt");
+        fwrite(payload, 1, payloadSize, fp);
+        fclose(fp);
+
+        callback("File Path: ", path);
+    }
+    else
+    {
+        LOGE("path Out of memory");
+    }
+}
+
+uint32_t gettodaydate()
+{
+    uint32_t ldate;
+    time_t clock;
+    struct tm *date;
+
+    clock = time(0);
+    date = localtime(&clock);
+    ldate = date->tm_year * 100000;
+    ldate += (date->tm_mon + 1) * 1000;
+    ldate += date->tm_mday * 10;
+    ldate += date->tm_wday;
+    ldate += 190000000;
+    ldate /= 10;
+
+    return(ldate);
 }
