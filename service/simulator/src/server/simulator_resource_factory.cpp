@@ -331,6 +331,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
 
     name = ramlResource->getDisplayName();
     uri = ramlResource->getResourceUri();
+    std::map<RAML::ActionType, RAML::ActionPtr> actionType = ramlResource->getActions();
 
     RAML::RequestResponseBodyPtr successResponseBody = getRAMLResponseBody(
                 ramlResource, RAML::ActionType::GET, "200");
@@ -359,6 +360,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
             collectionRes->setResourceType(resourceType);
             collectionRes->setInterface(interfaceType);
             collectionRes->setURI(ResourceURIFactory::getInstance()->constructURI(uri));
+            collectionRes->setActionType(actionType);
 
             collectionRes->setResourceModel(successResponseModel);
             simResource = std::dynamic_pointer_cast<SimulatorResource>(collectionRes);
@@ -376,6 +378,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
             singleRes->setResourceType(resourceType);
             singleRes->setInterface(interfaceType);
             singleRes->setURI(ResourceURIFactory::getInstance()->constructURI(uri));
+            singleRes->setActionType(actionType);
 
             singleRes->setResourceModel(successResponseModel);
             singleRes->setPutErrorResponseModel(putErrorResponseModel);

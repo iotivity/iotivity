@@ -23,6 +23,7 @@
 
 #include "simulator_single_resource.h"
 #include "resource_update_automation_mngr.h"
+#include "RamlParser.h"
 
 class SimulatorResourceFactory;
 class SimulatorSingleResourceImpl : public SimulatorSingleResource
@@ -74,6 +75,8 @@ class SimulatorSingleResourceImpl : public SimulatorSingleResource
         void setResourceModel(const SimulatorResourceModel &resModel);
         void setPutErrorResponseModel(const SimulatorResourceModel &resModel);
         void setPostErrorResponseModel(const SimulatorResourceModel &resModel);
+        void setActionType(std::map<RAML::ActionType, RAML::ActionPtr> &actionType);
+        RAML::ActionType getActionType(std::string requestType);
         void notifyApp();
         void notifyApp(SimulatorResourceModel &resModel);
 
@@ -103,6 +106,7 @@ class SimulatorSingleResourceImpl : public SimulatorSingleResource
         ObserverCallback m_observeCallback;
         UpdateAutomationMngr m_updateAutomationMgr;
         std::vector<ObserverInfo> m_observersList;
+        std::map<RAML::ActionType , RAML::ActionPtr> m_actionTypes;
 
         OCResourceProperty m_property;
         OCResourceHandle m_resourceHandle;

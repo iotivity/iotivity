@@ -315,9 +315,9 @@ class ClientController
             try
             {
                 SimulatorResourceModelSP rep = std::make_shared<SimulatorResourceModel>();
-                std::string value = "off";
+                bool value = false;
                 rep->add("power", value);
-                rep->add("intensity", 5);
+                rep->add("intensity", 15);
 
                 resource->put(std::map <std::string, std::string>(), rep, callback);
                 std::cout << "PUT is successful!" << std::endl;
@@ -358,9 +358,9 @@ class ClientController
             try
             {
                 SimulatorResourceModelSP rep = std::make_shared<SimulatorResourceModel>();
-                std::string value = "on";
+                bool value = true;
                 rep->add("power", value);
-                rep->add("intensity", 7);
+                rep->add("intensity", 17);
 
                 resource->post(std::map <std::string, std::string>(), rep, callback);
                 std::cout << "POST is successful!" << std::endl;

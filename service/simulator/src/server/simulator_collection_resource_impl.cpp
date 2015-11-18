@@ -229,6 +229,11 @@ void SimulatorCollectionResourceImpl::setResourceModel(const SimulatorResourceMo
     m_resModel = resModel;
 }
 
+void SimulatorCollectionResourceImpl::setActionType(std::map<RAML::ActionType, RAML::ActionPtr> &actionType)
+{
+    m_actionTypes = actionType;
+}
+
 std::vector<ObserverInfo> SimulatorCollectionResourceImpl::getObserversList()
 {
     return m_observersList;
@@ -426,6 +431,15 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
     std::shared_ptr<OC::OCResourceRequest> request)
 {
     std::shared_ptr<OC::OCResourceResponse> response;
+
+    RAML::ActionType type = getActionType(request->getRequestType());
+
+    if (!m_actionTypes.empty())
+    {
+        if (m_actionTypes.end() == m_actionTypes.find(type))
+            return response;
+    }
+
     if ("GET" == request->getRequestType())
     {
         // Construct the representation
@@ -455,6 +469,15 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
 {
     std::lock_guard<std::mutex> lock(m_childResourcesLock);
     std::shared_ptr<OC::OCResourceResponse> response;
+
+    RAML::ActionType type = getActionType(request->getRequestType());
+
+    if (!m_actionTypes.empty())
+    {
+        if (m_actionTypes.end() == m_actionTypes.find(type))
+            return response;
+    }
+
     if ("GET" == request->getRequestType())
     {
         // Construct the representation
@@ -561,4 +584,21 @@ void SimulatorCollectionResourceImpl::removeLink(std::string uri)
             break;
         }
     }
+}
+
+RAML::ActionType SimulatorCollectionResourceImpl::getActionType(std::string requestType)
+{
+    if (!requestType.compare("GET"))
+        return RAML::ActionType::GET;
+
+    if (!requestType.compare("PUT"))
+        return RAML::ActionType::PUT;
+
+    if (!requestType.compare("POST"))
+        return RAML::ActionType::POST;
+
+    if (!requestType.compare("DELETE"))
+        return RAML::ActionType::DELETE;
+
+    return RAML::ActionType::NONE;
 }

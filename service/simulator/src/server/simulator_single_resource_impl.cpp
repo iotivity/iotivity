@@ -426,6 +426,11 @@ void SimulatorSingleResourceImpl::setPostErrorResponseModel(const SimulatorResou
     m_postErrorResModel = resModel;
 }
 
+void SimulatorSingleResourceImpl::setActionType(std::map<RAML::ActionType, RAML::ActionPtr> &actionType)
+{
+    m_actionTypes = actionType;
+}
+
 void SimulatorSingleResourceImpl::notifyApp(SimulatorResourceModel &resModel)
 {
     if (m_modelCallback)
@@ -467,17 +472,10 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleRequests(
                     << " request received. \n**Payload details**\n" << payload)
         }
 
-        // Handover the request to appropriate interface handler
-        std::string interfaceType(OC::DEFAULT_INTERFACE);
-        OC::QueryParamsMap queryParams = request->getQueryParameters();
-        if (queryParams.end() != queryParams.find("if"))
-            interfaceType = queryParams["if"];
+        // TODO: Handover the request to appropriate interface handler
 
         std::shared_ptr<OC::OCResourceResponse> response;
-        if (interfaceType == OC::DEFAULT_INTERFACE)
-        {
-            response = requestOnBaseLineInterface(request);
-        }
+        response = requestOnBaseLineInterface(request);
 
         // Send response if the request handled by resource
         if (response)
@@ -522,6 +520,15 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorSingleResourceImpl::requestOnBa
     std::shared_ptr<OC::OCResourceRequest> request)
 {
     std::shared_ptr<OC::OCResourceResponse> response;
+
+    RAML::ActionType type = getActionType(request->getRequestType());
+
+    if (!m_actionTypes.empty())
+    {
+        if (m_actionTypes.end() == m_actionTypes.find(type))
+            return response;
+    }
+
     if ("GET" == request->getRequestType())
     {
         OC::OCRepresentation ocRep = m_resModel.getOCRepresentation();
@@ -621,4 +628,21 @@ void SimulatorSingleResourceImpl::removeAllObservers()
         if (m_observeCallback)
             m_observeCallback(m_uri, ObservationStatus::UNREGISTER, observerList[index]);
     }
+}
+
+RAML::ActionType SimulatorSingleResourceImpl::getActionType(std::string requestType)
+{
+    if (!requestType.compare("GET"))
+        return RAML::ActionType::GET;
+
+    if (!requestType.compare("PUT"))
+        return RAML::ActionType::PUT;
+
+    if (!requestType.compare("POST"))
+        return RAML::ActionType::POST;
+
+    if (!requestType.compare("DELETE"))
+        return RAML::ActionType::DELETE;
+
+    return RAML::ActionType::NONE;
 }
