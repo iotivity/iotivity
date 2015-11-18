@@ -26,6 +26,9 @@
 #include <dlog.h>
 #endif
 
+#define __STDC_FORMAT_MACROS
+#define __STDC_LIMIT_MACROS
+#include <inttypes.h>
 #include "rdpayload.h"
 
 #ifdef __cplusplus
@@ -80,7 +83,7 @@ static inline void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
                     OC_LOG_V(level, PL_TAG, "\t\t%s: NULL", val->name);
                     break;
                 case OCREP_PROP_INT:
-                    OC_LOG_V(level, PL_TAG, "\t\t%s(int):%lld", val->name, val->i);
+                    OC_LOG_V(level, PL_TAG, "\t\t%s(int):%zd", val->name, val->i);
                     break;
                 case OCREP_PROP_DOUBLE:
                     OC_LOG_V(level, PL_TAG, "\t\t%s(double):%f", val->name, val->d);
@@ -91,6 +94,10 @@ static inline void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
                 case OCREP_PROP_STRING:
                     OC_LOG_V(level, PL_TAG, "\t\t%s(string):%s", val->name, val->str);
                     break;
+                case OCREP_PROP_BYTE_STRING:
+                    OC_LOG_V(level, PL_TAG, "\t\t%s(binary):", val->name);
+                    OC_LOG_BUFFER(level, PL_TAG, val->ocByteStr.bytes, val->ocByteStr.len);
+                    break;
                 case OCREP_PROP_OBJECT:
                     // Note: Only prints the URI (if available), to print further, you'll
                     // need to dig into the object better!
@@ -100,31 +107,37 @@ static inline void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
                     switch(val->arr.type)
                     {
                         case OCREP_PROP_INT:
-                            OC_LOG_V(level, PL_TAG, "\t\t%s(int array):%lld x %lld x %lld",
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(int array):%zu x %zu x %zu",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);
                             break;
                         case OCREP_PROP_DOUBLE:
-                            OC_LOG_V(level, PL_TAG, "\t\t%s(double array):%lld x %lld x %lld",
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(double array):%zu x %zu x %zu",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);
                             break;
                         case OCREP_PROP_BOOL:
-                            OC_LOG_V(level, PL_TAG, "\t\t%s(bool array):%lld x %lld x %lld",
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(bool array):%zu x %zu x %zu",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);
                             break;
                         case OCREP_PROP_STRING:
-                            OC_LOG_V(level, PL_TAG, "\t\t%s(string array):%lld x %lld x %lld",
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(string array):%zu x %zu x %zu",
+                                    val->name,
+                                    val->arr.dimensions[0], val->arr.dimensions[1],
+                                    val->arr.dimensions[2]);
+                            break;
+                        case OCREP_PROP_BYTE_STRING:
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(byte array):%lld x %lld x %lld",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);
                             break;
                         case OCREP_PROP_OBJECT:
-                            OC_LOG_V(level, PL_TAG, "\t\t%s(OCRep array):%lld x %lld x %lld",
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(OCRep array):%zu x %zu x %zu",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);

@@ -303,31 +303,31 @@ void LogProvisioningResponse(OCRepPayloadValue * val) {
         case OCREP_PROP_ARRAY:
             switch (val->arr.type) {
                 case OCREP_PROP_INT:
-                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(int array):%lu x %lu x %lu",
+                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(int array):%zu x %zu x %zu",
                               val->name,
                               val->arr.dimensions[0], val->arr.dimensions[1],
                               val->arr.dimensions[2]);
                     break;
                 case OCREP_PROP_DOUBLE:
-                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(double array):%lu x %lu x %lu",
+                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(double array):%zu x %zu x %zu",
                               val->name,
                               val->arr.dimensions[0], val->arr.dimensions[1],
                               val->arr.dimensions[2]);
                     break;
                 case OCREP_PROP_BOOL:
-                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(bool array):%lu x %lu x %lu",
+                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(bool array):%zu x %zu x %zu",
                               val->name,
                               val->arr.dimensions[0], val->arr.dimensions[1],
                               val->arr.dimensions[2]);
                     break;
                 case OCREP_PROP_STRING:
-                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(string array):%lu x %lu x %lu",
+                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(string array):%zu x %zu x %zu",
                               val->name,
                               val->arr.dimensions[0], val->arr.dimensions[1],
                               val->arr.dimensions[2]);
                     break;
                 case OCREP_PROP_OBJECT:
-                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(OCRep array):%lu x %lu x %lu",
+                    OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(OCRep array):%zu x %zu x %zu",
                               val->name,
                               val->arr.dimensions[0], val->arr.dimensions[1],
                               val->arr.dimensions[2]);

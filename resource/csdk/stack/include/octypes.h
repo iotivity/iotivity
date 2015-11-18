@@ -336,11 +336,8 @@ typedef enum
     /**Remote Access over XMPP.*/
     OC_ADAPTER_REMOTE_ACCESS = (1 << 3),
 #endif
-
-#ifdef TCP_ADAPTER
     /** CoAP over TCP.*/
     OC_ADAPTER_TCP           = (1 << 4)
-#endif
 
 } OCTransportAdapter;
 
@@ -462,11 +459,8 @@ typedef enum
     /** Remote Access over XMPP.*/
     CT_ADAPTER_REMOTE_ACCESS = (1 << 19),
 #endif
-
-#ifdef TCP_ADAPTER
     /** CoAP over TCP.*/
     CT_ADAPTER_TCP          = (1 << 20),
-#endif
 
     /** Insecure transport is the default (subject to change).*/
 
@@ -943,9 +937,20 @@ typedef enum
     OCREP_PROP_DOUBLE,
     OCREP_PROP_BOOL,
     OCREP_PROP_STRING,
+    OCREP_PROP_BYTE_STRING,
     OCREP_PROP_OBJECT,
     OCREP_PROP_ARRAY
 }OCRepPayloadPropType;
+
+/** This structure will be used to represent a binary string for CBOR payloads.*/
+typedef struct
+{
+    /** pointer to data bytes.*/
+    uint8_t* bytes;
+
+    /** number of data bytes.*/
+    size_t   len;
+} OCByteString;
 
 #define MAX_REP_ARRAY_DEPTH 3
 typedef struct
@@ -959,6 +964,10 @@ typedef struct
         double* dArray;
         bool* bArray;
         char** strArray;
+
+        /** pointer to ByteString array.*/
+        OCByteString* ocByteStrArray;
+
         struct OCRepPayload** objArray;
     };
 } OCRepPayloadValueArray;
@@ -973,6 +982,10 @@ typedef struct OCRepPayloadValue
         double d;
         bool b;
         char* str;
+
+        /** ByteString object.*/
+        OCByteString ocByteStr;
+
         struct OCRepPayload* obj;
         OCRepPayloadValueArray arr;
     };

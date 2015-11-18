@@ -1219,7 +1219,7 @@ static void DeleteRemoveData_t(RemoveData_t* pRemoveData)
 static void registerResultForRemoveDevice(RemoveData_t *removeData, OicUuid_t *pLinkedDevId,
                                           OCStackResult stackresult, bool hasError)
 {
-    OC_LOG_V(INFO, TAG, "Inside registerResultForRemoveDevice removeData->numOfResults is %d\n",
+    OC_LOG_V(INFO, TAG, "Inside registerResultForRemoveDevice removeData->numOfResults is %zu\n",
                          removeData->numOfResults + 1);
     if (pLinkedDevId)
     {

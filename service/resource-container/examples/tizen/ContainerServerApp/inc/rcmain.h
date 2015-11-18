@@ -43,6 +43,6 @@ using namespace OC;
 
 #define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.containerserver/res/ui_controls.edj"
 
-void containerCreateUI(void *data, Evas_Object *obj, void *event_info);
+void containerCreateUI(void *data);
 
 #endif // RCMAIN_H__

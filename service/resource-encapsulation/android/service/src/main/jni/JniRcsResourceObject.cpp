@@ -32,6 +32,7 @@
 
 #include "RCSResourceObject.h"
 #include "RCSResponse.h"
+#include "RCSRequest.h"
 #include "RequestHandler.h"
 
 #define LOG_TAG "JNI-RCSResourceObject"
@@ -503,7 +504,7 @@ Java_org_iotivity_service_server_RcsResourceObject_nativeGetAttributes
     auto res = getResource(env, obj);
     VERIFY_NO_EXC_RET_DEF(env);
 
-    RCSResourceObject::LockGuard lock{ res };
+    RCSResourceObject::LockGuard lock{ res, RCSResourceObject::AutoNotifyPolicy::NEVER };
     return newAttributesObject(env, res->getAttributes());
 }
 

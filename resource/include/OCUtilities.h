@@ -112,6 +112,36 @@ namespace OC
     {
         constexpr static bool value = true;
     };
+
+    // type trait to remove the first type from a parameter-packed list
+    template <typename T>
+    struct remove_first;
+
+    // specialization that does all the work
+    template<template <typename...> class Base, typename T, typename ...Rest>
+    struct remove_first< Base<T, Rest...> >
+    {
+        typedef Base<Rest...> type;
+    };
+
+    // type trait that will only pass if ToTest is in the parameter pack of T2
+    template<typename ToTest, typename T2>
+    struct is_component;
+
+    // specialization to handle the single-item case
+    template<typename ToTest, template <typename...> class Base, typename T>
+    struct is_component<ToTest, Base<T>>
+    {
+        static constexpr bool value = std::is_same<ToTest, T>::value;
+    };
+
+    // Recursive specialization to handle cases with multiple values
+    template<typename ToTest, template <typename...> class Base, typename T, typename ...Rest>
+    struct is_component<ToTest, Base<T, Rest...>>
+    {
+        static constexpr bool value = std::is_same<ToTest, T>::value
+            || is_component<ToTest, Base<Rest...>>::value;
+    };
 } // namespace OC
 
 #endif

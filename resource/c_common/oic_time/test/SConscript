@@ -1,6 +1,6 @@
 #******************************************************************
 #
-# Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+# Copyright 2015 Intel Mobile Communications GmbH All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
@@ -22,37 +22,37 @@
 Import('env')
 import os
 
-target_os = env.get('TARGET_OS')
 
-env.AppendUnique(CPPPATH = [
-            os.path.join(Dir('.').abspath),
-            os.path.join(Dir('.').abspath, 'oic_malloc/include'),
-            os.path.join(Dir('.').abspath, 'oic_string/include'),
-            os.path.join(Dir('.').abspath, 'oic_time/include')
-        ])
-
-if target_os == 'tizen':
-	env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-else:
-	env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource/c_common')])
-
-env.AppendUnique(LIBS = ['c_common'])
-
-common_env = env.Clone()
+timetest_env = env.Clone()
+src_dir = timetest_env.get('SRC_DIR')
 
 ######################################################################
 # Build flags
 ######################################################################
+timetest_env.PrependUnique(CPPPATH = [
+        '../include',
+        '#extlibs/gtest/gtest-1.7.0/include' ])
 
+timetest_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource/c_common')])
+timetest_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
+timetest_env.PrependUnique(LIBS = ['c_common', 'gtest', 'gtest_main', 'pthread'])
+timetest_env.Append(LIBS = ['rt']);
+
+if env.get('LOGGING'):
+    timetest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+#
 ######################################################################
 # Source files and Targets
 ######################################################################
-common_src = [
-    'oic_string/src/oic_string.c',
-    'oic_malloc/src/oic_malloc.c',
-    'oic_time/src/oic_time.c'
-    ]
+timetests = timetest_env.Program('timetests', ['linux/oic_time_tests.cpp'])
 
-commonlib = common_env.StaticLibrary('c_common', common_src)
-common_env.InstallTarget(commonlib, 'c_common')
-common_env.UserInstallTargetLib(commonlib, 'c_common')
+Alias("test", [timetests])
+
+env.AppendTarget('test')
+if env.get('TEST') == '1':
+    target_os = env.get('TARGET_OS')
+    if target_os == 'linux':
+                from tools.scons.RunTest import *
+                run_test(timetest_env,
+                         'resource_ccommon_time_test.memcheck',
+                         'resource/c_common/oic_time/test/timetests')

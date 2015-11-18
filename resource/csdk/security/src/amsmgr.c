@@ -181,13 +181,14 @@ static OCStackApplicationResult SecurePortDiscoveryCallback(void *ctx, OCDoHandl
         !clientResponse->payload||
         (PAYLOAD_TYPE_DISCOVERY != clientResponse->payload->type)||
         (OC_STACK_OK != clientResponse->result))
-        {
-            OC_LOG_V(ERROR, TAG, "%s Invalid Response ", __func__);
-            SRMSendResponse(ACCESS_DENIED_AMS_SERVICE_ERROR);
-            return OC_STACK_DELETE_TRANSACTION;
-        }
+    {
+        OC_LOG_V(ERROR, TAG, "%s Invalid Response ", __func__);
+        SRMSendResponse(ACCESS_DENIED_AMS_SERVICE_ERROR);
+        return OC_STACK_DELETE_TRANSACTION;
+    }
 
     PEContext_t *context = (PEContext_t *) ctx;
+
     (void)handle;
     if (context->state != AWAITING_AMS_RESPONSE)
     {
@@ -196,6 +197,7 @@ static OCStackApplicationResult SecurePortDiscoveryCallback(void *ctx, OCDoHandl
         SRMSendResponse(context->retVal);
         return OC_STACK_DELETE_TRANSACTION;
     }
+
     OCResourcePayload* resPayload = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
 
     //Verifying if the ID of the sender is an AMS service that this device trusts.
@@ -203,6 +205,7 @@ static OCStackApplicationResult SecurePortDiscoveryCallback(void *ctx, OCDoHandl
        memcmp(context->amsMgrContext->amsDeviceId.id, resPayload->sid,
                     sizeof(context->amsMgrContext->amsDeviceId.id)) != 0)
     {
+        OC_LOG_V(ERROR, TAG, "%s Invalid AMS device", __func__);
         context->retVal = ACCESS_DENIED_AMS_SERVICE_ERROR;
         SRMSendResponse(context->retVal);
         return OC_STACK_DELETE_TRANSACTION;
@@ -217,6 +220,7 @@ static OCStackApplicationResult SecurePortDiscoveryCallback(void *ctx, OCDoHandl
         }
     }
     OC_LOG(INFO, TAG, "Can not find secure port information");
+
     context->retVal = ACCESS_DENIED_AMS_SERVICE_ERROR;
     SRMSendResponse(context->retVal);
     return OC_STACK_DELETE_TRANSACTION;
@@ -279,8 +283,9 @@ static OCStackApplicationResult AmsMgrAclReqCallback(void *ctx, OCDoHandle handl
         (PAYLOAD_TYPE_SECURITY != clientResponse->payload->type) ||
         (clientResponse->result != OC_STACK_OK))
     {
+        OC_LOG_V(ERROR, TAG, "%s Invalid Response ", __func__);
         SRMSendResponse(ACCESS_DENIED_AMS_SERVICE_ERROR);
-        goto exit;
+        return OC_STACK_DELETE_TRANSACTION;
     }
 
     if (context->state != AWAITING_AMS_RESPONSE)
@@ -315,8 +320,6 @@ static OCStackApplicationResult AmsMgrAclReqCallback(void *ctx, OCDoHandle handl
 exit:
     context->retVal = ACCESS_DENIED_AMS_SERVICE_ERROR;
     SRMSendResponse(context->retVal);
-    FreeCARequestInfo(context->amsMgrContext->requestInfo);
-    OICFree(context->amsMgrContext->endpoint);
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -351,6 +354,11 @@ exit:
 
 void FreeCARequestInfo(CARequestInfo_t *requestInfo)
 {
+    if(NULL == requestInfo)
+    {
+        OC_LOG_V(ERROR, TAG, "%s: Can't free memory. Received NULL requestInfo", __func__);
+        return;
+    }
     OICFree(requestInfo->info.token);
     OICFree(requestInfo->info.options);
     OICFree(requestInfo->info.payload);
@@ -404,6 +412,7 @@ void ProcessAMSRequest(PEContext_t *context)
                 if(OC_STACK_OK == DiscoverAmsService(context))
                 {
                     context->retVal = ACCESS_WAITING_FOR_AMS;
+                    context->state = AWAITING_AMS_RESPONSE;
                 }
                 else
                 {

@@ -27,8 +27,6 @@ using namespace std;
 
 void *showContainerAPIs(void *data);
 
-void containerCreateUI(void *data);
-
 static void startContainer(void *data, Evas_Object *obj, void *event_info);
 
 static void stopContainer(void *data, Evas_Object *obj, void *event_info);

@@ -140,7 +140,7 @@ static bool CACheckTimeout(uint64_t currentTime, CARetransmissionData_t *retData
 
     if (currentTime >= retData->timeStamp + timeout)
     {
-        OIC_LOG_V(DEBUG, TAG, "%d microseconds time out!!, tried count(%ld)",
+        OIC_LOG_V(DEBUG, TAG, "%zu microseconds time out!!, tried count(%d)",
                   timeout, retData->triedCount);
         return true;
     }
