@@ -675,7 +675,7 @@ static int64_t OCConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload
                 OC_RSRVD_PROPERTY,
                 sizeof(OC_RSRVD_PROPERTY) - 1);
         CborEncoder propMap;
-        err = err | cbor_encoder_create_map(&map, &propMap, 2);
+        err = err | cbor_encoder_create_map(&map, &propMap, CborIndefiniteLength);
 
         if (payload->types)
         {
