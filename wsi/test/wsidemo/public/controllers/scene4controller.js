@@ -20,8 +20,13 @@
             "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
             "endpointtype": "IOTIVITY",
             "operation": "GET",
-            "resourceID" : "",
             "chain" : "http://localhost:8081/observenotify"
+            "params": 
+            {
+                "address": "server ip address",
+                "port": "server port",
+                "uri": "server's uri"
+            }            
         };
         
         var posttweet = {
@@ -82,7 +87,25 @@
             var res = $http.post(uri, reqbody);
             res.success(function(data, status, headers, config) {
                 console.log("Success Response = " + data );
-                $scope.scene4updates.push({title: 'Success', content: data});
+                
+                var addresses = JSON.parse(data);
+                
+                for(var i = 0; i<addresses.length; i++)
+                {
+                    var obj = addresses[i];
+                    console.log("Checking : " + obj.uri);
+                    if(obj.uri == "/a/wsilight")
+                    {
+                        getresource.params.address = obj.address;
+                        getresource.params.port = obj.port;
+                        getresource.params.uri = obj.uri;
+                        
+                        putresource.params.address = obj.address;
+                        putresource.params.port = obj.port;
+                        putresource.params.uri = obj.uri;
+                        
+                    }
+                }                $scope.scene4updates.push({title: 'Success', content: data});
             });
             res.error(function(data, status, headers, config) {
                 console.log("Failed Response = " + data );

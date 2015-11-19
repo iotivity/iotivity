@@ -72,7 +72,7 @@
             document.getElementById('fbcap').value = JSON.stringify(postfb);
         };
         $scope.executeFbCap = function(){
-            var uri = location.origin + "/wsi/cap/post/com.facebook";
+            var uri = "http://localhost:8080/wsi/cap/post/com.facebook";
             console.log("Making a POST HTTP Request " + uri);
             reqbody = JSON.parse(document.getElementById('fbcap').value);
             
@@ -96,13 +96,35 @@
         };
 
         $scope.executeIoTivityCap = function() {
-            var uri = location.origin + "/wsi/cap/post/org.iotivity";
+            var uri = "http://localhost:8080/wsi/cap/post/org.iotivity";
             console.log("Making a POST HTTP Request " + uri);
             reqbody = JSON.parse(document.getElementById('iotivitycap').value);
             
             var res = $http.post(uri, reqbody);
             res.success(function(data, status, headers, config) {
                 console.log("Success Response = " + data );
+                
+                var addresses = JSON.parse(data);
+                
+                for(var i = 0; i<addresses.length; i++)
+                {
+                    var obj = addresses[i];
+                    console.log("Checking : " + obj.uri);
+                    if(obj.uri == "/a/wsilight")
+                    {
+                        getresource.params.address = obj.address;
+                        getresource.params.port = obj.port;
+                        getresource.params.uri = obj.uri;
+                        
+                        putresource.params.address = obj.address;
+                        putresource.params.port = obj.port;
+                        putresource.params.uri = obj.uri;
+                        
+                    }
+                }
+                
+                
+                
                 $scope.scene2updates.push({title: 'Success', content: data});
             });
             res.error(function(data, status, headers, config) {
