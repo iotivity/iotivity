@@ -171,18 +171,21 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
     CAEDRSetErrorHandler(CAEDRErrorHandler);
     CAEDRInitializeClient(handle);
 
-    CAConnectivityHandler_t handler;
-    handler.startAdapter = CAStartEDR;
-    handler.startListenServer = CAStartEDRListeningServer;
-    handler.stopListenServer = CAStopEDRListeningServer;
-    handler.startDiscoveryServer = CAStartEDRDiscoveryServer;
-    handler.sendData = CASendEDRUnicastData;
-    handler.sendDataToAll = CASendEDRMulticastData;
-    handler.GetnetInfo = CAGetEDRInterfaceInformation;
-    handler.readData = CAReadEDRData;
-    handler.stopAdapter = CAStopEDR;
-    handler.terminate = CATerminateEDR;
-    registerCallback(handler, CA_ADAPTER_RFCOMM_BTEDR);
+    static const CAConnectivityHandler_t handler =
+        {
+            .startAdapter = CAStartEDR,
+            .stopAdapter = CAStopEDR,
+            .startListenServer = CAStartEDRListeningServer,
+            .stopListenServer = CAStopEDRListeningServer,
+            .startDiscoveryServer = CAStartEDRDiscoveryServer,
+            .sendData = CASendEDRUnicastData,
+            .sendDataToAll = CASendEDRMulticastData,
+            .GetnetInfo = CAGetEDRInterfaceInformation,
+            .readData = CAReadEDRData,
+            .terminate = CATerminateEDR,
+            .cType = CA_ADAPTER_RFCOMM_BTEDR
+        };
+    registerCallback(handler);
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;

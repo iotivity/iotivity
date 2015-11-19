@@ -4255,8 +4255,8 @@ CAResult_t OCSelectNetwork()
     CATransportAdapter_t connTypes[] = {
             CA_ADAPTER_IP,
             CA_ADAPTER_RFCOMM_BTEDR,
-            CA_ADAPTER_GATT_BTLE
-
+            CA_ADAPTER_GATT_BTLE,
+            CA_ADAPTER_NFC
 #ifdef RA_ADAPTER
             ,CA_ADAPTER_REMOTE_ACCESS
 #endif

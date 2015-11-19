@@ -488,6 +488,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
     if(!ehResponse || !ehResponse->requestHandle)
     {
+        OC_LOG(ERROR, TAG, "ehResponse/requestHandle is NULL");
         return OC_STACK_ERROR;
     }
 
@@ -629,8 +630,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     CATransportAdapter_t CAConnTypes[] = {
                             CA_ADAPTER_IP,
                             CA_ADAPTER_GATT_BTLE,
-                            CA_ADAPTER_RFCOMM_BTEDR
-
+                            CA_ADAPTER_RFCOMM_BTEDR,
+                            CA_ADAPTER_NFC
 #ifdef RA_ADAPTER
                             , CA_ADAPTER_REMOTE_ACCESS
 #endif
@@ -647,8 +648,8 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             (CATransportAdapter_t)(
                 CA_ADAPTER_IP           |
                 CA_ADAPTER_GATT_BTLE    |
-                CA_ADAPTER_RFCOMM_BTEDR
-
+                CA_ADAPTER_RFCOMM_BTEDR |
+                CA_ADAPTER_NFC
 #ifdef RA_ADAP
                 | CA_ADAPTER_REMOTE_ACCESS
 #endif

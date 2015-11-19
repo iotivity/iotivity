@@ -248,8 +248,10 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
         .GetnetInfo = CAGetTCPInterfaceInformation,
         .readData = CAReadTCPData,
         .stopAdapter = CAStopTCP,
-        .terminate = CATerminateTCP };
-    registerCallback(TCPHandler, CA_ADAPTER_TCP);
+        .terminate = CATerminateTCP,
+        .cType = CA_ADAPTER_TCP};
+
+    registerCallback(TCPHandler);
 
     OIC_LOG(INFO, TAG, "OUT IntializeTCP is Success");
     return CA_STATUS_OK;

@@ -1761,10 +1761,11 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
             .sendDataToAll = CASendLEMulticastData,
             .GetnetInfo = CAGetLEInterfaceInformation,
             .readData = CAReadLEData,
-            .terminate = CATerminateLE
+            .terminate = CATerminateLE,
+            .cType = CA_ADAPTER_GATT_BTLE
         };
 
-    registerCallback(connHandler, CA_ADAPTER_GATT_BTLE);
+    registerCallback(connHandler);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 

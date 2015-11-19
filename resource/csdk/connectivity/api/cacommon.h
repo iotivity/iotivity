@@ -148,7 +148,9 @@ typedef enum
     CA_ADAPTER_REMOTE_ACCESS = (1 << 3),   // Remote Access over XMPP.
 #endif
 
-    CA_ADAPTER_TCP = (1 << 4),   // CoAP over TCP
+    CA_ADAPTER_TCP           = (1 << 4),   // CoAP over TCP
+    CA_ADAPTER_NFC           = (1 << 5),   // NFC Adapter
+
     CA_ALL_ADAPTERS          = 0xffffffff
 } CATransportAdapter_t;
 

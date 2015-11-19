@@ -27,6 +27,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -241,5 +242,18 @@ public class SimpleServer extends Activity {
             final String message = intent.getStringExtra("message");
             msg(message);
         }
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Log.d(TAG, "onNewIntent with changes sending broadcast IN ");
+
+        Intent i = new Intent();
+        i.setAction(intent.getAction());
+        i.putExtra(NfcAdapter.EXTRA_NDEF_MESSAGES,
+                intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES));
+        sendBroadcast(i);
+        Log.d(TAG, "Initialize Context again resetting");
     }
 }
