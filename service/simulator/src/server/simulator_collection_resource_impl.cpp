@@ -237,11 +237,6 @@ void SimulatorCollectionResourceImpl::setActionType(std::map<RAML::ActionType, R
     m_actionTypes = actionType;
 }
 
-void SimulatorCollectionResourceImpl::setActionType(std::map<RAML::ActionType, RAML::ActionPtr> &actionType)
-{
-    m_actionTypes = actionType;
-}
-
 std::vector<ObserverInfo> SimulatorCollectionResourceImpl::getObserversList()
 {
     return m_observersList;
