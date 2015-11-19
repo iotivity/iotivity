@@ -30,7 +30,7 @@
 
     </head>
 
-    <body ng-controller="scene1controller">
+    <body ng-controller="scene2controller">
 
         <div id="wrapper">
 
@@ -142,9 +142,6 @@
                 <div class="collapse navbar-collapse navbar-ex1-collapse">
                     <ul class="nav navbar-nav side-nav">
                         <li class="active">
-                            <a href="/"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
-                        </li>
-                        <li>
                             <a href="javascript:;" data-toggle="collapse" data-target="#demo"><i class="fa fa-fw fa-arrows-v"></i>App Demo<i class="fa fa-fw fa-caret-down"></i></a>
                             <ul id="demo">
                                 <li>
@@ -160,9 +157,13 @@
                             </ul>
                         </li>
                         
-                        <li>
+<!--                        <li>
                             <a href="tbd.html"><i class="fa fa-fw fa-table"></i> To Be Done</a>
                         </li>
+                        <li>
+                            <a href="about.html"><i class="fa fa-fw fa-help"></i> About</a>
+                        </li>-->
+                        
                     </ul>
                 </div>
                 <!-- /.navbar-collapse -->
@@ -172,38 +173,18 @@
 
                 <div class="container-fluid">
 
-                    <!-- Page Heading -->
-                    <div class="row">
-
-
                         <!-- Main jumbotron for a primary marketing message or call to action -->
                         <div class="jumbotron">
-                            <h1>Scenario 1</h1>
+                            <h1>Scenario 2</h1>
                             <p>
-                            Read from &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img height=50 width=230 src="assets/images/twitter.png"/> 
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and change the&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                            <img height=70 width=200 src="assets/images/iotivity.png"/>
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img height=70 width=70 src="assets/images/on.png"/>
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;status.
+                            Read &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=50px width=150px src="assets/images/iotivity.png"/> 
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=70px width=70px src="assets/images/on.png"/>status
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and post msg to <img vertical-align="top" height=70px width=200px src="assets/images/facebook.png"/>
                             </p>
                         </div>
                     <!-- /.row -->
                     <div class="row">
                         <div class="col-lg-6">
-                            
-                            <form role="form">
-                                <div class="form-group">
-                                    <button ng-click="readTweet()" type="button" class="btn btn-info">1. Read Latest Tweet</button>
-                                    <button ng-click="postTweet()" type="button" class="btn btn-primary">2. Post New Tweet</button>
-                                </div>
-                                <div class="form-group">
-                                    <label>Twitter Capability</label>
-                                    <textarea id="tweetcap" class="form-control" rows="5"></textarea>
-                                    <button ng-click="executeTweetCap()" type="button" class="btn btn-primary">Submit</button>
-                                </div>
-
-                            </form>
-
                             <form role="form">
                                 <div class="form-group">
                                     <button ng-click="findIoTivityDevices()" type="button" class="btn btn-info">1. Find IoTivity Light</button>
@@ -217,24 +198,34 @@
                                 </div>
                             </form>
                             
-                            
+                            <form role="form">
+                                <div class="form-group">
+                                    <button ng-click="postFB()" type="button" class="btn btn-success">Post to Facebook</button>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Facebook Message Body</label>
+                                    <textarea id ="fbcap" class="form-control" rows="10"></textarea>
+                                    <button ng-click="executeFbCap()" type="button" class="btn btn-sm btn-danger">Submit</button>
+                                </div>
+
+                            </form>
+
                         </div>
-                        <div id = "scene1updates" class="col-lg-6" style='height:10;overflow-y: scroll;'>
+                        <div id = "scene2updates" class="col-lg-6" style='height:10;overflow-y: scroll;'>
                             <h1>Alerts</h1>
-                            <div ng-class="scene1update.title == 'Success' ? 'alert alert-success' : 'alert alert-danger'" ng-repeat="scene1update in scene1updates">
-                                <strong>{{scene1update.title}}</strong> 
-                                <p>{{scene1update.content}}</p>
+                            <div ng-class="scene2update.title == 'Success' ? 'alert alert-success' : 'alert alert-danger'" ng-repeat="scene2update in scene2updates">
+                                <strong>{{scene2update.title}}</strong> 
+                                <p>{{scene2update.content}}</p>
                             </div>                            
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
     <script src="assets/js/angular/angular.js"></script>
     <script src="app.js"></script>
-    <script src="controllers/scene1controller.js"></script>
+    <script src="controllers/scene2controller.js"></script>
     <script src="assets/js/jquery.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
 

@@ -139,5 +139,5 @@
 
     scene1controller.$inject = ['$scope', '$http'];
 
-    angular.module('wsi').controller('scene1controller', scene1controller);
+    angular.module('wsidemo').controller('scene1controller', scene1controller);
 }());

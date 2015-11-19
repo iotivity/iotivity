@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html ng-app="wsi">
     <head>
-
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -31,7 +30,7 @@
 
     </head>
 
-    <body ng-controller="wsicontroller">
+    <body ng-controller="scene1controller">
 
         <div id="wrapper">
 
@@ -143,9 +142,6 @@
                 <div class="collapse navbar-collapse navbar-ex1-collapse">
                     <ul class="nav navbar-nav side-nav">
                         <li class="active">
-                            <a href="/"><i class="fa fa-fw fa-dashboard"></i> Dashboard</a>
-                        </li>
-                        <li>
                             <a href="javascript:;" data-toggle="collapse" data-target="#demo"><i class="fa fa-fw fa-arrows-v"></i>App Demo<i class="fa fa-fw fa-caret-down"></i></a>
                             <ul id="demo">
                                 <li>
@@ -161,9 +157,13 @@
                             </ul>
                         </li>
                         
-                        <li>
+<!--                        <li>
                             <a href="tbd.html"><i class="fa fa-fw fa-table"></i> To Be Done</a>
                         </li>
+                        <li>
+                            <a href="about.html"><i class="fa fa-fw fa-help"></i> About</a>
+                        </li>-->
+                        
                     </ul>
                 </div>
                 <!-- /.navbar-collapse -->
@@ -173,68 +173,72 @@
 
                 <div class="container-fluid">
 
+                    <!-- Page Heading -->
+                    <div class="row">
+
+
                         <!-- Main jumbotron for a primary marketing message or call to action -->
                         <div class="jumbotron">
-                            <h1>Scenario 3</h1>
+                            <h1>Scenario 1</h1>
                             <p>
-                            Read weather from &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=100px width=100px src="assets/images/owm.png"/> 
-                            and change color of &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=70px width=120px src="assets/images/iotivity.png"/>
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=100px width=100px src="assets/images/on.png"/>
-                            to &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=70px width=100px src="assets/images/violet.png"/>
+                            Read from &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img height=50 width=230 src="assets/images/twitter.png"/> 
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and change the&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            <img height=70 width=200 src="assets/images/iotivity.png"/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img height=70 width=70 src="assets/images/on.png"/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;status.
                             </p>
                         </div>
                     <!-- /.row -->
                     <div class="row">
                         <div class="col-lg-6">
+                            
                             <form role="form">
                                 <div class="form-group">
-                                    <button type="button" class="btn btn-primary">1. Initialize OpenWeatherMap</button>
-                                    <button type="button" class="btn btn-success">2. Read Current Weather</button>
-                                    <button type="button" class="btn btn-info">3. Change Bulb Color</button>
+                                    <button ng-click="readTweet()" type="button" class="btn btn-info">1. Read Latest Tweet</button>
+                                    <button ng-click="postTweet()" type="button" class="btn btn-primary">2. Post New Tweet</button>
                                 </div>
-
+                                <div class="form-group">
+                                    <label>Twitter Capability</label>
+                                    <textarea id="tweetcap" class="form-control" rows="5"></textarea>
+                                    <button ng-click="executeTweetCap()" type="button" class="btn btn-primary">Submit</button>
+                                </div>
 
                             </form>
 
+                            <form role="form">
+                                <div class="form-group">
+                                    <button ng-click="findIoTivityDevices()" type="button" class="btn btn-info">1. Find IoTivity Light</button>
+                                    <button ng-click="getLightColor()" type="button" class="btn btn-primary">2. Get Light Color</button>
+                                    <button ng-click="setLightColor()" type="button" class="btn btn-success">3. Set Light Color</button>
+                                </div>
+                                <div class="form-group">
+                                    <label>IoTivity Capability</label>
+                                    <textarea id="iotivitycap" class="form-control" rows="5"></textarea>
+                                    <button ng-click="executeIoTivityCap()" type="button" class="btn btn-primary">Submit</button>
+                                </div>
+                            </form>
+                            
+                            
                         </div>
-                        <div class="col-lg-6">
+                        <div id = "scene1updates" class="col-lg-6" style='height:10;overflow-y: scroll;'>
                             <h1>Alerts</h1>
-                            <div class="alert alert-success">
-                                <strong>Well done!</strong> You successfully read this important alert message.
-                            </div>
-                            <div class="alert alert-info">
-                                <strong>Heads up!</strong> This alert needs your attention, but it's not super important.
-                            </div>
-                            <div class="alert alert-warning">
-                                <strong>Warning!</strong> Best check yo self, you're not looking too good.
-                            </div>
-                            <div class="alert alert-danger">
-                                <strong>Oh snap!</strong> Change a few things up and try submitting again.
-                            </div>
+                            <div ng-class="scene1update.title == 'Success' ? 'alert alert-success' : 'alert alert-danger'" ng-repeat="scene1update in scene1updates">
+                                <strong>{{scene1update.title}}</strong> 
+                                <p>{{scene1update.content}}</p>
+                            </div>                            
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <script src="assets/js/angular.js"></script>
-        <script src="app.js"></script>
-        <script src="factory/dbfactory.js"></script>
-        <script src="factory/restfactory.js"></script>
-        <script src="controllers/capcontroller.js"></script>
-        <script src="controllers/wsicontroller.js"></script>
-        <script src="assets/jsoneditor/jsoneditor.min.js"></script>
-        <link rel="stylesheet" type="text/css" href="assets/jsoneditor/jsoneditor.min.css">
+    </div>
 
-        <!-- jQuery -->
-        <script src="assets/js/jquery.js"></script>
+    <script src="assets/js/angular/angular.js"></script>
+    <script src="app.js"></script>
+    <script src="controllers/scene1controller.js"></script>
+    <script src="assets/js/jquery.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
 
-        <!-- Bootstrap Core JavaScript -->
-        <script src="assets/js/bootstrap.min.js"></script>
-
-        <!-- Morris Charts JavaScript -->
-        <script src="assets/js/plugins/morris/raphael.min.js"></script>
-        <script src="assets/js/plugins/morris/morris.min.js"></script>
-        <script src="assets/js/plugins/morris/morris-data.js"></script>
-    </body>
+</body>
 
 </html>
