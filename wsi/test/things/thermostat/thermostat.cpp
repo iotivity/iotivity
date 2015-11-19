@@ -42,6 +42,7 @@
 #include <unistd.h>
 
 using namespace OC;
+using namespace std;
 namespace PH = std::placeholders;
 
 char *socket_path = "/tmp/.hiddenwsicomm";
@@ -49,6 +50,7 @@ int sendsock;
 struct sockaddr_un sname;
 
 int gObservation = 0;
+
 bool isListOfObservers = false;
 Evas_Object *images[1][1];
 
@@ -92,6 +94,7 @@ void sender(int power) {
         perror("sending datagram message");
     }
 }
+
 
 class LightResource {
 public:
@@ -166,6 +169,35 @@ public:
             } else {
                 std::cout << "\t\t\t\t" << "state not found in the representation" << std::endl;
             }
+        if (gObservation)
+        {
+            cout << "\nPower updated to : " << m_power << endl;
+            cout << "Notifying observers : " << endl;
+            OCStackResult result = OC_STACK_OK;
+            if(isListOfObservers)
+            {
+                std::shared_ptr<OCResourceResponse> resourceResponse =
+                            std::make_shared<OCResourceResponse>();
+                resourceResponse->setErrorCode(200);
+                resourceResponse->setResourceRepresentation(get(), DEFAULT_INTERFACE);
+                result = OCPlatform::notifyListOfObservers(
+                                                            getHandle(),
+                                                            m_interestedObservers,
+                                                            resourceResponse,
+                                                            OC::QualityOfService::HighQos);
+            }
+            else
+            {
+                result = OCPlatform::notifyAllObservers(getHandle(),
+                                                            OC::QualityOfService::HighQos);
+            }
+
+            if(OC_STACK_NO_OBSERVERS == result)
+            {
+                cout << "No More observers, stopping notifications" << endl;
+                gObservation = 0;
+            }
+        }
 
         } catch (std::exception & e) {
             std::cout << e.what() << std::endl;
@@ -278,19 +310,25 @@ private:
                 }   
             }
 
-            if (requestFlag & RequestHandlerFlag::ObserverFlag) {
+            if(requestFlag & RequestHandlerFlag::ObserverFlag)
+            {
                 ObservationInfo observationInfo = request->getObservationInfo();
-                if (ObserveAction::ObserveRegister == observationInfo.action) {
+                if(ObserveAction::ObserveRegister == observationInfo.action)
+                {
                     m_interestedObservers.push_back(observationInfo.obsId);
-                } else if (ObserveAction::ObserveUnregister == observationInfo.action) {
-                    m_interestedObservers.erase(std::remove(
-                            m_interestedObservers.begin(),
-                            m_interestedObservers.end(),
-                            observationInfo.obsId),
-                            m_interestedObservers.end());
                 }
-                std::cout << "\t\trequestFlag : Observer\n";
+                else if(ObserveAction::ObserveUnregister == observationInfo.action)
+                {
+                    m_interestedObservers.erase(std::remove(
+                                                                m_interestedObservers.begin(),
+                                                                m_interestedObservers.end(),
+                                                                observationInfo.obsId),
+                                                                m_interestedObservers.end());
+                }
+
+                cout << "\t\trequestFlag : Observer\n";
                 gObservation = 1;
+
                 ehResult = OC_EH_OK;
             }
         } else {
@@ -301,6 +339,7 @@ private:
     }
 
 };
+
 
 static FILE* client_open(const char *path, const char *mode) {
     return fopen("./oic_svr_db_server.json", mode);

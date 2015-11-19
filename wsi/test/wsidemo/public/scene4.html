@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html ng-app="wsi">
+<html ng-app="wsidemo">
     <head>
+
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -30,7 +31,7 @@
 
     </head>
 
-    <body ng-controller="scene2controller">
+    <body ng-controller="scene4controller">
 
         <div id="wrapper">
 
@@ -148,10 +149,13 @@
                                     <a href="scene1.html">Scenario 1</a>
                                 </li>
                                 <li>
-                                    <a href="scene2.html">Scenario 2</a>
+                                    <a href="scene4.html">Scenario 2</a>
                                 </li>
                                 <li>
                                     <a href="scene3.html">Scenario 3</a>
+                                </li>
+                                <li>
+                                    <a href="scene4.html">Scenario 4</a>
                                 </li>
 
                             </ul>
@@ -175,11 +179,11 @@
 
                         <!-- Main jumbotron for a primary marketing message or call to action -->
                         <div class="jumbotron">
-                            <h1>Scenario 2</h1>
+                            <h1>Scenario 4</h1>
                             <p>
-                            Read &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=50px width=150px src="assets/images/iotivity.png"/> 
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=70px width=70px src="assets/images/on.png"/>status
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and post msg to <img vertical-align="top" height=70px width=200px src="assets/images/facebook.png"/>
+                            Observe &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=70px width=120px src="assets/images/iotivity.png"/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=100px width=100px src="assets/images/on.png"/>&nbsp;&nbsp;&nbsp;&nbsp;Status
+                            and post to &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img height=50 width=230 src="assets/images/twitter.png"/> 
                             </p>
                         </div>
                     <!-- /.row -->
@@ -187,36 +191,22 @@
                         <div class="col-lg-6">
                             <form role="form">
                                 <div class="form-group">
-                                    <button ng-click="findIoTivityDevices()" type="button" class="btn btn-info">1. Find IoTivity Light</button>
-                                    <button ng-click="getLightColor()" type="button" class="btn btn-primary">2. Get Light Color</button>
-                                    <button ng-click="setLightColor()" type="button" class="btn btn-success">3. Set Light Color</button>
+                                    <button ng-click="findIoTivityDevices()" type="button" class="btn btn-info">1. Find Resource</button>
+                                    <button ng-click="startObserve()" type="button" class="btn btn-primary">2. Start Observation</button>
+                                    <button ng-click="stopObserve()" type="button" class="btn btn-success">3. Stop Observation</button>
                                 </div>
                                 <div class="form-group">
                                     <label>IoTivity Capability</label>
                                     <textarea id="iotivitycap" class="form-control" rows="5"></textarea>
-                                    <button ng-click="executeIoTivityCap()" type="button" class="btn btn-primary">Submit</button>
+                                    <button ng-click="observeIoTivityCap()" type="button" class="btn btn-primary">Submit</button>
                                 </div>
                             </form>
-                            
-                            <form role="form">
-                                <div class="form-group">
-                                    <button ng-click="postFB()" type="button" class="btn btn-success">Post to Facebook</button>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Facebook Message Body</label>
-                                    <textarea id ="fbcap" class="form-control" rows="10"></textarea>
-                                    <button ng-click="executeFbCap()" type="button" class="btn btn-sm btn-danger">Submit</button>
-                                </div>
-
-                            </form>
-
                         </div>
-                        <div id = "scene2updates" class="col-lg-6" style='height:10;overflow-y: scroll;'>
+                        <div id = "scene4updates" class="col-lg-6" style='height:10;overflow-y: scroll;'>
                             <h1>Alerts</h1>
-                            <div ng-class="scene2update.title == 'Success' ? 'alert alert-success' : 'alert alert-danger'" ng-repeat="scene2update in scene2updates">
-                                <strong>{{scene2update.title}}</strong> 
-                                <p>{{scene2update.content}}</p>
+                            <div ng-class="scene4update.title == 'Success' ? 'alert alert-success' : 'alert alert-danger'" ng-repeat="scene4update in scene4updates">
+                                <strong>{{scene4update.title}}</strong> 
+                                <p>{{scene4update.content}}</p>
                             </div>                            
                         </div>
                     </div>
@@ -225,10 +215,9 @@
         </div>
     <script src="assets/js/angular/angular.js"></script>
     <script src="app.js"></script>
-    <script src="controllers/scene2controller.js"></script>
+    <script src="controllers/scene4controller.js"></script>
     <script src="assets/js/jquery.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
-
-</body>
+    </body>
 
 </html>

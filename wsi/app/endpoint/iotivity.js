@@ -1,4 +1,6 @@
 var spawn = require("child_process").spawn;
+var request = require('request');
+
 var intervalId,
         handleReceptacle = {},
         iotivity = require("../../iotivity-node/lowlevel");
@@ -51,11 +53,22 @@ module.exports = {
                         "address": "server ip address",
                         "port": "server port",
                         "uri": "server's uri"
-                    },
-                    "payload":
-                    {
-
-                    }
+                   },
+                  "payload":
+                   {
+                       "property" : "value"
+                   },
+                  "tags": [
+                    "put reosurce properties and value"
+                  ]
+                },
+                {
+                  "cid": "org.iotivity.observeresource",
+                  "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
+                  "endpointtype": "IOTIVITY",
+                  "operation": "GET",
+                  "resourceID" : "",
+                  "chain" : ""
                 }
             ]
         };
@@ -344,6 +357,43 @@ module.exports = {
                     putResponseHandler,
                     null );
             }
+        }
+        else if(cap.cid == "org.iotivity.observeresource"){
+            var resourceID = cap.resourceID.split(";");         
+            var address = JSON.parse(resourceID[0]);
+            var uri = resourceID[1];
+            var observeResult,
+		observeHandleReceptacle = {};
+            observeResult = iotivity.OCDoResource(
+		observeHandleReceptacle,
+		iotivity.OCMethod.OC_REST_OBSERVE,
+		uri,
+		address,
+		null,
+		iotivity.OCConnectivityType.CT_DEFAULT,
+		iotivity.OCQualityOfService.OC_HIGH_QOS,
+		function( handle, response ) {
+                    var observeResult = JSON.stringify(response);
+                    console.log("Received response to Observe request:" + observeResult);
+                    if(cap.chain!=null){
+                        console.log("Posting " + JSON.stringify(response) + "to " + cap.chain);
+                        var options = {
+                            url: cap.chain,
+                            json : true,
+                            method: 'POST',
+                            body: response.payload
+                        };
+                        
+                        console.log("JSON Body Sent = " + JSON.stringify(response.values));
+                        
+                        request(options, function (error, response, body) {
+                                console.log(error + "  - " + body);
+                        });
+                    }
+                    return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
+		},
+		null );        
+                res.status(200).json("Started Observing " + uri + "@" + JSON.stringify(address));
         }
     }
 }
