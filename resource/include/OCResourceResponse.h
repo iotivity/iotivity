@@ -25,8 +25,8 @@
  * ResourceResponse.
  */
 
-#ifndef __OCRESOURCERESPONSE_H
-#define __OCRESOURCERESPONSE_H
+#ifndef OC_RESOURCERESPONSE_H_
+#define OC_RESOURCERESPONSE_H_
 
 #include "OCApi.h"
 #include <IServerWrapper.h>
@@ -275,4 +275,4 @@ namespace OC
 
 } // namespace OC
 
-#endif //__OCRESOURCERESPONSE_H
+#endif // OC_RESOURCERESPONSE_H_

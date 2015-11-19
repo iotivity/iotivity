@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _I_CLIENT_WRAPPER_H_
-#define _I_CLIENT_WRAPPER_H_
+#ifndef OC_I_CLIENT_WRAPPER_H_
+#define OC_I_CLIENT_WRAPPER_H_
 
 #include <memory>
 #include <string>

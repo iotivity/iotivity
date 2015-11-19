@@ -25,8 +25,8 @@
  * to OCRepresentation.
  */
 
-#ifndef __OCREPRESENTATION_H
-#define __OCREPRESENTATION_H
+#ifndef OC_REPRESENTATION_H_
+#define OC_REPRESENTATION_H_
 
 
 #include <string>
@@ -423,5 +423,5 @@ namespace OC
 } // namespace OC
 
 
-#endif //__OCREPRESENTATION_H
+#endif // OC_REPRESENTATION_H_
 

@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _INTEL_OCUTILITIES_H_
-#define _INTEL_OCUTILITIES_H_
+#ifndef OC_UTILITIES_H_
+#define OC_UTILITIES_H_
 
 #include <map>
 #include <vector>

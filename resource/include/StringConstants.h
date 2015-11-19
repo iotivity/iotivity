@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _STRING_CONSTANTS_H_
-#define _STRING_CONSTANTS_H_
+#ifndef OC_STRING_CONSTANTS_H_
+#define OC_STRING_CONSTANTS_H_
 
 #include <string>
 
@@ -143,5 +143,5 @@ namespace OC
 
 }
 
-#endif // _STRING_CONSTANTS_H_
+#endif // OC_STRING_CONSTANTS_H_
 

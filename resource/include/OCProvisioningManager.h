@@ -18,8 +18,8 @@
  *
  * *****************************************************************/
 
-#ifndef _OCPROVISIONINGMANAGER_CXX_H
-#define _OCPROVISIONINGMANAGER_CXX_H
+#ifndef OC_PROVISIONINGMANAGER_CXX_H_
+#define OC_PROVISIONINGMANAGER_CXX_H_
 
 #include <thread>
 
@@ -286,4 +286,4 @@ namespace OC
     };
 
 }
-#endif //_OCPROVISIONINGMANAGER_CXX_H
+#endif // OC_PROVISIONINGMANAGER_CXX_H_

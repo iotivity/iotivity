@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __OC_LOG_HPP_20140910
- #define __OC_LOG_HPP_20140910
+#ifndef OC_LOG_HPP_
+#define OC_LOG_HPP_
 
 #include "oc_ostream_logger.hpp"
 #include "oc_log_stream.hpp"
