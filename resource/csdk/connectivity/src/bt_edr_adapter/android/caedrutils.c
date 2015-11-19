@@ -338,7 +338,6 @@ jboolean CAEDRNativeIsEnableBTAdapter(JNIEnv *env)
     }
 
     jboolean jni_isEnable = (*env)->CallBooleanMethod(env, jni_obj_BTAdapter, jni_mid_isEnable);
-    OIC_LOG_V(DEBUG, TAG, "[EDR][Native] adapter state is %d", jni_isEnable);
 
     (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
     (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
@@ -565,8 +564,6 @@ CAConnectedState_t CAEDRIsConnectedDevice(const char *remoteAddress)
 
         if (!strcmp((const char*) state->address, remoteAddress))
         {
-            OIC_LOG(DEBUG, TAG, "[EDR][Native] check whether it is connected or not");
-
             return state->state;
         }
     }
@@ -857,8 +854,6 @@ void CAEDRNativeRemoveDeviceSocketBaseAddr(JNIEnv *env, jstring address)
 
 jobject CAEDRNativeGetDeviceSocket(uint32_t idx)
 {
-    OIC_LOG(DEBUG, TAG, "CAEDRNativeGetDeviceSocket");
-
     if (!g_deviceObjectList)
     {
         OIC_LOG(ERROR, TAG, "[EDR][Native] gdeviceObjectList is null");
