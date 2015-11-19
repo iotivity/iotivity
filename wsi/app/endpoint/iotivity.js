@@ -74,7 +74,7 @@ module.exports = {
         };
         return template;
     },
-    request: function (cap, res) {
+    request: function (cap, auth, res) {
         intervalId = setInterval(function () {
             iotivity.OCProcess();
         }, 1000);
@@ -140,12 +140,7 @@ module.exports = {
 
         if(cap.cid == "org.iotivity.findresource"){
             setTimeout(function(){
-                res.writeHead(200, {"Content-Type": "application/json"});
-                /*var json = JSON.stringify({
-                "endpointList": endpointList
-                });*/
-                var json = "\"response\" : [" + endpointList + "]";
-                res.end(json);
+                res.status(200).json("[" + endpointList + "]");
                 return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
             },7000);
 
@@ -176,8 +171,7 @@ module.exports = {
                 console.log("Received response to GET request:");
                 console.log(JSON.stringify(response, null, 4));
                 var getResult = JSON.stringify(response.payload);
-                res.writeHead(200, {"Content-Type": "application/json"});
-                res.end(getResult);
+                res.status(200).json(getResult);
                 return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
             };
             var getHandleReceptacle = {};
@@ -185,8 +179,7 @@ module.exports = {
 
             setTimeout(function(){
                 if(responseflag==0){
-                    res.writeHead(200, {"Content-Type": "text/plain"});
-                    res.end("resouce is not exist");
+               	    res.status(200).send("resouce is not exist");
                     return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
                 }
             },7000);
@@ -267,8 +260,7 @@ module.exports = {
                 console.log("Received response to PUT request:");
                 console.log(JSON.stringify(response, null, 4));
                 var putResult = JSON.stringify(response.payload);
-                res.writeHead(200, {"Content-Type": "application/json"});
-                res.end(putResult);
+                res.status(200).json(putResult);
                 return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
             }
             responseflag = 0;
@@ -282,8 +274,7 @@ module.exports = {
 
             setTimeout(function(){
               if(responseflag == 0){
-                  res.writeHead(200, {"Content-Type": "text/plain"});
-                  res.end("resouce is not exist");
+               	  res.status(200).send("resouce is not exist");
                   return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
               }
             },7000);
