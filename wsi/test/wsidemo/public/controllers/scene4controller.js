@@ -20,7 +20,7 @@
             "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
             "endpointtype": "IOTIVITY",
             "operation": "GET",
-            "chain" : "http://localhost:8081/observenotify"
+            "chain" : "http://localhost:8081/observenotify",
             "params": 
             {
                 "address": "server ip address",
@@ -90,22 +90,20 @@
                 
                 var addresses = JSON.parse(data);
                 
-                for(var i = 0; i<addresses.length; i++)
-                {
-                    var obj = addresses[i];
-                    console.log("Checking : " + obj.uri);
-                    if(obj.uri == "/a/wsilight")
+                if(addresses instanceof Array){
+                    for(var i = 0; i<addresses.length; i++)
                     {
-                        getresource.params.address = obj.address;
-                        getresource.params.port = obj.port;
-                        getresource.params.uri = obj.uri;
-                        
-                        putresource.params.address = obj.address;
-                        putresource.params.port = obj.port;
-                        putresource.params.uri = obj.uri;
-                        
+                        var obj = addresses[i];
+                        console.log("Checking : " + obj.uri);
+                        if(obj.uri == "/a/wsilight")
+                        {
+                            observeresource.params.address = obj.address;
+                            observeresource.params.port = obj.port;
+                            observeresource.params.uri = obj.uri;
+                        }
                     }
-                }                $scope.scene4updates.push({title: 'Success', content: data});
+                }
+                $scope.scene4updates.push({title: 'Success', content: data});
             });
             res.error(function(data, status, headers, config) {
                 console.log("Failed Response = " + data );

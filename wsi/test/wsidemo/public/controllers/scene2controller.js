@@ -122,9 +122,6 @@
                         
                     }
                 }
-                
-                
-                
                 $scope.scene2updates.push({title: 'Success', content: data});
             });
             res.error(function(data, status, headers, config) {

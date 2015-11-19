@@ -69,18 +69,18 @@ module.exports = {
 
         request(options, function (error, response, body) {
             console.log(error + "  - " + body);
-            if(error)
-                console.log("Success");
-            else
+            if(error){
                 console.log("Failure");
-                //$scope.scene4updates.push({title: 'Success', content: body});
-                //$scope.scene4updates.push({title: 'Failure', content: body});
+	    }
+            else{
+                console.log("Success");
+	    }
 
         });
         
         
     }
 }
-console.log("Twitter initialized");
+console.log("App initialized");
 
 

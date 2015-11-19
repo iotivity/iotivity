@@ -350,41 +350,105 @@ module.exports = {
             }
         }
         else if(cap.cid == "org.iotivity.observeresource"){
-            var resourceID = cap.resourceID.split(";");         
-            var address = JSON.parse(resourceID[0]);
-            var uri = resourceID[1];
             var observeResult,
 		observeHandleReceptacle = {};
-            observeResult = iotivity.OCDoResource(
-		observeHandleReceptacle,
-		iotivity.OCMethod.OC_REST_OBSERVE,
-		uri,
-		address,
-		null,
-		iotivity.OCConnectivityType.CT_DEFAULT,
-		iotivity.OCQualityOfService.OC_HIGH_QOS,
-		function( handle, response ) {
-                    var observeResult = JSON.stringify(response);
-                    console.log("Received response to Observe request:" + observeResult);
-                    if(cap.chain!=null){
-                        console.log("Posting " + JSON.stringify(response) + "to " + cap.chain);
-                        var options = {
-                            url: cap.chain,
-                            json : true,
-                            method: 'POST',
-                            body: response.payload
-                        };
-                        
-                        console.log("JSON Body Sent = " + JSON.stringify(response.values));
-                        
-                        request(options, function (error, response, body) {
-                                console.log(error + "  - " + body);
-                        });
+
+            obsResponseHandler = function( handle, response ) {
+                responseflag = 1;
+                console.log("Received response to OBSERVE request:");
+                console.log(JSON.stringify(response, null, 4));
+                var obsResult = JSON.stringify(response.payload);
+                
+                if(cap.chain!=null){
+                    console.log("Posting " + JSON.stringify(response) + "to " + cap.chain);
+                    var options = {
+                        url: cap.chain,
+                        json : true,
+                        method: 'POST',
+                        body: response.payload
+                    };
+                    console.log("JSON Body Sent = " + JSON.stringify(response.values));
+                    request(options, function (error, response, body) {
+                        console.log(error + "  - " + body);
+                    });
+                }
+                return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
+            }
+            
+            responseflag = 0;
+            //var endpoint = cap.endpoint;
+            var address = cap.params.address;
+            var port = cap.params.port;
+            var uri = cap.params.uri;
+            var payload = cap.payload;
+            var endpoint = "oic://"+ address +":"+ port + uri;
+            var resource = map[endpoint];
+
+            if(resource == undefined)
+            {
+                console.log("resource is not exist");
+                console.log("Find specific resource is not exist or not");
+                //var specificURI = parseEndpoint(endpoint);
+                var specificURI = "["+ address + "]:" + port +"/oic/res";
+                specificResponseHandlerNput = function (handle, response) {
+                    console.log("Received response to DISCOVER request:");
+                    console.log(JSON.stringify(response, null, 4));
+                    destination = response.addr,
+                    resources = response && response.payload && response.payload.resources;
+                    if(resources){
+                        var destinationAddress="";
+                        for(var i=0; (i< destination.addr.length) && (destination.addr[i]!=0) ; i++ ){
+                            destinationAddress = destinationAddress + String.fromCharCode(destination.addr[i]);
+                        }
+                        var endpoint = "oic://"+ destinationAddress +":"+ destination.port + resources[0].uri;
+                        var newresource = new Object();
+                        newresource.destination = destination;
+                        newresource.uri = resources[0].uri;
+                        map[endpoint] = newresource;
+                        endpointList.push(endpoint);
+
+                        observeResult = iotivity.OCDoResource(
+                            observeHandleReceptacle,
+                            iotivity.OCMethod.OC_REST_OBSERVE,
+                            resources[0].uri,
+                            destination,
+                            null,
+                            iotivity.OCConnectivityType.CT_DEFAULT,
+                            iotivity.OCQualityOfService.OC_HIGH_QOS,
+                            obsResponseHandler,
+                            null ); 
                     }
                     return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
-		},
-		null );        
-                res.status(200).json("Started Observing " + uri + "@" + JSON.stringify(address));
+                }
+                iotivity.OCDoResource(
+                    // The bindings fill in this object
+                    handleReceptacle,
+                    iotivity.OCMethod.OC_REST_DISCOVER,
+                    // Standard path for discovering resources
+                    specificURI,
+                    // There is no destination
+                    null,
+                    // There is no payload
+                    null,
+                    iotivity.OCConnectivityType.CT_DEFAULT,
+                    iotivity.OCQualityOfService.OC_HIGH_QOS,
+                    specificResponseHandlerNput,
+                    null);
+            }
+            else{
+                observeResult = iotivity.OCDoResource(
+                    observeHandleReceptacle,
+                    iotivity.OCMethod.OC_REST_OBSERVE,
+                    resource.uri,
+                    resource.destination,
+                    null,
+                    iotivity.OCConnectivityType.CT_DEFAULT,
+                    iotivity.OCQualityOfService.OC_HIGH_QOS,
+                    obsResponseHandler,
+                    null );        
+            }
+        res.status(200).json("Started Observing " + uri + "@" + JSON.stringify(address));
+	    return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
         }
     }
 }

@@ -53,6 +53,7 @@ int gObservation = 0;
 
 bool isListOfObservers = false;
 Evas_Object *images[1][1];
+void * ChangeLightRepresentation (void *param);
 
 typedef enum {
 	ON,
@@ -328,6 +329,16 @@ class LightResource {
 
 					cout << "\t\trequestFlag : Observer\n";
 					gObservation = 1;
+					    static int startedThread = 0;
+						pthread_t threadId;
+
+					    // Observation happens on a different thread in ChangeLightRepresentation function.
+					    // If we have not created the thread already, we will create one here.
+					    if(!startedThread)
+					    {
+						pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)this);
+						startedThread = 1;
+					    }
 					ehResult = OC_EH_OK;
 				}
 			} else {
@@ -338,6 +349,66 @@ class LightResource {
 		}
 
 };
+
+// ChangeLightRepresentaion is an observation function,
+// which notifies any changes to the resource to stack
+// via notifyObservers
+void * ChangeLightRepresentation (void *param)
+{
+    LightResource* lightPtr = (LightResource*) param;
+
+    sleep(10);
+
+    // This function continuously monitors for the changes
+    while (1)
+    {
+
+        if (gObservation)
+        {
+            // If under observation if there are any changes to the light resource
+            // we call notifyObservors
+            //
+            // For demostration we are changing the power value and notifying.
+            lightPtr->m_power = (lightPtr->m_power * 6)%7;
+	    if(lightPtr->m_power == 0) lightPtr->m_power++;
+		sender(lightPtr->m_power);
+            cout << "\nPower updated to : " << lightPtr->m_power << endl;
+            cout << "Notifying observers with resource handle: " << lightPtr->getHandle() << endl;
+
+            OCStackResult result = OC_STACK_OK;
+
+            if(isListOfObservers)
+            {
+                std::shared_ptr<OCResourceResponse> resourceResponse =
+                            std::make_shared<OCResourceResponse>();
+
+                resourceResponse->setErrorCode(200);
+                resourceResponse->setResourceRepresentation(lightPtr->get(), DEFAULT_INTERFACE);
+
+                result = OCPlatform::notifyListOfObservers(
+                                                            lightPtr->getHandle(),
+                                                            lightPtr->m_interestedObservers,
+                                                            resourceResponse,
+                                                            OC::QualityOfService::HighQos);
+            }
+            else
+            {
+                result = OCPlatform::notifyAllObservers(lightPtr->getHandle(),
+                                                            OC::QualityOfService::HighQos);
+            }
+
+            if(OC_STACK_NO_OBSERVERS == result)
+            {
+                cout << "No More observers, stopping notifications" << endl;
+                gObservation = 0;
+            }
+        }
+        sleep (1800);
+    }
+
+    return NULL;
+}
+
 
 
 static FILE* client_open(const char *path, const char *mode) {
