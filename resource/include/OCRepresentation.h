@@ -109,6 +109,10 @@ namespace OC
 
             virtual ~OCRepresentation(){}
 
+            void setDevAddr(const OCDevAddr addr);
+
+            const std::string getHost() const;
+
             OCRepPayload* getPayload() const;
 
             void addChild(const OCRepresentation&);
@@ -223,6 +227,9 @@ namespace OC
             void setNULL(const std::string& str);
 
             bool isNULL(const std::string& str) const;
+
+        private:
+            std::string m_host;
 
             // STL Container stuff
         public:

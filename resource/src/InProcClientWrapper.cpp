@@ -123,6 +123,7 @@ namespace OC
 
         // first one is considered the root, everything else is considered a child of this one.
         OCRepresentation root = *it;
+        root.setDevAddr(clientResponse->devAddr);
         ++it;
 
         std::for_each(it, oc.representations().end(),
