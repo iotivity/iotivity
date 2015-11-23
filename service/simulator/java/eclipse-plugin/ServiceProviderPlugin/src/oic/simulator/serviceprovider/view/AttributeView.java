@@ -89,20 +89,25 @@ public class AttributeView extends ViewPart {
                     @Override
                     public void run() {
                         if (null != attViewer) {
+                            Tree tree = attViewer.getTree();
+                            if (null == tree || tree.isDisposed()) {
+                                return;
+                            }
                             if (null != resource
                                     && null != resource
-                                            .getResourceRepresentation())
+                                            .getResourceRepresentation()) {
                                 attViewer.setInput(resource
                                         .getResourceRepresentation());
-                            /*
-                             * updateViewer(getData(resource)); Tree tree =
-                             * attViewer.getTree(); if (!tree.isDisposed()) { if
-                             * (null != resource && (resource instanceof
-                             * SingleResource && ((SingleResource) resource)
-                             * .isResourceAutomationInProgress())) {
-                             * tree.setEnabled(false); } else {
-                             * tree.setEnabled(true); } }
-                             */
+                                attViewer.expandAll();
+                                if (null != tree) {
+                                    tree.setLinesVisible(true);
+                                }
+                            } else {
+                                attViewer.setInput(null);
+                                if (null != tree) {
+                                    tree.setLinesVisible(false);
+                                }
+                            }
                         }
                     }
                 });
@@ -113,7 +118,14 @@ public class AttributeView extends ViewPart {
                 Display.getDefault().asyncExec(new Runnable() {
                     @Override
                     public void run() {
-                        updateViewer(null);
+                        if (null != attViewer) {
+                            Tree tree = attViewer.getTree();
+                            if (null != tree && !tree.isDisposed()) {
+                                // tbl.deselectAll();
+                                tree.removeAll();
+                                tree.setLinesVisible(false);
+                            }
+                        }
                     }
                 });
             }
@@ -133,17 +145,6 @@ public class AttributeView extends ViewPart {
                         if (null == resourceInSelection) {
                             return;
                         }
-                        /*
-                         * if (resource != resourceInSelection) { // This
-                         * notification is for a different resource // whose
-                         * attributes are not // currently not being shown in
-                         * UI. So ignoring this // notification. return; } //
-                         * Refresh the table viewers which will display // the
-                         * updated values if (null != attViewer) { if (resource
-                         * instanceof CollectionResource) {
-                         * updateViewer(getData(resource)); } else {
-                         * updateViewer(getData(resource)); } }
-                         */
                     }
                 });
             }
@@ -310,37 +311,6 @@ public class AttributeView extends ViewPart {
                 automationUIListener);
     }
 
-    private List<LocalResourceAttribute> getData(Resource resource) {
-        if (null != resource) {
-            List<LocalResourceAttribute> attList = resourceManager
-                    .getAttributes((Resource) resource);
-            // List<LocalResourceAttribute> attList =
-            // Utility.getDummyAttributes();
-            return attList;
-        } else {
-            return null;
-        }
-    }
-
-    private void updateViewer(List<LocalResourceAttribute> attList) {
-        Tree tree = attViewer.getTree();;
-        if (null != attList) {
-            if (null != tree && !tree.isDisposed()) {
-                tree.setLinesVisible(true);
-                attViewer.setInput(attList.toArray());
-            }
-        } else {
-            // Clear the attributes table viewer
-            if (null != attViewer) {
-                if (null != tree && !tree.isDisposed()) {
-                    // tbl.deselectAll();
-                    tree.removeAll();
-                    tree.setLinesVisible(false);
-                }
-            }
-        }
-    }
-
     class AttributeContentProvider implements ITreeContentProvider,
             DataChangeListener {
 
@@ -397,6 +367,7 @@ public class AttributeView extends ViewPart {
                 @Override
                 public void run() {
                     mTreeViewer.refresh(attribute.getParent());
+                    mTreeViewer.expandAll();
                 }
             });
         }
@@ -407,6 +378,7 @@ public class AttributeView extends ViewPart {
                 @Override
                 public void run() {
                     mTreeViewer.refresh(attribute.getParent());
+                    mTreeViewer.expandAll();
                 }
             });
         }
@@ -417,6 +389,7 @@ public class AttributeView extends ViewPart {
                 @Override
                 public void run() {
                     mTreeViewer.update(attribute, null);
+                    mTreeViewer.expandAll();
                 }
             });
         }

@@ -127,7 +127,6 @@ public class AttributeEditingSupport {
 
                 @Override
                 public void modifyText(ModifyEvent event) {
-
                     String newValue = comboBox.getText();
 
                     if (null != newValue && !newValue.isEmpty()) {
@@ -136,31 +135,6 @@ public class AttributeEditingSupport {
                         attributeElement.setPostState(false);
                     }
 
-                    /*
-                     * if (type.mType == ValueType.ARRAY) { return; }
-                     */
-                    /*
-                     * String oldValue = String.valueOf(Utility
-                     * .getAttributeValueAsString(val)); String newValue =
-                     * comboBox.getText();
-                     * 
-                     * if (null != newValue && !newValue.isEmpty()) {
-                     * attributeElement.setPostState(true); } else {
-                     * attributeElement.setPostState(false); }
-                     * 
-                     * if (!oldValue.equals(newValue)) { // Get the
-                     * AttriuteValue from the string AttributeValue value =
-                     * AttributeValueBuilder.build( newValue, type.mBaseType);
-                     * TypeInfo resTypeInfo = value.typeInfo(); if (null ==
-                     * value || type.mDepth != resTypeInfo.mDepth || type.mType
-                     * != resTypeInfo.mType || type.mBaseType !=
-                     * resTypeInfo.mBaseType) { MessageBox dialog = new
-                     * MessageBox(viewer.getTree() .getShell(), SWT.ICON_ERROR |
-                     * SWT.OK); dialog.setText("Invalid Value");
-                     * dialog.setMessage("Given value is invalid");
-                     * dialog.open(); } else { updateAttributeValue(attribute,
-                     * value); } }
-                     */
                     if (dialog instanceof PostRequestDialog) {
                         viewer.update(attributeElement, null);
                         // comboBox.setVisible(false);
@@ -214,23 +188,6 @@ public class AttributeEditingSupport {
             }
 
             TypeInfo type = val.typeInfo();
-            /*
-             * if (type.mType == ValueType.ARRAY) { int index; try { index =
-             * Integer.parseInt(String.valueOf(value)); } catch
-             * (NumberFormatException nfe) { index = -1; } if (index == -1) {
-             * String oldValue = String.valueOf(Utility
-             * .getAttributeValueAsString(val)); String newValue =
-             * comboBox.getText(); if (!oldValue.equals(newValue)) { // Get the
-             * AttriuteValue from the string AttributeValue attValue =
-             * AttributeValueBuilder.build( newValue, type.mBaseType); TypeInfo
-             * resTypeInfo = attValue.typeInfo(); if (null == attValue ||
-             * type.mDepth != resTypeInfo.mDepth || type.mType !=
-             * resTypeInfo.mType || type.mBaseType != resTypeInfo.mBaseType) {
-             * MessageBox dialog = new MessageBox(viewer.getTree() .getShell(),
-             * SWT.ICON_ERROR | SWT.OK); dialog.setText("Invalid Value");
-             * dialog.setMessage("Given value is invalid"); dialog.open(); }
-             * else { updateAttributeValue(att, attValue); } } } }
-             */
 
             String oldValue = String.valueOf(Utility
                     .getAttributeValueAsString(val));
@@ -239,10 +196,18 @@ public class AttributeEditingSupport {
                 // Get the AttriuteValue from the string
                 AttributeValue attValue = AttributeValueBuilder.build(newValue,
                         type.mBaseType);
-                TypeInfo resTypeInfo = attValue.typeInfo();
-                if (null == attValue || type.mDepth != resTypeInfo.mDepth
-                        || type.mType != resTypeInfo.mType
-                        || type.mBaseType != resTypeInfo.mBaseType) {
+                boolean invalid = false;
+                if (null == attValue) {
+                    invalid = true;
+                } else {
+                    TypeInfo resTypeInfo = attValue.typeInfo();
+                    if (type.mDepth != resTypeInfo.mDepth
+                            || type.mType != resTypeInfo.mType
+                            || type.mBaseType != resTypeInfo.mBaseType) {
+                        invalid = true;
+                    }
+                }
+                if (invalid) {
                     MessageBox dialog = new MessageBox(viewer.getTree()
                             .getShell(), SWT.ICON_ERROR | SWT.OK);
                     dialog.setText("Invalid Value");

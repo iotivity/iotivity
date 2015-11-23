@@ -89,6 +89,8 @@ public class PutRequestDialog extends TitleAreaDialog {
 
         attViewer.setInput(updatedRepresentation);
 
+        attViewer.expandAll();
+
         return compLayout;
     }
 

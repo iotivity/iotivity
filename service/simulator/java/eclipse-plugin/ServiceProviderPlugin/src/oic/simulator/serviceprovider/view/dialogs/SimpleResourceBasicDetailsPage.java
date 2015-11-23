@@ -5,6 +5,7 @@ import java.util.Set;
 
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
@@ -164,6 +165,10 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
             @Override
             public void modifyText(ModifyEvent arg0) {
                 resURI = resUriTxt.getText();
+                if (null == resURI) {
+                    return;
+                }
+
                 getWizard().getContainer().updateButtons();
             }
         });
@@ -234,13 +239,6 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
                 observable = observeBtn.getSelection();
             }
         });
-
-        /*
-         * startBtn.addSelectionListener(new SelectionAdapter() {
-         * 
-         * @Override public void widgetSelected(SelectionEvent e) { start =
-         * startBtn.getSelection(); } });
-         */
     }
 
     private void changeVisibility() {
@@ -267,6 +265,12 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
 
     @Override
     public IWizardPage getNextPage() {
+        if (!Utility.isUriValid(resURI)) {
+            MessageDialog.openError(Display.getDefault().getActiveShell(),
+                    "Invalid Resource URI.", Constants.INVALID_URI_MESSAGE);
+            return null;
+        }
+
         // Checking whether the uri is used by any other resource.
         if (Activator.getDefault().getResourceManager().isResourceExist(resURI)) {
             MessageDialog
@@ -276,6 +280,7 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
             // itself.
             return null;
         }
+
         return ((CreateResourceWizard) getWizard())
                 .getSimpleResourceAddAttributePage();
     }
@@ -295,9 +300,4 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
     public boolean isObservable() {
         return observable;
     }
-
-    /*
-     * public boolean isStart() { return start; }
-     */
-
 }

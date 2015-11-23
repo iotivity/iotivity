@@ -21,9 +21,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
 import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.model.CollectionResource;
 import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.SingleResource;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.utils.Utility;
+import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -295,6 +298,27 @@ public class LoadRamlPage extends WizardPage {
             wizard.setStatus("Failed to create Resource.");
             wizard.getWizardDialog().close();
             return null;
+        } else {
+            // Checking whether the resource is single or collection.
+            Option intendedResource = wizard.getMainPage().getOption();
+            if ((intendedResource == Option.SIMPLE_FROM_RAML && resource instanceof CollectionResource)) {
+                MessageDialog
+                        .openError(
+                                getShell(),
+                                "Invalid RAML",
+                                "Uploaded RAML is of type collection. "
+                                        + "Please upload the proper RAML of simple type.");
+                return null;
+            } else if (intendedResource == Option.COLLECTION_FROM_RAML
+                    && resource instanceof SingleResource) {
+                MessageDialog
+                        .openError(
+                                getShell(),
+                                "Invalid RAML",
+                                "Uploaded RAML is of type simple. "
+                                        + "Please upload the proper RAML of collection type.");
+                return null;
+            }
         }
         UpdatePropertiesPage updatePageRef = wizard.getUpdatePropPage();
         updatePageRef.setResName(resource.getResourceName());

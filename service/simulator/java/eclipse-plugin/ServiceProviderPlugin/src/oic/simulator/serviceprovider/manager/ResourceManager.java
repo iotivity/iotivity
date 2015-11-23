@@ -27,12 +27,27 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.model.AttributeElement;
+import oic.simulator.serviceprovider.model.CollectionResource;
+import oic.simulator.serviceprovider.model.Device;
+import oic.simulator.serviceprovider.model.LocalResourceAttribute;
+import oic.simulator.serviceprovider.model.MetaProperty;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.ResourceType;
+import oic.simulator.serviceprovider.model.SRMItem;
+import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
+
 import org.eclipse.swt.widgets.Display;
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeProperty.Type;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.DeviceInfo;
+import org.oic.simulator.DeviceListener;
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.PlatformInfo;
 import org.oic.simulator.SimulatorException;
@@ -47,19 +62,6 @@ import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
 import org.oic.simulator.server.SimulatorResource.ObserverListener;
 import org.oic.simulator.server.SimulatorResource.ResourceModelChangeListener;
 import org.oic.simulator.server.SimulatorSingleResource;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.model.AttributeElement;
-import oic.simulator.serviceprovider.model.CollectionResource;
-import oic.simulator.serviceprovider.model.Device;
-import oic.simulator.serviceprovider.model.LocalResourceAttribute;
-import oic.simulator.serviceprovider.model.MetaProperty;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.ResourceType;
-import oic.simulator.serviceprovider.model.SRMItem;
-import oic.simulator.serviceprovider.model.SingleResource;
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
 
 /**
  * This class acts as an interface between the simulator java SDK and the
@@ -82,12 +84,16 @@ public class ResourceManager {
 
     private ObserverListener               observer;
 
+    private DeviceListener                 deviceListener;
+
     private NotificationSynchronizerThread synchronizerThread;
 
     private Thread                         threadHandle;
 
-    private String                         deviceName;
+    private DeviceInfo                     deviceInfo;
     private PlatformInfo                   platformInfo;
+
+    private String                         deviceName;
 
     public ResourceManager() {
         data = new Data();
@@ -127,6 +133,47 @@ public class ResourceManager {
                     .log(Level.ERROR.ordinal(),
                             new Date(),
                             "Error while registering the platform info.\n"
+                                    + Utility.getSimulatorErrorString(e, null));
+        }
+
+        deviceListener = new DeviceListener() {
+
+            @Override
+            public void onDeviceFound(final String host,
+                    final DeviceInfo deviceInfo) {
+                if (null != ResourceManager.this.deviceInfo
+                        || null == deviceInfo || null == host) {
+                    return;
+                }
+                synchronizerThread.addToQueue(new Runnable() {
+                    @Override
+                    public void run() {
+                        String rcvdDeviceName = deviceInfo.getName();
+                        if (null == rcvdDeviceName) {
+                            return;
+                        }
+                        if (deviceName.equalsIgnoreCase(rcvdDeviceName)) {
+                            ResourceManager.this.deviceInfo = deviceInfo;
+
+                            // Notify the UI Listeners
+                            UiListenerHandler.getInstance()
+                                    .deviceInfoReceivedNotification();
+                        }
+                    }
+                });
+            }
+        };
+
+        // Get the device information to show other details of the device in UI.
+        try {
+            SimulatorManager.findDevices("", deviceListener);
+        } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "Failed to get the local device information.\n"
                                     + Utility.getSimulatorErrorString(e, null));
         }
 
@@ -298,12 +345,30 @@ public class ResourceManager {
         }
     }
 
-    public String getDeviceName() {
-        return deviceName;
-    }
+    public void setDeviceInfo(List<MetaProperty> metaProperties) {
+        if (null == metaProperties || metaProperties.size() < 1) {
+            return;
+        }
+        Iterator<MetaProperty> itr = metaProperties.iterator();
+        MetaProperty prop;
+        String propName;
+        String propValue;
+        boolean found = false;
+        while (itr.hasNext()) {
+            prop = itr.next();
+            propName = prop.getPropName();
+            propValue = prop.getPropValue();
+            if (propName.equals(Constants.DEVICE_NAME)) {
+                this.deviceName = propValue;
+                found = true;
+                break;
+            }
+        }
 
-    public void setDeviceName(String deviceName) {
-        this.deviceName = deviceName;
+        if (!found) {
+            return;
+        }
+
         try {
             SimulatorManager.setDeviceInfo(deviceName);
         } catch (SimulatorException e) {
@@ -315,6 +380,43 @@ public class ResourceManager {
                             "Error while registering the device info.\n"
                                     + Utility.getSimulatorErrorString(e, null));
         }
+    }
+
+    public boolean isDeviceInfoValid(List<MetaProperty> metaProperties) {
+        if (null == metaProperties || metaProperties.size() < 1) {
+            return false;
+        }
+
+        Iterator<MetaProperty> itr = metaProperties.iterator();
+        MetaProperty prop;
+        String propName;
+        String propValue;
+        while (itr.hasNext()) {
+            prop = itr.next();
+            propName = prop.getPropName();
+            propValue = prop.getPropValue();
+            if (propName.equals(Constants.DEVICE_NAME)) {
+                if (null == propValue || propValue.length() < 1) {
+                    return false;
+                }
+                break;
+            }
+        }
+        return true;
+    }
+
+    public List<MetaProperty> getDeviceInfo() {
+        List<MetaProperty> metaProperties = new ArrayList<MetaProperty>();
+        metaProperties.add(new MetaProperty(Constants.DEVICE_NAME, deviceName));
+        if (null != deviceInfo) {
+            metaProperties.add(new MetaProperty(Constants.DEVICE_ID, deviceInfo
+                    .getID()));
+            metaProperties.add(new MetaProperty(Constants.DEVICE_SPEC_VERSION,
+                    deviceInfo.getSpecVersion()));
+            metaProperties.add(new MetaProperty(Constants.DEVICE_DMV,
+                    deviceInfo.getDataModelVersion()));
+        }
+        return metaProperties;
     }
 
     public List<MetaProperty> getPlatformInfo() {
@@ -393,6 +495,23 @@ public class ResourceManager {
                             "Error while registering the platform info.\n"
                                     + Utility.getSimulatorErrorString(e, null));
         }
+    }
+
+    public boolean isPlatformInfoValid(List<MetaProperty> metaProperties) {
+        if (null == metaProperties || metaProperties.size() < 1) {
+            return false;
+        }
+        Iterator<MetaProperty> itr = metaProperties.iterator();
+        MetaProperty prop;
+        String propValue;
+        while (itr.hasNext()) {
+            prop = itr.next();
+            propValue = prop.getPropValue();
+            if (null == propValue || propValue.length() < 1) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public synchronized Resource getCurrentResourceInSelection() {
@@ -837,7 +956,7 @@ public class ResourceManager {
         return createCount;
     }
 
-    public void createDevice(String deviceName, Set<Resource> childs) {
+    public Device createDevice(String deviceName, Set<Resource> childs) {
         // 1. Create device
         Device dev = new Device();
         dev.setDeviceName(deviceName);
@@ -850,6 +969,7 @@ public class ResourceManager {
         // 3. Update ui listeners
         UiListenerHandler.getInstance().resourceListUpdateUINotification(
                 ResourceType.DEVICE);
+        return dev;
     }
 
     private Map<String, LocalResourceAttribute> fetchResourceAttributesFromModel(
@@ -890,39 +1010,6 @@ public class ResourceManager {
         }
         return resourceAttributeMap;
 
-    }
-
-    // This method gives all known possible values of the attribute in string
-    // format. It takes allowed values or range of values whichever is available
-    private List<String> getValueList(SimulatorResourceAttribute attributeN) {
-        AttributeProperty attProp = attributeN.property();
-        if (null == attProp) {
-            return null;
-        }
-        List<String> valueList = new ArrayList<String>();
-        Type valuesType = attProp.type();
-        if (valuesType == Type.VALUESET) {
-            Object[] allowedValues = attProp.valueSet();
-            if (null != allowedValues && allowedValues.length > 0) {
-                for (Object value : allowedValues) {
-                    if (null != value) {
-                        valueList.add(String.valueOf(((AttributeValue) value)
-                                .get()));
-                    }
-                }
-            }
-        } else if (valuesType == Type.RANGE) {
-            double minD = attProp.min();
-            double maxD = attProp.max();
-            for (double value = minD; value <= maxD; value++) {
-                valueList.add(String.valueOf(value));
-            }
-        }
-        Object attValue = attributeN.value().get();
-        if (valueList.size() < 1 && null != attValue) {
-            valueList.add(String.valueOf(attValue));
-        }
-        return valueList;
     }
 
     public List<Resource> getResourceList() {
@@ -1655,6 +1742,22 @@ public class ResourceManager {
         }
 
         String curURI = resource.getResourceURI();
+        setResourceURI(resource, newURI);
+
+        try {
+            if (!startResource(resource)) {
+                return false;
+            }
+        } catch (SimulatorException e) {
+            setResourceURI(resource, curURI);
+        }
+
+        return true;
+    }
+
+    public void setResourceURI(Resource resource, String newURI)
+            throws SimulatorException {
+        String curURI = resource.getResourceURI();
         SimulatorResource server = resource.getSimulatorResource();
         try {
             server.setURI(newURI);
@@ -1669,11 +1772,6 @@ public class ResourceManager {
                                     + Utility.getSimulatorErrorString(e, null));
             throw e;
         }
-
-        if (!startResource(resource)) {
-            return false;
-        }
-        return true;
     }
 
     public boolean updateResourceProperties(Resource resource,
@@ -1856,8 +1954,14 @@ public class ResourceManager {
             prop = itr.next();
             if (prop.getPropName().equals(propName)) {
                 String value = prop.getPropValue();
-                if (null == value || value.trim().isEmpty()) {
-                    invalid = true;
+                if (propName.equals(Constants.RESOURCE_URI)) {
+                    if (!Utility.isUriValid(value)) {
+                        invalid = true;
+                    }
+                } else {
+                    if (null == value || value.trim().isEmpty()) {
+                        invalid = true;
+                    }
                 }
             }
         }

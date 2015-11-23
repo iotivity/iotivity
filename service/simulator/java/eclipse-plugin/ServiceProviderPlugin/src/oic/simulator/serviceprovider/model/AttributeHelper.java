@@ -17,6 +17,7 @@
 package oic.simulator.serviceprovider.model;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import oic.simulator.serviceprovider.utils.Constants;
@@ -252,7 +253,14 @@ public class AttributeHelper {
                         min = Double.parseDouble(this.min);
                         max = Double.parseDouble(this.max);
                         dflValue = Double.parseDouble(value);
-                        if (dflValue < min || dflValue > max) {
+                        boolean found = false;
+                        for (double val = min; val <= max; val += 1.0) {
+                            if (dflValue == val) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
                             result = false;
                         }
                     } catch (Exception e) {
@@ -261,7 +269,33 @@ public class AttributeHelper {
                 }
             } else if (validValuesType == Type.VALUESET
                     && null != allowedValues && !allowedValues.isEmpty()) {
-                result = allowedValues.contains(value);
+                boolean found = false;
+                if (attributeType.equals(Constants.INT)) {
+                    Iterator<String> itr = allowedValues.iterator();
+                    while (itr.hasNext()) {
+                        String val = itr.next();
+                        int v1 = Integer.parseInt(val);
+                        int v2 = Integer.parseInt(value);
+                        if (v1 == v2) {
+                            found = true;
+                            break;
+                        }
+                    }
+                } else {
+                    Iterator<String> itr = allowedValues.iterator();
+                    while (itr.hasNext()) {
+                        String val = itr.next();
+                        double v1 = Double.parseDouble(val);
+                        double v2 = Double.parseDouble(value);
+                        if (v1 == v2) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                if (!found) {
+                    result = false;
+                }
             }
         }
         return result;
@@ -321,6 +355,7 @@ public class AttributeHelper {
                 } else {
                     attProperty = null;
                 }
+                break;
             case DOUBLE:
                 attValue = new AttributeValue(
                         Double.parseDouble(attributeDflValue));

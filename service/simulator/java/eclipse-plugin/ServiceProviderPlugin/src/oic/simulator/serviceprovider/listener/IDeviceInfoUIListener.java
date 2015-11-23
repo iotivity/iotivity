@@ -14,19 +14,8 @@
  * limitations under the License.
  */
 
-package org.oic.simulator;
+package oic.simulator.serviceprovider.listener;
 
-/**
- * Listener for getting platform information.
- */
-public interface PlatformListener {
-    /**
-     * Method which provides remote device platform information.
-     *
-     * @param hostUri
-     *            Holds the address and port information.
-     * @param platformInfo
-     *            {@link PlatformInfo} object holding the platform information.
-     */
-    public void onPlatformFound(String hostUri, PlatformInfo platformInfo);
+public interface IDeviceInfoUIListener {
+    public void onDeviceInfoFound();
 }

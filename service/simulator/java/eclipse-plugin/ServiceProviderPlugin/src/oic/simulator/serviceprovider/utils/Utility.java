@@ -802,4 +802,13 @@ public class Utility {
         return localAtt;
     }
 
+    public static boolean isUriValid(String resURI) {
+        if (null == resURI || resURI.length() < 2 || !resURI.startsWith("/")
+                || resURI.contains("//") || resURI.contains("?")
+                || resURI.contains("#") || resURI.contains("%")) {
+            return false;
+        }
+        return true;
+    }
+
 }

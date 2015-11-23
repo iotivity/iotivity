@@ -138,7 +138,7 @@ void SimulatorManager::getDeviceInfo(const std::string &host, DeviceInfoCallback
     VALIDATE_CALLBACK(callback)
 
     OC::FindDeviceCallback deviceCallback = std::bind(
-            [](const OC::OCRepresentation & rep, DeviceInfoCallback callback)
+            [](const OC::OCRepresentation & rep, const std::string & hostUri, DeviceInfoCallback callback)
     {
         std::string deviceName = rep.getValue<std::string>("n");
         std::string deviceID = rep.getValue<std::string>("di");
@@ -146,8 +146,8 @@ void SimulatorManager::getDeviceInfo(const std::string &host, DeviceInfoCallback
         std::string deviceDMV = rep.getValue<std::string>("dmv");
 
         DeviceInfo deviceInfo(deviceName, deviceID, deviceSpecVersion, deviceDMV);
-        callback(deviceInfo);
-    }, std::placeholders::_1, callback);
+        callback(hostUri, deviceInfo);
+    }, std::placeholders::_1, host, callback);
 
     typedef OCStackResult (*GetDeviceInfo)(const std::string &, const std::string &,
                                            OCConnectivityType, OC::FindDeviceCallback);
@@ -173,7 +173,7 @@ void SimulatorManager::getPlatformInfo(const std::string &host, PlatformInfoCall
     VALIDATE_CALLBACK(callback)
 
     OC::FindPlatformCallback platformCallback = std::bind(
-                [](const OC::OCRepresentation & rep, PlatformInfoCallback callback)
+                [](const OC::OCRepresentation & rep, const std::string & hostUri, PlatformInfoCallback callback)
     {
         PlatformInfo platformInfo;
         platformInfo.setPlatformID(rep.getValue<std::string>("pi"));
@@ -188,8 +188,8 @@ void SimulatorManager::getPlatformInfo(const std::string &host, PlatformInfoCall
         platformInfo.setSupportUrl(rep.getValue<std::string>("mnsl"));
         platformInfo.setSystemTime(rep.getValue<std::string>("st"));
 
-        callback(platformInfo);
-    }, std::placeholders::_1, callback);
+        callback(hostUri, platformInfo);
+    }, std::placeholders::_1, host, callback);
 
     typedef OCStackResult (*GetPlatformInfo)(const std::string &, const std::string &,
             OCConnectivityType, OC::FindPlatformCallback);

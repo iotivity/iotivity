@@ -24,11 +24,11 @@ public class MainPage extends WizardPage {
     private Button deviceBtn;
     private Text   description;
 
-    public enum ResourceOption {
+    public enum Option {
         SIMPLE, SIMPLE_FROM_RAML, COLLECTION, COLLECTION_FROM_RAML, DEVICE, NONE
     }
 
-    private ResourceOption resOption;
+    private Option option;
 
     protected MainPage() {
         super("Main Page");
@@ -87,7 +87,7 @@ public class MainPage extends WizardPage {
                                 + "\t1. Basic resource details: URI, Name, Resource Types, etc.\n"
                                 + "\t2. Options such as Observable, allowed request types, start/stop resource etc.\n"
                                 + "\t3. Adding attributes.");
-                resOption = ResourceOption.SIMPLE;
+                option = Option.SIMPLE;
                 getWizard().getContainer().updateButtons();
             }
         });
@@ -101,7 +101,7 @@ public class MainPage extends WizardPage {
                                 + "\t2. Supports multi-instance creation.\n"
                                 + "\t3. For single instance creation, allows editing the URI and Name of the resource.\n"
                                 + "\t4. Allows to start or stop the resource(s).");
-                resOption = ResourceOption.SIMPLE_FROM_RAML;
+                option = Option.SIMPLE_FROM_RAML;
                 getWizard().getContainer().updateButtons();
             }
         });
@@ -114,7 +114,7 @@ public class MainPage extends WizardPage {
                                 + "\t1. Basic resource details: URI, Name, Resource Types, etc.\n"
                                 + "\t2. Start/stop the resource.\n"
                                 + "\t3. Adding existing simple resources to this collection.");
-                resOption = ResourceOption.COLLECTION;
+                option = Option.COLLECTION;
                 getWizard().getContainer().updateButtons();
             }
         });
@@ -128,7 +128,7 @@ public class MainPage extends WizardPage {
                                 + "\t2. Supports multi-instance creation.\n"
                                 + "\t3. For single instance creation, allows editing the URI and Name of the resource.\n"
                                 + "\t4. Allows to start or stop the resource(s).");
-                resOption = ResourceOption.COLLECTION_FROM_RAML;
+                option = Option.COLLECTION_FROM_RAML;
                 getWizard().getContainer().updateButtons();
             }
         });
@@ -140,7 +140,7 @@ public class MainPage extends WizardPage {
                         .setText("Create a logical device that acts as a top-level logical classification.\n"
                                 + "\t1. Takes a device name for identication.\n"
                                 + "\t2. One or more simple and collection resources can be added to it.");
-                resOption = ResourceOption.DEVICE;
+                option = Option.DEVICE;
                 getWizard().getContainer().updateButtons();
             }
         });
@@ -148,7 +148,7 @@ public class MainPage extends WizardPage {
 
     @Override
     public boolean canFlipToNextPage() {
-        if (resOption != ResourceOption.NONE) {
+        if (option != Option.NONE) {
             return true;
         }
         return false;
@@ -185,7 +185,7 @@ public class MainPage extends WizardPage {
         return null;
     }
 
-    public ResourceOption getResourceOption() {
-        return resOption;
+    public Option getOption() {
+        return option;
     }
 }

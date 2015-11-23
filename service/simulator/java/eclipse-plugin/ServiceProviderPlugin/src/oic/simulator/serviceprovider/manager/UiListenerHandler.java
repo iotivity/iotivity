@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import oic.simulator.serviceprovider.listener.IAutomationUIListener;
+import oic.simulator.serviceprovider.listener.IDeviceInfoUIListener;
 import oic.simulator.serviceprovider.listener.IObserverListChangedUIListener;
 import oic.simulator.serviceprovider.listener.IPropertiesChangedUIListener;
 import oic.simulator.serviceprovider.listener.IResourceListChangedUIListener;
@@ -47,6 +48,8 @@ public class UiListenerHandler {
 
     private List<IPropertiesChangedUIListener>    propertiesChangedUIListeners;
 
+    private List<IDeviceInfoUIListener>           deviceInfoUIListeners;
+
     private UiListenerHandler() {
         resourceListChangedUIListeners = new ArrayList<IResourceListChangedUIListener>();
         selectionChangedUIListeners = new ArrayList<ISelectionChangedUIListener>();
@@ -54,6 +57,7 @@ public class UiListenerHandler {
         automationUIListeners = new ArrayList<IAutomationUIListener>();
         observerUIListeners = new ArrayList<IObserverListChangedUIListener>();
         propertiesChangedUIListeners = new ArrayList<IPropertiesChangedUIListener>();
+        deviceInfoUIListeners = new ArrayList<IDeviceInfoUIListener>();
     }
 
     public static UiListenerHandler getInstance() {
@@ -155,6 +159,19 @@ public class UiListenerHandler {
         synchronized (propertiesChangedUIListeners) {
             propertiesChangedUIListeners
                     .remove(resourcePropertiesChangedUIListener);
+        }
+    }
+
+    public void addDeviceInfoUIListener(IDeviceInfoUIListener deviceUIListener) {
+        synchronized (deviceInfoUIListeners) {
+            deviceInfoUIListeners.add(deviceUIListener);
+        }
+    }
+
+    public void removeDeviceInfoUIListener(
+            IDeviceInfoUIListener platformUIListener) {
+        synchronized (deviceInfoUIListeners) {
+            deviceInfoUIListeners.remove(platformUIListener);
         }
     }
 
@@ -303,7 +320,7 @@ public class UiListenerHandler {
         }
     }
 
-    public void propertiesChangedUINotification(Class targetClass) {
+    public void propertiesChangedUINotification(Class<?> targetClass) {
         synchronized (propertiesChangedUIListeners) {
             if (propertiesChangedUIListeners.size() > 0) {
                 IPropertiesChangedUIListener listener;
@@ -317,6 +334,22 @@ public class UiListenerHandler {
                         } else {
                             listener.onDevicePropertyChange();
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    public void deviceInfoReceivedNotification() {
+        synchronized (deviceInfoUIListeners) {
+            if (deviceInfoUIListeners.size() > 0) {
+                IDeviceInfoUIListener listener;
+                Iterator<IDeviceInfoUIListener> listenerItr = deviceInfoUIListeners
+                        .iterator();
+                while (listenerItr.hasNext()) {
+                    listener = listenerItr.next();
+                    if (null != listener) {
+                        listener.onDeviceInfoFound();
                     }
                 }
             }

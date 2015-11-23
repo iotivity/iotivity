@@ -5,6 +5,7 @@ import java.util.Set;
 
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
@@ -52,10 +53,7 @@ public class CollectionResourceBasicDetailsPage extends WizardPage {
     @Override
     public void createControl(Composite parent) {
         setPageComplete(false);
-        if (anyResourceExist)
-            setTitle(Constants.COLLECTION_RESOURCE_BASIC_DETAILS_PAGE_TITLE2);
-        else
-            setTitle(Constants.COLLECTION_RESOURCE_BASIC_DETAILS_PAGE_TITLE1);
+        setTitle(Constants.COLLECTION_RESOURCE_BASIC_DETAILS_PAGE_TITLE);
         setMessage(Constants.COLLECTION_RESOURCE_BASIC_DETAILS_PAGE_MESSAGE);
 
         Composite container = new Composite(parent, SWT.NONE);
@@ -175,6 +173,7 @@ public class CollectionResourceBasicDetailsPage extends WizardPage {
                 if (null == resURI) {
                     return;
                 }
+
                 if (anyResourceExist)
                     getWizard().getContainer().updateButtons();
                 else
@@ -304,6 +303,13 @@ public class CollectionResourceBasicDetailsPage extends WizardPage {
             // itself.
             return null;
         }
+
+        if (!Utility.isUriValid(resURI)) {
+            MessageDialog.openError(Display.getDefault().getActiveShell(),
+                    "Invalid Resource URI.", Constants.INVALID_URI_MESSAGE);
+            return null;
+        }
+
         if (anyResourceExist) {
             return ((CreateResourceWizard) getWizard())
                     .getAddResourcesToCollectionPage();

@@ -16,6 +16,8 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
+import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
+
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -76,7 +78,11 @@ public class ResourceWizardDialog extends WizardDialog {
                 loadRamlPage.setResource(null);
                 prevPage = loadRamlPage;
             } else if (curPage == addResourcesToCollectionPage) {
-                prevPage = collectionResourceBasicDetailsPage;
+                if (mainPage.getOption() == Option.COLLECTION_FROM_RAML) {
+                    prevPage = updatePropPage;
+                } else {
+                    prevPage = collectionResourceBasicDetailsPage;
+                }
             } else if (curPage == simpleResourceAddAttributesPage) {
                 prevPage = simpleResourceBasicDetailsPage;
             } else if (curPage == simpleResourceOtherDetailsPage) {

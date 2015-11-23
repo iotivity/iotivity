@@ -38,6 +38,7 @@ import oic.simulator.clientcontroller.listener.IPostUIListener;
 import oic.simulator.clientcontroller.listener.IPutUIListener;
 import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
 import oic.simulator.clientcontroller.listener.IVerificationUIListener;
+import oic.simulator.clientcontroller.remoteresource.DeviceAndPlatformInfo;
 import oic.simulator.clientcontroller.remoteresource.MetaProperty;
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
 import oic.simulator.clientcontroller.utils.Constants;
@@ -112,14 +113,15 @@ public class ResourceManager {
     // Maintaining a list of observed resource URIs.
     private List<String>                              observedResourceURIList;
 
-    private DeviceInfo                                devInfo;
-    private PlatformInfo                              platInfo;
+    private Map<String, DeviceAndPlatformInfo>        hostDeviceAndPlatformMap;
 
     public ResourceManager() {
         resourceMap = new HashMap<String, RemoteResource>();
         favoriteResources = new ArrayList<RemoteResource>();
         favoriteURIList = new ArrayList<String>();
         observedResourceURIList = new ArrayList<String>();
+        hostDeviceAndPlatformMap = new HashMap<String, DeviceAndPlatformInfo>();
+
         findResourceUIListeners = new ArrayList<IFindResourceUIListener>();
         resourceSelectionChangedUIListeners = new ArrayList<IResourceSelectionChangedUIListener>();
         getUIListeners = new ArrayList<IGetUIListener>();
@@ -210,22 +212,38 @@ public class ResourceManager {
                                                     null));
                         }
 
-                        // Get the device and platform information
-                        try {
-                            SimulatorManager.findDevices(resource
-                                    .getRemoteResourceRef().getHost(),
-                                    deviceListener);
-                            SimulatorManager.getPlatformInformation(resource
-                                    .getRemoteResourceRef().getHost(),
-                                    platformListener);
-                        } catch (SimulatorException e) {
-                            Activator
-                                    .getDefault()
-                                    .getLogManager()
-                                    .log(Level.ERROR.ordinal(),
-                                            new Date(),
-                                            Utility.getSimulatorErrorString(e,
-                                                    null));
+                        // Get the device information
+                        if (!isDeviceInfoExist(resourceN.getHost())) {
+                            try {
+                                SimulatorManager.findDevices(resource
+                                        .getRemoteResourceRef().getHost(),
+                                        deviceListener);
+                            } catch (SimulatorException e) {
+                                Activator
+                                        .getDefault()
+                                        .getLogManager()
+                                        .log(Level.ERROR.ordinal(),
+                                                new Date(),
+                                                Utility.getSimulatorErrorString(
+                                                        e, null));
+                            }
+                        }
+
+                        // Get the platform information
+                        if (!isPlatformInfoExist(resourceN.getHost())) {
+                            try {
+                                SimulatorManager.getPlatformInformation(
+                                        resource.getRemoteResourceRef()
+                                                .getHost(), platformListener);
+                            } catch (SimulatorException e) {
+                                Activator
+                                        .getDefault()
+                                        .getLogManager()
+                                        .log(Level.ERROR.ordinal(),
+                                                new Date(),
+                                                Utility.getSimulatorErrorString(
+                                                        e, null));
+                            }
                         }
                     }
                 });
@@ -236,14 +254,24 @@ public class ResourceManager {
         deviceListener = new DeviceListener() {
 
             @Override
-            public void onDeviceFound(final DeviceInfo deviceInfo) {
-                if (null == deviceInfo) {
+            public void onDeviceFound(final String host,
+                    final DeviceInfo deviceInfo) {
+                if (null == deviceInfo || null == host) {
                     return;
                 }
                 synchronizerThread.addToQueue(new Runnable() {
                     @Override
                     public void run() {
-                        setDeviceInfo(deviceInfo);
+                        synchronized (hostDeviceAndPlatformMap) {
+                            DeviceAndPlatformInfo info = hostDeviceAndPlatformMap
+                                    .get(host);
+                            if (null == info) {
+                                info = new DeviceAndPlatformInfo();
+                                info.setHost(host);
+                                hostDeviceAndPlatformMap.put(host, info);
+                            }
+                            info.setDeviceInfo(deviceInfo);
+                        }
 
                         // Notify UI listeners
                         deviceInfoReceivedNotification();
@@ -255,14 +283,24 @@ public class ResourceManager {
         platformListener = new PlatformListener() {
 
             @Override
-            public void onPlatformFound(final PlatformInfo platformInfo) {
-                if (null == platformInfo) {
+            public void onPlatformFound(final String host,
+                    final PlatformInfo platformInfo) {
+                if (null == platformInfo || null == host) {
                     return;
                 }
                 synchronizerThread.addToQueue(new Runnable() {
                     @Override
                     public void run() {
-                        setPlatformInfo(platformInfo);
+                        synchronized (hostDeviceAndPlatformMap) {
+                            DeviceAndPlatformInfo info = hostDeviceAndPlatformMap
+                                    .get(host);
+                            if (null == info) {
+                                info = new DeviceAndPlatformInfo();
+                                info.setHost(host);
+                                hostDeviceAndPlatformMap.put(host, info);
+                            }
+                            info.setPlatformInfo(platformInfo);
+                        }
 
                         // Notify UI listeners
                         platformInfoReceivedNotification();
@@ -487,20 +525,26 @@ public class ResourceManager {
         return resource;
     }
 
-    public synchronized DeviceInfo getDeviceInfo() {
-        return devInfo;
+    public synchronized boolean isDeviceInfoExist(String host) {
+        DeviceAndPlatformInfo info = hostDeviceAndPlatformMap.get(host);
+        if (null == info) {
+            return false;
+        }
+        if (null == info.getDeviceInfo()) {
+            return false;
+        }
+        return true;
     }
 
-    public synchronized void setDeviceInfo(DeviceInfo devInfo) {
-        this.devInfo = devInfo;
-    }
-
-    public synchronized PlatformInfo getPlatformInfo() {
-        return platInfo;
-    }
-
-    public synchronized void setPlatformInfo(PlatformInfo platInfo) {
-        this.platInfo = platInfo;
+    public synchronized boolean isPlatformInfoExist(String host) {
+        DeviceAndPlatformInfo info = hostDeviceAndPlatformMap.get(host);
+        if (null == info) {
+            return false;
+        }
+        if (null == info.getPlatformInfo()) {
+            return false;
+        }
+        return true;
     }
 
     private static class ResponseSynchronizerThread implements Runnable {
@@ -1020,6 +1064,9 @@ public class ResourceManager {
                         // Delete all cached details of resources
                         resourceMap.clear();
                         favoriteResources.clear();
+
+                        // Clearing the device and platform information
+                        hostDeviceAndPlatformMap.clear();
                     }
                     // Change the current resource in selection
                     setCurrentResourceInSelection(null);
@@ -1094,6 +1141,11 @@ public class ResourceManager {
                         removeResourceFromFavorites(resource);
                         // Remove the resource
                         keyItr.remove();
+                        // Remove the device and platform information
+                        synchronized (hostDeviceAndPlatformMap) {
+                            hostDeviceAndPlatformMap.remove(resource
+                                    .getRemoteResourceRef().getHost());
+                        }
                     }
                 }
             }
@@ -1160,20 +1212,48 @@ public class ResourceManager {
     }
 
     public List<MetaProperty> getDeviceProperties() {
-        if (null == devInfo) {
+        if (null == currentResourceInSelection) {
+            return null;
+        }
+
+        SimulatorRemoteResource remoteResource = currentResourceInSelection
+                .getRemoteResourceRef();
+        if (null == remoteResource) {
+            return null;
+        }
+
+        String host = remoteResource.getHost();
+        if (null == host) {
+            return null;
+        }
+
+        if (!isDeviceInfoExist(host)) {
+            // Device Information
+            try {
+                SimulatorManager.findDevices(host, deviceListener);
+            } catch (SimulatorException e) {
+                Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(),
+                                Utility.getSimulatorErrorString(e, null));
+            }
             return null;
         }
 
         List<MetaProperty> metaProperties = new ArrayList<MetaProperty>();
-
-        metaProperties.add(new MetaProperty(Constants.DEVICE_ID, devInfo
-                .getID()));
-        metaProperties.add(new MetaProperty(Constants.DEVICE_NAME, devInfo
-                .getName()));
-        metaProperties.add(new MetaProperty(Constants.DEVICE_SPEC_VERSION,
-                devInfo.getSpecVersion()));
-        metaProperties.add(new MetaProperty(Constants.DEVICE_DMV_VERSION,
-                devInfo.getDataModelVersion()));
+        synchronized (hostDeviceAndPlatformMap) {
+            DeviceInfo devInfo = hostDeviceAndPlatformMap.get(host)
+                    .getDeviceInfo();
+            metaProperties.add(new MetaProperty(Constants.DEVICE_ID, devInfo
+                    .getID()));
+            metaProperties.add(new MetaProperty(Constants.DEVICE_NAME, devInfo
+                    .getName()));
+            metaProperties.add(new MetaProperty(Constants.DEVICE_SPEC_VERSION,
+                    devInfo.getSpecVersion()));
+            metaProperties.add(new MetaProperty(Constants.DEVICE_DMV_VERSION,
+                    devInfo.getDataModelVersion()));
+        }
 
         /*
          * metaProperties.add(new MetaProperty(Constants.DEVICE_ID, ""));
@@ -1186,37 +1266,66 @@ public class ResourceManager {
     }
 
     public List<MetaProperty> getPlatformProperties() {
-        if (null == platInfo) {
+        if (null == currentResourceInSelection) {
+            return null;
+        }
+
+        SimulatorRemoteResource remoteResource = currentResourceInSelection
+                .getRemoteResourceRef();
+        if (null == remoteResource) {
+            return null;
+        }
+
+        String host = remoteResource.getHost();
+        if (null == host) {
+            return null;
+        }
+
+        if (!isPlatformInfoExist(host)) {
+            // Platform Information
+            try {
+                SimulatorManager.getPlatformInformation(host, platformListener);
+            } catch (SimulatorException e) {
+                Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(), new Date(),
+                                Utility.getSimulatorErrorString(e, null));
+            }
             return null;
         }
 
         List<MetaProperty> metaProperties = new ArrayList<MetaProperty>();
-
-        metaProperties.add(new MetaProperty(Constants.PLATFORM_ID, platInfo
-                .getPlatformID()));
-        metaProperties.add(new MetaProperty(Constants.PLATFORM_MANUFAC_NAME,
-                platInfo.getManufacturerName()));
-        metaProperties.add(new MetaProperty(Constants.PLATFORM_MANUFAC_URL,
-                platInfo.getManufacturerUrl()));
-        metaProperties.add(new MetaProperty(Constants.PLATFORM_MODEL_NO,
-                platInfo.getModelNumber()));
-        metaProperties.add(new MetaProperty(Constants.PLATFORM_DATE_OF_MANUFAC,
-                platInfo.getDateOfManufacture()));
-        metaProperties.add(new MetaProperty(Constants.PLATFORM_VERSION,
-                platInfo.getPlatformVersion()));
-        metaProperties.add(new MetaProperty(Constants.PLATFORM_OS_VERSION,
-                platInfo.getOperationSystemVersion()));
-        metaProperties.add(new MetaProperty(
-                Constants.PLATFORM_HARDWARE_VERSION, platInfo
-                        .getHardwareVersion()));
-        metaProperties.add(new MetaProperty(
-                Constants.PLATFORM_FIRMWARE_VERSION, platInfo
-                        .getFirmwareVersion()));
-        metaProperties.add(new MetaProperty(Constants.PLATFORM_SUPPORT_URL,
-                platInfo.getSupportUrl()));
-        metaProperties.add(new MetaProperty(Constants.PLATFORM_SYSTEM_TIME,
-                platInfo.getSystemTime()));
-
+        synchronized (hostDeviceAndPlatformMap) {
+            PlatformInfo platInfo = hostDeviceAndPlatformMap.get(host)
+                    .getPlatformInfo();
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_ID, platInfo
+                    .getPlatformID()));
+            metaProperties.add(new MetaProperty(
+                    Constants.PLATFORM_MANUFAC_NAME, platInfo
+                            .getManufacturerName()));
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_MANUFAC_URL,
+                    platInfo.getManufacturerUrl()));
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_MODEL_NO,
+                    platInfo.getModelNumber()));
+            metaProperties.add(new MetaProperty(
+                    Constants.PLATFORM_DATE_OF_MANUFAC, platInfo
+                            .getDateOfManufacture()));
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_VERSION,
+                    platInfo.getPlatformVersion()));
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_OS_VERSION,
+                    platInfo.getOperationSystemVersion()));
+            metaProperties.add(new MetaProperty(
+                    Constants.PLATFORM_HARDWARE_VERSION, platInfo
+                            .getHardwareVersion()));
+            metaProperties.add(new MetaProperty(
+                    Constants.PLATFORM_FIRMWARE_VERSION, platInfo
+                            .getFirmwareVersion()));
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_SUPPORT_URL,
+                    platInfo.getSupportUrl()));
+            metaProperties.add(new MetaProperty(Constants.PLATFORM_SYSTEM_TIME,
+                    platInfo.getSystemTime()));
+        }
         /*
          * metaProperties.add(new MetaProperty(Constants.PLATFORM_ID, ""));
          * metaProperties .add(new MetaProperty(Constants.PLATFORM_MANUFAC_NAME,

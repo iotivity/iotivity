@@ -91,6 +91,8 @@ public class PostRequestDialog extends TitleAreaDialog {
 
         attViewer.setInput(updatedRepresentation);
 
+        attViewer.expandAll();
+
         return compLayout;
     }
 

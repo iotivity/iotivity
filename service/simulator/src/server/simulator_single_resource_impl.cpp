@@ -562,7 +562,7 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorSingleResourceImpl::requestOnBa
         else
         {
             response = std::make_shared<OC::OCResourceResponse>();
-            response->setErrorCode(400);
+            response->setErrorCode(403);
             response->setResponseResult(OC_EH_ERROR);
             if ("PUT" == request->getRequestType())
             {

@@ -154,7 +154,8 @@ public class MetaPropertiesView extends ViewPart {
                                 Constants.RESOURCE_URI);
                         if (result) {
                             MessageDialog.openError(parent.getShell(),
-                                    "Invalid Input", "Resource URI is invalid.");
+                                    "Invalid Resource URI.",
+                                    Constants.INVALID_URI_MESSAGE);
                             return;
                         }
 

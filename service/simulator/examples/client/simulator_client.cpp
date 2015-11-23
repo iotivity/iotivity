@@ -551,17 +551,19 @@ class ClientController
 
             try
             {
-                SimulatorManager::getInstance()->getDeviceInfo(resource->getHost(), std::bind([](DeviceInfo & deviceInfo)
+                SimulatorManager::getInstance()->getDeviceInfo(resource->getHost(),
+                    std::bind([](const std::string & host, DeviceInfo & deviceInfo)
                 {
                     std::cout << "###Device Information received...." << std::endl;
                     std::ostringstream out;
+                    out << "Host URI: " << host << std::endl;
                     out << "Device name: " << deviceInfo.getName() << std::endl;
                     out << "Device ID: " << deviceInfo.getID() << std::endl;
                     out << "Device Spec version: " << deviceInfo.getSpecVersion() << std::endl;
                     out << "Device dat model version: " << deviceInfo.getDataModelVersion() << std::endl;
 
                     std::cout << out.str() << std::endl;
-                }, std::placeholders::_1));
+                }, std::placeholders::_1, std::placeholders::_2));
             }
             catch (InvalidArgsException &e)
             {
@@ -583,10 +585,12 @@ class ClientController
 
             try
             {
-                SimulatorManager::getInstance()->getPlatformInfo(resource->getHost(), std::bind([](PlatformInfo & platformInfo)
+                SimulatorManager::getInstance()->getPlatformInfo(resource->getHost(),
+                    std::bind([](const std::string & host, PlatformInfo & platformInfo)
                 {
                     std::cout << "###Platform Information received...." << std::endl;
                     std::ostringstream out;
+                    out << "Host URI: " << host << std::endl;
                     out << "Platform ID: " << platformInfo.getPlatformID() << std::endl;
                     out << "Platform version: " << platformInfo.getPlatformVersion() << std::endl;
                     out << "Manufacturer name: " << platformInfo.getManufacturerName() << std::endl;
@@ -600,7 +604,7 @@ class ClientController
                     out << "System time: " << platformInfo.getSystemTime() << std::endl;
 
                     std::cout << out.str() << std::endl;
-                }, std::placeholders::_1));
+                }, std::placeholders::_1, std::placeholders::_2));
             }
             catch (InvalidArgsException &e)
             {

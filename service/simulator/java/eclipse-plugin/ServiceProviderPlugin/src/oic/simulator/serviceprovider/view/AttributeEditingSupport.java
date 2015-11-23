@@ -166,10 +166,18 @@ public class AttributeEditingSupport {
                         // Get the AttriuteValue from the string
                         AttributeValue value = AttributeValueBuilder.build(
                                 newValue, type.mBaseType);
-                        TypeInfo resTypeInfo = value.typeInfo();
-                        if (null == value || type.mDepth != resTypeInfo.mDepth
-                                || type.mType != resTypeInfo.mType
-                                || type.mBaseType != resTypeInfo.mBaseType) {
+                        boolean invalid = false;
+                        if (null == value) {
+                            invalid = true;
+                        } else {
+                            TypeInfo resTypeInfo = value.typeInfo();
+                            if (type.mDepth != resTypeInfo.mDepth
+                                    || type.mType != resTypeInfo.mType
+                                    || type.mBaseType != resTypeInfo.mBaseType) {
+                                invalid = true;
+                            }
+                        }
+                        if (invalid) {
                             MessageBox dialog = new MessageBox(viewer.getTree()
                                     .getShell(), SWT.ICON_ERROR | SWT.OK);
                             dialog.setText("Invalid Value");
@@ -270,11 +278,18 @@ public class AttributeEditingSupport {
                         // Get the AttriuteValue from the string
                         AttributeValue attValue = AttributeValueBuilder.build(
                                 newValue, type.mBaseType);
-                        TypeInfo resTypeInfo = attValue.typeInfo();
-                        if (null == attValue
-                                || type.mDepth != resTypeInfo.mDepth
-                                || type.mType != resTypeInfo.mType
-                                || type.mBaseType != resTypeInfo.mBaseType) {
+                        boolean invalid = false;
+                        if (null == attValue) {
+                            invalid = true;
+                        } else {
+                            TypeInfo resTypeInfo = attValue.typeInfo();
+                            if (type.mDepth != resTypeInfo.mDepth
+                                    || type.mType != resTypeInfo.mType
+                                    || type.mBaseType != resTypeInfo.mBaseType) {
+                                invalid = true;
+                            }
+                        }
+                        if (invalid) {
                             MessageBox dialog = new MessageBox(viewer.getTree()
                                     .getShell(), SWT.ICON_ERROR | SWT.OK);
                             dialog.setText("Invalid Value");
@@ -365,7 +380,6 @@ public class AttributeEditingSupport {
 
         public SimulatorResourceAttribute getResultantValue(
                 AttributeValue newValue) {
-            AttributeValue val = null;
             IStructuredSelection selection = (IStructuredSelection) viewer
                     .getSelection();
             if (null == selection) {
@@ -460,6 +474,10 @@ public class AttributeEditingSupport {
 
             Object parent = ((AttributeElement) element).getParent();
             if (null != parent && !(parent instanceof ResourceRepresentation)) {
+                return null;
+            }
+
+            if (((AttributeElement) element).isReadOnly()) {
                 return null;
             }
 

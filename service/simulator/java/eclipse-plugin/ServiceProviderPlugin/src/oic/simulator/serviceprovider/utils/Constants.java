@@ -26,7 +26,7 @@ public class Constants {
 
     public static final String         INT                                                  = "Int";
     public static final String         DOUBLE                                               = "Double";
-    public static final String         BOOL                                                 = "Bool";
+    public static final String         BOOL                                                 = "Boolean";
     public static final String         STRING                                               = "String";
     public static final String         UNKNOWN                                              = "Unknown";
 
@@ -42,7 +42,6 @@ public class Constants {
     public static final String         RESOURCE_TYPE                                        = "Resource Type";
     public static final String         RESOURCE_TYPES                                       = "Resource Types";
     public static final String         RESOURCE_NAME                                        = "Resource Name";
-    public static final String         DEVICE_NAME                                          = "Device Name";
     public static final String         RESOURCE_UID                                         = "Resource ID";
     public static final String         CONNECTIVITY_TYPE                                    = "Connectivity Type";
 
@@ -124,6 +123,12 @@ public class Constants {
     public static final String         PLATFORM_SUPPORT_URL                                 = "Support URL";
     public static final String         PLATFORM_SYSTEM_TIME                                 = "System Time";
 
+    // Device information
+    public static final String         DEVICE_NAME                                          = "Device Name";
+    public static final String         DEVICE_ID                                            = "Device ID";
+    public static final String         DEVICE_SPEC_VERSION                                  = "Spec Version";
+    public static final String         DEVICE_DMV                                           = "Data Model Version";
+
     public static final String         SAMPLE_LIGHT                                         = "sample.light";
 
     public static final String         UPDATE_PROP_PAGE_TITLE                               = "Update Properties";
@@ -152,11 +157,10 @@ public class Constants {
     public static final String         SIMPLE_RESOURCE_OTHER_DETAILS_PAGE_TITLE             = "Create Simple Resource(Step 3 of 3)";
     public static final String         SIMPLE_RESOURCE_OTHER_DETAILS_PAGE_MESSAGE           = "Fill other details of the resource";
 
-    public static final String         COLLECTION_RESOURCE_BASIC_DETAILS_PAGE_TITLE1        = "Create Collection Resource";
-    public static final String         COLLECTION_RESOURCE_BASIC_DETAILS_PAGE_TITLE2        = "Create Collection Resource(Step 1 of 2)";
+    public static final String         COLLECTION_RESOURCE_BASIC_DETAILS_PAGE_TITLE         = "Create Collection Resource";
     public static final String         COLLECTION_RESOURCE_BASIC_DETAILS_PAGE_MESSAGE       = "Fill basic details of the resource";
 
-    public static final String         COLLECTION_RESOURCE_ADD_OTHER_RESOURCES_PAGE_TITLE   = "Create Collection Resource(Step 2 of 2)";
+    public static final String         COLLECTION_RESOURCE_ADD_OTHER_RESOURCES_PAGE_TITLE   = "Create Collection Resource";
     public static final String         COLLECTION_RESOURCE_ADD_OTHER_RESOURCES_PAGE_MESSAGE = "Add other resources to this collection resource";
 
     public static final String         CREATE_DEVICE_PAGE_TITLE                             = "Create Device";
@@ -165,5 +169,7 @@ public class Constants {
     public static final String         DEVICE                                               = "Create Device";
     public static final String         SINGLE_RESOURCE                                      = "Single Resource";
     public static final String         COLLECTION_RESOURCE                                  = "Collection Resource";
+    public static final String         INVALID_URI_MESSAGE                                  = "Resource URI should start with a '/' followed by atleast one character and it should not contain either # or ? or % or consecutive '/'.";
+    public static final int            TREE_EXPANSION_LEVEL                                 = 10;
 
 }

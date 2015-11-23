@@ -94,8 +94,9 @@ public class MetaPropertiesView extends ViewPart {
 
                     @Override
                     public void run() {
-                        if (null != deviceTblViewer) {
-                            updateViewer(deviceTblViewer, getDevicePropData());
+                        if (null != platformTblViewer) {
+                            updateViewer(platformTblViewer,
+                                    getPlatformPropData());
                         }
                     }
                 });
@@ -108,9 +109,8 @@ public class MetaPropertiesView extends ViewPart {
 
                     @Override
                     public void run() {
-                        if (null != platformTblViewer) {
-                            updateViewer(platformTblViewer,
-                                    getPlatformPropData());
+                        if (null != deviceTblViewer) {
+                            updateViewer(deviceTblViewer, getDevicePropData());
                         }
                     }
                 });

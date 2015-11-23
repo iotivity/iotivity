@@ -303,6 +303,7 @@ public class AttributeView extends ViewPart {
         Tree tree = attViewer.getTree();
         if (null != resource) {
             attViewer.setInput(resource.getResourceRepresentation());
+            attViewer.expandAll();
             if (!tree.isDisposed()) {
                 tree.setLinesVisible(true);
             }
@@ -467,15 +468,17 @@ public class AttributeView extends ViewPart {
                 PlatformUI.getWorkbench().getDisplay().syncExec(new Thread() {
                     @Override
                     public void run() {
-                        if (resourceInSelection.isPutAutomtnInProgress()) {
-                            MessageDialog
-                                    .openInformation(Display.getDefault()
-                                            .getActiveShell(), "PUT Request",
-                                            "PUT Automation is in progress. Please wait or stop the automation.");
-                            return;
+                        boolean attributesExist = false;
+                        ResourceRepresentation rep = resourceInSelection
+                                .getResourceRepresentation();
+                        if (null != rep) {
+                            Map<String, AttributeElement> attributes = rep
+                                    .getAttributes();
+                            if (null != attributes && !attributes.isEmpty()) {
+                                attributesExist = true;
+                            }
                         }
-                        if (resourceInSelection.getResourceRepresentation()
-                                .getAttributes().size() < 1) {
+                        if (!attributesExist) {
                             MessageDialog
                                     .openInformation(Display.getDefault()
                                             .getActiveShell(), "PUT Request",
@@ -501,15 +504,17 @@ public class AttributeView extends ViewPart {
                 PlatformUI.getWorkbench().getDisplay().syncExec(new Thread() {
                     @Override
                     public void run() {
-                        if (resourceInSelection.isPostAutomtnInProgress()) {
-                            MessageDialog
-                                    .openInformation(Display.getDefault()
-                                            .getActiveShell(), "POST Request",
-                                            "POST Automation is in progress. Please wait or stop the automation.");
-                            return;
+                        boolean attributesExist = false;
+                        ResourceRepresentation rep = resourceInSelection
+                                .getResourceRepresentation();
+                        if (null != rep) {
+                            Map<String, AttributeElement> attributes = rep
+                                    .getAttributes();
+                            if (null != attributes && !attributes.isEmpty()) {
+                                attributesExist = true;
+                            }
                         }
-                        if (resourceInSelection.getResourceRepresentation()
-                                .getAttributes().size() < 1) {
+                        if (!attributesExist) {
                             MessageDialog
                                     .openInformation(Display.getDefault()
                                             .getActiveShell(), "POST Request",

@@ -39,6 +39,7 @@ import oic.simulator.serviceprovider.view.dialogs.AddResources;
 import oic.simulator.serviceprovider.view.dialogs.AutomationSettingDialog;
 import oic.simulator.serviceprovider.view.dialogs.CreateResourceWizard;
 import oic.simulator.serviceprovider.view.dialogs.DeleteResourceWizard;
+import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
 import oic.simulator.serviceprovider.view.dialogs.RemoveResourceFromCollections;
 import oic.simulator.serviceprovider.view.dialogs.RemoveResourceFromDevices;
 import oic.simulator.serviceprovider.view.dialogs.RemoveResources;
@@ -50,6 +51,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.window.Window;
@@ -607,6 +609,10 @@ public class ResourceManagerView extends ViewPart {
                                             collectionResTreeViewer.refresh();
                                             // if(refreshDeviceTree)
                                             deviceTreeViewer.refresh();
+
+                                            resourceManager
+                                                    .resourceSelectionChanged(null);
+
                                             MessageDialog.openInformation(
                                                     Display.getDefault()
                                                             .getActiveShell(),
@@ -737,6 +743,9 @@ public class ResourceManagerView extends ViewPart {
                                                 collectionResTreeViewer
                                                         .refresh();
                                                 deviceTreeViewer.refresh();
+
+                                                resourceManager
+                                                        .resourceSelectionChanged(null);
 
                                                 status = "Resource removed from its parent";
                                             } catch (SimulatorException e1) {
@@ -1058,6 +1067,9 @@ public class ResourceManagerView extends ViewPart {
                     collectionResTreeViewer.refresh();
                     // if(refreshDeviceTree)
                     deviceTreeViewer.refresh();
+
+                    resourceManager.resourceSelectionChanged(null);
+
                     MessageDialog.openInformation(Display.getDefault()
                             .getActiveShell(), "Deleted", "Resource deleted.");
                 } catch (SimulatorException e1) {
@@ -1486,6 +1498,45 @@ public class ResourceManagerView extends ViewPart {
                         int open = wizardDialog.open();
                         if (open == WizardDialog.OK
                                 || createWizard.isDlgForceClosed()) {
+
+                            Option option = createWizard.getMainPage()
+                                    .getOption();
+                            if (option == Option.DEVICE) {
+                                Device dev = createWizard.getCreatedDevice();
+                                folder.setSelection(deviceTab);
+                                deviceTreeViewer.setSelection(
+                                        new StructuredSelection(dev), true);
+                                resourceManager.deviceSelectionChanged(dev);
+                                deviceTreeViewer.expandToLevel(dev,
+                                        Constants.TREE_EXPANSION_LEVEL);
+                            } else if (option == Option.SIMPLE_FROM_RAML
+                                    || option == Option.SIMPLE) {
+                                SingleResource res = (SingleResource) createWizard
+                                        .getCreatedResource();
+                                folder.setSelection(singleResTab);
+                                boolean canSelect = true;
+                                if (option == Option.SIMPLE_FROM_RAML
+                                        && createWizard.getResourceCount() > 1) {
+                                    canSelect = false;
+                                }
+                                if (canSelect) {
+                                    singleResTreeViewer.setSelection(
+                                            new StructuredSelection(res), true);
+                                    resourceManager
+                                            .resourceSelectionChanged(res);
+                                }
+                            } else if (option == Option.COLLECTION_FROM_RAML
+                                    || option == Option.COLLECTION) {
+                                CollectionResource res = (CollectionResource) createWizard
+                                        .getCreatedResource();
+                                folder.setSelection(collectionResTab);
+                                collectionResTreeViewer.setSelection(
+                                        new StructuredSelection(res), true);
+                                resourceManager.resourceSelectionChanged(res);
+                                collectionResTreeViewer.expandToLevel(res,
+                                        Constants.TREE_EXPANSION_LEVEL);
+                            }
+
                             MessageDialog.openInformation(Display.getDefault()
                                     .getActiveShell(),
                                     "Resource Creation Status", createWizard

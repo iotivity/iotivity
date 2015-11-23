@@ -38,8 +38,8 @@
 #include "simulator_exceptions.h"
 #include "simulator_logger.h"
 
-typedef std::function<void(DeviceInfo &deviceInfo)> DeviceInfoCallback;
-typedef std::function<void(PlatformInfo &platformInfo)> PlatformInfoCallback;
+typedef std::function<void(const std::string &hostUri, DeviceInfo &deviceInfo)> DeviceInfoCallback;
+typedef std::function<void(const std::string &hostUri, PlatformInfo &platformInfo)> PlatformInfoCallback;
 
 /**
  * @class   SimulatorManager

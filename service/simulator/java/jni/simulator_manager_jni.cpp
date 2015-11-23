@@ -274,11 +274,11 @@ Java_org_oic_simulator_SimulatorManager_findDevices
 {
     VALIDATE_CALLBACK(env, listener)
 
-    DeviceInfoCallback callback =  std::bind([](DeviceInfo & deviceInfo,
+    DeviceInfoCallback callback =  std::bind([](const std::string & host, DeviceInfo & deviceInfo,
                                    const std::shared_ptr<JniListenerHolder> &listenerRef)
     {
-        onDeviceInfoReceived(listenerRef->get(), deviceInfo);
-    }, std::placeholders::_1, JniListenerHolder::create(env, listener));
+        onDeviceInfoReceived(listenerRef->get(), host, deviceInfo);
+    }, std::placeholders::_1, std::placeholders::_2, JniListenerHolder::create(env, listener));
 
     try
     {
@@ -319,11 +319,11 @@ Java_org_oic_simulator_SimulatorManager_getPlatformInformation
 {
     VALIDATE_CALLBACK(env, listener)
 
-    PlatformInfoCallback callback =  std::bind([](PlatformInfo & platformInfo,
+    PlatformInfoCallback callback =  std::bind([](const std::string & host, PlatformInfo & platformInfo,
                                      const std::shared_ptr<JniListenerHolder> &listenerRef)
     {
-        onPlatformInfoReceived(listenerRef->get(), platformInfo);
-    }, std::placeholders::_1, JniListenerHolder::create(env, listener));
+        onPlatformInfoReceived(listenerRef->get(), host, platformInfo);
+    }, std::placeholders::_1, std::placeholders::_2, JniListenerHolder::create(env, listener));
 
     try
     {

@@ -299,20 +299,6 @@ public class AddAttributeDialog extends TitleAreaDialog {
     }
 
     private void setUiListeners() {
-
-        /*
-         * attNameTxt.addModifyListener(new ModifyListener() {
-         * 
-         * @Override public void modifyText(ModifyEvent e) { String value =
-         * attNameTxt.getText(); if(null != value) { value = value.trim(); }
-         * attHelper.setAttributeName(value); } });
-         * 
-         * dflValueTxt.addModifyListener(new ModifyListener() {
-         * 
-         * @Override public void modifyText(ModifyEvent arg0) { String value =
-         * dflValueTxt.getText(); if(null != value) { value = value.trim(); }
-         * attHelper.setAttributeDflValue(value); } });
-         */
         rangeBtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -354,7 +340,8 @@ public class AddAttributeDialog extends TitleAreaDialog {
                 char[] chars = new char[string.length()];
                 string.getChars(0, chars.length, chars, 0);
                 for (int i = 0; i < chars.length; i++) {
-                    if (!('0' <= chars[i] && chars[i] <= '9')) {
+                    if (!(('0' <= chars[i] && chars[i] <= '9')
+                            || chars[i] == '-' || chars[i] == '+')) {
                         if (attTypeCmb.getText().equals(Constants.INT)) {
                             e.doit = false;
                             return;
@@ -378,7 +365,8 @@ public class AddAttributeDialog extends TitleAreaDialog {
                 char[] chars = new char[string.length()];
                 string.getChars(0, chars.length, chars, 0);
                 for (int i = 0; i < chars.length; i++) {
-                    if (!('0' <= chars[i] && chars[i] <= '9')) {
+                    if (!(('0' <= chars[i] && chars[i] <= '9')
+                            || chars[i] == '-' || chars[i] == '+')) {
                         if (attTypeCmb.getText().equals(Constants.INT)) {
                             e.doit = false;
                             return;
