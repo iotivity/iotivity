@@ -63,7 +63,7 @@ public:
      MULTICASTURI("/oic/res"),
      HOSTED_RESOURCEURI("/a/TempHumSensor"),
      RESOURCEURI("/a/TempHumSensor/hosting"),
-     RESOURCETYPE("resource.hosting"),
+     RESOURCETYPE("oic.r.resourcehosting"),
      RESOURCEINTERFACE("oic.if.baseline"),
      ATTR_KEY("Temperature"),
      ATTR_VALUE(0)

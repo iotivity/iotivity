@@ -67,10 +67,10 @@ if target_os == 'linux':
 
 hosting_test_env.PrependUnique(CPPPATH = [ src_dir + '/extlibs/hippomocks-master',
                              gtest_dir + '/include'])
-hosting_test_env.AppendUnique(CPPPATH = ['../'])
-hosting_test_env.AppendUnique(CPPPATH = ['../../../resource-encapsulation/include'])
-hosting_test_env.AppendUnique(CPPPATH = ['../../../resource-encapsulation/src/common/primitiveResource/include'])
-hosting_test_env.AppendUnique(CPPPATH = ['../../../resource-encapsulation/src/common/utils/include'])
+hosting_test_env.AppendUnique(CPPPATH = ['../src'])
+hosting_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/include'])
+hosting_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/src/common/primitiveResource/include'])
+hosting_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/src/common/utils/include'])
 ######################################################################
 # Build Test
 ######################################################################
@@ -86,4 +86,4 @@ hosting_test_env.InstallTarget(hosting_test, 'hosting_test')
 #        from tools.scons.RunTest import *
 #        run_test(hosting_test_env,
 #                 '',
-#                 'service/notification-manager/NotificationManager/src/unittest/hosting_test')
+#                 'service/resource-hosting/unittest/hosting_test')
