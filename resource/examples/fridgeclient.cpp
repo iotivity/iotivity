@@ -187,6 +187,7 @@ class ClientFridge
         std::cout << "Got a response from get from the " << resourceName << std::endl;
         std::cout << "Get ID is "<<getId<<" and resource URI is " << resource->uri() << std::endl;
         std::cout << "Get eCode is "<< eCode << std::endl;
+        std::cout << "OCRepresentation uri is " << rep.getUri() << std::endl;
 
         printHeaderOptions(headerOptions);
 
