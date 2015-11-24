@@ -49,7 +49,7 @@ findresource = function(cap,res){
 
     responseflag = 0;
     setTimeout(function(){
-        res.status(200).json("[" + endpointList + "]");
+        res.status(200).json(JSON.parse("[" + endpointList + "]"));
         return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
     },7000);
 
@@ -79,7 +79,7 @@ getresource = function(cap,res)
             responseflag = 1;
             console.log("Received response to GET request:");
             console.log(JSON.stringify(response, null, 4));
-            res.status(200).json(JSON.stringify(response.payload));
+            res.status(200).json(response.payload);
             return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
         }
     };
@@ -164,7 +164,7 @@ putresource = function(cap,res)
             responseflag = 1;
             console.log("Received response to PUT request:");
             console.log(JSON.stringify(response, null, 4));
-            res.status(200).json(JSON.stringify(response.payload));
+            res.status(200).json(response.payload);
             return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
         }
     }
