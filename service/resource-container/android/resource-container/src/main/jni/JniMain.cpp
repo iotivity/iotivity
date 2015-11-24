@@ -23,10 +23,10 @@
 #include "JavaClasses.h"
 #include "JNIEnvWrapper.h"
 #include "Log.h"
-#include "JniRcsObject.h"
 #include "JniRcsValue.h"
 #include "JavaExceptions.h"
 #include "JniRcsValue.h"
+#include  "AndroidResource.h"
 
 #define LOG_TAG "JNI-Main"
 
@@ -55,7 +55,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
         initRCSValue(&envWrapper);
         initRCSResourceContainer(&envWrapper);
         initRCSResourceAttributes(&envWrapper);
-        initRCSObject(&envWrapper);
+        initRCSAndroidResource(&envWrapper);
     }
     catch (const JavaException &)
     {

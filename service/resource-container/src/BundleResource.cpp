@@ -60,7 +60,7 @@ namespace OIC
             return m_resourceAttributes;
         }
 
-        void BundleResource::setAttributes(RCSResourceAttributes &attrs)
+        void BundleResource::setAttributes(RCSResourceAttributes &attrs, bool notify)
         {
             for (RCSResourceAttributes::iterator it = attrs.begin(); it != attrs.end(); ++it)
             {
@@ -69,6 +69,14 @@ namespace OIC
 
                 m_resourceAttributes[it->key()] = it->value();
             }
+
+            if (notify && m_pNotiReceiver)
+                            m_pNotiReceiver->onNotificationReceived(m_uri);
+        }
+
+        void BundleResource::setAttributes(RCSResourceAttributes &attrs)
+        {
+            setAttributes(attrs, false);
         }
 
         void BundleResource::setAttribute(const std::string &key,

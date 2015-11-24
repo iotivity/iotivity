@@ -47,36 +47,4 @@ void writeNativeAttributesFromMap(JNIEnv*, jobject mapObj,
 void writeNativeAttributesFromMap(JNIEnvWrapper*, jobject mapObj,
         OIC::Service::RCSResourceAttributes& targetAttrs);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-JNIEXPORT jboolean JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeIsEmpty(JNIEnv*, jobject);
-
-JNIEXPORT jint JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeSize(JNIEnv*, jobject);
-
-JNIEXPORT jboolean JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeRemove(JNIEnv*, jobject, jstring keyObj);
-
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeClear(JNIEnv*, jobject);
-
-JNIEXPORT jboolean JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeContains(JNIEnv*, jobject, jstring keyObj);
-
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeAddKeys(JNIEnv*, jobject, jstring setObj);
-
-JNIEXPORT jobject JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeExtract(JNIEnv*, jobject, jstring keyObj);
-
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeExtractAll(JNIEnv*, jobject, jobject);
-
-#ifdef __cplusplus
-}
-#endif
-
 #endif  //JNI_RCS_RESOURCE_ATTRIBUTES_H_

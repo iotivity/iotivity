@@ -54,6 +54,18 @@ class Light
         }
 };
 
+class LightSensor
+{
+public:
+        int m_intensity;
+
+        std::string m_name;
+
+        LightSensor() : m_intensity(0), m_name("")
+        {
+        }
+};
+
 Light mylight;
 
 int observe_count()
@@ -351,6 +363,33 @@ void onGetForDISensor(const HeaderOptions &headerOptions, const OCRepresentation
     }
 }
 
+
+void onGetForLightIntensitySensor(const HeaderOptions &headerOptions, const OCRepresentation &rep,
+                      const int eCode)
+{
+    (void)headerOptions;
+    try
+    {
+        if (eCode == OC_STACK_OK)
+        {
+            std::cout << "GET request was successful" << std::endl;
+            //std::cout << "Resource URI: " << DISensorResource->uri() << std::endl;
+
+            std::cout << "Payload: " << rep.getPayload() << std::endl;
+
+            std::cout << "\lightIntensity: " << rep.getValue<int>("lightintensity") << std::endl;
+        }
+        else
+        {
+            std::cout << "onGET Response error: " << eCode << std::endl;
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Exception: " << e.what() << " in onPut" << std::endl;
+    }
+}
+
 // Local function to get representation of light resource
 void getLightRepresentation(std::shared_ptr<OCResource> resource)
 {
@@ -362,6 +401,20 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
         QueryParamsMap test;
         std::cout << "Sending request to: " << resource->uri() << std::endl;
         resource->get(test, &onGet);
+    }
+}
+
+// Local function to get representation of light resource
+void getLightIntensityRepresentation(std::shared_ptr<OCResource> resource)
+{
+    if (resource)
+    {
+        std::cout << "Getting Light Representation..." << std::endl;
+        // Invoke resource's get API with the callback parameter
+
+        QueryParamsMap test;
+        std::cout << "Sending request to: " << resource->uri() << std::endl;
+        resource->get(test, &onGetForLightIntensitySensor);
     }
 }
 
@@ -392,11 +445,17 @@ void foundResource(std::shared_ptr<OCResource> resource)
             for (auto &resourceTypes : resource->getResourceTypes())
             {
                 std::cout << "\t\t" << resourceTypes << std::endl;
-                if (resourceTypes == "oic.r.light")
+                /*if (resourceTypes == "oic.r.light")
                 {
                     curResource = resource;
                     // Call a local function which will internally invoke get API on the resource pointer
                     getLightRepresentation(resource);
+                }*/
+                if (resourceTypes == "oic.r.lightintensity")
+                {
+                    curResource = resource;
+                    // Call a local function which will internally invoke get API on the resource pointer
+                    getLightIntensityRepresentation(resource);
                 }
             }
 

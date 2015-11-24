@@ -43,6 +43,7 @@ std::map< string, BundleResource::Ptr > android_resources;
 namespace
 {
     jclass g_cls_RCSBundleInfo;
+    jfieldID g_field_mNativeHandle;
 
     jmethodID g_ctor_RCSBundleInfo;
 
@@ -98,6 +99,10 @@ void initRCSResourceContainer(JNIEnvWrapper *env)
             AS_SIG(CLS_NAME_STRING)
             AS_SIG(CLS_NAME_STRING)
             ")V");
+
+    auto clsAndroidBundleResource = env->FindClass(PACKAGE_NAME "/AndroidBundleResource");
+
+    g_field_mNativeHandle = env->GetFieldID(clsAndroidBundleResource, "mNativeHandle", "J");
 }
 
 void clearRCSResourceContainer(JNIEnvWrapper *env)
@@ -324,6 +329,10 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRegisterA
     androidResource->m_uri = string(str_uri, strlen(str_uri));
     androidResource->m_resourceType = string(str_resourceType, strlen(str_resourceType));
     androidResource->m_name = string(str_res_name, strlen(str_res_name));
+
+    // link java resource instance to c++ resource instance
+    env->SetLongField(bundleResource, g_field_mNativeHandle, reinterpret_cast< jlong >(androidResource.get()));
+
     container->registerResource(androidResource);
 
     android_resources[str_uri] = androidResource;

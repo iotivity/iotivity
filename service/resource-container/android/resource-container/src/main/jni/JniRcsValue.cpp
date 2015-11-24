@@ -20,7 +20,7 @@
 
 #include "JniRcsValue.h"
 
-#include "JniRcsObject.h"
+#include "JNIEnvWrapper.h"
 #include "JniRcsResourceAttributes.h"
 #include "JavaClasses.h"
 #include "JavaExceptions.h"

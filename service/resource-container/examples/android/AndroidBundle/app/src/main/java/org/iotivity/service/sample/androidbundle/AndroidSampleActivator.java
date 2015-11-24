@@ -28,6 +28,14 @@ public class AndroidSampleActivator extends AndroidBundleActivator {
         AndroidLightResource lightRes = new AndroidLightResource(this.appContext);
         lightRes.setURI("/android/light/1");
         bundleAPI.registerResource("oic.android.sample", lightRes);
+
+        LightSensor lightSensor = new LightSensor(this.appContext);
+        lightSensor.setURI("/android/lightsensor/1");
+        bundleAPI.registerResource("oic.android.sample", lightSensor);
+
+        DiscomfortIndexSensorResource diResource = new DiscomfortIndexSensorResource(this.appContext);
+        diResource.setURI("/android/discomfortindex/1");
+        bundleAPI.registerResource("oic.android.sample", diResource);
     }
 
     @Override

@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.iotivity.service.resourcecontainer.server.RcsLockedAttributes;
+//import org.iotivity.service.resourcecontainer.server.RcsLockedAttributes;
 
 /**
  *
@@ -34,35 +34,14 @@ import org.iotivity.service.resourcecontainer.server.RcsLockedAttributes;
  *
  * @see RcsValue
  */
-public final class RcsResourceAttributes extends RcsObject {
-
-    private native boolean nativeIsEmpty();
-
-    private native int nativeSize();
-
-    private native boolean nativeRemove(String key);
-
-    private native void nativeClear();
-
-    private native boolean nativeContains(String key);
-
-    private native void nativeAddKeys(Set<String> set);
-
-    private native RcsValue nativeExtract(String key);
-
-    private native void nativeExtractAll(Map<String, RcsValue> map);
+public final class RcsResourceAttributes 
+{
 
     private final Map<String, RcsValue> mCache = new HashMap<>();
 
     public RcsResourceAttributes() {
     }
 
-    public RcsResourceAttributes(RcsLockedAttributes lockedAttrs)
-            throws RcsException {
-        for (final String key : lockedAttrs.keySet()) {
-            mCache.put(key, lockedAttrs.get(key));
-        }
-    }
     
     public RcsResourceAttributes(RcsResourceAttributes attrs){
         for (final String key : attrs.keySet()) {
@@ -76,14 +55,6 @@ public final class RcsResourceAttributes extends RcsObject {
      * @return an unmodifiable set view of the keys in this attributes
      */
     public Set<String> keySet() {
-        if (hasHandle()) {
-            final Set<String> keySet = new HashSet<>(mCache.keySet());
-
-            nativeAddKeys(keySet);
-
-            return Collections.unmodifiableSet(keySet);
-        }
-
         return Collections.unmodifiableSet(mCache.keySet());
     }
 
@@ -102,10 +73,7 @@ public final class RcsResourceAttributes extends RcsObject {
      */
     public RcsValue get(String key) {
         if (key == null) throw new NullPointerException("key is null");
-
-        if (!mCache.containsKey(key) && hasHandle() && nativeContains(key)) {
-            mCache.put(key, nativeExtract(key));
-        }
+        
         return mCache.get(key);
     }
 
@@ -129,7 +97,6 @@ public final class RcsResourceAttributes extends RcsObject {
         if (value == null) throw new NullPointerException("value is null");
 
         mCache.put(key, value);
-        if (hasHandle()) nativeRemove(key);
     }
 
     /**
@@ -160,7 +127,7 @@ public final class RcsResourceAttributes extends RcsObject {
      * @return true if this contains no key-value mappings
      */
     public boolean isEmpty() {
-        return mCache.isEmpty() && (!hasHandle() || nativeIsEmpty());
+        return mCache.isEmpty();
     }
 
     /**
@@ -169,7 +136,6 @@ public final class RcsResourceAttributes extends RcsObject {
      * @return the number of key-value mappings
      */
     public int size() {
-        if (hasHandle()) return mCache.size() + nativeSize();
         return mCache.size();
     }
 
@@ -183,20 +149,17 @@ public final class RcsResourceAttributes extends RcsObject {
      */
     public boolean remove(String key) {
         if (key == null) throw new NullPointerException("key is null");
+      
+        final boolean cacheRemove = mCache.remove(key) != null;      
 
-        // XXX make sure both cache and native values to be removed.
-        final boolean cacheRemove = mCache.remove(key) != null;
-        final boolean nativeRemove = hasHandle() && nativeRemove(key);
-
-        return cacheRemove || nativeRemove;
+        return cacheRemove;
     }
 
     /**
      * Removes all of the mappings.
      */
-    public void clear() {
+    public void clear(){
         mCache.clear();
-        nativeClear();
     }
 
     /**
@@ -213,29 +176,20 @@ public final class RcsResourceAttributes extends RcsObject {
     public boolean contains(String key) {
         if (key == null) throw new NullPointerException("key is null");
 
-        return mCache.containsKey(key) || nativeContains(key);
+        return mCache.containsKey(key);
     }
-
-    private void esnureAllExtracted() {
-        if (hasHandle()) nativeExtractAll(mCache);
-    }
+    
 
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
-        if (!(o instanceof RcsResourceAttributes)) return false;
-
-        final RcsResourceAttributes rhs = (RcsResourceAttributes) o;
-
-        esnureAllExtracted();
-        rhs.esnureAllExtracted();
-
+        if (!(o instanceof RcsResourceAttributes)) return false;        
+        RcsResourceAttributes rhs = (RcsResourceAttributes) o;
         return mCache.equals(rhs.mCache);
     }
 
     @Override
     public int hashCode() {
-        esnureAllExtracted();
         return mCache.hashCode();
     }
     

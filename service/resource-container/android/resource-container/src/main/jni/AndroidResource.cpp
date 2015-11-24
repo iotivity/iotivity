@@ -21,6 +21,10 @@
 
 #include "AndroidResource.h"
 #include "JniRcsResourceAttributes.h"
+#include "JavaClasses.h"
+#include "JavaLocalRef.h"
+#include "JNIEnvWrapper.h"
+#include "JniRcsValue.h"
 
 #include <jni.h>
 #include <string.h>
@@ -32,6 +36,18 @@
 using namespace OIC::Service;
 using namespace std;
 
+namespace
+{
+    jclass g_cls_RCSBundleInfo;
+    jfieldID g_field_mNativeHandle;
+}
+
+void initRCSAndroidResource(JNIEnvWrapper *env)
+{
+    auto clsAndroidBundleResource = env->FindClass(PACKAGE_NAME "/AndroidBundleResource");
+
+    g_field_mNativeHandle = env->GetFieldID(clsAndroidBundleResource, "mNativeHandle", "J");
+}
 
 AndroidResource::AndroidResource()
 {
@@ -71,6 +87,10 @@ AndroidResource::AndroidResource(JNIEnv *env, jobject obj, jobject bundleResourc
     LOGD("Looking for getter.");
     m_attributeGetRequestHandler = m_env->GetMethodID(m_bundleResourceClass,
             "handleGetAttributesRequest", "()Lorg/iotivity/service/resourcecontainer/RcsResourceAttributes;");
+    jclass androidBundleSoftSensorResourceClass = m_env->FindClass("org/iotivity/service/resourcecontainer/AndroidBundleSoftSensorResource");
+    m_onUpdatedInputResource = m_env->GetMethodID(androidBundleSoftSensorResourceClass, "onUpdatedInputResource", "(java/lang/String,java/util/Vector)V");
+    m_vectorClazz = m_env->FindClass("java/util/Vector");
+    m_vectorAddMethod =  m_env->GetMethodID(m_vectorClazz, "add", "(java/lang/Object)V");
     LOGD("Get java vm.");
     int jvmAccess = m_env->GetJavaVM(&m_jvm);
     LOGD("JVM: %s", (jvmAccess ? "false" : "true") );
@@ -172,11 +192,51 @@ RCSResourceAttributes & AndroidResource::handleGetAttributesRequest()
 
             RCSResourceAttributes attrs = toNativeAttributes(m_env, responseObj);
             LOGD("Received attributes %d", attrs.size());
-            BundleResource::setAttributes(attrs);
+            BundleResource::setAttributes(attrs, false);
         }
 
         m_jvm->DetachCurrentThread();
     }
     LOGD("BundleResource::getAttributes().size() %d", BundleResource::getAttributes().size());
     return BundleResource::getAttributes();
+}
+
+void AndroidResource::executeLogic(){
+    LOGD("executeLogic");
+
+}
+
+void AndroidResource::onUpdatedInputResource(const std::string attributeName,
+        std::vector<RCSResourceAttributes::Value> values){
+    LOGD("onUpdatedInputResource");
+
+    int attached = m_jvm->AttachCurrentThread(&m_env, NULL);
+    jobject valueObj;
+    if(attached>0)
+    {
+        LOGE("Failed to attach thread to JavaVM");
+    }
+    else{
+        jobject obj = m_env->NewObject(m_vectorClazz, m_env->GetMethodID(m_vectorClazz, "<init>", "()V"));
+
+        for (int n=0;n<values.size();n++)
+        {
+           valueObj  = newRCSValueObject(m_env, values[n]);
+           m_env->CallVoidMethod(obj, m_vectorAddMethod, valueObj);
+        }
+        m_env->CallObjectMethod(m_bundleResource,
+                m_onUpdatedInputResource, obj);
+        m_jvm->DetachCurrentThread();
+    }
+    LOGD("BundleResource::getAttributes().size() %d", BundleResource::getAttributes().size());
+}
+
+JNIEXPORT void JNICALL Java_org_iotivity_service_resourcecontainer_AndroidBundleResource_updateNativeInstance
+(JNIEnv* env, jobject obj, jobject updates)
+{
+    LOGD("updateNativeInstance");
+    BundleResource* androidResource = reinterpret_cast<BundleResource*>(env->GetLongField(obj, g_field_mNativeHandle));
+    RCSResourceAttributes attrs = toNativeAttributes(env, updates);
+    LOGD("Received attributes %d", attrs.size());
+    androidResource->setAttributes(attrs, true);
 }

@@ -21,7 +21,7 @@ public class FlashLightResource extends AndroidBundleResource {
 
     @Override
     protected void initAttributes() {
-        this.m_attributes.put("on-off", true);
+        this.m_attributes.put("on-off", false);
     }
 
     @Override

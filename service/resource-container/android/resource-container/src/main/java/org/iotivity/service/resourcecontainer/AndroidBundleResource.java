@@ -37,6 +37,10 @@ public abstract class AndroidBundleResource {
     protected RcsResourceAttributes m_attributes = new RcsResourceAttributes();
 
     protected Context               m_context;
+    
+    long mNativeHandle;
+    
+    protected native void updateNativeInstance(RcsResourceAttributes update);
 
     public AndroidBundleResource() {
         initAttributes();
@@ -60,8 +64,24 @@ public abstract class AndroidBundleResource {
      * @param value
      *            new value of the attribute
      */
-    protected final void setAttribute(String key, RcsValue value) {
+    protected final void setAttribute(String key, RcsValue value, boolean notify) {
         m_attributes.put(key, value);
+        
+        if(notify){
+            updateNativeInstance(m_attributes);
+        }
+    }
+    
+    /**
+     * Set the attribute (map to a send command for the according protocol)
+     * 
+     * @param key
+     *            name of the attribute to be set
+     * @param value
+     *            new value of the attribute
+     */
+    protected final void setAttribute(String key, RcsValue value) {
+        setAttribute(key, value, false);
     }
 
     /**
@@ -72,8 +92,16 @@ public abstract class AndroidBundleResource {
      * @param value
      *            new value of the attribute
      */
-    protected final void setAttributes(RcsResourceAttributes value) {
+    protected final void setAttributes(RcsResourceAttributes value, boolean notify) {
         m_attributes.put(value);
+        
+        if(notify){
+            updateNativeInstance(m_attributes);
+        }
+    }
+
+    protected final void setAttributes(RcsResourceAttributes value) {
+        setAttributes(value, false);
     }
 
     /**
@@ -198,5 +226,4 @@ public abstract class AndroidBundleResource {
     public String getName() {
         return m_name;
     }
-
 }

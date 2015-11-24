@@ -30,11 +30,6 @@
 #define CLS_NAME_VALUE PACKAGE_NAME "/RcsValue"
 
 #define CLS_NAME_RESOURCEATTRIBUTES PACKAGE_NAME "/RcsResourceAttributes"
-#define CLS_NAME_REMOTERESOURCEOBJECT PACKAGE_NAME "/client/RcsRemoteResourceObject"
-
-#define EXC_NAME_RCS PACKAGE_NAME "/RcsException"
-#define EXC_NAME_PLATFORM PACKAGE_NAME "/RcsPlatformException"
-#define EXC_NAME_ILLEGAL_STATE PACKAGE_NAME "/RcsIllegalStateException"
 
 #define CLS_NAME_OBJECT "java/lang/Object"
 #define CLS_NAME_STRING "java/lang/String"

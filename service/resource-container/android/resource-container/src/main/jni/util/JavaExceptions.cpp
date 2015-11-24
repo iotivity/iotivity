@@ -34,24 +34,24 @@ namespace
 
 void initJavaExceptions(JNIEnvWrapper* env)
 {
-    g_cls_PlatformException = env->FindClassAsGlobalRef(EXC_NAME_PLATFORM);
+    /*g_cls_PlatformException = env->FindClassAsGlobalRef(EXC_NAME_PLATFORM);
     g_ctor_PlatformException = env->GetConstructorID(g_cls_PlatformException,
-            "(" AS_SIG(CLS_NAME_STRING) "I)V");
+            "(" AS_SIG(CLS_NAME_STRING) "I)V");*/
 }
 
 void clearJavaExceptions(JNIEnvWrapper* env)
 {
-    env->DeleteGlobalRef(g_cls_PlatformException);
+    //env->DeleteGlobalRef(g_cls_PlatformException);
 }
 
 void throwPlatformException(JNIEnv* env, const OIC::Service::RCSPlatformException& e)
 {
-    auto msg = newStringObject(env, e.getReason());
+    /*auto msg = newStringObject(env, e.getReason());
     VERIFY_NO_EXC(env);
 
     auto exObj = env->NewObject(g_cls_PlatformException, g_ctor_PlatformException,
             msg, e.getReasonCode());
     VERIFY_NO_EXC(env);
 
-    env->Throw(static_cast< jthrowable >(exObj));
+    env->Throw(static_cast< jthrowable >(exObj));*/
 }

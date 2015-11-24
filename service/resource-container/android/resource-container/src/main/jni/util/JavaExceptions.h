@@ -43,7 +43,7 @@ void throwPlatformException(JNIEnv*, const OIC::Service::RCSPlatformException&);
 template < typename ENV >
 void throwRCSException(ENV* env, const char* msg)
 {
-    env->ThrowNew(env->FindClass(EXC_NAME_RCS), msg);
+    //env->ThrowNew(env->FindClass(EXC_NAME_RCS), msg);
 }
 
 

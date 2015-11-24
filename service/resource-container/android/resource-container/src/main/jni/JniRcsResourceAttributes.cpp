@@ -20,7 +20,8 @@
 
 #include "JniRcsResourceAttributes.h"
 
-#include "JniRcsObject.h"
+#include "JNIEnvWrapper.h"
+#include "JavaClasses.h"
 #include "JavaLocalRef.h"
 #include "JniRcsValue.h"
 #include "Log.h"
@@ -57,7 +58,21 @@ jobject newAttributesObject(JNIEnv* env, const RCSResourceAttributes& attrs)
     jobject obj = env->NewObject(g_cls_RCSResourceAttributes, g_ctor_RCSResourceAttributes);
     VERIFY_NO_EXC_RET_DEF(env);
 
-    setSafeNativeHandle< RCSResourceAttributes >(env, obj, attrs);
+    jobject mapObj = env->GetObjectField(obj, g_field_mCache);
+
+    //EXPECT(mapObj, "Map is null.");
+    for (const auto& p : attrs) {
+        JavaLocalObject keyObj{ env, newStringObject(env, p.key()) };
+        //VERIFY_NO_EXC(env);
+
+        JavaLocalObject valueObj{ env, newRCSValueObject(env, p.value()) };
+        //VERIFY_NO_EXC(env);
+
+        invoke_Map_put(env, mapObj, keyObj, valueObj);
+        //VERIFY_NO_EXC(env);
+    }
+
+ //   setSafeNativeHandle< RCSResourceAttributes >(env, obj, attrs);
 
     return obj;
 }
@@ -66,7 +81,21 @@ jobject newAttributesObject(JNIEnvWrapper* env, const RCSResourceAttributes& att
 {
     jobject obj = env->NewObject(g_cls_RCSResourceAttributes, g_ctor_RCSResourceAttributes);
 
-    setSafeNativeHandle< RCSResourceAttributes >(env, obj, attrs);
+    jobject mapObj = env->GetObjectField(obj, g_field_mCache);
+
+    //EXPECT(mapObj, "Map is null.");
+    for (const auto& p : attrs) {
+        JavaLocalObject keyObj{ env, newStringObject(env, p.key()) };
+        //VERIFY_NO_EXC(env);
+
+        JavaLocalObject valueObj{ env, newRCSValueObject(env, p.value()) };
+        //VERIFY_NO_EXC(env);
+
+        invoke_Map_put(env, mapObj, keyObj, valueObj);
+        //VERIFY_NO_EXC(env);
+    }
+
+//    setSafeNativeHandle< RCSResourceAttributes >(env, obj, attrs);
 
     return obj;
 }
@@ -140,140 +169,5 @@ void writeNativeAttributesFromMap(JNIEnvWrapper* env, jobject mapObj,
         targetAttrs[std::move(key)] = toNativeAttrsValue(env, valueObj);
     }
     LOGD("in write native attributes from map finished");
-}
-
-JNIEXPORT jboolean JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeIsEmpty
-(JNIEnv* env, jobject obj)
-{
-    LOGD("isEmpty");
-    EXPECT_RET(hasNativeHandle(env, obj), "no native handle.", true);
-
-    auto& attrs = getNativeHandleAs< RCSResourceAttributes >(env, obj);
-    VERIFY_NO_EXC_RET_DEF(env);
-
-    return attrs.empty();
-}
-
-JNIEXPORT jint JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeSize
-(JNIEnv* env, jobject obj)
-{
-    LOGD("size");
-    EXPECT_RET(hasNativeHandle(env, obj), "no native handle.", 0);
-
-    auto& attrs = getNativeHandleAs< RCSResourceAttributes >(env, obj);
-    VERIFY_NO_EXC_RET_DEF(env);
-
-    return attrs.size();
-}
-
-JNIEXPORT jboolean JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeRemove
-(JNIEnv* env, jobject obj, jstring keyObj)
-{
-    LOGD("remove");
-    EXPECT_RET_DEF(keyObj, "Key is null.");
-    EXPECT_RET_DEF(hasNativeHandle(env, obj), "no native handle.");
-
-    auto& attrs = getNativeHandleAs< RCSResourceAttributes >(env, obj);
-    VERIFY_NO_EXC_RET_DEF(env);
-    const auto& key = toStdString(env, keyObj);
-    VERIFY_NO_EXC_RET_DEF(env);
-
-    auto ret = attrs.erase(key);
-
-    if (attrs.empty()) releaseNativeHandle(env, obj);
-
-    return ret;
-}
-
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeClear
-(JNIEnv* env, jobject obj)
-{
-    LOGD("clear");
-
-    releaseNativeHandle(env, obj);
-}
-
-JNIEXPORT jboolean JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeContains
-(JNIEnv *env, jobject obj, jstring keyObj)
-{
-    LOGD("contains");
-    EXPECT_RET(keyObj, "Key is null.", false);
-    EXPECT_RET(hasNativeHandle(env, obj), "no native handle.", false);
-
-    auto& attrs = getNativeHandleAs< RCSResourceAttributes >(env, obj);
-    VERIFY_NO_EXC_RET_DEF(env);
-    const auto& key = toStdString(env, keyObj);
-    VERIFY_NO_EXC_RET_DEF(env);
-    return attrs.contains(key);
-}
-
-JNIEXPORT void JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeAddKeys
-(JNIEnv *env, jobject obj, jstring setObj)
-{
-    LOGD("addKeys");
-    EXPECT(setObj, "set is null.");
-    EXPECT(hasNativeHandle(env, obj), "no native handle.");
-
-    auto& attrs = getNativeHandleAs< RCSResourceAttributes >(env, obj);
-    VERIFY_NO_EXC(env);
-
-    for (const auto& keyValue : attrs)
-    {
-        JavaLocalString localObj{ env, env->NewStringUTF(keyValue.key().c_str()) };
-        VERIFY_NO_EXC(env);
-
-        invoke_Collection_add(env, setObj, localObj);
-        VERIFY_NO_EXC(env);
-    }
-}
-
-JNIEXPORT jobject JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeExtract
-(JNIEnv* env, jobject obj, jstring keyObj)
-{
-    LOGD("extract");
-    EXPECT_RET_DEF(keyObj, "Key is null.");
-    EXPECT_RET_DEF(hasNativeHandle(env, obj), "no native handle.");
-
-    auto& attrs = getNativeHandleAs< RCSResourceAttributes >(env, obj);
-    VERIFY_NO_EXC_RET_DEF(env);
-
-    const auto& key = toStdString(env, keyObj);
-    VERIFY_NO_EXC_RET_DEF(env);
-
-    EXPECT_RET_DEF(attrs.contains(key), "no matched value");
-
-    jobject valueObj = newRCSValueObject(env, attrs[key]);
-    VERIFY_NO_EXC_RET_DEF(env);
-
-    attrs.erase(key);
-    if (attrs.empty()) releaseNativeHandle(env, obj);
-    return valueObj;
-}
-
-JNIEXPORT void JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceAttributes_nativeExtractAll
-(JNIEnv* env, jobject obj, jobject mapObj)
-{
-    LOGD("extractAll");
-    EXPECT(mapObj, "Map is null.");
-    EXPECT(hasNativeHandle(env, obj), "no native handle.");
-
-    auto& attrs = getNativeHandleAs< RCSResourceAttributes >(env, obj);
-    VERIFY_NO_EXC(env);
-
-    for (const auto& p : attrs) {
-        JavaLocalObject keyObj{ env, newStringObject(env, p.key()) };
-        VERIFY_NO_EXC(env);
-
-        JavaLocalObject valueObj{ env, newRCSValueObject(env, p.value()) };
-        VERIFY_NO_EXC(env);
-
-        invoke_Map_put(env, mapObj, keyObj, valueObj);
-        VERIFY_NO_EXC(env);
-    }
-
-    attrs.clear();
-    releaseNativeHandle(env, obj);
 }
 
