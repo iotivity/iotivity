@@ -913,7 +913,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, SingleItemNormal)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "rt.firstitem");
         OCRepPayloadAddInterface(payload, "if.firstitem");
 
@@ -940,7 +939,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, SingleItemFrontTrim)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "  rt.firstitem");
         OCRepPayloadAddInterface(payload, "  if.firstitem");
 
@@ -967,7 +965,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, SingleItemBackTrim)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "rt.firstitem  ");
         OCRepPayloadAddInterface(payload, "if.firstitem  ");
 
@@ -994,7 +991,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, SingleItemBothTrim)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "  rt.firstitem  ");
         OCRepPayloadAddInterface(payload, "  if.firstitem  ");
 
@@ -1021,7 +1017,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, MultiItemsNormal)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "rt.firstitem");
         OCRepPayloadAddResourceType(payload, "rt.seconditem");
         OCRepPayloadAddInterface(payload, "if.firstitem");
@@ -1052,7 +1047,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, MultiItemExtraLeadSpaces)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "  rt.firstitem");
         OCRepPayloadAddResourceType(payload, "  rt.seconditem");
         OCRepPayloadAddInterface(payload, "  if.firstitem");
@@ -1083,7 +1077,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, MultiItemExtraTrailSpaces)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "rt.firstitem  ");
         OCRepPayloadAddResourceType(payload, "rt.seconditem  ");
         OCRepPayloadAddInterface(payload, "if.firstitem  ");
@@ -1114,7 +1107,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, MultiItemExtraMiddleSpaces)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "  rt.firstitem  ");
         OCRepPayloadAddResourceType(payload, "  rt.seconditem  ");
         OCRepPayloadAddInterface(payload, "  if.firstitem  ");

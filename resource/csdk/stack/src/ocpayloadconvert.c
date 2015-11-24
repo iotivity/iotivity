@@ -50,6 +50,7 @@ static int64_t OCConvertDevicePayload(OCDevicePayload* payload, uint8_t* outPayl
 static int64_t OCConvertPlatformPayload(OCPlatformPayload* payload, uint8_t* outPayload,
         size_t* size);
 static int64_t OCConvertRepPayload(OCRepPayload* payload, uint8_t* outPayload, size_t* size);
+static int64_t OCConvertRepMap(CborEncoder *map, const OCRepPayload* payload);
 static int64_t OCConvertPresencePayload(OCPresencePayload* payload, uint8_t* outPayload,
         size_t* size);
 static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* outPayload,
@@ -586,7 +587,7 @@ static int64_t OCConvertArrayItem(CborEncoder* array, const OCRepPayloadValueArr
             }
             else
             {
-                err = OCConvertSingleRepPayload(array, valArray->objArray[index]);
+                err = OCConvertRepMap(array, valArray->objArray[index]);
             }
             break;
         case OCREP_PROP_ARRAY:
@@ -645,116 +646,63 @@ static int64_t OCConvertArray(CborEncoder* parent, const OCRepPayloadValueArray*
     return err;
 }
 
-static int64_t OCConvertSingleRepPayload(CborEncoder* parent, const OCRepPayload* payload)
+static int64_t OCConvertRepMap(CborEncoder *map, const OCRepPayload* payload)
 {
     int64_t err = 0;
-    CborEncoder map;
-    err = err | cbor_encoder_create_map(parent, &map, CborIndefiniteLength);
+    CborEncoder repMap;
+    err = err | cbor_encoder_create_map(map, &repMap, CborIndefiniteLength);
+    err = err | OCConvertSingleRepPayload(&repMap, payload);
+    err = err | cbor_encoder_close_container(map, &repMap);
+    return err;
+}
 
-    // Uri
-    err = err | ConditionalAddTextStringToMap(&map, OC_RSRVD_HREF,
-            sizeof(OC_RSRVD_HREF) - 1,
-            payload->uri);
-
-    // Prop Map
-    // resource types, interfaces
-    if(payload->types || payload->interfaces)
+static int64_t OCConvertSingleRepPayload(CborEncoder* repMap, const OCRepPayload* payload)
+{
+    int64_t err = 0;
+    OCRepPayloadValue* value = payload->values;
+    while(value)
     {
-        OC_LOG(INFO, TAG, "Payload has types or interfaces");
-        err = err | cbor_encode_text_string(&map,
-                OC_RSRVD_PROPERTY,
-                sizeof(OC_RSRVD_PROPERTY) - 1);
-        CborEncoder propMap;
-        err = err | cbor_encoder_create_map(&map, &propMap, 2);
-
-        if (payload->types)
+        err = err | cbor_encode_text_string(repMap,
+                value->name,
+                strlen(value->name));
+        switch(value->type)
         {
-            char* joinedTypes = OCStringLLJoin(payload->types);
-            if (joinedTypes)
-            {
-                err = err | cbor_encode_text_string(&propMap, OC_RSRVD_RESOURCE_TYPE,
-                        sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
-                err = err | cbor_encode_text_string(&propMap, joinedTypes,
-                        strlen(joinedTypes));
-                OICFree(joinedTypes);
-            }
-            else
-            {
-                return OC_STACK_NO_MEMORY;
-            }
+            case OCREP_PROP_NULL:
+                err = err | cbor_encode_null(repMap);
+                break;
+            case OCREP_PROP_INT:
+                err = err | cbor_encode_int(repMap,
+                        value->i);
+                break;
+            case OCREP_PROP_DOUBLE:
+                err = err | cbor_encode_double(repMap,
+                        value->d);
+                break;
+            case OCREP_PROP_BOOL:
+                err = err | cbor_encode_boolean(repMap,
+                        value->b);
+                break;
+            case OCREP_PROP_STRING:
+                err = err | cbor_encode_text_string(repMap,
+                        value->str, strlen(value->str));
+                break;
+            case OCREP_PROP_BYTE_STRING:
+                err = err | cbor_encode_byte_string(repMap,
+                        value->ocByteStr.bytes, value->ocByteStr.len);
+                break;
+            case OCREP_PROP_OBJECT:
+                err = err | OCConvertRepMap(repMap, value->obj);
+                break;
+            case OCREP_PROP_ARRAY:
+                err = err | OCConvertArray(repMap, &value->arr);
+                break;
+            default:
+                OC_LOG_V(ERROR, TAG, "Invalid Prop type: %d",
+                        value->type);
+                break;
         }
-        if (payload->interfaces)
-        {
-            char* joinedInterfaces = OCStringLLJoin(payload->interfaces);
-            if (joinedInterfaces)
-            {
-                err = err | cbor_encode_text_string(&propMap, OC_RSRVD_INTERFACE,
-                        sizeof(OC_RSRVD_INTERFACE) - 1);
-                err = err | cbor_encode_text_string(&propMap, joinedInterfaces,
-                        strlen(joinedInterfaces));
-                OICFree(joinedInterfaces);
-            }
-            else
-            {
-                return OC_STACK_NO_MEMORY;
-            }
-        }
-        err = err | cbor_encoder_close_container(&map, &propMap);
+        value = value->next;
     }
-
-    // Rep Map
-    {
-        CborEncoder repMap;
-        err = err | cbor_encode_text_string(&map,
-                OC_RSRVD_REPRESENTATION,
-                sizeof(OC_RSRVD_REPRESENTATION) - 1);
-        err = err | cbor_encoder_create_map(&map, &repMap, CborIndefiniteLength);
-        OCRepPayloadValue* value = payload->values;
-        while(value)
-        {
-            err = err | cbor_encode_text_string(&repMap,
-                    value->name,
-                    strlen(value->name));
-            switch(value->type)
-            {
-                case OCREP_PROP_NULL:
-                    err = err | cbor_encode_null(&repMap);
-                    break;
-                case OCREP_PROP_INT:
-                    err = err | cbor_encode_int(&repMap,
-                            value->i);
-                    break;
-                case OCREP_PROP_DOUBLE:
-                    err = err | cbor_encode_double(&repMap,
-                            value->d);
-                    break;
-                case OCREP_PROP_BOOL:
-                    err = err | cbor_encode_boolean(&repMap,
-                            value->b);
-                    break;
-                case OCREP_PROP_STRING:
-                    err = err | cbor_encode_text_string(&repMap,
-                            value->str, strlen(value->str));
-                    break;
-                case OCREP_PROP_OBJECT:
-                    err = err | OCConvertSingleRepPayload(&repMap, value->obj);
-                    break;
-                case OCREP_PROP_ARRAY:
-                    err = err | OCConvertArray(&repMap, &value->arr);
-                    break;
-                default:
-                    OC_LOG_V(ERROR, TAG, "Invalid Prop type: %d",
-                            value->type);
-                    break;
-            }
-            value = value->next;
-        }
-
-        err = err | cbor_encoder_close_container(&map, &repMap);
-    }
-
-    // Close Map
-    err = err | cbor_encoder_close_container(parent, &map);
 
     return err;
 }
@@ -765,17 +713,51 @@ static int64_t OCConvertRepPayload(OCRepPayload* payload, uint8_t* outPayload, s
     int64_t err = 0;
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
-    CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, CborIndefiniteLength);
+    CborEncoder rootMap;
+    err = err | cbor_encoder_create_map(&encoder, &rootMap, CborIndefiniteLength);
+
+    if (payload->types)
+    {
+        OC_LOG(INFO, TAG, "Payload has types or interfaces");
+        char* joinedTypes = OCStringLLJoin(payload->types);
+        if (joinedTypes)
+        {
+            err = err | cbor_encode_text_string(&rootMap, OC_RSRVD_RESOURCE_TYPE,
+                    sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
+            err = err | cbor_encode_text_string(&rootMap, joinedTypes,
+                    strlen(joinedTypes));
+            OICFree(joinedTypes);
+        }
+        else
+        {
+            return OC_STACK_NO_MEMORY;
+        }
+    }
+    if (payload->interfaces)
+    {
+        char* joinedInterfaces = OCStringLLJoin(payload->interfaces);
+        if (joinedInterfaces)
+        {
+            err = err | cbor_encode_text_string(&rootMap, OC_RSRVD_INTERFACE,
+                    sizeof(OC_RSRVD_INTERFACE) - 1);
+            err = err | cbor_encode_text_string(&rootMap, joinedInterfaces,
+                    strlen(joinedInterfaces));
+            OICFree(joinedInterfaces);
+        }
+        else
+        {
+            return OC_STACK_NO_MEMORY;
+        }
+    }
 
     while(payload != NULL && (err == 0 || err == CborErrorOutOfMemory))
     {
-        err = err | OCConvertSingleRepPayload(&rootArray, payload);
+        err = err | OCConvertSingleRepPayload(&rootMap, payload);
         payload = payload->next;
     }
 
     // Close main array
-    err = err | cbor_encoder_close_container(&encoder, &rootArray);
+    err = err | cbor_encoder_close_container(&encoder, &rootMap);
 
     return checkError(err, &encoder, outPayload, size);
 }
