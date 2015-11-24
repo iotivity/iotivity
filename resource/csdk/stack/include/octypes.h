@@ -272,9 +272,6 @@ extern "C" {
 #define MAX_ADDR_STR_SIZE (40)
 #endif
 
-/** Length of MAC address */
-#define MAC_ADDR_STR_SIZE (17)
-
 /** Max identity size. */
 #define MAX_IDENTITY_SIZE (32)
 
