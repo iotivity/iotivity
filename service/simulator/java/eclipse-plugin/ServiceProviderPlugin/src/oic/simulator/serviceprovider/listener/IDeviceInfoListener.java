@@ -16,12 +16,6 @@
 
 package oic.simulator.serviceprovider.listener;
 
-import oic.simulator.serviceprovider.model.Resource;
-
-/**
- * Interface through which the resource model change events are sent to the UI
- * listeners.
- */
-public interface IResourceModelChangedUIListener {
-    public void onResourceModelChange(Resource resource);
+public interface IDeviceInfoListener {
+    public void onDeviceInfoFound();
 }

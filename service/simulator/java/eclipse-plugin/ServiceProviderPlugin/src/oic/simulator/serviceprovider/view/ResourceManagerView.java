@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Set;
 
 import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.IPropertiesChangedUIListener;
-import oic.simulator.serviceprovider.listener.IResourceListChangedUIListener;
+import oic.simulator.serviceprovider.listener.IPropertiesChangedListener;
+import oic.simulator.serviceprovider.listener.IResourceListChangedListener;
 import oic.simulator.serviceprovider.manager.ResourceManager;
 import oic.simulator.serviceprovider.manager.UiListenerHandler;
 import oic.simulator.serviceprovider.model.AutomationSettingHelper;
@@ -87,31 +87,31 @@ import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
  */
 public class ResourceManagerView extends ViewPart {
 
-    public static final String             VIEW_ID = "oic.simulator.serviceprovider.view.resourcemanager";
+    public static final String           VIEW_ID = "oic.simulator.serviceprovider.view.resourcemanager";
 
-    private Button                         createButton;
-    private Button                         deleteButton;
+    private Button                       createButton;
+    private Button                       deleteButton;
 
-    private TreeViewer                     singleResTreeViewer;
-    private TreeViewer                     collectionResTreeViewer;
-    private TreeViewer                     deviceTreeViewer;
+    private TreeViewer                   singleResTreeViewer;
+    private TreeViewer                   collectionResTreeViewer;
+    private TreeViewer                   deviceTreeViewer;
 
-    private CTabFolder                     folder;
-    private CTabItem                       singleResTab;
-    private CTabItem                       collectionResTab;
-    private CTabItem                       deviceTab;
+    private CTabFolder                   folder;
+    private CTabItem                     singleResTab;
+    private CTabItem                     collectionResTab;
+    private CTabItem                     deviceTab;
 
-    private IResourceListChangedUIListener resourceListChangedListener;
+    private IResourceListChangedListener resourceListChangedListener;
 
-    private IPropertiesChangedUIListener   resourcePropertiesChangedListener;
+    private IPropertiesChangedListener   resourcePropertiesChangedListener;
 
-    private ResourceManager                resourceManager;
+    private ResourceManager              resourceManager;
 
     public ResourceManagerView() {
 
         resourceManager = Activator.getDefault().getResourceManager();
 
-        resourceListChangedListener = new IResourceListChangedUIListener() {
+        resourceListChangedListener = new IResourceListChangedListener() {
 
             @Override
             public void onResourceCreation(final ResourceType type) {
@@ -186,7 +186,7 @@ public class ResourceManagerView extends ViewPart {
             }
         };
 
-        resourcePropertiesChangedListener = new IPropertiesChangedUIListener() {
+        resourcePropertiesChangedListener = new IPropertiesChangedListener() {
 
             @Override
             public void onResourcePropertyChange() {
@@ -1503,38 +1503,46 @@ public class ResourceManagerView extends ViewPart {
                                     .getOption();
                             if (option == Option.DEVICE) {
                                 Device dev = createWizard.getCreatedDevice();
-                                folder.setSelection(deviceTab);
-                                deviceTreeViewer.setSelection(
-                                        new StructuredSelection(dev), true);
-                                resourceManager.deviceSelectionChanged(dev);
-                                deviceTreeViewer.expandToLevel(dev,
-                                        Constants.TREE_EXPANSION_LEVEL);
+                                if (null != dev) {
+                                    folder.setSelection(deviceTab);
+                                    deviceTreeViewer.setSelection(
+                                            new StructuredSelection(dev), true);
+                                    resourceManager.deviceSelectionChanged(dev);
+                                    deviceTreeViewer.expandToLevel(dev,
+                                            Constants.TREE_EXPANSION_LEVEL);
+                                }
                             } else if (option == Option.SIMPLE_FROM_RAML
                                     || option == Option.SIMPLE) {
                                 SingleResource res = (SingleResource) createWizard
                                         .getCreatedResource();
-                                folder.setSelection(singleResTab);
-                                boolean canSelect = true;
-                                if (option == Option.SIMPLE_FROM_RAML
-                                        && createWizard.getResourceCount() > 1) {
-                                    canSelect = false;
-                                }
-                                if (canSelect) {
-                                    singleResTreeViewer.setSelection(
-                                            new StructuredSelection(res), true);
-                                    resourceManager
-                                            .resourceSelectionChanged(res);
+                                if (null != res) {
+                                    folder.setSelection(singleResTab);
+                                    boolean canSelect = true;
+                                    if (option == Option.SIMPLE_FROM_RAML
+                                            && createWizard.getResourceCount() > 1) {
+                                        canSelect = false;
+                                    }
+                                    if (canSelect) {
+                                        singleResTreeViewer.setSelection(
+                                                new StructuredSelection(res),
+                                                true);
+                                        resourceManager
+                                                .resourceSelectionChanged(res);
+                                    }
                                 }
                             } else if (option == Option.COLLECTION_FROM_RAML
                                     || option == Option.COLLECTION) {
                                 CollectionResource res = (CollectionResource) createWizard
                                         .getCreatedResource();
-                                folder.setSelection(collectionResTab);
-                                collectionResTreeViewer.setSelection(
-                                        new StructuredSelection(res), true);
-                                resourceManager.resourceSelectionChanged(res);
-                                collectionResTreeViewer.expandToLevel(res,
-                                        Constants.TREE_EXPANSION_LEVEL);
+                                if (null != res) {
+                                    folder.setSelection(collectionResTab);
+                                    collectionResTreeViewer.setSelection(
+                                            new StructuredSelection(res), true);
+                                    resourceManager
+                                            .resourceSelectionChanged(res);
+                                    collectionResTreeViewer.expandToLevel(res,
+                                            Constants.TREE_EXPANSION_LEVEL);
+                                }
                             }
 
                             MessageDialog.openInformation(Display.getDefault()

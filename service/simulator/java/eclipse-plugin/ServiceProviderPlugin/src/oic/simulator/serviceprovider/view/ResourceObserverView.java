@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.Set;
 
 import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.IObserverListChangedUIListener;
-import oic.simulator.serviceprovider.listener.ISelectionChangedUIListener;
+import oic.simulator.serviceprovider.listener.IObserverListChangedListener;
+import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
 import oic.simulator.serviceprovider.manager.ResourceManager;
 import oic.simulator.serviceprovider.manager.UiListenerHandler;
 import oic.simulator.serviceprovider.model.Device;
@@ -53,26 +53,26 @@ import org.eclipse.ui.part.ViewPart;
  * This class manages and shows the resource observer view in the perspective.
  */
 public class ResourceObserverView extends ViewPart {
-    public static final String             VIEW_ID       = "oic.simulator.serviceprovider.view.observer";
+    public static final String           VIEW_ID       = "oic.simulator.serviceprovider.view.observer";
 
-    private TableViewer                    tblViewer;
+    private TableViewer                  tblViewer;
 
-    private final String[]                 columnHeaders = { "Client Address",
-            "Port", "Notify"                            };
+    private final String[]               columnHeaders = { "Client Address",
+            "Port", "Notify"                          };
 
-    private final Integer[]                columnWidth   = { 150, 75, 50 };
+    private final Integer[]              columnWidth   = { 150, 75, 50 };
 
-    private ISelectionChangedUIListener    resourceSelectionChangedListener;
+    private ISelectionChangedListener    resourceSelectionChangedListener;
 
-    private IObserverListChangedUIListener resourceObserverListChangedListener;
+    private IObserverListChangedListener resourceObserverListChangedListener;
 
-    private ResourceManager                resourceManagerRef;
+    private ResourceManager              resourceManagerRef;
 
     public ResourceObserverView() {
 
         resourceManagerRef = Activator.getDefault().getResourceManager();
 
-        resourceSelectionChangedListener = new ISelectionChangedUIListener() {
+        resourceSelectionChangedListener = new ISelectionChangedListener() {
 
             @Override
             public void onResourceSelectionChange(final Resource resource) {
@@ -95,7 +95,7 @@ public class ResourceObserverView extends ViewPart {
             }
         };
 
-        resourceObserverListChangedListener = new IObserverListChangedUIListener() {
+        resourceObserverListChangedListener = new IObserverListChangedListener() {
 
             @Override
             public void onObserverListChanged(final Resource resource) {

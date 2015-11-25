@@ -322,19 +322,7 @@ public class AttributeHelper {
         return false;
     }
 
-    public LocalResourceAttribute convertToLocalResourceAttribute() {
-        LocalResourceAttribute attribute = new LocalResourceAttribute();
-
-        // Initially disabling the automation
-        attribute.setAutomationInProgress(false);
-
-        // Assigning the default automation interval
-        attribute
-                .setAutomationUpdateInterval(Constants.DEFAULT_AUTOMATION_INTERVAL);
-
-        // Setting the default automation type
-        attribute.setAutomationType(Constants.DEFAULT_AUTOMATION_TYPE);
-
+    public SimulatorResourceAttribute convertToSimulatorResourceAttribute() {
         AttributeValue attValue = null;
         AttributeProperty attProperty = null;
         SimulatorResourceAttribute simResAtt;
@@ -393,7 +381,6 @@ public class AttributeHelper {
         }
         simResAtt = new SimulatorResourceAttribute(attributeName, attValue,
                 attProperty);
-        attribute.setResourceAttributeRef(simResAtt);
-        return attribute;
+        return simResAtt;
     }
 }

@@ -3,20 +3,20 @@ package oic.simulator.serviceprovider.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
+import oic.simulator.serviceprovider.utils.AttributeValueStringConverter;
+import oic.simulator.serviceprovider.utils.Constants;
+
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
 import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
 
-import oic.simulator.serviceprovider.utils.AttributeValueStringConverter;
-import oic.simulator.serviceprovider.utils.Constants;
-
 public class AttributeElement {
     private Object                        mParent             = null;
     private SimulatorResourceAttribute    mAttribute          = null;
     private Map<String, AttributeElement> mChildAttributes    = new HashMap<String, AttributeElement>();
-    private DataChangeListener            mListener           = null;
     private boolean                       mAutoUpdateSupport  = false;
     private int                           mAutoUpdateId       = -1;
     private boolean                       mAutoUpdateState    = false;
@@ -24,7 +24,8 @@ public class AttributeElement {
     private AutoUpdateType                mAutoUpdateType     = Constants.DEFAULT_AUTOMATION_TYPE;
 
     public AttributeElement(Object parent,
-            SimulatorResourceAttribute attribute, boolean autoUpdateSupport) {
+            SimulatorResourceAttribute attribute, boolean autoUpdateSupport)
+            throws NullPointerException {
         mParent = parent;
         mAttribute = attribute;
         mAutoUpdateSupport = autoUpdateSupport;
@@ -34,9 +35,10 @@ public class AttributeElement {
             SimulatorResourceModel resModel = (SimulatorResourceModel) attribute
                     .value().get();
             for (Map.Entry<String, SimulatorResourceAttribute> entrySet : resModel
-                    .getAttributes().entrySet())
+                    .getAttributes().entrySet()) {
                 mChildAttributes.put(entrySet.getKey(), new AttributeElement(
                         this, entrySet.getValue(), false));
+            }
         } else if (typeInfo.mType == AttributeValue.ValueType.ARRAY) {
             mAutoUpdateSupport = false;
             if (typeInfo.mBaseType == AttributeValue.ValueType.RESOURCEMODEL) {
@@ -113,8 +115,9 @@ public class AttributeElement {
     public void setAutoUpdateState(boolean state) {
         if (mAutoUpdateState != state) {
             mAutoUpdateState = state;
-            if (mListener != null)
-                mListener.update(this);
+
+            UiListenerHandler.getInstance()
+                    .attributeUpdatedUINotification(this);
         }
     }
 
@@ -142,17 +145,6 @@ public class AttributeElement {
         return (null == mAttribute.property());
     }
 
-    public void setListener(DataChangeListener listener) {
-        mListener = listener;
-        for (Map.Entry<String, AttributeElement> entry : mChildAttributes
-                .entrySet())
-            entry.getValue().setListener(listener);
-    }
-
-    public DataChangeListener getListener() {
-        return mListener;
-    }
-
     public void update(SimulatorResourceAttribute attribute) {
         if (attribute == null)
             return;
@@ -172,8 +164,9 @@ public class AttributeElement {
                     AttributeElement newAttribute = new AttributeElement(this,
                             entry.getValue(), false);
                     mChildAttributes.put(entry.getKey(), newAttribute);
-                    if (mListener != null)
-                        mListener.add(newAttribute);
+
+                    UiListenerHandler.getInstance()
+                            .attributeAddedUINotification(newAttribute);
                 }
             }
         } else if (typeInfo.mType == AttributeValue.ValueType.ARRAY
@@ -195,8 +188,8 @@ public class AttributeElement {
                                 this, indexAttribute, false);
                         mChildAttributes.put("[" + Integer.toString(i) + "]",
                                 newAttribute);
-                        if (mListener != null)
-                            mListener.add(newAttribute);
+                        UiListenerHandler.getInstance()
+                                .attributeAddedUINotification(newAttribute);
                     }
                 }
             }
@@ -217,8 +210,8 @@ public class AttributeElement {
                                 this, indexAttribute, false);
                         mChildAttributes.put("[" + Integer.toString(i) + "]",
                                 newAttribute);
-                        if (mListener != null)
-                            mListener.add(newAttribute);
+                        UiListenerHandler.getInstance()
+                                .attributeAddedUINotification(newAttribute);
                     }
                 }
             }
@@ -239,8 +232,8 @@ public class AttributeElement {
                                 this, indexAttribute, false);
                         mChildAttributes.put("[" + Integer.toString(i) + "]",
                                 newAttribute);
-                        if (mListener != null)
-                            mListener.add(newAttribute);
+                        UiListenerHandler.getInstance()
+                                .attributeAddedUINotification(newAttribute);
                     }
                 }
             }
@@ -251,8 +244,8 @@ public class AttributeElement {
                     attribute.value()).toString();
             if (!currentValue.equals(newValue)) {
                 mAttribute = attribute;
-                if (mListener != null)
-                    mListener.update(this);
+                UiListenerHandler.getInstance().attributeUpdatedUINotification(
+                        this);
             }
         }
     }

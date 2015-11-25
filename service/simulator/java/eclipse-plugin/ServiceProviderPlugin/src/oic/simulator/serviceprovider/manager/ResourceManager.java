@@ -19,7 +19,6 @@ package oic.simulator.serviceprovider.manager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,11 +30,9 @@ import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.model.AttributeElement;
 import oic.simulator.serviceprovider.model.CollectionResource;
 import oic.simulator.serviceprovider.model.Device;
-import oic.simulator.serviceprovider.model.LocalResourceAttribute;
 import oic.simulator.serviceprovider.model.MetaProperty;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.ResourceType;
-import oic.simulator.serviceprovider.model.SRMItem;
 import oic.simulator.serviceprovider.model.SingleResource;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.utils.Utility;
@@ -196,7 +193,20 @@ public class ResourceManager {
                                 Resource resource = data
                                         .getResourceByURI(resourceURI);
                                 if (null != resource) {
-                                    resource.setResourceRepresentation(resourceModelN);
+                                    try {
+                                        resource.setResourceRepresentation(resourceModelN);
+                                    } catch (NumberFormatException e) {
+                                        Activator
+                                                .getDefault()
+                                                .getLogManager()
+                                                .log(Level.ERROR.ordinal(),
+                                                        new Date(),
+                                                        "Error while trying to update the attributes.\n"
+                                                                + Utility
+                                                                        .getSimulatorErrorString(
+                                                                                e,
+                                                                                null));
+                                    }
                                 }
                             }
                         });
@@ -232,26 +242,11 @@ public class ResourceManager {
                             final AttributeElement attribute = getAttributeWithGivenAutomationId(
                                     resource, automationId);
                             if (null != attribute) {
-                                // Display.getDefault().asyncExec(new Runnable()
-                                // {
-                                // @Override
-                                // public void run() {
                                 attribute.setAutoUpdateState(false);
-                                // }
-                                // });
                                 resource.setAttributeAutomationInProgress(isAnyAttributeInAutomation(resource));
-                                // Notify the UI listeners
-                                /*
-                                 * UiListenerHandler .getInstance()
-                                 * .automationCompleteUINotification( resource,
-                                 * attribute
-                                 * .getSimulatorResourceAttribute().name());
-                                 */
                             } else {
-                                // TODO: Temporarily reset the attribute
-                                // automation status to false for making
-                                // resource-level automation work after
-                                // attribute-level automations.
+                                // Setting the attribute automation status to
+                                // false.
                                 resource.setAttributeAutomationInProgress(false);
                             }
                         }
@@ -538,7 +533,8 @@ public class ResourceManager {
         return data.isAnyResourceExist();
     }
 
-    public boolean createSingleResource(SingleResource resource)
+    public boolean createSingleResource(SingleResource resource,
+            Map<String, SimulatorResourceAttribute> attributes)
             throws SimulatorException {
         if (null == resource) {
             return false;
@@ -572,27 +568,13 @@ public class ResourceManager {
             }
 
             // 5. Add attributes.
-            Map<String, LocalResourceAttribute> attributes = resource
-                    .getResourceAttributes();
             if (null != attributes && !attributes.isEmpty()) {
-                Set<String> keySet = attributes.keySet();
-                Iterator<String> itr = keySet.iterator();
-
-                String attName;
-                LocalResourceAttribute localAtt;
-                SimulatorResourceAttribute simResAtt;
-
-                while (itr.hasNext()) {
-                    attName = itr.next();
-                    localAtt = attributes.get(attName);
-                    if (null == localAtt) {
-                        continue;
-                    }
-                    simResAtt = localAtt.getResourceAttributeRef();
-                    if (null == simResAtt) {
-                        continue;
-                    }
-                    jSimulatorSingleResource.addAttribute(simResAtt);
+                SimulatorResourceAttribute value;
+                for (Map.Entry<String, SimulatorResourceAttribute> entry : attributes
+                        .entrySet()) {
+                    value = entry.getValue();
+                    if (null != value)
+                        jSimulatorSingleResource.addAttribute(value);
                 }
 
                 // 6. Get the resource model java object reference.
@@ -602,7 +584,7 @@ public class ResourceManager {
                 resource.setResourceRepresentation(resource.getResourceModel());
             }
 
-            // 7. Register the resource with the platform.
+            // 6. Register the resource with the platform.
             jSimulatorSingleResource.start();
             resource.setStarted(true);
         } catch (SimulatorException e) {
@@ -657,11 +639,11 @@ public class ResourceManager {
             jSimulatorCollectionResource
                     .setResourceModelChangeListener(resourceModelChangeListener);
 
-            // set resource model
+            // 5. Fetch the model and attributes.
             resource.setResourceRepresentation(jSimulatorCollectionResource
-                    .getResourceModel());;
+                    .getResourceModel());
 
-            // 5. Register the resource with the platform.
+            // 6. Register the resource with the platform.
             jSimulatorCollectionResource.start();
             resource.setStarted(true);
         } catch (SimulatorException e) {
@@ -789,18 +771,12 @@ public class ResourceManager {
                             .convertVectorToSet(jSimulatorSingleResource
                                     .getInterface()));
 
-            // 6. Register the resource with the platform.
-            jSimulatorSingleResource.start();
-            singleRes.setStarted(true);
-
+            // 6. Fetch the resource attributes.
             singleRes.setResourceRepresentation(jResModel);
 
-            // 7. Fetch the resource attributes.
-            Map<String, LocalResourceAttribute> resourceAttributeMap;
-            resourceAttributeMap = fetchResourceAttributesFromModel(jResModel);
-            if (null != resourceAttributeMap) {
-                singleRes.setResourceAttributes(resourceAttributeMap);
-            }
+            // 7. Register the resource with the platform.
+            jSimulatorSingleResource.start();
+            singleRes.setStarted(true);
 
             // 8. Add to local cache.
             data.addResource(singleRes);
@@ -809,7 +785,7 @@ public class ResourceManager {
             if (!multiInstance)
                 UiListenerHandler.getInstance().resourceCreatedUINotification(
                         ResourceType.SINGLE);
-        } catch (SimulatorException e) {
+        } catch (Exception e) {
             Activator
                     .getDefault()
                     .getLogManager()
@@ -832,10 +808,13 @@ public class ResourceManager {
         if (null == resource || !(resource instanceof CollectionResource)) {
             return false;
         }
-        try {
-            CollectionResource collectionRes = (CollectionResource) resource;
 
-            SimulatorCollectionResource jSimulatorCollectionResource = (SimulatorCollectionResource) resource
+        CollectionResource collectionRes = (CollectionResource) resource;
+
+        SimulatorCollectionResource jSimulatorCollectionResource = null;
+
+        try {
+            jSimulatorCollectionResource = (SimulatorCollectionResource) resource
                     .getSimulatorResource();
             if (null == jSimulatorCollectionResource) {
                 return false;
@@ -879,26 +858,20 @@ public class ResourceManager {
                 collectionRes.setObservable(true);
             }
 
-            // 6. Register the resource with the platform.
+            // 6. Fetch the resource attributes.
+            collectionRes.setResourceRepresentation(jResModel);
+
+            // 7. Register the resource with the platform.
             jSimulatorCollectionResource.start();
             collectionRes.setStarted(true);
 
-            collectionRes.setResourceRepresentation(jResModel);
-
-            // 7. Fetch the resource attributes.
-            Map<String, LocalResourceAttribute> resourceAttributeMap;
-            resourceAttributeMap = fetchResourceAttributesFromModel(jResModel);
-            if (null != resourceAttributeMap) {
-                collectionRes.setResourceAttributes(resourceAttributeMap);
-            }
-
-            // 6. Add to local cache.
+            // 8. Add to local cache.
             data.addResource(collectionRes);
 
-            // 7. Update UI listeners for single instance creation
+            // 9. Update UI listeners for single instance creation
             UiListenerHandler.getInstance().resourceCreatedUINotification(
                     ResourceType.COLLECTION);
-        } catch (SimulatorException e) {
+        } catch (Exception e) {
             Activator
                     .getDefault()
                     .getLogManager()
@@ -970,46 +943,6 @@ public class ResourceManager {
         UiListenerHandler.getInstance().resourceListUpdateUINotification(
                 ResourceType.DEVICE);
         return dev;
-    }
-
-    private Map<String, LocalResourceAttribute> fetchResourceAttributesFromModel(
-            SimulatorResourceModel jResModel) throws SimulatorException {
-        Map<String, LocalResourceAttribute> resourceAttributeMap = null;
-        if (null != jResModel) {
-            Map<String, SimulatorResourceAttribute> jAttributeMap;
-            jAttributeMap = jResModel.getAttributes();
-            if (null != jAttributeMap) {
-                resourceAttributeMap = new HashMap<String, LocalResourceAttribute>();
-                Iterator<String> itr = jAttributeMap.keySet().iterator();
-                String attName;
-                SimulatorResourceAttribute jResAtt;
-                LocalResourceAttribute localAtt;
-                while (itr.hasNext()) {
-                    attName = itr.next();
-                    if (null != attName) {
-                        jResAtt = jAttributeMap.get(attName);
-                        if (null != jResAtt) {
-                            localAtt = new LocalResourceAttribute();
-
-                            localAtt.setResourceAttributeRef(jResAtt);
-
-                            // Initially disabling the automation
-                            localAtt.setAutomationInProgress(false);
-
-                            // Assigning the default automation interval
-                            localAtt.setAutomationUpdateInterval(Constants.DEFAULT_AUTOMATION_INTERVAL);
-
-                            // Setting the default automation type
-                            localAtt.setAutomationType(Constants.DEFAULT_AUTOMATION_TYPE);
-
-                            resourceAttributeMap.put(attName, localAtt);
-                        }
-                    }
-                }
-            }
-        }
-        return resourceAttributeMap;
-
     }
 
     public List<Resource> getResourceList() {
@@ -1620,7 +1553,19 @@ public class ResourceManager {
                 } else if (propName.equals(Constants.RESOURCE_URI)) {
                     propValue = resource.getResourceURI();
                 } else if (propName.equals(Constants.RESOURCE_TYPE)) {
-                    propValue = resource.getResourceTypes().toString();
+                    Set<String> resTypes = resource.getResourceTypes();
+                    if (null != resTypes && !resTypes.isEmpty()) {
+                        propValue = "";
+                        Iterator<String> itr = resTypes.iterator();
+                        while (itr.hasNext()) {
+                            propValue += itr.next();
+                            if (itr.hasNext()) {
+                                propValue += ", ";
+                            }
+                        }
+                    } else {
+                        propValue = null;
+                    }
                 } else {
                     propValue = null;
                 }
@@ -1854,65 +1799,6 @@ public class ResourceManager {
                 Device.class);
 
         return true;
-    }
-
-    public List<LocalResourceAttribute> getAttributes(Resource resource) {
-        List<LocalResourceAttribute> attList = null;
-        if (null != resource) {
-            Map<String, LocalResourceAttribute> attMap = resource
-                    .getResourceAttributes();
-            if (null != attMap && attMap.size() > 0) {
-                attList = new ArrayList<LocalResourceAttribute>();
-                Set<String> attNameSet = attMap.keySet();
-                String attName;
-                LocalResourceAttribute attribute;
-                Iterator<String> attNameItr = attNameSet.iterator();
-                while (attNameItr.hasNext()) {
-                    attName = attNameItr.next();
-                    attribute = attMap.get(attName);
-                    if (null != attribute) {
-                        attList.add(attribute);
-                    }
-                }
-            }
-        }
-        return attList;
-    }
-
-    public List<SimulatorResourceAttribute> getAttributes(
-            SimulatorResourceModel model) {
-        List<SimulatorResourceAttribute> attList = null;
-        if (null != model) {
-            Map<String, SimulatorResourceAttribute> attMap = model
-                    .getAttributes();
-            if (null != attMap && attMap.size() > 0) {
-                attList = new ArrayList<SimulatorResourceAttribute>();
-                Set<String> attNameSet = attMap.keySet();
-                String attName;
-                SimulatorResourceAttribute attribute;
-                Iterator<String> attNameItr = attNameSet.iterator();
-                while (attNameItr.hasNext()) {
-                    attName = attNameItr.next();
-                    attribute = attMap.get(attName);
-                    if (null != attribute) {
-                        attList.add(attribute);
-                    }
-                }
-            }
-        }
-        return attList;
-    }
-
-    public List<SRMItem> getIndexedAttributes(SimulatorResourceModel[] model) {
-        List<SRMItem> indexedAttList = null;
-        if (null != model && model.length > 0) {
-            indexedAttList = new ArrayList<SRMItem>();
-            int i = 0;
-            for (SimulatorResourceModel m : model) {
-                indexedAttList.add(new SRMItem(i++, m));
-            }
-        }
-        return indexedAttList;
     }
 
     public void attributeValueUpdated(SingleResource resource,
@@ -2348,19 +2234,6 @@ public class ResourceManager {
             return false;
         }
         return resource.isAttributeAutomationInProgress();
-    }
-
-    public LocalResourceAttribute getAttributeByResourceURI(
-            SingleResource resource, String attName) {
-        if (null == resource || null == attName) {
-            return null;
-        }
-        Map<String, LocalResourceAttribute> attMap = resource
-                .getResourceAttributes();
-        if (null == attMap) {
-            return null;
-        }
-        return attMap.get(attName);
     }
 
     public void notifyObserverRequest(Resource resource, int observerId) {

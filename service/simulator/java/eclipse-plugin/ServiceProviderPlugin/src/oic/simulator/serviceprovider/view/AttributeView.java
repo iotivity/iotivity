@@ -16,18 +16,14 @@
 
 package oic.simulator.serviceprovider.view;
 
-import java.util.List;
-
 import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.IAutomationUIListener;
-import oic.simulator.serviceprovider.listener.IResourceModelChangedUIListener;
-import oic.simulator.serviceprovider.listener.ISelectionChangedUIListener;
+import oic.simulator.serviceprovider.listener.IAutomationListener;
+import oic.simulator.serviceprovider.listener.IDataChangeListener;
+import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
 import oic.simulator.serviceprovider.manager.ResourceManager;
 import oic.simulator.serviceprovider.manager.UiListenerHandler;
 import oic.simulator.serviceprovider.model.AttributeElement;
-import oic.simulator.serviceprovider.model.DataChangeListener;
 import oic.simulator.serviceprovider.model.Device;
-import oic.simulator.serviceprovider.model.LocalResourceAttribute;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.ResourceRepresentation;
 import oic.simulator.serviceprovider.model.SingleResource;
@@ -61,27 +57,27 @@ import org.oic.simulator.SimulatorResourceAttribute;
  */
 public class AttributeView extends ViewPart {
 
-    public static final String              VIEW_ID        = "oic.simulator.serviceprovider.view.attribute";
+    public static final String        VIEW_ID        = "oic.simulator.serviceprovider.view.attribute";
 
-    private TreeViewer                      attViewer;
+    private TreeViewer                attViewer;
 
-    private AttributeEditingSupport         attributeEditor;
+    private AttributeEditingSupport   attributeEditor;
 
-    private ISelectionChangedUIListener     resourceSelectionChangedListener;
-    private IResourceModelChangedUIListener resourceModelChangedUIListener;
-    private IAutomationUIListener           automationUIListener;
+    private ISelectionChangedListener resourceSelectionChangedListener;
+    private IAutomationListener       automationUIListener;
+    private IDataChangeListener       dataChangeListener;
 
-    private final String[]                  attTblHeaders  = { "Name", "Value",
-            "Automation"                                  };
-    private final Integer[]                 attTblColWidth = { 150, 190, 150 };
+    private final String[]            attTblHeaders  = { "Name", "Value",
+            "Automation"                            };
+    private final Integer[]           attTblColWidth = { 150, 190, 150 };
 
-    private ResourceManager                 resourceManager;
+    private ResourceManager           resourceManager;
 
     public AttributeView() {
 
         resourceManager = Activator.getDefault().getResourceManager();
 
-        resourceSelectionChangedListener = new ISelectionChangedUIListener() {
+        resourceSelectionChangedListener = new ISelectionChangedListener() {
 
             @Override
             public void onResourceSelectionChange(final Resource resource) {
@@ -131,26 +127,43 @@ public class AttributeView extends ViewPart {
             }
         };
 
-        resourceModelChangedUIListener = new IResourceModelChangedUIListener() {
+        dataChangeListener = new IDataChangeListener() {
 
             @Override
-            public void onResourceModelChange(final Resource resource) {
+            public void add(final AttributeElement attribute) {
                 Display.getDefault().asyncExec(new Runnable() {
                     @Override
                     public void run() {
-                        // Handle the notification only if it is for the current
-                        // resource in selection
-                        Resource resourceInSelection = resourceManager
-                                .getCurrentResourceInSelection();
-                        if (null == resourceInSelection) {
-                            return;
-                        }
+                        attViewer.refresh(attribute.getParent());
+                        attViewer.expandAll();
+                    }
+                });
+            }
+
+            @Override
+            public void remove(final AttributeElement attribute) {
+                Display.getDefault().asyncExec(new Runnable() {
+                    @Override
+                    public void run() {
+                        attViewer.refresh(attribute.getParent());
+                        attViewer.expandAll();
+                    }
+                });
+            }
+
+            @Override
+            public void update(final AttributeElement attribute) {
+                Display.getDefault().asyncExec(new Runnable() {
+                    @Override
+                    public void run() {
+                        attViewer.update(attribute, null);
+                        attViewer.expandAll();
                     }
                 });
             }
         };
 
-        automationUIListener = new IAutomationUIListener() {
+        automationUIListener = new IAutomationListener() {
 
             @Override
             public void onResourceAutomationStart(final SingleResource resource) {
@@ -211,23 +224,8 @@ public class AttributeView extends ViewPart {
                         Tree tree;
                         tree = attViewer.getTree();
                         if (!tree.isDisposed()) {
-                            if (null != attName) {
-                                // Attribute level automation has stopped
-                                LocalResourceAttribute att = resourceManager
-                                        .getAttributeByResourceURI(resource,
-                                                attName);
-                                if (null == att) {
-                                    return;
-                                } else {
-                                    attViewer.update(att, null);
-                                }
-                            } else {
-                                // Resource level automation has stopped
-                                // Enabling the table which was disabled at the
-                                // beginning of automation
-                                tree.setEnabled(true);
-                                attViewer.refresh();
-                            }
+                            tree.setEnabled(true);
+                            attViewer.refresh();
                         }
                     }
                 });
@@ -305,16 +303,13 @@ public class AttributeView extends ViewPart {
     private void addManagerListeners() {
         UiListenerHandler.getInstance().addResourceSelectionChangedUIListener(
                 resourceSelectionChangedListener);
-        UiListenerHandler.getInstance().addResourceModelChangedUIListener(
-                resourceModelChangedUIListener);
+        UiListenerHandler.getInstance().addDataChangeListener(
+                dataChangeListener);
         UiListenerHandler.getInstance().addAutomationUIListener(
                 automationUIListener);
     }
 
-    class AttributeContentProvider implements ITreeContentProvider,
-            DataChangeListener {
-
-        private TreeViewer mTreeViewer;
+    class AttributeContentProvider implements ITreeContentProvider {
 
         @Override
         public void dispose() {
@@ -323,7 +318,6 @@ public class AttributeView extends ViewPart {
         @Override
         public void inputChanged(Viewer viewer, Object oldAttribute,
                 Object newAttribute) {
-            mTreeViewer = (TreeViewer) viewer;
         }
 
         @Override
@@ -353,45 +347,11 @@ public class AttributeView extends ViewPart {
         @Override
         public Object[] getElements(Object resourceModel) {
             if (resourceModel instanceof ResourceRepresentation) {
-                ((ResourceRepresentation) resourceModel).setListener(this);
                 return ((ResourceRepresentation) resourceModel).getAttributes()
                         .values().toArray();
             }
 
             return new Object[0];
-        }
-
-        @Override
-        public void add(final AttributeElement attribute) {
-            Display.getDefault().asyncExec(new Runnable() {
-                @Override
-                public void run() {
-                    mTreeViewer.refresh(attribute.getParent());
-                    mTreeViewer.expandAll();
-                }
-            });
-        }
-
-        @Override
-        public void remove(final AttributeElement attribute) {
-            Display.getDefault().asyncExec(new Runnable() {
-                @Override
-                public void run() {
-                    mTreeViewer.refresh(attribute.getParent());
-                    mTreeViewer.expandAll();
-                }
-            });
-        }
-
-        @Override
-        public void update(final AttributeElement attribute) {
-            Display.getDefault().asyncExec(new Runnable() {
-                @Override
-                public void run() {
-                    mTreeViewer.update(attribute, null);
-                    mTreeViewer.expandAll();
-                }
-            });
         }
     }
 
@@ -424,9 +384,6 @@ public class AttributeView extends ViewPart {
                             .getCurrentResourceInSelection();
                     if (res instanceof SingleResource) {
                         AttributeElement attrElement = (AttributeElement) element;
-                        SimulatorResourceAttribute attribute = attrElement
-                                .getSimulatorResourceAttribute();
-                        TypeInfo type = attribute.value().typeInfo();
                         if (attrElement.isAutoUpdateSupport()
                                 && !attrElement.isReadOnly()) {
                             if (attrElement.isAutoUpdateInProgress()) {
@@ -515,11 +472,10 @@ public class AttributeView extends ViewPart {
                             resourceSelectionChangedListener);
         }
 
-        // Unregister the model change listener
-        if (null != resourceModelChangedUIListener) {
-            UiListenerHandler.getInstance()
-                    .removeResourceModelChangedUIListener(
-                            resourceModelChangedUIListener);
+        // Unregister the data model change listener
+        if (null != dataChangeListener) {
+            UiListenerHandler.getInstance().removeDataChangeListener(
+                    dataChangeListener);
         }
 
         // Unregister the automation complete listener

@@ -1183,18 +1183,32 @@ public class ResourceManager {
                     propValue = Utility.getObservableInString(resource
                             .getRemoteResourceRef().isObservable());
                 } else if (propName.equals(Constants.RESOURCE_TYPES)) {
-                    Vector<String> types = resource.getRemoteResourceRef()
+                    Vector<String> resTypes = resource.getRemoteResourceRef()
                             .getResourceTypes();
-                    if (null != types) {
-                        propValue = types.toString();
+                    if (null != resTypes && !resTypes.isEmpty()) {
+                        propValue = "";
+                        Iterator<String> itr = resTypes.iterator();
+                        while (itr.hasNext()) {
+                            propValue += itr.next();
+                            if (itr.hasNext()) {
+                                propValue += ", ";
+                            }
+                        }
                     } else {
                         propValue = Constants.NOT_AVAILABLE;
                     }
                 } else if (propName.equals(Constants.RESOURCE_INTERFACES)) {
                     Vector<String> interfaces = resource.getRemoteResourceRef()
                             .getResourceInterfaces();
-                    if (null != interfaces) {
-                        propValue = interfaces.toString();
+                    if (null != interfaces && !interfaces.isEmpty()) {
+                        propValue = "";
+                        Iterator<String> itr = interfaces.iterator();
+                        while (itr.hasNext()) {
+                            propValue += itr.next();
+                            if (itr.hasNext()) {
+                                propValue += ", ";
+                            }
+                        }
                     } else {
                         propValue = Constants.NOT_AVAILABLE;
                     }

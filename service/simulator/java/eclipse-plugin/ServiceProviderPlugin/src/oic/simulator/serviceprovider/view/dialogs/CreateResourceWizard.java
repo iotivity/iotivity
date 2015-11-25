@@ -29,7 +29,6 @@ import oic.simulator.serviceprovider.manager.UiListenerHandler;
 import oic.simulator.serviceprovider.model.AttributeHelper;
 import oic.simulator.serviceprovider.model.CollectionResource;
 import oic.simulator.serviceprovider.model.Device;
-import oic.simulator.serviceprovider.model.LocalResourceAttribute;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.ResourceType;
 import oic.simulator.serviceprovider.model.SingleResource;
@@ -50,6 +49,7 @@ import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorException;
+import org.oic.simulator.SimulatorResourceAttribute;
 
 /**
  * This class creates a UI wizard for create resource operation.
@@ -189,7 +189,7 @@ public class CreateResourceWizard extends Wizard {
                             monitor.beginTask(
                                     "Single Resource Creation Without RAML", 2);
                             monitor.worked(1);
-                            createdResource = createSingleResourceWithoutRAML();
+                            createSingleResourceWithoutRAML();
                         } finally {
                             monitor.done();
                         }
@@ -250,7 +250,6 @@ public class CreateResourceWizard extends Wizard {
             }
             // creation of simple resource
             // with RAML
-            // String resURI = updatePropPage.getResURI();
             // Checking whether the uri is used by any other resource.
             if (Activator.getDefault().getResourceManager()
                     .isResourceExist(updatePropPage.getResURI())) {
@@ -261,8 +260,7 @@ public class CreateResourceWizard extends Wizard {
                 // itself.
                 return false;
             }
-            // Resource resource = loadRamlPage.getResource();
-            // resource.setResourceName(updatePropPage.getResName());
+
             try {
                 getContainer().run(true, true, new IRunnableWithProgress() {
 
@@ -482,13 +480,6 @@ public class CreateResourceWizard extends Wizard {
         return startStopPage;
     }
 
-    /*
-     * public SingleResource getSimResource() { return simResource; }
-     * 
-     * public void setSimResource(SingleResource simResource) { this.simResource
-     * = simResource; }
-     */
-
     public void setStatus(String status) {
         this.status = status;
     }
@@ -497,45 +488,29 @@ public class CreateResourceWizard extends Wizard {
         return status;
     }
 
-    /*
-     * public SingleResource getCreatedResource() { return simResource; }
-     */
-
-    private SingleResource createSingleResourceWithoutRAML() {
+    private void createSingleResourceWithoutRAML() {
         SingleResource resource = new SingleResource();
         // Basic resource details
         resource.setResourceURI(simpleResourceBasicDetailsPage.getResURI());
         resource.setResourceName(simpleResourceBasicDetailsPage.getResName());
         resource.setResourceTypes(simpleResourceBasicDetailsPage.getResTypes());
         resource.setObservable(simpleResourceBasicDetailsPage.isObservable());
-        // resource.setStarted(simpleResourceBasicDetailsPage.isStart());
 
         // Resource Attributes
-        Map<String, LocalResourceAttribute> attributes = new HashMap<String, LocalResourceAttribute>();
+        Map<String, SimulatorResourceAttribute> attributes = new HashMap<String, SimulatorResourceAttribute>();
         Set<AttributeHelper> attributeSet = simpleResourceAddAttributePage
                 .getAttributes();
         if (null != attributeSet && !attributeSet.isEmpty()) {
             Iterator<AttributeHelper> itr = attributeSet.iterator();
             AttributeHelper attHelper;
-            LocalResourceAttribute localResAtt;
-            // List<String> attValues;
+            SimulatorResourceAttribute attribute;
             while (itr.hasNext()) {
                 attHelper = itr.next();
                 if (null != attHelper) {
-                    localResAtt = attHelper.convertToLocalResourceAttribute();
-
-                    // Set the attribute value list.
-                    /*
-                     * attValues =
-                     * Activator.getDefault().getResourceManager().getValueList
-                     * (localResAtt); localResAtt.setAttValues(attValues);
-                     */
-                    attributes.put(
-                            localResAtt.getResourceAttributeRef().name(),
-                            localResAtt);
+                    attribute = attHelper.convertToSimulatorResourceAttribute();
+                    attributes.put(attribute.name(), attribute);
                 }
             }
-            resource.setResourceAttributes(attributes);
         }
 
         // Request types
@@ -547,19 +522,18 @@ public class CreateResourceWizard extends Wizard {
         // string.
         try {
             boolean result = Activator.getDefault().getResourceManager()
-                    .createSingleResource(resource);
+                    .createSingleResource(resource, attributes);
             if (result) {
                 status = "Resource created.";
             } else {
                 status = "Failed to create resource.";
                 resource = null;
             }
-        } catch (SimulatorException e) {
+        } catch (Exception e) {
             status = "Failed to create resource.\n"
                     + Utility.getSimulatorErrorString(e, null);
             resource = null;
         }
-        return resource;
     }
 
     private void completeResourceCreationWithRAML() {
@@ -589,7 +563,7 @@ public class CreateResourceWizard extends Wizard {
                 status = "Failed to create resource.";
                 createdResource = null;
             }
-        } catch (SimulatorException e) {
+        } catch (Exception e) {
             status = "Failed to create resource.\n"
                     + Utility.getSimulatorErrorString(e, null);
             createdResource = null;

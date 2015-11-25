@@ -28,22 +28,20 @@ import org.oic.simulator.server.SimulatorResource;
 public abstract class Resource {
 
     // Java SDK object reference
-    SimulatorResource                           simulatorResource;
-    private SimulatorResourceModel              resourceModel;
-    private ResourceRepresentation              mResourceRepresentation;
+    SimulatorResource                    simulatorResource;
+    private SimulatorResourceModel       resourceModel;
+    private ResourceRepresentation       mResourceRepresentation;
 
-    private String                              resourceURI;
-    private String                              resourceName;
-    private Set<String>                         resourceTypes;
-    private Set<String>                         resourceInterfaces;
-    private boolean                             started;
-    private boolean                             observable;
+    private String                       resourceURI;
+    private String                       resourceName;
+    private Set<String>                  resourceTypes;
+    private Set<String>                  resourceInterfaces;
+    private boolean                      started;
+    private boolean                      observable;
 
-    private Set<Device>                         deviceMembership;
+    private Set<Device>                  deviceMembership;
 
-    private Map<String, LocalResourceAttribute> attributes;
-
-    private Map<Integer, ObserverDetail>        observers;
+    private Map<Integer, ObserverDetail> observers;
 
     public Resource() {
         resourceTypes = new HashSet<String>();
@@ -235,16 +233,8 @@ public abstract class Resource {
         return true;
     }
 
-    public Map<String, LocalResourceAttribute> getResourceAttributes() {
-        return attributes;
-    }
-
-    public void setResourceAttributes(
-            Map<String, LocalResourceAttribute> attributes) {
-        this.attributes = attributes;
-    }
-
-    public void setResourceRepresentation(SimulatorResourceModel resModel) {
+    public void setResourceRepresentation(SimulatorResourceModel resModel)
+            throws NullPointerException {
         if (mResourceRepresentation == null)
             mResourceRepresentation = new ResourceRepresentation(resModel);
         else

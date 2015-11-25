@@ -16,6 +16,12 @@
 
 package oic.simulator.serviceprovider.listener;
 
-public interface IDeviceInfoUIListener {
-    public void onDeviceInfoFound();
+import oic.simulator.serviceprovider.model.Resource;
+
+/**
+ * Interface through which the resource observer events are sent to the UI
+ * listeners.
+ */
+public interface IObserverListChangedListener {
+    public void onObserverListChanged(Resource resource);
 }

@@ -1,6 +1,8 @@
-package oic.simulator.serviceprovider.model;
+package oic.simulator.serviceprovider.listener;
 
-public interface DataChangeListener {
+import oic.simulator.serviceprovider.model.AttributeElement;
+
+public interface IDataChangeListener {
     public void add(AttributeElement attribute);
 
     public void remove(AttributeElement attribute);

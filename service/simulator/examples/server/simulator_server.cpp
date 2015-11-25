@@ -374,7 +374,9 @@ void printMainMenu()
     std::cout << "7. Stop Automation" << std::endl;
     std::cout << "8. Get Observers of a resource" << std::endl;
     std::cout << "9. Set Logger" << std::endl;
-    std::cout << "10. Help" << std::endl;
+    std::cout << "10. Set Device Info" << std::endl;
+    std::cout << "11. Set Platform Info" << std::endl;
+    std::cout << "12. Help" << std::endl;
     std::cout << "0. Exit" << std::endl;
     std::cout << "######################################" << std::endl;
 }
@@ -412,6 +414,31 @@ void setLogger()
     }
 }
 
+void setDeviceInfo()
+{
+    SimulatorManager::getInstance()->setDeviceInfo("IoTivity Simulator Linux Sample");
+    std::cout << "Setting Device Info is successful" << std::endl;
+}
+
+void setPlatformInfo()
+{
+    PlatformInfo pInfo;
+    pInfo.setPlatformID("Samsung Platform Identifier");
+    pInfo.setFirmwareVersion("FirwareVersion01");
+    pInfo.setHardwareVersion("HardwareVersion01");
+    pInfo.setManufacturerName("Samsung");
+    pInfo.setManufacturerUrl("www.samsung.com");
+    pInfo.setModelNumber("Samsung Model Num01");
+    pInfo.setOSVersion("OSVersion01");
+    pInfo.setPlatformVersion("PlatformVersion01");
+    pInfo.setSupportUrl("http://www.samsung.com/support");
+    pInfo.setSystemTime("2015-09-10T11:10:30Z");
+    pInfo.setDateOfManfacture("2015-09-10T11:10:30Z");
+
+    SimulatorManager::getInstance()->setPlatformInfo(pInfo);
+    std::cout << "Setting Platform Info is successful" << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
     printMainMenu();
@@ -421,7 +448,7 @@ int main(int argc, char *argv[])
         int choice = -1;
         std::cout << "Enter your choice: ";
         std::cin >> choice;
-        if (choice < 0 || choice > 10)
+        if (choice < 0 || choice > 12)
         {
             std::cout << "Invaild choice !" << std::endl; continue;
         }
@@ -436,8 +463,10 @@ int main(int argc, char *argv[])
             case 6 : automateAttributeUpdate(); break;
             case 7 : stopAutomation(); break;
             case 8 : getObservers(); break;
-            case 9: setLogger(); break;
-            case 10: printMainMenu(); break;
+            case 9 : setLogger(); break;
+            case 10: setDeviceInfo(); break;
+            case 11: setPlatformInfo(); break;
+            case 12: printMainMenu(); break;
             case 0: cont = false;
         }
     }

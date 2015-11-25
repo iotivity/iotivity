@@ -19,7 +19,7 @@ package oic.simulator.serviceprovider.view;
 import java.util.List;
 
 import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.IDeviceInfoUIListener;
+import oic.simulator.serviceprovider.listener.IDeviceInfoListener;
 import oic.simulator.serviceprovider.manager.UiListenerHandler;
 import oic.simulator.serviceprovider.model.MetaProperty;
 import oic.simulator.serviceprovider.utils.Constants;
@@ -67,28 +67,28 @@ public class DevicePlatformInfoView extends ViewPart {
         DEVICE, PLATFORM
     }
 
-    private List<MetaProperty>    deviceProperties;
-    private List<MetaProperty>    platformProperties;
+    private List<MetaProperty>  deviceProperties;
+    private List<MetaProperty>  platformProperties;
 
-    private boolean               enableDeviceEdit;
-    private boolean               enablePlatformEdit;
+    private boolean             enableDeviceEdit;
+    private boolean             enablePlatformEdit;
 
-    private Button                devEditBtn;
-    private Button                devCancelBtn;
-    private Button                platEditBtn;
-    private Button                platCancelBtn;
+    private Button              devEditBtn;
+    private Button              devCancelBtn;
+    private Button              platEditBtn;
+    private Button              platCancelBtn;
 
-    private TableViewer           platformTblViewer;
-    private TableViewer           deviceTblViewer;
+    private TableViewer         platformTblViewer;
+    private TableViewer         deviceTblViewer;
 
-    private CTabFolder            folder;
-    private CTabItem              devicePropTab;
-    private CTabItem              platformPropTab;
+    private CTabFolder          folder;
+    private CTabItem            devicePropTab;
+    private CTabItem            platformPropTab;
 
-    private IDeviceInfoUIListener deviceInfoUIListener;
+    private IDeviceInfoListener deviceInfoUIListener;
 
     public DevicePlatformInfoView() {
-        deviceInfoUIListener = new IDeviceInfoUIListener() {
+        deviceInfoUIListener = new IDeviceInfoListener() {
 
             @Override
             public void onDeviceInfoFound() {

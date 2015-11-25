@@ -29,7 +29,6 @@ import java.util.Vector;
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.model.CollectionResource;
 import oic.simulator.serviceprovider.model.Device;
-import oic.simulator.serviceprovider.model.LocalResourceAttribute;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.SingleResource;
 
@@ -37,10 +36,7 @@ import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.ILogger.Level;
-import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorException;
-import org.oic.simulator.SimulatorResourceAttribute;
-import org.oic.simulator.SimulatorResourceModel;
 
 /**
  * This class has common utility methods.
@@ -192,7 +188,7 @@ public class Utility {
         if (null == e) {
             return null;
         }
-        String detail;
+        String detail = "";
         if (e instanceof SimulatorException) {
             SimulatorException simEx = (SimulatorException) e;
             detail = simEx.message() + "\n";
@@ -200,9 +196,15 @@ public class Utility {
                     + "\n";
             detail += "Error code: " + simEx.code().toString();
         } else {
-            detail = info + "\n";
+            if (null != info && !info.isEmpty())
+                detail = info + "\n";
+            else
+                detail = "Description not available\n";
             detail += "Exception Type: " + e.getClass().getSimpleName() + "\n";
-            detail += "Message: " + e.getMessage();
+            String msg = e.getMessage();
+            if (null != msg && !msg.isEmpty()) {
+                detail += "Message: " + e.getMessage();
+            }
         }
         return detail;
     }
@@ -669,137 +671,6 @@ public class Utility {
         } else {
             return String.valueOf(value);
         }
-    }
-
-    public static List<LocalResourceAttribute> getDummyAttributes() {
-        List<LocalResourceAttribute> attributes = null;
-        attributes = new ArrayList<LocalResourceAttribute>();
-
-        // Integer attribute
-        SimulatorResourceAttribute attribute = new SimulatorResourceAttribute(
-                "integer", new AttributeValue(2), null);
-        attributes.add(addAttribute(attribute));
-
-        // Boolean attribute
-        attribute = new SimulatorResourceAttribute("boolean",
-                new AttributeValue(false), null);
-        attributes.add(addAttribute(attribute));
-
-        // String attribute
-        attribute = new SimulatorResourceAttribute("string",
-                new AttributeValue("india"), null);
-        attributes.add(addAttribute(attribute));
-
-        // Integer array attribute
-        int iarr[] = { 1, 2, 3 };
-        attribute = new SimulatorResourceAttribute("integerArr",
-                new AttributeValue(iarr), null);
-        attributes.add(addAttribute(attribute));
-
-        // Double array attribute
-        double darr[] = { 1.5, 2.51, 3.15 };
-        attribute = new SimulatorResourceAttribute("doubleArr",
-                new AttributeValue(darr), null);
-        attributes.add(addAttribute(attribute));
-
-        // Boolean array attribute
-        boolean barr[] = { false, true, false };
-        attribute = new SimulatorResourceAttribute("boolArr",
-                new AttributeValue(barr), null);
-        attributes.add(addAttribute(attribute));
-
-        // String array attribute
-        String sarr[] = { "senthil", "muruga", "sriram" };
-        attribute = new SimulatorResourceAttribute("stringArr",
-                new AttributeValue(sarr), null);
-        attributes.add(addAttribute(attribute));
-
-        // Model type complex attribute
-        attribute = new SimulatorResourceAttribute("subAtt1",
-                new AttributeValue("chennai"), null);
-        SimulatorResourceModel model = new SimulatorResourceModel();
-        try {
-            model.addAttribute(attribute);
-        } catch (InvalidArgsException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        attribute = new SimulatorResourceAttribute("subAtt2",
-                new AttributeValue("madurai"), null);
-        try {
-            model.addAttribute(attribute);
-        } catch (InvalidArgsException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        SimulatorResourceModel subModel = new SimulatorResourceModel();
-        try {
-            subModel.addAttribute(attribute);
-        } catch (InvalidArgsException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        attribute = new SimulatorResourceAttribute("modelsubAtt3",
-                new AttributeValue(subModel), null);
-        try {
-            model.addAttribute(attribute);
-        } catch (InvalidArgsException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        SimulatorResourceAttribute modelAtt = new SimulatorResourceAttribute(
-                "modelAtt1", new AttributeValue(model));
-        attributes.add(addAttribute(modelAtt));
-
-        // 1-D array of model
-        attribute = new SimulatorResourceAttribute("subAtt1",
-                new AttributeValue("chennai"), null);
-        SimulatorResourceModel[] modelArr = new SimulatorResourceModel[2];
-        model = new SimulatorResourceModel();
-        try {
-            model.addAttribute(attribute);
-            modelArr[0] = model;
-        } catch (InvalidArgsException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        attribute = new SimulatorResourceAttribute("subAtt2",
-                new AttributeValue("madurai"), null);
-        model = new SimulatorResourceModel();
-        try {
-            model.addAttribute(attribute);
-            modelArr[1] = model;
-        } catch (InvalidArgsException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        modelAtt = new SimulatorResourceAttribute("modelAtt2",
-                new AttributeValue(modelArr));
-        attributes.add(addAttribute(modelAtt));
-
-        return attributes;
-    }
-
-    private static LocalResourceAttribute addAttribute(
-            SimulatorResourceAttribute att) {
-        LocalResourceAttribute localAtt = new LocalResourceAttribute();
-
-        localAtt = new LocalResourceAttribute();
-
-        localAtt.setResourceAttributeRef(att);
-
-        // Initially disabling the automation
-        localAtt.setAutomationInProgress(false);
-
-        // Assigning the default automation interval
-        localAtt.setAutomationUpdateInterval(Constants.DEFAULT_AUTOMATION_INTERVAL);
-
-        // Setting the default automation type
-        localAtt.setAutomationType(Constants.DEFAULT_AUTOMATION_TYPE);
-
-        return localAtt;
     }
 
     public static boolean isUriValid(String resURI) {

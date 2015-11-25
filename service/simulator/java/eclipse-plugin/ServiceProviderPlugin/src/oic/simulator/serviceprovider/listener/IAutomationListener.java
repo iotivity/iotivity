@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package oic.simulator.serviceprovider.model;
+package oic.simulator.serviceprovider.listener;
+
+import oic.simulator.serviceprovider.model.SingleResource;
 
 /**
- * This class represents the plug-in level exceptions.
+ * Interface through which the automation events are notified to the UI
+ * listeners.
  */
-@SuppressWarnings("serial")
-public class SimulatorPluginException extends Exception {
-    String msg;
+public interface IAutomationListener {
+    public void onResourceAutomationStart(SingleResource resource);
 
-    public SimulatorPluginException(String msg) {
-        this.msg = msg;
-    }
-
-    public String toString() {
-        return msg;
-    }
+    public void onAutomationComplete(SingleResource resource, String attName);
 }

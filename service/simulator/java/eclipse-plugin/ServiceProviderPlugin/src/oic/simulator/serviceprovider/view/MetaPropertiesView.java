@@ -19,7 +19,7 @@ package oic.simulator.serviceprovider.view;
 import java.util.List;
 
 import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.ISelectionChangedUIListener;
+import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
 import oic.simulator.serviceprovider.manager.ResourceManager;
 import oic.simulator.serviceprovider.manager.UiListenerHandler;
 import oic.simulator.serviceprovider.model.Device;
@@ -55,29 +55,29 @@ import org.oic.simulator.SimulatorException;
  */
 public class MetaPropertiesView extends ViewPart {
 
-    public static final String          VIEW_ID       = "oic.simulator.serviceprovider.view.metaproperties";
+    public static final String        VIEW_ID       = "oic.simulator.serviceprovider.view.metaproperties";
 
-    private TableViewer                 tableViewer;
+    private TableViewer               tableViewer;
 
-    private final String[]              columnHeaders = { "Property", "Value" };
+    private final String[]            columnHeaders = { "Property", "Value" };
 
-    private final Integer[]             columnWidth   = { 150, 150 };
+    private final Integer[]           columnWidth   = { 150, 150 };
 
-    private ISelectionChangedUIListener resourceSelectionChangedListener;
+    private ISelectionChangedListener resourceSelectionChangedListener;
 
-    private ResourceManager             resourceManagerRef;
+    private ResourceManager           resourceManagerRef;
 
-    private List<MetaProperty>          properties;
+    private List<MetaProperty>        properties;
 
-    private boolean                     enable_edit;
-    private Button                      editBtn;
-    private Button                      cancelBtn;
+    private boolean                   enable_edit;
+    private Button                    editBtn;
+    private Button                    cancelBtn;
 
     public MetaPropertiesView() {
 
         resourceManagerRef = Activator.getDefault().getResourceManager();
 
-        resourceSelectionChangedListener = new ISelectionChangedUIListener() {
+        resourceSelectionChangedListener = new ISelectionChangedListener() {
 
             @Override
             public void onResourceSelectionChange(final Resource resource) {

@@ -127,9 +127,6 @@ public class SimulatorResourceModel {
      *         corresponding {@link SimulatorResourceAttribute} as value.
      */
     public Map<String, SimulatorResourceAttribute> getAttributes() {
-        if (mValues.size() == 0)
-            return null;
-
         Map<String, SimulatorResourceAttribute> attributes = new HashMap<>();
         for (Map.Entry<String, AttributeValue> entry : mValues.entrySet()) {
             SimulatorResourceAttribute attribute = new SimulatorResourceAttribute(
