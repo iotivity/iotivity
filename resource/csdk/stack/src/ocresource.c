@@ -305,6 +305,10 @@ OCStackResult BuildVirtualCollectionResourceResponse(const OCResourceCollectionP
     if (resourcePtr->tags && !resourcePtr->tags->baseURI)
     {
         resourcePtr->tags->baseURI = OICStrdup(devAddr->addr);
+        if (resourcePtr->tags->port == 0 && devAddr->port != 0)
+        {
+            resourcePtr->tags->port = devAddr->port;
+        }
     }
     OCDiscoveryCollectionPayloadAddResource(payload, resourcePtr->tags, resourcePtr->setLinks);
     return OC_STACK_OK;
@@ -569,9 +573,9 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
 
 #ifdef WITH_RD
 static OCStackResult checkResourceExistsAtRD(const char *interfaceType, const char *resourceType,
-    OCResourceCollectionPayload **repPayload)
+    OCResourceCollectionPayload **repPayload, OCDevAddr *devAddr)
 {
-    if (OCRDCheckPublishedResource(interfaceType, resourceType, repPayload) == OC_STACK_OK)
+    if (OCRDCheckPublishedResource(interfaceType, resourceType, repPayload, devAddr) == OC_STACK_OK)
     {
         return OC_STACK_OK;
     }
@@ -622,14 +626,15 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                     if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
                     {
                         OCResourceCollectionPayload *repPayload;
-                        discoveryResult = checkResourceExistsAtRD(filterOne, filterTwo, &repPayload);
+                        OCDevAddr devAddr;
+                        discoveryResult = checkResourceExistsAtRD(filterOne, filterTwo, &repPayload, &devAddr);
                         if (discoveryResult != OC_STACK_OK)
                         {
                              break;
                         }
                         discoveryResult = BuildVirtualCollectionResourceResponse(repPayload,
                                     (OCDiscoveryPayload*)payload,
-                                    &request->devAddr);
+                                    &devAddr);
                         foundResourceAtRD = true;
                     }
 #endif

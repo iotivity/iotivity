@@ -21,6 +21,7 @@
 #include <StringConstants.h>
 #include "ocpayload.h"
 #include "ocrandom.h"
+#include "oic_string.h"
 
 namespace OC
 {
@@ -81,19 +82,24 @@ namespace OC
                 {
                     while(colRes)
                     {
+                        OCDevAddr colAddr;
+                        OICStrcpy(colAddr.addr, sizeof(colAddr.addr), colRes->tags->baseURI);
                         if (colRes->tags->bitmap & OC_SECURE)
                         {
-                            m_devAddr.flags =
-                                  (OCTransportFlags)(OC_FLAG_SECURE | m_devAddr.flags);
+                            colAddr.flags =
+                                  (OCTransportFlags)(OC_FLAG_SECURE | colRes->tags->bitmap);
+                            if (colRes->tags->port != 0)
+                            {
+                               colAddr.port = colRes->tags->port;
+                            }
                         }
-
-                        if (colRes->tags->port != 0)
+                        else
                         {
-                             m_devAddr.port = colRes->tags->port;
+                            colAddr.port = colRes->tags->port;
                         }
 
                         m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                    new OC::OCResource(m_clientWrapper, m_devAddr,
+                                    new OC::OCResource(m_clientWrapper, colAddr,
                                         std::string(colRes->setLinks->href),
                                         std::string((char*)colRes->tags->di.id),
                                         (colRes->tags->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
