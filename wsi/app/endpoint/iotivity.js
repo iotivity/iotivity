@@ -202,6 +202,7 @@ putresource = function(cap,res)
     responseflag = 0;
     setTimeout(function(){
       if(responseflag == 0){
+          responseflag = 1;
           res.status(200).send("resouce is not exist");
           return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
       }
