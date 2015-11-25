@@ -330,6 +330,9 @@ OCStackResult OCRDPublish(char *addr, uint16_t port, int numArg, ... )
         goto no_memory;
     }
 
+    OCTagsLog(DEBUG, rdPayload->rdPublish->tags);
+    OCLinksLog(DEBUG, rdPayload->rdPublish->setLinks);
+
     OCDevAddr rdAddr = { 0 };
     OICStrcpy(rdAddr.addr, MAX_ADDR_STR_SIZE, addr);
     rdAddr.port = port;

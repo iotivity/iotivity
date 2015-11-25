@@ -24,6 +24,7 @@
 
 #include "payload_logging.h"
 #include "oic_malloc.h"
+#include "octypes.h"
 
 #include "rdpayload.h"
 
@@ -46,7 +47,7 @@ static void printStoragedResources(OCRDStorePublishResources *payload)
     }
 }
 
-OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *payload)
+OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *payload, const OCDevAddr *address)
 {
     OCResourceCollectionPayload *storeResource = (OCResourceCollectionPayload *)OICCalloc(1, sizeof(OCResourceCollectionPayload));
     if (!storeResource)
@@ -55,11 +56,14 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
         return OC_STACK_NO_MEMORY;
     }
 
-    OC_LOG(DEBUG, TAG, "Storing Resources ... ");
+    OC_LOG_V(DEBUG, TAG, "Storing Resources for %s:%u", address->addr, address->port);
+
+    char rdPubAddr[MAX_ADDR_STR_SIZE];
+    snprintf(rdPubAddr, MAX_ADDR_STR_SIZE, "%s:%d", address->addr, address->port);
 
     OCTagsPayload *tags = payload->tags;
-    storeResource->tags = OCCopyTagsResources(tags->n.deviceName, tags->di.id, tags->baseURI,
-        tags->bitmap, tags->port, tags->ins, tags->rts, tags->drel, tags->ttl);
+    storeResource->tags = OCCopyTagsResources(tags->n.deviceName, tags->di.id, rdPubAddr,
+        tags->bitmap, address->port, tags->ins, tags->rts, tags->drel, tags->ttl);
     if (!storeResource->tags)
     {
         OC_LOG(ERROR, TAG, "Failed allocating memory for tags.");

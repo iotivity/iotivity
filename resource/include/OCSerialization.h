@@ -21,6 +21,7 @@
 #include <StringConstants.h>
 #include "ocpayload.h"
 #include "ocrandom.h"
+#include "oic_string.h"
 
 namespace OC
 {
@@ -81,19 +82,29 @@ namespace OC
                 {
                     while(colRes)
                     {
+                        // currently support for ipv4 is provided.
+                        OCDevAddr colAddr;
+                        colAddr.adapter = OC_ADAPTER_IP;
+                        colAddr.flags   = OC_IP_USE_V4;
+                        char *ptr = strtok(colRes->tags->baseURI, ":");
+                        OICStrcpy(colAddr.addr, sizeof(colAddr.addr), ptr);
+
                         if (colRes->tags->bitmap & OC_SECURE)
                         {
-                            m_devAddr.flags =
+                            colAddr.flags =
                                   (OCTransportFlags)(OC_FLAG_SECURE | m_devAddr.flags);
                         }
-
                         if (colRes->tags->port != 0)
                         {
-                             m_devAddr.port = colRes->tags->port;
+                             colAddr.port = colRes->tags->port;
+                        }
+                        else
+                        {
+                            colAddr.port = atoi(ptr+1);
                         }
 
                         m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                    new OC::OCResource(m_clientWrapper, m_devAddr,
+                                    new OC::OCResource(m_clientWrapper, colAddr,
                                         std::string(colRes->setLinks->href),
                                         std::string((char*)colRes->tags->di.id),
                                         (colRes->tags->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
