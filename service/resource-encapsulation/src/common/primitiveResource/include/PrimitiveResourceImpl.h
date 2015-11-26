@@ -107,6 +107,21 @@ namespace OIC
             {
                 using namespace std::placeholders;
 
+                typedef OCStackResult(BaseResource::*PostFunc)(
+                        const OC::OCRepresentation&,
+                        const OC::QueryParamsMap&, OC::PostCallback);
+
+                invokeOC(m_baseResource, static_cast< PostFunc >(&BaseResource::post),
+                        ResourceAttributesConverter::toOCRepresentation(attrs),
+                        OC::QueryParamsMap{ },
+                        std::bind(safeCallback< SetCallback >, WeakFromThis(),
+                                std::move(callback), _1, _2, _3));
+            }
+
+            void requestPut(const RCSResourceAttributes& attrs, PutCallback callback)
+            {
+                using namespace std::placeholders;
+
                 typedef OCStackResult(BaseResource::*PutFunc)(
                         const OC::OCRepresentation&,
                         const OC::QueryParamsMap&, OC::PutCallback);
@@ -114,7 +129,7 @@ namespace OIC
                 invokeOC(m_baseResource, static_cast< PutFunc >(&BaseResource::put),
                         ResourceAttributesConverter::toOCRepresentation(attrs),
                         OC::QueryParamsMap{ },
-                        std::bind(safeCallback< SetCallback >, WeakFromThis(),
+                        std::bind(safeCallback< PutCallback >, WeakFromThis(),
                                 std::move(callback), _1, _2, _3));
             }
 
@@ -128,7 +143,7 @@ namespace OIC
                 invokeOC(m_baseResource, static_cast< ObserveFunc >(&BaseResource::observe),
                         OC::ObserveType::ObserveAll, OC::QueryParamsMap{ },
                         std::bind(safeObserveCallback, WeakFromThis(),
-                                                       std::move(callback), _1, _2, _3, _4));
+                                std::move(callback), _1, _2, _3, _4));
             }
 
             void cancelObserve()

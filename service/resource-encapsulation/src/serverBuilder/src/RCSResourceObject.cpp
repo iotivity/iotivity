@@ -468,7 +468,7 @@ namespace OIC
                 return handleRequestGet(request);
             }
 
-            if (request->getRequestType() == "PUT")
+            if (request->getRequestType() == "POST")
             {
                 return handleRequestSet(request);
             }
