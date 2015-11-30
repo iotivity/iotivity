@@ -482,7 +482,6 @@ namespace OIC
             assert(request != nullptr);
 
             auto attrs = getAttributesFromOCRequest(request);
-
             return sendResponse(*this, request, invokeHandler(attrs, request, m_getRequestHandler));
         }
 

@@ -34,7 +34,7 @@ public class RcsBundleInfo {
     private final String mLibraryPath;
     private final String mVersion;
 
-    private RcsBundleInfo(String id, String path, String activatorName, 
+    private RcsBundleInfo(String id, String path, String activatorName,
             String libraryPath, String version) {
         mId = id;
         mPath = path;
@@ -45,9 +45,9 @@ public class RcsBundleInfo {
 
     /**
      * API for getting the Id of the bundle
-     *
+     * 
      * @return string - Id of the bundle
-     *
+     * 
      */
     public String getID() {
         return mId;
@@ -55,9 +55,9 @@ public class RcsBundleInfo {
 
     /**
      * API for getting the path of the bundle
-     *
+     * 
      * @return path - path of the bundle
-     *
+     * 
      */
     public String getPath() {
         return mPath;
@@ -65,9 +65,9 @@ public class RcsBundleInfo {
 
     /**
      * API for setting the Activator name for the bundle
-     *
+     * 
      * @return string - Name of the activator
-     *
+     * 
      */
     public String getActivatorName() {
         return mActivatorName;
@@ -75,9 +75,9 @@ public class RcsBundleInfo {
 
     /**
      * API for getting the library path for the bundle
-     *
+     * 
      * @return string - Library path in string form
-     *
+     * 
      */
     public String getLibraryPath() {
         return mLibraryPath;
@@ -85,9 +85,9 @@ public class RcsBundleInfo {
 
     /**
      * API for getting the version of the bundle
-     *
+     * 
      * @return string - version of the bundle
-     *
+     * 
      */
     public String getVersion() {
         return mVersion;

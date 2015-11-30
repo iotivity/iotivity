@@ -157,6 +157,16 @@ namespace OIC
             return m_java_bundle;
         }
 
+        void BundleInfoInternal::setSoBundle(bool soBundle)
+        {
+            m_so_bundle = soBundle;
+        }
+
+        bool BundleInfoInternal::getSoBundle()
+        {
+            return m_so_bundle;
+        }
+
         void BundleInfoInternal::setActivatorName( const std::string &activatorName)
         {
             m_activator_name = activatorName;
@@ -220,6 +230,7 @@ namespace OIC
             m_java_bundle = source->getJavaBundle();
             m_activator = source->getBundleActivator();
             m_bundleHandle = source->getBundleHandle();
+            m_activator_name = source->getActivatorName();
         }
     }
 }

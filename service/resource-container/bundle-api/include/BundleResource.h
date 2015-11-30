@@ -97,6 +97,8 @@ namespace OIC
                 */
                 void setAttributes(RCSResourceAttributes &attrs);
 
+                void setAttributes(RCSResourceAttributes &attrs, bool notify);
+
                 /**
                 * Return the value of an attribute
                 *

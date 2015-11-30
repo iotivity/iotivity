@@ -54,6 +54,18 @@ class Light
         }
 };
 
+class LightSensor
+{
+public:
+        int m_intensity;
+
+        std::string m_name;
+
+        LightSensor() : m_intensity(0), m_name("")
+        {
+        }
+};
+
 Light mylight;
 
 int observe_count()
@@ -195,7 +207,7 @@ void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, con
     }
 }
 
-// Local function to put a different state for this resource
+// Local function to put a different state for this re<< std::endlsource
 void postLightRepresentation(std::shared_ptr<OCResource> resource)
 {
     if (resource)
@@ -306,14 +318,11 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
             std::cout << "Resource URI: " << rep.getUri() << std::endl;
 
             std::cout << "Payload: " << rep.getPayload() << std::endl;
+            std::cout << "On-off: " << rep.getValueToString("on-off") << std::endl;
 
             rep.getValue("on-off", mylight.m_on_off);
-            rep.getValue("dim", mylight.m_dim);
-            rep.getValue("color", mylight.m_color);
 
             std::cout << "\ton-off: " << mylight.m_on_off << std::endl;
-            std::cout << "\tcolor: " << mylight.m_color << std::endl;
-            std::cout << "\tdim: " << mylight.m_dim << std::endl;
 
             putLightRepresentation(curResource);
         }
@@ -354,6 +363,33 @@ void onGetForDISensor(const HeaderOptions &headerOptions, const OCRepresentation
     }
 }
 
+
+void onGetForLightIntensitySensor(const HeaderOptions &headerOptions, const OCRepresentation &rep,
+                      const int eCode)
+{
+    (void)headerOptions;
+    try
+    {
+        if (eCode == OC_STACK_OK)
+        {
+            std::cout << "GET request was successful" << std::endl;
+            //std::cout << "Resource URI: " << DISensorResource->uri() << std::endl;
+
+            std::cout << "Payload: " << rep.getPayload() << std::endl;
+
+            std::cout << "\lightIntensity: " << rep.getValue<int>("lightintensity") << std::endl;
+        }
+        else
+        {
+            std::cout << "onGET Response error: " << eCode << std::endl;
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Exception: " << e.what() << " in onPut" << std::endl;
+    }
+}
+
 // Local function to get representation of light resource
 void getLightRepresentation(std::shared_ptr<OCResource> resource)
 {
@@ -368,6 +404,20 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
     }
 }
 
+// Local function to get representation of light resource
+void getLightIntensityRepresentation(std::shared_ptr<OCResource> resource)
+{
+    if (resource)
+    {
+        std::cout << "Getting Light Representation..." << std::endl;
+        // Invoke resource's get API with the callback parameter
+
+        QueryParamsMap test;
+        std::cout << "Sending request to: " << resource->uri() << std::endl;
+        resource->get(test, &onGetForLightIntensitySensor);
+    }
+}
+
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
@@ -376,39 +426,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     std::string hostAddress;
     try
     {
-        {
-            std::lock_guard<std::mutex> lock(curResourceLock);
-            if (discoveredResources.find(resource->uniqueIdentifier()) == discoveredResources.end())
-            {
-                std::cout << "Found resource " << resource->uniqueIdentifier() <<
-                          " for the first time on server with ID: " << resource->sid() << std::endl;
-                discoveredResources[resource->uniqueIdentifier()] = resource;
 
-                if (resourceURI.find("/discomfortIndex") != std::string::npos)
-                {
-                    std::cout << "discomfortIndex found !!! " << std::endl;
-
-                    DISensorResource = resource;
-
-                    OCRepresentation rep;
-
-                    rep.setValue("humidity", std::string("30"));
-                    rep.setValue("temperature", std::string("27"));
-
-                    resource->put(rep, QueryParamsMap(), &onPutForDISensor);
-                }
-            }
-            else
-            {
-                std::cout << "Found resource " << resource->uniqueIdentifier() << " again!" << std::endl;
-            }
-
-            if (curResource)
-            {
-                std::cout << "Found another resource, ignoring" << std::endl;
-                return;
-            }
-        }
 
         // Do some operations with resource object.
         if (resource)
@@ -427,12 +445,17 @@ void foundResource(std::shared_ptr<OCResource> resource)
             for (auto &resourceTypes : resource->getResourceTypes())
             {
                 std::cout << "\t\t" << resourceTypes << std::endl;
-
-                if (resourceTypes == "oic.r.light")
+                /*if (resourceTypes == "oic.r.light")
                 {
                     curResource = resource;
                     // Call a local function which will internally invoke get API on the resource pointer
                     getLightRepresentation(resource);
+                }*/
+                if (resourceTypes == "oic.r.lightintensity")
+                {
+                    curResource = resource;
+                    // Call a local function which will internally invoke get API on the resource pointer
+                    getLightIntensityRepresentation(resource);
                 }
             }
 
