@@ -39,6 +39,7 @@ namespace OC
 {
     static const char COAP[] = "coap://";
     static const char COAPS[] = "coaps://";
+    static const char COAP_TCP[] = "coap+tcp://";
 
     void MessageContainer::setPayload(const OCPayload* rep)
     {
@@ -651,12 +652,10 @@ namespace OC
         {
             ss << COAPS;
         }
-    #ifdef TCP_ADAPTER
         else if (m_devAddr.adapter & OC_ADAPTER_TCP)
         {
             ss << COAP_TCP;
         }
-    #endif
         else
         {
             ss << COAP;
