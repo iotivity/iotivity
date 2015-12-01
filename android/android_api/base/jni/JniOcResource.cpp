@@ -284,17 +284,12 @@ OCStackResult JniOcResource::observe(JNIEnv* env, ObserveType observeType,
     return m_sharedResource->observe(observeType, queryParametersMap, observeCallback, QoS);
 }
 
-OCStackResult JniOcResource::cancelObserve(JNIEnv* env)
-{
-    this->m_onObserveManager.removeAllListeners(env);
-    return m_sharedResource->cancelObserve();
-}
-
 OCStackResult JniOcResource::cancelObserve(JNIEnv* env, QualityOfService qos)
 {
-    //TODO confirm behavior
-    //add removal of java listeners by qos
-    this->m_onObserveManager.removeAllListeners(env);
+    if (QualityOfService::HighQos != qos)
+    {
+        this->m_onObserveManager.removeAllListeners(env);
+    }
     return m_sharedResource->cancelObserve(qos);
 }
 
@@ -1268,34 +1263,6 @@ jobject jListener, jint jQoS)
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "OcResource_observe");
-        }
-    }
-    catch (OCException& e)
-    {
-        LOGE("%s", e.reason().c_str());
-        ThrowOcException(e.code(), e.reason().c_str());
-    }
-}
-
-/*
-* Class:     org_iotivity_base_OcResource
-* Method:    cancelObserve
-* Signature: ()V
-*/
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_cancelObserve
-(JNIEnv *env, jobject thiz)
-{
-    LOGD("OcResource_cancelObserve");
-    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
-
-    try
-    {
-        OCStackResult result = resource->cancelObserve(env);
-
-        if (OC_STACK_OK != result)
-        {
-            ThrowOcException(result, "OcResource_cancelObserve");
         }
     }
     catch (OCException& e)

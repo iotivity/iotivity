@@ -127,6 +127,11 @@ void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
             m_ownerResource->removeOnObserveListener(env, m_jwListener);
             env->Throw((jthrowable)ex);
         }
+
+        if (OC_OBSERVE_DEREGISTER == sequenceNumber)
+        {
+            checkExAndRemoveListener(env);
+        }
     }
 
     if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
