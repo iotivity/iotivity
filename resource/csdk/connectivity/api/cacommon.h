@@ -26,10 +26,17 @@
 #ifndef CA_COMMON_H_
 #define CA_COMMON_H_
 
+#ifdef TCP_ADAPTER
+#define HAVE_SYS_POLL_H
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -511,6 +518,7 @@ typedef struct
         void *svrlist;          /**< unicast IPv4 TCP server information*/
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
+        int shutdownFds[2];     /**< shutdown pipe */
         int maxfd;              /**< highest fd (for select) */
         bool started;           /**< the TCP adapter has started */
         bool terminate;         /**< the TCP adapter needs to stop */
