@@ -133,39 +133,137 @@ tool isn't installed. An message will be displayed, please follow the message
 to skip it.
 
 
-=== Build IoTivity project on Linux(Ubuntu) ===
+=== Build IoTivity project ===
 
-1. Build IoTivity project for Linux
-      $ cd <top directory of the project>
-      $ sudo apt-get install libboost-dev libexpat1-dev libboost-thread-dev libssl-dev
-      $ scons
+Linux:
+ * Possible values for <TARGET_TRANSPORT> are: ALL, IP, BLE
 
-2. Build IoTivity project for Android
-      $ cd <top directory of the project>
-      $ scons TARGET_OS=android TARGET_ARCH=xxx
-(xxx can be x86, armeabi, armeabi-v7a, armeabi-v7a-hard. To see all of its
-allowed value, please execute command 'scons TARGET_OS=android -Q -h')
+1. Go to root directory
+    $ cd <top directory of the project>
+    $ sudo apt-get install libboost-dev libboost-thread-dev libssl-dev libtool
 
-3. Build IoTivity project for Arduino
-      $ cd <top directory of the project>
-      $ sudo apt-get install dos2unix
-      $ scons TARGET_OS=arduino TARGET_ARCH=xxx BOARD=yyy SHIELD=zzz
-(xxx can be avr, arm; yyy is the name of the board, zzz is the shield type, to
-get allowed values run: scons TARGET_OS=arduino TARGET_ARCH=xxx SHIELD=zzz -h.
-You may see a option 'CPU' in the output of above command line, that's due to
-some boards have different processors, to specify the processor, add 'CPU=zzz'
-in the command line. If no 'CPU' option exists, that means the board only
-support one kind of processor, it's unnecessary to specify it)
+2. Execute following command(s) to start build based on transport selection required
 
-4. Build Iotivity project for Tizen
-      $ cd <top directory of the project>
-      $ sh gbsbuild.sh
+    -> Building for all transports :
+    $ scons TARGET_OS=linux TARGET_TRANSPORT=ALL
+
+    -> Building for a specific transport :
+    $ scons TARGET_OS=linux TARGET_TRANSPORT=IP
+
+    -> Building for multiple transports :
+    $ scons TARGET_OS=linux TARGET_TRANSPORT=IP,BLE TARGET_ARCH=xxx
+
+    -> Clean Build (all transports) :
+    $ scons TARGET_OS=linux TARGET_TRANSPORT=ALL -c (for clean)
+
+Android:
+ * Possible values for <TARGET_TRANSPORT> are: ALL, IP, BT, BLE
+ * Possible values for <TARGET_ARCH> are: x86, armeabi, armeabi-v7a, armeabi-v7a-hard
+   (To see all of its allowed value, please execute command 'scons TARGET_OS=android -Q -h')
+
+1. Go to root directory
+    $ cd <top directory of the project>
+
+2. Execute following command(s) to start build based on transport selection required
+
+    -> Building for all transports :
+    $ scons TARGET_OS=android TARGET_TRANSPORT=ALL TARGET_ARCH=xxx
+
+    -> Building for a specific transport :
+    $ scons TARGET_OS=android TARGET_TRANSPORT=IP TARGET_ARCH=xxx
+
+    -> Building for multiple transports :
+    $ scons TARGET_OS=android TARGET_TRANSPORT=IP,BT,BLE TARGET_ARCH=xxx
+
+    -> Clean Build (all transports) :
+    $ scons TARGET_OS=android TARGET_TRANSPORT=ALL -c (for clean)
+
+Tizen:
+ * Possible values for <TARGET_TRANSPORT> are: ALL, IP, BT, BLE
+
+ 1. Go to root directory
+    $ cd <top directory of the project>
+
+ 2. Execute following command(s) to start build based on transport selection required
+
+    -> Building for all transports :
+    $ scons TARGET_OS=tizen TARGET_TRANSPORT=ALL
+
+    -> Building for a specific transport :
+    $ scons TARGET_OS=tizen TARGET_TRANSPORT=IP
+
+    -> Building for multiple transports :
+    $ scons TARGET_OS=tizen TARGET_TRANSPORT=IP,BT,BLE TARGET_ARCH=xxx
+
+    -> Clean Build (all transports) :
+    $ scons TARGET_OS=tizen TARGET_TRANSPORT=ALL -c (for clean)
+
 (we provide the spec file required by gbs tool at toools/tizen directory.
 gbs is default build tool for Tizen platfrom, we can refer the following
 wiki to setup Tizen development environment:
 https://source.tizen.org/documentation/developer-guide/getting-started-guide)
 
-Note: Currently most IoTivity project doesn't support Windows, so you can't set
+Arduino:
+ * Possible values for <TARGET_TRANSPORT> are: IP, BLE
+ * Possible values for <TARGET_ARCH> are: arv, arm
+    (arv: arduino due, arm: arduino mega)
+ * Possible values for <BOARD> are: arduino_due_x_dbg, arduino_due_x, mega
+ * Possible values for <SHIELD> are: ETH, WIFI
+    (It is required in the case of the arduino due.)
+
+ 1. Go to root directory
+    $ cd <top directory of the project>
+    $ sudo apt-get install dos2unix
+
+ 2. Execute following command(s) to start build based on transport selection required
+
+    -> Building for a specific transport :
+    $ scons TARGET_OS=arduino TARGET_ARCH=xxx BOARD=yyy SHIELD=zzz
+
+(To get allowed values run: scons TARGET_OS=arduino TARGET_ARCH=xxx SHIELD=zzz -h.
+You may see a option 'CPU' in the output of above command line, that's due to
+some boards have different processors, to specify the processor, add 'CPU=zzz'
+in the command line. If no 'CPU' option exists, that means the board only
+support one kind of processor, it's unnecessary to specify it)
+
+Mac OSX:
+ * Possible values for <SYS_VERSION> are: OSX version, e.g. 10.9
+
+ 1. Go to root directory
+    $ cd <top directory of the project>
+
+ 2. Execute following command(s) to start build based on transport selection required
+
+    -> Building for a specific transport :
+    $ scons SYS_VERSION=yyy
+
+IOS:
+ * Possible values for <TARGET_ARCH> are: i386, x86_64, armv7, armv7s, arm64
+ * Possible values for <SYS_VERSION> are: IOS version, e.g. 7.0
+
+ 1. Go to root directory
+    $ cd <top directory of the project>
+
+ 2. Execute following command(s) to start build based on transport selection required
+
+    -> Building for a specific transport :
+    $ scons TARGET_OS=ios TARGET_ARCH=xxx SYS_VERSION=yyy
+
+* Additional options
+ * VERBOSE=true or false (Show compilation)
+ * RELEASE=true or false (Build for release?)
+ * LOGGING=true or false (Enable stack logging)
+ * SECURED=1 or 0 (Build with DTLS)
+ * TEST=1 or 0 (Run unit tests)
+ * SECURED=1 or 0 (Build with DTLS)
+ * BUILD_SAMPLE=ON or OFF (Build with sample)
+ * ROUTING=GW or EP (Enable routing)
+ * WITH_TCP=true or false (Enable CoAP over TCP Transport, arduino is not supported)
+ * WITH_RA=true or false (Build with Remote Access module)
+ * WITH_RD=1 or 0 (Build including Resource Directory)
+ * SIMULATOR=true or false (Build with simulator module)
+
+Note1: Currently most IoTivity project doesn't support Windows, so you can't set
 TARGET_OS to 'windows' except the project support Windows.
 
 That's to say if the project doesn't support Windows, run:
@@ -174,25 +272,7 @@ or run on Windows
       $ scons
 may always fail.
 
-
-=== Build IoTivity project on Mac OSX ===
-
-1. Build IoTivity project for Mac OSX
-      $ cd <top directory of the project>
-      $ scons SYS_VERSION=yyy
-(yyy is the OSX version, e.g. 10.9)
-
-2. Build IoTivity project for Android(It's the same as on Ubuntu)
-      $ cd <top directory of the project>
-      $ scons TARGET_OS=android TARGET_ARCH=xxx
-(xxx can be x86, armeabi, armeabi-v7a, armeabi-v7a-hard)
-
-3. Build IoTivity project for IOS
-      $ cd <top directory of the project>
-      $ scons TARGET_OS=ios TARGET_ARCH=xxx SYS_VERSION=yyy
-(xxx can be i386, x86_64, armv7, armv7s, arm64, yyy is IOS version, e.g. 7.0)
-
-Note:
+Note2:
 1) for convenience, a script (auto_build.sh) is provided to run possible build
 at once. Following is the usage:
 
