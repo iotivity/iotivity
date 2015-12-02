@@ -68,7 +68,7 @@ if with_ra_ibb:
 		Exit(2)
 
 	print 'Building with ' + SRC_NAME + ' Completely.'
-	env.AppendUnique(CPPPATH = [INC_PATH], RALIBS = ['strophe', 'ssl', 'crypto', 'resolv', 'expat'], RALIBPATH = [LIB_PATH], RARPATH = [LIB_PATH])
+	env.AppendUnique(CPPPATH = [INC_PATH], RALIBS = ['strophe', 'ssl', 'crypto', 'resolv'], RALIBPATH = [LIB_PATH], RARPATH = [LIB_PATH])
 
 if env.GetOption('clean') :
 	act = env.Action(['cd ' + SRC_PATH, 'make clean'])

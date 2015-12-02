@@ -5,7 +5,7 @@
 command in this directory)
 
     Install external libraries:
-      $ sudo apt-get install libboost-dev libboost-program-options-dev libexpat1-dev libboost-thread-dev uuid-dev libssl-dev libtool
+      $ sudo apt-get install libboost-dev libboost-program-options-dev libboost-thread-dev uuid-dev libssl-dev libtool
 
     Build release binaries:
       $ scons
@@ -123,7 +123,7 @@ by doing the following:
 
 
 * 3. External libraries
-IoTivity project depends on some external libraries, such as boost, expat ...
+IoTivity project depends on some external libraries, such as boost ...
 During building, the existence of external library will be checked, if it doesn't
 exist, the build script will try to download, unpack and build the library or
 notify user to install it.
@@ -137,7 +137,7 @@ to skip it.
 
 1. Build IoTivity project for Linux
       $ cd <top directory of the project>
-      $ sudo apt-get install libboost-dev libexpat1-dev libboost-thread-dev libssl-dev libtool
+      $ sudo apt-get install libboost-dev libboost-thread-dev libssl-dev libtool
       $ scons
 
 2. Build IoTivity project for Android
