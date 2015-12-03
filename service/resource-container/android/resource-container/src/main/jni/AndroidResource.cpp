@@ -62,7 +62,7 @@ void AndroidResource::initAttributes()
 AndroidResource::AndroidResource(JNIEnv *env, jobject obj, jobject bundleResource,
                                        string bundleId, jobjectArray attributes)
 {
-    LOGD("Creating android resource");
+    LOGD("Creating android resource, bundleId: %s", bundleId.c_str());
     (void) obj;
     m_env = env;
     int stringCount = m_env->GetArrayLength(attributes);
@@ -87,10 +87,43 @@ AndroidResource::AndroidResource(JNIEnv *env, jobject obj, jobject bundleResourc
     LOGD("Looking for getter.");
     m_attributeGetRequestHandler = m_env->GetMethodID(m_bundleResourceClass,
             "handleGetAttributesRequest", "()Lorg/iotivity/service/resourcecontainer/RcsResourceAttributes;");
-    jclass androidBundleSoftSensorResourceClass = m_env->FindClass("org/iotivity/service/resourcecontainer/AndroidBundleSoftSensorResource");
-    m_onUpdatedInputResource = m_env->GetMethodID(androidBundleSoftSensorResourceClass, "onUpdatedInputResource", "(java/lang/String,java/util/Vector)V");
-    m_vectorClazz = m_env->FindClass("java/util/Vector");
-    m_vectorAddMethod =  m_env->GetMethodID(m_vectorClazz, "add", "(java/lang/Object)V");
+    //LOGD("Looking for softSensorResource class.");
+    //jclass androidBundleSoftSensorResourceClass = m_env->FindClass("org/iotivity/service/resourcecontainer/AndroidBundleSoftSensorResource");
+    LOGD("Looking for onUpdatedInputResource2.");
+    jclass superclass = m_env->GetSuperclass(m_bundleResourceClass);
+
+    jclass classClass = m_env->FindClass("java/lang/Class");
+
+    // Find the getName() method on the class object
+    jmethodID mid = env->GetMethodID(classClass, "getName", "()Ljava/lang/String;");
+
+    // Call the getName() to get a jstring object back
+    jstring strObj = (jstring)env->CallObjectMethod(superclass, mid);
+
+    // Now get the c string from the java jstring object
+    const char* str = env->GetStringUTFChars(strObj, NULL);
+
+    LOGD("Name of super class is %s", str);
+
+    //check for softsensor resource
+    if(strcmp("org.iotivity.service.resourcecontainer.AndroidBundleSoftSensorResource", str) == 0){
+       m_onUpdatedInputResource = m_env->GetMethodID(m_bundleResourceClass, "onUpdatedInputResource", "(Ljava/lang/String;Ljava/util/Vector;)V");
+       if (env->ExceptionCheck()) {
+           env->ExceptionDescribe();
+       }
+       LOGD("Looking up vector.");
+       m_vectorClazz = m_env->FindClass("java/util/Vector");
+       if (env->ExceptionCheck()) {
+               env->ExceptionDescribe();
+       }
+       LOGD("Looking up vector add method.");
+       m_vectorAddMethod =  m_env->GetMethodID(m_vectorClazz, "add", "(Ljava/lang/Object;)Z");
+       if (env->ExceptionCheck()) {
+              env->ExceptionDescribe();
+       }
+    }
+
+
     LOGD("Get java vm.");
     int jvmAccess = m_env->GetJavaVM(&m_jvm);
     LOGD("JVM: %s", (jvmAccess ? "false" : "true") );

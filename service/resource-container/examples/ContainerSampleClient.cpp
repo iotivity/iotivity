@@ -116,6 +116,45 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep,
 
 }
 
+
+void onLightIntensityObserve(const HeaderOptions headerOptions, const OCRepresentation &rep,
+               const int &eCode, const int &sequenceNumber)
+{
+    (void)headerOptions;
+    try
+    {
+        if (eCode == OC_STACK_OK)
+        {
+            std::cout << "OBSERVE RESULT:" << std::endl;
+            std::cout << "\tSequenceNumber: " << sequenceNumber << std::endl;
+
+
+            std::cout << "\tintensity: " << rep.getValue<int>("intensity") << std::endl;
+
+
+            if (observe_count() > 10)
+            {
+                std::cout << "Cancelling Observe..." << std::endl;
+                OCStackResult result = curResource->cancelObserve();
+
+                std::cout << "Cancel result: " << result << std::endl;
+                sleep(10);
+                std::cout << "DONE" << std::endl;
+                std::exit(0);
+            }
+        }
+        else
+        {
+            std::cout << "onObserve Response error: " << eCode << std::endl;
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Exception: " << e.what() << " in onObserve" << std::endl;
+    }
+
+}
+
 void onPost2(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
     (void)headerOptions;
@@ -377,7 +416,19 @@ void onGetForLightIntensitySensor(const HeaderOptions &headerOptions, const OCRe
 
             std::cout << "Payload: " << rep.getPayload() << std::endl;
 
-            std::cout << "\lightIntensity: " << rep.getValue<int>("lightintensity") << std::endl;
+            std::cout << "\tlightIntensity: " << rep.getValue<int>("intensity") << std::endl;
+
+            // iterating over all elements
+            OCRepresentation::const_iterator itr = rep.begin();
+            OCRepresentation::const_iterator endItr = rep.end();
+
+            for(;itr!=endItr;++itr)
+            {
+                std::cout << itr->attrname() << " ";
+                std::cout << itr->getValue<int>() << std::endl;
+            }
+
+            curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onLightIntensityObserve);
         }
         else
         {
@@ -451,7 +502,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
                     // Call a local function which will internally invoke get API on the resource pointer
                     getLightRepresentation(resource);
                 }*/
-                if (resourceTypes == "oic.r.lightintensity")
+                if (resourceTypes == "oic.r.lightsensor")
                 {
                     curResource = resource;
                     // Call a local function which will internally invoke get API on the resource pointer

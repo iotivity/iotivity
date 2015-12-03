@@ -744,6 +744,7 @@ namespace OIC
 
         void ResourceContainerImpl::discoverInputResource(const std::string &outputResourceUri)
         {
+            OC_LOG_V(DEBUG, CONTAINER_TAG, "Discover input resource%s", outputResourceUri.c_str());
             auto foundOutputResource = m_mapResources.find(outputResourceUri);
             auto resourceProperty = foundOutputResource->second->m_mapResourceProperty;
 

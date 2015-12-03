@@ -98,10 +98,10 @@ public class ResourceContainerActivity extends Activity {
         super.onCreate(savedInstanceState);
         context = this;
 
-        if (!isWifiConnected()) {
+        /*if (!isWifiConnected()) {
             showWifiUnavailableDialog();
             return;
-        }
+        }*/
 
         configurePlatform();
         CopyAssetsToSDCard();
