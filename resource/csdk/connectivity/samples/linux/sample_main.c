@@ -1647,6 +1647,12 @@ bool read_file(const char* name, CAPayload_t* bytes, size_t* length)
     // Get file length
     fseek(file, 0, SEEK_END);
     fileLen = ftell(file);
+    if (-1 == fileLen)
+    {
+        fprintf(stderr, "Failed to get file length\n");
+        fclose(file);
+        return false;
+    }
     fseek(file, 0, SEEK_SET);
 
     // Allocate memory
