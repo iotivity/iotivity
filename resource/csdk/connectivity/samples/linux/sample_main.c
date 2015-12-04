@@ -1206,7 +1206,13 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
                               .payloadSize = 0,
                               .resourceUri = resourceUri };
 
-    if(CA_MSG_RESET != messageType)
+    if (CA_MSG_RESET == messageType ||
+        (CA_MSG_ACKNOWLEDGE == messageType && CA_EMPTY == responseCode))
+    {
+        printf("RESET or ACK/EMPTY. there will be not payload/option\n");
+
+    }
+    else
     {
         responseData.token = (info != NULL) ? info->token : NULL;
         responseData.tokenLength = (info != NULL) ? info->tokenLength : 0;
