@@ -19,7 +19,7 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 ##
-# linux sample app  build script (Sample Client & Sample Server)
+# linux RE Secure sample apps  build script (Secure Server &  Client)
 ##
 Import('env')
 
@@ -37,42 +37,40 @@ sample_env.AppendUnique(LIBS = [
     'oc_logger',
     'connectivity_abstraction',
     'coap',
-    'pthread'
+    'pthread',
+    'tinydtls'
     ])
-sample_env.AppendUnique(CPPPATH = ['../../include'])
-
-if env.get('SECURED') == '1':
-    sample_env.AppendUnique(LIBS = ['tinydtls'])
+sample_env.AppendUnique(CPPPATH = ['../../../include'])
 
 if 'rt' in sample_env.get('LIBS'):
     sample_env.Append(LIBS = ['rt'])
 
 ######################################################################
-# ##### Client #####
+# ##### Authorized Client #####
 ######################################################################
 client_env = sample_env.Clone()
 client_env.AppendUnique(LIBS = 'rcs_client')
 
-sampleResourceClient = client_env.Program('sampleResourceClient', 'SampleResourceClient.cpp')
-nestedAttributesClient = client_env.Program('nestedAttributesClient', 'NestedAttributesClient.cpp')
-
-client_env.InstallTarget(sampleResourceClient, 'sampleResourceClient')
-client_env.InstallTarget(nestedAttributesClient, 'nestedAttributesClient')
+sampleAuthorizedClient = client_env.Program('sampleAuthorizedClient', 'SampleAuthorizedClient.cpp')
+client_env.InstallTarget(sampleAuthorizedClient, 'sampleAuthorizedClient')
 
 ######################################################################
-# ##### Server #####
+# ##### Secure Server #####
 ######################################################################
 server_env = sample_env.Clone()
 server_env.AppendUnique(LIBS = 'rcs_server')
 
-sampleResourceServer = server_env.Program('sampleResourceServer', 'SampleResourceServer.cpp')
-nestedAttributesServer = server_env.Program('nestedAttributesServer', 'NestedAttributesServer.cpp')
-
-server_env.InstallTarget(sampleResourceServer, 'sampleResourceServer')
-server_env.InstallTarget(nestedAttributesServer, 'nestedAttributesServer')
+sampleSecureServer = server_env.Program('sampleSecureServer', 'SampleSecureServer.cpp')
+server_env.InstallTarget(sampleSecureServer, 'sampleSecureServer')
 
 ######################################################################
-# ##### Build the RE Secure Resource Example #####
+# ##### Copy the client & Server credentials files to build directory #####
 ######################################################################
-if env.get('SECURED') == '1':
-	SConscript('secureResourceExample/SConscript')
+
+src_dir = sample_env.get('SRC_DIR')
+svr_db_src_dir = src_dir + '/service/resource-encapsulation/examples/linux/secureResourceExample/'
+svr_db_build_dir = env.get('BUILD_DIR') +'/service/resource-encapsulation/examples/linux/secureResourceExample/'
+sample_env.Alias("install", sample_env.Install( svr_db_build_dir,
+                svr_db_src_dir + 'oic_svr_db_client.json'))
+sample_env.Alias("install", sample_env.Install( svr_db_build_dir,
+                svr_db_src_dir + 'oic_svr_db_server.json'))

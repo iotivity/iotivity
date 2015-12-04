@@ -154,6 +154,12 @@ namespace OIC
             return *this;
         }
 
+        RCSResourceObject::Builder& RCSResourceObject::Builder::setSecureFlag(
+            bool secureFlag)
+        {
+            m_properties = ::makePropertyFlags(m_properties, OC_SECURE, secureFlag);
+            return *this;
+        }
         RCSResourceObject::Builder& RCSResourceObject::Builder::setAttributes(
                 const RCSResourceAttributes& attrs)
         {
