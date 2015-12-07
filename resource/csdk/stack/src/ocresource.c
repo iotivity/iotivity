@@ -670,8 +670,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         }
         else
         {
-            payload = (OCPayload*) OCDevicePayloadCreate(OC_RSRVD_DEVICE_URI,
-                    (const uint8_t*) &deviceId->id, savedDeviceInfo.deviceName,
+            payload = (OCPayload*) OCDevicePayloadCreate((const uint8_t*) &deviceId->id, savedDeviceInfo.deviceName,
                     OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
             if (!payload)
             {

@@ -407,53 +407,30 @@ static int64_t OCConvertDevicePayload(OCDevicePayload* payload, uint8_t* outPayl
     int64_t err = 0;
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
-    CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
+    CborEncoder repMap;
+    err = err | cbor_encoder_create_map(&encoder, &repMap, CborIndefiniteLength);
 
-    {
-        CborEncoder map;
-        err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
+    // Device ID
+    err = err | cbor_encode_text_string(&repMap, OC_RSRVD_DEVICE_ID,
+            sizeof(OC_RSRVD_DEVICE_ID) - 1);
+    err = err | cbor_encode_byte_string(&repMap, payload->sid, UUID_SIZE);
 
-        // uri
-        err = err | ConditionalAddTextStringToMap(&map, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
-                payload->uri);
+    // Device Name
+    err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DEVICE_NAME,
+            sizeof(OC_RSRVD_DEVICE_NAME) - 1,
+            payload->deviceName);
 
-        // Rep Map
-        {
-            CborEncoder repMap;
-            err = err | cbor_encode_text_string(&map, OC_RSRVD_REPRESENTATION,
-                    sizeof(OC_RSRVD_REPRESENTATION) - 1);
-            err = err | cbor_encoder_create_map(&map, &repMap, CborIndefiniteLength);
+    // Device Spec Version
+    err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SPEC_VERSION,
+            sizeof(OC_RSRVD_SPEC_VERSION) - 1,
+            payload->specVersion);
 
-            // Device ID
-            err = err | cbor_encode_text_string(&repMap, OC_RSRVD_DEVICE_ID,
-                    sizeof(OC_RSRVD_DEVICE_ID) - 1);
-            err = err | cbor_encode_byte_string(&repMap, payload->sid, UUID_SIZE);
+    // Device data Model Version
+    err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DATA_MODEL_VERSION,
+            sizeof(OC_RSRVD_DATA_MODEL_VERSION) - 1,
+            payload->dataModelVersion);
 
-            // Device Name
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DEVICE_NAME,
-                    sizeof(OC_RSRVD_DEVICE_NAME) - 1,
-                    payload->deviceName);
-
-            // Device Spec Version
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SPEC_VERSION,
-                    sizeof(OC_RSRVD_SPEC_VERSION) - 1,
-                    payload->specVersion);
-
-            // Device data Model Version
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DATA_MODEL_VERSION,
-                    sizeof(OC_RSRVD_DATA_MODEL_VERSION) - 1,
-                    payload->dataModelVersion);
-
-            err = err | cbor_encoder_close_container(&map, &repMap);
-        }
-
-        // Close Map
-        err = err | cbor_encoder_close_container(&rootArray, &map);
-    }
-
-    // Close main array
-    err = err | cbor_encoder_close_container(&encoder, &rootArray);
+    err = err | cbor_encoder_close_container(&encoder, &repMap);
 
     return checkError(err, &encoder, outPayload, size);
 }

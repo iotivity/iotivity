@@ -47,8 +47,6 @@ namespace OC
 // CBOR->OCPayload and OCPayload->OCRepresentation conversions
 namespace OCRepresentationEncodingTest
 {
-
-    static const char uri1[] = "/testuri";
     static const uint8_t sid1[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
     static const char devicename1[] = "device name";
     static const char specver1[] = "spec version";
@@ -57,13 +55,11 @@ namespace OCRepresentationEncodingTest
     TEST(DeviceDiscoveryEncoding, Normal)
     {
         OCDevicePayload* device = OCDevicePayloadCreate(
-                uri1,
                 sid1,
                 devicename1,
                 specver1,
                 dmver1);
 
-        EXPECT_STREQ(uri1, device->uri);
         EXPECT_STREQ(devicename1, device->deviceName);
         EXPECT_STREQ(specver1, device->specVersion);
         EXPECT_STREQ(dmver1, device->dataModelVersion);
@@ -82,7 +78,6 @@ namespace OCRepresentationEncodingTest
                     cborData, cborSize));
         OICFree(cborData);
 
-        EXPECT_STREQ(device->uri, ((OCDevicePayload*)parsedDevice)->uri);
         EXPECT_STREQ(device->deviceName, ((OCDevicePayload*)parsedDevice)->deviceName);
         EXPECT_STREQ(device->specVersion, ((OCDevicePayload*)parsedDevice)->specVersion);
         EXPECT_STREQ(device->dataModelVersion, ((OCDevicePayload*)parsedDevice)->dataModelVersion);
@@ -94,15 +89,14 @@ namespace OCRepresentationEncodingTest
         mc.setPayload(parsedDevice);
         EXPECT_EQ(1u, mc.representations().size());
         const OC::OCRepresentation& r = mc.representations()[0];
-        EXPECT_STREQ(uri1, r.getUri().c_str());
         EXPECT_STREQ(devicename1, r.getValue<std::string>(OC_RSRVD_DEVICE_NAME).c_str());
         EXPECT_STREQ(specver1, r.getValue<std::string>(OC_RSRVD_SPEC_VERSION).c_str());
         EXPECT_STREQ(dmver1, r.getValue<std::string>(OC_RSRVD_DATA_MODEL_VERSION).c_str());
 
-
         OCPayloadDestroy(parsedDevice);
     }
 
+    static const char uri1[] = "/testuri";
     static char pfid1[] = "pfid";
     static char mfgnm1[] = "mfgnm";
     static char mfgurl1[] = "mfgurl";
