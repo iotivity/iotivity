@@ -213,8 +213,8 @@ OCDevicePayload* OCDevicePayloadCreate(const char* uri, const uint8_t* sid, cons
 void OCDevicePayloadDestroy(OCDevicePayload* payload);
 
 // Platform Payload
-OCPlatformPayload* OCPlatformPayloadCreate(const char* uri, const OCPlatformInfo* platformInfo);
-OCPlatformPayload* OCPlatformPayloadCreateAsOwner(char* uri, OCPlatformInfo* platformInfo);
+OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo);
+OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo);
 
 void OCPlatformPayloadDestroy(OCPlatformPayload* payload);
 

@@ -120,9 +120,8 @@ namespace OCRepresentationEncodingTest
     {
         OCPlatformInfo info {pfid1, mfgnm1, mfgurl1, modelnum1, dom1, pfver1, osver1, hwver1,
             fwver1, url1, time1};
-        OCPlatformPayload* platform = OCPlatformPayloadCreate(uri1, &info);
+        OCPlatformPayload* platform = OCPlatformPayloadCreate(&info);
         EXPECT_EQ(PAYLOAD_TYPE_PLATFORM, ((OCPayload*)platform)->type);
-        EXPECT_STREQ(uri1, platform->uri);
         EXPECT_STREQ(pfid1, platform->info.platformID);
         EXPECT_STREQ(mfgnm1, platform->info.manufacturerName);
         EXPECT_STREQ(mfgurl1, platform->info.manufacturerUrl);
@@ -145,7 +144,6 @@ namespace OCRepresentationEncodingTest
 
         EXPECT_EQ(platform->base.type, ((OCPlatformPayload*)parsedPlatform)->base.type);
         OCPlatformPayload* platform2 = (OCPlatformPayload*)parsedPlatform;
-        EXPECT_STREQ(platform->uri, platform2->uri);
         EXPECT_STREQ(platform->info.platformID, platform2->info.platformID);
         EXPECT_STREQ(platform->info.manufacturerName, platform->info.manufacturerName);
         EXPECT_STREQ(platform->info.manufacturerUrl, platform->info.manufacturerUrl);
@@ -164,7 +162,6 @@ namespace OCRepresentationEncodingTest
         mc.setPayload(parsedPlatform);
         EXPECT_EQ(1u, mc.representations().size());
         const OC::OCRepresentation& r = mc.representations()[0];
-        EXPECT_STREQ(uri1, r.getUri().c_str());
         EXPECT_STREQ(pfid1, r.getValue<std::string>(OC_RSRVD_PLATFORM_ID).c_str());
         EXPECT_STREQ(mfgnm1, r.getValue<std::string>(OC_RSRVD_MFG_NAME).c_str());
         EXPECT_STREQ(mfgurl1, r.getValue<std::string>(OC_RSRVD_MFG_URL).c_str());
