@@ -22,6 +22,7 @@ public class AttributeElement {
     private boolean                       mAutoUpdateState    = false;
     private int                           mAutoUpdateInterval = Constants.DEFAULT_AUTOMATION_INTERVAL;
     private AutoUpdateType                mAutoUpdateType     = Constants.DEFAULT_AUTOMATION_TYPE;
+    private boolean                       mEditLock           = false;
 
     public AttributeElement(Object parent,
             SimulatorResourceAttribute attribute, boolean autoUpdateSupport)
@@ -145,6 +146,14 @@ public class AttributeElement {
         return (null == mAttribute.property());
     }
 
+    public synchronized boolean getEditLock() {
+        return mEditLock;
+    }
+
+    public synchronized void setEditLock(boolean editLock) {
+        this.mEditLock = editLock;
+    }
+
     public void update(SimulatorResourceAttribute attribute) {
         if (attribute == null)
             return;
@@ -243,7 +252,7 @@ public class AttributeElement {
             String newValue = new AttributeValueStringConverter(
                     attribute.value()).toString();
             if (!currentValue.equals(newValue)) {
-                mAttribute = attribute;
+                mAttribute.setValue(attribute.value());
                 UiListenerHandler.getInstance().attributeUpdatedUINotification(
                         this);
             }

@@ -1486,6 +1486,14 @@ public class ResourceManagerView extends ViewPart {
         createButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
+                if (resourceManager.getResourceCount() >= Constants.MAX_RESOURCE_COUNT) {
+                    MessageDialog
+                            .openInformation(Display.getDefault()
+                                    .getActiveShell(),
+                                    "Resource limit exceeded",
+                                    "Exceeded the limit of resources that can exist in the server.");
+                    return;
+                }
                 PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
 
                     @Override

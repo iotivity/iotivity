@@ -291,4 +291,7 @@ public class Data {
         return res;
     }
 
+    public synchronized int getResourceCount() {
+        return singleResourceMap.size() + collectionResourceMap.size();
+    }
 }

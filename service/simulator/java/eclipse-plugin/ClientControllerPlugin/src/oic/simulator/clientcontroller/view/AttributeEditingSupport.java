@@ -278,42 +278,6 @@ public class AttributeEditingSupport {
                 }
             }
         }
-
-        public AttributeValue getResultantValue(AttributeValue newValue) {
-            AttributeValue val = null;
-            IStructuredSelection selection = (IStructuredSelection) viewer
-                    .getSelection();
-            if (null == selection) {
-                return null;
-            }
-
-            Object obj = selection.getFirstElement();
-            if (null == obj) {
-                return null;
-            }
-
-            Tree t = viewer.getTree();
-            TreeItem item = t.getSelection()[0];
-            if (null == item) {
-                return null;
-            }
-
-            TreeItem parent = item.getParentItem();
-            if (null == parent) {
-                val = newValue;
-            } else {
-                while (parent.getParentItem() != null) {
-                    parent = parent.getParentItem();
-                }
-                // Parent will point to the top-level attribute of type
-                // LocalResourceAttribute
-                Object data = parent.getData();
-                val = ((AttributeElement) data).getSimulatorResourceAttribute()
-                        .value();
-            }
-
-            return val;
-        }
     }
 
     class PostRequestEditor extends EditingSupport {

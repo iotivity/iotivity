@@ -44,6 +44,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
@@ -264,6 +265,16 @@ public class LoadRamlPage extends WizardPage {
             // itself.
             return null;
         }
+
+        // Checking the resource count
+        if ((Activator.getDefault().getResourceManager().getResourceCount() + resourceCount) > Constants.MAX_RESOURCE_COUNT) {
+            MessageDialog
+                    .openInformation(Display.getDefault().getActiveShell(),
+                            "Resource limit exceeded",
+                            "Exceeded the limit of resources that can exist in the server.");
+            return null;
+        }
+
         final CreateResourceWizard wizard = ((CreateResourceWizard) getWizard());
 
         try {

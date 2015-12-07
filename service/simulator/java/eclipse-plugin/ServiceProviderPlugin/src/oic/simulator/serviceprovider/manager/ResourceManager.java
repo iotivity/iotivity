@@ -1801,7 +1801,7 @@ public class ResourceManager {
         return true;
     }
 
-    public void attributeValueUpdated(SingleResource resource,
+    public boolean attributeValueUpdated(SingleResource resource,
             String attributeName, AttributeValue value) {
         if (null != resource && null != attributeName && null != value) {
             SimulatorSingleResource simRes = (SimulatorSingleResource) resource
@@ -1809,6 +1809,7 @@ public class ResourceManager {
             if (null != simRes) {
                 try {
                     simRes.updateAttribute(attributeName, value);
+                    return true;
                 } catch (SimulatorException e) {
                     Activator
                             .getDefault()
@@ -1818,6 +1819,7 @@ public class ResourceManager {
                 }
             }
         }
+        return false;
     }
 
     // TODO: This method should get the status from the native layer.
@@ -2381,5 +2383,9 @@ public class ResourceManager {
             values.add(String.valueOf(obj));
         }
         return values;
+    }
+
+    public int getResourceCount() {
+        return data.getResourceCount();
     }
 }

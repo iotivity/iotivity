@@ -163,11 +163,4 @@ public class SingleResource extends Resource {
             boolean attributeAutomationInProgress) {
         this.attributeAutomationInProgress = attributeAutomationInProgress;
     }
-
-    /*
-     * public LocalResourceAttribute getAttribute(String attributeName) { if
-     * (null == attributeName || null == resourceAttributesMap ||
-     * resourceAttributesMap.size() < 1) { return null; } return
-     * resourceAttributesMap.get(attributeName); }
-     */
 }

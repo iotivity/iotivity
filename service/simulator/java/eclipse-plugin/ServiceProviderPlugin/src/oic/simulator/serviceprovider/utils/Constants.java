@@ -172,4 +172,5 @@ public class Constants {
     public static final String         INVALID_URI_MESSAGE                                  = "Resource URI should start with a '/' followed by atleast one character and it should not contain either # or ? or % or consecutive '/'.";
     public static final int            TREE_EXPANSION_LEVEL                                 = 10;
 
+    public static final int            MAX_RESOURCE_COUNT                                   = 200;
 }

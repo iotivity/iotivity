@@ -89,20 +89,27 @@ public class AttributeView extends ViewPart {
                             if (null == tree || tree.isDisposed()) {
                                 return;
                             }
+
+                            // Enabling/disabling the tree based on the resource
+                            // and automation status.
+                            if (resource instanceof SingleResource)
+                                if (((SingleResource) resource)
+                                        .isResourceAutomationInProgress())
+                                    tree.setEnabled(false);
+                                else
+                                    tree.setEnabled(true);
+
                             if (null != resource
                                     && null != resource
                                             .getResourceRepresentation()) {
                                 attViewer.setInput(resource
                                         .getResourceRepresentation());
                                 attViewer.expandAll();
-                                if (null != tree) {
-                                    tree.setLinesVisible(true);
-                                }
+                                tree.setLinesVisible(true);
+
                             } else {
                                 attViewer.setInput(null);
-                                if (null != tree) {
-                                    tree.setLinesVisible(false);
-                                }
+                                tree.setLinesVisible(false);
                             }
                         }
                     }

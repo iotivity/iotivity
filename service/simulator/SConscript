@@ -68,7 +68,7 @@ java_headers.append(os.path.join(java_headers[0], 'solaris'))
 simulator_env.AppendUnique(CPPPATH = java_headers)
 
 simulator_env.AppendUnique(CPPPATH = ['../../extlibs/cjson'])
-simulator_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap','RamlParser','YamlParser'])
+simulator_env.PrependUnique(LIBS = ['oc', 'RamlParser'])
 simulator_env.AppendUnique(LIBS = ['pthread'])
 
 simulator_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])

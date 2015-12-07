@@ -1269,13 +1269,6 @@ public class ResourceManager {
                     devInfo.getDataModelVersion()));
         }
 
-        /*
-         * metaProperties.add(new MetaProperty(Constants.DEVICE_ID, ""));
-         * metaProperties.add(new MetaProperty(Constants.DEVICE_NAME, ""));
-         * metaProperties.add(new MetaProperty(Constants.DEVICE_SPEC_VERSION,
-         * "")); metaProperties.add(new
-         * MetaProperty(Constants.DEVICE_DMV_VERSION, ""));
-         */
         return metaProperties;
     }
 

@@ -207,6 +207,15 @@ public class CreateResourceWizard extends Wizard {
         } else if (curPage == loadRamlPage) { // Handling multi-instance
             // creation of simple resource
             // with RAML
+            if ((loadRamlPage.getResourceCount() + Activator.getDefault()
+                    .getResourceManager().getResourceCount()) > Constants.MAX_RESOURCE_COUNT) {
+                MessageDialog
+                        .openInformation(Display.getDefault().getActiveShell(),
+                                "Resource limit exceeded",
+                                "Exceeded the limit of resources that can exist in the server.");
+                return false;
+            }
+
             try {
                 getContainer().run(true, true, new IRunnableWithProgress() {
 
@@ -525,14 +534,15 @@ public class CreateResourceWizard extends Wizard {
                     .createSingleResource(resource, attributes);
             if (result) {
                 status = "Resource created.";
+                createdResource = resource;
             } else {
                 status = "Failed to create resource.";
-                resource = null;
+                createdResource = null;
             }
         } catch (Exception e) {
             status = "Failed to create resource.\n"
                     + Utility.getSimulatorErrorString(e, null);
-            resource = null;
+            createdResource = null;
         }
     }
 
