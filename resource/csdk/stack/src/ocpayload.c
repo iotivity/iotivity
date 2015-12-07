@@ -1592,7 +1592,7 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
     OICFree(payload);
 }
 
-OCDevicePayload* OCDevicePayloadCreate(const char* uri, const uint8_t* sid, const char* dname,
+OCDevicePayload* OCDevicePayloadCreate(const uint8_t* sid, const char* dname,
         const char* specVer, const char* dmVer)
 {
 
@@ -1604,12 +1604,6 @@ OCDevicePayload* OCDevicePayloadCreate(const char* uri, const uint8_t* sid, cons
     }
 
     payload->base.type = PAYLOAD_TYPE_DEVICE;
-
-    payload->uri = OICStrdup(uri);
-    if(uri && !payload->uri)
-    {
-        goto exit;
-    }
 
     if(sid)
     {
@@ -1653,7 +1647,6 @@ void OCDevicePayloadDestroy(OCDevicePayload* payload)
         return;
     }
 
-    OICFree(payload->uri);
     OICFree(payload->sid);
     OICFree(payload->deviceName);
     OICFree(payload->specVersion);

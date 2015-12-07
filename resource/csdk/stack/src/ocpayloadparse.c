@@ -471,59 +471,45 @@ static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* roo
     }
 
     bool err = false;
-    CborValue arrayVal;
-    err = err || cbor_value_enter_container(rootValue, &arrayVal);
 
-    if(cbor_value_is_map(&arrayVal))
+    if(cbor_value_is_map(rootValue))
     {
-        char* uri = NULL;
         uint8_t* sid = NULL;
         char* dname = NULL;
         char* specVer = NULL;
         char* dmVer = NULL;
-        CborValue curVal;
-         err = err || cbor_value_map_find_value(&arrayVal, OC_RSRVD_HREF, &curVal);
+
+        CborValue repVal;
+        // Device ID
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_DEVICE_ID, &repVal);
         size_t len;
-         err = err || cbor_value_dup_text_string(&curVal, &uri, &len, NULL);
-
-        // Representation
+        if(cbor_value_is_valid(&repVal))
         {
-             err = err || cbor_value_map_find_value(&arrayVal, OC_RSRVD_REPRESENTATION, &curVal);
-
-            CborValue repVal;
-            // Device ID
-            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DEVICE_ID, &repVal);
-            if(cbor_value_is_valid(&repVal))
-            {
-                err = err || cbor_value_dup_byte_string(&repVal, &sid, &len, NULL);
-            }
-            // Device Name
-            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DEVICE_NAME, &repVal);
-            if(cbor_value_is_valid(&repVal))
-            {
-                err = err || cbor_value_dup_text_string(&repVal, &dname, &len, NULL);
-            }
-            // Device Spec Version
-            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_SPEC_VERSION, &repVal);
-            if(cbor_value_is_valid(&repVal))
-            {
-                err = err || cbor_value_dup_text_string(&repVal, &specVer, &len, NULL);
-            }
-
-            // Data Model Version
-            err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_DATA_MODEL_VERSION, &repVal);
-            if (cbor_value_is_valid(&repVal))
-            {
-                err = err || cbor_value_dup_text_string(&repVal, &dmVer, &len, NULL);
-            }
+            err = err || cbor_value_dup_byte_string(&repVal, &sid, &len, NULL);
+        }
+        // Device Name
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_DEVICE_NAME, &repVal);
+        if(cbor_value_is_valid(&repVal))
+        {
+            err = err || cbor_value_dup_text_string(&repVal, &dname, &len, NULL);
+        }
+        // Device Spec Version
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_SPEC_VERSION, &repVal);
+        if(cbor_value_is_valid(&repVal))
+        {
+            err = err || cbor_value_dup_text_string(&repVal, &specVer, &len, NULL);
+        }
+        // Data Model Version
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_DATA_MODEL_VERSION, &repVal);
+        if (cbor_value_is_valid(&repVal))
+        {
+            err = err || cbor_value_dup_text_string(&repVal, &dmVer, &len, NULL);
         }
 
-        err = err || cbor_value_advance(&arrayVal);
-        err = err || cbor_value_leave_container(rootValue, &arrayVal);
+        err = err || cbor_value_advance(rootValue);
 
         if(err)
         {
-            OICFree(uri);
             OICFree(sid);
             OICFree(dname);
             OICFree(specVer);
@@ -532,9 +518,8 @@ static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* roo
             return OC_STACK_MALFORMED_RESPONSE;
         }
 
-        *outPayload = (OCPayload*)OCDevicePayloadCreate(uri, sid, dname, specVer, dmVer);
+        *outPayload = (OCPayload*)OCDevicePayloadCreate(sid, dname, specVer, dmVer);
 
-        OICFree(uri);
         OICFree(sid);
         OICFree(dname);
         OICFree(specVer);

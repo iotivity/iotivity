@@ -194,7 +194,6 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
 static inline void OCPayloadLogDevice(LogLevel level, OCDevicePayload* payload)
 {
     OC_LOG(level, PL_TAG, "Payload Type: Device");
-    OC_LOG_V(level, PL_TAG, "\tURI:%s", payload->uri);
     OC_LOG(level, PL_TAG, "\tSID:");
     OC_LOG_BUFFER(level, PL_TAG, payload->sid, UUID_SIZE);
     OC_LOG_V(level, PL_TAG, "\tDevice Name:%s", payload->deviceName);

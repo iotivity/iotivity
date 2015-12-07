@@ -1136,7 +1136,6 @@ typedef struct
 typedef struct
 {
     OCPayload base;
-    char* uri;
     uint8_t* sid;
     char* deviceName;
     char* specVersion;

@@ -63,7 +63,6 @@ namespace OC
     void MessageContainer::setPayload(const OCDevicePayload* payload)
     {
         OCRepresentation rep;
-        rep.setUri(payload->uri);
         char uuidString[UUID_STRING_SIZE];
         if(payload->sid && RAND_UUID_OK == OCConvertUuidToString(payload->sid, uuidString))
         {
