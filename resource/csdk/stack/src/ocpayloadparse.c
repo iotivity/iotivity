@@ -519,7 +519,7 @@ static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* roo
             }
         }
 
-         err = err || cbor_value_advance(&arrayVal);
+        err = err || cbor_value_advance(&arrayVal);
         err = err || cbor_value_leave_container(rootValue, &arrayVal);
 
         if(err)
@@ -564,108 +564,94 @@ static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* r
 
     bool err = false;
 
-    CborValue arrayVal;
-    err = err || cbor_value_enter_container(rootValue, &arrayVal);
-
-    if(cbor_value_is_map(&arrayVal))
+    if(cbor_value_is_map(rootValue))
     {
-        char* uri = NULL;
         OCPlatformInfo info = {0};
-        CborValue curVal;
-         err = err || cbor_value_map_find_value(&arrayVal, OC_RSRVD_HREF, &curVal);
+
+        CborValue repVal;
         size_t len;
-         err = err || cbor_value_dup_text_string(&curVal, &uri, &len, NULL);
+        // Platform ID
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_PLATFORM_ID, &repVal);
+        if(cbor_value_is_valid(&repVal))
+         {
+             err = err || cbor_value_dup_text_string(&repVal, &(info.platformID), &len, NULL);
+         }
 
-        // Representation
+         // MFG Name
+         err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_MFG_NAME, &repVal);
+         if(cbor_value_is_valid(&repVal))
+         {
+             err = err || cbor_value_dup_text_string(&repVal, &(info.manufacturerName), &len, NULL);
+         }
+
+        // MFG URL
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_MFG_URL, &repVal);
+        if(cbor_value_is_valid(&repVal))
         {
-             err = err || cbor_value_map_find_value(&arrayVal, OC_RSRVD_REPRESENTATION, &curVal);
-
-            CborValue repVal;
-            // Platform ID
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_PLATFORM_ID, &repVal);
-             if(cbor_value_is_valid(&repVal))
-             {
-                 err = err || cbor_value_dup_text_string(&repVal, &(info.platformID), &len, NULL);
-             }
-
-            // MFG Name
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_MFG_NAME, &repVal);
-             if(cbor_value_is_valid(&repVal))
-             {
-                 err = err || cbor_value_dup_text_string(&repVal, &(info.manufacturerName), &len, NULL);
-             }
-
-            // MFG URL
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_MFG_URL, &repVal);
-            if(cbor_value_is_valid(&repVal))
-            {
-                 err = err || cbor_value_dup_text_string(&repVal, &(info.manufacturerUrl), &len, NULL);
-            }
-
-            // Model Num
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_MODEL_NUM, &repVal);
-            if(cbor_value_is_valid(&repVal))
-            {
-                 err = err || cbor_value_dup_text_string(&repVal, &(info.modelNumber), &len, NULL);
-            }
-
-            // Date of Mfg
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_MFG_DATE, &repVal);
-            if(cbor_value_is_valid(&repVal))
-            {
-                 err = err || cbor_value_dup_text_string(&repVal, &(info.dateOfManufacture), &len,
-                        NULL);
-            }
-
-            // Platform Version
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_PLATFORM_VERSION, &repVal);
-            if(cbor_value_is_valid(&repVal))
-            {
-                 err = err || cbor_value_dup_text_string(&repVal, &(info.platformVersion), &len,
-                        NULL);
-            }
-
-            // OS Version
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_OS_VERSION, &repVal);
-            if(cbor_value_is_valid(&repVal))
-            {
-                 err = err || cbor_value_dup_text_string(&repVal, &(info.operatingSystemVersion),
-                        &len, NULL);
-            }
-
-            // Hardware Version
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_HARDWARE_VERSION, &repVal);
-            if(cbor_value_is_valid(&repVal))
-            {
-                 err = err || cbor_value_dup_text_string(&repVal, &(info.hardwareVersion), &len,
-                        NULL);
-            }
-
-            // Firmware Version
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_FIRMWARE_VERSION, &repVal);
-            if(cbor_value_is_valid(&repVal))
-            {
-                 err = err || cbor_value_dup_text_string(&repVal, &(info.firmwareVersion), &len,
-                        NULL);
-            }
-
-            // Support URL
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_SUPPORT_URL, &repVal);
-            if(cbor_value_is_valid(&repVal))
-            {
-                 err = err || cbor_value_dup_text_string(&repVal, &(info.supportUrl), &len, NULL);
-            }
-
-            // System Time
-             err = err || cbor_value_map_find_value(&curVal, OC_RSRVD_SYSTEM_TIME, &repVal);
-            if(cbor_value_is_valid(&repVal))
-            {
-                 err = err || cbor_value_dup_text_string(&repVal, &(info.systemTime), &len, NULL);
-            }
+             err = err || cbor_value_dup_text_string(&repVal, &(info.manufacturerUrl), &len, NULL);
         }
 
-         err = err || cbor_value_advance(&arrayVal);
-         err = err || cbor_value_leave_container(rootValue, &arrayVal);
+        // Model Num
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_MODEL_NUM, &repVal);
+        if(cbor_value_is_valid(&repVal))
+        {
+             err = err || cbor_value_dup_text_string(&repVal, &(info.modelNumber), &len, NULL);
+        }
+
+        // Date of Mfg
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_MFG_DATE, &repVal);
+        if(cbor_value_is_valid(&repVal))
+        {
+             err = err || cbor_value_dup_text_string(&repVal, &(info.dateOfManufacture), &len,
+                    NULL);
+        }
+
+        // Platform Version
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_PLATFORM_VERSION, &repVal);
+        if(cbor_value_is_valid(&repVal))
+        {
+             err = err || cbor_value_dup_text_string(&repVal, &(info.platformVersion), &len, NULL);
+        }
+
+        // OS Version
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_OS_VERSION, &repVal);
+        if(cbor_value_is_valid(&repVal))
+        {
+             err = err || cbor_value_dup_text_string(&repVal, &(info.operatingSystemVersion),
+                    &len, NULL);
+        }
+
+        // Hardware Version
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_HARDWARE_VERSION, &repVal);
+        if(cbor_value_is_valid(&repVal))
+        {
+             err = err || cbor_value_dup_text_string(&repVal, &(info.hardwareVersion), &len,
+                    NULL);
+        }
+
+        // Firmware Version
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_FIRMWARE_VERSION, &repVal);
+        if(cbor_value_is_valid(&repVal))
+        {
+             err = err || cbor_value_dup_text_string(&repVal, &(info.firmwareVersion), &len,
+                    NULL);
+        }
+
+        // Support URL
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_SUPPORT_URL, &repVal);
+        if(cbor_value_is_valid(&repVal))
+        {
+             err = err || cbor_value_dup_text_string(&repVal, &(info.supportUrl), &len, NULL);
+        }
+
+        // System Time
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_SYSTEM_TIME, &repVal);
+        if(cbor_value_is_valid(&repVal))
+        {
+             err = err || cbor_value_dup_text_string(&repVal, &(info.systemTime), &len, NULL);
+        }
+
+        err = err || cbor_value_advance(rootValue);
 
         if(err)
         {
@@ -684,7 +670,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload** outPayload, CborValue* r
             return OC_STACK_MALFORMED_RESPONSE;
         }
 
-        *outPayload = (OCPayload*)OCPlatformPayloadCreateAsOwner(uri, &info);
+        *outPayload = (OCPayload*)OCPlatformPayloadCreateAsOwner(&info);
 
         if(!*outPayload)
         {

@@ -1681,7 +1681,7 @@ static void OCCopyPlatformInfo(const OCPlatformInfo* platformInfo, OCPlatformPay
     target->info.systemTime = OICStrdup(platformInfo->systemTime);
 }
 
-OCPlatformPayload* OCPlatformPayloadCreateAsOwner(char* uri, OCPlatformInfo* platformInfo)
+OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo)
 {
     OCPlatformPayload* payload = (OCPlatformPayload*)OICCalloc(1, sizeof(OCPlatformPayload));
     if(!payload)
@@ -1690,13 +1690,12 @@ OCPlatformPayload* OCPlatformPayloadCreateAsOwner(char* uri, OCPlatformInfo* pla
     }
 
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
-    payload->uri = uri;
     payload->info = *platformInfo;
 
     return payload;
 }
 
-OCPlatformPayload* OCPlatformPayloadCreate(const char* uri, const OCPlatformInfo* platformInfo)
+OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo)
 {
     OCPlatformPayload* payload = (OCPlatformPayload*)OICCalloc(1, sizeof(OCPlatformPayload));
 
@@ -1706,7 +1705,6 @@ OCPlatformPayload* OCPlatformPayloadCreate(const char* uri, const OCPlatformInfo
     }
 
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
-    payload->uri = OICStrdup(uri);
     OCCopyPlatformInfo(platformInfo, payload);
 
     return payload;

@@ -466,86 +466,68 @@ static int64_t OCConvertPlatformPayload(OCPlatformPayload* payload, uint8_t* out
     int64_t err = 0;
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
-    CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
     {
-        CborEncoder map;
-        err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
+        CborEncoder repMap;
+        err = err | cbor_encoder_create_map(&encoder, &repMap, CborIndefiniteLength);
 
-        // uri
-        err = err | ConditionalAddTextStringToMap(&map, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
-                payload->uri);
+        // Platform ID
+        err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_PLATFORM_ID,
+                sizeof(OC_RSRVD_PLATFORM_ID) - 1,
+                payload->info.platformID);
 
-        // Rep Map
-        {
-            CborEncoder repMap;
-            err = err | cbor_encode_text_string(&map, OC_RSRVD_REPRESENTATION,
-                    sizeof(OC_RSRVD_REPRESENTATION) - 1);
-            err = err | cbor_encoder_create_map(&map, &repMap, CborIndefiniteLength);
+        // MFG Name
+        err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_NAME,
+                sizeof(OC_RSRVD_MFG_NAME) - 1,
+                payload->info.manufacturerName);
 
-            // Platform ID
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_PLATFORM_ID,
-                    sizeof(OC_RSRVD_PLATFORM_ID) - 1,
-                    payload->info.platformID);
+        // MFG Url
+        err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_URL,
+                sizeof(OC_RSRVD_MFG_URL) - 1,
+                payload->info.manufacturerUrl);
 
-            // MFG Name
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_NAME,
-                    sizeof(OC_RSRVD_MFG_NAME) - 1,
-                    payload->info.manufacturerName);
+        // Model Num
+        err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MODEL_NUM,
+                sizeof(OC_RSRVD_MODEL_NUM) - 1,
+                payload->info.modelNumber);
 
-            // MFG Url
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_URL,
-                    sizeof(OC_RSRVD_MFG_URL) - 1,
-                    payload->info.manufacturerUrl);
+        // Date of Mfg
+        err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_DATE,
+                sizeof(OC_RSRVD_MFG_DATE) - 1,
+                payload->info.dateOfManufacture);
 
-            // Model Num
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MODEL_NUM,
-                    sizeof(OC_RSRVD_MODEL_NUM) - 1,
-                    payload->info.modelNumber);
+        // Platform Version
+        err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_PLATFORM_VERSION,
+                sizeof(OC_RSRVD_PLATFORM_VERSION) - 1,
+                payload->info.platformVersion);
 
-            // Date of Mfg
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_DATE,
-                    sizeof(OC_RSRVD_MFG_DATE) - 1,
-                    payload->info.dateOfManufacture);
+        // OS Version
+        err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_OS_VERSION,
+                sizeof(OC_RSRVD_OS_VERSION) - 1,
+                payload->info.operatingSystemVersion);
 
-            // Platform Version
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_PLATFORM_VERSION,
-                    sizeof(OC_RSRVD_PLATFORM_VERSION) - 1,
-                    payload->info.platformVersion);
+        // Hardware Version
+        err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_HARDWARE_VERSION,
+                sizeof(OC_RSRVD_HARDWARE_VERSION) - 1,
+                payload->info.hardwareVersion);
 
-            // OS Version
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_OS_VERSION,
-                    sizeof(OC_RSRVD_OS_VERSION) - 1,
-                    payload->info.operatingSystemVersion);
+        // Firmware Version
+        err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_FIRMWARE_VERSION,
+                sizeof(OC_RSRVD_FIRMWARE_VERSION) - 1,
+                payload->info.firmwareVersion);
 
-            // Hardware Version
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_HARDWARE_VERSION,
-                    sizeof(OC_RSRVD_HARDWARE_VERSION) - 1,
-                    payload->info.hardwareVersion);
+        // Support URL
+        err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SUPPORT_URL,
+                sizeof(OC_RSRVD_SUPPORT_URL) - 1,
+                payload->info.supportUrl);
 
-            // Firmware Version
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_FIRMWARE_VERSION,
-                    sizeof(OC_RSRVD_FIRMWARE_VERSION) - 1,
-                    payload->info.firmwareVersion);
-
-            // Support URL
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SUPPORT_URL,
-                    sizeof(OC_RSRVD_SUPPORT_URL) - 1,
-                    payload->info.supportUrl);
-
-            // System Time
-            err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SYSTEM_TIME,
-                    sizeof(OC_RSRVD_SYSTEM_TIME) - 1,
-                    payload->info.systemTime);
-            err = err | cbor_encoder_close_container(&map, &repMap);
-        }
+        // System Time
+        err = err | ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SYSTEM_TIME,
+                sizeof(OC_RSRVD_SYSTEM_TIME) - 1,
+                payload->info.systemTime);
 
         // Close Map
-        err = err | cbor_encoder_close_container(&rootArray, &map);
+        err = err | cbor_encoder_close_container(&encoder, &repMap);
     }
-
-    // Close main array
-    err = err | cbor_encoder_close_container(&encoder, &rootArray);
 
     return checkError(err, &encoder, outPayload, size);
 }

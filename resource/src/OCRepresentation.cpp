@@ -88,8 +88,6 @@ namespace OC
     void MessageContainer::setPayload(const OCPlatformPayload* payload)
     {
         OCRepresentation rep;
-        rep.setUri(payload->uri);
-
         rep[OC_RSRVD_PLATFORM_ID] = payload->info.platformID ?
             std::string(payload->info.platformID) :
             std::string();
