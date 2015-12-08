@@ -40,5 +40,6 @@ ${OIC_CORE_RESOURCE_MONITORING_URI}	/oic/mon
 ${OIC_CORE_RESOURCE_MAINTENANCE_URI}	/oic/mnt
 ${OIC_CORE_PROVISION_URI}               /oic/sec/doxm
 ${OIC_CORE_PROVISION_PSTAT}             /oic/sec/pstat
+${OIC_CORE_PROVISION_ACL}             /oic/sec/acl
 ${OIC_USER_RESOURCE_URI}	/a/light
 

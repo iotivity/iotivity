@@ -823,6 +823,7 @@ void deleteGroup()
             if (result == OC_STACK_OK)
             {
                 cout << "Successfully Deleted Group!!" << endl;
+                isGroupCreated = false;
             }
             else
             {
@@ -1556,7 +1557,7 @@ void showMenu()
     cout << "\t\t 2. Create Invisible Resource" << endl;
     cout << "\t\t 3. Create Resource With Complete URL" << endl;
     cout << "\t\t 4. Create Secured Resource" << endl;
-    cout << "\t\t 5. Create 100 Light Resources" << endl;
+    cout << "\t\t 5. Create " << MAX_LIGHT_RESOURCE_COUNT << " Light Resources" << endl;
     cout << "\t\t 6. Create Group Resource" << endl;
     cout << "\t\t 7. Delete All Resources" << endl;
     cout << "\t\t 8. Delete Created Group" << endl;

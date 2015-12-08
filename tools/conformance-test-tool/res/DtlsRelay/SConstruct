@@ -1,0 +1,11 @@
+##
+# Build script for DTLS Relay
+#
+##
+
+
+env = Environment()
+src_dir='src'
+build_dir='bin/linux/'
+env.VariantDir(build_dir, src_dir, duplicate=0)
+env.SConscript(build_dir+'SConscript', exports='env')

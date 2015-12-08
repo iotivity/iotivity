@@ -31,6 +31,7 @@ from oic.ctt.provision import *
 from oic.ctt.devicecontroller import *
 from oic.ctt import *
 from oic.ctt.formatter import *
+from oic.ctt.network.control import *
 import oic.ctt.DUTResource.CRUDNType as CRUDNType
 from robot.api import logger
 from robot.libraries.BuiltIn import BuiltIn
@@ -121,15 +122,57 @@ class ConformanceKeyword(object):
         self.oic_client = OICClient()
         self.oic_server = OICCoapServer()
         self.provision_manager = ProvisionManager()
-        self.oic_resource_light = OICCoapResource(
-            "/device/test-tool", "core.light", "oic.if.baseline", True)
-        self.oic_resource_light.addResourceAttribute("power","off")
-        self.oic_resource_light.addResourceAttribute("intensity",100)
-        self.oic_resource_light.addResourceAttribute("manufacturer","Korea")
+#        self.oic_resource_light = OICCoapResource("/device/test-tool", "core.light", "oic.if.baseline", True)
+#        self.oic_resource_light.addResourceAttribute("power", "off")
+#        self.oic_resource_light.addResourceAttribute("intensity", 100)
+#        self.oic_resource_light.addResourceAttribute("manufacturer", "Korea")
+
+#        self.oic_resource_light = OICCoapResource("/oic/r/door", "oic.r.door", "oic.if.a oic.if.baseline", True)
+#        self.oic_resource_light.addResourceAttribute("openState","Open")
+#        self.oic_resource_light.addResourceAttribute("openDuration","35")
+#        self.oic_resource_light.addResourceAttribute("openAlarm",False)
+
+#        self.oic_resource_light = OICCoapResource("/oic/r/brightlight", "oic.r.light.brightness", "oic.if.a oic.if.baseline", True)
+#        self.oic_resource_light.addResourceAttribute("brightness",59)
+
+#        self.oic_resource_light = OICCoapResource("/oic/r/sensor", "oic.r.sensor", "oic.if.s oic.if.baseline", True)
+#        self.oic_resource_light.addResourceAttribute("value",True)
+
+#        self.oic_resource_light = OICCoapResource("/oic/r/switch", "oic.r.switch.binary", "oic.if.a oic.if.baseline", True)
+#        self.oic_resource_light.addResourceAttribute("value",True)
+
+        self.oic_resource_light = OICCoapResource("/oic/r/temperature", "oic.r.temperature", "oic.if.a oic.if.s oic.if.baseline", True)
+        self.oic_resource_light.addResourceAttribute("temperature", 35)
+        self.oic_resource_light.addResourceAttribute("units", "C")
+        self.oic_resource_light.addResourceAttribute("range", "-20, 50")
+
+#        self.oic_resource_light = OICCoapResource("/oic/r/mode", "oic.r.mode", "oic.if.a oic.if.baseline", True)
+#        self.oic_resource_light.addResourceAttribute("supportedModes", "A, B, C")
+#        self.oic_resource_light.addResourceAttribute("modes", "B, C")
+
+#        self.oic_resource_light = OICCoapResource("/oic/r/audio", "oic.r.audio", "oic.if.a oic.if.baseline", True)
+#        self.oic_resource_light.addResourceAttribute("volume", 10)
+#        self.oic_resource_light.addResourceAttribute("mute", true)
+
+#        self.oic_resource_light = OICCoapResource("/oic/r/button", "oic.r.button", "oic.if.s oic.if.baseline", True)
+#        self.oic_resource_light.addResourceAttribute("value", true)
+
+#        self.oic_resource_light = OICCoapResource("/oic/r/illuminance", "oic.r.illuminance", "oic.if.s oic.if.baseline", True)
+#        self.oic_resource_light.addResourceAttribute("illuminance", 500)
+
+#        self.oic_resource_light = OICCoapResource("/oic/r/humidity", "oic.r.humidity", "oic.if.a oic.if.s oic.if.baseline", True)
+#        self.oic_resource_light.addResourceAttribute("humidity", 80)
+#        self.oic_resource_light.addResourceAttribute("desiredHumidity", 50)
+
+        self.oic_resource_light_bwt = OICCoapResource("/device/test-tool-bwt", "core.light", "oic.if.baseline", True)
+        self.oic_resource_light_bwt.addResourceAttribute("power", "off")
+        self.oic_resource_light_bwt.addResourceAttribute("intensity", 100)
+        self.oic_resource_light_bwt.addResourceAttribute("manufacturer", "Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_End_of_BWT")
         self.request = OICRequestData()
         self.rep_key_list = ArrayList()
         self.ui = UserInterface()
         self.control_client = ControlClient()
+        self.is_bwt_on = False
 
     # Documentation for a function
     # @brief print log to console
@@ -213,12 +256,16 @@ class ConformanceKeyword(object):
         else:
             return False
 
-## Security Relay Controller Keywords ##
+## Security Relay Controller Keywords  ##
     def intialize_dtls_connection(self, relay_ip, relay_port, dut_ip, dut_port_secured, cipher_suite):
-		self.control_client.initDtls(relay_ip, relay_port, dut_ip, dut_port_secured, cipher_suite)
+		return self.control_client.initDtls(relay_ip, int(relay_port), dut_ip, int(dut_port_secured), int(cipher_suite))
+
+    def intialize_dtls_connection_with_random_pin(self, relay_ip, relay_port, dut_ip, dut_port_secured, cipher_suite, client_di, server_di, pin):
+        return self.control_client.initDtls(relay_ip, int(relay_port), dut_ip, int(dut_port_secured), int(cipher_suite), client_di, server_di, pin)
+
 
     def terminate_dtls_connection(self):
-		self.control_client.terminateDtls()
+		return self.control_client.terminateDtls()
 
     def get_secured_port(self, dut_ip, dut_port):
         response_message = self.send_get_request("UNICAST", COAP, self.generate_message_id(), self.generate_token(), dut_ip, dut_port, "/oic/res", False)
@@ -238,8 +285,23 @@ class ConformanceKeyword(object):
     def start_server(self, is_confirmable=True):
         "Run server for test"
         self.oic_server.addResource(self.oic_resource_light)
+#        self.oic_server.addResource(self.oic_resource_light_bwt)
         self.oic_server.clearDiscoveryRequests()
+        self.is_bwt_on = False
         self.oic_server.start()
+
+    # Documentation for a function
+    # @brief start server at Conformance test tool
+    # @param is_confirmable(bool)
+    # @return void
+    def start_bwt_server(self, is_confirmable=True):
+        self.oic_server.removeResource("/device/test-tool")
+        "Run server for test"
+#        self.oic_server.addResource(self.oic_resource_light)
+        self.oic_server.addResource(self.oic_resource_light_bwt)
+        self.oic_server.clearDiscoveryRequests()
+        self.is_bwt_on = True
+#        self.oic_server.start()
 
     # Documentation for a function
     # @brief get received request from server of Conformance test tool
@@ -253,7 +315,10 @@ class ConformanceKeyword(object):
         self.print_testcase_get(DUT, TE, 'Waiting for Request from DUT')
         for sec in range(1, 60):
             BuiltIn().sleep(1)
-            request_list = self.oic_resource_light.getRequestList()
+            if self.is_bwt_on is False:
+                request_list = self.oic_resource_light.getRequestList()
+            else:
+                request_list = self.oic_resource_light_bwt.getRequestList()
             if request_list.size() > 0:
                 self.request = request_list.get(0)
         #        what = REQUEST_CODE + \
@@ -570,7 +635,7 @@ class ConformanceKeyword(object):
             message_id,
             token,
             ip,
-            port,
+            int(port),
             default_uri,
             query)
         if response is None:
@@ -623,7 +688,7 @@ class ConformanceKeyword(object):
             message_id,
             token,
             ip,
-            port,
+            int(port),
             uri,
             query,
             payload,
@@ -673,7 +738,7 @@ class ConformanceKeyword(object):
             message_id,
             token,
             ip,
-            port,
+            int(port),
             uri,
             query,
             payload)
@@ -718,7 +783,7 @@ class ConformanceKeyword(object):
             message_id,
             token,
             ip,
-            port,
+            int(port),
             uri)
         if response is None:
             self.print_testcase_get(DUT, TE, 'No Response')
@@ -762,7 +827,7 @@ class ConformanceKeyword(object):
             message_id,
             token,
             ip,
-            port,
+            int(port),
             uri)
         if response is None:
             self.print_testcase_get(DUT, TE, 'No Response')
@@ -794,7 +859,7 @@ class ConformanceKeyword(object):
         what += DESTINATION_URI + ip + ':' + str(port) + uri + '\n   '
         what += CONFIRMABLE_TYPE + str(is_confirmable) + '\n   '
         self.print_testcase_do(TE, DUT, 'Observe Request', what)
-        self.oic_client.observeResource(
+        response = self.oic_client.observeResource(
             self.get_protocol(protocol_type),
             self.get_coap_type(is_confirmable),
             message_id,
@@ -802,19 +867,42 @@ class ConformanceKeyword(object):
             ip,
             port,
             uri)
+        if response is None:
+            self.print_testcase_get(DUT, TE, 'No Observe Response')
+            return ""
+        else:
+            result = self.get_response_result(response)
+            self.oic_client.clearNotifications(self.get_protocol(protocol_type))
+            self.print_testcase_get(
+                DUT,
+                TE,
+                'Response for Observe Request',
+                self.get_response_description(response))
+        return result
 
     # Documentation for a function
     # @brief sends cancel observer request using get
     # @param request_type, protocol_type, ip, port, uri, is_confirmable(bool)
     # @return response as string
-    def cancel_observe_with_get_message(self, protocol_type, message_id, message_type, ip, port, uri):
+    def cancel_observe_with_get_message(
+            self,
+            protocol_type,
+            message_id,
+            ip,
+            port,
+            uri,
+            is_confirmable):
         "Send cancel observe request using get and return response"
         result = ""
-        response = self.oic_client.cancelObserveWithGetMessage(
-            self.get_coap_type(message_type), message_id, ip, port, uri)
+        what = PROTOCOL_TYPE + protocol_type + '\n   '
+        what += DESTINATION_URI + ip + ':' + str(port) + uri + '\n   '
+        what += CONFIRMABLE_TYPE + str(is_confirmable) + '\n   '
+        self.print_testcase_do(TE, DUT, 'Cancel Observe Request', what)
+        response = self.oic_client.cancelObserveWithGetMessage(self.get_protocol(protocol_type),
+            self.get_coap_type(is_confirmable), message_id, ip, port, uri)
         self.oic_client.clearNotifications(self.get_protocol(protocol_type))
         if response is None:
-            self.print_testcase_get(DUT, TE, 'No Response')
+            self.print_testcase_get(DUT, TE, 'No Response for Observe Cancellation')
             return ""
         else:
             result = self.get_response_result(response)
@@ -829,16 +917,18 @@ class ConformanceKeyword(object):
     # @brief sends cancel observer in a passive manner (by not sending any ACK for Confirmable type notification)
     # @param protocol_type
     # @return void
-    def cancel_observe_passively(self,protocol_type):
-        self.oic_client.cancelObservePassively(self.get_protocol(protocol_type))
+    def cancel_observe_passively(self,protocol_type, href):
+        self.print_testcase_do(TE, DUT, 'Cancelling Observe by not sending ACK')
+        self.oic_client.cancelObservePassively(self.get_protocol(protocol_type), href)
         self.oic_client.clearNotifications(self.get_protocol(protocol_type))
 
     # Documentation for a function
     # @brief Cancels observe in an active manner (by sending RST message in response * to Notifications)
     # @param protocol_type
     # @return void
-    def cancel_observe_reset(self,protocol_type):
-        self.oic_client.cancelObserveWithReset(self.get_protocol(protocol_type))
+    def cancel_observe_reset(self,protocol_type, href):
+        self.print_testcase_do(TE, DUT, 'Cancelling Observe by sending RESET Message')
+        self.oic_client.cancelObserveWithReset(self.get_protocol(protocol_type), href)
         self.oic_client.clearNotifications(self.get_protocol(protocol_type))
 
     # Documentation for a function
@@ -868,8 +958,8 @@ class ConformanceKeyword(object):
     # @brief get observe response
     # @param protocol_type
     # @return response observe as string
-    def get_observe_response(self,protocol_type):
-        notification_list = self.oic_client.getNotifications(self.get_protocol(protocol_type))
+    def get_observe_response(self, protocol_type, href):
+        notification_list = self.oic_client.getNotifications(self.get_protocol(protocol_type), href)
         result = ''
         if notification_list.size() > 0:
             for notification in notification_list:
@@ -1113,12 +1203,14 @@ class ConformanceKeyword(object):
     # @brief get json value
     # @param key, json_string, href=none
     # @return json_value as string
-    def get_json_value(self, key, json_string, href=None):
+    def get_json_value(self, key, json_string, href=None, is_value_string=None):
         json_analyzer = JsonAnalyzer(json_string)
  #       print "json_string"
  #       print json_string
  #       print "key"
  #       print key
+        if is_value_string is not None:
+            return json_analyzer.getValue(key).get(0)
         if href is None:
             return json_analyzer.getValue(key)
         else:
@@ -1477,3 +1569,22 @@ class ConformanceKeyword(object):
         "updates resource representation"
         self.oic_resource_light.updateResourceRespresentation()
 
+    def get_resource_interface(self, href):
+        self.dutInformation = self.dut_information_manager.getDUTInformation(self.dut_id)
+        return  self.dutInformation.getInterfaceList(href)
+        
+    def get_modified_json_string(self, json_string, key, value):
+        json_analyzer = JsonAnalyzer(json_string)
+        return  json_analyzer.getModifiedJsonString(key, value)
+    
+    def update_payload(self, payload, key, value):
+        if value == 'none':
+            return payload
+        key_index = payload.find(key)
+        first_index = payload.find(':', key_index+1)
+        last_index = payload.find(',', first_index+1)
+        if last_index == -1:
+            last_index = payload.find('}', first_index+1)
+        old_value = payload[first_index+1 : last_index]
+        payload = payload[:first_index+1] + str(value) + payload[last_index:]
+        return payload

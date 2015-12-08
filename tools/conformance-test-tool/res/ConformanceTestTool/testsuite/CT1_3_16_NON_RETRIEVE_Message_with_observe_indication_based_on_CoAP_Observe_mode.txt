@@ -1,8 +1,8 @@
 *** Settings ***
 Documentation	CT1.3.16 NON RETRIEVE Message with observe indication based on CoAP - Observe mode 
 Resource	OIC_ConformanceTest_Setting.txt
-Test Setup    Start Capture
-Test TearDown    End Capture
+Test Setup    Pre Condition
+Test TearDown    Post Condition
 
 *** Test Cases ***
 CT1.3.16 NON RETRIEVE Message with observe indication based on CoAP - Observe mode 
@@ -28,36 +28,68 @@ CT1.3.16 NON RETRIEVE Message with observe indication based on CoAP - Observe mo
 	...	|expected|2. Case 1: Server sends the response message OIC Layer -fr,to,cn,obs -cn includes URI of the resource CoAP Layer -Type = 1 (NON) -Token=Token in original GET -Response Code = 2.05  Case 2: No response is present |
 
     [Tags]	Mandatory	Server    Observe
-#Pre-Condition
-    Set Log File Directory	${TESTNAME}
-    ${DUT1_ID} =	Set Variable	Server_DUT1
-    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
-    Should Be True	${define_dut_result}
-    @{dut1_resource_types}  Get DUT Info Value      ${RESOURCE_TYPE}        ${DUT1_ID}      ${OBSERVABLE}=1&${DISCOVERABLE}=1
-    ${resource_ip}  ${resource_port}        ${resource_href}        Get IP Port And Uri             ${RESOURCE_TYPE}=@{dut1_resource_types}[0]
-    @{dut1_resource_hrefs}       Get DUT Info Value      ${HREF}    ${DUT1_ID}      ${OBSERVABLE}=1&${DISCOVERABLE}=1
-    :FOR        ${resource_href}   IN      @{dut1_resource_hrefs}
-#Test-Body
+
+    @{observable_resource_hrefs}	Get DUT Info Value	${HREF}	   ${DUT1_ID}	${OBSERVABLE}=1
+    :FOR        ${resource_href}   IN      @{observable_resource_hrefs}
     \   ${msgid1}    Generate Message Id
     \   ${token1}    Generate Token
-    \	Send Observe Request	${COAP}	${msgid1}	${token1}	${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}
+    \	${dut2_response}	Send Observe Request	${COAP}	${msgid1}	${token1}	${SERVER_IP}    ${${SERVER_PORT}}	${resource_href}	${NON_CONFIRMABLE}
+    \   Should Not Be Empty    ${dut2_response}    No response found for observe request
+    \	${duty_response_type}	Get Response Type	${dut2_response}
+    \	Should Be Equal	${duty_response_type}	${NON}    Observe response type is not NON
+    \   ${dut2_response_code}   Get Response Code       ${dut2_response}
+    \   Should Be Equal         ${COAP_RESPONSE_CODE_RETRIEVED}         ${dut2_response_code}     Response code mismatch for observe request
+    \	${dut2_response_token}   Get Response Token       ${dut2_response}
+    \	Should Be Equal             ${dut2_response_token}    ${token1}    Response token mismatch for observe request
+    \	${dut2_response_msgid}   Get Response Msgid       ${dut2_response}
+    \	Should Be Equal             ${dut2_response_msgid}    ${msgid1}    Response message id mismatch for observe request
+
     \   ${length}    Get Length Available Representation To Update    ${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}
-    \	${update_support}    Is Crudn Operation Supported    ${resource_href}    ${PARTIAL_UPDATE}
-    \	Run Keyword If    ${length} > 0    Set Modified Partial Representation Value Payload       ${DUT1_ID}      ${OBSERVABLE}=1&${HREF}=${resource_href}&${DISCOVERABLE}=1
-    \	${payload}    Run Keyword If    ${length} > 0    Get Json Representation
+    \	Run Keyword If    ${length} > 0    Set Modified Partial Representation Value Payload       ${DUT1_ID}      ${DISCOVERABLE}=1&${OBSERVABLE}=1&${HREF}=${resource_href}
+    \	${payload}    Run Keyword If    ${length} > 0     Get Json Representation
     \   ${msgid2}    Generate Message Id
     \   ${token2}    Generate Token
-    \	${dut2_response}    Run Keyword If    ${length} > 0 and ${update_support} == ${True}    Send Post Request	${UNICAST}	${COAP}	${msgid2}	${token2}	${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
-    \   Run Keyword If    ${length} > 0 and ${update_support} == ${True}    Should Not Be Empty    ${dut2_response}
+    \	${update_support}    Is Crudn Operation Supported    ${resource_href}    ${PARTIAL_UPDATE}
+    \	${dut2_response}	Run Keyword If    ${length} > 0 and ${update_support} == ${True}    Send Post Request	${UNICAST}	${COAP}	${msgid2}	${token2}	${SERVER_IP}    ${${SERVER_PORT}}	${resource_href}	${NON_CONFIRMABLE}	${payload}
+    \   Run Keyword If    ${length} > 0 and ${update_support} == ${True}    Should Not Be Empty    ${dut2_response}    No response found for post request
     \   Run Keyword If    ${length} < 1 or ${update_support} == ${False}    Log To Console    ============== User Control -> Change state of resource for notification================
+
     \	Builtin.sleep	${${DEFAULT_WAIT_TIME}}
-    \	${dut2_response}	Get Observe Response	 ${COAP}
-    \	Should Not Be Empty		${dut2_response}
+    \	${dut2_response}	Get Observe Response	 ${COAP}    ${resource_href}
+    \	Should Not Be Empty    ${dut2_response}    No observe notification received!! 
     \   ${dut2_response_json}   Get Response Json       ${dut2_response}
-    \   ${validate_json_result}         Validate JSON Format        ${dut2_response_json}
-    \   Should Be True   ${validate_json_result}
+    \   ${validate_json_result} 	Validate JSON Format        ${dut2_response_json}
+    \   Should Be True   ${validate_json_result}    Notification payload does not contain valid json data
     \   ${dut2_response_code}   Get Response Code       ${dut2_response}
-    \   Should Be Equal         ${COAP_RESPONSE_CODE_RETRIEVED}         ${dut2_response_code}
+    \   Should Be Equal         ${COAP_RESPONSE_CODE_RETRIEVED}         ${dut2_response_code}    Response code mismatch for observe request
     \	${dut2_response_token}   Get Response Token       ${dut2_response}
-    \	Should Be Equal             ${dut2_response_token}    ${token1} 
-    \	${dut2_response_code}	Get Response Code       ${dut2_response}
+    \	Should Be Equal             ${dut2_response_token}    ${token1}    Response code mismatch for observe request
+
+    @{non_obsevable_resource_hrefs}	Get DUT Info Value	${HREF}	   ${DUT1_ID}	${OBSERVABLE}=0&${DISCOVERABLE}=1
+    :FOR        ${resource_href}   IN      @{non_obsevable_resource_hrefs}
+    \   ${msgid1}    Generate Message Id
+    \   ${token1}    Generate Token
+    \	${dut_response}    Send Observe Request	${COAP}	${msgid1}	${token1}	${SERVER_IP}    ${${SERVER_PORT}}	${resource_href}	${NON_CONFIRMABLE}
+    \   Should Be Empty    ${dut_response}    Observe response received from non observalbe resource!!
+
+
+*** Keywords ***
+
+Pre Condition
+    Start Capture
+    Set Log File Directory	${TESTNAME}
+    Set Global Variable    ${DUT1_ID}    Server_DUT1
+    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
+    Should Be True	${define_dut_result}    The DUTDescriptor has some problem!!
+    @{discoverable_resources}	Get DUT Info Value	${RESOURCE_TYPE}	${DUT1_ID}    ${DISCOVERABLE}=1
+    ${resource_ip}	${resource_port}	${resource_href}	Get IP Port And Uri		${RESOURCE_TYPE}=@{discoverable_resources}[0]
+    Set Global Variable    ${SERVER_IP}    ${resource_ip}
+    Set Global Variable    ${SERVER_PORT}    ${resource_port}
+
+Post Condition
+    @{observable_resource_hrefs}	Get DUT Info Value	${HREF}	   ${DUT1_ID}	${OBSERVABLE}=1&${DISCOVERABLE}=1
+    :FOR        ${resource_href}   IN      @{observable_resource_hrefs}
+    \   ${msgid1}    Generate Message Id
+    \	${dut2_response}	Cancel Observe With Get Message    ${COAP}    ${msgid1}    ${SERVER_IP}    ${${SERVER_PORT}}    ${resource_href}    ${NON_CONFIRMABLE}
+    Release DUT information     ${DUT1_ID}
+    End Capture

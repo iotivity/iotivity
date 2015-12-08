@@ -51,6 +51,8 @@ protected:
     std::string m_resourceURI;
     std::string m_resourceTypeName;
     std::string m_resourceInterface;
+    bool m_observeStatus;
+    bool m_discoverStatus;
     OCResourceHandle m_resourceHandle;
     PlatformConfig m_platformConfig;
     bool m_isServerRunning;
@@ -240,6 +242,26 @@ public:
      *
      */
     void handleSlowResponse(std::shared_ptr< OCResourceRequest > request);
+
+    /**
+     * API to know whether the resource is observable or not
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     * @return bool - if resource is observable. true is returned, else  false
+     *
+     */
+    bool isObservableResource(void);
+
+    /**
+     * API to know whether the resource is discoverable or not
+     *
+     * @author Mushfiqul Islam Antu(i.mushfiq@samsung.com)
+     *
+     * @return bool - if resource is discoverable. true is returned, else  false
+     *
+     */
+    bool isDiscoverableResource(void);
 
     static OCStackResult setPlatformInfo(string platformID, string manufacturerName,
             string manufacturerUrl, string modelNumber, string dateOfManufacture,

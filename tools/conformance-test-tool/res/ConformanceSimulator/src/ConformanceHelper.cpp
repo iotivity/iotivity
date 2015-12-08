@@ -16,7 +16,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 #include "ConformanceHelper.h"
 
 ConformanceHelper *ConformanceHelper::s_conformanceHelperInstance = NULL;
@@ -34,7 +35,6 @@ ConformanceHelper::ConformanceHelper(void)
     m_isResourceEnlisted = 0;
     m_callbackErrorCode = 0;
     m_actionSetCallbackCount = 0;
-//    m_pGroupSynchronization = GroupSynchronization::getInstance();
     m_pThingsConfiguration = ThingsConfiguration::getInstance();
     m_pThingsMaintenance = ThingsMaintenance::getInstance();
 

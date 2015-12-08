@@ -49,6 +49,11 @@ cd res/ConformanceSimulator
 RunCommand "scons" "Conformance Simulator Build" 
 cd ../..
 
+# Buiding DtlsRelay
+cd res/DtlsRelay
+RunCommand "scons" "Dtls Relay Build" 
+cd ../..
+
 
 # Preparing Conformance Tool
 echo ''
@@ -59,6 +64,7 @@ mkdir -p bin/linux/ConformanceTestTool
 mkdir -p bin/linux/ConformanceTestTool/libs
 mkdir -p bin/linux/ConformanceTestTool/testsuite
 mkdir -p bin/linux/ConformanceSimulator
+mkdir -p bin/linux/DtlsRelay
 
 if [ ! -e res/ConformanceTestTool/bin/ConformanceTestTool ]; then
 	echo $bold$red'GUI Binary not found, only CLI will be supported!'$reset
@@ -69,7 +75,10 @@ else
 	RunCommand "cp -r res/ConformanceTestTool/bin/ConformanceTestTool/* res/ConformanceTestTool/provisioning res/ConformanceTestTool/testsuite bin/linux/ConformanceTestTool" "Required Files Installation"
 fi
 
-RunCommand "cp -r res/ConformanceSimulator/bin/linux/* bin/linux/ConformanceSimulator" "Conformance Simulator Installation"
+cd res/ConformanceSimulator/bin/linux/
+RunCommand "find . -type f -not -iname '*.o' -exec cp '{}' '../../../../bin/linux/ConformanceSimulator' ';' " "Conformance Simulator Installation"
+cd ../../../../
+RunCommand "cp -r res/DtlsRelay/bin/linux bin/linux/DtlsRelay" "Dtls Relay Installation"
 RunCommand "cp -r res/ConformanceTestTool/libs/* bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/" "Dependent Jars Installation"
 
 # Buiding JCOAP

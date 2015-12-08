@@ -1,0 +1,21 @@
+##
+# Build script for DTLS Relay
+#
+##
+
+print '\n---------------Started Building dtls relay---------------\n'
+
+Import('env')
+
+tiny_dtls_path = '../../../../../../extlibs/tinydtls'
+event_lib_path = '/usr/lib'
+project_include = '#inc'
+dtls_relay_src = Glob('*.c')
+
+env['CC']='gcc'
+
+env.AppendUnique(LIBS=['event', 'tinydtls', 'm'])
+env.AppendUnique(LIBPATH=[tiny_dtls_path, event_lib_path])
+env.AppendUnique(CPPPATH=[project_include, tiny_dtls_path])
+
+env.Program(target = 'dtls_relay', source = dtls_relay_src)

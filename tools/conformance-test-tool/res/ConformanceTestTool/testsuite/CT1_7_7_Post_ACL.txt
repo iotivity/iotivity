@@ -26,58 +26,120 @@ CT1.7.7 Post ACL
     [Tags]	Mandatory	Security
     #Precondition
     ${server_type}	Wait For User Confirmation	Please Select Server Type	${JUST_WORKS_SERVER} ${RANDOM_PIN_SERVER}
-    ${SECURITY_CLIENT_DIR}	Get Security Client Simulator Directory
-    Initialize Device Controller	${DEVICE_ID}
-    Change Working Directory	${SECURITY_CLIENT_DIR}
-    Execute Application	${SECURITY_CLIENT_PROCESS_ID}	${SECURITY_CLIENT}
-    ConformanceKeyword.Log to Console	Starting Security Provisioning Client ...
-    Start Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
-    Sleep	5 seconds
     
-    Transfer Ownership	${server_type}
+    Initialize Device Controller	${DEVICE_ID}
+    Change Working Directory	${DTLS_RELAY_DIR}
+    Execute Application	${DTLS_RELAY_PROCESS_ID}	${DTLS_RELAY}
+    Start Application Log	${DEVICE_ID}	${DTLS_RELAY_PROCESS_ID}
+    Sleep	2 seconds
+    ${app_log}	Get Application Log	${DEVICE_ID}	${DTLS_RELAY_PROCESS_ID}
+    Should Contain	${app_log}	Staring Dtls Relay
+    Should Not Contain	${app_log}	data address bind failed
     
     #Main Body
-    ConformanceKeyword.Log to Console	Discovering Owned Devices ...
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DISCOVERY_OWNED_DEVICE}
-    Sleep	5 seconds
-    ${current_time}	Get Current Date
-    Print Message	Starting ACL Provisioning at ${current_time}...
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_PROVISIONING_ACL}
-    Sleep	2 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DEVICE_SELECTION}
-    Sleep	2 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${SUBJECT}
-    Sleep	2 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_RESOURCE_COUNT}
-    Sleep	2 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${RESOURCE_URI}
-    Sleep	2 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${PERMISSION}
-    Sleep	2 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_OWNER_COUNT}
-    Sleep	2 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${RESOURCE_OWNER}
-    Sleep	2 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_CLOSE_SECURITY_CLIENT}
-    ${app_log}	Get Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
-    Should Contain	${app_log}	${PROVISIONING_SUCCESS_MESSAGE}
-    ConformanceKeyword.Log to Console	${app_log}
+    Run Keyword if	'${server_type}' == '${JUST_WORKS_SERVER}'	Transfer Ownership Using Just Works Method
+    ...	ELSE IF	'${server_type}' == '${RANDOM_PIN_SERVER}'	Transfer Ownership Using Random Pin Method
+    ...	ELSE	Should be True	False
     
-    Print Message	Please Verify the Resource has a new ACL with Subject= ${SUBJECT}, Resource= ${RESOURCE_URI}, Permission= ${PERMISSION} and Owner= ${RESOURCE_OWNER}
-
-
+    Terminate Dtls Connection
+    Terminate Application	${DTLS_RELAY_PROCESS_ID}
+    
+    
 *** Keywords ***
-
-Transfer Ownership
-    [Arguments]     ${server_type}
-    ConformanceKeyword.Log to Console	Discovering Unowned Devices ...
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DISCOVERY_UNOWNED_DEVICE}
-    Sleep	5 seconds
-    ${current_time}	Get Current Date
-    ConformanceKeyword.Log to Console	Transferring Ownership at ${current_time} ...
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_OWNER_TRANSFER}
-    Sleep	3 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DEVICE_SELECTION}
+Transfer Ownership Using Just Works Method
+	${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_PROVISION_URI}	${PROVISION_QUERY_UNOWNED}
     
-    Run Keyword if	'${server_type}' == '${RANDOM_PIN_SERVER}'	Take Random Pin From User	${SECURITY_CLIENT_PROCESS_ID}    
-    Sleep	5 seconds
+    ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_response_code}
+	${payload}	Get Payload From File	${PAYLOAD_OXMSEL_JUST_WORKS}	${PAYLOAD_FILE_DIR}
+	
+	${message_id}	Generate Message Id
+	${token}	Generate Token
+	${dut_put_response}        Send Put Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_URI}	${CONFIRMABLE}	${payload}	${PAYLOAD_TYPE_SECURITY}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	Should Be Equal	${COAP_RESPONSE_CODE_UPDATED}	${dut_put_response_code}
+	
+	${dut_get_response}        Send Get Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_PSTAT}	${CONFIRMABLE}
+	Should Not Be Empty             ${dut_get_response}
+	${dut_get_response_code}   Get Response Code       ${dut_get_response}
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_get_response_code}
+	
+	${payload}	Get Payload From File	${PAYLOAD_PSTAT_PROVISIONING_MODE}	${PAYLOAD_FILE_DIR}
+	
+	${dut_put_response}        Send Put Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_PSTAT}	${CONFIRMABLE}	${payload}	${PAYLOAD_TYPE_SECURITY}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	
+	${secured_port}	Get Secured Port	${resource_ip}	${${resource_port}}
+	
+	Intialize Dtls Connection	${DTLS_RELAY_IP}	${DTLS_COMMAND_PORT}	${resource_ip}	${secured_port}	${TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256}
+	
+	${payload}	Get Payload From File	payload_owner	${PAYLOAD_FILE_DIR}
+	
+	${dut_put_response}        Send Put Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${DTLS_RELAY_IP}	  ${DTLS_DATA_PORT}	${OIC_CORE_PROVISION_URI}	${CONFIRMABLE}	${payload}	${PAYLOAD_TYPE_SECURITY}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	Should Be Equal	${COAP_RESPONSE_CODE_UPDATED}	${dut_put_response_code}
+	
+	${payload}	Get Payload From File	payload_acl	${PAYLOAD_FILE_DIR}
+	
+	${dut_put_response}        Send Post Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${DTLS_RELAY_IP}	  ${DTLS_DATA_PORT}	${OIC_CORE_PROVISION_ACL}	${CONFIRMABLE}	${payload}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	Should Be Equal	${COAP_RESPONSE_CODE_CREATED}	${dut_put_response_code}
+	
+Transfer Ownership Using Random Pin Method
+	${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_PROVISION_URI}	${PROVISION_QUERY_UNOWNED}
+    
+    ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_response_code}
+	${payload}	Get Payload From File	payload_oxmsel_random	${PAYLOAD_FILE_DIR}
+	
+	${message_id}	Generate Message Id
+	${token}	Generate Token
+	${dut_put_response}        Send Put Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_URI}	${CONFIRMABLE}	${payload}	${PAYLOAD_TYPE_SECURITY}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	Should Be Equal	${COAP_RESPONSE_CODE_UPDATED}	${dut_put_response_code}
+	
+	${dut_get_response}        Send Get Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_PSTAT}	${CONFIRMABLE}
+	Should Not Be Empty             ${dut_get_response}
+	${dut_get_response_code}   Get Response Code       ${dut_get_response}
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_get_response_code}
+	
+	${payload}	Get Payload From File	payload_pstat_random	${PAYLOAD_FILE_DIR}
+	
+	${dut_put_response}        Send Put Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_PSTAT}	${CONFIRMABLE}	${payload}	${PAYLOAD_TYPE_SECURITY}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	
+	${secured_port}	Get Secured Port	${resource_ip}	${${resource_port}}
+	
+	${current_time}	Get Current Date
+    ConformanceKeyword.Log To Console	Initializing DTLS Handshake for Just Works at ${current_time} ...
+	
+	${client_di}	Set Variable	adminDeviceUUID0
+	${server_di}	Set Variable	randomPinDevUUIDadminDeviceUUID0
+	${random_pin}	Wait For User Confirmation	INPUT PIN
+	
+	${is_successful}	Intialize Dtls Connection With Random Pin	${DTLS_RELAY_IP}	${DTLS_COMMAND_PORT}	${resource_ip}	${secured_port}	${TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256}	${client_di}	${server_di}	${random_pin}
+    Should be True	${is_successful}
+    
+    ${current_time}	Get Current Date
+    ConformanceKeyword.Log To Console	Finishing DTLS Handshake for Just Works at ${current_time} ...
+    
+    
+    ${payload}	Get Payload From File	payload_owner	${PAYLOAD_FILE_DIR}
+	
+	${dut_put_response}        Send Put Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${DTLS_RELAY_IP}	  ${DTLS_DATA_PORT}	${OIC_CORE_PROVISION_URI}	${CONFIRMABLE}	${payload}	${PAYLOAD_TYPE_SECURITY}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	Should Be Equal	${COAP_RESPONSE_CODE_UPDATED}	${dut_put_response_code}
+	
+	${payload}	Get Payload From File	payload_acl	${PAYLOAD_FILE_DIR}
+	
+	${dut_put_response}        Send Post Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${DTLS_RELAY_IP}	  ${DTLS_DATA_PORT}	${OIC_CORE_PROVISION_ACL}	${CONFIRMABLE}	${payload}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	Should Be Equal	${COAP_RESPONSE_CODE_CREATED}	${dut_put_response_code}

@@ -40,7 +40,7 @@ CT1.3.14 NON DELETE Message based on CoAP
 #Test-Body
     \   ${msgid}    Generate Message Id
     \   ${token}    Generate Token
-    \	${delete_support}    Is Crudn Operation Supported    ${resource_href}    ${DELETE}
+    \	${delete_support}    Is Crudn Operation Supported    ${resource_href}    ${SUPPORT_DELETE}
     \	${dut2_response}	Send Delete Request	${UNICAST}	${COAP}	${msgid}	${token}	${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}
     \	Should Not Be Empty		${dut2_response}
     \	${dut2_response_json}	Run Keyword if    ${delete_support} == ${True}    Get Response Json	${dut2_response}

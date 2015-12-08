@@ -26,59 +26,25 @@ CT1.7.2.2 Set for Random Pin Based Owner Transfer Method
 
     [Tags]	Optional    Security
     
-    ${SECURITY_CLIENT_DIR}	Get Security Client Simulator Directory
-    Initialize Device Controller	${DEVICE_ID}
-    Change Working Directory	${SECURITY_CLIENT_DIR}
-    Execute Application	${SECURITY_CLIENT_PROCESS_ID}	${SECURITY_CLIENT}
-    ConformanceKeyword.Log to Console	Starting Security Provisioning Client ...
-    Start Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
-    Sleep	5 seconds
-    ConformanceKeyword.Log to Console	Discovering Unowned Devices ...
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DISCOVERY_UNOWNED_DEVICE}
-    Sleep	5 seconds
-    ConformanceKeyword.Log to Console	Setting OxmSel to oic.sec.doxm.rdp ...
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_OWNER_TRANSFER}
-    Sleep	3 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DEVICE_SELECTION}
-    ${random_pin}	Wait For User Confirmation	Please input the Random Pin generated in Server
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${random_pin}
-    Sleep	5 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_CLOSE_SECURITY_CLIENT}
-    ${app_log}	Get Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
-    Should Contain	${app_log}	Transferred Ownership successfuly for device
-    ConformanceKeyword.Log to Console	${app_log}
+    ${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_PROVISION_URI}	${PROVISION_QUERY_UNOWNED}
     
-    ${IS_RESOURCE_FOUND}	Set Variable	False
-#    @{dut_response_list}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_PROVISION_URI}	${PROVISION_QUERY_OWNED}
-    ${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_PROVISION_URI}	${PROVISION_QUERY_OWNED}
-
-    ${IS_RESOURCE_FOUND}	Set Variable	True
     ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}
 	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_response_code}
-	${msgid2}    Generate Message Id
-    ${token2}    Generate Token   
-	${dut_get_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid2}    ${token2}    ${resource_ip}    ${${resource_port}}    ${OIC_CORE_PROVISION_URI}?${PROVISION_QUERY_OWNED}    ${CONFIRMABLE}
+	${payload}	Get Payload From File	payload_oxmsel_random	${PAYLOAD_FILE_DIR}
+	
+	${message_id}	Generate Message Id
+	${token}	Generate Token
+	${dut_put_response}        Send Put Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_URI}	${CONFIRMABLE}	${payload}	${PAYLOAD_TYPE_SECURITY}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	Should Be Equal	${COAP_RESPONSE_CODE_UPDATED}	${dut_put_response_code}
+	
+	${dut_get_response}        Send Get Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_URI}?${PROVISION_QUERY_UNOWNED}	${CONFIRMABLE}
 	Should Not Be Empty             ${dut_get_response}
 	${dut_get_response_code}   Get Response Code       ${dut_get_response}
 	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_get_response_code}
 	${dut_get_response_payload}	Get Response Payload	${dut_get_response}
 	${oxmsel_property}	Get OXM Selection From Response	${dut_get_response_payload}
-	Should Contain	${oxmsel_property}	${RANDOM_PIN_BASED_OTM}
-	
-#	    :FOR       ${dut_response}   IN      @{dut_response_list}
-#    \	${IS_RESOURCE_FOUND}	Set Variable	True
-#    \	${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}
-#	\	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_response_code}
-#    \   ${msgid2}    Generate Message Id
-#    \   ${token2}    Generate Token   
-#	\	${dut_get_response}        Send Get Request        ${UNICAST}      ${COAP}    ${msgid2}    ${token2} 	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_URI}?${PROVISION_QUERY_OWNED}	${CONFIRMABLE}
-#	\	Should Not Be Empty             ${dut_get_response}
-#	\	${dut_get_response_code}   Get Response Code       ${dut_get_response}
-#	\	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_get_response_code}
-#	\	${dut_get_response_payload}	Get Response Payload	${dut_get_response}
-#	\	${oxmsel_property}	Get OXM Selection From Response	${dut_get_response_payload}
-#	\	Should Contain	${oxmsel_property}	${RANDOM_PIN_BASED_OTM}
-
-    Should be True	${IS_RESOURCE_FOUND}
+	Should Contain	${oxmsel_property}	${OXM_JUST_WORKS}
     
 

@@ -5,7 +5,7 @@ Test Setup    Start Capture
 Test TearDown    End Capture
 
 *** Test Cases ***
-CT1.1.4 CoAP Based Unicast Discovery – /oic/d
+CT1.1.4 CoAP Based Unicast Discovery - oic_d
     [Documentation]
 	...	|author	| |
 	...	|reviewer| |				
@@ -31,8 +31,7 @@ CT1.1.4 CoAP Based Unicast Discovery – /oic/d
     ${define_dut_result}  	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
     Should Be True	${define_dut_result}
     @{dut1_resource_types}      Get DUT Info Value      ${RESOURCE_TYPE}        ${DUT1_ID}      ${DISCOVERABLE}=1
-    :FOR       ${dut1_resource_type}   IN      @{dut1_resource_types}
-    \   ${resource_ip}  ${resource_port}        ${resource_href}        Get IP Port And Uri             ${RESOURCE_TYPE}=${dut1_resource_type}
+    ${resource_ip}	${resource_port}	${resource_href}	Get IP Port And Uri		${RESOURCE_TYPE}=${dut1_resource_types[0]}
 
 #Test-Body
     ${msgid}    Generate Message Id

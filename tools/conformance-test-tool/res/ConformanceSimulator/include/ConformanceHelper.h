@@ -16,7 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #ifndef __CONFORMANCE_HELPER_H__
 #define __CONFORMANCE_HELPER_H__
@@ -29,9 +29,7 @@
 #include <algorithm>
 #include "time.h"
 #include "ocstack.h"
-//#include "SampleResource.h"
 #include "GroupManager.h"
-//#include "GroupSynchronization.h"
 #include "ThingsConfiguration.h"
 #include "ThingsMaintenance.h"
 #include "ActionSet.h"

@@ -29,42 +29,19 @@ CT1.7.3 Check supporting provisioning mode
 	...	|expected| in “Sm” property. Server (DUT)’s “/oic/sec/pstat.sm” == “bx0000 0011” |
 
     [Tags]    Security     Mandatary
-    #Precondition
-    Set Log File Directory	${TESTNAME}
-    ${server_type}	Wait For User Confirmation	Please Select Server Type	${JUST_WORKS_SERVER} ${RANDOM_PIN_SERVER}
     
-    ${SECURITY_CLIENT_DIR}	Get Security Client Simulator Directory
-    Initialize Device Controller	${DEVICE_ID}
-    Change Working Directory	${SECURITY_CLIENT_DIR}
-    Execute Application	${SECURITY_CLIENT_PROCESS_ID}	${SECURITY_CLIENT}
-    ConformanceKeyword.Log to Console	Starting Security Provisioning Client ...
-    Start Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
-    Sleep	5 seconds
+    ${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_PROVISION_URI}	${PROVISION_QUERY_UNOWNED}
     
-    #Main Body
-    ConformanceKeyword.Log to Console	Discovering Unowned Devices ...
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DISCOVERY_UNOWNED_DEVICE}
-    Sleep	5 seconds
-    ${current_time}	Get Current Date
-    ConformanceKeyword.Log to Console	Transferring Ownership ...
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_OWNER_TRANSFER}
-    Sleep	3 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_DEVICE_SELECTION}
-    
-    Run Keyword if	'${server_type}' == '${RANDOM_PIN_SERVER}'	Take Random Pin From User	${SECURITY_CLIENT_PROCESS_ID}
-    
-    Sleep	5 seconds
-    Input Command To Application	${SECURITY_CLIENT_PROCESS_ID}	${INPUT_CLOSE_SECURITY_CLIENT}
-    ${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_PROVISION_URI}	${PROVISION_QUERY_OWNED}
-    ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}	
+    ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}
 	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_response_code}
-    
-    ${message_id}	Generate Message Id
+	
+	${message_id}	Generate Message Id
 	${token}	Generate Token
-    ${dut_get_response}        Send Get Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_PSTAT}	${CONFIRMABLE}
-    Should Not Be Empty             ${dut_get_response}
-    ${dut_get_response_code}   Get Response Code       ${dut_get_response}
-    Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_get_response_code}
-    ${dut_get_response_payload}	Get Response Payload	${dut_get_response}
+	
+	${dut_get_response}        Send Get Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_PSTAT}	${CONFIRMABLE}
+	Should Not Be Empty             ${dut_get_response}
+	${dut_get_response_code}   Get Response Code       ${dut_get_response}
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_get_response_code}
+	${dut_get_response_payload}	Get Response Payload	${dut_get_response}
     ${sm_property}	Get SM Property From Response	${dut_get_response_payload}
     Should Contain	${sm_property}	${PROVISIONING_TOOL_DIRECTED_PROVISIONING_MODE}

@@ -26,23 +26,56 @@ CT1.7.8 Access policy enforcement when the Server (DUT) doesn't have ACL
 	...	|expected| 1. Client (TE) get RSP 2.03 or 2.05 |
 
     [Tags]	Mandatory	Security
-   	Wait For User Confirmation	Please Start DUT With No ACL
-#    ${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_RESOURCE_DEFAULT_URI}
-#    ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}	
-#	Should Be True	${COAP_RESPONSE_CODE_SUCCESS} == ${dut_response_code} or ${COAP_RESPONSE_CODE_VALID} == ${dut_response_code}
+    
+   	Initialize Device Controller	${DEVICE_ID}
+    Change Working Directory	${DTLS_RELAY_DIR}
+    Execute Application	${DTLS_RELAY_PROCESS_ID}	${DTLS_RELAY}
+    Start Application Log	${DEVICE_ID}	${DTLS_RELAY_PROCESS_ID}
+    Sleep	2 seconds
+    ${app_log}	Get Application Log	${DEVICE_ID}	${DTLS_RELAY_PROCESS_ID}
+    Should Contain	${app_log}	Staring Dtls Relay
+    Should Not Contain	${app_log}	data address bind failed
+    
+    ${dut_response}	Get Multicast Discovery Request List	${COAP}	${OIC_CORE_PROVISION_URI}	${PROVISION_QUERY_UNOWNED}
+    
+    ${dut_response_code}	${resource_ip}	${resource_port}	${response_payload}	Get Response Code IP Port And Payload From Response	${dut_response}
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_response_code}
+	${payload}	Get Payload From File	${PAYLOAD_OXMSEL_JUST_WORKS}	${PAYLOAD_FILE_DIR}
 	
-	${SECURITY_CLIENT_DIR}	Get Security Client Simulator Directory
-	Initialize Device Controller	${DEVICE_ID}
-    Change Working Directory	${SECURITY_CLIENT_DIR}
-    ConformanceKeyword.Log to Console	Starting Secured Provisioning Client ...
-    Execute Application	${SECURITY_CLIENT_PROCESS_ID}	${SECURED_CLIENT}
-    Start Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
-    ConformanceKeyword.Log to Console	${FIND_AND_GET}
-    Sleep	10 seconds
-    Terminate Application	${SECURITY_CLIENT_PROCESS_ID}
-    sleep	2 seconds
-    ${app_log}	Get Application Log	${DEVICE_ID}	${SECURITY_CLIENT_PROCESS_ID}
-    Should Contain	${app_log}	${SECURED_GET_FAILURE_MESSAGE}
-    ConformanceKeyword.Log to Console	${app_log}
-
-
+	${message_id}	Generate Message Id
+	${token}	Generate Token
+	${dut_put_response}        Send Put Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_URI}	${CONFIRMABLE}	${payload}	${PAYLOAD_TYPE_SECURITY}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	Should Be Equal	${COAP_RESPONSE_CODE_UPDATED}	${dut_put_response_code}
+	
+	${dut_get_response}        Send Get Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_PSTAT}	${CONFIRMABLE}
+	Should Not Be Empty             ${dut_get_response}
+	${dut_get_response_code}   Get Response Code       ${dut_get_response}
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_get_response_code}
+	
+	${payload}	Get Payload From File	${PAYLOAD_PSTAT_PROVISIONING_MODE}	${PAYLOAD_FILE_DIR}
+	
+	${dut_put_response}        Send Put Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${resource_ip}	  ${${resource_port}}	${OIC_CORE_PROVISION_PSTAT}	${CONFIRMABLE}	${payload}	${PAYLOAD_TYPE_SECURITY}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	
+	${secured_port}	Get Secured Port	${resource_ip}	${${resource_port}}
+	
+	Intialize Dtls Connection	${DTLS_RELAY_IP}	${DTLS_COMMAND_PORT}	${resource_ip}	${secured_port}	${TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256}
+	
+	${payload}	Get Payload From File	payload_owner	${PAYLOAD_FILE_DIR}
+	
+	${dut_put_response}        Send Put Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${DTLS_RELAY_IP}	  ${DTLS_DATA_PORT}	${OIC_CORE_PROVISION_URI}	${CONFIRMABLE}	${payload}	${PAYLOAD_TYPE_SECURITY}
+	Should Not Be Empty             ${dut_put_response}
+	${dut_put_response_code}	Get Response Code	${dut_put_response}
+	Should Be Equal	${COAP_RESPONSE_CODE_UPDATED}	${dut_put_response_code}
+	
+	${dut_get_response}        Send Get Request        ${UNICAST}      ${COAP} 	${message_id}	${token}	${DTLS_RELAY_IP}	  ${DTLS_DATA_PORT}	/a/led	${CONFIRMABLE}
+	Should Not Be Empty             ${dut_get_response}
+	${dut_get_response_code}   Get Response Code       ${dut_get_response}
+	Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut_get_response_code}
+    
+    
+    Terminate Dtls Connection
+    Terminate Application	${DTLS_RELAY_PROCESS_ID}

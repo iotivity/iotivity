@@ -68,7 +68,24 @@ void SampleResource::handleObserveRequest(QueryParamsMap &queryParamsMap,
         std::shared_ptr< OCResourceResponse > response)
 {
     cout << "Inside handleObserveRequest... " << endl;
+    OCStackResult result = OC_STACK_ERROR;
+
     // handle observe request
+    if (this->isObservableResource() == false)
+    {
+        cout << "Observe not supported!!";
+        response->setErrorCode(COAP_RESPONSE_CODE_ERROR);
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
+        cerr << "Resource does not support Observe!!" << endl;
+
+        result = OCPlatform::sendResponse(response);
+        if (result != OC_STACK_OK)
+        {
+            cerr << "Unable to send response" << endl;
+        }
+
+        return;
+    }
 
     ObservationInfo observationInfo = request->getObservationInfo();
     if (ObserveAction::ObserveRegister == observationInfo.action)
@@ -80,7 +97,8 @@ void SampleResource::handleObserveRequest(QueryParamsMap &queryParamsMap,
         cout << "Sending notification from from register observer - for the first time" << endl;
 
         response->setErrorCode(COAP_RESPONSE_CODE_SUCCESS);
-        OCStackResult result = OCPlatform::sendResponse(response);
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+        result = OCPlatform::sendResponse(response);
         if (result != OC_STACK_OK)
         {
             cerr << "Unable to register observe" << endl;
@@ -101,12 +119,14 @@ void SampleResource::handleObserveRequest(QueryParamsMap &queryParamsMap,
         else
         {
             response->setErrorCode(COAP_RESPONSE_CODE_ERROR);
+            response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+            cerr << "No observer found!! Unable cancel observe!!" << endl;
         }
 
-        OCStackResult result = OCPlatform::sendResponse(response);
+        result = OCPlatform::sendResponse(response);
         if (result != OC_STACK_OK)
         {
-            cerr << "Unable to cancel observe" << endl;
+            cerr << "Unable to send response" << endl;
         }
     }
 

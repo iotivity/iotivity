@@ -37,6 +37,8 @@ ResourceServer::ResourceServer(void) :
     m_isServerRunning = false;
     m_isServerConstructed = false;
     m_isSlowResource = false;
+    m_observeStatus = false;
+    m_discoverStatus = false;
 }
 
 ResourceServer::~ResourceServer(void)
@@ -149,6 +151,16 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
 {
     OCStackResult result = OC_STACK_OK;
 
+    if (resourceProperty & OC_OBSERVABLE)
+    {
+        cout << "This resource is Observable" << endl;
+        m_observeStatus = true;
+    }
+    if (resourceProperty & OC_DISCOVERABLE)
+    {
+        cout << "This resource is Discoverable" << endl;
+        m_discoverStatus = true;
+    }
     // This will internally create and register the resource.
     result = OCPlatform::registerResource(m_resourceHandle, m_resourceURI, m_resourceTypeName,
             m_resourceInterface, std::bind(&ResourceServer::entityHandler, this, PH::_1),
@@ -346,4 +358,14 @@ void ResourceServer::handleSlowResponse(std::shared_ptr< OCResourceRequest > req
     cout << "Slow working period is over" << endl;
 
     handleResponse(request);
+}
+
+bool ResourceServer::isObservableResource(void)
+{
+    return m_observeStatus;
+}
+
+bool ResourceServer::isDiscoverableResource(void)
+{
+    return m_discoverStatus;
 }

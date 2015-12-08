@@ -14,6 +14,17 @@ Start Capture
 
 End Capture
     OperatingSystem.Run    killall tshark
+    OperatingSystem.Run    killall dtls_relay
+
+Update Representation Multiple Times
+        [Arguments]    ${ip}    ${port}    ${href}    ${qos}    ${payload}    ${update_support}    ${no_of_update}
+    :FOR    ${index}    IN RANGE    ${no_of_update}
+    \   ${msgid}    Generate Message Id
+    \   ${token}    Generate Token
+    \   ${dut2_response}    Run Keyword If    ${update_support} == ${True}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}    ${ip}    ${${port}}    ${href}    ${qos}    ${payload}
+    \   Run Keyword If    ${update_support} == ${False}    Log To Console    ============== User Control -> Change state of resource for notification================
+    \   Run Keyword If    ${update_support} == ${False}    Builtin.sleep	${${DEFAULT_WAIT_TIME}}
+
 
 Get Length Available Representation To Update
         [Arguments]     ${DUT_ID}       ${DUT_HREF_QUERY}
@@ -117,7 +128,49 @@ Take Random Pin From User
         ${RANDOM_PIN}	Wait For User Confirmation	Please input the Random Pin generated in Server
         Input Command To Application	${PROCESS_ID}	${RANDOM_PIN}
 
+Get Doxm Selection Payload
+        [Arguments]     ${payload}	${is_owned}	${oxm_selection}	${owner}
+        ${payload}	Update Payload	${payload}	${OWNED}	${is_owned}
+        ${payload}	Update Payload	${payload}	${OXMSEL}	${oxm_selection}
+        ${payload}	Update Payload	${payload}	${OWNR}	${owner}
+        [Return]	${payload}
+        
+Get Pstat Om Selection Payload
+        [Arguments]     ${pstat_payload}	${omsel}
+        ${payload}	Get Modified Json String	${pstat_payload}	${OM}	${omsel}
+        [Return]	${payload}
+        
+Get Ownership Transfer Payload
+        [Arguments]     ${doxm_payload}	${client_di}
+        ${payload}	Get Modified Json String	${doxm_payload}	${OWNED}	true
+        ${payload}	Get Modified Json String	${payload}	${OWNR}	${client_di}
+        [Return]	${payload}
+        
+Get ACL Provisioning Payload
+        [Arguments]     ${acl_payload}	${client_di}	${resouce}	${permission}
+        ${payload}	Get Modified Json String	${acl_payload}	${RESOURCE}	${resouce}
+        ${payload}	Get Modified Json String	${payload}	${PERMISSION}	${permission}
+        ${payload}	Get Modified Json String	${payload}	${SUBJECT}	${permission}
+        ${payload}	Get Modified Json String	${payload}	${OWNER}	${permission}
+        [Return]	${payload}
+        
+
 *** Variables ***
+${OXMSEL}	oxmsel
+${OM}	om
+${OWNED}	owned
+${OWNR}	ownr
+${RESOURCE}	rsrc
+${PERMISSION}	perms
+${SUBJECT}	sub
+${OWNER}	ownrs
+
+${OWNED_STATE_TRUE}	true
+${OWNED_STATE_FALSE}	false
+${DEFAULT_OWNER}	none
+${CTTSW9ULVRlc3QtVG9vbC0wMQ==_CLIENT_DI}	SW9ULVRlc3QtVG9vbC0wMQ==
+
+
 ${DUT1_INFO_PATH}       libs/DUTDescriptor.json
 ${DUT_TYPE_SERVER}      SERVER
 ${DUT_TYPE_CLIENT}      CLIENT
@@ -165,6 +218,7 @@ ${FALSE_URI}			/oic/res
 ${FALSE_RESOURCE_TYPE}	core.dummydummy
 ${EMPTY_QUERY}	
 ${DEFAULT_WAIT_TIME}	10
+${OBSERVE_MAX_ACK_TIMEOUT}    60
 ${FALSE_DEVICE_ID}	FALSE960-731F-46F1-BEC1-1E6CBD61ADC1
 ${TEST_REP_VALUE}	1
 
@@ -208,9 +262,12 @@ ${PROVISION_QUERY_OWNED}	Owned=TRUE
 
 ${SECURITY_CLIENT_DIR_GUI}        provisioning
 ${SECURITY_CLIENT_DIR_CLI}        provisioning
+${DTLS_RELAY_DIR}        ../DtlsRelay/linux
+${DTLS_RELAY}        stdbuf -oL ./dtls_relay
 ${SECURITY_CLIENT}    stdbuf -oL ./simulator_runner.sh 1
 ${SECURED_CLIENT}    stdbuf -oL ./simulator_runner.sh 2
 ${SECURITY_CLIENT_PROCESS_ID}    Security_Client_Process_Id
+${DTLS_RELAY_PROCESS_ID}    Dtls_Relay_Process_Id
 ${DEVICE_ID}    Linux
 ${PROVISIONING_SUCCESS_MESSAGE}	Received provisioning results: Result is = 1
 ${OWNER_TRANSFER_SUCCESS_MESSAGE}	Transferred Ownership successfuly for device
@@ -241,5 +298,22 @@ ${SUBORDINATE_CREATE}    SUBORDINATE_CREATE
 ${RETRIEVE}              RETRIEVE
 ${COMPLETE_UPDATE}       COMPLETE_UPDATE
 ${PARTIAL_UPDATE}        PARTIAL_UPDATE
-${DELETE}                DELETE
+${SUPPORT_DELETE}                DELETE
 
+#Cipher Suite
+${TLS_NULL_WITH_NULL_NULL}	0
+${TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256}	49176
+${TLS_PSK_WITH_AES_128_CCM_8}	49320
+${TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256}	49207
+${TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8}	49326
+
+#Dtls Relay
+${DTLS_RELAY_IP}	10.0.2.15
+${DTLS_DATA_PORT}	12346
+${DTLS_COMMAND_PORT}	12345
+
+#Observe Notification
+${CON_UPDATE_REQUIREMENT_ACK}    3
+${NON_UPDATE_REQUIREMENT_ACK}    12
+${CON_UPDATE_REQUIREMENT_RST}    1
+${NON_UPDATE_REQUIREMENT_RST}    4
