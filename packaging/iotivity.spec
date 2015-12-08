@@ -1,5 +1,5 @@
 Name: iotivity
-Version: 0.9.0
+Version: 1.0.0
 Release: 0
 Summary: IoTivity Base Stack & IoTivity Services
 Group: System Environment/Libraries
@@ -7,12 +7,22 @@ License: Apache-2.0
 URL: https://www.iotivity.org/
 Source0: %{name}-%{version}.tar.bz2
 Source10: cereal.tar.bz2
+Source100: tinycbor.tar.bz2
+Source101: gtest-1.7.0.zip
+# https://github.com/dascandy/hippomocks/archive/2f40aa11e31499432283b67f9d3449a3cd7b9c4d.zip
+Source102: 2f40aa11e31499432283b67f9d3449a3cd7b9c4d.zip
 BuildRequires: gettext-tools
 BuildRequires: expat-devel
 BuildRequires:	python, libcurl-devel
 BuildRequires:	scons
+BuildRequires:  unzip
 BuildRequires:	openssl-devel
-BuildRequires:  boost-devel, boost-program-options
+BuildRequires:  boost-devel, boost-program-options, boost-thread
+BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(uuid)
+BuildRequires:  pkgconfig(dlog)
+BuildRequires:  pkgconfig(capi-network-wifi)
+BuildRequires:  pkgconfig(capi-network-bluetooth)
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
 
@@ -39,58 +49,64 @@ Requires: pkgconfig
 Contains samples applications that use %{name}.
 
 %prep
-%setup -q -n %{name}-%{version} -a 10
+%setup -q -n %{name}-%{version} -a 10 -a 100 -a 101 -a 102
 
-%build
+%define release_mode false
+%define build_mode debug
+%define secure_mode 0
+%define RPM_ARCH %{_arch}
+%define target_os linux
+
+# overide to prevent issues
+%define _smp_mflags -j4
+
+# overide arch if needed
 %ifarch %arm
-export RPM_ARCH=arm
+%if "%{tizen}" == "2.4"
+%define RPM_ARCH arm-v7a
+%endif
 %else
 %ifarch aarch64
-export RPM_ARCH=arm64
+%define RPM_ARCH arm64
 %else
 %ifarch i586 i686 %{ix86}
-export RPM_ARCH=x86
-%else
-export RPM_ARCH=%{_arch}
+%define RPM_ARCH x86
 %endif
 %endif
 %endif
+
+%build
+
+cp -rfv hippomocks-2f40aa11e31499432283b67f9d3449a3cd7b9c4d  extlibs/hippomocks-master
+ln -fs ../../gtest-1.7.0  extlibs/gtest/gtest-1.7.0
 
 find . -iname "*.h*" -exec chmod -v a-x "{}" \;
 
-scons -j 4 TARGET_ARCH=$RPM_ARCH
+scons %{?_smp_mflags} \
+    RELEASE=%{release_mode} \
+    SECURED=%{secure_mode} \
+    TARGET_ARCH=%{RPM_ARCH} \
+    TARGET_OS=%{target_os} \
+    TARGET_TRANSPORT=IP
 
-%__make \
-    -C examples/OICMiddle \
-    TARGET_ARCH=$RPM_ARCH
-
-touch resource/deps resource/applyDepPatches
-
-%__make \
-    -C resource \
-    DEPEND_DIR=$(pwd)/extlibs/
-
-%__make \
-    -C resource/csdk \
-    DEPEND_DIR=$(pwd)/extlibs/
-
+%__make -C examples/OICSensorBoard/ BUILDTYPE=debug CLIENTARCH=%{RPM_ARCH}
 
 %install
 rm -rf %{buildroot}
 
-%__make \
+echo %__make \
     -C resource \
     DEPEND_DIR=$(pwd)/extlibs/ \
     DEST_LIB_DIR=%{buildroot}%{_libdir}/%{name}/ \
     install
 
-%__make \
+echo %__make \
     -C resource/csdk \
     DEPEND_DIR=$(pwd)/extlibs/ \
     DESTDIR=%{buildroot} \
     install
 
-%__make \
+echo %__make \
     -C resource/oc_logger \
     DEPEND_DIR=$(pwd)/extlibs/ \
     DESTDIR=%{buildroot} \
@@ -104,21 +120,32 @@ install -d %{buildroot}%{_libdir}
 find . -iname "lib*.a" -exec install "{}" %{buildroot}%{_libdir}/ \;
 find . -iname "lib*.so" -exec install "{}" %{buildroot}%{_libdir}/ \;
 
+find resource service -iname "include" -o -iname 'inc' -a -type d\
+    | grep -v example | while read include ; do \
+    dirname=$(dirname -- "$include") ; \
+    install -d %{buildroot}%{_includedir}/%{name}/${dirname} ; \
+    install $include/*.* %{buildroot}%{_includedir}/%{name}/${dirname}/ ; \
+done
 
-install -d %{buildroot}%{_includedir}
-install -d %{buildroot}%{_includedir}/%{name}/
-install resource/include/*.h %{buildroot}%{_includedir}/%{name}/
+install -d %{buildroot}%{_includedir}/%{name}/resource/oc_logger/targets/
+install ./resource/oc_logger/include/targets/*.* %{buildroot}%{_includedir}/%{name}/resource/oc_logger/targets/
 
-install service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}/%{name}/
-install service/soft-sensor-manager/SDK/cpp/include/*.h %{buildroot}%{_includedir}/%{name}/
+install -d %{buildroot}%{_includedir}/%{name}/resource/c_common
+install ./resource/c_common/*.h %{buildroot}%{_includedir}/%{name}/resource/c_common/
 
-install -d %{buildroot}%{_bindir}
-install examples/OICMiddle/debug/OICMiddle %{buildroot}%{_bindir}
+install -d %{buildroot}%{_libdir}/%{name}/examples/
+install out/%{target_os}/%{RPM_ARCH}/%{build_mode}/resource/examples/*client %{buildroot}%{_libdir}/%{name}/examples/
+install out/%{target_os}/%{RPM_ARCH}/%{build_mode}/resource/examples/*server %{buildroot}%{_libdir}/%{name}/examples/
 
 rm -fv %{buildroot}%{_libdir}/libcoap.a
 rm -fv %{buildroot}%{_libdir}/liboc.a
 rm -fv %{buildroot}%{_libdir}/liboc_logger.a
 rm -fv %{buildroot}%{_libdir}/libmosquitto.a
+
+%__make -C examples/OICSensorBoard/ install \
+ BUILDTYPE=debug \
+ CLIENTARCH=%{RPM_ARCH} \
+ install_dir=%{buildroot}/%{_libdir}/%{name}/examples/OICSensorBoard/
 
 %clean
 rm -rf %{buildroot}
@@ -133,13 +160,10 @@ rm -rf %{buildroot}
 
 %files devel
 %defattr(644,root,root,755)
-%{_includedir}/*/*.h*
-%{_includedir}/*/*/*.h*
+%{_includedir}/%{name}/
 %{_libdir}/lib*.a
 
 %files examples
 %defattr(-,root,root,-)
-%{_bindir}/OICMiddle
-%{_libdir}/%{name}/examples/*client*
-%{_libdir}/%{name}/examples/*server*
-%{_libdir}/%{name}/examples/*sample*
+%{_libdir}/%{name}/examples/
+
