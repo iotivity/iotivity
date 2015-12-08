@@ -31,6 +31,7 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <errno.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
@@ -43,6 +44,8 @@
 #define MAX_RESOURCE_TYPE_SIZE      (32)
 #define MAX_RESOURCE_TYPE_LENGTH    (MAX_RESOURCE_TYPE_SIZE - 1)
 #define MAX_RESOURCES_REMEMBERED    (10)
+
+#define MAX_USER_INPUT              (100)
 
 #define TAG "oc_zb_client"
 
@@ -65,53 +68,54 @@ static DiscoveredResourceInfo g_discoveredResources[MAX_RESOURCES_REMEMBERED];
 static void PrintTestCases()
 {
     printf("\nTest Cases:\n");
-    printf ("\n\t%d : Quit    %d: GET    %d: Build PUT payload %d: OBSERVE\n\n",
+    printf("\n\t%d : Quit    %d: GET    %d: Build PUT payload %d: OBSERVE\n\n",
             TEST_QUIT, TEST_GET, TEST_CUSTOM_PUT, TEST_OBSERVE);
-    printf ("\t%d : Turn binary switch for light ON\n", TEST_TURN_SWITCH_ON);
-    printf ("\t%d : Turn binary switch for light OFF\n", TEST_TURN_SWITCH_OFF);
-    printf ("\t%d : Change light brightness\n", TEST_SET_LIGHT_BRIGHTNESS);
-    printf ("\n\t%d : Check for observation updates.\n", TEST_CYCLE);
+    printf("\t%d : Turn binary switch for light ON\n", TEST_TURN_SWITCH_ON);
+    printf("\t%d : Turn binary switch for light OFF\n", TEST_TURN_SWITCH_OFF);
+    printf("\t%d : Change light brightness\n", TEST_SET_LIGHT_BRIGHTNESS);
+    printf("\t%d : Change light temperature\n", TEST_SET_LIGHT_TEMPERATURE);
+    printf("\n\t%d : Check for observation updates.\n", TEST_CYCLE);
 }
 
-static void PrintResources ()
+static void PrintResources()
 {
     printf("\nResources: \n");
-    for (uint32_t i = 0; i < countDiscoveredResources; ++i)
+    for(uint32_t i = 0; i < countDiscoveredResources; ++i)
     {
         printf("\t# : %u \t URI: %s \t Type:%s\n", i, g_discoveredResources[i].uri,
             g_discoveredResources[i].resourceType);
     }
 }
 
-void rememberDiscoveredResources (OCClientResponse *clientResponse)
+void rememberDiscoveredResources(OCClientResponse *clientResponse)
 {
     OCResourcePayload* itr = NULL;
-    if(!(OCDiscoveryPayload*)clientResponse->payload)
+    if (!(OCDiscoveryPayload*)clientResponse->payload)
     {
-        OC_LOG (INFO, TAG, "No resources discovered.");
+        OC_LOG(INFO, TAG, "No resources discovered.");
         return;
     }
 
     itr = ((OCDiscoveryPayload*)(clientResponse->payload))->resources;
 
-    while(itr && itr != itr->next)
+    while (itr && itr != itr->next)
     {
         if (countDiscoveredResources == MAX_RESOURCES_REMEMBERED)
         {
-            OC_LOG_V (INFO, TAG, "Only remembering %u resources. Ignoring rest.",
+            OC_LOG_V(INFO, TAG, "Only remembering %u resources. Ignoring rest.",
                 MAX_RESOURCES_REMEMBERED);
             break;
         }
-        strncpy (g_discoveredResources[countDiscoveredResources].uri,
+        strncpy(g_discoveredResources[countDiscoveredResources].uri,
             itr->uri, MAX_URI_SIZE - 1);
-        strncpy (g_discoveredResources[countDiscoveredResources].resourceType,
+        strncpy(g_discoveredResources[countDiscoveredResources].resourceType,
             itr->types->value, MAX_RESOURCE_TYPE_SIZE - 1);
         ++countDiscoveredResources;
         itr = itr->next;
     }
 }
 
-OCStackResult InvokeOCDoResource (const char *query,
+OCStackResult InvokeOCDoResource(const char *query,
                                  OCPayload *payload,
                                  OCMethod method,
                                  OCClientResponseHandler cb)
@@ -140,7 +144,7 @@ OCStackApplicationResult responseCallbacks(void* ctx,
 {
     (void)handle;
     (void) ctx;
-    if(clientResponse == NULL)
+    if (clientResponse == NULL)
     {
         OC_LOG(INFO, TAG, "responseCallbacks received NULL clientResponse");
         return   OC_STACK_DELETE_TRANSACTION;
@@ -151,13 +155,13 @@ OCStackApplicationResult responseCallbacks(void* ctx,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-int InitGetRequest (const char *resourceUri)
+int InitGetRequest(const char *resourceUri)
 {
     OC_LOG_V(INFO, TAG, "Executing %s for resource: %s", __func__, resourceUri);
     return (InvokeOCDoResource(resourceUri, NULL, OC_REST_GET, responseCallbacks));
 }
 
-int InitPutRequest (const char *resourceUri, OCPayload* payload)
+int InitPutRequest(const char *resourceUri, OCPayload* payload)
 {
     OC_LOG_V(INFO, TAG, "Executing %s for resource: %s", __func__, resourceUri);
     return (InvokeOCDoResource(resourceUri, payload, OC_REST_PUT, responseCallbacks));
@@ -169,24 +173,47 @@ int InitObserveRequest(const char *resourceUri)
     return (InvokeOCDoResource(resourceUri, NULL, OC_REST_OBSERVE, responseCallbacks));
 }
 
-OCPayload * getSwitchStatePayload (bool state)
+OCPayload * getSwitchStatePayload(bool state)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
-    if(!payload)
+    if (!payload)
     {
-       OC_LOG (ERROR, TAG, "Failed to create payload object");
+       OC_LOG(ERROR, TAG, "Failed to create payload object");
        exit(1);
     }
     OCRepPayloadSetPropBool(payload, "value", state);
     return (OCPayload*) payload;
 }
 
-OCPayload* getChangeLevelPayload(uint32_t level)
+OCPayload* getChangeBulbTempLevelPayload(uint32_t level)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
-    if(!payload)
+    if (!payload)
     {
-        OC_LOG (ERROR, TAG, "Failed to create payload object");
+        OC_LOG(ERROR, TAG, "Failed to create payload object");
+        exit(1);
+    }
+
+    OC_LOG_V(INFO, TAG, "Setting level to : %u", level);
+    char value[4] = "";
+    errno = 0;
+    size_t sizeValue = sizeof(value);
+    int strRet = snprintf(value, sizeValue, "%d", level);
+    if (strRet < 0 || strRet >= sizeValue)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
+        exit(1);
+    }
+    OCRepPayloadSetPropString(payload, "colourspacevalue", value);
+    return (OCPayload*) payload;
+}
+
+OCPayload* getChangeDimLevelPayload(uint32_t level)
+{
+    OCRepPayload* payload = OCRepPayloadCreate();
+    if (!payload)
+    {
+        OC_LOG(ERROR, TAG, "Failed to create payload object");
         exit(1);
     }
 
@@ -212,25 +239,25 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
 
     destinationAddress = clientResponse->devAddr;
 
-    rememberDiscoveredResources (clientResponse);
+    rememberDiscoveredResources(clientResponse);
 
     promptUser = true;
 
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-OCPayload* getCustomPutPayload ()
+OCPayload* getCustomPutPayload()
 {
     OCRepPayload* payload = OCRepPayloadCreate();
-    if(!payload)
+    if (!payload)
     {
-        OC_LOG (ERROR, TAG, "Failed to create payload object");
+        OC_LOG(ERROR, TAG, "Failed to create payload object");
         exit(1);
     }
 
-    char key[100] = {0};
-    char input[100] = {0};
-    char valueString[100] = {0};
+    char key[MAX_USER_INPUT] = {0};
+    char input[MAX_USER_INPUT] = {0};
+    char valueString[MAX_USER_INPUT] = {0};
     int value = 0;
     double valueDouble = 0.0;
     int type = -1;
@@ -239,10 +266,10 @@ OCPayload* getCustomPutPayload ()
     printf("\nType: 0:bool \t 1:int \t 2:double\n");
     while (true)
     {
-        printf ("Blank line / press ENTER to finish :");
-        char *ret = fgets (input, sizeof(input), stdin);
+        printf("Blank line / press ENTER to finish :");
+        char *ret = fgets(input, sizeof(input), stdin);
         (void) ret;
-        int inCount = sscanf (input, "%d %s %s", &type, key, valueString);
+        int inCount = sscanf(input, "%d %s %s", &type, key, valueString);
 
         if (inCount <= 0)
         {
@@ -251,7 +278,7 @@ OCPayload* getCustomPutPayload ()
         if (inCount != 3)
         {
             printf("Invalid input\n");
-            OCRepPayloadDestroy (payload);
+            OCRepPayloadDestroy(payload);
             promptUser = true;
             return NULL;
         }
@@ -280,13 +307,13 @@ OCPayload* getCustomPutPayload ()
         else
         {
             OC_LOG(ERROR, TAG, "Invalid entry. Stopping accepting key-values");
-            OCRepPayloadDestroy (payload);
+            OCRepPayloadDestroy(payload);
             promptUser = true;
             return NULL;
         }
-        memset (input, 0, sizeof (input));
-        memset (key, 0, sizeof (key));
-        memset (valueString, 0, sizeof (valueString));
+        memset(input, 0, sizeof (input));
+        memset(key, 0, sizeof (key));
+        memset(valueString, 0, sizeof (valueString));
     }
 
     if (payload->values)
@@ -295,25 +322,30 @@ OCPayload* getCustomPutPayload ()
     }
     else
     {
-        OCRepPayloadDestroy (payload);
+        OCRepPayloadDestroy(payload);
         return NULL;
     }
 }
 
-void processUserInput (int resourceNo, int testCase)
+void processUserInput(int resourceNo, int testCase)
 {
+    int level = 0;
+    if (!resourceNo && !testCase)
+    {
+        testCase = TEST_QUIT;
+    }
     switch (testCase)
     {
         case TEST_GET:
-            InitGetRequest (g_discoveredResources[resourceNo].uri);
+            InitGetRequest(g_discoveredResources[resourceNo].uri);
             break;
 
         case TEST_CUSTOM_PUT:
         {
-            OCPayload *payload = getCustomPutPayload ();
+            OCPayload *payload = getCustomPutPayload();
             if (payload)
             {
-                InitPutRequest (g_discoveredResources[resourceNo].uri, payload);
+                InitPutRequest(g_discoveredResources[resourceNo].uri, payload);
             }
             else
             {
@@ -324,24 +356,37 @@ void processUserInput (int resourceNo, int testCase)
         }
 
         case TEST_OBSERVE:
-            InitObserveRequest (g_discoveredResources[resourceNo].uri);
+            InitObserveRequest(g_discoveredResources[resourceNo].uri);
             break;
 
         case TEST_TURN_SWITCH_ON:
-            InitPutRequest (g_discoveredResources[resourceNo].uri, getSwitchStatePayload (true));
+            InitPutRequest(g_discoveredResources[resourceNo].uri, getSwitchStatePayload (true));
             break;
 
         case TEST_TURN_SWITCH_OFF:
-            InitPutRequest (g_discoveredResources[resourceNo].uri, getSwitchStatePayload (false));
+            InitPutRequest(g_discoveredResources[resourceNo].uri, getSwitchStatePayload (false));
             break;
 
         case TEST_SET_LIGHT_BRIGHTNESS:
-            printf ("Change bulb level [0-100] to ? :");
-            int level = 0;
-            if (scanf ("%d", &level) > 0)
+            printf("Change bulb level [0-100] to ? :");
+            if (scanf("%d", &level) > 0)
             {
-                InitPutRequest (g_discoveredResources[resourceNo].uri,
-                    getChangeLevelPayload (level));
+                InitPutRequest(g_discoveredResources[resourceNo].uri,
+                    getChangeDimLevelPayload (level));
+            }
+            else
+            {
+                printf("Invalid value\n");
+                promptUser = true;
+            }
+            break;
+
+        case TEST_SET_LIGHT_TEMPERATURE:
+            printf("Change bulb temp level [0-100] to ? :");
+            if (scanf("%d", &level) > 0)
+            {
+                InitPutRequest(g_discoveredResources[resourceNo].uri,
+                    getChangeBulbTempLevelPayload(level));
             }
             else
             {
@@ -356,7 +401,7 @@ void processUserInput (int resourceNo, int testCase)
             break;
 
         case TEST_QUIT:
-            raise (SIGINT);
+            raise(SIGINT);
             break;
 
         default:
@@ -365,19 +410,19 @@ void processUserInput (int resourceNo, int testCase)
     }
 }
 
-void getTestCaseFromUser ()
+void getTestCaseFromUser()
 {
-    PrintResources ();
-    PrintTestCases ();
+    PrintResources();
+    PrintTestCases();
     printf("\nUsage:<resource number> <test case> :");
 
     char input[10] = {0};
     uint32_t resourceNo = 0;
     int testCase = 0;
 
-    char * ret = fgets (input, sizeof(input), stdin);
+    char * ret = fgets(input, sizeof(input), stdin);
     (void) ret;
-    int inCount = sscanf (input, "%d %d", &resourceNo, &testCase);
+    int inCount = sscanf(input, "%d %d", &resourceNo, &testCase);
 
     if (inCount != 2)
     {
@@ -391,10 +436,10 @@ void getTestCaseFromUser ()
         promptUser = true;
         return;
     }
-    processUserInput (resourceNo, testCase);
+    processUserInput(resourceNo, testCase);
 }
 
-OCStackResult DiscoverResources ()
+OCStackResult DiscoverResources()
 {
     OCCallbackData cbData = {
                                 .context = (void*)DEFAULT_CONTEXT_VALUE,
@@ -423,7 +468,7 @@ bool processSignal(bool set)
 
 void processCancel(int signal)
 {
-    if(signal == SIGINT)
+    if (signal == SIGINT)
     {
         processSignal(true);
     }
@@ -443,7 +488,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    DiscoverResources ();
+    DiscoverResources();
 
     if (signal(SIGINT, processCancel) == SIG_ERR)
     {
@@ -465,7 +510,7 @@ int main(int argc, char* argv[])
             if (promptUser)
             {
                 promptUser = false;
-                getTestCaseFromUser ();
+                getTestCaseFromUser();
             }
         }
     }
