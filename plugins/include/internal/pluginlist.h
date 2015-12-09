@@ -50,6 +50,10 @@ OCStackResult GetResourceFromZigBeeNodeId(PIPluginBase * plugin,
 
 OCStackResult AddResourceToPlugin(PIPluginBase * plugin, PIResourceBase * resource);
 
+OCStackResult UpdateZigbeeResourceNodeId(PIPluginBase * plugin,
+                                         const char * eui,
+                                         const char * nodeId);
+
 OCStackResult DeleteResource(PIPluginBase * plugin, PIResourceBase * resource);
 
 OCStackResult DeleteResourceList(PIPluginBase * plugin);

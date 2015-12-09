@@ -26,6 +26,7 @@
 #include "zigbee_wrapper.h"
 #include "utlist.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "ocstack.h"
 #include "logger.h"
 
@@ -182,6 +183,33 @@ OCStackResult AddResourceToPlugin (PIPluginBase * plugin, PIResourceBase * resou
     LL_APPEND(plugin->resourceList, resource);
 
     return OC_STACK_NO_MEMORY;
+}
+
+OCStackResult UpdateZigbeeResourceNodeId(PIPluginBase * plugin,
+                                         const char * eui,
+                                         const char * nodeId)
+{
+    if (!plugin || !eui || !nodeId)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if(plugin->type != PLUGIN_ZIGBEE)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    PIResourceBase * out = NULL;
+    PIResourceBase * tmp = NULL;
+    size_t checkLength = strlen(eui);
+    LL_FOREACH_SAFE(plugin->resourceList, out, tmp)
+    {
+        size_t indexLength = strlen(((PIResource_Zigbee *)out)->eui);
+        if(ZigbeeStrEquals(eui, ((PIResource_Zigbee *)out)->eui, checkLength, indexLength) != true)
+        {
+            continue;
+        }
+        OICStrcpy(((PIResource_Zigbee *)out)->nodeId, (strlen(nodeId)+1)*sizeof(char), nodeId);
+    }
+    return OC_STACK_OK;
 }
 
 OCStackResult DeleteResource(PIPluginBase * plugin, PIResourceBase * resource)

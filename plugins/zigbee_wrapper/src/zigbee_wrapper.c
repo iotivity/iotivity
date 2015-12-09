@@ -416,6 +416,21 @@ void zigbeeZoneStatusUpdate(TWUpdate * update, PIPlugin_Zigbee* plugin)
                                                  piResource->header.piResource.resourceHandle);
 }
 
+void deviceNodeIdChanged(const char * eui, const char * nodeId, PIPlugin_Zigbee* plugin)
+{
+    if(!eui || !nodeId)
+    {
+        return;
+    }
+    OCStackResult result = UpdateZigbeeResourceNodeId((PIPluginBase *)plugin,
+                                                  eui,
+                                                  nodeId);
+    if(result != OC_STACK_OK)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed to update Zigbee Resource NodeId due to result: %s", result);
+    }
+}
+
 OCStackResult ZigbeeInit(const char * comPort, PIPlugin_Zigbee ** plugin,
                          PINewResourceFound newResourceCB,
                          PIObserveNotificationUpdate observeNotificationUpdate)
@@ -442,8 +457,12 @@ OCStackResult ZigbeeInit(const char * comPort, PIPlugin_Zigbee ** plugin,
     {
         return result;
     }
-
-    return TWSetStatusUpdateCallback(zigbeeZoneStatusUpdate, *plugin);
+    result = TWSetStatusUpdateCallback(zigbeeZoneStatusUpdate, *plugin);
+    if(result != OC_STACK_OK)
+    {
+        return result;
+    }
+    return TWSetEndDeviceNodeIdChangedCallback(deviceNodeIdChanged, *plugin);
 }
 
 OCStackResult ZigbeeDiscover(PIPlugin_Zigbee * plugin)
