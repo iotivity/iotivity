@@ -471,7 +471,6 @@ static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* roo
     }
 
     bool err = false;
-
     CborValue arrayVal;
     err = err || cbor_value_enter_container(rootValue, &arrayVal);
 
@@ -1185,7 +1184,7 @@ static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* rootMa
 
     while (!err && cbor_value_is_map(rootMap))
     {
-         err = err || OCParseSingleRepPayload(&temp, rootMap);
+        err = err || OCParseSingleRepPayload(&temp, rootMap);
 
         if(rootPayload == NULL)
         {
@@ -1224,10 +1223,7 @@ static OCStackResult OCParsePresencePayload(OCPayload** outPayload, CborValue* r
     }
 
     bool err = false;
-    CborValue arrayVal;
-    err = err || cbor_value_enter_container(rootValue, &arrayVal);
-
-    if(cbor_value_is_map(&arrayVal))
+    if(cbor_value_is_map(rootValue))
     {
         uint64_t seqNum = 0;
         uint64_t maxAge = 0;
@@ -1237,29 +1233,28 @@ static OCStackResult OCParsePresencePayload(OCPayload** outPayload, CborValue* r
 
         CborValue curVal;
         // Sequence Number
-        err = err || cbor_value_map_find_value(&arrayVal, OC_RSRVD_NONCE, &curVal);
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_NONCE, &curVal);
         err = err || cbor_value_get_uint64(&curVal, &seqNum);
 
         // Max Age
-        err = err || cbor_value_map_find_value(&arrayVal, OC_RSRVD_TTL, &curVal);
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_TTL, &curVal);
         err = err || cbor_value_get_uint64(&curVal, &maxAge);
 
         // Trigger
-        err = err || cbor_value_map_find_value(&arrayVal, OC_RSRVD_TRIGGER, &curVal);
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_TRIGGER, &curVal);
         err = err || cbor_value_dup_text_string(&curVal, &tempStr, &len, NULL);
         trigger = convertTriggerStringToEnum(tempStr);
         OICFree(tempStr);
         tempStr = NULL;
 
         // Resource type name
-         err = err || cbor_value_map_find_value(&arrayVal, OC_RSRVD_RESOURCE_TYPE, &curVal);
+        err = err || cbor_value_map_find_value(rootValue, OC_RSRVD_RESOURCE_TYPE, &curVal);
         if(cbor_value_is_valid(&curVal))
         {
              err = err || cbor_value_dup_text_string(&curVal, &tempStr, &len, NULL);
         }
 
-        err = err || cbor_value_advance(&arrayVal);
-        err = err || cbor_value_leave_container(rootValue, &arrayVal);
+        err = err || cbor_value_advance(rootValue);
 
         if(!err)
         {
