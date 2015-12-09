@@ -28,6 +28,7 @@ namespace OIC
     namespace Service
     {
         class RemoteEnrolleeResource;
+        class EnrolleeSecurity;
 
         /**
          * This class represents Remote Enrollee device instance.
@@ -61,10 +62,30 @@ namespace OIC
             typedef std::function< void(std::shared_ptr< EasySetupStatus >) >
                                                                         EasySetupStatusCB;
 
+#ifdef __WITH_DTLS__
+            /**
+             * Register Security status and other information callback handlers.
+             *
+             * @param enrolleeSecStatusCb Callback to get security status callbacks.
+             * @param secProvisioningDbCb Callback to be invoked when the stack expects a
+             *        path for the provisioning db.
+             * @param securityPinCb Callback to get security pin during pin based ownership transfer.
+             *
+             * @throws InvalidParameterException If callback is an empty function or null.
+             * @throws ESBadRequestException If registration is already completed.
+             *
+             * @see SecProvisioningResult
+             */
+            ESResult registerSecurityCallbackHandler(EnrolleeSecStatusCb enrolleeSecStatusCb,
+                    SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb);
+#endif //__WITH_DTLS__
+
             /**
              * Register EasySetup status handler.
              *
              * @param callback Callback to get EasySetup status.
+             * @param secProvisioningDbCB Callback to be invoked when the stack expects a
+             *        path for the provisioning db.
              *
              * @throws InvalidParameterException If callback is an empty function or null.
              * @throws ESBadRequestException If registration is already completed.
@@ -80,32 +101,37 @@ namespace OIC
              *
              * @see RemoteEnrollee
              */
-            virtual void startProvisioning();
+            void startProvisioning();
 
             /**
              * Stop provisioning process that is currently in progress.
              *
              * @throws BadRequestException If provisioning is not in progress.
              */
-            virtual void stopProvisioning();
+            void stopProvisioning();
 
             /**
              * Check if the Enrollee device provisioned.
              */
-            virtual bool isEnrolleeProvisioned();
+            bool isEnrolleeProvisioned();
 
             /**
              * Get the Provisioning information provided for the current Enrollee.
              *
              * @return EnrolleeNWProvInfo Provisioning information provided for the current Enrollee.
              */
-            virtual EnrolleeNWProvInfo& getEnrolleeProvisioningInfo ();
+            EnrolleeNWProvInfo& getEnrolleeProvisioningInfo ();
 
         private:
             std::shared_ptr< RemoteEnrolleeResource > m_remoteResource;
             EasySetupStatusCB m_easySetupStatusCb;
+            EnrolleeSecStatusCb m_enrolleeSecStatusCb;
+            SecurityPinCb m_securityPinCb;
+            SecProvisioningDbPathCb m_secProvisioningDbPathCb;
             EnrolleeNWProvInfo m_enrolleeNWProvInfo;
+            std::shared_ptr< EnrolleeSecurity > m_enrolleeSecurity;
             CurrentESState m_currentESState;
+            bool m_needSecuredEasysetup;
 
             void provisioningStatusHandler (std::shared_ptr< ProvisioningStatus > provStatus);
         };

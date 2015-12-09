@@ -22,6 +22,9 @@
 #include "RemoteEnrolleeResource.h"
 #include "ESException.h"
 #include "logger.h"
+#ifdef __WITH_DTLS__
+#include "EnrolleeSecurity.h"
+#endif //__WITH_DTLS
 
 namespace OIC
 {
@@ -33,13 +36,27 @@ namespace OIC
                 m_enrolleeNWProvInfo(enrolleeNWProvInfo)
         {
             m_currentESState = CurrentESState::ES_UNKNOWN;
+            m_needSecuredEasysetup = enrolleeNWProvInfo.needSecuredEasysetup;
 
             OC_LOG ( DEBUG, ES_REMOTE_ENROLLEE_TAG, "Inside RemoteEnrollee constr");
-            if (m_easySetupStatusCb)
-            {
-                throw ESBadRequestException("Callback handler already registered");
-            }
         }
+
+#ifdef __WITH_DTLS__
+        ESResult RemoteEnrollee::registerSecurityCallbackHandler(
+                EnrolleeSecStatusCb enrolleeSecStatusCb, SecurityPinCb securityPinCb,
+                SecProvisioningDbPathCb secProvisioningDbPathCb)
+        {
+            // No need to check NULL for m_secProvisioningDbPathCB as this is not a mandatory
+            // callback function. If m_secProvisioningDbPathCB is NULL, provisioning manager
+            // in security layer will try to find the PDM.db file in the local path.
+            // If PDM.db is found, the provisioning manager operations will succeed.
+            // Otherwise all the provisioning manager operations will fail.
+            m_secProvisioningDbPathCb = secProvisioningDbPathCb;
+            m_enrolleeSecStatusCb = enrolleeSecStatusCb;
+            m_securityPinCb = securityPinCb;
+            return ES_OK;
+        }
+#endif //__WITH_DTLS__
 
         void RemoteEnrollee::registerEasySetupStatusHandler(EasySetupStatusCB callback)
         {
@@ -57,9 +74,7 @@ namespace OIC
             {
                 m_easySetupStatusCb = callback;
 
-                m_remoteResource = std::make_shared< RemoteEnrolleeResource >(
-                        m_enrolleeNWProvInfo.netAddressInfo.WIFI.ipAddress,
-                        m_enrolleeNWProvInfo.connType);
+                m_remoteResource = std::make_shared< RemoteEnrolleeResource >(m_enrolleeNWProvInfo);
 
                 m_remoteResource->constructResourceObject();
             }
@@ -141,7 +156,6 @@ namespace OIC
             return;
         }
 
-
         void RemoteEnrollee::startProvisioning()
         {
             OC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Entering startProvisioning");
@@ -153,13 +167,33 @@ namespace OIC
             {
                 m_currentESState = CurrentESState::ES_ONBOARDED;
 
+#ifdef __WITH_DTLS__
+                if (m_needSecuredEasysetup && m_currentESState < CurrentESState::ES_OWNED)
+                {
+                    //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
+                    m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_remoteResource, "");
+
+                    m_enrolleeSecurity->registerCallbackHandler(m_enrolleeSecStatusCb,
+                            m_securityPinCb, m_secProvisioningDbPathCb);
+
+                    if (m_enrolleeSecurity->performOwnershipTransfer() == ES_ERROR)
+                    {
+                        std::shared_ptr< EasySetupStatus > easySetupStatus = nullptr;
+
+                        easySetupStatus = std::make_shared < EasySetupStatus
+                        > (DEVICE_NOT_OWNED, m_enrolleeNWProvInfo);
+                        return;
+                    }
+                }
+#endif
+
                 OC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Before ProvisionEnrollee");
 
                 RemoteEnrolleeResource::ProvStatusCb provStatusCb = std::bind(
                         &RemoteEnrollee::provisioningStatusHandler, this, std::placeholders::_1);
 
                 m_remoteResource->registerProvStatusCallback(provStatusCb);
-                m_remoteResource->provisionEnrollee(m_enrolleeNWProvInfo);
+                m_remoteResource->provisionEnrollee();
             }
         }
 

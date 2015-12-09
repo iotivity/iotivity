@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <iostream>
+#include<stdio.h>
 
 #include "oic_string.h"
 #include "EasySetup.h"
@@ -28,12 +29,16 @@
 #define ES_SAMPLE_APP_TAG "ES_SAMPLE_APP_TAG"
 #define DECLARE_MENU(FUNC, ...) { #FUNC, FUNC }
 
+#define JSON_DB_PATH "./oic_svr_db_client.json"
+
 using namespace OC;
 using namespace OIC::Service;
 
 static EasySetup *easySetupIntance = nullptr;
 static EnrolleeNWProvInfo netInfo;
 static RemoteEnrollee::shared_ptr remoteEnrollee = nullptr;
+
+static std::string ipaddress, ssid, pwd;
 
 struct CloseApp
 {
@@ -88,20 +93,21 @@ void initEasySetup()
 
     easySetupIntance = EasySetup::getInstance();
 
-    std::string ipaddress ("192.168.0.100");
-    std::cout << "Enter the target enrollee ipv4 address ";
+    ipaddress = "192.168.0.150";
+    //std::cout << "Enter the target enrollee ipv4 address ";
 
 
-    std::string ssid;
-    std::cout << "Enter the ssid of the target Enrolleer ";
-    std:: cin >> ssid;
+    ssid = "hello";
+    //std::cout << "Enter the ssid of the target Enrolleer ";
+    //std:: cin >> ssid;
 
-    std::string pwd;
-    std::cout << "Enter the pwd of the target Enrolleer ";
-    std::cin >> pwd;
+    pwd = "helalalal";
+    //std::cout << "Enter the pwd of the target Enrolleer ";
+    //std::cin >> pwd;
 
     netInfo.connType = CT_ADAPTER_IP;
     netInfo.isSecured = false;
+    netInfo.needSecuredEasysetup = false;
     OICStrcpy(netInfo.netAddressInfo.WIFI.ipAddress, IPV4_ADDR_SIZE - 1, ipaddress.c_str());
     OICStrcpy(netInfo.netAddressInfo.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, ssid.c_str());
     OICStrcpy(netInfo.netAddressInfo.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, pwd.c_str());
@@ -154,11 +160,19 @@ void runEasySetupMenu()
     };
 }
 
+static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
+{
+    (void)UNUSED_PARAM;
+    return fopen(JSON_DB_PATH, mode);
+}
+
 void configurePlatform()
 {
+    OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
+
     PlatformConfig config
     {
-        OC::ServiceType::InProc, ModeType::Client, "0.0.0.0", 0, OC::QualityOfService::LowQos
+        OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos, NULL
     };
     OCPlatform::Configure(config);
 }

@@ -21,6 +21,8 @@
 #include "resourceHandler.h"
 #include "ocpayload.h"
 
+#include "oic_string.h"
+
 /**
  * @var ES_RH_TAG
  * @brief Logging tag for module name.
@@ -172,6 +174,10 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
     {
         sprintf(g_prov.tnn, "%s", tnn);
     }
+    else
+    {
+        OC_LOG (ERROR, ES_RH_TAG, "value is not available");
+    }
 
     OC_LOG_V(INFO, ES_RH_TAG, "g_prov.tnn %s", g_prov.tnn);
 
@@ -179,6 +185,10 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd))
     {
         sprintf(g_prov.cd, "%s", cd);
+    }
+    else
+    {
+        OC_LOG (ERROR, ES_RH_TAG, "value is not available");
     }
 
     OC_LOG_V(INFO, ES_RH_TAG, "g_prov.cd %s", g_prov.cd);

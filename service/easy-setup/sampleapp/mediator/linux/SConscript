@@ -55,6 +55,9 @@ mediator_env.PrependUnique(CPPPATH = [
 			env.get('SRC_DIR') + '/service/easy-setup/sdk/common'])
 
 mediator_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction', 'coap', 'ESSDKLibrary'])
+if env.get('SECURED') == '1':
+	mediator_env.PrependUnique(LIBS = ['ocpmapi', 'ocprovision'])
+
 
 mediator = mediator_env.Program('mediator', 'mediator_cpp.cpp')
 

@@ -21,6 +21,7 @@
 #ifndef ES_COMMON_H_
 #define ES_COMMON_H_
 
+#include <string>
 #ifndef WITH_ARDUINO
 #include <memory>
 #endif
@@ -32,8 +33,8 @@
 #define OIC_STRING_MAX_VALUE 100
 #define IPV4_ADDR_SIZE 16
 #define IP_PORT 55555
-#define NET_WIFI_SSID_SIZE 16
-#define NET_WIFI_PWD_SIZE 16
+#define NET_WIFI_SSID_SIZE 100
+#define NET_WIFI_PWD_SIZE 100
 
 /**
  * @brief Mac address length for BT port
@@ -188,15 +189,21 @@ typedef union
  */
 typedef struct
 {
-    EnrolleeInfo netAddressInfo;          /**< Enroller Network Info**/
-    OCConnectivityType connType;            /**< Connectivity Type**/
-    bool isSecured;                         /**< Secure connection**/
+    EnrolleeInfo netAddressInfo;    /**< Enroller Network Info**/
+    OCConnectivityType connType;    /**< Connectivity Type**/
+    bool isSecured;                 /**< Secure connection**/
+    // TODO : Ideally isSecured should be renamed to needSecuredEasysetup.
+    // To provide backward compatibility to v1.0 release, a new variable is being added.
+    // If isSecured is not used by other applications, isSecured will be depricated.
+    bool needSecuredEasysetup;      /**< Need of secure ownership transfer during easysetup**/
 } EnrolleeNWProvInfo;
 
 /**
  * Client applications implement this callback to consume responses received from Servers.
  */
 typedef void (*OCProvisioningStatusCB)(EasySetupInfo *easySetupInfo);
+
+#ifndef WITH_ARDUINO
 
 namespace OIC
 {
@@ -218,7 +225,40 @@ namespace OIC
             ES_PROVISIONED
         } CurrentESState;
 
-#ifndef WITH_ARDUINO
+        typedef enum
+        {
+            ES_SEC_UNKNOWN = 0,
+            ES_SEC_OWNED,
+            ES_SEC_ACL_PROVISIONED,
+            ES_SEC_CREDS_PROVISIONED
+        } EnrolleeSecState;
+
+        /**
+         * Security Provisioning Status
+         */
+        typedef struct {
+            /// UUID of the target device
+            std::string devUUID;
+            /// EasySetup result
+            ESResult res;
+        } SecProvisioningResult;
+
+
+        /**
+         * Callback function definition for providing Enrollee security status .
+         */
+        typedef std::function< void(SecProvisioningResult) > EnrolleeSecStatusCb;
+
+        /**
+         * Callback definition to be invoked when the security stack expects a pin from application.
+         */
+        typedef std::function< void(std::string&) > SecurityPinCb;
+
+        /**
+         * Callback definition to be invoked when the stack expects a db path.
+         */
+        typedef std::function< void(std::string&) > SecProvisioningDbPathCb;
+
         class ProvisioningStatus
         {
         public:
@@ -267,9 +307,8 @@ namespace OIC
             EasySetupState m_easySetupState;
             EnrolleeNWProvInfo m_enrolleeNWProvInfo;
         };
-#endif
-
     }
 }
+#endif //WITH_ARDUINO
 
-#endif
+#endif //ES_COMMON_H_

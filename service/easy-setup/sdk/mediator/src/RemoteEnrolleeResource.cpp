@@ -32,14 +32,12 @@ namespace OIC
     namespace Service
     {
         #define ES_REMOTE_ENROLLEE_TAG "ES_REMOTE_ENROLLEE"
-        static const char ES_RES_URI[]  = "/oic/prov";
-        static const char ES_RES_TYPE[] = "oic.r.prov";
+        static const char ES_PROV_RES_URI[]  = "/oic/prov";
+        static const char ES_PROV_RES_TYPE[] = "oic.r.prov";
 
-        RemoteEnrolleeResource::RemoteEnrolleeResource(const std::string& host,
-                OCConnectivityType connectivityType) :
-                m_host(host), m_connectivityType(connectivityType)
+        RemoteEnrolleeResource::RemoteEnrolleeResource(EnrolleeNWProvInfo enrolleeNWProvInfo)
         {
-
+            m_enrolleeNWProvInfo = enrolleeNWProvInfo;
         }
 
         void RemoteEnrolleeResource::onProvPostResource(const HeaderOptions& /*headerOptions*/,
@@ -145,14 +143,14 @@ namespace OIC
                 OCRepresentation provisioningRepresentation;
 
                 provisioningRepresentation.setValue(OC_RSRVD_ES_TNN,
-                        m_enrolleeNWProvInfo.netAddressInfo.WIFI.ssid);
+                        std::string(m_enrolleeNWProvInfo.netAddressInfo.WIFI.ssid));
                 provisioningRepresentation.setValue(OC_RSRVD_ES_CD,
-                                        m_enrolleeNWProvInfo.netAddressInfo.WIFI.pwd);
+                        std::string(m_enrolleeNWProvInfo.netAddressInfo.WIFI.pwd));
 
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "onProvResource : ssid - %s",
-                                            m_enrolleeNWProvInfo.netAddressInfo.WIFI.ssid);
+                        m_enrolleeNWProvInfo.netAddressInfo.WIFI.ssid);
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "onProvResource : pwd - %s",
-                                            m_enrolleeNWProvInfo.netAddressInfo.WIFI.pwd);
+                        m_enrolleeNWProvInfo.netAddressInfo.WIFI.pwd);
 
                 m_ocResource->put(provisioningRepresentation, QueryParamsMap(),
                         std::function<
@@ -188,21 +186,22 @@ namespace OIC
             {
 
                 std::vector< std::string > m_if = { DEFAULT_INTERFACE };
-                std::vector< std::string > m_resTypes = {ES_RES_TYPE};
+                std::vector< std::string > m_resTypes = {ES_PROV_RES_TYPE};
 
 
                 OC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "Before OCPlatform::constructResourceObject");
 
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "m_host = %s", m_host.c_str());
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "ES_RES_URI = %s", ES_RES_URI);
+                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "m_host = %s",
+                                    m_enrolleeNWProvInfo.netAddressInfo.WIFI.ipAddress);
+                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "ES_PROV_RES_URI = %s", ES_PROV_RES_URI);
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "m_connectivityType = %d",
-                                                            m_connectivityType);
+                                    m_enrolleeNWProvInfo.connType);
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "m_resTypes = %s",
-                                                            m_resTypes.at(0).c_str());
+                                    m_resTypes.at(0).c_str());
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "m_if = %s", m_if.at(0).c_str());
 
                 std::string host;
-                if(m_enrolleeNWProvInfo.isSecured)
+                if(m_enrolleeNWProvInfo.needSecuredEasysetup)
                 {
                     host.append("coaps://");
                 }
@@ -211,21 +210,24 @@ namespace OIC
                     host.append("coap://");
                 }
 
-                if(m_connectivityType == CT_ADAPTER_IP)
+                if(m_enrolleeNWProvInfo.connType == CT_ADAPTER_IP)
                 {
-                    host.append(m_host);
-                    //TODO : If the target Enrollee is not a Arduino Wi-Fi device, then m_ocResource
-                    // will be discovered using findResource API of OCPlatform instead of using
-                    // constructResourceObject API. The port number thus will be found during
-                    // resource discovery instead of using 55555
+                    // TODO : RemoteEnrollee is current handling easysetup on IP transport.
+                    // WiFiRemoteEnrollee need to extend RemoteEnrollee for providing IP specific
+                    // Enrollee easysetup.
+
+                    host.append(m_enrolleeNWProvInfo.netAddressInfo.WIFI.ipAddress);
+                    //TODO : If the target Enrollee is not a Arduino Wi-Fi device,
+                    // then the port number will be found during resource discovery instead of
+                    // using 55555
                     host.append(":55555");
                 }
 
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "HOST = %s", host.c_str());
 
                 m_ocResource = OC::OCPlatform::constructResourceObject(host,
-                                                                   ES_RES_URI,
-                                                                   m_connectivityType,
+                                                                   ES_PROV_RES_URI,
+                                                                   m_enrolleeNWProvInfo.connType,
                                                                    true,
                                                                    m_resTypes,
                                                                    m_if);
@@ -239,7 +241,7 @@ namespace OIC
             }
         }
 
-        void RemoteEnrolleeResource::provisionEnrollee(const EnrolleeNWProvInfo& enrolleeNWProvInfo)
+        void RemoteEnrolleeResource::provisionEnrollee()
 
         {
             if(m_ocResource == nullptr)
@@ -247,7 +249,6 @@ namespace OIC
                 throw ESBadRequestException ("Resource is not initialized");
             }
 
-            m_enrolleeNWProvInfo = enrolleeNWProvInfo;
             OC::QueryParamsMap query;
             OC::OCRepresentation rep;
 

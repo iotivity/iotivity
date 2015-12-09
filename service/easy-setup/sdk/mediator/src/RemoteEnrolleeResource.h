@@ -35,6 +35,7 @@ namespace OIC
     namespace Service
     {
         class OCResource;
+        class EnrolleeSecurity;
 
         /**
          * This class contains the resource discovery methods.
@@ -43,20 +44,21 @@ namespace OIC
          */
         class RemoteEnrolleeResource
         {
+            friend class EnrolleeSecurity;
+
         public:
             typedef std::shared_ptr< RemoteEnrolleeResource > Ptr;
 
-            typedef std::function< void(std::shared_ptr< ProvisioningStatus > provStatus) > ProvStatusCb;
+            typedef std::function< void(std::shared_ptr< ProvisioningStatus >) > ProvStatusCb;
 
             /**
              * RemoteEnrolleeResource constructor
              *
-             * @param host Host information of the Enrollee device obtained from OnBoarding process.
-             * @param connectivityType Connectivity type on which OnBoarding is performed
+             * @param enrolleeNWProvInfo Provisioning information for the Enrollee
              *
              * @throw ESBadRequestException is thrown if the parameters are invalid
              */
-            RemoteEnrolleeResource(const std::string& host, OCConnectivityType connectivityType);
+            RemoteEnrolleeResource(EnrolleeNWProvInfo enrolleeNWProvInfo);
 
             ~RemoteEnrolleeResource() = default;
 
@@ -86,26 +88,22 @@ namespace OIC
             /**
              * Function for provisioning of Remote Enrollee resource using the information provided.
              *
-             * @param enrolleeNWProvInfo Provisioning information for the Enrollee
-             *
              * @throws InvalidParameterException If cb is empty.
              */
-            virtual void provisionEnrollee(const EnrolleeNWProvInfo& enrolleeNWProvInfo);
+            void provisionEnrollee();
 
             /**
              * Function for unprovisioning of Remote Enrollee and bring to unprovisioned state
              *
              * @throws ESBadRequestException If device is not provisioned already.
              */
-            virtual void unprovisionEnrollee();
+            void unprovisionEnrollee();
 
 
 
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
             std::mutex m_mutex;
-            std::string m_host;
-            OCConnectivityType m_connectivityType;
             ProvStatusCb m_provStatusCb;
             EnrolleeNWProvInfo m_enrolleeNWProvInfo;
 
