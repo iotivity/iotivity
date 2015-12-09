@@ -738,12 +738,8 @@ static int64_t OCConvertPresencePayload(OCPresencePayload* payload,
     int64_t err = 0;
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
-    CborEncoder rootArray;
-
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
-
     CborEncoder map;
-    err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
+    err = err | cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
 
     // Sequence Number
     err = err | cbor_encode_text_string(&map,
@@ -770,8 +766,7 @@ static int64_t OCConvertPresencePayload(OCPresencePayload* payload,
     }
 
     // Close Map
-    err = err | cbor_encoder_close_container(&rootArray, &map);
-    err = err | cbor_encoder_close_container(&encoder, &rootArray);
+    err = err | cbor_encoder_close_container(&encoder, &map);
 
     return checkError(err, &encoder, outPayload, size);
 }

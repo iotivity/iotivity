@@ -170,7 +170,30 @@ namespace OCRepresentationEncodingTest
 
         OCPayloadDestroy(parsedPlatform);
     }
+    TEST(PresencePayload, Normal)
+    {
+        uint32_t maxAge = 0;
+        uint32_t sequenceNumber = 0;
+        OCPresenceTrigger trigger = OC_PRESENCE_TRIGGER_CREATE;
+        OCPresencePayload *presence = OCPresencePayloadCreate(sequenceNumber, maxAge, trigger, uri1);
 
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)presence, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_PRESENCE,
+                    cborData, cborSize));
+        OCPayloadDestroy((OCPayload*)presence);
+        OICFree(cborData);
+
+        OCPresencePayload* parsed = ((OCPresencePayload*)cparsed);
+        EXPECT_EQ(sequenceNumber, parsed->sequenceNumber);
+        EXPECT_EQ(maxAge, parsed->maxAge);
+        EXPECT_EQ(trigger, parsed->trigger);
+        EXPECT_STREQ(uri1, parsed->resourceType);
+
+        OCPayloadDestroy(cparsed);
+    }
     // Representation Payloads
     TEST(RepresentationEncoding, BaseAttributeTypes)
     {
