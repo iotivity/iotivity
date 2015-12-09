@@ -169,6 +169,26 @@ if target_os in ['linux', 'tizen', 'android']:
         Command("WeightSensorApp", BMI_SENSOR_BUNDLE_DIR + "src/inputSensors/WeightSensorApp/WeightSensorApp", Copy("$TARGET", "$SOURCE"))
 
 ######################################################################
+# build Fire Alarm sensor sample bundle
+######################################################################
+if target_os in ['linux']:
+    FA_sensor_bundle_env = resource_container_env.Clone()
+    FA_sensor_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+
+    FA_SENSOR_BUNDLE_DIR = 'examples/FireAlarmSensor/FireAlarmBundle_linux/'
+    FA_sensor_bundle_env.AppendUnique(CPPPATH = [ FA_SENSOR_BUNDLE_DIR + 'include' ])
+
+    FA_sensor_bundle_env.PrependUnique(LIBS = ['rcs_container'])
+
+    FA_sensor_bundle_src = [ Glob(FA_SENSOR_BUNDLE_DIR + 'src/*.cpp')]
+
+    FASensorBundle = FA_sensor_bundle_env.SharedLibrary('FASensorBundle', FA_sensor_bundle_src)
+    FA_sensor_bundle_env.InstallTarget(FASensorBundle, 'libFASensorBundle')
+
+    SConscript(FA_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
+    Command("THLSensorApp", FA_SENSOR_BUNDLE_DIR + "src/inputSensors/THLSensorApp/THLSensorApp", Copy("$TARGET", "$SOURCE"))
+
+######################################################################
 # build hue sample bundle
 ######################################################################
 

@@ -135,4 +135,93 @@
             </resourceInfo>       
         </resources>
     </bundle>
+
+    <bundle>
+        <id>oic.bundle.fireAlarmSensor_android</id>       
+        <path>/service/resource-container/examples/FireAlarmSensor/FireAlarmBundle/app/target/fireAlarm.jar</path>
+        <libraryPath>.</libraryPath>
+        <uri>/fireAlarm</uri>
+        <activator>org.iotivity.service.sample.FireAlarmActivator</activator>
+        <version>1.0.0</version>
+        <resources>
+            <resourceInfo>
+                <name>FireAlarmSensor</name>
+                <resourceType>oic.r.fireAlarm</resourceType>
+                <outputs>
+                    <output>
+                        <name>fireAlarmLevel</name>
+                        <type>int</type>
+                    </output>
+                </outputs>
+                <inputs>
+                    <input>
+                        <name>humiditySensor</name>
+                        <type>double</type>
+                        <resourceType>oic.r.humiditysensor</resourceType>
+                    </input>
+                    <input>
+                        <name>temperatureSensor</name>
+                        <type>double</type>
+                        <resourceType>oic.r.temperaturesensor</resourceType>
+                    </input>
+                    <input>
+                        <name>lightSensor</name>
+                        <type>double</type>
+                        <resourceType>oic.r.lightsensor</resourceType>
+                    </input>
+                    <input>
+                        <name>accelerometer</name>
+                        <type>double</name>
+                        <resourceType>oic.r.accelerometer</resourceType>
+                    </input>
+                    <input>
+                        <name>runningSensor</name>
+                        <type>boolean</type>
+                        <resourceType>oic.r.runningsensor</resourceType>
+                    </input>
+                </inputs>
+            </resourceInfo>       
+        </resources>
+    </bundle>
+
+    <bundle>
+        <id>oic.bundle.fireAlarmSensor_linux</id>
+        <path>libFASensorBundle.so</path>
+        <activator>fasensor</activator>
+        <version>1.0.0</version>
+        <resources>
+            <resourceInfo>
+                <name>FireAlarmSensor</name>
+                <resourceType>oic.r.sensor</resourceType>
+                <outputs>
+                    <output>
+                        <name>fireAlarmLevel</name>
+                        <type>int</type>
+                    </output>
+                </outputs>
+                <inputs>
+                    <input>
+                        <name>humidity</name>
+                        <type>double</type>
+                        <resourceType>oic.r.humidity</resourceType>
+                        <resourceUri>/Thing_THLSensor</resourceUri>
+                    </input>
+                    <input>
+                        <name>temperature</name>
+                        <type>double</type>
+                        <resourceType>oic.r.temperature</resourceType>
+                        <resourceUri>/Thing_THLSensor</resourceUri>
+                    </input>
+                    <input>
+                        <name>light</name>
+                        <type>double</type>
+                        <resourceType>oic.r.light</resourceType>
+                        <resourceUri>/Thing_THLSensor</resourceUri>
+                    </input>
+                </inputs>
+            </resourceInfo>       
+        </resources>
+    </bundle>
+
+
 </container>
