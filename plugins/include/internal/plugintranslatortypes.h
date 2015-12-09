@@ -58,7 +58,7 @@ typedef void (* PINewResourceFound)(struct PIPluginBase * plugin,
  *
  */
 typedef void (* PIObserveNotificationUpdate)(struct PIPluginBase * plugin,
-                                            const char * uri);
+                                             OCResourceHandle resourceHandle);
 
 /**
  *

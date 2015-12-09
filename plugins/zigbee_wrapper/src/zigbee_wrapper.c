@@ -249,18 +249,18 @@ const char * getResourceTypeForIASZoneType(TWDevice *device, PIPluginBase* plugi
 
 OCStackResult buildURI(char ** output,
                        const char * prefix,
-                       const char * nodeId,
+                       const char * eui,
                        const char * endpointId,
                        const char * clusterId)
 {
-    if (!output || !prefix || !nodeId || !endpointId || !clusterId)
+    if(!output || !prefix || !eui || !endpointId || !clusterId)
     {
         return OC_STACK_INVALID_PARAM;
     }
     const char LEN_SEPARATOR[] = "/";
     size_t lenSeparatorSize = sizeof(LEN_SEPARATOR) - 1;
     size_t newUriSize = strlen(prefix) + lenSeparatorSize +
-                        strlen(nodeId) + lenSeparatorSize +
+                        strlen(eui) + lenSeparatorSize +
                         strlen(endpointId) + lenSeparatorSize +
                         strlen(clusterId)
                         + 1; // NULL Terminator
@@ -282,7 +282,7 @@ OCStackResult buildURI(char ** output,
     {
         goto exit;
     }
-    temp = OICStrcat(*output, newUriSize, nodeId);
+    temp = OICStrcat(*output, newUriSize, eui);
     if (temp != *output)
     {
         goto exit;
@@ -336,7 +336,7 @@ void foundZigbeeCallback(TWDevice *device, PIPlugin_Zigbee* plugin)
 
         OCStackResult result = buildURI(&piResource->header.piResource.uri,
                                 PI_ZIGBEE_PREFIX,
-                                device->nodeId,
+                                device->eui,
                                 device->endpointOfInterest->endpointId,
                                 device->endpointOfInterest->clusterList->clusterIds[i].clusterId);
 
@@ -400,20 +400,20 @@ void zigbeeZoneStatusUpdate(TWUpdate * update, PIPlugin_Zigbee* plugin)
         return;
     }
 
-    char * uri = NULL;
-    OCStackResult result = buildURI(&uri,
-                                    PI_ZIGBEE_PREFIX,
-                                    update->nodeId,
-                                    update->endpoint,
-                                    ZB_IAS_ZONE_CLUSTER);
-    if (result != OC_STACK_OK || !uri)
+    PIResource_Zigbee * piResource = NULL;
+    OCStackResult result = GetResourceFromZigBeeNodeId((PIPluginBase *)plugin,
+                                                    &piResource,
+                                                    update->nodeId,
+                                                    update->endpoint,
+                                                    ZB_IAS_ZONE_CLUSTER);
+    if (result != OC_STACK_OK || !piResource)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to build URI with result: %d", result);
+        OC_LOG_V(ERROR, TAG, "Failed to retrieve resource handle with result: %d", result);
         return;
     }
 
-    plugin->header.ObserveNotificationUpdate((PIPluginBase *)plugin, uri);
-    OICFree(uri);
+    plugin->header.ObserveNotificationUpdate((PIPluginBase *)plugin,
+                                                 piResource->header.piResource.resourceHandle);
 }
 
 OCStackResult ZigbeeInit(const char * comPort, PIPlugin_Zigbee ** plugin,
