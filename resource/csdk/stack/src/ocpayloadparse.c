@@ -112,19 +112,13 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* r
 
     bool err = false;
     char * securityData = NULL;
-    CborValue arrayVal;
-    err = err || cbor_value_enter_container(rootValue, &arrayVal);
+    CborValue map;
+    err = err || cbor_value_enter_container(rootValue, &map);
 
-    if(cbor_value_is_map(&arrayVal))
+    if(cbor_value_is_map(&map))
     {
-        CborValue curVal;
-        err = err || cbor_value_map_find_value(&arrayVal, OC_RSRVD_REPRESENTATION, &curVal);
-
-        if(cbor_value_is_valid(&curVal))
-        {
-            size_t len;
-            err = err || cbor_value_dup_text_string(&curVal, &securityData, &len, NULL);
-        }
+        size_t len;
+        err = err || cbor_value_dup_text_string(&map, &securityData, &len, NULL);
     }
     else
     {
@@ -132,8 +126,7 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* r
         return OC_STACK_MALFORMED_RESPONSE;
     }
 
-    err = err || cbor_value_advance(&arrayVal);
-    err = err || cbor_value_leave_container(rootValue, &arrayVal);
+    err = err || cbor_value_leave_container(rootValue, &map);
 
     if(err)
     {
