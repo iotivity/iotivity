@@ -154,6 +154,10 @@ static void CAReceiveHandler(void *data)
 
     CAAdapterReceiveThreadContext_t *ctx = (CAAdapterReceiveThreadContext_t *) data;
 
+    ca_mutex_lock(g_mutexUnicastServer);
+    g_stopUnicast = false;
+    ca_mutex_unlock(g_mutexUnicastServer);
+
     while (true != *(ctx->stopFlag))
     {
         // if new socket object is added in socket list after below logic is ran.
@@ -706,6 +710,7 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
 
             // remove socket to list
             CAEDRNativeRemoveDeviceSocket(env, jni_obj_socket);
+            CAEDRNativeRemoveDevice(address);
             (*env)->ReleaseStringUTFChars(env, jni_str_address, address);
 
             (*env)->DeleteLocalRef(env, jni_str_address);
@@ -718,7 +723,6 @@ CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t t
         if (!jni_cid_BTsocket)
         {
             (*env)->DeleteLocalRef(env, jni_str_address);
-
             OIC_LOG(ERROR, TAG, "[EDR][Native] btReadData: jni_cid_BTsocket is null");
             return CA_STATUS_FAILED;
         }
