@@ -185,22 +185,17 @@ static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* out
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
 
-    CborEncoder rootArray;
-    err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
     CborEncoder map;
 
-    err = err | cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
+    err = err | cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
 
     if(payload->securityData)
     {
-        err = err | AddTextStringToMap(&map, OC_RSRVD_REPRESENTATION,
-                sizeof(OC_RSRVD_REPRESENTATION) - 1,
-                payload->securityData);
+        err = err | cbor_encode_text_string(&map, payload->securityData,
+                                            strlen(payload->securityData));
     }
 
-    err = err | cbor_encoder_close_container(&rootArray, &map);
-
-    err = err | cbor_encoder_close_container(&encoder, &rootArray);
+    err = err | cbor_encoder_close_container(&encoder, &map);
     return checkError(err, &encoder, outPayload, size);
 }
 
