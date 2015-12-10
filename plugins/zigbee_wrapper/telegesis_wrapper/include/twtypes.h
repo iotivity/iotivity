@@ -50,6 +50,14 @@ extern "C" {
 
 #define SIMPLEDESC_RESPONSE_EXPECTED_LINES (6)
 
+#define ZB_PROFILE_ID_HOME_AUTOMATION       "0104"
+
+#define ZB_CLUSTER_IDENTIFY                 "0003"
+#define ZB_CLUSTER_ON_OFF                   "0006"
+#define ZB_CLUSTER_TEMPERATURE_MEASUREMENT  "0402"
+#define ZB_CLUSTER_IAS_ZONE                 "0500"
+#define ZB_CLUSTER_COLOR_CONTROL            "0300"
+
 #define AT_STR_ERROR_OK             "00"
 #define AT_STR_ERROR_INVALID_OP     "70"
 
