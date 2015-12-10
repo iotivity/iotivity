@@ -49,19 +49,11 @@ int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, siz
     int flags = 0;
     cbor_encoder_init(&encoder, outPayload, *size, flags);
 
-    CborEncoder rootArray;
     CborError cborEncoderResult;
-    cborEncoderResult = cbor_encoder_create_array(&encoder, &rootArray, CBOR_ROOT_ARRAY_LENGTH);
-    if (CborNoError != cborEncoderResult)
-    {
-        OC_LOG(ERROR, TAG, "Failed creating cbor array.");
-        goto cbor_error;
-    }
-
     if (rdPayload->rdDiscovery)
     {
         CborEncoder map;
-        cborEncoderResult = cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
+        cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
         if (CborNoError != cborEncoderResult)
         {
             OC_LOG(ERROR, TAG, "Failed creating discovery map.");
@@ -86,7 +78,7 @@ int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, siz
             OC_LOG(ERROR, TAG, "Failed setting OC_RSRVD_RD_DISCOVERY_SEL.");
             goto cbor_error;
         }
-        cborEncoderResult = cbor_encoder_close_container(&rootArray, &map);
+        cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
         if (CborNoError != cborEncoderResult)
         {
             OC_LOG(ERROR, TAG, "Failed closing discovery map.");
@@ -96,7 +88,7 @@ int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, siz
     else if (rdPayload->rdPublish)
     {
         CborEncoder colArray;
-        cborEncoderResult = cbor_encoder_create_array(&rootArray, &colArray, CborIndefiniteLength);
+        cborEncoderResult = cbor_encoder_create_array(&encoder, &colArray, CborIndefiniteLength);
         if (CborNoError != cborEncoderResult)
         {
             OC_LOG(ERROR, TAG, "Failed creating collection array.");
@@ -118,23 +110,32 @@ int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, siz
             }
             rdPublish = rdPublish->next;
         }
-        cborEncoderResult = cbor_encoder_close_container(&rootArray, &colArray);
+        cborEncoderResult = cbor_encoder_close_container(&encoder, &colArray);
         if (CborNoError != cborEncoderResult)
         {
             OC_LOG(ERROR, TAG, "Failed closing collection array.");
             goto cbor_error;
         }
     }
-    cborEncoderResult = cbor_encoder_close_container(&encoder, &rootArray);
-    if (CborNoError != cborEncoderResult)
+    else
     {
-        OC_LOG(ERROR, TAG, "Failed closing root array container. ");
-        goto cbor_error;
+        CborEncoder map;
+        cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
+        if (CborNoError != cborEncoderResult)
+        {
+            OC_LOG(ERROR, TAG, "Failed creating discovery map.");
+            goto cbor_error;
+        }
+        cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
+        if (CborNoError != cborEncoderResult)
+        {
+            OC_LOG(ERROR, TAG, "Failed creating discovery map.");
+            goto cbor_error;
+        }
     }
-
     *size = encoder.ptr - outPayload;
-    return OC_STACK_OK;
 
+    return OC_STACK_OK;
 cbor_error:
     OICFree(outPayload);
     return OC_STACK_ERROR;
