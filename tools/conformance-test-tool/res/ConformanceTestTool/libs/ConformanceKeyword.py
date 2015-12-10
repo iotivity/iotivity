@@ -86,7 +86,7 @@ class ConformanceKeyword(object):
         DEFAULT_URI = 'Default URI : '
         DESTINATION_URI = 'Destination URI : '
         CONFIRMABLE_TYPE = 'Confirmable Type : '
-        PAYLOAD = 'Payload : '
+        PAYLOAD = 'Payload : \n'
         QUERY = 'Query : '
         CREATED_PAYLOAD = 'Created payload'
 
@@ -98,10 +98,10 @@ class ConformanceKeyword(object):
         global SRCPORT
         global MSGID
         global TOKEN
-    
+
         REQUESTCODE = 'requestCode'
         RESPONSECODE = 'responseCode'
-        PAYLOAD = 'payload'
+#        PAYLOAD = 'payload'
         SRCADDRESS = 'srcAddress'
         SRCPORT = 'srcPort'
         MSGID = 'msgID'
@@ -675,12 +675,11 @@ class ConformanceKeyword(object):
         what = PROTOCOL_TYPE + protocol_type + '\n   '
         what += DESTINATION_URI + ip + ':' + str(port) + uri + '\n   '
         what += CONFIRMABLE_TYPE + str(is_confirmable) + '\n   '
-        what += PAYLOAD + payload + '\n   '
+        what += PAYLOAD + OICHelper.getPrettyJson(payload) + '\n   '
         self.print_testcase_do(TE, DUT, 'Put Request', what)
-        
+
         if payload_type == None:
             payload_type = REP
-            
         response = client.sendRequest(
             self.get_protocol(protocol_type),
             self.get_coap_type(is_confirmable),
@@ -729,7 +728,7 @@ class ConformanceKeyword(object):
         what = PROTOCOL_TYPE + protocol_type + '\n   '
         what += DESTINATION_URI + ip + ':' + str(port) + uri + '\n   '
         what += CONFIRMABLE_TYPE + str(is_confirmable) + '\n   '
-        what += PAYLOAD + payload + '\n   '
+        what += PAYLOAD + OICHelper.getPrettyJson(payload) + '\n   '
         self.print_testcase_do(TE, DUT, 'Post Request', what)
         response = client.sendRequest(
             self.get_protocol(protocol_type),
@@ -965,7 +964,7 @@ class ConformanceKeyword(object):
             for notification in notification_list:
                 response_observe = self.get_response_result(notification)
                 self.print_testcase_get(
-                    DUT, TE, 'Response for Observation', response_observe)
+                    DUT, TE, 'Response for Observation', self.get_response_description(notification))
                 result = result + response_observe
         else:
             result = ''
@@ -982,7 +981,7 @@ class ConformanceKeyword(object):
             input_response, OICHelper.MessageParameters.srcAddress) + ':' + self.get_response_value(
             input_response, OICHelper.MessageParameters.srcPort) + '\n   '
         logs += PAYLOAD + \
-            self.get_response_value(input_response, OICHelper.MessageParameters.payload) + '\n   '
+            OICHelper.getPrettyJson(self.get_response_value(input_response, OICHelper.MessageParameters.payload)) + '\n   '
         return logs
 
     # Documentation for a function
@@ -1292,17 +1291,17 @@ class ConformanceKeyword(object):
         if request_code is not None:
             request_result = request_code
         else:
-            request_result = ""          
-        request_payload = self.get_request_value(request, OICHelper.MessageParameters.payload)
+            request_result = ""
+        request_payload = OICHelper.getPrettyJson(self.get_request_value(request, OICHelper.MessageParameters.payload))
         if request_payload is not None:
             request_result = request_result + "\n" + request_payload
         else:
-            request_result = request_result + "\n" + ""          
+            request_result = request_result + "\n" + ""
         request_ip = self.get_request_value(request, OICHelper.MessageParameters.srcAddress)
         if request_ip is not None:
             request_result = request_result + "\n" + request_ip
         else:
-            request_result = request_result + "\n" + ""  
+            request_result = request_result + "\n" + ""
         request_port = self.get_request_value(request, OICHelper.MessageParameters.srcPort)
         if request_port is not None:
             request_result = request_result + "\n" + request_port

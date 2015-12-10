@@ -20,9 +20,11 @@
 
 package oic.ctt.network;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.regex.Pattern;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import oic.ctt.formatter.IotivityKey;
 
@@ -63,7 +65,7 @@ public class OICHelper {
 
     /**
      * Sets default value for OIC
-     * 
+     *
      * @param oic
      *            OIC value as string
      */
@@ -73,7 +75,7 @@ public class OICHelper {
 
     /**
      * Set default value for URI
-     * 
+     *
      * @param uri
      *            URI value as string
      */
@@ -83,7 +85,7 @@ public class OICHelper {
 
     /**
      * Gets the default value for URI
-     * 
+     *
      * @return the default uri
      * 
      */
@@ -93,7 +95,7 @@ public class OICHelper {
 
     /**
      * Validates ipv4 address
-     * 
+     *
      * @param ip
      *            the ip address to be validated
      * @return true if valid, false if invalid
@@ -106,7 +108,7 @@ public class OICHelper {
 
     /**
      * Converts string of hexadecimal values to byte data
-     * 
+     *
      * @param s
      *            String of HEX values
      * @return byte data array
@@ -123,7 +125,7 @@ public class OICHelper {
 
     /**
      * Converts byte data to string of hexadecimals
-     * 
+     *
      * @param bytes
      *            byte data array
      * @return String of HEX values
@@ -140,7 +142,7 @@ public class OICHelper {
 
     /**
      * Makes a complete URI by concatenation of prefix, ip & port
-     * 
+     *
      * @param prefix
      *            URI prefix, for example, coap:// or http://
      * @param ip
@@ -155,7 +157,7 @@ public class OICHelper {
 
     /**
      * Parses and divides URI into segments (separated by "/")
-     * 
+     *
      * @param uriPath
      *            The URI to be segmented
      * @return An ArrayList of String segments from the given URI
@@ -175,7 +177,7 @@ public class OICHelper {
 
     /**
      * Parses and divides Query into segments (separated by "&")
-     * 
+     *
      * @param query
      *            The Query to be segmented
      * @return An ArrayList of String segments from the given Query
@@ -200,7 +202,7 @@ public class OICHelper {
 
     /**
      * Generates a random string of HEX numbers of the given length
-     * 
+     *
      * @param numchars
      *            Length of the string
      * @return Random generated string of Hex numbers
@@ -226,7 +228,7 @@ public class OICHelper {
 
     /**
      * Generates a random Token of the given length
-     * 
+     *
      * @param length
      *            Length of the Token
      * @return Token in byte array format
@@ -247,5 +249,26 @@ public class OICHelper {
     public static int getRandomMessageId() {
         Random random = new Random();
         return random.nextInt(OICHelper.MESSAGE_ID_MAX + 1);
+    }
+
+    /**
+     * Converts normal json string to a pretty format
+     *
+     * @param jsonData
+     *            Json string to coverted into a pretty one
+     * @return formatted pretty Json  in string
+     */
+    public static String getPrettyJson(String jsonData){
+        ObjectMapper mapper = new ObjectMapper();
+        String prettyJson = "";
+
+        try {
+            Object json = mapper.readValue(jsonData, Object.class);
+            prettyJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return prettyJson;
     }
 }
