@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
+// Copyright 2015 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -18,8 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-// OCClient.cpp : Defines the entry point for the console application.
-//
+
 #include <string>
 #include <map>
 #include <cstdlib>
@@ -204,7 +203,7 @@ void postLightRepresentation(std::shared_ptr<OCResource> resource)
 
         std::cout << "Posting light representation..." << std::endl;
 
-        mylight.m_on_off = "false";
+        mylight.m_on_off = false;
 
         rep.setValue("on-off", mylight.m_on_off);
 
