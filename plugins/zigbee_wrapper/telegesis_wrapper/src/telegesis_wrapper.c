@@ -215,6 +215,7 @@ static TWDevice* g_WIPDevice = NULL;
 static TWDeviceFoundCallback g_DeviceFoundCallback = NULL;
 static TWEnrollmentSucceedCallback g_EnrollmentSucceedCallback = NULL;
 static TWDeviceStatusUpdateCallback g_DeviceStatusUpdateCallback = NULL;
+static TWDeviceNodeIdChangedCallback g_EndDeviceNodeIdChangedCallback = NULL;
 
 /*****************************************************************************/
 /*                                                                           */
@@ -830,6 +831,22 @@ OCStackResult TWSetDiscoveryCallback(const TWDeviceFoundCallback callback)
     }
 
     OC_LOG(INFO, TAG, "Leave TWSetDiscoveryCallback() with ret=OC_STACK_OK");
+    return OC_STACK_OK;
+}
+
+OCStackResult TWSetEndDeviceNodeIdChangedCallback(TWDeviceNodeIdChangedCallback callback)
+{
+    OC_LOG(INFO, TAG, "Enter TWSetEndDeviceNodeIdChangedCallback()");
+    if (callback != NULL)
+    {
+        g_EndDeviceNodeIdChangedCallback= callback;
+    }
+    else
+    {
+        g_EndDeviceNodeIdChangedCallback = NULL;
+    }
+
+    OC_LOG(INFO, TAG, "Leave TWSetEndDeviceNodeIdChangedCallback() with ret=OC_STACK_OK");
     return OC_STACK_OK;
 }
 
@@ -2382,8 +2399,6 @@ exit:
     OC_LOG_V(INFO, TAG, "Leave TelSimpleDescInClusterHandler() with ret=%d", ret);
     return ret;
 }
-
-
 
 TWResultCode TelWriteAttrHandler(int count, char* tokens[])
 {

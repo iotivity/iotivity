@@ -132,7 +132,7 @@ typedef struct
 typedef void (*TWDeviceFoundCallback)(TWDevice* device);
 typedef void (*TWEnrollmentSucceedCallback)(TWEnrollee* enrollee);
 typedef void (*TWDeviceStatusUpdateCallback)(TWUpdate* update);
-typedef void (*TWInitCompleteCallback)(bool status);
+typedef void (*TWDeviceNodeIdChangedCallback)(const char* eui, const char* nodeId);
 
 /**
  *
@@ -247,6 +247,15 @@ OCStackResult TWColorMoveToColorTemperature(char* nodeId, char* endpointId,
  *
  */
 OCStackResult TWSetDiscoveryCallback(const TWDeviceFoundCallback callback);
+
+/**
+ *
+ * Sets end device's nodeId changed callback.
+ * This callback will be called when there is a NodeId change for a remote ZigBee device.
+ *
+ */
+OCStackResult TWSetEndDeviceNodeIdChangedCallback(TWDeviceNodeIdChangedCallback callback);
+
 /**
  *
  * Sets status update callback.
