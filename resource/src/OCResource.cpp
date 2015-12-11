@@ -23,6 +23,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <sstream>
+#include <arpa/inet.h>
 
 namespace OC {
 
@@ -133,66 +134,126 @@ void OCResource::setHost(const std::string& host)
             m_interfaces.empty(), m_clientWrapper.expired(), false, false);
     }
 
-    // removed coap:// or coaps:// or coap+tcp://
+    // remove 'coap://' or 'coaps://' or 'coap+tcp://'
     std::string host_token = host.substr(prefix_len);
 
-    if(host_token[0] == '[')
+    if(host_token[0] == '[') // IPv6
     {
-        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_IP_USE_V6);
+        size_t bracket = host_token.find(']');
 
-        size_t found = host_token.find(']');
-
-        if(found == std::string::npos || found == 0)
+        if(bracket == std::string::npos || bracket == 0)
         {
             throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);
         }
-        // extract the ipaddress
-        std::string ip6Addr = host_token.substr(1, found-1);
+        // extract the ipv6 address
+        std::string ip6Addr = host_token.substr(1, bracket - 1);
 
-        if (ip6Addr.length() >= MAX_ADDR_STR_SIZE)
+        // address validity check
+        struct in6_addr buf;
+        const char *cAddr = ip6Addr.c_str();
+        if(0 == inet_pton(AF_INET6, cAddr, &buf))
         {
-            throw std::length_error("host address is too long.");
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+        }
+
+        //skip ']' and ':' characters in host string
+        host_token = host_token.substr(bracket + 2);
+        int port = std::stoi(host_token);
+
+        if (0 > port || UINT16_MAX < port)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
         }
 
         ip6Addr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
         m_devAddr.addr[ip6Addr.length()] = '\0';
-        //skip ']' and ':' characters in host string
-        host_token = host_token.substr(found + 2);
+        m_devAddr.port = static_cast<uint16_t>(port);
+        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_IP_USE_V6);
     }
-    else
-    {
-        size_t found = host_token.find(':');
-
-        if(found == std::string::npos || found == 0)
-        {
-            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
-                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
-        }
-
-        std::string addrPart = host_token.substr(0, found);
-
-        if (addrPart.length() >= MAX_ADDR_STR_SIZE)
-        {
-            throw std::length_error("host address is too long.");
-        }
-
-        addrPart.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
-        m_devAddr.addr[addrPart.length()] = '\0';
-        //skip ':' character in host string
-        host_token = host_token.substr(found + 1);
-    }
-
-    int port = std::stoi(host_token);
-
-    if( port < 0 || port > UINT16_MAX )
+    else if (host_token[0] == ':')
     {
         throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
             m_interfaces.empty(), m_clientWrapper.expired(), false, false);
     }
+    else
+    {
+        size_t dot = host_token.find('.');
+        if (std::string::npos == dot) // MAC
+        {
+            std::string macAddr = host_token;
 
-    m_devAddr.port = static_cast<uint16_t>(port);
+            // address validity check
+            if (MAC_ADDR_STR_SIZE != macAddr.length())
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                    m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+            }
 
+            for (size_t blockCnt = 0; blockCnt < MAC_ADDR_BLOCKS; blockCnt++)
+            {
+                std::string block = macAddr.substr(blockCnt * 3, 2);
+
+                if (std::string::npos != block.find_first_not_of("0123456789ABCDEFabcdef"))
+                {
+                    throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                        m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+                }
+
+                if (MAC_ADDR_BLOCKS - 1 > blockCnt)
+                {
+                    char delimiter = macAddr[blockCnt * 3 + 2];
+
+                    if (':' != delimiter)
+                    {
+                        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                            m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+                    }
+                }
+            }
+
+            macAddr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
+            m_devAddr.addr[MAC_ADDR_STR_SIZE] = '\0';
+        }
+        else // IPv4
+        {
+            size_t colon = host_token.find(':');
+
+            if (colon == std::string::npos || colon == 0)
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                    m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+            }
+
+            // extract the ipv4 address
+            std::string ip4Addr = host_token.substr(0, colon);
+
+            // address validity check
+            struct in_addr buf;
+            const char *cAddr = ip4Addr.c_str();
+            if(0 == inet_pton(AF_INET, cAddr, &buf))
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                    m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+            }
+
+            //skip ':' characters in host string
+            host_token = host_token.substr(colon + 1);
+            int port = std::stoi(host_token);
+
+            if (0 > port || UINT16_MAX < port)
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                    m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+            }
+
+            ip4Addr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
+            m_devAddr.addr[ip4Addr.length()] = '\0';
+            m_devAddr.port = static_cast<uint16_t>(port);
+        }
+    }
 }
 
 OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
