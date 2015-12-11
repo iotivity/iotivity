@@ -53,7 +53,11 @@
 #define OC_RSRVD_ES_URI_PROV               "/oic/prov"
 #define OC_RSRVD_ES_URI_NET                "/oic/net"
 
-
+/**
+ * @brief Defines for Provisioning status accepted values
+ */
+#define ES_PS_NEED_PROVISIONING 1
+#define ES_PS_PROVISIONING_COMPLETED 2
 
 typedef enum
 {

@@ -107,10 +107,10 @@ namespace OIC
             ProvStatusCb m_provStatusCb;
             EnrolleeNWProvInfo m_enrolleeNWProvInfo;
 
-            void onProvResource(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+            void getProvStatusResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
 
-            void onProvPostResource(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+            void checkProvInformationCb(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
         };
     }

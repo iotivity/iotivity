@@ -169,6 +169,23 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
         return ehResult;
     }
 
+    //TODO : ES_PS_PROVISIONING_COMPLETED state indicates that already provisioning is completed.
+    // A new request for provisioning means overriding existing network provisioning information.
+    // Metadata to indicate that it is override is needed. The metadata can be a new attribute
+    // should be added to the /oic/prov resource indicating to override the existing network
+    // information.
+    if (g_prov.ps == ES_PS_PROVISIONING_COMPLETED)
+    {
+        OC_LOG(DEBUG, ES_RH_TAG, "Provisioning already completed. "
+                "This a request to override the existing the network provisioning information");
+    }
+
+    // PUT request is appropriate for provisioning information to the enrollee.
+    // When an enrollee receives the put request, the entire resource information should
+    // be overwritten.
+    sprintf(g_prov.tnn, "%s", "");
+    sprintf(g_prov.cd, "%s", "");
+
     char* tnn;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_TNN, &tnn))
     {
@@ -192,6 +209,9 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
     }
 
     OC_LOG_V(INFO, ES_RH_TAG, "g_prov.cd %s", g_prov.cd);
+
+    g_prov.ps = 2;
+    OC_LOG_V(INFO, ES_RH_TAG, "g_prov.ps %d", g_prov.ps);
 
     g_flag = 1;
 
@@ -232,7 +252,6 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
     char* tr;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_TR, &tr))
     {
-
         // Triggering
         ehResult = OC_EH_OK;
     }
