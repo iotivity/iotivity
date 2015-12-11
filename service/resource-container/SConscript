@@ -241,3 +241,27 @@ env.AppendTarget('containersampleclient')
 ######################################################################
 if target_os == 'android':
     SConscript('android/SConscript')
+
+######################################################################
+# build Energy Saver sample bundle
+######################################################################
+if target_os in ['linux']:
+    Energy_saver_bundle_env = resource_container_env.Clone()
+    Energy_saver_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+
+    ENERGY_SAVER_BUNDLE_DIR = 'examples/EnergySaverBundle/'
+    Energy_saver_bundle_env.AppendUnique(CPPPATH = [ ENERGY_SAVER_BUNDLE_DIR + 'include' ])
+
+    Energy_saver_bundle_env.PrependUnique(LIBS = ['rcs_container'])
+
+    Energy_saver_bundle_src = [ Glob(ENERGY_SAVER_BUNDLE_DIR + 'src/*.cpp')]
+
+    EnergySaverBundle = Energy_saver_bundle_env.SharedLibrary('EnergySaverBundle', Energy_saver_bundle_src)
+    Energy_saver_bundle_env.InstallTarget(EnergySaverBundle, 'libEnergySaverBundle')
+
+    if target_os == 'linux' :
+        SConscript(ENERGY_SAVER_BUNDLE_DIR + 'src/inputSensors/SConscript')
+        Command("EntranceCheckSensorApp", ENERGY_SAVER_BUNDLE_DIR + "src/inputSensors/EntranceCheckSensorApp/EntranceCheckSensorApp", Copy("$TARGET", "$SOURCE"))
+        Command("LightSensorApp", ENERGY_SAVER_BUNDLE_DIR + "src/inputSensors/LightSensorApp/LightSensorApp", Copy("$TARGET", "$SOURCE"))
+
+

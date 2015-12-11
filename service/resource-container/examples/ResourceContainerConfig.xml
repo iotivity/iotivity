@@ -86,7 +86,6 @@
         </resources>
     </bundle>
     
-    <!--
     <bundle>
         <id>oic.bundle.hueJavaSample</id>       
         <path>../../../../../../service/resource-container/examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar</path>
@@ -103,6 +102,37 @@
             </resourceInfo>       
         </resources>
     </bundle>
-    -->
-    
+
+    <bundle>
+        <id>oic.bundle.EnergySaver</id>
+        <path>libEnergySaverBundle.so</path>
+        <activator>energysaver</activator>
+        <version>1.0.0</version>
+        <resources>
+            <resourceInfo>
+                <name>EnergySaver</name>
+                <resourceType>oic.r.sensor</resourceType>
+                <outputs>
+                    <output>
+                        <name>EnergySaverResult</name>
+                        <type>int</type>
+                    </output>
+                </outputs>
+                <inputs>
+                    <input>
+                        <name>light</name>
+                        <type>double</type>
+                        <resourceType>oic.r.sensor.light</resourceType>
+                        <resourceUri>/Thing_LightSensor</resourceUri>
+                    </input>
+                    <input>
+                        <name>peopleCount</name>
+                        <type>int</type>
+                        <resourceType>oic.r.sensor.entrancecheck</resourceType>
+                        <resourceUri>/Thing_EntranceCheckSensor</resourceUri>
+                    </input>
+                </inputs>
+            </resourceInfo>       
+        </resources>
+    </bundle>
 </container>
