@@ -113,19 +113,10 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* r
     bool err = false;
     char * securityData = NULL;
     CborValue map;
+    size_t len;
+
     err = err || cbor_value_enter_container(rootValue, &map);
-
-    if(cbor_value_is_map(&map))
-    {
-        size_t len;
-        err = err || cbor_value_dup_text_string(&map, &securityData, &len, NULL);
-    }
-    else
-    {
-        OC_LOG(ERROR, TAG, "Cbor main value not a map");
-        return OC_STACK_MALFORMED_RESPONSE;
-    }
-
+    err = err || cbor_value_dup_text_string(&map, &securityData, &len, NULL);
     err = err || cbor_value_leave_container(rootValue, &map);
 
     if(err)
