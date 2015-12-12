@@ -14,8 +14,8 @@ host_target_map = {
 
 # Map of os and allowed archs (os: allowed archs)
 os_arch_map = {
-		'linux': ['x86', 'x86_64', 'arm', 'arm64'],
-		'tizen': ['x86', 'x86_64', 'arm', 'arm64', 'armeabi-v7a'],
+		'linux': ['x86', 'x86_64', 'arm', 'arm-v7a', 'arm64'],
+		'tizen': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'],
 		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
 		'windows': ['x86', 'amd64', 'arm'],
 		'winrt': ['arm'],
