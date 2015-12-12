@@ -171,14 +171,6 @@ typedef struct
 
 } TWEndControlMap;
 
-typedef TWResultCode (*TWATResultHandler)(int count, char** tokens);
-
-typedef struct
-{
-    const char *resultTxt;
-    TWATResultHandler handler;
-
-} TWATResultHandlerPair;
 
 #ifdef __cplusplus
 }

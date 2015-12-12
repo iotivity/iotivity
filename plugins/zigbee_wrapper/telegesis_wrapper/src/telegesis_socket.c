@@ -37,7 +37,7 @@
 /**
  * New thread's main() ftn.
  */
-void * readForever(/*PIPlugin */void * plugin);
+void * readForever(/*PIPlugin_Zigbee */void * plugin);
 /**
  * Just grabs the next char in the buffer. Called by readBufferLine() multiple times.
  */
@@ -53,7 +53,7 @@ TWEntry * readEntry(int fd);
 /**
  * Posts the TWEntry to the queue.
  */
-TWResultCode TWEnqueueEntry(PIPlugin * plugin, TWEntry * entry);
+TWResultCode TWEnqueueEntry(PIPlugin_Zigbee * plugin, TWEntry * entry);
 
 /**
  * Defines the mapping relationships between Telegesis AT response/prompt tags and
@@ -433,7 +433,7 @@ exit:
     return NULL;
 }
 
-TWResultCode TWRetrieveEUI(PIPlugin * plugin, TWSock * twSock)
+TWResultCode TWRetrieveEUI(PIPlugin_Zigbee * plugin, TWSock * twSock)
 {
     if(!plugin || !twSock)
     {
@@ -522,9 +522,9 @@ exit:
     return result;
 }
 
-TWResultCode TWStartSock(PIPlugin * plugin, const char * fileLoc)
+TWResultCode TWStartSock(PIPlugin_Zigbee * plugin, const char * fileLoc)
 {
-    TWSock * sock = TWGetSock((PIPlugin *)plugin);
+    TWSock * sock = TWGetSock((PIPlugin_Zigbee *)plugin);
     if(sock && sock->isActive == true)
     {
         // Ignore requests to start up the same socket.
@@ -544,7 +544,7 @@ TWResultCode TWStartSock(PIPlugin * plugin, const char * fileLoc)
         goto exit;
     }
 
-    ret = TWRetrieveEUI((PIPlugin *)plugin, sock);
+    ret = TWRetrieveEUI((PIPlugin_Zigbee *)plugin, sock);
     if(ret != TW_RESULT_OK)
     {
         OC_LOG(ERROR, TAG, "Unable to retrieve Zigbee Radio's EUI.");
@@ -582,7 +582,7 @@ void * readForever(/*PIPlugin*/ void * plugin)
 {
     TWResultCode result = TW_RESULT_OK;
     TWEntry * entry = NULL;
-    TWSock * twSock = TWGetSock((PIPlugin *)plugin);
+    TWSock * twSock = TWGetSock((PIPlugin_Zigbee *)plugin);
     if(!twSock)
     {
         OC_LOG(ERROR, TAG, "Unable to retrieve associated socket.");
@@ -667,13 +667,13 @@ void * readForever(/*PIPlugin*/ void * plugin)
                     // response. Not necessarily fatal.
                     continue;
                 }
-                result = TWEnqueueEntry((PIPlugin *)plugin, entry);
+                result = TWEnqueueEntry((PIPlugin_Zigbee *)plugin, entry);
                 if(result != TW_RESULT_OK)
                 {
                     OC_LOG_V(ERROR, TAG, "Could not add TWEntry to queue for"
                                           "consumption by the application"
                                           "layer. Error is: %d", result);
-                    TWDeleteEntry((PIPlugin *)plugin, entry);
+                    TWDeleteEntry((PIPlugin_Zigbee *)plugin, entry);
                     // This is most likely a FATAL error, such as out of memory.
                     break;
                 }
@@ -695,7 +695,7 @@ void * readForever(/*PIPlugin*/ void * plugin)
     return NULL;
 }
 
-TWResultCode TWIssueATCommand(PIPlugin * plugin, const char * command)
+TWResultCode TWIssueATCommand(PIPlugin_Zigbee * plugin, const char * command)
 {
     if(!plugin || !command)
     {
@@ -763,7 +763,7 @@ exit:
     return result;
 }
 
-TWResultCode TWEnqueueEntry(PIPlugin * plugin, TWEntry * entry)
+TWResultCode TWEnqueueEntry(PIPlugin_Zigbee * plugin, TWEntry * entry)
 {
     if(!plugin || !entry)
     {
@@ -783,7 +783,7 @@ TWResultCode TWEnqueueEntry(PIPlugin * plugin, TWEntry * entry)
     return TW_RESULT_OK;
 }
 
-TWResultCode TWDequeueEntry(PIPlugin * plugin, TWEntry ** entry, TWEntryType type)
+TWResultCode TWDequeueEntry(PIPlugin_Zigbee * plugin, TWEntry ** entry, TWEntryType type)
 {
     if(!plugin || !entry)
     {
@@ -855,7 +855,7 @@ TWResultCode TWDequeueEntry(PIPlugin * plugin, TWEntry ** entry, TWEntryType typ
     return TWReleaseMutex(&twSock->mutex);
 }
 
-TWResultCode TWFreeQueue(PIPlugin * plugin)
+TWResultCode TWFreeQueue(PIPlugin_Zigbee * plugin)
 {
     if(!plugin)
     {
@@ -883,7 +883,7 @@ TWResultCode TWFreeQueue(PIPlugin * plugin)
     return ret;
 }
 
-TWResultCode TWDeleteEntry(PIPlugin * plugin, TWEntry * entry)
+TWResultCode TWDeleteEntry(PIPlugin_Zigbee * plugin, TWEntry * entry)
 {
     if(!plugin || !entry)
     {
@@ -924,7 +924,7 @@ TWResultCode TWDeleteEntry(PIPlugin * plugin, TWEntry * entry)
     return TW_RESULT_OK;
 }
 
-TWResultCode TWGetEUI(PIPlugin * plugin, char ** eui)
+TWResultCode TWGetEUI(PIPlugin_Zigbee * plugin, char ** eui)
 {
     if(!plugin || !eui)
     {
@@ -947,7 +947,7 @@ TWResultCode TWGetEUI(PIPlugin * plugin, char ** eui)
 
 }
 
-TWResultCode TWStopSock(PIPlugin * plugin)
+TWResultCode TWStopSock(PIPlugin_Zigbee * plugin)
 {
     if(!plugin)
     {

@@ -216,7 +216,8 @@ const char * getResourceTypeForIASZoneType(TWDevice *device)
         ZB_IAS_ZONE_CLUSTER,
         ZB_IAS_ZONE_TYPE_ATTRIBUTE_ID,
         &IASZoneType,
-        &length
+        &length,
+        *gPlugin
     );
 
     if (ret != OC_STACK_OK || !IASZoneType)
@@ -356,7 +357,8 @@ void foundZigbeeCallback(TWDevice *device)
                 = getResourceTypeForIASZoneType(device);
 
             OCStackResult ret = TWListenForStatusUpdates(device->nodeId,
-                                      device->endpointOfInterest->endpointId);
+                                                          device->endpointOfInterest->endpointId,
+                                                          *gPlugin);
 
             if (ret != OC_STACK_OK)
             {
@@ -438,21 +440,20 @@ OCStackResult ZigbeeInit(const char * comPort, PIPlugin_Zigbee ** plugin,
     ((*plugin)->header).processEHRequest = ProcessEHRequest;
 
     gPlugin = plugin;
-    OCStackResult result = TWInitialize(comPort);
+    OCStackResult result = TWInitialize(*gPlugin, comPort);
     if (result != OC_STACK_OK)
     {
         return result;
     }
 
-    return TWSetStatusUpdateCallback(zigbeeZoneStatusUpdate);
+    return TWSetStatusUpdateCallback(zigbeeZoneStatusUpdate, *gPlugin);
 }
 
 OCStackResult ZigbeeDiscover(PIPlugin_Zigbee * plugin)
 {
     OCStackResult result = OC_STACK_ERROR;
-    (void)plugin;
-    TWSetDiscoveryCallback(foundZigbeeCallback);
-    result = TWDiscover(NULL);
+    TWSetDiscoveryCallback(foundZigbeeCallback, plugin);
+    result = TWDiscover(plugin);
     OC_LOG_V(DEBUG, TAG, "ZigbeeDiscover : Status = %d\n", result);
 
     return result;
@@ -460,14 +461,14 @@ OCStackResult ZigbeeDiscover(PIPlugin_Zigbee * plugin)
 
 OCStackResult ZigbeeStop(PIPlugin_Zigbee * plugin)
 {
+    OCStackResult ret = TWUninitialize(plugin);
     free(plugin);
-    return TWUninitialize();
+    return ret;
 }
 
 OCStackResult ZigbeeProcess(PIPlugin_Zigbee * plugin)
 {
-    (void)plugin;
-    return TWProcess();
+    return TWProcess(plugin);
 }
 
 // Function returns an OIC Smart Home resource Type
@@ -841,7 +842,8 @@ OCEntityHandlerResult processGetRequest(PIPluginBase * plugin,
                                      piResource->clusterId,
                                      attributeList.list[i].zigBeeAttribute,
                                      &outVal,
-                                     &outValLength);
+                                     &outValLength,
+                                     *gPlugin);
 
         if (stackResult != OC_STACK_OK || !outVal)
         {
@@ -1033,7 +1035,8 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                     }
                 }
                 stackResult = TWMoveToLevel(piResource->nodeId, piResource->endpointId,
-                                    DEFAULT_MOVETOLEVEL_MODE, value, DEFAULT_TRANS_TIME);
+                                    DEFAULT_MOVETOLEVEL_MODE, value, DEFAULT_TRANS_TIME,
+                                    (PIPlugin_Zigbee*)plugin);
             }
             else
             {
@@ -1050,7 +1053,8 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                 stackResult = TWSetAttribute(piResource->eui,
                     piResource->nodeId, piResource->endpointId,
                     piResource->clusterId, attributeList.list[i].zigBeeAttribute,
-                    getZBDataTypeString(attributeList.list[i].zigbeeType), value);
+                    getZBDataTypeString(attributeList.list[i].zigbeeType), value,
+                    (PIPlugin_Zigbee*)plugin);
             }
             if (stackResult != OC_STACK_OK)
             {
@@ -1070,7 +1074,8 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
             stackResult = TWSetAttribute(piResource->eui,
                 piResource->nodeId, piResource->endpointId,
                  piResource->clusterId, attributeList.list[i].zigBeeAttribute,
-                 getZBDataTypeString(attributeList.list[i].zigbeeType), value);
+                 getZBDataTypeString(attributeList.list[i].zigbeeType), value,
+                 (PIPlugin_Zigbee*)plugin);
         }
         else if (attributeList.list[i].oicType == OIC_ATTR_STRING)
         {
@@ -1089,7 +1094,8 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                 }
                 stackResult =
                 TWColorMoveToColorTemperature(piResource->nodeId, piResource->endpointId,
-                                              value, DEFAULT_TRANS_TIME);
+                                              value, DEFAULT_TRANS_TIME,
+                                              (PIPlugin_Zigbee*)plugin);
             }
             else
             {
@@ -1097,7 +1103,8 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                     piResource->nodeId, piResource->endpointId,
                     piResource->clusterId, attributeList.list[i].zigBeeAttribute,
                     getZBDataTypeString(attributeList.list[i].zigbeeType),
-                    attributeList.list[i].val.str);
+                    attributeList.list[i].val.str,
+                    (PIPlugin_Zigbee*)plugin);
             }
             if (stackResult != OC_STACK_OK)
             {
@@ -1109,7 +1116,8 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
             char * value = attributeList.list[i].val.b ? "1" : "0";
             if (attributeList.CIEMask || CIE_RON_OFF)
             {
-                stackResult = TWSwitchOnOff(piResource->nodeId, piResource->endpointId, value);
+                stackResult = TWSwitchOnOff(piResource->nodeId, piResource->endpointId, value,
+                                            (PIPlugin_Zigbee*)plugin);
             }
             else
             {
@@ -1117,7 +1125,8 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                     piResource->nodeId, piResource->endpointId,
                     piResource->clusterId, attributeList.list[i].zigBeeAttribute,
                     getZBDataTypeString(attributeList.list[i].zigbeeType),
-                    value);
+                    value,
+                    (PIPlugin_Zigbee*)plugin);
             }
             if (stackResult != OC_STACK_OK)
             {
