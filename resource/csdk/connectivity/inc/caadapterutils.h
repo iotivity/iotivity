@@ -40,35 +40,12 @@
 #include "logger.h"
 #include "pdu.h"
 #include "uarraylist.h"
+#include "cacommonutil.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-/**
- * Macro to verify the validity of input argument.
- */
-#define VERIFY_NON_NULL_RET(arg, log_tag, log_message,ret) \
-    if (NULL == arg) { \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
-        return ret; \
-    } \
-
-/**
- * Macro to verify the validity of input argument.
- */
-#define VERIFY_NON_NULL(arg, log_tag, log_message) \
-    VERIFY_NON_NULL_RET((arg), (log_tag), (log_message), CA_STATUS_INVALID_PARAM)
-
-/**
- * Macro to verify the validity of input argument.
- */
-#define VERIFY_NON_NULL_VOID(arg, log_tag, log_message) \
-    if (NULL == arg) { \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
-        return; \
-    } \
 
 /**
  * Length of network interface name.

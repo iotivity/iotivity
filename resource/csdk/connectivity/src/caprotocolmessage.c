@@ -41,18 +41,9 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocrandom.h"
+#include "cacommonutil.h"
 
 #define TAG "CA_PRTCL_MSG"
-
-/**
- * @def VERIFY_NON_NULL_RET
- * @brief Macro to verify the validity of input argument
- */
-#define VERIFY_NON_NULL_RET(arg, log_tag, log_message,ret) \
-    if (NULL == arg ){ \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
-        return ret; \
-    }
 
 #define CA_BUFSIZE (128)
 #define CA_PDU_MIN_SIZE (4)
@@ -63,11 +54,8 @@ static const char COAP_URI_HEADER[] = "coap://[::]/";
 CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                    CARequestInfo_t *outReqInfo)
 {
-    if (NULL == pdu || NULL == outReqInfo)
-    {
-        OIC_LOG(ERROR, TAG, "parameter is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(pdu, TAG, "pdu");
+    VERIFY_NON_NULL(outReqInfo, TAG, "outReqInfo");
 
     uint32_t code = CA_NOT_FOUND;
     CAResult_t ret = CAGetInfoFromPDU(pdu, endpoint, &code, &(outReqInfo->info));
@@ -79,11 +67,8 @@ CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *en
 CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo,
                                     const CAEndpoint_t *endpoint)
 {
-    if (NULL == pdu || NULL == outResInfo)
-    {
-        OIC_LOG(ERROR, TAG, "parameter is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(pdu, TAG, "pdu");
+    VERIFY_NON_NULL(outResInfo, TAG, "outResInfo");
 
     uint32_t code = CA_NOT_FOUND;
     CAResult_t ret = CAGetInfoFromPDU(pdu, endpoint, &code, &(outResInfo->info));
@@ -95,11 +80,7 @@ CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *out
 CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                  CAErrorInfo_t *errorInfo)
 {
-    if (!pdu)
-    {
-        OIC_LOG(ERROR, TAG, "parameter is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(pdu, TAG, "pdu");
 
     uint32_t code = 0;
     CAResult_t ret = CAGetInfoFromPDU(pdu, endpoint, &code, &errorInfo->info);
@@ -192,11 +173,8 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
 coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
                        const CAEndpoint_t *endpoint)
 {
-    if (NULL == data)
-    {
-        OIC_LOG(ERROR, TAG, "data is null");
-        return NULL;
-    }
+    VERIFY_NON_NULL_RET(data, TAG, "data", NULL);
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
 
     coap_transport_type transport;
 #ifdef TCP_ADAPTER
@@ -409,19 +387,10 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
 
 CAResult_t CAParseURI(const char *uriInfo, coap_list_t **optlist)
 {
-    if (NULL == uriInfo)
-    {
-        OIC_LOG(ERROR, TAG, "uriInfo is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(uriInfo, TAG, "uriInfo");
+    VERIFY_NON_NULL(optlist, TAG, "optlist");
 
     OIC_LOG_V(DEBUG, TAG, "url : %s", uriInfo);
-
-    if (NULL == optlist)
-    {
-        OIC_LOG(ERROR, TAG, "optlist is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
 
     /* split arg into Uri-* options */
     coap_uri_t uri;
@@ -469,11 +438,7 @@ CAResult_t CAParseURI(const char *uriInfo, coap_list_t **optlist)
 CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target,
                              coap_list_t **optlist)
 {
-    if (!optlist)
-    {
-        OIC_LOG(ERROR, TAG, "optlist is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(optlist, TAG, "optlist");
 
     if ((target != COAP_OPTION_URI_PATH) && (target != COAP_OPTION_URI_QUERY))
     {
@@ -529,7 +494,7 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target
 CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **optlist)
 {
     (void)code;
-    VERIFY_NON_NULL_RET(info, TAG, "info is NULL", CA_STATUS_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(info, TAG, "info", CA_STATUS_INVALID_PARAM);
 
     OIC_LOG_V(DEBUG, TAG, "parse Head Opt: %d", info->numOptions);
 
@@ -629,11 +594,7 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
 
 coap_list_t *CACreateNewOptionNode(uint16_t key, uint32_t length, const char *data)
 {
-    if (!data)
-    {
-        OIC_LOG(ERROR, TAG, "invalid pointer parameter");
-        return NULL;
-    }
+    VERIFY_NON_NULL_RET(data, TAG, "data", NULL);
 
     coap_option *option = coap_malloc(sizeof(coap_option) + length + 1);
     if (!option)
@@ -720,11 +681,10 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
 CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                             uint32_t *outCode, CAInfo_t *outInfo)
 {
-    if (!pdu || !outCode || !outInfo)
-    {
-        OIC_LOG(ERROR, TAG, "NULL pointer param");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(pdu, TAG, "pdu");
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint");
+    VERIFY_NON_NULL(outCode, TAG, "outCode");
+    VERIFY_NON_NULL(outInfo, TAG, "outInfo");
 
     coap_transport_type transport;
 #ifdef TCP_ADAPTER
@@ -984,17 +944,9 @@ exit:
 CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo,
                              const CAEndpoint_t *endpoint)
 {
-    if (NULL == pdu_hdr)
-    {
-        OIC_LOG(ERROR, TAG, "pdu_hdr is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
-
-    if (NULL == outInfo)
-    {
-        OIC_LOG(ERROR, TAG, "outInfo is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(pdu_hdr, TAG, "pdu_hdr");
+    VERIFY_NON_NULL(outInfo, TAG, "outInfo");
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint");
 
     coap_transport_type transport;
 #ifdef TCP_ADAPTER
@@ -1034,11 +986,7 @@ CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo,
 
 CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
 {
-    if (!token)
-    {
-        OIC_LOG(ERROR, TAG, "invalid token pointer");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(token, TAG, "token");
 
     if ((tokenLength > CA_MAX_TOKEN_LEN) || (0 == tokenLength))
     {
@@ -1117,11 +1065,7 @@ uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
 
 CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void *pdu, uint32_t size)
 {
-    if (NULL == pdu)
-    {
-        OIC_LOG(ERROR, TAG, "pdu is null");
-        return CA_MSG_NONCONFIRM;
-    }
+    VERIFY_NON_NULL_RET(pdu, TAG, "pdu", CA_MSG_NONCONFIRM);
 
     // pdu minimum size is 4 byte.
     if (size < CA_PDU_MIN_SIZE)
@@ -1137,11 +1081,7 @@ CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void *pdu, uint32_t size
 
 uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size)
 {
-    if (NULL == pdu)
-    {
-        OIC_LOG(ERROR, TAG, "pdu is null");
-        return 0;
-    }
+    VERIFY_NON_NULL_RET(pdu, TAG, "pdu", 0);
 
     // pdu minimum size is 4 byte.
     if (size < CA_PDU_MIN_SIZE)
@@ -1157,11 +1097,7 @@ uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size)
 
 CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size)
 {
-    if (NULL == pdu)
-    {
-        OIC_LOG(ERROR, TAG, "pdu is null");
-        return CA_NOT_FOUND;
-    }
+    VERIFY_NON_NULL_RET(pdu, TAG, "pdu", CA_NOT_FOUND);
 
     // pdu minimum size is 4 byte.
     if (size < CA_PDU_MIN_SIZE)
