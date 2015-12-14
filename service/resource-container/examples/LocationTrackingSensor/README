@@ -1,1 +1,34 @@
-Location Tracking Sensor - initail commit.
+Location Tracking Sensor
+
+1. Description
+
+LocationTracking Sensor is a soft sensor for tracking person who needs for being cared.
+
+1-1. This sensor needs
+    1) Accelerometer
+    3) Magnetic Sensor
+    4) WiFi module
+
+1-2. This sensor's output is location of target person.
+
+2. Utilized sensors
+
+We used accelerometer, magnetic sensor, and WiFi module to get the location of the user device. 
+
+1-1. Accelerometer:
+
+- output: 3 dimensional acceleration vector
+- The output of the accelerometer satisfies following equation.
+    Acceleration = linear acceleration + gravity
+- Location of the device is found by integrating linear acceleration twice.
+- Gravity component calculated from the accelerometer is used to make a compass.  
+
+2-1. Magnetic sensor:  
+
+- output: 3 dimensional magnetic force vector
+- Combining the orientation(especially azimuth) from magnetic sensor and gravity component from above accelerometer, we can make a compass to get the information about the global coordinate. 
+
+3-1. WiFi module:
+
+- output: RSSI, frequency
+- We can get the RSSI(in dBm) and frequency(in MHz) of signal from connected AP(Access Point) and calculate the distance from AP.
