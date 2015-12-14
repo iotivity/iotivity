@@ -40,18 +40,18 @@
     <bundle>
         <id>oic.bundle.android.light</id>
         <path>org.iotivity.service.sample.androidbundle.apk</path>
-        <activator>org.iotivity.service.sample.androidbundle.AndroidSampleActivator</activator>
+        <activator>org.iotivity.service.sample.androidbundle.SampleActivator</activator>
         <version>1.0.0</version>
         <resources>
             <resourceInfo>
-                <name>androidLIghtResource</name>
+                <name>LightResource1</name>
                 <resourceType>oic.r.light</resourceType>
                 <resourceUri>/android/light/1</resourceUri>
             </resourceInfo>
             <resourceInfo>
-                <name>androidLightSensor</name>
-                <resourceType>oic.r.lightsensor</resourceType>
-                <resourceUri>/android/lightsensor/1</resourceUri>
+                <name>LightIntensity1</name>
+                <resourceType>oic.r.lightintensity</resourceType>
+                <resourceUri>/android/lightintensity/1</resourceUri>
             </resourceInfo>
             <resourceInfo>
                 <name>DiscomfortIndexSensor1</name>
