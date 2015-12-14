@@ -1353,13 +1353,12 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
     }
 
     pl->uri = OICStrdup(res->uri);
-    pl->sid = (uint8_t*)OICCalloc(1, UUID_SIZE);
-    if(!pl->uri || ! pl->sid)
+
+    if(!pl->uri)
     {
         FreeOCDiscoveryResource(pl);
         return NULL;
     }
-    memcpy(pl->sid, OCGetServerInstanceID(), UUID_SIZE);
 
     // types
     OCResourceType* typePtr = res->rsrcType;
@@ -1574,7 +1573,6 @@ static void FreeOCDiscoveryResource(OCResourcePayload* payload)
     }
 
     OICFree(payload->uri);
-    OICFree(payload->sid);
     OCFreeOCStringLL(payload->types);
     OCFreeOCStringLL(payload->interfaces);
     FreeOCDiscoveryResource(payload->next);
@@ -1587,7 +1585,7 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
     {
         return;
     }
-
+    OICFree(payload->sid);
     FreeOCDiscoveryResource(payload->resources);
     OICFree(payload);
 }

@@ -647,12 +647,12 @@ namespace OCRepresentationEncodingTest
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
+        payload->sid = (uint8_t*)OICMalloc(16);
         payload->resources = resource;
 
         OCResourcePayloadAddResourceType(resource, "rt.singleitem");
         OCResourcePayloadAddInterface(resource, "if.singleitem");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -680,13 +680,13 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, SingleItemFrontTrim)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
         OCResourcePayloadAddResourceType(resource, "    rt.singleitem");
         OCResourcePayloadAddInterface(resource, "    if.singleitem");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -713,13 +713,13 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, SingleItemBackTrim)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
         OCResourcePayloadAddResourceType(resource, "rt.singleitem    ");
         OCResourcePayloadAddInterface(resource, "if.singleitem    ");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -746,13 +746,13 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, SingleItemBothTrim)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
         OCResourcePayloadAddResourceType(resource, "    rt.singleitem    ");
         OCResourcePayloadAddInterface(resource, "    if.singleitem     ");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -779,6 +779,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, MultiItemsNormal)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -787,7 +788,6 @@ namespace OCRepresentationEncodingTest
         OCResourcePayloadAddInterface(resource, "if.firstitem");
         OCResourcePayloadAddInterface(resource, "if.seconditem");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -816,6 +816,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, MultiItemExtraLeadSpaces)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -824,7 +825,6 @@ namespace OCRepresentationEncodingTest
         OCResourcePayloadAddInterface(resource, "  if.firstitem");
         OCResourcePayloadAddInterface(resource, "  if.seconditem");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -853,6 +853,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, MultiItemExtraTrailSpaces)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -861,7 +862,6 @@ namespace OCRepresentationEncodingTest
         OCResourcePayloadAddInterface(resource, "if.firstitem  ");
         OCResourcePayloadAddInterface(resource, "if.seconditem  ");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -890,6 +890,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, MultiItemBothSpaces)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -898,7 +899,6 @@ namespace OCRepresentationEncodingTest
         OCResourcePayloadAddInterface(resource, "  if.firstitem  ");
         OCResourcePayloadAddInterface(resource, "  if.seconditem  ");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;

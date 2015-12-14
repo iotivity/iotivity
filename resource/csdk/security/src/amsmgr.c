@@ -202,7 +202,9 @@ static OCStackApplicationResult SecurePortDiscoveryCallback(void *ctx, OCDoHandl
 
     //Verifying if the ID of the sender is an AMS service that this device trusts.
     if(resPayload &&
-       memcmp(context->amsMgrContext->amsDeviceId.id, resPayload->sid,
+       memcmp(context->amsMgrContext->amsDeviceId.id,
+            ((OCDiscoveryPayload*)clientResponse->payload)->sid,
+            // resPayload->sid,
                     sizeof(context->amsMgrContext->amsDeviceId.id)) != 0)
     {
         OC_LOG_V(ERROR, TAG, "%s Invalid AMS device", __func__);

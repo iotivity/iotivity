@@ -170,15 +170,14 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
         OC_LOG(level, PL_TAG, "\tNO Resources");
         return;
     }
-
+    OC_LOG(level, PL_TAG, "\tSID:");
+    OC_LOG_BUFFER(level, PL_TAG, payload->sid, UUID_SIZE);
     OCResourcePayload* res = payload->resources;
 
     while(res)
     {
         OC_LOG_V(level, PL_TAG, "\tResource #%d", i);
         OC_LOG_V(level, PL_TAG, "\tURI:%s", res->uri);
-        OC_LOG(level, PL_TAG, "\tSID:");
-        OC_LOG_BUFFER(level, PL_TAG, res->sid, UUID_SIZE);
         OC_LOG(level, PL_TAG, "\tResource Types:");
         OCStringLL* strll =  res->types;
         while(strll)

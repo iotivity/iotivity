@@ -619,6 +619,10 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
             if(payload)
             {
+                ((OCDiscoveryPayload*)payload)->sid = (uint8_t*)OICCalloc(1, UUID_SIZE);
+                memcpy(((OCDiscoveryPayload*)payload)->sid,
+                    OCGetServerInstanceID(), UUID_SIZE);
+
                 bool foundResourceAtRD = false;
                 for(;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                 {

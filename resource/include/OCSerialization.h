@@ -51,7 +51,7 @@ namespace OC
                     while(res)
                     {
                         char uuidString[UUID_STRING_SIZE];
-                        if(OCConvertUuidToString(res->sid, uuidString) != RAND_UUID_OK)
+                        if(OCConvertUuidToString(payload->sid, uuidString) != RAND_UUID_OK)
                         {
                             uuidString[0]= '\0';
                         }
