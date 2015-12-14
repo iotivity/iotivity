@@ -102,6 +102,8 @@ static OCStackState stackState = OC_STACK_UNINITIALIZED;
 
 OCResource *headResource = NULL;
 static OCResource *tailResource = NULL;
+static OCResourceHandle platformResource = {0};
+static OCResourceHandle deviceResource = {0};
 #ifdef WITH_PRESENCE
 static OCPresenceState presenceState = OC_PRESENCE_UNINITIALIZED;
 static PresenceResource presenceResource;
@@ -117,7 +119,6 @@ static bool gRASetInfo = false;
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
 static const char COAP_TCP[] = "coap+tcp:";
-
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -3735,6 +3736,29 @@ OCStackResult initResources()
         result = SRMInitSecureResources();
     }
 #endif
+
+    if(result == OC_STACK_OK)
+    {
+        result = OCCreateResource(&deviceResource,
+                                  OC_RSRVD_RESOURCE_TYPE_DEVICE,
+                                  OC_RSRVD_INTERFACE_DEFAULT,
+                                  OC_RSRVD_DEVICE_URI,
+                                  NULL,
+                                  NULL,
+                                  OC_DISCOVERABLE);
+    }
+
+    if(result == OC_STACK_OK)
+    {
+        result = OCCreateResource(&platformResource,
+                                  OC_RSRVD_RESOURCE_TYPE_PLATFORM,
+                                  OC_RSRVD_INTERFACE_DEFAULT,
+                                  OC_RSRVD_PLATFORM_URI,
+                                  NULL,
+                                  NULL,
+                                  OC_DISCOVERABLE);
+    }
+
     return result;
 }
 

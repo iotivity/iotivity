@@ -137,6 +137,12 @@ extern "C" {
 /** To represent resource type with presence.*/
 #define OC_RSRVD_RESOURCE_TYPE_PRESENCE "oic.wk.ad"
 
+/** To represent resource type with device.*/
+#define OC_RSRVD_RESOURCE_TYPE_DEVICE   "oic.wk.d"
+
+/** To represent resource type with platform.*/
+#define OC_RSRVD_RESOURCE_TYPE_PLATFORM "oic.wk.p"
+
 /** To represent interface.*/
 #define OC_RSRVD_INTERFACE              "if"
 
@@ -154,6 +160,9 @@ extern "C" {
 
 /** To represent default interface.*/
 #define OC_RSRVD_INTERFACE_DEFAULT      "oic.if.baseline"
+
+/** To represent read-only interface.*/
+#define OC_RSRVD_INTERFACE_READ         "oic.if.r"
 
 /** To represent ll interface.*/
 #define OC_RSRVD_INTERFACE_LL           "oic.if.ll"
