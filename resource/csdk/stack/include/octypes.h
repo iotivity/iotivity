@@ -1017,7 +1017,6 @@ typedef struct OCRepPayload
 typedef struct OCResourcePayload
 {
     char* uri;
-    uint8_t* sid;
     OCStringLL* types;
     OCStringLL* interfaces;
     uint8_t bitmap;
@@ -1111,6 +1110,9 @@ typedef struct OCResourceCollectionPayload
 typedef struct
 {
     OCPayload base;
+
+    uint8_t* sid;
+
     /** This structure holds the old /oic/res response. */
     OCResourcePayload *resources;
     /** This structure holds the collection response for the /oic/res. */

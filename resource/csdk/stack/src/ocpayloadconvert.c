@@ -283,12 +283,50 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* o
     }
     else if (payload->resources)
     {
+        /*
+        The format for the payload is "modelled" as JSON.
+
+        [                                                       // rootArray
+            {                                                   // rootMap
+                "di" : UUID,                                    // device ID
+                links :[                                        // linksArray contains maps of resources
+                            {
+                                href, rt, if, policy            // Resource 1
+                            },
+                            {
+                                href, rt, if, policy            // Resource 2
+                            },
+                            .
+                            .
+                            .
+                        ]
+            }
+        ]
+        */
+        CborEncoder rootMap = {};
         size_t resourceCount =  OCDiscoveryPayloadGetResourceCount(payload);
-        err = err | cbor_encoder_create_array(&encoder, &rootArray, resourceCount);
+
+        // Open the main root array
+        err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
+
+        // Open the root map in the root array
+        err = err | cbor_encoder_create_map(&rootArray, &rootMap, DISCOVERY_CBOR_RES_MAP_LEN);
+
+        // Insert Device ID into the root map
+        err = err | cbor_encode_text_string(&rootMap, OC_RSRVD_DEVICE_ID,
+                sizeof(OC_RSRVD_DEVICE_ID) - 1);
+        err = err | cbor_encode_byte_string(&rootMap, payload->sid, UUID_SIZE);
+
+
+        // Insert Links into the root map.
+        CborEncoder linkArray = {};
+        err = err | cbor_encode_text_string(&rootMap, OC_RSRVD_LINKS,
+                    sizeof(OC_RSRVD_LINKS) - 1);
+        err = err | cbor_encoder_create_array(&rootMap, &linkArray, resourceCount);
 
         for(size_t i = 0; i < resourceCount; ++i)
         {
-            CborEncoder map;
+            CborEncoder resourceMapElement = {};
             OCResourcePayload* resource = OCDiscoveryPayloadGetResource(payload, i);
             if(!resource)
             {
@@ -296,97 +334,85 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* o
                 return OC_STACK_INVALID_PARAM;
             }
 
-            err = err | cbor_encoder_create_map(&rootArray, &map, DISCOVERY_CBOR_RES_MAP_LEN);
+            // resource map inside the links array.
+            err = err | cbor_encoder_create_map(&linkArray, &resourceMapElement,
+                DISCOVERY_CBOR_LINKS_MAP_LEN);
 
-            // Device ID
-            err = err | cbor_encode_text_string(&map, OC_RSRVD_DEVICE_ID,
-                    sizeof(OC_RSRVD_DEVICE_ID) - 1);
-            err = err | cbor_encode_byte_string(&map, resource->sid, UUID_SIZE);
-
+            // Below are insertions of the resource properties into the map.
+            // Uri
+            err = err | AddTextStringToMap(&resourceMapElement, OC_RSRVD_HREF,
+                        sizeof(OC_RSRVD_HREF) - 1,
+                        resource->uri);
+            // Resource Type
+            if (resource->types)
             {
-                CborEncoder linkArray;
-                err = err | cbor_encode_text_string(&map, OC_RSRVD_LINKS, sizeof(OC_RSRVD_LINKS) -1);
-                err = err | cbor_encoder_create_array(&map, &linkArray, CborIndefiniteLength);
-
-                // Link Map
+                char* joinedTypes = OCStringLLJoin(resource->types);
+                if (joinedTypes)
                 {
-                    CborEncoder linkMap;
-                    err = err | cbor_encoder_create_map(&linkArray, &linkMap, DISCOVERY_CBOR_LINKS_MAP_LEN);
-
-                    // Uri
-                    err = err | AddTextStringToMap(&linkMap, OC_RSRVD_HREF,
-                            sizeof(OC_RSRVD_HREF) - 1,
-                            resource->uri);
-                    // Resource Type
-                    if (resource->types)
-                    {
-                        char* joinedTypes = OCStringLLJoin(resource->types);
-                        if (joinedTypes)
-                        {
-                            err = err | cbor_encode_text_string(&linkMap, OC_RSRVD_RESOURCE_TYPE,
-                                    sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
-                            err = err | cbor_encode_text_string(&linkMap, joinedTypes,
-                                    strlen(joinedTypes));
-                            OICFree(joinedTypes);
-                        }
-                        else
-                        {
-                            return OC_STACK_NO_MEMORY;
-                        }
-                    }
-                    // Interface Types
-                    if (resource->interfaces)
-                    {
-                        char* joinedInterfaces = OCStringLLJoin(resource->interfaces);
-                        if (joinedInterfaces)
-                        {
-                            err = err | cbor_encode_text_string(&linkMap, OC_RSRVD_INTERFACE,
-                                    sizeof(OC_RSRVD_INTERFACE) - 1);
-                            err = err | cbor_encode_text_string(&linkMap, joinedInterfaces,
-                                    strlen(joinedInterfaces));
-                            OICFree(joinedInterfaces);
-                        }
-                        else
-                        {
-                            return OC_STACK_NO_MEMORY;
-                        }
-                    }
-                    // Policy
-                    {
-                        CborEncoder policyMap;
-                        err = err | cbor_encode_text_string(&linkMap, OC_RSRVD_POLICY,
-                                sizeof(OC_RSRVD_POLICY) - 1);
-                        err = err | cbor_encoder_create_map(&linkMap, &policyMap, CborIndefiniteLength);
-
-                        // Bitmap
-                        err = err | cbor_encode_text_string(&policyMap, OC_RSRVD_BITMAP,
-                                sizeof(OC_RSRVD_BITMAP) - 1);
-                        err = err | cbor_encode_uint(&policyMap, resource->bitmap);
-
-                        if(resource->secure)
-                        {
-                            err = err | cbor_encode_text_string(&policyMap, OC_RSRVD_SECURE,
-                                    sizeof(OC_RSRVD_SECURE) - 1);
-                            err = err | cbor_encode_boolean(&policyMap, OC_RESOURCE_SECURE);
-
-                            if(resource->port != 0)
-                            {
-                                err = err | cbor_encode_text_string(&policyMap, OC_RSRVD_HOSTING_PORT,
-                                        sizeof(OC_RSRVD_HOSTING_PORT) - 1);
-                                err = err | cbor_encode_uint(&policyMap, resource->port);
-                            }
-                        }
-
-                        err = err | cbor_encoder_close_container(&linkMap, &policyMap);
-                    }
-                    // Close
-                    err = err | cbor_encoder_close_container(&linkArray, &linkMap);
+                    err = err | cbor_encode_text_string(&resourceMapElement, OC_RSRVD_RESOURCE_TYPE,
+                            sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
+                    err = err | cbor_encode_text_string(&resourceMapElement, joinedTypes,
+                            strlen(joinedTypes));
+                    OICFree(joinedTypes);
                 }
-                err = err | cbor_encoder_close_container(&map, &linkArray);
+                else
+                {
+                    return OC_STACK_NO_MEMORY;
+                }
             }
-            err = err | cbor_encoder_close_container(&rootArray, &map);
+            // Interface Types
+            if (resource->interfaces)
+            {
+                char* joinedInterfaces = OCStringLLJoin(resource->interfaces);
+                if (joinedInterfaces)
+                {
+                    err = err | cbor_encode_text_string(&resourceMapElement, OC_RSRVD_INTERFACE,
+                            sizeof(OC_RSRVD_INTERFACE) - 1);
+                    err = err | cbor_encode_text_string(&resourceMapElement, joinedInterfaces,
+                            strlen(joinedInterfaces));
+                    OICFree(joinedInterfaces);
+                }
+                else
+                {
+                    return OC_STACK_NO_MEMORY;
+                }
+            }
+
+            // Policy
+            CborEncoder policyMap;
+            err = err | cbor_encode_text_string(&resourceMapElement, OC_RSRVD_POLICY,
+                    sizeof(OC_RSRVD_POLICY) - 1);
+            err = err | cbor_encoder_create_map(&resourceMapElement, &policyMap, CborIndefiniteLength);
+
+            // Bitmap
+            err = err | cbor_encode_text_string(&policyMap, OC_RSRVD_BITMAP,
+                    sizeof(OC_RSRVD_BITMAP) - 1);
+            err = err | cbor_encode_uint(&policyMap, resource->bitmap);
+
+            if(resource->secure)
+            {
+                err = err | cbor_encode_text_string(&policyMap, OC_RSRVD_SECURE,
+                        sizeof(OC_RSRVD_SECURE) - 1);
+                err = err | cbor_encode_boolean(&policyMap, OC_RESOURCE_SECURE);
+
+                if(resource->port != 0)
+                {
+                    err = err | cbor_encode_text_string(&policyMap, OC_RSRVD_HOSTING_PORT,
+                            sizeof(OC_RSRVD_HOSTING_PORT) - 1);
+                    err = err | cbor_encode_uint(&policyMap, resource->port);
+                }
+            }
+
+            err = err | cbor_encoder_close_container(&resourceMapElement, &policyMap);
+
+            // Finsihed encoding a resource, close the map.
+            err = err | cbor_encoder_close_container(&linkArray, &resourceMapElement);
         }
-        // Close main array
+        // Close links array inside the root map.
+        err = err | cbor_encoder_close_container(&rootMap, &linkArray);
+        // close root map inside the root array.
+        err = err | cbor_encoder_close_container(&rootArray, &rootMap);
+        // Close the final root array.
         err = err | cbor_encoder_close_container(&encoder, &rootArray);
     }
 

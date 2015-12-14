@@ -200,7 +200,9 @@ static OCStackApplicationResult SecurePortDiscoveryCallback(void *ctx, OCDoHandl
 
     //Verifying if the ID of the sender is an AMS service that this device trusts.
     if(resPayload &&
-       memcmp(context->amsMgrContext->amsDeviceId.id, resPayload->sid,
+       memcmp(context->amsMgrContext->amsDeviceId.id,
+            ((OCDiscoveryPayload*)clientResponse->payload)->sid,
+            // resPayload->sid,
                     sizeof(context->amsMgrContext->amsDeviceId.id)) != 0)
     {
         context->retVal = ACCESS_DENIED_AMS_SERVICE_ERROR;

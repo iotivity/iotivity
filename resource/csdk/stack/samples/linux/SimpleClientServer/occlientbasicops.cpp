@@ -393,17 +393,23 @@ void queryResource()
 
 void collectUniqueResource(const OCClientResponse * clientResponse)
 {
-    OCResourcePayload* res = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
+    OCDiscoveryPayload* pay = (OCDiscoveryPayload*) clientResponse->payload;
+    OCResourcePayload* res = pay->resources;
+
+    // Including the NUL terminator, length of UUID string of the form:
+    //   "a62389f7-afde-00b6-cd3e-12b97d2fcf09"
+#   define UUID_LENGTH 37
+
     char sidStr[UUID_LENGTH];
 
     while(res) {
 
         int ret = snprintf(sidStr, UUID_LENGTH,
                 "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-                res->sid[0], res->sid[1], res->sid[2], res->sid[3],
-                res->sid[4], res->sid[5], res->sid[6], res->sid[7],
-                res->sid[8], res->sid[9], res->sid[10], res->sid[11],
-                res->sid[12], res->sid[13], res->sid[14], res->sid[15]
+                pay->sid[0], pay->sid[1], pay->sid[2], pay->sid[3],
+                pay->sid[4], pay->sid[5], pay->sid[6], pay->sid[7],
+                pay->sid[8], pay->sid[9], pay->sid[10], pay->sid[11],
+                pay->sid[12], pay->sid[13], pay->sid[14], pay->sid[15]
                 );
 
         if (ret == UUID_LENGTH - 1)
