@@ -1,3 +1,54 @@
-A Sensor Telling Where We Should Sleep.
+SleepPlaceSensor : A Sensor Telling Where We Should Sleep.
 
-Sleep Tight!
+1. Description
+
+SleepPlaceSensor is a soft sensor that finds a good place to sleep.
+SleepPlaceSensor combines several kinds of sensing data from physical sensors.
+
+This Sensor use the SleepPlaceIndex determined by the following rule:
+
+1) There are 5 kinds of sensing data
+	- humidity, temperature, light-intensity, emc-intensity, sound
+
+2) Each sensor has an ideal value which means good to sleep and max value which
+means the dangerous condition.
+	- this value is searched in healthcare reference site.
+
+3) Each sensor data is reflected to the score by the following fomula:
+	- ((current value - ideal value) / max value * 100) ^ 2
+	- We assume that sleep condition is determined by how far from the ideal
+	  value.
+	- As the value becomes farther from the ideal value, the negative effect
+	  on deep sleep gets more serious, so we square the derivation between the
+	  current value and the ideal value.
+	  
+4) Final result (SleepPlaceIndex) is derived from 100 - average of each scores
+	- Using this index, we can define the level of how good we can sleep in
+	  the place
+
+2. Input sensors
+
+1) LightSensor
+	- goal: check the lightness level of the room
+	- output: light-intensity
+
+2) Sound Sensor
+	- goal: check the soundness of the room
+	- output: sound
+
+3) EMC Sensor 
+	- goal: check the electromagnetic wave of the current place
+	- output: emc-intensity
+
+4) Temparature Sensor
+	- goal: check the temparature of the room
+
+5) Humidity sensor
+	- goal: check the humidity of the room
+
+
+
+
+
+
+
