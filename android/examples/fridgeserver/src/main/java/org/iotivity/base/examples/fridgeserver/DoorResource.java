@@ -37,109 +37,73 @@ import org.iotivity.base.ResourceProperty;
 
 import java.util.EnumSet;
 
-import base.iotivity.org.examples.message.IMessageLogger;
-
 /**
  * DoorResource
  * <p/>
- * Creates a door resource and performs action based on client requests
+ * Creates a door resource and performs actions based on the client requests
  */
-public class DoorResource extends Resource implements IMessageLogger {
-    private Context mContext;
-
-    private static String TAG = "DoorResource: ";
-    private String mSide = StringConstants.LEFT;
-    private boolean mOpen;
-    private String resourceURI;
+public class DoorResource extends Resource implements OcPlatform.EntityHandler {
+    public static final String DOOR_URI = "/door/";
+    public static final String RESOURCE_TYPEDOOR = "intel.fridge.door";
+    public static final String DOOR_STATE_KEY = "state";
+    public static final String DOOR_SIDE_KEY = "side";
+    private boolean mDoorState;
+    private String mSide;
 
     /**
      * Constructor
      *
-     * @param side    left or right side of the door
+     * @param side    side of the door
      * @param context to enable sending of broadcast messages to be displayed on the user screen
      */
     DoorResource(String side, Context context) {
         mContext = context;
         mSide = side;
+        registerDoorResource();
+    }
 
-        resourceURI = StringConstants.DOOR_URI + mSide;
-
-        // eventHandler for register doorResource
-        OcPlatform.EntityHandler eh = new OcPlatform.EntityHandler() {
-            @Override
-            public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest) {
-                // this is where the main logic of DoorResource is handled
-                return entityHandler(ocResourceRequest);
-            }
-        };
+    private void registerDoorResource() {
+        String resourceURI = DOOR_URI + mSide;
+        logMessage(TAG + "RegisterDoorResource " + resourceURI + " : " + RESOURCE_TYPEDOOR);
         try {
-            logMessage(TAG + "RegisterDoorResource " + resourceURI + " : " +
-                    StringConstants.RESOURCE_TYPEDOOR + " : " + StringConstants.RESOURCE_INTERFACE);
             mResourceHandle = OcPlatform.registerResource(resourceURI,
-                    StringConstants.RESOURCE_TYPEDOOR, StringConstants.RESOURCE_INTERFACE,
-                    eh, EnumSet.of(ResourceProperty.DISCOVERABLE));
+                    RESOURCE_TYPEDOOR,
+                    OcPlatform.DEFAULT_INTERFACE,
+                    this,
+                    EnumSet.of(ResourceProperty.DISCOVERABLE));
         } catch (OcException e) {
-            logMessage(TAG + "DoorResource registerResource error: " + e.getMessage());
+            logMessage(TAG + "Failed to register DoorResource");
             Log.e(TAG, e.getMessage());
         }
-    }
-
-    /**
-     * updates the current value of the door resource
-     *
-     * @return door representation
-     */
-    private void updateRepresentationValues() {
-        try {
-            mRepresentation.setValue(StringConstants.SIDE, mSide);
-            mRepresentation.setValue(StringConstants.OPEN, mOpen);
-            mRepresentation.setValue(StringConstants.DEVICE_NAME,
-                    "Intel Powered 2 door, 1 light refrigerator");
-        } catch (OcException e) {
-            Log.e(TAG, e.getMessage());
-        }
-    }
-
-    /**
-     * update the OPEN value of doorResource (door is open/ closed)
-     *
-     * @param representation get current state of door
-     */
-    private void put(OcRepresentation representation) {
-        try {
-            mOpen = representation.getValue(StringConstants.OPEN);
-        } catch (OcException e) {
-            Log.e(TAG, e.getMessage());
-        }
-        // Note, we won't let the user change the door side!
     }
 
     /**
      * this is the main method which handles different incoming requests appropriately.
      *
-     * @param request OcResourceRequest from the client
-     * @return EntityHandlerResult depending on whether the request was handled successfully or not
+     * @param ocResourceRequest OcResourceRequest from the client
+     * @return EntityHandlerResult indicates whether the request was handled successfully or not
      */
-    private EntityHandlerResult entityHandler(OcResourceRequest request) {
+    @Override
+    public synchronized EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest) {
         EntityHandlerResult result = EntityHandlerResult.ERROR;
-        if (null != request) {
+        if (null != ocResourceRequest) {
             try {
-                if (request.getRequestHandlerFlagSet().contains(RequestHandlerFlag.REQUEST)) {
+                if (ocResourceRequest.getRequestHandlerFlagSet().contains(RequestHandlerFlag.REQUEST)) {
                     OcResourceResponse response = new OcResourceResponse();
-                    response.setRequestHandle(request.getRequestHandle());
-                    response.setResourceHandle(request.getResourceHandle());
+                    response.setRequestHandle(ocResourceRequest.getRequestHandle());
+                    response.setResourceHandle(ocResourceRequest.getResourceHandle());
 
-                    switch (request.getRequestType()) {
+                    switch (ocResourceRequest.getRequestType()) {
                         case GET:
-                            response.setErrorCode(StringConstants.OK);
+                            response.setErrorCode(SUCCESS);
                             updateRepresentationValues();
                             response.setResourceRepresentation(mRepresentation);
                             response.setResponseResult(EntityHandlerResult.OK);
                             OcPlatform.sendResponse(response);
                             break;
                         case PUT:
-                            response.setErrorCode(StringConstants.OK);
-                            put(request.getResourceRepresentation());
+                            response.setErrorCode(SUCCESS);
+                            put(ocResourceRequest.getResourceRepresentation());
                             updateRepresentationValues();
                             response.setResourceRepresentation(mRepresentation);
                             response.setResponseResult(EntityHandlerResult.OK);
@@ -154,25 +118,52 @@ public class DoorResource extends Resource implements IMessageLogger {
                     result = EntityHandlerResult.OK;
                 }
             } catch (OcException e) {
-                logMessage(TAG + e.getMessage());
+                logMessage("Error in handleEntity of DoorResource");
                 Log.e(TAG, e.getMessage());
                 return EntityHandlerResult.ERROR;
             }
         }
+        logMessage("-----------------------------------------------------");
         return result;
     }
 
-    @Override
-    public void logMessage(String msg) {
-        logMsg(msg);
-        if (StringConstants.ENABLE_PRINTING) {
-            Log.i(TAG, msg);
+    /**
+     * helper function to update the current value of the door resource
+     */
+    private void updateRepresentationValues() {
+        try {
+            mRepresentation.setValue(DOOR_STATE_KEY, mDoorState);
+            mRepresentation.setValue(DOOR_SIDE_KEY, mSide);
+            logMessage(TAG + "door state is  " + ((mDoorState == true) ? "open" : "close") +
+                    " and door side is " + mSide);
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
         }
     }
 
-    public void logMsg(final String text) {
-        Intent intent = new Intent(StringConstants.INTENT);
-        intent.putExtra(StringConstants.MESSAGE, text);
+    /**
+     * update the value of doorResource, depending on if door is open/ closed
+     *
+     * @param representation new state of a door
+     */
+    private void put(OcRepresentation representation) {
+        try {
+            mDoorState = representation.getValue(DOOR_STATE_KEY);
+        } catch (OcException e) {
+            Log.e(TAG, e.getMessage());
+        }
+        // Note, we won't let the user change the door side!
+    }
+
+    //******************************************************************************
+    // End of the OIC specific code
+    //******************************************************************************
+    private Context mContext;
+    private static String TAG = "DoorResource: ";
+
+    public void logMessage(String msg) {
+        Intent intent = new Intent(FridgeServer.INTENT);
+        intent.putExtra(FridgeServer.MESSAGE, msg);
         mContext.sendBroadcast(intent);
     }
 }

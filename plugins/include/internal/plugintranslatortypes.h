@@ -54,6 +54,14 @@ typedef void (* PINewResourceFound)(struct PIPluginBase * plugin,
 
 /**
  *
+ * This callback will be called when a resource' representation has changed.
+ *
+ */
+typedef void (* PIObserveNotificationUpdate)(struct PIPluginBase * plugin,
+                                             OCResourceHandle resourceHandle);
+
+/**
+ *
  * This function type is used by the radio's mapping implementation against IoTivity.
  * The mapping implementation must implement this function to handle GET & PUT requests.
  *
@@ -71,13 +79,16 @@ typedef struct PIPluginBase
     PIPluginType type;
 
     /** The file location which represents the interface of the plugin.  */
-    char * comPort;
+    const char * comPort;
 
     /** Linked list of plugins. */
     struct PIPluginBase * next;
 
     /** Callback to be used when a new resource has been found. */
     PINewResourceFound NewResourceFoundCB;
+
+    /** Callback to be used when an Observation update has occurred. */
+    PIObserveNotificationUpdate ObserveNotificationUpdate;
 
     /** Function Pointer to be invoked upon an incoming IoTivity request. */
     PIProcessRequest processEHRequest;
@@ -107,8 +118,8 @@ typedef struct
 typedef struct
 {
     OCResourceHandle resourceHandle;
-    char *resourceTypeName;
-    char *resourceInterfaceName;
+    const char *resourceTypeName;
+    const char *resourceInterfaceName;
     char *uri;
     OCEntityHandler entityHandler;
     void* callbackParam;

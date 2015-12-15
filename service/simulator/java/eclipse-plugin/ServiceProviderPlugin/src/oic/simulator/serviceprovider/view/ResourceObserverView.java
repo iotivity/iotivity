@@ -22,10 +22,12 @@ import java.util.Set;
 
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.listener.IObserverListChangedUIListener;
-import oic.simulator.serviceprovider.listener.IResourceSelectionChangedUIListener;
+import oic.simulator.serviceprovider.listener.ISelectionChangedUIListener;
 import oic.simulator.serviceprovider.manager.ResourceManager;
-import oic.simulator.serviceprovider.resource.ObserverDetail;
-import oic.simulator.serviceprovider.resource.SimulatorResource;
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
+import oic.simulator.serviceprovider.model.Device;
+import oic.simulator.serviceprovider.model.ObserverDetail;
+import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.utils.Constants;
 
 import org.eclipse.jface.viewers.CellEditor;
@@ -51,60 +53,65 @@ import org.eclipse.ui.part.ViewPart;
  * This class manages and shows the resource observer view in the perspective.
  */
 public class ResourceObserverView extends ViewPart {
-    public static final String                  VIEW_ID       = "oic.simulator.serviceprovider.view.observer";
+    public static final String             VIEW_ID       = "oic.simulator.serviceprovider.view.observer";
 
-    private TableViewer                         tblViewer;
+    private TableViewer                    tblViewer;
 
-    private final String[]                      columnHeaders = {
-            "Client Address", "Port", "Notify"               };
+    private final String[]                 columnHeaders = { "Client Address",
+            "Port", "Notify"                            };
 
-    private final Integer[]                     columnWidth   = { 150, 75, 50 };
+    private final Integer[]                columnWidth   = { 150, 75, 50 };
 
-    private IResourceSelectionChangedUIListener resourceSelectionChangedListener;
+    private ISelectionChangedUIListener    resourceSelectionChangedListener;
 
-    private IObserverListChangedUIListener      resourceObserverListChangedListener;
+    private IObserverListChangedUIListener resourceObserverListChangedListener;
 
-    private ResourceManager                     resourceManagerRef;
+    private ResourceManager                resourceManagerRef;
 
     public ResourceObserverView() {
 
         resourceManagerRef = Activator.getDefault().getResourceManager();
 
-        resourceSelectionChangedListener = new IResourceSelectionChangedUIListener() {
+        resourceSelectionChangedListener = new ISelectionChangedUIListener() {
 
             @Override
-            public void onResourceSelectionChange() {
+            public void onResourceSelectionChange(final Resource resource) {
                 Display.getDefault().asyncExec(new Runnable() {
 
                     @Override
                     public void run() {
                         if (null != tblViewer) {
                             changeButtonStatus();
-                            updateViewer(getData(resourceManagerRef
-                                    .getCurrentResourceInSelection()));
+                            updateViewer(getData(resource));
                         }
                     }
                 });
+            }
+
+            @Override
+            public void onDeviceSelectionChange(Device dev) {
+                // TODO Auto-generated method stub
+
             }
         };
 
         resourceObserverListChangedListener = new IObserverListChangedUIListener() {
 
             @Override
-            public void onObserverListChanged(final String resourceURI) {
+            public void onObserverListChanged(final Resource resource) {
                 Display.getDefault().asyncExec(new Runnable() {
 
                     @Override
                     public void run() {
-                        if (null == resourceURI) {
-                            return;
-                        }
-                        SimulatorResource resource = resourceManagerRef
-                                .getCurrentResourceInSelection();
                         if (null == resource) {
                             return;
                         }
-                        if (resource.getResourceURI().equals(resourceURI)) {
+                        Resource resourceInSelection = resourceManagerRef
+                                .getCurrentResourceInSelection();
+                        if (null == resourceInSelection) {
+                            return;
+                        }
+                        if (resource == resourceInSelection) {
                             if (null != tblViewer) {
                                 updateViewer(getData(resource));
                             }
@@ -116,7 +123,7 @@ public class ResourceObserverView extends ViewPart {
         };
     }
 
-    private Map<Integer, ObserverDetail> getData(SimulatorResource resource) {
+    private Map<Integer, ObserverDetail> getData(Resource resource) {
         if (null == resource) {
             return null;
         }
@@ -229,10 +236,10 @@ public class ResourceObserverView extends ViewPart {
     }
 
     private void addManagerListeners() {
-        resourceManagerRef
-                .addResourceSelectionChangedUIListener(resourceSelectionChangedListener);
-        resourceManagerRef
-                .addObserverListChangedUIListener(resourceObserverListChangedListener);
+        UiListenerHandler.getInstance().addResourceSelectionChangedUIListener(
+                resourceSelectionChangedListener);
+        UiListenerHandler.getInstance().addObserverListChangedUIListener(
+                resourceObserverListChangedListener);
     }
 
     class ObserverContentProvider implements IStructuredContentProvider {
@@ -273,7 +280,6 @@ public class ResourceObserverView extends ViewPart {
 
         @Override
         protected Object getValue(Object element) {
-            System.out.println("getValue()");
             @SuppressWarnings("unchecked")
             Map.Entry<Integer, ObserverDetail> observer = (Map.Entry<Integer, ObserverDetail>) element;
             return observer.getValue().isClicked();
@@ -281,7 +287,6 @@ public class ResourceObserverView extends ViewPart {
 
         @Override
         protected void setValue(Object element, Object value) {
-            System.out.println("setValue()");
             // Change the button status of all the resources
             changeButtonStatus();
 
@@ -298,8 +303,7 @@ public class ResourceObserverView extends ViewPart {
     }
 
     private void changeButtonStatus() {
-        SimulatorResource resource = resourceManagerRef
-                .getCurrentResourceInSelection();
+        Resource resource = resourceManagerRef.getCurrentResourceInSelection();
         if (null == resource) {
             return;
         }
@@ -318,13 +322,15 @@ public class ResourceObserverView extends ViewPart {
     public void dispose() {
         // Unregister the listener
         if (null != resourceSelectionChangedListener) {
-            resourceManagerRef
-                    .removeResourceSelectionChangedUIListener(resourceSelectionChangedListener);
+            UiListenerHandler.getInstance()
+                    .removeResourceSelectionChangedUIListener(
+                            resourceSelectionChangedListener);
         }
 
         if (null != resourceObserverListChangedListener) {
-            resourceManagerRef
-                    .removeObserverListChangedUIListener(resourceObserverListChangedListener);
+            UiListenerHandler.getInstance()
+                    .removeObserverListChangedUIListener(
+                            resourceObserverListChangedListener);
         }
         super.dispose();
     }

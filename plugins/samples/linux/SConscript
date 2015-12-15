@@ -22,6 +22,7 @@ Import('env')
 import os
 import os.path
 target_os = env.get('TARGET_OS')
+target_arch = env.get('TARGET_ARCH')
 samples_env = env.Clone()
 src_dir = env.get('SRC_DIR')
 pi_dir = os.path.join(src_dir, 'plugins')
@@ -54,6 +55,11 @@ elif target_os not in ['arduino']:
                                           'coap',
                                           'plugin_interface'])
 	samples_env.AppendUnique(LIBS = ['rt'])
+	if target_arch in ['x86_64', 'arm64']:
+		samples_env.AppendUnique(CPPFLAGS = ['-Llib64'])
+	else:
+		samples_env.AppendUnique(CPPFLAGS = ['-Llib'])
+	samples_env.AppendUnique(LIBS = ['pthread'])
 
 if env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS = ['tinydtls'])

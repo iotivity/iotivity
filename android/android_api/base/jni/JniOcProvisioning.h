@@ -72,6 +72,14 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverOwn
 
 /*
  * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setDisplayPinListener
+ * Signature: (Lorg/iotivity/base/OcProvisioning/DisplayPinListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListener
+  (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
  * Method:    getDevicestatusLists
  * Signature: (I)[Lorg/iotivity/base/OcSecureResource;
  */

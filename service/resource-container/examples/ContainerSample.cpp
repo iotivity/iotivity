@@ -85,8 +85,8 @@ int main()
     std::map<string, string> bundleParams;
     container->addBundle("oic.bundle.hueSample", "", "libHueBundle.so", "huesample", bundleParams);
 
-    std::list<RCSBundleInfo *> bundles = container->listBundles();
-    std::list<RCSBundleInfo *>::iterator bundleIt;
+    std::list<unique_ptr<RCSBundleInfo>> bundles = container->listBundles();
+    std::list<unique_ptr<RCSBundleInfo>>::iterator bundleIt;
 
     cout << "\t>>> bundle list size : " << bundles.size() << endl;
     for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)

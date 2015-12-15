@@ -79,8 +79,7 @@ namespace OIC
 
             m_resourceAttributes[key] = value;
 
-            if (notify && m_pNotiReceiver)
-                m_pNotiReceiver->onNotificationReceived(m_uri);
+            sendNotification();
         }
 
         void BundleResource::setAttribute(const std::string &key, RCSResourceAttributes::Value &&value)
@@ -93,6 +92,12 @@ namespace OIC
             OC_LOG_V(INFO, CONTAINER_TAG, "get attribute \'(%s)" , std::string(key + "\'").c_str());
 
             return m_resourceAttributes.at(key);
+        }
+
+        void BundleResource::sendNotification()
+        {
+            if (m_pNotiReceiver)
+                m_pNotiReceiver->onNotificationReceived(m_uri);
         }
     }
 }

@@ -43,6 +43,8 @@ using namespace OC;
 
 #define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.resampleclient/res/ui_controls.edj"
 
-void client_cb(void *data, Evas_Object *obj, void *event_info);
+void discoverTempSensor(void *data, Evas_Object *obj, void *event_info);
+
+void discoverLight(void *data, Evas_Object *obj, void *event_info);
 
 #endif // RECLIENTMAIN_H__

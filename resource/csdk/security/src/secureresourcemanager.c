@@ -69,17 +69,26 @@ void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler)
 static void SRMSendUnAuthorizedAccessresponse(PEContext_t *context)
 {
     CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
+
+    if(NULL == context ||
+       NULL == context->amsMgrContext->requestInfo)
+    {
+        OC_LOG_V(ERROR, TAG, "%s : NULL Parameter(s)",__func__);
+        return;
+    }
+
     memcpy(&responseInfo.info, &(context->amsMgrContext->requestInfo->info),
             sizeof(responseInfo.info));
     responseInfo.info.payload = NULL;
     responseInfo.result = CA_UNAUTHORIZED_REQ;
-    if (CA_STATUS_OK != CASendResponse(context->amsMgrContext->endpoint, &responseInfo))
+
+    if (CA_STATUS_OK == CASendResponse(context->amsMgrContext->endpoint, &responseInfo))
     {
-        OC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
+        OC_LOG(DEBUG, TAG, "Succeed in sending response to a unauthorized request!");
     }
     else
     {
-        OC_LOG(INFO, TAG, "Succeed in sending response to a unauthorized request!");
+        OC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
     }
 }
 
@@ -92,7 +101,7 @@ void SRMSendResponse(SRMAccessResponse_t responseVal)
     {
         OC_LOG_V(INFO, TAG, "%s : Access granted. Passing Request to RI layer", __func__);
         if (!g_policyEngineContext.amsMgrContext->endpoint ||
-                !g_policyEngineContext.amsMgrContext->requestInfo)
+            !g_policyEngineContext.amsMgrContext->requestInfo)
         {
             OC_LOG_V(ERROR, TAG, "%s : Invalid arguments", __func__);
             SRMSendUnAuthorizedAccessresponse(&g_policyEngineContext);
@@ -108,7 +117,7 @@ void SRMSendResponse(SRMAccessResponse_t responseVal)
     }
 
 exit:
-    //Resting PE state to AWAITING_REQUEST
+    //Resetting PE state to AWAITING_REQUEST
     SetPolicyEngineState(&g_policyEngineContext, AWAITING_REQUEST);
 }
 

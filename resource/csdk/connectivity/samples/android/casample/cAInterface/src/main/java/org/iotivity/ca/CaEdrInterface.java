@@ -28,18 +28,23 @@ import android.content.Intent;
 import android.content.IntentFilter;
 
 public class CaEdrInterface {
+    private static Context mContext;
 
     private CaEdrInterface(Context context) {
-
-        registerIntentFilter(context);
+        mContext = context;
+        registerIntentFilter();
     }
 
-    private static IntentFilter registerIntentFilter(Context context) {
+    private static IntentFilter registerIntentFilter() {
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        context.registerReceiver(mReceiver, filter);
+        mContext.registerReceiver(mReceiver, filter);
         return filter;
+    }
+
+    public static void destroyEdrInterface() {
+        mContext.unregisterReceiver(mReceiver);
     }
 
     // Network Monitor

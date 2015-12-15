@@ -36,9 +36,14 @@
  * @param[in] newResourceCB A function pointer to the callback that will be
  *                          invoked when a ZigBee cluster is found that matches
  *                          a valid OIC resource.
+ *
+ * @param[in] observeNotificationUpdate A function pointer to the callback that will be
+ *                                      invoked when a Zigbee Zone IAS update occurs that
+ *                                      should be mapped to IoTivity's observe functionality.
  */
 OCStackResult ZigbeeInit(const char * comPort, PIPlugin_Zigbee ** plugin,
-                         PINewResourceFound newResourceCB);
+                         PINewResourceFound newResourceCB,
+                         PIObserveNotificationUpdate observeNotificationUpdate);
 
 /**
  * Initiates the discovery operation associated with this ZigBee radio.

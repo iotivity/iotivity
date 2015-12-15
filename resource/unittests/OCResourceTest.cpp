@@ -83,6 +83,11 @@ namespace OCResourceTest
         EXPECT_ANY_THROW(ConstructResourceObject("coap://192.168.1.2", "/resource"));
     }
 
+    TEST(ConstructResourceTest, ConstructResourceObjectWithoutPortNumber2)
+    {
+        EXPECT_ANY_THROW(ConstructResourceObject("coap://192.168.1.2:", "/resource"));
+    }
+
     TEST(ConstructResourceTest, ConstructResourceObjectWithLongHostAddress)
     {
         EXPECT_ANY_THROW(ConstructResourceObject(gLongHostAddress, "/resource"));

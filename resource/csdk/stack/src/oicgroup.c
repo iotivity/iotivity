@@ -220,6 +220,9 @@ void RemoveScheduledResource(ScheduledResourceInfo **head,
 
     if (del == NULL)
     {
+#ifndef WITH_ARDUINO
+    pthread_mutex_unlock(&lock);
+#endif
         return;
     }
 
@@ -536,7 +539,7 @@ OCStackResult ExtractKeyValueFromRequest(OCEntityHandlerRequest *ehRequest,
 {
     OCStackResult result = OC_STACK_OK;
 
-    char *actionSetStr;
+    char *actionSetStr = NULL;
 
     if( NULL == ehRequest->payload )
     {
@@ -710,11 +713,6 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
             {
                 OC_LOG(INFO, TAG, "Build OCAction Instance.");
 
-                if(action)
-                {
-                    OICFree(action->resourceUri);
-                    OICFree(action);
-                }
                 action = (OCAction*) OICMalloc(sizeof(OCAction));
                 VARIFY_POINTER_NULL(action, result, exit)
                 memset(action, 0, sizeof(OCAction));
@@ -1319,21 +1317,29 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                             OC_LOG(INFO, TAG, "Building New Call Info.");
                             memset(schedule, 0,
                                     sizeof(ScheduledResourceInfo));
-
+#ifndef WITH_ARDUINO
+                            pthread_mutex_lock(&lock);
+#endif
                             schedule->resource = resource;
                             schedule->actionset = actionset;
                             schedule->ehRequest =
                                     (OCServerRequest*) ehRequest->requestHandle;
-
+#ifndef WITH_ARDUINO
+                            pthread_mutex_unlock(&lock);
+#endif
                             if (delay > 0)
                             {
-                                OC_LOG_V(INFO, TAG, "delay_time is %lf seconds.",
+                                OC_LOG_V(INFO, TAG, "delay_time is %ld seconds.",
                                         actionset->timesteps);
-
+#ifndef WITH_ARDUINO
+                                pthread_mutex_lock(&lock);
+#endif
                                 schedule->time = registerTimer(delay,
                                         &schedule->timer_id,
                                         &DoScheduledGroupAction);
-
+#ifndef WITH_ARDUINO
+                                pthread_mutex_unlock(&lock);
+#endif
                                 AddScheduledResource(&scheduleResourceList,
                                         schedule);
                                 stackRet = OC_STACK_OK;

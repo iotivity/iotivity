@@ -81,7 +81,7 @@ public:
         }
     }
 
-    void setBootstrapRepresentation(OCRepresentation& rep)
+    void setBootstrapRepresentation(OCRepresentation& /*rep*/)
     {
         // Not allowed
     }

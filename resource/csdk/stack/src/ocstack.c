@@ -30,6 +30,9 @@
 // For POSIX.1-2001 base specification,
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 #define _POSIX_C_SOURCE 200112L
+#define __STDC_FORMAT_MACROS
+#define __STDC_LIMIT_MACROS
+#include <inttypes.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -99,6 +102,8 @@ static OCStackState stackState = OC_STACK_UNINITIALIZED;
 
 OCResource *headResource = NULL;
 static OCResource *tailResource = NULL;
+static OCResourceHandle platformResource = {0};
+static OCResourceHandle deviceResource = {0};
 #ifdef WITH_PRESENCE
 static OCPresenceState presenceState = OC_PRESENCE_UNINITIALIZED;
 static PresenceResource presenceResource;
@@ -113,10 +118,7 @@ static bool gRASetInfo = false;
 #endif
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
-
-#ifdef TCP_ADAPTER
 static const char COAP_TCP[] = "coap+tcp:";
-#endif
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -128,7 +130,7 @@ static const char COAP_TCP[] = "coap+tcp:";
              TAG, #arg " is NULL"); return (retVal); } }
 #define VERIFY_NON_NULL_NR(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
              TAG, #arg " is NULL"); return; } }
-#define VERIFY_NON_NULL_V(arg) { if (!arg) {OC_LOG_V(FATAL, TAG, "%s is NULL", #arg);\
+#define VERIFY_NON_NULL_V(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL");\
     goto exit;} }
 
 //TODO: we should allow the server to define this
@@ -653,7 +655,7 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
                    // This should not happen but,
                    // give it a value just in case but output an error
                    ret = CA_CONTENT;
-                   OC_LOG_V(ERROR, TAG, "Unexpected OC_STACK_OK return code for method [d].", method);
+                   OC_LOG_V(ERROR, TAG, "Unexpected OC_STACK_OK return code for method [%d].", method);
             }
             break;
         case OC_STACK_RESOURCE_CREATED:
@@ -931,6 +933,8 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         if(cbNode->sequenceNumber == response.sequenceNumber)
         {
             OC_LOG(INFO, TAG, "No presence change");
+            ResetPresenceTTL(cbNode, maxAge);
+            OC_LOG_V(INFO, TAG, "ResetPresenceTTL - TTLlevel:%d\n", cbNode->presence->TTLlevel);
             goto exit;
         }
 
@@ -1875,20 +1879,8 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
         caglobals.clientFlags = (CATransportFlags_t)(caglobals.clientFlags|CA_IPV4|CA_IPV6);
     }
 
-#ifdef TCP_ADAPTER
-    if (!(caglobals.serverFlags & CA_IPFAMILY_MASK))
-    {
-        caglobals.serverFlags = (CATransportFlags_t)(caglobals.serverFlags|CA_IPV4);
-    }
-    if (!(caglobals.clientFlags & CA_IPFAMILY_MASK))
-    {
-        caglobals.clientFlags = (CATransportFlags_t)(caglobals.clientFlags|CA_IPV4);
-    }
-#endif
-
     defaultDeviceHandler = NULL;
     defaultDeviceHandlerCallbackParameter = NULL;
-    OCSeedRandom();
 
     result = CAResultToOCResult(CAInitialize());
     VERIFY_SUCCESS(result, OC_STACK_OK);
@@ -1899,18 +1891,18 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     switch (myStackMode)
     {
         case OC_CLIENT:
-			CARegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
+            CARegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartDiscoveryServer());
             OC_LOG(INFO, TAG, "Client mode: CAStartDiscoveryServer");
             break;
         case OC_SERVER:
-			SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
+            SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartListeningServer());
             OC_LOG(INFO, TAG, "Server mode: CAStartListeningServer");
             break;
         case OC_CLIENT_SERVER:
         case OC_GATEWAY:
-			SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
+            SRMRegisterHandler(HandleCARequests, HandleCAResponses, HandleCAErrorResponse);
             result = CAResultToOCResult(CAStartListeningServer());
             if(result == OC_STACK_OK)
             {
@@ -1998,7 +1990,7 @@ OCStackResult OCStop()
     // Remove all the client callbacks
     DeleteClientCBList();
 
-	// De-init the SRM Policy Engine
+    // De-init the SRM Policy Engine
     // TODO after BeachHead delivery: consolidate into single SRMDeInit()
     SRMDeInitPolicyEngine();
 
@@ -2128,7 +2120,6 @@ static OCStackResult ParseRequestUri(const char *fullUri,
         return OC_STACK_INVALID_URI;
     }
 
-#ifdef TCP_ADAPTER
     // process url scheme
     size_t prefixLen = slash2 - fullUri;
     bool istcp = false;
@@ -2139,7 +2130,6 @@ static OCStackResult ParseRequestUri(const char *fullUri,
             istcp = true;
         }
     }
-#endif
 
     // TODO: this logic should come in with unit tests exercising the various strings
     // processs url prefix, if any
@@ -2171,13 +2161,12 @@ static OCStackResult ParseRequestUri(const char *fullUri,
             {   // ipv4 address
                 colon = strchr(start, ':');
                 end = (colon && colon < slash) ? colon : slash;
-#ifdef TCP_ADAPTER
+
                 if (istcp)
                 {   // coap over tcp
                     adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_TCP);
                 }
                 else
-#endif
                 {
                     adapter = (OCTransportAdapter)(adapter | OC_ADAPTER_IP);
                     flags = (OCTransportFlags)(flags | OC_IP_USE_V4);
@@ -2636,6 +2625,12 @@ OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption
 
             break;
 
+        case OC_REST_DISCOVER:
+            OC_LOG_V(INFO, TAG, "Cancelling discovery callback for resource %s",
+                                           clientCB->requestUri);
+            FindAndDeleteClientCB(clientCB);
+            break;
+
 #ifdef WITH_PRESENCE
         case OC_REST_PRESENCE:
             FindAndDeleteClientCB(clientCB);
@@ -2812,7 +2807,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
     {
         presenceResource.presenceTTL = ttl;
     }
-    OC_LOG_V(DEBUG, TAG, "Presence TTL is %lu seconds", presenceResource.presenceTTL);
+    OC_LOG_V(DEBUG, TAG, "Presence TTL is %" PRIu32 " seconds", presenceResource.presenceTTL);
 
     if (OC_PRESENCE_UNINITIALIZED == presenceState)
     {
@@ -3735,10 +3730,33 @@ OCStackResult initResources()
             &(((OCResource *) presenceResource.handle)->resourceProperties),
             OC_ACTIVE, 0);
 #endif
-
+#ifndef WITH_ARDUINO
     if (result == OC_STACK_OK)
     {
         result = SRMInitSecureResources();
+    }
+#endif
+
+    if(result == OC_STACK_OK)
+    {
+        result = OCCreateResource(&deviceResource,
+                                  OC_RSRVD_RESOURCE_TYPE_DEVICE,
+                                  OC_RSRVD_INTERFACE_DEFAULT,
+                                  OC_RSRVD_DEVICE_URI,
+                                  NULL,
+                                  NULL,
+                                  OC_DISCOVERABLE);
+    }
+
+    if(result == OC_STACK_OK)
+    {
+        result = OCCreateResource(&platformResource,
+                                  OC_RSRVD_RESOURCE_TYPE_PLATFORM,
+                                  OC_RSRVD_INTERFACE_DEFAULT,
+                                  OC_RSRVD_PLATFORM_URI,
+                                  NULL,
+                                  NULL,
+                                  OC_DISCOVERABLE);
     }
 
     return result;
@@ -4188,6 +4206,10 @@ CAResult_t OCSelectNetwork()
 
 #ifdef RA_ADAPTER
             ,CA_ADAPTER_REMOTE_ACCESS
+#endif
+
+#ifdef TCP_ADAPTER
+            ,CA_ADAPTER_TCP
 #endif
         };
     int numConnTypes = sizeof(connTypes)/sizeof(connTypes[0]);

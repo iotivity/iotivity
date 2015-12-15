@@ -43,26 +43,21 @@ OCStackResult OICStartCoordinate()
         OIC_HOSTING_LOG(DEBUG,
                 "[OICStartCoordinate] platformException, reason:%s", e.what());
         retResult = OC_STACK_ERROR;
-        throw;
     }catch(const RCSInvalidParameterException &e)
     {
         OIC_HOSTING_LOG(DEBUG,
                 "[OICStartCoordinate] InvalidParameterException, reason:%s", e.what());
         retResult = OC_STACK_ERROR;
-        throw;
     }catch(...)
     {
         OIC_HOSTING_LOG(DEBUG, "[OICStartCoordinate] Unknown Exception");
         retResult = OC_STACK_ERROR;
     }
-
     return retResult;
 }
 
 OCStackResult OICStopCoordinate()
 {
-    OCStackResult retResult = OC_STACK_OK;
     OIC::Service::ResourceHosting::getInstance()->stopHosting();
-
-    return retResult;
+    return OC_STACK_OK;
 }

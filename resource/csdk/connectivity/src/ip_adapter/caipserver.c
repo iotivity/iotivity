@@ -120,7 +120,6 @@ static void CAReceiveHandler(void *data)
 {
     (void)data;
     OIC_LOG(DEBUG, TAG, "IN");
-
     while (!caglobals.ip.terminate)
     {
         CAFindReadyMessage();
@@ -196,14 +195,20 @@ static void CASelectReturned(fd_set *readFds, int ret)
             CAHandleNetlink();
             break;
         }
-        else
+        else if (FD_ISSET(caglobals.ip.shutdownFds[0], readFds))
         {
+            char buf[10] = {0};
+            (void)read(caglobals.ip.shutdownFds[0], buf, sizeof (buf));
             CAInterface_t *ifchanged = CAFindInterfaceChange();
             if (ifchanged)
             {
                 CAProcessNewInterface(ifchanged);
                 OICFree(ifchanged);
             }
+            break;
+        }
+        else
+        {
             break;
         }
 
@@ -299,7 +304,7 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags)
         }
     }
 
-    CAConvertAddrToName(&srcAddr, sep.endpoint.addr, &sep.endpoint.port);
+    CAConvertAddrToName(&srcAddr, msg.msg_namelen, sep.endpoint.addr, &sep.endpoint.port);
 
     if (flags & CA_SECURE)
     {
@@ -506,7 +511,7 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
 
     if (!IPv4MulticastAddress.s_addr)
     {
-        (void)inet_aton(IPv4_MULTICAST, &IPv4MulticastAddress);
+        (void)inet_pton(AF_INET, IPv4_MULTICAST, &IPv4MulticastAddress);
         (void)inet_pton(AF_INET6, IPv6_MULTICAST_INT, &IPv6MulticastAddressInt);
         (void)inet_pton(AF_INET6, IPv6_MULTICAST_LNK, &IPv6MulticastAddressLnk);
         (void)inet_pton(AF_INET6, IPv6_MULTICAST_RLM, &IPv6MulticastAddressRlm);
@@ -667,6 +672,7 @@ static void applyMulticastToInterface6(uint32_t interface)
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressSit, interface);
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressOrg, interface);
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressGlb, interface);
+
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressInt, interface);
     applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressLnk, interface);
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressRlm, interface);
@@ -1070,9 +1076,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
             eps[j].flags = CA_IPV4;
             eps[j].port = caglobals.ip.u4.port;
 
-            unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
-            snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d",
-                     addr[0], addr[1], addr[2], addr[3]);
+            inet_ntop(AF_INET, &(ifitem->ipv4addr), eps[j].addr, MAX_ADDR_STR_SIZE_CA);
         }
 
 #ifdef __WITH_DTLS__
@@ -1090,10 +1094,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         {
             eps[j].flags = CA_IPV4 | CA_SECURE;
             eps[j].port = caglobals.ip.u4s.port;
-
-            unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
-            snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d",
-                     addr[0], addr[1], addr[2], addr[3]);
+            inet_ntop(AF_INET, &(ifitem->ipv4addr), eps[j].addr, MAX_ADDR_STR_SIZE_CA);
         }
 #endif
         j++;

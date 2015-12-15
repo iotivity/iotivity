@@ -26,7 +26,7 @@
 
 using namespace OIC::Service;
 
-HueSampleBundleActivator *bundle;
+HueSampleBundleActivator *g_bundleHUE;
 
 HueSampleBundleActivator::HueSampleBundleActivator()
 {
@@ -108,22 +108,22 @@ void HueSampleBundleActivator::destroyResource(BundleResource::Ptr pBundleResour
 extern "C" void huesample_externalActivateBundle(ResourceContainerBundleAPI *resourceContainer,
         std::string bundleId)
 {
-    bundle = new HueSampleBundleActivator();
-    bundle->activateBundle(resourceContainer, bundleId);
+    g_bundleHUE = new HueSampleBundleActivator();
+    g_bundleHUE->activateBundle(resourceContainer, bundleId);
 }
 
 extern "C" void huesample_externalDeactivateBundle()
 {
-    bundle->deactivateBundle();
-    delete bundle;
+    g_bundleHUE->deactivateBundle();
+    delete g_bundleHUE;
 }
 
 extern "C" void huesample_externalCreateResource(resourceInfo resourceInfo)
 {
-    bundle->createResource(resourceInfo);
+    g_bundleHUE->createResource(resourceInfo);
 }
 
 extern "C" void huesample_externalDestroyResource(BundleResource::Ptr pBundleResource)
 {
-    bundle->destroyResource(pBundleResource);
+    g_bundleHUE->destroyResource(pBundleResource);
 }

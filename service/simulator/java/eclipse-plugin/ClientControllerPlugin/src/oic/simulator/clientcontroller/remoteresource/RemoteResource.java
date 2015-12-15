@@ -18,34 +18,25 @@ package oic.simulator.clientcontroller.remoteresource;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import oic.simulator.clientcontroller.utils.Constants;
 
 import org.oic.simulator.SimulatorResourceModel;
-import org.oic.simulator.clientcontroller.SimulatorConnectivityType;
-import org.oic.simulator.clientcontroller.SimulatorRemoteResource;
+import org.oic.simulator.client.SimulatorRemoteResource;
 
 /**
  * This class represents a remote resource. It maintains all the necessary
  * information about the resource.
  */
 public class RemoteResource {
-    private String                               uId;
-    private String                               resourceURI;
-    private String                               host;
-    private LinkedList<String>                   resourceTypes;
-    private LinkedList<String>                   resourceInterfaces;
-    private SimulatorConnectivityType            connectivityType;
-    private boolean                              isObservable;
 
     private boolean                              observed;
 
     // Native object references
-    private SimulatorRemoteResource              resourceN;
-    private SimulatorResourceModel               resourceModel;
+    private SimulatorRemoteResource              remoteResourceRef;
+    private SimulatorResourceModel               resourceModelRef;
     private Map<String, RemoteResourceAttribute> resourceAttributesMap;
 
     private boolean                              configUploaded;
@@ -60,12 +51,12 @@ public class RemoteResource {
 
     private boolean                              isFavorite;
 
-    public SimulatorResourceModel getResourceModel() {
-        return resourceModel;
+    public SimulatorResourceModel getResourceModelRef() {
+        return resourceModelRef;
     }
 
-    public void setResourceModel(SimulatorResourceModel resourceModel) {
-        this.resourceModel = resourceModel;
+    public void setResourceModelRef(SimulatorResourceModel resourceModel) {
+        this.resourceModelRef = resourceModel;
     }
 
     public Map<String, RemoteResourceAttribute> getResourceAttributesMap() {
@@ -101,54 +92,6 @@ public class RemoteResource {
         this.postAutomtnId = postAutomtnId;
     }
 
-    public String getResourceURI() {
-        return resourceURI;
-    }
-
-    public void setResourceURI(String resourceURI) {
-        this.resourceURI = resourceURI;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public void setHost(String host) {
-        this.host = host;
-    }
-
-    public LinkedList<String> getResourceTypes() {
-        return resourceTypes;
-    }
-
-    public void setResourceTypes(LinkedList<String> resourceTypes) {
-        this.resourceTypes = resourceTypes;
-    }
-
-    public LinkedList<String> getResourceInterfaces() {
-        return resourceInterfaces;
-    }
-
-    public void setResourceInterfaces(LinkedList<String> resourceInterfaces) {
-        this.resourceInterfaces = resourceInterfaces;
-    }
-
-    public SimulatorConnectivityType getConnectivityType() {
-        return connectivityType;
-    }
-
-    public void setConnectivityType(SimulatorConnectivityType connectivityType) {
-        this.connectivityType = connectivityType;
-    }
-
-    public boolean isObservable() {
-        return isObservable;
-    }
-
-    public void setObservable(boolean isObservable) {
-        this.isObservable = isObservable;
-    }
-
     public boolean isGetAutomtnInProgress() {
         return getAutomtnInProgress;
     }
@@ -181,12 +124,12 @@ public class RemoteResource {
         this.configUploaded = configUploaded;
     }
 
-    public SimulatorRemoteResource getResource() {
-        return resourceN;
+    public SimulatorRemoteResource getRemoteResourceRef() {
+        return remoteResourceRef;
     }
 
-    public void setResource(SimulatorRemoteResource resource) {
-        this.resourceN = resource;
+    public void setRemoteResourceRef(SimulatorRemoteResource resource) {
+        this.remoteResourceRef = resource;
     }
 
     public boolean isObserved() {
@@ -224,14 +167,6 @@ public class RemoteResource {
             return null;
         }
         return String.valueOf(attribute.getAttributeValue());
-    }
-
-    public String getuId() {
-        return uId;
-    }
-
-    public void setuId(String uId) {
-        this.uId = uId;
     }
 
     public int getAutomationtype(int autoId) {

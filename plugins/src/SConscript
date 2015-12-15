@@ -37,6 +37,7 @@ print"Reading PI script"
 
 env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'resource', 'c_common', 'oic_malloc', 'include'),
                               os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'include'),
+                              os.path.join(src_dir, 'resource', 'c_common', 'oic_time', 'include'),
                               os.path.join(src_dir, 'resource', 'oc_logger', 'include'),
                               os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
                               os.path.join(src_dir, 'resource', 'csdk', 'stack', 'include'),

@@ -132,15 +132,22 @@ namespace OIC
                 void setAttribute(const std::string &key, RCSResourceAttributes::Value &&value);
 
                 /**
+                * Sends a notification to all observers.
+                *
+                * Calling this is not needed when setAttribute() was called
+                * with notify == true.
+                *
+                * @return void
+                */
+                void sendNotification();
+
+                /**
                 * This function should be implemented by the according bundle resource
                 * and execute the according business logic (e.g., light switch or sensor resource)
                 * to retrieve a sensor value. If a new sensor value is retrieved, the
                 * setAttribute data should be called to update the value.
                 * The implementor of the function can decide weather to notify OIC clients
                 * about the changed state or not.
-                *
-                * @param key Name of attribute to get
-                *
                 *
                 * @return All attributes
                 */
@@ -158,8 +165,6 @@ namespace OIC
                 * The implementor of the function can decide weather to notify OIC clients
                 * about the changed state or not.
                 *
-                * @param key Name of attribute to set
-                *
                 * @param attrs Attributes to set
                 *
                 * @return void
@@ -169,7 +174,7 @@ namespace OIC
 
             public:
                 std::string m_bundleId;
-                std::string m_name, m_uri, m_resourceType, m_address;
+                std::string m_name, m_uri, m_resourceType, m_interface, m_address;
                 std::map< std::string,
                     std::vector< std::map< std::string, std::string > > > m_mapResourceProperty;
 

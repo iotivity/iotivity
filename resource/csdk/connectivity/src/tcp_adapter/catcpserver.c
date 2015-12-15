@@ -211,9 +211,9 @@ static size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer)
                                                         transport);
     size_t headerLen = coap_get_tcp_header_length((unsigned char *)recvBuffer);
 
-    OIC_LOG_V(DEBUG, TAG, "option/paylaod length [%d]", optPaylaodLen);
-    OIC_LOG_V(DEBUG, TAG, "header length [%d]", headerLen);
-    OIC_LOG_V(DEBUG, TAG, "total data length [%d]", headerLen + optPaylaodLen);
+    OIC_LOG_V(DEBUG, TAG, "option/paylaod length [%zu]", optPaylaodLen);
+    OIC_LOG_V(DEBUG, TAG, "header length [%zu]", headerLen);
+    OIC_LOG_V(DEBUG, TAG, "total data length [%zu]", headerLen + optPaylaodLen);
 
     OIC_LOG(DEBUG, TAG, "OUT - CAGetTotalLengthFromHeader");
     return headerLen + optPaylaodLen;
@@ -296,7 +296,7 @@ static CAResult_t CAReceiveMessage()
                 {
                     g_packetReceivedCallback(&ep, recvBuffer, totalLen);
                 }
-                OIC_LOG_V(DEBUG, TAG, "received data len:%d", totalLen);
+                OIC_LOG_V(DEBUG, TAG, "received data len:%zu", totalLen);
                 break;
             }
         } while (!totalLen || totalLen > totalReceivedLen);
@@ -478,7 +478,7 @@ static void CAAcceptHandler(void *data)
                 }
                 svritem->u4tcp.fd = sockfd;
 
-                CAConvertAddrToName((struct sockaddr_storage *)&clientaddr,
+                CAConvertAddrToName((struct sockaddr_storage *)&clientaddr, clientlen,
                                     (char *) &svritem->addr, &svritem->u4tcp.port);
 
                 ca_mutex_lock(g_mutexObjectList);
@@ -639,7 +639,10 @@ static size_t CACheckPayloadLength(const void *data, size_t dlen)
     }
 
     size_t payloadLen = 0;
-    if (pdu->data)
+    size_t headerSize = coap_get_tcp_header_length_for_transport(transport);
+    OIC_LOG_V(DEBUG, TAG, "headerSize : %d, pdu length : %d",
+              headerSize, pdu->length);
+    if (pdu->length > headerSize)
     {
         payloadLen = (unsigned char *) pdu->hdr + pdu->length - pdu->data;
     }
@@ -707,7 +710,7 @@ static void sendData(const CAEndpoint_t *endpoint,
         remainLen -= len;
     } while (remainLen > 0);
 
-    OIC_LOG_V(INFO, TAG, "unicast ipv4tcp sendTo is successful: %d bytes", dlen);
+    OIC_LOG_V(INFO, TAG, "unicast ipv4tcp sendTo is successful: %zu bytes", dlen);
 }
 
 void CATCPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t datalen,

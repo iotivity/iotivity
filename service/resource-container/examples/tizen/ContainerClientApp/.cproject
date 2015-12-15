@@ -98,7 +98,6 @@
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.1501991974" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\boost_1_56_0&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\..\resource-encapsulation\src\resourceBroker\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\..\resource-encapsulation\src\resourceCache\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\..\resource-encapsulation\src\common\utils\include&quot;"/>

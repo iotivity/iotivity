@@ -36,11 +36,11 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-simulator_env.AppendUnique(CPPPATH = ['inc', 'src/client-controller', 'src/service-provider', 'src/common'])
+simulator_env.AppendUnique(CPPPATH = ['inc', 'src/client', 'src/server', 'src/common'])
 simulator_env.AppendUnique(CPPPATH = [
 		'../../resource/include/',
 		'../../resource/csdk/stack/include',
-		'../../resource/csdk/ocrandom/include',
+		'../../resource/c_common/ocrandom/include',
 		'../../resource/csdk/logger/include',
 		'../../resource/oc_logger/include',
 		'./ramlparser/raml',
@@ -86,4 +86,4 @@ simulator_env.InstallTarget(simulatorsdk, 'libSimulator')
 
 #Build sample application
 SConscript('examples/server/SConscript')
-SConscript('examples/client-controller/SConscript')
+SConscript('examples/client/SConscript')

@@ -90,7 +90,6 @@ extlibs/gtest/gtest-*
 extlibs/hippomocks-master/
 extlibs/master.zip
 extlibs/cereal/cereal
-extlibs/expat/expat*
 extlibs/cereal
 extlibs/android/gradle/gradle-2.2.1
 extlibs/android/ndk/android-ndk-r10d

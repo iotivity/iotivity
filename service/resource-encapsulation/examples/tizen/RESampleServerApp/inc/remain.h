@@ -35,7 +35,7 @@ using namespace OC;
 #ifdef  LOG_TAG
 #undef  LOG_TAG
 #endif
-#define LOG_TAG "reservermain"
+#define LOG_TAG "reserver"
 
 #if !defined(PACKAGE)
 #define PACKAGE "org.tizen.resampleserver"
@@ -43,6 +43,8 @@ using namespace OC;
 
 #define ELM_DEMO_EDJ "opt/usr/apps/org.tizen.resampleserver/res/ui_controls.edj"
 
-void serverCreateUI(void *data, Evas_Object *obj, void *event_info);
+void temperatureResource(void *data, Evas_Object *obj, void *event_info);
+
+void lightResource(void *data, Evas_Object *obj, void *event_info);
 
 #endif // REMAIN_H__

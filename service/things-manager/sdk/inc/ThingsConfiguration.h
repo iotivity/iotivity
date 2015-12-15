@@ -49,7 +49,6 @@ namespace OIC
     typedef std::string ConfigurationValue;
 
     /**
-     * @brief
      * The following class is used as a item stacking in request queue. The class stores a request
      * and referential information (e.g., a configuration name, a target resource object, a callback
      * function passed from the applications, and a update value). When the function for updating/
@@ -75,7 +74,6 @@ namespace OIC
     };
 
     /**
-     * @brief
      * The following class is used to store providing configuration name and its relevant
      * information. The relevant information includes a brief description, uri, and attribute key.
      * Note that a developer only specifies a configuration name, not URI nor attribute key, to
@@ -102,12 +100,11 @@ namespace OIC
     typedef std::string ConfigurationValue;
 
     /**
-     * @class ThingsConfiguration
-     * @brief
-     * There are two main usages of this class: (1) On a server side, bootstrapping requisite
-     * information (i.e. system configuration parameters) from a bootstrap server to access other
-     * IoT services, (2) On a client side, getting/updating the system configuration parameters
-     * from/to multiple remote things.
+     * @par There are two main usages of this class:
+     * -# On a server side, bootstrapping requisite information (i.e. system configuration parameters)
+     * from a bootstrap server to access other IoT services,
+     * -# On a client side, getting/updating the system configuration parameters from/to multiple remote things.
+     * @par
      */
     class ThingsConfiguration
     {
@@ -142,22 +139,25 @@ namespace OIC
          * by Things Configuration class and what the configuration name means.
          * To get a list of supported configuration names, use getListOfSupportedConfigurationUnits(
          * ) function, which provides the list in JSON format.
+         *
          * NOTICE: A series of callback functions is called from updateConfigurations() function:
-         * (1) For a collection resource
+         * @par
+         * -# For a collection resource
          * updateConfiguration()->onDeleteActionSet()->onGetChildInfoForUpdate()->onCreateActionSet(
          * )->...(CoAP msg. is transmitted)->OnExecuteForGroupAction()->callback function in APP.
-         * (2) For a simple resource
+         * -# For a simple resource
          * updateConfiguration()->...(CoAP msg. is transmitted)->OnPut()->callback function in APP.
+         * @par
          *
-         * @param resource - resource pointer representing the target group or the single thing.
-         * @param configurations - ConfigurationUnit: an attribute key of target resource
+         * @param resource resource pointer representing the target group or the single thing.
+         * @param configurations ConfigurationUnit: an attribute key of target resource
          *                         (e.g., loc, st, c, r)
          *                         Value : a value to be updated
-         * @param callback - callback.
+         * @param callback callback.
          *
-         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+         * @return Returns ::OC_STACK_OK if success, some other value upon failure.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult updateConfigurations(std::shared_ptr< OCResource > resource,
                 std::map< ConfigurationName, ConfigurationValue > configurations,
@@ -167,20 +167,23 @@ namespace OIC
          * API for getting configuration value of multiple things of a target group or a single
          * thing.
          * Callback is called when a response arrives.
+         *
          * NOTICE: A series of callback functions is called from getConfigurations() function:
-         * (1) For a collection resource
+         * @par
+         * -# For a collection resource
          * getConfigurations()->onGetChildInfoForGet()->...(CoAP msg. is transmitted)
          * ->callback function in APP.
-         * (2) For a simple resource
+         * -# For a simple resource
          * getConfigurations()->...(CoAP msg. is transmitted)->onGet()->callback function in APP.
+         * @par
          *
-         * @param resource - resource pointer representing the target group or the single thing.
-         * @param configurations - ConfigurationUnit: an attribute key of target resource.
-         * @param callback - callback.
+         * @param resource resource pointer representing the target group or the single thing.
+         * @param configurations ConfigurationUnit: an attribute key of target resource.
+         * @param callback callback.
          *
-         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+         * @return Returns ::OC_STACK_OK if success, some other value upon failure.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult getConfigurations(std::shared_ptr< OCResource > resource,
                 std::vector< ConfigurationName > configurations, ConfigurationCallback callback);
@@ -198,11 +201,11 @@ namespace OIC
          * information from the bootstrap server. With the information, make a configuration
          * resource.
          *
-         * @param callback - callback.
+         * @param callback callback.
          *
-         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+         * @return Returns ::OC_STACK_OK if success, some other value upon failure.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult doBootstrap(ConfigurationCallback callback);
 

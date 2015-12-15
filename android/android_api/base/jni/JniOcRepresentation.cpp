@@ -170,10 +170,17 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresent
     if (!rep) return;
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
-    OCRepresentation *value = JniOcRepresentation::getOCRepresentationPtr(env, jValue);
-    if (!value) return;
 
-    rep->setValue(key, *value);
+    if (jValue)
+    {
+        OCRepresentation *value = JniOcRepresentation::getOCRepresentationPtr(env, jValue);
+        if (!value) return;
+        rep->setValue(key, *value);
+    }
+    else
+    {
+        rep->setNULL(key);
+    }
 }
 
 /*
@@ -781,6 +788,22 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcRepresentation_getUri
     if (!rep) return nullptr;
 
     std::string uri(rep->getUri());
+    return env->NewStringUTF(uri.c_str());
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    getHost
+* Signature: ()Ljava/lang/String;
+*/
+JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcRepresentation_getHost
+(JNIEnv *env, jobject thiz)
+{
+    LOGD("OcRepresentation_getHost");
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    if (!rep) return nullptr;
+
+    std::string uri(rep->getHost());
     return env->NewStringUTF(uri.c_str());
 }
 

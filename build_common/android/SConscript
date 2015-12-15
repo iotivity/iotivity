@@ -239,4 +239,3 @@ SConscript('compatibility/cpp11_compat.scons')
 
 # Make sure that boost for android is available
 SConscript(env.get('SRC_DIR') + '/extlibs/boost/SConscript')
-SConscript(env.get('SRC_DIR') + '/extlibs/expat/SConscript')

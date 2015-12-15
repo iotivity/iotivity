@@ -305,6 +305,10 @@ OCStackResult BuildVirtualCollectionResourceResponse(const OCResourceCollectionP
     if (resourcePtr->tags && !resourcePtr->tags->baseURI)
     {
         resourcePtr->tags->baseURI = OICStrdup(devAddr->addr);
+        if (resourcePtr->tags->port == 0 && devAddr->port != 0)
+        {
+            resourcePtr->tags->port = devAddr->port;
+        }
     }
     OCDiscoveryCollectionPayloadAddResource(payload, resourcePtr->tags, resourcePtr->setLinks);
     return OC_STACK_OK;
@@ -569,9 +573,9 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
 
 #ifdef WITH_RD
 static OCStackResult checkResourceExistsAtRD(const char *interfaceType, const char *resourceType,
-    OCResourceCollectionPayload **repPayload)
+    OCResourceCollectionPayload **repPayload, OCDevAddr *devAddr)
 {
-    if (OCRDCheckPublishedResource(interfaceType, resourceType, repPayload) == OC_STACK_OK)
+    if (OCRDCheckPublishedResource(interfaceType, resourceType, repPayload, devAddr) == OC_STACK_OK)
     {
         return OC_STACK_OK;
     }
@@ -615,6 +619,10 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
             if(payload)
             {
+                ((OCDiscoveryPayload*)payload)->sid = (uint8_t*)OICCalloc(1, UUID_SIZE);
+                memcpy(((OCDiscoveryPayload*)payload)->sid,
+                    OCGetServerInstanceID(), UUID_SIZE);
+
                 bool foundResourceAtRD = false;
                 for(;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                 {
@@ -622,14 +630,15 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                     if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
                     {
                         OCResourceCollectionPayload *repPayload;
-                        discoveryResult = checkResourceExistsAtRD(filterOne, filterTwo, &repPayload);
+                        OCDevAddr devAddr;
+                        discoveryResult = checkResourceExistsAtRD(filterOne, filterTwo, &repPayload, &devAddr);
                         if (discoveryResult != OC_STACK_OK)
                         {
                              break;
                         }
                         discoveryResult = BuildVirtualCollectionResourceResponse(repPayload,
                                     (OCDiscoveryPayload*)payload,
-                                    &request->devAddr);
+                                    &devAddr);
                         foundResourceAtRD = true;
                     }
 #endif
@@ -665,8 +674,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         }
         else
         {
-            payload = (OCPayload*) OCDevicePayloadCreate(OC_RSRVD_DEVICE_URI,
-                    (const uint8_t*) &deviceId->id, savedDeviceInfo.deviceName,
+            payload = (OCPayload*) OCDevicePayloadCreate((const uint8_t*) &deviceId->id, savedDeviceInfo.deviceName,
                     OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
             if (!payload)
             {
@@ -680,9 +688,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
-        payload = (OCPayload*)OCPlatformPayloadCreate(
-                OC_RSRVD_PLATFORM_URI,
-                &savedPlatformInfo);
+        payload = (OCPayload*)OCPlatformPayloadCreate(&savedPlatformInfo);
         if (!payload)
         {
             discoveryResult = OC_STACK_NO_MEMORY;
@@ -734,7 +740,8 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         {
             SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
         }
-        else if(bMulticast == false)
+        else if(bMulticast == false && (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
+               (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
         {
             OC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d)  \
                 discovery request", discoveryResult, virtualUriInRequest);

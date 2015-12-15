@@ -16,12 +16,14 @@
 
 package oic.simulator.serviceprovider.listener;
 
+import oic.simulator.serviceprovider.model.SingleResource;
+
 /**
  * Interface through which the automation events are notified to the UI
  * listeners.
  */
 public interface IAutomationUIListener {
-    public void onResourceAutomationStart(String resourceURI);
+    public void onResourceAutomationStart(SingleResource resource);
 
-    public void onAutomationComplete(String resourceURI, String attName);
+    public void onAutomationComplete(SingleResource resource, String attName);
 }

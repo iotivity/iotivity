@@ -97,7 +97,7 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
     OCRDPayload *payload = (OCRDPayload *)ehRequest->payload;
     if (payload && payload->rdPublish)
     {
-        OCRDStorePublishedResources(payload->rdPublish);
+        OCRDStorePublishedResources(payload->rdPublish, &ehRequest->devAddr);
     }
 
     OCRDPayload *rdPayload = OCRDPayloadCreate();

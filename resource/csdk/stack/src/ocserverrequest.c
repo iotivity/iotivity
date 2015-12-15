@@ -117,7 +117,7 @@ static void DeleteServerResponse(OCServerResponse * serverResponse)
     if(serverResponse)
     {
         LL_DELETE(serverResponseList, serverResponse);
-        OICFree(serverResponse->payload);
+        OCPayloadDestroy(serverResponse->payload);
         OICFree(serverResponse);
         OC_LOG(INFO, TAG, "Server Response Removed!!");
     }
@@ -442,7 +442,7 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
                    // This should not happen but,
                    // give it a value just in case but output an error
                    caResult = CA_CONTENT;
-                   OC_LOG_V(ERROR, TAG, "Unexpected OC_EH_OK return code for method [d].", method);
+                   OC_LOG_V(ERROR, TAG, "Unexpected OC_EH_OK return code for method [%d].", method);
            }
             break;
         case OC_EH_ERROR:
@@ -634,10 +634,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 #ifdef RA_ADAPTER
                             , CA_ADAPTER_REMOTE_ACCESS
 #endif
-
-#ifdef TCP_ADAPTER
                             , CA_ADAPTER_TCP
-#endif
                         };
 
     size_t size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
@@ -655,10 +652,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 #ifdef RA_ADAP
                 | CA_ADAPTER_REMOTE_ACCESS
 #endif
-
-#ifdef TCP_ADAPTER
                 | CA_ADAPTER_TCP
-#endif
             );
     }
 
@@ -746,14 +740,16 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
             goto exit;
         }
 
+        OCRepPayload *newPayload = OCRepPayloadClone((OCRepPayload *)ehResponse->payload);
+
         if(!serverResponse->payload)
         {
-            serverResponse->payload = ehResponse->payload;
+            serverResponse->payload = (OCPayload *)newPayload;
         }
         else
         {
             OCRepPayloadAppend((OCRepPayload*)serverResponse->payload,
-                    (OCRepPayload*)ehResponse->payload);
+                    (OCRepPayload*)newPayload);
         }
 
 

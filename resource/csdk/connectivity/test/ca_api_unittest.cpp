@@ -397,46 +397,6 @@ TEST_F(CATests, SendResponseTest)
     }
 }
 
-// CASendNotification TC
-// check return value
-TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
-{
-    addr = (char *) ADDRESS;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
-
-    memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.type = CA_MSG_NONCONFIRM;
-    responseData.payload = (CAPayload_t)malloc(sizeof("Temp Notification Data"));
-
-    EXPECT_TRUE(responseData.payload != NULL);
-    if(!responseData.payload)
-    {
-        CADestroyEndpoint(tempRep);
-        return;
-    }
-
-    memcpy(responseData.payload, "Temp Notification Data", sizeof("Temp Notification Data"));
-    responseData.payloadSize = sizeof("Temp Notification Data");
-
-    CAGenerateToken(&tempToken, tokenLength);
-    requestData.token = tempToken;
-    requestData.tokenLength = tokenLength;
-
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_CONTENT;
-    responseInfo.info = responseData;
-
-    EXPECT_EQ(CA_STATUS_OK, CASendNotification(tempRep, &responseInfo));
-
-    CADestroyToken(tempToken);
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
-    free(responseData.payload);
-}
-
 // CASelectNewwork TC
 // check return value
 TEST_F(CATests, SelectNetworkTestGood)

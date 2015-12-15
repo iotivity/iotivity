@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _RESOURCE_INIT_EXCEPTION_H_
-#define _RESOURCE_INIT_EXCEPTION_H_
+#ifndef OC_RESOURCE_INIT_EXCEPTION_H_
+#define OC_RESOURCE_INIT_EXCEPTION_H_
 
 #include <stdexcept>
 #include "StringConstants.h"

@@ -45,7 +45,6 @@ namespace OIC
             > MaintenanceCallback;
 
     /**
-     *  @brief
      *  The following class is used as a item stacking in request queue. The class stores a request
      *  and referential information (e.g., a maintenance name, a target resource object, a callback
      *  function passed from the applications, and a update value). When the function for updating/
@@ -74,7 +73,6 @@ namespace OIC
     };
 
     /**
-     *  @brief
      *  The following class is used to store providing maintenance name and its relevant information
      *  The relevant information includes a brief description, uri, and attribute key.
      *  Note that a developer only specifies a maintenance name, not URI nor attribute key, to
@@ -100,10 +98,12 @@ namespace OIC
     typedef std::string MaintenanceValue;
 
     /**
-     * @class ThingsMaintenance
-     * @brief
-     * There are two functionalities in Things Maintenance; (1) FactoryReset to restore all
-     * configuration parameters to default one, and (2) Reboot to request a system rebooting.
+     * There are two functionalities in Things Maintenance;
+     * @par
+     * -# FactoryReset to restore all configuration parameters to default one, and
+     * -# Reboot to request a system rebooting.
+     * @par
+     *
      */
     class ThingsMaintenance
     {
@@ -129,12 +129,12 @@ namespace OIC
          * API to make things reboot
          * Callback call when a response arrives.
          *
-         * @param resource - resource pointer representing the target group
-         * @param callback - callback.
+         * @param resource resource pointer representing the target group
+         * @param callback callback.
          *
-         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+         * @return Returns ::OC_STACK_OK if success, some other value upon failure.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @note OCStackResult is defined in ocstack.h.
          */
         OCStackResult reboot(std::shared_ptr< OCResource > resource, MaintenanceCallback callback);
 
@@ -142,12 +142,12 @@ namespace OIC
          * API for factory reset on device
          * Callback call when a response arrives.
          *
-         * @param resource - resource pointer representing the target group
-         * @param callback - callback.
+         * @param resource resource pointer representing the target group
+         * @param callback callback.
          *
-         * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+         * @return Returns ::OC_STACK_OK if success, some other value upon failure.
          *
-         * NOTE: OCStackResult is defined in ocstack.h.
+         * @note OCStackResult is defined in ocstack.h.
          */
 
         OCStackResult factoryReset(std::shared_ptr< OCResource > resource,

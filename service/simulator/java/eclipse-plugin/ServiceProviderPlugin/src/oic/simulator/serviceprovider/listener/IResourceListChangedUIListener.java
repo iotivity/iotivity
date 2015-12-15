@@ -16,12 +16,16 @@
 
 package oic.simulator.serviceprovider.listener;
 
+import oic.simulator.serviceprovider.model.ResourceType;
+
 /**
  * Interface through which the resource creation/deletion events are sent to the
  * UI listeners.
  */
 public interface IResourceListChangedUIListener {
-    public void onResourceCreation();
+    public void onResourceCreation(ResourceType type);
 
-    public void onResourceDeletion();
+    public void onResourceDeletion(ResourceType type);
+
+    public void onResourceListUpdate(ResourceType type);
 }

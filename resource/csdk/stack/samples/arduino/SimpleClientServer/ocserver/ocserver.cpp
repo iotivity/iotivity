@@ -31,7 +31,7 @@
 #include <SPI.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
-#else
+#elif defined ARDUINOETH
 // Arduino Ethernet Shield
 #include <EthernetServer.h>
 #include <Ethernet.h>
@@ -107,7 +107,7 @@ int ConnectToNetwork()
     OC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
     return 0;
 }
-#else
+#elif defined ARDUINOETH
 // Arduino Ethernet Shield
 int ConnectToNetwork()
 {
@@ -249,11 +249,13 @@ void setup()
     OC_LOG(DEBUG, TAG, ("OCServer is starting..."));
 
     // Connect to Ethernet or WiFi network
+#if defined(ARDUINOWIFI) || defined(ARDUINOETH)
     if (ConnectToNetwork() != 0)
     {
         OC_LOG(ERROR, TAG, ("Unable to connect to network"));
         return;
     }
+#endif
 
     // Initialize the OC Stack in Server mode
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)

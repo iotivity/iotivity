@@ -91,6 +91,12 @@ CAResult_t CALEClientInitialize(ca_thread_pool_t handle);
 void CALEClientTerminate();
 
 /**
+ * destroy interface object and terminate the interface.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientDestroyJniInterface();
+
+/**
  * for destroy sending routine.
  * @param[in]   env                   JNI interface pointer.
  * @param[in]   gatt                  Gatt profile object.

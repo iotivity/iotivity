@@ -60,8 +60,6 @@ static std::string coapServerResource = "/a/light";
 
 void StripNewLineChar(char* str);
 
-// The handle for the observe registration
-OCDoHandle gObserveDoHandle;
 #ifdef WITH_PRESENCE
 // The handle for observe registration
 OCDoHandle gPresenceHandle;
@@ -161,10 +159,6 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     if (ret != OC_STACK_OK)
     {
         OC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d", ret, method);
-    }
-    else if (method == OC_REST_OBSERVE || method == OC_REST_OBSERVE_ALL)
-    {
-        gObserveDoHandle = handle;
     }
 #ifdef WITH_PRESENCE
     else if (method == OC_REST_PRESENCE)
@@ -279,7 +273,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle /*handle*/,
+OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle,
                                   OCClientResponse * clientResponse)
 {
     if (ctx == (void*)DEFAULT_CONTEXT_VALUE)
@@ -296,11 +290,12 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle /*handle*/,
         OC_LOG_PAYLOAD(INFO, clientResponse->payload);
         OC_LOG(INFO, TAG, ("=============> Obs Response"));
         gNumObserveNotifies++;
-        if (gNumObserveNotifies == 15) //large number to test observing in DELETE case.
+        if (gNumObserveNotifies > 15) //large number to test observing in DELETE case.
         {
             if (TestCase == TEST_OBS_REQ_NON || TestCase == TEST_OBS_REQ_CON)
             {
-                if (OCCancel (gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+                OC_LOG(ERROR, TAG, "Cancelling with LOW QOS");
+                if (OCCancel (handle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
                 {
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
@@ -308,7 +303,8 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle /*handle*/,
             }
             else if (TestCase == TEST_OBS_REQ_NON_CANCEL_IMM)
             {
-                if (OCCancel (gObserveDoHandle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                OC_LOG(ERROR, TAG, "Cancelling with HIGH QOS");
+                if (OCCancel (handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
                 {
                     OC_LOG(ERROR, TAG, "Observe cancel error");
                 }
@@ -392,7 +388,20 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
         ConnType = clientResponse->connType;
         serverAddr = clientResponse->devAddr;
-        parseClientResponse(clientResponse);
+
+        OCDiscoveryPayload *payload = (OCDiscoveryPayload*) clientResponse->payload;
+        if (!payload)
+        {
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+
+        OCResourcePayload *resource = (OCResourcePayload*) payload->resources;
+        if (!resource)
+        {
+            OC_LOG_V (INFO, TAG, "No resources in payload");
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+        coapServerResource =  resource->uri;
 
         switch(TestCase)
         {
@@ -549,27 +558,27 @@ int InitPresence()
 
 int InitGetRequestToUnavailableResource(OCQualityOfService qos)
 {
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "/SomeUnknownResource";
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
     return (InvokeOCDoResource(query, &serverAddr, OC_REST_GET, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS,
             getReqCB, NULL, 0));
 }
 
 int InitObserveRequest(OCQualityOfService qos)
 {
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
     return (InvokeOCDoResource(query, &serverAddr, OC_REST_OBSERVE,
               (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, obsReqCB, NULL, 0));
 }
 
 int InitPutRequest(OCQualityOfService qos)
 {
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
     return (InvokeOCDoResource(query, &serverAddr, OC_REST_PUT, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS,
             putReqCB, NULL, 0));
 }
@@ -577,10 +586,11 @@ int InitPutRequest(OCQualityOfService qos)
 int InitPostRequest(OCQualityOfService qos)
 {
     OCStackResult result;
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+
     std::ostringstream query;
     query << coapServerResource;
 
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
     // First POST operation (to create an Light instance)
     result = InvokeOCDoResource(query, &serverAddr, OC_REST_POST,
                                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
@@ -612,7 +622,7 @@ void* RequestDeleteDeathResourceTask(void* myqos)
     std::ostringstream query;
     query << coapServerResource;
 
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
 
     // Second DELETE operation to delete the resource that might have been removed already.
     OCQualityOfService qos;
@@ -643,7 +653,7 @@ int InitDeleteRequest(OCQualityOfService qos)
     std::ostringstream query;
     query << coapServerResource;
 
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
 
     // First DELETE operation
     result = InvokeOCDoResource(query, &serverAddr, OC_REST_DELETE,
@@ -670,7 +680,6 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
 
     OCHeaderOption options[MAX_HEADER_OPTIONS];
 
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
 
@@ -680,6 +689,7 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
         OC_LOG(INFO, TAG, "Using query power<50");
         query << "?power<50";
     }
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
 
     if (withVendorSpecificHeaderOptions)
     {
@@ -921,14 +931,4 @@ std::string getConnectivityType (OCConnectivityType connType)
         default:
             return "Incorrect connectivity";
     }
-}
-
-std::string getQueryStrForGetPut(OCClientResponse * /*clientResponse*/)
-{
-    return "/a/light";
-}
-
-void parseClientResponse(OCClientResponse * clientResponse)
-{
-    coapServerResource = getQueryStrForGetPut(clientResponse);
 }

@@ -343,7 +343,7 @@ bool PMGenerateQuery(bool isSecure,
     switch(connType & CT_MASK_ADAPTER)
     {
         case CT_ADAPTER_IP:
-            switch(connType & CT_MASK_FLAGS)
+            switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
             {
                 case CT_IP_USE_V4:
                         snRet = snprintf(buffer, bufferSize, "%s%s:%d%s",
@@ -400,7 +400,7 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
     if (ctx == NULL)
     {
         OC_LOG(ERROR, TAG, "Lost List of device information");
-        return OC_STACK_KEEP_TRANSACTION;
+        return OC_STACK_DELETE_TRANSACTION;
     }
     (void)UNUSED;
     if (clientResponse)
@@ -414,7 +414,7 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
             if (PAYLOAD_TYPE_DISCOVERY != clientResponse->payload->type)
             {
                 OC_LOG(INFO, TAG, "Wrong payload type");
-                return OC_STACK_KEEP_TRANSACTION;
+                return OC_STACK_DELETE_TRANSACTION;
             }
 
             uint16_t securePort = 0;
@@ -427,7 +427,7 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
             else
             {
                 OC_LOG(INFO, TAG, "Can not find secure port information.");
-                return OC_STACK_KEEP_TRANSACTION;
+                return OC_STACK_DELETE_TRANSACTION;
             }
 
             DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
@@ -438,12 +438,12 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
             if (OC_STACK_OK != res)
             {
                 OC_LOG(ERROR, TAG, "Error while getting secure port.");
-                return OC_STACK_KEEP_TRANSACTION;
+                return OC_STACK_DELETE_TRANSACTION;
             }
             OC_LOG(INFO, TAG, "Exiting SecurePortDiscoveryHandler.");
         }
 
-        return  OC_STACK_KEEP_TRANSACTION;
+        return  OC_STACK_DELETE_TRANSACTION;
     }
     else
     {
@@ -534,13 +534,20 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                     DeleteDoxmBinData(ptrDoxm);
                     return OC_STACK_KEEP_TRANSACTION;
                 }
-
+                char rsrc_uri[MAX_URI_LENGTH+1] = {0};
+                int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",
+                          OC_RSRVD_WELL_KNOWN_URI, OC_RSRVD_RESOURCE_TYPE, OIC_RSRC_TYPE_SEC_DOXM);
+                if(wr_len <= 0 || (size_t)wr_len >= sizeof(rsrc_uri))
+                {
+                    OC_LOG(ERROR, TAG, "rsrc_uri_string_print failed");
+                    return OC_STACK_ERROR;
+                }
                 //Try to the unicast discovery to getting secure port
-                char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = { 0, };
+                char query[MAX_URI_LENGTH+MAX_QUERY_LENGTH+1] = {0};
                 if(!PMGenerateQuery(false,
                                     clientResponse->devAddr.addr, clientResponse->devAddr.port,
                                     clientResponse->connType,
-                                    query, sizeof(query), OC_RSRVD_WELL_KNOWN_URI))
+                                    query, sizeof(query), rsrc_uri))
                 {
                     OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
                     return OC_STACK_KEEP_TRANSACTION;
@@ -619,12 +626,14 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     const char* query = isOwned ? DOXM_OWNED_TRUE_MULTICAST_QUERY :
                                   DOXM_OWNED_FALSE_MULTICAST_QUERY;
 
-    res = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
+    OCDoHandle handle = NULL;
+    res = OCDoResource(&handle, OC_REST_DISCOVER, query, 0, 0,
                                      CT_DEFAULT, OC_LOW_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OC_LOG(ERROR, TAG, "OCStack resource error");
-        goto exit;
+        OICFree(pDInfo);
+        return res;
     }
 
     //Waiting for each response.
@@ -632,12 +641,22 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     if(OC_STACK_OK != res)
     {
         OC_LOG(ERROR, TAG, "Failed to wait response for secure discovery.");
-        goto exit;
+        OICFree(pDInfo);
+        OCStackResult resCancel = OCCancel(handle, OC_LOW_QOS, NULL, 0);
+        if(OC_STACK_OK !=  resCancel)
+        {
+            OC_LOG(ERROR, TAG, "Failed to remove registered callback");
+        }
+        return res;
     }
-
+    res = OCCancel(handle,OC_LOW_QOS,NULL,0);
+    if (OC_STACK_OK != res)
+    {
+        OC_LOG(ERROR, TAG, "Failed to remove registered callback");
+        OICFree(pDInfo);
+        return res;
+    }
     OC_LOG(DEBUG, TAG, "OUT PMDeviceDiscovery");
-
-exit:
     OICFree(pDInfo);
     return res;
 }

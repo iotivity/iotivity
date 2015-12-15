@@ -150,6 +150,9 @@ function build_tizen()
 	echo "*********** Build for Tizen octbstack lib and sample *************"
 	scons -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true RELEASE=$1 $2
 
+	echo "*********** Build for Tizen octbstack lib and sample with Security*************"
+	scons -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true SECURED=1 RELEASE=$1 $2
+
 	echo "*********** Build for Tizen octbstack lib and sample with Routing Manager*************"
 	scons -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true ROUTING=GW RELEASE=$1 $2
 }

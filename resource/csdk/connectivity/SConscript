@@ -8,6 +8,7 @@ target_os = env.get('TARGET_OS')
 transport = env.get('TARGET_TRANSPORT')
 build_sample = env.get('BUILD_SAMPLE')
 with_ra = env.get('WITH_RA')
+with_tcp = env.get('WITH_TCP')
 
 print "Given Transport is %s" % transport
 print "Given OS is %s" % target_os
@@ -24,8 +25,10 @@ if target_os in targets_disallow_multitransport:
 if 'ALL' in transport:
 	if with_ra == True:
 			env.AppendUnique(CPPDEFINES = ['RA_ADAPTER'])
+	if with_tcp == True:
+			env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER'])
 	if target_os == 'linux':
-		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','LE_ADAPTER', 'TCP_ADAPTER'])
+		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','LE_ADAPTER'])
 	elif target_os == 'tizen':
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
 	elif target_os in['darwin','ios']:
@@ -56,8 +59,8 @@ else:
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER'])
 
-	if 'TCP' in transport:
-		if target_os in['linux']:
+	if with_tcp == True:
+		if target_os in ['linux', 'tizen', 'android']:
 			env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER'])
 			print "CA Transport is TCP"
 		else:

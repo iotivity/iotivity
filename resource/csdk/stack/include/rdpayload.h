@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _RDPAYLOAD_H_
-#define _RDPAYLOAD_H_
+#ifndef OC_RDPAYLOAD_H_
+#define OC_RDPAYLOAD_H_
 
 #include <cbor.h>
 #include "octypes.h"
@@ -237,4 +237,4 @@ void OCLinksLog(const LogLevel level, const OCLinksPayload *links);
 }
 #endif // __cplusplus
 
-#endif /* OCTYPES_H_ */
+#endif /* OC_RDPAYLOAD_H_ */

@@ -18,461 +18,316 @@
  *
  ******************************************************************/
 
-#include "simulator_remote_resource_jni.h"
-#include "simulator_common_jni.h"
-#include "simulator_error_codes.h"
-#include "simulator_resource_jni_util.h"
 #include "simulator_resource_model_jni.h"
-#include "simulator_client_types.h"
-#include "simulator_exceptions.h"
-#include "simulator_jni_utils.h"
+#include "simulator_exceptions_jni.h"
+#include "simulator_utils_jni.h"
+#include "jni_sharedobject_holder.h"
+#include "jni_listener_holder.h"
+#include "jni_queryparam.h"
+#include "jni_string.h"
+#include "jni_vector.h"
 
-extern SimulatorClassRefs gSimulatorClassRefs;
+#include "simulator_remote_resource.h"
 
-SimulatorRemoteResourceSP JniSimulatorRemoteResource::getResourceHandle
-(JNIEnv *env, jobject object)
+#define VALIDATE_OBJECT(ENV, OBJECT) if (!OBJECT){throwBadObjectException(ENV, "No corresponsing native object!"); return;}
+#define VALIDATE_OBJECT_RET(ENV, OBJECT, RET) if (!OBJECT){throwBadObjectException(ENV, "No corresponsing native object!"); return RET;}
+
+SimulatorRemoteResourceSP SimulatorRemoteResourceToCpp(JNIEnv *env, jobject object)
 {
-    JniSimulatorRemoteResource *jniResource = GetHandle<JniSimulatorRemoteResource>(env, object);
-    if (env->ExceptionCheck() || !jniResource)
-    {
-        return nullptr;
-    }
-
-    return jniResource->m_resource;
+    JniSharedObjectHolder<SimulatorRemoteResource> *jniResource =
+        GetHandle<JniSharedObjectHolder<SimulatorRemoteResource>>(env, object);
+    if (jniResource)
+        return jniResource->get();
+    return nullptr;
 }
 
-class JNIOnObserveListener
+void onObserveCallback(jobject listener, const std::string &uid, const int errorCode,
+                       SimulatorResourceModelSP representation, const int seq)
 {
-    public:
-        void setJavaOnObserveListener(JNIEnv *env, jobject listener)
-        {
-            m_listener = env->NewWeakGlobalRef(listener);
-        }
+    JNIEnv *env = getEnv();
+    if (!env)
+        return;
 
-        void onObserveCallback(const std::string &uId, const int errorCode,
-                               SimulatorResourceModelSP representation,
-                               const int seqNumber)
-        {
-            JNIEnv *env = getEnv();
-            if (nullptr == env)
-                return;
+    jclass listenerCls = env->GetObjectClass(listener);
+    jmethodID listenerMethodId = env->GetMethodID(listenerCls, "onObserveNotification",
+                                 "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;I)V");
 
-            jobject onObserveListener = env->NewLocalRef(m_listener);
-            if (!onObserveListener)
-            {
-                releaseEnv();
-                return;
-            }
+    SimulatorResourceModel *resModel = representation.get();
+    jobject jResModel = simulatorResourceModelToJava(env, *resModel);
+    jstring jUid = env->NewStringUTF(uid.c_str());
+    env->CallVoidMethod(listener, listenerMethodId, jUid, jResModel, seq);
+    releaseEnv();
+}
 
-            jclass onObserveCls = env->GetObjectClass(onObserveListener);
-            if (!onObserveCls)
-            {
-                releaseEnv();
-                return;
-            }
-
-            if (OC_STACK_OK != errorCode && OC_STACK_RESOURCE_CREATED != errorCode
-                && OC_STACK_RESOURCE_DELETED != errorCode)
-            {
-                jmethodID midL = env->GetMethodID(onObserveCls, "onObserveFailed", "(Ljava/lang/Throwable;)V");
-                if (!midL)
-                {
-                    releaseEnv();
-                    return;
-                }
-                env->CallVoidMethod(onObserveListener, midL);
-            }
-            else
-            {
-                JSimulatorResourceModel *jniModel = new JSimulatorResourceModel(representation);
-                if (!jniModel)
-                {
-                    releaseEnv();
-                    return;
-                }
-
-                jobject jRepresentation = JSimulatorResourceModel::toJava(env,
-                        reinterpret_cast<jlong>(jniModel));
-                if (!jRepresentation)
-                {
-                    delete jniModel;
-                    releaseEnv();
-                    return;
-                }
-
-                jmethodID midL = env->GetMethodID(onObserveCls, "onObserveCompleted",
-                        "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;I)V");
-                if (!midL)
-                {
-                    delete jniModel;
-                    releaseEnv();
-                    return;
-                }
-
-                jstring jUid = env->NewStringUTF(uId.c_str());
-
-                env->CallVoidMethod(onObserveListener, midL, jUid, jRepresentation,
-                                    static_cast<jint>(seqNumber));
-                if (env->ExceptionCheck())
-                {
-                    delete jniModel;
-                    releaseEnv();
-                }
-            }
-        }
-
-    private:
-        jweak m_listener;
-};
-
-class JNIOnGetListener
+void onGetCallback(jobject listener, const std::string &uid, int errorCode,
+                   SimulatorResourceModelSP representation)
 {
-    public:
-        void setJavaOnGetListener(JNIEnv *env, jobject listener)
-        {
-            m_listener = env->NewWeakGlobalRef(listener);
-        }
+    JNIEnv *env = getEnv();
+    if (!env)
+        return;
 
-        void onGetCallback(const std::string &uId, int errorCode,
-                           SimulatorResourceModelSP representation)
-        {
-            JNIEnv *env = getEnv();
-            if (nullptr == env)
-                return;
+    jclass listenerCls = env->GetObjectClass(listener);
+    jmethodID listenerMethodId = env->GetMethodID(listenerCls, "onGetResponse",
+                                 "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResult;Lorg/oic/simulator/SimulatorResourceModel;)V");
 
-            jobject onGetListener = env->NewLocalRef(m_listener);
-            if (!onGetListener)
-            {
-                releaseEnv();
-                return;
-            }
+    SimulatorResourceModel *resModel = representation.get();
+    jobject jResModel = simulatorResourceModelToJava(env, *resModel);
+    jstring jUid = env->NewStringUTF(uid.c_str());
+    env->CallVoidMethod(listener, listenerMethodId, jUid,
+                        simulatorResultToJava(env, static_cast<SimulatorResult>(errorCode)), jResModel);
 
-            jclass onGetCls = env->GetObjectClass(onGetListener);
-            if (!onGetCls)
-            {
-                releaseEnv();
-                return;
-            }
+    releaseEnv();
+}
 
-            // TODO: Revisit is it required?
-            if (OC_STACK_OK != errorCode && OC_STACK_RESOURCE_CREATED != errorCode
-                && OC_STACK_RESOURCE_DELETED != errorCode)
-            {
-                jmethodID midL = env->GetMethodID(onGetCls, "onGetFailed", "(Ljava/lang/Throwable;)V");
-                if (!midL)
-                {
-                    releaseEnv();
-                    return;
-                }
-                env->CallVoidMethod(onGetListener, midL);
-            }
-            else
-            {
-                JSimulatorResourceModel *jniModel = new JSimulatorResourceModel(representation);
-                if (!jniModel)
-                {
-                    releaseEnv();
-                    return;
-                }
-
-                jobject jRepresentation = JSimulatorResourceModel::toJava(env, reinterpret_cast<jlong>(jniModel));
-                if (!jRepresentation)
-                {
-                    delete jniModel;
-                    releaseEnv();
-                    return;
-                }
-
-                jmethodID midL = env->GetMethodID(onGetCls, "onGetCompleted",
-                                                  "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;)V");
-                if (!midL)
-                {
-                    delete jniModel;
-                    releaseEnv();
-                    return;
-                }
-
-                jstring jUid = env->NewStringUTF(uId.c_str());
-                env->CallVoidMethod(onGetListener, midL, jUid, jRepresentation);
-                if (env->ExceptionCheck())
-                {
-                    delete jniModel;
-                    releaseEnv();
-                }
-            }
-        }
-
-    private:
-        jweak m_listener;
-};
-
-class JNIOnPutListener
+void onPutCallback(jobject listener, const std::string &uid, int errorCode,
+                   SimulatorResourceModelSP representation)
 {
-    public:
-        void setJavaOnPutListener(JNIEnv *env, jobject listener)
-        {
-            m_listener = env->NewWeakGlobalRef(listener);
-        }
+    JNIEnv *env = getEnv();
+    if (!env)
+        return;
 
-        void onPutCallback(const std::string &uId, int errorCode,
-                           SimulatorResourceModelSP representation)
-        {
-            JNIEnv *env = getEnv();
-            if (nullptr == env)
-                return;
+    jclass listenerCls = env->GetObjectClass(listener);
+    jmethodID listenerMethodId = env->GetMethodID(listenerCls, "onPutResponse",
+                                 "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResult;Lorg/oic/simulator/SimulatorResourceModel;)V");
 
-            jobject onPutListener = env->NewLocalRef(m_listener);
-            if (!onPutListener)
-            {
-                releaseEnv();
-                return;
-            }
+    SimulatorResourceModel *resModel = representation.get();
+    jobject jResModel = simulatorResourceModelToJava(env, *resModel);
+    jstring jUid = env->NewStringUTF(uid.c_str());
+    env->CallVoidMethod(listener, listenerMethodId, jUid,
+                        simulatorResultToJava(env, static_cast<SimulatorResult>(errorCode)), jResModel);
 
-            jclass onGetCls = env->GetObjectClass(onPutListener);
-            if (!onGetCls)
-            {
-                releaseEnv();
-                return;
-            }
+    releaseEnv();
+}
 
-            // TODO: Revisit is it required?
-            if (OC_STACK_OK != errorCode && OC_STACK_RESOURCE_CREATED != errorCode
-                && OC_STACK_RESOURCE_DELETED != errorCode)
-            {
-                jmethodID midL = env->GetMethodID(onGetCls, "onPutFailed", "(Ljava/lang/Throwable;)V");
-                if (!midL)
-                {
-                    releaseEnv();
-                    return;
-                }
-                env->CallVoidMethod(onPutListener, midL);
-            }
-            else
-            {
-                JSimulatorResourceModel *jniModel = new JSimulatorResourceModel(representation);
-                if (!jniModel)
-                {
-                    releaseEnv();
-                    return;
-                }
-
-                jobject jRepresentation = JSimulatorResourceModel::toJava(env,
-                        reinterpret_cast<jlong>(jniModel));
-                if (!jRepresentation)
-                {
-                    delete jniModel;
-                    releaseEnv();
-                    return;
-                }
-
-                jmethodID midL = env->GetMethodID(onGetCls, "onPutCompleted",
-                            "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;)V");
-                if (!midL)
-                {
-                    delete jniModel;
-                    releaseEnv();
-                    return;
-                }
-
-                jstring jUid = env->NewStringUTF(uId.c_str());
-                env->CallVoidMethod(onPutListener, midL, jUid, jRepresentation);
-                if (env->ExceptionCheck())
-                {
-                    delete jniModel;
-                    releaseEnv();
-                }
-            }
-        }
-
-    private:
-        jweak m_listener;
-};
-
-class JNIOnPostListener
+void onPostCallback(jobject listener, const std::string &uid, int errorCode,
+                    SimulatorResourceModelSP representation)
 {
-    public:
-        void setJavaOnPostListener(JNIEnv *env, jobject listener)
-        {
-            m_listener = env->NewWeakGlobalRef(listener);
-        }
+    JNIEnv *env = getEnv();
+    if (!env)
+        return;
 
-        void onPostCallback(const std::string &uId, int errorCode,
-                            SimulatorResourceModelSP representation)
-        {
-            JNIEnv *env = getEnv();
-            if (nullptr == env)
-                return;
+    jclass listenerCls = env->GetObjectClass(listener);
+    jmethodID listenerMethodId = env->GetMethodID(listenerCls, "onPostResponse",
+                                 "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResult;Lorg/oic/simulator/SimulatorResourceModel;)V");
 
-            jobject onPostListener = env->NewLocalRef(m_listener);
-            if (!onPostListener)
-            {
-                releaseEnv();
-                return;
-            }
+    SimulatorResourceModel *resModel = representation.get();
+    jobject jResModel = simulatorResourceModelToJava(env, *resModel);
+    jstring jUid = env->NewStringUTF(uid.c_str());
+    env->CallVoidMethod(listener, listenerMethodId, jUid,
+                        simulatorResultToJava(env, static_cast<SimulatorResult>(errorCode)), jResModel);
 
-            jclass onGetCls = env->GetObjectClass(onPostListener);
-            if (!onGetCls)
-            {
-                releaseEnv();
-                return;
-            }
+    releaseEnv();
+}
 
-            // TODO: Revisit is it required?
-            if (OC_STACK_OK != errorCode && OC_STACK_RESOURCE_CREATED != errorCode
-                && OC_STACK_RESOURCE_DELETED != errorCode)
-            {
-                jmethodID midL = env->GetMethodID(onGetCls, "onPostFailed", "(Ljava/lang/Throwable;)V");
-                if (!midL)
-                {
-                    releaseEnv();
-                    return;
-                }
-                env->CallVoidMethod(onPostListener, midL);
-            }
-            else
-            {
-                JSimulatorResourceModel *jniModel = new JSimulatorResourceModel(representation);
-                if (!jniModel)
-                {
-                    releaseEnv();
-                    return;
-                }
-
-                jobject jRepresentation = JSimulatorResourceModel::toJava(env,
-                        reinterpret_cast<jlong>(jniModel));
-                if (!jRepresentation)
-                {
-                    delete jniModel;
-                    releaseEnv();
-                    return;
-                }
-
-                jmethodID midL = env->GetMethodID(onGetCls, "onPostCompleted",
-                        "(Ljava/lang/String;Lorg/oic/simulator/SimulatorResourceModel;)V");
-                if (!midL)
-                {
-                    delete jniModel;
-                    releaseEnv();
-                    return;
-                }
-
-                jstring jUid = env->NewStringUTF(uId.c_str());
-
-                env->CallVoidMethod(onPostListener, midL, jUid, jRepresentation);
-                if (env->ExceptionCheck())
-                {
-                    delete jniModel;
-                    releaseEnv();
-                }
-            }
-        }
-
-    private:
-        jweak m_listener;
-
-};
-
-class JNIOnVerificationListener
+void onVerificationCallback(jobject listener, const std::string &uid, int id,
+                            OperationState opState)
 {
-    public:
-        void setJavaOnVerificationListener(JNIEnv *env, jobject listener)
-        {
-            m_listener = env->NewWeakGlobalRef(listener);
-        }
+    JNIEnv *env = getEnv();
+    if (!env)
+        return;
 
-        void onVerificationCallback(const std::string &uId, int id, OperationState opState)
-        {
-            JNIEnv *env = getEnv();
-            if (nullptr == env)
-                return;
+    jclass listenerCls = env->GetObjectClass(listener);
+    jmethodID listenerMethodId;
+    if (OP_START == opState)
+    {
+        listenerMethodId = env->GetMethodID(listenerCls, "onVerificationStarted", "(Ljava/lang/String;I)V");
+    }
+    else if (OP_COMPLETE == opState)
+    {
+        listenerMethodId = env->GetMethodID(listenerCls, "onVerificationCompleted",
+                                            "(Ljava/lang/String;I)V");
+    }
+    else if (OP_ABORT == opState)
+    {
+        listenerMethodId = env->GetMethodID(listenerCls, "onVerificationAborted", "(Ljava/lang/String;I)V");
+    }
 
-            jobject onVerificationListener = env->NewLocalRef(m_listener);
-            if (!onVerificationListener)
-            {
-                releaseEnv();
-                return;
-            }
+    jstring jUid = env->NewStringUTF(uid.c_str());
+    env->CallVoidMethod(listener, listenerMethodId, jUid, id);
 
-            jclass onVerificationCls = env->GetObjectClass(onVerificationListener);
-            if (!onVerificationCls)
-            {
-                releaseEnv();
-                return;
-            }
+    if (OP_COMPLETE == opState || OP_ABORT == opState)
+        env->DeleteGlobalRef(listener);
+    releaseEnv();
+}
 
-            jmethodID midL;
-
-            if (OP_START == opState)
-            {
-                midL = env->GetMethodID(onVerificationCls, "onVerificationStarted", "(Ljava/lang/String;I)V");
-            }
-            else if (OP_COMPLETE == opState)
-            {
-                midL = env->GetMethodID(onVerificationCls, "onVerificationCompleted", "(Ljava/lang/String;I)V");
-            }
-            else
-            {
-                midL = env->GetMethodID(onVerificationCls, "onVerificationAborted", "(Ljava/lang/String;I)V");
-            }
-
-            if (!midL)
-            {
-                releaseEnv();
-                return;
-            }
-
-            jstring jUid = env->NewStringUTF(uId.c_str());
-
-            env->CallVoidMethod(onVerificationListener, midL, jUid, (jint)id);
-
-            if (env->ExceptionCheck())
-            {
-                releaseEnv();
-            }
-        }
-
-    private:
-        jweak m_listener;
-
-};
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_startObserve
-(JNIEnv *env, jobject thiz, jint observeType, jobject jQueryParamsMap, jobject jListener)
+Java_org_oic_simulator_client_SimulatorRemoteResource_nativeGet
+(JNIEnv *env, jobject object, jstring resInterface, jobject queryParamsMap, jobject listener)
 {
-    if (!jListener)
-    {
-        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-        return;
-    }
+    VALIDATE_CALLBACK(env, listener)
 
-    SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
-                                         thiz);
-    if (!resource)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
-        return;
-    }
-
-    std::map<std::string, std::string> queryParams;
-    if (jQueryParamsMap)
-        convertJavaMapToQueryParamsMap(env, jQueryParamsMap, queryParams);
-
-    ObserveType type = ObserveType::OBSERVE;
-    if (1 == observeType)
-        type = ObserveType::OBSERVE_ALL;
-
-    JNIOnObserveListener *onObserveListener = new JNIOnObserveListener();
-    onObserveListener->setJavaOnObserveListener(env, jListener);
+    SimulatorRemoteResourceSP resource = SimulatorRemoteResourceToCpp(env, object);
+    VALIDATE_OBJECT(env, resource)
 
     try
     {
-        resource->observe(type,
-                          std::bind(&JNIOnObserveListener::onObserveCallback,
-                                    onObserveListener, std::placeholders::_1,
-                                    std::placeholders::_2, std::placeholders::_3,
-                                    std::placeholders::_4));
+        JniString jniInterface(env, resInterface);
+        std::map<std::string, std::string> queryParams =
+            JniQueryParameter(env).toCpp(queryParamsMap);
+
+        SimulatorRemoteResource::ResponseCallback callback =  std::bind([](
+                    const std::string & uid, int errorCode, SimulatorResourceModelSP representation,
+                    const std::shared_ptr<JniListenerHolder> &listenerRef)
+        {
+            onGetCallback(listenerRef->get(), uid, errorCode, representation);
+        }, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+        JniListenerHolder::create(env, listener));
+
+        resource->get(jniInterface.get(), queryParams, callback);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (NoSupportException &e)
+    {
+        throwNoSupportException(env, e.what());
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_client_SimulatorRemoteResource_nativePut
+(JNIEnv *env, jobject object, jstring resInterface, jobject queryParamsMap,
+ jobject representation, jobject listener)
+{
+    VALIDATE_CALLBACK(env, listener)
+
+    SimulatorRemoteResourceSP resource = SimulatorRemoteResourceToCpp(env, object);
+    VALIDATE_OBJECT(env, resource)
+
+    try
+    {
+        JniString jniInterface(env, resInterface);
+        std::map<std::string, std::string> queryParams =
+            JniQueryParameter(env).toCpp(queryParamsMap);
+
+        SimulatorResourceModel resModel;
+        simulatorResourceModelToCpp(env, representation, resModel);
+        SimulatorResourceModelSP resModelSP(new SimulatorResourceModel(resModel));
+
+        SimulatorRemoteResource::ResponseCallback callback =  std::bind([](
+                    const std::string & uid, int errorCode, SimulatorResourceModelSP representation,
+                    const std::shared_ptr<JniListenerHolder> &listenerRef)
+        {
+            onPutCallback(listenerRef->get(), uid, errorCode, representation);
+        }, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+        JniListenerHolder::create(env, listener));
+
+        resource->put(jniInterface.get(), queryParams, resModelSP, callback);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (NoSupportException &e)
+    {
+        throwNoSupportException(env, e.what());
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_client_SimulatorRemoteResource_nativePost
+(JNIEnv *env, jobject object, jstring resInterface, jobject queryParamsMap,
+ jobject representation, jobject listener)
+{
+    VALIDATE_CALLBACK(env, listener)
+
+    SimulatorRemoteResourceSP resource = SimulatorRemoteResourceToCpp(env, object);
+    VALIDATE_OBJECT(env, resource)
+
+    try
+    {
+        JniString jniInterface(env, resInterface);
+        std::map<std::string, std::string> queryParams =
+            JniQueryParameter(env).toCpp(queryParamsMap);
+
+        SimulatorResourceModel resModel;
+        simulatorResourceModelToCpp(env, representation, resModel);
+        SimulatorResourceModelSP resModelSP(new SimulatorResourceModel(resModel));
+
+        SimulatorRemoteResource::ResponseCallback callback =  std::bind([](
+                    const std::string & uid, int errorCode, SimulatorResourceModelSP representation,
+                    const std::shared_ptr<JniListenerHolder> &listenerRef)
+        {
+            onPostCallback(listenerRef->get(), uid, errorCode, representation);
+        }, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+        JniListenerHolder::create(env, listener));
+
+        resource->post(jniInterface.get(), queryParams, resModelSP, callback);
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+    }
+    catch (NoSupportException &e)
+    {
+        throwNoSupportException(env, e.what());
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+}
+
+JNIEXPORT jobject JNICALL
+Java_org_oic_simulator_client_SimulatorRemoteResource_setConfigInfo
+(JNIEnv *env, jobject object, jstring configPath)
+{
+    VALIDATE_INPUT_RET(env, !configPath, "Path is null!", nullptr)
+
+    SimulatorRemoteResourceSP resource = SimulatorRemoteResourceToCpp(env, object);
+    VALIDATE_OBJECT_RET(env, resource, nullptr)
+
+    try
+    {
+        JniString jniConfigPath(env, configPath);
+        SimulatorResourceModelSP repSchema = resource->configure(jniConfigPath.get());
+        return simulatorResourceModelToJava(env, *(repSchema.get()));
+    }
+    catch (InvalidArgsException &e)
+    {
+        throwInvalidArgsException(env, e.code(), e.what());
+    }
+
+    return nullptr;
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_client_SimulatorRemoteResource_startObserve
+(JNIEnv *env, jobject object, jobject queryParamsMap, jobject listener)
+{
+    VALIDATE_CALLBACK(env, listener)
+
+    SimulatorRemoteResourceSP resource = SimulatorRemoteResourceToCpp(env, object);
+    VALIDATE_OBJECT(env, resource)
+
+    try
+    {
+        std::map<std::string, std::string> queryParams =
+            JniQueryParameter(env).toCpp(queryParamsMap);
+
+        SimulatorRemoteResource::ObserveNotificationCallback callback =  std::bind([](
+                    const std::string & uid, const int errorCode,
+                    SimulatorResourceModelSP representation, const int seq,
+                    const std::shared_ptr<JniListenerHolder> &listenerRef)
+        {
+            onObserveCallback(listenerRef->get(), uid, errorCode, representation, seq);
+        }, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+        std::placeholders::_4, JniListenerHolder::create(env, listener));
+
+        resource->observe(ObserveType::OBSERVE, callback);
     }
     catch (InvalidArgsException &e)
     {
@@ -482,23 +337,14 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_startObserve
     {
         throwSimulatorException(env, e.code(), e.what());
     }
-    catch (...)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
-    }
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_stopObserve
-(JNIEnv *env, jobject thiz)
+Java_org_oic_simulator_client_SimulatorRemoteResource_stopObserve
+(JNIEnv *env, jobject object)
 {
-    SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
-                                         thiz);
-    if (!resource)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
-        return;
-    }
+    SimulatorRemoteResourceSP resource = SimulatorRemoteResourceToCpp(env, object);
+    VALIDATE_OBJECT(env, resource)
 
     try
     {
@@ -508,332 +354,39 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_stopObserve
     {
         throwSimulatorException(env, e.code(), e.what());
     }
-    catch (...)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
-    }
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_get
-(JNIEnv *env, jobject thiz, jstring jResourceInterface,
- jobject jQueryParamsMap, jobject jListener)
-{
-    if (!jListener)
-    {
-        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-        return;
-    }
-
-    SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
-                                         thiz);
-    if (!resource)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
-        return;
-    }
-
-    // Interface type
-    const char *interfaceCStr = NULL;
-    std::string interfaceType;
-    if (jResourceInterface)
-    {
-        interfaceCStr = env->GetStringUTFChars(jResourceInterface, NULL);
-        interfaceType = interfaceCStr;
-    }
-
-    // Query parameters
-    std::map<std::string, std::string> queryParams;
-    if (jQueryParamsMap)
-        convertJavaMapToQueryParamsMap(env, jQueryParamsMap, queryParams);
-
-    // Create listener
-    JNIOnGetListener *onGetListener = new JNIOnGetListener();
-    onGetListener->setJavaOnGetListener(env, jListener);
-
-    try
-    {
-        resource->get(interfaceType,
-                      queryParams,
-                      std::bind(&JNIOnGetListener::onGetCallback,
-                                onGetListener, std::placeholders::_1,
-                                std::placeholders::_2, std::placeholders::_3));
-    }
-    catch (InvalidArgsException &e)
-    {
-        throwInvalidArgsException(env, e.code(), e.what());
-        return;
-    }
-    catch (NoSupportException &e)
-    {
-        throwNoSupportException(env, e.code(), e.what());
-        return;
-    }
-    catch (SimulatorException &e)
-    {
-        throwSimulatorException(env, e.code(), e.what());
-        return;
-    }
-    catch (...)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
-        return;
-    }
-
-    if (interfaceCStr)
-        env->ReleaseStringUTFChars(jResourceInterface, interfaceCStr);
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_put
-(JNIEnv *env, jobject thiz, jstring jResourceInterface,
- jobject jRepresentation, jobject jQueryParamsMap, jobject jListener)
-{
-    if (!jListener)
-    {
-        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-        return;
-    }
-
-    SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
-                                         thiz);
-    if (!resource)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
-        return;
-    }
-
-    // Interface type
-    const char *interfaceCStr = NULL;
-    std::string interfaceType;
-    if (jResourceInterface)
-    {
-        interfaceCStr = env->GetStringUTFChars(jResourceInterface, NULL);
-        interfaceType = interfaceCStr;
-    }
-
-    // Query parameters
-    std::map<std::string, std::string> queryParams;
-    if (jQueryParamsMap)
-        convertJavaMapToQueryParamsMap(env, jQueryParamsMap, queryParams);
-
-    SimulatorResourceModelSP resourceModel =
-        JSimulatorResourceModel::getResourceModelPtr(env, jRepresentation);
-
-    // Create listener
-    JNIOnPutListener *onPutListener = new JNIOnPutListener();
-    onPutListener->setJavaOnPutListener(env, jListener);
-
-    try
-    {
-        resource->put(interfaceType,
-                      queryParams,
-                      resourceModel,
-                      std::bind(&JNIOnPutListener::onPutCallback,
-                                onPutListener, std::placeholders::_1,
-                                std::placeholders::_2, std::placeholders::_3));
-    }
-    catch (InvalidArgsException &e)
-    {
-        throwInvalidArgsException(env, e.code(), e.what());
-        return;
-    }
-    catch (NoSupportException &e)
-    {
-        throwNoSupportException(env, e.code(), e.what());
-        return;
-    }
-    catch (SimulatorException &e)
-    {
-        throwSimulatorException(env, e.code(), e.what());
-        return;
-    }
-    catch (...)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
-        return;
-    }
-
-    if (interfaceCStr)
-        env->ReleaseStringUTFChars(jResourceInterface, interfaceCStr);
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_post
-(JNIEnv *env, jobject thiz, jstring jResourceInterface,
- jobject jRepresentation, jobject jQueryParamsMap, jobject jListener)
-{
-    if (!jListener)
-    {
-        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-        return;
-    }
-
-    SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
-                                         thiz);
-    if (!resource)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
-        return;
-    }
-
-    // Interface type
-    const char *interfaceCStr = NULL;
-    std::string interfaceType;
-    if (jResourceInterface)
-    {
-        interfaceCStr = env->GetStringUTFChars(jResourceInterface, NULL);
-        interfaceType = interfaceCStr;
-    }
-
-    // Query parameters
-    std::map<std::string, std::string> queryParams;
-    if (jQueryParamsMap)
-        convertJavaMapToQueryParamsMap(env, jQueryParamsMap, queryParams);
-
-    SimulatorResourceModelSP resourceModel =
-        JSimulatorResourceModel::getResourceModelPtr(env, jRepresentation);
-
-    // Create listener
-    JNIOnPostListener *onPostListener = new JNIOnPostListener();
-    onPostListener->setJavaOnPostListener(env, jListener);
-
-    try
-    {
-        resource->post(interfaceType,
-                       queryParams,
-                       resourceModel,
-                       std::bind(&JNIOnPostListener::onPostCallback,
-                                 onPostListener, std::placeholders::_1,
-                                 std::placeholders::_2, std::placeholders::_3));
-    }
-    catch (InvalidArgsException &e)
-    {
-        throwInvalidArgsException(env, e.code(), e.what());
-        return;
-    }
-    catch (NoSupportException &e)
-    {
-        throwNoSupportException(env, e.code(), e.what());
-        return;
-    }
-    catch (SimulatorException &e)
-    {
-        throwSimulatorException(env, e.code(), e.what());
-        return;
-    }
-    catch (...)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
-        return;
-    }
-
-    if (interfaceCStr)
-        env->ReleaseStringUTFChars(jResourceInterface, interfaceCStr);
-}
-
-JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_setConfigInfo
-(JNIEnv *env, jobject thiz, jstring jConfigPath)
-{
-    if (!jConfigPath)
-    {
-        throwInvalidArgsException(env, SIMULATOR_INVALID_PARAM,
-                                  "Configuration file path is empty!");
-        return;
-    }
-
-    SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
-                                         thiz);
-    if (!resource)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
-        return;
-    }
-
-    // Interface type
-    const char *configCStr = NULL;
-    std::string configPath;
-    if (jConfigPath)
-    {
-        configCStr = env->GetStringUTFChars(jConfigPath, NULL);
-        configPath = configCStr;
-    }
-
-    try
-    {
-        resource->configure(configPath);
-    }
-    catch (InvalidArgsException &e)
-    {
-        throwInvalidArgsException(env, e.code(), e.what());
-        return;
-    }
-    catch (...)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
-        return;
-    }
-
-    if (configCStr)
-        env->ReleaseStringUTFChars(jConfigPath, configCStr);
 }
 
 JNIEXPORT jint JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_startVerification
-(JNIEnv *env, jobject thiz, jint jReqType, jobject jListener)
+Java_org_oic_simulator_client_SimulatorRemoteResource_startVerification
+(JNIEnv *env, jobject object, jint reqType, jobject listener)
 {
-    if (!jListener)
-    {
-        throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
-        return SIMULATOR_INVALID_CALLBACK;
-    }
+    VALIDATE_CALLBACK_RET(env, listener, -1)
 
-    SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
-                                         thiz);
-    if (!resource)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
-        return SIMULATOR_BAD_OBJECT;
-    }
+    SimulatorRemoteResourceSP resource = SimulatorRemoteResourceToCpp(env, object);
+    VALIDATE_OBJECT_RET(env, resource, -1)
 
     // Convert RequestType
-    RequestType reqType;
-
-    switch (jReqType)
+    RequestType type;
+    switch (reqType)
     {
-        case 0:
-            reqType = RequestType::RQ_TYPE_GET;
-            break;
-
-        case 1:
-            reqType = RequestType::RQ_TYPE_PUT;
-            break;
-
-        case 2:
-            reqType = RequestType::RQ_TYPE_POST;
-            break;
-
-        case 3:
-            reqType = RequestType::RQ_TYPE_DELETE;
-            break;
-
-        default:
-            return -1;
+        case 0: type = RequestType::RQ_TYPE_GET; break;
+        case 1: type = RequestType::RQ_TYPE_PUT; break;
+        case 2: type = RequestType::RQ_TYPE_POST; break;
+        case 3: type = RequestType::RQ_TYPE_DELETE; break;
+        default: return -1;
     }
-
-    // Create listener
-    JNIOnVerificationListener *onVerificationListener = new JNIOnVerificationListener();
-    onVerificationListener->setJavaOnVerificationListener(env, jListener);
-
-    int automationId = -1;
 
     try
     {
-        automationId = resource->startVerification(reqType,
-                       std::bind(&JNIOnVerificationListener::onVerificationCallback,
-                                 onVerificationListener, std::placeholders::_1,
-                                 std::placeholders::_2, std::placeholders::_3));
+        SimulatorRemoteResource::StateCallback callback =  std::bind([](
+                    const std::string & uid, int id, OperationState opState,
+                    const std::shared_ptr<JniListenerHolder> &listenerRef)
+        {
+            onVerificationCallback(listenerRef->get(), uid, id, opState);
+        }, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+        JniListenerHolder::create(env, listener));
+
+        return resource->startVerification(type, callback);
     }
     catch (InvalidArgsException &e)
     {
@@ -841,39 +394,30 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_startVerificatio
     }
     catch (NoSupportException &e)
     {
-        throwNoSupportException(env, e.code(), e.what());
+        throwNoSupportException(env, e.what());
     }
     catch (OperationInProgressException &e)
     {
-        throwOperationInProgressException(env, e.code(), e.what());
+        throwOperationInProgressException(env, e.what());
     }
     catch (SimulatorException &e)
     {
         throwSimulatorException(env, e.code(), e.what());
     }
-    catch (...)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
-    }
 
-    return automationId;
+    return -1;
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_stopVerification
-(JNIEnv *env, jobject thiz, jint jId)
+Java_org_oic_simulator_client_SimulatorRemoteResource_stopVerification
+(JNIEnv *env, jobject object, jint id)
 {
-    SimulatorRemoteResourceSP resource = JniSimulatorRemoteResource::getResourceHandle(env,
-                                         thiz);
-    if (!resource)
-    {
-        throwSimulatorException(env, SIMULATOR_BAD_OBJECT, "No resource!");
-        return;
-    }
+    SimulatorRemoteResourceSP resource = SimulatorRemoteResourceToCpp(env, object);
+    VALIDATE_OBJECT(env, resource)
 
     try
     {
-        resource->stopVerification((int)jId);
+        resource->stopVerification(id);
     }
     catch (InvalidArgsException &e)
     {
@@ -881,11 +425,19 @@ Java_org_oic_simulator_clientcontroller_SimulatorRemoteResource_stopVerification
     }
     catch (NoSupportException &e)
     {
-        throwNoSupportException(env, e.code(), e.what());
-    }
-    catch (...)
-    {
-        throwSimulatorException(env, SIMULATOR_ERROR, "Unknown Exception");
+        throwNoSupportException(env, e.what());
     }
 }
 
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_client_SimulatorRemoteResource_dispose
+(JNIEnv *env, jobject object)
+{
+    JniSharedObjectHolder<SimulatorRemoteResource> *resource =
+        GetHandle<JniSharedObjectHolder<SimulatorRemoteResource>>(env, object);
+    delete resource;
+}
+
+#ifdef __cplusplus
+}
+#endif

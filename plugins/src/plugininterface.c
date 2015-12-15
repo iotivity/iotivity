@@ -95,6 +95,15 @@ OCEntityHandlerResult PluginInterfaceEntityHandler(OCEntityHandlerFlag flag,
     else
     {
         OC_LOG_V(ERROR, TAG, "Error handling request %u", ehResult);
+        PIResource * piResource = NULL;
+        result = GetResourceFromHandle(plugin, &piResource, response->resourceHandle);
+        OC_LOG_V(ERROR, TAG, "Deleting resource \"%s\" because of failed request.", piResource->uri);
+        result = DeleteResource(plugin, piResource);
+        if(result != OC_STACK_OK)
+        {
+            OC_LOG_V(ERROR, TAG, "Failed to delete resource after failed request.");
+            ehResult = OC_EH_ERROR;
+        }
     }
 
     OCPayloadDestroy(response->payload);
@@ -109,7 +118,7 @@ void piNewResourceCB(PIPluginBase * p_plugin, PIResourceBase * r_newResource)
         return;
     }
 
-    r_newResource->piResource.resourceProperties = OC_DISCOVERABLE;
+    r_newResource->piResource.resourceProperties = OC_DISCOVERABLE | OC_OBSERVABLE;
     OCStackResult result = OCCreateResource(&r_newResource->piResource.resourceHandle,
                                             r_newResource->piResource.resourceTypeName,
                                             r_newResource->piResource.resourceInterfaceName,
@@ -129,6 +138,20 @@ void piNewResourceCB(PIPluginBase * p_plugin, PIResourceBase * r_newResource)
     result = AddResourceToPlugin(p_plugin, r_newResource);
 }
 
+void piObserveNotificationUpdate(PIPluginBase * plugin, OCResourceHandle resourceHandle)
+{
+    if(!plugin)
+    {
+        return;
+    }
+
+    OCStackResult result = OCNotifyAllObservers(resourceHandle, OC_LOW_QOS);
+    if(result != OC_STACK_OK && result != OC_STACK_NO_OBSERVERS)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed to notify observers of update. Result: %d", result);
+    }
+}
+
 OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPlugin ** plugin)
 {
     if (!plugin || !comPort || strlen(comPort) == 0)
@@ -138,7 +161,10 @@ OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPlu
     OCStackResult result = OC_STACK_ERROR;
     if (pluginType == PLUGIN_ZIGBEE)
     {
-        result = ZigbeeInit(comPort, (PIPlugin_Zigbee **) plugin, piNewResourceCB);
+        result = ZigbeeInit(comPort,
+                            (PIPlugin_Zigbee **) plugin,
+                            piNewResourceCB,
+                            piObserveNotificationUpdate);
         if (result != OC_STACK_OK)
         {
             return result;
@@ -147,10 +173,10 @@ OCStackResult PIStartPlugin(const char * comPort, PIPluginType pluginType, PIPlu
         {
             return OC_STACK_ERROR;
         }
-        result = AddPlugin((PIPluginBase *) *plugin);
-        if (result == OC_STACK_OK)
+        result = AddPlugin((PIPluginBase *)*plugin);
+        if(result != OC_STACK_OK)
         {
-            result = ZigbeeDiscover((PIPlugin_Zigbee *) plugin);
+            return result;
         }
     }
     return result;
@@ -169,6 +195,24 @@ OCStackResult PIStopPlugin(PIPlugin * plugin)
 OCStackResult PIStopAll()
 {
     return DeletePluginList();
+}
+
+OCStackResult PISetup(PIPlugin * plugin)
+{
+    if (!plugin)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    OCStackResult result = OC_STACK_ERROR;
+    if (((PIPluginBase *)plugin)->type == PLUGIN_ZIGBEE)
+    {
+        result = ZigbeeDiscover((PIPlugin_Zigbee *) plugin);
+        if( result != OC_STACK_OK)
+        {
+            return result;
+        }
+    }
+    return result;
 }
 
 OCStackResult PIProcess(PIPlugin * p_plugin)

@@ -31,10 +31,10 @@
             restorable="true">
          </view>
          <view category="oic.simulator.serviceprovider.category"
-            class="oic.simulator.serviceprovider.view.MultiResourceOrchestrationView"
+            class="oic.simulator.serviceprovider.view.DevicePlatformInfoView"
             icon="icons/oic_logo_16x16.png"
-            id="oic.simulator.serviceprovider.view.orchestration"
-            name="Multi-Resource Automation"
+            id="oic.simulator.serviceprovider.view.devplatinfo"
+            name="Device/Platform Info"
             restorable="true">
          </view>
          <view category="oic.simulator.serviceprovider.category"
@@ -76,7 +76,7 @@
                id="oic.simulator.serviceprovider.view.attribute">
          </viewShortcut>
          <viewShortcut
-               id="oic.simulator.serviceprovider.view.orchestration">
+               id="oic.simulator.serviceprovider.view.devplatinfo">
          </viewShortcut>
          <viewShortcut
                id="oic.simulator.serviceprovider.view.log">

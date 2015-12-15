@@ -25,8 +25,15 @@ namespace OIC
 namespace Service
 {
 
-RequestObject::RequestObject() : pSetRequestCB(nullptr){ }
-RequestObject::RequestObject(SetRequestCallback cb) : pSetRequestCB(cb){ };
+RequestObject::RequestObject()
+: pSetRequestCB(nullptr)
+{
+}
+
+RequestObject::RequestObject(SetRequestCallback cb)
+: pSetRequestCB(cb)
+{
+}
 
 RequestObject::~RequestObject()
 {
@@ -34,42 +41,36 @@ RequestObject::~RequestObject()
 }
 
 void RequestObject::invokeRequest(RemoteObjectPtr remoteObject, RequestMethod method,
-        RCSResourceAttributes & resourceAttibutes)
+        const RCSResourceAttributes & resourceAttibutes)
 {
-    try
+    switch (method)
     {
-        switch (method)
-        {
-        case RequestMethod::Setter:
-        {
-            if(pSetRequestCB == nullptr)
-            {
-                remoteObject->setRemoteAttributes(resourceAttibutes,
-                        std::bind(&RequestObject::setRequestCB, this,
-                                std::placeholders::_1, resourceAttibutes));
-            }
-            else
-            {
-                remoteObject->setRemoteAttributes(resourceAttibutes,
-                        std::bind(pSetRequestCB,
-                                std::placeholders::_1, resourceAttibutes));
-            }
-        }
-            break;
-        case RequestMethod::Getter:
-        case RequestMethod::Delete:
-        default:
-            // unknown type of method.
-            break;
-        }
-    }catch(...)
+    case RequestMethod::Set:
     {
-        throw;
+        if(pSetRequestCB == nullptr)
+        {
+            remoteObject->setRemoteAttributes(resourceAttibutes,
+                    std::bind(&RequestObject::setRequestCB, this,
+                            std::placeholders::_1, resourceAttibutes));
+        }
+        else
+        {
+            remoteObject->setRemoteAttributes(resourceAttibutes,
+                    std::bind(pSetRequestCB,
+                            std::placeholders::_1, resourceAttibutes));
+        }
+    }
+        break;
+    case RequestMethod::Get:
+    case RequestMethod::Delete:
+    default:
+        // unknown type of method.
+        break;
     }
 }
 
 void RequestObject::setRequestCB(const RCSResourceAttributes & returnedAttributes,
-        RCSResourceAttributes & putAttibutes)
+        const RCSResourceAttributes & putAttibutes)
 {
     if(putAttibutes != returnedAttributes)
     {

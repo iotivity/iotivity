@@ -47,4 +47,3 @@ ramlsdk = raml_env.SharedLibrary('RamlParser', raml_src)
 raml_env.InstallTarget(ramlsdk, 'libRaml')
 
 SConscript('../../../extlibs/yaml/SConscript')
-SConscript('example/SConscript')

@@ -86,6 +86,23 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     }
     OC_LOG(INFO, TAG, "Anonymous cipher suite Enabled.");
 
+    caresult  = CASelectCipherSuite(TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256);
+    if (CA_STATUS_OK != caresult)
+    {
+        OC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256");
+        caresult = CAEnableAnonECDHCipherSuite(false);
+        if (CA_STATUS_OK != caresult)
+        {
+            OC_LOG_V(ERROR, TAG, "Unable to enable anon cipher suite");
+        }
+        else
+        {
+            OC_LOG(INFO, TAG, "Anonymous cipher suite Disabled.");
+        }
+        return OC_STACK_ERROR;
+    }
+    OC_LOG(INFO, TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
+
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
     CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
     if(NULL == endpoint)

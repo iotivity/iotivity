@@ -98,7 +98,14 @@ int main()
 
     std::cout << "Created Platform..." << std::endl;
 
-    registerLocalResources();
+    try
+    {
+        registerLocalResources();
+    }
+    catch (std::runtime_error e)
+    {
+        std::cout << "Caught OCException [Code: " << e.what() << std::endl;
+    }
 
     while (1)
     {

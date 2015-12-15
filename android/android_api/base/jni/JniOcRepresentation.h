@@ -653,6 +653,14 @@ extern "C" {
 
     /*
     * Class:     org_iotivity_base_OcRepresentation
+    * Method:    getHost
+    * Signature: ()Ljava/lang/String;
+    */
+    JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcRepresentation_getHost
+        (JNIEnv *, jobject);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
     * Method:    setUri
     * Signature: (Ljava/lang/String;)V
     */

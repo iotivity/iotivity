@@ -662,7 +662,7 @@ WARN_LOGFILE           =
 INPUT                  = . \
 						 ../stack/include \
 						 ../ocsocket/include \
-						 ../ocrandom/include \
+						 ../../c_common/ocrandom/include \
 						 ../occoap/include \
 
 # This tag can be used to specify the character encoding of the source files

@@ -1,5 +1,5 @@
 Name: iotivity
-Version: 0.9.2
+Version: 1.0.0
 Release: 0
 Summary: IoTivity Base Stack & IoTivity Services
 Group: System Environment/Libraries
@@ -8,7 +8,7 @@ URL: https://www.iotivity.org/
 Source0: %{name}-%{version}.tar.bz2
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
-BuildRequires:	gettext, expat-devel
+BuildRequires:	gettext
 BuildRequires:	python, libcurl-devel
 BuildRequires:	scons
 BuildRequires:	openssl-devel
@@ -122,12 +122,15 @@ cp out/tizen/*/%{build_mode}/resource/examples/simpleclientserver %{buildroot}%{
 cp out/tizen/*/%{build_mode}/resource/examples/simpleserver %{buildroot}%{_bindir}
 cp out/tizen/*/%{build_mode}/resource/examples/simpleserverHQ %{buildroot}%{_bindir}
 cp out/tizen/*/%{build_mode}/resource/examples/threadingsample %{buildroot}%{_bindir}
-
+if echo %{secure_mode}|grep -qi '1'; then
+	cp out/tizen/*/%{build_mode}/libocpmapi.a %{buildroot}%{_libdir}
+fi
+cp out/tizen/*/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
 cp out/tizen/*/%{build_mode}/lib*.so %{buildroot}%{_libdir}
 
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
-cp resource/csdk/ocrandom/include/*.h %{buildroot}%{_includedir}
+cp resource/c_common/ocrandom/include/*.h %{buildroot}%{_includedir}
 cp -r resource/oc_logger/include/* %{buildroot}%{_includedir}
 cp resource/include/*.h %{buildroot}%{_includedir}
 
@@ -145,6 +148,7 @@ cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 %{_libdir}/liboc_logger_core.so
 %{_libdir}/liboctbstack.so
 %{_libdir}/libconnectivity_abstraction.so
+%{_libdir}/lib*.a
 
 %files service
 %manifest %{name}.manifest

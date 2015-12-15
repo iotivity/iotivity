@@ -40,6 +40,9 @@ public:
     virtual OCStackResult put(
             const OC::OCRepresentation&, const OC::QueryParamsMap&, OC::PutCallback) = 0;
 
+    virtual OCStackResult post(
+            const OC::OCRepresentation&, const OC::QueryParamsMap&, OC::PostCallback) = 0;
+
     virtual OCStackResult observe(
             OC::ObserveType, const OC::QueryParamsMap&, OC::ObserveCallback) = 0;
 

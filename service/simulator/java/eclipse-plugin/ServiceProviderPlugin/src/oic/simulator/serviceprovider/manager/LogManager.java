@@ -26,11 +26,13 @@ import oic.simulator.logger.LoggerCallback;
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.listener.ILogUIListener;
 import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
 
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.oic.simulator.ILogger;
 import org.oic.simulator.ILogger.Level;
+import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorManager;
 
 /**
@@ -55,7 +57,14 @@ public class LogManager {
 
         // Set the logger callback with the native layer
         logger = new LoggerCallback();
-        SimulatorManager.setLogger(logger);
+        try {
+            SimulatorManager.setLogger(logger);
+        } catch (SimulatorException e) {
+            log(Level.ERROR.ordinal(),
+                    new Date(),
+                    "Failed to register the logger.\n"
+                            + Utility.getSimulatorErrorString(e, null));
+        }
     }
 
     private static class LogManagerSynchronizerThread implements Runnable {

@@ -507,6 +507,78 @@ void CAEDRTerminate()
 
     CAEDRNativeRemoveAllDeviceState();
     CAEDRNativeRemoveAllDeviceSocket(env);
+    CAEDRDestroyJniInterface();
+}
+
+CAResult_t CAEDRDestroyJniInterface()
+{
+    OIC_LOG(DEBUG, TAG, "CAEDRDestroyJniInterface");
+
+    if (!g_jvm)
+    {
+        OIC_LOG(ERROR, TAG, "g_jvm is null");
+        return CA_STATUS_FAILED;
+    }
+
+    bool isAttached = false;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
+    if (JNI_OK != res)
+    {
+        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if (JNI_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
+            return CA_STATUS_FAILED;
+        }
+        isAttached = true;
+    }
+
+    jclass jni_EDRJniInterface = (*env)->FindClass(env, CLASSPATH_BT_INTERFACE);
+    if (!jni_EDRJniInterface)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get CaEdrInterface class");
+        goto error_exit;
+    }
+
+    jmethodID jni_EDRInterfaceDestroyMethod = (*env)->GetStaticMethodID(env, jni_EDRJniInterface,
+                                                                        "destroyEdrInterface",
+                                                                        "()V");
+    if (!jni_EDRInterfaceDestroyMethod)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get CaEdrInterface destroy method");
+        goto error_exit;
+    }
+
+    (*env)->CallStaticVoidMethod(env, jni_EDRJniInterface, jni_EDRInterfaceDestroyMethod);
+
+    if ((*env)->ExceptionCheck(env))
+    {
+        OIC_LOG(ERROR, TAG, "destroyEdrInterface has failed");
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        goto error_exit;
+    }
+
+    OIC_LOG(DEBUG, TAG, "Destroy instance for CaEdrInterface");
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
+    return CA_STATUS_OK;
+
+error_exit:
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
+    return CA_STATUS_FAILED;
 }
 
 void CAEDRCoreJniInit()

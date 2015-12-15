@@ -140,7 +140,7 @@ static bool CACheckTimeout(uint64_t currentTime, CARetransmissionData_t *retData
 
     if (currentTime >= retData->timeStamp + timeout)
     {
-        OIC_LOG_V(DEBUG, TAG, "%d microseconds time out!!, tried count(%ld)",
+        OIC_LOG_V(DEBUG, TAG, "%zu microseconds time out!!, tried count(%d)",
                   timeout, retData->triedCount);
         return true;
     }
@@ -490,10 +490,13 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     // ACK, RST --> remove the CON data
     CAMessageType_t type = CAGetMessageTypeFromPduBinaryData(pdu, size);
     uint16_t messageId = CAGetMessageIdFromPduBinaryData(pdu, size);
+    CAResponseResult_t code = CAGetCodeFromPduBinaryData(pdu, size);
 
-    OIC_LOG_V(DEBUG, TAG, "received pdu, msgtype=%d, msgid=%d", type, messageId);
+    OIC_LOG_V(DEBUG, TAG, "received pdu, msgtype=%d, msgid=%d, code=%d",
+              type, messageId, code);
 
-    if ((CA_MSG_ACKNOWLEDGE != type) && (CA_MSG_RESET != type))
+    if (((CA_MSG_ACKNOWLEDGE != type) && (CA_MSG_RESET != type))
+        || (CA_MSG_RESET == type && CA_EMPTY != code))
     {
         return CA_STATUS_OK;
     }

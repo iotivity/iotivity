@@ -53,6 +53,9 @@ namespace OIC
             typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)>
                     SetCallback;
 
+            typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)>
+                    PutCallback;
+
             typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int, int)>
                     ObserveCallback;
 
@@ -63,6 +66,7 @@ namespace OIC
 
             virtual void requestGet(GetCallback) = 0;
             virtual void requestSet(const RCSResourceAttributes&, SetCallback) = 0;
+            virtual void requestPut(const RCSResourceAttributes&, PutCallback) = 0;
             virtual void requestObserve(ObserveCallback) = 0;
             virtual void cancelObserve() = 0;
 
