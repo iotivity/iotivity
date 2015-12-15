@@ -330,6 +330,9 @@ unsigned int coap_get_length_from_header(const unsigned char *header, coap_trans
     unsigned int length_field_data = 0;
     switch(transport)
     {
+        case coap_tcp:
+            length = header[0] >> 4;
+            break;
         case coap_tcp_8bit:
             length = header[1] + COAP_TCP_LENGTH_FIELD_8_BIT;
             break;
