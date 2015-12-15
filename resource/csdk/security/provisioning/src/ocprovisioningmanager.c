@@ -299,16 +299,42 @@ OCStackResult OCRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDis
         goto error;
     }
 
-    // Remove device info from prvisioning database.
-    res = PDMDeleteDevice(&pTargetDev->doxm->deviceID);
+    /**
+     * Change the device status as stale status.
+     * If all request are successed, this device information will be deleted.
+     */
+    res = PDMSetDeviceStale(&pTargetDev->doxm->deviceID);
     if (res != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to delete device in PDM.");
+        OC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to set device status as stale");
         goto error;
     }
 
-    // Check that we have to wait callback for DELETE request or not
+    // TODO: We need to add new mechanism to clean up the stale state of the device.
+
     res = resReq;
+
+    //Close the DTLS session of the removed device.
+    CAEndpoint_t* endpoint = (CAEndpoint_t *)&pTargetDev->endpoint;
+    endpoint->port = pTargetDev->securePort;
+    CAResult_t caResult = CACloseDtlsSession(endpoint);
+    if(CA_STATUS_OK != caResult)
+    {
+        OC_LOG_V(WARNING, TAG, "OCRemoveDevice : Failed to close DTLS session : %d", caResult);
+    }
+
+    /**
+     * If there is no linked device, PM does not send any request.
+     * So we should directly invoke the result callback to inform the result of OCRemoveDevice.
+     */
+    if(OC_STACK_CONTINUE == res)
+    {
+        if(resultCallback)
+        {
+            resultCallback(ctx, 0, NULL, false);
+        }
+        res = OC_STACK_OK;
+    }
 
 error:
     OC_LOG(INFO, TAG, "OUT OCRemoveDevice");

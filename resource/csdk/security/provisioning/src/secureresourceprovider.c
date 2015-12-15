@@ -1238,6 +1238,15 @@ static void registerResultForRemoveDevice(RemoveData_t *removeData, OicUuid_t *p
     // If we get suffcient result from linked devices, we have to call user callback and do free
     if (removeData->sizeOfResArray == removeData->numOfResults)
     {
+        if(!removeData->hasError)
+        {
+            // Remove device info from prvisioning database
+            if (OC_STACK_OK != PDMDeleteDevice(&removeData->revokeTargetDev->doxm->deviceID))
+            {
+                OC_LOG(ERROR, TAG, "ResultForRemoveDevice : Failed to remove device in PDM.");
+                removeData->hasError = true;
+            }
+        }
         removeData->resultCallback(removeData->ctx, removeData->numOfResults, removeData->removeRes,
                                    removeData->hasError);
         DeleteRemoveData_t(removeData);
@@ -1264,45 +1273,66 @@ static OCStackApplicationResult SRPRemoveDeviceCB(void *delDevCtx, OCDoHandle ha
     OCStackResult res = OC_STACK_ERROR;
 
     RemoveData_t* removeData = (RemoveData_t*)delDevCtx;
-    if (clientResponse)
+    if(removeData)
     {
-        // If we can get device's UUID from OCClientResponse, it'd be good to use it in here
-        // but OCIdentity in OCClientResponse is emtpy now.
-        // It seems that we can set identity to CAData_t *cadata in CAPrepareSendData() API
-        // but CA doesn't have deviceID yet.
-        //
-        //TODO: Get OCIdentity from OCClientResponse and use it for 'registerResultForRemoveDevice'
-        //      If we can't complete this task, Provisioning Database has always stale link status
-        //      when Remove device is called.
-
-        if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
+        if (clientResponse)
         {
-            res = PDMUnlinkDevices(&removeData->revokeTargetDev->doxm->deviceID,
-                                   NULL /*TODO: Replace NULL to uuid from OCClientResponse*/);
-            if (OC_STACK_OK != res)
+            OicUuid_t revDevUuid = {.id={0}};
+            if(UUID_LENGTH == clientResponse->identity.id_length)
             {
-                OC_LOG(FATAL, TAG, "PDMSetLinkStale() FAIL: PDB is an obsolete one.");
-                registerResultForRemoveDevice(removeData,
-                                          NULL /*TODO: Replace NULL to uuid from OCClientResponse*/,
-                                          OC_STACK_INCONSISTENT_DB, true);
-                return OC_STACK_DELETE_TRANSACTION;
+                memcpy(revDevUuid.id, clientResponse->identity.id, sizeof(revDevUuid.id));
+                if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
+                {
+                    res = PDMUnlinkDevices(&removeData->revokeTargetDev->doxm->deviceID, &revDevUuid);
+                    if (OC_STACK_OK != res)
+                    {
+                        OC_LOG(ERROR, TAG, "PDMSetLinkStale() FAIL: PDB is an obsolete one.");
+                               registerResultForRemoveDevice(removeData, &revDevUuid,
+                               OC_STACK_INCONSISTENT_DB, true);
+
+                        return OC_STACK_DELETE_TRANSACTION;
+                    }
+
+                    registerResultForRemoveDevice(removeData, &revDevUuid,
+                                                  OC_STACK_RESOURCE_DELETED, false);
+                }
+                else
+                {
+                    registerResultForRemoveDevice(removeData, &revDevUuid,
+                                                  clientResponse->result, true);
+                    OC_LOG(ERROR, TAG, "Unexpected result from DELETE credential request!");
+                }
             }
-            registerResultForRemoveDevice(removeData,
-                                          NULL /*TODO: Replace NULL to uuid from OCClientResponse*/,
-                                          OC_STACK_RESOURCE_DELETED, false);
+            else
+            {
+                OC_LOG_V(WARNING, TAG, "Incorrect length of device UUID was sent from %s:%d",
+                         clientResponse->devAddr.addr, clientResponse->devAddr.port);
+
+                if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
+                {
+                    /**
+                      * Since server's credential was deleted,
+                      * register result as OC_STACK_INCONSISTENT_DB with NULL UUID.
+                      */
+
+                    OC_LOG_V(ERROR, TAG, "But server's credential was deleted.");
+                    registerResultForRemoveDevice(removeData, NULL, OC_STACK_INCONSISTENT_DB, true);
+                }
+                else
+                {
+                    registerResultForRemoveDevice(removeData, NULL, clientResponse->result, true);
+                }
+            }
         }
         else
         {
-            registerResultForRemoveDevice(removeData,
-                                          NULL /*TODO: Replace NULL to uuid from OCClientResponse*/,
-                                          clientResponse->result, true);
-            OC_LOG(ERROR, TAG, "Unexpected result from DELETE credential request!");
+            registerResultForRemoveDevice(removeData, NULL, OC_STACK_ERROR, true);
+            OC_LOG(ERROR, TAG, "SRPRemoveDevices received Null clientResponse");
         }
     }
     else
     {
-        registerResultForRemoveDevice(removeData, NULL, OC_STACK_ERROR, true);
-        OC_LOG(ERROR, TAG, "SRPRemoveDevices received Null clientResponse");
+        OC_LOG(WARNING, TAG, "SRPRemoveDevices received null context");
     }
 
     return OC_STACK_DELETE_TRANSACTION;
