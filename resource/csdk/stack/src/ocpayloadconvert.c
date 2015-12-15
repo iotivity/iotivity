@@ -34,10 +34,6 @@
 // Arbitrarily chosen size that seems to contain the majority of packages
 #define INIT_SIZE (255)
 
-// CBOR Array Length
-#define DISCOVERY_CBOR_ARRAY_LEN 1
-// CBOR Res Map Length
-#define DISCOVERY_CBOR_RES_MAP_LEN 2
 // CBOR Links Map Length
 #define DISCOVERY_CBOR_LINKS_MAP_LEN 4
 
@@ -237,50 +233,7 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* o
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
 
-    if (payload->collectionResources)
-    {
-        CborError cborEncoderResult;
-        cborEncoderResult = cbor_encoder_create_array(&encoder, &rootArray, DISCOVERY_CBOR_ARRAY_LEN);
-        if (CborNoError != cborEncoderResult)
-        {
-            OC_LOG(ERROR, TAG, "Failed creating root array.");
-            goto cbor_error;
-        }
-
-        CborEncoder colArray;
-        cborEncoderResult = cbor_encoder_create_array(&rootArray, &colArray, CborIndefiniteLength);
-        if (CborNoError != cborEncoderResult)
-        {
-            OC_LOG(ERROR, TAG, "Failed creating collection array.");
-            goto cbor_error;
-        }
-        OCResourceCollectionPayload *colResources = payload->collectionResources;
-        while (colResources)
-        {
-            if (OC_STACK_OK != OCTagsPayloadToCbor(colResources->tags, &colArray))
-            {
-                goto cbor_error;
-            }
-            if (OC_STACK_OK != OCLinksPayloadToCbor(colResources->setLinks, &colArray))
-            {
-                goto cbor_error;
-            }
-            colResources = colResources->next;
-        }
-        cborEncoderResult = cbor_encoder_close_container(&rootArray, &colArray);
-        if (CborNoError != cborEncoderResult)
-        {
-            OC_LOG(ERROR, TAG, "Failed closing collection array.");
-            goto cbor_error;
-        }
-        cborEncoderResult = cbor_encoder_close_container(&encoder, &rootArray);
-        if (CborNoError != cborEncoderResult)
-        {
-            OC_LOG(ERROR, TAG, "Failed closing root array.");
-            goto cbor_error;
-        }
-    }
-    else if (payload->resources)
+    if (payload->resources)
     {
         /*
         The format for the payload is "modelled" as JSON.
@@ -302,30 +255,34 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* o
             }
         ]
         */
-        CborEncoder rootMap = {};
+        CborEncoder rootMap = {0};
         size_t resourceCount =  OCDiscoveryPayloadGetResourceCount(payload);
 
         // Open the main root array
         err = err | cbor_encoder_create_array(&encoder, &rootArray, 1);
 
         // Open the root map in the root array
-        err = err | cbor_encoder_create_map(&rootArray, &rootMap, DISCOVERY_CBOR_RES_MAP_LEN);
+        err = err | cbor_encoder_create_map(&rootArray, &rootMap, CborIndefiniteLength);
 
         // Insert Device ID into the root map
         err = err | cbor_encode_text_string(&rootMap, OC_RSRVD_DEVICE_ID,
                 sizeof(OC_RSRVD_DEVICE_ID) - 1);
         err = err | cbor_encode_byte_string(&rootMap, payload->sid, UUID_SIZE);
 
+        // Insert baseURI if present
+        err = err | ConditionalAddTextStringToMap(&rootMap, OC_RSRVD_BASE_URI,
+                                                  sizeof(OC_RSRVD_BASE_URI) - 1,
+                                                  payload->baseURI);
 
         // Insert Links into the root map.
-        CborEncoder linkArray = {};
+        CborEncoder linkArray = {0};
         err = err | cbor_encode_text_string(&rootMap, OC_RSRVD_LINKS,
                     sizeof(OC_RSRVD_LINKS) - 1);
         err = err | cbor_encoder_create_array(&rootMap, &linkArray, resourceCount);
 
         for(size_t i = 0; i < resourceCount; ++i)
         {
-            CborEncoder resourceMapElement = {};
+            CborEncoder resourceMapElement = {0};
             OCResourcePayload* resource = OCDiscoveryPayloadGetResource(payload, i);
             if(!resource)
             {
@@ -378,7 +335,7 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* o
             }
 
             // Policy
-            CborEncoder policyMap;
+            CborEncoder policyMap = {0};
             err = err | cbor_encode_text_string(&resourceMapElement, OC_RSRVD_POLICY,
                     sizeof(OC_RSRVD_POLICY) - 1);
             err = err | cbor_encoder_create_map(&resourceMapElement, &policyMap, CborIndefiniteLength);
@@ -401,6 +358,12 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* o
                     err = err | cbor_encode_uint(&policyMap, resource->port);
                 }
             }
+            if (payload->baseURI)
+            {
+                err = err | cbor_encode_text_string(&policyMap, OC_RSRVD_HOSTING_PORT,
+                                                    sizeof(OC_RSRVD_HOSTING_PORT) - 1);
+                err = err | cbor_encode_uint(&policyMap, resource->port);
+            }
 
             err = err | cbor_encoder_close_container(&resourceMapElement, &policyMap);
 
@@ -416,9 +379,6 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* o
     }
 
     return checkError(err, &encoder, outPayload, size);
-cbor_error:
-    OICFree(outPayload);
-    return OC_STACK_ERROR;
 }
 
 static int64_t OCConvertDevicePayload(OCDevicePayload* payload, uint8_t* outPayload,

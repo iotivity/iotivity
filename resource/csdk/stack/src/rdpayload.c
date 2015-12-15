@@ -939,26 +939,6 @@ memory_allocation_failed:
     return NULL;
 }
 
-void OCLinksAddResource(OCDiscoveryPayload *payload, const char *href, OCStringLL *rt,
-    OCStringLL *itf, const char *rel, bool obs, const char *title, const char *uri,
-    uint8_t ins, OCStringLL *mt)
-{
-    if(!payload->collectionResources->setLinks)
-    {
-        payload->collectionResources->setLinks =
-            OCCopyLinksResources(href, rt, itf, rel, obs, title, uri, ins, mt);
-    }
-    else
-    {
-        OCLinksPayload *p = payload->collectionResources->setLinks;
-        while (p->next)
-        {
-            p = p->next;
-        }
-        p->next = OCCopyLinksResources(href, rt, itf, rel, obs, title, uri, ins, mt);
-    }
-}
-
 OCResourceCollectionPayload* OCCopyCollectionResource(OCTagsPayload *tags, OCLinksPayload *links)
 {
     if (!tags || !links)
@@ -975,29 +955,6 @@ OCResourceCollectionPayload* OCCopyCollectionResource(OCTagsPayload *tags, OCLin
     pl->setLinks = links;
 
     return pl;
-}
-
-OCStackResult OCDiscoveryCollectionPayloadAddResource(OCDiscoveryPayload *payload, OCTagsPayload *tags, OCLinksPayload *links)
-{
-    OCResourceCollectionPayload* res = OCCopyCollectionResource(tags, links);
-    if (res == NULL)
-    {
-        return OC_STACK_NO_MEMORY;
-    }
-    if(!payload->collectionResources)
-    {
-        payload->collectionResources = res;
-    }
-    else
-    {
-        OCResourceCollectionPayload *p = payload->collectionResources;
-        while(p->next)
-        {
-            p = p->next;
-        }
-        p->next = res;
-    }
-    return OC_STACK_OK;
 }
 
 void OCFreeLinksResource(OCLinksPayload *payload)
@@ -1047,18 +1004,6 @@ void OCFreeCollectionResource(OCResourceCollectionPayload *payload)
     OCFreeCollectionResource(payload->next);
     OICFree(payload);
 }
-
-void OCDiscoveryCollectionPayloadDestroy(OCDiscoveryPayload* payload)
-{
-    if(!payload)
-    {
-        return;
-    }
-
-    OCFreeCollectionResource(payload->collectionResources);
-    OICFree(payload);
-}
-
 
 void OCTagsLog(const LogLevel level, const OCTagsPayload *tags)
 {

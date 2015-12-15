@@ -1119,10 +1119,12 @@ typedef struct
 
     uint8_t* sid;
 
+    /** A special case for handling RD address. */
+    char* baseURI;
+
     /** This structure holds the old /oic/res response. */
     OCResourcePayload *resources;
-    /** This structure holds the collection response for the /oic/res. */
-    OCResourceCollectionPayload *collectionResources;
+
 } OCDiscoveryPayload;
 
 /**
