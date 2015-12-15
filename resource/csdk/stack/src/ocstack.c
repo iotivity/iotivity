@@ -3743,6 +3743,11 @@ OCStackResult initResources()
                                   NULL,
                                   NULL,
                                   OC_DISCOVERABLE);
+        if(result == OC_STACK_OK)
+        {
+            result = BindResourceInterfaceToResource((OCResource *)deviceResource,
+                                                     OC_RSRVD_INTERFACE_READ);
+        }
     }
 
     if(result == OC_STACK_OK)
@@ -3754,6 +3759,11 @@ OCStackResult initResources()
                                   NULL,
                                   NULL,
                                   OC_DISCOVERABLE);
+        if(result == OC_STACK_OK)
+        {
+            result = BindResourceInterfaceToResource((OCResource *)platformResource,
+                                                     OC_RSRVD_INTERFACE_READ);
+        }
     }
 
     return result;
