@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<container>    
+    <bundle>
+        <id>oic.bundle.IASensor</id>
+        <path>libIASensorBundle.so</path>
+        <activator>iasensor</activator>
+        <version>1.0.0</version>
+        <resources>
+            <resourceInfo>
+                <name>IASensor</name>
+                <resourceType>oic.r.sensor</resourceType>
+                <outputs>
+                    <output>
+                        <name>IAresult</name>
+                        <type>json</type>
+                    </output>
+                </outputs>
+                <inputs>
+                    <input>
+                        <name>motion</name>
+                        <type>bool</type>
+                        <resourceType>oic.r.sensor.motion</resourceType>
+                        <resourceUri>/Thing_MotionSensor</resourceUri>
+                    </input>
+                    <input>
+                        <name>wireless</name>
+                        <type>string</type>
+                        <resourceType>oic.r.sensor.wireless</resourceType>
+                        <resourceUri>/Thing_WirelessSensor</resourceUri>
+                    </input>
+                </inputs>
+            </resourceInfo>       
+        </resources>
+    </bundle>
+</container>
