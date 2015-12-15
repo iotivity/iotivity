@@ -52,6 +52,8 @@ void DiscoverResourceUnit::startDiscover(DiscoverResourceInfo info, UpdatedCB up
         return;
     }
 
+    OC_LOG_V(DEBUG, CONTAINER_TAG, "Start discover%s", info.resourceUri.c_str());
+
     m_Uri = info.resourceUri;
     m_ResourceType = info.resourceType;
     m_AttrubuteName = info.attributeName;
@@ -86,6 +88,7 @@ void DiscoverResourceUnit::discoverdCB(RCSRemoteResourceObject::Ptr remoteObject
 {
     if (remoteObject && !isAlreadyDiscoveredResource(remoteObject))
     {
+        OC_LOG_V(DEBUG, CONTAINER_TAG, "Discovered%s", uri.c_str());
         RemoteResourceUnit::Ptr newDiscoveredResource =
             RemoteResourceUnit::createRemoteResourceInfo(remoteObject, pUpdatedCBFromServer);
 

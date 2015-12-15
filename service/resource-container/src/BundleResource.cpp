@@ -70,8 +70,10 @@ namespace OIC
                 m_resourceAttributes[it->key()] = it->value();
             }
 
-            if (notify && m_pNotiReceiver)
-                            m_pNotiReceiver->onNotificationReceived(m_uri);
+            if (notify && m_pNotiReceiver){
+                OC_LOG_V(INFO, "BUNDLE_RESOUCE", "Notifying receiver");
+                m_pNotiReceiver->onNotificationReceived(m_uri);
+            }
         }
 
         void BundleResource::setAttributes(RCSResourceAttributes &attrs)
