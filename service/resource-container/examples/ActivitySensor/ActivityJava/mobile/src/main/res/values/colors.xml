@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="colorPrimary">#259b24</color>
+    <color name="colorPrimaryDark">#056f00</color>
+    <color name="colorAccent">#72d572</color>
+    <color name="colorControlHighlight">#a3e9a4</color>
+    <color name="colorText">#ff767676</color>
+    <color name="pressed_bg">#9ccc65</color>
+    <color name="selected_bg">#dcedc8</color>
+
+    <color name="graph_color_1">#FF3f51b5</color>
+    <color name="graph_color_2">#FF9c27b0</color>
+    <color name="graph_color_3">#FF009688</color>
+    <color name="graph_color_4">#FF8bc34a</color>
+    <color name="graph_color_5">#FFffc107</color>
+    <color name="graph_color_6">#FF795548</color>
+    <color name="graph_color_7">#FFe51c23</color>
+    <color name="graph_color_8">#FFcddc39</color>
+    <color name="graph_color_9">#FFff9800</color>
+    <color name="graph_color_info">#FF9e9e9e</color>
+    <color name="graph_color_tag">#AA000000</color>
+</resources>

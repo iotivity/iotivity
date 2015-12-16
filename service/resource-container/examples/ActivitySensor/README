@@ -1,0 +1,25 @@
+Team 24
+=========================
+
+We developed a soft sensor that reads sensor data values from a smartwatch.
+We obtained three sensor values, the GPS, the heart rate, and the acceleration 
+using a combination of the smartwatch and android phones. 
+
+We have a linux environment and android bundle environment that both operates
+in the same manner. We created the linux environment to allow interactivity
+with the smartwatch using bluetooth. 
+
+After obtaining these values, we calculated the activity levels of a person
+And we were able to determine how much activity a person is doing,
+and whether the activity level is dangerous to the person based on 
+how fast he is moving, and his heart rate, and how much his location changes. 
+
+There are three  activity levels
+one is NORMAL, when the user is having normal activity levels, nothing special
+one is EXERCISING, when the user is doing exercise,
+the last is ABNORMAL, when the user is not moving but still having abornal heart rate.
+
+===================================
+
+
+

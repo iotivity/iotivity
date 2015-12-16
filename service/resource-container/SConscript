@@ -169,24 +169,28 @@ if target_os in ['linux', 'tizen', 'android']:
         Command("WeightSensorApp", BMI_SENSOR_BUNDLE_DIR + "src/inputSensors/WeightSensorApp/WeightSensorApp", Copy("$TARGET", "$SOURCE"))
 
 ######################################################################
-# build Fire Alarm sensor sample bundle
-######################################################################
+#  Activity Sensor sample bundle
+#####################################################################
 if target_os in ['linux']:
-    FA_sensor_bundle_env = resource_container_env.Clone()
-    FA_sensor_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+	activity_bundle_env = resource_container_env.Clone()
+	activity_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+	
+	ACTIVITY_BUNDLE_DIR = 'examples/ActivitySensor/'
 
-    FA_SENSOR_BUNDLE_DIR = 'examples/FireAlarmSensor/FireAlarmBundle_linux/'
-    FA_sensor_bundle_env.AppendUnique(CPPPATH = [ FA_SENSOR_BUNDLE_DIR + 'include' ])
+	activity_bundle_env.AppendUnique(CPPPATH = [ ACTIVITY_BUNDLE_DIR + 'include' ])
 
-    FA_sensor_bundle_env.PrependUnique(LIBS = ['rcs_container'])
+	activity_bundle_env.PrependUnique(LIBS = ['rcs_container'])
 
-    FA_sensor_bundle_src = [ Glob(FA_SENSOR_BUNDLE_DIR + 'src/*.cpp')]
+	activity_bundle_src = [ Glob(ACTIVITY_BUNDLE_DIR + 'src/*.cpp')]
 
-    FASensorBundle = FA_sensor_bundle_env.SharedLibrary('FASensorBundle', FA_sensor_bundle_src)
-    FA_sensor_bundle_env.InstallTarget(FASensorBundle, 'libFASensorBundle')
+	ActivitySensorBundle = activity_bundle_env.SharedLibrary('ActivitySensorBundle', activity_bundle_src)
+	activity_bundle_env.InstallTarget(ActivitySensorBundle, 'libActivitySensorBundle')
 
-    SConscript(FA_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
-    Command("THLSensorApp", FA_SENSOR_BUNDLE_DIR + "src/inputSensors/THLSensorApp/THLSensorApp", Copy("$TARGET", "$SOURCE"))
+if target_os == 'linux' :
+        SConscript(ACTIVITY_BUNDLE_DIR + 'src/inputSensors/SConscript')
+ #       Command("HeightSensorApp", BMI_SENSOR_BUNDLE_DIR + "src/inputSensors/HeightSensorApp/HeightSensorApp", Copy("$TARGET", "$SOURCE"))
+        Command("ActivitySensorApp", ACTIVITY_BUNDLE_DIR + "src/inputSensors/ActivitySensorApp/ActivitySensorApp", Copy("$TARGET", "$SOURCE"))
+
 
 ######################################################################
 # build hue sample bundle
@@ -261,72 +265,3 @@ env.AppendTarget('containersampleclient')
 ######################################################################
 if target_os == 'android':
     SConscript('android/SConscript')
-
-######################################################################
-# build IA sensor sample bundle
-######################################################################
-if target_os in ['linux']:
-    IA_sensor_bundle_env = resource_container_env.Clone()
-    IA_sensor_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
-
-    IA_SENSOR_BUNDLE_DIR = 'examples/IASensorBundle/'
-    IA_sensor_bundle_env.AppendUnique(CPPPATH = [ IA_SENSOR_BUNDLE_DIR + 'include' ])
-
-    IA_sensor_bundle_env.PrependUnique(LIBS = ['rcs_container'])
-
-    IA_sensor_bundle_src = [ Glob(IA_SENSOR_BUNDLE_DIR + 'src/*.cpp')]
-
-    IASensorBundle = IA_sensor_bundle_env.SharedLibrary('IASensorBundle', IA_sensor_bundle_src)
-    IA_sensor_bundle_env.InstallTarget(IASensorBundle, 'libIASensorBundle')
-
-    if target_os == 'linux' :
-        SConscript(IA_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
-        Command("WirelessSensorApp", IA_SENSOR_BUNDLE_DIR + "src/inputSensors/WirelessSensorApp/WirelessSensorApp", Copy("$TARGET", "$SOURCE"))
-        Command("MotionSensorApp", IA_SENSOR_BUNDLE_DIR + "src/inputSensors/MotionSensorApp/MotionSensorApp", Copy("$TARGET", "$SOURCE"))
-
-    iacontainer_env = resource_container_env.Clone();
-    iacontainer_env.AppendUnique(LINKFLAGS=["-rdynamic"])
-
-    # Copy test configuration
-    Command(IA_SENSOR_BUNDLE_DIR + "/IAContainer/IAContainerConfig.xml", IA_SENSOR_BUNDLE_DIR + "/IAContainer/IAContainerConfig.xml", Copy("$TARGET", "$SOURCE"))
-    Ignore(IA_SENSOR_BUNDLE_DIR + "/IAContainer/IAContainerConfig.xml", IA_SENSOR_BUNDLE_DIR + "/IAContainer/IAContainerConfig.xml")
-
-    Command(IA_SENSOR_BUNDLE_DIR + "/IAContainer/index.html", IA_SENSOR_BUNDLE_DIR + "/IAContainer/index.html", Copy("$TARGET", "$SOURCE"))
-    Ignore(IA_SENSOR_BUNDLE_DIR + "/IAContainer/index.html", IA_SENSOR_BUNDLE_DIR + "/IAContainer/index.html")
-
-    Command(IA_SENSOR_BUNDLE_DIR + "/IAContainer/script.js", IA_SENSOR_BUNDLE_DIR + "/IAContainer/script.js", Copy("$TARGET", "$SOURCE"))
-    Ignore(IA_SENSOR_BUNDLE_DIR + "/IAContainer/script.js", IA_SENSOR_BUNDLE_DIR + "/IAContainer/script.js")
-
-    Command(IA_SENSOR_BUNDLE_DIR + "/IAContainer/jquery.js", IA_SENSOR_BUNDLE_DIR + "/IAContainer/jquery.js", Copy("$TARGET", "$SOURCE"))
-    Ignore(IA_SENSOR_BUNDLE_DIR + "/IAContainer/jquery.js", IA_SENSOR_BUNDLE_DIR + "/IAContainer/jquery.js")
-
-    iacontainer_env.AppendUnique(LIBS = ['rcs_container'])
-
-    iacontainerapp_src = [IA_SENSOR_BUNDLE_DIR + '/IAContainer/IAContainer.cpp']
-    iacontainerapp = iacontainer_env.Program('IAContainer',iacontainerapp_src)
-    Alias("iacontainer", iacontainerapp)
-    env.AppendTarget('iacontainer')
-
-######################################################################
-# build Energy Saver sample bundle
-######################################################################
-if target_os in ['linux']:
-    Energy_saver_bundle_env = resource_container_env.Clone()
-    Energy_saver_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
-
-    ENERGY_SAVER_BUNDLE_DIR = 'examples/EnergySaverBundle/'
-    Energy_saver_bundle_env.AppendUnique(CPPPATH = [ ENERGY_SAVER_BUNDLE_DIR + 'include' ])
-
-    Energy_saver_bundle_env.PrependUnique(LIBS = ['rcs_container'])
-
-    Energy_saver_bundle_src = [ Glob(ENERGY_SAVER_BUNDLE_DIR + 'src/*.cpp')]
-
-    EnergySaverBundle = Energy_saver_bundle_env.SharedLibrary('EnergySaverBundle', Energy_saver_bundle_src)
-    Energy_saver_bundle_env.InstallTarget(EnergySaverBundle, 'libEnergySaverBundle')
-
-    if target_os == 'linux' :
-        SConscript(ENERGY_SAVER_BUNDLE_DIR + 'src/inputSensors/SConscript')
-        Command("EntranceCheckSensorApp", ENERGY_SAVER_BUNDLE_DIR + "src/inputSensors/EntranceCheckSensorApp/EntranceCheckSensorApp", Copy("$TARGET", "$SOURCE"))
-        Command("LightSensorApp", ENERGY_SAVER_BUNDLE_DIR + "src/inputSensors/LightSensorApp/LightSensorApp", Copy("$TARGET", "$SOURCE"))
-
-

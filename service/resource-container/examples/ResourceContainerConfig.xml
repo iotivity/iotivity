@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <container>    
-    <bundle>
+<!--    <bundle>
         <id>oic.bundle.discomfortIndexSensor</id>
         <path>libDISensorBundle.so</path>
         <activator>disensor</activator>
@@ -38,7 +38,31 @@
             </resourceInfo>       
         </resources>
     </bundle>
+-->
 
+   <bundle>
+	<id>oic.bundle.activitySensor</id>
+   	<path>activitySensorBundle.so</path>
+	<activator>activitysensor</activator>
+	<version>1.0.0</version>
+	<resources>
+		<resourceInfo>
+			<name>ActivitySensor</name>
+			<resourceType>oic.r.sensor</resourceType>
+			<outputs>
+				<output>
+					<name>accelerator</name>
+					<type>double</type>
+				</output>
+				<output>
+					<name>heartrate</name>
+					<type>double</type>
+				</output>
+			</outputs>
+		</resourceinfo>
+	</resources>
+    </bundle>
+<!--
     <bundle>
         <id>oic.bundle.BMISensor</id>
         <path>libBMISensorBundle.so</path>
@@ -85,7 +109,9 @@
             </resourceInfo>       
         </resources>
     </bundle>
-    
+
+   -->
+    <!--
     <bundle>
         <id>oic.bundle.hueJavaSample</id>       
         <path>../../../../../../service/resource-container/examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar</path>
@@ -102,126 +128,6 @@
             </resourceInfo>       
         </resources>
     </bundle>
-
-    <bundle>
-        <id>oic.bundle.EnergySaver</id>
-        <path>libEnergySaverBundle.so</path>
-        <activator>energysaver</activator>
-        <version>1.0.0</version>
-        <resources>
-            <resourceInfo>
-                <name>EnergySaver</name>
-                <resourceType>oic.r.sensor</resourceType>
-                <outputs>
-                    <output>
-                        <name>EnergySaverResult</name>
-                        <type>int</type>
-                    </output>
-                </outputs>
-                <inputs>
-                    <input>
-                        <name>light</name>
-                        <type>double</type>
-                        <resourceType>oic.r.sensor.light</resourceType>
-                        <resourceUri>/Thing_LightSensor</resourceUri>
-                    </input>
-                    <input>
-                        <name>peopleCount</name>
-                        <type>int</type>
-                        <resourceType>oic.r.sensor.entrancecheck</resourceType>
-                        <resourceUri>/Thing_EntranceCheckSensor</resourceUri>
-                    </input>
-                </inputs>
-            </resourceInfo>       
-        </resources>
-    </bundle>
-
-    <bundle>
-        <id>oic.bundle.fireAlarmSensor_android</id>       
-        <path>/service/resource-container/examples/FireAlarmSensor/FireAlarmBundle/app/target/fireAlarm.jar</path>
-        <libraryPath>.</libraryPath>
-        <uri>/fireAlarm</uri>
-        <activator>org.iotivity.service.sample.FireAlarmActivator</activator>
-        <version>1.0.0</version>
-        <resources>
-            <resourceInfo>
-                <name>FireAlarmSensor</name>
-                <resourceType>oic.r.fireAlarm</resourceType>
-                <outputs>
-                    <output>
-                        <name>fireAlarmLevel</name>
-                        <type>int</type>
-                    </output>
-                </outputs>
-                <inputs>
-                    <input>
-                        <name>humiditySensor</name>
-                        <type>double</type>
-                        <resourceType>oic.r.humiditysensor</resourceType>
-                    </input>
-                    <input>
-                        <name>temperatureSensor</name>
-                        <type>double</type>
-                        <resourceType>oic.r.temperaturesensor</resourceType>
-                    </input>
-                    <input>
-                        <name>lightSensor</name>
-                        <type>double</type>
-                        <resourceType>oic.r.lightsensor</resourceType>
-                    </input>
-                    <input>
-                        <name>accelerometer</name>
-                        <type>double</name>
-                        <resourceType>oic.r.accelerometer</resourceType>
-                    </input>
-                    <input>
-                        <name>runningSensor</name>
-                        <type>boolean</type>
-                        <resourceType>oic.r.runningsensor</resourceType>
-                    </input>
-                </inputs>
-            </resourceInfo>       
-        </resources>
-    </bundle>
-
-    <bundle>
-        <id>oic.bundle.fireAlarmSensor_linux</id>
-        <path>libFASensorBundle.so</path>
-        <activator>fasensor</activator>
-        <version>1.0.0</version>
-        <resources>
-            <resourceInfo>
-                <name>FireAlarmSensor</name>
-                <resourceType>oic.r.sensor</resourceType>
-                <outputs>
-                    <output>
-                        <name>fireAlarmLevel</name>
-                        <type>int</type>
-                    </output>
-                </outputs>
-                <inputs>
-                    <input>
-                        <name>humidity</name>
-                        <type>double</type>
-                        <resourceType>oic.r.humidity</resourceType>
-                        <resourceUri>/Thing_THLSensor</resourceUri>
-                    </input>
-                    <input>
-                        <name>temperature</name>
-                        <type>double</type>
-                        <resourceType>oic.r.temperature</resourceType>
-                        <resourceUri>/Thing_THLSensor</resourceUri>
-                    </input>
-                    <input>
-                        <name>light</name>
-                        <type>double</type>
-                        <resourceType>oic.r.light</resourceType>
-                        <resourceUri>/Thing_THLSensor</resourceUri>
-                    </input>
-                </inputs>
-            </resourceInfo>       
-        </resources>
-    </bundle>
-
-
+    -->
+    
 </container>
