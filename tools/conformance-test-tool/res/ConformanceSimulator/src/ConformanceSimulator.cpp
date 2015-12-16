@@ -28,6 +28,7 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 
+#define ACTUATOR_INTERFACE "oic.if.a"
 #define LIGHT_1_URI "/device/light-1"
 #define LIGHT_2_URI "/device/light-2"
 #define LIGHT_3_URI "/device/light-3"
@@ -450,7 +451,7 @@ void onDelete(const HeaderOptions &headerOptions, const int eCode)
     }
     else
     {
-        cout << "onPOST Response error: " << eCode << endl;
+        cout << "onDELETE Response error: " << eCode << endl;
     }
     hasCallbackArrived = true;
 }
@@ -543,7 +544,7 @@ void createResource()
     {
         createdLightResource = new SampleResource();
         createdLightResource->setResourceProperties(LIGHT_1_URI, RESOURCE_TYPE_LIGHT,
-        OC_RSRVD_INTERFACE_DEFAULT);
+                ACTUATOR_INTERFACE);
         OCStackResult result = createdLightResource->startServer();
 
         if (result == OC_STACK_OK)
@@ -557,8 +558,9 @@ void createResource()
         }
 
         createdFanResource = new SampleResource();
-        createdFanResource->setResourceProperties(FAN_1_URI, RESOURCE_TYPE_FAN, DEFAULT_INTERFACE);
+        createdFanResource->setResourceProperties(FAN_1_URI, RESOURCE_TYPE_FAN, ACTUATOR_INTERFACE);
         uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE;
+
         result = createdFanResource->startServer(resourceProperty);
         createdFanResource->setAsSlowResource();
 
@@ -591,8 +593,7 @@ void createManyLightResources()
             uri = baseUri + to_string(lightCount++);
             manyResources[i] = new SampleResource();
             manyResources[i]->setResourceProperties(uri, RESOURCE_TYPE_LIGHT,
-            OC_RSRVD_INTERFACE_DEFAULT);
-            //                "oic.if.a");
+                    ACTUATOR_INTERFACE);
             OCStackResult result = manyResources[i]->startServer();
 
             if (result == OC_STACK_OK)
@@ -622,7 +623,7 @@ void createSecuredResource()
 
         securedLightResource = new SampleResource();
         securedLightResource->setResourceProperties(LIGHT_SECURED_URI, RESOURCE_TYPE_LIGHT,
-        OC_RSRVD_INTERFACE_DEFAULT);
+                ACTUATOR_INTERFACE);
         uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE;
         OCStackResult result = securedLightResource->startServer(resourceProperty);
 
@@ -638,7 +639,7 @@ void createSecuredResource()
 
         securedFanResource = new SampleResource();
         securedFanResource->setResourceProperties(FAN_SECURED_URI, RESOURCE_TYPE_FAN,
-                DEFAULT_INTERFACE);
+                ACTUATOR_INTERFACE);
         resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_SECURE;
         result = securedFanResource->startServer(resourceProperty);
 
@@ -666,7 +667,7 @@ void createInvisibleResource()
     {
         invisibleFanResource = new SampleResource();
         invisibleFanResource->setResourceProperties(FAN_INVISIBLE_URI, RESOURCE_TYPE_FAN,
-                DEFAULT_INTERFACE);
+                ACTUATOR_INTERFACE);
         uint8_t resourceProperty = OC_ACTIVE;
         OCStackResult result = invisibleFanResource->startServer(resourceProperty);
 
@@ -682,7 +683,7 @@ void createInvisibleResource()
 
         invisibleLightResource = new SampleResource();
         invisibleLightResource->setResourceProperties(LIGHT_INVISIBLE_URI, RESOURCE_TYPE_LIGHT,
-                DEFAULT_INTERFACE);
+                ACTUATOR_INTERFACE);
         resourceProperty = OC_ACTIVE;
         result = invisibleLightResource->startServer(resourceProperty);
 

@@ -1,4 +1,4 @@
-/* 
+/*
    Copyright 2011 Rolf Kulemann, Pascal Bockhorn
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,12 +25,8 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.RollingFileAppender;
 import org.apache.log4j.helpers.LogLog;
 
-import com.google.common.io.Closer;
-
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.Properties;
 
 public class LogConfiguratorJava {
@@ -74,16 +70,13 @@ public class LogConfiguratorJava {
     }
 
     public void readConfigurationFromFile(String fileName) throws IOException {
-        Closer closer = Closer.create();
 
         try {
-            InputStream configFileStream = closer.register(this.getClass()
-                    .getClassLoader().getResourceAsStream(fileName));
-            Reader reader = closer.register(new InputStreamReader(
-                    configFileStream, "UTF-8"));
+
+            FileReader fileReader = new FileReader(fileName);
 
             Properties properties = new Properties();
-            properties.load(reader);
+            properties.load(fileReader);
 
             String logLevelSetting = properties.getProperty("logLevel").trim();
             String fileOutputSetting = properties.getProperty("fileOutput")
@@ -91,8 +84,8 @@ public class LogConfiguratorJava {
             String fileNameSetting = properties.getProperty("fileName").trim();
             String fileLogMsgFormatSetting = properties
                     .getProperty("fileMsgPattern");
-            String consoleOutputSetting = properties.getProperty(
-                    "consoleOutput").trim();
+            String consoleOutputSetting = properties
+                    .getProperty("consoleOutput").trim();
             String consoleLogMsgFormatSetting = properties
                     .getProperty("consoleMsgPattern");
 
@@ -136,7 +129,8 @@ public class LogConfiguratorJava {
             if (fileLogMsgFormatSetting.length() > 0)
                 setFilePattern(fileLogMsgFormatSetting);
             else
-                setFilePattern("[%c] [%d{dd MMM yyyy} %d{HH:mm:ss.SSS}] %l [%-5p] - %m%n");
+                setFilePattern(
+                        "[%c] [%d{dd MMM yyyy} %d{HH:mm:ss.SSS}] %l [%-5p] - %m%n");
 
             if (consoleOutputSetting.toLowerCase().equals("false"))
                 setUseConsoleAppender(false);
@@ -146,13 +140,11 @@ public class LogConfiguratorJava {
             if (consoleLogMsgFormatSetting.length() > 0)
                 setConsolePattern(consoleLogMsgFormatSetting);
             else
-                setConsolePattern("[%c] [%d{dd MMM yyyy} %d{HH:mm:ss.SSS}] %l [%-5p] - %m%n");
+                setConsolePattern(
+                        "[%c] [%d{dd MMM yyyy} %d{HH:mm:ss.SSS}] %l [%-5p] - %m%n");
         } catch (IOException e) {
             e.printStackTrace();
 
-        } finally {
-
-            closer.close();
         }
     }
 
@@ -161,10 +153,12 @@ public class LogConfiguratorJava {
 
         setUseFileAppender(false);
         setFileName("ConformanceTool.log");
-        setFilePattern("[%c] [%d{dd MMM yyyy} %d{HH:mm:ss.SSS}] %l [%-5p] - %m%n");
+        setFilePattern(
+                "[%c] [%d{dd MMM yyyy} %d{HH:mm:ss.SSS}] %l [%-5p] - %m%n");
 
         setUseConsoleAppender(true);
-        setConsolePattern("[%c] [%d{dd MMM yyyy} %d{HH:mm:ss.SSS}] %l [%-5p] - %m%n");
+        setConsolePattern(
+                "[%c] [%d{dd MMM yyyy} %d{HH:mm:ss.SSS}] %l [%-5p] - %m%n");
     }
 
     public void configure() {

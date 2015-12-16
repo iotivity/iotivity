@@ -82,26 +82,68 @@ static void control_handler(evutil_socket_t fd, short which, void* arg)
 
     	printf("Parsing the message\n");
 
-    	int msgCode = parse_command(msg);
+    	int msgCode;
+    	int msgId;
+
+    	int success = parse_command(msg, &msgCode, &msgId);
 
     	if(msgCode == 1)
     	{
     		int server_fd = open_connection(g_server_ip, g_port, g_cipher);
+    		int response_code = 101;
 
-			server_event = event_new(base, server_fd, EV_READ | EV_PERSIST, periodic_read, NULL);
-			event_add(server_event, NULL);
+    		if(server_fd == -1)
+    		{
+    			printf("dtls open connection failed\n");
+    			response_code = 201;
+    		}
+    		else
+    		{
+    			printf("dtls open connection success\n");
+    			server_event = event_new(base, server_fd, EV_READ | EV_PERSIST, periodic_read, NULL);
+    			event_add(server_event, NULL);
+    		}
+
+    		unsigned char data[MSG_SIZE];
+
+    		int size = get_private_data(response_code, msgId, data);
+
+    		printf("sending dtls open connection response ...\n");
+
+    		int sendSize = sendto(fd, data, size, 0, (struct sockaddr*) &client, len);
+
+    		printf("%d bytes response send\n", sendSize);
     	}
     	else if(msgCode == 2)
     	{
-    		close_connection();
-    		event_del(server_event);
+    		int success = close_connection();
+    		int responseCode = 202;
+    		unsigned char data[MSG_SIZE];
+
+    		if(success)
+    		{
+    			responseCode = 102;
+    			event_del(server_event);
+    		}
+
+    		printf("sending dtls open connection response ...\n");
+
+    		int offset = 0;
+    		data[offset++] = responseCode & 0xFF;
+			data[offset++] = (msgId >> 8) & 0xFF;
+			data[offset++] = msgId & 0xFF;
+			data[offset++] = 0;
+
+    		int sendSize = sendto(fd, data, offset, 0, (struct sockaddr*) &client, len);
+
+    		printf("%d bytes response send\n", sendSize);
     	}
     }
 }
 
 int main(int argc, char** argv)
 {
-    int control_fd;
+	int control_fd;
 
     int ret, ch, on = 1;
     struct event* control_event;

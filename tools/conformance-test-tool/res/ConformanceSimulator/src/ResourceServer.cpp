@@ -165,7 +165,7 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
     result = OCPlatform::registerResource(m_resourceHandle, m_resourceURI, m_resourceTypeName,
             m_resourceInterface, std::bind(&ResourceServer::entityHandler, this, PH::_1),
             resourceProperty);
-    OCPlatform::bindInterfaceToResource(m_resourceHandle, "oic.if.a");
+    OCPlatform::bindInterfaceToResource(m_resourceHandle, OC_RSRVD_INTERFACE_DEFAULT);
 
     if (result != OC_STACK_OK)
     {
@@ -197,7 +197,8 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
         types.push_back(m_resourceTypeName);
         m_representation.setResourceTypes(types);
 
-        m_representation.addResourceInterface("oic.if.a");
+        m_representation.addResourceInterface(OC_RSRVD_INTERFACE_DEFAULT);
+        m_representation.setUri(m_resourceURI);
     }
 
     return result;

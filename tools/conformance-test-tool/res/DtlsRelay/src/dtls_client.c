@@ -160,6 +160,18 @@ bail:
     return res;
 }
 
+static int generate_owner_psk(const uint8_t* label, const size_t labelLen,
+        const uint8_t* rsrcServerDeviceID, const size_t rsrcServerDeviceIDLen,
+        const uint8_t* provServerDeviceID, const size_t provServerDeviceIDLen,
+        uint8_t* ownerPSK, const size_t ownerPSKSize)
+{
+	int ret = dtls_prf_with_current_keyblock(
+			g_dtls_context, (session_t*)(&g_dst), label, labelLen,
+			rsrcServerDeviceID, rsrcServerDeviceIDLen, provServerDeviceID, provServerDeviceIDLen, ownerPSK, ownerPSKSize);
+
+	return ret;
+}
+
 static int get_psk_info(struct dtls_context_t *ctx,
 	    const session_t *session,
 	    dtls_credentials_type_t type,
@@ -170,12 +182,6 @@ static int get_psk_info(struct dtls_context_t *ctx,
   {
   	  case DTLS_PSK_IDENTITY:
 
-          if (result_length < sizeof(g_client_identity))
-          {
-              printf("ERROR : Wrong value for result for storing IDENTITY");
-              return -1;
-          }
-
           memcpy(result, g_client_identity, g_client_identity_len);
           return g_client_identity_len;
 
@@ -185,7 +191,7 @@ static int get_psk_info(struct dtls_context_t *ctx,
 		  {
 				if (result_length < sizeof(g_psk))
 				{
-					printf("ERROR : Wrong value for result for storing RS_CLIENT_PSK");
+					printf("ERROR : Wrong value for result for storing RS_CLIENT_PSK\n");
 					return -1;
 				}
 
@@ -281,11 +287,12 @@ static int dtls_handle_read(struct dtls_context_t *ctx)
 	return dtls_handle_message(ctx, &session, g_rcv, len);
 }
 
-static int resolve_address(const char *server, struct sockaddr *dst)
+static int resolve_address(const char *server, int port, struct sockaddr *dst)
 {
 	struct addrinfo *res, *ainfo;
 	struct addrinfo hints;
 	static char addrstr[256];
+	char portstr[10];
 	int error;
 
 	memset(addrstr, 0, sizeof(addrstr));
@@ -298,14 +305,18 @@ static int resolve_address(const char *server, struct sockaddr *dst)
 		memcpy(addrstr, "localhost", 9);
 	}
 
+	sprintf(portstr, "%d", port);
+
+	printf("Server: %s\n", server);
+	printf("addrstr: %s\n", addrstr);
+	printf("portstr: %s\n", portstr);
+
 	memset ((char *)&hints, 0, sizeof(hints));
 
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_protocol = 0;
-	hints.ai_flags = AI_ADDRCONFIG;
 
-	error = getaddrinfo(addrstr, "", &hints, &res);
+	error = getaddrinfo(addrstr, portstr, &hints, &res);
 
 	if (error != 0)
 	{
@@ -381,13 +392,28 @@ int open_connection(char* ip, int port, int cipher)
 		ecdh_anon_enalbe = DTLS_CIPHER_ENABLE;
 	}
 
-	if(selected_cipher == TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 || selected_cipher == TLS_PSK_WITH_AES_128_CCM_8)
+	if(selected_cipher == TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256)
 	{
 		g_psk_len = 16;
 		DeriveCryptoKeyFromPassword(g_password, strlen(g_password), g_client_identity, 16, 1000, g_psk_len, g_psk);
+		int i;
+		printf("pre-shared key: ");
+		for(i = 0; i < g_psk_len; i++)
+		{
+			printf("%02x ", g_psk[i]);
+		}
+		printf("\n");
+	}
+	else if(selected_cipher == TLS_PSK_WITH_AES_128_CCM_8)
+	{
+		if(g_psk_len == -1)
+		{
+			printf("Private data not found for cipher TLS_PSK_WITH_AES_128_CCM_8\n");
+			return -1;
+		}
 	}
 
-	printf("Calling dtls_int\n");
+	printf("Calling dtls_init\n");
 
 	dtls_init();
 
@@ -398,12 +424,13 @@ int open_connection(char* ip, int port, int cipher)
 
 	memset(&g_dst, 0, sizeof(session_t));
 
-	res = resolve_address(ip, &g_dst.addr.sa);
+	printf("ip address: %s\n", ip);
+
+	res = resolve_address(ip, port, &g_dst.addr.sa);
 
 	if (res < 0)
 	{
 		printf("failed to resolve address\n");
-		return -1;
 	}
 
 	g_dst.size = res;
@@ -472,6 +499,20 @@ int open_connection(char* ip, int port, int cipher)
 
 	printf("Dtls option Connection Successful\n");
 
+	if(selected_cipher == TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256)
+	{
+		char label[] = "oic.sec.doxm.jw";
+		g_psk_len = 16;
+		int ret = generate_owner_psk(label, strlen(label),
+				g_client_identity, g_client_identity_len, g_server_identity, g_server_identity_len, g_psk, g_psk_len);
+
+		if(!ret)
+		{
+			printf("generate_owner_psk returns %d\n", ret);
+			return -1;
+		}
+	}
+
 	printf("Dtls option Connection Out\n");
 
 	return g_server_fd;
@@ -494,7 +535,10 @@ int send_message(char* str, int str_len,int data_fd, fun_ptr fptr)
 
 int close_connection()
 {
-	dtls_close(g_dtls_context, &g_dst);
+	if(dtls_close(g_dtls_context, &g_dst) < 0)
+	{
+		return 0;
+	}
 
 	dtls_free_context(g_dtls_context);
 

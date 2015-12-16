@@ -437,6 +437,7 @@ public class OICCoapServer {
                 OICObserver oicObserver = new OICObserver();
                 oicObserver.setCoapServerChannel(channel);
                 oicObserver.setCoapRequest(request);
+                oicObserver.setSeqNumber(4);
                 mOicResourceMap.get(requestUri).addObserver(requestToken,
                         oicObserver);
             }
@@ -523,7 +524,6 @@ public class OICCoapServer {
         CoapResponse postResponse = channel.createResponse(request,
                 CoapResponseCode.Changed_204);
         // Seperate Response
-        // CoapResponse postResponse = channel.createSeparateResponse(request, CoapResponseCode.Changed_204);
         postResponse.setContentType(CoapMediaType.cbor);
         // Confirm receiving last block request and [piggyback response with ACK]
         if (request.getBlock1() != null)
@@ -546,8 +546,6 @@ public class OICCoapServer {
         ObjectMapper mapper = new ObjectMapper();
         try {
             jsonNodeTree = mapper.readTree(substr);
-            mlogger.info("Handle POST Request: before create:"
-                    + jsonNodeTree.get("href").toString() + "finish");
             if (jsonNodeTree.get("href") != null
                     && (!jsonNodeTree.get("href").toString().equals("\"\""))) {
                 newResUri += jsonNodeTree.get("href").toString()
@@ -587,20 +585,25 @@ public class OICCoapServer {
 
     }
 
-    private byte[] discoverJson(ArrayList<OICCoapResource> mOicResource) {
-        JSONArray jsonArray = new JSONArray();
-        JSONObject toPayload = new JSONObject();
+    @SuppressWarnings("unchecked")
+	private byte[] discoverJson(ArrayList<OICCoapResource> mOicResource) {
+        JSONArray mainArray = new JSONArray();
+        JSONArray linksArray = new JSONArray();
+        JSONObject mainJsonObject = new JSONObject();
+        mainJsonObject.put("di", "059952a1-7f2f-4ef8-b47b-0b3dc834732b");
+        
         for (OICCoapResource res : mOicResource) {
             mlogger.info("Res Uri: " + res.getResourceUri());
             mlogger.info("Res Uri: " + res.getResourceType());
             CTLogger.getInstance().info(
-                    "Cumulative Array : " + jsonArray.toJSONString());
-            jsonArray.add(jSONFromResource(res));
-            toPayload = jSONFromResource(res);
+                    "Cumulative Array : " + linksArray.toJSONString());
+            linksArray.add(jSONFromResource(res));
         }
-
+        mainJsonObject.put("links", linksArray);
+        mainArray.add(mainJsonObject);
+        
         CTLogger.getInstance().info("Inside discover Json without HAshmap : ");
-        String jsonString = jsonArray.toJSONString().replace("\\", "");
+        String jsonString = mainArray.toJSONString().replace("\\", "");
         mlogger.info("Discovery response payload: " + jsonString);
         return CborManager.convertToCbor(jsonString,
                 OCPayloadType.PAYLOAD_TYPE_DISCOVERY);
@@ -609,7 +612,6 @@ public class OICCoapServer {
     private JSONObject jSONFromResource(OICCoapResource resource) {
         JSONObject jsonObjectProp = new JSONObject();
         JSONObject jsonObjectOC = new JSONObject();
-        JSONArray jsonObjectLINK = new JSONArray();
         JSONObject jsonObjectRES = new JSONObject();
         JSONObject jsonObjectBM = new JSONObject();
         // bm is added
@@ -618,11 +620,8 @@ public class OICCoapServer {
         jsonObjectRES.put("p", jsonObjectBM);
         jsonObjectRES.put("if", resource.getResourceInterfaces());
         jsonObjectRES.put("href", resource.getResourceUri());
-        jsonObjectLINK.add(jsonObjectRES);
-
-        jsonObjectOC.put("di", "059952a1-7f2f-4ef8-b47b-0b3dc834732b");
-        jsonObjectOC.put("links", jsonObjectLINK);
-        return jsonObjectOC;
+        
+        return jsonObjectRES;
     }
 
     private void createResource(JsonNode jsonNodeTree) {
@@ -743,7 +742,6 @@ public class OICCoapServer {
                         mBlockSize);
 
             CoapResponse putBlockResponse = channel.createResponse(request, responseCode); /* piggy back response */
-//            CoapResponse putBlockResponse = channel.createSeparateResponse(request, responseCode); /* seperate response */
             putBlockResponse.setContentType(CoapMediaType.cbor);
             putBlockResponse.setBlock1(block1);
             channel.sendSeparateResponse(putBlockResponse);

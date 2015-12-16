@@ -127,7 +127,7 @@ const int SUCCESS_RESPONSE = 0;
 #define OPERATING_SYSTEM_VERSION "10"
 #define HARDWARE_VERSION "1.0.0"
 #define FIRMWARE_VERSION "1.0.1"
-#define SUPPORT_URL "support..samsung.com"
+#define SUPPORT_URL "support.samsung.com"
 #define SYSTEM_TIME "00:00:00"
 #define DEVICE_NAME "IotivitySmartRoom"
 
@@ -185,7 +185,6 @@ public:
 
     map< OCStackResult, string > m_resultMap;
     GroupManager m_groupManager;
-//        GroupSynchronization* m_pGroupSynchronization;
     ThingsConfiguration* m_pThingsConfiguration;
     ThingsMaintenance* m_pThingsMaintenance;
     int m_actionSetCallbackCount;
@@ -208,50 +207,6 @@ public:
             OCStackResult expectedResult, int expectedResourceCount, string &errorMsg);
 
     /**
-     * @brief   Function to Find Group and Verify
-     * @param   groupTypeList - A vector of groupType
-     * @param   expectedResult - Result that is expected from the findGroup API
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool findGroupAndVerify(vector< string > groupTypeList, OCStackResult expectedResult,
-//                                string &errorMsg);
-    /**
-     * @brief   Function to Create Group and Verify
-     * @param   groupType - Type of the Group
-     * @param   expectedResult - Result that is expected from the createGroup API
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool createGroupAndVerify(string groupType, OCStackResult expectedResult, string &errorMsg);
-    /**
-     * @brief   Function to Delete Group and Verify
-     * @param   groupType - Type of the Group
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool deleteGroupAndVerify(string groupType, string &errorMsg);
-    /**
-     * @brief   Function to Join Group and Verify
-     * @param   resource - Resource Pointer
-     * @param   resourceHandle - OCResourceHandle& instance
-     * @param   expectedResult - Result that is expected from the joinGroup API
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool joinGroupAndVerify(const std::shared_ptr< OCResource > resource,
-//                                OCResourceHandle &resourceHandle, OCStackResult expectedResult, string &errorMsg);
-    /**
-     * @brief   Function to Join Group and Verify
-     * @param   groupType - Type of the Group
-     * @param   resourceHandle - OCResourceHandle& instance
-     * @param   expectedResult - Result that is expected from the joinGroup API
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool joinGroupAndVerify(string groupType, OCResourceHandle &resourceHandle,
-//                                OCStackResult expectedResult, string &errorMsg);
-    /**
      * @brief   Function to Join Group and Verify
      * @param[in]   groupType - Type of the Group
      * @param[in]   groupType - Type of the resource to join
@@ -273,16 +228,6 @@ public:
     bool doBootstrapAndVerify(OCStackResult expectedResult, int expectedErrorCode,
             string &errorMsg);
 
-    /**
-     * @brief   Function to Leave Group and Verify
-     * @param   groupType - Type of the Group
-     * @param   resourceHandle - OCResourceHandle& instance
-     * @param   expectedResult - Result that is expected from the leaveGroup API
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool leaveGroupAndVerify(string groupType, OCResourceHandle &resourceHandle,
-//                                 OCStackResult expectedResult, string &errorMsg);
     /**
      * @brief   Function to getConfiguration and Verify
      * @param   resource - Resource Pointer
@@ -374,32 +319,6 @@ public:
     vector< shared_ptr< OCResource > > getGroupList(void);
 
     /**
-     * @brief   Function to Initialize Group by Creating then Registering then Joining and Verify
-     * @param   resourceType - Type of the Resource
-     * @param   resourceHandle - OCResourceHandle& instance
-     * @param   expectedResourceCount - Expected found Group count
-     * @param   isCreateRequested - true if new Group Creation is requested otherwise false
-     * @param   isJoinRequested - true if Joining to Group is requested otherwise false
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool initialzeGroupUsingGroupType(string groupType, string resourceType,
-//                                          OCResourceHandle &resourceHandle, int expectedResourceCount, bool isCreateRequested,
-//                                          bool isJoinRequested, string &errorMsg);
-    /**
-     * @brief   Function to Initialize Group by Creating then Registering then Joining and Verify
-     * @param   resourceType - Type of the Resource
-     * @param   resourceHandle - OCResourceHandle& instance
-     * @param   expectedResourceCount - Expected found Group count
-     * @param   isCreateRequested - true if new Group Creation is requested otherwise false
-     * @param   isJoinRequested - true if Joining to Group is requested otherwise false
-     * @param   errorMsg - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool initialzeGroupUsingGroupPointer(string groupType, string resourceType,
-//                                             OCResourceHandle &resourceHandle, int expectedResourceCount, bool isCreateRequested,
-//                                             bool isJoinRequested, string &errorMsg);
-    /**
      * @brief   Function to Create Action
      * @param   resource - Type of the Resource
      * @param   capability - Capabilities of the Action
@@ -426,15 +345,6 @@ public:
      */
     bool IsCallbackTimeoutOccured(int &callbackMonitor, int timeOut);
 
-    /**
-     * @brief   Function to Initialize Group by Finding and Then Adding ActionSet and Verify
-     * @param   groupManager - Pointer to GroupManager Instance
-     * @param   actionSet - Pointer to ActionSet Instance
-     * @param   errorMessage - A reference of Error Message
-     * @return  bool - If verified returns true otherwise false
-     */
-//        bool initializeAndAddActionSet(GroupManager *groupManager, ActionSet *actionSet,
-//                                       string &errorMessage);
     /**
      * @brief   Function to Initialize Group by Finding and Then Adding ActionSet and Verify
      * @param   actionSet - Pointer to ActionSet Instance

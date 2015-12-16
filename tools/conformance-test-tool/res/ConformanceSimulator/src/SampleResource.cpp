@@ -109,7 +109,7 @@ void SampleResource::handleObserveRequest(QueryParamsMap &queryParamsMap,
         if (m_listOfObservers.size() > 0)
         {
             cout << "Removing observer from observer list" << endl;
-            cout << "Observe Info: " << observationInfo.obsId << endl;
+            cout << "Observe Info: " << observationInfo.address << endl;
             m_listOfObservers.erase(
                     remove(m_listOfObservers.begin(), m_listOfObservers.end(),
                             observationInfo.obsId), m_listOfObservers.end());
@@ -335,14 +335,14 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
             cout << "Resource representation is updated!! Sending Notification to observers"
                     << endl;
             notifyObservers(this);
-//            response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
-//            response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+            response->setErrorCode(COAP_RESPONSE_CODE_UPDATED);
+            response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
         }
         else
         {
             cout << "Incoming Representation not supported by this resource!!" << endl;
-//            response->setErrorCode(405);
-//            response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+            response->setErrorCode(COAP_RESPONSE_CODE_ERROR);
+            response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
         }
 
     }

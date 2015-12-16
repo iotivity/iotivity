@@ -21,7 +21,7 @@ apply plugin: "java"
 apply plugin: "eclipse"
 
 repositories {
-    jcenter()
+    jcenter{url "http://jcenter.bintray.com"}
 }
 
 jar {
@@ -44,6 +44,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.6.3'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.3'
     compile 'com.googlecode.json-simple:json-simple:1.1.1'
+    compile 'commons-codec:commons-codec:1.10'
     compile 'org.json:json:20140107'
 }
 

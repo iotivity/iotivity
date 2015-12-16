@@ -66,5 +66,21 @@ CT1.3.9 Partial CON UPDATE Message based on CoAP
     \	Run Keyword if    ${update_support} == ${False}    Should Be Equal	${COAP_RESPONSE_CODE_ERROR}	${dut2_response_code}
     \	${dut2_payload}	Run Keyword if    ${update_support} == ${True}    Get Response Json	${dut2_response}
     \	Run Keyword if    ${update_support} == ${True}    Check Modified Partial Representation Value     ${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}      ${dut2_payload}
+    \   ${msgid}    Generate Message Id
+    \   ${token}    Generate Token
+    \	${dut2_response}	Send Get Request	${UNICAST}	${COAP}	${msgid}	${token}	${resource_ip}	${${resource_port}}    ${resource_href}    ${CONFIRMABLE}
+    \	Should Not Be Empty		${dut2_response}
+    \	${duty_response_type}	Get Response Type	${dut2_response}
+    \	Should Be Equal    ${duty_response_type}	${ACK}   
+    \	${dut2_response_code}    Get Response Code       ${dut2_response}
+    \	${dut2_response_token}    Get Response Token       ${dut2_response}
+    \	Should Be Equal             ${dut2_response_token}    ${token}
+    \	${dut2_response_msgid}   Get Response Msgid       ${dut2_response}
+    \	Should Be Equal             ${dut2_response_msgid}    ${msgid}
+    \	Should Be Equal    ${COAP_RESPONSE_CODE_RETRIEVED}    ${dut2_response_code}
+    \	${dut2_response_json}	Get Response Json	${dut2_response}
+    \	${validate_json_result}    Validate JSON Format        ${dut2_response_json}
+    \	Should Be True	${validate_json_result}
+    \	Run Keyword if    ${update_support} == ${True}    Check Modified Partial Representation Value     ${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}      ${dut2_response_json}
     Release DUT information     ${DUT1_ID}
 

@@ -3,7 +3,9 @@ package oic.ctt.network.control;
 public class SecurityConstants {
 
     public enum ArgumentType {
-        IP_V4_ADDRESS(1), IP_V6_ADDRESS(2), PORT(3), CIPHER_SUITE(4), CLIENT_IDENTITY(5), SERVER_IDENTITY(6), PASSWORD(7);
+        IP_V4_ADDRESS(1), IP_V6_ADDRESS(2), PORT(3), CIPHER_SUITE(
+                4), CLIENT_IDENTITY(5), SERVER_IDENTITY(6), PASSWORD(
+                        7), PRIVATE_DATA(8);
 
         private int mArgumentTypeValue;
 
@@ -19,16 +21,18 @@ public class SecurityConstants {
                     return IP_V6_ADDRESS;
                 case 3:
                     return PORT;
-                case 4: 
+                case 4:
                     return CIPHER_SUITE;
-                case 5: 
+                case 5:
                     return CLIENT_IDENTITY;
-                case 6: 
+                case 6:
                     return SERVER_IDENTITY;
-                case 7: 
-                    return PASSWORD;                        
+                case 7:
+                    return PASSWORD;
+                case 8:
+                    return PRIVATE_DATA;
                 default:
-                    throw new IllegalArgumentException("Invalid Message Code");
+                    throw new IllegalArgumentException("Invalid Argument Code");
             }
         }
 

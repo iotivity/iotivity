@@ -22,7 +22,7 @@ apply plugin: "java"
 apply plugin: "eclipse"
 
 repositories {
-    jcenter()
+    jcenter{url "http://jcenter.bintray.com"}
 }
 
 sourceSets {

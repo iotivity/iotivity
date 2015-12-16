@@ -33,12 +33,14 @@ import org.slf4j.Logger;
 import org.ws4d.coap.connection.OICCTFlags;
 import org.ws4d.coap.interfaces.CoapResponse;
 import org.ws4d.coap.interfaces.CoapServerChannel;
+import org.ws4d.coap.messages.CoapMediaType;
 import org.ws4d.coap.messages.CoapResponseCode;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -165,11 +167,13 @@ public class OICCoapResource {
             CoapResponse response = notificationChannel.createNotification(
                     observer.getCoapRequest(), CoapResponseCode.Content_205,
                     observer.getSeqNumber());
-            response.setObserveOption(OICHelper.hexStringToByteArray(String
-                    .format("%08d", observer.getSeqNumber())));
+
+            byte[] bytes = ByteBuffer.allocate(4).putInt(observer.getSeqNumber()).array();
+            response.setObserveOption(bytes);
 
             response.setToken(observer.getCoapRequest().getToken());
             response.setPayload(payload);
+            response.setContentType(CoapMediaType.cbor);
 
             OICCTFlags.addToken(response.getMessageID(), token);
             notificationChannel.sendNotification(response);
@@ -299,21 +303,9 @@ public class OICCoapResource {
      */
     public byte[] getResourceRepresentation() {
         JSONObject jsonObject = new JSONObject();
-        JSONArray jsonArray = new JSONArray();
-        JSONObject jsonProp = new JSONObject();
-        JSONObject jsonRep = new JSONObject();
-        jsonRep.putAll(mOicResourceAttributes);
+        jsonObject.putAll(mOicResourceAttributes);
 
-        jsonProp.put("if", mResourceInterface);
-        jsonProp.put("rt", mResourceType);
-
-        jsonObject.put("href", mResourceUri);
-        jsonObject.put("prop", jsonProp);
-        jsonObject.put("rep", jsonRep);
-
-        jsonArray.add(jsonObject);
-
-        String jsonStr = jsonArray.toJSONString().replace("\\", "");
+        String jsonStr = jsonObject.toJSONString().replace("\\", "");
         mlogger.info("getResourceRepresentation: " + jsonStr);
         return CborManager.convertToCbor(jsonStr,
                 OCPayloadType.PAYLOAD_TYPE_REPRESENTATION);
@@ -327,13 +319,13 @@ public class OICCoapResource {
      */
     public void updateResourceRespresentation(String payloadString) {
         mlogger.info("POST Request for UpdateResource: " + payloadString);
-        String substr = payloadString.substring(1, payloadString.length() - 1);
+        String substr = payloadString.substring(0, payloadString.length());
 
         ObjectMapper mapper = new ObjectMapper();
         try {
             JsonNode jsonNodeTree = mapper.readTree(substr);
 
-            JsonNode repJsonNode = jsonNodeTree.get("rep");
+            JsonNode repJsonNode = jsonNodeTree;
             Iterator<String> it = repJsonNode.fieldNames();
             while (it.hasNext()) {
                 String subField = it.next();
@@ -385,7 +377,7 @@ public class OICCoapResource {
             mOicResourceAttributes.clear();
             JsonNode jsonNodeTree = mapper.readTree(substr);
 
-            JsonNode repJsonNode = jsonNodeTree.get("rep");
+            JsonNode repJsonNode = jsonNodeTree;
             Iterator<String> it = repJsonNode.fieldNames();
             while (it.hasNext()) {
                 String subField = it.next();

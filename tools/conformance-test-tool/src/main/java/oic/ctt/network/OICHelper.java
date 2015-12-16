@@ -65,7 +65,7 @@ public class OICHelper {
 
     /**
      * Sets default value for OIC
-     *
+     * 
      * @param oic
      *            OIC value as string
      */
@@ -256,15 +256,19 @@ public class OICHelper {
      *
      * @param jsonData
      *            Json string to coverted into a pretty one
-     * @return formatted pretty Json  in string
+     * @return formatted pretty Json in string
      */
-    public static String getPrettyJson(String jsonData){
+    public static String getPrettyJson(String jsonData) {
         ObjectMapper mapper = new ObjectMapper();
         String prettyJson = "";
-
+        
+        if(jsonData.isEmpty() || (jsonData == null))
+            return prettyJson;
         try {
             Object json = mapper.readValue(jsonData, Object.class);
-            prettyJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+            prettyJson = mapper.writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(json);
+            System.out.println(prettyJson);
         } catch (IOException e) {
             e.printStackTrace();
         }

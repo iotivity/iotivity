@@ -7,7 +7,8 @@
 
 #ifndef COM_PARSER_H_
 #define COM_PARSER_H_
-int comm_parse(unsigned char *str);
 
+int parse_command(unsigned char *str, int* msgCode, int* msgId);
+int get_private_data(int msg_code, int msg_id, unsigned char data[]);
 
 #endif /* COM_PARSER_H_ */

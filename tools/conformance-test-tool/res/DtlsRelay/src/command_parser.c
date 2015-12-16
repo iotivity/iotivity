@@ -25,6 +25,7 @@ typedef enum argument_list
     CLIENT_IDENTITY,
 	SERVER_IDENTITY,
 	PASSWORD,
+	PRIVATE_DATA,
 	KEY,
     TOTAL_COUNT
 }argList;
@@ -100,13 +101,18 @@ void getArgumentValue(carg cArg, unsigned char *str)
 			strcpy(g_password, buffer);
 			printf("Password: %s\n", g_password);
 			break;
+        case PRIVATE_DATA:
+        	strcpy(g_psk, buffer);
+        	g_psk_len = strlen(g_psk);
+			printf("Private data: %s\n", g_psk);
+			break;
         default:
             break;
 
     }
 }
 
-int parse_command(unsigned char *str)
+int parse_command(unsigned char *str, int* msgCode, int* msgId)
 {
     int i=0;
 
@@ -134,5 +140,37 @@ int parse_command(unsigned char *str)
         offset += scommand.cArg.length;
     }
 
-    return scommand.msgCode;
+    *msgCode = scommand.msgCode;
+    *msgId = scommand.msgId;
+
+    return 1;
+}
+
+int get_private_data(int msg_code, int msg_id, unsigned char data[])
+{
+	int i;
+	int bufferLength;
+	int argLength = 0;
+	int argCount = 1;
+	int argType = 8;
+	int offset = 0;
+	int valueLength = 0;
+
+	data[offset++] = msg_code & 0xFF;
+	data[offset++] = (msg_id >> 8) & 0xFF;
+	data[offset++] = msg_id & 0xFF;
+	data[offset++] = argCount & 0xFF;
+
+	data[offset++] = argType & 0xFF;
+
+	valueLength = g_psk_len;
+	data[offset++] = (valueLength >> 8) & 0xFF;
+	data[offset++] = valueLength & 0xFF;
+
+	for (i = 0; i < valueLength; i++)
+	{
+		data[offset++] = g_psk[i];
+	}
+
+	return offset;
 }

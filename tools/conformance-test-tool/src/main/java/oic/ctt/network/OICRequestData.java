@@ -125,10 +125,10 @@ public class OICRequestData {
         OICRequestData oicRequest = new OICRequestData();
 
         oicRequest.setProtocolType(OICClient.Protocol.COAP);
-        oicRequest.setRequestValue(MessageParameters.msgType, request
-                .getPacketType().toString());
-        oicRequest.setRequestValue(MessageParameters.srcAddress, request
-                .getSourceIP().split("/")[1]);
+        oicRequest.setRequestValue(MessageParameters.msgType,
+                request.getPacketType().toString());
+        oicRequest.setRequestValue(MessageParameters.srcAddress,
+                request.getSourceIP().split("/")[1]);
         oicRequest.setRequestValue(MessageParameters.srcPort,
                 Integer.toString(request.getSourcePort()));
         oicRequest.setRequestValue(MessageParameters.requestCode,

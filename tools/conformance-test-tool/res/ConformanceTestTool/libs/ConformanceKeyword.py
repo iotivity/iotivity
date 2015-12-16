@@ -330,7 +330,8 @@ class ConformanceKeyword(object):
         #            self.get_request_header(self.request) + '\n   '
         #        self.log_to_console(what)
                 result = self.get_request_result(self.request)
-                self.print_testcase_get(DUT, TE, ' Request Message from DUT', result)
+                to_show = self.get_request_description(self.request)
+                self.print_testcase_get(DUT, TE, ' Request Message from DUT', to_show)
                 return result
         return None
 
@@ -985,6 +986,20 @@ class ConformanceKeyword(object):
         return logs
 
     # Documentation for a function
+    # @brief get description of request
+    # @param input_response
+    # @return request_value as log string
+    def get_request_description(self, input_request):
+        logs = REQUEST_CODE + \
+            self.get_request_value(input_request, OICHelper.MessageParameters.requestCode) + '\n   '
+        logs += SOURCE_ADDRESS + self.get_request_value(
+            input_request, OICHelper.MessageParameters.srcAddress) + ':' + self.get_request_value(
+            input_request, OICHelper.MessageParameters.srcPort) + '\n   '
+        logs += PAYLOAD + \
+            OICHelper.getPrettyJson(self.get_request_value(input_request, OICHelper.MessageParameters.payload)) + '\n   '
+        return logs
+
+    # Documentation for a function
     # @brief get response code
     # @param input_response
     # @return response_code as result
@@ -1291,8 +1306,8 @@ class ConformanceKeyword(object):
         if request_code is not None:
             request_result = request_code
         else:
-            request_result = ""
-        request_payload = OICHelper.getPrettyJson(self.get_request_value(request, OICHelper.MessageParameters.payload))
+            request_result = ""          
+        request_payload = self.get_request_value(request, OICHelper.MessageParameters.payload)
         if request_payload is not None:
             request_result = request_result + "\n" + request_payload
         else:
@@ -1332,37 +1347,22 @@ class ConformanceKeyword(object):
 
     def create_json_representation(self):
         self.json_representation = HashMap()
-        self.prop_map = HashMap()
-        self.rep_map = HashMap()
-        self.resource_type_array = ArrayList()
-        self.resource_interface_array = ArrayList()
-
+        self.rep_map = JsonData()
+  
     def add_into_json_representation(self, key, value, data_type=None):
-        if key == "href":
-            self.json_representation.put(key, value)
-            self.resource_href = value
-        elif key == "dis":
-            self.resource_dis = int(value)
-        elif key == "rt":
-            self.resource_type = value
-        elif key == "if":
-            self.resource_interface_array.add(value)       
-        else:
-            if data_type == "int":
-                value = int(value)
-            elif data_type == "float":
-                value = float(value)
-            elif data_type == "bool":
-                value = Boolean.valueOf(value)
-            elif data_type == "array":
-                json_array = JsonData(value)
-                value = json_array.toArray()
-            self.rep_map.put(key, value)
+        if data_type == "int":
+            value = int(value)
+        elif data_type == "float":
+            value = float(value)
+        elif data_type == "bool":
+            value = Boolean.valueOf(value)
+        elif data_type == "array":
+            json_array = JsonData(value)
+            value = json_array.toArray()
+        self.rep_map.put(key , value )
 
     def get_json_string(self):
-        key = IotivityKey.REP.toString()
         intermediate_representation = HashMap()
-        intermediate_representation.put(key, self.json_representation)
         key = IotivityKey.ROOT.toString()
         final_representation = JsonData()
         final_representation.put(key, intermediate_representation)
@@ -1401,26 +1401,7 @@ class ConformanceKeyword(object):
                 return listofvalues[i]
 
     def get_json_representation(self):
-        if self.rep_map.isEmpty():
-            self.prop_map.put("rt", self.resource_type)
-            self.prop_map.put("dis", self.resource_dis)
-            self.rep_map.put("sample_key", "sample_value")
-        if self.resource_interface_array.size() != 0:
-            self.prop_map.put("if", self.resource_interface_array)    
-        
-        final_representation = JsonData()
-        
-        if self.resource_href != None:
-            final_representation.put("href", self.resource_href)
-        if not self.prop_map.isEmpty():
-            self.prop_map.put("rep", self.rep_map)
-            final_representation.put("prop", self.prop_map)
-        else:    
-            final_representation.put("rep", self.rep_map)
-        temp = ArrayList()
-        temp.add(final_representation)
-#        json_string = final_representation.toString()
-        json_string = temp.toString()
+        json_string = self.rep_map.toString()
         what = CREATED_PAYLOAD + json_string + '\n'
                
         return json_string

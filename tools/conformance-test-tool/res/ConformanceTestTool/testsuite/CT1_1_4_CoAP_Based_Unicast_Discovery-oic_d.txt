@@ -43,7 +43,5 @@ CT1.1.4 CoAP Based Unicast Discovery - oic_d
     Should Be True          ${validate_json_result}
     ${dut1_response_code}   Get Response Code       ${dut1_response}
     Should Be Equal         ${COAP_RESPONSE_CODE_SUCCESS}   ${dut1_response_code}
-    ${response_href}    Get Json Value    ${HREF}     ${dut1_response_json}
-    Should Contain    ${response_href}    ${OIC_CORE_RESOURCE_DEVICE_URI}
     Check Representation    ${DUT1_ID}      ${dut1_response_json}   Json   ${DISCOVERABLE}=1                @{REPRESENTATION_OIC_D}
     Release DUT information     ${DUT1_ID}

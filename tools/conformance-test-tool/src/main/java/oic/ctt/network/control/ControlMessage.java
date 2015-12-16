@@ -37,8 +37,13 @@ public class ControlMessage {
     private int                        mMessageId;
     private InetAddress                mRemoteAddress;
     private int                        mRemotePort;
-    private ArrayList<MessageArgument> messageArguments = new ArrayList<MessageArgument>();
+    private ArrayList<MessageArgument> mMessageArguments = new ArrayList<MessageArgument>();
     public static final int            HEADER_LENGTH    = 4;
+
+    public ControlMessage() {
+        mMessageCode = null;
+        mMessageId = OICHelper.getRandomMessageId();
+    }
 
     public MessageCode getMessageCode() {
         return mMessageCode;
@@ -56,13 +61,28 @@ public class ControlMessage {
         this.mMessageId = messageId;
     }
 
-    public ControlMessage() {
-        mMessageCode = null;
-        mMessageId = OICHelper.getRandomMessageId();
+    public void addArgument(MessageArgument msgArgument) {
+        mMessageArguments.add(msgArgument);
     }
 
-    public void addArgument(MessageArgument msgArgument) {
-        messageArguments.add(msgArgument);
+    public void addArgumentPrivateData(byte[] privateData){
+        MessageArgument pvDataArg = new MessageArgument();
+        pvDataArg.setType(ArgumentType.PRIVATE_DATA);
+        pvDataArg.setValue(privateData);
+        this.addArgument(pvDataArg);
+    }
+
+    public byte[] getPrivateData()
+    {
+        for(MessageArgument messageArgument : mMessageArguments)
+        {
+            if(messageArgument.getType().equals(ArgumentType.PRIVATE_DATA))
+            {
+                return messageArgument.getValue();
+            }
+        }
+
+        return null;
     }
 
     public void addArgumentIpAddress(String ipAddress) {
@@ -186,13 +206,13 @@ public class ControlMessage {
         // Determine the length of message
         int bufferLength;
         int argLength = 0;
-        int argCount = messageArguments.size();
+        int argCount = mMessageArguments.size();
         int offset = 0;
         int valueLength = 0;
         int i;
 
         if (argCount > 0) {
-            for (MessageArgument msgArgument : messageArguments) {
+            for (MessageArgument msgArgument : mMessageArguments) {
                 argLength += msgArgument.getLength() + 3; // Type: 1 byte,
                                                           // Length: 2 bytes
             }
@@ -210,7 +230,7 @@ public class ControlMessage {
 
         // Arguments
         if (argCount > 0) {
-            for (MessageArgument msgArgument : messageArguments) {
+            for (MessageArgument msgArgument : mMessageArguments) {
                 // [Type] [Length] [Value]
                 msgBytes[offset++] = (byte) (msgArgument.getType().getValue()
                         & 0xFF);

@@ -112,17 +112,18 @@ public class OICResponseData {
      *            CoapResponse message object
      * @return OICResponse message object
      */
-    public static OICResponseData convertResponseCoap(CoapResponse coapResponse) {
+    public static OICResponseData convertResponseCoap(
+            CoapResponse coapResponse) {
         if (coapResponse == null)
             return null;
 
         OICResponseData response = new OICResponseData();
 
         response.setProtocolType(OICClient.Protocol.COAP);
-        response.setResponseValue(MessageParameters.msgType, coapResponse
-                .getPacketType().toString());
-        response.setResponseValue(MessageParameters.srcAddress, coapResponse
-                .getSourceIP().split("/")[1]);
+        response.setResponseValue(MessageParameters.msgType,
+                coapResponse.getPacketType().toString());
+        response.setResponseValue(MessageParameters.srcAddress,
+                coapResponse.getSourceIP().split("/")[1]);
         response.setResponseValue(MessageParameters.srcPort,
                 Integer.toString(coapResponse.getSourcePort()));
         response.setResponseValue(MessageParameters.responseCode,

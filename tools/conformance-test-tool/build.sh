@@ -78,7 +78,10 @@ fi
 cd res/ConformanceSimulator/bin/linux/
 RunCommand "find . -type f -not -iname '*.o' -exec cp '{}' '../../../../bin/linux/ConformanceSimulator' ';' " "Conformance Simulator Installation"
 cd ../../../../
-RunCommand "cp -r res/DtlsRelay/bin/linux bin/linux/DtlsRelay" "Dtls Relay Installation"
+cd res/DtlsRelay/bin/linux/
+RunCommand "find . -type f -not -iname '*.o' -exec cp '{}' '../../../../bin/linux/DtlsRelay' ';' " "Dtls Relay Installation"
+cd ../../../../
+#RunCommand "cp -r res/DtlsRelay/bin/linux bin/linux/DtlsRelay" "Dtls Relay Installation"
 RunCommand "cp -r res/ConformanceTestTool/libs/* bin/linux/ConformanceTestTool/plugins/oic.ctt.ui_1.0.0/libs/" "Dependent Jars Installation"
 
 # Buiding JCOAP

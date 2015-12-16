@@ -1,6 +1,6 @@
 #include "global.h"
 
-#define DEFAULT_STRING_SIZE 20
+#define DEFAULT_STRING_SIZE 50
 //#define DEBUG_MODE
 
 typedef void (*fun_ptr)(uint8 *data, size_t len);
