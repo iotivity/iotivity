@@ -59,6 +59,7 @@ cp -R ./extlibs/tinydtls/ $sourcedir/tmp/con/extlibs/
 cp -R ./extlibs/timer/ $sourcedir/tmp/con/extlibs/
 mkdir -p $sourcedir/tmp/con/c_common
 cp -R ./resource/c_common/* $sourcedir/tmp/con/c_common/
+cp -R ./resource/csdk/logger/include/* $sourcedir/tmp/con/common/inc/
 
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm $sourcedir/tmp

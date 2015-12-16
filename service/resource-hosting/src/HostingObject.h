@@ -26,12 +26,12 @@
 #include "RCSResourceObject.h"
 #include "RequestObject.h"
 
+#define OIC_HOSTING_LOG(level, fmt, args...) OIC_LOG_V((level), PCF("Hosting"), fmt, ##args)
+
 namespace OIC
 {
 namespace Service
 {
-
-void OIC_HOSTING_LOG(LogLevel level, const char * format, ...);
 
 class HostingObject : public std::enable_shared_from_this<HostingObject>
 {
