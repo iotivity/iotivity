@@ -24,6 +24,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "global.h"
+#include "timer.h"
 #include <netdb.h>
 
 #ifdef __WITH_X509__
@@ -63,6 +64,12 @@ static ca_mutex g_dtlsContextMutex = NULL;
  * @brief callback to get DTLS credentials
  */
 static CAGetDTLSPskCredentialsHandler g_getCredentialsCallback = NULL;
+
+/**
+ * @var MAX_RETRANSMISSION_TIME
+ * @brief Maximum timeout value (in seconds) to start DTLS retransmission.
+ */
+#define MAX_RETRANSMISSION_TIME 1
 
 /**
  * @var g_dtlsHandshakeCallback
@@ -992,6 +999,48 @@ exit:
 
 #endif
 
+static void CAStartRetransmit()
+{
+    static int timerId = -1;
+    clock_time_t nextSchedule = MAX_RETRANSMISSION_TIME;
+
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "CAStartRetransmit IN");
+
+    if (timerId != -1)
+    {
+        //clear previous timer
+        unregisterTimer(timerId);
+
+        ca_mutex_lock(g_dtlsContextMutex);
+
+        //stop retransmission if context is invalid
+        if(NULL == g_caDtlsContext)
+        {
+            OIC_LOG(ERROR, NET_DTLS_TAG, "Context is NULL. Stop retransmission");
+            ca_mutex_unlock(g_dtlsContextMutex);
+            return;
+        }
+
+        OIC_LOG(DEBUG, NET_DTLS_TAG, "Check retransmission");
+        dtls_check_retransmit(g_caDtlsContext->dtlsContext, &nextSchedule);
+        ca_mutex_unlock(g_dtlsContextMutex);
+
+        //re-transmission timeout should not be greater then max one
+        //this will cover case when several clients start dtls sessions
+        nextSchedule /= CLOCKS_PER_SEC;
+        if (nextSchedule > MAX_RETRANSMISSION_TIME)
+        {
+            nextSchedule = MAX_RETRANSMISSION_TIME;
+        }
+    }
+
+    //start new timer
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "Start new timer");
+    registerTimer(nextSchedule, &timerId, CAStartRetransmit);
+
+    OIC_LOG(DEBUG, NET_DTLS_TAG, "CAStartRetransmit OUT");
+}
+
 CAResult_t CAAdapterNetDtlsInit()
 {
     OIC_LOG(DEBUG, NET_DTLS_TAG, "IN");
@@ -1066,6 +1115,9 @@ CAResult_t CAAdapterNetDtlsInit()
 #endif //__WITH_X509__*
     dtls_set_handler(g_caDtlsContext->dtlsContext, &(g_caDtlsContext->callbacks));
     ca_mutex_unlock(g_dtlsContextMutex);
+
+    CAStartRetransmit();
+
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT");
     return CA_STATUS_OK;
 }
