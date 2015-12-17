@@ -16,12 +16,8 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
 
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -30,7 +26,6 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
@@ -138,13 +133,6 @@ public class UpdatePropertiesPage extends WizardPage {
 
     @Override
     public boolean canFlipToNextPage() {
-        CreateResourceWizard createWizard = (CreateResourceWizard) getWizard();
-        if (isSelectionDone()
-                && (createWizard.getMainPage().getOption() == Option.COLLECTION_FROM_RAML)
-                && Activator.getDefault().getResourceManager()
-                        .isAnyResourceExist()) {
-            return true;
-        }
         return false;
     }
 
@@ -159,29 +147,7 @@ public class UpdatePropertiesPage extends WizardPage {
 
     @Override
     public IWizardPage getNextPage() {
-        if (null == resName || resName.trim().length() < 1) {
-            MessageDialog.openError(Display.getDefault().getActiveShell(),
-                    "Invalid Resource Name.", "Resource name is invalid.");
-            return null;
-        }
-
-        if (!Utility.isUriValid(resURI)) {
-            MessageDialog.openError(Display.getDefault().getActiveShell(),
-                    "Invalid Resource URI.", Constants.INVALID_URI_MESSAGE);
-            return null;
-        }
-
-        CreateResourceWizard createWizard = (CreateResourceWizard) getWizard();
-        // Checking whether the uri is used by any other resource.
-        if (Activator.getDefault().getResourceManager().isResourceExist(resURI)) {
-            MessageDialog
-                    .openError(getShell(), "Resource URI in use",
-                            "Entered resource URI is in use. Please try a different one.");
-            // TODO: Instead of MessageDialog, errors may be shown on wizard
-            // itself.
-            return null;
-        }
-        return createWizard.getAddResourcesToCollectionPage();
+        return null;
     }
 
     public void setResName(String resName) {

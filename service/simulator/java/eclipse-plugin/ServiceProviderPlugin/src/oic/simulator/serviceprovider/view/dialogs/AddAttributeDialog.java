@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package oic.simulator.serviceprovider.view.dialogs;
 
 import java.util.Iterator;
@@ -78,7 +94,6 @@ public class AddAttributeDialog extends TitleAreaDialog {
             att = new AttributeHelper();
         } else {
             attClone = att.clone();
-            System.out.println("Cloned attribute's data:" + attClone);
             editOperation = true;
         }
         attHelper = att;
@@ -99,9 +114,6 @@ public class AddAttributeDialog extends TitleAreaDialog {
         Composite container = new Composite(compLayout, SWT.NONE);
         container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         GridLayout layout = new GridLayout(5, false);
-        /*
-         * layout.verticalSpacing = 10; layout.marginTop = 10;
-         */
         container.setLayout(layout);
 
         Label attNameLbl = new Label(container, SWT.NULL);
@@ -279,10 +291,7 @@ public class AddAttributeDialog extends TitleAreaDialog {
             updateControls();
             dflValueTxt.setText(attHelper.getAttributeDflValue());
             Type valuesType = attHelper.getValidValuesType();
-            /*
-             * if (valuesType == Type.UNKNOWN) { noneBtn.setSelection(true); }
-             * else
-             */if (valuesType == Type.RANGE) {
+            if (valuesType == Type.RANGE) {
                 rangeBtn.setSelection(true);
                 noneBtn.setSelection(false);
                 rangeOptionSelected(true);
@@ -336,7 +345,6 @@ public class AddAttributeDialog extends TitleAreaDialog {
             @Override
             public void handleEvent(Event e) {
                 String string = e.text;
-                System.out.println(string);
                 char[] chars = new char[string.length()];
                 string.getChars(0, chars.length, chars, 0);
                 for (int i = 0; i < chars.length; i++) {
@@ -354,7 +362,6 @@ public class AddAttributeDialog extends TitleAreaDialog {
                         }
                     }
                 }
-                // attHelper.setMin(minRangeTxt.getText() + string);
             }
         });
 
@@ -379,7 +386,6 @@ public class AddAttributeDialog extends TitleAreaDialog {
                         }
                     }
                 }
-                // attHelper.setMax(maxRangeTxt.getText() + string);
             }
         });
 
@@ -389,7 +395,6 @@ public class AddAttributeDialog extends TitleAreaDialog {
                 SingleTextInputDialog dialog = new SingleTextInputDialog(
                         getShell(), "Add Attribute Value", "Attribute Value");
                 if (dialog.open() == Window.OK) {
-                    System.out.println(dialog.getValue());
                     String value = dialog.getValue();
                     String type = attTypeCmb.getText();
                     if (!attHelper.isValueValid(value, type)) {
@@ -406,7 +411,6 @@ public class AddAttributeDialog extends TitleAreaDialog {
                         customValuesList.select(customValuesList.getItemCount() - 1);
                         customValuesList.showSelection();
                         remBtn.setEnabled(true);
-                        // attHelper.addValueToAllowedValues(value);
                     }
                 }
             }
@@ -416,13 +420,8 @@ public class AddAttributeDialog extends TitleAreaDialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 int[] selection = customValuesList.getSelectionIndices();
-                // String[] selectionStr = customValuesList.getSelection();
                 if (null != selection && selection.length > 0) {
                     customValuesList.remove(selection);
-                    /*
-                     * for (String selected : selectionStr) {
-                     * attHelper.removeValueFromAllowedValues(selected); }
-                     */
                 }
 
                 changeRemBtnVisibility();
@@ -446,7 +445,6 @@ public class AddAttributeDialog extends TitleAreaDialog {
         dflValueTxt.setText("");
 
         String selected = attTypeCmb.getText();
-        // attHelper.setAttributeType(selected);
 
         if (selected.equals(Constants.INT)) {
             enable(true);
@@ -459,7 +457,6 @@ public class AddAttributeDialog extends TitleAreaDialog {
             customOptionSelected(false);
             detail.setText(defaultMessage + msgForDoubleType);
         } else if (selected.equals(Constants.BOOL)) {
-            // noneBtn.setSelection(true);
             enable(false);
             rangeOptionSelected(false);
             customOptionSelected(false);
@@ -469,10 +466,8 @@ public class AddAttributeDialog extends TitleAreaDialog {
             rangeOptionSelected(false);
             cusValuesBtn.setEnabled(true);
             noneBtn.setEnabled(true);
-            // cusValuesBtn.setSelection(true);
             detail.setText(defaultMessage + msgForStringType);
         } else {
-            // noneBtn.setSelection(true);
             enable(false);
             rangeOptionSelected(false);
             customOptionSelected(false);
@@ -700,11 +695,6 @@ public class AddAttributeDialog extends TitleAreaDialog {
     public boolean isHelpAvailable() {
         return false;
     }
-
-    /*
-     * @Override protected Point getInitialSize() { Point curSize =
-     * super.getInitialSize(); return new Point(curSize.x, curSize.y + 200); }
-     */
 
     @Override
     protected Point getInitialLocation(Point initialSize) {

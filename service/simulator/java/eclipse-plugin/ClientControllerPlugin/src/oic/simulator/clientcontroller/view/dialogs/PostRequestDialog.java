@@ -74,6 +74,7 @@ public class PostRequestDialog extends TitleAreaDialog {
     @Override
     protected Control createDialogArea(Composite parent) {
         Composite compLayout = (Composite) super.createDialogArea(parent);
+
         Composite container = new Composite(compLayout, SWT.NONE);
         container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         GridLayout layout = new GridLayout(1, false);

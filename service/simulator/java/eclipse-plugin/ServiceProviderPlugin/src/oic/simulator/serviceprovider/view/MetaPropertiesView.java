@@ -22,14 +22,12 @@ import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
 import oic.simulator.serviceprovider.manager.ResourceManager;
 import oic.simulator.serviceprovider.manager.UiListenerHandler;
-import oic.simulator.serviceprovider.model.Device;
 import oic.simulator.serviceprovider.model.MetaProperty;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.utils.Constants;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
-import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
@@ -93,21 +91,6 @@ public class MetaPropertiesView extends ViewPart {
                     }
                 });
             }
-
-            @Override
-            public void onDeviceSelectionChange(final Device dev) {
-                Display.getDefault().asyncExec(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (null != tableViewer) {
-                            properties = getData(dev);
-                            updateViewer(properties);
-                        }
-                        updateEditControls(dev);
-                    }
-                });
-            }
         };
     }
 
@@ -141,7 +124,7 @@ public class MetaPropertiesView extends ViewPart {
                 if (editBtn.getText().equals("Edit")) {
                     cancelBtn.setEnabled(true);
                     editBtn.setText("Save");
-                    enable_edit = true;
+                    setEnableEdit(true);
                 } else {
                     boolean result = false;
                     Resource resourceInSelection = resourceManagerRef
@@ -172,6 +155,7 @@ public class MetaPropertiesView extends ViewPart {
                         boolean update = false;
                         boolean uriChange = false;
                         boolean nameChange = false;
+
                         if (resourceManagerRef.isPropValueChanged(
                                 resourceInSelection, properties,
                                 Constants.RESOURCE_NAME)) {
@@ -189,9 +173,6 @@ public class MetaPropertiesView extends ViewPart {
                                 return;
                             }
 
-                            update = true;
-                            uriChange = true;
-
                             if (resourceManagerRef
                                     .isResourceStarted(resourceInSelection)) {
                                 update = MessageDialog.openQuestion(
@@ -202,17 +183,21 @@ public class MetaPropertiesView extends ViewPart {
                                     return;
                                 }
                             }
+
+                            update = true;
+                            uriChange = true;
                         }
                         if (update) {
                             try {
-                                result = Activator
-                                        .getDefault()
-                                        .getResourceManager()
-                                        .updateResourceProperties(
-                                                resourceManagerRef
-                                                        .getCurrentResourceInSelection(),
-                                                properties, uriChange,
-                                                nameChange);
+                                if (uriChange || nameChange)
+                                    result = Activator
+                                            .getDefault()
+                                            .getResourceManager()
+                                            .updateResourceProperties(
+                                                    resourceManagerRef
+                                                            .getCurrentResourceInSelection(),
+                                                    properties, uriChange,
+                                                    nameChange);
                             } catch (SimulatorException ex) {
                                 result = false;
                             }
@@ -231,29 +216,10 @@ public class MetaPropertiesView extends ViewPart {
                                 updateViewer(properties);
                             }
                         }
-                    } else {
-                        Device dev = resourceManagerRef
-                                .getCurrentDeviceInSelection();
-
-                        // Null check
-                        result = resourceManagerRef.isPropertyValueInvalid(dev,
-                                properties, Constants.DEVICE_NAME);
-                        if (result) {
-                            MessageDialog.openError(parent.getShell(),
-                                    "Invalid Input", "Device Name is invalid.");
-                            return;
-                        }
-
-                        if (resourceManagerRef.isPropValueChanged(dev,
-                                properties, Constants.DEVICE_NAME)) {
-                            resourceManagerRef.updateDeviceProperties(dev,
-                                    properties);
-                        }
-
                     }
                     cancelBtn.setEnabled(false);
                     editBtn.setText("Edit");
-                    enable_edit = false;
+                    setEnableEdit(false);
                 }
             }
         });
@@ -271,18 +237,12 @@ public class MetaPropertiesView extends ViewPart {
                         .getCurrentResourceInSelection();
                 if (null != res) {
                     properties = getData(res);
-                } else {
-                    Device dev = resourceManagerRef
-                            .getCurrentDeviceInSelection();
-                    if (null != dev) {
-                        properties = getData(dev);
-                    }
                 }
                 updateViewer(properties);
 
                 cancelBtn.setEnabled(false);
                 editBtn.setText("Edit");
-                enable_edit = false;
+                setEnableEdit(false);
             }
         });
 
@@ -302,7 +262,7 @@ public class MetaPropertiesView extends ViewPart {
 
             if (editBtn.getText().equals("Save")) {
                 editBtn.setText("Edit");
-                enable_edit = false;
+                setEnableEdit(false);
             }
 
             if (null == obj) {
@@ -324,34 +284,23 @@ public class MetaPropertiesView extends ViewPart {
         }
     }
 
-    private List<MetaProperty> getData(Device dev) {
-        if (null != dev) {
-            List<MetaProperty> metaPropertyList = resourceManagerRef
-                    .getMetaProperties(dev);
-            return metaPropertyList;
-        } else {
-            return null;
-        }
-    }
-
     private void updateViewer(List<MetaProperty> metaPropertyList) {
         if (null != tableViewer) {
             Table tbl = tableViewer.getTable();
+            if (tbl.isDisposed()) {
+                return;
+            }
             if (null != metaPropertyList) {
                 tableViewer.setInput(metaPropertyList.toArray());
-                if (!tbl.isDisposed()) {
-                    tbl.setLinesVisible(true);
-                }
+                tbl.setLinesVisible(true);
             } else {
-                if (!tbl.isDisposed()) {
-                    tbl.removeAll();
-                    tbl.setLinesVisible(false);
-                }
+                tbl.removeAll();
+                tbl.setLinesVisible(false);
             }
         }
     }
 
-    public void createColumns(TableViewer tableViewer) {
+    public void createColumns(final TableViewer tableViewer) {
         TableViewerColumn propName = new TableViewerColumn(tableViewer,
                 SWT.NONE);
         propName.getColumn().setWidth(columnWidth[0]);
@@ -369,15 +318,12 @@ public class MetaPropertiesView extends ViewPart {
                 SWT.NONE);
         propValue.getColumn().setWidth(columnWidth[1]);
         propValue.getColumn().setText(columnHeaders[1]);
-        propValue.setLabelProvider(new ColumnLabelProvider() {
+        propValue.setLabelProvider(new StyledCellLabelProvider() {
             @Override
-            public String getText(Object element) {
-                MetaProperty prop = (MetaProperty) element;
-                if (null != prop) {
-                    return prop.getPropValue();
-                } else {
-                    return "";
-                }
+            public void update(ViewerCell cell) {
+                MetaProperty prop = (MetaProperty) cell.getElement();
+                cell.setText(prop.getPropValue());
+                super.update(cell);
             }
         });
         propValue.setEditingSupport(new PropValueEditor(tableViewer));
@@ -430,8 +376,8 @@ public class MetaPropertiesView extends ViewPart {
         }
 
         @Override
-        protected CellEditor getCellEditor(Object element) {
-            if (!enable_edit) {
+        protected CellEditor getCellEditor(final Object element) {
+            if (!getEnableEdit()) {
                 return null;
             }
             // Disabling edit for resource type
@@ -439,6 +385,7 @@ public class MetaPropertiesView extends ViewPart {
             if (null != propName && propName.equals(Constants.RESOURCE_TYPE)) {
                 return null;
             }
+
             CellEditor editor = new TextCellEditor(viewer.getTable());
             return editor;
         }
@@ -451,10 +398,20 @@ public class MetaPropertiesView extends ViewPart {
         @Override
         protected void setValue(Object element, Object value) {
             MetaProperty prop = (MetaProperty) element;
+            if (prop.getPropName().equals(Constants.INTERFACE_TYPES)) {
+                return;
+            }
             prop.setPropValue(String.valueOf(value));
             viewer.update(element, null);
         }
+    }
 
+    private synchronized Boolean getEnableEdit() {
+        return enable_edit;
+    }
+
+    private synchronized void setEnableEdit(boolean value) {
+        enable_edit = value;
     }
 
     @Override

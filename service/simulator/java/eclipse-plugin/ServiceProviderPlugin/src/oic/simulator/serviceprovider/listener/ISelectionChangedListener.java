@@ -16,7 +16,6 @@
 
 package oic.simulator.serviceprovider.listener;
 
-import oic.simulator.serviceprovider.model.Device;
 import oic.simulator.serviceprovider.model.Resource;
 
 /**
@@ -25,6 +24,4 @@ import oic.simulator.serviceprovider.model.Resource;
  */
 public interface ISelectionChangedListener {
     public void onResourceSelectionChange(Resource resource);
-
-    public void onDeviceSelectionChange(Device dev);
 }

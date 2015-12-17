@@ -21,7 +21,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
 import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.model.CollectionResource;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.SingleResource;
 import oic.simulator.serviceprovider.utils.Constants;
@@ -215,12 +214,8 @@ public class LoadRamlPage extends WizardPage {
             resourceCount = -1;
         }
         if (null != configFilePath && configFilePath.trim().length() > 0) {
-            if (typeOfResource == Type.COLLECTION) {
+            if (resourceCount == 1) {
                 done = true;
-            } else {
-                if (resourceCount == 1) {
-                    done = true;
-                }
             }
         }
         return done;
@@ -234,19 +229,15 @@ public class LoadRamlPage extends WizardPage {
             resourceCount = -1;
         }
         if (null != configFilePath && configFilePath.trim().length() > 0) {
-            if (typeOfResource == Type.COLLECTION) {
+            if (resourceCount >= 1) {
                 done = true;
-            } else {
-                if (resourceCount >= 1) {
-                    done = true;
-                }
             }
         }
         return done;
     }
 
     public boolean isMultiResourceCreation() {
-        if (typeOfResource != Type.COLLECTION && resourceCount > 1) {
+        if (typeOfResource == Type.SINGLE && resourceCount > 1) {
             return true;
         }
         return false;
@@ -278,7 +269,7 @@ public class LoadRamlPage extends WizardPage {
         final CreateResourceWizard wizard = ((CreateResourceWizard) getWizard());
 
         try {
-            getContainer().run(true, true, new IRunnableWithProgress() {
+            getContainer().run(true, false, new IRunnableWithProgress() {
                 @Override
                 public void run(IProgressMonitor monitor)
                         throws InvocationTargetException, InterruptedException {
@@ -310,24 +301,15 @@ public class LoadRamlPage extends WizardPage {
             wizard.getWizardDialog().close();
             return null;
         } else {
-            // Checking whether the resource is single or collection.
+            // Checking whether the resource is of type single.
             Option intendedResource = wizard.getMainPage().getOption();
-            if ((intendedResource == Option.SIMPLE_FROM_RAML && resource instanceof CollectionResource)) {
+            if ((intendedResource == Option.SIMPLE_FROM_RAML && !(resource instanceof SingleResource))) {
                 MessageDialog
                         .openError(
                                 getShell(),
                                 "Invalid RAML",
-                                "Uploaded RAML is of type collection. "
+                                "Uploaded RAML is not of simple type. "
                                         + "Please upload the proper RAML of simple type.");
-                return null;
-            } else if (intendedResource == Option.COLLECTION_FROM_RAML
-                    && resource instanceof SingleResource) {
-                MessageDialog
-                        .openError(
-                                getShell(),
-                                "Invalid RAML",
-                                "Uploaded RAML is of type simple. "
-                                        + "Please upload the proper RAML of collection type.");
                 return null;
             }
         }

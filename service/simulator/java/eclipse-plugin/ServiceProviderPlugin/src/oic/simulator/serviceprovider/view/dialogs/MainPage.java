@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package oic.simulator.serviceprovider.view.dialogs;
 
 import oic.simulator.serviceprovider.utils.Constants;
@@ -18,14 +34,11 @@ import org.oic.simulator.server.SimulatorResource.Type;
 public class MainPage extends WizardPage {
 
     private Button simpleBtn;
-    private Button collectionBtn;
     private Button simpleFromRamlBtn;
-    private Button collectionFromRamlBtn;
-    private Button deviceBtn;
     private Text   description;
 
     public enum Option {
-        SIMPLE, SIMPLE_FROM_RAML, COLLECTION, COLLECTION_FROM_RAML, DEVICE, NONE
+        SIMPLE, SIMPLE_FROM_RAML
     }
 
     private Option option;
@@ -50,15 +63,6 @@ public class MainPage extends WizardPage {
 
         simpleFromRamlBtn = new Button(compContent, SWT.RADIO);
         simpleFromRamlBtn.setText("Simple resource(From RAML)");
-
-        collectionBtn = new Button(compContent, SWT.RADIO);
-        collectionBtn.setText("Collection resource");
-
-        collectionFromRamlBtn = new Button(compContent, SWT.RADIO);
-        collectionFromRamlBtn.setText("Collection resource(From RAML)");
-
-        deviceBtn = new Button(compContent, SWT.RADIO);
-        deviceBtn.setText("Device");
 
         Label lbl = new Label(compContent, SWT.NULL);
         lbl.setText("Details:");
@@ -105,53 +109,11 @@ public class MainPage extends WizardPage {
                 getWizard().getContainer().updateButtons();
             }
         });
-
-        collectionBtn.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                description
-                        .setText("Create a collection resource by manually entering all the details given below.\n"
-                                + "\t1. Basic resource details: URI, Name, Resource Types, etc.\n"
-                                + "\t2. Start/stop the resource.\n"
-                                + "\t3. Adding existing simple resources to this collection.");
-                option = Option.COLLECTION;
-                getWizard().getContainer().updateButtons();
-            }
-        });
-
-        collectionFromRamlBtn.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                description
-                        .setText("Create a collection resource from RAML configuration file.\n"
-                                + "\t1. Resource details, attributes, and other properties will be read from RAML.\n"
-                                + "\t2. Supports multi-instance creation.\n"
-                                + "\t3. For single instance creation, allows editing the URI and Name of the resource.\n"
-                                + "\t4. Allows to start or stop the resource(s).");
-                option = Option.COLLECTION_FROM_RAML;
-                getWizard().getContainer().updateButtons();
-            }
-        });
-
-        deviceBtn.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                description
-                        .setText("Create a logical device that acts as a top-level logical classification.\n"
-                                + "\t1. Takes a device name for identication.\n"
-                                + "\t2. One or more simple and collection resources can be added to it.");
-                option = Option.DEVICE;
-                getWizard().getContainer().updateButtons();
-            }
-        });
     }
 
     @Override
     public boolean canFlipToNextPage() {
-        if (option != Option.NONE) {
-            return true;
-        }
-        return false;
+        return true;
     }
 
     @Override
@@ -168,18 +130,6 @@ public class MainPage extends WizardPage {
         if (simpleFromRamlBtn.getSelection()) {
             LoadRamlPage page = createWizard.getLoadRamlPage();
             page.initialSetup(Type.SINGLE);
-            return page;
-        }
-        if (collectionBtn.getSelection()) {
-            return createWizard.getCollectionResourceBasicDetailsPage();
-        }
-        if (collectionFromRamlBtn.getSelection()) {
-            LoadRamlPage page = createWizard.getLoadRamlPage();
-            page.initialSetup(Type.COLLECTION);
-            return page;
-        }
-        if (deviceBtn.getSelection()) {
-            DevicePage page = createWizard.getDevicePage();
             return page;
         }
         return null;

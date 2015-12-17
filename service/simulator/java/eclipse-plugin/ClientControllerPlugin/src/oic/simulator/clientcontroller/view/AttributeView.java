@@ -27,6 +27,7 @@ import oic.simulator.clientcontroller.listener.IPutUIListener;
 import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
 import oic.simulator.clientcontroller.listener.IVerificationUIListener;
 import oic.simulator.clientcontroller.manager.ResourceManager;
+import oic.simulator.clientcontroller.manager.UiListenerHandler;
 import oic.simulator.clientcontroller.remoteresource.AttributeElement;
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
 import oic.simulator.clientcontroller.remoteresource.ResourceRepresentation;
@@ -451,14 +452,12 @@ public class AttributeView extends ViewPart {
         getButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                if (resourceInSelection.isGetAutomtnInProgress()) {
-                    MessageDialog
-                            .openInformation(Display.getDefault()
-                                    .getActiveShell(), "GET Request",
-                                    "GET Automation is in progress. Please wait or stop the automation.");
-                } else {
-                    resourceManager.sendGetRequest(resourceInSelection);
-                }
+                PlatformUI.getWorkbench().getDisplay().syncExec(new Thread() {
+                    @Override
+                    public void run() {
+                        resourceManager.sendGetRequest(resourceInSelection);
+                    }
+                });
             }
         });
 
@@ -488,7 +487,6 @@ public class AttributeView extends ViewPart {
                         PutRequestDialog putDialog = new PutRequestDialog(
                                 Display.getDefault().getActiveShell());
                         if (putDialog.open() == Window.OK) {
-                            // Call the native PUT method
                             resourceManager.sendPutRequest(resourceInSelection,
                                     putDialog.getUpdatedRepresentation()
                                             .getModel());
@@ -525,7 +523,6 @@ public class AttributeView extends ViewPart {
                         PostRequestDialog postDialog = new PostRequestDialog(
                                 Display.getDefault().getActiveShell());
                         if (postDialog.open() == Window.OK) {
-                            // Call the native POST method
                             ResourceRepresentation representation = postDialog
                                     .getUpdatedRepresentation();
                             resourceManager.sendPostRequest(
@@ -701,14 +698,16 @@ public class AttributeView extends ViewPart {
     }
 
     private void addManagerListeners() {
-        resourceManager
-                .addResourceSelectionChangedUIListener(resourceSelectionChangedListener);
-        resourceManager.addGetUIListener(getUIListener);
-        resourceManager.addPutUIListener(putUIListener);
-        resourceManager.addPostUIListener(postUIListener);
-        resourceManager.addObserveUIListener(observeUIListener);
-        resourceManager.addVerificationUIListener(verificationUIListener);
-        resourceManager.addConfigUploadUIListener(configUploadUIListener);
+        UiListenerHandler.getInstance().addResourceSelectionChangedUIListener(
+                resourceSelectionChangedListener);
+        UiListenerHandler.getInstance().addGetUIListener(getUIListener);
+        UiListenerHandler.getInstance().addPutUIListener(putUIListener);
+        UiListenerHandler.getInstance().addPostUIListener(postUIListener);
+        UiListenerHandler.getInstance().addObserveUIListener(observeUIListener);
+        UiListenerHandler.getInstance().addVerificationUIListener(
+                verificationUIListener);
+        UiListenerHandler.getInstance().addConfigUploadUIListener(
+                configUploadUIListener);
     }
 
     private void setVisibility(boolean visibility) {
@@ -833,13 +832,14 @@ public class AttributeView extends ViewPart {
     public void dispose() {
         // Unregister the selection listener
         if (null != resourceSelectionChangedListener) {
-            resourceManager
-                    .removeResourceSelectionChangedUIListener(resourceSelectionChangedListener);
+            UiListenerHandler.getInstance()
+                    .removeResourceSelectionChangedUIListener(
+                            resourceSelectionChangedListener);
         }
 
         // Unregister the GET listener
         if (null != getUIListener) {
-            resourceManager.removeGetUIListener(getUIListener);
+            UiListenerHandler.getInstance().removeGetUIListener(getUIListener);
         }
 
         super.dispose();

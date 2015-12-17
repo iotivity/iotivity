@@ -16,9 +16,6 @@
 
 package oic.simulator.serviceprovider.model;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
 
 /**
@@ -26,77 +23,21 @@ import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
  * information about the resource.
  */
 public class SingleResource extends Resource {
-    private Set<CollectionResource> collectionMembership;
+    private boolean        getAllowed;
 
-    private boolean                 getAllowed;
+    private boolean        putAllowed;
 
-    private boolean                 putAllowed;
+    private boolean        postAllowed;
 
-    private boolean                 postAllowed;
+    private int            automationId;
 
-    private int                     automationId;
+    private boolean        resourceAutomationInProgress;
 
-    private boolean                 resourceAutomationInProgress;
+    private boolean        attributeAutomationInProgress;
 
-    private boolean                 attributeAutomationInProgress;
+    private int            automationUpdateInterval;
 
-    private int                     automationUpdateInterval;
-
-    private AutoUpdateType          automationType;
-
-    public SingleResource() {
-        setCollectionMembership(new HashSet<CollectionResource>());
-    }
-
-    public Set<CollectionResource> getCollectionMembership() {
-        return collectionMembership;
-    }
-
-    public void setCollectionMembership(
-            Set<CollectionResource> collectionMembership) {
-        this.collectionMembership = collectionMembership;
-    }
-
-    public void addCollectionMembership(CollectionResource resource) {
-        if (null == resource) {
-            return;
-        }
-        if (null == collectionMembership) {
-            collectionMembership = new HashSet<CollectionResource>();
-        }
-        collectionMembership.add(resource);
-    }
-
-    public void addCollectionMembership(Set<CollectionResource> resources) {
-        if (null == resources) {
-            return;
-        }
-        if (null == collectionMembership) {
-            collectionMembership = new HashSet<CollectionResource>();
-        }
-        collectionMembership.addAll(resources);
-    }
-
-    public void removeCollectionMembership(CollectionResource resource) {
-        if (null == resource || null == collectionMembership) {
-            return;
-        }
-        collectionMembership.remove(resource);
-    }
-
-    public void removeCollectionMembership(Set<CollectionResource> collections) {
-        if (null == collections || null == collectionMembership) {
-            return;
-        }
-        collectionMembership.removeAll(collections);
-    }
-
-    public boolean isMemberOfAnyCollection() {
-        if (null == collectionMembership || collectionMembership.isEmpty()) {
-            return false;
-        }
-        return true;
-    }
+    private AutoUpdateType automationType;
 
     public boolean isGetAllowed() {
         return getAllowed;

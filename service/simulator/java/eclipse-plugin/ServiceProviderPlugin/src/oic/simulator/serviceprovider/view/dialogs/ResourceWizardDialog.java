@@ -16,8 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
-
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -57,32 +55,19 @@ public class ResourceWizardDialog extends WizardDialog {
                     .getSimpleResourceOtherDetailsPage();
             SimpleResourceAddAttributePage simpleResourceAddAttributesPage = createWizard
                     .getSimpleResourceAddAttributePage();
-            CollectionResourceBasicDetailsPage collectionResourceBasicDetailsPage = createWizard
-                    .getCollectionResourceBasicDetailsPage();
-            AddResourcesToCollectionPage addResourcesToCollectionPage = createWizard
-                    .getAddResourcesToCollectionPage();
             LoadRamlPage loadRamlPage = createWizard.getLoadRamlPage();
             UpdatePropertiesPage updatePropPage = createWizard
                     .getUpdatePropPage();
-            DevicePage devPage = createWizard.getDevicePage();
 
             IWizardPage curPage = wizard.getContainer().getCurrentPage();
             IWizardPage prevPage = null;
 
             if (curPage == loadRamlPage
-                    || curPage == simpleResourceBasicDetailsPage
-                    || curPage == collectionResourceBasicDetailsPage
-                    || curPage == devPage) {
+                    || curPage == simpleResourceBasicDetailsPage) {
                 prevPage = mainPage;
             } else if (curPage == updatePropPage) {
                 loadRamlPage.setResource(null);
                 prevPage = loadRamlPage;
-            } else if (curPage == addResourcesToCollectionPage) {
-                if (mainPage.getOption() == Option.COLLECTION_FROM_RAML) {
-                    prevPage = updatePropPage;
-                } else {
-                    prevPage = collectionResourceBasicDetailsPage;
-                }
             } else if (curPage == simpleResourceAddAttributesPage) {
                 prevPage = simpleResourceBasicDetailsPage;
             } else if (curPage == simpleResourceOtherDetailsPage) {

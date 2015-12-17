@@ -25,7 +25,6 @@ import oic.simulator.serviceprovider.listener.IObserverListChangedListener;
 import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
 import oic.simulator.serviceprovider.manager.ResourceManager;
 import oic.simulator.serviceprovider.manager.UiListenerHandler;
-import oic.simulator.serviceprovider.model.Device;
 import oic.simulator.serviceprovider.model.ObserverDetail;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.utils.Constants;
@@ -86,12 +85,6 @@ public class ResourceObserverView extends ViewPart {
                         }
                     }
                 });
-            }
-
-            @Override
-            public void onDeviceSelectionChange(Device dev) {
-                // TODO Auto-generated method stub
-
             }
         };
 
@@ -156,7 +149,7 @@ public class ResourceObserverView extends ViewPart {
 
         createColumns(tblViewer);
 
-        // make lines and header visible
+        // Make lines and header visible
         final Table table = tblViewer.getTable();
         table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         table.setHeaderVisible(true);

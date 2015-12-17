@@ -23,7 +23,6 @@ import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
 import oic.simulator.serviceprovider.manager.ResourceManager;
 import oic.simulator.serviceprovider.manager.UiListenerHandler;
 import oic.simulator.serviceprovider.model.AttributeElement;
-import oic.simulator.serviceprovider.model.Device;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.ResourceRepresentation;
 import oic.simulator.serviceprovider.model.SingleResource;
@@ -37,6 +36,8 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
@@ -109,23 +110,6 @@ public class AttributeView extends ViewPart {
 
                             } else {
                                 attViewer.setInput(null);
-                                tree.setLinesVisible(false);
-                            }
-                        }
-                    }
-                });
-            }
-
-            @Override
-            public void onDeviceSelectionChange(Device dev) {
-                Display.getDefault().asyncExec(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (null != attViewer) {
-                            Tree tree = attViewer.getTree();
-                            if (null != tree && !tree.isDisposed()) {
-                                // tbl.deselectAll();
-                                tree.removeAll();
                                 tree.setLinesVisible(false);
                             }
                         }
@@ -293,6 +277,7 @@ public class AttributeView extends ViewPart {
         TreeColumn attValue = new TreeColumn(tree, SWT.NONE);
         attValue.setWidth(attTblColWidth[1]);
         attValue.setText(attTblHeaders[1]);
+
         TreeViewerColumn attValueVwrCol = new TreeViewerColumn(attViewer,
                 attValue);
         attValueVwrCol.setEditingSupport(attributeEditor
@@ -305,6 +290,25 @@ public class AttributeView extends ViewPart {
                 automation);
         automationVwrCol.setEditingSupport(attributeEditor
                 .createAutomationEditor(attViewer));
+
+        addColumnListeners();
+    }
+
+    private void addColumnListeners() {
+        TreeColumn[] columns = attViewer.getTree().getColumns();
+        for (TreeColumn column : columns) {
+            column.addSelectionListener(new SelectionAdapter() {
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    // Refreshing the viewer. If combo list is open,
+                    // then click events on other parts of the view or outside
+                    // the combo should hide the editor.
+                    // Refreshing the viewer hides the combo and other editors
+                    // which are active.
+                    attViewer.refresh();
+                }
+            });
+        }
     }
 
     private void addManagerListeners() {
@@ -386,7 +390,7 @@ public class AttributeView extends ViewPart {
         public Image getColumnImage(Object element, int col) {
             if (col == 2) {
                 if (element instanceof AttributeElement) {
-                    // Ignore for collection resource
+                    // Ignore for non-single resource
                     Resource res = resourceManager
                             .getCurrentResourceInSelection();
                     if (res instanceof SingleResource) {
@@ -433,7 +437,7 @@ public class AttributeView extends ViewPart {
                     }
 
                     case 2: {
-                        // Ignore for collection resource
+                        // Ignore for non-single resource
                         Resource res = resourceManager
                                 .getCurrentResourceInSelection();
                         if (res instanceof SingleResource) {

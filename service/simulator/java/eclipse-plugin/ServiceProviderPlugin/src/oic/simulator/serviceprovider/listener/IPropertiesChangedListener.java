@@ -22,6 +22,4 @@ package oic.simulator.serviceprovider.listener;
  */
 public interface IPropertiesChangedListener {
     public void onResourcePropertyChange();
-
-    public void onDevicePropertyChange();
 }

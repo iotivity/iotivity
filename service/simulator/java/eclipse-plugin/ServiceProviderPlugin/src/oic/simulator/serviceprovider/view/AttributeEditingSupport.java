@@ -16,13 +16,13 @@
 
 package oic.simulator.serviceprovider.view;
 
+import java.util.Date;
 import java.util.List;
 
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.manager.ResourceManager;
 import oic.simulator.serviceprovider.model.AttributeElement;
 import oic.simulator.serviceprovider.model.AutomationSettingHelper;
-import oic.simulator.serviceprovider.model.CollectionResource;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.ResourceRepresentation;
 import oic.simulator.serviceprovider.model.SingleResource;
@@ -46,10 +46,13 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.ui.IPartListener2;
+import org.eclipse.ui.IWorkbenchPartReference;
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
@@ -81,6 +84,82 @@ public class AttributeEditingSupport {
         public AttributeValueEditor(TreeViewer viewer) {
             super(viewer);
             this.viewer = viewer;
+
+            // Using the part listener to refresh the viewer on various part
+            // events.
+            // If combo list is open, then click events on other parts of the
+            // view or outside the combo should hide the editor.
+            // Refreshing the viewer hides the combo and other editors which are
+            // active.
+            IPartListener2 partListener;
+            partListener = new IPartListener2() {
+
+                @Override
+                public void partVisible(IWorkbenchPartReference partRef) {
+                }
+
+                @Override
+                public void partOpened(IWorkbenchPartReference partRef) {
+                }
+
+                @Override
+                public void partInputChanged(IWorkbenchPartReference partRef) {
+                }
+
+                @Override
+                public void partHidden(IWorkbenchPartReference partRef) {
+                }
+
+                @Override
+                public void partDeactivated(IWorkbenchPartReference partRef) {
+                    String viewId = partRef.getId();
+                    if (viewId.equals(AttributeView.VIEW_ID)) {
+                        refreshViewer();
+                    }
+                }
+
+                @Override
+                public void partClosed(IWorkbenchPartReference partRef) {
+                }
+
+                @Override
+                public void partBroughtToTop(IWorkbenchPartReference partRef) {
+                }
+
+                @Override
+                public void partActivated(IWorkbenchPartReference partRef) {
+                    String viewId = partRef.getId();
+                    if (viewId.equals(AttributeView.VIEW_ID)) {
+                        refreshViewer();
+                    }
+                }
+            };
+
+            try {
+                Activator.getDefault().getWorkbench()
+                        .getActiveWorkbenchWindow().getActivePage()
+                        .addPartListener(partListener);
+            } catch (NullPointerException e) {
+                Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(),
+                                new Date(),
+                                "There is an error while configuring the listener for UI.\n"
+                                        + Utility.getSimulatorErrorString(e,
+                                                null));
+            }
+        }
+
+        public void refreshViewer() {
+            if (null == viewer)
+                return;
+
+            Tree tree = viewer.getTree();
+            if (null == tree || tree.isDisposed())
+                return;
+
+            viewer.refresh();
         }
 
         @Override
@@ -98,9 +177,10 @@ public class AttributeEditingSupport {
                 return null;
             }
 
-            // If selected resource is a collection, then editor support is not
+            // If selected resource is not a single resource, then editor
+            // support is not
             // required.
-            if (res instanceof CollectionResource) {
+            if (!(res instanceof SingleResource)) {
                 return null;
             }
 
@@ -383,7 +463,7 @@ public class AttributeEditingSupport {
                 return null;
             }
 
-            if (resource instanceof CollectionResource) {
+            if (!(resource instanceof SingleResource)) {
                 return null;
             }
             if (((SingleResource) resource).isResourceAutomationInProgress()) {

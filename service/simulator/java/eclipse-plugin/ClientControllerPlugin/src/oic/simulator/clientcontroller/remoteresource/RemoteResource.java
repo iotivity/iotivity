@@ -33,7 +33,6 @@ public class RemoteResource {
     private SimulatorRemoteResource remoteResourceRef;
     private SimulatorResourceModel  resourceModelRef;
     private ResourceRepresentation  mResourceRepresentation;
-    // private Map<String, RemoteResourceAttribute> resourceAttributesMap;
 
     private boolean                 configUploaded;
 
@@ -55,14 +54,6 @@ public class RemoteResource {
         this.resourceModelRef = resourceModel;
     }
 
-    /*
-     * public Map<String, RemoteResourceAttribute> getResourceAttributesMap() {
-     * return resourceAttributesMap; }
-     * 
-     * public void setResourceAttributesMap( Map<String,
-     * RemoteResourceAttribute> resourceAttributesMap) {
-     * this.resourceAttributesMap = resourceAttributesMap; }
-     */
     public int getGetAutomtnId() {
         return getAutomtnId;
     }
@@ -135,28 +126,12 @@ public class RemoteResource {
         this.observed = observed;
     }
 
-    /*
-     * public List<PutPostAttributeModel> getPutPostModel() { Map<String,
-     * RemoteResourceAttribute> attMap = getResourceAttributesMap(); if (null ==
-     * attMap || attMap.size() < 1) { return null; } List<PutPostAttributeModel>
-     * putPostModelList = new ArrayList<PutPostAttributeModel>(); String
-     * attName; RemoteResourceAttribute attribute; PutPostAttributeModel
-     * putPostModel; Iterator<String> attItr = attMap.keySet().iterator(); while
-     * (attItr.hasNext()) { attName = attItr.next(); attribute =
-     * attMap.get(attName); putPostModel =
-     * PutPostAttributeModel.getModel(attribute); if (null != putPostModel) {
-     * putPostModelList.add(putPostModel); } } return putPostModelList; }
-     * 
-     * public String getAttributeValue(String attName) { RemoteResourceAttribute
-     * attribute = resourceAttributesMap.get(attName); if (null == attribute) {
-     * return null; } return String.valueOf(attribute.getAttributeValue()); }
-     */
     public int getAutomationtype(int autoId) {
         if (getAutomtnId == autoId) {
             return Constants.GET_AUTOMATION_INDEX;
         } else if (putAutomtnId == autoId) {
             return Constants.PUT_AUTOMATION_INDEX;
-        } else {// if(postAutomtnId == autoId) {
+        } else {
             return Constants.POST_AUTOMATION_INDEX;
         }
     }
@@ -166,7 +141,7 @@ public class RemoteResource {
             getAutomtnInProgress = status;
         } else if (putAutomtnId == autoId) {
             putAutomtnInProgress = status;
-        } else {// if(postAutomtnId == autoId) {
+        } else {
             postAutomtnInProgress = status;
         }
     }

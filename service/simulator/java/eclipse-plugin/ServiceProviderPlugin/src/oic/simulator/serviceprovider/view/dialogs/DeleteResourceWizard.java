@@ -23,7 +23,6 @@ import java.util.Set;
 
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.manager.ResourceManager;
-import oic.simulator.serviceprovider.model.CollectionResource;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.SingleResource;
 
@@ -52,6 +51,8 @@ public class DeleteResourceWizard extends Wizard {
         URL find = FileLocator.find(Activator.getDefault().getBundle(), path,
                 null);
         setDefaultPageImageDescriptor(ImageDescriptor.createFromURL(find));
+
+        setNeedsProgressMonitor(true);
     }
 
     @Override
@@ -66,7 +67,7 @@ public class DeleteResourceWizard extends Wizard {
             return false;
         }
         try {
-            getContainer().run(true, true, new IRunnableWithProgress() {
+            getContainer().run(true, false, new IRunnableWithProgress() {
 
                 @Override
                 public void run(IProgressMonitor monitor)
@@ -75,27 +76,6 @@ public class DeleteResourceWizard extends Wizard {
                             .getResourceManager();
                     try {
                         monitor.beginTask("Resource Deletion", 2);
-                        Set<CollectionResource> collectionResources = page
-                                .getSelectedCollectionResourcesList();
-                        if (null != collectionResources
-                                && collectionResources.size() > 0) {
-                            Activator
-                                    .getDefault()
-                                    .getResourceManager()
-                                    .removeCollectionResources(
-                                            collectionResources);
-
-                            Resource res = resourceManager
-                                    .getCurrentResourceInSelection();
-                            if (null != res
-                                    && res instanceof CollectionResource) {
-                                if (collectionResources
-                                        .contains((CollectionResource) res)) {
-                                    resourceManager
-                                            .resourceSelectionChanged(null);
-                                }
-                            }
-                        }
                         monitor.worked(1);
                         Set<SingleResource> singleResources = page
                                 .getSelectedSingleResourcesList();

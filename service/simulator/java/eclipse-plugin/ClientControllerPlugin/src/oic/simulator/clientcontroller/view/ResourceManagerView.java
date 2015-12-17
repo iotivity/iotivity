@@ -22,6 +22,7 @@ import java.util.Set;
 import oic.simulator.clientcontroller.Activator;
 import oic.simulator.clientcontroller.listener.IFindResourceUIListener;
 import oic.simulator.clientcontroller.manager.ResourceManager;
+import oic.simulator.clientcontroller.manager.UiListenerHandler;
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
 import oic.simulator.clientcontroller.utils.Constants;
 import oic.simulator.clientcontroller.view.dialogs.FindResourceWizard;
@@ -641,14 +642,15 @@ public class ResourceManagerView extends ViewPart {
     }
 
     private void addManagerListeners() {
-        resourceManager.addFindresourceUIListener(findListener);
+        UiListenerHandler.getInstance().addFindresourceUIListener(findListener);
     }
 
     @Override
     public void dispose() {
         // Unregister the listener
         if (null != findListener) {
-            resourceManager.removeFindresourceUIListener(findListener);
+            UiListenerHandler.getInstance().removeFindresourceUIListener(
+                    findListener);
             resourceManager.resourceSelectionChanged(null);
         }
         super.dispose();

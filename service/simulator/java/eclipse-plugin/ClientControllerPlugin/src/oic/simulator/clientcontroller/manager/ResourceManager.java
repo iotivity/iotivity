@@ -29,15 +29,6 @@ import java.util.Set;
 import java.util.Vector;
 
 import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.listener.IConfigurationUpload;
-import oic.simulator.clientcontroller.listener.IDevicePlatformInfoUIListener;
-import oic.simulator.clientcontroller.listener.IFindResourceUIListener;
-import oic.simulator.clientcontroller.listener.IGetUIListener;
-import oic.simulator.clientcontroller.listener.IObserveUIListener;
-import oic.simulator.clientcontroller.listener.IPostUIListener;
-import oic.simulator.clientcontroller.listener.IPutUIListener;
-import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
-import oic.simulator.clientcontroller.listener.IVerificationUIListener;
 import oic.simulator.clientcontroller.remoteresource.DeviceAndPlatformInfo;
 import oic.simulator.clientcontroller.remoteresource.MetaProperty;
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
@@ -77,43 +68,33 @@ import org.oic.simulator.client.SimulatorRemoteResource.VerificationType;
  */
 public class ResourceManager {
 
-    private Set<String>                               lastKnownSearchTypes;
+    private Set<String>                        lastKnownSearchTypes;
 
-    private RemoteResource                            currentResourceInSelection;
+    private RemoteResource                     currentResourceInSelection;
 
-    private FindResourceListener                      findResourceListener;
-    private GetResponseListener                       getListener;
-    private PutResponseListener                       putListener;
-    private PostResponseListener                      postListener;
-    private ObserveNotificationListener               observeListener;
-    private VerificationListener                      verifyListener;
-    private DeviceListener                            deviceListener;
-    private PlatformListener                          platformListener;
+    private FindResourceListener               findResourceListener;
+    private GetResponseListener                getListener;
+    private PutResponseListener                putListener;
+    private PostResponseListener               postListener;
+    private ObserveNotificationListener        observeListener;
+    private VerificationListener               verifyListener;
+    private DeviceListener                     deviceListener;
+    private PlatformListener                   platformListener;
 
-    private ResponseSynchronizerThread                synchronizerThread;
+    private ResponseSynchronizerThread         synchronizerThread;
 
-    private Thread                                    threadHandle;
-
-    private List<IFindResourceUIListener>             findResourceUIListeners;
-    private List<IResourceSelectionChangedUIListener> resourceSelectionChangedUIListeners;
-    private List<IGetUIListener>                      getUIListeners;
-    private List<IPutUIListener>                      putUIListeners;
-    private List<IPostUIListener>                     postUIListeners;
-    private List<IObserveUIListener>                  observeUIListeners;
-    private List<IVerificationUIListener>             verificationUIListeners;
-    private List<IConfigurationUpload>                configUploadUIListeners;
-    private List<IDevicePlatformInfoUIListener>       devicePlatformInfoUIListeners;
+    private Thread                             threadHandle;
 
     // Map with Server ID as key and the complete object as the value
-    private Map<String, RemoteResource>               resourceMap;
-    private List<RemoteResource>                      favoriteResources;
+    private Map<String, RemoteResource>        resourceMap;
+    private List<RemoteResource>               favoriteResources;
     // Maintaining a list of resource URIs for favorite resources feature.
-    private List<String>                              favoriteURIList;
+    private List<String>                       favoriteURIList;
 
     // Maintaining a list of observed resource URIs.
-    private List<String>                              observedResourceURIList;
+    private List<String>                       observedResourceURIList;
 
-    private Map<String, DeviceAndPlatformInfo>        hostDeviceAndPlatformMap;
+    private Map<String, DeviceAndPlatformInfo> hostDeviceAndPlatformMap;
 
     public ResourceManager() {
         resourceMap = new HashMap<String, RemoteResource>();
@@ -121,16 +102,6 @@ public class ResourceManager {
         favoriteURIList = new ArrayList<String>();
         observedResourceURIList = new ArrayList<String>();
         hostDeviceAndPlatformMap = new HashMap<String, DeviceAndPlatformInfo>();
-
-        findResourceUIListeners = new ArrayList<IFindResourceUIListener>();
-        resourceSelectionChangedUIListeners = new ArrayList<IResourceSelectionChangedUIListener>();
-        getUIListeners = new ArrayList<IGetUIListener>();
-        putUIListeners = new ArrayList<IPutUIListener>();
-        postUIListeners = new ArrayList<IPostUIListener>();
-        observeUIListeners = new ArrayList<IObserveUIListener>();
-        verificationUIListeners = new ArrayList<IVerificationUIListener>();
-        configUploadUIListeners = new ArrayList<IConfigurationUpload>();
-        devicePlatformInfoUIListeners = new ArrayList<IDevicePlatformInfoUIListener>();
 
         findResourceListener = new FindResourceListener() {
 
@@ -157,9 +128,6 @@ public class ResourceManager {
                             return;
                         }
 
-                        // Fetch the resource data
-                        // RemoteResource resource =
-                        // fetchResourceDetails(resourceN);
                         RemoteResource resource = new RemoteResource();
                         resource.setRemoteResourceRef(resourceN);
 
@@ -188,7 +156,8 @@ public class ResourceManager {
                         addResourceDetails(resource);
 
                         // Notify the UI listener
-                        newResourceFoundNotification(resource);
+                        UiListenerHandler.getInstance()
+                                .newResourceFoundNotification(resource);
 
                         Activator
                                 .getDefault()
@@ -250,7 +219,7 @@ public class ResourceManager {
             }
         };
 
-        // TODO: Listeners for device and platform information.
+        // Listeners for device and platform information.
         deviceListener = new DeviceListener() {
 
             @Override
@@ -274,7 +243,8 @@ public class ResourceManager {
                         }
 
                         // Notify UI listeners
-                        deviceInfoReceivedNotification();
+                        UiListenerHandler.getInstance()
+                                .deviceInfoReceivedNotification();
                     }
                 });
             }
@@ -303,7 +273,8 @@ public class ResourceManager {
                         }
 
                         // Notify UI listeners
-                        platformInfoReceivedNotification();
+                        UiListenerHandler.getInstance()
+                                .platformInfoReceivedNotification();
                     }
                 });
             }
@@ -314,7 +285,6 @@ public class ResourceManager {
             public void onGetResponse(final String uid,
                     final SimulatorResult result,
                     final SimulatorResourceModel resourceModelN) {
-                System.out.println(result);
                 if (result != SimulatorResult.SIMULATOR_OK) {
                     Activator
                             .getDefault()
@@ -335,7 +305,8 @@ public class ResourceManager {
                                 resourceModelN);
                         if (null != resource) {
                             // Notify the UI listeners
-                            getCompleteNotification(resource);
+                            UiListenerHandler.getInstance()
+                                    .getCompleteNotification(resource);
                         }
                     }
                 });
@@ -368,7 +339,8 @@ public class ResourceManager {
                                 resourceModelN);
                         if (null != resource) {
                             // Notify the UI listeners
-                            putCompleteNotification(resource);
+                            UiListenerHandler.getInstance()
+                                    .putCompleteNotification(resource);
                         }
                     }
                 });
@@ -400,7 +372,8 @@ public class ResourceManager {
                                 resourceModelN);
                         if (null != resource) {
                             // Notify the UI listeners
-                            postCompleteNotification(resource);
+                            UiListenerHandler.getInstance()
+                                    .postCompleteNotification(resource);
                         }
                     }
                 });
@@ -421,7 +394,8 @@ public class ResourceManager {
                                 resourceModelN);
                         if (null != resource) {
                             // Notify the UI listeners
-                            observeCompleteNotification(resource);
+                            UiListenerHandler.getInstance()
+                                    .observeCompleteNotification(resource);
                         }
                     }
                 });
@@ -445,7 +419,9 @@ public class ResourceManager {
                         int autoType = resource.getAutomationtype(autoId);
 
                         // Notify the listeners.
-                        verificationStartedNotification(resource, autoType);
+                        UiListenerHandler.getInstance()
+                                .verificationStartedNotification(resource,
+                                        autoType);
                     }
                 });
             }
@@ -466,7 +442,9 @@ public class ResourceManager {
                         int autoType = resource.getAutomationtype(autoId);
 
                         // Notify the listeners.
-                        verificationCompletedNotification(resource, autoType);
+                        UiListenerHandler.getInstance()
+                                .verificationCompletedNotification(resource,
+                                        autoType);
                     }
                 });
             }
@@ -486,7 +464,9 @@ public class ResourceManager {
                         int autoType = resource.getAutomationtype(autoId);
 
                         // Notify the listeners.
-                        verificationAbortedNotification(resource, autoType);
+                        UiListenerHandler.getInstance()
+                                .verificationAbortedNotification(resource,
+                                        autoType);
                     }
                 });
             }
@@ -511,8 +491,6 @@ public class ResourceManager {
             return null;
         }
 
-        // if(!resource.isConfigUploaded() || null ==
-        // resource.getResourceModelRef())
         SimulatorResourceModel resourceModel = resource.getResourceModelRef();
         if (null == resourceModel) {
             resource.setResourceModelRef(resourceModelN);
@@ -585,112 +563,6 @@ public class ResourceManager {
                 responseQueue.add(event);
                 this.notify();
             }
-        }
-    }
-
-    public void addResourceSelectionChangedUIListener(
-            IResourceSelectionChangedUIListener resourceSelectionChangedUIListener) {
-        synchronized (resourceSelectionChangedUIListeners) {
-            resourceSelectionChangedUIListeners
-                    .add(resourceSelectionChangedUIListener);
-        }
-    }
-
-    public void addGetUIListener(IGetUIListener getUIListener) {
-        synchronized (getUIListeners) {
-            getUIListeners.add(getUIListener);
-        }
-    }
-
-    public void addPutUIListener(IPutUIListener putUIListener) {
-        synchronized (putUIListeners) {
-            putUIListeners.add(putUIListener);
-        }
-    }
-
-    public void addPostUIListener(IPostUIListener postUIListener) {
-        synchronized (postUIListeners) {
-            postUIListeners.add(postUIListener);
-        }
-    }
-
-    public void addObserveUIListener(IObserveUIListener observeUIListener) {
-        synchronized (observeUIListeners) {
-            observeUIListeners.add(observeUIListener);
-        }
-    }
-
-    public void addVerificationUIListener(
-            IVerificationUIListener verificationUIListener) {
-        synchronized (verificationUIListeners) {
-            verificationUIListeners.add(verificationUIListener);
-        }
-    }
-
-    public void addConfigUploadUIListener(IConfigurationUpload configListener) {
-        synchronized (configUploadUIListeners) {
-            configUploadUIListeners.add(configListener);
-        }
-    }
-
-    public void addDevicePlatformInfoUIListener(
-            IDevicePlatformInfoUIListener deviceUIListener) {
-        synchronized (devicePlatformInfoUIListeners) {
-            devicePlatformInfoUIListeners.add(deviceUIListener);
-        }
-    }
-
-    public void removeDevicePlatformInfoUIListener(
-            IDevicePlatformInfoUIListener platformUIListener) {
-        synchronized (devicePlatformInfoUIListeners) {
-            devicePlatformInfoUIListeners.remove(platformUIListener);
-        }
-    }
-
-    public void removeResourceSelectionChangedUIListener(
-            IResourceSelectionChangedUIListener listener) {
-        synchronized (resourceSelectionChangedUIListeners) {
-            if (null != listener
-                    && resourceSelectionChangedUIListeners.size() > 0) {
-                resourceSelectionChangedUIListeners.remove(listener);
-            }
-        }
-    }
-
-    public void removeGetUIListener(IGetUIListener getUIListener) {
-        synchronized (getUIListeners) {
-            getUIListeners.remove(getUIListener);
-        }
-    }
-
-    public void removePutUIListener(IPutUIListener putUIListener) {
-        synchronized (putUIListeners) {
-            putUIListeners.remove(putUIListener);
-        }
-    }
-
-    public void removePostUIListener(IPostUIListener postUIListener) {
-        synchronized (postUIListeners) {
-            postUIListeners.remove(postUIListener);
-        }
-    }
-
-    public void removeObserveUIListener(IObserveUIListener observeUIListener) {
-        synchronized (observeUIListeners) {
-            observeUIListeners.remove(observeUIListener);
-        }
-    }
-
-    public void removeVerificationUIListener(
-            IVerificationUIListener verificationUIListener) {
-        synchronized (verificationUIListeners) {
-            verificationUIListeners.remove(verificationUIListener);
-        }
-    }
-
-    public void removeConfigUploadUIListener(IConfigurationUpload configListener) {
-        synchronized (configUploadUIListeners) {
-            configUploadUIListeners.remove(configListener);
         }
     }
 
@@ -771,24 +643,6 @@ public class ResourceManager {
         }
     }
 
-    public void addFindresourceUIListener(IFindResourceUIListener listener) {
-        if (null == listener) {
-            return;
-        }
-        synchronized (findResourceUIListeners) {
-            findResourceUIListeners.add(listener);
-        }
-    }
-
-    public void removeFindresourceUIListener(IFindResourceUIListener listener) {
-        if (null == listener) {
-            return;
-        }
-        synchronized (findResourceUIListeners) {
-            findResourceUIListeners.remove(listener);
-        }
-    }
-
     private boolean isUidExist(String uid) {
         boolean exist;
         synchronized (resourceMap) {
@@ -806,201 +660,6 @@ public class ResourceManager {
             resource = resourceMap.get(uid);
         }
         return resource;
-    }
-
-    private void newResourceFoundNotification(RemoteResource resource) {
-        synchronized (findResourceUIListeners) {
-            if (findResourceUIListeners.size() > 0) {
-                IFindResourceUIListener listener;
-                Iterator<IFindResourceUIListener> listenerItr = findResourceUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onNewResourceFound(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void resourceSelectionChangedUINotification(RemoteResource resource) {
-        synchronized (resourceSelectionChangedUIListeners) {
-            if (resourceSelectionChangedUIListeners.size() > 0) {
-                IResourceSelectionChangedUIListener listener;
-                Iterator<IResourceSelectionChangedUIListener> listenerItr = resourceSelectionChangedUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onResourceSelectionChange(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void getCompleteNotification(RemoteResource resource) {
-        synchronized (getUIListeners) {
-            if (getUIListeners.size() > 0) {
-                IGetUIListener listener;
-                Iterator<IGetUIListener> listenerItr = getUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onGetCompleted(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void putCompleteNotification(RemoteResource resource) {
-        synchronized (putUIListeners) {
-            if (putUIListeners.size() > 0) {
-                IPutUIListener listener;
-                Iterator<IPutUIListener> listenerItr = putUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onPutCompleted(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void postCompleteNotification(RemoteResource resource) {
-        synchronized (postUIListeners) {
-            if (postUIListeners.size() > 0) {
-                IPostUIListener listener;
-                Iterator<IPostUIListener> listenerItr = postUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onPostCompleted(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void observeCompleteNotification(RemoteResource resource) {
-        synchronized (observeUIListeners) {
-            if (observeUIListeners.size() > 0) {
-                IObserveUIListener listener;
-                Iterator<IObserveUIListener> listenerItr = observeUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onObserveCompleted(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void verificationStartedNotification(RemoteResource resource,
-            int autoType) {
-        synchronized (verificationUIListeners) {
-            if (verificationUIListeners.size() > 0) {
-                IVerificationUIListener listener;
-                Iterator<IVerificationUIListener> listenerItr = verificationUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onVerificationStarted(resource, autoType);
-                    }
-                }
-            }
-        }
-    }
-
-    private void verificationAbortedNotification(RemoteResource resource,
-            int autoType) {
-        synchronized (verificationUIListeners) {
-            if (verificationUIListeners.size() > 0) {
-                IVerificationUIListener listener;
-                Iterator<IVerificationUIListener> listenerItr = verificationUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onVerificationAborted(resource, autoType);
-                    }
-                }
-            }
-        }
-    }
-
-    private void verificationCompletedNotification(RemoteResource resource,
-            int autoType) {
-        synchronized (verificationUIListeners) {
-            if (verificationUIListeners.size() > 0) {
-                IVerificationUIListener listener;
-                Iterator<IVerificationUIListener> listenerItr = verificationUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onVerificationCompleted(resource, autoType);
-                    }
-                }
-            }
-        }
-    }
-
-    private void configUploadedNotification(RemoteResource resource) {
-        synchronized (configUploadUIListeners) {
-            if (configUploadUIListeners.size() > 0) {
-                IConfigurationUpload listener;
-                Iterator<IConfigurationUpload> listenerItr = configUploadUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onConfigurationUploaded(resource);
-                    }
-                }
-            }
-        }
-    }
-
-    private void deviceInfoReceivedNotification() {
-        synchronized (devicePlatformInfoUIListeners) {
-            if (devicePlatformInfoUIListeners.size() > 0) {
-                IDevicePlatformInfoUIListener listener;
-                Iterator<IDevicePlatformInfoUIListener> listenerItr = devicePlatformInfoUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onDeviceInfoFound();
-                    }
-                }
-            }
-        }
-    }
-
-    private void platformInfoReceivedNotification() {
-        synchronized (devicePlatformInfoUIListeners) {
-            if (devicePlatformInfoUIListeners.size() > 0) {
-                IDevicePlatformInfoUIListener listener;
-                Iterator<IDevicePlatformInfoUIListener> listenerItr = devicePlatformInfoUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onPlatformInfoFound();
-                    }
-                }
-            }
-        }
     }
 
     public synchronized Set<String> getLastKnownSearchTypes() {
@@ -1070,7 +729,8 @@ public class ResourceManager {
                     }
                     // Change the current resource in selection
                     setCurrentResourceInSelection(null);
-                    resourceSelectionChangedUINotification(null);
+                    UiListenerHandler.getInstance()
+                            .resourceSelectionChangedUINotification(null);
                 } else {
                     Iterator<String> typeItr = searchTypes.iterator();
                     String resType;
@@ -1105,7 +765,8 @@ public class ResourceManager {
             type = itr.next();
             if (searchTypes.contains(type)) {
                 setCurrentResourceInSelection(null);
-                resourceSelectionChangedUINotification(null);
+                UiListenerHandler.getInstance()
+                        .resourceSelectionChangedUINotification(null);
                 break;
             }
         }
@@ -1158,7 +819,8 @@ public class ResourceManager {
             public void run() {
                 setCurrentResourceInSelection(resource);
                 // Notify all observers for resource selection change event
-                resourceSelectionChangedUINotification(resource);
+                UiListenerHandler.getInstance()
+                        .resourceSelectionChangedUINotification(resource);
             }
         }.start();
     }
@@ -1333,23 +995,6 @@ public class ResourceManager {
             metaProperties.add(new MetaProperty(Constants.PLATFORM_SYSTEM_TIME,
                     platInfo.getSystemTime()));
         }
-        /*
-         * metaProperties.add(new MetaProperty(Constants.PLATFORM_ID, ""));
-         * metaProperties .add(new MetaProperty(Constants.PLATFORM_MANUFAC_NAME,
-         * "")); metaProperties .add(new
-         * MetaProperty(Constants.PLATFORM_MANUFAC_URL, ""));
-         * metaProperties.add(new MetaProperty(Constants.PLATFORM_MODEL_NO,
-         * "")); metaProperties.add(new
-         * MetaProperty(Constants.PLATFORM_DATE_OF_MANUFAC, ""));
-         * metaProperties.add(new MetaProperty(Constants.PLATFORM_VERSION, ""));
-         * metaProperties.add(new MetaProperty(Constants.PLATFORM_OS_VERSION,
-         * "")); metaProperties.add(new MetaProperty(
-         * Constants.PLATFORM_HARDWARE_VERSION, "")); metaProperties.add(new
-         * MetaProperty( Constants.PLATFORM_FIRMWARE_VERSION, ""));
-         * metaProperties .add(new MetaProperty(Constants.PLATFORM_SUPPORT_URL,
-         * "")); metaProperties .add(new
-         * MetaProperty(Constants.PLATFORM_SYSTEM_TIME, ""));
-         */
         return metaProperties;
     }
 
@@ -1534,11 +1179,6 @@ public class ResourceManager {
         return values;
     }
 
-    /*
-     * public String getAttributeValue(RemoteResource res, String attName) { if
-     * (null == res || null == attName) { return null; } return
-     * res.getAttributeValue(attName); }
-     */
     public void sendGetRequest(RemoteResource resource) {
         if (null == resource) {
             return;
@@ -1547,6 +1187,7 @@ public class ResourceManager {
         if (null == resourceN) {
             return;
         }
+
         try {
             resourceN.get(null, getListener);
         } catch (SimulatorException e) {
@@ -1757,7 +1398,7 @@ public class ResourceManager {
         resource.setConfigUploaded(true);
 
         // Notify the UI listeners
-        configUploadedNotification(resource);
+        UiListenerHandler.getInstance().configUploadedNotification(resource);
 
         return true;
     }

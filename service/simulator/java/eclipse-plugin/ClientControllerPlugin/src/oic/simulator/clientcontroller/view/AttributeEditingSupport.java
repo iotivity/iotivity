@@ -137,7 +137,6 @@ public class AttributeEditingSupport {
 
                     if (dialog instanceof PostRequestDialog) {
                         viewer.update(attributeElement, null);
-                        // comboBox.setVisible(false);
                     }
                 }
             });
@@ -233,8 +232,6 @@ public class AttributeEditingSupport {
 
         public void updateAttributeValue(SimulatorResourceAttribute att,
                 AttributeValue value) {
-            att.setValue(value);
-
             IStructuredSelection selection = (IStructuredSelection) viewer
                     .getSelection();
             if (null == selection) {

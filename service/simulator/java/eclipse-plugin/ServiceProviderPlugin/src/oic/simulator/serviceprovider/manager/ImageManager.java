@@ -58,11 +58,6 @@ public class ImageManager {
         // Resource icons based on the resource type
         r.put(Constants.SINGLE_RESOURCE, ImageDescriptor.createFromURL(bundle
                 .getEntry("/icons/single_resource.gif")));
-        r.put(Constants.COLLECTION_RESOURCE, ImageDescriptor
-                .createFromURL(bundle
-                        .getEntry("/icons/collection_resource.gif")));
-        r.put(Constants.DEVICE, ImageDescriptor.createFromURL(bundle
-                .getEntry("/icons/device.gif")));
 
         // Log View related icons
         r.put(Constants.DEBUG_LOG, ImageDescriptor.createFromURL(bundle

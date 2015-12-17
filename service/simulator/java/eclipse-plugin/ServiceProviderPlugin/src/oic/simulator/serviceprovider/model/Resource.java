@@ -34,17 +34,14 @@ public abstract class Resource {
 
     private String                       resourceURI;
     private String                       resourceName;
-    private Set<String>                  resourceTypes;
+    private String                       resourceType;
     private Set<String>                  resourceInterfaces;
     private boolean                      started;
     private boolean                      observable;
 
-    private Set<Device>                  deviceMembership;
-
     private Map<Integer, ObserverDetail> observers;
 
     public Resource() {
-        resourceTypes = new HashSet<String>();
         resourceInterfaces = new HashSet<String>();
         observers = new HashMap<Integer, ObserverDetail>();
     }
@@ -81,16 +78,19 @@ public abstract class Resource {
         this.resourceName = resourceName;
     }
 
-    public Set<String> getResourceTypes() {
-        return resourceTypes;
+    public String getResourceType() {
+        return resourceType;
     }
 
-    public void setResourceTypes(Set<String> resourceTypes) {
-        this.resourceTypes = resourceTypes;
+    public void setResourceType(String resourceType) {
+        this.resourceType = resourceType;
     }
 
     public Set<String> getResourceInterfaces() {
-        return resourceInterfaces;
+        if (null != resourceInterfaces) {
+            return new HashSet<String>(resourceInterfaces);
+        }
+        return null;
     }
 
     public void setResourceInterfaces(Set<String> resourceInterfaces) {
@@ -111,30 +111,6 @@ public abstract class Resource {
 
     public void setObservable(boolean observable) {
         this.observable = observable;
-    }
-
-    public void addResourceType(String resType) {
-        if (null == resType) {
-            return;
-        }
-        if (null == resourceTypes) {
-            resourceTypes = new HashSet<String>();
-        }
-        resourceTypes.add(resType);
-    }
-
-    public void removeResourceType(String resType) {
-        if (null == resType || null == resourceTypes) {
-            return;
-        }
-        resourceTypes.remove(resType);
-    }
-
-    public boolean isResourceTypeExist(String resType) {
-        if (null == resType || null == resourceTypes) {
-            return false;
-        }
-        return resourceTypes.contains(resType);
     }
 
     public void addInterfaceType(String ifType) {
@@ -182,55 +158,6 @@ public abstract class Resource {
             return;
         }
         observers.remove(observer.getId());
-    }
-
-    public Set<Device> getDeviceMembership() {
-        return deviceMembership;
-    }
-
-    public void setDeviceMembership(Set<Device> deviceMembership) {
-        this.deviceMembership = deviceMembership;
-    }
-
-    public void addDeviceMembership(Device dev) {
-        if (null == dev) {
-            return;
-        }
-        if (null == deviceMembership) {
-            deviceMembership = new HashSet<Device>();
-        }
-        deviceMembership.add(dev);
-    }
-
-    public void addDeviceMembership(Set<Device> devices) {
-        if (null == devices) {
-            return;
-        }
-        if (null == deviceMembership) {
-            deviceMembership = new HashSet<Device>();
-        }
-        deviceMembership.addAll(devices);
-    }
-
-    public void removeDeviceMembership(Device dev) {
-        if (null == dev || null == deviceMembership) {
-            return;
-        }
-        deviceMembership.remove(dev);
-    }
-
-    public void removeDeviceMembership(Set<Device> devices) {
-        if (null == devices || null == deviceMembership) {
-            return;
-        }
-        deviceMembership.removeAll(devices);
-    }
-
-    public boolean isMemberOfAnyDevice() {
-        if (null == deviceMembership || deviceMembership.isEmpty()) {
-            return false;
-        }
-        return true;
     }
 
     public void setResourceRepresentation(SimulatorResourceModel resModel)

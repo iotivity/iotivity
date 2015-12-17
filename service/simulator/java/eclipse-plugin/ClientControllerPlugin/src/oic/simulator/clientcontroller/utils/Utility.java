@@ -17,9 +17,11 @@
 package oic.simulator.clientcontroller.utils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.oic.simulator.AttributeValue;
@@ -160,5 +162,19 @@ public class Utility {
         } else {
             return String.valueOf(value);
         }
+    }
+
+    public static Map<String, String> getResourceInterfaces() {
+        Map<String, String> ifTypes = null;
+        ifTypes = new HashMap<String, String>();
+        ifTypes.put(Constants.BASELINE_INTERFACE, "Baseline");
+        ifTypes.put(Constants.LINKS_LIST_INTERFACE, "Links List");
+        ifTypes.put(Constants.BATCH_INTERFACE, "Batch");
+        ifTypes.put(Constants.LINK_BATCH_INTERFACE, "Link Batch");
+        ifTypes.put(Constants.READ_ONLY_INTERFACE, "Read-Only");
+        ifTypes.put(Constants.READ_WRITE_INTERFACE, "Read-Write");
+        ifTypes.put(Constants.ACTUATOR_INTERFACE, "Actuator");
+        ifTypes.put(Constants.SENSOR_INTERFACE, "Sensor");
+        return ifTypes;
     }
 }

@@ -28,7 +28,6 @@ import oic.simulator.serviceprovider.listener.IPropertiesChangedListener;
 import oic.simulator.serviceprovider.listener.IResourceListChangedListener;
 import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
 import oic.simulator.serviceprovider.model.AttributeElement;
-import oic.simulator.serviceprovider.model.Device;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.ResourceType;
 import oic.simulator.serviceprovider.model.SingleResource;
@@ -235,22 +234,6 @@ public class UiListenerHandler {
         }
     }
 
-    public void deviceSelectionChangedUINotification(Device dev) {
-        synchronized (selectionChangedUIListeners) {
-            if (selectionChangedUIListeners.size() > 0) {
-                ISelectionChangedListener listener;
-                Iterator<ISelectionChangedListener> listenerItr = selectionChangedUIListeners
-                        .iterator();
-                while (listenerItr.hasNext()) {
-                    listener = listenerItr.next();
-                    if (null != listener) {
-                        listener.onDeviceSelectionChange(dev);
-                    }
-                }
-            }
-        }
-    }
-
     public void attributeUpdatedUINotification(AttributeElement attribute) {
         synchronized (dataChangeListeners) {
             if (dataChangeListeners.size() > 0 && null != attribute) {
@@ -359,8 +342,6 @@ public class UiListenerHandler {
                     if (null != listener) {
                         if (targetClass == Resource.class) {
                             listener.onResourcePropertyChange();
-                        } else {
-                            listener.onDevicePropertyChange();
                         }
                     }
                 }
