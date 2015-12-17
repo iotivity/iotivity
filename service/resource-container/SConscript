@@ -191,6 +191,40 @@ if target_os == 'linux' :
  #       Command("HeightSensorApp", BMI_SENSOR_BUNDLE_DIR + "src/inputSensors/HeightSensorApp/HeightSensorApp", Copy("$TARGET", "$SOURCE"))
         Command("ActivitySensorApp", ACTIVITY_BUNDLE_DIR + "src/inputSensors/ActivitySensorApp/ActivitySensorApp", Copy("$TARGET", "$SOURCE"))
 
+######################################################################
+# build Acne sensor sample bundle
+######################################################################
+if target_os in ['linux']:
+    Acne_sensor_bundle_env = resource_container_env.Clone()
+    ACNE2_sensor_bundle_env = resource_container_env.Clone()
+    Acne_sensor_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+    ACNE2_sensor_bundle_env.AppendUnique(CCFLAGS = ['-fPIC'])
+
+    Acne_SENSOR_BUNDLE_DIR = 'examples/ACNESensor/GlobalSensor/'
+    ACNE2_SENSOR_BUNDLE_DIR = 'examples/ACNESensor/ACNESensor/'
+    Acne_sensor_bundle_env.AppendUnique(CPPPATH = [ Acne_SENSOR_BUNDLE_DIR + 'include' ])
+    ACNE2_sensor_bundle_env.AppendUnique(CPPPATH = [ ACNE2_SENSOR_BUNDLE_DIR + 'include' ])
+
+    Acne_sensor_bundle_env.PrependUnique(LIBS = ['rcs_container'])
+    ACNE2_sensor_bundle_env.PrependUnique(LIBS = ['rcs_container'])
+
+    Acne_sensor_bundle_src = [ Glob(Acne_SENSOR_BUNDLE_DIR + 'src/*.cpp')]
+    ACNE2_sensor_bundle_src = [ Glob(ACNE2_SENSOR_BUNDLE_DIR + 'src/*.cpp')]
+
+    AcneSensorBundle = Acne_sensor_bundle_env.SharedLibrary('AcneSensorBundle', Acne_sensor_bundle_src)
+    ACNE2SensorBundle = ACNE2_sensor_bundle_env.SharedLibrary('ACNE2SensorBundle', ACNE2_sensor_bundle_src)
+    Acne_sensor_bundle_env.InstallTarget(AcneSensorBundle, 'libAcneSensorBundle')
+    ACNE2_sensor_bundle_env.InstallTarget(ACNE2SensorBundle, 'libACNE2SensorBundle')
+
+    if target_os == 'linux' :
+        SConscript(Acne_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
+        Command("OutsideSensorApp", Acne_SENSOR_BUNDLE_DIR + "src/inputSensors/OutsideSensorApp/OutsideSensorApp", Copy("$TARGET", "$SOURCE"))
+        SConscript(ACNE2_SENSOR_BUNDLE_DIR + 'SConscript')
+        Command("ACNESensorApp", ACNE2_SENSOR_BUNDLE_DIR + "ACNESensorApp", Copy("$TARGET", "$SOURCE"))
+        SConscript(ACNE2_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
+        Command("MoistSensorApp", ACNE2_SENSOR_BUNDLE_DIR + "src/inputSensors/MoistSensorApp/MoistSensorApp", Copy("$TARGET", "$SOURCE"))
+        Command("OilSensorApp", ACNE2_SENSOR_BUNDLE_DIR + "src/inputSensors/OilSensorApp/OilSensorApp", Copy("$TARGET", "$SOURCE"))
+        Command("TempSensorApp", ACNE2_SENSOR_BUNDLE_DIR + "src/inputSensors/TempSensorApp/TempSensorApp", Copy("$TARGET", "$SOURCE"))
 
 ######################################################################
 # build hue sample bundle

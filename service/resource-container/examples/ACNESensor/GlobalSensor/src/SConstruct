@@ -1,0 +1,1 @@
+Program('AcneServer', ['AcneSensor.cpp', 'AcneSensorResource.cpp', 'AcneSensorBundleActivator.cpp', 'SysTimer.cpp'])
