@@ -23,24 +23,15 @@ package org.iotivity.service.sample.container;
 import android.os.Message;
 import android.util.Log;
 
-import org.iotivity.service.resourcecontainer.AndroidBundleActivator;
-import org.iotivity.service.resourcecontainer.AndroidBundleResource;
-import org.iotivity.service.resourcecontainer.AndroidBundleSoftSensorResource;
 import org.iotivity.service.resourcecontainer.RcsBundleInfo;
-import org.iotivity.service.resourcecontainer.RcsResourceAttributes;
 import org.iotivity.service.resourcecontainer.RcsResourceContainer;
-import org.iotivity.service.resourcecontainer.RcsResourceContainerBundleAPI;
-import org.iotivity.service.resourcecontainer.RcsValue;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by duseok on 15. 12. 13.
- */
 public class ResourceContainer {
-    private final String LOG_TAG = "[" + MainActivity.class.getName() + "]";
+    private final String LOG_TAG = "[" + "ResourceContainer" + "]";
     private static MainActivity mainActivityInstance;
 
     public static String logMessage;
@@ -55,12 +46,10 @@ public class ResourceContainer {
     public ResourceContainer() {
         mainActivityInstance = MainActivity.getActivity();
         containerInstance = new RcsResourceContainer(mainActivityInstance.getApplicationContext());
-        trackingResource = new TrackingResource(mainActivityInstance.getApplicationContext());
+//        trackingResource = new TrackingResource(mainActivityInstance.getApplicationContext());
 
-        // TODO
-        // example...
-        trackingResource.setURI("/boy/1");
-        trackingResource.setName("boy1");
+//        trackingResource.setURI("/boy/1");
+//        trackingResource.setName("boy1");
     }
 
     public void startContainer(String sdCardPath) {
@@ -83,16 +72,12 @@ public class ResourceContainer {
         }
     }
 
-    public void stopContainer() {
-
-    }
-
     public void startTracking() {
         List<RcsBundleInfo> bundleList = containerInstance.listBundles();
 
         if (1 == bundleList.size()) {
             logMessage = "Bundle not added\n";
-        } else if (true == startBundleFlag) {
+        } else if (startBundleFlag) {
             logMessage = "Bundle already started\n";
         } else {
             containerInstance.startBundle("oic.bundle.TrackingSensor");
@@ -111,7 +96,7 @@ public class ResourceContainer {
     }
 
     public void addTracking() {
-        Map<String,String> bundleParams = null;
+//        Map<String,String> bundleParams = null;
         List<RcsBundleInfo> bundleList = containerInstance.listBundles();
 
         if (1 < bundleList.size()) {
@@ -119,7 +104,7 @@ public class ResourceContainer {
         } else {
             containerInstance.addBundle("oic.bundle.TrackingSensor","oic.r.trackingsensor",
                     "org.iotivity.service.sample.locationtrackingapp.apk","Activator",
-                    bundleParams);
+                    null);
 
             logMessage = "bundle to add : \n";
             logMessage = logMessage + "ID : " + "oic.bundle.TrackingSensor\n";
@@ -134,7 +119,7 @@ public class ResourceContainer {
     }
 
     public void addResourceConfig() {
-        if (false == startBundleFlag) {
+        if (!startBundleFlag) {
             logMessage = "Bundle is not started" + "\n";
         } else {
             List<RcsBundleInfo> bundleList = containerInstance.listBundles();
@@ -146,7 +131,7 @@ public class ResourceContainer {
                     && (0 == bundleResources.size())) {
                 logMessage = "No bundle found" + "\n";
             } else {
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 params.put("resourceType", "oic.r.trackingsensor");
                 params.put("address",
                         "http://192.168.2.40/api/duseok/sensor/7");

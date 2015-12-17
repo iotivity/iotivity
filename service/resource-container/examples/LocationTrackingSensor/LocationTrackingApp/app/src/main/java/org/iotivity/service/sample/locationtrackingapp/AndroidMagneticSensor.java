@@ -35,7 +35,7 @@ import org.iotivity.service.resourcecontainer.RcsValue;
  * Created by duseok on 15. 12. 13.
  */
 public class AndroidMagneticSensor extends AndroidBundleResource implements SensorEventListener {
-    private final String LOG_TAG = "[" + Activator.class.getName() + "]";
+    private final String LOG_TAG = "[" + this.getName() + "]";
     private final SensorManager mSensorManager;
     private final Sensor magSensor;
 
@@ -51,9 +51,9 @@ public class AndroidMagneticSensor extends AndroidBundleResource implements Sens
 
     @Override
     protected void initAttributes() {
-        this.m_attributes.put("mag_x", 0);
-        this.m_attributes.put("mag_y", 0);
-        this.m_attributes.put("mag_z", 0);
+        this.m_attributes.put("mag_x", 0.0);
+        this.m_attributes.put("mag_y", 0.0);
+        this.m_attributes.put("mag_z", 0.0);
     }
 
     @Override

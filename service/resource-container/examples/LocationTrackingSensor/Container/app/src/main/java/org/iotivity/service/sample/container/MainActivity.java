@@ -34,7 +34,12 @@ import android.view.Gravity;
 import android.widget.Toast;
 
 import org.iotivity.base.ModeType;
+import org.iotivity.base.OcConnectivityType;
+import org.iotivity.base.OcException;
+import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcPlatform;
+import org.iotivity.base.OcRepresentation;
+import org.iotivity.base.OcResource;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
@@ -43,15 +48,27 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
-    private final String LOG_TAG = "[" + MainActivity.class.getName() + "]";
+public class MainActivity extends AppCompatActivity implements
+        OcPlatform.OnResourceFoundListener,
+        OcResource.OnPutListener {
+    private final String LOG_TAG = "[" + "MainActivity" + "]";
     private static String logMessage;
 
     private static MainActivity resContainerActivityInstance;
-    private ResourceContainer resContainerInstance;
 
     private static Handler mHandler;
+
+    private OcResource accelResource;
+    private OcResource linearAccelResource;
+    private OcResource magneticResource;
+    private OcResource wifiResource;
+    private OcResource trackingResource;
+    private OcResource.OnPutListener trackingResourceListener;
 
     public static MainActivity getActivity() {
         return resContainerActivityInstance;
@@ -59,6 +76,41 @@ public class MainActivity extends AppCompatActivity {
 
     public static void setMessageLog(String message) {
         logMessage = message;
+    }
+
+    private void startClient() {
+        configurePlatform();
+
+            try {
+                Log.i(LOG_TAG, "Find Resource");
+                OcPlatform.findResource("", "/oic/res?rt=", EnumSet.of(OcConnectivityType.CT_DEFAULT), this);
+                Log.i(LOG_TAG, "Find Resource called");
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        do {
+            try {
+                wait(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            getAccelResource();
+            getLinearAccelResource();
+            getMagneticResource();
+            getWifiResource();
+        }
+        while (true);
+    }
+
+    @Override
+    public void onPutCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+        //Log.i(LOG_TAG, "put completed");
+
+    }
+
+    @Override
+    public void onPutFailed(Throwable throwable) {
+
     }
 
     @SuppressLint("HandlerLeak")
@@ -81,6 +133,31 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public synchronized void onResourceFound(OcResource ocResource) {
+        Log.i(LOG_TAG, "Uri : " + ocResource.getUri());
+        Log.i(LOG_TAG, "Host : " + ocResource.getHost());
+        Log.i(LOG_TAG, "Type : " + ocResource.getResourceTypes());
+        switch(ocResource.getUri()) {
+            case "/android/accel/1":
+                accelResource = ocResource;
+                break;
+            case "/android/linearaccel/1":
+                linearAccelResource = ocResource;
+                break;
+            case "/android/magnetic/1":
+                magneticResource = ocResource;
+                break;
+            case "/android/wifi/1":
+                wifiResource = ocResource;
+                break;
+            case "/android/trackingsensor/1":
+                trackingResource = ocResource;
+                break;
+            default:
+                break;
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         final String sdCardPath;
@@ -93,10 +170,9 @@ public class MainActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_main);
 
-        configurePlatform();
         resContainerActivityInstance = this;
 
-        resContainerInstance = new ResourceContainer();
+        ResourceContainer resContainerInstance = new ResourceContainer();
 
         CopyAssetsToSDCard();
         sdCardPath = this.getFilesDir().getPath();
@@ -108,8 +184,162 @@ public class MainActivity extends AppCompatActivity {
 
         resContainerInstance.addTracking();
         resContainerInstance.startTracking();
-//        resContainerInstance.addResourceConfig();
-//        resContainerInstance.addAndroidResource();
+
+        trackingResourceListener = this;
+
+        new Thread(new Runnable() {
+            public void run() {
+                startClient();
+            }
+        }).start();
+    }
+
+    private void getMagneticResource() {
+        Map<String, String> map = new HashMap<>();
+        OcResource.OnGetListener magneticResourceListener = new OcResource.OnGetListener() {
+            @Override
+            public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+                double value[] = new double[3];
+                try {
+                    value[0] = ocRepresentation.getValue("mag_x");
+                    value[1] = ocRepresentation.getValue("mag_y");
+                    value[2] = ocRepresentation.getValue("mag_z");
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Map<String, String> map = new HashMap<>();
+                try {
+                    trackingResource.put(ocRepresentation, map, trackingResourceListener);
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Log.i(LOG_TAG, "magnetic : " + value[0] + ", " + value[1] + ", " + value[2]);
+            }
+
+            @Override
+            public void onGetFailed(Throwable throwable) {
+
+            }
+        };
+
+        try {
+            magneticResource.get(map, magneticResourceListener);
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getAccelResource() {
+        Map<String, String> map = new HashMap<>();
+        OcResource.OnGetListener accelResourceListener = new OcResource.OnGetListener() {
+            @Override
+            public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+                double value[] = new double[3];
+
+                try {
+                    value[0] = ocRepresentation.getValue("accel_x");
+                    value[1] = ocRepresentation.getValue("accel_y");
+                    value[2] = ocRepresentation.getValue("accel_z");
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Map<String, String> map = new HashMap<>();
+                try {
+                    trackingResource.put(ocRepresentation, map, trackingResourceListener);
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Log.i(LOG_TAG, "acceleration : " + value[0] + ", " + value[1] + ", " + value[2]);
+            }
+
+            @Override
+            public void onGetFailed(Throwable throwable) {
+
+            }
+        };
+
+        try {
+            accelResource.get(map, accelResourceListener);
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getLinearAccelResource() {
+        Map<String, String> map = new HashMap<>();
+        OcResource.OnGetListener linearaccelResourceListener = new OcResource.OnGetListener() {
+            @Override
+            public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+                double value[] = new double[3];
+                try {
+                    value[0] = ocRepresentation.getValue("linearaccel_x");
+                    value[1] = ocRepresentation.getValue("linearaccel_y");
+                    value[2] = ocRepresentation.getValue("linearaccel_z");
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Map<String, String> map = new HashMap<>();
+                try {
+                    trackingResource.put(ocRepresentation, map, trackingResourceListener);
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Log.i(LOG_TAG, "linear acceleration : " + value[0] + ", " + value[1] + ", " + value[2]);
+            }
+
+            @Override
+            public void onGetFailed(Throwable throwable) {
+
+            }
+        };
+
+        try {
+            linearAccelResource.get(map, linearaccelResourceListener);
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getWifiResource() {
+        Map<String, String> map = new HashMap<>();
+        OcResource.OnGetListener wifiResourceListener = new OcResource.OnGetListener() {
+            @Override
+            public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+                int value[] = new int[2];
+
+                try {
+                    value[0] = ocRepresentation.getValue("wifi_rssi");
+                    value[1] = ocRepresentation.getValue("wifi_frequency");
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Map<String, String> map = new HashMap<>();
+                try {
+                    trackingResource.put(ocRepresentation, map, trackingResourceListener);
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Log.i(LOG_TAG, "wifi : " + value[0] + ", " + value[1]);
+            }
+
+            @Override
+            public void onGetFailed(Throwable throwable) {
+
+            }
+        };
+        try {
+            wifiResource.get(map, wifiResourceListener);
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
     }
 
     public Handler getHandler() {

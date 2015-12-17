@@ -26,9 +26,17 @@ We used accelerometer, magnetic sensor, and WiFi module to get the location of t
 2-1. Magnetic sensor:  
 
 - output: 3 dimensional magnetic force vector
-- Combining the orientation(especially azimuth) from magnetic sensor and gravity component from above accelerometer, we can make a compass to get the information about the global coordinate. 
+- Combining the orientation(especially azimuth) from magnetic sensor and gravity component from
+  above accelerometer, we can make a compass to get the information about the global coordinate.
 
 3-1. WiFi module:
 
 - output: RSSI, frequency
-- We can get the RSSI(in dBm) and frequency(in MHz) of signal from connected AP(Access Point) and calculate the distance from AP.
+- We can get the RSSI(in dBm) and frequency(in MHz) of signal from connected AP(Access Point)
+  and calculate the distance from AP.
+
+3. Accuracy Problem
+
+- Our focus was on utilization of IoTivity framework, not on the performance of our soft sensor.
+  So the output accuracy of our location sensor is relatively low, although we did some basic
+  signal processing to reduce the effect of noise.

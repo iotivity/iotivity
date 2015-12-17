@@ -26,4 +26,5 @@ dependencies {
 //    compile (name:'iotivity-armeabi-service-debug', ext:'aar')
     compile (name:'iotivity-base-armeabi-release', ext:'aar')
     compile (name:'iotivity-armeabi-resource-container-debug', ext:'aar')
+    compile (name:'dsp-collection')
 }

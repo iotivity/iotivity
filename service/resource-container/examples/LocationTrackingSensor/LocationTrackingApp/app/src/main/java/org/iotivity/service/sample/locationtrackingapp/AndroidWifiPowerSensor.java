@@ -36,7 +36,7 @@ import org.iotivity.service.resourcecontainer.RcsValue;
  * Created by duseok on 15. 12. 13.
  */
 public class AndroidWifiPowerSensor extends AndroidBundleResource {
-    private final String LOG_TAG = "[" + Activator.class.getName() + "]";
+    private final String LOG_TAG = "[" + this.getName() + "]";
 
     private WifiManager wifiManager;
     private WifiInfo wifiInfo;
@@ -72,7 +72,7 @@ public class AndroidWifiPowerSensor extends AndroidBundleResource {
     @Override
     protected void initAttributes() {
         this.m_attributes.put("wifi_rssi", 0);
-        this.m_attributes.put("wifi_freqency", 0);
+        this.m_attributes.put("wifi_frequency", 0);
     }
 
     @Override

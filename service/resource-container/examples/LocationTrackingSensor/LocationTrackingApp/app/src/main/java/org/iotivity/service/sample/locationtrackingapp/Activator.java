@@ -30,9 +30,6 @@ import org.iotivity.service.resourcecontainer.ResourceConfig;
 
 import java.util.List;
 
-/**
- * Created by duseok on 15. 12. 13.
- */
 public class Activator extends AndroidBundleActivator {
     private final String LOG = "[" + Activator.class.getName() + "]";
 

@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.Vector;
 
 public class TrackingSensorResource extends AndroidBundleSoftSensorResource {
-    private final String LOG_TAG = "[" + Activator.class.getName() + "]";
+    private final String LOG_TAG = "[" + "TrackingResource" + "]";
 
     private float[] accel = new float[3];
     private float[] LinearAccel = new float[3];
@@ -49,28 +49,29 @@ public class TrackingSensorResource extends AndroidBundleSoftSensorResource {
     private float[] gravity = new float[3];
     private float[] velocity = new float[3];
     private float[] loc = new float[3];
-    private float[] rdisthistory = new float[10];
-    private int rdistidx = 0;
+    private Vector<Float> rdisthistory = new Vector<>();
+    private float[] rdistavg = new float[10];
 
     private float azimuth = 0f;
     private float rdist = 0f;
 
     private long prevTime = 0;
-    private long time = System.currentTimeMillis();
+    private long time;
 
     public TrackingSensorResource(Context appContext) {
         super(appContext);
         this.setResourceType("oic.r.trackingsensor");
         this.setName("TrackingSensor1");
 
-        m_mapInputData = new HashMap<>();
+        this.m_mapInputData = new HashMap<>();
+        time = System.currentTimeMillis();
     }
 
     @Override
     protected void onUpdatedInputResource(String attribute, Vector<RcsValue> values) {
         Log.i(LOG_TAG, "attribute - " + attribute + " value - " + values);
 
-        m_mapInputData.put(attribute, values.get(0));
+        this.m_mapInputData.put(attribute, values.get(0));
     }
 
     public float calculateDistance(float levelInDb, float freqInMHz)    {
@@ -112,8 +113,8 @@ public class TrackingSensorResource extends AndroidBundleSoftSensorResource {
         mag[1]         = alpha * mag[1] + (1 -alpha) * ((float) m_mapInputData.get("mag_y").asDouble());
         mag[2]         = alpha * mag[2] + (1 -alpha) * ((float) m_mapInputData.get("mag_z").asDouble());
 
-        wifi_rssi    = (float) m_mapInputData.get("wifi_rssi").asDouble();
-        wifi_freq    = (float) m_mapInputData.get("wifi_frequency").asDouble();
+        wifi_rssi    = m_mapInputData.get("wifi_rssi").asInt();
+        wifi_freq    = m_mapInputData.get("wifi_frequency").asInt();
 
         gravity[0]     = accel[0] - LinearAccel[0];
         gravity[1]     = accel[1] - LinearAccel[1];
@@ -182,15 +183,34 @@ public class TrackingSensorResource extends AndroidBundleSoftSensorResource {
         velocity[2] += (float)lpfiltervelz.step(time_slot *
                 (zLinearAccel + prevzLinearAccel)/2.0);
 
-        float diff = 0;
-        for(int i = 0; i < 9; i++){
-            diff = (rdisthistory[i+1] - rdisthistory[i] > diff)
-                ? (rdisthistory[i+1] - rdisthistory[i]) : diff;
+        Log.d(LOG_TAG, "velocity X : " + velocity[0]);
+        Log.d(LOG_TAG, "velocity Y : " + velocity[1]);
+
+        float diff = 0.0f;
+        float sum = 0.0f;
+        if(rdisthistory.size() >= 100) {
+            for (int i = 0; i < 10; i++) {
+                for (int j = 10 * i; j < 10 * (i + 1); j++) {
+                    sum += rdisthistory.get(j);
+                }
+                rdistavg[i] = sum / 10.0f;
+            }
+            for (int i = 0; i < 9; i++) {
+                diff = (rdistavg[i + 1] - rdistavg[i] > diff)
+                        ? (rdistavg[i + 1] - rdistavg[i]) : diff;
+            }
+
+            Log.d(LOG_TAG, "rdistavg[0]: " + rdistavg[0] + ", rdistavg[1]: " + rdistavg[1] + ", rdistavg[2]: " + rdistavg[2] + ", rdistavg[3]: " + rdistavg[3]);
+            Log.d(LOG_TAG, "diff: " + diff);
+            if (diff < 0.5 && diff > -0.5) {
+                velocity[0] = 0;
+                velocity[1] = 0;
+            }
         }
-        if(diff < 0.7 && diff>-0.7){
-            velocity[0] = 0;
-            velocity[1] = 0;
-        }
+        Log.d(LOG_TAG, "velocity X : " + velocity[0]);
+        Log.d(LOG_TAG, "velocity Y : " + velocity[1]);
+        Log.d(LOG_TAG, "timeslot: "+ time_slot);
+
 
         loc[0] += (float)lpfiltervelx.step(time_slot * velocity[0]);
         loc[1] += (float)lpfiltervelx.step(time_slot * velocity[1]);
@@ -209,17 +229,15 @@ public class TrackingSensorResource extends AndroidBundleSoftSensorResource {
 
     private void getDistenceFromWifi() {
         rdist = calculateDistance(wifi_rssi, wifi_freq);
-        rdisthistory[(rdistidx++) % 10] = rdist;
+        rdisthistory.add(rdist);
+        rdisthistory.remove(0);
     }
 
-    protected void executeLogic() {
-        Log.d(LOG_TAG, "in accel - " + accel.toString() + " linear - " + LinearAccel.toString() +
-                " mag - " + mag.toString() + " wifi - " + wifi_rssi);
-        Log.d(LOG_TAG, "accel - " + m_mapInputData.get("accel_x") + " linear - "
-                + m_mapInputData.get("linearaccel_x") + " mag - " + m_mapInputData.get("mag_x"));
-        if (m_mapInputData.get("accel_x") != null &&
-                m_mapInputData.get("linearaccel_x") != null &&
-                m_mapInputData.get("mag_x") != null) {
+    protected void executeLogic() {//main logic
+        if (this.m_mapInputData.get("accel_x") != null &&
+                this.m_mapInputData.get("linearaccel_x") != null &&
+                this.m_mapInputData.get("mag_x") != null &&
+                m_mapInputData.get("wifi_rssi") != null) {
             getSensorValue();
 
             setAzimuth();
@@ -238,28 +256,37 @@ public class TrackingSensorResource extends AndroidBundleSoftSensorResource {
 
     @Override
     protected void initAttributes() {
-        this.m_attributes.put("accel_x", 0);
-        this.m_attributes.put("accel_y", 0);
-        this.m_attributes.put("accel_z", 0);
+        this.m_attributes.put("accel_x", 0.0);
+        this.m_attributes.put("accel_y", 0.0);
+        this.m_attributes.put("accel_z", 0.0);
 
-        this.m_attributes.put("linearaccel_x", 0);
-        this.m_attributes.put("linearaccel_y", 0);
-        this.m_attributes.put("linearaccel_z", 0);
+        this.m_attributes.put("linearaccel_x", 0.0);
+        this.m_attributes.put("linearaccel_y", 0.0);
+        this.m_attributes.put("linearaccel_z", 0.0);
 
-        this.m_attributes.put("mag_x", 0);
-        this.m_attributes.put("mag_y", 0);
-        this.m_attributes.put("mag_z", 0);
+        this.m_attributes.put("mag_x", 0.0);
+        this.m_attributes.put("mag_y", 0.0);
+        this.m_attributes.put("mag_z", 0.0);
 
         this.m_attributes.put("wifi_rssi", 0);
         this.m_attributes.put("wifi_frequency", 0);
 
-        this.m_attributes.put("loc_x", 0);
-        this.m_attributes.put("loc_y", 0);
+        this.m_attributes.put("loc_x", 0.0);
+        this.m_attributes.put("loc_y", 0.0);
     }
 
     @Override
     public void handleSetAttributesRequest(RcsResourceAttributes rcsResourceAttributes) {
-        this.setAttributes(rcsResourceAttributes);
+        Log.i (LOG_TAG, "handle : " + rcsResourceAttributes.contains("accel_x"));
+//        this.setAttributes(rcsResourceAttributes, true);
+//        m_attributes.put(rcsResourceAttributes);
+
+        for (String key : rcsResourceAttributes.keySet()) {
+            m_mapInputData.put(key, rcsResourceAttributes.get(key));
+            m_attributes.put(key, rcsResourceAttributes.get(key));
+
+        }
+
         executeLogic();
     }
 

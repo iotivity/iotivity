@@ -35,7 +35,7 @@ import org.iotivity.service.resourcecontainer.RcsValue;
  * Created by duseok on 15. 12. 13.
  */
 public class AndroidLinearAccelerationSensor extends AndroidBundleResource implements SensorEventListener {
-    private final String LOG_TAG = "[" + Activator.class.getName() + "]";
+    private final String LOG_TAG = "[" + this.getName() + "]";
     private final SensorManager mSensorManager;
     private final Sensor linearaccelSensor;
 
@@ -51,9 +51,9 @@ public class AndroidLinearAccelerationSensor extends AndroidBundleResource imple
 
     @Override
     protected void initAttributes() {
-        this.m_attributes.put("linearaccel_x", 0);
-        this.m_attributes.put("linearaccel_y", 0);
-        this.m_attributes.put("linearaccel_z", 0);
+        this.m_attributes.put("linearaccel_x", 0.0);
+        this.m_attributes.put("linearaccel_y", 0.0);
+        this.m_attributes.put("linearaccel_z", 0.0);
     }
 
     @Override

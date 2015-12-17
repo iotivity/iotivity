@@ -31,11 +31,8 @@ import org.iotivity.service.resourcecontainer.AndroidBundleResource;
 import org.iotivity.service.resourcecontainer.RcsResourceAttributes;
 import org.iotivity.service.resourcecontainer.RcsValue;
 
-/**
- * Created by duseok on 15. 12. 13.
- */
 public class AndroidAccelerationSensor extends AndroidBundleResource implements SensorEventListener {
-    private final String LOG_TAG = "[" + Activator.class.getName() + "]";
+    private final String LOG_TAG = "[" + this.getName() + "]";
     private final SensorManager mSensorManager;
     private final Sensor accelSensor;
 
@@ -51,9 +48,9 @@ public class AndroidAccelerationSensor extends AndroidBundleResource implements 
 
     @Override
     protected void initAttributes() {
-        this.m_attributes.put("accel_x", 0);
-        this.m_attributes.put("accel_y", 0);
-        this.m_attributes.put("accel_z", 0);
+        this.m_attributes.put("accel_x", 0.0);
+        this.m_attributes.put("accel_y", 0.0);
+        this.m_attributes.put("accel_z", 0.0);
     }
 
     @Override
