@@ -18,7 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
 package org.iotivity.service.sample.androidbundle;
 
 import android.content.Context;
@@ -34,11 +33,10 @@ import org.iotivity.service.sample.androidbundle.resources.LightIntensityResourc
 import org.iotivity.service.sample.androidbundle.resources.TemperatureResource;
 
 import java.util.List;
+import java.util.Vector;
 
-/**
- * Created by markus.jung on 11/7/2015.
- */
 public class SampleActivator extends AndroidBundleActivator {
+    private List<AndroidBundleResource> resources = new Vector<AndroidBundleResource>();
 
     public SampleActivator(RcsResourceContainerBundleAPI bundleAPI, Context appContext){
         super(bundleAPI, appContext);
@@ -49,40 +47,70 @@ public class SampleActivator extends AndroidBundleActivator {
     public void activateBundle() {
         Log.d(SampleActivator.class.getName(), "Activate bundle called");
 
-        LightIntensityResource lightIntensityResource = new LightIntensityResource(this.appContext);
-        lightIntensityResource.setURI("/lightsensor/1");
-        bundleAPI.registerResource("oic.android.sample", lightIntensityResource);
+        List<ResourceConfig> configuredBundleResources = this.bundleAPI.
+                getConfiguredBundleResources("oic.android.sample");
 
-        HumidityResource humidityResource = new HumidityResource(this.appContext);
-        humidityResource.setURI("/humidity/1");
-        bundleAPI.registerResource("oic.android.sample", humidityResource);
+        for(ResourceConfig config : configuredBundleResources){
+            AndroidBundleResource resource = null;
 
-        TemperatureResource tempResource = new TemperatureResource(this.appContext);
-        tempResource.setURI("/temperature/1");
-        bundleAPI.registerResource("oic.android.sample", tempResource);
+            if("oic.r.lightsensor".equals(config.getResourceType())){
+                resource =
+                        new LightIntensityResource(this.appContext);
+            } else if("oic.r.temperature".equals(config.getResourceType())){
+                resource =
+                        new TemperatureResource(this.appContext);
+            } else if("oic.r.discomfortindex".equals(config.getResourceType())){
+                resource =
+                        new DiscomfortIndexResource(this.appContext);
+            } else if ("oic.r.humidity".equals(config.getResourceType())) {
+                resource =
+                        new HumidityResource(this.appContext);
+            }
 
-        DiscomfortIndexResource diResource = new DiscomfortIndexResource(this.appContext);
-        diResource.setURI("/android/discomfortindex/1");
-        bundleAPI.registerResource("oic.android.sample", diResource);
+            if(resource != null) {
+                resource.setURI(config.getURI());
+                resource.setName(config.getName());
+                bundleAPI.registerResource("oic.android.sample", resource);
+                resources.add(resource);
+            }
+        }
     }
 
     @Override
     public void deactivateBundle() {
-
+        for(AndroidBundleResource resource : resources){
+            bundleAPI.unregisterResource(resource);
+        }
     }
 
     @Override
-    public void createResource(ResourceConfig resourceConfig) {
+    public void createResource(ResourceConfig config) {
+        AndroidBundleResource resource = null;
 
+        if("oic.r.lightsensor".equals(config.getResourceType())){
+            resource =
+                    new LightIntensityResource(this.appContext);
+        } else if("oic.r.temperature".equals(config.getResourceType())){
+            resource =
+                    new TemperatureResource(this.appContext);
+        } else if("oic.r.discomfortindex".equals(config.getResourceType())){
+            resource =
+                    new DiscomfortIndexResource(this.appContext);
+        } else if ("oic.r.humidity".equals(config.getResourceType())) {
+            resource =
+                    new HumidityResource(this.appContext);
+        }
+
+        if(resource != null) {
+            resource.setURI(config.getURI());
+            resource.setName(config.getName());
+            bundleAPI.registerResource("oic.android.sample", resource);
+            resources.add(resource);
+        }
     }
 
     @Override
     public void destroyResource(AndroidBundleResource androidBundleResource) {
-
-    }
-
-    @Override
-    public List<ResourceConfig> getConfiguredBundleResources() {
-        return null;
+        bundleAPI.unregisterResource(androidBundleResource);
     }
 }

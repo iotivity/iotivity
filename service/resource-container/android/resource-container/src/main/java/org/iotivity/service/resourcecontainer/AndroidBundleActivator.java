@@ -52,9 +52,4 @@ public abstract class AndroidBundleActivator {
      */
     public abstract void destroyResource(AndroidBundleResource resource);
 
-    /**
-     * List the configuration of the bundle resources.
-     * @return List of configuration for each resource 
-     */
-    public abstract List<ResourceConfig> getConfiguredBundleResources();
 }

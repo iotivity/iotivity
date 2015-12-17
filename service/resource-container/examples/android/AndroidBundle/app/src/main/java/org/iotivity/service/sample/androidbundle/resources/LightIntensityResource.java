@@ -18,7 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
 package org.iotivity.service.sample.androidbundle.resources;
 
 import android.content.Context;
@@ -31,6 +30,7 @@ import android.util.Log;
 import org.iotivity.service.resourcecontainer.AndroidBundleResource;
 import org.iotivity.service.resourcecontainer.RcsResourceAttributes;
 import org.iotivity.service.resourcecontainer.RcsValue;
+
 
 public class LightIntensityResource extends AndroidBundleResource implements SensorEventListener {
     private static final String LOG_TAG = LightIntensityResource.class.getSimpleName();

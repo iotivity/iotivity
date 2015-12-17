@@ -26,6 +26,7 @@ package org.iotivity.service.resourcecontainer;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 // TODO null check for parameters
 /**
@@ -33,13 +34,10 @@ import java.util.Map;
  * container.
  */
 public interface RcsResourceContainerBundleAPI{
-    
+
     public void registerResource(String bundleId, AndroidBundleResource resource);
-        
+
     public void unregisterResource(AndroidBundleResource resource);
-            
-    public int getNumberOfConfiguredResources(String bundleId);
-   
-    public String[] getConfiguredResourceParams(String bundleId,
-        int resId);
+
+    public List<ResourceConfig> getConfiguredBundleResources(String bundleId);
 }

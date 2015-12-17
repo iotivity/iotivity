@@ -18,7 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
 package org.iotivity.service.sample.androidbundle.resources;
 
 import android.content.Context;
@@ -40,9 +39,9 @@ public class TemperatureResource  extends AndroidBundleResource implements Senso
     public TemperatureResource(Context context){
         super(context);
         this.setResourceType("oic.r.temperature");
-        this.setName("humiditySensor");
+        this.setName("temperatureSensor");
         mSensorManager = (SensorManager) context.getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
-        temperatureSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
+        temperatureSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
         mSensorManager.registerListener(this, temperatureSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 

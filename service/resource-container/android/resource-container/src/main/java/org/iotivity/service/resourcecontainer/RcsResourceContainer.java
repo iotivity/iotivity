@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Enumeration;
 import android.util.Log;
 import android.content.Context;
+import java.util.Vector;
 
 import dalvik.system.DexFile;
 import android.content.pm.ApplicationInfo;
@@ -279,6 +280,20 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
         nativeRegisterAndroidResource(resource, resource.getAttributeKeys(), bundleId,
                         resource.getURI(), resource.getResourceType(),
                         resource.getName());
+    }
+    
+    public List<ResourceConfig> getConfiguredBundleResources(String bundleId) {
+        int configuredResources = getNumberOfConfiguredResources(bundleId);
+
+        Vector<ResourceConfig> configs = new Vector<ResourceConfig>();
+
+        for (int i = 0; i < configuredResources; i++) {
+                String[] resourceParams = getConfiguredResourceParams(bundleId, i);
+                ResourceConfig config = new ResourceConfig(resourceParams);
+                configs.add(config);
+
+        }
+        return configs;
     }
 
     
