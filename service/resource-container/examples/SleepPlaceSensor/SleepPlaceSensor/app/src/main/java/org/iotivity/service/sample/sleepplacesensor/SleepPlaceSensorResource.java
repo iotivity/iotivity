@@ -30,6 +30,7 @@ import org.iotivity.service.resourcecontainer.RcsResourceAttributes;
 import org.iotivity.service.resourcecontainer.RcsValue;
 
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Vector;
 
 /**
@@ -40,8 +41,11 @@ public class SleepPlaceSensorResource extends AndroidBundleSoftSensorResource {
 
     public SleepPlaceSensorResource(Context context){
         super(context);
-        this.setResourceType("oic.r.sleepplaceindex");
-        this.setName("sleepPlaceIndex");
+        this.setResourceType("oic.r.sleepplacesensor");
+        this.setName("SleepPlaceSensor");
+        this.setURI("/android/sleepplacesensor/1");
+
+        m_mapInputData = new HashMap<String, RcsValue>();
     }
 
     @Override
@@ -49,35 +53,39 @@ public class SleepPlaceSensorResource extends AndroidBundleSoftSensorResource {
         this.m_attributes.put("humidity", 0);
         this.m_attributes.put("temperature", 0);
         this.m_attributes.put("light-intensity", 0);
-        this.m_attributes.put("emc-intensity", 0);
-        this.m_attributes.put("sound-dB", 0);
-        this.m_attributes.put("sleepplaceIndex", 0);
+        this.m_attributes.put("emf-intensity", 0);
+        this.m_attributes.put("sound-intensity", 0);
+        this.m_attributes.put("sleepplaceindex", 0);
     }
 
     @Override
     protected void onUpdatedInputResource(String attributeName, Vector<RcsValue> values) {
+        Log.i(LOG_TAG, "Update SleepPlaceSensor Call!");
         m_mapInputData.put(attributeName, values.get(0));
     }
 
     int calcScore(double n, double min, double max) {
-        double deviation_from_optimal = (n - min) / max;
+        double deviation_from_optimal = Math.abs(n - min) / max * 100;
         return (int)Math.pow(deviation_from_optimal, 2);
     }
 
     @Override
     protected void executeLogic() {
-        if(m_mapInputData.get("humidity") != null && m_mapInputData.get("temperature") != null){
+        if(/*m_mapInputData.get("humidity") != null && m_mapInputData.get("temperature") != null &&*/
+                m_mapInputData.get("light-intensity") != null &&
+                m_mapInputData.get("emf-intensity") != null &&
+                m_mapInputData.get("sound-intensity") != null) {
             double dDI = 0.0;
             int dSPI = 0;
 
-            double t = m_mapInputData.get("temperature").asDouble();
-            double h = m_mapInputData.get("humidity").asDouble();
+            double t = 20;//m_mapInputData.get("temperature").asDouble();
+            double h = 60;//m_mapInputData.get("humidity").asDouble();
             double l = m_mapInputData.get("light-intensity").asDouble();
-            double e = m_mapInputData.get("emc-intensity").asDouble();
-            //double s = m_mapInputData.get("sound-dB").asDouble();
+            double e = m_mapInputData.get("emf-intensity").asDouble();
+            double s = m_mapInputData.get("sound-intensity").asDouble();
 
             double MIN_t = 0, MAX_t = 40;
-            double MIN_h = 50, MAX_h = 85;
+            double MIN_h = 60, MAX_h = 85;
 
             Calendar oCalendar = Calendar.getInstance();
             int month = oCalendar.get(Calendar.MONTH) + 1;
@@ -90,7 +98,7 @@ public class SleepPlaceSensorResource extends AndroidBundleSoftSensorResource {
                 MIN_t = 20;
 
             double MIN_l = 30, MAX_l = 100;
-            double MIN_e = 200, MAX_e = 2000;
+            double MIN_e = 200, MAX_e = 3000;
             //double MIN_s = 30, MAX_s = 90;
 
             int t_score = calcScore(t, MIN_t, MAX_t);
@@ -104,19 +112,34 @@ public class SleepPlaceSensorResource extends AndroidBundleSoftSensorResource {
             this.setAttribute("temperature", new RcsValue(t));
             this.setAttribute("humidity", new RcsValue(h));
             this.setAttribute("light-intensity", new RcsValue(l));
-            this.setAttribute("emc-intensity", new RcsValue(e));
-            //this.setAttribute("sound-dB", new RcsValue(s));
-            this.setAttribute("sleepplaceIndex", new RcsValue(SP_score));
+            this.setAttribute("emf-intensity", new RcsValue(e));
+            this.setAttribute("sound-intensity", new RcsValue(s));
+            this.setAttribute("sleepplaceindex", new RcsValue(SP_score));
 
-            Log.i(LOG_TAG, "SleepPlace Index" + SP_score);
+            Log.i(LOG_TAG, "SleepPlace Index: " + SP_score);
 
             // something to add
+            if (SP_score > 90)
+                Log.i(LOG_TAG, "SP result : best place!");
+            else if (SP_score > 80)
+                Log.i(LOG_TAG, "SP result : good place :)");
+            else if (SP_score > 70)
+                Log.i(LOG_TAG, "SP result : normal place");
+            else
+                Log.i(LOG_TAG, "SP result : WARNING! DO NOT sleep here!");
         }
     }
 
     @Override
     public void handleSetAttributesRequest(RcsResourceAttributes rcsResourceAttributes) {
-        this.setAttributes(rcsResourceAttributes);
+        Log.i(LOG_TAG, "Set SleepPlaceSensor Call!");
+        //this.setAttributes(rcsResourceAttributes);
+
+        for (String key : rcsResourceAttributes.keySet()) {
+            m_mapInputData.put(key, rcsResourceAttributes.get(key));
+            m_attributes.put(key, rcsResourceAttributes.get(key));
+
+        }
         executeLogic();
     }
 

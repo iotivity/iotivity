@@ -71,8 +71,10 @@
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/dependency-cache" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/dex" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/dex-cache" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/SleepPlaceSensorContainer/iotivity-armeabi-resource-container-debug/unspecified/jars" />
-      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/SleepPlaceSensorContainer/iotivity-base-armeabi-debug/unspecified/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.1.1/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/support-v4/23.1.1/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/iotivity-armeabi-resource-container-debug/jars" />
+      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/iotivity-base-armeabi-debug/jars" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/jacoco" />
       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/javaResources" />
@@ -88,11 +90,12 @@
       <excludeFolder url="file://$MODULE_DIR$/build/outputs" />
       <excludeFolder url="file://$MODULE_DIR$/build/tmp" />
     </content>
-    <orderEntry type="jdk" jdkName="Android API 21 Platform" jdkType="Android SDK" />
+    <orderEntry type="jdk" jdkName="Android API 23 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="iotivity-base-armeabi-debug" exported="" />
-    <orderEntry type="module" module-name="iotivity-armeabi-resource-container-debug" exported="" />
-    <orderEntry type="library" exported="" name="iotivity-base-armeabi-debug-unspecified" level="project" />
-    <orderEntry type="library" exported="" name="iotivity-armeabi-resource-container-debug-unspecified" level="project" />
+    <orderEntry type="library" exported="" name="support-annotations-23.1.1" level="project" />
+    <orderEntry type="library" exported="" name="support-v4-23.1.1" level="project" />
+    <orderEntry type="library" exported="" name="iotivity-armeabi-resource-container-debug-" level="project" />
+    <orderEntry type="library" exported="" name="appcompat-v7-23.1.1" level="project" />
+    <orderEntry type="library" exported="" name="iotivity-base-armeabi-debug-" level="project" />
   </component>
 </module>

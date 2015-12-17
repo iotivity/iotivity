@@ -1,3 +1,23 @@
+//******************************************************************
+//
+// Copyright 2015 Euiseok Kim (Seoul National University) All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 package org.iotivity.service.sample.sleepplacesensor;
 
 import org.iotivity.service.resourcecontainer.AndroidBundleResource;
@@ -5,6 +25,10 @@ import org.iotivity.service.resourcecontainer.RcsResourceAttributes;
 import org.iotivity.service.resourcecontainer.RcsValue;
 
 import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -13,40 +37,38 @@ import android.util.Log;
 /**
  * Created by ikess on 15. 12. 14.
  */
-public class SoundSensor extends AndroidBundleResource {
+public class SoundSensor extends AndroidBundleResource implements SensorEventListener {
     private static final String LOG_TAG = SoundSensor.class.getSimpleName();
-    private int minSize = AudioRecord.getMinBufferSize(8000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-    private AudioRecord ar = new AudioRecord(MediaRecorder.AudioSource.MIC, 8000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, minSize);
-
-    short[] buffer = new short[minSize];
+    private final SensorManager mSensorManager;
+    private final Sensor soundSensor;   // temporal sensor to use onChanged()
+    SoundMeter mSoundMeter = null;
 
     public SoundSensor(Context context){
         super(context);
-        this.setResourceType("oic.r.soundsensor");
-        this.setName("soundSensor");
+        this.setResourceType("oic.r.sound-intensity");
+        this.setName("SoundSensor");
 
-        while (true) {
-            ar.startRecording();
-            ar.read(buffer, 0, minSize);
-            int max = 0;
-            for (short s : buffer) {
-                if (Math.abs(s) > max) {
-                    max = Math.abs(s);
-                }
-            }
-            setAttribute("sound-dB", new RcsValue(max) , true);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        mSensorManager = (SensorManager) context.getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
+        soundSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ALL);
+        mSoundMeter = new SoundMeter();
+
     }
 
+    public void startListener()
+    {
+        mSensorManager.registerListener(this, soundSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        mSoundMeter.start();
+    }
+
+    public void stopListener()
+    {
+        mSoundMeter.stop();
+        mSensorManager.unregisterListener(this);
+    }
 
     @Override
     protected void initAttributes() {
-        this.m_attributes.put("emc-intensity", 0);
+        this.m_attributes.put("sound-intensity", 0);
     }
 
     @Override
@@ -65,5 +87,18 @@ public class SoundSensor extends AndroidBundleResource {
             Log.i(LOG_TAG, " " + key + ": " + m_attributes.get(key));
         }
         return this.m_attributes;
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        double sound = mSoundMeter.getAmplitude();
+        Log.i(LOG_TAG, "soundSensor event " + sound);
+
+        this.setAttribute("sound-intensity", new RcsValue((sound)), true);
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
     }
 }

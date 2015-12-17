@@ -1,24 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <container>
     <bundle>
-        <id>oic.bundle.android.sleepplacesensor</id>
+        <id>oic.bundle.sleepplacesensor</id>
         <path>org.iotivity.service.sample.sleepplacesensor.apk</path>
         <activator>org.iotivity.service.sample.sleepplacesensor.SleepPlaceSensorActivator</activator>
         <version>1.0.0</version>
         <resources>
             <resourceInfo>
                 <name>LightSensor</name>
-                <resourceType>oic.r.lightsensor</resourceType>
+                <resourceType>oic.r.light-intensity</resourceType>
                 <resourceUri>/android/lightsensor/1</resourceUri>
             </resourceInfo>
             <resourceInfo>
-                <name>androidEMCResource</name>
-                <resourceType>oic.r.emc</resourceType>
-                <resourceUri>/android/emc/1</resourceUri>
+                <name>EMFSensor</name>
+                <resourceType>oic.r.emf-intensity</resourceType>
+                <resourceUri>/android/emfsensor/1</resourceUri>
             </resourceInfo>
             <resourceInfo>
-                <name>EMCSensor</name>
-                <resourceType>oic.r.emcsensor</resourceType>
-                <resourceUri>/android/emcsensor/1</resourceUri>
+                <name>SoundSensor</name>
+                <resourceType>oic.r.sound-intensity</resourceType>
+                <resourceUri>/android/soundsensor/1</resourceUri>
             </resourceInfo>
             <resourceInfo>
                 <name>SleepPlaceSensor</name>
@@ -38,15 +39,15 @@
                         <type>double</type>
                     </output>
                     <output>
-                        <name>emc-intensity</name>
+                        <name>emf-intensity</name>
                         <type>double</type>
                     </output>
-                    <!--<output>
-                        <name>sound</name>
-                        <type>double</type>
-                    </output>-->
                     <output>
-                        <name>sleepplaceIndex</name>
+                        <name>sound-intensity</name>
+                        <type>double</type>
+                    </output>
+                    <output>
+                        <name>sleepplaceindex</name>
                         <type>int</type>
                     </output>
                 </outputs>
@@ -64,18 +65,18 @@
                     <input>
                         <name>light-intensity</name>
                         <type>double</type>
-                        <resourceType>oic.r.humidity</resourceType>
+                        <resourceType>oic.r.light-intensity</resourceType>
                     </input>
                     <input>
-                        <name>emc-intensity</name>
+                        <name>emf-intensity</name>
                         <type>double</type>
-                        <resourceType>oic.r.temperature</resourceType>
+                        <resourceType>oic.r.emf-intensity</resourceType>
                     </input>
-                    <!--<input>
-                        <name>sound-dB</name>
+                    <input>
+                        <name>sound-intensity</name>
                         <type>double</type>
-                        <resourceType>oic.r.humidity</resourceType>
-                    </input>-->
+                        <resourceType>oic.r.sound-intensity</resourceType>
+                    </input>
                 </inputs>
             </resourceInfo>
         </resources>

@@ -1,3 +1,23 @@
+//******************************************************************
+//
+// Copyright 2015 Euiseok Kim (Seoul National University) All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 package org.iotivity.service.sample.sleepplacesensor;
 
 import android.content.Context;
@@ -14,6 +34,11 @@ import java.util.List;
  * Created by ikess on 15. 12. 13.
  */
 public class SleepPlaceSensorActivator extends AndroidBundleActivator {
+    private LightSensor lightSensor;
+    private EMFSensor emfSensor;
+    private SoundSensor soundSensor;
+    private SleepPlaceSensorResource sleepPlaceResource;
+
     public SleepPlaceSensorActivator(RcsResourceContainerBundleAPI bundleAPI, Context appContext){
         super(bundleAPI, appContext);
         Log.d(SleepPlaceSensorActivator.class.getName(), "Created activator instance");
@@ -21,59 +46,71 @@ public class SleepPlaceSensorActivator extends AndroidBundleActivator {
 
     @Override
     public void activateBundle() {
+        int numberOfConfiguredResources = 0;
         Log.d(SleepPlaceSensorActivator.class.getName(), "Activate bundle called");
 
+        numberOfConfiguredResources = bundleAPI.getNumberOfConfiguredResources("oic.bundle.sleepplacesensor");
+
         // make a test resource
-        AndroidLightResource humidityRes = new AndroidLightResource(this.appContext);
-        humidityRes.setURI("/android/humidity/1");
-        bundleAPI.registerResource("oic.sleepplace.sensor", humidityRes);
-
-        AndroidLightResource temperatureRes = new AndroidLightResource(this.appContext);
-        temperatureRes.setURI("/android/temperature/1");
-        bundleAPI.registerResource("oic.sleepplace.sensor", temperatureRes);
-
-        AndroidLightResource lightRes = new AndroidLightResource(this.appContext);
-        lightRes.setURI("/android/light-intensity/1");
-        bundleAPI.registerResource("oic.sleepplace.sensor", lightRes);
-
-        LightSensor lightSensor = new LightSensor(this.appContext);
+        lightSensor = new LightSensor(this.appContext);
         lightSensor.setURI("/android/lightsensor/1");
-        bundleAPI.registerResource("oic.sleepplace.sensor", lightSensor);
+        lightSensor.startListener();
+        bundleAPI.registerResource("oic.bundle.sleepplacesensor", lightSensor);
 
-        AndroidEMCResource emcRes = new AndroidEMCResource(this.appContext);
-        emcRes.setURI("/android/emc-intensity/1");
-        bundleAPI.registerResource("oic.sleepplace.sensor", emcRes);
+        emfSensor = new EMFSensor(this.appContext);
+        emfSensor.setURI("/android/emfsensor/1");
+        emfSensor.startListener();
+        //bundleAPI.getConfiguredResourceParams()
+        bundleAPI.registerResource("oic.bundle.sleepplacesensor", emfSensor);
 
-        EMCSensor emcSensor = new EMCSensor(this.appContext);
-        emcSensor.setURI("/android/emcsensor/1");
-        bundleAPI.registerResource("oic.sleepplace.sensor", emcSensor);
-
-        /*AndroidSoundResource soundRes = new AndroidSoundResource(this.appContext);
-        emcRes.setURI("/android/sound-dB/1");
-        bundleAPI.registerResource("oic.sleepplace.sensor", emcRes);
-
-        SoundSensor soundSensor = new SoundSensor(this.appContext);
+        soundSensor = new SoundSensor(this.appContext);
         soundSensor.setURI("/android/soundsensor/1");
-        bundleAPI.registerResource("oic.sleepplace.sensor", soundSensor);*/
+        soundSensor.startListener();
+        bundleAPI.registerResource("oic.bundle.sleepplacesensor", soundSensor);
 
-        SleepPlaceSensorResource sleepPlaceResource = new SleepPlaceSensorResource(this.appContext);
-        sleepPlaceResource.setURI("/android/sleepplaceindex/1");
-        bundleAPI.registerResource("oic.sleepplace.sensor", sleepPlaceResource);
+        sleepPlaceResource = new SleepPlaceSensorResource(this.appContext);
+        sleepPlaceResource.setURI("/android/sleepplacesensor/1");
+        bundleAPI.registerResource("oic.bundle.sleepplacesensor", sleepPlaceResource);
     }
 
     @Override
     public void deactivateBundle() {
+        if(lightSensor != null)
+        {
+            lightSensor.stopListener();
+            bundleAPI.unregisterResource(lightSensor);
+        }
 
+        if(emfSensor != null)
+        {
+            emfSensor.stopListener();
+            bundleAPI.unregisterResource(emfSensor);
+        }
+        if(soundSensor != null)
+        {
+            soundSensor.stopListener();
+            bundleAPI.unregisterResource(soundSensor);
+        }
+
+        if(sleepPlaceResource != null)
+        {
+            bundleAPI.unregisterResource(sleepPlaceResource);
+        }
     }
 
     @Override
     public void createResource(ResourceConfig resourceConfig) {
-
+        lightSensor = null;
+        emfSensor = null;
+        soundSensor = null;
+        sleepPlaceResource = null;
+        Log.d(SleepPlaceSensorActivator.class.getName(), "Create Resource bundle called");
+        //resourceConfig.
     }
 
     @Override
     public void destroyResource(AndroidBundleResource androidBundleResource) {
-
+        Log.d(SleepPlaceSensorActivator.class.getName(), "Destroyed Resource bundle called");
     }
 
     @Override

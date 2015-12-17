@@ -1,48 +1,46 @@
-/******************************************************************
- * Copyright 2015 Samsung Electronics All Rights Reserved.
- * <p/>
- * <p/>
- * <p/>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p/>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************/
+//******************************************************************
+//
+// Copyright 2015 Euiseok Kim (Seoul National University) All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 package org.iotivity.service.sample.sleepplacesensorcontainer;
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.AssetManager;
-import android.graphics.Typeface;
 import android.net.ConnectivityManager;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.BaseExpandableListAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ExpandableListAdapter;
-import android.widget.ExpandableListView;
-import android.widget.TextView;
+import android.view.Gravity;
 import android.widget.Toast;
 
 import org.iotivity.base.ModeType;
+import org.iotivity.base.OcConnectivityType;
+import org.iotivity.base.OcException;
+import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcPlatform;
+import org.iotivity.base.OcRepresentation;
+import org.iotivity.base.OcResource;
+import org.iotivity.base.OcResource.OnGetListener;
+import org.iotivity.base.OcResource.OnPutListener;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
@@ -51,145 +49,333 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-/**
- * Activity for handling user's selection on UI for Resource container APIs. &
- * for updating UI.
- */
-public class ResourceContainerActivity extends Activity {
-    // private static final String LOG_TAG =
-    // ResourceContainerActivity.class.getSimpleName();
+public class ResourceContainerActivity extends AppCompatActivity implements
+        OcPlatform.OnResourceFoundListener, OcResource.OnPutListener {
+    private final String LOG_TAG = "[" + ResourceContainerActivity.class.getName() + "]";
+    private static String logMessage;
 
-    private final String                     LOG_TAG = "[SleepPlaceSensorContainer] "
-            + this.getClass()
-            .getSimpleName();
-    private static ResourceContainerActivity resourceContainerActivityInstance;
-    private ResourceContainer                resourceContainerInstance;
-    private static String                    logMessage;
+    private static ResourceContainerActivity resContainerActivityInstance;
+    private ResourceContainer resContainerInstance;
+    private OcResource lightResource;
+    private OcResource emfResource;
+    private OcResource soundResource;
+    private OcResource temphumResource;
+    private OcResource sleepPlaceSensorResource;
+    private OnPutListener sleepPlaceSensorListener;
 
-    private Context                          context;
-    public ExpandableListAdapter             listAdapter;
-    public ExpandableListView                expListView;
-    public List<String>                      sensors;
-    HashMap<String, List<String>>            listChild;
+    private static Handler mHandler;
 
-    private static Handler                   mHandler;
-    private Button                           startContainer;
-    private Button                           listBundles;
-    private static EditText                  logs;
-    private static String                    sdCardPath;
+    public static ResourceContainerActivity getActivity() {
+        return resContainerActivityInstance;
+    }
 
     public static void setMessageLog(String message) {
         logMessage = message;
     }
 
-    public static ResourceContainerActivity getResourceContainerActivityObj() {
-        return resourceContainerActivityInstance;
+    private class handleMsg extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 0:
+                    break;
+                case 1:
+                    // for log
+                    Toast toast = Toast.makeText(getApplicationContext(),
+                            logMessage, Toast.LENGTH_LONG);
+                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    toast.show();
+                    break;
+                case 2:
+                    break;
+            }
+        }
+    }
+
+    public void onPutCompleted(List<OcHeaderOption> list, OcRepresentation ocRep)   {
+
+    }
+
+    public synchronized void onResourceFound(OcResource ocResource) {
+        Log.i(LOG_TAG, "MainActivity " + ocResource.getUri() + " found");
+        if(ocResource.getUri().equals("/android/lightsensor/1"))
+        {
+            lightResource = ocResource;
+        }
+        else if(ocResource.getUri().equals("/android/emfsensor/1"))
+        {
+            emfResource = ocResource;
+        }
+        else if(ocResource.getUri().equals("/android/soundsensor/1"))
+        {
+            soundResource = ocResource;
+        }
+        else if(ocResource.getUri().equals("/Thing_TempHumSensor"))
+        {
+            temphumResource = ocResource;
+        }
+        else if(ocResource.getUri().equals("/android/sleepplacesensor/1"))
+        {
+            sleepPlaceSensorResource = ocResource;
+        }
+    }
+
+    public void onPutFailed(Throwable throwable) {
+
+    }
+
+    private void getLightResource() {
+        Map<String, String> map = new HashMap<>();
+        OnGetListener lightListener = new OnGetListener() {
+            @Override
+            public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+                int value = 0;
+                try {
+                    ocRepresentation.getValue("light-intensity");
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Map<String, String> map = new HashMap<>();
+                try {
+                    sleepPlaceSensorResource.put(ocRepresentation, map, sleepPlaceSensorListener);
+                }
+                catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Log.i(LOG_TAG, "light-intensity: " + value);
+
+            }
+
+            @Override
+            public void onGetFailed(Throwable throwable) {
+
+            }
+        };
+
+        if(lightResource != null)
+        {
+            try {
+                lightResource.get(map, lightListener);
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    private void getEMFResource() {
+        Map<String, String> map = new HashMap<>();
+        OnGetListener emfListener = new OnGetListener() {
+            @Override
+            public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+                double value = 0;
+                try {
+                    ocRepresentation.getValue("emf-intensity");
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Map<String, String> map = new HashMap<>();
+                try {
+                    sleepPlaceSensorResource.put(ocRepresentation, map, sleepPlaceSensorListener);
+                }
+                catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Log.i(LOG_TAG, "emf-intensity: " + value);
+
+            }
+
+            @Override
+            public void onGetFailed(Throwable throwable) {
+
+            }
+        };
+
+        if(emfResource != null)
+        {
+            try {
+                emfResource.get(map, emfListener);
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void getSoundResource() {
+        Map<String, String> map = new HashMap<>();
+        OnGetListener soundListener = new OnGetListener() {
+            @Override
+            public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+                double value = 0;
+                try {
+                    value = ocRepresentation.getValue("sound-intensity");
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Map<String, String> map = new HashMap<>();
+                try {
+                    sleepPlaceSensorResource.put(ocRepresentation, map, sleepPlaceSensorListener);
+                }
+                catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Log.i(LOG_TAG, "sound-intensity: " + value);
+
+            }
+
+            @Override
+            public void onGetFailed(Throwable throwable) {
+
+            }
+        };
+        if(soundResource != null) {
+            try {
+                soundResource.get(map, soundListener);
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void getTempHumidResource() {
+        Map<String, String> map = new HashMap<>();
+        OnGetListener tempHumListener = new OnGetListener() {
+            @Override
+            public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+                double tempValue = 0;
+                double humValue = 0;
+                try {
+                    tempValue = Double.parseDouble((String) ocRepresentation.getValue("temperature"));
+                    humValue = Double.parseDouble((String) ocRepresentation.getValue("humidity"));
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Map<String, String> map = new HashMap<>();
+                try {
+                    sleepPlaceSensorResource.put(ocRepresentation, map, sleepPlaceSensorListener);
+                }
+                catch (OcException e) {
+                    e.printStackTrace();
+                }
+
+                Log.i(LOG_TAG, "temperature: " + tempValue + ", humValue: " + humValue);
+
+            }
+
+            @Override
+            public void onGetFailed(Throwable throwable) {
+
+            }
+        };
+
+        if(temphumResource != null)
+        {
+            try {
+                temphumResource.get(map, tempHumListener);
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void resourceMonitor() {
+        try {
+            OcPlatform.findResource("", "/oic/res", EnumSet.of(OcConnectivityType.CT_DEFAULT), this);
+        }
+        catch(OcException e)
+        {
+            e.printStackTrace();
+        }
+
+        try {
+            OcPlatform.findResource("", "/oic/res", EnumSet.of(OcConnectivityType.CT_DEFAULT), this);
+        }
+        catch(OcException e)
+        {
+            e.printStackTrace();
+        }
+
+        while(true) {
+            {
+                try {
+                    //Thread.sleep(300);
+                    synchronized (this)
+                    {
+                        wait(500);
+                    }
+                }
+                catch(InterruptedException e)
+                {
+                    e.printStackTrace();
+                }
+
+                getLightResource();
+                getEMFResource();
+                getSoundResource();
+                getTempHumidResource();
+            }
+        }
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        final String sdCardPath;
 
         super.onCreate(savedInstanceState);
-        context = this;
 
-        /*if (!isWifiConnected()) {
+        if (!isWifiConnected()){
             showWifiUnavailableDialog();
             return;
-        }*/
+        }
+        setContentView(R.layout.activity_main);
 
-        configurePlatform();
-        CopyAssetsToSDCard();
+        lightResource = null;
+        emfResource = null;
+        soundResource = null;
+        temphumResource = null;
+        sleepPlaceSensorResource = null;
+        sleepPlaceSensorListener = this;
 
-        setContentView(R.layout.resource_container);
-        resourceContainerActivityInstance = this;
-
-        resourceContainerInstance = new ResourceContainer();
-
-        expListView = (ExpandableListView) findViewById(R.id.lvExp);
-        startContainer = (Button) findViewById(R.id.startContainer);
-        listBundles = (Button) findViewById(R.id.listBundles);
-        listBundles.setEnabled(false);
-        logs = (EditText) findViewById(R.id.log);
-
-        sensors = new ArrayList<String>();
-        listChild = new HashMap<String, List<String>>();
-
-        // Adding list items (header)
-        //sensors.add("Discomfort Index Sensor");
-        //sensors.add("BMI Sensor");
-
-        // Adding child data [discomfort Index sensor]
-        //diApiList.add("1. List bundle resources");
-
-        //listChild.put(sensors.get(0), diApiList);
-        //listChild.put(sensors.get(1), bmiApiList);
-        listAdapter = new ExpandableList(this, sensors, listChild);
-
-        // getting the sd card path
+        resContainerActivityInstance = this;
         sdCardPath = this.getFilesDir().getPath();
 
-        // handler for updating the UI i.e. MessageLog (TextBox) & ListView
-        mHandler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                switch (msg.what) {
-                    case 0:
-                        //expListView.setAdapter(listAdapter);
-                        //expListView.bringToFront();
-                        break;
-                    case 1:
-                        logs.setText("");
-                        logs.setText(logMessage);
-                        Log.i(LOG_TAG, logMessage);
-                        break;
-                    case 2:
-                        listAdapter = null;
-                        //expListView.setAdapter(listAdapter);
-                        break;
-                }
-            }
-        };
+        //Log.e(LOG_TAG, "Main activity path: " + resContainerActivityInstance.getFilesDir());
+
+        CopyAssetsToSDCard();
+        configurePlatform();
+
+        this.resContainerInstance = new ResourceContainer();
+
+        mHandler = new handleMsg();
         setHandler(mHandler);
 
-        // StartContainer/stopContainer Button Listener
-        startContainer.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        this.resContainerInstance.startContainer(sdCardPath);
 
-                String text = (String) startContainer.getText();
-                if (text.contains("Start")) {
-                    resourceContainerInstance.startContainer(sdCardPath);
-                    /*listAdapter = new ExpandableList(ResourceContainerActivity
-                            .getResourceContainerActivityObj(), sensors,
-                            listChild);*/
-                    listBundles.setEnabled(true);
-                    resourceContainerInstance.addAndroidResource();
-                    startContainer.setText("Stop Container");
-                } else {
-                    resourceContainerInstance.stopContainer();
-                    startContainer.setText("Start Container");
-                    listBundles.setEnabled(false);
-                    Message msg;
-                    msg = Message.obtain();
-                    msg.what = 2;
-                    resourceContainerActivityInstance.getHandler().sendMessage(
-                            msg);
-                }
+        new Thread(new Runnable() {
+            public void run() {
+                resourceMonitor();
             }
-        });
+        }).start();
+    }
 
-        // List Bundles Button Listener
-        listBundles.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                resourceContainerInstance.listBundles();
-            }
-        });
+    public Handler getHandler() {
+        return mHandler;
+    }
 
+    public void setHandler(Handler mHandler) {
+        ResourceContainerActivity.mHandler = mHandler;
     }
 
     private void CopyAssetsToSDCard() {
@@ -201,19 +387,19 @@ public class ResourceContainerActivity extends Activity {
             Log.e(LOG_TAG, e.getMessage());
         }
 
+        assert files != null;
         for (String filename : files) {
-            InputStream in = null;
-            OutputStream out = null;
+            InputStream in;
+            OutputStream out;
+
             try {
                 in = assetManager.open("lib/" + filename);
-                out = new FileOutputStream(context.getFilesDir().getParent()
+                out = new FileOutputStream(resContainerActivityInstance.getFilesDir().getParent()
                         + "/files/" + filename);
                 copyIndividualFile(in, out);
                 in.close();
-                in = null;
                 out.flush();
                 out.close();
-                out = null;
             } catch (Exception e) {
                 Log.e(LOG_TAG, e.getMessage());
             }
@@ -222,7 +408,6 @@ public class ResourceContainerActivity extends Activity {
 
     private void copyIndividualFile(InputStream in, OutputStream out)
             throws IOException {
-
         Log.i(LOG_TAG, "copyIndividualFile");
         byte[] buffer = new byte[2048];
         int read;
@@ -231,130 +416,11 @@ public class ResourceContainerActivity extends Activity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        //listAdapter = null;
-        //expListView.setAdapter(listAdapter);
-        resourceContainerInstance.stopContainer();
-        ResourceContainer.startBundleFlag = false;
-        super.onBackPressed();
-    }
-
-    // class for handling expandable list items
-    public class ExpandableList extends BaseExpandableListAdapter {
-
-        private Context                       mContext;
-        private HashMap<String, List<String>> mListDataChild;
-        private List<String>                  mListDataHeader;
-
-        // constructor
-        public ExpandableList(Context context, List<String> dataHeader,
-                              HashMap<String, List<String>> childData) {
-            this.mContext = context;
-            this.mListDataHeader = dataHeader;
-            this.mListDataChild = childData;
-        }
-
-        // get the child ID
-        @Override
-        public long getChildId(int grpPosition, int childPosition) {
-            return childPosition;
-        }
-
-        // get the child
-        @Override
-        public Object getChild(int grpPosition, int childPosititon) {
-            return this.mListDataChild.get(
-                    this.mListDataHeader.get(grpPosition)).get(childPosititon);
-        }
-
-        // get Group View
-        @Override
-        public View getGroupView(int grpPosition, boolean isExpandable,
-                                 View changeView, ViewGroup head) {
-            String mainHeading = (String) getGroup(grpPosition);
-            if (changeView == null) {
-                LayoutInflater flater;
-                flater = (LayoutInflater) this.mContext
-                        .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                changeView = flater.inflate(R.layout.group, null);
-            }
-
-            TextView listHeader = (TextView) changeView
-                    .findViewById(R.id.ListHead);
-            listHeader.setTypeface(null, Typeface.BOLD);
-            listHeader.setText(mainHeading);
-            return changeView;
-        }
-
-        // get Children count
-        @Override
-        public int getChildrenCount(int grpPosition) {
-            int count = this.mListDataChild.get(
-                    this.mListDataHeader.get(grpPosition)).size();
-            return count;
-        }
-
-        // Get Group
-        @Override
-        public Object getGroup(int grpPosition) {
-            return this.mListDataHeader.get(grpPosition);
-        }
-
-        // get Group size
-        @Override
-        public int getGroupCount() {
-            int size = this.mListDataHeader.size();
-            return size;
-        }
-
-        // get Group ID
-        @Override
-        public long getGroupId(int grpPosition) {
-            return grpPosition;
-        }
-
-        // get Group View
-        @Override
-        public View getChildView(int grpPosition, final int childPosition,
-                                 boolean isLastItem, View changeView, ViewGroup head) {
-
-            final String innerText = (String) getChild(grpPosition,
-                    childPosition);
-
-            if (changeView == null) {
-                LayoutInflater flater = (LayoutInflater) this.mContext
-                        .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                changeView = flater.inflate(R.layout.list_item, null);
-            }
-
-            TextView textListChild = (TextView) changeView
-                    .findViewById(R.id.listItem);
-
-            textListChild.setText(innerText);
-            return changeView;
-        }
-
-        // To check whether child is selectable or not
-        @Override
-        public boolean isChildSelectable(int grpPosition, int childPosition) {
-            return true;
-        }
-
-        // To check the stable IDs
-        @Override
-        public boolean hasStableIds() {
-            return false;
-        }
-    }
-
     private void showWifiUnavailableDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Error")
-                .setMessage(
-                        "WiFi is not enabled/connected! Please connect the WiFi and start application again...")
+        new AlertDialog.Builder(this).setTitle("Error")
+                .setMessage("WiFi is not enabled/connected!")
                 .setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                .setPositiveButton("OK", new DialogInterface.OnClickListener(){
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         finish();
@@ -362,30 +428,15 @@ public class ResourceContainerActivity extends Activity {
                 }).create().show();
     }
 
-    private boolean isWifiConnected() {
-        ConnectivityManager connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-        return connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI)
-                .isConnected();
-    }
-
     private void configurePlatform() {
         OcPlatform.Configure(new PlatformConfig(getApplicationContext(),
-                ServiceType.IN_PROC, ModeType.CLIENT_SERVER, "0.0.0.0", 0,
-                QualityOfService.LOW));
+                ServiceType.IN_PROC, ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW));
         Log.i(LOG_TAG, "Configuration done successfully");
     }
 
-    public Handler getHandler() {
-        return mHandler;
-    }
-
-    public void setHandler(Handler mHandler) {
-        ResourceContainerActivity.mHandler = mHandler;
-    }
-
-    public void displayToastMessage(String message) {
-        Toast toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
-        toast.show();
-        Log.i(LOG_TAG, message);
+    private boolean isWifiConnected() {
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        //noinspection deprecation
+        return connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected();
     }
 }

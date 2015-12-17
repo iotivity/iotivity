@@ -1,1 +1,1 @@
-include ':app', ':iotivity-armeabi-resource-container-debug', ':iotivity-base-armeabi-debug'
+include ':app', ':iotivity-armeabi-resource-container-debug'

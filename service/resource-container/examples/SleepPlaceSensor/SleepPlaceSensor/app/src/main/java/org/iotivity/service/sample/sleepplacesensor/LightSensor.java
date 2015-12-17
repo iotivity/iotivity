@@ -1,3 +1,23 @@
+//******************************************************************
+//
+// Copyright 2015 Euiseok Kim (Seoul National University) All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 package org.iotivity.service.sample.sleepplacesensor;
 
 import android.content.Context;
@@ -11,7 +31,6 @@ import org.iotivity.service.resourcecontainer.AndroidBundleResource;
 import org.iotivity.service.resourcecontainer.RcsResourceAttributes;
 import org.iotivity.service.resourcecontainer.RcsValue;
 
-
 /**
  * Created by ikess on 15. 12. 13.
  */
@@ -22,15 +41,26 @@ public class LightSensor extends AndroidBundleResource implements SensorEventLis
 
     public LightSensor(Context context){
         super(context);
-        this.setResourceType("oic.r.lightsensor");
-        this.setName("lightSensor");
+        this.setResourceType("oic.r.light-intensity");
+        this.setName("LightSensor");
         mSensorManager = (SensorManager) context.getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
         lightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+
+    }
+
+    public void startListener()
+    {
         mSensorManager.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    public void stopListener()
+    {
+        mSensorManager.unregisterListener(this);
     }
 
     @Override
     protected void initAttributes() {
+        Log.i(LOG_TAG, "Init Attributes called");
         this.m_attributes.put("light-intensity", 0);
     }
 
@@ -56,7 +86,7 @@ public class LightSensor extends AndroidBundleResource implements SensorEventLis
     public void onSensorChanged(SensorEvent sensorEvent) {
         Log.i(LOG_TAG, "Sensor event " + sensorEvent.values[0]);
 
-        setAttribute("light-intensity", new RcsValue( (sensorEvent.values[0]) ) , true);
+        this.setAttribute("light-intensity", new RcsValue((sensorEvent.values[0])), true);
     }
 
     @Override

@@ -24,5 +24,4 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile project(':iotivity-armeabi-resource-container-debug')
-    compile project(':iotivity-base-armeabi-debug')
 }
