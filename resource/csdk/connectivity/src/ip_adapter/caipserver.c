@@ -627,8 +627,9 @@ static void applyMulticastToInterface4(struct in_addr inaddr)
         return;
     }
 
-    struct ip_mreq mreq = { .imr_multiaddr = IPv4MulticastAddress,
-                            .imr_interface = inaddr};
+    struct ip_mreqn mreq = { .imr_multiaddr = IPv4MulticastAddress,
+                             .imr_address = inaddr,
+                             .imr_ifindex = 0 };
     if (setsockopt(caglobals.ip.m4.fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof (mreq)))
     {
         if (EADDRINUSE != errno)
@@ -935,7 +936,8 @@ static void sendMulticastData4(const u_arraylist_t *iflist,
                                CAEndpoint_t *endpoint,
                                const void *data, uint32_t datalen)
 {
-    struct ip_mreq mreq = { .imr_multiaddr = IPv4MulticastAddress };
+    struct ip_mreqn mreq = { .imr_multiaddr = IPv4MulticastAddress,
+                             .imr_ifindex = 0 };
     OICStrcpy(endpoint->addr, sizeof(endpoint->addr), IPv4_MULTICAST);
     int fd = caglobals.ip.u4.fd;
 
@@ -958,7 +960,7 @@ static void sendMulticastData4(const u_arraylist_t *iflist,
 
         struct in_addr inaddr;
         inaddr.s_addr = ifitem->ipv4addr;
-        mreq.imr_interface = inaddr;
+        mreq.imr_address = inaddr;
         if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, &mreq, sizeof (mreq)))
         {
             OIC_LOG_V(ERROR, TAG, "send IP_MULTICAST_IF failed: %s (using defualt)",
