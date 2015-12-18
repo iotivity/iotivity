@@ -39,6 +39,7 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "rdpayload.h"
+#include "ocpayload.h"
 
 #ifdef WITH_RD
 #include "rd_server.h"
@@ -59,6 +60,14 @@
 extern OCResource *headResource;
 static OCPlatformInfo savedPlatformInfo = {0};
 static OCDeviceInfo savedDeviceInfo = {0};
+
+/**
+ * Prepares a Payload for response.
+ */
+static OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
+                                                  OCDiscoveryPayload* payload,
+                                                  OCDevAddr *endpoint,
+                                                  bool rdResponse);
 
 //-----------------------------------------------------------------------------
 // Default resource entity handler function
@@ -269,7 +278,7 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
 }
 
 OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
-                        OCDiscoveryPayload *payload, OCDevAddr *devAddr)
+                        OCDiscoveryPayload *payload, OCDevAddr *devAddr, bool rdResponse)
 {
     if (!resourcePtr || !payload)
     {
@@ -284,29 +293,12 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
        }
     }
 
-    OCDiscoveryPayloadAddResource(payload, resourcePtr, port);
-    return OC_STACK_OK;
-}
+    if (rdResponse)
+    {
+        port = devAddr->port;
+    }
 
-OCStackResult BuildVirtualCollectionResourceResponse(const OCResourceCollectionPayload *resourcePtr,
-        OCDiscoveryPayload *payload, OCDevAddr *devAddr)
-{
-    if (!resourcePtr || !payload)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
-    if (resourcePtr->tags && (resourcePtr->tags->bitmap & OC_SECURE))
-    {
-       if (GetSecurePortInfo(devAddr, &resourcePtr->tags->port) != OC_STACK_OK)
-       {
-           OC_LOG(ERROR, TAG, "Failed setting secure port.");
-       }
-    }
-    if (resourcePtr->tags && !resourcePtr->tags->baseURI)
-    {
-        resourcePtr->tags->baseURI = OICStrdup(devAddr->addr);
-    }
-    OCDiscoveryCollectionPayloadAddResource(payload, resourcePtr->tags, resourcePtr->setLinks);
+    OCDiscoveryPayloadAddResource(payload, resourcePtr, port);
     return OC_STACK_OK;
 }
 
@@ -569,10 +561,89 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
 
 #ifdef WITH_RD
 static OCStackResult checkResourceExistsAtRD(const char *interfaceType, const char *resourceType,
-    OCResourceCollectionPayload **repPayload)
+     OCResource **payload, OCDevAddr *devAddr)
 {
-    if (OCRDCheckPublishedResource(interfaceType, resourceType, repPayload) == OC_STACK_OK)
+    OCResourceCollectionPayload *repPayload;
+    if (!payload)
     {
+        return OC_STACK_ERROR;
+    }
+    if (OCRDCheckPublishedResource(interfaceType, resourceType, &repPayload, devAddr) == OC_STACK_OK)
+    {
+        if (!repPayload)
+        {
+            return OC_STACK_ERROR;
+        }
+        OCResource *ptr = ((OCResource *) OICCalloc(1, sizeof(OCResource)));
+        if (!ptr)
+        {
+           return OC_STACK_NO_MEMORY;
+        }
+
+        ptr->uri = OICStrdup(repPayload->setLinks->href);
+        if (!ptr->uri)
+        {
+           return OC_STACK_NO_MEMORY;
+        }
+        OCStringLL *rt = repPayload->setLinks->rt;
+        while (rt)
+        {
+            OCResourceType *temp = (OCResourceType *) OICCalloc(1, sizeof(OCResourceType));
+            if(!temp)
+            {
+                OICFree(ptr->uri);
+                return OC_STACK_NO_MEMORY;
+            }
+            temp->next = NULL;
+            temp->resourcetypename = OICStrdup(rt->value);
+            if (!ptr->rsrcType)
+            {
+                ptr->rsrcType = temp;
+            }
+            else
+            {
+                OCResourceType *type = ptr->rsrcType;
+                while (type->next)
+                {
+                    type = type->next;
+                }
+                type->next = temp;
+            }
+            rt = rt->next;
+        }
+
+        OCStringLL *itf = repPayload->setLinks->itf;
+        while (itf)
+        {
+            OCResourceInterface *temp = (OCResourceInterface *) OICCalloc(1, sizeof(OCResourceInterface));
+            if (!temp)
+            {
+                OICFree(ptr->uri);
+
+                return OC_STACK_NO_MEMORY;
+            }
+            temp->next = NULL;
+            temp->name = OICStrdup(itf->value);
+            if (!ptr->rsrcInterface)
+            {
+                ptr->rsrcInterface = temp;
+            }
+            else
+            {
+                OCResourceInterface *type = ptr->rsrcInterface;
+                while (type->next)
+                {
+                    type = type->next;
+                }
+                type->next = temp;
+            }
+            itf = itf->next;
+        }
+
+        ptr->resourceProperties = (OCResourceProperty) repPayload->tags->bitmap;
+
+        OCFreeCollectionResource(repPayload);
+        *payload = ptr;
         return OC_STACK_OK;
     }
     else
@@ -615,21 +686,30 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
             if(payload)
             {
+                ((OCDiscoveryPayload*)payload)->sid = (uint8_t*)OICCalloc(1, UUID_SIZE);
+                memcpy(((OCDiscoveryPayload*)payload)->sid, OCGetServerInstanceID(), UUID_SIZE);
+
                 bool foundResourceAtRD = false;
                 for(;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                 {
 #ifdef WITH_RD
                     if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
                     {
-                        OCResourceCollectionPayload *repPayload;
-                        discoveryResult = checkResourceExistsAtRD(filterOne, filterTwo, &repPayload);
+                        OCResource *resource = NULL;
+                        OCDevAddr devAddr;
+                        discoveryResult = checkResourceExistsAtRD(filterOne, filterTwo,
+                                                                  &resource, &devAddr);
                         if (discoveryResult != OC_STACK_OK)
                         {
                              break;
                         }
-                        discoveryResult = BuildVirtualCollectionResourceResponse(repPayload,
+                        discoveryResult = BuildVirtualResourceResponse(resource,
                                     (OCDiscoveryPayload*)payload,
-                                    &request->devAddr);
+                                    &devAddr, true);
+                        if (payload)
+                        {
+                            ((OCDiscoveryPayload*)payload)->baseURI = OICStrdup(devAddr.addr);
+                        }
                         foundResourceAtRD = true;
                     }
 #endif
@@ -637,7 +717,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                     {
                         discoveryResult = BuildVirtualResourceResponse(resource,
                                 (OCDiscoveryPayload*)payload,
-                                &request->devAddr);
+                                &request->devAddr, false);
                     }
                 }
                 // Set discoveryResult appropriately if no 'valid' resources are available
@@ -665,8 +745,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         }
         else
         {
-            payload = (OCPayload*) OCDevicePayloadCreate(OC_RSRVD_DEVICE_URI,
-                    (const uint8_t*) &deviceId->id, savedDeviceInfo.deviceName,
+            payload = (OCPayload*) OCDevicePayloadCreate((const uint8_t*) &deviceId->id, savedDeviceInfo.deviceName,
                     OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
             if (!payload)
             {
@@ -680,9 +759,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
-        payload = (OCPayload*)OCPlatformPayloadCreate(
-                OC_RSRVD_PLATFORM_URI,
-                &savedPlatformInfo);
+        payload = (OCPayload*)OCPlatformPayloadCreate(&savedPlatformInfo);
         if (!payload)
         {
             discoveryResult = OC_STACK_NO_MEMORY;
@@ -734,7 +811,8 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         {
             SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
         }
-        else if(bMulticast == false)
+        else if(bMulticast == false && (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
+               (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
         {
             OC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d)  \
                 discovery request", discoveryResult, virtualUriInRequest);

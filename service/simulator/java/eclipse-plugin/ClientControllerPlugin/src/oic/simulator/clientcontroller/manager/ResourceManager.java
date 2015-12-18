@@ -114,6 +114,12 @@ public class ResourceManager {
                             return;
                         }
 
+                        // Ignore the response if the resource is a device or platform.
+                        Vector<String> resTypes = resourceN.getResourceTypes();
+                        if(null != resTypes && resTypes.contains("oic.wk.d") || resTypes.contains("oic.wk.p")) {
+                            return;
+                        }
+
                         // If id is not available, then it cannot be added to
                         // the local map as null value should not be allowed as
                         // key.
@@ -168,7 +174,7 @@ public class ResourceManager {
                                                 + "].");
 
                         // Send an initial GET request to get the resource
-                        // attributes
+                        // attributes.
                         try {
                             resourceN.get(null, getListener);
                         } catch (SimulatorException e) {

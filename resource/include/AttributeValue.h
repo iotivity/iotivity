@@ -25,8 +25,8 @@
  * AttributeValue.
  */
 
-#ifndef __ATTRIBUTEVALUE_H
-#define __ATTRIBUTEVALUE_H
+#ifndef OC_ATTRIBUTEVALUE_H_
+#define OC_ATTRIBUTEVALUE_H_
 
 // These defines are required to get the boost::variant to hold more than 20 items.
 // documentation requires that you use a power of 10
@@ -131,4 +131,4 @@ namespace OC
 
     std::ostream& operator << (std::ostream& os, const AttributeType at);
 }
-#endif // __ATTRIBUTEVALUE_H
+#endif // OC_ATTRIBUTEVALUE_H_

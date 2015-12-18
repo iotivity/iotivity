@@ -469,11 +469,13 @@ CAResult_t CAStartListeningServerAdapters()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
+    CAResult_t result = CA_STATUS_FAILED;
+
     u_arraylist_t *list = CAGetSelectedNetworkList();
     if (!list)
     {
         OIC_LOG(ERROR, TAG, "No selected network");
-        return CA_STATUS_FAILED;
+        return result;
     }
 
     for (uint32_t i = 0; i < u_arraylist_length(list); i++)
@@ -496,12 +498,19 @@ CAResult_t CAStartListeningServerAdapters()
 
         if (g_adapterHandler[index].startListenServer != NULL)
         {
-            g_adapterHandler[index].startListenServer();
+            const CAResult_t tmp =
+                g_adapterHandler[index].startListenServer();
+
+            // Successful listen if at least one adapter started.
+            if (CA_STATUS_OK == tmp)
+            {
+                result = tmp;
+            }
         }
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return result;
 }
 
 CAResult_t CAStopListeningServerAdapters()
@@ -546,12 +555,14 @@ CAResult_t CAStartDiscoveryServerAdapters()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
+    CAResult_t result = CA_STATUS_FAILED;
+
     u_arraylist_t *list = CAGetSelectedNetworkList();
 
     if (!list)
     {
         OIC_LOG(ERROR, TAG, "No selected network");
-        return CA_STATUS_FAILED;
+        return result;
     }
 
     for (uint32_t i = 0; i < u_arraylist_length(list); i++)
@@ -575,12 +586,19 @@ CAResult_t CAStartDiscoveryServerAdapters()
 
         if (g_adapterHandler[index].startDiscoveryServer != NULL)
         {
-            g_adapterHandler[index].startDiscoveryServer();
+            const CAResult_t tmp =
+                g_adapterHandler[index].startDiscoveryServer();
+
+            // Successful discovery if at least one adapter started.
+            if (CA_STATUS_OK == tmp)
+            {
+                result = tmp;
+            }
         }
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return result;
 }
 
 void CATerminateAdapters()

@@ -258,11 +258,13 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::registerResource(BundleResource::Ptr resource)
+        int ResourceContainerImpl::registerResource(BundleResource::Ptr resource)
         {
             string strUri = resource->m_uri;
             string strResourceType = resource->m_resourceType;
+            string strInterface = resource->m_interface;
             RCSResourceObject::Ptr server = nullptr;
+            int ret = EINVAL;
 
             OC_LOG_V(INFO, CONTAINER_TAG, "Registration of resource (%s)" ,
                      std::string(strUri + ", " + strResourceType).c_str());
@@ -270,7 +272,11 @@ namespace OIC
             registrationLock.lock();
             if (m_mapResources.find(strUri) == m_mapResources.end())
             {
-                server = buildResourceObject(strUri, strResourceType);
+                if (strInterface.empty()) {
+                    strInterface = "oic.if.baseline";
+                }
+
+                server = buildResourceObject(strUri, strResourceType, strInterface);
 
                 if (server != nullptr)
                 {
@@ -290,21 +296,25 @@ namespace OIC
                              std::string(strUri + ", " +
                                          strResourceType).c_str());
 
-                    if (m_config->isHasInput(resource->m_bundleId))
+                    if (m_config && m_config->isHasInput(resource->m_bundleId))
                     {
                         discoverInputResource(strUri);
                     }
 
                     // to get notified if bundle resource attributes are updated
                     resource->registerObserver((NotificationReceiver *) this);
+                    ret = 0;
                 }
             }
             else
             {
                 OC_LOG_V(ERROR, CONTAINER_TAG, "resource with (%s)",
                          std::string(strUri + " already exists.").c_str());
+                ret = -EEXIST;
             }
             registrationLock.unlock();
+
+            return ret;
         }
 
         void ResourceContainerImpl::unregisterResource(BundleResource::Ptr resource)
@@ -316,7 +326,7 @@ namespace OIC
                      std::string(resource->m_uri + ", " +
                                  resource->m_resourceType).c_str());
 
-            if (m_config->isHasInput(resource->m_bundleId))
+            if (m_config && m_config->isHasInput(resource->m_bundleId))
             {
                 undiscoverInputResource(strUri);
             }
@@ -426,10 +436,10 @@ namespace OIC
         }
 
         RCSResourceObject::Ptr ResourceContainerImpl::buildResourceObject(const std::string &strUri,
-                const std::string &strResourceType)
+                const std::string &strResourceType, const std::string &strInterface)
         {
             return RCSResourceObject::Builder(strUri, strResourceType,
-                                              "oic.if.baseline").setObservable(
+                                              strInterface).setObservable(
                        true).setDiscoverable(true).build();
         }
 

@@ -28,7 +28,7 @@ using namespace OIC::Service;
 
 namespace
 {
-    void setRequestCB(const RCSResourceAttributes &, RCSResourceAttributes &) { }
+    void setRequestCB(const RCSResourceAttributes &, const RCSResourceAttributes & ) { }
 }
 
 class RequestObjectTest : public TestWithMock
@@ -90,14 +90,14 @@ TEST_F(RequestObjectTest, invokeRequestExpectCallwithSetter)
    RequestObject::Ptr instance = std::make_shared<RequestObject>(setRequestCB);
 
    mocks.ExpectCallFunc(setRequestCB).Do(
-           [this, &isCalled](const RCSResourceAttributes &, RCSResourceAttributes &)
+           [this, &isCalled](const RCSResourceAttributes &, const RCSResourceAttributes &)
            {
                isCalled = true;
                notifyCondition();
            });
 
    RCSResourceAttributes att;
-   instance->invokeRequest(remoteObject, RequestObject::RequestMethod::Setter, att);
+   instance->invokeRequest(remoteObject, RequestObject::RequestMethod::Set, att);
 
    waitForCondition();
 

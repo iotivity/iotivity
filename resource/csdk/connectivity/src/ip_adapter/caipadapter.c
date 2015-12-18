@@ -349,10 +349,9 @@ CAResult_t CAStopIPListeningServer()
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to stop listening server![%d]", ret);
-        return ret;
     }
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return ret;
 }
 
 CAResult_t CAStartIPDiscoveryServer()

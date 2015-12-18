@@ -16,6 +16,7 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
+import java.io.FileInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Date;
@@ -58,7 +59,6 @@ public class CreateResourceWizard extends Wizard {
     private SimpleResourceOtherDetailsPage simpleResourceOtherDetailsPage;
     private LoadRamlPage                   loadRamlPage;
     private UpdatePropertiesPage           updatePropPage;
-    private StartStopResourcePage          startStopPage;
 
     private String                         status;
 
@@ -85,7 +85,6 @@ public class CreateResourceWizard extends Wizard {
         simpleResourceOtherDetailsPage = new SimpleResourceOtherDetailsPage();
         loadRamlPage = new LoadRamlPage();
         updatePropPage = new UpdatePropertiesPage();
-        startStopPage = new StartStopResourcePage();
 
         addPage(mainPage);
         addPage(simpleResourceBasicDetailsPage);
@@ -93,7 +92,6 @@ public class CreateResourceWizard extends Wizard {
         addPage(simpleResourceOtherDetailsPage);
         addPage(loadRamlPage);
         addPage(updatePropPage);
-        addPage(startStopPage);
     }
 
     public void setWizardDialog(WizardDialog dlg) {
@@ -137,7 +135,7 @@ public class CreateResourceWizard extends Wizard {
                 .getDefault().getResourceManager().isAnyResourceExist()))
                 || curPage == simpleResourceAddAttributePage
                 || (curPage == loadRamlPage && loadRamlPage.isSelectionDone() && loadRamlPage
-                        .isMultiResourceCreation())) {
+                .isMultiResourceCreation())) {
             return true;
         }
         return false;
@@ -167,21 +165,33 @@ public class CreateResourceWizard extends Wizard {
                 });
             } catch (InvocationTargetException e) {
                 Activator.getDefault().getLogManager()
-                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
                 e.printStackTrace();
             } catch (InterruptedException e) {
                 Activator.getDefault().getLogManager()
-                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
                 e.printStackTrace();
             }
         } else if (curPage == loadRamlPage) {
+            // Validate the file path.
+            try {
+                new FileInputStream(loadRamlPage.getConfigFilePath());
+            } catch (Exception e) {
+                MessageDialog
+                .openError(getShell(), "Invalid File",
+                        "File doesn't exist. Either the file path or file name is invalid.");
+                // TODO: Instead of MessageDialog, errors may be shown on wizard
+                // itself.
+                return false;
+            }
+
             // Handling multiple instance creation of simple resource with RAML
             if ((loadRamlPage.getResourceCount() + Activator.getDefault()
                     .getResourceManager().getResourceCount()) > Constants.MAX_RESOURCE_COUNT) {
                 MessageDialog
-                        .openInformation(Display.getDefault().getActiveShell(),
-                                "Resource limit exceeded",
-                                "Exceeded the limit of resources that can exist in the server.");
+                .openInformation(Display.getDefault().getActiveShell(),
+                        "Resource limit exceeded",
+                        "Exceeded the limit of resources that can exist in the server.");
                 return false;
             }
 
@@ -206,11 +216,11 @@ public class CreateResourceWizard extends Wizard {
                 });
             } catch (InvocationTargetException e) {
                 Activator.getDefault().getLogManager()
-                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
                 e.printStackTrace();
             } catch (InterruptedException e) {
                 Activator.getDefault().getLogManager()
-                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
                 e.printStackTrace();
             }
         } else if (curPage == updatePropPage) {
@@ -232,8 +242,8 @@ public class CreateResourceWizard extends Wizard {
             if (Activator.getDefault().getResourceManager()
                     .isResourceExist(updatePropPage.getResURI())) {
                 MessageDialog
-                        .openError(getShell(), "Resource URI in use",
-                                "Entered resource URI is in use. Please try a different one.");
+                .openError(getShell(), "Resource URI in use",
+                        "Entered resource URI is in use. Please try a different one.");
                 // TODO: Instead of MessageDialog, errors may be shown on wizard
                 // itself.
                 return false;
@@ -258,11 +268,11 @@ public class CreateResourceWizard extends Wizard {
                 });
             } catch (InvocationTargetException e) {
                 Activator.getDefault().getLogManager()
-                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
                 e.printStackTrace();
             } catch (InterruptedException e) {
                 Activator.getDefault().getLogManager()
-                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -291,10 +301,6 @@ public class CreateResourceWizard extends Wizard {
 
     public UpdatePropertiesPage getUpdatePropPage() {
         return updatePropPage;
-    }
-
-    public StartStopResourcePage getStartStopPage() {
-        return startStopPage;
     }
 
     public void setStatus(String status) {

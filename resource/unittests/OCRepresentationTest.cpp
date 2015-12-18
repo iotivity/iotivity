@@ -421,9 +421,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(nullptr, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -442,9 +442,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -463,9 +463,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         int badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<int>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -492,9 +492,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout);
 
         int badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<int>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -513,7 +513,7 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         (void)badout;
     }
 
@@ -535,9 +535,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource.getUri(), repout2.getUri());
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -556,9 +556,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -577,9 +577,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -598,9 +598,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -619,9 +619,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -640,9 +640,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -662,9 +662,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -683,9 +683,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -704,9 +704,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -726,9 +726,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -747,9 +747,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -768,9 +768,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -790,9 +790,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(repsource, repout2);
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -818,9 +818,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(inner2.getUri(), repout2[1].getUri());
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -860,9 +860,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(inner4.getUri(), repout2[1][1].getUri());
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }
@@ -922,9 +922,9 @@ namespace OCRepresentationTest
         EXPECT_EQ(inner8.getUri(), repout2[1][1][1].getUri());
 
         double badout;
-        EXPECT_THROW(badout = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<double>(AttrName, badout));
         string badoutstr;
-        EXPECT_THROW(badoutstr = rep[AttrName], boost::bad_get);
+        EXPECT_FALSE(rep.getValue<string>(AttrName, badoutstr));
         (void)badout;
         (void)badoutstr;
     }

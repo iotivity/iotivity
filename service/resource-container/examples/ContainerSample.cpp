@@ -33,12 +33,11 @@ using OC::oc_log_stream;
 
 #define MAX_PATH 2048
 
-/* Annother way to create a context: */
+/* Another way to create a context: */
 auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
 {
     static OC::oc_log_stream ols(oc_make_ostream_logger);
     static boost::iostreams::stream<OC::oc_log_stream> os(ols);
-
     return os;
 };
 

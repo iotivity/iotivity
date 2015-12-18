@@ -1774,14 +1774,14 @@ static CAResult_t CAStartLEListeningServer()
         return CA_STATUS_FAILED;
     }
 
-    CAStartLEGattServer();
+    result = CAStartLEGattServer();
 
     ca_mutex_lock(g_bleIsServerMutex);
     g_isServer = true;
     ca_mutex_unlock(g_bleIsServerMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
+    return result;
 #else
     // Routing Gateway only supports BLE client mode.
     OIC_LOG(ERROR, CALEADAPTER_TAG, "LE server not supported in Routing Gateway");
@@ -1821,14 +1821,14 @@ static CAResult_t CAStartLEDiscoveryServer()
         return CA_STATUS_FAILED;
     }
 
-    CAStartLEGattClient();
+    result = CAStartLEGattClient();
 
     ca_mutex_lock(g_bleIsServerMutex);
     g_isServer = false;
     ca_mutex_unlock(g_bleIsServerMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
+    return result;
 }
 
 static CAResult_t CAReadLEData()

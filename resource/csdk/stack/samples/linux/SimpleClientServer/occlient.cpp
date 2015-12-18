@@ -388,7 +388,20 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
         ConnType = clientResponse->connType;
         serverAddr = clientResponse->devAddr;
-        parseClientResponse(clientResponse);
+
+        OCDiscoveryPayload *payload = (OCDiscoveryPayload*) clientResponse->payload;
+        if (!payload)
+        {
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+
+        OCResourcePayload *resource = (OCResourcePayload*) payload->resources;
+        if (!resource)
+        {
+            OC_LOG_V (INFO, TAG, "No resources in payload");
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+        coapServerResource =  resource->uri;
 
         switch(TestCase)
         {
@@ -545,27 +558,27 @@ int InitPresence()
 
 int InitGetRequestToUnavailableResource(OCQualityOfService qos)
 {
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << "/SomeUnknownResource";
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
     return (InvokeOCDoResource(query, &serverAddr, OC_REST_GET, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS,
             getReqCB, NULL, 0));
 }
 
 int InitObserveRequest(OCQualityOfService qos)
 {
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
     return (InvokeOCDoResource(query, &serverAddr, OC_REST_OBSERVE,
               (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, obsReqCB, NULL, 0));
 }
 
 int InitPutRequest(OCQualityOfService qos)
 {
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
     return (InvokeOCDoResource(query, &serverAddr, OC_REST_PUT, (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS,
             putReqCB, NULL, 0));
 }
@@ -573,10 +586,11 @@ int InitPutRequest(OCQualityOfService qos)
 int InitPostRequest(OCQualityOfService qos)
 {
     OCStackResult result;
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+
     std::ostringstream query;
     query << coapServerResource;
 
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
     // First POST operation (to create an Light instance)
     result = InvokeOCDoResource(query, &serverAddr, OC_REST_POST,
                                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
@@ -608,7 +622,7 @@ void* RequestDeleteDeathResourceTask(void* myqos)
     std::ostringstream query;
     query << coapServerResource;
 
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
 
     // Second DELETE operation to delete the resource that might have been removed already.
     OCQualityOfService qos;
@@ -639,7 +653,7 @@ int InitDeleteRequest(OCQualityOfService qos)
     std::ostringstream query;
     query << coapServerResource;
 
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
 
     // First DELETE operation
     result = InvokeOCDoResource(query, &serverAddr, OC_REST_DELETE,
@@ -666,7 +680,6 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
 
     OCHeaderOption options[MAX_HEADER_OPTIONS];
 
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
 
@@ -676,6 +689,7 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
         OC_LOG(INFO, TAG, "Using query power<50");
         query << "?power<50";
     }
+    OC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
 
     if (withVendorSpecificHeaderOptions)
     {
@@ -917,14 +931,4 @@ std::string getConnectivityType (OCConnectivityType connType)
         default:
             return "Incorrect connectivity";
     }
-}
-
-std::string getQueryStrForGetPut(OCClientResponse * /*clientResponse*/)
-{
-    return "/a/light";
-}
-
-void parseClientResponse(OCClientResponse * clientResponse)
-{
-    coapServerResource = getQueryStrForGetPut(clientResponse);
 }

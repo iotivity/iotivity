@@ -49,19 +49,11 @@ int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, siz
     int flags = 0;
     cbor_encoder_init(&encoder, outPayload, *size, flags);
 
-    CborEncoder rootArray;
     CborError cborEncoderResult;
-    cborEncoderResult = cbor_encoder_create_array(&encoder, &rootArray, CBOR_ROOT_ARRAY_LENGTH);
-    if (CborNoError != cborEncoderResult)
-    {
-        OC_LOG(ERROR, TAG, "Failed creating cbor array.");
-        goto cbor_error;
-    }
-
     if (rdPayload->rdDiscovery)
     {
         CborEncoder map;
-        cborEncoderResult = cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
+        cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
         if (CborNoError != cborEncoderResult)
         {
             OC_LOG(ERROR, TAG, "Failed creating discovery map.");
@@ -86,7 +78,7 @@ int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, siz
             OC_LOG(ERROR, TAG, "Failed setting OC_RSRVD_RD_DISCOVERY_SEL.");
             goto cbor_error;
         }
-        cborEncoderResult = cbor_encoder_close_container(&rootArray, &map);
+        cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
         if (CborNoError != cborEncoderResult)
         {
             OC_LOG(ERROR, TAG, "Failed closing discovery map.");
@@ -96,7 +88,7 @@ int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, siz
     else if (rdPayload->rdPublish)
     {
         CborEncoder colArray;
-        cborEncoderResult = cbor_encoder_create_array(&rootArray, &colArray, CborIndefiniteLength);
+        cborEncoderResult = cbor_encoder_create_array(&encoder, &colArray, CborIndefiniteLength);
         if (CborNoError != cborEncoderResult)
         {
             OC_LOG(ERROR, TAG, "Failed creating collection array.");
@@ -118,23 +110,32 @@ int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, siz
             }
             rdPublish = rdPublish->next;
         }
-        cborEncoderResult = cbor_encoder_close_container(&rootArray, &colArray);
+        cborEncoderResult = cbor_encoder_close_container(&encoder, &colArray);
         if (CborNoError != cborEncoderResult)
         {
             OC_LOG(ERROR, TAG, "Failed closing collection array.");
             goto cbor_error;
         }
     }
-    cborEncoderResult = cbor_encoder_close_container(&encoder, &rootArray);
-    if (CborNoError != cborEncoderResult)
+    else
     {
-        OC_LOG(ERROR, TAG, "Failed closing root array container. ");
-        goto cbor_error;
+        CborEncoder map;
+        cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
+        if (CborNoError != cborEncoderResult)
+        {
+            OC_LOG(ERROR, TAG, "Failed creating discovery map.");
+            goto cbor_error;
+        }
+        cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
+        if (CborNoError != cborEncoderResult)
+        {
+            OC_LOG(ERROR, TAG, "Failed creating discovery map.");
+            goto cbor_error;
+        }
     }
-
     *size = encoder.ptr - outPayload;
-    return OC_STACK_OK;
 
+    return OC_STACK_OK;
 cbor_error:
     OICFree(outPayload);
     return OC_STACK_ERROR;
@@ -938,26 +939,6 @@ memory_allocation_failed:
     return NULL;
 }
 
-void OCLinksAddResource(OCDiscoveryPayload *payload, const char *href, OCStringLL *rt,
-    OCStringLL *itf, const char *rel, bool obs, const char *title, const char *uri,
-    uint8_t ins, OCStringLL *mt)
-{
-    if(!payload->collectionResources->setLinks)
-    {
-        payload->collectionResources->setLinks =
-            OCCopyLinksResources(href, rt, itf, rel, obs, title, uri, ins, mt);
-    }
-    else
-    {
-        OCLinksPayload *p = payload->collectionResources->setLinks;
-        while (p->next)
-        {
-            p = p->next;
-        }
-        p->next = OCCopyLinksResources(href, rt, itf, rel, obs, title, uri, ins, mt);
-    }
-}
-
 OCResourceCollectionPayload* OCCopyCollectionResource(OCTagsPayload *tags, OCLinksPayload *links)
 {
     if (!tags || !links)
@@ -974,29 +955,6 @@ OCResourceCollectionPayload* OCCopyCollectionResource(OCTagsPayload *tags, OCLin
     pl->setLinks = links;
 
     return pl;
-}
-
-OCStackResult OCDiscoveryCollectionPayloadAddResource(OCDiscoveryPayload *payload, OCTagsPayload *tags, OCLinksPayload *links)
-{
-    OCResourceCollectionPayload* res = OCCopyCollectionResource(tags, links);
-    if (res == NULL)
-    {
-        return OC_STACK_NO_MEMORY;
-    }
-    if(!payload->collectionResources)
-    {
-        payload->collectionResources = res;
-    }
-    else
-    {
-        OCResourceCollectionPayload *p = payload->collectionResources;
-        while(p->next)
-        {
-            p = p->next;
-        }
-        p->next = res;
-    }
-    return OC_STACK_OK;
 }
 
 void OCFreeLinksResource(OCLinksPayload *payload)
@@ -1046,18 +1004,6 @@ void OCFreeCollectionResource(OCResourceCollectionPayload *payload)
     OCFreeCollectionResource(payload->next);
     OICFree(payload);
 }
-
-void OCDiscoveryCollectionPayloadDestroy(OCDiscoveryPayload* payload)
-{
-    if(!payload)
-    {
-        return;
-    }
-
-    OCFreeCollectionResource(payload->collectionResources);
-    OICFree(payload);
-}
-
 
 void OCTagsLog(const LogLevel level, const OCTagsPayload *tags)
 {

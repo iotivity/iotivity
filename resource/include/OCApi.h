@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __INTEL_OCAPI_H_2014_07_10
-#define __INTEL_OCAPI_H_2014_07_10
+#ifndef OC_OCAPI_H_
+#define OC_OCAPI_H_
 
 #include <string>
 #include <sstream>

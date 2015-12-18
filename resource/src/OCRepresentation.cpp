@@ -37,6 +37,9 @@
 
 namespace OC
 {
+    static const char COAP[] = "coap://";
+    static const char COAPS[] = "coaps://";
+    static const char COAP_TCP[] = "coap+tcp://";
 
     void MessageContainer::setPayload(const OCPayload* rep)
     {
@@ -60,7 +63,6 @@ namespace OC
     void MessageContainer::setPayload(const OCDevicePayload* payload)
     {
         OCRepresentation rep;
-        rep.setUri(payload->uri);
         char uuidString[UUID_STRING_SIZE];
         if(payload->sid && RAND_UUID_OK == OCConvertUuidToString(payload->sid, uuidString))
         {
@@ -85,8 +87,6 @@ namespace OC
     void MessageContainer::setPayload(const OCPlatformPayload* payload)
     {
         OCRepresentation rep;
-        rep.setUri(payload->uri);
-
         rep[OC_RSRVD_PLATFORM_ID] = payload->info.platformID ?
             std::string(payload->info.platformID) :
             std::string();
@@ -641,6 +641,42 @@ namespace OC
     {
         m_children = children;
     }
+
+    void OCRepresentation::setDevAddr(const OCDevAddr m_devAddr)
+    {
+        std::ostringstream ss;
+        if (m_devAddr.flags & OC_SECURE)
+        {
+            ss << COAPS;
+        }
+        else if (m_devAddr.adapter & OC_ADAPTER_TCP)
+        {
+            ss << COAP_TCP;
+        }
+        else
+        {
+            ss << COAP;
+        }
+        if (m_devAddr.flags & OC_IP_USE_V6)
+        {
+            ss << '[' << m_devAddr.addr << ']';
+        }
+        else
+        {
+            ss << m_devAddr.addr;
+        }
+        if (m_devAddr.port)
+        {
+            ss << ':' << m_devAddr.port;
+        }
+        m_host = ss.str();
+    }
+
+    const std::string OCRepresentation::getHost() const
+    {
+        return m_host;
+    }
+
     void OCRepresentation::setUri(const char* uri)
     {
         m_uri = uri ? uri : "";

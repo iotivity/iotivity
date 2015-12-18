@@ -251,14 +251,6 @@ extern "C" {
 
     /*
     * Class:     org_iotivity_base_OcResource
-    * Method:    cancelObserve
-    * Signature: ()V
-    */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_cancelObserve
-        (JNIEnv *, jobject);
-
-    /*
-    * Class:     org_iotivity_base_OcResource
     * Method:    cancelObserve1
     * Signature: (I)V
     */

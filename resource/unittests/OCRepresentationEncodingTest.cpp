@@ -47,8 +47,6 @@ namespace OC
 // CBOR->OCPayload and OCPayload->OCRepresentation conversions
 namespace OCRepresentationEncodingTest
 {
-
-    static const char uri1[] = "/testuri";
     static const uint8_t sid1[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
     static const char devicename1[] = "device name";
     static const char specver1[] = "spec version";
@@ -57,13 +55,11 @@ namespace OCRepresentationEncodingTest
     TEST(DeviceDiscoveryEncoding, Normal)
     {
         OCDevicePayload* device = OCDevicePayloadCreate(
-                uri1,
                 sid1,
                 devicename1,
                 specver1,
                 dmver1);
 
-        EXPECT_STREQ(uri1, device->uri);
         EXPECT_STREQ(devicename1, device->deviceName);
         EXPECT_STREQ(specver1, device->specVersion);
         EXPECT_STREQ(dmver1, device->dataModelVersion);
@@ -82,7 +78,6 @@ namespace OCRepresentationEncodingTest
                     cborData, cborSize));
         OICFree(cborData);
 
-        EXPECT_STREQ(device->uri, ((OCDevicePayload*)parsedDevice)->uri);
         EXPECT_STREQ(device->deviceName, ((OCDevicePayload*)parsedDevice)->deviceName);
         EXPECT_STREQ(device->specVersion, ((OCDevicePayload*)parsedDevice)->specVersion);
         EXPECT_STREQ(device->dataModelVersion, ((OCDevicePayload*)parsedDevice)->dataModelVersion);
@@ -94,15 +89,14 @@ namespace OCRepresentationEncodingTest
         mc.setPayload(parsedDevice);
         EXPECT_EQ(1u, mc.representations().size());
         const OC::OCRepresentation& r = mc.representations()[0];
-        EXPECT_STREQ(uri1, r.getUri().c_str());
         EXPECT_STREQ(devicename1, r.getValue<std::string>(OC_RSRVD_DEVICE_NAME).c_str());
         EXPECT_STREQ(specver1, r.getValue<std::string>(OC_RSRVD_SPEC_VERSION).c_str());
         EXPECT_STREQ(dmver1, r.getValue<std::string>(OC_RSRVD_DATA_MODEL_VERSION).c_str());
 
-
         OCPayloadDestroy(parsedDevice);
     }
 
+    static const char uri1[] = "/testuri";
     static char pfid1[] = "pfid";
     static char mfgnm1[] = "mfgnm";
     static char mfgurl1[] = "mfgurl";
@@ -120,9 +114,8 @@ namespace OCRepresentationEncodingTest
     {
         OCPlatformInfo info {pfid1, mfgnm1, mfgurl1, modelnum1, dom1, pfver1, osver1, hwver1,
             fwver1, url1, time1};
-        OCPlatformPayload* platform = OCPlatformPayloadCreate(uri1, &info);
+        OCPlatformPayload* platform = OCPlatformPayloadCreate(&info);
         EXPECT_EQ(PAYLOAD_TYPE_PLATFORM, ((OCPayload*)platform)->type);
-        EXPECT_STREQ(uri1, platform->uri);
         EXPECT_STREQ(pfid1, platform->info.platformID);
         EXPECT_STREQ(mfgnm1, platform->info.manufacturerName);
         EXPECT_STREQ(mfgurl1, platform->info.manufacturerUrl);
@@ -145,7 +138,6 @@ namespace OCRepresentationEncodingTest
 
         EXPECT_EQ(platform->base.type, ((OCPlatformPayload*)parsedPlatform)->base.type);
         OCPlatformPayload* platform2 = (OCPlatformPayload*)parsedPlatform;
-        EXPECT_STREQ(platform->uri, platform2->uri);
         EXPECT_STREQ(platform->info.platformID, platform2->info.platformID);
         EXPECT_STREQ(platform->info.manufacturerName, platform->info.manufacturerName);
         EXPECT_STREQ(platform->info.manufacturerUrl, platform->info.manufacturerUrl);
@@ -164,7 +156,6 @@ namespace OCRepresentationEncodingTest
         mc.setPayload(parsedPlatform);
         EXPECT_EQ(1u, mc.representations().size());
         const OC::OCRepresentation& r = mc.representations()[0];
-        EXPECT_STREQ(uri1, r.getUri().c_str());
         EXPECT_STREQ(pfid1, r.getValue<std::string>(OC_RSRVD_PLATFORM_ID).c_str());
         EXPECT_STREQ(mfgnm1, r.getValue<std::string>(OC_RSRVD_MFG_NAME).c_str());
         EXPECT_STREQ(mfgurl1, r.getValue<std::string>(OC_RSRVD_MFG_URL).c_str());
@@ -179,7 +170,30 @@ namespace OCRepresentationEncodingTest
 
         OCPayloadDestroy(parsedPlatform);
     }
+    TEST(PresencePayload, Normal)
+    {
+        uint32_t maxAge = 0;
+        uint32_t sequenceNumber = 0;
+        OCPresenceTrigger trigger = OC_PRESENCE_TRIGGER_CREATE;
+        OCPresencePayload *presence = OCPresencePayloadCreate(sequenceNumber, maxAge, trigger, uri1);
 
+        uint8_t* cborData;
+        size_t cborSize;
+        OCPayload* cparsed;
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)presence, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_PRESENCE,
+                    cborData, cborSize));
+        OCPayloadDestroy((OCPayload*)presence);
+        OICFree(cborData);
+
+        OCPresencePayload* parsed = ((OCPresencePayload*)cparsed);
+        EXPECT_EQ(sequenceNumber, parsed->sequenceNumber);
+        EXPECT_EQ(maxAge, parsed->maxAge);
+        EXPECT_EQ(trigger, parsed->trigger);
+        EXPECT_STREQ(uri1, parsed->resourceType);
+
+        OCPayloadDestroy(cparsed);
+    }
     // Representation Payloads
     TEST(RepresentationEncoding, BaseAttributeTypes)
     {
@@ -633,12 +647,12 @@ namespace OCRepresentationEncodingTest
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
+        payload->sid = (uint8_t*)OICMalloc(16);
         payload->resources = resource;
 
         OCResourcePayloadAddResourceType(resource, "rt.singleitem");
         OCResourcePayloadAddInterface(resource, "if.singleitem");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -666,13 +680,13 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, SingleItemFrontTrim)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
         OCResourcePayloadAddResourceType(resource, "    rt.singleitem");
         OCResourcePayloadAddInterface(resource, "    if.singleitem");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -699,13 +713,13 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, SingleItemBackTrim)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
         OCResourcePayloadAddResourceType(resource, "rt.singleitem    ");
         OCResourcePayloadAddInterface(resource, "if.singleitem    ");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -732,13 +746,13 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, SingleItemBothTrim)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
         OCResourcePayloadAddResourceType(resource, "    rt.singleitem    ");
         OCResourcePayloadAddInterface(resource, "    if.singleitem     ");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -765,6 +779,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, MultiItemsNormal)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -773,7 +788,6 @@ namespace OCRepresentationEncodingTest
         OCResourcePayloadAddInterface(resource, "if.firstitem");
         OCResourcePayloadAddInterface(resource, "if.seconditem");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -802,6 +816,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, MultiItemExtraLeadSpaces)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -810,7 +825,6 @@ namespace OCRepresentationEncodingTest
         OCResourcePayloadAddInterface(resource, "  if.firstitem");
         OCResourcePayloadAddInterface(resource, "  if.seconditem");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -839,6 +853,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, MultiItemExtraTrailSpaces)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -847,7 +862,6 @@ namespace OCRepresentationEncodingTest
         OCResourcePayloadAddInterface(resource, "if.firstitem  ");
         OCResourcePayloadAddInterface(resource, "if.seconditem  ");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -876,6 +890,7 @@ namespace OCRepresentationEncodingTest
     TEST(DiscoveryRTandIF, MultiItemBothSpaces)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
+        payload->sid = (uint8_t*)OICMalloc(16);
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
@@ -884,7 +899,6 @@ namespace OCRepresentationEncodingTest
         OCResourcePayloadAddInterface(resource, "  if.firstitem  ");
         OCResourcePayloadAddInterface(resource, "  if.seconditem  ");
         resource->uri = OICStrdup("/uri/thing");
-        resource->sid = (uint8_t*)OICMalloc(16);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -913,7 +927,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, SingleItemNormal)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "rt.firstitem");
         OCRepPayloadAddInterface(payload, "if.firstitem");
 
@@ -940,7 +953,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, SingleItemFrontTrim)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "  rt.firstitem");
         OCRepPayloadAddInterface(payload, "  if.firstitem");
 
@@ -967,7 +979,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, SingleItemBackTrim)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "rt.firstitem  ");
         OCRepPayloadAddInterface(payload, "if.firstitem  ");
 
@@ -994,7 +1005,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, SingleItemBothTrim)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "  rt.firstitem  ");
         OCRepPayloadAddInterface(payload, "  if.firstitem  ");
 
@@ -1021,7 +1031,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, MultiItemsNormal)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "rt.firstitem");
         OCRepPayloadAddResourceType(payload, "rt.seconditem");
         OCRepPayloadAddInterface(payload, "if.firstitem");
@@ -1052,7 +1061,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, MultiItemExtraLeadSpaces)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "  rt.firstitem");
         OCRepPayloadAddResourceType(payload, "  rt.seconditem");
         OCRepPayloadAddInterface(payload, "  if.firstitem");
@@ -1083,7 +1091,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, MultiItemExtraTrailSpaces)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "rt.firstitem  ");
         OCRepPayloadAddResourceType(payload, "rt.seconditem  ");
         OCRepPayloadAddInterface(payload, "if.firstitem  ");
@@ -1114,7 +1121,6 @@ namespace OCRepresentationEncodingTest
     TEST(RepresentationEncodingRTandIF, MultiItemExtraMiddleSpaces)
     {
         OCRepPayload* payload = OCRepPayloadCreate();
-        OCRepPayloadSetUri(payload, "/this/uri");
         OCRepPayloadAddResourceType(payload, "  rt.firstitem  ");
         OCRepPayloadAddResourceType(payload, "  rt.seconditem  ");
         OCRepPayloadAddInterface(payload, "  if.firstitem  ");

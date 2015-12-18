@@ -24,6 +24,7 @@
 
 #include "payload_logging.h"
 #include "oic_malloc.h"
+#include "octypes.h"
 
 #include "rdpayload.h"
 
@@ -46,7 +47,7 @@ static void printStoragedResources(OCRDStorePublishResources *payload)
     }
 }
 
-OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *payload)
+OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *payload, const OCDevAddr *address)
 {
     OCResourceCollectionPayload *storeResource = (OCResourceCollectionPayload *)OICCalloc(1, sizeof(OCResourceCollectionPayload));
     if (!storeResource)
@@ -55,11 +56,11 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
         return OC_STACK_NO_MEMORY;
     }
 
-    OC_LOG(DEBUG, TAG, "Storing Resources ... ");
+    OC_LOG_V(DEBUG, TAG, "Storing Resources for %s:%u", address->addr, address->port);
 
     OCTagsPayload *tags = payload->tags;
     storeResource->tags = OCCopyTagsResources(tags->n.deviceName, tags->di.id, tags->baseURI,
-        tags->bitmap, tags->port, tags->ins, tags->rts, tags->drel, tags->ttl);
+        tags->bitmap, address->port, tags->ins, tags->rts, tags->drel, tags->ttl);
     if (!storeResource->tags)
     {
         OC_LOG(ERROR, TAG, "Failed allocating memory for tags.");
@@ -106,6 +107,7 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
         return OC_STACK_NO_MEMORY;
     }
     resources->publishedResource = storeResource;
+    resources->devAddr = *address;
 
     pthread_mutex_lock(&storageMutex);
     if (g_rdStorage)
@@ -128,13 +130,13 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
 }
 
 OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *resourceType,
-        OCResourceCollectionPayload **payload)
+        OCResourceCollectionPayload **payload, OCDevAddr *devAddr)
 {
     // ResourceType and InterfaceType if both are NULL it will return. If either is
     // not null it will continue execution.
     if (!resourceType && !interfaceType)
     {
-        OC_LOG(DEBUG, TAG, "Missing resource type and interace type.");
+        OC_LOG(DEBUG, TAG, "Missing resource type or interace type.");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -151,7 +153,7 @@ OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *
                     // If either rt or itf are NULL, it should skip remaining code execution.
                     if (!tLinks->rt || !tLinks->itf)
                     {
-                        OC_LOG(DEBUG, TAG, "Either resource type and interface type are missing.");
+                        OC_LOG(DEBUG, TAG, "Either resource type or interface type is missing.");
                         continue;
                     }
                     if (resourceType)
@@ -183,6 +185,7 @@ OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *
                                     OCFreeLinksResource(links);
                                     return OC_STACK_NO_MEMORY;
                                 }
+                                memcpy(devAddr, &pResource->devAddr, sizeof(*devAddr));
                                 return OC_STACK_OK;
                             }
                             temp = temp->next;
@@ -217,6 +220,7 @@ OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *
                                     OCFreeLinksResource(links);
                                     return OC_STACK_NO_MEMORY;
                                 }
+                                devAddr = &pResource->devAddr;
                                 return OC_STACK_OK;
                             }
                             temp = temp->next;

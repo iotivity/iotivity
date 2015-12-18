@@ -684,7 +684,7 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
             if ((familyFlags ^ item->flags) == CA_IPFAMILY_MASK)
             {
                 OIC_LOG_V(INFO, TAG, "IPv%c duplicate message ignored",
-                                            familyFlags & CA_IPV6 ? '6' : '4');
+                          familyFlags & CA_IPV6 ? '6' : '4');
                 ret = true;
                 break;
             }
@@ -1133,7 +1133,7 @@ CAResult_t CAInitializeMessageHandler()
 
 #ifndef SINGLE_HANDLE // This will be enabled when RI supports multi threading
     // start receive thread
-    res = CAQueueingThreadStart(&gReceiveThread);
+    res = CAQueueingThreadStart(&g_receiveThread);
 
     if (res != CA_STATUS_OK)
     {
@@ -1211,7 +1211,7 @@ void CATerminateMessageHandler()
     if (NULL != g_receiveThread.threadMutex)
     {
 #ifndef SINGLE_HANDLE // This will be enabled when RI supports multi threading
-        CAQueueingThreadStop(&gReceiveThread);
+        CAQueueingThreadStop(&g_receiveThread);
 #endif /* SINGLE_HANDLE */
     }
 
@@ -1277,7 +1277,7 @@ static void CALogPayloadInfo(CAInfo_t *info)
         {
             for (uint32_t i = 0; i < info->numOptions; i++)
             {
-                OIC_LOG_V(DEBUG, TAG, "optionID: %d", info->options[i].optionID);
+                OIC_LOG_V(DEBUG, TAG, "optionID: %u", info->options[i].optionID);
 
                 OIC_LOG_V(DEBUG, TAG, "list: %s", info->options[i].optionData);
             }
@@ -1295,7 +1295,7 @@ static void CALogPayloadInfo(CAInfo_t *info)
             OIC_LOG_BUFFER(DEBUG, TAG, (const uint8_t *) info->token,
                            info->tokenLength);
         }
-        OIC_LOG_V(DEBUG, TAG, "msgID: %d", info->messageId);
+        OIC_LOG_V(DEBUG, TAG, "msgID: %u", info->messageId);
     }
     else
     {

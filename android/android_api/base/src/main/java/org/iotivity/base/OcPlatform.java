@@ -70,6 +70,7 @@ public final class OcPlatform {
     public static final String PRESENCE_URI = "/oic/ad";
 
     private static volatile boolean sIsPlatformInitialized = false;
+    private static QualityOfService sPlatformQualityOfService = QualityOfService.NA;
 
     private OcPlatform() {
     }
@@ -85,6 +86,8 @@ public final class OcPlatform {
     public synchronized static void Configure(PlatformConfig platformConfig) {
         if (!sIsPlatformInitialized) {
             CaInterface.initialize(platformConfig.getContext());
+
+            sPlatformQualityOfService = platformConfig.getQualityOfService();
 
             OcPlatform.configure(
                     platformConfig.getServiceType().getValue(),
@@ -463,7 +466,7 @@ public final class OcPlatform {
 
     /**
      * This API registers a resource with the server
-     * <P>
+     * <p/>
      * Note: This API applies to server & client side.
      * </P>
      *
@@ -482,9 +485,10 @@ public final class OcPlatform {
 
     /**
      * This API registers a resource with the server NOTE: This API applies to server side only.
-     * <P>
+     * <p/>
      * Note: This API applies to server side only.
      * </P>
+     *
      * @param resourceUri         The URI of the resource. Example: "a/light"
      * @param resourceTypeName    The resource type. Example: "light"
      * @param resourceInterface   The resource interface (whether it is collection etc).
@@ -932,5 +936,15 @@ public final class OcPlatform {
             throw new IllegalStateException("OcPlatform must be configured by making a call to " +
                     "OcPlatform.Configure before any other API calls are permitted");
         }
+    }
+
+    /**
+     * Gets platform quality of service
+     *
+     * @return quality of service
+     */
+    public static QualityOfService getPlatformQualityOfService() {
+        OcPlatform.initCheck();
+        return sPlatformQualityOfService;
     }
 }

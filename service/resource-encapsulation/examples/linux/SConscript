@@ -32,11 +32,11 @@ sample_env = lib_env.Clone()
 sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
 sample_env.AppendUnique(LIBS = [
     'rcs_common',
-    'oc', 
-    'octbstack', 
-    'oc_logger', 
-    'connectivity_abstraction', 
-    'coap', 
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
     'pthread'
     ])
 sample_env.AppendUnique(CPPPATH = ['../../include'])
@@ -70,3 +70,9 @@ nestedAttributesServer = server_env.Program('nestedAttributesServer', 'NestedAtt
 
 server_env.InstallTarget(sampleResourceServer, 'sampleResourceServer')
 server_env.InstallTarget(nestedAttributesServer, 'nestedAttributesServer')
+
+######################################################################
+# ##### Build the RE Secure Resource Example #####
+######################################################################
+if env.get('SECURED') == '1':
+	SConscript('secureResourceExample/SConscript')

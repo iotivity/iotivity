@@ -158,6 +158,14 @@ namespace OIC
                         Builder& setObservable(bool observable);
 
                         /**
+                         * Sets whether the resource should be secure or not.
+                         *
+                         * @param secureFlag whether to be secure or not.
+                         *
+                         */
+                        Builder& setSecureFlag(bool secureFlag);
+
+                        /**
                          * Sets attributes for the resource.
                          *
                          * @param attributes attributes to set

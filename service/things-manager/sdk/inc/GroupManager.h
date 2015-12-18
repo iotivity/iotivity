@@ -48,8 +48,6 @@ typedef std::function< void(const HeaderOptions&, const OCRepresentation&, const
 typedef std::function< void(const HeaderOptions&, const OCRepresentation&, const int) > PutCallback;
 
 /**
- * @class GroupManager
- * @brief
  * This APIs provide functions for application to find appropriate devices (i.e. things) in network,
  * create a group of the devices, check a presence of member devices in the group, and actuate a
  * group action in a more convenient way.
@@ -75,9 +73,9 @@ public:
      * @param callback callback with OCResource vector.
      * @param waitsec time to wait to finish finding resources
      *
-     * @return OCStackResult return value of this API. Returns OC_STACK_OK if success.
+     * @return Returns ::OC_STACK_OK if success, some other value upon failure.
      *
-     * NOTE: OCStackResult is defined in ocstack.h.
+     * @note OCStackResult is defined in ocstack.h.
      */
     OCStackResult findCandidateResources(std::vector< std::string > resourceTypes,
             CandidateCallback callback, int waitsec = -1);
@@ -85,7 +83,7 @@ public:
     /**
      * API for Collection member's state subscribe.
      *
-     * NOTE: NOT IMPLEMENT YET
+     * @note NOT IMPLEMENT YET
      */
     OCStackResult subscribeCollectionPresence(std::shared_ptr< OCResource > resource,
             CollectionPresenceCallback);
@@ -118,7 +116,6 @@ public:
      *
      * @return std::string return value of this API.
      *                     It returns an action set String.
-     * @note OCStackResult is defined in ocstack.h.
      */
     std::string getStringFromActionSet(const ActionSet *newActionSet);
 
@@ -140,7 +137,7 @@ public:
      * @param newActionSet pointer of ActionSet class instance
      * @param cb callback for PUT operation.
      *
-     * @return Returns ::OC_STACK_OK if success.
+     * @return Returns ::OC_STACK_OK if success, some other value upon failure.
      *
      * @note OCStackResult is defined in ocstack.h.
      */
@@ -155,7 +152,7 @@ public:
      * @param actionsetName the action set name for executing the action set
      * @param cb callback for POST operation.
      *
-     * @return Returns ::OC_STACK_OK if success.
+     * @return Returns ::OC_STACK_OK if success, some other value upon failure.
      * @note OCStackResult is defined in ocstack.h.
      */
     OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
@@ -170,7 +167,7 @@ public:
      * @param delay waiting time for until the action set run.
      * @param cb callback for POST operation.
      *
-     * @return Returns ::OC_STACK_OK if success.
+     * @return Returns ::OC_STACK_OK if success, some other value upon failure.
      * @note OCStackResult is defined in ocstack.h.
      */
     OCStackResult executeActionSet(std::shared_ptr< OCResource > resource,
@@ -184,7 +181,7 @@ public:
      * @param actionsetName the action set name for executing the action set
      * @param cb callback for POST operation.
      *
-     * @return Returns ::OC_STACK_OK if success.
+     * @return Returns ::OC_STACK_OK if success, some other value upon failure.
      * @note OCStackResult is defined in ocstack.h.
      */
     OCStackResult cancelActionSet(std::shared_ptr< OCResource > resource,
@@ -198,7 +195,7 @@ public:
      * @param actionsetName the action set name for reading the action set
      * @param cb callback for GET operation.
      *
-     * @return Returns ::OC_STACK_OK if success.
+     * @return Returns ::OC_STACK_OK if success, some other value upon failure.
      * @note OCStackResult is defined in ocstack.h.
      */
     OCStackResult getActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName,
@@ -212,7 +209,7 @@ public:
      * @param actionsetName the action set name for removing the action set
      * @param cb callback for POST operation.
      *
-     * @return Returns ::OC_STACK_OK if success.
+     * @return Returns ::OC_STACK_OK if success, some other value upon failure.
      * @note OCStackResult is defined in ocstack.h.
      */
     OCStackResult deleteActionSet(std::shared_ptr< OCResource > resource, std::string actionsetName,

@@ -42,7 +42,6 @@ extern "C"
 #ifdef TB_LOG
     #define OC_LOG_PAYLOAD(level, payload) OCPayloadLog((level),(payload))
     #define UUID_SIZE (16)
-    #define UUID_LENGTH (37)
 const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
@@ -131,7 +130,7 @@ static inline void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
                                     val->arr.dimensions[2]);
                             break;
                         case OCREP_PROP_BYTE_STRING:
-                            OC_LOG_V(level, PL_TAG, "\t\t%s(byte array):%lld x %lld x %lld",
+                            OC_LOG_V(level, PL_TAG, "\t\t%s(byte array):%zu x %zu x %zu",
                                     val->name,
                                     val->arr.dimensions[0], val->arr.dimensions[1],
                                     val->arr.dimensions[2]);
@@ -171,15 +170,14 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
         OC_LOG(level, PL_TAG, "\tNO Resources");
         return;
     }
-
+    OC_LOG(level, PL_TAG, "\tSID:");
+    OC_LOG_BUFFER(level, PL_TAG, payload->sid, UUID_SIZE);
     OCResourcePayload* res = payload->resources;
 
     while(res)
     {
         OC_LOG_V(level, PL_TAG, "\tResource #%d", i);
         OC_LOG_V(level, PL_TAG, "\tURI:%s", res->uri);
-        OC_LOG(level, PL_TAG, "\tSID:");
-        OC_LOG_BUFFER(level, PL_TAG, res->sid, UUID_SIZE);
         OC_LOG(level, PL_TAG, "\tResource Types:");
         OCStringLL* strll =  res->types;
         while(strll)
@@ -207,7 +205,6 @@ static inline void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* pay
 static inline void OCPayloadLogDevice(LogLevel level, OCDevicePayload* payload)
 {
     OC_LOG(level, PL_TAG, "Payload Type: Device");
-    OC_LOG_V(level, PL_TAG, "\tURI:%s", payload->uri);
     OC_LOG(level, PL_TAG, "\tSID:");
     OC_LOG_BUFFER(level, PL_TAG, payload->sid, UUID_SIZE);
     OC_LOG_V(level, PL_TAG, "\tDevice Name:%s", payload->deviceName);

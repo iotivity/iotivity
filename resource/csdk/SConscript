@@ -44,7 +44,6 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'../../extlibs/cjson/',
 		'../../extlibs/timer/',
 		'logger/include',
-		'ocrandom/include',
 		'stack/include',
 		'stack/include/internal',
 		'../oc_logger/include',
@@ -83,8 +82,8 @@ if target_os in ['android', 'linux', 'tizen']:
 
 liboctbstack_env.AppendUnique(LIBS = ['coap', 'm'])
 
-if target_os == 'tizen':
-    liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
+if target_os in ['tizen', 'linux']:
+	liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
 
 if target_os not in ['android', 'arduino', 'windows', 'winrt']:
 	liboctbstack_env.AppendUnique(LIBS = ['pthread'])
@@ -137,7 +136,6 @@ liboctbstack_src = [
 	OCTBSTACK_SRC + 'occollection.c',
 	OCTBSTACK_SRC + 'oicgroup.c',
 	'logger/src/logger.c',
-	'ocrandom/src/ocrandom.c',
 	OCTBSTACK_SRC + "rdpayload.c"
 	]
 
@@ -156,4 +154,3 @@ else:
 	liboctbstack_env.UserInstallTargetLib([static_liboctbstack, shared_liboctbstack], 'liboctbstack')
 	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstackconfig.h', 'resource', 'ocstackconfig.h')
 	liboctbstack_env.UserInstallTargetHeader('stack/include/octypes.h', 'resource', 'octypes.h')
-	liboctbstack_env.UserInstallTargetHeader('stack/include/ocstack.h', 'resource', 'ocstack.h')

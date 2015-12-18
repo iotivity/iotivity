@@ -54,9 +54,12 @@ namespace OIC
                 *
                 * @param resource bundle resource to register
                 *
-                * @return void
+                * @return int
+                *       0        in case of an success
+                *       -EEXIST  when the resource already exists and was not registered
+                *       -EINVAL  when it was not possible to create such a resource
                 */
-                virtual void registerResource(BundleResource::Ptr resource) = 0;
+                virtual int registerResource(BundleResource::Ptr resource) = 0;
 
                 /**
                 * Unregister bundle resource from the container

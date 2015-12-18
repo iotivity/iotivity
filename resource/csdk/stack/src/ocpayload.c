@@ -1353,13 +1353,12 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
     }
 
     pl->uri = OICStrdup(res->uri);
-    pl->sid = (uint8_t*)OICCalloc(1, UUID_SIZE);
-    if(!pl->uri || ! pl->sid)
+
+    if(!pl->uri)
     {
         FreeOCDiscoveryResource(pl);
         return NULL;
     }
-    memcpy(pl->sid, OCGetServerInstanceID(), UUID_SIZE);
 
     // types
     OCResourceType* typePtr = res->rsrcType;
@@ -1574,7 +1573,6 @@ static void FreeOCDiscoveryResource(OCResourcePayload* payload)
     }
 
     OICFree(payload->uri);
-    OICFree(payload->sid);
     OCFreeOCStringLL(payload->types);
     OCFreeOCStringLL(payload->interfaces);
     FreeOCDiscoveryResource(payload->next);
@@ -1587,12 +1585,12 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
     {
         return;
     }
-
+    OICFree(payload->sid);
     FreeOCDiscoveryResource(payload->resources);
     OICFree(payload);
 }
 
-OCDevicePayload* OCDevicePayloadCreate(const char* uri, const uint8_t* sid, const char* dname,
+OCDevicePayload* OCDevicePayloadCreate(const uint8_t* sid, const char* dname,
         const char* specVer, const char* dmVer)
 {
 
@@ -1604,12 +1602,6 @@ OCDevicePayload* OCDevicePayloadCreate(const char* uri, const uint8_t* sid, cons
     }
 
     payload->base.type = PAYLOAD_TYPE_DEVICE;
-
-    payload->uri = OICStrdup(uri);
-    if(uri && !payload->uri)
-    {
-        goto exit;
-    }
 
     if(sid)
     {
@@ -1653,7 +1645,6 @@ void OCDevicePayloadDestroy(OCDevicePayload* payload)
         return;
     }
 
-    OICFree(payload->uri);
     OICFree(payload->sid);
     OICFree(payload->deviceName);
     OICFree(payload->specVersion);
@@ -1681,7 +1672,7 @@ static void OCCopyPlatformInfo(const OCPlatformInfo* platformInfo, OCPlatformPay
     target->info.systemTime = OICStrdup(platformInfo->systemTime);
 }
 
-OCPlatformPayload* OCPlatformPayloadCreateAsOwner(char* uri, OCPlatformInfo* platformInfo)
+OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo)
 {
     OCPlatformPayload* payload = (OCPlatformPayload*)OICCalloc(1, sizeof(OCPlatformPayload));
     if(!payload)
@@ -1690,13 +1681,12 @@ OCPlatformPayload* OCPlatformPayloadCreateAsOwner(char* uri, OCPlatformInfo* pla
     }
 
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
-    payload->uri = uri;
     payload->info = *platformInfo;
 
     return payload;
 }
 
-OCPlatformPayload* OCPlatformPayloadCreate(const char* uri, const OCPlatformInfo* platformInfo)
+OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo)
 {
     OCPlatformPayload* payload = (OCPlatformPayload*)OICCalloc(1, sizeof(OCPlatformPayload));
 
@@ -1706,7 +1696,6 @@ OCPlatformPayload* OCPlatformPayloadCreate(const char* uri, const OCPlatformInfo
     }
 
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
-    payload->uri = OICStrdup(uri);
     OCCopyPlatformInfo(platformInfo, payload);
 
     return payload;

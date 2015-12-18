@@ -25,8 +25,8 @@
  * OCPlatform.
  */
 
-#ifndef __OCPLATFORM_H
-#define __OCPLATFORM_H
+#ifndef OC_PLATFORM_H_
+#define OC_PLATFORM_H_
 #include <OCApi.h>
 #include <OCPlatform_impl.h>
 namespace OC
@@ -492,7 +492,7 @@ namespace OC
     }
 }
 
-#endif //__OCPLATFORM_H
+#endif // OC_PLATFORM_H_
 
 
 
