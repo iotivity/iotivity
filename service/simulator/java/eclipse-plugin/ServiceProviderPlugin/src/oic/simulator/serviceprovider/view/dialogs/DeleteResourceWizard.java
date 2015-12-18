@@ -22,7 +22,8 @@ import java.util.Date;
 import java.util.Set;
 
 import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.model.CollectionResource;
+import oic.simulator.serviceprovider.manager.ResourceManager;
+import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.SingleResource;
 
 import org.eclipse.core.runtime.FileLocator;
@@ -50,6 +51,8 @@ public class DeleteResourceWizard extends Wizard {
         URL find = FileLocator.find(Activator.getDefault().getBundle(), path,
                 null);
         setDefaultPageImageDescriptor(ImageDescriptor.createFromURL(find));
+
+        setNeedsProgressMonitor(true);
     }
 
     @Override
@@ -64,23 +67,15 @@ public class DeleteResourceWizard extends Wizard {
             return false;
         }
         try {
-            getContainer().run(true, true, new IRunnableWithProgress() {
+            getContainer().run(true, false, new IRunnableWithProgress() {
 
                 @Override
                 public void run(IProgressMonitor monitor)
                         throws InvocationTargetException, InterruptedException {
+                    ResourceManager resourceManager = Activator.getDefault()
+                            .getResourceManager();
                     try {
                         monitor.beginTask("Resource Deletion", 2);
-                        Set<CollectionResource> collectionResources = page
-                                .getSelectedCollectionResourcesList();
-                        if (null != collectionResources
-                                && collectionResources.size() > 0) {
-                            Activator
-                                    .getDefault()
-                                    .getResourceManager()
-                                    .removeCollectionResources(
-                                            collectionResources);
-                        }
                         monitor.worked(1);
                         Set<SingleResource> singleResources = page
                                 .getSelectedSingleResourcesList();
@@ -88,6 +83,16 @@ public class DeleteResourceWizard extends Wizard {
                                 && singleResources.size() > 0) {
                             Activator.getDefault().getResourceManager()
                                     .removeSingleResources(singleResources);
+
+                            Resource res = resourceManager
+                                    .getCurrentResourceInSelection();
+                            if (null != res && res instanceof SingleResource) {
+                                if (singleResources
+                                        .contains((SingleResource) res)) {
+                                    resourceManager
+                                            .resourceSelectionChanged(null);
+                                }
+                            }
                         }
                         monitor.worked(1);
                         status = "Resources deleted.";

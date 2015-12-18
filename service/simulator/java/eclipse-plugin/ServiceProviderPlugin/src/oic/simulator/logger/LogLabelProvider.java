@@ -51,9 +51,11 @@ public class LogLabelProvider extends LabelProvider implements
             return dateFormat.format(entry.getDate());
         } else {
             String msg = entry.getMessage();
-            int pos = msg.indexOf('\n');
-            if (pos != -1) {
-                msg = msg.substring(0, pos);
+            if (null != msg) {
+                int pos = msg.indexOf('\n');
+                if (pos != -1) {
+                    msg = msg.substring(0, pos);
+                }
             }
             return msg;
         }

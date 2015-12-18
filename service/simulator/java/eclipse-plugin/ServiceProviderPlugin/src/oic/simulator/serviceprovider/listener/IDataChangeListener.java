@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package oic.simulator.serviceprovider.model;
+package oic.simulator.serviceprovider.listener;
 
-/**
- * Enumerates different types of supported delete operations.
- */
-public enum DeleteCategory {
-    ALL, BY_TYPE, BY_URI, NONE
+import oic.simulator.serviceprovider.model.AttributeElement;
+
+public interface IDataChangeListener {
+    public void add(AttributeElement attribute);
+
+    public void remove(AttributeElement attribute);
+
+    public void update(AttributeElement attribute);
 }

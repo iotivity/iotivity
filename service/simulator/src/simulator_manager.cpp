@@ -49,7 +49,7 @@ std::shared_ptr<SimulatorResource> SimulatorManager::createResource(
     VALIDATE_INPUT(configPath.empty(), "Empty path!")
 
     std::shared_ptr<SimulatorResource> resource =
-            SimulatorResourceFactory::getInstance()->createResource(configPath);
+        SimulatorResourceFactory::getInstance()->createResource(configPath);
     if (!resource)
         throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
     return resource;
@@ -62,7 +62,7 @@ std::vector<std::shared_ptr<SimulatorResource>> SimulatorManager::createResource
     VALIDATE_INPUT(!count, "Count is zero!")
 
     std::vector<std::shared_ptr<SimulatorResource>> resources =
-            SimulatorResourceFactory::getInstance()->createResource(configPath, count);
+                SimulatorResourceFactory::getInstance()->createResource(configPath, count);
     if (!resources.size())
         throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
     return resources;
@@ -133,12 +133,12 @@ void SimulatorManager::findResource(const std::string &resourceType,
                      CT_DEFAULT, findCallback);
 }
 
-void SimulatorManager::getDeviceInfo(DeviceInfoCallback callback)
+void SimulatorManager::getDeviceInfo(const std::string &host, DeviceInfoCallback callback)
 {
     VALIDATE_CALLBACK(callback)
 
     OC::FindDeviceCallback deviceCallback = std::bind(
-            [](const OC::OCRepresentation & rep, DeviceInfoCallback callback)
+            [](const OC::OCRepresentation & rep, const std::string & hostUri, DeviceInfoCallback callback)
     {
         std::string deviceName = rep.getValue<std::string>("n");
         std::string deviceID = rep.getValue<std::string>("di");
@@ -146,17 +146,14 @@ void SimulatorManager::getDeviceInfo(DeviceInfoCallback callback)
         std::string deviceDMV = rep.getValue<std::string>("dmv");
 
         DeviceInfo deviceInfo(deviceName, deviceID, deviceSpecVersion, deviceDMV);
-        callback(deviceInfo);
-    }, std::placeholders::_1, callback);
-
-    std::ostringstream uri;
-    uri << OC_MULTICAST_PREFIX << OC_RSRVD_DEVICE_URI;
+        callback(hostUri, deviceInfo);
+    }, std::placeholders::_1, host, callback);
 
     typedef OCStackResult (*GetDeviceInfo)(const std::string &, const std::string &,
                                            OCConnectivityType, OC::FindDeviceCallback);
 
-    invokeocplatform(static_cast<GetDeviceInfo>(OC::OCPlatform::getDeviceInfo), "",
-                     uri.str(), CT_DEFAULT, deviceCallback);
+    invokeocplatform(static_cast<GetDeviceInfo>(OC::OCPlatform::getDeviceInfo), host.c_str(),
+                     "/oic/d", CT_DEFAULT, deviceCallback);
 }
 
 void SimulatorManager::setDeviceInfo(const std::string &deviceName)
@@ -171,12 +168,12 @@ void SimulatorManager::setDeviceInfo(const std::string &deviceName)
                      ocDeviceInfo);
 }
 
-void SimulatorManager::getPlatformInfo(PlatformInfoCallback callback)
+void SimulatorManager::getPlatformInfo(const std::string &host, PlatformInfoCallback callback)
 {
     VALIDATE_CALLBACK(callback)
 
     OC::FindPlatformCallback platformCallback = std::bind(
-                [](const OC::OCRepresentation & rep, PlatformInfoCallback callback)
+                [](const OC::OCRepresentation & rep, const std::string & hostUri, PlatformInfoCallback callback)
     {
         PlatformInfo platformInfo;
         platformInfo.setPlatformID(rep.getValue<std::string>("pi"));
@@ -191,17 +188,14 @@ void SimulatorManager::getPlatformInfo(PlatformInfoCallback callback)
         platformInfo.setSupportUrl(rep.getValue<std::string>("mnsl"));
         platformInfo.setSystemTime(rep.getValue<std::string>("st"));
 
-        callback(platformInfo);
-    }, std::placeholders::_1, callback);
-
-    std::ostringstream uri;
-    uri << OC_MULTICAST_PREFIX << OC_RSRVD_PLATFORM_URI;
+        callback(hostUri, platformInfo);
+    }, std::placeholders::_1, host, callback);
 
     typedef OCStackResult (*GetPlatformInfo)(const std::string &, const std::string &,
             OCConnectivityType, OC::FindPlatformCallback);
 
-    invokeocplatform(static_cast<GetPlatformInfo>(OC::OCPlatform::getPlatformInfo), "",
-                     uri.str(), CT_DEFAULT, platformCallback);
+    invokeocplatform(static_cast<GetPlatformInfo>(OC::OCPlatform::getPlatformInfo), host.c_str(),
+                     "/oic/p", CT_DEFAULT, platformCallback);
 }
 
 void SimulatorManager::setPlatformInfo(PlatformInfo &platformInfo)

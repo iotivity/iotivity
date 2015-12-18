@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package oic.simulator.serviceprovider.model;
+package oic.simulator.serviceprovider.listener;
 
-public enum ResourceCategory {
-    SIMPLE, COLLECTION
+/**
+ * Interface through which the resource property change UI events are sent to
+ * the other UI listeners.
+ */
+public interface IPropertiesChangedListener {
+    public void onResourcePropertyChange();
 }

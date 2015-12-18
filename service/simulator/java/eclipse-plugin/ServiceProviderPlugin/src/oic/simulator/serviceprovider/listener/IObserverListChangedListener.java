@@ -16,12 +16,12 @@
 
 package oic.simulator.serviceprovider.listener;
 
-/**
- * Interface through which the resource property change UI events are sent to
- * the other UI listeners.
- */
-public interface IPropertiesChangedUIListener {
-    public void onResourcePropertyChange();
+import oic.simulator.serviceprovider.model.Resource;
 
-    public void onDevicePropertyChange();
+/**
+ * Interface through which the resource observer events are sent to the UI
+ * listeners.
+ */
+public interface IObserverListChangedListener {
+    public void onObserverListChanged(Resource resource);
 }

@@ -1,13 +1,26 @@
-package oic.simulator.serviceprovider.view.dialogs;
+/*
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-import java.util.HashSet;
-import java.util.Set;
+package oic.simulator.serviceprovider.view.dialogs;
 
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
 
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -22,29 +35,22 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Text;
 
 public class SimpleResourceBasicDetailsPage extends WizardPage {
 
-    private Text        resNameTxt;
-    private Text        resUriTxt;
-    private List        resTypeslist;
-    private Button      addToListBtn;
-    private Button      remFromListBtn;
-    private Button      observeBtn;
-    // private Button startBtn;
+    private Text    resNameTxt;
+    private Text    resUriTxt;
+    private Text    resTypeTxt;
+    private Button  observeBtn;
 
-    private String      resName;
-    private String      resURI;
-    private Set<String> resTypes;
-    private boolean     observable;
-
-    // private boolean start;
+    private String  resName;
+    private String  resURI;
+    private String  resType;
+    private boolean observable;
 
     protected SimpleResourceBasicDetailsPage() {
         super("Basic Details");
-        resTypes = new HashSet<String>();
     }
 
     @Override
@@ -73,7 +79,6 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
 
         resNameTxt = new Text(resDetGrp, SWT.BORDER);
         gd = new GridData();
-        // gd.widthHint = 300;
         gd.horizontalAlignment = SWT.FILL;
         gd.grabExcessHorizontalSpace = true;
         gd.horizontalSpan = 3;
@@ -85,56 +90,20 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
 
         resUriTxt = new Text(resDetGrp, SWT.BORDER);
         gd = new GridData();
-        // gd.widthHint = 300;
         gd.horizontalSpan = 3;
         gd.horizontalAlignment = SWT.FILL;
         gd.grabExcessHorizontalSpace = true;
         resUriTxt.setLayoutData(gd);
-        /*
-         * Composite resTypesComp = new Composite(compContent, SWT.NONE);
-         * gridLayout = new GridLayout(3, false);
-         * resTypesComp.setLayout(gridLayout); gd = new GridData();
-         * gd.grabExcessHorizontalSpace = true; gd.horizontalAlignment =
-         * SWT.FILL; resTypesComp.setLayoutData(gd);
-         */
 
-        Label resTypesLbl = new Label(resDetGrp, SWT.NULL);
-        resTypesLbl.setText(Constants.RESOURCE_TYPES);
+        Label resTypeLbl = new Label(resDetGrp, SWT.NULL);
+        resTypeLbl.setText(Constants.RESOURCE_TYPE);
 
-        resTypeslist = new List(resDetGrp, SWT.BORDER | SWT.MULTI
-                | SWT.V_SCROLL);
+        resTypeTxt = new Text(resDetGrp, SWT.BORDER);
         gd = new GridData();
-        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalSpan = 3;
         gd.horizontalAlignment = SWT.FILL;
-        gd.horizontalSpan = 2;
-        gd.heightHint = 100;
-        /* gd.widthHint = 200; */
-        resTypeslist.setLayoutData(gd);
-        // resTypeslist.setBackground(new Color());
-
-        Composite resTypesActionsComp = new Composite(resDetGrp, SWT.NONE);
-        gridLayout = new GridLayout();
-        resTypesActionsComp.setLayout(gridLayout);
-        gd = new GridData();
-        gd.verticalAlignment = SWT.TOP;
-        /*
-         * gd.grabExcessHorizontalSpace = true; gd.horizontalAlignment =
-         * SWT.FILL;
-         */
-        resTypesActionsComp.setLayoutData(gd);
-
-        addToListBtn = new Button(resTypesActionsComp, SWT.PUSH);
-        addToListBtn.setText("Add");
-        gd = new GridData();
-        gd.widthHint = 70;
-        addToListBtn.setLayoutData(gd);
-
-        remFromListBtn = new Button(resTypesActionsComp, SWT.PUSH);
-        remFromListBtn.setText("Remove");
-        gd = new GridData();
-        gd.widthHint = 70;
-        remFromListBtn.setLayoutData(gd);
-        remFromListBtn.setEnabled(false);
+        gd.grabExcessHorizontalSpace = true;
+        resTypeTxt.setLayoutData(gd);
 
         Group otherOptionsGrp = new Group(container, SWT.NONE);
         otherOptionsGrp.setText("Other options");
@@ -148,11 +117,6 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
         observeBtn.setSelection(true);
         observable = true;
 
-        /*
-         * startBtn = new Button(otherOptionsGrp, SWT.CHECK);
-         * startBtn.setText("Start the resource immediately after creation");
-         * startBtn.setSelection(true);
-         */
         addUiListeners();
 
         setControl(container);
@@ -164,6 +128,10 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
             @Override
             public void modifyText(ModifyEvent arg0) {
                 resURI = resUriTxt.getText();
+                if (null == resURI) {
+                    return;
+                }
+
                 getWizard().getContainer().updateButtons();
             }
         });
@@ -176,55 +144,11 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
             }
         });
 
-        addToListBtn.addSelectionListener(new SelectionAdapter() {
+        resTypeTxt.addModifyListener(new ModifyListener() {
             @Override
-            public void widgetSelected(SelectionEvent e) {
-                SingleTextInputDialog dialog = new SingleTextInputDialog(
-                        getShell(), "Add Resource Type", "Resource Type");
-                if (dialog.open() == Window.OK) {
-                    System.out.println(dialog.getValue());
-                    String resType = dialog.getValue();
-                    // Duplicate check.
-                    if (resTypes.contains(resType)) {
-                        MessageDialog.openError(Display.getDefault()
-                                .getActiveShell(), "Duplicate value",
-                                "value already exist.");
-                        return;
-                    }
-                    resTypeslist.add(resType);
-                    resTypeslist.deselectAll();
-                    resTypeslist.select(resTypeslist.getItemCount() - 1);
-                    resTypeslist.showSelection();
-                    remFromListBtn.setEnabled(true);
-
-                    resTypes.add(resType);
-
-                    getWizard().getContainer().updateButtons();
-                }
-            }
-        });
-
-        remFromListBtn.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                int[] selection = resTypeslist.getSelectionIndices();
-                String[] selectionStr = resTypeslist.getSelection();
-                if (null != selection && selection.length > 0) {
-                    resTypeslist.remove(selection);
-                    for (String selected : selectionStr) {
-                        resTypes.remove(selected);
-                    }
-                }
-
-                changeVisibility();
+            public void modifyText(ModifyEvent arg0) {
+                resType = resTypeTxt.getText();
                 getWizard().getContainer().updateButtons();
-            }
-        });
-
-        resTypeslist.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                changeVisibility();
             }
         });
 
@@ -234,32 +158,17 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
                 observable = observeBtn.getSelection();
             }
         });
-
-        /*
-         * startBtn.addSelectionListener(new SelectionAdapter() {
-         * 
-         * @Override public void widgetSelected(SelectionEvent e) { start =
-         * startBtn.getSelection(); } });
-         */
-    }
-
-    private void changeVisibility() {
-        int[] selection = resTypeslist.getSelectionIndices();
-        if (null != selection && selection.length > 0) {
-            remFromListBtn.setEnabled(true);
-        } else {
-            remFromListBtn.setEnabled(false);
-        }
     }
 
     @Override
     public boolean canFlipToNextPage() {
-        if (null == resName || null == resURI || resTypes.size() < 1) {
+        if (null == resName || null == resURI || null == resType) {
             return false;
         }
         resName = resName.trim();
         resURI = resURI.trim();
-        if (resName.length() < 1 || resURI.length() < 1) {
+        resType = resType.trim();
+        if (resName.length() < 1 || resURI.length() < 1 || resType.length() < 1) {
             return false;
         }
         return true;
@@ -267,6 +176,12 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
 
     @Override
     public IWizardPage getNextPage() {
+        if (!Utility.isUriValid(resURI)) {
+            MessageDialog.openError(Display.getDefault().getActiveShell(),
+                    "Invalid Resource URI.", Constants.INVALID_URI_MESSAGE);
+            return null;
+        }
+
         // Checking whether the uri is used by any other resource.
         if (Activator.getDefault().getResourceManager().isResourceExist(resURI)) {
             MessageDialog
@@ -276,6 +191,7 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
             // itself.
             return null;
         }
+
         return ((CreateResourceWizard) getWizard())
                 .getSimpleResourceAddAttributePage();
     }
@@ -288,16 +204,11 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
         return resURI;
     }
 
-    public Set<String> getResTypes() {
-        return resTypes;
+    public String getResType() {
+        return resType;
     }
 
     public boolean isObservable() {
         return observable;
     }
-
-    /*
-     * public boolean isStart() { return start; }
-     */
-
 }

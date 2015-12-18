@@ -205,6 +205,13 @@ void SimulatorSingleResourceImpl::stop()
     if (!m_resourceHandle)
         return;
 
+    // Stop all the update automation of this resource
+    m_updateAutomationMgr.stopAll();
+
+    // Clear all the observers
+    removeAllObservers();
+
+    // Unregister the resource from stack
     typedef OCStackResult (*UnregisterResource)(const OCResourceHandle &);
 
     invokeocplatform(static_cast<UnregisterResource>(OC::OCPlatform::unregisterResource),
@@ -419,6 +426,11 @@ void SimulatorSingleResourceImpl::setPostErrorResponseModel(const SimulatorResou
     m_postErrorResModel = resModel;
 }
 
+void SimulatorSingleResourceImpl::setActionType(std::map<RAML::ActionType, RAML::ActionPtr> &actionType)
+{
+    m_actionTypes = actionType;
+}
+
 void SimulatorSingleResourceImpl::notifyApp(SimulatorResourceModel &resModel)
 {
     if (m_modelCallback)
@@ -460,17 +472,10 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleRequests(
                     << " request received. \n**Payload details**\n" << payload)
         }
 
-        // Handover the request to appropriate interface handler
-        std::string interfaceType(OC::DEFAULT_INTERFACE);
-        OC::QueryParamsMap queryParams = request->getQueryParameters();
-        if (queryParams.end() != queryParams.find("if"))
-            interfaceType = queryParams["if"];
+        // TODO: Handover the request to appropriate interface handler
 
         std::shared_ptr<OC::OCResourceResponse> response;
-        if (interfaceType == OC::DEFAULT_INTERFACE)
-        {
-            response = requestOnBaseLineInterface(request);
-        }
+        response = requestOnBaseLineInterface(request);
 
         // Send response if the request handled by resource
         if (response)
@@ -498,29 +503,12 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleRequests(
         if (OC::ObserveAction::ObserveRegister == observationInfo.action)
         {
             SIM_LOG(ILogger::INFO, "[" << m_uri << "] OBSERVE REGISTER request received");
-
-            ObserverInfo info {observationInfo.obsId, observationInfo.address, observationInfo.port};
-            m_observersList.push_back(info);
-
-            if (m_observeCallback)
-                m_observeCallback(m_uri, ObservationStatus::REGISTER, info);
+            addObserver(observationInfo);
         }
         else if (OC::ObserveAction::ObserveUnregister == observationInfo.action)
         {
             SIM_LOG(ILogger::INFO, "[" << m_uri << "] OBSERVE UNREGISTER request received");
-
-            ObserverInfo info;
-            for (auto iter = m_observersList.begin(); iter != m_observersList.end(); iter++)
-            {
-                if ((info = *iter), info.id == observationInfo.obsId)
-                {
-                    m_observersList.erase(iter);
-                    break;
-                }
-            }
-
-            if (m_observeCallback)
-                m_observeCallback(m_uri, ObservationStatus::UNREGISTER, info);
+            removeObserver(observationInfo);
         }
         errCode = OC_EH_OK;
     }
@@ -532,6 +520,15 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorSingleResourceImpl::requestOnBa
     std::shared_ptr<OC::OCResourceRequest> request)
 {
     std::shared_ptr<OC::OCResourceResponse> response;
+
+    RAML::ActionType type = getActionType(request->getRequestType());
+
+    if (!m_actionTypes.empty())
+    {
+        if (m_actionTypes.end() == m_actionTypes.find(type))
+            return response;
+    }
+
     if ("GET" == request->getRequestType())
     {
         OC::OCRepresentation ocRep = m_resModel.getOCRepresentation();
@@ -565,7 +562,7 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorSingleResourceImpl::requestOnBa
         else
         {
             response = std::make_shared<OC::OCResourceResponse>();
-            response->setErrorCode(400);
+            response->setErrorCode(403);
             response->setResponseResult(OC_EH_ERROR);
             if ("PUT" == request->getRequestType())
             {
@@ -595,4 +592,57 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorSingleResourceImpl::requestOnBa
     }
 
     return response;
+}
+
+void SimulatorSingleResourceImpl::addObserver(OC::ObservationInfo ocObserverInfo)
+{
+    ObserverInfo info {ocObserverInfo.obsId, ocObserverInfo.address, ocObserverInfo.port};
+    m_observersList.push_back(info);
+
+    if (m_observeCallback)
+        m_observeCallback(m_uri, ObservationStatus::REGISTER, info);
+}
+
+void SimulatorSingleResourceImpl::removeObserver(OC::ObservationInfo ocObserverInfo)
+{
+    ObserverInfo info;
+    for (auto iter = m_observersList.begin(); iter != m_observersList.end(); iter++)
+    {
+        if ((info = *iter), info.id == ocObserverInfo.obsId)
+        {
+            m_observersList.erase(iter);
+            break;
+        }
+    }
+
+    if (m_observeCallback)
+        m_observeCallback(m_uri, ObservationStatus::UNREGISTER, info);
+}
+
+void SimulatorSingleResourceImpl::removeAllObservers()
+{
+    std::vector<ObserverInfo> observerList = m_observersList;
+    m_observersList.clear();
+    for (int index = 0; index < observerList.size(); index++)
+    {
+        if (m_observeCallback)
+            m_observeCallback(m_uri, ObservationStatus::UNREGISTER, observerList[index]);
+    }
+}
+
+RAML::ActionType SimulatorSingleResourceImpl::getActionType(std::string requestType)
+{
+    if (!requestType.compare("GET"))
+        return RAML::ActionType::GET;
+
+    if (!requestType.compare("PUT"))
+        return RAML::ActionType::PUT;
+
+    if (!requestType.compare("POST"))
+        return RAML::ActionType::POST;
+
+    if (!requestType.compare("DELETE"))
+        return RAML::ActionType::DELETE;
+
+    return RAML::ActionType::NONE;
 }

@@ -19,7 +19,10 @@ package oic.simulator.serviceprovider.view;
 import java.util.List;
 
 import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.listener.IDeviceInfoListener;
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
 import oic.simulator.serviceprovider.model.MetaProperty;
+import oic.simulator.serviceprovider.utils.Constants;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
@@ -44,9 +47,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.part.ViewPart;
 
 /**
@@ -62,21 +63,49 @@ public class DevicePlatformInfoView extends ViewPart {
 
     private final Integer[]    columnWidth   = { 150, 150 };
 
-    private List<MetaProperty> metaProperties;
+    enum PropertiesType {
+        DEVICE, PLATFORM
+    }
 
-    private boolean            enable_edit;
+    private List<MetaProperty>  deviceProperties;
+    private List<MetaProperty>  platformProperties;
 
-    private Text               deviceNameTxt;
-    private Button             devEditBtn;
-    private Button             devCancelBtn;
-    private Button             platEditBtn;
-    private Button             platCancelBtn;
+    private boolean             enableDeviceEdit;
+    private boolean             enablePlatformEdit;
 
-    private TableViewer        platformTblViewer;
+    private Button              devEditBtn;
+    private Button              devCancelBtn;
+    private Button              platEditBtn;
+    private Button              platCancelBtn;
 
-    private CTabFolder         folder;
-    private CTabItem           devicePropTab;
-    private CTabItem           platformPropTab;
+    private TableViewer         platformTblViewer;
+    private TableViewer         deviceTblViewer;
+
+    private CTabFolder          folder;
+    private CTabItem            devicePropTab;
+    private CTabItem            platformPropTab;
+
+    private IDeviceInfoListener deviceInfoUIListener;
+
+    public DevicePlatformInfoView() {
+        deviceInfoUIListener = new IDeviceInfoListener() {
+
+            @Override
+            public void onDeviceInfoFound() {
+                Display.getDefault().asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (null != deviceTblViewer) {
+                            updateViewer(deviceTblViewer, getDevicePropData());
+                        }
+                    }
+                });
+            }
+        };
+
+        addManagerListeners();
+    }
 
     @Override
     public void createPartControl(Composite parent) {
@@ -98,9 +127,18 @@ public class DevicePlatformInfoView extends ViewPart {
 
         folder.setSelection(devicePropTab);
 
-        metaProperties = getPlatformPropData();
+        platformProperties = getPlatformPropData();
 
-        updateViewer(metaProperties);
+        updateViewer(platformTblViewer, platformProperties);
+
+        deviceProperties = getDevicePropData();
+
+        updateViewer(deviceTblViewer, deviceProperties);
+    }
+
+    private void addManagerListeners() {
+        UiListenerHandler.getInstance().addDeviceInfoUIListener(
+                deviceInfoUIListener);
     }
 
     private void createDevicePropertiesTab() {
@@ -115,27 +153,23 @@ public class DevicePlatformInfoView extends ViewPart {
 
         propGroup.setLayout(new GridLayout(2, false));
         GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
-        gd.horizontalIndent = 5;
-        gd.verticalIndent = 5;
         propGroup.setLayoutData(gd);
 
-        Label devNameLbl = new Label(propGroup, SWT.NULL);
-        devNameLbl.setText("Device Name");
-        gd = new GridData();
-        gd.horizontalAlignment = SWT.FILL;
-        gd.grabExcessHorizontalSpace = true;
-        gd.horizontalSpan = 2;
-        devNameLbl.setLayoutData(gd);
+        deviceTblViewer = new TableViewer(propGroup, SWT.SINGLE | SWT.H_SCROLL
+                | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 
-        deviceNameTxt = new Text(propGroup, SWT.BORDER);
-        deviceNameTxt.setText(Activator.getDefault().getResourceManager()
-                .getDeviceName());
-        gd = new GridData();
-        gd.horizontalAlignment = SWT.FILL;
-        gd.grabExcessHorizontalSpace = true;
+        createColumns(deviceTblViewer, PropertiesType.DEVICE);
+
+        // Make lines and header visible
+        final Table table = deviceTblViewer.getTable();
+        table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        table.setHeaderVisible(true);
+        table.setLinesVisible(true);
+        gd = new GridData(SWT.FILL, SWT.FILL, true, true);
         gd.horizontalSpan = 2;
-        deviceNameTxt.setLayoutData(gd);
-        deviceNameTxt.setEnabled(false);
+        table.setLayoutData(gd);
+
+        deviceTblViewer.setContentProvider(new PropertycontentProvider());
 
         devEditBtn = new Button(propGroup, SWT.PUSH);
         devEditBtn.setText("Edit");
@@ -146,26 +180,22 @@ public class DevicePlatformInfoView extends ViewPart {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 if (devEditBtn.getText().equals("Edit")) {
-                    deviceNameTxt.setEnabled(true);
                     devCancelBtn.setEnabled(true);
-
-                    deviceNameTxt.selectAll();
-                    deviceNameTxt.setFocus();
                     devEditBtn.setText("Save");
+                    enableDeviceEdit = true;
                 } else {
-                    String devName = deviceNameTxt.getText();
-                    if (null == devName || devName.trim().length() < 1) {
+                    if (Activator.getDefault().getResourceManager()
+                            .isDeviceInfoValid(deviceProperties)) {
+                        Activator.getDefault().getResourceManager()
+                                .setDeviceInfo(deviceProperties);
+                        devCancelBtn.setEnabled(false);
+                        devEditBtn.setText("Edit");
+                        enableDeviceEdit = false;
+                    } else {
                         MessageDialog.openError(Display.getDefault()
-                                .getActiveShell(), "Invalid Device Name",
-                                "Device name is Invalid!!");
-                        deviceNameTxt.setFocus();
-                        return;
+                                .getActiveShell(), "Invalid value",
+                                "Property value cannot be empty.");
                     }
-                    Activator.getDefault().getResourceManager()
-                            .setDeviceName(devName);
-                    deviceNameTxt.setEnabled(false);
-                    devCancelBtn.setEnabled(false);
-                    devEditBtn.setText("Edit");
                 }
             }
         });
@@ -179,11 +209,12 @@ public class DevicePlatformInfoView extends ViewPart {
         devCancelBtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                deviceNameTxt.setText(Activator.getDefault()
-                        .getResourceManager().getDeviceName());
-                deviceNameTxt.setEnabled(false);
+                deviceProperties = getDevicePropData();
+                updateViewer(deviceTblViewer, deviceProperties);
+
                 devCancelBtn.setEnabled(false);
                 devEditBtn.setText("Edit");
+                enableDeviceEdit = false;
             }
         });
 
@@ -207,7 +238,7 @@ public class DevicePlatformInfoView extends ViewPart {
         platformTblViewer = new TableViewer(propGroup, SWT.SINGLE
                 | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 
-        createColumns(platformTblViewer);
+        createColumns(platformTblViewer, PropertiesType.PLATFORM);
 
         // Make lines and header visible
         final Table table = platformTblViewer.getTable();
@@ -231,13 +262,20 @@ public class DevicePlatformInfoView extends ViewPart {
                 if (platEditBtn.getText().equals("Edit")) {
                     platCancelBtn.setEnabled(true);
                     platEditBtn.setText("Save");
-                    enable_edit = true;
+                    enablePlatformEdit = true;
                 } else {
-                    Activator.getDefault().getResourceManager()
-                            .setPlatformInfo(metaProperties);
-                    platCancelBtn.setEnabled(false);
-                    platEditBtn.setText("Edit");
-                    enable_edit = false;
+                    if (Activator.getDefault().getResourceManager()
+                            .isPlatformInfoValid(platformProperties)) {
+                        Activator.getDefault().getResourceManager()
+                                .setPlatformInfo(platformProperties);
+                        platCancelBtn.setEnabled(false);
+                        platEditBtn.setText("Edit");
+                        enablePlatformEdit = false;
+                    } else {
+                        MessageDialog.openError(Display.getDefault()
+                                .getActiveShell(), "Invalid value",
+                                "Property value cannot be empty.");
+                    }
                 }
             }
         });
@@ -251,19 +289,19 @@ public class DevicePlatformInfoView extends ViewPart {
         platCancelBtn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                metaProperties = getPlatformPropData();
-                updateViewer(metaProperties);
+                platformProperties = getPlatformPropData();
+                updateViewer(platformTblViewer, platformProperties);
 
                 platCancelBtn.setEnabled(false);
                 platEditBtn.setText("Edit");
-                enable_edit = false;
+                enablePlatformEdit = false;
             }
         });
 
         platformPropTab.setControl(propGroup);
     }
 
-    public void createColumns(TableViewer tableViewer) {
+    public void createColumns(TableViewer tableViewer, PropertiesType propType) {
         TableViewerColumn propName = new TableViewerColumn(tableViewer,
                 SWT.NONE);
         propName.getColumn().setWidth(columnWidth[0]);
@@ -292,7 +330,13 @@ public class DevicePlatformInfoView extends ViewPart {
                 }
             }
         });
-        propValue.setEditingSupport(new PropValueEditor(platformTblViewer));
+        if (propType == PropertiesType.DEVICE) {
+            propValue.setEditingSupport(new PropValueEditor(deviceTblViewer,
+                    propType));
+        } else {
+            propValue.setEditingSupport(new PropValueEditor(platformTblViewer,
+                    propType));
+        }
     }
 
     class PropertycontentProvider implements IStructuredContentProvider {
@@ -317,11 +361,18 @@ public class DevicePlatformInfoView extends ViewPart {
         return metaPropertyList;
     }
 
-    private void updateViewer(List<MetaProperty> metaPropertyList) {
-        if (null != platformTblViewer) {
-            Table tbl = platformTblViewer.getTable();
+    private List<MetaProperty> getDevicePropData() {
+        List<MetaProperty> metaPropertyList = Activator.getDefault()
+                .getResourceManager().getDeviceInfo();
+        return metaPropertyList;
+    }
+
+    private void updateViewer(TableViewer tableViewer,
+            List<MetaProperty> metaPropertyList) {
+        if (null != tableViewer) {
+            Table tbl = tableViewer.getTable();
             if (null != metaPropertyList) {
-                platformTblViewer.setInput(metaPropertyList.toArray());
+                tableViewer.setInput(metaPropertyList.toArray());
                 if (!tbl.isDisposed()) {
                     tbl.setLinesVisible(true);
                 }
@@ -336,11 +387,14 @@ public class DevicePlatformInfoView extends ViewPart {
 
     class PropValueEditor extends EditingSupport {
 
-        private final TableViewer viewer;
+        private final TableViewer    viewer;
 
-        public PropValueEditor(TableViewer viewer) {
+        private final PropertiesType propType;
+
+        public PropValueEditor(TableViewer viewer, PropertiesType propType) {
             super(viewer);
             this.viewer = viewer;
+            this.propType = propType;
         }
 
         @Override
@@ -350,9 +404,24 @@ public class DevicePlatformInfoView extends ViewPart {
 
         @Override
         protected CellEditor getCellEditor(Object element) {
-            if (!enable_edit) {
+            String propName = ((MetaProperty) element).getPropName();
+            if (null == propName) {
                 return null;
             }
+
+            if (propType == PropertiesType.DEVICE) {
+                if (!enableDeviceEdit)
+                    return null;
+                // Only device name property is editable
+                if (!propName.equals(Constants.DEVICE_NAME)) {
+                    return null;
+                }
+            } else {
+                if (!enablePlatformEdit) {
+                    return null;
+                }
+            }
+
             CellEditor editor = new TextCellEditor(viewer.getTable());
             return editor;
         }

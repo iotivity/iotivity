@@ -41,6 +41,6 @@ class JniDeviceInfo
         JNIEnv *m_env;
 };
 
-void onDeviceInfoReceived(jobject listener, DeviceInfo &deviceInfo);
+void onDeviceInfoReceived(jobject listener, const std::string &host, DeviceInfo &deviceInfo);
 
 #endif
