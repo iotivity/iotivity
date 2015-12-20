@@ -17,18 +17,24 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#ifdef WITH_ARDUINO
+#define __STDC_LIMIT_MACROS
+#endif
 
+#include <stdlib.h>
+#include <string.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "oic_malloc.h"
+#include "ocpayload.h"
+#include "ocpayloadcbor.h"
+#include "payload_logging.h"
 #include "cJSON.h"
 #include "cainterface.h"
 #include "secureresourcemanager.h"
 #include "resourcemanager.h"
 #include "srmresourcestrings.h"
 #include "srmutility.h"
-#include <stdlib.h>
-#include <string.h>
 
 #define TAG  "SRM-PSI"
 
@@ -40,9 +46,9 @@ const size_t DB_FILE_SIZE_BLOCK = 1023;
  *
  * @param ps  pointer of OCPersistentStorage for the SVR name ("acl", "cred", "pstat" etc).
  *
- * @retval  total size of the SVR database.
+ * @return total size of the SVR database.
  */
-size_t GetSVRDatabaseSize(OCPersistentStorage* ps)
+static size_t GetSVRDatabaseSize(const OCPersistentStorage* ps)
 {
     size_t size = 0;
     if (!ps)
@@ -51,7 +57,7 @@ size_t GetSVRDatabaseSize(OCPersistentStorage* ps)
     }
     size_t bytesRead  = 0;
     char buffer[DB_FILE_SIZE_BLOCK];
-    FILE* fp = ps->open(SVR_DB_FILE_NAME, "r");
+    FILE* fp = ps->open(SVR_DB_DAT_FILE_NAME, "r");
     if (fp)
     {
         do
@@ -64,16 +70,7 @@ size_t GetSVRDatabaseSize(OCPersistentStorage* ps)
     return size;
 }
 
-/**
- * Reads the Secure Virtual Database from PS into dynamically allocated
- * memory buffer.
- *
- * @note Caller of this method MUST use OICFree() method to release memory
- *       referenced by return value.
- *
- * @retval  reference to memory buffer containing SVR database.
- */
-char * GetSVRDatabase()
+char* GetSVRDatabase()
 {
     char * jsonStr = NULL;
     FILE * fp = NULL;
@@ -114,16 +111,6 @@ exit:
     return jsonStr;
 }
 
-
-/**
- * This method is used by a entity handlers of SVR's to update
- * SVR database.
- *
- * @param rsrcName string denoting the SVR name ("acl", "cred", "pstat" etc).
- * @param jsonObj JSON object containing the SVR contents.
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -205,6 +192,219 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
 exit:
     OICFree(jsonSVRDbStr);
     cJSON_Delete(jsonSVRDb);
+
+    return ret;
+}
+
+OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **data, size_t *size)
+{
+    if (!data || !size)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    OCStackResult ret = OC_STACK_ERROR;
+    *data = NULL;
+
+     FILE *fp = NULL;
+    size_t fileSize = 0;
+
+    OCPersistentStorage *ps = SRMGetPersistentStorageHandler();
+    VERIFY_NON_NULL(TAG, ps, ERROR);
+
+    fileSize = GetSVRDatabaseSize(ps);
+    if (fileSize != 0)
+    {
+        OIC_LOG_V(DEBUG, TAG, "File Read Size: %zu", fileSize);
+        uint8_t *fsData = (uint8_t *)OICCalloc(1, fileSize);
+        VERIFY_NON_NULL(TAG, fsData, ERROR);
+
+        FILE *fp = ps->open(SVR_DB_DAT_FILE_NAME, "r");
+        VERIFY_NON_NULL(TAG, fp, ERROR);
+        size_t itemsRead = ps->read(fsData, 1, fileSize, fp);
+        if (itemsRead == fileSize)
+        {
+            VERIFY_NON_NULL(TAG, fsData, ERROR);
+            if (rsrcName != NULL)
+            {
+                CborParser parser = { .end = NULL, .flags = 0 };
+                CborValue cbor =  { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                cbor_parser_init(fsData, fileSize, 0, &parser, &cbor);
+                CborValue cborValue =  { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                CborError cborFindResult = cbor_value_enter_container(&cbor, &cborValue);
+
+                while (cbor_value_is_valid(&cborValue))
+                {
+                    char *name = NULL;
+                    size_t len = 0;
+                    cborFindResult = cbor_value_dup_text_string(&cborValue, &name, &len, NULL);
+                    VERIFY_SUCCESS(TAG, cborFindResult == CborNoError, ERROR);
+                    cborFindResult = cbor_value_advance(&cborValue);
+                    VERIFY_SUCCESS(TAG, cborFindResult == CborNoError, ERROR);
+                    if (strcmp(name, rsrcName) == 0)
+                    {
+                        cborFindResult = cbor_value_dup_byte_string(&cborValue, data, size, NULL);
+                        VERIFY_SUCCESS(TAG, cborFindResult == CborNoError, ERROR);
+                        ret = OC_STACK_OK;
+                        OICFree(fsData);
+                        OICFree(name);
+                        goto exit;
+                    }
+                    OICFree(name);
+                }
+            }
+            // return everything in case rsrcName is NULL
+            else
+            {
+                *data = fsData;
+                *size = fileSize;
+            }
+        }
+    }
+    else
+    {
+        OIC_LOG (ERROR, TAG, "Unable to open SVR database to read!! ");
+    }
+
+exit:
+    if (ps && fp)
+    {
+        ps->close(fp);
+    }
+    return ret;
+}
+
+OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPayload, size_t psSize)
+{
+    /*
+     * This function stores cbor payload of each resource by appending resource name.
+     */
+    if (!rsrcName || !*psPayload)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    OCStackResult ret = OC_STACK_ERROR;
+
+    size_t cborSize = 0;
+    uint8_t *dbData = NULL;
+    uint8_t *outPayload = NULL;
+    size_t dbSize = 0;
+
+    ret = GetSecureVirtualDatabaseFromPS(NULL, &dbData, &dbSize);
+    if (dbData && dbSize != 0)
+    {
+        uint8_t size = dbSize + psSize;
+
+        outPayload = (uint8_t *)OICCalloc(1, size);
+        VERIFY_NON_NULL(TAG, outPayload, ERROR);
+
+        CborEncoder encoder = { { .ptr = NULL }, .end = NULL, .added = 0, .flags = 0};
+        cbor_encoder_init(&encoder, outPayload, size, 0);
+        {
+            CborEncoder map = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0};
+            CborError cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Creating PS Interface Map.");
+            {
+                bool found = false;
+                CborValue cbor = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                CborParser parser = { .end = NULL, .flags = 0 };
+                cbor_parser_init(dbData, size, 0, &parser, &cbor);
+
+                CborValue cborValue = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                CborError cborFindResult = CborNoError;
+
+                if (cbor_value_is_container(&cbor))
+                {
+                    cborFindResult = cbor_value_enter_container(&cbor, &cborValue);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering PS Interface Map.");
+                }
+
+                while (cbor_value_is_valid(&cborValue))
+                {
+                    char *name = NULL;
+                    size_t len = 0;
+                    cborFindResult = cbor_value_dup_text_string(&cborValue, &name, &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Duplicating Value.");
+                    cborFindResult = cbor_value_advance(&cborValue);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Value.");
+
+                    cborEncoderResult = cbor_encode_text_string(&map, name, strlen(name));
+                    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Copying Text Str Value.");
+
+                    if (strcmp(name, rsrcName) == 0)
+                    {
+                        cborEncoderResult = cbor_encode_byte_string(&map, psPayload, psSize);
+                        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Encoding Byte String.");
+                        found = true;
+                    }
+                    else
+                    {
+                        uint8_t *byteString = NULL;
+                        size_t byteLen = 0;
+                        cborFindResult = cbor_value_dup_byte_string(&cborValue, &byteString, &byteLen, NULL);
+                        VERIFY_SUCCESS(TAG, cborFindResult == CborNoError, ERROR);
+                        if (byteString)
+                        {
+                            cborEncoderResult = cbor_encode_byte_string(&map, byteString, byteLen);
+                            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding value.");
+                        }
+                        OICFree(byteString);
+                    }
+                    OICFree(name);
+                    cbor_value_advance(&cborValue);
+                }
+
+                // This is an exception when the value is not stored in the database.
+                if (!found)
+                {
+                    cborEncoderResult = cbor_encode_text_string(&map, rsrcName, strlen(rsrcName));
+                    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding value.");
+                    cborEncoderResult = cbor_encode_byte_string(&map, psPayload, psSize);
+                    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed entering byte string.");
+                }
+            }
+            cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing container.");
+        }
+        cborSize = encoder.ptr - outPayload;
+    }
+
+    {
+        OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
+        if (ps)
+        {
+            FILE *fp = ps->open(SVR_DB_DAT_FILE_NAME, "w+");
+            if (fp)
+            {
+                size_t numberItems = ps->write(outPayload, 1, cborSize, fp);
+                if (cborSize == numberItems)
+                {
+                    OIC_LOG_V(DEBUG, TAG, "Written %zu bytes into SVR database file", cborSize);
+                    ret = OC_STACK_OK;
+                }
+                else
+                {
+                    OIC_LOG_V(ERROR, TAG, "Failed writing %zu in the database", numberItems);
+                }
+                ps->close(fp);
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "File open failed.");
+            }
+
+        }
+    }
+
+
+exit:
+    if (dbData)
+    {
+        OICFree(dbData);
+    }
+    if (outPayload)
+    {
+        OICFree(outPayload);
+    }
 
     return ret;
 }

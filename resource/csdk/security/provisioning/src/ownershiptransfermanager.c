@@ -58,6 +58,8 @@
 #include "srmutility.h"
 #include "provisioningdatabasemanager.h"
 #include "oxmrandompin.h"
+#include "ocpayload.h"
+#include "payload_logging.h"
 
 #define TAG "OTM"
 
@@ -1434,4 +1436,3 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
 
     return ret;
 }
-

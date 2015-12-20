@@ -43,15 +43,6 @@
 #include "crlresource.h"
 #endif // __WITH_X509__
 
-/**
- * This method is used by all secure resource modules to send responses to REST queries.
- *
- * @param ehRequest pointer to entity handler request data structure.
- * @param ehRet result code from entity handler.
- * @param rspPayload response payload in JSON.
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, const char *rspPayload)
 {
@@ -74,11 +65,30 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
     return OC_STACK_ERROR;
 }
 
-/**
- * Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
+OCStackResult SendSRMCBORResponse(const OCEntityHandlerRequest *ehRequest,
+        OCEntityHandlerResult ehRet, uint8_t *cborPayload)
+{
+    OIC_LOG(DEBUG, TAG, "SRM sending SRM response");
+    OCEntityHandlerResponse response = {.requestHandle = NULL};
+    OCStackResult ret = OC_STACK_ERROR;
+
+    if (ehRequest)
+    {
+        OCSecurityPayload ocPayload = {.base = {.type = PAYLOAD_TYPE_INVALID}};
+
+        response.requestHandle = ehRequest->requestHandle;
+        response.resourceHandle = ehRequest->resource;
+        response.ehResult = ehRet;
+        response.payload = (OCPayload *)(&ocPayload);
+        response.payload->type = PAYLOAD_TYPE_SECURITY;
+        ((OCSecurityPayload *)response.payload)->securityData1 = cborPayload;
+        response.persistentBufferFlag = 0;
+
+        ret = OCDoResponse(&response);
+    }
+    return ret;
+}
+
 OCStackResult InitSecureResources( )
 {
     OCStackResult ret;
@@ -134,11 +144,6 @@ OCStackResult InitSecureResources( )
     return ret;
 }
 
-/**
- * Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult DestroySecureResources( )
 {
     DeInitACLResource();

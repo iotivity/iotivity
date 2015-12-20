@@ -33,7 +33,6 @@ extern "C"
 }
 #endif
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -42,10 +41,10 @@ extern "C" {
 typedef struct OicParseQueryIter OicParseQueryIter_t;
 
 /**
- * @brief   OicRestQueryIter data structure is used for book-keeping
- *          sub-REST query's attribute's and value's, starting location &
- *          length between calls to GetNextQuery(). This struct needs
- *          to be first initialized with ParseQueryIterInit().
+ * OicRestQueryIter data structure is used for book-keeping
+ * sub-REST query's attribute's and value's, starting location &
+ * length between calls to GetNextQuery(). This struct needs
+ * to be first initialized with ParseQueryIterInit().
  *
  */
 struct OicParseQueryIter
@@ -58,8 +57,7 @@ struct OicParseQueryIter
 };
 
 /**
- * @def VERIFY_SUCCESS
- * @brief Macro to verify success of operation.
+ * Macro to verify success of operation.
  * eg: VERIFY_SUCCESS(TAG, OC_STACK_OK == foo(), ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  *
@@ -68,8 +66,8 @@ struct OicParseQueryIter
             {OIC_LOG((logLevel), tag, #op " failed!!"); goto exit; } }while(0)
 
 /**
- * @def VERIFY_NON_NULL
- * @brief Macro to verify argument is not equal to NULL.
+ * VERIFY_NON_NULL
+ * Macro to verify argument is not equal to NULL.
  * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  *
@@ -80,26 +78,21 @@ struct OicParseQueryIter
 /**
  * This method initializes the OicParseQueryIter_t struct
  *
- *@param query     - REST query, to be parsed
- *@param parseIter - OicParseQueryIter_t struct, to be initialized
+ * @param query     - REST query, to be parsed
+ * @param parseIter - OicParseQueryIter_t struct, to be initialized
  *
  */
 void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter);
-
 
 /**
  * This method fills the OicParseQueryIter_t struct with next REST query's
  * attribute's and value's information
  *
- *@param parseIter - OicParseQueryIter_t struct, has next query's attribute's & value's info
+ * @param parseIter - OicParseQueryIter_t struct, has next query's attribute's & value's info
  *
- * @retval
- *     OicParseQueryIter_t *  - has parsed query info
- *     NULL                   - has no query to parse
+ * @return reference to @ref OicParseQueryIter_t with parsed query info or NULL has no query to parse.
  */
 OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter);
-
-
 
 /**
  * This method acts as a helper funtion for JSON unmarshalling by various SVR's.

@@ -40,6 +40,7 @@
 #include "provisioningdatabasemanager.h"
 #include "base64.h"
 #include "utlist.h"
+#include "ocpayload.h"
 
 #ifdef __WITH_X509__
 #include "crlresource.h"
@@ -848,15 +849,13 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToAclJSON(acl);
-    if(NULL == secPayload->securityData)
+    size_t size = 0;
+    if(OC_STACK_OK != AclToCBORPayload(acl, &secPayload->securityData1, &size))
     {
-        OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to BinToAclJSON");
+        OCPayloadDestroy((OCPayload *)secPayload);
+        OIC_LOG(ERROR, TAG, "Failed to AclToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "ACL : %s", secPayload->securityData);
-
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         selectedDeviceInfo->endpoint.addr,
@@ -874,8 +873,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     ACLData_t *aclData = (ACLData_t *) OICCalloc(1, sizeof(ACLData_t));
     if (aclData == NULL)
     {
-        OICFree(secPayload->securityData);
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -889,8 +887,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     if (aclData->resArr == NULL)
     {
         OICFree(aclData);
-        OICFree(secPayload->securityData);
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }

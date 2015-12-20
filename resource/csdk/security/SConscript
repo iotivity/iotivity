@@ -109,8 +109,7 @@ if env.get('SECURED') == '1':
 		OCSRM_SRC + 'base64.c',
 		#pbkdf2.c is required to PIN based OxM only.
 		#But we did not use a separate build options to prevent the build command becomes complicated.
-		OCSRM_SRC + 'pbkdf2.c',
-		OCSRM_SRC + 'directpairing.c'
+		OCSRM_SRC + 'pbkdf2.c'
 		]
 else:
 	libocsrm_src = [
@@ -130,14 +129,16 @@ else:
 		OCSRM_SRC + 'srmresourcestrings.c',
 		OCSRM_SRC + 'srmutility.c',
 		OCSRM_SRC + 'iotvticalendar.c',
-		OCSRM_SRC + 'base64.c',
-		OCSRM_SRC + 'directpairing.c'
+		OCSRM_SRC + 'base64.c'
 		]
 
 if env.get('DTLS_WITH_X509') == '1' and env.get('SECURED') == '1':
 	crl_src = [OCSRM_SRC + 'crlresource.c']
 	libocsrm_src  = libocsrm_src + crl_src
 
+if target_os != 'arduino':
+	dp_src = [OCSRM_SRC + 'directpairing.c']
+	libocsrm_src  = libocsrm_src + dp_src
 
 libocsrm = libocsrm_env.StaticLibrary('libocsrm', libocsrm_src)
 
@@ -145,4 +146,3 @@ libocsrm_env.InstallTarget(libocsrm, 'libocsrm')
 
 if target_os in ['linux', 'android', 'tizen'] and env.get('SECURED') == '1':
 	SConscript('provisioning/SConscript')
-

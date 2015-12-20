@@ -1049,4 +1049,3 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
     OIC_LOG(DEBUG, TAG, "OUT DPDeviceDiscovery");
     return ret;
 }
-
