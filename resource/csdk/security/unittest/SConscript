@@ -47,6 +47,7 @@ srmtest_env.PrependUnique(CPPPATH = [
 #		'../../../../extlibs/tinydtls/',
 		'../include'
 		])
+
 srmtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 srmtest_env.AppendUnique(LIBS = ['-lpthread'])
 srmtest_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
@@ -83,7 +84,9 @@ unittest = srmtest_env.Program('unittest', ['aclresourcetest.cpp',
 Alias("test", [unittest])
 
 unittest_src_dir = src_dir + '/resource/csdk/security/unittest/'
-unittest_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/unittest'
+unittest_build_dir = env.get('BUILD_DIR') + 'resource/csdk/security/unittest'
+
+srmtest_env.AppendUnique(CPPDEFINES = ['SECURITY_BUILD_UNITTEST_DIR='+unittest_build_dir])
 
 srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_unittest.json'))
@@ -91,6 +94,13 @@ srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_unittest_acl1.json'))
 srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_unittest_default_acl.json'))
+
+srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
+    unittest_src_dir + 'oic_unittest.dat'))
+srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
+    unittest_src_dir + 'oic_unittest_acl1.dat'))
+srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
+    unittest_src_dir + 'oic_unittest_default_acl.dat'))
 
 env.AppendTarget('test')
 if env.get('TEST') == '1':

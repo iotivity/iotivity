@@ -58,6 +58,8 @@
 #include "srmutility.h"
 #include "provisioningdatabasemanager.h"
 #include "oxmrandompin.h"
+#include "ocpayload.h"
+#include "payload_logging.h"
 
 #define TAG "OTM"
 
@@ -1131,9 +1133,11 @@ OCStackResult FinalizeProvisioning(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToAclJSON(&defaultAcl);
+    size_t size = 0;
+    secPayload->securityData1 = AclToCBORPayload(&defaultAcl, &size);
+
     OICFree(defaultAcl.owners);
-    if(!secPayload->securityData)
+    if(!secPayload->securityData1)
     {
         OICFree(secPayload);
         OC_LOG(INFO, TAG, "FinalizeProvisioning : Failed to BinToAclJSON");

@@ -28,16 +28,16 @@ extern "C" {
 /**
  * Initialize ACL resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitACLResource();
 
 /**
  * Perform cleanup for ACL resources.
  *
- * @retval  none
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-void DeInitACLResource();
+OCStackResult DeInitACLResource();
 
 /**
  * This method is used by PolicyEngine to retrieve ACL for a Subject.
@@ -46,38 +46,38 @@ void DeInitACLResource();
  * @param savePtr is used internally by @ref GetACLResourceData to maintain index between
  *                successive calls for same subjectId.
  *
- * @retval  reference to @ref OicSecAcl_t if ACL is found, else NULL
+ * @note On the first call to @ref GetACLResourceData, savePtr should point to NULL.
  *
- * @note On the first call to @ref GetACLResourceData, savePtr should point to NULL
+ * @return reference to @ref OicSecAcl_t if ACL is found, else NULL.
  */
 const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **savePtr);
 
 /**
- * This function converts ACL data into JSON format.
- * Caller needs to invoke 'free' when done using
- * returned string.
- * @param acl  instance of OicSecAcl_t structure.
+ * This function converts ACL data into CBOR format.
  *
- * @retval  pointer to ACL in json format.
+ * @param acl instance of @ref OicSecAcl_t structure.
+ * @param size of the cbor payload.
+ *
+ * @return pointer to allocated memory for cbor payload.
  */
-char* BinToAclJSON(const OicSecAcl_t * acl);
-
+uint8_t* AclToCBORPayload(const OicSecAcl_t * acl, size_t *size);
 
 /**
  * This function deletes ACL data.
  *
- * @param acl  instance of OicSecAcl_t structure.
+ * @param acl instance of @ref OicSecAcl_t structure to be deleted.
  */
 void DeleteACLList(OicSecAcl_t* acl);
 
-
 /**
  * This function installs a new ACL.
- * @param newJsonStr JSON string representing a new ACL.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @param payload cbor value representing a new ACL.
+ * @param size of the cbor payload.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult InstallNewACL(const char* newJsonStr);
+OCStackResult InstallNewACL(const uint8_t* payload, const size_t size);
 
 
 #ifdef __cplusplus

@@ -22,6 +22,7 @@
 #include "securevirtualresourcetypes.h"
 
 const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
+const char * SVR_DB_DAT_FILE_NAME = "oic_svr_db.dat";
 const char * OIC_MI_DEF = "oic.mi.def";
 
 //AMACL
@@ -91,6 +92,8 @@ const char * OIC_JSON_RECURRENCES_NAME = "recurs";
 const char * OIC_JSON_SUPPORTED_CRED_TYPE_NAME = "sct";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
+OicUuid_t WILDCARD_SUBJECT_B64_ID = { .id = {'2', '2', '2', '2', '2', '2', '2', '2',
+                                             '2', '2', '2', '2', '2', '2', '2', '2' }};
 size_t WILDCARD_SUBJECT_ID_LEN = 1;
 const char * WILDCARD_RESOURCE_URI = "*";
 

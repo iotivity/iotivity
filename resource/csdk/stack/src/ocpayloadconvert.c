@@ -182,20 +182,19 @@ static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* out
 {
     CborEncoder encoder;
     int64_t err = 0;
-
     cbor_encoder_init(&encoder, outPayload, *size, 0);
-
-    CborEncoder map;
-
-    err = err | cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
-
     if(payload->securityData)
     {
+        CborEncoder map;
+        err = err | cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
         err = err | cbor_encode_text_string(&map, payload->securityData,
                                             strlen(payload->securityData));
+        err = err | cbor_encoder_close_container(&encoder, &map);
     }
-
-    err = err | cbor_encoder_close_container(&encoder, &map);
+    if (payload->securityData1)
+    {
+        err = err | cbor_encode_byte_string(&encoder, payload->securityData1, *size);
+    }
     return checkError(err, &encoder, outPayload, size);
 }
 
@@ -292,7 +291,8 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload* payload, uint8_t* o
             if(!resource)
             {
                 OICFree(outPayload);
-                return OC_STACK_INVALID_PARAM;
+
+               return OC_STACK_INVALID_PARAM;
             }
 
             err = err | cbor_encoder_create_map(&rootArray, &map, DISCOVERY_CBOR_RES_MAP_LEN);

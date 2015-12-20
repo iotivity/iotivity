@@ -18,33 +18,36 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <stdlib.h>
-#include <string.h>
-#include "ocstack.h"
-#include "logger.h"
-#include "oic_malloc.h"
-#include "oic_string.h"
-#include "cJSON.h"
-#include "base64.h"
-#include "resourcemanager.h"
-#include "aclresource.h"
-#include "psinterface.h"
-#include "utlist.h"
-#include "srmresourcestrings.h"
-#include "doxmresource.h"
-#include "srmutility.h"
-#include "ocserverrequest.h"
-#include <stdlib.h>
 #ifdef WITH_ARDUINO
 #include <string.h>
 #else
 #include <strings.h>
 #endif
+#include <stdlib.h>
+
+#include "ocstack.h"
+#include "ocserverrequest.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
+#include "ocrandom.h"
+#include "utlist.h"
+#include "payload_logging.h"
+#include "srmresourcestrings.h"
+#include "aclresource.h"
+#include "doxmresource.h"
+#include "resourcemanager.h"
+#include "srmutility.h"
+#include "psinterface.h"
+
+#include "security_internals.h"
 
 #define TAG  "SRM-ACL"
 
-OicSecAcl_t               *gAcl = NULL;
-static OCResourceHandle    gAclHandle = NULL;
+// CborSize is the default cbor payload size being used.
+static uint64_t CborSize = 255;
+
+static OicSecAcl_t *gAcl = NULL;
+static OCResourceHandle gAclHandle = NULL;
 
 /**
  * This function frees OicSecAcl_t object's fields and object itself.
@@ -52,9 +55,9 @@ static OCResourceHandle    gAclHandle = NULL;
 static void FreeACE(OicSecAcl_t *ace)
 {
     size_t i;
-    if(NULL == ace)
+    if (NULL == ace)
     {
-        OC_LOG (ERROR, TAG, "Invalid Parameter");
+        OC_LOG(ERROR, TAG, "Invalid Parameter");
         return;
     }
 
@@ -66,9 +69,9 @@ static void FreeACE(OicSecAcl_t *ace)
     OICFree(ace->resources);
 
     //Clean Period
-    if(ace->periods)
+    if (ace->periods)
     {
-        for(i = 0; i < ace->prdRecrLen; i++)
+        for (i = 0; i < ace->prdRecrLen; i++)
         {
             OICFree(ace->periods[i]);
         }
@@ -76,9 +79,9 @@ static void FreeACE(OicSecAcl_t *ace)
     }
 
     //Clean Recurrence
-    if(ace->recurrences)
+    if (ace->recurrences)
     {
-        for(i = 0; i < ace->prdRecrLen; i++)
+        for (i = 0; i < ace->prdRecrLen; i++)
         {
             OICFree(ace->recurrences[i]);
         }
@@ -106,298 +109,360 @@ void DeleteACLList(OicSecAcl_t* acl)
     }
 }
 
-/*
- * This internal method converts ACL data into JSON format.
- *
- * Note: Caller needs to invoke 'free' when finished done using
- * return string.
- */
-char * BinToAclJSON(const OicSecAcl_t * acl)
+static size_t OicSecAclSize(const OicSecAcl_t *secAcl)
 {
-    cJSON *jsonRoot = NULL;
-    char *jsonStr = NULL;
-
-    if (acl)
+    if (!secAcl)
     {
-        jsonRoot = cJSON_CreateObject();
-        VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-        cJSON *jsonAclArray = NULL;
-        cJSON_AddItemToObject (jsonRoot, OIC_JSON_ACL_NAME, jsonAclArray = cJSON_CreateArray());
-        VERIFY_NON_NULL(TAG, jsonAclArray, ERROR);
-
-        while(acl)
-        {
-            char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
-            uint32_t outLen = 0;
-            size_t inLen = 0;
-            B64Result b64Ret = B64_OK;
-
-            cJSON *jsonAcl = cJSON_CreateObject();
-
-            // Subject -- Mandatory
-            outLen = 0;
-            if (memcmp(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0)
-            {
-                inLen = WILDCARD_SUBJECT_ID_LEN;
-            }
-            else
-            {
-                inLen =  sizeof(OicUuid_t);
-            }
-            b64Ret = b64Encode(acl->subject.id, inLen, base64Buff,
-                sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-            cJSON_AddStringToObject(jsonAcl, OIC_JSON_SUBJECT_NAME, base64Buff );
-
-            // Resources -- Mandatory
-            cJSON *jsonRsrcArray = NULL;
-            cJSON_AddItemToObject (jsonAcl, OIC_JSON_RESOURCES_NAME, jsonRsrcArray = cJSON_CreateArray());
-            VERIFY_NON_NULL(TAG, jsonRsrcArray, ERROR);
-            for (size_t i = 0; i < acl->resourcesLen; i++)
-            {
-                cJSON_AddItemToArray (jsonRsrcArray, cJSON_CreateString(acl->resources[i]));
-            }
-
-            // Permissions -- Mandatory
-            cJSON_AddNumberToObject (jsonAcl, OIC_JSON_PERMISSION_NAME, acl->permission);
-
-            //Period & Recurrence -- Not Mandatory
-            if(0 != acl->prdRecrLen)
-            {
-                cJSON *jsonPeriodArray = NULL;
-                cJSON_AddItemToObject (jsonAcl, OIC_JSON_PERIODS_NAME,
-                        jsonPeriodArray = cJSON_CreateArray());
-                VERIFY_NON_NULL(TAG, jsonPeriodArray, ERROR);
-                for (size_t i = 0; i < acl->prdRecrLen; i++)
-                {
-                    cJSON_AddItemToArray (jsonPeriodArray,
-                            cJSON_CreateString(acl->periods[i]));
-                }
-            }
-
-            //Recurrence -- Not Mandatory
-            if(0 != acl->prdRecrLen && acl->recurrences)
-            {
-                cJSON *jsonRecurArray  = NULL;
-                cJSON_AddItemToObject (jsonAcl, OIC_JSON_RECURRENCES_NAME,
-                        jsonRecurArray = cJSON_CreateArray());
-                VERIFY_NON_NULL(TAG, jsonRecurArray, ERROR);
-                for (size_t i = 0; i < acl->prdRecrLen; i++)
-                {
-                    cJSON_AddItemToArray (jsonRecurArray,
-                            cJSON_CreateString(acl->recurrences[i]));
-                }
-            }
-
-            // Owners -- Mandatory
-            cJSON *jsonOwnrArray = NULL;
-            cJSON_AddItemToObject (jsonAcl, OIC_JSON_OWNERS_NAME, jsonOwnrArray = cJSON_CreateArray());
-            VERIFY_NON_NULL(TAG, jsonOwnrArray, ERROR);
-            for (size_t i = 0; i < acl->ownersLen; i++)
-            {
-                outLen = 0;
-
-                b64Ret = b64Encode(acl->owners[i].id, sizeof(((OicUuid_t*)0)->id), base64Buff,
-                    sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-
-                cJSON_AddItemToArray (jsonOwnrArray, cJSON_CreateString(base64Buff));
-            }
-
-            // Attach current acl node to Acl Array
-            cJSON_AddItemToArray(jsonAclArray, jsonAcl);
-            acl = acl->next;
-        }
-
-        jsonStr = cJSON_PrintUnformatted(jsonRoot);
+        return 0;
     }
-
-exit:
-    if (jsonRoot)
+    OicSecAcl_t *acl = (OicSecAcl_t *)secAcl;
+    size_t size = 0;
+    while (acl)
     {
-        cJSON_Delete(jsonRoot);
+       size++;
+       acl = acl->next;
     }
-    return jsonStr;
+    return size;
 }
 
-/*
- * This internal method converts JSON ACL into binary ACL.
- */
-OicSecAcl_t * JSONToAclBin(const char * jsonStr)
+uint8_t* AclToCBORPayload(const OicSecAcl_t *secAcl, size_t *size)
 {
-    OCStackResult ret = OC_STACK_ERROR;
-    OicSecAcl_t * headAcl = NULL;
-    OicSecAcl_t * prevAcl = NULL;
-    cJSON *jsonRoot = NULL;
-    cJSON *jsonAclArray = NULL;
-
-    VERIFY_NON_NULL(TAG, jsonStr, ERROR);
-
-    jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-    jsonAclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_ACL_NAME);
-    VERIFY_NON_NULL(TAG, jsonAclArray, ERROR);
-
-    if (cJSON_Array == jsonAclArray->type)
+    if (NULL == secAcl)
     {
-        int numAcl = cJSON_GetArraySize(jsonAclArray);
-        int idx = 0;
+        return NULL;
+    }
 
-        VERIFY_SUCCESS(TAG, numAcl > 0, INFO);
-        do
+    CborEncoder encoder = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+    CborEncoder oicSecAclArray = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+    *size = CborSize;
+
+    // Please note: This has been initialized prior to use because of VERIFY macro
+    CborError cborEncoderResult = CborNoError;
+    OicSecAcl_t *acl = (OicSecAcl_t *)secAcl;
+
+    uint8_t *outPayload = (uint8_t *)OICCalloc(1, *size);
+    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    cbor_encoder_init(&encoder, outPayload, *size, 0);
+
+    // Create ACL Array
+    cborEncoderResult = cbor_encoder_create_array(&encoder, &oicSecAclArray, OicSecAclSize(secAcl));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+    while (acl)
+    {
+        CborEncoder oicSecAclMap = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        // ACL Map size - Number of mandatory items
+        uint8_t aclMapSize = 4;
+        // Create ACL Map
+        if (acl->periods)
         {
-            cJSON *jsonAcl = cJSON_GetArrayItem(jsonAclArray, idx);
-            VERIFY_NON_NULL(TAG, jsonAcl, ERROR);
+            ++aclMapSize;
+        }
+        if (acl->recurrences)
+        {
+            ++aclMapSize;
+        }
+        cborEncoderResult = cbor_encoder_create_map(&oicSecAclArray, &oicSecAclMap, aclMapSize);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
 
-            OicSecAcl_t *acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
-            VERIFY_NON_NULL(TAG, acl, ERROR);
+        // Subject -- Mandatory
+        cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_SUBJECT_NAME,
+            sizeof(OIC_JSON_SUBJECT_NAME) - 1);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        size_t inLen = 0;
+        if (memcmp(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0)
+        {
+            inLen = WILDCARD_SUBJECT_ID_LEN;
+        }
+        else
+        {
+            inLen = sizeof(OicUuid_t);
+        }
+        cborEncoderResult = cbor_encode_byte_string(&oicSecAclMap, (uint8_t *)acl->subject.id, inLen);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
 
-            headAcl = (headAcl) ? headAcl : acl;
-            if (prevAcl)
+        // Resources
+        CborEncoder resources = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_RESOURCES_NAME,
+            sizeof(OIC_JSON_RESOURCES_NAME) -1);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        cborEncoderResult = cbor_encoder_create_array(&oicSecAclMap, &resources, acl->resourcesLen);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        for (size_t i = 0; i < acl->resourcesLen; i++)
+        {
+            cborEncoderResult = cbor_encode_text_string(&resources, acl->resources[i],
+                strlen(acl->resources[i]));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+        }
+        cborEncoderResult = cbor_encoder_close_container(&oicSecAclMap, &resources);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+        // Permissions -- Mandatory
+        cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_PERMISSION_NAME,
+            sizeof(OIC_JSON_PERMISSION_NAME) -1);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        cborEncoderResult = cbor_encode_int(&oicSecAclMap, acl->permission);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+        // Period -- Not Mandatory
+        if (acl->periods)
+        {
+            CborEncoder period = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+            cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_PERIODS_NAME,
+                sizeof(OIC_JSON_PERIODS_NAME) -1);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+            cborEncoderResult = cbor_encoder_create_array(&oicSecAclMap, &period, acl->prdRecrLen);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+            for (size_t i = 0; i < acl->prdRecrLen; i++)
             {
-                prevAcl->next = acl;
+                cborEncoderResult = cbor_encode_text_string(&period, acl->periods[i],
+                    strlen(acl->periods[i]));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
             }
+            cborEncoderResult = cbor_encoder_close_container(&oicSecAclMap, &period);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        }
 
-            size_t jsonObjLen = 0;
-            cJSON *jsonObj = NULL;
+        // Recurrence -- Not Mandatory
+        if (acl->recurrences)
+        {
+            CborEncoder recurrences = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+            cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_RECURRENCES_NAME,
+                sizeof(OIC_JSON_RECURRENCES_NAME) -1);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+            cborEncoderResult = cbor_encoder_create_array(&oicSecAclMap, &recurrences, acl->prdRecrLen);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+            for (size_t i = 0; i < acl->prdRecrLen; i++)
+            {
+                cborEncoderResult = cbor_encode_text_string(&recurrences, acl->recurrences[i],
+                    strlen(acl->recurrences[i]));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
 
-            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-            uint32_t outLen = 0;
-            B64Result b64Ret = B64_OK;
+            }
+            cborEncoderResult = cbor_encoder_close_container(&oicSecAclMap, &recurrences);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        }
+
+        cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_OWNERS_NAME,
+            sizeof(OIC_JSON_OWNERS_NAME) - 1);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        CborEncoder owners = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        cborEncoderResult = cbor_encoder_create_array(&oicSecAclMap, &owners, acl->ownersLen);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        for (size_t i = 0; i < acl->ownersLen; i++)
+        {
+            cborEncoderResult = cbor_encode_byte_string(&owners, (uint8_t *)acl->owners[i].id,
+                sizeof(acl->owners[i].id));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+        }
+        cborEncoderResult = cbor_encoder_close_container(&oicSecAclMap, &owners);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+        cborEncoderResult = cbor_encoder_close_container(&oicSecAclArray, &oicSecAclMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+        acl = acl->next;
+    }
+    cborEncoderResult = cbor_encoder_close_container(&encoder, &oicSecAclArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+    *size = encoder.ptr - outPayload;
+
+exit:
+    if (CborErrorOutOfMemory == cborEncoderResult)
+    {
+        // reallocate and try again!
+        OICFree(outPayload);
+        // Since the allocated initial memory failed, double the memory.
+        CborSize += CborSize;
+        cborEncoderResult = CborNoError;
+        outPayload = AclToCBORPayload(secAcl, size);
+    }
+
+    if (cborEncoderResult != CborNoError)
+    {
+        OICFree(outPayload);
+        outPayload = NULL;
+        *size = 0;
+    }
+
+    return outPayload;
+}
+
+// This function converts CBOR format to ACL data.
+// Caller needs to invoke 'free' when done using
+// note: This function is used in unit test hence not declared static,
+OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
+{
+    if (NULL == cborPayload)
+    {
+        return NULL;
+    }
+
+    CborValue aclCbor = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+    CborParser parser = { .end = NULL, .flags = 0 };
+    CborError cborFindResult = CborNoError;
+    cbor_parser_init(cborPayload, size, 0, &parser, &aclCbor);
+
+    OicSecAcl_t *headAcl = NULL;
+
+    CborValue aclArray = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+    cborFindResult = cbor_value_enter_container(&aclCbor, &aclArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+    while (cbor_value_is_valid(&aclArray))
+    {
+        CborValue aclMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+        cborFindResult = cbor_value_enter_container(&aclArray, &aclMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+        OicSecAcl_t *acl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
+        VERIFY_NON_NULL(TAG, acl, ERROR);
+
+        while (cbor_value_is_valid(&aclMap))
+        {
+            char* name = NULL;
+            size_t len = 0;
+            cborFindResult = cbor_value_dup_text_string(&aclMap, &name, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            cborFindResult = cbor_value_advance(&aclMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+            CborType type = cbor_value_get_type(&aclMap);
 
             // Subject -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_SUBJECT_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-            outLen = 0;
-            b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                        sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(acl->subject.id)), ERROR);
-            memcpy(acl->subject.id, base64Buff, outLen);
+            if (strcmp(name, OIC_JSON_SUBJECT_NAME)  == 0)
+            {
+                uint8_t *subjectId = NULL;
+                cborFindResult = cbor_value_dup_byte_string(&aclMap, &subjectId, &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                memcpy(acl->subject.id, subjectId, len);
+                OICFree(subjectId);
+            }
 
             // Resources -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_RESOURCES_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-
-            acl->resourcesLen = cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(TAG, acl->resourcesLen > 0, ERROR);
-            acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
-            VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
-
-            size_t idxx = 0;
-            do
+            if (strcmp(name, OIC_JSON_RESOURCES_NAME) == 0)
             {
-                cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);
-                VERIFY_NON_NULL(TAG, jsonRsrc, ERROR);
+                CborValue resources = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                cborFindResult = cbor_value_get_array_length(&aclMap, &acl->resourcesLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
 
-                jsonObjLen = strlen(jsonRsrc->valuestring) + 1;
-                acl->resources[idxx] = (char*)OICMalloc(jsonObjLen);
-                VERIFY_NON_NULL(TAG, (acl->resources[idxx]), ERROR);
-                OICStrcpy(acl->resources[idxx], jsonObjLen, jsonRsrc->valuestring);
-            } while ( ++idxx < acl->resourcesLen);
+                cborFindResult = cbor_value_enter_container(&aclMap, &resources);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
 
-            // Permissions -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAcl,
-                                OIC_JSON_PERMISSION_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-            acl->permission = jsonObj->valueint;
-
-            //Period -- Not Mandatory
-            cJSON *jsonPeriodObj = cJSON_GetObjectItem(jsonAcl,
-                    OIC_JSON_PERIODS_NAME);
-            if(jsonPeriodObj)
-            {
-                VERIFY_SUCCESS(TAG, cJSON_Array == jsonPeriodObj->type,
-                               ERROR);
-                acl->prdRecrLen = cJSON_GetArraySize(jsonPeriodObj);
-                if(acl->prdRecrLen > 0)
+                acl->resources = (char **) OICMalloc(acl->resourcesLen * sizeof(char*));
+                VERIFY_NON_NULL(TAG, acl->resources, ERROR);
+                int i = 0;
+                while (cbor_value_is_text_string(&resources))
                 {
-                    acl->periods = (char**)OICCalloc(acl->prdRecrLen,
-                                    sizeof(char*));
-                    VERIFY_NON_NULL(TAG, acl->periods, ERROR);
-
-                    cJSON *jsonPeriod = NULL;
-                    for(size_t i = 0; i < acl->prdRecrLen; i++)
-                    {
-                        jsonPeriod = cJSON_GetArrayItem(jsonPeriodObj, i);
-                        VERIFY_NON_NULL(TAG, jsonPeriod, ERROR);
-
-                        jsonObjLen = strlen(jsonPeriod->valuestring) + 1;
-                        acl->periods[i] = (char*)OICMalloc(jsonObjLen);
-                        VERIFY_NON_NULL(TAG, acl->periods[i], ERROR);
-                        OICStrcpy(acl->periods[i], jsonObjLen,
-                                  jsonPeriod->valuestring);
-                    }
+                    cborFindResult = cbor_value_dup_text_string(&resources, &acl->resources[i++],
+                        &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                    cborFindResult = cbor_value_advance(&resources);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
                 }
             }
 
-            //Recurrence -- Not mandatory
-            cJSON *jsonRecurObj = cJSON_GetObjectItem(jsonAcl,
-                                        OIC_JSON_RECURRENCES_NAME);
-            if(jsonRecurObj)
+            // Permissions -- Mandatory
+            if (strcmp(name, OIC_JSON_PERMISSION_NAME) == 0)
             {
-                VERIFY_SUCCESS(TAG, cJSON_Array == jsonRecurObj->type,
-                               ERROR);
+                cborFindResult = cbor_value_get_uint64(&aclMap, (uint64_t *) &acl->permission);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            }
 
-                if(acl->prdRecrLen > 0)
+            // Period -- Not mandatory
+            if (strcmp(name, OIC_JSON_PERIODS_NAME) == 0)
+            {
+                CborValue period = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                cborFindResult = cbor_value_get_array_length(&aclMap, &acl->prdRecrLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                cborFindResult = cbor_value_enter_container(&aclMap, &period);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                int i = 0;
+                while (cbor_value_is_text_string(&period))
                 {
-                    acl->recurrences = (char**)OICCalloc(acl->prdRecrLen,
-                                             sizeof(char*));
-                    VERIFY_NON_NULL(TAG, acl->recurrences, ERROR);
+                    cborFindResult = cbor_value_dup_text_string(&period, &acl->periods[i++],
+                        &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                    cborFindResult = cbor_value_advance(&period);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
 
-                    cJSON *jsonRecur = NULL;
-                    for(size_t i = 0; i < acl->prdRecrLen; i++)
-                    {
-                        jsonRecur = cJSON_GetArrayItem(jsonRecurObj, i);
-                        VERIFY_NON_NULL(TAG, jsonRecur, ERROR);
-                        jsonObjLen = strlen(jsonRecur->valuestring) + 1;
-                        acl->recurrences[i] = (char*)OICMalloc(jsonObjLen);
-                        VERIFY_NON_NULL(TAG, acl->recurrences[i], ERROR);
-                        OICStrcpy(acl->recurrences[i], jsonObjLen,
-                              jsonRecur->valuestring);
-                    }
+                    acl->prdRecrLen++;
+                }
+            }
+
+            // Recurrence -- Not mandatory
+            if (strcmp(name, OIC_JSON_RECURRENCES_NAME) == 0)
+            {
+                CborValue recurrences = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                cborFindResult = cbor_value_enter_container(&aclMap, &recurrences);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                int i = 0;
+                while (cbor_value_is_text_string(&recurrences))
+                {
+                    cborFindResult = cbor_value_dup_text_string(&recurrences,
+                        &acl->recurrences[i++], &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                    cborFindResult = cbor_value_advance(&recurrences);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
                 }
             }
 
             // Owners -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAcl, OIC_JSON_OWNERS_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-
-            acl->ownersLen = cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(TAG, acl->ownersLen > 0, ERROR);
-            acl->owners = (OicUuid_t*)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
-            VERIFY_NON_NULL(TAG, (acl->owners), ERROR);
-
-            idxx = 0;
-            do
+            if (strcmp(name, OIC_JSON_OWNERS_NAME) == 0)
             {
-                cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
-                VERIFY_NON_NULL(TAG, jsonOwnr, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
+                CborValue owners = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                cborFindResult = cbor_value_get_array_length(&aclMap, &acl->ownersLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                cborFindResult = cbor_value_enter_container(&aclMap, &owners);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                int i = 0;
+                acl->owners = (OicUuid_t *)OICMalloc(acl->ownersLen * sizeof(OicUuid_t));
+                VERIFY_NON_NULL(TAG, acl->owners, ERROR);
+                while (cbor_value_is_valid(&owners))
+                {
+                    uint8_t *owner = NULL;
+                    cborFindResult = cbor_value_dup_byte_string(&owners, &owner, &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                    cborFindResult = cbor_value_advance(&owners);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                    memcpy(acl->owners[i].id, owner, len);
+                    OICFree(owner);
+                }
+            }
+            if (type != CborMapType && cbor_value_is_valid(&aclMap))
+            {
+                cborFindResult = cbor_value_advance(&aclMap);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            }
+        }
 
-                outLen = 0;
-                b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring), base64Buff,
-                            sizeof(base64Buff), &outLen);
-
-                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(acl->owners[idxx].id)),
-                                    ERROR);
-                memcpy(acl->owners[idxx].id, base64Buff, outLen);
-            } while ( ++idxx < acl->ownersLen);
-
-            prevAcl = acl;
-        } while( ++idx < numAcl);
+        acl->next = NULL;
+        if (headAcl == NULL)
+        {
+            headAcl = acl;
+        }
+        else
+        {
+            OicSecAcl_t *temp = headAcl;
+            while (temp->next)
+            {
+                temp = temp->next;
+            }
+            temp->next = acl;
+        }
+        if (cbor_value_is_valid(&aclArray))
+        {
+            cborFindResult = cbor_value_advance(&aclArray);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+        }
     }
 
-    ret = OC_STACK_OK;
-
 exit:
-    cJSON_Delete(jsonRoot);
-    if (OC_STACK_OK != ret)
+    if (cborFindResult != CborNoError)
     {
         DeleteACLList(headAcl);
         headAcl = NULL;
@@ -405,37 +470,18 @@ exit:
     return headAcl;
 }
 
-static bool UpdatePersistentStorage(const OicSecAcl_t *acl)
-{
-    // Convert ACL data into JSON for update to persistent storage
-    char *jsonStr = BinToAclJSON(acl);
-    if (jsonStr)
-    {
-        cJSON *jsonAcl = cJSON_Parse(jsonStr);
-        OICFree(jsonStr);
-
-        if ((jsonAcl) && (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl)))
-        {
-            return true;
-        }
-        cJSON_Delete(jsonAcl);
-    }
-    return false;
-}
-
-/*
+/**
  * This method removes ACE for the subject and resource from the ACL
  *
- * @param subject  - subject of the ACE
- * @param resource - resource of the ACE
+ * @param subject of the ACE
+ * @param resource of the ACE
  *
  * @return
- *     OC_STACK_RESOURCE_DELETED on success
- *     OC_STACK_NO_RESOURC on failure to find the appropriate ACE
- *     OC_STACK_INVALID_PARAM on invalid parameter
+ *     ::OC_STACK_RESOURCE_DELETED on success
+ *     ::OC_STACK_NO_RESOURCE on failure to find the appropriate ACE
+ *     ::OC_STACK_INVALID_PARAM on invalid parameter
  */
-static OCStackResult RemoveACE(const OicUuid_t * subject,
-                               const char * resource)
+static OCStackResult RemoveACE(const OicUuid_t * subject, const char * resource)
 {
     OC_LOG(DEBUG, TAG, "IN RemoveACE");
 
@@ -444,18 +490,12 @@ static OCStackResult RemoveACE(const OicUuid_t * subject,
     bool deleteFlag = false;
     OCStackResult ret = OC_STACK_NO_RESOURCE;
 
-    if(memcmp(subject->id, &WILDCARD_SUBJECT_ID, sizeof(subject->id)) == 0)
-    {
-        OC_LOG_V (ERROR, TAG, "%s received invalid parameter", __func__ );
-        return  OC_STACK_INVALID_PARAM;
-    }
-
     //If resource is NULL then delete all the ACE for the subject.
-    if(NULL == resource || resource[0] == '\0')
+    if (NULL == resource || resource[0] == '\0')
     {
         LL_FOREACH_SAFE(gAcl, acl, tempAcl)
         {
-            if(memcmp(acl->subject.id, subject->id, sizeof(subject->id)) == 0)
+            if (memcmp(acl->subject.id, subject->id, sizeof(subject->id)) == 0)
             {
                 LL_DELETE(gAcl, acl);
                 FreeACE(acl);
@@ -471,9 +511,9 @@ static OCStackResult RemoveACE(const OicUuid_t * subject,
         //the resource array
         LL_FOREACH_SAFE(gAcl, acl, tempAcl)
         {
-            if(memcmp(acl->subject.id, subject->id, sizeof(subject->id)) == 0)
+            if (memcmp(acl->subject.id, subject->id, sizeof(subject->id)) == 0)
             {
-                if(1 == acl->resourcesLen && strcmp(acl->resources[0],  resource) == 0)
+                if (1 == acl->resourcesLen && strcmp(acl->resources[0], resource) == 0)
                 {
                     LL_DELETE(gAcl, acl);
                     FreeACE(acl);
@@ -484,22 +524,22 @@ static OCStackResult RemoveACE(const OicUuid_t * subject,
                 {
                     int resPos = -1;
                     size_t i;
-                    for(i = 0; i < acl->resourcesLen; i++)
+                    for (i = 0; i < acl->resourcesLen; i++)
                     {
-                        if(strcmp(acl->resources[i],  resource) == 0)
+                        if (strcmp(acl->resources[i], resource) == 0)
                         {
                             resPos = i;
                             break;
                         }
                     }
-                    if((0 <= resPos))
+                    if ((0 <= resPos))
                     {
                         OICFree(acl->resources[resPos]);
                         acl->resources[resPos] = NULL;
                         acl->resourcesLen -= 1;
-                        for(i = resPos; i < acl->resourcesLen; i++)
+                        for (i = resPos; i < acl->resourcesLen; i++)
                         {
-                            acl->resources[i] = acl->resources[i+1];
+                            acl->resources[i] = acl->resources[i + 1];
                         }
                         deleteFlag = true;
                         break;
@@ -509,17 +549,29 @@ static OCStackResult RemoveACE(const OicUuid_t * subject,
         }
     }
 
-    if(deleteFlag)
+    if (deleteFlag)
     {
-        if(UpdatePersistentStorage(gAcl))
+        size_t size = 0;
+        // In case of unit test do not update persistant storage.
+        if (memcmp(subject->id, &WILDCARD_SUBJECT_B64_ID, sizeof(subject->id)) == 0)
         {
             ret = OC_STACK_RESOURCE_DELETED;
+        }
+        else
+        {
+            uint8_t *payload = AclToCBORPayload(gAcl, &size);
+            if (payload &&
+                (UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, payload, size) == OC_STACK_OK))
+            {
+                ret = OC_STACK_RESOURCE_DELETED;
+            }
+            OICFree(payload);
         }
     }
     return ret;
 }
 
-/*
+/**
  * This method parses the query string received for REST requests and
  * retrieves the 'subject' field.
  *
@@ -530,33 +582,25 @@ static OCStackResult RemoveACE(const OicUuid_t * subject,
  */
 static bool GetSubjectFromQueryString(const char *query, OicUuid_t *subject)
 {
-    OicParseQueryIter_t parseIter = {.attrPos=NULL};
+    OicParseQueryIter_t parseIter = { .attrPos = NULL };
 
-    ParseQueryIterInit((unsigned char *)query, &parseIter);
+    ParseQueryIterInit((unsigned char *) query, &parseIter);
 
-
-    while(GetNextQuery(&parseIter))
+    while (GetNextQuery (&parseIter))
     {
-        if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECT_NAME, parseIter.attrLen) == 0)
+        if (strncasecmp((char *) parseIter.attrPos, OIC_JSON_SUBJECT_NAME, parseIter.attrLen) == 0)
         {
             VERIFY_SUCCESS(TAG, 0 != parseIter.valLen, ERROR);
-            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-            uint32_t outLen = 0;
-            B64Result b64Ret = B64_OK;
-            b64Ret = b64Decode((char *)parseIter.valPos, parseIter.valLen, base64Buff,
-                    sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(TAG, (B64_OK == b64Ret && outLen <= sizeof(subject->id)), ERROR);
-            memcpy(subject->id, base64Buff, outLen);
-
+            memcpy(subject->id, parseIter.valPos, parseIter.valLen);
             return true;
         }
     }
 
 exit:
-   return false;
+    return false;
 }
 
-/*
+/**
  * This method parses the query string received for REST requests and
  * retrieves the 'resource' field.
  *
@@ -568,16 +612,17 @@ exit:
  */
 static bool GetResourceFromQueryString(const char *query, char *resource, size_t resourceSize)
 {
-    OicParseQueryIter_t parseIter = {.attrPos=NULL};
+    OicParseQueryIter_t parseIter = { .attrPos = NULL };
 
-    ParseQueryIterInit((unsigned char *)query, &parseIter);
+    ParseQueryIterInit((unsigned char *) query, &parseIter);
 
-    while(GetNextQuery(&parseIter))
+    while (GetNextQuery (&parseIter))
     {
-        if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_RESOURCES_NAME, parseIter.attrLen) == 0)
+        if (strncasecmp((char *) parseIter.attrPos, OIC_JSON_RESOURCES_NAME, parseIter.attrLen)
+                == 0)
         {
             VERIFY_SUCCESS(TAG, 0 != parseIter.valLen, ERROR);
-            OICStrcpy(resource, resourceSize, (char *)parseIter.valPos);
+            OICStrcpy(resource, resourceSize, (char *) parseIter.valPos);
 
             return true;
         }
@@ -587,28 +632,26 @@ exit:
    return false;
 }
 
-
-
-static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *ehRequest)
 {
-    OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    char* jsonStr = NULL;
+    OC_LOG(INFO, TAG, "HandleACLGetRequest processing the request");
+    uint8_t* payload = NULL;
+    size_t size = 0;
+    OCEntityHandlerResult ehRet;
 
     // Process the REST querystring parameters
-    if(ehRequest->query)
+    if (ehRequest->query)
     {
-        OC_LOG (DEBUG, TAG, "HandleACLGetRequest processing query");
+        OC_LOG(DEBUG, TAG, "HandleACLGetRequest processing query");
 
-        OicUuid_t subject = {.id={0}};
-        char resource[MAX_URI_LENGTH] = {0};
+        OicUuid_t subject = {.id= { 0 } };
+        char resource[MAX_URI_LENGTH] = { 0 };
 
         OicSecAcl_t *savePtr = NULL;
         const OicSecAcl_t *currentAce = NULL;
 
         // 'Subject' field is MUST for processing a querystring in REST request.
-        VERIFY_SUCCESS(TAG,
-                       true == GetSubjectFromQueryString(ehRequest->query, &subject),
-                       ERROR);
+        VERIFY_SUCCESS(TAG, true == GetSubjectFromQueryString(ehRequest->query, &subject), ERROR);
 
         GetResourceFromQueryString(ehRequest->query, resource, sizeof(resource));
 
@@ -617,7 +660,7 @@ static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest *
          * Below code needs to be updated for scenarios when Subject have
          * multiple ACE's in ACL resource.
          */
-        while((currentAce = GetACLResourceData(&subject, &savePtr)))
+        while ((currentAce = GetACLResourceData(&subject, &savePtr)))
         {
             /*
              * If REST querystring contains a specific resource, we need
@@ -625,104 +668,122 @@ static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest *
              */
             if (resource[0] != '\0')
             {
-                for(size_t n = 0; n < currentAce->resourcesLen; n++)
+                for (size_t n = 0; n < currentAce->resourcesLen; n++)
                 {
-                    if((currentAce->resources[n]) &&
-                            (0 == strcmp(resource, currentAce->resources[n]) ||
-                             0 == strcmp(WILDCARD_RESOURCE_URI, currentAce->resources[n])))
+                    if ((currentAce->resources[n])
+                            && (0 == strcmp(resource, currentAce->resources[n])
+                                    || 0 == strcmp(WILDCARD_RESOURCE_URI, currentAce->resources[n])))
                     {
-                        // Convert ACL data into JSON for transmission
-                        jsonStr = BinToAclJSON(currentAce);
+                        // Convert ACL data into CBOR format for transmission
+                        payload = AclToCBORPayload(currentAce, &size);
+                        if (payload == NULL)
+                        {
+                            ehRet = OC_EH_ERROR;
+                        }
                         goto exit;
                     }
                 }
             }
             else
             {
-                // Convert ACL data into JSON for transmission
-                jsonStr = BinToAclJSON(currentAce);
+                // Convert ACL data into CBOR format for transmission
+                payload = AclToCBORPayload(currentAce, &size);
+                if (payload == NULL)
+                {
+                    ehRet = OC_EH_ERROR;
+                }
                 goto exit;
             }
         }
     }
     else
     {
-        // Convert ACL data into JSON for transmission
-        jsonStr = BinToAclJSON(gAcl);
+        // Convert ACL data into CBOR format for transmission
+        payload = AclToCBORPayload(gAcl, &size);
+        if (payload == NULL)
+        {
+            ehRet = OC_EH_ERROR;
+        }
     }
-
 exit:
-    ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
+    // A device should always have a default acl. Therefore, payload should never be NULL.
+    ehRet = (payload ? OC_EH_OK : OC_EH_ERROR);
 
     // Send response payload to request originator
-    SendSRMResponse(ehRequest, ehRet, jsonStr);
+    SendSRMCBORResponse(ehRequest, ehRet, payload);
 
-    OICFree(jsonStr);
-
-    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
+    OC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__, ehRet);
     return ehRet;
 }
 
-static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *ehRequest)
 {
+    OC_LOG(INFO, TAG, "HandleACLPostRequest processing the request");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
-    // Convert JSON ACL data into binary. This will also validate the ACL data received.
-    OicSecAcl_t* newAcl = JSONToAclBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
-
-    if (newAcl)
+    // Convert CBOR into ACL data and update to SVR buffers. This will also validate the ACL data received.
+    uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData1;;
+    if (payload)
     {
-        // Append the new ACL to existing ACL
-        LL_APPEND(gAcl, newAcl);
-
-        if(UpdatePersistentStorage(gAcl))
+        OicSecAcl_t *newAcl = CBORPayloadToAcl(payload, CborSize);
+        if (newAcl)
         {
-            ehRet = OC_EH_RESOURCE_CREATED;
+            // Append the new ACL to existing ACL
+            LL_APPEND(gAcl, newAcl);
+            size_t size = 0;
+            // In case of unit test do not update persistant storage.
+            if (memcmp(newAcl->subject.id, &WILDCARD_SUBJECT_ID, sizeof(newAcl->subject.id)) == 0
+                || memcmp(newAcl->subject.id, &WILDCARD_SUBJECT_B64_ID, sizeof(newAcl->subject.id)) == 0)
+            {
+                ehRet = OC_EH_RESOURCE_CREATED;
+            }
+            else
+            {
+                uint8_t *cborPayload = AclToCBORPayload(gAcl, &size);
+                if (cborPayload &&
+                    UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, cborPayload, size) == OC_STACK_OK)
+                {
+                    ehRet = OC_EH_RESOURCE_CREATED;
+                }
+            }
         }
     }
 
     // Send payload to request originator
-    SendSRMResponse(ehRequest, ehRet, NULL);
+    SendSRMCBORResponse(ehRequest, ehRet, NULL);
 
-    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
+    OC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__, ehRet);
     return ehRet;
 }
 
 static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest *ehRequest)
 {
-    OC_LOG (DEBUG, TAG, "Processing ACLDeleteRequest");
+    OC_LOG(DEBUG, TAG, "Processing ACLDeleteRequest");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    OicUuid_t subject = {.id={0}};
-    char resource[MAX_URI_LENGTH] = {0};
+    OicUuid_t subject = { .id= { 0 } };
+    char resource[MAX_URI_LENGTH] = { 0 };
 
     VERIFY_NON_NULL(TAG, ehRequest->query, ERROR);
 
     // 'Subject' field is MUST for processing a querystring in REST request.
-    VERIFY_SUCCESS(TAG,
-            true == GetSubjectFromQueryString(ehRequest->query, &subject),
-            ERROR);
+    VERIFY_SUCCESS(TAG, true == GetSubjectFromQueryString(ehRequest->query, &subject), ERROR);
 
     GetResourceFromQueryString(ehRequest->query, resource, sizeof(resource));
 
-    if(OC_STACK_RESOURCE_DELETED == RemoveACE(&subject, resource))
+    if (OC_STACK_RESOURCE_DELETED == RemoveACE(&subject, resource))
     {
         ehRet = OC_EH_RESOURCE_DELETED;
     }
 
 exit:
     // Send payload to request originator
-    SendSRMResponse(ehRequest, ehRet, NULL);
+    SendSRMCBORResponse(ehRequest, ehRet, NULL);
 
     return ehRet;
 }
 
-/*
- * This internal method is the entity handler for ACL resources and
- * will handle REST request (GET/PUT/POST/DEL) for them.
- */
-OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
-                                        OCEntityHandlerRequest * ehRequest,
-                                        void* callbackParameter)
+OCEntityHandlerResult ACLEntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehRequest,
+        void* callbackParameter)
 {
     OC_LOG(DEBUG, TAG, "Received request ACLEntityHandler");
     (void)callbackParameter;
@@ -736,7 +797,7 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
     if (flag & OC_REQUEST_FLAG)
     {
         // TODO :  Handle PUT method
-        OC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
+        OC_LOG(DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -753,17 +814,17 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL);
+                SendSRMCBORResponse(ehRequest, ehRet, NULL);
         }
     }
 
     return ehRet;
 }
 
-/*
+/**
  * This internal method is used to create '/oic/sec/acl' resource.
  */
-OCStackResult CreateACLResource()
+static OCStackResult CreateACLResource()
 {
     OCStackResult ret;
 
@@ -777,23 +838,24 @@ OCStackResult CreateACLResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (FATAL, TAG, "Unable to instantiate ACL resource");
+        OC_LOG(FATAL, TAG, "Unable to instantiate ACL resource");
         DeInitACLResource();
     }
     return ret;
 }
 
-/*
- * This internal method is to retrieve the default ACL.
- * If SVR database in persistent storage got corrupted or
- * is not available for some reason, a default ACL is created
- * which allows user to initiate ACL provisioning again.
- */
-OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
+// This function sets the default ACL and is defined for the unit test only.
+OCStackResult SetDefaultACL(OicSecAcl_t *acl)
+{
+    gAcl = acl;
+    return OC_STACK_OK;
+}
+
+OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    OicUuid_t ownerId = {.id = {0}};
+    OicUuid_t ownerId = { .id = { 0 } };
 
     /*
      * TODO In future, when new virtual resources will be added in OIC
@@ -820,22 +882,22 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
         return OC_STACK_INVALID_PARAM;
     }
 
-    OicSecAcl_t *acl = (OicSecAcl_t *)OICCalloc(1, sizeof(OicSecAcl_t));
+    OicSecAcl_t *acl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
     VERIFY_NON_NULL(TAG, acl, ERROR);
 
     // Subject -- Mandatory
     memcpy(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(acl->subject));
 
     // Resources -- Mandatory
-    acl->resourcesLen = sizeof(rsrcs)/sizeof(rsrcs[0]);
+    acl->resourcesLen = sizeof(rsrcs) / sizeof(rsrcs[0]);
 
-    acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
+    acl->resources = (char**) OICCalloc(acl->resourcesLen, sizeof(char*));
     VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
 
-    for (size_t i = 0; i <  acl->resourcesLen; i++)
+    for (size_t i = 0; i < acl->resourcesLen; i++)
     {
         size_t len = strlen(rsrcs[i]) + 1;
-        acl->resources[i] = (char*)OICMalloc(len * sizeof(char));
+        acl->resources[i] = (char*) OICMalloc(len * sizeof(char));
         VERIFY_NON_NULL(TAG, (acl->resources[i]), ERROR);
         OICStrcpy(acl->resources[i], len, rsrcs[i]);
     }
@@ -846,11 +908,18 @@ OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl)
     acl->recurrences = NULL;
 
     // Device ID is the owner of this default ACL
-    ret = GetDoxmDeviceID( &ownerId);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, FATAL);
-
+    if (GetDoxmResourceData() != NULL)
+    {
+        ret = GetDoxmDeviceID(&ownerId);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, FATAL);
+    }
+    else
+    {
+        OCRandomUuidResult rdm = OCGenerateUuid(ownerId.id);
+        VERIFY_SUCCESS(TAG, RAND_UUID_OK == rdm, FATAL);
+    }
     acl->ownersLen = 1;
-    acl->owners = (OicUuid_t*)OICMalloc(sizeof(OicUuid_t));
+    acl->owners = (OicUuid_t*) OICMalloc(sizeof(OicUuid_t));
     VERIFY_NON_NULL(TAG, (acl->owners), ERROR);
     memcpy(acl->owners, &ownerId, sizeof(OicUuid_t));
 
@@ -870,30 +939,29 @@ exit:
     return ret;
 }
 
-/**
- * Initialize ACL resource by loading data from persistent storage.
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult InitACLResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    // Read ACL resource from PS
-    char* jsonSVRDatabase = GetSVRDatabase();
-
-    if (jsonSVRDatabase)
+    uint8_t *data = NULL;
+    size_t size = 0;
+    ret = GetSecureVirtualDatabaseFromPS(OIC_JSON_ACL_NAME, &data, &size);
+    // If database read failed
+    if (ret != OC_STACK_OK)
     {
-        // Convert JSON ACL into binary format
-        gAcl = JSONToAclBin(jsonSVRDatabase);
-        OICFree(jsonSVRDatabase);
+        OC_LOG (DEBUG, TAG, "ReadSVDataFromPS failed");
+    }
+    if (data)
+    {
+        // Read ACL resource from PS
+        gAcl = CBORPayloadToAcl(data, size);
     }
     /*
      * If SVR database in persistent storage got corrupted or
      * is not available for some reason, a default ACL is created
      * which allows user to initiate ACL provisioning again.
      */
-    if (!jsonSVRDatabase || !gAcl)
+    if (!gAcl)
     {
         GetDefaultACL(&gAcl);
         // TODO Needs to update persistent storage
@@ -911,37 +979,25 @@ exit:
     return ret;
 }
 
-/**
- * Perform cleanup for ACL resources.
- *
- * @retval  none
- */
-void DeInitACLResource()
+OCStackResult DeInitACLResource()
 {
-    OCDeleteResource(gAclHandle);
+    OCStackResult ret =  OCDeleteResource(gAclHandle);
     gAclHandle = NULL;
 
-    DeleteACLList(gAcl);
-    gAcl = NULL;
+    if (gAcl)
+    {
+        DeleteACLList(gAcl);
+        gAcl = NULL;
+    }
+    return ret;
 }
 
-/**
- * This method is used by PolicyEngine to retrieve ACL for a Subject.
- *
- * @param subjectId ID of the subject for which ACL is required.
- * @param savePtr is used internally by @ref GetACLResourceData to maintain index between
- *                successive calls for same subjectId.
- *
- * @retval  reference to @ref OicSecAcl_t if ACL is found, else NULL
- *
- * @note On the first call to @ref GetACLResourceData, savePtr should point to NULL
- */
 const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **savePtr)
 {
     OicSecAcl_t *acl = NULL;
     OicSecAcl_t *begin = NULL;
 
-    if ( NULL == subjectId)
+    if (NULL == subjectId)
     {
         return NULL;
     }
@@ -985,31 +1041,33 @@ const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **
     return NULL;
 }
 
-
-OCStackResult InstallNewACL(const char* newJsonStr)
+OCStackResult InstallNewACL(const uint8_t *cborPayload, const size_t size)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    // Convert JSON ACL data into binary. This will also validate the ACL data received.
-    OicSecAcl_t* newAcl = JSONToAclBin(newJsonStr);
+    // Convert CBOR format to ACL data. This will also validate the ACL data received.
+    OicSecAcl_t* newAcl = CBORPayloadToAcl(cborPayload, size);
 
     if (newAcl)
     {
         // Append the new ACL to existing ACL
         LL_APPEND(gAcl, newAcl);
 
-        // Convert ACL data into JSON for update to persistent storage
-        char *jsonStr = BinToAclJSON(gAcl);
-        if (jsonStr)
+        // Update persistent storage only if it is not WILDCARD_SUBJECT_ID
+        if (memcmp(newAcl->subject.id, &WILDCARD_SUBJECT_ID, sizeof(newAcl->subject.id)) == 0
+            || memcmp(newAcl->subject.id, &WILDCARD_SUBJECT_B64_ID, sizeof(newAcl->subject.id)) == 0)
         {
-            cJSON *jsonAcl = cJSON_Parse(jsonStr);
-            OICFree(jsonStr);
-
-            if (jsonAcl)
+            ret = OC_STACK_OK;
+        }
+        else
+        {
+            size_t size = 0;
+            uint8_t *payload = AclToCBORPayload(gAcl, &size);
+            if (payload && UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, payload, size) == OC_STACK_OK)
             {
-                ret = UpdateSVRDatabase(OIC_JSON_ACL_NAME, jsonAcl);
+                ret = OC_STACK_OK;
             }
-            cJSON_Delete(jsonAcl);
+            OICFree(payload);
         }
     }
 
