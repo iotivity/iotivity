@@ -1,4 +1,4 @@
-IOTIVITY_DIR=${HOME}/source/active/iotivity
+IOTIVITY_DIR=../../../..
 all:
 	g++ -g bulb.cpp `pkg-config --cflags --libs elementary` -std=c++11 -pthread -Wall -fpermissive \
 		-I$(IOTIVITY_DIR)/resource/include \
