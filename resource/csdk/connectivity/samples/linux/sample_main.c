@@ -1601,7 +1601,7 @@ bool read_file(const char* name, CAPayload_t* bytes, size_t* length)
 
     FILE* file = NULL;
     CAPayload_t buffer = NULL;
-    unsigned long fileLen = 0;
+    long fileLen = 0;
 
     // Open file
     file = fopen(name, "rb");

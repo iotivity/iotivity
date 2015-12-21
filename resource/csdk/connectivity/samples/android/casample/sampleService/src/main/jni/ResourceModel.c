@@ -1633,7 +1633,7 @@ bool read_file(const char* name, char** bytes, size_t* length)
 
     FILE* file;
     char* buffer;
-    size_t fileLen;
+    long fileLen;
 
     // Open file
     file = fopen(name, "rt");
@@ -1654,7 +1654,7 @@ bool read_file(const char* name, char** bytes, size_t* length)
     }
     fseek(file, 0, SEEK_SET);
 
-    LOGI("file size: %d", fileLen);
+    LOGI("file size: %ld", fileLen);
 
     // Allocate memory
     buffer = calloc(1, sizeof(char) * fileLen + 1);
