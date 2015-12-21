@@ -60,7 +60,7 @@ module.exports = {
         };
         
         var options = {
-            url: "http://localhost:8080/wsi/cap/post/com.twitter",
+            url: "http://localhost:8080/wsi/cap/com.twitter",
             json : true,
             method: 'POST',
             body: resbody

@@ -79,7 +79,7 @@ module.exports = function(app, passport) {
         res.send(200);
     });
     
-    app.post('/wsi/cap/post/:id', function(req, res) {
+    app.post('/wsi/cap/:id', function(req, res) {
         var cap = req.body;
         console.log("WSI POST " + JSON.stringify(cap));
         servicedb.find({'sid':req.params.id}, function(err, service) {

@@ -1,6 +1,6 @@
 var request = require("request");
 var os = require("os");
-var wsiuri = "http://localhost:8080/wsi/cap/post/org.iotivity";
+var wsiuri = "http://localhost:8080/wsi/cap/org.iotivity";
 var localaddress;
 var interfaces = os.networkInterfaces();
 for (var k in interfaces) {

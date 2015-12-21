@@ -7,7 +7,7 @@
             },
             post : function(sid, cap) {
                 console.log("restfactory - post " + cap.cid );
-                return $http.post('/wsi/cap/post/' + sid, cap);
+                return $http.post('/wsi/cap/' + sid, cap);
             }
         }
     }

@@ -52,7 +52,7 @@
             document.getElementById('tweetcap').value = JSON.stringify(posttweet);
         };
         $scope.executeTweetCap = function(){
-            var uri = location.origin + "/wsi/cap/post/com.twitter";
+            var uri = location.origin + "/wsi/cap/com.twitter";
             console.log("Making a POST HTTP Request " + uri);
             reqbody = JSON.parse(document.getElementById('tweetcap').value);
             
@@ -80,7 +80,7 @@
         };
 
         $scope.observeIoTivityCap = function() {
-            var uri = "http://localhost:8080/wsi/cap/post/org.iotivity";
+            var uri = "http://localhost:8080/wsi/cap/org.iotivity";
             console.log("Making a POST HTTP Request " + uri);
             reqbody = JSON.parse(document.getElementById('iotivitycap').value);
             

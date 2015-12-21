@@ -72,7 +72,7 @@
             document.getElementById('fbcap').value = JSON.stringify(postfb);
         };
         $scope.executeFbCap = function(){
-            var uri = "http://localhost:8080/wsi/cap/post/com.facebook";
+            var uri = "http://localhost:8080/wsi/cap/com.facebook";
             console.log("Making a POST HTTP Request " + uri);
             reqbody = JSON.parse(document.getElementById('fbcap').value);
             
@@ -96,7 +96,7 @@
         };
 
         $scope.executeIoTivityCap = function() {
-            var uri = "http://localhost:8080/wsi/cap/post/org.iotivity";
+            var uri = "http://localhost:8080/wsi/cap/org.iotivity";
             console.log("Making a POST HTTP Request " + uri);
             reqbody = JSON.parse(document.getElementById('iotivitycap').value);
             
