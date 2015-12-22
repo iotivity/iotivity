@@ -211,12 +211,12 @@ OCStackResult JniOcSecureResource::provisionACL(JNIEnv* env, jobject _acl, jobje
     OCStackResult ret;
     JniProvisionResultListner *resultListener = AddProvisionResultListener(env, jListener);
     OicSecAcl_t *acl = new OicSecAcl_t;
-    acl->next = nullptr;
     if (!acl)
     {
         return OC_STACK_NO_MEMORY;
     }
 
+    acl->next = nullptr;
     if (OC_STACK_OK != JniSecureUtils::convertJavaACLToOCAcl(env, _acl, acl))
     {
         delete acl;
