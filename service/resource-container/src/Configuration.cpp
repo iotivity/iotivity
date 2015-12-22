@@ -70,12 +70,15 @@ namespace OIC
 
         bool Configuration::isHasInput(std::string &bundleId) const
         {
+
             try
             {
+                OC_LOG_V(INFO, CONTAINER_TAG, "isHasInput: (%d) %s",m_mapisHasInput.at(bundleId), bundleId.c_str() );
                 return m_mapisHasInput.at(bundleId);
             }
             catch (std::out_of_range &e)
             {
+                OC_LOG_V(INFO, CONTAINER_TAG, "isHasInput out of range %s.", bundleId.c_str());
                 return false;
             }
         }
@@ -174,6 +177,7 @@ namespace OIC
 
             string strBundleId;
             string strKey, strValue;
+            OC_LOG(INFO, CONTAINER_TAG, "Loading resource configuration!");
 
             if (m_loaded)
             {
@@ -186,8 +190,11 @@ namespace OIC
                         // <id>
                         strBundleId = bundle->first_node(BUNDLE_ID)->value();
 
+                        OC_LOG_V(INFO, CONTAINER_TAG, "Comparing bundle ids %s - %s !", strBundleId.c_str(), bundleId.c_str());
+
                         if (!strBundleId.compare(bundleId))
                         {
+                            OC_LOG_V(INFO, CONTAINER_TAG, "Inspecting");
                             // <resourceInfo>
                             for (resource = bundle->first_node(OUTPUT_RESOURCES_TAG)->first_node(OUTPUT_RESOURCE_INFO);
                                  resource; resource = resource->next_sibling())
@@ -224,6 +231,7 @@ namespace OIC
                                             if (strKey.compare(INPUT_RESOURCE))
                                             {
                                                 m_mapisHasInput[strBundleId] = true;
+                                                OC_LOG_V(INFO, CONTAINER_TAG, "Bundle has input (%s)", strBundleId.c_str());
                                             }
 
                                             for (subItem2 = subItem->first_node(); subItem2;
@@ -251,6 +259,9 @@ namespace OIC
                     OC_LOG(ERROR, CONTAINER_TAG, "xml parsing failed !!");
                     OC_LOG_V(ERROR, CONTAINER_TAG, "Exception (%s)", e.what());
                 }
+            }
+            else{
+                OC_LOG(INFO, CONTAINER_TAG, "config is not loaded yet !!");
             }
         }
 

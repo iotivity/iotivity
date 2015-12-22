@@ -220,12 +220,12 @@ namespace OIC
                 ((BundleInfoInternal *) bundleInfo)->setJavaBundle(false);
                 registerSoBundle(bundleInfo);
             }
+            // other cases might be for example .apk for android, which are loaded in the wrapper
             else{
                 ((BundleInfoInternal *) bundleInfo)->setSoBundle(false);
                 ((BundleInfoInternal *) bundleInfo)->setJavaBundle(false);
                 registerExtBundle(bundleInfo);
             }
-            // other cases might be for example .apk for android, which are loaded in the wrapper
         }
 
         void ResourceContainerImpl::unregisterBundle(RCSBundleInfo *bundleInfo)
@@ -273,8 +273,8 @@ namespace OIC
             string strResourceType = resource->m_resourceType;
             RCSResourceObject::Ptr server = nullptr;
 
-            OC_LOG_V(INFO, CONTAINER_TAG, "Registration 2 of resource (%s)" ,
-                     std::string(strUri + ", " + strResourceType).c_str());
+            OC_LOG_V(INFO, CONTAINER_TAG, "Registration of resource (%s)" ,
+                     std::string(strUri + ", " + strResourceType + "," + resource->m_bundleId).c_str());
 
             registrationLock.lock();
             if (m_mapResources.find(strUri) == m_mapResources.end())
@@ -295,14 +295,23 @@ namespace OIC
                         std::bind(&ResourceContainerImpl::setRequestHandler, this,
                                   std::placeholders::_1, std::placeholders::_2));
 
-                    OC_LOG_V(INFO, CONTAINER_TAG, "Registration finished (%s)",
-                             std::string(strUri + ", " +
-                                         strResourceType).c_str());
+
 
                     if (m_config->isHasInput(resource->m_bundleId))
                     {
+                        OC_LOG_V(INFO, CONTAINER_TAG, "Resource has input (%s)",
+                                                                        std::string(strUri + ", " +
+                                                                                    strResourceType).c_str());
                         discoverInputResource(strUri);
                     }
+                    else{
+                        OC_LOG_V(INFO, CONTAINER_TAG, "Resource has no input (%s)",
+                                                                                                std::string(strUri + ", " +
+                                                                                                            strResourceType).c_str());
+                    }
+                    OC_LOG_V(INFO, CONTAINER_TAG, "Registration finished (%s)",
+                                                std::string(strUri + ", " +
+                                                            strResourceType).c_str());
 
                     // to get notified if bundle resource attributes are updated
                     resource->registerObserver((NotificationReceiver *) this);
@@ -354,6 +363,9 @@ namespace OIC
             if (m_config)
             {
                 m_config->getResourceConfiguration(bundleId, configOutput);
+            }
+            else{
+                OC_LOG_V(DEBUG, CONTAINER_TAG, "no config present ");
             }
         }
 
@@ -449,6 +461,7 @@ namespace OIC
 
         void ResourceContainerImpl::startBundle(const std::string &bundleId)
         {
+            OC_LOG_V(INFO, CONTAINER_TAG, "startBundle %s",bundleId.c_str());
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
                 if (!m_bundles[bundleId]->isActivated())
@@ -467,6 +480,7 @@ namespace OIC
 
         void ResourceContainerImpl::stopBundle(const std::string &bundleId)
         {
+            OC_LOG_V(INFO, CONTAINER_TAG, "stopBundle %s",bundleId.c_str());
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
                 if (m_bundles[bundleId]->isActivated())
@@ -516,6 +530,7 @@ namespace OIC
 
         void ResourceContainerImpl::removeBundle(const std::string &bundleId)
         {
+            OC_LOG_V(INFO, CONTAINER_TAG, "removeBundle %s",bundleId.c_str());
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
                 BundleInfoInternal *bundleInfo = m_bundles[bundleId];
@@ -579,6 +594,7 @@ namespace OIC
         void ResourceContainerImpl::removeResourceConfig(const std::string &bundleId,
                 const std::string &resourceUri)
         {
+            OC_LOG_V(INFO, CONTAINER_TAG, "removeResourceConfig %s, %s",bundleId.c_str(), resourceUri.c_str());
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
                 if (m_bundles[bundleId]->getSoBundle())
@@ -595,6 +611,7 @@ namespace OIC
 
         std::list< string > ResourceContainerImpl::listBundleResources(const std::string &bundleId)
         {
+            OC_LOG_V(INFO, CONTAINER_TAG, "listBundleResources %s",bundleId.c_str());
             std::list < string > ret;
 
             if (m_mapBundleResources.find(bundleId) != m_mapBundleResources.end())
@@ -709,6 +726,13 @@ namespace OIC
                                              std::string(bundleInfo->getActivatorName()).c_str());
 
             m_bundles[bundleInfo->getID()] = ((BundleInfoInternal *)bundleInfo);
+            // in this case at least the resource configuration needs to be loaded
+            // in order to mark potential input resources for soft sensors
+            std::vector< resourceInfo > temp;
+            OC_LOG_V(INFO, CONTAINER_TAG, "Loading resource config(%s)",
+                                                         std::string(bundleInfo->getID()).c_str());
+            getResourceConfiguration(bundleInfo->getID(),
+                            &temp);
 
             OC_LOG(INFO, CONTAINER_TAG, "Bundle registered");
         }

@@ -89,7 +89,7 @@ AndroidResource::AndroidResource(JNIEnv *env, jobject obj, jobject bundleResourc
             "handleGetAttributesRequest", "()Lorg/iotivity/service/resourcecontainer/RcsResourceAttributes;");
     //LOGD("Looking for softSensorResource class.");
     //jclass androidBundleSoftSensorResourceClass = m_env->FindClass("org/iotivity/service/resourcecontainer/AndroidBundleSoftSensorResource");
-    LOGD("Looking for onUpdatedInputResource2.");
+    LOGD("Looking for onUpdatedInputResource.");
     jclass superclass = m_env->GetSuperclass(m_bundleResourceClass);
 
     jclass classClass = m_env->FindClass("java/lang/Class");

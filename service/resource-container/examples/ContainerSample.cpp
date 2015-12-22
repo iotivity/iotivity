@@ -33,14 +33,6 @@ using OC::oc_log_stream;
 
 #define MAX_PATH 2048
 
-/* Annother way to create a context: */
-auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
-{
-    static OC::oc_log_stream ols(oc_make_ostream_logger);
-    static boost::iostreams::stream<OC::oc_log_stream> os(ols);
-
-    return os;
-};
 
 void getCurrentPath(std::string *pPath)
 {
@@ -64,10 +56,8 @@ void getCurrentPath(std::string *pPath)
 
 int main()
 {
-    info_logger()->set_module("ContainerTest");
-    info_logger()->set_level(OC_LOG_INFO);
 
-    info_logger() << "Starting container test." << std::flush;
+    cout << "Starting container test." << endl;
 
     std::string strConfigPath;
     getCurrentPath(&strConfigPath);

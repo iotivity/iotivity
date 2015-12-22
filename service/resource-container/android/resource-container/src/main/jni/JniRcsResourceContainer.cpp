@@ -311,24 +311,26 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRegisterA
 (JNIEnv *env, jobject obj, jobject bundleResource, jobjectArray attributes, jstring bundleId,
  jstring uri, jstring resourceType, jstring res_name)
 {
+    JNIEnvWrapper envWrapper(env);
     LOGD("nativeRegisterAndroidResource");
-    const char *str_bundleId = env->GetStringUTFChars(bundleId, 0);
-    LOGD("retrieved bundle id.");
-    const char *str_uri = env->GetStringUTFChars(uri, 0);
-    LOGD("retrieved uri.");
-    const char *str_resourceType = env->GetStringUTFChars(resourceType, 0);
-    LOGD("retrieved resource type");
-    const char *str_res_name = env->GetStringUTFChars(res_name, 0);
+    auto str_bundle_id = toStdString(&envWrapper, bundleId);
+    __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved bundle id: %s.", str_bundle_id.c_str());
+    auto str_uri = toStdString(&envWrapper, uri);
+    __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved uri: %s.", str_uri.c_str());
+    auto str_resourceType = toStdString(&envWrapper, resourceType);
+    __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved resource type: %s.", str_resourceType.c_str());
+    auto str_res_name = toStdString(&envWrapper, res_name);
     LOGD("retrieved res name.");
     AndroidResource res;
 
     BundleResource::Ptr androidResource = std::make_shared< AndroidResource >
-            (env, obj, bundleResource, str_bundleId, attributes);
+            (env, obj, bundleResource, str_bundle_id, attributes);
     ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
 
-    androidResource->m_uri = string(str_uri, strlen(str_uri));
-    androidResource->m_resourceType = string(str_resourceType, strlen(str_resourceType));
-    androidResource->m_name = string(str_res_name, strlen(str_res_name));
+    androidResource->m_uri = str_uri;
+    androidResource->m_resourceType = str_resourceType;
+    androidResource->m_name = str_res_name;
+    androidResource->m_bundleId = str_bundle_id;
 
     // link java resource instance to c++ resource instance
     env->SetLongField(bundleResource, g_field_mNativeHandle, reinterpret_cast< jlong >(androidResource.get()));
@@ -369,8 +371,10 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeGetNumber
     JNIEnv *env, jobject obj, jstring bundleId)
 {
     (void)obj;
+    LOGD("nativeGetNumberOfConfiguredResources");
     const char *str_bundleId = env->GetStringUTFChars(bundleId, 0);
-
+    LOGD("retrieved bundle id");
+    __android_log_print(ANDROID_LOG_DEBUG, "CONTAINER", "getNumberOfConfiguredResources %s",str_bundleId);
     ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
     vector< resourceInfo > resourceConfig;
     container->getResourceConfiguration(str_bundleId, &resourceConfig);

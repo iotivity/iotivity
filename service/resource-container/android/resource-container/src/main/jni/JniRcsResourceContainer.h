@@ -83,12 +83,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceCo
   (JNIEnv *, jobject, jobject, jobjectArray, jstring, jstring, jstring, jstring);
 
 JNIEXPORT void JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeUnregisterAndroidResource
-  (JNIEnv *, jobject, jstring, jobject, jstring);
+  (JNIEnv *, jobject, jobject, jstring);
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeGetNumberOfConfiguredResources
   (JNIEnv *, jobject,  jstring);
 
-JNIEXPORT jobjectArray JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeBaseActivator_getConfiguredResourceParams
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeGetConfiguredResourceParams
   (JNIEnv *, jobject, jstring, jint);
 
 
