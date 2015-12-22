@@ -130,8 +130,6 @@ CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo)
 static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
                                      const void *data, uint32_t dataLen)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     if (g_networkPacketReceivedCallback != NULL)
     {
         g_networkPacketReceivedCallback(sep, data, dataLen);
@@ -140,21 +138,15 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
     {
         OIC_LOG(ERROR, TAG, "network packet received callback is NULL!");
     }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 static void CANetworkChangedCallback(const CAEndpoint_t *info, CANetworkStatus_t status)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     // Call the callback.
     if (g_networkChangeCallback != NULL)
     {
         g_networkChangeCallback(info, status);
     }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 static void CAAdapterErrorHandleCallback(const CAEndpoint_t *endpoint,
@@ -206,12 +198,14 @@ void CAInitializeAdapters(ca_thread_pool_t handle)
 void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "Set Receiver handle callback");
+
     g_networkPacketReceivedCallback = callback;
 }
 
 void CASetNetworkChangeCallback(CANetworkChangeCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "Set network handle callback");
+
     g_networkChangeCallback = callback;
 }
 
@@ -349,8 +343,6 @@ memory_error_exit:
 
 CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     if (endpoint == NULL)
     {
         OIC_LOG(DEBUG, TAG, "Invalid endpoint");
@@ -382,14 +374,11 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
 #endif
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     u_arraylist_t *list = CAGetSelectedNetworkList();
     if (!list)
     {
@@ -446,15 +435,11 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
         }
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
-
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartListeningServerAdapters()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     CAResult_t result = CA_STATUS_FAILED;
 
     u_arraylist_t *list = CAGetSelectedNetworkList();
@@ -496,14 +481,11 @@ CAResult_t CAStartListeningServerAdapters()
         }
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return result;
 }
 
 CAResult_t CAStopListeningServerAdapters()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     u_arraylist_t *list = CAGetSelectedNetworkList();
     if (!list)
     {
@@ -535,14 +517,11 @@ CAResult_t CAStopListeningServerAdapters()
         }
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartDiscoveryServerAdapters()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     CAResult_t result = CA_STATUS_FAILED;
 
     u_arraylist_t *list = CAGetSelectedNetworkList();
@@ -585,14 +564,11 @@ CAResult_t CAStartDiscoveryServerAdapters()
         }
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return result;
 }
 
 void CATerminateAdapters()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     for (size_t index = 0; index < CA_TRANSPORT_TYPE_NUM; index++)
     {
         if (g_adapterHandler[index].terminate != NULL)
@@ -600,14 +576,11 @@ void CATerminateAdapters()
             g_adapterHandler[index].terminate();
         }
     }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 #ifdef SINGLE_THREAD
 CAResult_t CAReadData()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     u_arraylist_t *list = CAGetSelectedNetworkList();
 
     if (!list)
@@ -640,7 +613,6 @@ CAResult_t CAReadData()
         }
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 #endif

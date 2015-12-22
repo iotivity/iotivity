@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "ocrandom.h"
 #include "cainterface.h"
 #include "caremotehandler.h"
 #include "camessagehandler.h"
@@ -38,10 +39,8 @@
 #include "catcpadapter.h"
 #endif
 
-#include "ocrandom.h"
-
-
-CAGlobals_t caglobals = { 0 };
+CAGlobals_t caglobals = { .clientFlags = 0,
+                          .serverFlags = 0, };
 
 #define TAG "CA_CONN_MGR"
 

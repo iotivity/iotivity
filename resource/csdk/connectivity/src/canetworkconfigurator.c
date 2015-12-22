@@ -42,7 +42,6 @@ static uint32_t NETWORK_TCP = CA_ADAPTER_TCP;
 
 CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == g_selectedNetworkList)
     {
         OIC_LOG(DEBUG, TAG, "Create network list");
@@ -134,7 +133,6 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
     }
     // start selected interface adapter
     CAResult_t result = CAStartAdapter(transportType);
-    OIC_LOG(DEBUG, TAG, "OUT");
     return result;
 
 exit:
@@ -144,8 +142,6 @@ exit:
 
 CAResult_t CARemoveNetworkType(CATransportAdapter_t transportType)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     if (NULL == g_selectedNetworkList)
     {
         OIC_LOG(ERROR, TAG, "SelectedNetwork list is NULL");

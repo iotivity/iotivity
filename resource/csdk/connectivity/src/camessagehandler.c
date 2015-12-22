@@ -835,21 +835,13 @@ void CAHandleRequestResponseCallbacks()
 
     ca_mutex_unlock(g_receiveThread.threadMutex);
 
-    if (NULL == item)
-    {
-        return;
-    }
-
-    // get values
-    void *msg = item->msg;
-
-    if (NULL == msg)
+    if (NULL == item || NULL == item->msg)
     {
         return;
     }
 
     // get endpoint
-    CAData_t *td = (CAData_t *) msg;
+    CAData_t *td = (CAData_t *) item->msg;
 
     if (td->requestInfo && g_requestHandler)
     {
@@ -867,7 +859,7 @@ void CAHandleRequestResponseCallbacks()
         g_errorHandler(td->remoteEndpoint, td->errorInfo);
     }
 
-    CADestroyData(msg, sizeof(CAData_t));
+    CADestroyData(item->msg, sizeof(CAData_t));
     OICFree(item);
 
 #endif // SINGLE_HANDLE
@@ -1220,6 +1212,7 @@ void CATerminateMessageHandler()
 void CALogPDUInfo(coap_pdu_t *pdu, const CAEndpoint_t *endpoint)
 {
     VERIFY_NON_NULL_VOID(pdu, TAG, "pdu");
+    VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint");
 
     OIC_LOG_V(DEBUG, TAG, "PDU Maker - payload : %s", pdu->data);
 
@@ -1227,7 +1220,7 @@ void CALogPDUInfo(coap_pdu_t *pdu, const CAEndpoint_t *endpoint)
     if (CA_ADAPTER_TCP == endpoint->adapter)
     {
         OIC_LOG(DEBUG, TAG, "pdu header data :");
-        OIC_LOG_BUFFER(DEBUG, TAG,  pdu->hdr, pdu->length);
+        OIC_LOG_BUFFER(DEBUG, TAG,  (const uint8_t *) pdu->hdr, pdu->length);
     }
     else
 #else

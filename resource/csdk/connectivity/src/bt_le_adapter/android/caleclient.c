@@ -2178,7 +2178,7 @@ CAResult_t CALEClientAddScanDeviceToList(JNIEnv *env, jobject device)
         jobject gdevice = (*env)->NewGlobalRef(env, device);
         u_arraylist_add(g_deviceList, gdevice);
         ca_cond_signal(g_deviceDescCond);
-        OIC_LOG_V(DEBUG, TAG, "Added this Device[%d] in the List", remoteAddress);
+        OIC_LOG_V(DEBUG, TAG, "Added this Device[%s] in the List", remoteAddress);
     }
     (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
 

@@ -47,8 +47,8 @@ extern "C"
  * @pre  Callback must be registered using CAIPSetPacketReceiveCallback().
  */
 typedef void (*CATCPPacketReceivedCallback)(const CASecureEndpoint_t *endpoint,
-                                           const void *data,
-                                           uint32_t dataLength);
+                                            const void *data,
+                                            uint32_t dataLength);
 
 /**
   * Callback to notify error in the TCP adapter.
@@ -60,7 +60,7 @@ typedef void (*CATCPPacketReceivedCallback)(const CASecureEndpoint_t *endpoint,
   * @pre  Callback must be registered using CAIPSetPacketReceiveCallback().
  */
 typedef void (*CATCPErrorHandleCallback)(const CAEndpoint_t *endpoint, const void *data,
-                                        uint32_t dataLength, CAResult_t result);
+                                         uint32_t dataLength, CAResult_t result);
 
 /**
  * set error callback to notify error in TCP adapter.

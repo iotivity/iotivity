@@ -59,8 +59,6 @@ static void CAQueueingThreadBaseRoutine(void *threadValue)
             OIC_LOG(DEBUG, TAG, "wake up..");
         }
 
-
-
         // check stop flag
         if (thread->isStop)
         {

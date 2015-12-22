@@ -538,7 +538,8 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
     {
         coap_list_t* node = NULL;
         uint8_t buf[3] = {0};
-        switch (info->payloadFormat) {
+        switch (info->payloadFormat)
+        {
             case CA_FORMAT_APPLICATION_CBOR:
                 node = CACreateNewOptionNode(
                         COAP_OPTION_CONTENT_FORMAT,
@@ -565,7 +566,8 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
     {
         coap_list_t* node = NULL;
         uint8_t buf[3] = {0};
-        switch (info->acceptFormat) {
+        switch (info->acceptFormat)
+        {
             case CA_FORMAT_APPLICATION_CBOR:
                 node = CACreateNewOptionNode(
                         COAP_OPTION_ACCEPT,
@@ -1049,7 +1051,8 @@ uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
     }
 
     coap_option_def_t* def = coap_opt_def(key);
-    if(NULL != def && coap_is_var_bytes(def) && 0 == len) {
+    if (NULL != def && coap_is_var_bytes(def) && 0 == len)
+    {
         // A 0 length option is permitted in CoAP but the
         // rest or the stack is unaware of variable byte encoding
         // should remain that way so a 0 byte of length 1 is inserted.

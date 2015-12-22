@@ -356,7 +356,7 @@ static void CAReceiveMessage(int fd)
     return;
 }
 
-static int CATCPCreateSocket(int family, CATCPSessionInfo_t *tcpServerInfo)
+static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
 {
     // create tcp socket
     int fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
@@ -367,7 +367,7 @@ static int CATCPCreateSocket(int family, CATCPSessionInfo_t *tcpServerInfo)
     }
 
     struct sockaddr_storage sa = { .ss_family = family };
-    CAConvertNameToAddr(tcpServerInfo->sep.endpoint.addr, tcpServerInfo->sep.endpoint.port, &sa);
+    CAConvertNameToAddr(svritem->sep.endpoint.addr, svritem->sep.endpoint.port, &sa);
     socklen_t socklen = sizeof (struct sockaddr_in);
 
     // connect to TCP server
@@ -420,7 +420,8 @@ static CAResult_t CACreateAcceptSocket()
     int reuse = 1;
     struct sockaddr_in server = { .sin_addr.s_addr = INADDR_ANY,
                                   .sin_family = AF_INET,
-                                  .sin_port = htons(SERVER_PORT) };
+                                  .sin_port = htons(SERVER_PORT),
+                                  .sin_zero = { 0 } };
 
     g_acceptServerFD = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (g_acceptServerFD < 0)
@@ -805,7 +806,8 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
             continue;
         }
 
-        if (!strncmp(svritem->sep.endpoint.addr, endpoint->addr, sizeof(svritem->sep.endpoint.addr))
+        if (!strncmp(svritem->sep.endpoint.addr, endpoint->addr,
+                     sizeof(svritem->sep.endpoint.addr))
                 && (svritem->sep.endpoint.port == endpoint->port))
         {
             *index = i;

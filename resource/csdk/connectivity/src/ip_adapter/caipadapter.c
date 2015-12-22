@@ -100,8 +100,6 @@ static void CADataDestroyer(void *data, uint32_t size);
 
 CAResult_t CAIPInitializeQueueHandles()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     // Check if the message queue is already initialized
     if (g_sendQueueHandle)
     {
@@ -127,19 +125,14 @@ CAResult_t CAIPInitializeQueueHandles()
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CAIPDeinitializeQueueHandles()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     CAQueueingThreadDestroy(g_sendQueueHandle);
     OICFree(g_sendQueueHandle);
     g_sendQueueHandle = NULL;
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 #endif // SINGLE_THREAD
@@ -148,20 +141,15 @@ void CAIPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status)
 {
     (void)ipAddress;
     (void)status;
-    OIC_LOG(DEBUG, TAG, "IN");
 }
 
 #ifdef __WITH_DTLS__
 static void CAIPPacketSendCB(CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
 
     CAIPSendData(endpoint, data, dataLength, false);
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 #endif
 
@@ -169,8 +157,6 @@ static void CAIPPacketSendCB(CAEndpoint_t *endpoint, const void *data, uint32_t 
 void CAIPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
                           uint32_t dataLength)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL_VOID(sep, TAG, "sep is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
 
@@ -180,16 +166,12 @@ void CAIPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
     {
         g_networkPacketCallback(sep, data, dataLength);
     }
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CAIPErrorHandler (const CAEndpoint_t *endpoint, const void *data,
                        uint32_t dataLength, CAResult_t result)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
-
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
 
     void *buf = (void*)OICMalloc(sizeof(char) * dataLength);
@@ -207,8 +189,6 @@ void CAIPErrorHandler (const CAEndpoint_t *endpoint, const void *data,
     {
         OICFree(buf);
     }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 static void CAInitializeIPGlobals()
@@ -290,8 +270,6 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartIP()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     CAIPStartNetworkMonitor();
 #ifdef SINGLE_THREAD
     uint16_t unicastPort = 55555;
@@ -326,32 +304,29 @@ CAResult_t CAStartIP()
 
 #endif
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartIPListeningServer()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     CAResult_t ret = CAIPStartListenServer();
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to start listening server![%d]", ret);
         return ret;
     }
-    OIC_LOG(DEBUG, TAG, "OUT");
+
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStopIPListeningServer()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     CAResult_t ret = CAIPStopListenServer();
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to stop listening server![%d]", ret);
     }
-    OIC_LOG(DEBUG, TAG, "OUT");
+
     return ret;
 }
 
@@ -363,8 +338,6 @@ CAResult_t CAStartIPDiscoveryServer()
 static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
                              const void *data, uint32_t dataLength)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL_RET(endpoint, TAG, "remoteEndpoint", -1);
     VERIFY_NON_NULL_RET(data, TAG, "data", -1);
 
@@ -394,35 +367,28 @@ static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
 
 #endif // SINGLE_THREAD
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return dataLength;
 }
 
 int32_t CASendIPUnicastData(const CAEndpoint_t *endpoint,
                             const void *data, uint32_t dataLength)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     return CAQueueIPData(false, endpoint, data, dataLength);
 }
 
 int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     return CAQueueIPData(true, endpoint, data, dataLength);
 }
 
 CAResult_t CAReadIPData()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     CAIPPullData();
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStopIP()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
 #ifdef __WITH_DTLS__
     CAAdapterNetDtlsDeInit();
 #endif
@@ -441,14 +407,11 @@ CAResult_t CAStopIP()
     //Re-initializing the Globals to start them again
     CAInitializeIPGlobals();
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CATerminateIP()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
 #ifdef __WITH_DTLS__
     CADTLSSetAdapterCallbacks(NULL, NULL, 0);
 #endif
@@ -458,16 +421,12 @@ void CATerminateIP()
 #ifndef SINGLE_THREAD
     CAIPDeinitializeQueueHandles();
 #endif
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 #ifndef SINGLE_THREAD
 
 void CAIPSendDataThread(void *threadData)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     CAIPData_t *ipData = (CAIPData_t *) threadData;
     if (!ipData)
     {
@@ -506,17 +465,15 @@ void CAIPSendDataThread(void *threadData)
         CAIPSendData(ipData->remoteEndpoint, ipData->data, ipData->dataLen, false);
 #endif
     }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 #endif
 
 #ifndef SINGLE_THREAD
-
 CAIPData_t *CACreateIPData(const CAEndpoint_t *remoteEndpoint, const void *data,
                            uint32_t dataLength, bool isMulticast)
 {
+    VERIFY_NON_NULL_RET(remoteEndpoint, TAG, "remoteEndpoint is NULL", NULL);
     VERIFY_NON_NULL_RET(data, TAG, "IPData is NULL", NULL);
 
     CAIPData_t *ipData = (CAIPData_t *) OICMalloc(sizeof(*ipData));

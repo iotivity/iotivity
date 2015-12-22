@@ -118,13 +118,11 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags);
 static void CAReceiveHandler(void *data)
 {
     (void)data;
-    OIC_LOG(DEBUG, TAG, "IN");
+
     while (!caglobals.ip.terminate)
     {
         CAFindReadyMessage();
     }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 static void CAFindReadyMessage()
@@ -197,7 +195,12 @@ static void CASelectReturned(fd_set *readFds, int ret)
         else if (FD_ISSET(caglobals.ip.shutdownFds[0], readFds))
         {
             char buf[10] = {0};
-            (void)read(caglobals.ip.shutdownFds[0], buf, sizeof (buf));
+            ssize_t len = read(caglobals.ip.shutdownFds[0], buf, sizeof (buf));
+            if (-1 == len)
+            {
+                continue;
+            }
+
             CAInterface_t *ifchanged = CAFindInterfaceChange();
             if (ifchanged)
             {
@@ -221,11 +224,10 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags)
     char recvBuffer[COAP_MAX_PDU_SIZE];
 
     size_t len;
-    int level, type;
+    int level, type, namelen;
     struct sockaddr_storage srcAddr;
     unsigned char *pktinfo = NULL;
-    struct msghdr msg = { 0 };
-    struct cmsghdr *cmp;
+    struct cmsghdr *cmp = NULL;
     struct iovec iov = { recvBuffer, sizeof (recvBuffer) };
     union control
     {
@@ -235,24 +237,25 @@ static CAResult_t CAReceiveMessage(int fd, CATransportFlags_t flags)
 
     if (flags & CA_IPV6)
     {
-        msg.msg_namelen = sizeof (struct sockaddr_in6);
+        namelen = sizeof (struct sockaddr_in6);
         level = IPPROTO_IPV6;
         type = IPV6_PKTINFO;
         len = sizeof (struct in6_pktinfo);
     }
     else
     {
-        msg.msg_namelen = sizeof (struct sockaddr_in);
+        namelen = sizeof (struct sockaddr_in);
         level = IPPROTO_IP;
         type = IP_PKTINFO;
         len = sizeof (struct in6_pktinfo);
     }
 
-    msg.msg_name = &srcAddr;
-    msg.msg_iov = &iov;
-    msg.msg_iovlen = 1;
-    msg.msg_control = &cmsg;
-    msg.msg_controllen = CMSG_SPACE(len);
+    struct msghdr msg = { .msg_name = &srcAddr,
+                          .msg_namelen = namelen,
+                          .msg_iov = &iov,
+                          .msg_iovlen = 1,
+                          .msg_control = &cmsg,
+                          .msg_controllen = CMSG_SPACE(len) };
 
     ssize_t recvLen = recvmsg(fd, &msg, flags);
     if (-1 == recvLen)
@@ -585,8 +588,6 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
 
 void CAIPStopServer()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     caglobals.ip.started = false;
     caglobals.ip.terminate = true;
 
@@ -599,8 +600,6 @@ void CAIPStopServer()
     {
         // receive thread will stop in SELECT_TIMEOUT seconds.
     }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CAWakeUpForChange()
@@ -838,20 +837,12 @@ static void CAHandleNetlink()
 
 void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     g_packetReceivedCallback = callback;
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CAIPSetExceptionCallback(CAIPExceptionCallback callback)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     g_exceptionCallback = callback;
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 static void sendData(int fd, const CAEndpoint_t *endpoint,
@@ -896,7 +887,7 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
     }
     else
     {
-        OIC_LOG_V(INFO, TAG, "%s%s %s sendTo is successful: %ld bytes", secure, cast, fam, len);
+        OIC_LOG_V(INFO, TAG, "%s%s %s sendTo is successful: %zd bytes", secure, cast, fam, len);
     }
 }
 
@@ -1046,8 +1037,6 @@ void CAIPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t datalen,
 
 CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL(info, TAG, "info is NULL");
     VERIFY_NON_NULL(size, TAG, "size is NULL");
 
@@ -1124,6 +1113,5 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 
     u_arraylist_destroy(iflist);
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }

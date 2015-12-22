@@ -227,7 +227,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
 
     if (!gCALEDeviceStateChangedCallback)
     {
-        OIC_LOG_V(ERROR, TAG, "gNetworkChangeCb is null", status);
+        OIC_LOG(ERROR, TAG, "gNetworkChangeCb is null");
         return;
     }
 
