@@ -72,6 +72,12 @@ if target_os == 'linux':
 	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
 	if env.get('SECURED') == '1':
 		easy_setup_env.PrependUnique(LIBS = ['ocprovision', 'ocpmapi'])
+
+if target_os == 'tizen':
+	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
+	easy_setup_env.AppendUnique(CXXFLAGS = ['-pthread'])
+	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
 		
 if target_os == 'arduino':
 	easy_setup_env.AppendUnique(CPPPATH = [
@@ -105,6 +111,17 @@ if target_os in ['android','linux']:
 	                env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm'])
 
+if target_os == 'tizen':
+	easy_setup_env.AppendUnique(CPPPATH = [
+			       env.get('SRC_DIR')+'/resource/oc_logger/include',
+			       env.get('SRC_DIR')+'/resource/csdk/logger/include',
+			       env.get('SRC_DIR')+'/resource/csdk/stack/include',
+			       env.get('SRC_DIR')+'/extlibs/cjson',
+				   'sdk/enrollee/tizen/wifi',
+				   'sdk/enrollee/api',
+				   'sdk/enrollee/src',
+			       'sdk/enrollee/inc'])
+	easy_setup_env.AppendUnique(CPPDEFINES = ['ESWIFI'])
 
 ######################################################################
 # Source files and Targets
@@ -122,6 +139,13 @@ if target_os == 'android':
 					['sdk/mediator/src/prov_adapter.cpp',
 					'sdk/mediator/src/wifi_provisioning.cpp',
                     'sdk/mediator/src/provisioning.cpp'])
+	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
+
+if target_os == 'tizen':
+	es_sdk_shared = easy_setup_env.SharedLibrary('ESSDKLibrary',
+					['sdk/enrollee/src/easysetup.cpp',
+					'sdk/enrollee/src/resourceHandler.cpp',
+					'sdk/enrollee/tizen/wifi/networkHandler.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 print"easysetup_path %s" % easysetup_path
