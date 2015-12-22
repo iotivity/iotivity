@@ -52,7 +52,7 @@ typedef struct
     void *data;
     uint32_t dataLen;
     bool isMulticast;
-} CAIPData;
+} CAIPData_t;
 
 /**
  * Queue handle for Send Data.
@@ -90,10 +90,11 @@ static void CAIPDeinitializeQueueHandles();
 
 static void CAIPSendDataThread(void *threadData);
 
-static CAIPData *CACreateIPData(const CAEndpoint_t *remoteEndpoint,
-                                const void *data, uint32_t dataLength,
-                                bool isMulticast);
-void CAFreeIPData(CAIPData *ipData);
+static CAIPData_t *CACreateIPData(const CAEndpoint_t *remoteEndpoint,
+                                  const void *data, uint32_t dataLength,
+                                  bool isMulticast);
+
+void CAFreeIPData(CAIPData_t *ipData);
 
 static void CADataDestroyer(void *data, uint32_t size);
 
@@ -356,12 +357,11 @@ CAResult_t CAStopIPListeningServer()
 
 CAResult_t CAStartIPDiscoveryServer()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     return CAStartIPListeningServer();
 }
 
 static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
-                            const void *data, uint32_t dataLength)
+                             const void *data, uint32_t dataLength)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
@@ -383,14 +383,14 @@ static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
 
     VERIFY_NON_NULL_RET(g_sendQueueHandle, TAG, "sendQueueHandle", -1);
     // Create IPData to add to queue
-    CAIPData *ipData = CACreateIPData(endpoint, data, dataLength, isMulticast);
+    CAIPData_t *ipData = CACreateIPData(endpoint, data, dataLength, isMulticast);
     if (!ipData)
     {
         OIC_LOG(ERROR, TAG, "Failed to create ipData!");
         return -1;
     }
     // Add message to send queue
-    CAQueueingThreadAddData(g_sendQueueHandle, ipData, sizeof(CAIPData));
+    CAQueueingThreadAddData(g_sendQueueHandle, ipData, sizeof(CAIPData_t));
 
 #endif // SINGLE_THREAD
 
@@ -468,7 +468,7 @@ void CAIPSendDataThread(void *threadData)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    CAIPData *ipData = (CAIPData *) threadData;
+    CAIPData_t *ipData = (CAIPData_t *) threadData;
     if (!ipData)
     {
         OIC_LOG(DEBUG, TAG, "Invalid ip data!");
@@ -485,7 +485,7 @@ void CAIPSendDataThread(void *threadData)
     {
         //Processing for sending unicast
 #ifdef __WITH_DTLS__
-        if (ipData->remoteEndpoint->flags & CA_SECURE)
+        if (ipData->remoteEndpoint && ipData->remoteEndpoint->flags & CA_SECURE)
         {
             OIC_LOG(DEBUG, TAG, "CAAdapterNetDtlsEncrypt called!");
             CAResult_t result = CAAdapterNetDtlsEncrypt(ipData->remoteEndpoint,
@@ -514,12 +514,12 @@ void CAIPSendDataThread(void *threadData)
 
 #ifndef SINGLE_THREAD
 
-CAIPData *CACreateIPData(const CAEndpoint_t *remoteEndpoint, const void *data,
-                                     uint32_t dataLength, bool isMulticast)
+CAIPData_t *CACreateIPData(const CAEndpoint_t *remoteEndpoint, const void *data,
+                           uint32_t dataLength, bool isMulticast)
 {
     VERIFY_NON_NULL_RET(data, TAG, "IPData is NULL", NULL);
 
-    CAIPData *ipData = (CAIPData *) OICMalloc(sizeof(CAIPData));
+    CAIPData_t *ipData = (CAIPData_t *) OICMalloc(sizeof(*ipData));
     if (!ipData)
     {
         OIC_LOG(ERROR, TAG, "Memory allocation failed!");
@@ -543,7 +543,7 @@ CAIPData *CACreateIPData(const CAEndpoint_t *remoteEndpoint, const void *data,
     return ipData;
 }
 
-void CAFreeIPData(CAIPData *ipData)
+void CAFreeIPData(CAIPData_t *ipData)
 {
     VERIFY_NON_NULL_VOID(ipData, TAG, "ipData is NULL");
 
@@ -554,11 +554,11 @@ void CAFreeIPData(CAIPData *ipData)
 
 void CADataDestroyer(void *data, uint32_t size)
 {
-    if (size < sizeof(CAIPData))
+    if (size < sizeof(CAIPData_t))
     {
         OIC_LOG_V(ERROR, TAG, "Destroy data too small %p %d", data, size);
     }
-    CAIPData *etdata = (CAIPData *) data;
+    CAIPData_t *etdata = (CAIPData_t *) data;
 
     CAFreeIPData(etdata);
 }

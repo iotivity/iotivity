@@ -47,9 +47,8 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
-/**
- * @def TAG
- * @brief Logging tag for module name
+/*
+ * Logging tag for module name
  */
 #define TAG "IP_SERVER"
 
@@ -335,9 +334,9 @@ void CAIPPullData()
 static int CACreateSocket(int family, uint16_t *port)
 {
     int socktype = SOCK_DGRAM;
-    #ifdef SOCK_CLOEXEC
+#ifdef SOCK_CLOEXEC
     socktype |= SOCK_CLOEXEC;
-    #endif
+#endif
     int fd = socket(family, socktype, IPPROTO_UDP);
     if (-1 == fd)
     {
@@ -345,7 +344,7 @@ static int CACreateSocket(int family, uint16_t *port)
         return -1;
     }
 
-    #ifndef SOCK_CLOEXEC
+#ifndef SOCK_CLOEXEC
     int fl = fcntl(fd, F_GETFD);
     if (-1 == fl || -1 == fcntl(fd, F_SETFD, fl|FD_CLOEXEC))
     {
@@ -353,7 +352,7 @@ static int CACreateSocket(int family, uint16_t *port)
         close(fd);
         return -1;
     }
-    #endif
+#endif
 
     struct sockaddr_storage sa = { .ss_family = family };
     socklen_t socklen;
@@ -648,9 +647,8 @@ static void applyMulticastToInterface4(struct in_addr inaddr)
 
 static void applyMulticast6(int fd, struct in6_addr *addr, uint32_t interface)
 {
-    struct ipv6_mreq mreq;
-    mreq.ipv6mr_multiaddr = *addr;
-    mreq.ipv6mr_interface = interface;
+    struct ipv6_mreq mreq = {.ipv6mr_multiaddr = *addr, .ipv6mr_interface = interface};
+
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof (mreq)))
     {
         if (EADDRINUSE != errno)
@@ -773,9 +771,14 @@ CAResult_t CAIPStopListenServer()
 
 static void CAProcessNewInterface(CAInterface_t *ifitem)
 {
+    if (!ifitem)
+    {
+        OIC_LOG(DEBUG, TAG, "ifitem is null");
+        return;
+    }
+
     applyMulticastToInterface6(ifitem->index);
-    struct in_addr inaddr;
-    inaddr.s_addr = ifitem->ipv4addr;
+    struct in_addr inaddr = { .s_addr = ifitem->ipv4addr };
     applyMulticastToInterface4(inaddr);
 }
 static void CAHandleNetlink()
@@ -857,6 +860,12 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
+    if (!endpoint)
+    {
+        OIC_LOG(DEBUG, TAG, "endpoint is null");
+        return;
+    }
+
     char *secure = (endpoint->flags & CA_SECURE) ? "secure " : "";
     (void)secure;   // eliminates release warning
     struct sockaddr_storage sock;
@@ -895,6 +904,12 @@ static void sendMulticastData6(const u_arraylist_t *iflist,
                                CAEndpoint_t *endpoint,
                                const void *data, uint32_t datalen)
 {
+    if (!endpoint)
+    {
+        OIC_LOG(DEBUG, TAG, "endpoint is null");
+        return;
+    }
+
     int scope = endpoint->flags & CA_SCOPE_MASK;
     char *ipv6mcname = ipv6mcnames[scope];
     if (!ipv6mcname)
@@ -936,6 +951,8 @@ static void sendMulticastData4(const u_arraylist_t *iflist,
                                CAEndpoint_t *endpoint,
                                const void *data, uint32_t datalen)
 {
+    VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
+
     struct ip_mreqn mreq = { .imr_multiaddr = IPv4MulticastAddress,
                              .imr_ifindex = 0 };
     OICStrcpy(endpoint->addr, sizeof(endpoint->addr), IPv4_MULTICAST);
@@ -971,7 +988,7 @@ static void sendMulticastData4(const u_arraylist_t *iflist,
 }
 
 void CAIPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t datalen,
-                                                            bool isMulticast)
+                  bool isMulticast)
 {
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
@@ -1011,17 +1028,17 @@ void CAIPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t datalen,
         if (caglobals.ip.ipv6enabled && (endpoint->flags & CA_IPV6))
         {
             fd = isSecure ? caglobals.ip.u6s.fd : caglobals.ip.u6.fd;
-            #ifndef __WITH_DTLS__
+#ifndef __WITH_DTLS__
             fd = caglobals.ip.u6.fd;
-            #endif
+#endif
             sendData(fd, endpoint, data, datalen, "unicast", "ipv6");
         }
         if (caglobals.ip.ipv4enabled && (endpoint->flags & CA_IPV4))
         {
             fd = isSecure ? caglobals.ip.u4s.fd : caglobals.ip.u4.fd;
-            #ifndef __WITH_DTLS__
+#ifndef __WITH_DTLS__
             fd = caglobals.ip.u4.fd;
-            #endif
+#endif
             sendData(fd, endpoint, data, datalen, "unicast", "ipv4");
         }
     }
