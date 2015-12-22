@@ -43,6 +43,11 @@ namespace OC
 
     void MessageContainer::setPayload(const OCPayload* rep)
     {
+        if (rep == nullptr)
+        {
+            return;
+        }
+
         switch(rep->type)
         {
             case PAYLOAD_TYPE_REPRESENTATION:
@@ -62,9 +67,14 @@ namespace OC
 
     void MessageContainer::setPayload(const OCDevicePayload* payload)
     {
+        if (payload == nullptr)
+        {
+            return;
+        }
+
         OCRepresentation rep;
         char uuidString[UUID_STRING_SIZE];
-        if(payload->sid && RAND_UUID_OK == OCConvertUuidToString(payload->sid, uuidString))
+        if (payload->sid && RAND_UUID_OK == OCConvertUuidToString(payload->sid, uuidString))
         {
             rep[OC_RSRVD_DEVICE_ID] = std::string(uuidString);
         }
@@ -86,6 +96,11 @@ namespace OC
 
     void MessageContainer::setPayload(const OCPlatformPayload* payload)
     {
+        if (payload == nullptr)
+        {
+            return;
+        }
+
         OCRepresentation rep;
         rep[OC_RSRVD_PLATFORM_ID] = payload->info.platformID ?
             std::string(payload->info.platformID) :
@@ -142,7 +157,7 @@ namespace OC
         OCRepPayload* root = nullptr;
         for(const auto& r : representations())
         {
-            if(!root)
+            if (!root)
             {
                 root = r.getPayload();
             }
@@ -364,7 +379,7 @@ namespace OC
     OCRepPayload* OCRepresentation::getPayload() const
     {
         OCRepPayload* root = OCRepPayloadCreate();
-        if(!root)
+        if (!root)
         {
             throw std::bad_alloc();
         }
@@ -421,11 +436,11 @@ namespace OC
 
     size_t calcArrayDepth(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
     {
-        if(dimensions[0] == 0)
+        if (dimensions[0] == 0)
         {
             throw std::logic_error("invalid calcArrayDepth");
         }
-        else if(dimensions[1] == 0)
+        else if (dimensions[1] == 0)
         {
             return 1;
         }
@@ -487,7 +502,7 @@ namespace OC
     template<typename T>
     void OCRepresentation::payload_array_helper(const OCRepPayloadValue* pl, size_t depth)
     {
-        if(depth == 1)
+        if (depth == 1)
         {
             std::vector<T> val(pl->arr.dimensions[0]);
 
@@ -735,7 +750,7 @@ namespace OC
         // child of a default or link item.
         // Our values array is only printed in the if we are the child of a Batch resource,
         // the parent in a 'default' situation, or not in a child/parent relationship.
-        if(!m_uri.empty())
+        if (!m_uri.empty())
         {
             return false;
         }
@@ -746,7 +761,7 @@ namespace OC
         {
             return false;
         }
-        else if((m_interfaceType == InterfaceType::None
+        else if ((m_interfaceType == InterfaceType::None
                         || m_interfaceType == InterfaceType::BatchChild
                         || m_interfaceType == InterfaceType::DefaultParent)
                     && m_values.size()>0)
@@ -754,7 +769,7 @@ namespace OC
             return false;
         }
 
-        if(m_children.size() > 0)
+        if (m_children.size() > 0)
         {
             return false;
         }
@@ -781,7 +796,7 @@ namespace OC
     {
         auto x = m_values.find(str);
 
-        if(m_values.end() != x)
+        if (m_values.end() != x)
         {
             return x->second.which() == AttributeValueNullIndex;
         }
@@ -1003,7 +1018,7 @@ namespace OC
     OCRepresentation::iterator& OCRepresentation::iterator::operator++()
     {
         m_iterator++;
-        if(m_iterator != m_item.m_values.end())
+        if (m_iterator != m_item.m_values.end())
         {
             m_item.m_attrName = m_iterator->first;
         }
@@ -1017,7 +1032,7 @@ namespace OC
     OCRepresentation::const_iterator& OCRepresentation::const_iterator::operator++()
     {
         m_iterator++;
-        if(m_iterator != m_item.m_values.end())
+        if (m_iterator != m_item.m_values.end())
         {
             m_item.m_attrName = m_iterator->first;
         }
@@ -1095,7 +1110,7 @@ namespace OC
     std::string OCRepresentation::getValueToString(const std::string& key) const
     {
         auto x = m_values.find(key);
-        if(x != m_values.end())
+        if (x != m_values.end())
         {
             to_string_visitor vis;
             boost::apply_visitor(vis, x->second);
@@ -1118,4 +1133,3 @@ namespace OC
         return os;
     }
 }
-

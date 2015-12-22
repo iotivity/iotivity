@@ -51,7 +51,7 @@
 
 static OCStackResult CheckRTParamSupport(const OCResource* resource, const char* rtPtr)
 {
-    if(!resource || !rtPtr)
+    if (!resource || !rtPtr)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -59,7 +59,7 @@ static OCStackResult CheckRTParamSupport(const OCResource* resource, const char*
     OCResourceType* rTPointer = resource->rsrcType;
     while (rTPointer)
     {
-        if( strcmp (rTPointer->resourcetypename, rtPtr) == 0)
+        if (strcmp(rTPointer->resourcetypename, rtPtr) == 0)
         {
             return OC_STACK_OK;
         }
@@ -71,7 +71,7 @@ static OCStackResult CheckRTParamSupport(const OCResource* resource, const char*
 
 static OCStackResult CheckIFParamSupport(const OCResource* resource, const char* ifPtr)
 {
-    if(!resource || !ifPtr)
+    if (!resource || !ifPtr)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -79,7 +79,7 @@ static OCStackResult CheckIFParamSupport(const OCResource* resource, const char*
     OCResourceInterface* iFPointer = resource->rsrcInterface;
     while (iFPointer)
     {
-        if( strcmp (iFPointer->name, ifPtr) == 0)
+        if (strcmp(iFPointer->name, ifPtr) == 0)
         {
             return OC_STACK_OK;
         }
@@ -91,7 +91,7 @@ static OCStackResult CheckIFParamSupport(const OCResource* resource, const char*
 
 static OCStackResult
 ValidateQuery (const char *query, OCResourceHandle resource,
-                             OCStackIfTypes *ifParam, char **rtParam)
+               OCStackIfTypes *ifParam, char **rtParam)
 {
     uint8_t numFields = 0;
     uint8_t numParam;
@@ -106,7 +106,7 @@ ValidateQuery (const char *query, OCResourceHandle resource,
         return OC_STACK_ERROR;
     }
 
-    if(!ifParam || !rtParam)
+    if (!ifParam || !rtParam)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -172,7 +172,7 @@ ValidateQuery (const char *query, OCResourceHandle resource,
 
     if (ifPtr)
     {
-        if(CheckIFParamSupport((OCResource *)resource, ifPtr) != OC_STACK_OK)
+        if (CheckIFParamSupport((OCResource *)resource, ifPtr) != OC_STACK_OK)
         {
             return OC_STACK_INVALID_QUERY;
         }
@@ -188,7 +188,7 @@ ValidateQuery (const char *query, OCResourceHandle resource,
         {
             *ifParam = STACK_IF_BATCH;
         }
-        else if(strcmp (ifPtr, OC_RSRVD_INTERFACE_GROUP) == 0)
+        else if (strcmp (ifPtr, OC_RSRVD_INTERFACE_GROUP) == 0)
         {
             *ifParam = STACK_IF_GROUP;
         }
@@ -231,36 +231,33 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
 {
     (void)filterOn;
     (void)filterValue;
-    if(!ehRequest)
+    if (!ehRequest)
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCStackResult ret = OC_STACK_OK;
     OCResource *collResource = (OCResource *)ehRequest->resource;
 
     OCRepPayload* payload = NULL;
-
-    if(ret == OC_STACK_OK)
-    {
-        ret = BuildResponseRepresentation(collResource, &payload);
-    }
-
+    OCStackResult ret = BuildResponseRepresentation(collResource, &payload);
     if (ret == OC_STACK_OK)
     {
-        for  (int i = 0; i < MAX_CONTAINED_RESOURCES && ret == OC_STACK_OK; i++)
+        for (size_t i = 0; i < MAX_CONTAINED_RESOURCES && ret == OC_STACK_OK; i++)
         {
-            OCResource* temp = collResource->rsrcResources[i];
-            if (temp)
+            if (collResource)
             {
-                //TODO : Add resource type filtering once collections
-                // start supporting queries.
-                ret = BuildResponseRepresentation(temp, &payload);
+                OCResource* temp = collResource->rsrcResources[i];
+                if (temp)
+                {
+                    //TODO : Add resource type filtering once collections
+                    // start supporting queries.
+                    ret = BuildResponseRepresentation(temp, &payload);
+                }
             }
         }
     }
 
-    if(ret == OC_STACK_OK)
+    if (ret == OC_STACK_OK)
     {
         OCEntityHandlerResponse response = {0};
         response.ehResult = OC_EH_OK;
@@ -282,38 +279,30 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCStackResult stackRet = OC_STACK_OK;
-    OCEntityHandlerResult ehResult = OC_EH_ERROR;
     OCResource * collResource = (OCResource *) ehRequest->resource;
 
     OCRepPayload* payload = OCRepPayloadCreate();
-    if(!payload)
+    if (!payload)
     {
-        stackRet = OC_STACK_NO_MEMORY;
+        return OC_STACK_NO_MEMORY;
     }
 
-    if(stackRet == OC_STACK_OK)
+    if (collResource)
     {
-        if (collResource)
-        {
-            OCRepPayloadSetUri(payload, collResource->uri);
-        }
+        OCRepPayloadSetUri(payload, collResource->uri);
     }
 
-    if(stackRet == OC_STACK_OK)
-    {
-        OCEntityHandlerResponse response = {0};
-        response.ehResult = OC_EH_OK;
-        response.payload = (OCPayload*)payload;
-        response.persistentBufferFlag = 0;
-        response.requestHandle = (OCRequestHandle) ehRequest->requestHandle;
-        response.resourceHandle = (OCResourceHandle) collResource;
-        stackRet = OCDoResponse(&response);
-    }
+    OCEntityHandlerResponse response = {0};
+    response.ehResult = OC_EH_OK;
+    response.payload = (OCPayload*)payload;
+    response.persistentBufferFlag = 0;
+    response.requestHandle = (OCRequestHandle) ehRequest->requestHandle;
+    response.resourceHandle = (OCResourceHandle) collResource;
+    OCStackResult stackRet = OCDoResponse(&response);
 
     if (stackRet == OC_STACK_OK)
     {
-        for  (uint8_t i = 0; i < MAX_CONTAINED_RESOURCES; i++)
+        for (uint8_t i = 0; i < MAX_CONTAINED_RESOURCES; i++)
         {
             OCResource* temp = collResource->rsrcResources[i];
             if (temp)
@@ -323,17 +312,17 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
                 // is ehRequest->resource
                 ehRequest->resource = (OCResourceHandle) temp;
 
-                ehResult = temp->entityHandler(OC_REQUEST_FLAG, ehRequest,
-                                        temp->entityHandlerCallbackParam);
+                OCEntityHandlerResult ehResult = temp->entityHandler(OC_REQUEST_FLAG, ehRequest,
+                                                                     temp->entityHandlerCallbackParam);
 
                 // The default collection handler is returning as OK
-                if(stackRet != OC_STACK_SLOW_RESOURCE)
+                if (stackRet != OC_STACK_SLOW_RESOURCE)
                 {
                     stackRet = OC_STACK_OK;
                 }
                 // if a single resource is slow, then entire response will be treated
                 // as slow response
-                if(ehResult == OC_EH_SLOW)
+                if (ehResult == OC_EH_SLOW)
                 {
                     OC_LOG(INFO, TAG, "This is a slow resource");
                     ((OCServerRequest *)ehRequest->requestHandle)->slowFlag = 1;
@@ -352,7 +341,7 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
 uint8_t GetNumOfResourcesInCollection (OCResource *resource)
 {
-    if(resource)
+    if (resource)
     {
         uint8_t num = 0;
         for (uint8_t i = 0; i < MAX_CONTAINED_RESOURCES; i++)
@@ -374,14 +363,10 @@ uint8_t GetNumOfResourcesInCollection (OCResource *resource)
 OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                                               OCEntityHandlerRequest *ehRequest)
 {
-    if(!ehRequest || !ehRequest->query)
+    if (!ehRequest || !ehRequest->query)
     {
         return OC_STACK_INVALID_PARAM;
     }
-
-    OCStackResult result = OC_STACK_ERROR;
-    OCStackIfTypes ifQueryParam = STACK_IF_INVALID;
-    char *rtQueryParam = NULL;
 
     OC_LOG_V(INFO, TAG, "DefaultCollectionEntityHandler with query %s", ehRequest->query);
 
@@ -390,8 +375,10 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
         return OC_STACK_ERROR;
     }
 
-    result = ValidateQuery (ehRequest->query,
-                            ehRequest->resource, &ifQueryParam, &rtQueryParam);
+    OCStackIfTypes ifQueryParam = STACK_IF_INVALID;
+    char *rtQueryParam = NULL;
+    OCStackResult result = ValidateQuery (ehRequest->query,
+                                          ehRequest->resource, &ifQueryParam, &rtQueryParam);
 
     if (result != OC_STACK_OK)
     {
