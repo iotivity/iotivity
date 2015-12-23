@@ -65,7 +65,7 @@ void OCPayloadDestroy(OCPayload* payload)
            OCRDPayloadDestroy((OCRDPayload*)payload);
            break;
         default:
-            OC_LOG_V(ERROR, TAG, "Unsupported payload type in destroy: %d", payload->type);
+            OIC_LOG_V(ERROR, TAG, "Unsupported payload type in destroy: %d", payload->type);
             OICFree(payload);
             break;
     }
@@ -157,7 +157,7 @@ static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue*
             }
             break;
         default:
-            OC_LOG(ERROR, TAG, "CopyPropertyValueArray invalid type");
+            OIC_LOG(ERROR, TAG, "CopyPropertyValueArray invalid type");
             break;
     }
 }
@@ -240,7 +240,7 @@ static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
                 break;
             case OCREP_PROP_NULL:
             case OCREP_PROP_ARRAY:
-                OC_LOG_V(ERROR, TAG, "FreeRepPayloadValueContents: Illegal type\
+                OIC_LOG_V(ERROR, TAG, "FreeRepPayloadValueContents: Illegal type\
                         inside an array: %d", val->arr.type);
                 break;
         }
@@ -357,7 +357,7 @@ static OCRepPayloadValue* OCRepPayloadFindAndSetValue(OCRepPayload* payload, con
         val = val->next;
     }
 
-    OC_LOG(ERROR, TAG, "FindAndSetValue reached point after while loop, pointer corruption?");
+    OIC_LOG(ERROR, TAG, "FindAndSetValue reached point after while loop, pointer corruption?");
     return NULL;
 }
 

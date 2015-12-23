@@ -71,17 +71,17 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
     #undef CborNeedsUpdating
     if (!payload)
     {
-        OC_LOG(ERROR, TAG, "Payload parameter NULL");
+        OIC_LOG(ERROR, TAG, "Payload parameter NULL");
         return OC_STACK_INVALID_PARAM;
     }
 
     if (!outPayload || !size)
     {
-        OC_LOG(ERROR, TAG, "Out parameter/s parameter NULL");
+        OIC_LOG(ERROR, TAG, "Out parameter/s parameter NULL");
         return OC_STACK_INVALID_PARAM;
     }
 
-    OC_LOG_V(INFO, TAG, "Converting payload of type %d", payload->type);
+    OIC_LOG_V(INFO, TAG, "Converting payload of type %d", payload->type);
 
     size_t curSize = INIT_SIZE;
     uint8_t* out = (uint8_t*)OICCalloc(1, curSize);
@@ -150,7 +150,7 @@ static int64_t OCConvertPayloadHelper(OCPayload* payload, uint8_t* outPayload, s
         case PAYLOAD_TYPE_RD:
             return OCRDPayloadToCbor((OCRDPayload*)payload, outPayload, size);
         default:
-            OC_LOG_V(INFO,TAG, "ConvertPayload default %d", payload->type);
+            OIC_LOG_V(INFO,TAG, "ConvertPayload default %d", payload->type);
             return OC_STACK_NOTIMPL;
     }
 }
@@ -164,7 +164,7 @@ static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload
     }
     else if (err != 0)
     {
-        OC_LOG_V(ERROR, TAG, "Convert Payload failed : %zd", err);
+        OIC_LOG_V(ERROR, TAG, "Convert Payload failed : %zd", err);
         return err;
     }
     else
@@ -497,7 +497,7 @@ static int64_t OCConvertArrayItem(CborEncoder* array, const OCRepPayloadValueArr
     switch (valArray->type)
     {
         case OCREP_PROP_NULL:
-            OC_LOG(ERROR, TAG, "ConvertArray Invalid NULL");
+            OIC_LOG(ERROR, TAG, "ConvertArray Invalid NULL");
             err = CborUnknownError;
             break;
         case OCREP_PROP_INT:
@@ -542,7 +542,7 @@ static int64_t OCConvertArrayItem(CborEncoder* array, const OCRepPayloadValueArr
             }
             break;
         case OCREP_PROP_ARRAY:
-            OC_LOG(ERROR, TAG, "ConvertArray Invalid child array");
+            OIC_LOG(ERROR, TAG, "ConvertArray Invalid child array");
             err = CborUnknownError;
             break;
     }
@@ -648,7 +648,7 @@ static int64_t OCConvertSingleRepPayload(CborEncoder* repMap, const OCRepPayload
                 err = err | OCConvertArray(repMap, &value->arr);
                 break;
             default:
-                OC_LOG_V(ERROR, TAG, "Invalid Prop type: %d",
+                OIC_LOG_V(ERROR, TAG, "Invalid Prop type: %d",
                         value->type);
                 break;
         }
@@ -669,7 +669,7 @@ static int64_t OCConvertRepPayload(OCRepPayload* payload, uint8_t* outPayload, s
 
     if (payload->types)
     {
-        OC_LOG(INFO, TAG, "Payload has types or interfaces");
+        OIC_LOG(INFO, TAG, "Payload has types or interfaces");
         char* joinedTypes = OCStringLLJoin(payload->types);
         if (joinedTypes)
         {

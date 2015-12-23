@@ -53,9 +53,9 @@
 #define TAG "OIC_RI_RESOURCE"
 
 #define VERIFY_SUCCESS(op, successCode) { if (op != successCode) \
-            {OC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
+            {OIC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 
-#define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OC_LOG((logLevel), \
+#define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OIC_LOG((logLevel), \
              TAG, #arg " is NULL"); return (retVal); } }
 
 extern OCResource *headResource;
@@ -123,7 +123,7 @@ static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char
     *filterOne = NULL;
     *filterTwo = NULL;
 
-    OC_LOG_V(INFO, TAG, "Extracting params from %s", query);
+    OIC_LOG_V(INFO, TAG, "Extracting params from %s", query);
 
     char *keyValuePair = strtok_r (query, OC_QUERY_SEPARATOR, &restOfQuery);
 
@@ -131,7 +131,7 @@ static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char
     {
         if (numKeyValuePairsParsed >= 2)
         {
-            OC_LOG(ERROR, TAG, "More than 2 queries params in URI.");
+            OIC_LOG(ERROR, TAG, "More than 2 queries params in URI.");
             return OC_STACK_INVALID_QUERY;
         }
 
@@ -151,7 +151,7 @@ static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char
         }
         else
         {
-            OC_LOG_V(ERROR, TAG, "Unsupported query key: %s", key);
+            OIC_LOG_V(ERROR, TAG, "Unsupported query key: %s", key);
             return OC_STACK_INVALID_QUERY;
         }
         ++numKeyValuePairsParsed;
@@ -159,7 +159,7 @@ static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char
         keyValuePair = strtok_r(NULL, OC_QUERY_SEPARATOR, &restOfQuery);
     }
 
-    OC_LOG_V(INFO, TAG, "Extracted params %s and %s.", *filterOne, *filterTwo);
+    OIC_LOG_V(INFO, TAG, "Extracted params %s and %s.", *filterOne, *filterTwo);
     return OC_STACK_OK;
 }
 
@@ -211,7 +211,7 @@ static OCStackResult getQueryParamsForFiltering (OCVirtualResources uri, char *q
     if (uri == OC_PRESENCE)
     {
         //Nothing needs to be done, except for pass a OC_PRESENCE query through as OC_STACK_OK.
-        OC_LOG(INFO, TAG, "OC_PRESENCE Request for virtual resource.");
+        OIC_LOG(INFO, TAG, "OC_PRESENCE Request for virtual resource.");
         return OC_STACK_OK;
     }
     #endif
@@ -336,7 +336,7 @@ OCResource *FindResourceByUri(const char* resourceUri)
         }
         pointer = pointer->next;
     }
-    OC_LOG_V(INFO, TAG, "Resource %s not found", resourceUri);
+    OIC_LOG_V(INFO, TAG, "Resource %s not found", resourceUri);
     return NULL;
 }
 
@@ -350,12 +350,12 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
         return OC_STACK_INVALID_PARAM;
     }
 
-    OC_LOG_V(INFO, TAG, "DetermineResourceHandling for %s", request->resourceUrl);
+    OIC_LOG_V(INFO, TAG, "DetermineResourceHandling for %s", request->resourceUrl);
 
     // Check if virtual resource
     if (GetTypeOfVirtualURI(request->resourceUrl) != OC_UNKNOWN_URI)
     {
-        OC_LOG_V (INFO, TAG, "%s is virtual", request->resourceUrl);
+        OIC_LOG_V (INFO, TAG, "%s is virtual", request->resourceUrl);
         *handling = OC_RESOURCE_VIRTUAL;
         *resource = headResource;
         return OC_STACK_OK;
@@ -473,7 +473,7 @@ static bool resourceMatchesRTFilter(OCResource *resource, char *resourceTypeFilt
         resourceTypePtr = resourceTypePtr->next;
     }
 
-    OC_LOG_V(INFO, TAG, "%s does not contain rt=%s.", resource->uri, resourceTypeFilter);
+    OIC_LOG_V(INFO, TAG, "%s does not contain rt=%s.", resource->uri, resourceTypeFilter);
     return false;
 }
 
@@ -501,7 +501,7 @@ static bool resourceMatchesIFFilter(OCResource *resource, char *interfaceFilter)
         interfacePtr = interfacePtr->next;
     }
 
-    OC_LOG_V(INFO, TAG, "%s does not contain if=%s.", resource->uri, interfaceFilter);
+    OIC_LOG_V(INFO, TAG, "%s does not contain if=%s.", resource->uri, interfaceFilter);
     return false;
 }
 
@@ -516,7 +516,7 @@ static bool includeThisResourceInResponse(OCResource *resource,
 {
     if (!resource)
     {
-        OC_LOG(ERROR, TAG, "Invalid resource");
+        OIC_LOG(ERROR, TAG, "Invalid resource");
         return false;
     }
 
@@ -529,7 +529,7 @@ static bool includeThisResourceInResponse(OCResource *resource,
         if (!((interfaceFilter && *interfaceFilter ) ||
               (resourceTypeFilter && *resourceTypeFilter)))
         {
-            OC_LOG_V(INFO, TAG, "%s no query string for EXPLICIT_DISCOVERABLE \
+            OIC_LOG_V(INFO, TAG, "%s no query string for EXPLICIT_DISCOVERABLE \
                 resource", resource->uri);
             return false;
         }
@@ -537,7 +537,7 @@ static bool includeThisResourceInResponse(OCResource *resource,
     else if ( !(resource->resourceProperties & OC_ACTIVE) ||
          !(resource->resourceProperties & OC_DISCOVERABLE))
     {
-        OC_LOG_V(INFO, TAG, "%s not ACTIVE or DISCOVERABLE", resource->uri);
+        OIC_LOG_V(INFO, TAG, "%s not ACTIVE or DISCOVERABLE", resource->uri);
         return false;
     }
 
@@ -649,7 +649,7 @@ static OCStackResult checkResourceExistsAtRD(const char *interfaceType, const ch
     }
     else
     {
-        OC_LOG_V(ERROR, TAG, "The resource type or interface type doe not exist \
+        OIC_LOG_V(ERROR, TAG, "The resource type or interface type doe not exist \
                              on the resource directory");
     }
     return OC_STACK_ERROR;
@@ -668,7 +668,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     bool bMulticast    = false;     // Was the discovery request a multicast request?
     OCPayload* payload = NULL;
 
-    OC_LOG(INFO, TAG, "Entering HandleVirtualResource");
+    OIC_LOG(INFO, TAG, "Entering HandleVirtualResource");
 
     OCVirtualResources virtualUriInRequest = GetTypeOfVirtualURI (request->resourceUrl);
 
@@ -734,7 +734,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         }
         else
         {
-            OC_LOG_V(ERROR, TAG, "Error (%d) parsing query.", discoveryResult);
+            OIC_LOG_V(ERROR, TAG, "Error (%d) parsing query.", discoveryResult);
         }
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
@@ -774,7 +774,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     else if (OC_GATEWAY_URI == virtualUriInRequest)
     {
         // Received request for a gateway
-        OC_LOG(INFO, TAG, "Request is for Gateway Virtual Request");
+        OIC_LOG(INFO, TAG, "Request is for Gateway Virtual Request");
         discoveryResult = RMHandleGatewayRequest(request, resource);
 
     }
@@ -815,7 +815,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         else if(bMulticast == false && (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
                (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
         {
-            OC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d)  \
+            OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d)  \
                 discovery request", discoveryResult, virtualUriInRequest);
             SendNonPersistantDiscoveryResponse(request, resource, NULL,
                 (discoveryResult == OC_STACK_NO_RESOURCE) ? OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR);
@@ -823,7 +823,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         else
         {
             // Ignoring the discovery request as per RFC 7252, Section #8.2
-            OC_LOG(INFO, TAG, "Silently ignoring the request since device does not have \
+            OIC_LOG(INFO, TAG, "Silently ignoring the request since device does not have \
                 any useful data to send");
         }
     }
@@ -845,7 +845,7 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     OCEntityHandlerRequest ehRequest = {0};
 
-    OC_LOG(INFO, TAG, "Entering HandleResourceWithDefaultDeviceEntityHandler");
+    OIC_LOG(INFO, TAG, "Entering HandleResourceWithDefaultDeviceEntityHandler");
     result = FormOCEntityHandlerRequest(&ehRequest,
                                         (OCRequestHandle) request,
                                         request->method,
@@ -865,7 +865,7 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
                                   (char*) request->resourceUrl, defaultDeviceHandlerCallbackParameter);
     if(ehResult == OC_EH_SLOW)
     {
-        OC_LOG(INFO, TAG, "This is a slow resource");
+        OIC_LOG(INFO, TAG, "This is a slow resource");
         request->slowFlag = 1;
     }
     else if(ehResult == OC_EH_ERROR)
@@ -895,7 +895,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
 
     OCEntityHandlerRequest ehRequest = {0};
 
-    OC_LOG(INFO, TAG, "Entering HandleResourceWithEntityHandler");
+    OIC_LOG(INFO, TAG, "Entering HandleResourceWithEntityHandler");
     OCPayloadType type = PAYLOAD_TYPE_REPRESENTATION;
     // check the security resource
     if (request && request->resourceUrl && SRMIsSecurityResourceURI(request->resourceUrl))
@@ -926,22 +926,22 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
 
     if(ehRequest.obsInfo.action == OC_OBSERVE_NO_OPTION)
     {
-        OC_LOG(INFO, TAG, "No observation requested");
+        OIC_LOG(INFO, TAG, "No observation requested");
         ehFlag = OC_REQUEST_FLAG;
     }
     else if(ehRequest.obsInfo.action == OC_OBSERVE_REGISTER && !collectionResource)
     {
-        OC_LOG(INFO, TAG, "Observation registration requested");
+        OIC_LOG(INFO, TAG, "Observation registration requested");
 
         ResourceObserver *obs = GetObserverUsingToken (request->requestToken,
                                     request->tokenLength);
 
         if (obs)
         {
-            OC_LOG (INFO, TAG, "Observer with this token already present");
-            OC_LOG (INFO, TAG, "Possibly re-transmitted CON OBS request");
-            OC_LOG (INFO, TAG, "Not adding observer. Not responding to client");
-            OC_LOG (INFO, TAG, "The first request for this token is already ACKED.");
+            OIC_LOG (INFO, TAG, "Observer with this token already present");
+            OIC_LOG (INFO, TAG, "Possibly re-transmitted CON OBS request");
+            OIC_LOG (INFO, TAG, "Not adding observer. Not responding to client");
+            OIC_LOG (INFO, TAG, "The first request for this token is already ACKED.");
 
             // server requests are usually free'd when the response is sent out
             // for the request in ocserverrequest.c : HandleSingleResponse()
@@ -962,7 +962,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
 
         if(result == OC_STACK_OK)
         {
-            OC_LOG(INFO, TAG, "Added observer successfully");
+            OIC_LOG(INFO, TAG, "Added observer successfully");
             request->observeResult = OC_STACK_OK;
             ehFlag = (OCEntityHandlerFlag)(OC_REQUEST_FLAG | OC_OBSERVE_FLAG);
         }
@@ -973,7 +973,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
             // The error in observeResult for the request will be used when responding to this
             // request by omitting the observation option/sequence number.
             request->observeResult = OC_STACK_ERROR;
-            OC_LOG(ERROR, TAG, "Observer Addition failed");
+            OIC_LOG(ERROR, TAG, "Observer Addition failed");
             ehFlag = OC_REQUEST_FLAG;
         }
 
@@ -981,7 +981,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     else if(ehRequest.obsInfo.action == OC_OBSERVE_DEREGISTER &&
             !collectionResource)
     {
-        OC_LOG(INFO, TAG, "Deregistering observation requested");
+        OIC_LOG(INFO, TAG, "Deregistering observation requested");
 
         resObs = GetObserverUsingToken (request->requestToken, request->tokenLength);
 
@@ -999,14 +999,14 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
 
         if(result == OC_STACK_OK)
         {
-            OC_LOG(INFO, TAG, "Removed observer successfully");
+            OIC_LOG(INFO, TAG, "Removed observer successfully");
             request->observeResult = OC_STACK_OK;
         }
         else
         {
             result = OC_STACK_OK;
             request->observeResult = OC_STACK_ERROR;
-            OC_LOG(ERROR, TAG, "Observer Removal failed");
+            OIC_LOG(ERROR, TAG, "Observer Removal failed");
         }
     }
     else
@@ -1018,7 +1018,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     ehResult = resource->entityHandler(ehFlag, &ehRequest, resource->entityHandlerCallbackParam);
     if(ehResult == OC_EH_SLOW)
     {
-        OC_LOG(INFO, TAG, "This is a slow resource");
+        OIC_LOG(INFO, TAG, "This is a slow resource");
         request->slowFlag = 1;
     }
     else if(ehResult == OC_EH_ERROR)
@@ -1084,7 +1084,7 @@ ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerReque
         }
         case OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER:
         {
-            OC_LOG(INFO, TAG, "OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER");
+            OIC_LOG(INFO, TAG, "OC_RESOURCE_NOT_COLLECTION_DEFAULT_ENTITYHANDLER");
             return OC_STACK_ERROR;
         }
         case OC_RESOURCE_NOT_COLLECTION_WITH_ENTITYHANDLER:
@@ -1109,7 +1109,7 @@ ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerReque
         }
         default:
         {
-            OC_LOG(INFO, TAG, "Invalid Resource Determination");
+            OIC_LOG(INFO, TAG, "Invalid Resource Determination");
             return OC_STACK_ERROR;
         }
     }
@@ -1118,7 +1118,7 @@ ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerReque
 
 void DeletePlatformInfo()
 {
-    OC_LOG(INFO, TAG, "Deleting platform info.");
+    OIC_LOG(INFO, TAG, "Deleting platform info.");
 
     OICFree(savedPlatformInfo.platformID);
     savedPlatformInfo.platformID = NULL;
@@ -1196,11 +1196,11 @@ OCStackResult SavePlatformInfo(OCPlatformInfo info)
 
     if (res != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to save platform info. errno(%d)", res);
+        OIC_LOG_V(ERROR, TAG, "Failed to save platform info. errno(%d)", res);
     }
     else
     {
-        OC_LOG(INFO, TAG, "Platform info saved.");
+        OIC_LOG(INFO, TAG, "Platform info saved.");
     }
 
     return res;
@@ -1208,7 +1208,7 @@ OCStackResult SavePlatformInfo(OCPlatformInfo info)
 
 void DeleteDeviceInfo()
 {
-    OC_LOG(INFO, TAG, "Deleting device info.");
+    OIC_LOG(INFO, TAG, "Deleting device info.");
 
     OICFree(savedDeviceInfo.deviceName);
     savedDeviceInfo.deviceName = NULL;
@@ -1239,12 +1239,12 @@ OCStackResult SaveDeviceInfo(OCDeviceInfo info)
 
     if(OCGetServerInstanceID() == NULL)
     {
-        OC_LOG(INFO, TAG, "Device ID generation failed");
+        OIC_LOG(INFO, TAG, "Device ID generation failed");
         res =  OC_STACK_ERROR;
         goto exit;
     }
 
-    OC_LOG(INFO, TAG, "Device initialized successfully.");
+    OIC_LOG(INFO, TAG, "Device initialized successfully.");
     return OC_STACK_OK;
 
 exit:

@@ -78,15 +78,15 @@ OCPayload* putPayload()
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1>");
-    OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
-    OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
-    OC_LOG(INFO, TAG, "-t 2 : Discover Resources and"
+    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1|2|3> -c <0|1>");
+    OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
+    OIC_LOG(INFO, TAG, "-t 1 : Discover Resources");
+    OIC_LOG(INFO, TAG, "-t 2 : Discover Resources and"
             " Initiate Nonconfirmable Get/Put/Post Requests");
-    OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate "
+    OIC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate "
             "Confirmable Get/Put/Post Requests");
-    OC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
-    OC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
+    OIC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
+    OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
 }
 
 /*
@@ -117,7 +117,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 
     if (ret != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d",
+        OIC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d",
                  ret, method);
     }
 
@@ -129,21 +129,21 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle /*handle*/,
 {
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(INFO, TAG, "<====Callback Context for PUT received successfully====>");
+        OIC_LOG(INFO, TAG, "<====Callback Context for PUT received successfully====>");
     }
     else
     {
-        OC_LOG(ERROR, TAG, "<====Callback Context for PUT fail====>");
+        OIC_LOG(ERROR, TAG, "<====Callback Context for PUT fail====>");
     }
 
     if(clientResponse)
     {
-        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OC_LOG(INFO, TAG, ("=============> Put Response"));
+        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OIC_LOG(INFO, TAG, ("=============> Put Response"));
     }
     else
     {
-        OC_LOG(ERROR, TAG, "<====PUT Callback fail to receive clientResponse====>\n");
+        OIC_LOG(ERROR, TAG, "<====PUT Callback fail to receive clientResponse====>\n");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -153,21 +153,21 @@ OCStackApplicationResult postReqCB(void *ctx, OCDoHandle /*handle*/,
 {
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(INFO, TAG, "<====Callback Context for POST received successfully====>");
+        OIC_LOG(INFO, TAG, "<====Callback Context for POST received successfully====>");
     }
     else
     {
-        OC_LOG(ERROR, TAG, "<====Callback Context for POST fail====>");
+        OIC_LOG(ERROR, TAG, "<====Callback Context for POST fail====>");
     }
 
     if(clientResponse)
     {
-        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OC_LOG(INFO, TAG, ("=============> Post Response"));
+        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OIC_LOG(INFO, TAG, ("=============> Post Response"));
     }
     else
     {
-        OC_LOG(ERROR, TAG, "<====POST Callback fail to receive clientResponse====>\n");
+        OIC_LOG(ERROR, TAG, "<====POST Callback fail to receive clientResponse====>\n");
     }
 
     return OC_STACK_DELETE_TRANSACTION;
@@ -178,33 +178,33 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
 {
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(INFO, TAG, "<====Callback Context for GET received successfully====>");
+        OIC_LOG(INFO, TAG, "<====Callback Context for GET received successfully====>");
     }
     else
     {
-        OC_LOG(ERROR, TAG, "<====Callback Context for GET fail====>");
+        OIC_LOG(ERROR, TAG, "<====Callback Context for GET fail====>");
     }
 
     if (clientResponse)
     {
-        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OC_LOG(INFO, TAG, ("=============> Get Response"));
+        OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+        OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OIC_LOG(INFO, TAG, ("=============> Get Response"));
 
         if (clientResponse->numRcvdVendorSpecificHeaderOptions > 0 )
         {
-            OC_LOG (INFO, TAG, "Received vendor specific options");
+            OIC_LOG (INFO, TAG, "Received vendor specific options");
             uint8_t i = 0;
             OCHeaderOption * rcvdOptions = clientResponse->rcvdVendorSpecificHeaderOptions;
             for (i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
             {
                 if (((OCHeaderOption) rcvdOptions[i]).protocolID == OC_COAP_ID)
                 {
-                    OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
+                    OIC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
                             ((OCHeaderOption)rcvdOptions[i]).optionID );
 
-                    OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
+                    OIC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
                         MAX_HEADER_OPTION_DATA_LENGTH);
                 }
             }
@@ -212,7 +212,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
     }
     else
     {
-        OC_LOG(ERROR, TAG, "<====GET Callback fail to receive clientResponse====>\n");
+        OIC_LOG(ERROR, TAG, "<====GET Callback fail to receive clientResponse====>\n");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -225,27 +225,27 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 {
     if (ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(INFO, TAG, "\n<====Callback Context for DISCOVERY query "
+        OIC_LOG(INFO, TAG, "\n<====Callback Context for DISCOVERY query "
                "received successfully====>");
     }
     else
     {
-        OC_LOG(ERROR, TAG, "\n<====Callback Context for DISCOVERY fail====>");
+        OIC_LOG(ERROR, TAG, "\n<====Callback Context for DISCOVERY fail====>");
     }
 
     if (clientResponse)
     {
-        OC_LOG_V(INFO, TAG,
+        OIC_LOG_V(INFO, TAG,
                 "Device =============> Discovered @ %s:%d",
                 clientResponse->devAddr.addr,
                 clientResponse->devAddr.port);
-        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
         collectUniqueResource(clientResponse);
     }
     else
     {
-        OC_LOG(ERROR, TAG, "<====DISCOVERY Callback fail to receive clientResponse====>\n");
+        OIC_LOG(ERROR, TAG, "<====DISCOVERY Callback fail to receive clientResponse====>\n");
     }
     return (UnicastDiscovery) ?
            OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
@@ -259,11 +259,11 @@ int InitPutRequest(OCQualityOfService qos)
 
     if(!resource)
     {
-        OC_LOG_V(ERROR, TAG, "Resource null, can't do PUT request\n");
+        OIC_LOG_V(ERROR, TAG, "Resource null, can't do PUT request\n");
         return -1;
     }
     query << resource->uri;
-    OC_LOG_V(INFO, TAG,"Executing InitPutRequest, Query: %s", query.str().c_str());
+    OIC_LOG_V(INFO, TAG,"Executing InitPutRequest, Query: %s", query.str().c_str());
 
     return (InvokeOCDoResource(query, OC_REST_PUT, &resource->endpoint,
            ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
@@ -279,12 +279,12 @@ int InitPostRequest(OCQualityOfService qos)
 
     if(!resource)
     {
-        OC_LOG_V(ERROR, TAG, "Resource null, can't do POST request\n");
+        OIC_LOG_V(ERROR, TAG, "Resource null, can't do POST request\n");
         return -1;
     }
 
     query << resource->uri;
-    OC_LOG_V(INFO, TAG,"Executing InitPostRequest, Query: %s", query.str().c_str());
+    OIC_LOG_V(INFO, TAG,"Executing InitPostRequest, Query: %s", query.str().c_str());
 
     // First POST operation (to create an LED instance)
     result = InvokeOCDoResource(query, OC_REST_POST, &resource->endpoint,
@@ -293,7 +293,7 @@ int InitPostRequest(OCQualityOfService qos)
     if (OC_STACK_OK != result)
     {
         // Error can happen if for example, network connectivity is down
-        OC_LOG(ERROR, TAG, "First POST call did not succeed");
+        OIC_LOG(ERROR, TAG, "First POST call did not succeed");
     }
 
     // Second POST operation (to create an LED instance)
@@ -302,7 +302,7 @@ int InitPostRequest(OCQualityOfService qos)
             postReqCB, NULL, 0);
     if (OC_STACK_OK != result)
     {
-        OC_LOG(ERROR, TAG, "Second POST call did not succeed");
+        OIC_LOG(ERROR, TAG, "Second POST call did not succeed");
     }
 
     // This POST operation will update the original resourced /a/led
@@ -319,11 +319,11 @@ int InitGetRequest(OCQualityOfService qos)
 
     if(!resource)
     {
-        OC_LOG_V(ERROR, TAG, "Resource null, can't do GET request\n");
+        OIC_LOG_V(ERROR, TAG, "Resource null, can't do GET request\n");
         return -1;
     }
     query << resource->uri;
-    OC_LOG_V(INFO, TAG,"Executing InitGetRequest, Query: %s", query.str().c_str());
+    OIC_LOG_V(INFO, TAG,"Executing InitGetRequest, Query: %s", query.str().c_str());
 
     return (InvokeOCDoResource(query, OC_REST_GET, &resource->endpoint,
             (qos == OC_HIGH_QOS)?OC_HIGH_QOS:OC_LOW_QOS, getReqCB, NULL, 0));
@@ -338,9 +338,9 @@ int InitDiscovery()
 
     if (UnicastDiscovery)
     {
-        OC_LOG(INFO, TAG, "Enter IP address (with optional port) of the Server hosting resource\n");
-        OC_LOG(INFO, TAG, "IPv4: 192.168.0.15:45454\n");
-        OC_LOG(INFO, TAG, "IPv6: [fe80::20c:29ff:fe1b:9c5]:45454\n");
+        OIC_LOG(INFO, TAG, "Enter IP address (with optional port) of the Server hosting resource\n");
+        OIC_LOG(INFO, TAG, "IPv4: 192.168.0.15:45454\n");
+        OIC_LOG(INFO, TAG, "IPv6: [fe80::20c:29ff:fe1b:9c5]:45454\n");
 
         if (fgets(ipaddr, sizeof (ipaddr), stdin))
         {
@@ -348,7 +348,7 @@ int InitDiscovery()
         }
         else
         {
-            OC_LOG(ERROR, TAG, "!! Bad input for IP address. !!");
+            OIC_LOG(ERROR, TAG, "!! Bad input for IP address. !!");
             return OC_STACK_INVALID_PARAM;
         }
     }
@@ -363,7 +363,7 @@ int InitDiscovery()
                        OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
     return ret;
 }
@@ -416,17 +416,17 @@ void collectUniqueResource(const OCClientResponse * clientResponse)
         {
             if(insertResource(sidStr, res->uri, clientResponse) == 1)
             {
-                OC_LOG_V(INFO,TAG,"%s%s%s%s\n",sidStr, ":", res->uri, " is new");
+                OIC_LOG_V(INFO,TAG,"%s%s%s%s\n",sidStr, ":", res->uri, " is new");
                 printResourceList();
                 queryResource();
             }
             else {
-                OC_LOG_V(INFO,TAG,"%s%s%s%s\n",sidStr, ":", res->uri, " is old");
+                OIC_LOG_V(INFO,TAG,"%s%s%s%s\n",sidStr, ":", res->uri, " is old");
             }
         }
         else
         {
-            OC_LOG(ERROR, TAG, "Could Not Retrieve the Server ID");
+            OIC_LOG(ERROR, TAG, "Could Not Retrieve the Server ID");
         }
 
         res = res->next;
@@ -469,7 +469,7 @@ int insertResource(const char * sid, char const * uri,
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Memory not allocated to ResourceNode");
+        OIC_LOG(ERROR, TAG, "Memory not allocated to ResourceNode");
         OICFree(sid_cpy);
         OICFree(uri_cpy);
         return -1;
@@ -492,37 +492,37 @@ void printResourceList()
 {
     ResourceNode * iter;
     iter = resourceList;
-    OC_LOG(INFO, TAG, "Resource List: ");
+    OIC_LOG(INFO, TAG, "Resource List: ");
     while(iter)
     {
-        OC_LOG(INFO, TAG, "*****************************************************");
-        OC_LOG_V(INFO, TAG, "sid = %s",iter->sid);
-        OC_LOG_V(INFO, TAG, "uri = %s", iter->uri);
-        OC_LOG_V(INFO, TAG, "ip = %s", iter->endpoint.addr);
-        OC_LOG_V(INFO, TAG, "port = %d", iter->endpoint.port);
+        OIC_LOG(INFO, TAG, "*****************************************************");
+        OIC_LOG_V(INFO, TAG, "sid = %s",iter->sid);
+        OIC_LOG_V(INFO, TAG, "uri = %s", iter->uri);
+        OIC_LOG_V(INFO, TAG, "ip = %s", iter->endpoint.addr);
+        OIC_LOG_V(INFO, TAG, "port = %d", iter->endpoint.port);
         switch (iter->endpoint.adapter)
         {
             case OC_ADAPTER_IP:
-                OC_LOG(INFO, TAG, "connType = Default (IPv4)");
+                OIC_LOG(INFO, TAG, "connType = Default (IPv4)");
                 break;
             case OC_ADAPTER_GATT_BTLE:
-                OC_LOG(INFO, TAG, "connType = BLE");
+                OIC_LOG(INFO, TAG, "connType = BLE");
                 break;
             case OC_ADAPTER_RFCOMM_BTEDR:
-                OC_LOG(INFO, TAG, "connType = BT");
+                OIC_LOG(INFO, TAG, "connType = BT");
                 break;
             default:
-                OC_LOG(INFO, TAG, "connType = Invalid connType");
+                OIC_LOG(INFO, TAG, "connType = Invalid connType");
                 break;
         }
-        OC_LOG(INFO, TAG, "*****************************************************");
+        OIC_LOG(INFO, TAG, "*****************************************************");
         iter = iter->next;
     }
 }
 
 void freeResourceList()
 {
-    OC_LOG(INFO, TAG, "Freeing ResourceNode List");
+    OIC_LOG(INFO, TAG, "Freeing ResourceNode List");
     ResourceNode * temp;
     while(resourceList)
     {
@@ -570,7 +570,7 @@ int main(int argc, char* argv[])
     /* Initialize OCStack*/
     if (OCInit1(OC_CLIENT, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 
@@ -580,7 +580,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        OC_LOG(INFO, TAG, "Default Connectivity type selected");
+        OIC_LOG(INFO, TAG, "Default Connectivity type selected");
         PrintUsage();
     }
 
@@ -593,17 +593,17 @@ int main(int argc, char* argv[])
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
         sleep(2);
     }
 
     freeResourceList();
-    OC_LOG(INFO, TAG, "Exiting occlient main loop...");
+    OIC_LOG(INFO, TAG, "Exiting occlient main loop...");
     if (OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack stop error");
+        OIC_LOG(ERROR, TAG, "OCStack stop error");
     }
     return 0;
 }

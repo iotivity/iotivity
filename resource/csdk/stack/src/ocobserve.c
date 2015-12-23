@@ -40,7 +40,7 @@
 
 #define TAG  "OIC_RI_OBSERVE"
 
-#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
+#define VERIFY_NON_NULL(arg) { if (!arg) {OIC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 
 static struct ResourceObserver * g_serverObsList = NULL;
 /**
@@ -59,7 +59,7 @@ static OCQualityOfService DetermineObserverQoS(OCMethod method,
 {
     if (!resourceObserver)
     {
-        OC_LOG(ERROR, TAG, "DetermineObserverQoS called with invalid resourceObserver");
+        OIC_LOG(ERROR, TAG, "DetermineObserverQoS called with invalid resourceObserver");
         return OC_NA_QOS;
     }
 
@@ -71,7 +71,7 @@ static OCQualityOfService DetermineObserverQoS(OCMethod method,
 
     if (appQoS != OC_HIGH_QOS)
     {
-        OC_LOG_V(INFO, TAG, "Current NON count for this observer is %d",
+        OIC_LOG_V(INFO, TAG, "Current NON count for this observer is %d",
                 resourceObserver->lowQosCount);
 #ifdef WITH_PRESENCE
         if ((resourceObserver->forceHighQos \
@@ -85,7 +85,7 @@ static OCQualityOfService DetermineObserverQoS(OCMethod method,
             resourceObserver->lowQosCount = 0;
             // at some point we have to to send CON to check on the
             // availability of observer
-            OC_LOG(INFO, TAG, "This time we are sending the  notification as High qos");
+            OIC_LOG(INFO, TAG, "This time we are sending the  notification as High qos");
             decidedQoS = OC_HIGH_QOS;
         }
         else
@@ -104,7 +104,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
         OCQualityOfService qos)
 #endif
 {
-    OC_LOG(INFO, TAG, "Entering SendObserverNotification");
+    OIC_LOG(INFO, TAG, "Entering SendObserverNotification");
     if (!resPtr)
     {
         return OC_STACK_INVALID_PARAM;
@@ -175,7 +175,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                 OCEntityHandlerResponse ehResponse = {0};
 
                 //This is effectively the implementation for the presence entity handler.
-                OC_LOG(DEBUG, TAG, "This notification is for Presence");
+                OIC_LOG(DEBUG, TAG, "This notification is for Presence");
                 result = AddServerRequest(&request, 0, 0, 1, OC_REST_GET,
                         0, resPtr->sequenceNum, qos, resourceObserver->query,
                         NULL, NULL,
@@ -222,12 +222,12 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
 
     if (numObs == 0)
     {
-        OC_LOG(INFO, TAG, "Resource has no observers");
+        OIC_LOG(INFO, TAG, "Resource has no observers");
         result = OC_STACK_NO_OBSERVERS;
     }
     else if (observeErrorFlag)
     {
-        OC_LOG(ERROR, TAG, "Observer notification error");
+        OIC_LOG(ERROR, TAG, "Observer notification error");
         result = OC_STACK_ERROR;
     }
     return result;
@@ -252,7 +252,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
     OCStackResult result = OC_STACK_ERROR;
     bool observeErrorFlag = false;
 
-    OC_LOG(INFO, TAG, "Entering SendListObserverNotification");
+    OIC_LOG(INFO, TAG, "Entering SendListObserverNotification");
     while(numIds)
     {
         observer = GetObserverUsingId (*obsIdList);
@@ -290,7 +290,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                         result = OCDoResponse(&ehResponse);
                         if (result == OC_STACK_OK)
                         {
-                            OC_LOG_V(INFO, TAG, "Observer id %d notified.", *obsIdList);
+                            OIC_LOG_V(INFO, TAG, "Observer id %d notified.", *obsIdList);
 
                             // Increment only if OCDoResponse is successful
                             numSentNotification++;
@@ -300,7 +300,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                         }
                         else
                         {
-                            OC_LOG_V(INFO, TAG, "Error notifying observer id %d.", *obsIdList);
+                            OIC_LOG_V(INFO, TAG, "Error notifying observer id %d.", *obsIdList);
                         }
                     }
                     else
@@ -330,7 +330,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Observer notification error");
+        OIC_LOG(ERROR, TAG, "Observer notification error");
         return OC_STACK_ERROR;
     }
 }
@@ -339,7 +339,7 @@ OCStackResult GenerateObserverId (OCObservationId *observationId)
 {
     ResourceObserver *resObs = NULL;
 
-    OC_LOG(INFO, TAG, "Entering GenerateObserverId");
+    OIC_LOG(INFO, TAG, "Entering GenerateObserverId");
     VERIFY_NON_NULL (observationId);
 
     do
@@ -349,7 +349,7 @@ OCStackResult GenerateObserverId (OCObservationId *observationId)
         resObs = GetObserverUsingId (*observationId);
     } while (NULL != resObs);
 
-    OC_LOG_V(INFO, TAG, "GeneratedObservation ID is %u", *observationId);
+    OIC_LOG_V(INFO, TAG, "GeneratedObservation ID is %u", *observationId);
 
     return OC_STACK_OK;
 exit:
@@ -438,7 +438,7 @@ ResourceObserver* GetObserverUsingId (const OCObservationId observeId)
             }
         }
     }
-    OC_LOG(INFO, TAG, "Observer node not found!!");
+    OIC_LOG(INFO, TAG, "Observer node not found!!");
     return NULL;
 }
 
@@ -448,13 +448,13 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLen
 
     if (token && *token)
     {
-        OC_LOG(INFO, TAG, "Looking for token");
-        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
-        OC_LOG(INFO, TAG, "\tFound token:");
+        OIC_LOG(INFO, TAG, "Looking for token");
+        OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
+        OIC_LOG(INFO, TAG, "\tFound token:");
 
         LL_FOREACH (g_serverObsList, out)
         {
-            OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
+            OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
             if ((memcmp(out->token, token, tokenLength) == 0))
             {
                 return out;
@@ -463,10 +463,10 @@ ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLen
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Passed in NULL token");
+        OIC_LOG(ERROR, TAG, "Passed in NULL token");
     }
 
-    OC_LOG(INFO, TAG, "Observer node not found!!");
+    OIC_LOG(INFO, TAG, "Observer node not found!!");
     return NULL;
 }
 
@@ -480,8 +480,8 @@ OCStackResult DeleteObserverUsingToken (CAToken_t token, uint8_t tokenLength)
     ResourceObserver *obsNode = GetObserverUsingToken (token, tokenLength);
     if (obsNode)
     {
-        OC_LOG_V(INFO, TAG, "deleting observer id  %u with token", obsNode->observeId);
-        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)obsNode->token, tokenLength);
+        OIC_LOG_V(INFO, TAG, "deleting observer id  %u with token", obsNode->observeId);
+        OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)obsNode->token, tokenLength);
         LL_DELETE (g_serverObsList, obsNode);
         OICFree(obsNode->resUri);
         OICFree(obsNode->query);
@@ -527,7 +527,7 @@ CreateObserveHeaderOption (CAHeaderOption_t **caHdrOpt,
 
     if (numOptions > 0 && !ocHdrOpt)
     {
-        OC_LOG (INFO, TAG, "options are NULL though number is non zero");
+        OIC_LOG (INFO, TAG, "options are NULL though number is non zero");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -571,7 +571,7 @@ GetObserveHeaderOption (uint32_t * observationOption,
 
     if (!options || !numOptions)
     {
-        OC_LOG (INFO, TAG, "No options present");
+        OIC_LOG (INFO, TAG, "No options present");
         return OC_STACK_OK;
     }
 

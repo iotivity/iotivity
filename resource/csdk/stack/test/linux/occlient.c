@@ -41,8 +41,8 @@ void handleSigInt(int signum) {
 // This is a function called back when a device is discovered
 OCStackApplicationResult applicationDiscoverCB(
         OCClientResponse * clientResponse) {
-    OC_LOG(INFO, TAG, "Entering applicationDiscoverCB (Application Layer CB)");
-    OC_LOG_V(INFO, TAG, "Device =============> Discovered %s @ %s:%d",
+    OIC_LOG(INFO, TAG, "Entering applicationDiscoverCB (Application Layer CB)");
+    OIC_LOG_V(INFO, TAG, "Device =============> Discovered %s @ %s:%d",
                                     clientResponse->resJSONPayload,
                                     clientResponse->devAddr.addr,
                                     clientResponse->devAddr.port);
@@ -51,11 +51,11 @@ OCStackApplicationResult applicationDiscoverCB(
 }
 
 int main() {
-    OC_LOG_V(INFO, TAG, "Starting occlient on address %s",addr);
+    OIC_LOG_V(INFO, TAG, "Starting occlient on address %s",addr);
 
     /* Initialize OCStack*/
     if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK) {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 
@@ -64,25 +64,27 @@ int main() {
     strcpy(szQueryUri, OC_EXPLICIT_DEVICE_DISCOVERY_URI);
     if (OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS,
             0, 0, 0) != OC_STACK_OK) {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
         return 0;
     }
 
     // Break from loop with Ctrl+C
-    OC_LOG(INFO, TAG, "Entering occlient main loop...");
+    OIC_LOG(INFO, TAG, "Entering occlient main loop...");
     signal(SIGINT, handleSigInt);
     while (!gQuitFlag) {
 
         if (OCProcess() != OC_STACK_OK) {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
 
         sleep(1);
-    }OC_LOG(INFO, TAG, "Exiting occlient main loop...");
+    }
+
+    OIC_LOG(INFO, TAG, "Exiting occlient main loop...");
 
     if (OCStop() != OC_STACK_OK) {
-        OC_LOG(ERROR, TAG, "OCStack stop error");
+        OIC_LOG(ERROR, TAG, "OCStack stop error");
     }
 
     return 0;
