@@ -42,7 +42,6 @@ public final class LogCatFilterSettingsSerializer {
     private static final String KW_NAME        = "name";
     private static final String KW_TAG         = "tag";
     private static final String KW_TEXT        = "text";
-    private static final String KW_PID         = "pid";
     private static final String KW_ROBOTSYSLOG = "robot";
     private static final String KW_LOGLEVEL    = "level";
 

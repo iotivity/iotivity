@@ -20,13 +20,6 @@
 package oic.ctt.ui.views;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
 
 import oic.ctt.ui.Activator;
 import oic.ctt.ui.UIConst;
@@ -34,10 +27,11 @@ import oic.ctt.ui.actions.CreateTestPlanAction;
 import oic.ctt.ui.actions.CreateTestSuiteAction;
 import oic.ctt.ui.actions.DeleteAction;
 import oic.ctt.ui.multipages.TestSuiteMultiPageEditor;
-import oic.ctt.ui.multipages.TestSuiteSpecPage;
-import oic.ctt.ui.util.TestCaseParser;
+import oic.ctt.ui.util.CTLogger;
+import static oic.ctt.ui.types.IDType.*;
+import static oic.ctt.ui.types.ImageFilePathType.*;
+import static oic.ctt.ui.types.ToolTipTextType.*;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -49,17 +43,9 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.text.BadLocationException;
-import org.eclipse.jface.text.FindReplaceDocumentAdapter;
-import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.IRegion;
-import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTreeViewer;
-import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.ICheckStateListener;
 import org.eclipse.jface.viewers.IDoubleClickListener;
-import org.eclipse.jface.viewers.ILabelProvider;
-import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -67,7 +53,6 @@ import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
@@ -78,19 +63,14 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.ViewPart;
-import org.eclipse.ui.texteditor.IDocumentProvider;
-
-import com.nitorcreations.robotframework.eclipseide.editors.RobotFrameworkTextfileEditor;
+import org.slf4j.Logger;
 
 /**
  * This sample class demonstrates how to plug-in a new workbench view. The view
@@ -112,9 +92,12 @@ public class TestSuiteView extends ViewPart {
     /**
      * The ID of the view as specified by the extension.
      */
-    public static final String       ID        = "oic.ctt.ui.views.TestSuiteView";
-    private static TestSuiteSpecPage specpage  = null;
-    public static TreeItem           prev_item = null;
+    public static final String  ID              = TEST_SUITE_VIEW_ID.toString();
+
+    public static TreeItem      prev_item       = null;
+
+    private static final String POPUP_MENU_TEXT = "#PopupMenu";
+    private Logger              logger          = CTLogger.getInstance();
 
     /*
      * The content provider class is responsible for providing objects to the
@@ -125,12 +108,15 @@ public class TestSuiteView extends ViewPart {
      */
 
     static class ViewContentProvider implements IStructuredContentProvider {
+        @Override
         public void inputChanged(Viewer v, Object oldInput, Object newInput) {
         }
 
+        @Override
         public void dispose() {
         }
 
+        @Override
         public Object[] getElements(Object parent) {
             return new String[] {};
         }
@@ -138,10 +124,12 @@ public class TestSuiteView extends ViewPart {
 
     static class ViewLabelProvider extends LabelProvider implements
             ITableLabelProvider {
+        @Override
         public String getColumnText(Object obj, int index) {
             return getText(obj);
         }
 
+        @Override
         public Image getColumnImage(Object obj, int index) {
             return getImage(obj);
         }
@@ -152,187 +140,11 @@ public class TestSuiteView extends ViewPart {
         }
     }
 
-    static class FileTreeContentProvider implements ITreeContentProvider {
-
-        @Override
-        public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-        }
-
-        @Override
-        public void dispose() {
-        }
-
-        @Override
-        public Object[] getElements(Object inputElement) {
-            return getChildren(inputElement);
-        }
-
-        @Override
-        public Object[] getChildren(Object parentElement) {
-            if (parentElement instanceof File) {
-                Object[] child = ((File) parentElement)
-                        .listFiles(new FilenameFilter() {
-
-                            @Override
-                            public boolean accept(File dir, String name) {
-                                if (name.contains(".project")
-                                        || name.endsWith("~")) {
-                                    return false;
-                                } else {
-                                    return true;
-                                }
-                            }
-                        });
-
-                File[] tcname = null;
-
-                if (child == null && ((File) parentElement).isFile()) {
-                    TestCaseParser parser = new TestCaseParser();
-                    LinkedHashMap<Integer, LinkedHashMap<String, String>> list = new LinkedHashMap<Integer, LinkedHashMap<String, String>>();
-                    list = parser.getDocumentHashMap(((File) parentElement)
-                            .getAbsolutePath());
-
-                    if (list != null) {
-                        if (list.size() > 0) {
-                            tcname = new File[list.size()];
-                            for (int i = 0; i < list.size(); i++) {
-                                String tcFullName = list.get(i).get(
-                                        "TC FULL NAME");
-                                File temp = new File(
-                                        ((File) parentElement)
-                                                .getAbsolutePath(),
-                                        tcFullName);
-                                tcname[i] = temp;
-                            }
-                        }
-                    }
-                    return tcname == null ? new Object[0] : tcname;
-                }
-                return child == null ? new Object[0] : child;
-            }
-
-            return new Object[0];
-        }
-
-        @Override
-        public Object getParent(Object element) {
-            return ((File) element).getParentFile();
-        }
-
-        @Override
-        public boolean hasChildren(Object element) {
-            Object[] object = getChildren(element);
-            if (object == null) {
-                System.out.println(element.toString());
-            }
-            return getChildren(element).length > 0;
-        }
-    }
-
-    static class FileTreeLabelProvider implements ILabelProvider {
-        private List  listeners;
-        private Image file;
-        private Image dir;
-        private Image tc;
-
-        public FileTreeLabelProvider() {
-            listeners = new ArrayList();
-            FileInputStream[] fileInputStream = new FileInputStream[3];
-            try {
-
-                File f = new File(UIConst.PROJECT_PATH + "icons/");
-                if (f.exists()) {
-                    try {
-                        fileInputStream[0] = new FileInputStream(
-                                UIConst.PROJECT_PATH + "icons/file2.gif");
-                        file = new Image(null, fileInputStream[0]);
-
-                        fileInputStream[1] = new FileInputStream(
-                                UIConst.PROJECT_PATH + "icons/folder.gif");
-                        dir = new Image(null, fileInputStream[1]);
-
-                        fileInputStream[2] = new FileInputStream(
-                                UIConst.PROJECT_PATH + "icons/test.gif");
-                        tc = new Image(null, fileInputStream[2]);
-                        System.out
-                                .println("Found icons directory(PROJECT_PATH). PATH = "
-                                        + UIConst.PROJECT_PATH + "icons/");
-
-                    } catch (FileNotFoundException e) {
-                        System.out.println("icon error.");
-                    }
-                }
-                for (int i = 0; i < 3; i++) {
-                    if (fileInputStream[i] != null) {
-                        fileInputStream[i].close();
-                    }
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public Image getImage(Object arg0) {
-            Image image = null;
-
-            if (arg0 instanceof File) {
-                if (((File) arg0).isDirectory()) {
-                    image = dir;
-                } else if (((File) arg0).isFile()) {
-                    image = file;
-                } else {
-                    image = tc;
-                }
-            }
-            return image;
-        }
-
-        public String getText(Object arg0) {
-            if (arg0 instanceof File) {
-                String text = ((File) arg0).getName();
-                if (text.length() == 0) {
-                    text = ((File) arg0).getPath();
-                }
-                return text;
-            } else {
-                return (String) arg0;
-            }
-        }
-
-        public void addListener(ILabelProviderListener arg0) {
-            listeners.add(arg0);
-        }
-
-        public void dispose() {
-            // Dispose the images
-            if (dir != null) {
-                dir.dispose();
-            }
-            if (file != null) {
-                file.dispose();
-            }
-            if (tc != null) {
-                tc.dispose();
-            }
-        }
-
-        public boolean isLabelProperty(Object arg0, String arg1) {
-            return false;
-        }
-
-        public void removeListener(ILabelProviderListener arg0) {
-            listeners.remove(arg0);
-        }
-    }
-
     private ITreeContentProvider getContentProvider() {
         return ((ITreeContentProvider) treeViewer.getContentProvider());
     }
 
-    static class NameSorter extends ViewerSorter {
-
-    }
+    static class NameSorter extends ViewerSorter {}
 
     /**
      * The constructor.
@@ -349,9 +161,8 @@ public class TestSuiteView extends ViewPart {
 
     public void createPartControl(Composite parent) {
 
-        UIConst.setAssociateEditorToFile("", "txt", TestSuiteMultiPageEditor.ID); // set
-                                                                                  // file
-                                                                                  // association
+        // set file association
+        UIConst.setAssociateEditorToFile("", "txt", TestSuiteMultiPageEditor.ID);
 
         // Update Test suite view, refresh tree view.
         final Action updateTestSuiteView = new Action("Refresh") {
@@ -359,12 +170,15 @@ public class TestSuiteView extends ViewPart {
             public void run() {
                 super.run();
                 treeViewer.refresh();
-
             }
         };
-        updateTestSuiteView.setToolTipText("Refresh (F5)");
-        updateTestSuiteView.setImageDescriptor(Activator
-                .getImageDescriptor("icons/refresh.gif"));
+
+        updateTestSuiteView.setToolTipText(TOOLTIP_TEXT_REFRESH_TEST_VIEW
+                .toString());
+        updateTestSuiteView
+                .setImageDescriptor(Activator
+                        .getImageDescriptor(IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_REFRESH_ICON
+                                .toString()));
         getViewSite().getActionBars().getToolBarManager()
                 .add(updateTestSuiteView);
 
@@ -388,14 +202,15 @@ public class TestSuiteView extends ViewPart {
         IProject newProjectHandle = root.getProject(UIConst.TESTSUITE_PATH);
 
         if (newProjectHandle != null) {
-            System.out.println("newProjectHandle.getLocation()="
+            logger.info("newProjectHandle.getLocation()="
                     + newProjectHandle.getLocation());
 
             treeViewer = new CheckboxTreeViewer(parent, SWT.BORDER | SWT.CHECK);
 
             if (treeViewer != null) {
-                treeViewer.setContentProvider(new FileTreeContentProvider());
-                treeViewer.setLabelProvider(new FileTreeLabelProvider());
+                treeViewer
+                        .setContentProvider(new FileTreeContentProvider(this));
+                treeViewer.setLabelProvider(new FileTreeLabelProvider(this));
 
                 treeViewer.setSorter(new ViewerSorter());
                 IPath newProjectHandleLocation = newProjectHandle.getLocation();
@@ -406,184 +221,20 @@ public class TestSuiteView extends ViewPart {
                 }
             }
 
-            // get Workbench resouces
+            // get Workbench resources
             IWorkbench workbench = PlatformUI.getWorkbench();
             IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
             final IWorkbenchPage page = window.getActivePage();
 
-            treeViewer.addCheckStateListener(new ICheckStateListener() {
+            ICheckStateListener checkStateListener = new CheckStateListenerThread(
+                    treeViewer, this, createTestPlanAction);
+            treeViewer.addCheckStateListener(checkStateListener);
 
-                public void checkStateChanged(CheckStateChangedEvent e) {
-                    if (e.getChecked()) {
-                        treeViewer.setSubtreeChecked(e.getElement(), true);
-                    } else {
-                        treeViewer.setSubtreeChecked(e.getElement(), false);
-                    }
+            IDoubleClickListener doubleClickListener = new DoubleClickListenerThread(
+                    page, this);
+            treeViewer.addDoubleClickListener(doubleClickListener);
 
-                    File element = (File) e.getElement();
-                    if (element != null) {
-                        if (treeViewer.getChecked(element)) {
-                            while (true) {
-                                File elementParent = element.getParentFile();
-                                if (elementParent != null) {
-                                    element = elementParent;
-                                    if (element != null) {
-                                        if (element.getName().equals(
-                                                UIConst.TESTSUITE_PATH)) {
-                                            break;
-                                        }
-                                        System.out.println(element.getName());
-                                        treeViewer.setChecked(element, true);
-                                    }
-                                } else {
-                                    break;
-                                }
-                            }
-
-                        } else {
-                            while (true) {
-                                if (element != null) {
-                                    element = element.getParentFile();
-                                    if (element != null) {
-                                        System.out.println(element.getName());
-                                        if (element.getName().equals(
-                                                UIConst.TESTSUITE_PATH)) {
-                                            break;
-                                        }
-                                        boolean check = false;
-                                        File[] children = (File[]) ((ITreeContentProvider) treeViewer
-                                                .getContentProvider())
-                                                .getChildren(element);
-                                        for (int i = 0; i < children.length; i++) {
-                                            if (treeViewer
-                                                    .getChecked(children[i])) {
-                                                check = true;
-                                                break;
-                                            }
-                                        }
-                                        if (check == false) {
-                                            treeViewer.setChecked(element,
-                                                    false);
-                                        }
-                                    } else {
-                                        System.out
-                                                .println("[Debug] element is null");
-                                    }
-                                } else {
-                                    System.out
-                                            .println("[Debug] element is null");
-                                }
-
-                            }
-                        }
-
-                        if (getSelectedItems().length > 0) {
-                            createTestPlanAction.setEnabled(true);
-                        } else {
-                            createTestPlanAction.setEnabled(false);
-                        }
-                    }
-                }
-            });
-
-            treeViewer.addDoubleClickListener(new IDoubleClickListener() {
-                public void doubleClick(DoubleClickEvent arg0) {
-                    TreeViewer viewer = (TreeViewer) arg0.getViewer();
-                    Object obj = ((IStructuredSelection) arg0.getSelection())
-                            .getFirstElement();
-                    if (viewer.getExpandedState(obj)) {
-                        viewer.collapseToLevel(obj, 1);
-                    } else {
-                        viewer.expandToLevel(obj, 1);
-                    }
-
-                    IWorkspace workspace = ResourcesPlugin.getWorkspace();
-                    IWorkspaceRoot root = workspace.getRoot();
-                    IProject newProjectHandle = root
-                            .getProject(UIConst.TESTSUITE_PATH);
-                    IStructuredSelection selection = (IStructuredSelection) arg0
-                            .getSelection();
-
-                    if (selection.getFirstElement() instanceof File) {
-                        File file = (File) selection.getFirstElement();
-                        String findName = UIConst.getIFileFindName(file);
-                        IFile ifile = newProjectHandle.getFile(findName);
-
-                        if (file.isFile()) {
-                            try {
-                                IEditorPart editorpart = IDE.openEditor(page,
-                                        ifile, true);
-
-                            } catch (PartInitException e) {
-                                e.printStackTrace();
-                            }
-                        } else if (file.isDirectory()) {
-                        } else {
-                            System.out.println("testcase click :"
-                                    + file.getName());
-                            findName = UIConst.getIFileFindName(file
-                                    .getParentFile());
-                            ifile = newProjectHandle.getFile(findName);
-                            IEditorPart editorpart = null;
-
-                            try {
-                                editorpart = IDE.openEditor(page, ifile, true);
-
-                            } catch (PartInitException e) {
-                                e.printStackTrace();
-                            }
-
-                            if (editorpart instanceof TestSuiteMultiPageEditor) {
-                                TestSuiteMultiPageEditor suiteEditor = (TestSuiteMultiPageEditor) editorpart;
-                                if (suiteEditor.getActivePageInstance() instanceof TestSuiteSpecPage) {
-                                    TestSuiteSpecPage specpage = (TestSuiteSpecPage) suiteEditor
-                                            .getActivePageInstance();
-                                    String tcName = "";
-                                    String tcFullName = "";
-                                    tcFullName = file.getName();
-                                    if (tcFullName.contains("]")) {
-                                        tcName = tcFullName.split("\\]")[1]
-                                                .trim();
-                                    } else {
-                                        tcName = tcFullName;
-                                    }
-                                    specpage.setSelectionItem(tcName);
-
-                                } else if (suiteEditor.getActivePageInstance() == null) {
-                                    if (suiteEditor.getActiveEditor() instanceof RobotFrameworkTextfileEditor) {
-                                        RobotFrameworkTextfileEditor editor = (RobotFrameworkTextfileEditor) suiteEditor
-                                                .getActiveEditor();
-                                        IDocumentProvider provider = editor
-                                                .getDocumentProvider();
-                                        IDocument document = provider
-                                                .getDocument(editor
-                                                        .getEditorInput());
-                                        FindReplaceDocumentAdapter documentAdapter = new FindReplaceDocumentAdapter(
-                                                document);
-                                        try {
-                                            IRegion findTextoffset = documentAdapter
-                                                    .find(0, file.getName(),
-                                                            true, false, false,
-                                                            false);
-                                            int lineNumber = document
-                                                    .getLineOfOffset(findTextoffset
-                                                            .getOffset());
-                                            int start = document
-                                                    .getLineOffset(lineNumber);
-                                            editor.selectAndReveal(start, 0);
-                                        } catch (BadLocationException e) {
-                                            e.printStackTrace();
-                                        }
-
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            MenuManager menuMgr = new MenuManager("#PopupMenu");
+            MenuManager menuMgr = new MenuManager(POPUP_MENU_TEXT);
             menuMgr.setRemoveAllWhenShown(true);
 
             menuMgr.addMenuListener(new IMenuListener() {
@@ -609,6 +260,7 @@ public class TestSuiteView extends ViewPart {
                     manager.add(updateTestSuiteView);
                 }
             });
+
             Menu menu = menuMgr.createContextMenu(treeViewer.getTree());
             treeViewer.getTree().setMenu(menu);
             getSite().registerContextMenu(menuMgr, treeViewer);
@@ -632,7 +284,6 @@ public class TestSuiteView extends ViewPart {
                 public void keyReleased(KeyEvent arg0) {
                 }
             });
-
         }
     }
 
@@ -650,15 +301,15 @@ public class TestSuiteView extends ViewPart {
     private static void buildPath(TreeItem item, StringBuilder builder) {
         if (item.getParentItem() != null) {
 
-            buildPath(item.getParentItem(), builder); // build path
-
+            // build path
+            buildPath(item.getParentItem(), builder);
             builder.append('/');
         }
         builder.append(item.getText());
     }
 
     private void hookContextMenu() {
-        MenuManager menuMgr = new MenuManager("#PopupMenu");
+        MenuManager menuMgr = new MenuManager(POPUP_MENU_TEXT);
         menuMgr.setRemoveAllWhenShown(true);
         menuMgr.addMenuListener(new IMenuListener() {
             public void menuAboutToShow(IMenuManager manager) {
@@ -707,8 +358,8 @@ public class TestSuiteView extends ViewPart {
 
     public boolean getChildrenChecked(File element) {
         boolean check = false;
-        File[] children = (File[]) ((ITreeContentProvider) treeViewer
-                .getContentProvider()).getChildren(element);
+        File[] children = (File[]) (this.getContentProvider()
+                .getChildren(element));
 
         for (int i = 0; i < children.length; i++) {
             if (treeViewer.getChecked(children[i])) {

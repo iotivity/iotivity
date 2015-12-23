@@ -20,8 +20,8 @@
 package oic.ctt.ui.actions;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -31,109 +31,78 @@ import java.util.LinkedHashMap;
 
 import oic.ctt.ui.Activator;
 import oic.ctt.ui.UIConst;
+import oic.ctt.ui.util.DatabaseUtil;
 import oic.ctt.ui.dialogs.CreateTestPlanDialog;
+import static oic.ctt.ui.types.ImageFilePathType.*;
+import static oic.ctt.ui.types.ToolTipTextType.*;
+import static oic.ctt.ui.types.IDType.*;
+import oic.ctt.ui.util.CTLogger;
 import oic.ctt.ui.util.TestCaseParser;
 import oic.ctt.ui.views.TestPlanView;
 import oic.ctt.ui.views.TestSuiteView;
+import static oic.ctt.ui.util.PopUpUtil.*;
+import static oic.ctt.ui.util.DatabaseUtil.*;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.MessageBox;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.slf4j.Logger;
 
 public class CreateTestPlanAction extends Action implements IWorkbenchAction {
-
-    private static final String ID = "oic.ctt.ui.actions.CreateTestPlan";
+    private Logger              logger                                 = CTLogger
+                                                                               .getInstance();
+    private static final String KEY_TC_FULL_NAME                       = "TC FULL NAME";
+    private static final String KEY_TC_NAME                            = "TC NAME";
+    private static final String DUPLICATE_TEST_PLAN_NAME_ERROR_MESSAGE = "The plan name is already exist. \nPlease enter the another name.";
+    private static final String INVALID_TEST_PLAN_NAME_ERROR_MESSAGE   = "You can't use \"/\" in the Test Plan name. \nPlease enter another name.";
+    private static final String EMPTY_TEST_PLAN_NAME_ERROR_MESSAGE     = "You didn't enter the Test Plan name. \nPlease enter the new plan name.";
+    private static final String COLUMNS_DETAILS                        = "id INTEGER PRIMARY_KEY, testsuite TEXT, testcase TEXT, testcase_fullname TEXT, checked BOOLEAN";
+    private static final String TEST_PLAN_DB_UPDATE_STATEMENT          = "UPDATE tcinfo SET checked = 'true' WHERE testsuite = ? AND testcase_fullname = ?;";
+    private static final String UNCHECKED_TEST_PLAN_ERROR_MESSAGE      = "You didn't enter the Test Plan name. \nPlease enter the new plan name";
+    private static final String TEST_PLAN_SUCCESS_DIALOG_MESSAGE       = "Success to create a new Test Plan.\nTest Plan Name = ";
+    private static final String TEST_PLAN_EXCEPTION_MESSAGE            = "Fail to create a new Test Plan";
+    private String              testPlanName;
+    private boolean             checkCancel                            = false;
+    private File                currentPlanPath;
+    private ArrayList<String>   checkedTestsuite;
+    private ArrayList<String>   checkedTestcase;
+    private int                 tccount;
 
     public CreateTestPlanAction() {
-        super("Create Test Plan");
+        super(TOOLTIP_TEXT_CREATE_TEST_PLAN.toString());
         this.setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(
-                Activator.PLUGIN_ID, "icons/folder_add.png"));
-        this.setToolTipText("Create Test Plan");
-        setId(ID);
+                Activator.PLUGIN_ID,
+                IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_CREATE_TEST_PLAN.toString()));
+        this.setToolTipText(TOOLTIP_TEXT_CREATE_TEST_PLAN.toString());
+        setId(CREATE_TEST_PLAN_ACTION_ID.toString());
     }
 
     public void run() {
-
-        Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
-                .getShell();
-        CreateTestPlanDialog dialog = new CreateTestPlanDialog(shell);
+        CreateTestPlanDialog dialog = new CreateTestPlanDialog(
+                ACTIVE_WORKBENCH_WINDOW_SHELL);
         dialog.create();
 
         if (dialog.open() == Window.OK) {
-            String testPlanName = dialog.getTestPlanName();
-            boolean checkCancel = false;
+            testPlanName = dialog.getTestPlanName();
+            checkCancel = false;
             IWorkbenchPage page = PlatformUI.getWorkbench()
                     .getActiveWorkbenchWindow().getActivePage();
             TestSuiteView testSuiteView = (TestSuiteView) page
-                    .findView(TestSuiteView.ID);
-            File currentPlanPath = null;
+                    .findView(TEST_SUITE_VIEW_ID.toString());
+            currentPlanPath = null;
 
             if (testPlanName != null) {
-                while (testPlanName.isEmpty()) {
-                    MessageBox box = new MessageBox(PlatformUI.getWorkbench()
-                            .getActiveWorkbenchWindow().getShell(),
-                            SWT.ICON_ERROR | SWT.OK);
-                    box.setMessage("You didn't enter the Test Plan name. \nPlease enter the new plan name.");
-                    box.setText("ERROR");
-                    box.open();
-                    if (dialog.open() == Window.CANCEL) {
-                        checkCancel = true;
-                        break;
-                    }
-                    testPlanName = dialog.getTestPlanName();
-                }
-                while (testPlanName.contains("/")) {
-                    MessageBox box = new MessageBox(PlatformUI.getWorkbench()
-                            .getActiveWorkbenchWindow().getShell(),
-                            SWT.ICON_ERROR | SWT.OK);
-                    box.setMessage("You can't use \"/\" in the Test Plan name. \nPlease enter another name.");
-                    box.setText("ERROR");
-                    box.open();
-                    if (dialog.open() == Window.CANCEL) {
-                        checkCancel = true;
-                        break;
-                    }
-                    testPlanName = dialog.getTestPlanName();
-                }
+                checkInvalidTestPlanName(dialog);
             }
 
-            boolean checkSameDir = true;
-            while (checkSameDir) {
-
-                testPlanName = dialog.getTestPlanName();
-                currentPlanPath = new File(UIConst.ROOT_PATH
-                        + UIConst.TESTPLAN_PATH + "/" + testPlanName);
-                if (!currentPlanPath.exists()) {
-                    System.out.println("creating directory: " + testPlanName);
-                    currentPlanPath.mkdir();
-                    checkSameDir = false;
-                    break;
-                } else { // if exist same directory.
-                    checkSameDir = true;
-                    MessageBox box = new MessageBox(PlatformUI.getWorkbench()
-                            .getActiveWorkbenchWindow().getShell(),
-                            SWT.ICON_ERROR | SWT.OK);
-                    box.setMessage("The plan name is already exist. \nPlease enter the another name.");
-                    box.setText("ERROR");
-                    box.open();
-                }
-                if (dialog.open() == Window.CANCEL) {
-                    checkCancel = true;
-                    break;
-                }
-            }
+            createCurrentPlan(dialog);
 
             if (checkCancel == false) {
 
@@ -147,40 +116,19 @@ public class CreateTestPlanAction extends Action implements IWorkbenchAction {
                     PreparedStatement prepUpdate = null;
                     TestCaseParser parser = new TestCaseParser();
                     boolean checkCreate = true;
-                    ArrayList<String> checkedTestsuite = new ArrayList<String>();
-                    ArrayList<String> checkedTestcase = new ArrayList<String>();
+                    checkedTestsuite = new ArrayList<String>();
+                    checkedTestcase = new ArrayList<String>();
 
                     try {
-                        Class.forName("org.sqlite.JDBC");
-                        conn = DriverManager.getConnection("jdbc:sqlite:"
-                                + UIConst.ROOT_PATH + UIConst.TESTPLAN_PATH
-                                + "/" + testPlanName + "/" + testPlanName
-                                + ".db");
-                        stat = conn.createStatement();
-                        stat.executeUpdate("drop table if exists tcinfo;");
-                        stat.executeUpdate("CREATE TABLE tcinfo (id INTEGER PRIMARY_KEY, testsuite TEXT, testcase TEXT, testcase_fullname TEXT, checked BOOLEAN);");
-                        prepInsert = conn
-                                .prepareStatement("INSERT INTO tcinfo VALUES (?, ?, ?, ?, ?);");
-                        prepUpdate = conn
-                                .prepareStatement("UPDATE tcinfo SET checked = 'true' WHERE testsuite = ? AND testcase_fullname = ?;");
-
-                        int tccount = 0;
-                        for (int i = 0; i < items.length; i++) {
-                            if (items[i] instanceof File) {
-                                File currentItem = (File) items[i];
-                                if (currentItem.isFile()) {
-                                    FileUtils.copyFileToDirectory(currentItem,
-                                            currentPlanPath);
-                                    FileUtils.waitFor(currentItem, 5);
-                                    System.out.println(currentItem.getName());
-                                } else if (currentItem.isFile() == false
-                                        && currentItem.isDirectory() == false) {
-                                    checkedTestsuite.add(currentItem
-                                            .getParentFile().getName());
-                                    checkedTestcase.add(currentItem.getName());
-                                }
-                            }
-                        }
+                        conn = createDBConnection(testPlanName);
+                        createDBTable(TABLE_NAME, COLUMNS_DETAILS, conn);
+                        prepInsert = insertIntoTable(conn, TABLE_NAME,
+                                DEFAULT_INSERT_VALUES);
+                        prepUpdate = updateTable(conn,
+                                TEST_PLAN_DB_UPDATE_STATEMENT);
+                        tccount = 0;
+                        addSelectedSuiteAndTestCase(items, checkedTestsuite,
+                                checkedTestcase);
                         File[] planFiles = null;
                         planFiles = currentPlanPath.listFiles();
                         if (planFiles != null) {
@@ -195,45 +143,9 @@ public class CreateTestPlanAction extends Action implements IWorkbenchAction {
                                                 .getDocumentHashMap(currentItem
                                                         .toPath());
                                         if (list != null) {
-                                            for (int j = 0; j < list.size(); j++) {
-                                                prepInsert.setInt(1, tccount);
-                                                tccount++;
-                                                prepInsert.setString(2,
-                                                        currenTestSuite);
-                                                prepInsert.setString(3, list
-                                                        .get(j).get("TC NAME"));
-                                                prepInsert
-                                                        .setString(
-                                                                4,
-                                                                list.get(j)
-                                                                        .get("TC FULL NAME"));
-                                                boolean check = false;
-                                                for (int k = 0; k < checkedTestsuite
-                                                        .size(); k++) {
-                                                    if (checkedTestcase
-                                                            .get(k)
-                                                            .equals(list
-                                                                    .get(j)
-                                                                    .get("TC FULL NAME"))) {
-                                                        if (checkedTestsuite
-                                                                .get(k)
-                                                                .equals(currentItem
-                                                                        .getName())) {
-                                                            check = true;
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                                if (check) {
-                                                    prepInsert.setString(5,
-                                                            "true");
-                                                } else {
-                                                    prepInsert.setString(5,
-                                                            "false");
-                                                }
-
-                                                prepInsert.addBatch();
-                                            }
+                                            addBatch(currenTestSuite,
+                                                    prepInsert, currentItem,
+                                                    list);
                                             conn.setAutoCommit(false);
                                             prepInsert.executeBatch();
                                             conn.setAutoCommit(true);
@@ -241,61 +153,187 @@ public class CreateTestPlanAction extends Action implements IWorkbenchAction {
                                     }
                                 } else {
                                     checkCreate = false;
-                                    System.err.println("Checked item ERROR.");
+                                    logger.error("Checked item ERROR.");
                                 }
                             }
                         }
 
                         if (checkCreate) {
-
-                            MessageDialog dialog1 = new MessageDialog(
-                                    PlatformUI.getWorkbench()
-                                            .getActiveWorkbenchWindow()
-                                            .getShell(), "Information", null,
-                                    "Success to create a new Test Plan.\nTest Plan Name = "
+                            displayMessageDialog(ACTIVE_WORKBENCH_WINDOW_SHELL,
+                                    DIALOG_TITLE,
+                                    TEST_PLAN_SUCCESS_DIALOG_MESSAGE
                                             + testPlanName,
                                     MessageDialog.INFORMATION,
-                                    new String[] { "OK" }, 0);
-                            dialog1.open();
+                                    new String[] { DIALOG_BUTTON_LABEL_OK });
 
-                            IViewPart planView = page.showView(TestPlanView.ID);
+                            IViewPart planView = page
+                                    .showView(TEST_PLAN_VIEW_ID.toString());
                             ((TestPlanView) planView)
                                     .setFocusCurrentPlan(testPlanName);
                         } else {
-                            MessageBox box = new MessageBox(PlatformUI
-                                    .getWorkbench().getActiveWorkbenchWindow()
-                                    .getShell(), SWT.ICON_ERROR | SWT.ERROR);
-                            box.setMessage("Fail to create a new Test Plan.\nPlease try again.");
-                            box.setText("ERROR");
-                            box.open();
+                            displayMessageBox(ACTIVE_WORKBENCH_WINDOW_SHELL,
+                                    UNCHECKED_TEST_PLAN_ERROR_MESSAGE,
+                                    ERROR_TEXT, SWT.ICON_ERROR | SWT.ERROR);
                         }
                     } catch (Exception e) {
-                        MultiStatus status = UIConst.createMultiStatus(
-                                e.getLocalizedMessage(), e);
-                        ErrorDialog.openError(Display.getDefault()
-                                .getActiveShell(), "Error",
-                                "Fail to create a new Test Plan", status);
-                        e.printStackTrace();
+                        displayErrorDialog(e, ERROR_TEXT,
+                                TEST_PLAN_EXCEPTION_MESSAGE);
                     } finally {
-                        try {
-                            if (prepUpdate != null) {
-                                prepUpdate.close();
-                            }
-                            if (prepInsert != null) {
-                                prepInsert.close();
-                            }
-                            if (stat != null) {
-                                stat.close();
-                            }
-                            if (conn != null) {
-                                conn.close();
-                            }
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                        }
+                        AutoCloseable[] autoCloseable = { stat, prepInsert,
+                                prepUpdate, conn };
+                        DatabaseUtil.closeDataBaseObjects(autoCloseable);
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Adds a set of parameters to this <code>PreparedStatement</code> object's
+     * batch of commands.
+     * 
+     * @param currenTestSuite
+     *            name of current suite
+     * @param prepInsert
+     *            PreparedStatement object
+     * @param currentItem
+     *            current file
+     * @param list
+     *            current item list
+     * @throws SQLException
+     */
+    private void addBatch(String currenTestSuite, PreparedStatement prepInsert,
+            File currentItem,
+            LinkedHashMap<Integer, LinkedHashMap<String, String>> list)
+            throws SQLException {
+        for (int j = 0; j < list.size(); j++) {
+            prepInsert.setInt(1, tccount);
+            tccount++;
+            prepInsert.setString(2, currenTestSuite);
+            prepInsert.setString(3, list.get(j).get(KEY_TC_NAME));
+            prepInsert.setString(4, list.get(j).get(KEY_TC_FULL_NAME));
+            if (isSuiteAndTestChecked(currentItem, list, j)) {
+                prepInsert.setString(5, "true");
+            } else {
+                prepInsert.setString(5, "false");
+            }
+
+            prepInsert.addBatch();
+        }
+    }
+
+    /**
+     * check if suite or test case checked or not
+     * 
+     * @param currentItem
+     *            current file
+     * @param list
+     *            current item list
+     * @param j
+     *            current index
+     * @return check true or false
+     */
+    private boolean isSuiteAndTestChecked(File currentItem,
+            LinkedHashMap<Integer, LinkedHashMap<String, String>> list, int j) {
+        boolean check = false;
+        for (int k = 0; k < checkedTestsuite.size(); k++) {
+            if (checkedTestcase.get(k)
+                    .equals(list.get(j).get(KEY_TC_FULL_NAME))) {
+                if (checkedTestsuite.get(k).equals(currentItem.getName())) {
+                    check = true;
+                    break;
+                }
+            }
+        }
+        return check;
+    }
+
+    /**
+     * add selected items to suite and test case object list
+     * 
+     * @param items
+     *            items to be added
+     * @param checkedTestsuite
+     *            list of checked test suites
+     * @param checkedTestcase
+     *            list of checked test cases
+     * @throws IOException
+     */
+    private void addSelectedSuiteAndTestCase(Object[] items,
+            ArrayList<String> checkedTestsuite,
+            ArrayList<String> checkedTestcase) throws IOException {
+        for (int i = 0; i < items.length; i++) {
+            if (items[i] instanceof File) {
+                File currentItem = (File) items[i];
+                if (currentItem.isFile()) {
+                    FileUtils.copyFileToDirectory(currentItem, currentPlanPath);
+                    FileUtils.waitFor(currentItem, 5);
+                    logger.info("Process map has : " + currentItem.getName());
+                } else if (currentItem.isFile() == false
+                        && currentItem.isDirectory() == false) {
+                    checkedTestsuite.add(currentItem.getParentFile().getName());
+                    checkedTestcase.add(currentItem.getName());
+                }
+            }
+        }
+    }
+
+    /**
+     * This method creates current test plan
+     * 
+     * @param dialog
+     *            used to get test plan name
+     */
+    private void createCurrentPlan(CreateTestPlanDialog dialog) {
+        boolean checkSameDir = true;
+        while (checkSameDir) {
+            testPlanName = dialog.getTestPlanName();
+            currentPlanPath = new File(UIConst.ROOT_PATH
+                    + UIConst.TESTPLAN_PATH + "/" + testPlanName);
+            if (!currentPlanPath.exists()) {
+                logger.info("creating directory: " + testPlanName);
+                currentPlanPath.mkdir();
+                checkSameDir = false;
+                break;
+            } else {
+                logger.info("Same directory already exist");
+                checkSameDir = true;
+                displayMessageBox(ACTIVE_WORKBENCH_WINDOW_SHELL,
+                        DUPLICATE_TEST_PLAN_NAME_ERROR_MESSAGE, ERROR_TEXT,
+                        SWT.ICON_ERROR | SWT.OK);
+            }
+            if (dialog.open() == Window.CANCEL) {
+                checkCancel = true;
+                break;
+            }
+        }
+    }
+
+    /**
+     * This method checks if test plan name is empty or invalid
+     * 
+     * @param dialog
+     */
+    private void checkInvalidTestPlanName(CreateTestPlanDialog dialog) {
+        while (testPlanName.isEmpty()) {
+            displayMessageBox(ACTIVE_WORKBENCH_WINDOW_SHELL,
+                    EMPTY_TEST_PLAN_NAME_ERROR_MESSAGE, ERROR_TEXT,
+                    SWT.ICON_ERROR | SWT.OK);
+            if (dialog.open() == Window.CANCEL) {
+                checkCancel = true;
+                break;
+            }
+            testPlanName = dialog.getTestPlanName();
+        }
+        while (testPlanName.contains("/")) {
+            displayMessageBox(ACTIVE_WORKBENCH_WINDOW_SHELL,
+                    INVALID_TEST_PLAN_NAME_ERROR_MESSAGE, ERROR_TEXT,
+                    SWT.ICON_ERROR | SWT.OK);
+            if (dialog.open() == Window.CANCEL) {
+                checkCancel = true;
+                break;
+            }
+            testPlanName = dialog.getTestPlanName();
         }
     }
 

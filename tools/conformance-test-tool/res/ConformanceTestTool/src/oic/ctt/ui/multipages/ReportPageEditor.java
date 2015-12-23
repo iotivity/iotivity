@@ -20,6 +20,7 @@
 package oic.ctt.ui.multipages;
 
 import oic.ctt.ui.UIConst;
+import static oic.ctt.ui.types.IDType.*;
 
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
@@ -57,7 +58,7 @@ import org.eclipse.ui.part.MultiPageEditorPart;
 public class ReportPageEditor extends MultiPageEditorPart implements
         IResourceChangeListener {
 
-    public static final String ID   = "oic.ctt.ui.multipages.ReportPageEditor";
+    public static final String ID   = REPORT_PAGE_EDITOR_ID.toString();
 
     Browser                    browser;
     private String             home = "";

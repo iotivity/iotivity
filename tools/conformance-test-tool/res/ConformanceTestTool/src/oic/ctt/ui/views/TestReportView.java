@@ -20,18 +20,14 @@
 package oic.ctt.ui.views;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import oic.ctt.ui.Activator;
 import oic.ctt.ui.UIConst;
 import oic.ctt.ui.actions.DeleteAction;
+import static oic.ctt.ui.types.IDType.*;
+import static oic.ctt.ui.types.ToolTipTextType.*;
+import static oic.ctt.ui.types.ImageFilePathType.*;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -42,32 +38,22 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
-import org.eclipse.jface.viewers.ILabelProvider;
-import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.ViewPart;
 
 /**
@@ -90,157 +76,25 @@ public class TestReportView extends ViewPart {
     /**
      * The ID of the view as specified by the extension.
      */
-    public static final String ID = "oic.ctt.ui.views.TestReportView";
+    public static final String  ID                                    = TEST_REPORT_VIEW_ID
+                                                                              .toString();
 
-    static class FileTreeContentProvider implements ITreeContentProvider {
-
-        @Override
-        public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-        }
-
-        @Override
-        public void dispose() {
-        }
-
-        @Override
-        public Object[] getElements(Object inputElement) {
-            return getChildren(inputElement);
-        }
-
-        @Override
-        public Object[] getChildren(Object parentElement) {
-            Object[] child = ((File) parentElement)
-                    .listFiles(new FilenameFilter() {
-
-                        @Override
-                        public boolean accept(File dir, String name) {
-                            if (name.contains(".project") || name.endsWith("~")
-                                    || name.contains(".xml")) {
-                                return false;
-                            } else {
-                                return true;
-                            }
-                        }
-                    });
-            return child == null ? new Object[0] : child;
-        }
-
-        @Override
-        public Object getParent(Object element) {
-            return ((File) element).getParentFile();
-        }
-
-        @Override
-        public boolean hasChildren(Object element) {
-            Object[] object = getChildren(element);
-            if (object == null) {
-                System.out.println(element.toString());
-            }
-            return getChildren(element).length > 0;
-        }
-    }
-
-    static class FileTreeLabelProvider implements ILabelProvider {
-        private List  listeners;
-        private Image file;
-        private Image dir;
-        private Image tc;
-        private Image graph;
-
-        public FileTreeLabelProvider() {
-            listeners = new ArrayList();
-            FileInputStream[] fileInputStream = new FileInputStream[4];
-            try {
-
-                File f = new File(UIConst.PROJECT_PATH + "icons/");
-                if (f.exists()) {
-                    try {
-                        fileInputStream[0] = new FileInputStream(
-                                UIConst.PROJECT_PATH + "icons/file2.gif");
-                        file = new Image(null, fileInputStream[0]);
-
-                        fileInputStream[1] = new FileInputStream(
-                                UIConst.PROJECT_PATH + "icons/folder.gif");
-                        dir = new Image(null, fileInputStream[1]);
-
-                        fileInputStream[2] = new FileInputStream(
-                                UIConst.PROJECT_PATH + "icons/test.gif");
-                        tc = new Image(null, fileInputStream[2]);
-
-                        fileInputStream[3] = new FileInputStream(
-                                UIConst.PROJECT_PATH + "icons/sequence.gif");
-                        graph = new Image(null, fileInputStream[3]);
-                    } catch (FileNotFoundException e) {
-                        System.out.println("icon error.");
-                    }
-                    for (int i = 0; i < 4; i++) {
-                        if (fileInputStream[i] != null) {
-                            fileInputStream[i].close();
-                        }
-                    }
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public Image getImage(Object arg0) {
-            if (((File) arg0).isDirectory()) {
-                return dir;
-            } else {
-                String filename = ((File) arg0).getName();
-                if (filename.equals(UIConst.FLOWGRAPH_FILE_NAME)) {
-                    return graph;
-                } else {
-                    return file;
-                }
-            }
-        }
-
-        public String getText(Object arg0) {
-            if (arg0 instanceof File) {
-                String text = ((File) arg0).getName();
-                if (((File) arg0).getName().length() == 0) {
-                    text = ((File) arg0).getPath();
-                }
-                return text;
-            } else {
-                return (String) arg0;
-            }
-        }
-
-        public void addListener(ILabelProviderListener arg0) {
-            listeners.add(arg0);
-        }
-
-        public void dispose() {
-            // Dispose the images
-            if (dir != null) {
-                dir.dispose();
-            }
-            if (file != null) {
-                file.dispose();
-            }
-            if (tc != null) {
-                tc.dispose();
-            }
-        }
-
-        public boolean isLabelProperty(Object arg0, String arg1) {
-            return false;
-        }
-
-        public void removeListener(ILabelProviderListener arg0) {
-            listeners.remove(arg0);
-        }
-    }
+    private static final String EMPTY_FILE_NAME                       = "";
+    private static final String UI_XML_MULTI_PAGE_EDITOR_PACKAGE_NAME = "org.eclipse.wst.xml.ui.internal.tabletree.XMLMultiPageEditorPart";
+    private static final String UI_DEFAULT_TEXT_EDITOR_PACKAGE_NAME   = "org.eclipse.ui.DefaultTextEditor";
+    private static final String UI_BROWSER_EDITOR_PACKAGE_NAME        = "org.eclipse.ui.browser.editor";
+    private static final String REFRESH_ACTION_TEXT                   = "Refresh";
+    private static final String SHELL_EXT_NAME                        = "sh";
+    private static final String LOG_EXT_NAME                          = "log";
+    private static final String HTML_EXT_NAME                         = "html";
+    private static final String XML_EXT_NAME                          = "xml";
+    private static final String POPUP_MENU_TEXT                       = "#PopupMenu";
 
     /**
      * This is a callback that will allow us to create the viewer and initialize
      * it.
      */
-    TreeViewer treeViewer;
+    TreeViewer                  treeViewer;
 
     /**
      * The constructor.
@@ -250,26 +104,30 @@ public class TestReportView extends ViewPart {
 
     public void createPartControl(Composite parent) {
 
-        UIConst.setAssociateEditorToFile("", "xml",
-                "org.eclipse.wst.xml.ui.internal.tabletree.XMLMultiPageEditorPart");
-        UIConst.setAssociateEditorToFile("", "html",
-                "org.eclipse.ui.browser.editor");
-        UIConst.setAssociateEditorToFile("", "log",
-                "org.eclipse.ui.DefaultTextEditor");
-        UIConst.setAssociateEditorToFile("", "sh",
-                "org.eclipse.ui.DefaultTextEditor");
+        UIConst.setAssociateEditorToFile(EMPTY_FILE_NAME, XML_EXT_NAME,
+                UI_XML_MULTI_PAGE_EDITOR_PACKAGE_NAME);
+        UIConst.setAssociateEditorToFile(EMPTY_FILE_NAME, HTML_EXT_NAME,
+                UI_BROWSER_EDITOR_PACKAGE_NAME);
+        UIConst.setAssociateEditorToFile(EMPTY_FILE_NAME, LOG_EXT_NAME,
+                UI_DEFAULT_TEXT_EDITOR_PACKAGE_NAME);
+        UIConst.setAssociateEditorToFile(EMPTY_FILE_NAME, SHELL_EXT_NAME,
+                UI_DEFAULT_TEXT_EDITOR_PACKAGE_NAME);
 
         // Update Test plan view, refresh tree view.
-        final Action updateTestReportView = new Action("Refresh") {
+        final Action updateTestReportView = new Action(REFRESH_ACTION_TEXT) {
             @Override
             public void run() {
                 super.run();
                 treeViewer.refresh();
             }
         };
-        updateTestReportView.setToolTipText("Refresh (F5)");
-        updateTestReportView.setImageDescriptor(Activator
-                .getImageDescriptor("icons/refresh.gif"));
+
+        updateTestReportView.setToolTipText(TOOLTIP_TEXT_REFRESH_TEST_VIEW
+                .toString());
+        updateTestReportView
+                .setImageDescriptor(Activator
+                        .getImageDescriptor(IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_REFRESH_ICON
+                                .toString()));
         getViewSite().getActionBars().getToolBarManager()
                 .add(updateTestReportView);
 
@@ -279,7 +137,7 @@ public class TestReportView extends ViewPart {
 
         treeViewer = new TreeViewer(parent, SWT.BORDER | SWT.MULTI);
 
-        MenuManager menuMgr = new MenuManager("#PopupMenu"); //$NON-NLS-1$
+        MenuManager menuMgr = new MenuManager(POPUP_MENU_TEXT); //$NON-NLS-1$
         menuMgr.setRemoveAllWhenShown(true);
 
         menuMgr.addMenuListener(new IMenuListener() {
@@ -305,6 +163,7 @@ public class TestReportView extends ViewPart {
                 }
             }
         });
+
         Menu menu = menuMgr.createContextMenu(treeViewer.getTree());
         treeViewer.getTree().setMenu(menu);
         getSite().registerContextMenu(menuMgr, treeViewer);
@@ -314,8 +173,8 @@ public class TestReportView extends ViewPart {
         IWorkspaceRoot root = workspace.getRoot();
         IProject newProjectHandle = root.getProject(UIConst.TESTREPORT_PATH);
 
-        treeViewer.setContentProvider(new FileTreeContentProvider());
-        treeViewer.setLabelProvider(new FileTreeLabelProvider());
+        treeViewer.setContentProvider(new FileTreeContentProvider(this));
+        treeViewer.setLabelProvider(new FileTreeLabelProvider(this));
 
         treeViewer.setSorter(new ViewerSorter());
         treeViewer.setInput(newProjectHandle.getLocation().toFile());
@@ -325,54 +184,9 @@ public class TestReportView extends ViewPart {
         IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
         final IWorkbenchPage page = window.getActivePage();
 
-        treeViewer.addDoubleClickListener(new IDoubleClickListener() {
-            public void doubleClick(DoubleClickEvent arg0) {
-                TreeViewer viewer = (TreeViewer) arg0.getViewer();
-                Object obj = ((IStructuredSelection) arg0.getSelection())
-                        .getFirstElement();
-                if (viewer.getExpandedState(obj)) {
-                    viewer.collapseToLevel(obj, 1);
-                } else {
-                    viewer.expandToLevel(obj, 1);
-                }
-
-                IWorkspace workspace = ResourcesPlugin.getWorkspace();
-                IWorkspaceRoot root = workspace.getRoot();
-                IProject newProjectHandle = root
-                        .getProject(UIConst.TESTREPORT_PATH);
-
-                IStructuredSelection selection = (IStructuredSelection) arg0
-                        .getSelection();
-
-                if (selection.getFirstElement() instanceof File) {
-                    File file = (File) selection.getFirstElement();
-
-                    if (file.isFile()) {
-                        String findName = UIConst.getIFileFindName(file);
-                        IFile ifile = newProjectHandle.getFile(findName);
-
-                        try {
-                            IEditorPart editorpart = IDE.openEditor(page,
-                                    ifile, true);
-
-                        } catch (PartInitException e) {
-                            e.printStackTrace();
-                        }
-                    } else if (file.isDirectory()) {
-                    } else {
-                        MessageBox box = new MessageBox(PlatformUI
-                                .getWorkbench().getActiveWorkbenchWindow()
-                                .getShell(), SWT.ICON_WARNING | SWT.OK);
-                        box.setMessage("Can't open the file. Please select the report file.");
-                        box.setText("Information");
-                        box.open();
-                    }
-                } else if (selection.getFirstElement() instanceof String) {
-                    System.out
-                            .println("[Debug] Selection.getFirstElement is String");
-                }
-            }
-        });
+        IDoubleClickListener doubleClickListener = new DoubleClickListenerThread(
+                page, this);
+        treeViewer.addDoubleClickListener(doubleClickListener);
 
         makeActions();
         hookDoubleClickAction();
@@ -396,7 +210,7 @@ public class TestReportView extends ViewPart {
     }
 
     private void hookContextMenu() {
-        MenuManager menuMgr = new MenuManager("#PopupMenu");
+        MenuManager menuMgr = new MenuManager(POPUP_MENU_TEXT);
         menuMgr.setRemoveAllWhenShown(true);
         menuMgr.addMenuListener(new IMenuListener() {
             public void menuAboutToShow(IMenuManager manager) {

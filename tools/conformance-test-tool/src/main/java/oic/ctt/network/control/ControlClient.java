@@ -51,27 +51,10 @@ public class ControlClient implements ControllerEntity {
             String dutIp, int dutPortSecured, int cipherSuite, String clientId,
             String serverId, byte[] privateData) {
 
+        mResponses.clear();
+
         int messageId = OICHelper.getRandomMessageId();
-
-        ControlMessage controlMessage = new ControlMessage();
-        controlMessage.setMessageId(messageId);
-        controlMessage.setMessageCode(MessageCode.INIT_DTLS_CONNECTION);
-        controlMessage.addArgumentIpAddress(dutIp);
-        controlMessage.addArgumentPort(dutPortSecured);
-        controlMessage.addArgumentCipherSuite(
-                CipherSuite.parseCipherSuite(cipherSuite));
-
-        MessageArgument argClientIdentity = new MessageArgument();
-        argClientIdentity.setType(
-                oic.ctt.network.control.SecurityConstants.ArgumentType.CLIENT_IDENTITY);
-        argClientIdentity.setValue(clientId.getBytes());
-        controlMessage.addArgument(argClientIdentity);
-
-        MessageArgument argServerIdentity = new MessageArgument();
-        argServerIdentity.setType(
-                oic.ctt.network.control.SecurityConstants.ArgumentType.SERVER_IDENTITY);
-        argServerIdentity.setValue(serverId.getBytes());
-        controlMessage.addArgument(argServerIdentity);
+        ControlMessage controlMessage = createControlMessage(messageId, relayIp, relayPort, dutIp, dutPortSecured, cipherSuite, clientId, serverId);
 
         controlMessage.addArgumentPrivateData(privateData);
 
@@ -92,33 +75,13 @@ public class ControlClient implements ControllerEntity {
         return getResponse(messageId);
     }
 
-    public ControlMessage initDtls(String relayIp, int relayPort, String dutIp,
-            int dutPortSecured, int cipherSuite, String clientId,
+    public ControlMessage initDtlsWithRndPin(String relayIp, int relayPort,
+            String dutIp, int dutPortSecured, int cipherSuite, String clientId,
             String serverId, String password) {
 
         mResponses.clear();
-
         int messageId = OICHelper.getRandomMessageId();
-
-        ControlMessage controlMessage = new ControlMessage();
-        controlMessage.setMessageId(messageId);
-        controlMessage.setMessageCode(MessageCode.INIT_DTLS_CONNECTION);
-        controlMessage.addArgumentIpAddress(dutIp);
-        controlMessage.addArgumentPort(dutPortSecured);
-        controlMessage.addArgumentCipherSuite(
-                CipherSuite.parseCipherSuite(cipherSuite));
-
-        MessageArgument argClientIdentity = new MessageArgument();
-        argClientIdentity.setType(
-                oic.ctt.network.control.SecurityConstants.ArgumentType.CLIENT_IDENTITY);
-        argClientIdentity.setValue(clientId.getBytes());
-        controlMessage.addArgument(argClientIdentity);
-
-        MessageArgument argServerIdentity = new MessageArgument();
-        argServerIdentity.setType(
-                oic.ctt.network.control.SecurityConstants.ArgumentType.SERVER_IDENTITY);
-        argServerIdentity.setValue(serverId.getBytes());
-        controlMessage.addArgument(argServerIdentity);
+        ControlMessage controlMessage = createControlMessage(messageId, relayIp, relayPort, dutIp, dutPortSecured, cipherSuite, clientId, serverId);
 
         MessageArgument argPassword = new MessageArgument();
         argPassword.setType(
@@ -141,6 +104,57 @@ public class ControlClient implements ControllerEntity {
         mSocketHandler.sendMessage(controlMessage);
 
         return getResponse(messageId);
+    }
+
+    public ControlMessage initDtlsWithJustWorks(String relayIp, int relayPort,
+            String dutIp, int dutPortSecured, int cipherSuite, String clientId,
+            String serverId) {
+
+        mResponses.clear();
+        int messageId = OICHelper.getRandomMessageId();
+        ControlMessage controlMessage = createControlMessage(messageId, relayIp, relayPort, dutIp, dutPortSecured, cipherSuite, clientId, serverId);
+
+        try {
+            mRelayIp = InetAddress.getByName(relayIp);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
+        if (mRelayIp == null)
+            return null;
+
+        mControlPort = relayPort;
+        controlMessage.setRemoteAddress(mRelayIp);
+        controlMessage.setRemotePort(mControlPort);
+        mSocketHandler.sendMessage(controlMessage);
+
+        return getResponse(messageId);
+    }
+
+    private ControlMessage createControlMessage(int messageId, String relayIp,
+            int relayPort, String dutIp, int dutPortSecured, int cipherSuite,
+            String clientId, String serverId) {
+        ControlMessage controlMessage = new ControlMessage();
+        controlMessage.setMessageId(messageId);
+        controlMessage.setMessageCode(MessageCode.INIT_DTLS_CONNECTION);
+        controlMessage.addArgumentIpAddress(dutIp);
+        controlMessage.addArgumentPort(dutPortSecured);
+        controlMessage.addArgumentCipherSuite(
+                CipherSuite.parseCipherSuite(cipherSuite));
+
+        MessageArgument argClientIdentity = new MessageArgument();
+        argClientIdentity.setType(
+                oic.ctt.network.control.SecurityConstants.ArgumentType.CLIENT_IDENTITY);
+        argClientIdentity.setValue(clientId.getBytes());
+        controlMessage.addArgument(argClientIdentity);
+
+        MessageArgument argServerIdentity = new MessageArgument();
+        argServerIdentity.setType(
+                oic.ctt.network.control.SecurityConstants.ArgumentType.SERVER_IDENTITY);
+        argServerIdentity.setValue(serverId.getBytes());
+        controlMessage.addArgument(argServerIdentity);
+
+        return controlMessage;
     }
 
     public ControlMessage terminateDtls() {

@@ -57,8 +57,6 @@ public final class LogFilterSettingsDialog extends TitleAreaDialog {
     private Text                mFilterNameText;
     private Text                mTagFilterText;
     private Text                mTextFilterText;
-    private Text                mPidFilterText;
-    private Text                mAppNameFilterText;
     private Combo               mLogLevelCombo;
     private Button              mOkButton;
 

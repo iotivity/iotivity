@@ -24,29 +24,38 @@ import java.io.IOException;
 
 import oic.ctt.ui.Activator;
 import oic.ctt.ui.UIConst;
+import static oic.ctt.ui.types.ToolTipTextType.*;
+import static oic.ctt.ui.types.ImageFilePathType.*;
+import static oic.ctt.ui.types.IDType.*;
+import oic.ctt.ui.util.CTLogger;
+import static oic.ctt.ui.util.PopUpUtil.*;
 import oic.ctt.ui.views.TestPlanView;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.DirectoryDialog;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.slf4j.Logger;
 
 public class ImportTestPlanAction extends Action implements ISelectionListener,
         IWorkbenchAction {
+    private Logger              logger                             = CTLogger
+                                                                           .getInstance();
+    private static final String DIRECTORY_DIALOG_TEST_PLAN_MESSAGE = "Select Plan Directory..";
+    private static final String TEST_PLAN_EXIST_ERROR_MESSAGE      = "The plan name is already exist. \nPlease check the plan name.";
+
     public ImportTestPlanAction() {
-        super("Import Test Plan");
+        super(TOOLTIP_TEXT_IMPORT_TEST_PLAN.toString());
         this.setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(
-                Activator.PLUGIN_ID, "icons/import.png"));
-        this.setToolTipText("Import Test Plan.");
+                Activator.PLUGIN_ID,
+                IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_IMPORT_TEST_PLAN.toString()));
+        this.setToolTipText(TOOLTIP_TEXT_IMPORT_TEST_PLAN.toString());
     }
 
     @Override
@@ -62,27 +71,20 @@ public class ImportTestPlanAction extends Action implements ISelectionListener,
         IWorkbenchPage page = PlatformUI.getWorkbench()
                 .getActiveWorkbenchWindow().getActivePage();
         TestPlanView testPlanView = (TestPlanView) page
-                .findView(TestPlanView.ID);
-
-        DirectoryDialog dirDialog = new DirectoryDialog(Display.getCurrent()
-                .getActiveShell(), SWT.MULTI);
-        dirDialog.setText("Select Plan Directory..");
-        dirDialog.setFilterPath(UIConst.PROJECT_PATH);
-        String dirName = dirDialog.open();
-        System.out.println(dirName);
+                .findView(TEST_PLAN_VIEW_ID.toString());
+        String dirName = displayDirectoryDialog(ACTIVE_SHELL,
+                DIRECTORY_DIALOG_TEST_PLAN_MESSAGE, UIConst.PROJECT_PATH);
+        logger.info("Directory name : " + dirName);
         if (dirName != null) {
             File importDir = new File(dirName);
 
             File existTestDir = new File(UIConst.ROOT_PATH
                     + UIConst.TESTPLAN_PATH + "/" + importDir.getName());
             if (existTestDir.exists()) {
-                System.out.println("exist directory");
-                MessageBox box = new MessageBox(PlatformUI.getWorkbench()
-                        .getActiveWorkbenchWindow().getShell(), SWT.ICON_ERROR
-                        | SWT.OK);
-                box.setMessage("The plan name is already exist. \nPlease check the plan name.");
-                box.setText("ERROR");
-                box.open();
+                logger.info("Directory " + dirName + " exists");
+                displayMessageBox(ACTIVE_WORKBENCH_WINDOW_SHELL,
+                        TEST_PLAN_EXIST_ERROR_MESSAGE, ERROR_TEXT,
+                        SWT.ICON_ERROR | SWT.OK);
             }
 
             try {

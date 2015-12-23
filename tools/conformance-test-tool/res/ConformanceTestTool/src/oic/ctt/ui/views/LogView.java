@@ -21,6 +21,8 @@ package oic.ctt.ui.views;
 
 import oic.ctt.ui.log.LogHandler;
 import oic.ctt.ui.log.LogPanel;
+import oic.ctt.ui.util.CTLogger;
+import static oic.ctt.ui.types.IDType.*;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
@@ -33,21 +35,25 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
+import org.slf4j.Logger;
 
 public class LogView extends ViewPart {
 
     /**
      * The ID of the view as specified by the extension.
      */
-    public static final String ID        = "oic.ctt.ui.views.LogView";
+    public static final String  ID              = LOG_VIEW_ID.toString();
 
-    List                       list;
-    Text                       text;
-    String                     temp;
-    Clipboard                  mClipboard;
-    public final LogPanel      mLogPanel = new LogPanel(
-                                                 PlatformUI
-                                                         .getPreferenceStore());
+    private static final String MSG_END_PASTING = "End Pasting";
+    private Logger              logger          = CTLogger.getInstance();
+
+    List                        list;
+    Text                        text;
+    String                      temp;
+    Clipboard                   mClipboard;
+    public final LogPanel       mLogPanel       = new LogPanel(
+                                                        PlatformUI
+                                                                .getPreferenceStore());
 
     public LogView() {
     }
@@ -57,7 +63,7 @@ public class LogView extends ViewPart {
         parent.setLayout(new FillLayout());
 
         getViewSite().getActionBars().getStatusLineManager()
-                .setMessage("End Pasting");
+                .setMessage(MSG_END_PASTING);
 
         mLogPanel.createPanel(parent);
 
@@ -94,6 +100,6 @@ public class LogView extends ViewPart {
     public void dispose() {
         LogHandler.stopRealTimeLogging();
         LogHandler.stopLogViewer();
-        System.out.println("LogView dispose");
+        logger.info("LogView dispose");
     }
 }

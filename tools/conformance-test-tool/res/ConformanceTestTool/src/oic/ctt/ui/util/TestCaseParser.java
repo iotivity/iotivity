@@ -29,13 +29,27 @@ import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.StringTokenizer;
 
-import oic.ctt.ui.UIConst;
-
-import org.eclipse.core.runtime.MultiStatus;
-import org.eclipse.jface.dialogs.ErrorDialog;
-import org.eclipse.swt.widgets.Display;
+import static oic.ctt.ui.util.PopUpUtil.*;
 
 public class TestCaseParser {
+    private static final String                                   PARSING_ERROR_MSG       = "Fail to parsing Test Case.\nTest suite : ";
+    private static final String                                   TEST_CASE_PARSING_ERROR = "Test Case Parsing Error";
+    private static final String                                   OTHER_MATCH_STR         = "^\\s{0,}(\\.\\.\\.)(?!\\.).{0,}";
+    private static final String                                   SPEC_MATCH_STR          = "^\\s{0,}(\\.\\.\\.)(?!\\.).*";
+    private static final String                                   TAGS_MATCH_STR          = "(^\\t|^\\s{2,})(\\[Tags\\]).*";
+    private static final String                                   ENCODING_TYPE           = "UTF-8";
+    private static final String                                   STR_TC_FULL_NAME        = "TC FULL NAME";
+    private static final String                                   STR_TC_ID               = "TC ID";
+    private static final String                                   STR_TC_NAME             = "TC NAME";
+    private static final String                                   STR_TEST_SPEC           = "test spec";
+    private static final String                                   PARSE_MATCH_STR         = "^(?!\\s*\\#) {0,1}\\S.*";
+    private static final String                                   DOC_MATCH_STR           = "(^\\t|^\\s{2,})(\\[Documentation\\]).*";
+    private static final String                                   MAIN_NOT_MATCH_STR      = "^ {0,1}(\\*){1,}.*";
+    private static final String                                   MAIN_MATCH_STR          = "(?i)^ {0,1}(\\*){1,} {0,1}t {0,1}e {0,1}s {0,1}t {0,1}c {0,1}a {0,1}s {0,1}e {0,1}s{0,1}\\W+";
+    private LinkedHashMap<Integer, LinkedHashMap<String, String>> hashMapParent;
+    private LinkedHashMap<String, String>                         hashMapChild;
+    private String                                                str;
+    private int                                                   parentIndex;
 
     public TestCaseParser() {
     }
@@ -62,115 +76,112 @@ public class TestCaseParser {
 
     private LinkedHashMap<Integer, LinkedHashMap<String, String>> setDocumentHashMap(
             Path filePath) throws IOException {
-        String str = null;
+        str = null;
         boolean parseFlag = false;
         boolean documentationFlag = false;
-        int parentIndex = 0;
-        LinkedHashMap<String, String> hashMapChild = new LinkedHashMap<>();
-        LinkedHashMap<Integer, LinkedHashMap<String, String>> hashMapParent = new LinkedHashMap<Integer, LinkedHashMap<String, String>>();
+        parentIndex = 0;
+        hashMapChild = new LinkedHashMap<>();
+        hashMapParent = new LinkedHashMap<Integer, LinkedHashMap<String, String>>();
         Reader fileReader = null;
         try {
             fileReader = new InputStreamReader(new FileInputStream(
-                    filePath.toFile()), "UTF-8");
+                    filePath.toFile()), ENCODING_TYPE);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
 
             while ((str = bufferedReader.readLine()) != null) {
-                if (str.matches("(?i)^ {0,1}(\\*){1,} {0,1}t {0,1}e {0,1}s {0,1}t {0,1}c {0,1}a {0,1}s {0,1}e {0,1}s{0,1}\\W+")) {
+                if (str.matches(MAIN_MATCH_STR)) {
                     parseFlag = true;
                     continue;
-                } else if (str.matches("^ {0,1}(\\*){1,}.*")) {
+                } else if (str.matches(MAIN_NOT_MATCH_STR)) {
                     parseFlag = false;
                 }
 
                 if (parseFlag) {
-                    if (str.matches("^(?!\\s*\\#) {0,1}\\S.*")
-                            && !documentationFlag) {
-                        str = str.split("(\\t|\\s{2,})#.*$")[0]; 
-                        str = str.trim();
-                        hashMapChild = new LinkedHashMap<>();
-                        hashMapParent.put(parentIndex++, hashMapChild);
-                        hashMapChild.put("TC FULL NAME", str);
-                        if (str.contains("]")) {
-                            StringTokenizer strTokenizer = new StringTokenizer(
-                                    str.trim(), "]");
-                            hashMapChild.put("TC ID", strTokenizer.nextToken()
-                                    .trim().substring(1));
-                            hashMapChild.put("TC NAME", strTokenizer
-                                    .nextToken().trim());
-                        } else {
-                            hashMapChild.put("TC NAME", str);
-                        }
-
-                    } else if (str
-                            .matches("(^\\t|^\\s{2,})(\\[Documentation\\]).*")) {
+                    if (str.matches(PARSE_MATCH_STR) && !documentationFlag) {
+                        parseDocument();
+                    } else if (str.matches(DOC_MATCH_STR)) {
                         documentationFlag = true;
                     } else if ((documentationFlag == true)
-                            && (str.matches("^\\s{0,}(\\.\\.\\.)(?!\\.).*"))
+                            && (str.matches(SPEC_MATCH_STR))
                             && !(str.contains("==") && str.toLowerCase()
-                                    .contains("test spec"))) {
-                        StringTokenizer strTokenizer = new StringTokenizer(str,
-                                "|");
-                        int index = 0;
-                        String[] strArray = new String[strTokenizer
-                                .countTokens()];
-                        while (strTokenizer.hasMoreTokens()) {
-                            strArray[index++] = strTokenizer.nextToken().trim();
-                        }
-
-                        if (strArray.length < 3) {
-                            if (strArray.length > 1) {
-                                if (!hashMapChild.containsKey(strArray[1]
-                                        .toUpperCase())) {
-                                    hashMapChild.put(strArray[1].toUpperCase(),
-                                            null);
-                                }
-                            }
-                        } else {
-                            if (hashMapChild.containsKey(strArray[1]
-                                    .toUpperCase())) {
-                                hashMapChild.put(
-                                        strArray[1].toUpperCase(),
-                                        hashMapChild.get(strArray[1]
-                                                .toUpperCase())
-                                                + "\n"
-                                                + strArray[2]);
-                            } else {
-                                hashMapChild.put(strArray[1].toUpperCase(),
-                                        strArray[2]);
-                            }
-                        }
-                    } else if (str.matches("(^\\t|^\\s{2,})(\\[Tags\\]).*")) {
-                        String[] strArray = str.split("]");
-                        if (strArray.length < 2) {
-                            hashMapChild.put(
-                                    strArray[0].split("\\[")[1].toUpperCase(),
-                                    null);
-                        } else {
-                            hashMapChild.put(
-                                    strArray[0].split("\\[")[1].toUpperCase(),
-                                    strArray[1].substring(1));
-                        }
+                                    .contains(STR_TEST_SPEC))) {
+                        putTokenizeValueToChildMap();
+                    } else if (str.matches(TAGS_MATCH_STR)) {
+                        splitMainString();
                     } else if ((documentationFlag == true)
-                            && !(str.matches("^\\s{0,}(\\.\\.\\.)(?!\\.).{0,}"))) {
+                            && !(str.matches(OTHER_MATCH_STR))) {
                         documentationFlag = false;
                     }
                 }
             }
             bufferedReader.close();
         } catch (IOException e) {
-            MultiStatus status = UIConst.createMultiStatus(
-                    e.getLocalizedMessage(), e);
-            ErrorDialog.openError(
-                    Display.getDefault().getActiveShell(),
-                    "Test Case Parsing Error",
-                    "Fail to parsing Test Case.\nTest suite : "
-                            + filePath.getFileName() + "\nTest case : " + str,
-                    status);
+            displayErrorDialog(e, TEST_CASE_PARSING_ERROR, PARSING_ERROR_MSG
+                    + filePath.getFileName() + "\nTest case : " + str);
         }
         if (fileReader != null) {
             fileReader.close();
         }
 
         return hashMapParent;
+    }
+
+    /**
+     * This method is to Parse the Document
+     */
+    private void parseDocument() {
+        str = str.split("(\\t|\\s{2,})#.*$")[0];
+        str = str.trim();
+        hashMapChild = new LinkedHashMap<>();
+        hashMapParent.put(parentIndex++, hashMapChild);
+        hashMapChild.put(STR_TC_FULL_NAME, str);
+        if (str.contains("]")) {
+            StringTokenizer strTokenizer = new StringTokenizer(str.trim(), "]");
+            hashMapChild.put(STR_TC_ID, strTokenizer.nextToken().trim()
+                    .substring(1));
+            hashMapChild.put(STR_TC_NAME, strTokenizer.nextToken().trim());
+        } else {
+            hashMapChild.put(STR_TC_NAME, str);
+        }
+    }
+
+    /**
+     * This method is for split and put the value into the Child hash map.
+     */
+    private void splitMainString() {
+        String[] strArray = str.split("]");
+        if (strArray.length < 2) {
+            hashMapChild.put(strArray[0].split("\\[")[1].toUpperCase(), null);
+        } else {
+            hashMapChild.put(strArray[0].split("\\[")[1].toUpperCase(),
+                    strArray[1].substring(1));
+        }
+    }
+
+    /**
+     * This method is for Putting token value to the Child Hash Map.
+     */
+    private void putTokenizeValueToChildMap() {
+        StringTokenizer strTokenizer = new StringTokenizer(str, "|");
+        int index = 0;
+        String[] strArray = new String[strTokenizer.countTokens()];
+        while (strTokenizer.hasMoreTokens()) {
+            strArray[index++] = strTokenizer.nextToken().trim();
+        }
+
+        if (strArray.length < 3) {
+            if ((strArray.length > 1)
+                    && (!hashMapChild.containsKey(strArray[1].toUpperCase()))) {
+                hashMapChild.put(strArray[1].toUpperCase(), null);
+            }
+        } else {
+            if (hashMapChild.containsKey(strArray[1].toUpperCase())) {
+                hashMapChild.put(strArray[1].toUpperCase(),
+                        hashMapChild.get(strArray[1].toUpperCase()) + "\n"
+                                + strArray[2]);
+            } else {
+                hashMapChild.put(strArray[1].toUpperCase(), strArray[2]);
+            }
+        }
     }
 }

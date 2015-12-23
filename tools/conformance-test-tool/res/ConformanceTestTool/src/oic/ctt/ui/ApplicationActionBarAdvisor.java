@@ -54,7 +54,6 @@ import org.eclipse.ui.internal.registry.ActionSetRegistry;
 import org.eclipse.ui.internal.registry.IActionSetDescriptor;
 
 public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
-
     private IWorkbenchWindow window;
     private IWorkbenchPage   page;
     private IWorkbenchAction exitAction;
@@ -75,7 +74,6 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
             @Override
             public void partActivated(
                     IWorkbenchPartReference paramIWorkbenchPartReference) {
-                System.out.println("partActivated");
                 String currentPerspective = page.getPerspective().getId();
                 if (currentPerspective.equals(Perspective.ID)) {
                     if (existRuningJob() == false) {

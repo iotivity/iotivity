@@ -26,20 +26,30 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Map;
 
+import oic.ctt.ui.util.CTLogger;
+
+import org.slf4j.Logger;
+
 public class RobotLogConsumer {
+    private static final String END_TIME                   = "endtime";
+    private static final String START_TIME                 = "starttime";
+    private Logger              logger                     = CTLogger
+                                                                   .getInstance();
+    private static final String MESSAGE                    = "message";
+    private static final String LEVEL                      = "level";
+    private static final String TIMESTAMP                  = "timestamp";
+    public static final int     ROBOT_LISTENER_API_VERSION = 2;
+    public static final String  DEFAULT_FILENAME           = "listen_java.txt";
+    public static final String  SPLIT                      = "#s#";
+    public static final String  TAG_LOG_MSG                = "RobotLog";
+    public static final String  TAG_SYSLOG_MSG             = "RobotSysLog";
+    public static final String  REAR_MSG                   = "\n";
+    public static final String  END_FLAG                   = "#END_LOG#";
 
-    public static final int    ROBOT_LISTENER_API_VERSION = 2;
-    public static final String DEFAULT_FILENAME           = "listen_java.txt";
-    public static final String SPLIT                      = "#s#";
-    public static final String TAG_LOG_MSG                = "RobotLog";
-    public static final String TAG_SYSLOG_MSG             = "RobotSysLog";
-    public static final String REAR_MSG                   = "\n";
-    public static final String END_FLAG                   = "#END_LOG#";
-
-    private static final int   LOGPORT                    = 3000;
-    private Socket             socket                     = null;
-    private BufferedWriter     outfile                    = null;
-    private static PrintWriter sendQueueLog               = null;
+    private static final int    LOGPORT                    = 3000;
+    private Socket              socket                     = null;
+    private BufferedWriter      outfile                    = null;
+    private static PrintWriter  sendQueueLog               = null;
 
     public RobotLogConsumer() throws IOException {
         this(DEFAULT_FILENAME);
@@ -49,19 +59,16 @@ public class RobotLogConsumer {
         String tmpdir = System.getProperty("java.io.tmpdir");
         String sep = System.getProperty("file.separator");
         String outpath = tmpdir + sep + filename;
-
-        System.out
-                .println("====================================================");
-        System.out.println("robotlistener filel location : " + outpath);
-
+        logger.info("====================================================");
+        logger.info("robotlistener filel location : " + outpath);
         outfile = new BufferedWriter(new FileWriter(outpath));
 
         try {
             socket = new Socket("localhost", LOGPORT);
             sendQueueLog = new PrintWriter(socket.getOutputStream(), true);
-            System.out.println("RobotLogConsumer ready");
+            logger.info("RobotLogConsumer ready");
         } catch (Exception e) {
-            System.out.println("RobotLogConsumer init error : " + e.toString());
+            logger.info("RobotLogConsumer init error : " + e.toString());
         }
     }
 
@@ -72,21 +79,28 @@ public class RobotLogConsumer {
             sendQueueLog.println(END_FLAG);
             outfile.close();
             socket.close();
-            System.out.println("RobotLogConsumer close");
+            logger.info("RobotLogConsumer close");
         } catch (Exception e) {
-            System.out
-                    .println("RobotLogConsumer close error : " + e.toString());
+            logger.info("RobotLogConsumer close error : " + e.toString());
         }
     }
 
     public void logMessage(Map attrs) throws IOException {
         try {
             // write listener file
-            String log = attrs.get("timestamp") + SPLIT + attrs.get("level")
-                    + SPLIT + TAG_LOG_MSG + SPLIT + attrs.get("message");
+            String log = attrs.get(TIMESTAMP) + SPLIT + attrs.get(LEVEL)
+                    + SPLIT + TAG_LOG_MSG + SPLIT + attrs.get(MESSAGE);
+            writeAndPrintLog(log);
+
+        } catch (Exception e) {
+            outfile.write("error : " + e.toString() + "\n");
+        }
+    }
+
+    private void writeAndPrintLog(String log) throws IOException {
+        try {
             outfile.write(log + "\n");
             sendQueueLog.println(log);
-
         } catch (Exception e) {
             outfile.write("error : " + e.toString() + "\n");
         }
@@ -96,10 +110,9 @@ public class RobotLogConsumer {
     public void message(Map attrs) throws IOException {
         try {
             // write listener file
-            String log = attrs.get("timestamp") + SPLIT + attrs.get("level")
-                    + SPLIT + TAG_SYSLOG_MSG + SPLIT + attrs.get("message");
-            outfile.write(log + "\n");
-            sendQueueLog.println(log);
+            String log = attrs.get(TIMESTAMP) + SPLIT + attrs.get(LEVEL)
+                    + SPLIT + TAG_SYSLOG_MSG + SPLIT + attrs.get(MESSAGE);
+            writeAndPrintLog(log);
 
         } catch (Exception e) {
             outfile.write("error : " + e.toString() + "\n");
@@ -108,7 +121,7 @@ public class RobotLogConsumer {
 
     public void startSuite(String name, Map attrs) throws IOException {
         try {
-            String tagging = attrs.get("starttime") + SPLIT + TAG_LOG_MSG;
+            String tagging = attrs.get(START_TIME) + SPLIT + TAG_LOG_MSG;
 
             String log = TAG_LOG_MSG
                     + SPLIT
@@ -124,8 +137,7 @@ public class RobotLogConsumer {
                     + SPLIT
                     + "=======================================================================================";
 
-            outfile.write(log + "\n");
-            sendQueueLog.println(log);
+            writeAndPrintLog(log);
 
         } catch (Exception e) {
             outfile.write("error : " + e.toString() + "\n");
@@ -134,7 +146,7 @@ public class RobotLogConsumer {
 
     public void startTest(String name, Map attrs) throws IOException {
         try {
-            String tagging = attrs.get("starttime") + SPLIT + TAG_LOG_MSG;
+            String tagging = attrs.get(START_TIME) + SPLIT + TAG_LOG_MSG;
 
             String log = TAG_LOG_MSG
                     + SPLIT
@@ -148,8 +160,7 @@ public class RobotLogConsumer {
                     + SPLIT
                     + "---------------------------------------------------------------------------------------";
 
-            outfile.write(log + "\n");
-            sendQueueLog.println(log);
+            writeAndPrintLog(log);
 
         } catch (Exception e) {
             outfile.write("error : " + e.toString() + "\n");
@@ -169,7 +180,7 @@ public class RobotLogConsumer {
 
     public void endSuite(String name, Map attrs) throws IOException {
         try {
-            String tagging = attrs.get("endtime") + SPLIT + TAG_LOG_MSG;
+            String tagging = attrs.get(END_TIME) + SPLIT + TAG_LOG_MSG;
 
             String log = TAG_LOG_MSG
                     + SPLIT
@@ -190,8 +201,7 @@ public class RobotLogConsumer {
                     + SPLIT
                     + "=======================================================================================";
 
-            outfile.write(log + "\n");
-            sendQueueLog.println(log);
+            writeAndPrintLog(log);
 
         } catch (Exception e) {
             outfile.write("error : " + e.toString() + "\n");

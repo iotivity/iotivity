@@ -57,7 +57,7 @@ cd ../..
 
 # Preparing Conformance Tool
 echo ''
-echo 'Preparing Conformance Tool. It will take 2/3 minute. Please Wait ...'
+echo 'Preparing Conformance Tool. It will take several minutes. Please Wait ...'
 echo ''
 
 mkdir -p bin/linux/ConformanceTestTool
@@ -65,6 +65,11 @@ mkdir -p bin/linux/ConformanceTestTool/libs
 mkdir -p bin/linux/ConformanceTestTool/testsuite
 mkdir -p bin/linux/ConformanceSimulator
 mkdir -p bin/linux/DtlsRelay
+
+
+cd res/ConformanceTestTool/build
+./build_gui.sh
+cd ../../../
 
 if [ ! -e res/ConformanceTestTool/bin/ConformanceTestTool ]; then
 	echo $bold$red'GUI Binary not found, only CLI will be supported!'$reset

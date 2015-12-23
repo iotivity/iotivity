@@ -19,12 +19,17 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
 package oic.ctt.ui.actions;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 
-import oic.ctt.ui.Activator;
 import oic.ctt.ui.UIConst;
+import oic.ctt.ui.types.ImageFilePathType;
+import oic.ctt.ui.types.ToolTipTextType;
+import oic.ctt.ui.util.CTLogger;
+import static oic.ctt.ui.types.ToolTipTextType.*;
+import static oic.ctt.ui.types.ImageFilePathType.*;
+import static oic.ctt.ui.types.IDType.*;
+import static oic.ctt.ui.actions.ActionsConstants.*;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
@@ -38,9 +43,11 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.slf4j.Logger;
 
 public class PauseTestAction extends Action implements ISelectionListener,
         IWorkbenchAction {
+    private Logger                 logger    = CTLogger.getInstance();
     public final static String     ID        = "oic.ctt.ui.actions.StopTestAction";
     private IWorkbenchWindow       workbenchwindow;
     private ActionContributionItem pauseTest = null;
@@ -49,8 +56,9 @@ public class PauseTestAction extends Action implements ISelectionListener,
     public PauseTestAction(IWorkbenchWindow window) {
         super(UIConst.TOOLBAR_TEXT_PAUSERESUME);
         this.setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(
-                Activator.PLUGIN_ID, "icons/pause.png"));
-        this.setToolTipText("Pause Test ");
+                PLUGIN_ID.toString(),
+                IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_PAUSE_TEST.toString()));
+        this.setToolTipText(TOOLTIP_TEXT_PAUSE_TEST.toString());
         this.setEnabled(false);
         workbenchwindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
     }
@@ -71,11 +79,10 @@ public class PauseTestAction extends Action implements ISelectionListener,
                 Menu menubar = workbenchwindow.getShell().getMenuBar();
                 MenuItem[] mItems = menubar.getItems();
                 int shellPid = StartTestAction.getShellPID();
-
                 String processStat = null;
                 for (MenuItem mitem : mItems) {
-                    if (mitem.getText().equals("&Run")
-                            || mitem.getText().equals("Run")) {
+                    if (mitem.getText().equals("&" + MENU_ITEM_RUN_TEXT)
+                            || mitem.getText().equals(MENU_ITEM_RUN_TEXT)) {
                         Menu menu = mitem.getMenu();
 
                         for (MenuItem menuItem : menu.getItems()) {
@@ -90,227 +97,101 @@ public class PauseTestAction extends Action implements ISelectionListener,
                                         .getData();
                                 Process pidProcess = null;
                                 try {
-                                    if (pauseTest.getAction().getToolTipText() == "Pause Test ") {
-                                        pidProcess = Runtime
-                                                .getRuntime()
-                                                .exec(new String[] { "/bin/sh",
-                                                        "-c",
-                                                        "pgrep -P " + shellPid });
-                                        String childPID = new BufferedReader(
-                                                new InputStreamReader(
-                                                        pidProcess
-                                                                .getInputStream(),
-                                                        "UTF-8"), 1024)
-                                                .readLine();
-                                        pidProcess = Runtime
-                                                .getRuntime()
-                                                .exec(new String[] { "/bin/sh",
-                                                        "-c",
-                                                        "pgrep -P " + childPID });
-                                        String grandchildPID = new BufferedReader(
-                                                new InputStreamReader(
-                                                        pidProcess
-                                                                .getInputStream(),
-                                                        "UTF-8"), 1024)
-                                                .readLine();
+                                    if (pauseTest.getAction().getToolTipText() == TOOLTIP_TEXT_PAUSE_TEST
+                                            .toString()) {
+                                        pidProcess = ActionsConstants
+                                                .executeCommand(new String[] {
+                                                        COMMAND_TYPE_SHELL, C,
+                                                        COMMAND_GREP + shellPid });
+                                        String childPID = ActionsConstants
+                                                .getProcessID(pidProcess);
+                                        pidProcess = ActionsConstants
+                                                .executeCommand(new String[] {
+                                                        COMMAND_TYPE_SHELL, C,
+                                                        COMMAND_GREP + childPID });
+                                        String grandchildPID = ActionsConstants
+                                                .getProcessID(pidProcess);
+
                                         if (grandchildPID != null) {
-                                            pidProcess = Runtime
-                                                    .getRuntime()
-                                                    .exec(new String[] {
-                                                            "/bin/sh",
-                                                            "-c",
-                                                            "kill -19 "
-                                                                    + grandchildPID });
-                                            Thread.sleep(100);
-                                            pidProcess = Runtime
-                                                    .getRuntime()
-                                                    .exec(new String[] {
-                                                            "/bin/sh",
-                                                            "-c",
-                                                            "ps "
-                                                                    + grandchildPID
-                                                                    + "| awk END'{print $3}'" });
-                                            processStat = new BufferedReader(
-                                                    new InputStreamReader(
-                                                            pidProcess
-                                                                    .getInputStream(),
-                                                            "UTF-8"), 1024)
-                                                    .readLine();
+                                            processStat = executeCommandForChild(
+                                                    grandchildPID, KILL_19);
                                         } else {
-                                            pidProcess = Runtime
-                                                    .getRuntime()
-                                                    .exec(new String[] {
-                                                            "/bin/sh",
-                                                            "-c",
-                                                            "ps -o command -p"
+                                            pidProcess = ActionsConstants
+                                                    .executeCommand(new String[] {
+                                                            COMMAND_TYPE_SHELL,
+                                                            C,
+                                                            COMMAND_PROCESS
                                                                     + childPID
-                                                                    + " | awk END'{print}'" });
-                                            String line_findJava = new BufferedReader(
-                                                    new InputStreamReader(
-                                                            pidProcess
-                                                                    .getInputStream(),
-                                                            "UTF-8"), 1024)
-                                                    .readLine();
+                                                                    + AWK_END_PRINT });
+                                            String line_findJava = ActionsConstants
+                                                    .getProcessID(pidProcess);
                                             if (line_findJava != null) {
                                                 if (line_findJava
-                                                        .contains("jython.jar")) {
-                                                    pidProcess = Runtime
-                                                            .getRuntime()
-                                                            .exec(new String[] {
-                                                                    "/bin/sh",
-                                                                    "-c",
-                                                                    "pkill -19 -P "
-                                                                            + shellPid });
-                                                    Thread.sleep(100);
-                                                    pidProcess = Runtime
-                                                            .getRuntime()
-                                                            .exec(new String[] {
-                                                                    "/bin/sh",
-                                                                    "-c",
-                                                                    "ps "
-                                                                            + childPID
-                                                                            + "| awk END'{print $3}'" });
-                                                    processStat = new BufferedReader(
-                                                            new InputStreamReader(
-                                                                    pidProcess
-                                                                            .getInputStream(),
-                                                                    "UTF-8"),
-                                                            1024).readLine();
+                                                        .contains(JYTHON_JAR_FILE_NAME)) {
+                                                    processStat = executeCommandForShellPid(
+                                                            shellPid, childPID,
+                                                            PKILL_19_P);
                                                 }
                                             }
                                         }
                                         if (processStat != null) {
                                             if (processStat.contains("T")) {
-                                                pauseTest
-                                                        .getAction()
-                                                        .setImageDescriptor(
-                                                                AbstractUIPlugin
-                                                                        .imageDescriptorFromPlugin(
-                                                                                Activator.PLUGIN_ID,
-                                                                                "icons/resume.png"));
-                                                pauseTest.getAction()
-                                                        .setToolTipText(
-                                                                "Resume Test ");
-                                                stopTest.getAction()
-                                                        .setEnabled(false);
+                                                changeActionState(
+                                                        TOOLTIP_TEXT_RESUME_TEST,
+                                                        IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_RESUME,
+                                                        false);
                                             } else {
-                                                System.out
-                                                        .println("[Debug] Process didn't pause.");
+                                                logger.debug("Process didn't pause.");
                                             }
                                         } else {
-                                            System.out
-                                                    .println("[Debug] Process is null.");
+                                            logger.debug("Process is null.");
                                         }
                                     } else {
-                                        pidProcess = Runtime
-                                                .getRuntime()
-                                                .exec(new String[] { "/bin/sh",
-                                                        "-c",
-                                                        "pgrep -P " + shellPid });
-                                        String childPID = new BufferedReader(
-                                                new InputStreamReader(
-                                                        pidProcess
-                                                                .getInputStream(),
-                                                        "UTF-8"), 1024)
-                                                .readLine();
-                                        pidProcess = Runtime
-                                                .getRuntime()
-                                                .exec(new String[] { "/bin/sh",
-                                                        "-c",
-                                                        "pgrep -P " + childPID });
-                                        String grandchildPID = new BufferedReader(
-                                                new InputStreamReader(
-                                                        pidProcess
-                                                                .getInputStream(),
-                                                        "UTF-8"), 1024)
-                                                .readLine();
+                                        pidProcess = ActionsConstants
+                                                .executeCommand(new String[] {
+                                                        COMMAND_TYPE_SHELL, C,
+                                                        COMMAND_GREP + shellPid });
+                                        String childPID = ActionsConstants
+                                                .getProcessID(pidProcess);
+                                        pidProcess = ActionsConstants
+                                                .executeCommand(new String[] {
+                                                        COMMAND_TYPE_SHELL, C,
+                                                        COMMAND_GREP + childPID });
+                                        String grandchildPID = ActionsConstants
+                                                .getProcessID(pidProcess);
                                         if (grandchildPID != null) {
-                                            pidProcess = Runtime
-                                                    .getRuntime()
-                                                    .exec(new String[] {
-                                                            "/bin/sh",
-                                                            "-c",
-                                                            "kill -18 "
-                                                                    + grandchildPID });
-                                            Thread.sleep(100);
-                                            pidProcess = Runtime
-                                                    .getRuntime()
-                                                    .exec(new String[] {
-                                                            "/bin/sh",
-                                                            "-c",
-                                                            "ps "
-                                                                    + grandchildPID
-                                                                    + "| awk END'{print $3}'" });
-                                            processStat = new BufferedReader(
-                                                    new InputStreamReader(
-                                                            pidProcess
-                                                                    .getInputStream(),
-                                                            "UTF-8"), 1024)
-                                                    .readLine();
+                                            processStat = executeCommandForChild(
+                                                    grandchildPID, KILL_18);
                                         } else {
-                                            pidProcess = Runtime
-                                                    .getRuntime()
-                                                    .exec(new String[] {
-                                                            "/bin/sh",
-                                                            "-c",
-                                                            "ps -o command -p"
+                                            pidProcess = ActionsConstants
+                                                    .executeCommand(new String[] {
+                                                            COMMAND_TYPE_SHELL,
+                                                            C,
+                                                            COMMAND_PROCESS
                                                                     + childPID
-                                                                    + " | awk END'{print}'" });
-                                            String line_findJava = new BufferedReader(
-                                                    new InputStreamReader(
-                                                            pidProcess
-                                                                    .getInputStream(),
-                                                            "UTF-8"), 1024)
-                                                    .readLine();
+                                                                    + AWK_END_PRINT });
+                                            String line_findJava = ActionsConstants
+                                                    .getProcessID(pidProcess);
                                             if (line_findJava != null) {
                                                 if (line_findJava
-                                                        .contains("jython.jar")) {
-                                                    pidProcess = Runtime
-                                                            .getRuntime()
-                                                            .exec(new String[] {
-                                                                    "/bin/sh",
-                                                                    "-c",
-                                                                    "pkill -18 -P "
-                                                                            + shellPid });
-                                                    Thread.sleep(100);
-                                                    pidProcess = Runtime
-                                                            .getRuntime()
-                                                            .exec(new String[] {
-                                                                    "/bin/sh",
-                                                                    "-c",
-                                                                    "ps "
-                                                                            + childPID
-                                                                            + "| awk END'{print $3}'" });
-                                                    processStat = new BufferedReader(
-                                                            new InputStreamReader(
-                                                                    pidProcess
-                                                                            .getInputStream(),
-                                                                    "UTF-8"),
-                                                            1024).readLine();
+                                                        .contains(JYTHON_JAR_FILE_NAME)) {
+                                                    processStat = executeCommandForShellPid(
+                                                            shellPid, childPID,
+                                                            PKILL_18_P);
                                                 }
                                             }
                                         }
                                         if (processStat != null) {
                                             if (processStat.contains("S")) {
-                                                pauseTest
-                                                        .getAction()
-                                                        .setImageDescriptor(
-                                                                AbstractUIPlugin
-                                                                        .imageDescriptorFromPlugin(
-                                                                                Activator.PLUGIN_ID,
-                                                                                "icons/pause.png"));
-                                                pauseTest.getAction()
-                                                        .setToolTipText(
-                                                                "Pause Test ");
-                                                stopTest.getAction()
-                                                        .setEnabled(true);
+                                                changeActionState(
+                                                        TOOLTIP_TEXT_PAUSE_TEST,
+                                                        IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_PAUSE_TEST,
+                                                        true);
                                             } else {
-                                                System.out
-                                                        .println("[Debug] Process didn't resume.");
+                                                logger.debug("Process didn't resume.");
                                             }
                                         } else {
-                                            System.out
-                                                    .println("[Debug] Process is null.");
+                                            logger.debug("Process is null.");
                                         }
                                     }
                                     findAction = true;
@@ -326,6 +207,49 @@ public class PauseTestAction extends Action implements ISelectionListener,
                     }
                 }
             }
+
+            private String executeCommandForShellPid(int shellPid,
+                    String childPID, String command) throws IOException,
+                    InterruptedException, UnsupportedEncodingException {
+                String processStat;
+                Process pidProcess;
+                pidProcess = ActionsConstants.executeCommand(new String[] {
+                        COMMAND_TYPE_SHELL, C, command + shellPid });
+                Thread.sleep(100);
+                pidProcess = ActionsConstants.executeCommand(new String[] {
+                        COMMAND_TYPE_SHELL, C,
+                        COMMAND_PROCESS_SEARCH + childPID + AWK_END_PRINT_$3 });
+                processStat = ActionsConstants.getProcessID(pidProcess);
+                return processStat;
+            }
+
+            private String executeCommandForChild(String childPid,
+                    String command) throws IOException, InterruptedException,
+                    UnsupportedEncodingException {
+                String processStat;
+                Process pidProcess;
+                pidProcess = ActionsConstants.executeCommand(new String[] {
+                        COMMAND_TYPE_SHELL, C, command + childPid });
+                Thread.sleep(100);
+                pidProcess = ActionsConstants.executeCommand(new String[] {
+                        COMMAND_TYPE_SHELL, C,
+                        COMMAND_PROCESS_SEARCH + childPid + AWK_END_PRINT_$3 });
+                processStat = ActionsConstants.getProcessID(pidProcess);
+                return processStat;
+            }
+
+            private void changeActionState(ToolTipTextType toolTipTypeText,
+                    ImageFilePathType imageFilePath, boolean enable) {
+                pauseTest.getAction()
+                        .setImageDescriptor(
+                                AbstractUIPlugin.imageDescriptorFromPlugin(
+                                        PLUGIN_ID.toString(),
+                                        imageFilePath.toString()));
+                pauseTest.getAction()
+                        .setToolTipText(toolTipTypeText.toString());
+                stopTest.getAction().setEnabled(enable);
+            }
+
         });
     }
 }

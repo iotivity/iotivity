@@ -19,48 +19,30 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
 package oic.ctt.ui.actions;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
-import oic.ctt.ui.Activator;
-import oic.ctt.ui.Perspective;
 import oic.ctt.ui.UIConst;
 import oic.ctt.ui.log.LogHandler;
 import oic.ctt.ui.multipages.TestPlanMultiPageEditor;
 import oic.ctt.ui.multipages.TestPlanSpecPage;
+import static oic.ctt.ui.types.ToolTipTextType.*;
+import static oic.ctt.ui.types.ImageFilePathType.*;
+import static oic.ctt.ui.types.IDType.*;
+import oic.ctt.ui.util.CTLogger;
+import static oic.ctt.ui.util.PopUpUtil.*;
+import static oic.ctt.ui.util.DatabaseUtil.*;
 import oic.ctt.ui.views.LogView;
 
-import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteException;
-import org.apache.commons.exec.PumpStreamHandler;
-import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
@@ -68,60 +50,70 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.ISelectionListener;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
-import org.eclipse.ui.ide.IDE;
-import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.slf4j.Logger;
 
 public class StartTestAction extends Action implements ISelectionListener,
         IWorkbenchAction {
-    public final static String     ID                = "oic.ctt.ui.actions.StartTestAction";
+    private static final String          TCINFO_TABLE_TESTCASE_COLUMN               = "testcase_fullname";
+    private static final String          TCINFO_TABLE_TESTSUITE_COLUMN              = "testsuite";
+    private static final String          DIALOG_MESSAGE                             = "There is no selected TestCase. Please select at least one Testcase.";
+    private static final String          TEST_PLAN_EXISTENCE_MESSAGE                = "Test Plan not exist";
+    private static final String          TEST_PLAN_PAGE_CHECKING_MESSAGE            = "Not Test Plan Page.";
+    private static Logger                logger                                     = CTLogger
+                                                                                            .getInstance();
+    private static final String          SHELL_SCRIPT_NAME                          = "testCommand.sh";
+    private static final String          DATE_FORMAT_1                              = "yyyyMMdd-HHmmss_";
+    private static final String          CLASS_OIC_CTT_UI_ACTIONS_START_TEST_ACTION = "class oic.ctt.ui.actions.JobProgressThread";
+    private static final String          JYBOT_COMMAND_STRING                       = " jybot --listener oic.ctt.logmanager.collector.RobotLogConsumer -d ";
+    private static final String          QUERY_TO_GET_CHECKED_ROW_FROM_TCINFO_TABLE = "select * from tcinfo where checked = 'true'";
+    private static final String          QUERY_TO_COUNT_CHECKED_ROW                 = "select count(*) from tcinfo where checked = 'true'";
+    public static final Shell            SHELL                                      = PlatformUI
+                                                                                            .getWorkbench()
+                                                                                            .getActiveWorkbenchWindow()
+                                                                                            .getShell();
 
-    Shell                          shell             = PlatformUI
-                                                             .getWorkbench()
-                                                             .getActiveWorkbenchWindow()
-                                                             .getShell();
+    public static ConsoleThread          consoleThread;
+    private String                       planName;
+    public static TestPlanSpecPage       specpage;
+    public static File                   currentResultDir;
+    public static int                    testcaseIndex;
 
-    private static Thread          consoleThread;
-    private String                 planName;
-    private TestPlanSpecPage       specpage;
-    public static File             currentResultDir;
-    private static int             testcaseIndex;
+    public static IWorkbenchWindow       workbenchwindow;
+    private IWorkbenchPage               page;
+    public static ActionContributionItem startTest;
+    public static ActionContributionItem stopTest;
+    public static ActionContributionItem pauseTest;
+    public static boolean                testInprogress                             = false;
+    private static LogView               mLogView;
 
-    private IWorkbenchWindow       workbenchwindow;
-    private IWorkbenchPage         page;
-    private ActionContributionItem startTest         = null;
-    private ActionContributionItem stopTest          = null;
-    private ActionContributionItem pauseTest         = null;
-    private boolean                testInprogress    = false;
-    private static LogView         mLogView;
+    public static DefaultExecutor        executor;
+    public static ProgressMonitorDialog  htmlMonitorDialog;
 
-    static DefaultExecutor         executor          = null;
-    ProgressMonitorDialog          htmlMonitorDialog = null;
-
-    private Action                 startConnTestAction;
+    private Action                       startConnTestAction;
+    public static IRunnableWithProgress  runnableHtmlProgress;
 
     public StartTestAction(IWorkbenchWindow window) {
-        // TODO Auto-generated constructor stub
         super(UIConst.TOOLBAR_TEXT_START);
         this.setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(
-                Activator.PLUGIN_ID, "icons/run.png"));
-        this.setToolTipText("Start Test");
-        testcaseIndex = 0;
+                PLUGIN_ID.toString(),
+                IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_START_TEST.toString()));
+        this.setToolTipText(TOOLTIP_TEXT_START_TEST.toString());
+        doInitialization();
+    }
 
+    private void doInitialization() {
+        testcaseIndex = 0;
+        currentResultDir = null;
         workbenchwindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
         page = workbenchwindow.getActivePage();
-
     }
 
     public static int getShellPID() {
@@ -141,7 +133,7 @@ public class StartTestAction extends Action implements ISelectionListener,
     public void run() {
 
         String currentPerspective = page.getPerspective().getId();
-        if (currentPerspective.equals(Perspective.ID)) {
+        if (currentPerspective.equals(PERSPECTIVE_ID.toString())) {
             runTestPlan();
         } else {
             startConnTestAction.run();
@@ -151,8 +143,145 @@ public class StartTestAction extends Action implements ISelectionListener,
 
     public void runTestPlan() {
         testInprogress = false;
+        String libraryClasspathCommand = "";
         boolean zeroChecked = false;
+        setSpecPageAndPlanName();
+        libraryClasspathCommand = setlibraryClasspathCommand();
+        String testTargetCommand = "";
+        Connection conn = null;
+        ResultSet checkdInfo = null;
+        ResultSet countRow = null;
+        String jybotCommand = "";
+        String jythonPath = "";
+        String command = "";
 
+        try {
+            conn = createDBConnection(planName);
+            countRow = retrieveQueryResult(conn, QUERY_TO_COUNT_CHECKED_ROW);
+            logger.info("Checked TC Count : "
+                    + Integer.toString(countRow.getInt("count(*)")));
+            if (countRow.getInt("count(*)") == 0) {
+                zeroChecked = true;
+            }
+            if (zeroChecked == false) {
+                checkdInfo = retrieveQueryResult(conn,
+                        QUERY_TO_GET_CHECKED_ROW_FROM_TCINFO_TABLE);
+                testcaseIndex = 0;
+                testTargetCommand = setTestTargetCommand(checkdInfo);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            AutoCloseable[] closeableObjects = { checkdInfo, conn, countRow };
+            closeDataBaseObjects(closeableObjects);
+        }
+        if (zeroChecked == false) {
+            String currentTime = getCurrentTime();
+            String resultDir = UIConst.ROOT_PATH + UIConst.TESTREPORT_PATH
+                    + "/" + currentTime + planName;
+            currentResultDir = new File(resultDir);
+            if (!currentResultDir.exists()) {
+                currentResultDir.mkdir();
+            }
+            jybotCommand = JYBOT_COMMAND_STRING + "\""
+                    + currentResultDir.getAbsolutePath() + "\"" + " -b "
+                    + UIConst.DEBUG_FILE_NAME + " -C auto";
+            jythonPath = " JYTHONPATH=" + UIConst.PROJECT_PATH + "libs/" + ":"
+                    + UIConst.ROOT_PATH + "testsuite/" + ":"
+                    + UIConst.PROJECT_PATH + ":";
+
+            command = "CLASSPATH=$CLASSPATH:" + libraryClasspathCommand
+                    + jythonPath + jybotCommand + testTargetCommand;
+            logger.info("Test execution command : " + command);
+            writeTestExecutaionCommandToShellScript(command);
+            executeTestCommand(command);
+        } else {
+            displayMessageDialog(ACTIVE_WORKBENCH_WINDOW_SHELL, ERROR_TEXT,
+                    DIALOG_MESSAGE, MessageDialog.ERROR,
+                    new String[] { DIALOG_BUTTON_LABEL_OK });
+        }
+    }
+
+    /**
+     * This method is used to write test execution command to shell script
+     * 
+     * @param command
+     *            This is the test execution command
+     * @return nothing
+     */
+    private void writeTestExecutaionCommandToShellScript(String command) {
+        FileWriter fw = null;
+
+        try {
+            File file = new File(currentResultDir, SHELL_SCRIPT_NAME);
+
+            if (!file.exists()) {
+                logger.info("file doesn't exists, creating it it");
+                file.createNewFile();
+            }
+
+            fw = new FileWriter(file.getAbsoluteFile());
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(command);
+
+            if (!file.canExecute()) {
+                file.setExecutable(true);
+            }
+            bw.close();
+            logger.info("Successfully Write test execution command to testCommand.sh");
+        } catch (IOException e) {
+            e.printStackTrace();
+            if (fw != null) {
+                try {
+                    fw.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * This method is used to get current time
+     * 
+     * @param nothing
+     * @return currentTime
+     */
+    private String getCurrentTime() {
+        DateFormat date = new SimpleDateFormat(DATE_FORMAT_1);
+        String currentTime = date.format(System.currentTimeMillis());
+        return currentTime;
+    }
+
+    /**
+     * This method is used to set library class path command
+     * 
+     * @param nothing
+     * @return libraryClasspathCommand This is the command used to set library
+     *         path
+     */
+    private String setlibraryClasspathCommand() {
+        String[] libraryPath = { "bin/jar", "libs", "" };
+        String libraryClasspathCommand = "";
+        for (int i = 0; i < libraryPath.length; i++) {
+            libraryClasspathCommand += UIConst.PROJECT_PATH + libraryPath[i]
+                    + "/*";
+            if (i < libraryPath.length - 1) {
+                libraryClasspathCommand += ":";
+            }
+        }
+        return libraryClasspathCommand;
+    }
+
+    /**
+     * This method is used to set test plan spec page and plan name
+     * 
+     * @param nothing
+     * @return libraryClasspathCommand This is the command used to set library
+     *         path
+     */
+    private void setSpecPageAndPlanName() {
         if (page.getActiveEditor() != null) {
             if (page.getActiveEditor() instanceof TestPlanMultiPageEditor) {
                 TestPlanMultiPageEditor editor = (TestPlanMultiPageEditor) page
@@ -163,154 +292,47 @@ public class StartTestAction extends Action implements ISelectionListener,
                     planName = editor.getPartName();
                 }
             } else {
-                System.out.println("Not Test Plan Page.");
+                logger.info(TEST_PLAN_PAGE_CHECKING_MESSAGE);
             }
         } else {
-            System.out.println("Not exist Test Plan.");
+            logger.info(TEST_PLAN_EXISTENCE_MESSAGE);
             return;
         }
+    }
 
-        String[] libraryPath = { "bin/jar", "libs", "" };
-        String libraryClasspathCommand = "";
-
-        for (int i = 0; i < libraryPath.length; i++) {
-            libraryClasspathCommand += UIConst.PROJECT_PATH + libraryPath[i]
-                    + "/*";
-            if (i < libraryPath.length - 1) {
-                libraryClasspathCommand += ":";
-            }
-        }
-
-        // Get DB data
-        Statement stat = null;
-        Connection conn = null;
+    /**
+     * This mehtod is used to set target test command
+     * 
+     * @param checkdInfo
+     *            this is database table query result set
+     * @return testTargetCommand this is target test command
+     * @throws SQLException
+     */
+    private String setTestTargetCommand(ResultSet checkdInfo)
+            throws SQLException {
         String testCase = "";
         String testSuite = "";
         String prevTestSuite = "";
         String testTargetCommand = "";
-        ResultSet checkdInfo = null;
-        ResultSet countRow = null;
 
-        try {
-            Class.forName("org.sqlite.JDBC");
-            System.out.println("jdbc:sqlite:" + UIConst.ROOT_PATH
-                    + UIConst.TESTPLAN_PATH + "/" + planName + "/" + planName
-                    + ".db");
-            conn = DriverManager.getConnection("jdbc:sqlite:"
-                    + UIConst.ROOT_PATH + UIConst.TESTPLAN_PATH + "/"
-                    + planName + "/" + planName + ".db");
-            stat = conn.createStatement();
-
-            countRow = stat
-                    .executeQuery("select count(*) from tcinfo where checked = 'true'");
-            System.out.println(countRow.getInt("count(*)"));
-            if (countRow.getInt("count(*)") == 0) {
-                zeroChecked = true;
+        while (checkdInfo.next()) {
+            testSuite = checkdInfo.getString(TCINFO_TABLE_TESTSUITE_COLUMN);
+            testSuite = testSuite.split(UIConst.ROBOT_EXT)[0];
+            testCase = checkdInfo.getString(TCINFO_TABLE_TESTCASE_COLUMN)
+                    .trim();
+            testCase = testCase.replaceAll("\"", "\\\\\"");
+            if (testSuite.equals(prevTestSuite) == false) {
+                testTargetCommand += " -s " + "\"" + testSuite + "\" -t "
+                        + "\"" + testCase + "\"";
+            } else {
+                testTargetCommand += " -t " + "\"" + testCase + "\"";
             }
-            if (zeroChecked == false) {
-                checkdInfo = stat
-                        .executeQuery("select * from tcinfo where checked = 'true'");
-                testcaseIndex = 0;
-                while (checkdInfo.next()) {
-                    testSuite = checkdInfo.getString("testsuite");
-                    testSuite = testSuite.split(UIConst.ROBOT_EXT)[0];
-                    testCase = checkdInfo.getString("testcase_fullname").trim();
-                    testCase = testCase.replaceAll("\"", "\\\\\"");
-                    if (testSuite.equals(prevTestSuite) == false) {
-                        testTargetCommand += " -s " + "\"" + testSuite
-                                + "\" -t " + "\"" + testCase + "\"";
-                    } else {
-                        testTargetCommand += " -t " + "\"" + testCase + "\"";
-                    }
-                    prevTestSuite = testSuite;
-                    testcaseIndex++;
-                }
-                testTargetCommand += " " + "\"" + UIConst.ROOT_PATH
-                        + UIConst.TESTPLAN_PATH + "/" + planName + "\"";
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (checkdInfo != null) {
-                    checkdInfo.close();
-                }
-                if (stat != null) {
-                    stat.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            prevTestSuite = testSuite;
+            testcaseIndex++;
         }
-        if (zeroChecked == false) {
-            DateFormat date = new SimpleDateFormat("yyyyMMdd-HHmmss_");
-            String currentTime = date.format(System.currentTimeMillis());
-            String resultDir = UIConst.ROOT_PATH + UIConst.TESTREPORT_PATH
-                    + "/" + currentTime + planName;
-            currentResultDir = new File(resultDir);
-            if (!currentResultDir.exists()) {
-                currentResultDir.mkdir();
-            }
-            String jybotCommand = " jybot --listener oic.ctt.logmanager.collector.RobotLogConsumer -d "
-                    + "\""
-                    + currentResultDir.getAbsolutePath()
-                    + "\""
-                    + " -b "
-                    + UIConst.DEBUG_FILE_NAME + " -C auto";
-            String jythonPath = " JYTHONPATH=" + UIConst.PROJECT_PATH + "libs/"
-                    + ":" + UIConst.ROOT_PATH + "testsuite/" + ":"
-                    + UIConst.PROJECT_PATH + ":";
-
-            String command = "CLASSPATH=$CLASSPATH:" + libraryClasspathCommand
-                    + jythonPath + jybotCommand + testTargetCommand;
-
-            System.out.println(command);
-
-            FileWriter fw = null;
-
-            try {
-                File file = new File(currentResultDir, "testCommand.sh");
-
-                // if file doesn't exists, then create it
-                if (!file.exists()) {
-                    file.createNewFile();
-                }
-
-                fw = new FileWriter(file.getAbsoluteFile());
-                BufferedWriter bw = new BufferedWriter(fw);
-                bw.write(command);
-
-                if (!file.canExecute()) {
-                    file.setExecutable(true);
-                }
-                bw.close();
-
-                System.out.println("Done");
-            } catch (IOException e) {
-                e.printStackTrace();
-                if (fw != null) {
-                    try {
-                        fw.close();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                }
-            }
-            executeTestCommand(command);
-        } else {
-            MessageDialog dialog1 = new MessageDialog(
-                    PlatformUI.getWorkbench().getActiveWorkbenchWindow()
-                            .getShell(),
-                    "Error",
-                    null,
-                    "There is no selected TestCase. Please select at least one Testcase.",
-                    MessageDialog.ERROR, new String[] { "OK" }, 0);
-            dialog1.open();
-        }
+        testTargetCommand += " " + "\"" + UIConst.ROOT_PATH
+                + UIConst.TESTPLAN_PATH + "/" + planName + "\"";
+        return testTargetCommand;
     }
 
     public static class MyFileNameFilter implements FilenameFilter {
@@ -329,6 +351,7 @@ public class StartTestAction extends Action implements ISelectionListener,
     }
 
     private void executeTestCommand(final String command) {
+        logger.debug(" executeTestCommand started.");
         final File debugLogFile = new File(currentResultDir,
                 UIConst.DEBUG_FILE_NAME);
 
@@ -347,9 +370,9 @@ public class StartTestAction extends Action implements ISelectionListener,
 
         if (debugLogFile.exists()) {
             if (debugLogFile.delete()) {
-                System.out.println("[Debug] Debugfile was deleted.");
+                logger.debug(" Debugfile was deleted.");
             } else {
-                System.out.println("[Debug] Debugfile wasn't deleted.");
+                logger.debug(" Debugfile wasn't deleted.");
             }
         }
         try {
@@ -357,602 +380,8 @@ public class StartTestAction extends Action implements ISelectionListener,
         } catch (IOException e3) {
             e3.printStackTrace();
         }
-
-        IWorkbenchPage page = PlatformUI.getWorkbench()
-                .getActiveWorkbenchWindow().getActivePage();
-
-        IRunnableWithProgress runnableHtmlProgress = new IRunnableWithProgress() {
-            @Override
-            public void run(IProgressMonitor monitor)
-                    throws InvocationTargetException, InterruptedException {
-                monitor.beginTask("Test Reporting...", IProgressMonitor.UNKNOWN);
-
-                while (!monitor.isCanceled()) {
-                    Thread.sleep(100);
-                }
-                monitor.done();
-            }
-
-        };
-
-        consoleThread = new Thread() {
-            public void run() {
-
-                IJobChangeListener progressListner = new IJobChangeListener() {
-
-                    @Override
-                    public void sleeping(IJobChangeEvent arg0) {
-                    }
-
-                    @Override
-                    public void scheduled(IJobChangeEvent arg0) {
-                    }
-
-                    @Override
-                    public void running(IJobChangeEvent arg0) {
-                    }
-
-                    @Override
-                    public void done(IJobChangeEvent arg0) {
-                        Display.getDefault().asyncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                try {
-                                    htmlMonitorDialog = new ProgressMonitorDialog(
-                                            shell);
-                                    htmlMonitorDialog.run(true, true,
-                                            runnableHtmlProgress);
-
-                                } catch (InvocationTargetException e) {
-                                    e.printStackTrace();
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
-
-                    }
-
-                    @Override
-                    public void awake(IJobChangeEvent arg0) {
-                    }
-
-                    @Override
-                    public void aboutToRun(IJobChangeEvent arg0) {
-                    }
-                };
-                progress.addJobChangeListener(progressListner);
-                progress.schedule();
-
-                Display.getDefault().syncExec(new Runnable() {
-                    @Override
-                    public void run() {
-                        boolean findAction = false;
-                        Menu menubar = workbenchwindow.getShell().getMenuBar();
-                        MenuItem[] mItems = menubar.getItems();
-                        for (MenuItem mitem : mItems) {
-                            if (mitem.getText().equals("&Run")
-                                    || mitem.getText().equals("Run")) {
-                                Menu menu = mitem.getMenu();
-
-                                for (MenuItem menuItem : menu.getItems()) {
-                                    if (menuItem.getText().equals(
-                                            UIConst.TOOLBAR_TEXT_START)) {
-                                        startTest = (ActionContributionItem) menuItem
-                                                .getData();
-                                        startTest.getAction().setEnabled(false);
-                                    }
-                                    if (menuItem.getText().equals(
-                                            UIConst.TOOLBAR_TEXT_STOP)) {
-                                        stopTest = (ActionContributionItem) menuItem
-                                                .getData();
-                                        stopTest.getAction().setEnabled(true);
-                                    }
-                                    if (menuItem.getText().equals(
-                                            UIConst.TOOLBAR_TEXT_PAUSERESUME)) {
-                                        pauseTest = (ActionContributionItem) menuItem
-                                                .getData();
-                                        pauseTest.getAction().setEnabled(true);
-                                        findAction = true;
-                                        break;
-                                    }
-                                }
-                                if (findAction) {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                });
-
-                executor = new DefaultExecutor();
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                PumpStreamHandler streamHandler = new PumpStreamHandler(baos);
-                executor.setStreamHandler(streamHandler);
-                CommandLine commandLine = new CommandLine(
-                        currentResultDir.getAbsolutePath() + "/testCommand.sh");
-                try {
-                    executor.setExitValues(new int[] { 0, 1, 2, 3, 4, 5, 6, 7,
-                            8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-                            21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
-                            34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
-                            47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
-                            60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72,
-                            73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
-                            86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98,
-                            99, 100, -559038737 });
-                    int exitCode = executor.execute(commandLine);
-
-                } catch (ExecuteException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                try {
-                    progress.join();
-                    progress.removeJobChangeListener(progressListner);
-
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                Display.getDefault().syncExec(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        if (htmlMonitorDialog != null) {
-                            htmlMonitorDialog.getProgressMonitor().setCanceled(
-                                    true);
-                        }
-
-                    }
-                });
-
-                openBrowser();
-            }
-
-        };
+        consoleThread = new ConsoleThread();
         consoleThread.start();
-
-    }
-
-    public Job progress = new Job("Test Initializing...") {
-
-                            boolean testCancel = false;
-
-                            @Override
-                            protected void canceling() {
-                                super.canceling();
-                                super.setName("Test Stopping...");
-                                testCancel = true;
-                                consoleThread.interrupt();
-                                System.out.println("Test Stopped.");
-                            }
-
-                            String         line             = "";
-                            String         tempLine         = "";
-                            String         currentSuiteName = "";
-                            int            currentPbarID    = 0;
-
-                            IWorkbenchPage page             = PlatformUI
-                                                                    .getWorkbench()
-                                                                    .getActiveWorkbenchWindow()
-                                                                    .getActivePage();
-
-                            @Override
-                            protected IStatus run(IProgressMonitor monitor) {
-                                int result = 0;
-
-                                currentPbarID = 0;
-                                Boolean endFlag = false;
-                                String progressStr = "";
-
-                                specpage.setInitStatus();
-
-                                final File file = new File(currentResultDir,
-                                        UIConst.DEBUG_FILE_NAME);
-
-                                // file exist
-                                if (!file.exists()) {
-                                    System.out.println("not exist : "
-                                            + file.toString());
-                                    return Status.CANCEL_STATUS;
-                                }
-
-                                System.out.println("file is : "
-                                        + file.toString());
-                                FileInputStream fis = null;
-                                InputStreamReader isr = null;
-                                BufferedReader reader = null;
-
-                                FileWriter fwGraph = null;
-                                BufferedWriter bwGraph = null;
-
-                                try {
-
-                                    fis = new FileInputStream(file);
-                                    isr = new InputStreamReader(fis, "UTF-8");
-                                    reader = new BufferedReader(isr, 1024);
-                                    super.setName("Test Initializing...");
-                                    monitor.beginTask("Load Libraries",
-                                            testcaseIndex);
-
-                                    testCancel = false;
-
-                                    while (true) {
-                                        // create Graph data file.
-                                        File fileGraph = new File(
-                                                currentResultDir,
-                                                UIConst.FLOWGRAPH_FILE_NAME);
-
-                                        if (!fileGraph.exists()) {
-                                            fileGraph.createNewFile();
-                                        }
-                                        fwGraph = new FileWriter(
-                                                fileGraph.getAbsoluteFile(),
-                                                true);
-                                        bwGraph = new BufferedWriter(fwGraph);
-
-                                        if (testCancel) {
-                                            if (!testInprogress) {
-                                                break;
-                                            }
-                                        }
-
-                                        line = reader.readLine();
-                                        tempLine = line;
-                                        if (line != null) {
-                                            testInprogress = true;
-                                            if (line.contains("START TEST:")) {
-                                                bwGraph.write(line + "\n");
-
-                                                result++;
-
-                                                String strTime = line
-                                                        .substring(0, 21);
-                                                long longTime = getTimestamp(strTime);
-
-                                                String tcFullName = line
-                                                        .substring(
-                                                                line.indexOf("TEST: ") + 6,
-                                                                line.lastIndexOf(" ["));
-                                                super.setName((currentPbarID + 1)
-                                                        + "/"
-                                                        + testcaseIndex
-                                                        + " " + tcFullName);
-                                                progressStr = "";
-
-                                                String tcName = "";
-                                                if (tcFullName.contains("]")) {
-                                                    tcName = tcFullName
-                                                            .split("\\]")[1]
-                                                            .trim();
-                                                } else {
-                                                    tcName = tcFullName;
-                                                }
-                                                specpage.setStatusOnRuntime(
-                                                        currentSuiteName,
-                                                        tcName,
-                                                        UIConst.STATUS_IN_PROGRESS);
-                                            } else if (line
-                                                    .contains("END TEST:")) {
-                                                bwGraph.write(line + "\n");
-
-                                                tempLine = line
-                                                        .split("END TEST: ")[1];
-                                                String tcFullName = null;
-                                                if (tempLine != null) {
-                                                    tempLine = tempLine.trim();
-                                                    if (tempLine
-                                                            .contains("- PASS (")
-                                                            || tempLine
-                                                                    .contains("- FAIL (")) {
-                                                        tcFullName = tempLine
-                                                                .substring(
-                                                                        0,
-                                                                        tempLine.lastIndexOf("-") - 1);
-                                                    } else {
-                                                        tcFullName = tempLine
-                                                                .substring(
-                                                                        0,
-                                                                        tempLine.lastIndexOf("(") - 1);
-                                                    }
-                                                    String tcName = "";
-                                                    if (tcFullName
-                                                            .contains("]")) {
-                                                        tcName = tcFullName
-                                                                .split("\\]")[1]
-                                                                .trim();
-                                                    } else {
-                                                        tcName = tcFullName;
-                                                    }
-
-                                                    String strTime = line
-                                                            .substring(0, 21);
-                                                    long longTime = getTimestamp(strTime);
-
-                                                    String tcPassFail = tempLine
-                                                            .substring(
-                                                                    tempLine.lastIndexOf("-") + 2,
-                                                                    tempLine.lastIndexOf("(") - 1);
-                                                    if (tcPassFail
-                                                            .equals("PASS")) {
-                                                        specpage.setStatusOnRuntime(
-                                                                currentSuiteName,
-                                                                tcName,
-                                                                UIConst.STATUS_PASS);
-                                                    } else if (tcPassFail
-                                                            .equals("FAIL")) {
-                                                        specpage.setStatusOnRuntime(
-                                                                currentSuiteName,
-                                                                tcName,
-                                                                UIConst.STATUS_FAIL);
-                                                    } else {
-
-                                                        specpage.setStatusOnRuntime(
-                                                                currentSuiteName,
-                                                                tcName,
-                                                                UIConst.STATUS_DONE);
-                                                    }
-
-                                                    currentPbarID++;
-                                                }
-                                                monitor.worked(1);
-                                                Thread.sleep(10);
-                                            } else if (line
-                                                    .contains("START SUITE:")) {
-                                                String tempLine = line
-                                                        .split("START SUITE: ")[1]
-                                                        .split(" \\[")[0];
-                                                if (tempLine.contains(".")) {
-                                                    currentSuiteName = tempLine
-                                                            .split("\\.")[1];
-                                                }
-                                            } else if (line
-                                                    .contains("END SUITE:")) {
-                                                if (line.contains("INFO - + END SUITE:")) {
-                                                    endFlag = true;
-                                                }
-                                                progressStr = "";
-                                                currentSuiteName = "";
-                                            } else if (line.contains("- @@")) {
-                                                bwGraph.write(line + "\n");
-                                                String newStr = line
-                                                        .replaceAll("\\\\n",
-                                                                "\n");
-                                                String[] parsedLine = newStr
-                                                        .split("@@");
-                                                String strTime = parsedLine[0]
-                                                        .substring(0, 21);
-                                                String direction = parsedLine[1]
-                                                        .substring(0, 2);
-                                                String lifeLine = parsedLine[1]
-                                                        .substring(2).trim();
-                                                String message = parsedLine[2]
-                                                        .trim();
-
-                                                long longTime = getTimestamp(strTime);
-                                                String startLifeline = "TEST FRAMEWORK";
-
-                                            } else if (line
-                                                    .contains("START SETUP:")) {
-                                                bwGraph.write(line + "\n");
-
-                                                String strTime = line
-                                                        .substring(0, 21);
-                                                long longTime = getTimestamp(strTime);
-                                                String setupName = line
-                                                        .substring(
-                                                                line.indexOf("SETUP: ") + 7,
-                                                                line.lastIndexOf(" ["));
-
-                                                super.setName("TEST SETUP...");
-                                            } else if (line
-                                                    .contains("END SETUP:")) {
-                                                bwGraph.write(line + "\n");
-                                                tempLine = line
-                                                        .split("END SETUP: ")[1];
-                                                String strTime = line
-                                                        .substring(0, 21);
-                                                long longTime = getTimestamp(strTime);
-                                                tempLine = tempLine.trim();
-
-                                                String setupName = null;
-                                                if (tempLine
-                                                        .contains("- PASS (")
-                                                        || tempLine
-                                                                .contains("- FAIL (")) {
-                                                    setupName = tempLine
-                                                            .substring(
-                                                                    0,
-                                                                    tempLine.lastIndexOf("-") - 1);
-                                                } else {
-                                                    setupName = tempLine
-                                                            .substring(
-                                                                    0,
-                                                                    tempLine.lastIndexOf("(") - 1);
-                                                }
-
-                                                String tcPassFail = line
-                                                        .substring(
-                                                                line.lastIndexOf("-") + 2,
-                                                                line.lastIndexOf("(") - 1);
-
-                                            } else if (line
-                                                    .contains("START TEARDOWN:")) {
-                                                bwGraph.write(line + "\n");
-
-                                                String strTime = line
-                                                        .substring(0, 21);
-                                                long longTime = getTimestamp(strTime);
-                                                String teardownName = line
-                                                        .substring(
-                                                                line.indexOf("TEARDOWN: ") + 10,
-                                                                line.lastIndexOf(" ["));
-
-                                                super.setName("TEST TEARDOWN...");
-                                            } else if (line
-                                                    .contains("END TEARDOWN:")) {
-                                                bwGraph.write(line + "\n");
-                                                tempLine = line
-                                                        .split("END TEARDOWN: ")[1];
-                                                String strTime = line
-                                                        .substring(0, 21);
-                                                long longTime = getTimestamp(strTime);
-                                                tempLine = tempLine.trim();
-
-                                                String teardownName = null;
-                                                if (tempLine
-                                                        .contains("- PASS (")
-                                                        || tempLine
-                                                                .contains("- FAIL (")) {
-                                                    teardownName = tempLine
-                                                            .substring(
-                                                                    0,
-                                                                    tempLine.lastIndexOf("-") - 1);
-                                                } else {
-                                                    teardownName = tempLine
-                                                            .substring(
-                                                                    0,
-                                                                    tempLine.lastIndexOf("(") - 1);
-                                                }
-
-                                                String tcPassFail = line
-                                                        .substring(
-                                                                line.lastIndexOf("-") + 2,
-                                                                line.lastIndexOf("(") - 1);
-                                            }
-                                        } else {
-                                            if (!fileGraph.canExecute()) {
-                                                fileGraph.setExecutable(true);
-                                            }
-                                            bwGraph.close();
-                                            fwGraph.close();
-
-                                            progressStr += "▶";
-                                            if (progressStr.length() > 10) {
-                                                progressStr = "";
-                                            }
-                                            monitor.subTask(progressStr);
-                                            if (endFlag) {
-                                                break;
-                                            } else {
-                                                Thread.sleep(500);
-                                            }
-                                        }
-
-                                        if (!fileGraph.canExecute()) {
-                                            fileGraph.setExecutable(true);
-                                        }
-                                        bwGraph.close();
-                                        fwGraph.close();
-
-                                    }
-
-                                    if (testCancel) {
-                                        monitor.setTaskName("Canceled");
-                                        monitor.setCanceled(true);
-                                    } else {
-                                        monitor.setTaskName("Finshed");
-                                        monitor.done();
-                                    }
-                                } catch (IOException | InterruptedException e) {
-                                    e.printStackTrace();
-                                    try {
-                                        if (bwGraph != null) {
-                                            bwGraph.close();
-                                        }
-                                        if (fwGraph != null) {
-                                            fwGraph.close();
-                                        }
-                                    } catch (IOException e1) {
-                                        e1.printStackTrace();
-                                    }
-
-                                }
-
-                                try {
-                                    fis.close();
-                                    isr.close();
-                                    reader.close();
-
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-
-                                System.out.println("tc sum is : " + result);
-                                Display.getDefault().syncExec(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (stopTest != null) {
-                                            stopTest.getAction().setEnabled(
-                                                    false);
-                                        }
-                                        if (pauseTest != null) {
-                                            pauseTest.getAction()
-                                                    .setToolTipText(
-                                                            "Pause Test ");
-                                            pauseTest
-                                                    .getAction()
-                                                    .setImageDescriptor(
-                                                            AbstractUIPlugin
-                                                                    .imageDescriptorFromPlugin(
-                                                                            Activator.PLUGIN_ID,
-                                                                            "icons/pause.png"));
-                                            pauseTest.getAction().setEnabled(
-                                                    false);
-                                        }
-                                    }
-                                });
-
-                                return Status.OK_STATUS;
-                            }
-
-                            private long getTimestamp(String time) {
-                                Date parsedDate = null;
-                                try {
-                                    DateFormat dateFormat = new SimpleDateFormat(
-                                            "yyyyMMdd hh:mm:ss.SSS");
-                                    parsedDate = dateFormat.parse(time);
-                                    return parsedDate.getTime();
-
-                                } catch (ParseException e) {
-                                    e.printStackTrace();
-                                }
-                                return 0;
-                            }
-
-                        };
-
-    void openBrowser() {
-        if (testInprogress) {
-            Display.getDefault().syncExec(new Runnable() {
-                @Override
-                public void run() {
-                    IWorkspace workspace = ResourcesPlugin.getWorkspace();
-                    IWorkspaceRoot root = workspace.getRoot();
-                    final IProject newProjectHandle = root
-                            .getProject(UIConst.TESTREPORT_PATH);
-                    IFile ifile = newProjectHandle.getFile(currentResultDir
-                            .getName() + UIConst.REPORT_FILE_NAME);
-                    System.out.println(ifile.getFullPath());
-                    IWorkbench workbench = PlatformUI.getWorkbench();
-                    IWorkbenchWindow window = workbench
-                            .getActiveWorkbenchWindow();
-                    IWorkbenchPage page = window.getActivePage();
-
-                    try {
-                        Thread.sleep(500);
-                        IDE.openEditor(page, ifile,
-                                "org.eclipse.ui.browser.editor");
-                    } catch (PartInitException | InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-        }
     }
 
     public String getPlanName() {
@@ -966,7 +395,7 @@ public class StartTestAction extends Action implements ISelectionListener,
         Job[] jobs = Job.getJobManager().find(null);
         for (Job job : jobs) {
             if (job.getClass().toString()
-                    .startsWith("class oic.ctt.ui.actions.StartTestAction")) {
+                    .startsWith(CLASS_OIC_CTT_UI_ACTIONS_START_TEST_ACTION)) {
                 check = true;
                 break;
             }

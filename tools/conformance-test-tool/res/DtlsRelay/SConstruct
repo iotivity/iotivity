@@ -3,7 +3,7 @@
 #
 ##
 
-tinydtls_path='../../../../extlibs/tinydtls'
+tinydtls_path='../../../../extlibs/tinydtls/'
 def __install(ienv, targets, name):
 	i_n = ienv.Install(env.get(tinydtls_path), targets)
 	Alias(name, i_n)

@@ -24,27 +24,28 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 import oic.ctt.ui.UIConst;
+import oic.ctt.ui.util.CTLogger;
+import oic.ctt.ui.util.DatabaseUtil;
 import oic.ctt.ui.util.TestCaseParser;
 import oic.ctt.ui.views.TestPlanView;
 import oic.ctt.ui.views.TestSuiteView;
+import static oic.ctt.ui.types.ImageFilePathType.*;
+import static oic.ctt.ui.types.IDType.*;
+import static oic.ctt.ui.util.DatabaseUtil.*;
+import static oic.ctt.ui.util.PopUpUtil.*;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IPageChangedListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.ISelectionListener;
@@ -56,6 +57,7 @@ import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.forms.editor.FormEditor;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
+import org.slf4j.Logger;
 
 import com.nitorcreations.robotframework.eclipseide.editors.RobotFrameworkTextfileEditor;
 
@@ -71,11 +73,16 @@ import com.nitorcreations.robotframework.eclipseide.editors.RobotFrameworkTextfi
 public class TestSuiteMultiPageEditor extends FormEditor implements
         ISelectionListener {
 
-    public static final String ID      = "oic.ctt.ui.multipages.TestSuiteMultiPageEditor";
+    public static final String  ID              = TEST_SUITE_MULTI_PAGE_EDITOR_ID
+                                                        .toString();
 
-    private TextEditor         editor;
-    public TestSuiteSpecPage   testspecpage;
-    int                        tccount = 0;
+    private static final String COLUMNS_DETAILS = "id INTEGER PRIMARY_KEY, testsuite TEXT, testcase TEXT, testcase_fullname TEXT, checked BOOLEAN";
+
+    private Logger              logger          = CTLogger.getInstance();
+
+    private TextEditor          editor;
+    public TestSuiteSpecPage    testspecpage;
+    int                         tccount         = 0;
 
     /**
      * Creates a multi-page editor example.
@@ -93,20 +100,19 @@ public class TestSuiteMultiPageEditor extends FormEditor implements
         try {
             try {
                 editor = new RobotFrameworkTextfileEditor();
-                fileInputStream = new FileInputStream(UIConst.PROJECT_PATH
-                        + "icons/robot.png");
+                fileInputStream = new FileInputStream(
+                        UIConst.PROJECT_PATH
+                                + IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_ROBOT_SYS_LOG
+                                        .toString());
                 int index = addPage(editor, getEditorInput());
                 setPageText(index, "Source");
                 setPageImage(index, new Image(null, fileInputStream));
             } catch (PartInitException e) {
-                ErrorDialog.openError(getSite().getShell(),
-                        "Error creating nested text editor", null,
-                        e.getStatus());
+                displayErrorDialogForSingleStatus(e);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
             if (fileInputStream != null) {
-
                 fileInputStream.close();
             }
         } catch (IOException e) {
@@ -115,29 +121,38 @@ public class TestSuiteMultiPageEditor extends FormEditor implements
     }
 
     /**
+     * This method is for displaying Single Status ErrorDialog
+     * 
+     * @param e
+     *            this is PartInitException
+     */
+    private void displayErrorDialogForSingleStatus(PartInitException e) {
+        ErrorDialog.openError(getSite().getShell(),
+                "Error creating nested text editor", null, e.getStatus());
+    }
+
+    /**
      * Creates the pages of the multi-page editor.
      */
-
     protected void createPages() {
         FileInputStream fileInputStream = null;
         try {
             try {
                 testspecpage = new TestSuiteSpecPage(this, "Editor");
-                fileInputStream = new FileInputStream(UIConst.PROJECT_PATH
-                        + "icons/settings.gif");
+                fileInputStream = new FileInputStream(
+                        UIConst.PROJECT_PATH
+                                + IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_SETTINGS_ICON
+                                        .toString());
                 int index = addPage(testspecpage);
                 setPageText(index, "Test Suite Specification");
                 setPageImage(index, new Image(null, fileInputStream));
 
                 createPage_Editor();
                 setPartName(editor.getTitle());
-
             } catch (PartInitException | FileNotFoundException e) {
                 e.printStackTrace();
-
             }
             if (fileInputStream != null) {
-
                 fileInputStream.close();
             }
         } catch (IOException e) {
@@ -161,22 +176,26 @@ public class TestSuiteMultiPageEditor extends FormEditor implements
         IEditorPart editorPart = getEditor(1);
         if (editorPart != null) {
             editorPart.doSave(monitor);
-            System.out.println("doSave");
+            logger.info("doSave");
+
             TestCaseParser parser = new TestCaseParser();
             LinkedHashMap<Integer, LinkedHashMap<String, String>> listNew = new LinkedHashMap<Integer, LinkedHashMap<String, String>>();
             IFile ifile = (IFile) getEditorInput().getAdapter(IFile.class);
             String filePath = ifile.getRawLocation().toOSString();
             listNew = parser.getDocumentHashMap(filePath);
+
             if (listNew != null) {
                 if (listNew.equals(testspecpage.list) == false) {
-                    System.out.println("Test Case Changed.");
+                    logger.info("Test Case Changed.");
                     removePage(0);
                     FileInputStream fileInputStream = null;
                     try {
                         try {
                             testspecpage = new TestSuiteSpecPage(this, "Editor");
                             fileInputStream = new FileInputStream(
-                                    UIConst.PROJECT_PATH + "icons/settings.gif");
+                                    UIConst.PROJECT_PATH
+                                            + IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_SETTINGS_ICON
+                                                    .toString());
                             addPage(0, testspecpage);
                             setPageText(0, "Test Suite Specification");
                             setPageImage(0, new Image(null, fileInputStream));
@@ -193,9 +212,10 @@ public class TestSuiteMultiPageEditor extends FormEditor implements
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+
                     if (ifile.getFullPath().toOSString()
                             .startsWith("/" + UIConst.TESTPLAN_PATH)) {
-                        System.out.println("Update Test Plan");
+                        logger.info("Update Test Plan");
                         setNewDatabase(ifile.getParent().getName());
 
                         IWorkbenchPage[] pages = PlatformUI.getWorkbench()
@@ -215,7 +235,7 @@ public class TestSuiteMultiPageEditor extends FormEditor implements
                                     File file = ((FileEditorInput) editors[j]
                                             .getEditorInput()).getPath()
                                             .toFile();
-                                    System.out.println(file.getAbsolutePath());
+                                    logger.info(file.getAbsolutePath());
                                     if (file.exists() == false) {
                                         pages[i].closeEditor(
                                                 editors[j].getEditor(true),
@@ -230,6 +250,7 @@ public class TestSuiteMultiPageEditor extends FormEditor implements
                 }
             }
         }
+
         IWorkbenchPage page = PlatformUI.getWorkbench()
                 .getActiveWorkbenchWindow().getActivePage();
         TestSuiteView testSuiteView = (TestSuiteView) page
@@ -256,41 +277,48 @@ public class TestSuiteMultiPageEditor extends FormEditor implements
                 String testsuiteName = null;
 
                 for (int i = 0; i < planFiles.length; i++) {
-                    if (planFiles[i].getName().contains(".db")) {
+                    if (planFiles[i].getName().contains(EXTENTION_DB)) {
                         continue;
                     }
                     tcList.clear();
                     tcList = parser.getDocumentHashMap(planFiles[i]
                             .getAbsolutePath());
                     testsuiteName = planFiles[i].getName();
+
                     insertTCInfoToDatabase(tcList, testsuiteName, planName);
-                    System.out.println((i + 1) + " / " + (planFiles.length)
-                            + " " + planFiles[i].getName());
+
+                    logger.info((i + 1) + " / " + (planFiles.length) + " "
+                            + planFiles[i].getName());
                 }
             }
         }
     }
 
+    /**
+     * This method is for inserting TC Information to Database
+     * 
+     * @param tcList
+     *            this is the list of testcases
+     * @param suiteName
+     *            this is the test suite name
+     * @param planName
+     *            this is the test plan name
+     */
     private void insertTCInfoToDatabase(
             LinkedHashMap<Integer, LinkedHashMap<String, String>> tcList,
             String suiteName, String planName) {
 
-        Statement stat = null;
         Connection conn = null;
         PreparedStatement prepInsert = null;
 
         try {
-            Class.forName("org.sqlite.JDBC");
-            conn = DriverManager.getConnection("jdbc:sqlite:"
-                    + UIConst.ROOT_PATH + UIConst.TESTPLAN_PATH + "/"
-                    + planName + "/" + planName + ".db");
-            stat = conn.createStatement();
+            conn = createDBConnection(planName);
+
             if (tccount == 0) {
-                stat.executeUpdate("drop table if exists tcinfo;");
-                stat.executeUpdate("CREATE TABLE tcinfo (id INTEGER PRIMARY_KEY, testsuite TEXT, testcase TEXT, testcase_fullname TEXT, checked BOOLEAN);");
+                createDBTable(TABLE_NAME, COLUMNS_DETAILS, conn);
             }
-            prepInsert = conn
-                    .prepareStatement("INSERT INTO tcinfo VALUES (?, ?, ?, ?, ?);");
+
+            prepInsert = insertIntoTable(conn, TABLE_NAME, DEFAULT_INSERT_VALUES);
 
             if (tcList != null) {
                 for (int j = 0; j < tcList.size(); j++) {
@@ -307,27 +335,11 @@ public class TestSuiteMultiPageEditor extends FormEditor implements
                 conn.setAutoCommit(true);
             }
         } catch (Exception e) {
-            MultiStatus status = UIConst.createMultiStatus(
-                    e.getLocalizedMessage(), e);
-            ErrorDialog.openError(Display.getDefault().getActiveShell(),
-                    "Error", "Fail to update Database", status);
-            e.printStackTrace();
+            displayErrorDialog(e, ERROR_TEXT, "Fail to update Database");
         } finally {
-            try {
-                if (prepInsert != null) {
-                    prepInsert.close();
-                }
-                if (stat != null) {
-                    stat.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            AutoCloseable[] autoCloseable = { prepInsert, conn };
+            DatabaseUtil.closeDataBaseObjects(autoCloseable);
         }
-
     }
 
     /**

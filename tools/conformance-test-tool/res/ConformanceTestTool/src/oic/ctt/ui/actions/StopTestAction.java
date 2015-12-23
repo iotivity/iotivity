@@ -19,13 +19,15 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 package oic.ctt.ui.actions;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 import oic.ctt.ui.Activator;
-import oic.ctt.ui.Perspective;
 import oic.ctt.ui.UIConst;
+import oic.ctt.ui.util.CTLogger;
+import static oic.ctt.ui.types.ToolTipTextType.*;
+import static oic.ctt.ui.types.ImageFilePathType.*;
+import static oic.ctt.ui.types.IDType.*;
+import static oic.ctt.ui.actions.ActionsConstants.*;
 
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
@@ -40,22 +42,27 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.slf4j.Logger;
 
 public class StopTestAction extends Action implements ISelectionListener,
         IWorkbenchAction {
-    public final static String     ID        = "oic.ctt.ui.actions.StopTestAction";
+    private Logger                 logger                                       = CTLogger
+                                                                                        .getInstance();
+    private static final String    KILL                                         = "kill";
+    private static final String    CLASS_OIC_CTT_UI_ACTIONS_JOB_PROGRESS_THREAD = "class oic.ctt.ui.actions.JobProgressThread";
     private IWorkbenchWindow       workbenchwindow;
     private IWorkbenchPage         page;
-    private ActionContributionItem pauseTest = null;
-    private ActionContributionItem stopTest  = null;
+    private ActionContributionItem pauseTest                                    = null;
+    private ActionContributionItem stopTest                                     = null;
 
     private Action                 stopConnTestAction;
 
     public StopTestAction(IWorkbenchWindow window) {
         super(UIConst.TOOLBAR_TEXT_STOP);
         this.setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(
-                Activator.PLUGIN_ID, "icons/stop.png"));
-        this.setToolTipText("Stop Test");
+                Activator.PLUGIN_ID,
+                IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_STOP_TEST.toString()));
+        this.setToolTipText(TOOLTIP_TEXT_STOP_TEST.toString());
         this.setEnabled(false);
         workbenchwindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
         page = workbenchwindow.getActivePage();
@@ -70,87 +77,87 @@ public class StopTestAction extends Action implements ISelectionListener,
     }
 
     public void run() {
-
         String currentPerspective = page.getPerspective().getId();
-        if (currentPerspective.equals(Perspective.ID)) {
+        if (currentPerspective.equals(PERSPECTIVE_ID.toString())) {
             int shellPID = StartTestAction.getShellPID();
-
-            Menu menubar = workbenchwindow.getShell().getMenuBar();
-            MenuItem[] mItems = menubar.getItems();
-
-            for (MenuItem mitem : mItems) {
-                if (mitem.getText().equals("&Run")
-                        || mitem.getText().equals("Run")) {
-                    Menu menu = mitem.getMenu();
-
-                    for (MenuItem menuItem : menu.getItems()) {
-                        if (menuItem.getText()
-                                .equals(UIConst.TOOLBAR_TEXT_STOP)) {
-                            stopTest = (ActionContributionItem) menuItem
-                                    .getData();
-                            stopTest.getAction().setEnabled(false);
-                        }
-                        if (menuItem.getText().equals(
-                                UIConst.TOOLBAR_TEXT_PAUSERESUME)) {
-                            pauseTest = (ActionContributionItem) menuItem
-                                    .getData();
-                            pauseTest.getAction().setEnabled(false);
-                        }
-                    }
-                }
-            }
+            changeMenuItemsState();
             try {
                 Process pidKillProcess = null;
-                pidKillProcess = Runtime.getRuntime()
-                        .exec(new String[] { "/bin/sh", "-c",
-                                "pgrep -P " + shellPID });
-                String childPID = new BufferedReader(new InputStreamReader(
-                        pidKillProcess.getInputStream(), "UTF-8"), 1024)
-                        .readLine();
-                pidKillProcess = Runtime.getRuntime()
-                        .exec(new String[] { "/bin/sh", "-c",
-                                "pgrep -P " + childPID });
-                String grandchildPID = new BufferedReader(
-                        new InputStreamReader(pidKillProcess.getInputStream(),
-                                "UTF-8"), 1024).readLine();
+                pidKillProcess = ActionsConstants.executeCommand(new String[] {
+                        COMMAND_TYPE_SHELL, C, COMMAND_GREP + shellPID });
+                String childPID = getProcessID(pidKillProcess);
+                pidKillProcess = ActionsConstants.executeCommand(new String[] {
+                        COMMAND_TYPE_SHELL, C, COMMAND_GREP + childPID });
+                String grandchildPID = getProcessID(pidKillProcess);
                 if (grandchildPID != null) {
-                    pidKillProcess = Runtime.getRuntime().exec(
-                            new String[] { "/bin/sh", "-c",
-                                    "kill " + grandchildPID });
+                    pidKillProcess = ActionsConstants
+                            .executeCommand(new String[] { COMMAND_TYPE_SHELL,
+                                    C, COMMAND_KILL + grandchildPID });
                 } else {
-                    pidKillProcess = Runtime.getRuntime().exec(
-                            new String[] {
-                                    "/bin/sh",
-                                    "-c",
-                                    "ps -o command -p " + childPID
-                                            + " | awk END'{print}'" });
+                    pidKillProcess = Runtime
+                            .getRuntime()
+                            .exec(new String[] { COMMAND_TYPE_SHELL, C,
+                                    COMMAND_PROCESS + childPID + AWK_END_PRINT });
 
-                    String line_findJava = new BufferedReader(
-                            new InputStreamReader(
-                                    pidKillProcess.getInputStream(), "UTF-8"),
-                            1024).readLine();
+                    String line_findJava = getProcessID(pidKillProcess);
                     if (line_findJava != null) {
-                        if (line_findJava.contains("jython.jar")) {
-                            pidKillProcess = Runtime.getRuntime().exec(
-                                    new String[] { "/bin/sh", "-c",
-                                            "kill" + childPID });
+                        if (line_findJava.contains(JYTHON_JAR_FILE_NAME)) {
+                            pidKillProcess = ActionsConstants
+                                    .executeCommand(new String[] {
+                                            COMMAND_TYPE_SHELL, C,
+                                            KILL + childPID });
                         }
                     }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            Job[] jobs = Job.getJobManager().find(null);
-            for (Job job : jobs) {
-                if (job.getClass().toString()
-                        .startsWith("class oic.ctt.ui.actions.StartTestAction")) {
-                    job.cancel();
-                    break;
-                }
-            }
+            cancelStartTestAction();
         } else {
             stopConnTestAction.run();
+        }
+    }
+
+    /**
+     * cancels a list of jobs
+     */
+    private void cancelStartTestAction() {
+        Job[] jobs = Job.getJobManager().find(null);
+        for (Job job : jobs) {
+            if (job.getClass().toString()
+                    .startsWith(CLASS_OIC_CTT_UI_ACTIONS_JOB_PROGRESS_THREAD)) {
+                job.cancel();
+                break;
+            }
+        }
+    }
+
+    /**
+     * changes the state of a menu item control
+     */
+    private void changeMenuItemsState() {
+        Menu menubar = workbenchwindow.getShell().getMenuBar();
+        MenuItem[] mItems = menubar.getItems();
+
+        for (MenuItem mitem : mItems) {
+            if (mitem.getText().equals("&" + MENU_ITEM_RUN_TEXT)
+                    || mitem.getText().equals(MENU_ITEM_RUN_TEXT)) {
+                Menu menu = mitem.getMenu();
+
+                for (MenuItem menuItem : menu.getItems()) {
+                    if (menuItem.getText().equals(UIConst.TOOLBAR_TEXT_STOP)) {
+                        stopTest = (ActionContributionItem) menuItem.getData();
+                        stopTest.getAction().setEnabled(false);
+                        logger.info("stopTest initialized");
+                    }
+                    if (menuItem.getText().equals(
+                            UIConst.TOOLBAR_TEXT_PAUSERESUME)) {
+                        pauseTest = (ActionContributionItem) menuItem.getData();
+                        pauseTest.getAction().setEnabled(false);
+                        logger.info("pause initialized");
+                    }
+                }
+            }
         }
     }
 }

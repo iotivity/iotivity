@@ -19,56 +19,68 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
 package oic.ctt.logmanager;
 
+import oic.ctt.ui.util.CTLogger;
+
+import org.slf4j.Logger;
+
 public class RobotLogProducer {
 
-    private static String      sendingLog = null;
-    public static final String SPLIT      = "#s#";
+	private static Logger logger = CTLogger.getInstance();
+	private static final String NO_MESSAGE = "No message";
+	private static String info = "*INFO* ";
+	private static String debug = "*DEBUG* ";
+	private static String warn = "*WARN* ";
+	private static String error = "*ERROR* ";
+	private static String trace = "*TRACE* ";
+	private static String sendingLog = null;
+	public static final String SPLIT = "#s#";
 
-    public RobotLogProducer() {
-    }
+	public RobotLogProducer() {
+	}
 
-    public static void info_log(String tag, String msg) {
-        if (msg == null) {
-            msg = "No message";
-        }
+	public static void info_log(String tag, String msg) {
 
-        sendingLog = "*INFO* " + LogCollector.setNomalizeTag(tag) + "" + msg;
-        System.out.println(sendingLog);
-    }
+		if (msg == null) {
+			msg = NO_MESSAGE;
+		}
 
-    public static void debug_log(String tag, String msg) {
-        if (msg == null) {
-            msg = "No message";
-        }
+		sendLog(info, tag, msg);
+	}
 
-        sendingLog = "*DEBUG* " + LogCollector.setNomalizeTag(tag) + "" + msg;
-        System.out.println(sendingLog);
-    }
+	public static void debug_log(String tag, String msg) {
+		if (msg == null) {
+			msg = NO_MESSAGE;
+		}
 
-    public static void warn_log(String tag, String msg) {
-        if (msg == null) {
-            msg = "No message";
-        }
+		sendLog(debug, tag, msg);
+	}
 
-        sendingLog = "*WARN* " + LogCollector.setNomalizeTag(tag) + "" + msg;
-        System.out.println(sendingLog);
-    }
+	public static void warn_log(String tag, String msg) {
+		if (msg == null) {
+			msg = NO_MESSAGE;
+		}
 
-    public static void trace_log(String tag, String msg) {
-        if (msg == null) {
-            msg = "No message";
-        }
+		sendLog(warn, tag, msg);
+	}
 
-        sendingLog = "*TRACE* " + LogCollector.setNomalizeTag(tag) + "" + msg;
-        System.out.println(sendingLog);
-    }
+	public static void trace_log(String tag, String msg) {
+		if (msg == null) {
+			msg = NO_MESSAGE;
+		}
 
-    public static void error_log(String tag, String msg) {
-        if (msg == null) {
-            msg = "No message";
-        }
+		sendLog(trace, tag, msg);
+	}
 
-        sendingLog = "*ERROR* " + LogCollector.setNomalizeTag(tag) + "" + msg;
-        System.out.println(sendingLog);
-    }
+	public static void error_log(String tag, String msg) {
+		if (msg == null) {
+			msg = NO_MESSAGE;
+		}
+
+		sendLog(error, tag, msg);
+	}
+
+	private static void sendLog(String str, String tag, String msg) {
+		sendingLog = str + LogCollector.setNomalizeTag(tag) + "" + msg;
+		logger.info(sendingLog);
+	}
 }

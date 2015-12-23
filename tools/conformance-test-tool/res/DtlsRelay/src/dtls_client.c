@@ -315,6 +315,7 @@ static int resolve_address(const char *server, int port, struct sockaddr *dst)
 
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol=IPPROTO_UDP;
 
 	error = getaddrinfo(addrstr, portstr, &hints, &res);
 

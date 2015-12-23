@@ -25,6 +25,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import oic.ctt.ui.util.CTLogger;
+
+import org.slf4j.Logger;
+
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.ddmlib.logcat.LogCatFilter;
@@ -35,10 +39,11 @@ import com.android.ddmlib.logcat.LogCatFilter;
  * matches the filter's settings.
  */
 public final class LogFilter {
-    private static final String PID_KEYWORD   = "pid:";  //$NON-NLS-1$
-    private static final String ROBOT_KEYWORD = "robot:"; //$NON-NLS-1$
-    private static final String TAG_KEYWORD   = "tag:";  //$NON-NLS-1$
-    private static final String TEXT_KEYWORD  = "text:"; //$NON-NLS-1$
+    private Logger              logger        = CTLogger.getInstance();
+    private static final String PID_KEYWORD   = "pid:";                //$NON-NLS-1$
+    private static final String ROBOT_KEYWORD = "robot:";              //$NON-NLS-1$
+    private static final String TAG_KEYWORD   = "tag:";                //$NON-NLS-1$
+    private static final String TEXT_KEYWORD  = "text:";               //$NON-NLS-1$
     private final String        mName;
     private final String        mText;
     private final LogLevel      mLogLevel;
@@ -86,6 +91,7 @@ public final class LogFilter {
      */
     public LogFilter(String name, String tag, String text, String robotLog,
             LogLevel logLevel) {
+        logger.info("Calling LogFilter" + robotLog);
         mName = name.trim();
         mTag = tag.trim();
         mText = text.trim();

@@ -643,29 +643,37 @@ void SampleResource::notifyObservers(void *param)
     SampleResource *resource = (SampleResource *) param;
 
     cout << "Inside notifyObservers....." << endl;
-    if ((m_isObserveRegistered == true) && (m_listOfObservers.size() > 0))
+    try
     {
-        cout << "Sending Notification to Observers...." << endl;
-        std::shared_ptr< OCResourceResponse > resourceResponse =
-        { std::make_shared< OCResourceResponse >() };
-
-        resourceResponse->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
-        resourceResponse->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
-        resourceResponse->setResourceRepresentation(resource->getRepresentation(),
-                DEFAULT_INTERFACE);
-
-        OCStackResult result = OCPlatform::notifyListOfObservers(resource->getResourceHandle(),
-                resource->m_listOfObservers, resourceResponse);
-
-        if (OC_STACK_NO_OBSERVERS == result)
+        if ((m_isObserveRegistered == true) && (m_listOfObservers.size() > 0))
         {
-            cout << "No More observers, stopping notifications" << endl;
-            m_isObserveRegistered = false;
+            cout << "Sending Notification to Observers...." << endl;
+            std::shared_ptr< OCResourceResponse > resourceResponse =
+            { std::make_shared< OCResourceResponse >() };
+
+            resourceResponse->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
+            resourceResponse->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+            resourceResponse->setResourceRepresentation(resource->getRepresentation(),
+                    DEFAULT_INTERFACE);
+
+            OCStackResult result = OCPlatform::notifyListOfObservers(resource->getResourceHandle(),
+                    resource->m_listOfObservers, resourceResponse);
+
+            if (OC_STACK_NO_OBSERVERS == result)
+            {
+                cout << "No More observers, stopping notifications" << endl;
+                m_listOfObservers.clear();
+                m_isObserveRegistered = false;
+            }
+        }
+        else
+        {
+            cout << "No observers available to notify!!" << endl;
         }
     }
-    else
+    catch (const exception& e)
     {
-        cout << "No observers available to notify!!" << endl;
+        cerr << e.what() << endl;
     }
 
 }

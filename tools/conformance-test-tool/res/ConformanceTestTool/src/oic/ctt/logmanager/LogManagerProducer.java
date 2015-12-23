@@ -24,68 +24,71 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 
+import oic.ctt.ui.util.CTLogger;
+
+import org.slf4j.Logger;
+
 public class LogManagerProducer implements Runnable {
-    private static int         mPORT                  = 0;
-    private BlockingQueue      queue;
-    private int                cnt                    = 1;
+	private static Logger logger = CTLogger.getInstance();
+	private static int mPORT = 0;
+	private BlockingQueue queue;
+	private int cnt = 1;
 
-    private static Socket      socket                 = null;
-    private static PrintWriter sendLog                = null;
-    private static boolean     readySocketFail        = false;
-    private static boolean     stopLogManagerProducer = false;
-    private String             response               = null;
-    public static String       END_FLAG               = "#END_LOG#";
+	private static Socket socket = null;
+	private static PrintWriter sendLog = null;
+	private static boolean readySocketFail = false;
+	private static boolean stopLogManagerProducer = false;
+	private String response = null;
+	public static String END_FLAG = "#END_LOG#";
 
-    public LogManagerProducer(BlockingQueue queue, int port) {
-        this.queue = queue;
-        mPORT = port;
-        stopLogManagerProducer = false;
-        try {
-            socket = new Socket("localhost", mPORT);
-            System.out
-                    .println("LogManagerProducer conneting LogViewConsumer...");
-            sendLog = new PrintWriter(socket.getOutputStream(), true);
-            System.out.println("LogManagerProducer ready");
-        } catch (IOException e) {
-            readySocketFail = true;
-            System.out.println("check LogView Consumer port : " + e.toString());
-        }
-    }
+	public LogManagerProducer(BlockingQueue queue, int port) {
+		this.queue = queue;
+		mPORT = port;
+		stopLogManagerProducer = false;
+		try {
+			socket = new Socket("localhost", mPORT);
+			logger.info("LogManagerProducer conneting LogViewConsumer...");
+			sendLog = new PrintWriter(socket.getOutputStream(), true);
+			logger.info("LogManagerProducer ready");
+		} catch (IOException e) {
+			readySocketFail = true;
+			logger.info("check LogView Consumer port : " + e.toString());
+		}
+	}
 
-    public static void stopLogManagerProducer() {
-        stopLogManagerProducer = true;
-        System.out.println("LogManagerProducer Close");
-    }
+	public static void stopLogManagerProducer() {
+		stopLogManagerProducer = true;
+		logger.info("LogManagerProducer Close");
+	}
 
-    @Override
-    public void run() {
-        while (!stopLogManagerProducer) {
-            try {
-                response = (String) queue.take();
-                if (response != null) {
-                    if (response.contains(END_FLAG)) {
-                        sendLog.println(response);
-                        System.out.println("LogManagerProducer end");
-                        break;
-                    }
-                    sendLog.println(response);
-                }
+	@Override
+	public void run() {
+		while (!stopLogManagerProducer) {
+			try {
+				response = (String) queue.take();
+				if (response != null) {
+					if (response.contains(END_FLAG)) {
+						sendLog.println(response);
+						logger.info("LogManagerProducer end");
+						break;
+					}
+					sendLog.println(response);
+				}
 
-            } catch (Exception e) {
-                System.out.println("LogManagerProducer msg sending error : "
-                        + e.toString());
-                System.out.println("LogManagerProducer port : " + mPORT);
-                break;
-            }
-        }
-        try {
-            if (!readySocketFail) {
-                socket.close();
-            }
-        } catch (Exception e) {
-            System.out
-                    .println("LogManagerProducer socket.close() sending error : "
-                            + e.toString());
-        }
-    }
+			} catch (Exception e) {
+				logger.info("LogManagerProducer msg sending error : "
+						+ e.toString());
+				logger.info("LogManagerProducer port : " + mPORT);
+				break;
+			}
+		}
+		try {
+			if (!readySocketFail) {
+				socket.close();
+			}
+		} catch (Exception e) {
+			logger.info("LogManagerProducer socket.close() sending error : "
+					+ e.toString());
+		}
+	}
 }

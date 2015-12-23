@@ -22,7 +22,6 @@ package oic.ctt.ui.multipages;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -34,16 +33,16 @@ import java.util.LinkedHashMap;
 
 import oic.ctt.ui.Activator;
 import oic.ctt.ui.UIConst;
+import oic.ctt.ui.util.CTLogger;
+import oic.ctt.ui.util.DatabaseUtil;
 import oic.ctt.ui.util.TestCaseParser;
+import static oic.ctt.ui.types.ImageFilePathType.*;
+import static oic.ctt.ui.util.DatabaseUtil.*;
+import static oic.ctt.ui.util.PopUpUtil.*;
+import static oic.ctt.ui.types.IDType.*;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.SWT;
@@ -57,36 +56,40 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.editor.FormEditor;
 import org.eclipse.ui.forms.editor.FormPage;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.ScrolledForm;
+import org.slf4j.Logger;
 
 public class TestPlanSpecPage extends FormPage {
 
-    public static final String                                   ID                  = "oic.ctt.ui.editors.TestPlanSpecPage";
+    public static final String                                   ID                        = TEST_PLAN_SPEC_PAGE_ID
+                                                                                                   .toString();
 
-    public static String                                         TC_NAME             = null;
-    public Tree                                                  tree                = null;
-    public TreeColumn                                            columnStatus        = null;
-    public TreeColumn                                            columnTestSuite     = null;
-    public TreeColumn                                            columnTestCase      = null;
-    public LinkedHashMap<Integer, LinkedHashMap<String, String>> list                = new LinkedHashMap<Integer, LinkedHashMap<String, String>>();
-    public static int                                            currentPbarID       = 0;
-    public int                                                   lengthArray         = 0;
+    private static final String                                  SELECT_CHECKED_DATA_QUERY = "select * from tcinfo where checked = 'true'";
+    private static Logger                                        logger                    = CTLogger
+                                                                                                   .getInstance();
+
+    public static String                                         TC_NAME                   = null;
+    public Tree                                                  tree                      = null;
+    public TreeColumn                                            columnStatus              = null;
+    public TreeColumn                                            columnTestSuite           = null;
+    public TreeColumn                                            columnTestCase            = null;
+    public LinkedHashMap<Integer, LinkedHashMap<String, String>> list                      = new LinkedHashMap<Integer, LinkedHashMap<String, String>>();
+    public static int                                            currentPbarID             = 0;
+    public int                                                   lengthArray               = 0;
     private ArrayList<Button>                                    checkBox_array;
-    private String                                               planName            = "";
-    public GC                                                    gc                  = null;
+    private String                                               planName                  = "";
+    public GC                                                    gc                        = null;
 
-    private int                                                  idColnumber         = 1;
-    private int                                                  statustextColnumber = 0;
-    private int                                                  testcaseColnumber   = 2;
+    private int                                                  idColnumber               = 1;
+    private int                                                  statustextColnumber       = 0;
+    private int                                                  testcaseColnumber         = 2;
 
     public TestPlanSpecPage(FormEditor editor, String plan) {
         super(editor, "planSpecPage", plan);
@@ -107,9 +110,10 @@ public class TestPlanSpecPage extends FormPage {
             }
         };
         updateTestPlanAction.setImageDescriptor(Activator
-                .getImageDescriptor("icons/save.png"));
+                .getImageDescriptor(IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_SAVE_ICON
+                        .toString()));
         form.getToolBarManager().add(updateTestPlanAction);
-        System.out.println("getEditorInput().getName() = " + planName);
+        logger.info("getEditorInput().getName() = " + planName);
 
         tree = new Tree(managedForm.getForm().getBody(), SWT.H_SCROLL
                 | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.MULTI | SWT.WRAP);
@@ -153,11 +157,6 @@ public class TestPlanSpecPage extends FormPage {
                         }
                     });
 
-                    IWorkspace workspace = ResourcesPlugin.getWorkspace();
-                    IWorkspaceRoot root = workspace.getRoot();
-
-                    final IProject newProjectHandle = root
-                            .getProject(UIConst.TESTPLAN_PATH);
                     String findName = getEditorInput().getName();
 
                     File planDir = new File(UIConst.ROOT_PATH
@@ -196,7 +195,7 @@ public class TestPlanSpecPage extends FormPage {
                                             });
 
                                 }
-                                System.out.println((i + 1) + " / "
+                                logger.info((i + 1) + " / "
                                         + (planFiles.length) + " "
                                         + planFiles[i].getName());
                                 monitor.worked(1);
@@ -210,27 +209,14 @@ public class TestPlanSpecPage extends FormPage {
                                 public void run() {
                                     monitor.subTask("Processing Database.");
 
-                                    Statement stat = null;
                                     Connection conn = null;
                                     ResultSet checkdInfo = null;
                                     try {
-                                        // Get DB data
-                                        Class.forName("org.sqlite.JDBC");
-                                        conn = DriverManager
-                                                .getConnection("jdbc:sqlite:"
-                                                        + UIConst.ROOT_PATH
-                                                        + UIConst.TESTPLAN_PATH
-                                                        + "/"
-                                                        + getEditorInput()
-                                                                .getName()
-                                                        + "/"
-                                                        + getEditorInput()
-                                                                .getName()
-                                                        + ".db");
-                                        stat = conn.createStatement();
+                                        conn = createDBConnection(getEditorInput()
+                                                .getName());
 
-                                        checkdInfo = stat
-                                                .executeQuery("select * from tcinfo where checked = 'true'");
+                                        checkdInfo = retrieveQueryResult(conn,
+                                                SELECT_CHECKED_DATA_QUERY);
 
                                         int id = 0;
                                         String suiteName = "";
@@ -259,7 +245,8 @@ public class TestPlanSpecPage extends FormPage {
                                                                     statustextColnumber,
                                                                     Activator
                                                                             .getImageDescriptor(
-                                                                                    "icons/nottested.gif")
+                                                                                    IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_NOTTESTED_ICON
+                                                                                            .toString())
                                                                             .createImage());
                                                     tree.getItem(id)
                                                             .setText(
@@ -267,47 +254,30 @@ public class TestPlanSpecPage extends FormPage {
                                                                     UIConst.STATUS_NOT_TESTED);
                                                 }
                                             } else {
-                                                System.err
-                                                        .println("TC List order does not match the DB.");
+                                                logger.error("TC List order does not match the DB.");
                                             }
-
                                         }
                                     } catch (SQLException e) {
-                                        e.printStackTrace();
-                                        MultiStatus status = UIConst.createMultiStatus(
-                                                e.getLocalizedMessage(), e);
-                                        ErrorDialog
-                                                .openError(
-                                                        Display.getDefault()
-                                                                .getActiveShell(),
-                                                        "Database Error",
-                                                        "Sorry, you can't use this Test Plan files.\nTest Plan : "
-                                                                + findName
-                                                                + "\nPlease delete it and create a new test plan.\nBecause Test Plan DB schema has changed.\nIf you Create a new Test plan, you will have no problem.",
-                                                        status);
-                                    } catch (ClassNotFoundException e) {
-                                        e.printStackTrace();
+                                        String errorMessage = "Sorry, you can't use this Test Plan files.\nTest Plan : "
+                                                + findName
+                                                + "\nPlease delete it and create a new test plan."
+                                                + "\nBecause Test Plan DB schema has changed.\n"
+                                                + "If you Create a new Test plan, you will have no problem.";
+
+                                        displayErrorDialog(e, "Database Error",
+                                                errorMessage);
                                     } finally {
-                                        try {
-                                            if (checkdInfo != null) {
-                                                checkdInfo.close();
-                                            }
-                                            if (stat != null) {
-                                                stat.close();
-                                            }
-                                            if (conn != null) {
-                                                conn.close();
-                                            }
-                                        } catch (SQLException e) {
-                                            e.printStackTrace();
-                                        }
+                                        AutoCloseable[] autoCloseable = {
+                                                checkdInfo, conn };
+                                        DatabaseUtil
+                                                .closeDataBaseObjects(autoCloseable);
                                     }
                                 }
                             });
 
                         }
                     } else {
-                        System.err.println("Test Plan Path ERROR.");
+                        logger.error("Test Plan Path ERROR.");
                     }
 
                     Display.getDefault().syncExec(new Runnable() {
@@ -316,7 +286,7 @@ public class TestPlanSpecPage extends FormPage {
                             int sumWidth = columnTestSuite.getWidth()
                                     + columnTestCase.getWidth()
                                     + columnStatus.getWidth();
-                            System.out.println("sumWidth = " + sumWidth);
+                            logger.info("sumWidth = " + sumWidth);
                             form.setText("Test Plan Specification - "
                                     + findName);
                             form.getToolBarManager().update(true);
@@ -325,7 +295,6 @@ public class TestPlanSpecPage extends FormPage {
                     monitor.done();
                 }
             }
-
         };
 
         try {
@@ -335,7 +304,6 @@ public class TestPlanSpecPage extends FormPage {
         } catch (InterruptedException e1) {
             e1.printStackTrace();
         }
-
     }
 
     public void addTestCases(
@@ -346,7 +314,7 @@ public class TestPlanSpecPage extends FormPage {
         String keyTCName = "TC NAME";
         String keyTCFullName = "TC FULL NAME";
         lengthArray += list.size();
-        System.out.println("length_array = " + lengthArray);
+        logger.info("length_array = " + lengthArray);
 
         Display.getDefault().syncExec(new Runnable() {
             @Override
@@ -390,10 +358,8 @@ public class TestPlanSpecPage extends FormPage {
                         String[] subitemValues = new String[] { "", "", "", "" };
                         subitemValues[statustextColnumber] = "";
                         subitemValues[idColnumber] = key;
-                        long startTime = System.currentTimeMillis();
                         subitemValues[testcaseColnumber] = autoMultiline(tree,
                                 value, columnWidth);
-                        long lTime = System.currentTimeMillis() - startTime;
                         subItem.setText(subitemValues);
                         subItem.setData(value);
 
@@ -494,10 +460,7 @@ public class TestPlanSpecPage extends FormPage {
         Connection conn = null;
         PreparedStatement prepUpdate = null;
         try {
-            conn = DriverManager.getConnection("jdbc:sqlite:"
-                    + UIConst.ROOT_PATH + UIConst.TESTPLAN_PATH + "/"
-                    + getEditorInput().getName() + "/"
-                    + getEditorInput().getName() + ".db");
+            conn = createDBConnection(getEditorInput().getName());
             stat = conn.createStatement();
             prepUpdate = conn
                     .prepareStatement("UPDATE tcinfo SET checked = ? WHERE id = ? AND testsuite = ? AND testcase = ?;");
@@ -516,35 +479,20 @@ public class TestPlanSpecPage extends FormPage {
                         .getData());
                 prepUpdate.setString(4, checkBox_array.get(i).getText());
                 prepUpdate.addBatch();
-                System.out.println(i + " " + checkedStr);
+                logger.info(i + " " + checkedStr);
             }
             conn.setAutoCommit(false);
             prepUpdate.executeBatch();
             conn.setAutoCommit(true);
 
-            MessageBox box = new MessageBox(PlatformUI.getWorkbench()
-                    .getActiveWorkbenchWindow().getShell(), SWT.ICON_WORKING
-                    | SWT.OK);
-            box.setMessage("Success to update this Test Plan.");
-            box.setText("Information");
-            box.open();
-
+            displayMessageBox(ACTIVE_WORKBENCH_WINDOW_SHELL,
+                    "Success to update this Test Plan.", DIALOG_TITLE,
+                    SWT.ICON_WORKING | SWT.OK);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                if (prepUpdate != null) {
-                    prepUpdate.close();
-                }
-                if (stat != null) {
-                    stat.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            AutoCloseable[] autoCloseable = { prepUpdate, stat, conn };
+            DatabaseUtil.closeDataBaseObjects(autoCloseable);
         }
     }
 
@@ -553,100 +501,59 @@ public class TestPlanSpecPage extends FormPage {
         Display.getDefault().asyncExec(new Runnable() {
             @Override
             public void run() {
-                if (status.equals(UIConst.STATUS_DONE)) {
+                String statusDone = UIConst.STATUS_DONE;
+                if (status.equals(statusDone)) {
 
-                    for (int i = 0; i < checkBox_array.size(); i++) {
-                        if (tree.getItem(i).getText(statustextColnumber)
-                                .equals(UIConst.STATUS_DONE)) {
-                            continue;
-                        }
+                    setSelectedItems(testsuite, testcase, statusDone,
+                            IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_EXCLAMATION_ICON
+                                    .toString());
 
-                        String testsuite_remove_ext = ((String) checkBox_array
-                                .get(i).getData()).split(UIConst.ROBOT_EXT)[0];
-                        testsuite_remove_ext = testsuite_remove_ext.replaceAll(
-                                "_", " ").toLowerCase();
-                        if (testsuite_remove_ext.equals(testsuite.toLowerCase())
-                                && checkBox_array.get(i).getText()
-                                        .equals(testcase)) {
-                            tree.getItem(i).setText(statustextColnumber,
-                                    UIConst.STATUS_DONE);
-                            tree.getItem(i).setImage(
-                                    statustextColnumber,
-                                    Activator.getImageDescriptor(
-                                            "icons/exclamation.png")
-                                            .createImage());
-                            setSelectionItem(tree.getItem(i));
-                            break;
+                } else {
+                    String statusInProgress = UIConst.STATUS_IN_PROGRESS;
+                    if (status.equals(statusInProgress)) {
+                        setSelectedItems(testsuite, testcase, statusInProgress,
+                                IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_PLAY_ICON
+                                        .toString());
+                    } else {
+                        String statusPass = UIConst.STATUS_PASS;
+                        if (status.equals(statusPass)) {
+                            setSelectedItems(testsuite, testcase, statusPass,
+                                    IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_PASS_ICON
+                                            .toString());
+                        } else {
+                            String statusFail = UIConst.STATUS_FAIL;
+                            if (status.equals(statusFail)) {
+                                setSelectedItems(testsuite, testcase,
+                                        statusFail,
+                                        IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_PASS_ICON
+                                                .toString());
+                            }
                         }
                     }
-                } else if (status.equals(UIConst.STATUS_IN_PROGRESS)) {
-                    for (int i = 0; i < checkBox_array.size(); i++) {
-                        if (tree.getItem(i).getText(statustextColnumber)
-                                .equals(UIConst.STATUS_IN_PROGRESS)) {
-                            continue;
-                        }
-                        String testsuite_remove_ext = ((String) checkBox_array
-                                .get(i).getData()).split(UIConst.ROBOT_EXT)[0];
-                        testsuite_remove_ext = testsuite_remove_ext.replaceAll(
-                                "_", " ").toLowerCase();
-                        if (testsuite_remove_ext.equals(testsuite.toLowerCase())
-                                && checkBox_array.get(i).getText()
-                                        .equals(testcase)) {
-                            tree.getItem(i).setText(statustextColnumber,
-                                    UIConst.STATUS_IN_PROGRESS);
-                            tree.getItem(i).setImage(
-                                    statustextColnumber,
-                                    Activator.getImageDescriptor(
-                                            "icons/play2.png").createImage());
-                            setSelectionItem(tree.getItem(i));
-                            break;
-                        }
+                }
+            }
+
+            private void setSelectedItems(final String testsuite,
+                    final String testcase, String status, final String imageName) {
+                for (int i = 0; i < checkBox_array.size(); i++) {
+                    if (tree.getItem(i).getText(statustextColnumber)
+                            .equals(status)) {
+                        continue;
                     }
-                } else if (status.equals(UIConst.STATUS_PASS)) {
-                    for (int i = 0; i < checkBox_array.size(); i++) {
-                        if (tree.getItem(i).getText(statustextColnumber)
-                                .equals(UIConst.STATUS_PASS)) {
-                            continue;
-                        }
-                        String testsuite_remove_ext = ((String) checkBox_array
-                                .get(i).getData()).split(UIConst.ROBOT_EXT)[0];
-                        testsuite_remove_ext = testsuite_remove_ext.replaceAll(
-                                "_", " ").toLowerCase();
-                        if (testsuite_remove_ext.equals(testsuite.toLowerCase())
-                                && checkBox_array.get(i).getText()
-                                        .equals(testcase)) {
-                            tree.getItem(i).setText(statustextColnumber,
-                                    UIConst.STATUS_PASS);
-                            tree.getItem(i).setImage(
-                                    statustextColnumber,
-                                    Activator.getImageDescriptor(
-                                            "icons/pass.png").createImage());
-                            setSelectionItem(tree.getItem(i));
-                            break;
-                        }
-                    }
-                } else if (status.equals(UIConst.STATUS_FAIL)) {
-                    for (int i = 0; i < checkBox_array.size(); i++) {
-                        if (tree.getItem(i).getText(statustextColnumber)
-                                .equals(UIConst.STATUS_FAIL)) {
-                            continue;
-                        }
-                        String testsuite_remove_ext = ((String) checkBox_array
-                                .get(i).getData()).split(UIConst.ROBOT_EXT)[0];
-                        testsuite_remove_ext = testsuite_remove_ext.replaceAll(
-                                "_", " ").toLowerCase();
-                        if (testsuite_remove_ext.equals(testsuite.toLowerCase())
-                                && checkBox_array.get(i).getText()
-                                        .equals(testcase)) {
-                            tree.getItem(i).setText(statustextColnumber,
-                                    UIConst.STATUS_FAIL);
-                            tree.getItem(i).setImage(
-                                    statustextColnumber,
-                                    Activator.getImageDescriptor(
-                                            "icons/fail.png").createImage());
-                            setSelectionItem(tree.getItem(i));
-                            break;
-                        }
+
+                    String testsuite_remove_ext = ((String) checkBox_array.get(
+                            i).getData()).split(UIConst.ROBOT_EXT)[0];
+                    testsuite_remove_ext = testsuite_remove_ext.replaceAll("_",
+                            " ").toLowerCase();
+                    if (testsuite_remove_ext.equals(testsuite.toLowerCase())
+                            && checkBox_array.get(i).getText().equals(testcase)) {
+                        tree.getItem(i).setText(statustextColnumber, status);
+                        tree.getItem(i).setImage(
+                                statustextColnumber,
+                                Activator.getImageDescriptor(imageName)
+                                        .createImage());
+                        setSelectionItem(tree.getItem(i));
+                        break;
                     }
                 }
             }
@@ -663,21 +570,15 @@ public class TestPlanSpecPage extends FormPage {
                 }
 
                 // Get DB data
-                Statement stat = null;
                 Connection conn = null;
                 String testCase = "";
                 String testSuite = "";
                 ResultSet checkdInfo = null;
 
                 try {
-                    Class.forName("org.sqlite.JDBC");
-                    conn = DriverManager.getConnection("jdbc:sqlite:"
-                            + UIConst.ROOT_PATH + UIConst.TESTPLAN_PATH + "/"
-                            + planName + "/" + planName + ".db");
-                    stat = conn.createStatement();
-
-                    checkdInfo = stat
-                            .executeQuery("select * from tcinfo where checked = 'true'");
+                    conn = createDBConnection(planName);
+                    checkdInfo = retrieveQueryResult(conn,
+                            SELECT_CHECKED_DATA_QUERY);
                     while (checkdInfo.next()) {
                         testSuite = checkdInfo.getString("testsuite");
                         testSuite = testSuite.split(UIConst.ROBOT_EXT)[0]
@@ -697,7 +598,8 @@ public class TestPlanSpecPage extends FormPage {
                                 tree.getItem(i).setImage(
                                         statustextColnumber,
                                         Activator.getImageDescriptor(
-                                                "icons/nottested.gif")
+                                                IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_NOTTESTED_ICON
+                                                        .toString())
                                                 .createImage());
                                 checkBox_array.get(i).setSelection(true);
                                 break;
@@ -707,28 +609,11 @@ public class TestPlanSpecPage extends FormPage {
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
-                    try {
-                        if (checkdInfo != null) {
-                            checkdInfo.close();
-                        }
-                        if (stat != null) {
-                            stat.close();
-                        }
-                        if (conn != null) {
-                            conn.close();
-                        }
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    AutoCloseable[] autoCloseable = { checkdInfo, conn };
+                    DatabaseUtil.closeDataBaseObjects(autoCloseable);
                 }
             }
         });
-    }
-
-    private static String getTCNameByDebugLog(String str) {
-        String tcname = "";
-
-        return tcname;
     }
 
     @Override

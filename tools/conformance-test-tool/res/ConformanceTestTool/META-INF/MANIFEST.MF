@@ -10,7 +10,6 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui.editors,
  org.eclipse.ui.console,
  org.eclipse.ui.ide,
- com.nitorcreations.robotframework.eclipseide,
  org.eclipse.emf.common.ui,
  org.eclipse.emf.common,
  org.eclipse.core.resources,
@@ -19,12 +18,19 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.e4.ui.workbench,
  org.eclipse.linuxtools.tmf.ui,
  org.eclipse.linuxtools.tmf.core,
- org.eclipse.e4.core.contexts
+ org.eclipse.e4.core.contexts,
+ org.eclipse.jface,
+ org.apache.commons.exec,
+ org.apache.log4j,
+ org.apache.commons.io
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .,
- libs/commons-io-2.4.jar,
  libs/ddmlib.jar,
+ libs/commons-io-2.4.jar,
  libs/sqlite-jdbc-3.8.6.jar,
- libs/commons-exec-1.3.jar
- 
+ libs/commons-exec-1.3.jar,
+ libs/log4j-1.2.17.jar,
+ libs/slf4j-api-1.7.12.jar,
+ libs/slf4j-log4j12-1.7.12.jar,
+ libs/com.nitorcreations.robotframework.eclipseide_1.4.0.jar

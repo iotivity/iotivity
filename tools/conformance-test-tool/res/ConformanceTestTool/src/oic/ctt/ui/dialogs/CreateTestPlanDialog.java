@@ -30,11 +30,14 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+import static oic.ctt.ui.types.ToolTipTextType.*;
+
 public class CreateTestPlanDialog extends TitleAreaDialog {
 
-    private Text   txtTestPlanName;
-
-    private String TestPlanName;
+    private static final String TEST_PLAN_NAME    = "Test Plan Name";
+    private static final String TEST_PLAN_MESSAGE = "Enter the name for the new test plan.";
+    private Text                txtTestPlanName;
+    private String              TestPlanName;
 
     public CreateTestPlanDialog(Shell parentShell) {
         super(parentShell);
@@ -43,9 +46,8 @@ public class CreateTestPlanDialog extends TitleAreaDialog {
     @Override
     public void create() {
         super.create();
-        setTitle("Create Test Plan");
-        setMessage("Enter the name for the new test plan.",
-                IMessageProvider.INFORMATION);
+        setTitle(TOOLTIP_TEXT_CREATE_TEST_PLAN.toString());
+        setMessage(TEST_PLAN_MESSAGE, IMessageProvider.INFORMATION);
     }
 
     @Override
@@ -63,7 +65,7 @@ public class CreateTestPlanDialog extends TitleAreaDialog {
 
     private void createTestPlanName(Composite container) {
         Label lbtFirstName = new Label(container, SWT.NONE);
-        lbtFirstName.setText("Test Plan Name");
+        lbtFirstName.setText(TEST_PLAN_NAME);
 
         GridData dataFirstName = new GridData();
         dataFirstName.grabExcessHorizontalSpace = true;

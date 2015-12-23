@@ -20,6 +20,7 @@
 package oic.ctt.ui.actions;
 
 import oic.ctt.ui.multipages.TestPlanSpecPage;
+import static oic.ctt.ui.types.IDType.*;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.ui.IWorkbenchPage;
@@ -29,10 +30,8 @@ import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 public class UpdateTestPlanInfoAction extends Action implements
         IWorkbenchAction {
 
-    private static final String ID = "oic.ctt.ui.actions.UpdateTestPlanInfo";
-
     public UpdateTestPlanInfoAction() {
-        setId(ID);
+        setId(UPDATE_TEST_PLAN_INFO_ID.toString());
     }
 
     public void run() {
@@ -40,7 +39,7 @@ public class UpdateTestPlanInfoAction extends Action implements
         IWorkbenchPage page = PlatformUI.getWorkbench()
                 .getActiveWorkbenchWindow().getActivePage();
         TestPlanSpecPage view = (TestPlanSpecPage) page
-                .findView(TestPlanSpecPage.ID);
+                .findView(TEST_PLAN_SPEC_PAGE_ID.toString());
         if (view != null) {
             view.updateCheckBox();
         }

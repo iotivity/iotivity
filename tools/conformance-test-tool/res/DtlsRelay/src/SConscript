@@ -14,7 +14,7 @@ dtls_relay_src = Glob('*.c')
 
 env['CC']='gcc'
 
-env.AppendUnique(LIBS=['event', 'tinydtls', 'm'])
+env.AppendUnique(LIBS=['event', 'tinydtls', 'm' , 'pthread'])
 env.AppendUnique(LIBPATH=[tiny_dtls_path, event_lib_path])
 env.AppendUnique(CPPPATH=[project_include, tiny_dtls_path])
 

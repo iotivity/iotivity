@@ -1277,20 +1277,21 @@ void sendPostRequestUpdateUserInput()
             cin >> userInput;
 
             choice = strtol(userInput.c_str(), NULL, 10);
-            if (choice > 0 && choice <6)
+            if (choice > 0 && choice < 6)
             {
                 validChoice = true;
             }
             else
             {
                 validChoice = false;
-                cout << "Invalid input for attribute data type. Please select between 1 and 5" << endl;
+                cout << "Invalid input for attribute data type. Please select between 1 and 5"
+                        << endl;
             }
 
-        }while(!validChoice);
+        } while (!validChoice);
 
         cout << "Please input Attribute Value: ";
-        switch(choice)
+        switch (choice)
         {
             case 1:
                 cin >> valueInt;

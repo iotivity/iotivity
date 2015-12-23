@@ -24,7 +24,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import oic.ctt.ui.UIConst;
+import oic.ctt.ui.util.CTLogger;
 import oic.ctt.ui.util.TestCaseParser;
+import static oic.ctt.ui.types.ImageFilePathType.*;
+import static oic.ctt.ui.types.IDType.*;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -35,6 +38,7 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.forms.editor.FormEditor;
+import org.slf4j.Logger;
 
 /**
  * An example showing how to create a multi-page editor. This example has 3
@@ -48,7 +52,9 @@ import org.eclipse.ui.forms.editor.FormEditor;
 public class TestPlanMultiPageEditor extends FormEditor implements
         ISelectionListener {
 
-    public static final String   ID = "oic.ctt.ui.multipages.TestPlanMultiPageEditor";
+    public static final String   ID     = TEST_PLAN_MULTI_PAGE_EDITOR_ID
+                                                .toString();
+    private Logger               logger = CTLogger.getInstance();
 
     public TextEditor            editor;
     // public TestPlanSpecPage testspecpage;
@@ -74,18 +80,19 @@ public class TestPlanMultiPageEditor extends FormEditor implements
                 }
                 TestPlanSpecPage testspecpage = new TestPlanSpecPage(this,
                         getEditorInput().getName());
-                fileInputStream = new FileInputStream(UIConst.PROJECT_PATH
-                        + "icons/settings.gif");
+                fileInputStream = new FileInputStream(
+                        UIConst.PROJECT_PATH
+                                + IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_SETTINGS_ICON
+                                        .toString());
                 int index = addPage(testspecpage);
                 setPageText(index, "Test Plan - Specification");
                 setPageImage(index, new Image(null, fileInputStream));
                 setPartName(getEditorInput().getName());
-
             } catch (PartInitException | FileNotFoundException e) {
                 e.printStackTrace();
             }
-            if (fileInputStream != null) {
 
+            if (fileInputStream != null) {
                 fileInputStream.close();
             }
         } catch (IOException e1) {
@@ -125,13 +132,11 @@ public class TestPlanMultiPageEditor extends FormEditor implements
 
     @Override
     protected void addPages() {
-
     }
 
     @Override
     public void selectionChanged(IWorkbenchPart paramIWorkbenchPart,
             ISelection paramISelection) {
-        System.out.println("tab changed");
+        logger.info("tab changed");
     }
-
 }

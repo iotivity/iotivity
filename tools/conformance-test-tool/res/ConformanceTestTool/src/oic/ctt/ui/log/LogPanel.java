@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import oic.ctt.ui.log.ITableFocusListener.IFocusedTableActivator;
+import oic.ctt.ui.util.CTLogger;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -73,10 +74,31 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.slf4j.Logger;
 
 import com.android.ddmlib.Log.LogLevel;
 
+import static oic.ctt.ui.types.ToolTipTextType.*;
+import static oic.ctt.ui.types.IDType.*;
+import static oic.ctt.ui.types.ImageFilePathType.*;
+
 public class LogPanel extends Panel implements ILogMessageEventListener {
+    private static final String                FILE_DIALOG_TXT                 = "*.txt";
+    private static final String                FILE_DIALOG_TEXT_FILES_TXT      = "Text Files (*.txt)";
+    private static final String                FILE_DIALOG_LOG_TXT             = "log.txt";
+    private static final String                FILE_DIALOG_SAVE_LOG            = "Save Log..";
+    private static final String                SYMPLE_TEXT_VALUE               = " 00-00 00:00:00.0000 ";
+    private static final String                SYMPLE_TEXT_MESSAGE             = " Log Message field should be pretty long by default.";
+    private static final String                SYMPLE_TEXT_SERVER_CLIENT       = "SmartThingServerClient";
+    private static final String                PROPERTY_MESSAGE                = "Message";
+    private static final String                PROPERTY_TAG                    = "Tag";
+    private static final String                PROPERTY_TIME                   = "Time";
+    private static final String                PROPERTY_LEVEL                  = "Level";
+    private static final String                THREAD_NAME                     = "Saving selected items to logfile..";
+    private static final String                EXPORT_DIALOG_MASSAGE           = "Unexpected error while saving selected messages to file: ";
+    private static final String                EXPORT_DIALOG_TITLE             = "Unable to export selection to file.";
+    private Logger                             logger                          = CTLogger
+                                                                                       .getInstance();
     public static final String                 LOGCAT_VIEW_FONT_PREFKEY        = "logcat.view.font";
     // public static final String LOGCAT_VIEW_FONT_PREFKEY = "Ubuntu";
     // Use a monospace font family
@@ -273,8 +295,12 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
         /* new filter */
         mNewFilterToolItem = new ToolItem(t, SWT.PUSH);
         mNewFilterToolItem.setImage(AbstractUIPlugin.imageDescriptorFromPlugin(
-                "oic.ctt.ui", "icons/add_filter.png").createImage());
-        mNewFilterToolItem.setToolTipText("Add a new log filter");
+                PLUGIN_ID.toString(),
+                IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_CREATE_FILTERS_TOOLBAR
+                        .toString()).createImage());
+        mNewFilterToolItem.setToolTipText(TOOLTIP_TEXT_CREATE_FILTERS_TOOLBAR
+                .toString());
+        // mNewFilterToolItem.setToolTipText("Add a new log filter");
         mNewFilterToolItem.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent arg0) {
@@ -284,9 +310,13 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
         /* delete filter */
         mDeleteFilterToolItem = new ToolItem(t, SWT.PUSH);
         mDeleteFilterToolItem.setImage(AbstractUIPlugin
-                .imageDescriptorFromPlugin("oic.ctt.ui", "icons/erase.png")
-                .createImage());
-        mDeleteFilterToolItem.setToolTipText("Delete selected log filter");
+                .imageDescriptorFromPlugin(
+                        PLUGIN_ID.toString(),
+                        IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_DELETE_LOG_FILTER
+                                .toString()).createImage());
+        // mDeleteFilterToolItem.setToolTipText("Delete selected log filter");
+        mDeleteFilterToolItem.setToolTipText(TOOLTIP_TEXT_DELETE_LOG_FILTER
+                .toString());
         mDeleteFilterToolItem.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent arg0) {
@@ -296,9 +326,13 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
         /* edit filter */
         mEditFilterToolItem = new ToolItem(t, SWT.PUSH);
         mEditFilterToolItem.setImage(AbstractUIPlugin
-                .imageDescriptorFromPlugin("oic.ctt.ui",
-                        "icons/edit_filter.png").createImage());
-        mEditFilterToolItem.setToolTipText("Edit selected log filter");
+                .imageDescriptorFromPlugin(
+                        PLUGIN_ID.toString(),
+                        IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_EDIT_LOG_FILTER
+                                .toString()).createImage());
+        mEditFilterToolItem.setToolTipText(TOOLTIP_TEXT_EDIT_LOG_FILTER
+                .toString());
+        // mEditFilterToolItem.setToolTipText("Edit selected log filter");
         mEditFilterToolItem.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent arg0) {
@@ -530,11 +564,14 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
         // robot sys log
         mRobotSysLogCheckBox = new ToolItem(toolBar, SWT.CHECK);
         mRobotSysLogCheckBox.setImage(AbstractUIPlugin
-                .imageDescriptorFromPlugin("oic.ctt.ui", "icons/robot.png")
-                .createImage());
+                .imageDescriptorFromPlugin(
+                        PLUGIN_ID.toString(),
+                        IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_ROBOT_SYS_LOG
+                                .toString()).createImage());
 
         mRobotSysLogCheckBox.setSelection(false);
-        mRobotSysLogCheckBox.setToolTipText("Show Robotframework System Log");
+        mRobotSysLogCheckBox.setToolTipText(TOOLTIP_TEXT_ROBOT_SYS_LOG
+                .toString());
         mRobotSysLogCheckBox.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
@@ -546,8 +583,11 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
 
         ToolItem saveToLog = new ToolItem(toolBar, SWT.PUSH);
         saveToLog.setImage(AbstractUIPlugin.imageDescriptorFromPlugin(
-                "oic.ctt.ui", "icons/save_log.png").createImage());
-        saveToLog.setToolTipText("Export Selected Items To Text File..");
+                PLUGIN_ID.toString(),
+                IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_SAVE_TO_LOG.toString())
+                .createImage());
+        saveToLog.setToolTipText(TOOLTIP_TEXT_SAVE_TO_LOG.toString());
+
         saveToLog.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent arg0) {
@@ -555,9 +595,11 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
             }
         });
         ToolItem clearLog = new ToolItem(toolBar, SWT.PUSH);
-        clearLog.setToolTipText("Clear Log");
+        clearLog.setToolTipText(TOOLTIP_TEXT_CLEAR_LOG.toString());
         clearLog.setImage(AbstractUIPlugin.imageDescriptorFromPlugin(
-                "oic.ctt.ui", "icons/delete_log.png").createImage());
+                PLUGIN_ID.toString(),
+                IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_CLEAR_LOG.toString())
+                .createImage());
         clearLog.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent arg0) {
@@ -568,12 +610,16 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
 
         // scroll lock
         mScrollLockCheckBox = new ToolItem(toolBar, SWT.CHECK);
-        mScrollLockCheckBox.setImage(AbstractUIPlugin
-                .imageDescriptorFromPlugin("oic.ctt.ui",
-                        "icons/scroll_lock.png").createImage());
+        mScrollLockCheckBox
+                .setImage(AbstractUIPlugin
+                        .imageDescriptorFromPlugin(
+                                PLUGIN_ID.toString(),
+                                IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_SCROLL_LOCK
+                                        .toString()).createImage());
 
         mScrollLockCheckBox.setSelection(false);
-        mScrollLockCheckBox.setToolTipText("Scroll Lock");
+        mScrollLockCheckBox.setToolTipText(TOOLTIP_TEXT_SCROLL_LOCK.toString());
+
         mScrollLockCheckBox.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
@@ -583,11 +629,16 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
         });
 
         final ToolItem showFiltersColumn = new ToolItem(toolBar, SWT.CHECK);
-        showFiltersColumn.setImage(AbstractUIPlugin.imageDescriptorFromPlugin(
-                "oic.ctt.ui", "icons/filter_log.png").createImage());
+        showFiltersColumn.setImage(AbstractUIPlugin
+                .imageDescriptorFromPlugin(
+                        PLUGIN_ID.toString(),
+                        IMAGE_FILE_PATH_IMAGE_DESCRIPTOR_SHOW_FILTERS_COLUMN
+                                .toString()).createImage());
         showFiltersColumn.setSelection(mPrefStore
                 .getBoolean(DISPLAY_FILTERS_COLUMN_PREFKEY));
-        showFiltersColumn.setToolTipText("Display Saved Filters View");
+        showFiltersColumn.setToolTipText(TOOLTIP_TEXT_SHOW_FILTERS_COLUMN
+                .toString());
+
         showFiltersColumn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
@@ -616,21 +667,7 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
                     for (LogMessage m : selectedMessages) {
                         if (m != null) {
                             String temp = "";
-                            if (m != null) {
-                                if (!m.getTime().isEmpty()) {
-                                    temp += m.getTime() + SEPARATOR_MSG;
-                                }
-                                if (!m.getLogLevel().toString().isEmpty()) {
-                                    temp += m.getLogLevel().toString()
-                                            + SEPARATOR_MSG;
-                                }
-                                if (!m.getTag().isEmpty()) {
-                                    temp += m.getTag() + SEPARATOR_MSG;
-                                }
-                                if (!m.getMessage().isEmpty()) {
-                                    temp += m.getMessage();
-                                }
-                            }
+                            temp = appendLogMessage(m, temp);
                             w.append(temp);
                             w.newLine();
                         }
@@ -640,29 +677,44 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
                     Display.getDefault().asyncExec(new Runnable() {
                         public void run() {
                             MessageDialog.openError(Display.getCurrent()
-                                    .getActiveShell(),
-                                    "Unable to export selection to file.",
-                                    "Unexpected error while saving selected messages to file: "
-                                            + e.getMessage());
+                                    .getActiveShell(), EXPORT_DIALOG_TITLE,
+                                    EXPORT_DIALOG_MASSAGE + e.getMessage());
                         }
                     });
                 }
             }
+
         });
-        t.setName("Saving selected items to logfile..");
+        t.setName(THREAD_NAME);
         t.start();
+    }
+
+    private static String appendLogMessage(LogMessage m, String temp) {
+        if (!m.getTime().isEmpty()) {
+            temp += m.getTime() + SEPARATOR_MSG;
+        }
+        if (!m.getLogLevel().toString().isEmpty()) {
+            temp += m.getLogLevel().toString() + SEPARATOR_MSG;
+        }
+        if (!m.getTag().isEmpty()) {
+            temp += m.getTag() + SEPARATOR_MSG;
+        }
+        if (!m.getMessage().isEmpty()) {
+            temp += m.getMessage();
+        }
+        return temp;
     }
 
     private String getLogFileTargetLocation() {
         FileDialog fd = new FileDialog(Display.getCurrent().getActiveShell(),
                 SWT.SAVE);
-        fd.setText("Save Log..");
-        fd.setFileName("log.txt");
+        fd.setText(FILE_DIALOG_SAVE_LOG);
+        fd.setFileName(FILE_DIALOG_LOG_TXT);
         if (mLogFileExportFolder == null) {
             mLogFileExportFolder = System.getProperty("user.home");
         }
-        fd.setFilterNames(new String[] { "Text Files (*.txt)" });
-        fd.setFilterExtensions(new String[] { "*.txt" });
+        fd.setFilterNames(new String[] { FILE_DIALOG_TEXT_FILES_TXT });
+        fd.setFilterExtensions(new String[] { FILE_DIALOG_TXT });
         String fName = fd.open();
         if (fName != null) {
             mLogFileExportFolder = fd.getFilterPath();
@@ -709,16 +761,16 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
         mViewer = new TableViewer(table);
 
         /** Columns to show in the table. */
-        String[] properties = { "Level", "Time", "Tag", "Message" };
+        String[] properties = { PROPERTY_LEVEL, PROPERTY_TIME, PROPERTY_TAG,
+                PROPERTY_MESSAGE };
         int[] widths = { 50, 150, 10, 400 };
         /**
          * The sampleText for each column is used to determin,e the default
          * widths for each column. The contents do not matter, only their
          * lengths are needed.
          */
-        String[] sampleText = { "Level", " 00-00 00:00:00.0000 ",
-                "SmartThingServerClient",
-                " Log Message field should be pretty long by default." };
+        String[] sampleText = { PROPERTY_LEVEL, SYMPLE_TEXT_VALUE,
+                SYMPLE_TEXT_SERVER_CLIENT, SYMPLE_TEXT_MESSAGE };
         mLogMessageLabelProvider = new LogMessageLabelProvider(
                 getFontFromPrefStore());
 
@@ -847,18 +899,7 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
 
             String temp = "";
             if (m != null) {
-                if (!m.getTime().isEmpty()) {
-                    temp += m.getTime() + SEPARATOR_MSG;
-                }
-                if (!m.getLogLevel().toString().isEmpty()) {
-                    temp += m.getLogLevel().toString() + SEPARATOR_MSG;
-                }
-                if (!m.getTag().isEmpty()) {
-                    temp += m.getTag() + SEPARATOR_MSG;
-                }
-                if (!m.getMessage().isEmpty()) {
-                    temp += m.getMessage();
-                }
+                temp = appendLogMessage(m, temp);
             }
             text.setText(temp);
             text.setLayoutData(new GridData(500, 150));
@@ -915,29 +956,14 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
                         try {
                             if (m != null) {
                                 String temp = "";
-                                if (m != null) {
-                                    if (!m.getTime().isEmpty()) {
-                                        temp += m.getTime() + SEPARATOR_MSG;
-                                    }
-                                    if (!m.getLogLevel().toString().isEmpty()) {
-                                        temp += m.getLogLevel().toString()
-                                                + SEPARATOR_MSG;
-                                    }
-                                    if (!m.getTag().isEmpty()) {
-                                        temp += m.getTag() + SEPARATOR_MSG;
-                                    }
-                                    if (!m.getMessage().isEmpty()) {
-                                        temp += m.getMessage();
-                                    }
-                                }
+                                temp = appendLogMessage(m, temp);
                                 sb.append(temp);
                                 sb.append('\n');
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
-                            System.out
-                                    .println("LogPanel copySelectionToClipboard :"
-                                            + e.toString());
+                            logger.error("LogPanel copySelectionToClipboard :"
+                                    + e.toString());
                         }
                     }
                     clipboard.setContents(new Object[] { sb.toString() },
@@ -945,7 +971,7 @@ public class LogPanel extends Panel implements ILogMessageEventListener {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    System.out.println("LogPanel copySelectionToClipboard :"
+                    logger.error("LogPanel copySelectionToClipboard :"
                             + e.toString());
                 }
             }

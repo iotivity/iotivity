@@ -24,7 +24,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 import oic.ctt.ui.UIConst;
+import oic.ctt.ui.util.CTLogger;
 import oic.ctt.ui.util.TestCaseParser;
+import static oic.ctt.ui.types.IDType.*;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -50,19 +52,25 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.editor.FormEditor;
 import org.eclipse.ui.forms.editor.FormPage;
-import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.ScrolledForm;
 import org.eclipse.ui.part.WorkbenchPart;
+import org.slf4j.Logger;
 
 public class TestSuiteSpecPage extends FormPage {
 
-    public static final String                                   ID           = "oic.ctt.ui.editors.TestSuiteSpecPage";
+    public static final String                                   ID               = TEST_SUITE_SPEC_PAGE_ID
+                                                                                          .toString();
+    private Logger                                               logger           = CTLogger
+                                                                                          .getInstance();
+    private static final String                                  KEY_TC_FULL_NAME = "TC FULL NAME";
+    private static final String                                  KEY_TC_NAME      = "TC NAME";
+    private static final String                                  KEY_TC_ID        = "TC ID";
 
-    public static String                                         TC_NAME      = null;
+    public static String                                         TC_NAME          = null;
     public Tree                                                  tree;
-    public static int                                            length_array = 0;
-    public GC                                                    gc           = null;
-    public LinkedHashMap<Integer, LinkedHashMap<String, String>> list         = new LinkedHashMap<Integer, LinkedHashMap<String, String>>();
+    public static int                                            length_array     = 0;
+    public GC                                                    gc               = null;
+    public LinkedHashMap<Integer, LinkedHashMap<String, String>> list             = new LinkedHashMap<Integer, LinkedHashMap<String, String>>();
 
     public TestSuiteSpecPage(FormEditor editor, String tcname) {
         super(editor, "first", tcname);
@@ -70,7 +78,6 @@ public class TestSuiteSpecPage extends FormPage {
 
     protected void createFormContent(IManagedForm managedForm) {
         ScrolledForm form = managedForm.getForm();
-        final FormToolkit toolkit = managedForm.getToolkit();
         form.setText("Test Suite Specification - " + getPartName());
         managedForm.getForm().getBody()
                 .setLayout(new FillLayout(SWT.HORIZONTAL));
@@ -89,15 +96,15 @@ public class TestSuiteSpecPage extends FormPage {
         tree.addSelectionListener(new SelectionAdapter() {
             public void widgetSelected(SelectionEvent e) {
                 TreeItem selectItem = (TreeItem) e.item;
-                System.out.println("widgetSelected");
+                logger.info("widgetSelected");
             }
         });
+
         tree.addTouchListener(new TouchListener() {
 
             @Override
             public void touch(TouchEvent arg0) {
-                System.out.println("addTouchListener");
-
+                logger.info("addTouchListener");
             }
         });
 
@@ -120,10 +127,12 @@ public class TestSuiteSpecPage extends FormPage {
             final IProject newProjectHandle = root.getProject(projectName);
             String findName = UIConst.getIFileFindName(openFile);
             final IFile ifile = (IFile) newProjectHandle.findMember(findName);
+
             TestCaseParser parser = new TestCaseParser();
             list = parser.getDocumentHashMap(ifile.getLocation().toOSString());
             addTestCases(list);
             String path = ifile.getLocation().toString();
+
             if (path.contains(UIConst.ROOT_PATH)) {
                 form.setText("Test Suite Specification - "
                         + path.split(UIConst.ROOT_PATH)[1]);
@@ -133,7 +142,7 @@ public class TestSuiteSpecPage extends FormPage {
 
             // If none Test case, Focus to Robot Editor
             if (length_array == 0) {
-                System.out.println("length_array==0");
+                logger.info("length_array==0");
                 getEditor().setActiveEditor(
                         getEditor().findEditors(getEditorInput())[0]);
             }
@@ -147,17 +156,13 @@ public class TestSuiteSpecPage extends FormPage {
             tree.removeAll();
         }
 
-        String keyID = "TC ID";
-        String keyTCName = "TC NAME";
-        String keyTCFullName = "TC FULL NAME";
-
         length_array = list.size();
 
         for (int i = 0; i < length_array; i++) {
 
             TreeItem item = new TreeItem(tree, SWT.NONE);
-            item.setText(new String[] { list.get(i).get(keyID),
-                    list.get(i).get(keyTCName) });
+            item.setText(new String[] { list.get(i).get(KEY_TC_ID),
+                    list.get(i).get(KEY_TC_NAME) });
             item.setFont(new Font(Display.getCurrent(), "Ubuntu", 11, SWT.BOLD));
             item.setBackground(new Color(null, 255, 236, 225));
 
@@ -167,10 +172,11 @@ public class TestSuiteSpecPage extends FormPage {
             while (iterator.hasNext()) {
 
                 String key = (String) iterator.next();
-                if (key.equals(keyTCName) || key.equals(keyID)
-                        || key.equals(keyTCFullName)) {
+                if (key.equals(KEY_TC_NAME) || key.equals(KEY_TC_ID)
+                        || key.equals(KEY_TC_FULL_NAME)) {
                     continue;
                 }
+
                 final TreeItem subItem = new TreeItem(item, SWT.NONE);
                 String value = "";
                 if (map.get(key) != null) {
@@ -247,7 +253,8 @@ public class TestSuiteSpecPage extends FormPage {
     }
 
     public String getFilePath() {
-        System.out.println(((WorkbenchPart) getSite().getPart()).getPartName());
+        logger.info(((WorkbenchPart) getSite().getPart()).getPartName());
+
         return getPartName();
     }
 

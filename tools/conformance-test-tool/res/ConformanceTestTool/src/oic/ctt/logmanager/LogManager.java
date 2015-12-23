@@ -19,47 +19,51 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
 package oic.ctt.logmanager;
 
+import oic.ctt.ui.util.CTLogger;
+
+import org.slf4j.Logger;
+
 public class LogManager {
-    private static Thread threadLogManagerProducer = null;
+	private static Logger logger = CTLogger.getInstance();
+	private static Thread threadLogManagerProducer = null;
 
-    public LogManager() {
+	public LogManager() {
 
-    }
+	}
 
-    public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException {
 
-    }
+	}
 
-    public static void startLogManager(int port) {
-        LogCollector.startLogCollector();
-        while (true) {
-            if (LogCollector.mergeQueue.isEmpty()) {
-                try {
-                    Thread.sleep(500);
-                    System.out.println("wating RobotFramework.......");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    System.out.println("check startLogManager init : "
-                            + e.toString());
-                }
-            } else {
-                break;
-            }
-        }
-        startLogManagerProducer(port);
-        System.out.println("startLogManager");
-    }
+	public static void startLogManager(int port) {
+		LogCollector.startLogCollector();
+		while (true) {
+			if (LogCollector.mergeQueue.isEmpty()) {
+				try {
+					Thread.sleep(500);
+					logger.info("wating RobotFramework.......");
+				} catch (Exception e) {
+					e.printStackTrace();
+					logger.info("check startLogManager init : " + e.toString());
+				}
+			} else {
+				break;
+			}
+		}
+		startLogManagerProducer(port);
+		logger.info("startLogManager");
+	}
 
-    public static void stopLogManager() {
-        LogCollector.stopLogCollector();
-        LogManagerProducer.stopLogManagerProducer();
-        System.out.println("stopLogManager");
-    }
+	public static void stopLogManager() {
+		LogCollector.stopLogCollector();
+		LogManagerProducer.stopLogManagerProducer();
+		logger.info("stopLogManager");
+	}
 
-    public static void startLogManagerProducer(int port) {
-        threadLogManagerProducer = new Thread(new LogManagerProducer(
-                LogCollector.mergeQueue, port));
-        threadLogManagerProducer.start();
-        System.out.println("startLogManagerProducer");
-    }
+	public static void startLogManagerProducer(int port) {
+		threadLogManagerProducer = new Thread(new LogManagerProducer(
+				LogCollector.mergeQueue, port));
+		threadLogManagerProducer.start();
+		logger.info("startLogManagerProducer");
+	}
 }
