@@ -103,6 +103,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::DUPLICATE_UUID;
         case OC_STACK_INCONSISTENT_DB:
             return OC::Exception::INCONSISTENT_DB;
+        case OC_STACK_AUTHENTICATION_FAILURE:
+            return OC::Exception::AUTHENTICATION_FAILURE;
     }
 
     return OC::Exception::UNKNOWN_ERROR;
