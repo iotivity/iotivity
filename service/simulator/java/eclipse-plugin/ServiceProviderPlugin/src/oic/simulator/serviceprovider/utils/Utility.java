@@ -512,8 +512,10 @@ public class Utility {
     }
 
     public static boolean isUriValid(String resURI) {
-        if (null == resURI || resURI.length() < 2 || !resURI.startsWith("/")
-                || resURI.contains("//") || resURI.contains("?")
+        if (null == resURI || resURI.length() < 2 || resURI.length() > 63
+                || !resURI.startsWith("/") || resURI.endsWith("/")
+                || resURI.contains("/..") || resURI.contains("//")
+                || resURI.contains("/./") || resURI.contains("?")
                 || resURI.contains("#") || resURI.contains("%")) {
             return false;
         }
