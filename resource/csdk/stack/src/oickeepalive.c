@@ -73,9 +73,19 @@ static const uint64_t USECS_PER_SEC = 1000000;
 #define KEEPALIVE_MAX_INTERVAL 64
 
 /**
+ * Default counts of interval value.
+ */
+#define DEFAULT_INTERVAL_COUNT  6
+
+/**
  * KeepAlive key to parser Payload Table.
  */
 static const char INTERVAL[] = "in";
+
+/**
+ * KeepAlive key to get interval values from Payload Table.
+ */
+static const char INTERVAL_ARRAY[] = "inarray";
 
 /**
  * To check if KeepAlive is initialized.
@@ -100,6 +110,9 @@ typedef struct
     OCMode mode;                    /**< host Mode of Operation. */
     CAEndpoint_t remoteAddr;        /**< destination Address. */
     uint32_t interval;              /**< time interval for KeepAlive. in seconds.*/
+    int32_t currIndex;              /**< current interval value index. */
+    size_t intervalSize;            /**< total interval counts. */
+    int64_t *intervalInfo;          /**< interval values for KeepAlive. */
     bool sentPingMsg;               /**< if oic client already sent ping message. */
     uint64_t timeStamp;             /**< last sent or received ping message. in microseconds. */
 } KeepAliveEntry_t;
@@ -113,6 +126,11 @@ static OCStackResult SendDisconnectMessage(const KeepAliveEntry_t *entry);
  * Send ping message to remote endpoint.
  */
 static OCStackResult SendPingMessage(KeepAliveEntry_t *entry);
+
+/**
+ * Increase interval value to send next ping message.
+ */
+static void IncreaseInterval(KeepAliveEntry_t *entry);
 
 /**
  * Ping Message callback registered with RI for KeepAlive Request.
@@ -152,13 +170,14 @@ static OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
 
 /**
  * API to handle the Response payload.
- * @param[in]   endpoint    RemoteEndpoint which sent the packet.
- * @param[in]   responseCode   Received reseponse code.
+ * @param[in]   endpoint        RemoteEndpoint which sent the packet.
+ * @param[in]   responseCode    Received reseponse code.
+ * @param[in]   respPayload     Response payload.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-static OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
-                                      OCStackResult responseCode);
-
+OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
+                                      OCStackResult responseCode,
+                                      const OCRepPayload *respPayload);
 /**
  * Gets keepalive entry.
  * @param[in]   endpoint    Remote Endpoint information (like ipaddress,
@@ -174,9 +193,11 @@ static KeepAliveEntry_t *GetEntryFromEndpoint(const CAEndpoint_t *endpoint, uint
  * @param[in]   endpoint    Remote Endpoint information (like ipaddress,
  *                          port, reference uri and transport type).
  * @param[in]   mode        Whether it is OIC Server or OIC Client.
+ * @param[in]   intervalArray   Received interval values from cloud server.
  * @return  The KeepAlive entry added in KeepAlive Table.
  */
-static KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode);
+KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode,
+                                    int64_t *intervalArray);
 
 /**
  * Remove keepalive entry.
@@ -317,7 +338,7 @@ OCStackResult HandleKeepAliveGETRequest(const CAEndpoint_t* endPoint,
 
     OIC_LOG_V(DEBUG, TAG, "Find Ping resource [%s]", requestInfo->info.resourceUri);
 
-    CAResponseResult_t result = CA_VALID;
+    CAResponseResult_t result = CA_CONTENT;
     OCResource *resourcePtr = FindResourceByUri(requestInfo->info.resourceUri);
     if (!resourcePtr)
     {
@@ -346,7 +367,7 @@ OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
     if (!entry)
     {
         OIC_LOG(ERROR, TAG, "Received the first keepalive message from client");
-        entry = AddKeepAliveEntry(endPoint, OC_SERVER);
+        entry = AddKeepAliveEntry(endPoint, OC_SERVER, NULL);
         if (!entry)
         {
             OIC_LOG(ERROR, TAG, "Failed to add new keepalive entry");
@@ -375,7 +396,8 @@ OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
 }
 
 OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
-                                      OCStackResult responseCode)
+                                      OCStackResult responseCode,
+                                      const OCRepPayload *respPayload)
 {
     VERIFY_NON_NULL(endPoint, FATAL, OC_STACK_INVALID_PARAM);
 
@@ -386,6 +408,7 @@ OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
     KeepAliveEntry_t *entry = GetEntryFromEndpoint(endPoint, &index);
     if (!entry)
     {
+        // Receive response message about find /oic/ping request.
         OIC_LOG(ERROR, TAG, "There is no connection info in KeepAlive table");
 
         if (OC_STACK_NO_RESOURCE == responseCode)
@@ -395,11 +418,22 @@ OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
         }
         else if (OC_STACK_OK == responseCode)
         {
-            entry = AddKeepAliveEntry(endPoint, OC_CLIENT);
+            int64_t *recvInterval = NULL;
+            size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
+            OCRepPayloadGetIntArray(respPayload, INTERVAL_ARRAY, &recvInterval, dimensions);
+            size_t serverIntervalSize = calcDimTotal(dimensions);
+
+            entry = AddKeepAliveEntry(endPoint, OC_CLIENT, recvInterval);
             if (!entry)
             {
                 OIC_LOG(ERROR, TAG, "Failed to add new KeepAlive entry");
                 return OC_STACK_ERROR;
+            }
+
+            if (serverIntervalSize)
+            {
+                // update interval size with received size of server.
+                entry->intervalSize = serverIntervalSize;
             }
 
             // Send first ping message
@@ -456,10 +490,7 @@ void ProcessKeepAlive()
                         <= currentTime - entry->timeStamp)
                 {
                     // Increase interval value.
-                    if (KEEPALIVE_MAX_INTERVAL > entry->interval)
-                    {
-                        entry->interval = entry->interval << 1;
-                    }
+                    IncreaseInterval(entry);
 
                     OCStackResult result = SendPingMessage(entry);
                     if (OC_STACK_OK != result)
@@ -484,6 +515,19 @@ void ProcessKeepAlive()
                 SendDisconnectMessage(entry);
             }
         }
+    }
+}
+
+void IncreaseInterval(KeepAliveEntry_t *entry)
+{
+    VERIFY_NON_NULL_NR(entry, FATAL);
+
+    OIC_LOG_V(DEBUG, TAG, "Total interval counts: %d", entry->intervalSize);
+    if (entry->intervalSize > entry->currIndex + 1)
+    {
+        entry->currIndex++;
+        entry->interval = entry->intervalInfo[entry->currIndex];
+        OIC_LOG_V(DEBUG, TAG, "increase interval value [%d]", entry->interval);
     }
 }
 
@@ -544,7 +588,8 @@ OCStackApplicationResult PingRequestCallback(void* ctx, OCDoHandle handle,
     CAEndpoint_t endpoint = { .adapter = CA_ADAPTER_TCP };
     CopyDevAddrToEndpoint(&(clientResponse->devAddr), &endpoint);
 
-    HandleKeepAliveResponse(&endpoint, clientResponse->result);
+    HandleKeepAliveResponse(&endpoint, clientResponse->result,
+                            (OCRepPayload *)clientResponse->payload);
 
     OIC_LOG(DEBUG, TAG, "PingRequestCallback OUT");
     return OC_STACK_KEEP_TRANSACTION;
@@ -580,7 +625,8 @@ KeepAliveEntry_t *GetEntryFromEndpoint(const CAEndpoint_t *endpoint, uint32_t *i
     return NULL;
 }
 
-KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode)
+KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode,
+                                    int64_t *intervalInfo)
 {
     if (!endpoint)
     {
@@ -603,17 +649,29 @@ KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode)
 
     entry->mode = mode;
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
-    entry->interval = KEEPALIVE_MIN_INTERVAL;
     entry->remoteAddr.adapter = endpoint->adapter;
     entry->remoteAddr.flags = endpoint->flags;
     entry->remoteAddr.interface = endpoint->interface;
     entry->remoteAddr.port = endpoint->port;
     strncpy(entry->remoteAddr.addr, endpoint->addr, sizeof(entry->remoteAddr.addr));
 
+    entry->intervalSize = DEFAULT_INTERVAL_COUNT;
+    entry->intervalInfo = intervalInfo;
+    if (!entry->intervalInfo)
+    {
+        entry->intervalInfo = (int64_t*) OICMalloc(entry->intervalSize * sizeof(int64_t));
+        for (size_t i = 0; i < entry->intervalSize; i++)
+        {
+            entry->intervalInfo[i] = KEEPALIVE_MIN_INTERVAL << i;
+        }
+    }
+    entry->interval = entry->intervalInfo[0];
+
     bool result = u_arraylist_add(g_keepAliveConnectionTable, (void *)entry);
     if (!result)
     {
         OIC_LOG(ERROR, TAG, "Adding node to head failed");
+        OICFree(entry->intervalInfo);
         OICFree(entry);
         return NULL;
     }
@@ -644,6 +702,7 @@ OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint)
              "remote addr=%s port:%d", removedEntry->remoteAddr.addr,
              removedEntry->remoteAddr.port);
 
+    OICFree(entry->intervalInfo);
     OICFree(removedEntry);
 
     return OC_STACK_OK;
@@ -659,8 +718,9 @@ void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint)
     OCCallbackData pingData = { .cb = PingRequestCallback };
     OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
     CopyEndpointToDevAddr(endpoint, &devAddr);
-    return OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI, &devAddr, NULL,
-                        OC_ADAPTER_TCP, OC_HIGH_QOS, &pingData, NULL, 0);
+
+    OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI, &devAddr, NULL,
+                 OC_ADAPTER_TCP, OC_HIGH_QOS, &pingData, NULL, 0);
 }
 
 void HandleKeepAliveDisconnCB(const CAEndpoint_t *endpoint)
