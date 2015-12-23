@@ -97,17 +97,17 @@ void initEasySetup()
     //std::cout << "Enter the target enrollee ipv4 address ";
 
 
-    ssid = "hello";
+    ssid = "hub2.4G";
     //std::cout << "Enter the ssid of the target Enrolleer ";
     //std:: cin >> ssid;
 
-    pwd = "helalalal";
+    pwd = "22221111";
     //std::cout << "Enter the pwd of the target Enrolleer ";
     //std::cin >> pwd;
 
     netInfo.connType = CT_ADAPTER_IP;
     netInfo.isSecured = false;
-    netInfo.needSecuredEasysetup = false;
+    netInfo.needSecuredEasysetup = true;
     OICStrcpy(netInfo.netAddressInfo.WIFI.ipAddress, IPV4_ADDR_SIZE - 1, ipaddress.c_str());
     OICStrcpy(netInfo.netAddressInfo.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, ssid.c_str());
     OICStrcpy(netInfo.netAddressInfo.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, pwd.c_str());
@@ -166,20 +166,15 @@ static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
     return fopen(JSON_DB_PATH, mode);
 }
 
-void configurePlatform()
+int main()
 {
     OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
 
     PlatformConfig config
     {
-        OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos, NULL
+        OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos, &ps
     };
     OCPlatform::Configure(config);
-}
-
-int main()
-{
-    configurePlatform();
 
     g_currentRun = runEasySetupMenu;
 
