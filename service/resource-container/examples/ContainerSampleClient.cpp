@@ -455,6 +455,85 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
     }
 }
 
+void onGetDiscomfortIndex(const HeaderOptions &headerOptions, const OCRepresentation &rep,
+                      const int eCode)
+{
+    (void)headerOptions;
+    std::cout << "onGetDiscomfortIndex" << std::endl;
+    try
+    {
+        if (eCode == OC_STACK_OK)
+        {
+            std::cout << "GET request was successful" << std::endl;
+
+            std::cout << "Payload: " << rep.getPayload() << std::endl;
+
+            std::cout << "\tdiscomfortIndex: " << rep.getValue<double>("discomfortIndex") << std::endl;
+        }
+        else
+        {
+            std::cout << "onGET Response error: " << eCode << std::endl;
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Exception: " << e.what() << " in onPut" << std::endl;
+    }
+}
+
+void onObserveDiscomfort(const HeaderOptions headerOptions, const OCRepresentation &rep,
+               const int &eCode, const int &sequenceNumber)
+{
+    (void)headerOptions;
+    try
+    {
+        if (eCode == OC_STACK_OK)
+        {
+            std::cout << "OBSERVE RESULT:" << std::endl;
+            std::cout << "\tSequenceNumber: " << sequenceNumber << std::endl;
+            std::cout << "\tdiscomfortIndex: " << rep.getValue<double>("discomfortIndex") << std::endl;
+
+            if (observe_count() > 10)
+            {
+                std::cout << "Cancelling Observe..." << std::endl;
+                OCStackResult result = curResource->cancelObserve();
+
+                std::cout << "Cancel result: " << result << std::endl;
+                sleep(10);
+                std::cout << "DONE" << std::endl;
+                std::exit(0);
+            }
+        }
+        else
+        {
+            std::cout << "onObserve Response error: " << eCode << std::endl;
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Exception: " << e.what() << " in onObserve" << std::endl;
+    }
+
+}
+
+// Local function to get representation of light resource
+void getDiscomfortRepresentation(std::shared_ptr<OCResource> resource)
+{
+    if (resource)
+    {
+        std::cout << "Getting Discomfort Representation..." << std::endl;
+        // Invoke resource's get API with the callback parameter
+
+        QueryParamsMap test;
+        std::cout << "Sending request to: " << resource->uri() << std::endl;
+        resource->get(test, &onGetDiscomfortIndex);
+        //resource->observe(ObserveType::Observe, QueryParamsMap(), &onObserve);
+    }
+}
+
+
+
+
 // Local function to get representation of light resource
 void getLightIntensityRepresentation(std::shared_ptr<OCResource> resource)
 {
@@ -502,11 +581,12 @@ void foundResource(std::shared_ptr<OCResource> resource)
                     // Call a local function which will internally invoke get API on the resource pointer
                     getLightRepresentation(resource);
                 }*/
-                if (resourceTypes == "oic.r.lightsensor")
+                if (resourceTypes == "oic.r.discomfortindex")
                 {
                     curResource = resource;
+                    std::cout << "\t\tGet discomfort representation " << std::endl;
                     // Call a local function which will internally invoke get API on the resource pointer
-                    getLightIntensityRepresentation(resource);
+                    getDiscomfortRepresentation(resource);
                 }
             }
 

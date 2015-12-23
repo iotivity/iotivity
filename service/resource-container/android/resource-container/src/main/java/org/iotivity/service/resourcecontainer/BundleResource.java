@@ -31,7 +31,7 @@ import android.util.Log;
  * getAttribute method and map the according reads and writes to the technology
  * specific messages.
  */
-public abstract class AndroidBundleResource {
+public abstract class BundleResource {
     protected String                m_name, m_uri, m_resourceType, m_address;
 
     protected RcsResourceAttributes m_attributes = new RcsResourceAttributes();
@@ -42,11 +42,11 @@ public abstract class AndroidBundleResource {
     
     protected native void updateNativeInstance(RcsResourceAttributes update);
 
-    public AndroidBundleResource() {
+    public BundleResource() {
         initAttributes();
     }
 
-    public AndroidBundleResource(Context context) {
+    public BundleResource(Context context) {
         this();
         this.m_context = context;
     }

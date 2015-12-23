@@ -83,11 +83,11 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
 
     private native List<String> nativeListBundleResources(String bundleId);
     
-    private native void nativeRegisterAndroidResource(AndroidBundleResource resource,
+    private native void nativeRegisterBundleResource(BundleResource resource,
         String[] attributes, String bundleId, String uri,
         String resourceType, String name);
     
-    private native void nativeUnregisterAndroidResource(AndroidBundleResource resource,
+    private native void nativeUnregisterBundleResource(BundleResource resource,
         String uri);
     
     private native int nativeGetNumberOfConfiguredResources(String bundleId);
@@ -135,7 +135,7 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
                     Log.d(TAG, "Loading activator: " + className);
                     Class activatorClass = df.loadClass(className, cl);
                     if(activatorClass!= null){
-                        AndroidBundleActivator activator = (AndroidBundleActivator) activatorClass.getConstructor(RcsResourceContainerBundleAPI.class, Context.class).newInstance(this, appContext);
+                        BundleActivator activator = (BundleActivator) activatorClass.getConstructor(RcsResourceContainerBundleAPI.class, Context.class).newInstance(this, appContext);
                         activator.activateBundle();
                     }else{
                         Log.e(TAG, "Activator is null.");
@@ -276,10 +276,10 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
         return nativeListBundleResources(bundleId);
     }
 
-    public void registerResource(String bundleId, AndroidBundleResource resource){
+    public void registerResource(String bundleId, BundleResource resource){
         Log.d(TAG, "register Resource");
         // bundleResources.add(resource);
-        nativeRegisterAndroidResource(resource, resource.getAttributeKeys(), bundleId,
+        nativeRegisterBundleResource(resource, resource.getAttributeKeys(), bundleId,
                         resource.getURI(), resource.getResourceType(),
                         resource.getName());
     }
@@ -301,9 +301,9 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
     }
 
     
-    public void unregisterResource(AndroidBundleResource resource){
+    public void unregisterResource(BundleResource resource){
         Log.d(TAG, "unregister Resource");
-        nativeUnregisterAndroidResource(resource, resource.getURI());
+        nativeUnregisterBundleResource(resource, resource.getURI());
     }
 
     public int getNumberOfConfiguredResources(String bundleId){

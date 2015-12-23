@@ -127,6 +127,7 @@ RCSResourceAttributes toNativeAttributes(JNIEnvWrapper* env, jobject attrsObj)
         attrs = getNativeHandleAs< RCSResourceAttributes >(env, attrsObj);
     }*/
     LOGD("writeNativeAttributesFromMap");
+
     writeNativeAttributesFromMap(env,
             JavaLocalObject{ env, env->GetObjectField(attrsObj, g_field_mCache) }, attrs);
 

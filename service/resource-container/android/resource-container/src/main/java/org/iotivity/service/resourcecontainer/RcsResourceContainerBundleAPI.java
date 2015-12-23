@@ -35,9 +35,9 @@ import java.util.Vector;
  */
 public interface RcsResourceContainerBundleAPI{
 
-    public void registerResource(String bundleId, AndroidBundleResource resource);
+    public void registerResource(String bundleId, BundleResource resource);
 
-    public void unregisterResource(AndroidBundleResource resource);
+    public void unregisterResource(BundleResource resource);
 
     public List<ResourceConfig> getConfiguredBundleResources(String bundleId);
 }

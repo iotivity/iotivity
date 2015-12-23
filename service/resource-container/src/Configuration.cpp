@@ -168,6 +168,102 @@ namespace OIC
             }
         }
 
+        void Configuration::getResourceConfiguration(std::string bundleId, std::string resourceName,
+                        resourceInfo *resourceInfoOut){
+            rapidxml::xml_node< char > *bundle;
+            rapidxml::xml_node< char > *resource;
+            rapidxml::xml_node< char > *item, *subItem, *subItem2;
+
+            string strBundleId;
+            string strKey, strValue;
+            OC_LOG_V(INFO, CONTAINER_TAG, "Loading resource configuration for %s %s!", bundleId.c_str(), resourceName.c_str());
+
+            if (m_loaded)
+            {
+                try
+                {
+                    // <bundle>
+                    for (bundle = m_xmlDoc.first_node()->first_node(BUNDLE_TAG); bundle; bundle =
+                             bundle->next_sibling())
+                    {
+                        // <id>
+                        strBundleId = bundle->first_node(BUNDLE_ID)->value();
+
+                        OC_LOG_V(INFO, CONTAINER_TAG, "Comparing bundle id %s - %s !", strBundleId.c_str(), bundleId.c_str());
+
+                        if (!strBundleId.compare(bundleId))
+                        {
+                            OC_LOG_V(INFO, CONTAINER_TAG, "Inspecting");
+                            // <resourceInfo>
+                            for (resource = bundle->first_node(OUTPUT_RESOURCES_TAG)->first_node(OUTPUT_RESOURCE_INFO);
+                                 resource; resource = resource->next_sibling())
+                            {
+
+                                for (item = resource->first_node(); item; item =
+                                         item->next_sibling())
+                                {
+                                    strKey = item->name();
+                                    strValue = item->value();
+
+                                    if (!strKey.compare(OUTPUT_RESOURCE_NAME))
+                                        resourceInfoOut->name = trim_both(strValue);
+
+                                    else if (!strKey.compare(OUTPUT_RESOURCE_URI))
+                                        resourceInfoOut->uri = trim_both(strValue);
+
+                                    else if (!strKey.compare(OUTPUT_RESOURCE_ADDR))
+                                        resourceInfoOut->address = trim_both(strValue);
+
+                                    else if (!strKey.compare(OUTPUT_RESOURCE_TYPE))
+                                        resourceInfoOut->resourceType = trim_both(strValue);
+
+                                    else
+                                    {
+                                        for (subItem = item->first_node(); subItem; subItem =
+                                                 subItem->next_sibling())
+                                        {
+                                            map< string, string > propertyMap;
+
+                                            strKey = subItem->name();
+
+                                            if (strKey.compare(INPUT_RESOURCE))
+                                            {
+                                                m_mapisHasInput[strBundleId] = true;
+                                                OC_LOG_V(INFO, CONTAINER_TAG, "Bundle has input (%s)", strBundleId.c_str());
+                                            }
+
+                                            for (subItem2 = subItem->first_node(); subItem2;
+                                                 subItem2 = subItem2->next_sibling())
+                                            {
+                                                string newStrKey = subItem2->name();
+                                                string newStrValue = subItem2->value();
+                                                OC_LOG_V(INFO, CONTAINER_TAG, "key: %s, value %s", newStrKey.c_str(), newStrValue.c_str());
+
+                                                propertyMap[trim_both(newStrKey)] = trim_both(
+                                                                                        newStrValue);
+                                            }
+
+                                            resourceInfoOut->resourceProperty[trim_both(strKey)].push_back(
+                                                propertyMap);
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+                catch (rapidxml::parse_error &e)
+                {
+                    OC_LOG(ERROR, CONTAINER_TAG, "xml parsing failed !!");
+                    OC_LOG_V(ERROR, CONTAINER_TAG, "Exception (%s)", e.what());
+                }
+            }
+            else{
+                OC_LOG(INFO, CONTAINER_TAG, "config is not loaded yet !!");
+            }
+        }
+
         void Configuration::getResourceConfiguration(std::string bundleId,
                 std::vector< resourceInfo > *configOutput)
         {
@@ -239,6 +335,7 @@ namespace OIC
                                             {
                                                 string newStrKey = subItem2->name();
                                                 string newStrValue = subItem2->value();
+                                                OC_LOG_V(INFO, CONTAINER_TAG, "key: %s, value %s", newStrKey.c_str(), newStrValue.c_str());
 
                                                 propertyMap[trim_both(newStrKey)] = trim_both(
                                                                                         newStrValue);

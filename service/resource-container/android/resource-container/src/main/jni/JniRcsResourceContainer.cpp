@@ -27,7 +27,7 @@
 #include "Verify.h"
 
 #include "ResourceContainerBundleAPI.h"
-#include "AndroidResource.h"
+#include "JniBundleResource.h"
 #include "RCSResourceContainer.h"
 
 
@@ -100,9 +100,9 @@ void initRCSResourceContainer(JNIEnvWrapper *env)
             AS_SIG(CLS_NAME_STRING)
             ")V");
 
-    auto clsAndroidBundleResource = env->FindClass(PACKAGE_NAME "/AndroidBundleResource");
+    auto clsJniBundleResource = env->FindClass(PACKAGE_NAME "/BundleResource");
 
-    g_field_mNativeHandle = env->GetFieldID(clsAndroidBundleResource, "mNativeHandle", "J");
+    g_field_mNativeHandle = env->GetFieldID(clsJniBundleResource, "mNativeHandle", "J");
 }
 
 void clearRCSResourceContainer(JNIEnvWrapper *env)
@@ -307,12 +307,12 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeListBundl
 
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRegisterAndroidResource
+Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRegisterBundleResource
 (JNIEnv *env, jobject obj, jobject bundleResource, jobjectArray attributes, jstring bundleId,
  jstring uri, jstring resourceType, jstring res_name)
 {
     JNIEnvWrapper envWrapper(env);
-    LOGD("nativeRegisterAndroidResource");
+    LOGD("nativeRegisterJniBundleResource");
     auto str_bundle_id = toStdString(&envWrapper, bundleId);
     __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved bundle id: %s.", str_bundle_id.c_str());
     auto str_uri = toStdString(&envWrapper, uri);
@@ -321,9 +321,9 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRegisterA
     __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved resource type: %s.", str_resourceType.c_str());
     auto str_res_name = toStdString(&envWrapper, res_name);
     LOGD("retrieved res name.");
-    AndroidResource res;
+    JniBundleResource res;
 
-    BundleResource::Ptr androidResource = std::make_shared< AndroidResource >
+    BundleResource::Ptr androidResource = std::make_shared< JniBundleResource >
             (env, obj, bundleResource, str_bundle_id, attributes);
     ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
 
@@ -346,7 +346,7 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRegisterA
  * Signature: (Lorg/iotivity/resourcecontainer/bundle/api/BundleResource;)V
  */
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeUnregisterAndroidResource
+Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeUnregisterBundleResource
 (JNIEnv *env, jobject obj, jobject bundleResource, jstring uri)
 {
     (void)obj;

@@ -26,7 +26,7 @@
 #include "JniRcsValue.h"
 #include "JavaExceptions.h"
 #include "JniRcsValue.h"
-#include  "AndroidResource.h"
+#include  "JniBundleResource.h"
 
 #define LOG_TAG "JNI-Main"
 
@@ -55,7 +55,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
         initRCSValue(&envWrapper);
         initRCSResourceContainer(&envWrapper);
         initRCSResourceAttributes(&envWrapper);
-        initRCSAndroidResource(&envWrapper);
+        initRCSJniBundleResource(&envWrapper);
     }
     catch (const JavaException &)
     {

@@ -20,10 +20,12 @@
 
 package org.iotivity.service.sample.container;
 
+import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Message;
 
+import android.os.PowerManager;
 import android.util.Log;
 
 import org.iotivity.service.resourcecontainer.RcsBundleInfo;
@@ -52,17 +54,19 @@ public class ResourceContainer {
     public static boolean                    startBundleFlag;
     private static boolean                   isStarted     = false;
     public static boolean                    isInitialized = false;
+    PowerManager pm = null;
+    PowerManager.WakeLock wl = null;
 
-    private FlashLightResource testResource;
+
 
     // constructor
     public ResourceContainer() {
         resourceContainerActivityInstance = ResourceContainerActivity
                 .getResourceContainerActivityObj();
-        containerInstance = new RcsResourceContainer(resourceContainerActivityInstance.getApplicationContext());
-        testResource = new FlashLightResource(resourceContainerActivityInstance.getApplicationContext());
-        testResource.setURI("/light/1");
-        testResource.setName("light1");
+        containerInstance = new RcsResourceContainer(
+                resourceContainerActivityInstance.getApplicationContext());
+        pm = (PowerManager) resourceContainerActivityInstance.getApplicationContext().
+                getSystemService(Context.POWER_SERVICE);
     }
 
     // Start Container
@@ -72,6 +76,9 @@ public class ResourceContainer {
         Log.i("startContainer : config path : ", configFile);
 
         if (!isStarted) {
+            wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK,
+                    "ResourceContainer sample");
+            wl.acquire();
             containerInstance.startContainer(configFile);
             isStarted = true;
             logMessage = "Container Started ";
@@ -94,6 +101,7 @@ public class ResourceContainer {
             containerInstance.stopContainer();
             logMessage = "Container stopped";
             isStarted = false;
+            wl.release();
         } else {
             logMessage = "Container not started";
         }

@@ -27,11 +27,11 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 
-import org.iotivity.service.resourcecontainer.AndroidBundleResource;
+import org.iotivity.service.resourcecontainer.BundleResource;
 import org.iotivity.service.resourcecontainer.RcsResourceAttributes;
 import org.iotivity.service.resourcecontainer.RcsValue;
 
-public class HumidityResource extends AndroidBundleResource  implements SensorEventListener {
+public class HumidityResource extends BundleResource implements SensorEventListener {
     private static final String LOG_TAG = HumidityResource.class.getSimpleName();
     private final SensorManager mSensorManager;
     private final Sensor humiditySensor;
@@ -40,8 +40,9 @@ public class HumidityResource extends AndroidBundleResource  implements SensorEv
         super(context);
         this.setResourceType("oic.r.humidity");
         this.setName("humiditySensor");
-        mSensorManager = (SensorManager) context.getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
-        humiditySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
+        mSensorManager = (SensorManager) context.getApplicationContext().
+                getSystemService(Context.SENSOR_SERVICE);
+        humiditySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         mSensorManager.registerListener(this, humiditySensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
 

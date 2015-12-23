@@ -22,11 +22,11 @@ package org.iotivity.service.resourcecontainer;
 import android.content.Context;
 import java.util.List;
 
-public abstract class AndroidBundleActivator {
+public abstract class BundleActivator {
     protected RcsResourceContainerBundleAPI bundleAPI;
     protected Context appContext;
     
-    public AndroidBundleActivator(RcsResourceContainerBundleAPI bundleAPI, Context appContext){
+    public BundleActivator(RcsResourceContainerBundleAPI bundleAPI, Context appContext){
         this.bundleAPI = bundleAPI;
         this.appContext = appContext;
     }
@@ -50,6 +50,6 @@ public abstract class AndroidBundleActivator {
      * Destroys a resource
      * @param resource Instance of a BundleResource
      */
-    public abstract void destroyResource(AndroidBundleResource resource);
+    public abstract void destroyResource(BundleResource resource);
 
 }

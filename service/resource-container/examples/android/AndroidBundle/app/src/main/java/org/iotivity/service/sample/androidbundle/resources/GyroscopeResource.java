@@ -27,11 +27,12 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 
-import org.iotivity.service.resourcecontainer.AndroidBundleResource;
+import org.iotivity.service.resourcecontainer.BundleResource;
+import org.iotivity.service.resourcecontainer.BundleResource;
 import org.iotivity.service.resourcecontainer.RcsResourceAttributes;
 import org.iotivity.service.resourcecontainer.RcsValue;
 
-public class GyroscopeResource extends AndroidBundleResource implements SensorEventListener {
+public class GyroscopeResource extends BundleResource implements SensorEventListener {
     private static final String LOG_TAG = GyroscopeResource.class.getSimpleName();
     private final SensorManager mSensorManager;
     private final Sensor humiditySensor;
@@ -40,7 +41,8 @@ public class GyroscopeResource extends AndroidBundleResource implements SensorEv
         super(context);
         this.setResourceType("oic.r.gyroscope");
         this.setName("gyroscopeSensor");
-        mSensorManager = (SensorManager) context.getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
+        mSensorManager = (SensorManager) context.getApplicationContext().
+                getSystemService(Context.SENSOR_SERVICE);
         humiditySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         mSensorManager.registerListener(this, humiditySensor, SensorManager.SENSOR_DELAY_NORMAL);
         Log.d(LOG_TAG, "Created new gyroscope instance");
@@ -65,7 +67,7 @@ public class GyroscopeResource extends AndroidBundleResource implements SensorEv
     public RcsResourceAttributes handleGetAttributesRequest() {
         Log.i(LOG_TAG, "Get Attributes called");
         Log.i(LOG_TAG, "Returning: ");
-        for(String key: m_attributes.keySet()){
+        for(String key:m_attributes.keySet()){
             Log.i(LOG_TAG, " " + key + ": " + m_attributes.get(key));
         }
         return this.m_attributes;

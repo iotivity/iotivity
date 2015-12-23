@@ -27,12 +27,11 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 
-import org.iotivity.service.resourcecontainer.AndroidBundleResource;
+import org.iotivity.service.resourcecontainer.BundleResource;
 import org.iotivity.service.resourcecontainer.RcsResourceAttributes;
 import org.iotivity.service.resourcecontainer.RcsValue;
 
-
-public class LightIntensityResource extends AndroidBundleResource implements SensorEventListener {
+public class LightIntensityResource extends BundleResource implements SensorEventListener {
     private static final String LOG_TAG = LightIntensityResource.class.getSimpleName();
     private final SensorManager mSensorManager;
     private final Sensor lightSensor;
@@ -41,7 +40,8 @@ public class LightIntensityResource extends AndroidBundleResource implements Sen
         super(context);
         this.setResourceType("oic.r.lightsensor");
         this.setName("lightSensor");
-        mSensorManager = (SensorManager) context.getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
+        mSensorManager = (SensorManager) context.getApplicationContext().
+                getSystemService(Context.SENSOR_SERVICE);
         lightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         mSensorManager.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }

@@ -20,34 +20,42 @@
 
 package org.iotivity.service.sample.androidbundle.resources;
 
+import android.app.Notification;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 
-import org.iotivity.service.resourcecontainer.AndroidBundleSoftSensorResource;
+import org.iotivity.service.resourcecontainer.BundleSoftSensorResource;
 import org.iotivity.service.resourcecontainer.RcsResourceAttributes;
 import org.iotivity.service.resourcecontainer.RcsValue;
 
+import java.util.HashMap;
 import java.util.Vector;
 
-public class DiscomfortIndexResource extends AndroidBundleSoftSensorResource {
+import org.iotivity.service.sample.androidbundle.DummyActivity;
+import org.iotivity.service.sample.androidbundle.R;
+
+public class DiscomfortIndexResource extends BundleSoftSensorResource {
     private static final String LOG_TAG = DiscomfortIndexResource.class.getSimpleName();
 
     public DiscomfortIndexResource(Context context){
         super(context);
         this.setResourceType("oic.r.discomfortindex");
         this.setName("discomfortIndex");
+        m_mapInputData = new HashMap<String, RcsValue>();
     }
 
     @Override
     protected void initAttributes() {
         this.m_attributes.put("discomfortIndex", 0);
         this.m_attributes.put("humidity", 0);
-        this.m_attributes.put("temperature",0);
+        this.m_attributes.put("temperature", 0);
     }
 
     @Override
     protected void onUpdatedInputResource(String attributeName, Vector<RcsValue> values) {
         m_mapInputData.put(attributeName, values.get(0));
+        executeLogic();
     }
 
     @Override
@@ -55,7 +63,6 @@ public class DiscomfortIndexResource extends AndroidBundleSoftSensorResource {
         if(m_mapInputData.get("humidity") != null && m_mapInputData.get("temperature") != null){
             double dDI = 0.0;
             Vector v = new Vector();
-
 
             int t = m_mapInputData.get("temperature").asInt();
             int h = m_mapInputData.get("humidity").asInt();
@@ -68,7 +75,14 @@ public class DiscomfortIndexResource extends AndroidBundleSoftSensorResource {
             this.setAttribute("humidity", new RcsValue(h));
             this.setAttribute("discomfortIndex", new RcsValue(dDI));
 
+            setAttribute("discomfortIndex",new RcsValue(dDI), true ); // notify observers
             Log.i(LOG_TAG, "Discomfort Index" + dDI);
+            showNotification(" " + dDI, this.m_context);
+        }
+        else{
+            Log.i(LOG_TAG, "Discomfort Index input data - humidity:  " +
+                    m_mapInputData.get("humidity") + " temp: " +
+                    m_mapInputData.get("temperature") );
         }
     }
 
@@ -81,5 +95,16 @@ public class DiscomfortIndexResource extends AndroidBundleSoftSensorResource {
     @Override
     public RcsResourceAttributes handleGetAttributesRequest() {
         return this.getAttributes();
+    }
+
+    private void showNotification(String eventtext, Context ctx) {
+        // Set the icon, scrolling text and timestamp
+        Log.i(LOG_TAG, "*************************************** ");
+        Log.i(LOG_TAG, "*************************************** ");
+        Log.i(LOG_TAG, "*************************************** ");
+        Log.i(LOG_TAG, eventtext);
+        Log.i(LOG_TAG, "*************************************** ");
+        Log.i(LOG_TAG, "*************************************** ");
+        Log.i(LOG_TAG, "*************************************** ");
     }
 }

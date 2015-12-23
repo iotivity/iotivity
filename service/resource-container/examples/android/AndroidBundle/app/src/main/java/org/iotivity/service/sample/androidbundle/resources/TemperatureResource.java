@@ -27,11 +27,11 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 
-import org.iotivity.service.resourcecontainer.AndroidBundleResource;
+import org.iotivity.service.resourcecontainer.BundleResource;
 import org.iotivity.service.resourcecontainer.RcsResourceAttributes;
 import org.iotivity.service.resourcecontainer.RcsValue;
 
-public class TemperatureResource  extends AndroidBundleResource implements SensorEventListener {
+public class TemperatureResource  extends BundleResource implements SensorEventListener {
     private static final String LOG_TAG = HumidityResource.class.getSimpleName();
     private final SensorManager mSensorManager;
     private final Sensor temperatureSensor;
@@ -40,7 +40,8 @@ public class TemperatureResource  extends AndroidBundleResource implements Senso
         super(context);
         this.setResourceType("oic.r.temperature");
         this.setName("temperatureSensor");
-        mSensorManager = (SensorManager) context.getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
+        mSensorManager = (SensorManager) context.getApplicationContext().
+                getSystemService(Context.SENSOR_SERVICE);
         temperatureSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
         mSensorManager.registerListener(this, temperatureSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }

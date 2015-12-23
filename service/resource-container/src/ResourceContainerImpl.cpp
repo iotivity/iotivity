@@ -768,9 +768,14 @@ namespace OIC
 
         void ResourceContainerImpl::discoverInputResource(const std::string &outputResourceUri)
         {
-            OC_LOG_V(DEBUG, CONTAINER_TAG, "Discover input resource%s", outputResourceUri.c_str());
+            OC_LOG_V(DEBUG, CONTAINER_TAG, "Discover input resource %s", outputResourceUri.c_str());
             auto foundOutputResource = m_mapResources.find(outputResourceUri);
-            auto resourceProperty = foundOutputResource->second->m_mapResourceProperty;
+           // auto resourceProperty = foundOutputResource->second->m_mapResourceProperty;
+
+            resourceInfo info;
+            m_config->getResourceConfiguration(foundOutputResource->second->m_bundleId,
+                    foundOutputResource->second->m_name, &info);
+            map< string, vector< map< string, string > > > resourceProperty = info.resourceProperty;
 
             try
             {
@@ -778,6 +783,7 @@ namespace OIC
             }
             catch (std::out_of_range &e)
             {
+                OC_LOG_V(DEBUG, CONTAINER_TAG, "No input resource %s", outputResourceUri.c_str());
                 return;
             }
 
@@ -804,13 +810,17 @@ namespace OIC
                         std::string type = makeValue(INPUT_RESOURCE_TYPE);
                         std::string attributeName = makeValue(INPUT_RESOURCE_ATTRIBUTENAME);
 
+
+                        OC_LOG_V(DEBUG, CONTAINER_TAG, "Start discovery %s, %s, %s", uri.c_str(),
+                                type.c_str(), attributeName.c_str());
                         DiscoverResourceUnit::Ptr newDiscoverUnit = std::make_shared
                                 < DiscoverResourceUnit > (outputResourceUri);
                         newDiscoverUnit->startDiscover(
                             DiscoverResourceUnit::DiscoverResourceInfo(uri, type,
                                     attributeName),
                             std::bind(&SoftSensorResource::onUpdatedInputResource,
-                                      std::static_pointer_cast< SoftSensorResource > (foundOutputResource->second),
+                                      std::static_pointer_cast< SoftSensorResource >
+                        (foundOutputResource->second),
                                       std::placeholders::_1, std::placeholders::_2));
 
                         auto foundDiscoverResource = m_mapDiscoverResourceUnits.find(
@@ -989,7 +999,8 @@ namespace OIC
             {
                 OC_LOG_V(ERROR, CONTAINER_TAG, "Cannot register bundle (%s)",
                          std::string( bundleInfoInternal->getID()
-                                      + " bundle activator(" + bundleInfoInternal->getActivatorName()
+                                      + " bundle activator(" +
+                                      bundleInfoInternal->getActivatorName()
                                       + ") not found ").c_str());
                 return;
             }

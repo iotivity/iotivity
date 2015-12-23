@@ -28,10 +28,10 @@ import android.content.Context;
 import android.util.Log;
 
 
-public abstract class AndroidBundleSoftSensorResource extends AndroidBundleResource {
+public abstract class BundleSoftSensorResource extends BundleResource {
     protected HashMap<String, RcsValue> m_mapInputData;
     
-    public AndroidBundleSoftSensorResource(Context context) {
+    public BundleSoftSensorResource(Context context) {
         super(context);
     }
     /**

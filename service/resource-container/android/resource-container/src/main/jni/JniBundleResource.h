@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef ANDROIDRESOURCE_H_
-#define ANDROIDRESOURCE_H_
+#ifndef JNI_BUNDLERESOURCE_H_
+#define JNI_BUNDLERESOURCE_H_
 
 #include <map>
 #include <vector>
@@ -33,7 +33,7 @@
 
 class JNIEnvWrapper;
 
-void initRCSAndroidResource(JNIEnvWrapper *);
+void initRCSJniBundleResource(JNIEnvWrapper *);
 
 using namespace std;
 
@@ -41,13 +41,13 @@ namespace OIC
 {
     namespace Service
     {
-        class AndroidResource: public SoftSensorResource
+        class JniBundleResource: public SoftSensorResource
         {
         public:
-            AndroidResource();
-            AndroidResource(JNIEnv *env, jobject obj, jobject bundleResource, string bundleId,
+            JniBundleResource();
+            JniBundleResource(JNIEnv *env, jobject obj, jobject bundleResource, string bundleId,
                     jobjectArray attributes);
-            virtual ~AndroidResource();
+            virtual ~JniBundleResource();
 
             void handleSetAttributeRequest(const std::string& key,
                     RCSResourceAttributes::Value&&);
@@ -93,6 +93,8 @@ namespace OIC
             jclass m_vectorClazz;
             jmethodID m_vectorAddMethod;
             string m_bundleId;
+            jclass m_superclass;
+            jclass m_classClass;
             JNIEnv *m_env;
             JavaVM *m_jvm;
             jfieldID g_field_mNativeHandle;
@@ -104,11 +106,11 @@ namespace OIC
 extern "C" {
 #endif
 /*
- * Class:     org_iotivity_service_resourcecontainer_AndroidBundleResource
+ * Class:     org_iotivity_service_resourcecontainer_JniBundleResource
  * Method:    updateNativeInstance
  * Signature: (Lorg/iotivity/service/resourcecontainer/RcsResourceAttributes;)V
  */
-JNIEXPORT void JNICALL Java_org_iotivity_service_resourcecontainer_AndroidBundleResource_updateNativeInstance
+JNIEXPORT void JNICALL Java_org_iotivity_service_resourcecontainer_BundleResource_updateNativeInstance
   (JNIEnv *, jobject, jobject);
 
 #ifdef __cplusplus
