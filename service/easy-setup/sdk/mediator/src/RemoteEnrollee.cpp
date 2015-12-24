@@ -42,8 +42,7 @@ namespace OIC
         }
 
 #ifdef __WITH_DTLS__
-        ESResult RemoteEnrollee::registerSecurityCallbackHandler(
-                EnrolleeSecStatusCb enrolleeSecStatusCb, SecurityPinCb securityPinCb,
+        ESResult RemoteEnrollee::registerSecurityCallbackHandler(SecurityPinCb securityPinCb,
                 SecProvisioningDbPathCb secProvisioningDbPathCb)
         {
             // No need to check NULL for m_secProvisioningDbPathCB as this is not a mandatory
@@ -52,7 +51,6 @@ namespace OIC
             // If PDM.db is found, the provisioning manager operations will succeed.
             // Otherwise all the provisioning manager operations will fail.
             m_secProvisioningDbPathCb = secProvisioningDbPathCb;
-            m_enrolleeSecStatusCb = enrolleeSecStatusCb;
             m_securityPinCb = securityPinCb;
             return ES_OK;
         }
@@ -75,8 +73,48 @@ namespace OIC
                 m_easySetupStatusCb = callback;
 
                 m_remoteResource = std::make_shared< RemoteEnrolleeResource >(m_enrolleeNWProvInfo);
+            }
+        }
 
-                m_remoteResource->constructResourceObject();
+        void RemoteEnrollee::easySetupSecurityStatusCallback(
+                        std::shared_ptr< SecProvisioningResult > secProvisioningResult)
+        {
+            OC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG, "easySetupStatusCallback status is, UUID = %s, "
+                    "Status = %d", secProvisioningResult->getDeviceUUID().c_str(),
+                    secProvisioningResult->getResult());
+
+            if(secProvisioningResult->getResult() == ES_OK)
+            {
+                OC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "Ownership and ACL are successful. "
+                        "Continue with Network information provisioning");
+
+                m_currentESState = CurrentESState::ES_OWNED;
+
+                OC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Before ProvisionEnrollee");
+
+                RemoteEnrolleeResource::ProvStatusCb provStatusCb = std::bind(
+                        &RemoteEnrollee::provisioningStatusHandler, this, std::placeholders::_1);
+
+                m_remoteResource->registerProvStatusCallback(provStatusCb);
+                m_remoteResource->provisionEnrollee();
+            }
+            else
+            {
+                OC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "Ownership and ACL are successful");
+                std::shared_ptr< EasySetupStatus > easySetupStatus = nullptr;
+                easySetupStatus = std::make_shared< EasySetupStatus >(DEVICE_NOT_PROVISIONED,
+                                            m_enrolleeNWProvInfo);
+                if (m_easySetupStatusCb)
+                {
+                    if (easySetupStatus)
+                    {
+                        m_easySetupStatusCb(easySetupStatus);
+                    }
+                    else
+                    {
+                        m_easySetupStatusCb(nullptr);
+                    }
+                }
             }
         }
 
@@ -163,38 +201,74 @@ namespace OIC
             {
                 throw ESBadRequestException ("Device not created");
             }
-            else
+
+            ESResult result = ES_ERROR;
+
+            result = m_remoteResource->constructResourceObject();
+
+            if (result == ES_ERROR)
             {
-                m_currentESState = CurrentESState::ES_ONBOARDED;
+                OC_LOG(ERROR,ES_REMOTE_ENROLLEE_TAG,
+                                    "Failed to create device using constructResourceObject");
+                throw ESBadRequestException ("Device not created");
+            }
+
+            m_currentESState = CurrentESState::ES_ONBOARDED;
 
 #ifdef __WITH_DTLS__
-                if (m_needSecuredEasysetup && m_currentESState < CurrentESState::ES_OWNED)
+            if (m_needSecuredEasysetup && m_currentESState < CurrentESState::ES_OWNED)
+            {
+                EnrolleeSecStatusCb securityProvStatusCb = std::bind(
+                        &RemoteEnrollee::easySetupSecurityStatusCallback,
+                        this,
+                        std::placeholders::_1);
+                //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
+                m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_remoteResource, "");
+
+                m_enrolleeSecurity->registerCallbackHandler(securityProvStatusCb,
+                        m_securityPinCb, m_secProvisioningDbPathCb);
+
+                try
                 {
-                    //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
-                    m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_remoteResource, "");
-
-                    m_enrolleeSecurity->registerCallbackHandler(m_enrolleeSecStatusCb,
-                            m_securityPinCb, m_secProvisioningDbPathCb);
-
-                    if (m_enrolleeSecurity->performOwnershipTransfer() == ES_ERROR)
+                    EasySetupState easySetupState = m_enrolleeSecurity->performOwnershipTransfer();
+                    if (easySetupState == DEVICE_NOT_OWNED)
                     {
-                        std::shared_ptr< EasySetupStatus > easySetupStatus = nullptr;
-
-                        easySetupStatus = std::make_shared < EasySetupStatus
-                        > (DEVICE_NOT_OWNED, m_enrolleeNWProvInfo);
+                        OC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG,
+                                "performOwnershipTransfer returned : %d",
+                                easySetupState);
                         return;
                     }
+                    else if (easySetupState == DEVICE_OWNED)
+                    {
+                        OC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG,
+                                "performOwnershipTransfer returned : %d",
+                                easySetupState);
+                        OC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Before ProvisionEnrollee");
+
+                        RemoteEnrolleeResource::ProvStatusCb provStatusCb = std::bind(
+                                &RemoteEnrollee::provisioningStatusHandler,
+                                this, std::placeholders::_1);
+
+                        m_remoteResource->registerProvStatusCallback(provStatusCb);
+                        m_remoteResource->provisionEnrollee();
+                    }
                 }
-#endif
-
-                OC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Before ProvisionEnrollee");
-
-                RemoteEnrolleeResource::ProvStatusCb provStatusCb = std::bind(
-                        &RemoteEnrollee::provisioningStatusHandler, this, std::placeholders::_1);
-
-                m_remoteResource->registerProvStatusCallback(provStatusCb);
-                m_remoteResource->provisionEnrollee();
+                catch (OCException & e)
+                {
+                    OC_LOG_V(ERROR, ES_REMOTE_ENROLLEE_TAG,
+                            "Exception for performOwnershipTransfer : %s", e.reason().c_str());
+                    return ;
+                }
             }
+#else
+            OC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Before ProvisionEnrollee");
+
+            RemoteEnrolleeResource::ProvStatusCb provStatusCb = std::bind(
+                    &RemoteEnrollee::provisioningStatusHandler, this, std::placeholders::_1);
+
+            m_remoteResource->registerProvStatusCallback(provStatusCb);
+            m_remoteResource->provisionEnrollee();
+#endif
         }
 
         void RemoteEnrollee::stopProvisioning()

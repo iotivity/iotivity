@@ -30,7 +30,7 @@ namespace OIC
 {
     namespace Service
     {
-        #define ENROLEE_SECURITY_TAG "ENROLEE_SECURITY"
+#define ENROLEE_SECURITY_TAG "ENROLEE_SECURITY"
 
         class RemoteEnrolleeResource;
         class OCSecureResource;
@@ -44,31 +44,33 @@ namespace OIC
         {
         public:
             EnrolleeSecurity(std::shared_ptr< RemoteEnrolleeResource > remoteEnrolleeResource,
-                    std::string secDbPath);
+            std::string secDbPath);
 
             ESResult registerCallbackHandler(EnrolleeSecStatusCb enrolleeSecStatusCb,
                     SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb);
 
-
-            ESResult performOwnershipTransfer();
+            EasySetupState performOwnershipTransfer();
 
             ESResult provisionCreds();
 
             ESResult provisionAcl();
 
         private:
-            std::shared_ptr < RemoteEnrolleeResource > m_remoteEnrolleeResource;
+            std::shared_ptr< RemoteEnrolleeResource > m_remoteEnrolleeResource;
             EnrolleeSecStatusCb m_enrolleeSecStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
+            std::shared_ptr< OC::OCSecureResource > m_unownedDevice;
 
-            EnrolleeSecState m_enrolleeSecState;
-            std::shared_ptr < OC::OCSecureResource > m_securedResource;
+            EnrolleeSecState m_enrolleeSecState;std::shared_ptr< OC::OCSecureResource > m_securedResource;
 
             std::shared_ptr< OC::OCSecureResource > findEnrollee(std::string host,
                     OC::DeviceList_t &list);
             void provisionCb(OC::PMResultList_t *result, int hasError);
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
+            void convertUUIDToString(OicUuid_t uuid, std::string& uuidString);
+            ESResult createProvisiongResourceACL(OicSecAcl_t *acl);
+            int CalculateAclPermission(const char *temp_pms, uint16_t *pms);
         };
     }
 }

@@ -66,7 +66,6 @@ namespace OIC
             /**
              * Register Security status and other information callback handlers.
              *
-             * @param enrolleeSecStatusCb Callback to get security status callbacks.
              * @param secProvisioningDbCb Callback to be invoked when the stack expects a
              *        path for the provisioning db.
              * @param securityPinCb Callback to get security pin during pin based ownership transfer.
@@ -76,8 +75,8 @@ namespace OIC
              *
              * @see SecProvisioningResult
              */
-            ESResult registerSecurityCallbackHandler(EnrolleeSecStatusCb enrolleeSecStatusCb,
-                    SecurityPinCb securityPinCb, SecProvisioningDbPathCb secProvisioningDbPathCb);
+            ESResult registerSecurityCallbackHandler(SecurityPinCb securityPinCb,
+                    SecProvisioningDbPathCb secProvisioningDbPathCb);
 #endif //__WITH_DTLS__
 
             /**
@@ -134,6 +133,8 @@ namespace OIC
             bool m_needSecuredEasysetup;
 
             void provisioningStatusHandler (std::shared_ptr< ProvisioningStatus > provStatus);
+            void easySetupSecurityStatusCallback(
+            std::shared_ptr< SecProvisioningResult > secProvisioningResult);
         };
     }
 }

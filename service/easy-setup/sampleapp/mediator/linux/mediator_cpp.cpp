@@ -93,7 +93,7 @@ void initEasySetup()
 
     easySetupIntance = EasySetup::getInstance();
 
-    ipaddress = "192.168.0.150";
+    ipaddress = "10.113.64.106";
     //std::cout << "Enter the target enrollee ipv4 address ";
 
 

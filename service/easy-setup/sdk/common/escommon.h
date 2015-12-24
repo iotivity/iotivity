@@ -240,18 +240,34 @@ namespace OIC
         /**
          * Security Provisioning Status
          */
-        typedef struct {
-            /// UUID of the target device
-            std::string devUUID;
-            /// EasySetup result
-            ESResult res;
-        } SecProvisioningResult;
+        class SecProvisioningResult
+        {
+        public:
+            std::shared_ptr< SecProvisioningResult > shared_ptr;
+            SecProvisioningResult(std::string deviceUUID, ESResult result) :
+                m_devUUID(deviceUUID), m_result(result)
+            {
 
+            }
+
+            std::string getDeviceUUID()
+            {
+                return m_devUUID;
+            }
+
+            ESResult getResult()
+            {
+                return m_result;
+            }
+        private:
+            std::string m_devUUID;
+            ESResult m_result;
+        };
 
         /**
          * Callback function definition for providing Enrollee security status .
          */
-        typedef std::function< void(SecProvisioningResult) > EnrolleeSecStatusCb;
+        typedef std::function< void(std::shared_ptr<SecProvisioningResult>) > EnrolleeSecStatusCb;
 
         /**
          * Callback definition to be invoked when the security stack expects a pin from application.

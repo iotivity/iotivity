@@ -83,7 +83,7 @@ namespace OIC
              *
              * @see ProvisioningStatus
              */
-            void constructResourceObject();
+            ESResult constructResourceObject();
 
             /**
              * Function for provisioning of Remote Enrollee resource using the information provided.
@@ -106,12 +106,17 @@ namespace OIC
             std::mutex m_mutex;
             ProvStatusCb m_provStatusCb;
             EnrolleeNWProvInfo m_enrolleeNWProvInfo;
+            bool m_discoveryResponse;
 
             void getProvStatusResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
 
             void checkProvInformationCb(const HeaderOptions& headerOptions, const OCRepresentation& rep,
                     const int eCode);
+
+            ESResult ESDiscoveryTimeout(unsigned short waittime);
+
+            void onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource);
         };
     }
 }
