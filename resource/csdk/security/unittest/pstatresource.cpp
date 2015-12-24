@@ -37,8 +37,8 @@ extern "C" {
 OCStackResult CreatePstatResource();
 OCEntityHandlerResult PstatEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest);
-char * BinToPstatJSON(const OicSecPstat_t * pstat);
-OicSecPstat_t * JSONToPstatBin(const char * jsonStr);
+char * BinToPstatJSON(const OicSecPstat_t * pstat, const bool isIncResName);
+OicSecPstat_t * JSONToPstatBin(const char * jsonStr, const bool isIncResName);
 const char* UNIT_TEST_JSON_FILE_NAME = "oic_unittest.json";
 #ifdef __cplusplus
 }
@@ -88,13 +88,13 @@ TEST(PstatEntityHandlerTest, PstatEntityHandlerInvalidRequest)
 //BinToJSON Tests
 TEST(BinToJSONTest, BinToNullJSON)
 {
-    char* value = BinToPstatJSON(NULL);
+    char* value = BinToPstatJSON(NULL, true);
     EXPECT_TRUE(value == NULL);
 }
 
 TEST(JSONToBinTest, NullJSONToBin)
 {
-    OicSecPstat_t *pstat1 = JSONToPstatBin(NULL);
+    OicSecPstat_t *pstat1 = JSONToPstatBin(NULL, true);
     EXPECT_TRUE(pstat1 == NULL);
 }
 
@@ -119,7 +119,7 @@ TEST(MarshalingAndUnMarshalingTest, BinToPstatJSONAndJSONToPstatBin)
     }
     pstat.sm[0] = SINGLE_SERVICE_CLIENT_DRIVEN;
     pstat.sm[1] = SINGLE_SERVICE_SERVER_DRIVEN;
-    char* jsonPstat = BinToPstatJSON(&pstat);
+    char* jsonPstat = BinToPstatJSON(&pstat, true);
     if(!jsonPstat)
     {
         OICFree(pstat.sm);
@@ -128,7 +128,7 @@ TEST(MarshalingAndUnMarshalingTest, BinToPstatJSONAndJSONToPstatBin)
     }
     printf("BinToJSON Dump:\n%s\n\n", jsonPstat);
     EXPECT_TRUE(jsonPstat != NULL);
-    OicSecPstat_t *pstat1 = JSONToPstatBin(jsonPstat);
+    OicSecPstat_t *pstat1 = JSONToPstatBin(jsonPstat, true);
     EXPECT_TRUE(pstat1 != NULL);
     if(pstat1)
     {
@@ -157,10 +157,10 @@ TEST(PstatTests, JSONMarshalliingTests)
         }
         jsonStr1[len + 1] = 0;
 
-        OicSecPstat_t* pstat = JSONToPstatBin(jsonStr1);
+        OicSecPstat_t* pstat = JSONToPstatBin(jsonStr1, true);
         EXPECT_TRUE(NULL != pstat);
 
-        char* jsonStr2 = BinToPstatJSON(pstat);
+        char* jsonStr2 = BinToPstatJSON(pstat, true);
         EXPECT_STRNE(jsonStr1, jsonStr2);
 
         OICFree(jsonStr1);

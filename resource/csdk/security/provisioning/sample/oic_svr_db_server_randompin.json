@@ -1,28 +1,28 @@
 {
     "acl": [
         {
-            "sub": "Kg==",
-            "rsrc": [
+            "subject": "Kg==",
+            "resources": [
                 "/oic/res",
                 "/oic/res/d",
                 "/oic/res/types/d",
                 "/oic/presence"
 			],
-			"perms": 2,
-			"ownrs" : [
+			"permission": 2,
+			"rowners" : [
 				"cmFuZG9tUGluRGV2VVVJRA=="
 			]
 		},
         {
-            "sub": "Kg==",
-            "rsrc": [
+            "subject": "Kg==",
+            "resources": [
                 "/oic/sec/doxm",
                 "/oic/sec/pstat",
                 "/oic/sec/acl",
                 "/oic/sec/cred"
              ],
-             "perms": 6,
-             "ownrs" : [
+             "permission": 6,
+             "rowners" : [
                  "cmFuZG9tUGluRGV2VVVJRA=="
              ]
         }
@@ -30,7 +30,7 @@
 	"pstat":	{
 		"isop":	false,
 		"deviceid":	"cmFuZG9tUGluRGV2VVVJRA==",
-		"commithash": 0,
+		"ch": 0,
 		"cm":	0,
 		"tm":	0,
 		"om":	3,

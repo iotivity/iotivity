@@ -38,8 +38,8 @@ extern "C" {
 OCStackResult CreateCredResource();
 OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
                 OCEntityHandlerRequest * ehRequest);
-char * BinToCredJSON(const OicSecCred_t * pstat);
-OicSecCred_t * JSONToCredBin(const char * jsonStr);
+char * BinToCredJSON(const OicSecCred_t * pstat, const bool isIncResName);
+OicSecCred_t * JSONToCredBin(const char * jsonStr, const bool isIncResName);
 void InitSecCredInstance(OicSecCred_t * cred);
 void DeleteCredList(OicSecCred_t* cred);
 const OicSecCred_t* GetCredResourceData(const OicUuid_t* subject);
@@ -194,7 +194,7 @@ TEST(CredEntityHandlerTest, CredEntityHandlerDeleteTest)
     OicSecCred_t *cred = getCredList();
     VERIFY_NON_NULL(TAG, cred, ERROR);
 
-    jsonStr = BinToCredJSON(cred);
+    jsonStr = BinToCredJSON(cred, false);
     VERIFY_NON_NULL(TAG, jsonStr, ERROR);
 
     // Create Entity Handler POST request payload
@@ -235,7 +235,7 @@ exit:
 //BinToCredJSON Tests
 TEST(BinToCredJSONTest, BinToCredJSONNullCred)
 {
-    char* value = BinToCredJSON(NULL);
+    char* value = BinToCredJSON(NULL, true);
     EXPECT_TRUE(value == NULL);
 }
 
@@ -244,7 +244,7 @@ TEST(BinToCredJSONTest, BinToCredJSONValidCred)
     char* json = NULL;
     OicSecCred_t * cred = getCredList();
 
-    json = BinToCredJSON(cred);
+    json = BinToCredJSON(cred, true);
 
     OC_LOG_V(INFO, TAG, "BinToCredJSON:%s\n", json);
     EXPECT_TRUE(json != NULL);
@@ -256,10 +256,10 @@ TEST(BinToCredJSONTest, BinToCredJSONValidCred)
 TEST(JSONToCredBinTest, JSONToCredBinValidJSON)
 {
     OicSecCred_t* cred1 = getCredList();
-    char* json = BinToCredJSON(cred1);
+    char* json = BinToCredJSON(cred1, true);
 
     EXPECT_TRUE(json != NULL);
-    OicSecCred_t *cred2 = JSONToCredBin(json);
+    OicSecCred_t *cred2 = JSONToCredBin(json, true);
     EXPECT_TRUE(cred2 != NULL);
     DeleteCredList(cred1);
     DeleteCredList(cred2);
@@ -268,7 +268,7 @@ TEST(JSONToCredBinTest, JSONToCredBinValidJSON)
 
 TEST(JSONToCredBinTest, JSONToCredBinNullJSON)
 {
-    OicSecCred_t *cred = JSONToCredBin(NULL);
+    OicSecCred_t *cred = JSONToCredBin(NULL, true);
     EXPECT_TRUE(cred == NULL);
 }
 

@@ -116,7 +116,7 @@ static OCStackApplicationResult AmsMgrDiscoveryCallback(void *ctx, OCDoHandle ha
     OicSecDoxm_t *doxm = NULL;
     OC_LOG_V(INFO, TAG, "Doxm DeviceId Discovery response = %s\n",
           ((OCSecurityPayload*)clientResponse->payload)->securityData);
-    doxm = JSONToDoxmBin(((OCSecurityPayload*)clientResponse->payload)->securityData);
+    doxm = JSONToDoxmBin(((OCSecurityPayload*)clientResponse->payload)->securityData, false);
 
     //As doxm is NULL amsmgr can't test if response from trusted AMS service
     //so keep the transaction.
@@ -306,7 +306,7 @@ static OCStackApplicationResult AmsMgrAclReqCallback(void *ctx, OCDoHandle handl
                        sizeof(context->amsMgrContext->amsDeviceId.id)) == 0)
     {
         OCStackResult ret =
-                InstallNewACL(((OCSecurityPayload*)clientResponse->payload)->securityData);
+                InstallNewACL(((OCSecurityPayload*)clientResponse->payload)->securityData, false);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
         OC_LOG_V(INFO, TAG, "%s : Calling checkPermission", __func__);

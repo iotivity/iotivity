@@ -63,7 +63,7 @@ void DeletePstatBinData(OicSecPstat_t* pstat)
     }
 }
 
-char * BinToPstatJSON(const OicSecPstat_t * pstat)
+char * BinToPstatJSON(const OicSecPstat_t * pstat, const bool isIncResName)
 {
     if(NULL == pstat)
     {
@@ -76,11 +76,21 @@ char * BinToPstatJSON(const OicSecPstat_t * pstat)
     char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*) 0)->id)) + 1] = {};
     uint32_t outLen = 0;
     B64Result b64Ret = B64_OK;
+    cJSON *jsonRoot = NULL;
 
-    cJSON *jsonRoot = cJSON_CreateObject();
-    VERIFY_NON_NULL(TAG, jsonRoot, INFO);
+    if(isIncResName)
+    {
+        jsonRoot = cJSON_CreateObject();
+        VERIFY_NON_NULL(TAG, jsonRoot, INFO);
+        cJSON_AddItemToObject(jsonRoot, OIC_JSON_PSTAT_NAME, jsonPstat = cJSON_CreateObject());
+    }
+    else
+    {
+        jsonPstat = cJSON_CreateObject();
+        jsonRoot = jsonPstat;
+    }
+    VERIFY_NON_NULL(TAG, jsonPstat, INFO);
 
-    cJSON_AddItemToObject(jsonRoot, OIC_JSON_PSTAT_NAME, jsonPstat=cJSON_CreateObject());
     cJSON_AddBoolToObject(jsonPstat, OIC_JSON_ISOP_NAME, pstat->isOp);
 
     b64Ret = b64Encode(pstat->deviceID.id,
@@ -109,7 +119,7 @@ exit:
     return jsonStr;
 }
 
-OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
+OicSecPstat_t * JSONToPstatBin(const char * jsonStr, const bool isIncResName)
 {
     if(NULL == jsonStr)
     {
@@ -128,7 +138,14 @@ OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
     cJSON *jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NON_NULL(TAG, jsonRoot, INFO);
 
-    jsonPstat = cJSON_GetObjectItem(jsonRoot, OIC_JSON_PSTAT_NAME);
+    if(isIncResName)
+    {
+        jsonPstat = cJSON_GetObjectItem(jsonRoot, OIC_JSON_PSTAT_NAME);
+    }
+    else
+    {
+        jsonPstat = jsonRoot;
+    }
     VERIFY_NON_NULL(TAG, jsonPstat, INFO);
 
     pstat = (OicSecPstat_t*)OICCalloc(1, sizeof(OicSecPstat_t));
@@ -197,7 +214,7 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
 {
     OC_LOG (INFO, TAG, "HandlePstatGetRequest  processing GET request");
    // Convert ACL data into JSON for transmission
-    char* jsonStr = BinToPstatJSON(gPstat);
+    char* jsonStr = BinToPstatJSON(gPstat, false);
 
     // A device should always have a default pstat. Therefore, jsonStr should never be NULL.
     OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
@@ -224,15 +241,14 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
     {
         postJson = cJSON_Parse(((OCSecurityPayload*)ehRequest->payload)->securityData);
         VERIFY_NON_NULL(TAG, postJson, INFO);
-        cJSON *jsonPstat = cJSON_GetObjectItem(postJson, OIC_JSON_PSTAT_NAME);
-        VERIFY_NON_NULL(TAG, jsonPstat, INFO);
-        cJSON *commitHashJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_COMMIT_HASH_NAME);
+
+        cJSON *commitHashJson = cJSON_GetObjectItem(postJson, OIC_JSON_COMMIT_HASH_NAME);
         uint16_t commitHash = 0;
         if (commitHashJson)
         {
             commitHash = commitHashJson->valueint;
         }
-        cJSON *tmJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_TM_NAME);
+        cJSON *tmJson = cJSON_GetObjectItem(postJson, OIC_JSON_TM_NAME);
         if (tmJson && gPstat)
         {
             gPstat->tm = (OicSecDpm_t)tmJson->valueint;
@@ -247,7 +263,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
                 OC_LOG (INFO, TAG, "CommitHash is not valid");
             }
         }
-        cJSON *omJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_OM_NAME);
+        cJSON *omJson = cJSON_GetObjectItem(postJson, OIC_JSON_OM_NAME);
         if (omJson && gPstat)
         {
             /*
@@ -264,7 +280,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
             }
         }
         // Convert pstat data into JSON for update to persistent storage
-        char *jsonStr = BinToPstatJSON(gPstat);
+        char *jsonStr = BinToPstatJSON(gPstat, true);
         if (jsonStr)
         {
             cJSON *jsonPstat = cJSON_Parse(jsonStr);
@@ -369,7 +385,7 @@ OCStackResult InitPstatResource()
     if (jsonSVRDatabase)
     {
         // Convert JSON Pstat into binary format
-        gPstat = JSONToPstatBin(jsonSVRDatabase);
+        gPstat = JSONToPstatBin(jsonSVRDatabase, true);
     }
     /*
      * If SVR database in persistent storage got corrupted or

@@ -45,8 +45,8 @@ using namespace std;
 extern "C" {
 #endif
 
-extern char * BinToAclJSON(const OicSecAcl_t * acl);
-extern OicSecAcl_t * JSONToAclBin(const char * jsonStr);
+extern char * BinToAclJSON(const OicSecAcl_t * acl, const bool isIncResName);
+extern OicSecAcl_t * JSONToAclBin(const char * jsonStr, const bool isIncResName);
 extern void DeleteACLList(OicSecAcl_t* acl);
 OCStackResult  GetDefaultACL(OicSecAcl_t** defaultAcl);
 OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
@@ -58,6 +58,8 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
 const char* JSON_FILE_NAME = "oic_unittest.json";
 const char* DEFAULT_ACL_JSON_FILE_NAME = "oic_unittest_default_acl.json";
 const char* ACL1_JSON_FILE_NAME = "oic_unittest_acl1.json";
+const char* ACL_JSON_PAYLOAD_FILE_NAME = "oic_unittest_acl_payload.json";
+
 
 #define NUM_ACE_FOR_WILDCARD_IN_ACL1_JSON (2)
 
@@ -80,10 +82,10 @@ TEST(ACLResourceTest, JSONMarshallingTests)
         }
         jsonStr1[len + 1] = 0;
 
-        OicSecAcl_t * acl = JSONToAclBin(jsonStr1);
+        OicSecAcl_t * acl = JSONToAclBin(jsonStr1, true);
         EXPECT_TRUE(NULL != acl);
 
-        char * jsonStr2 = BinToAclJSON(acl);
+        char * jsonStr2 = BinToAclJSON(acl, true);
         EXPECT_TRUE(NULL != jsonStr2);
 
         EXPECT_STREQ(jsonStr1, jsonStr2);
@@ -101,7 +103,7 @@ TEST(ACLResourceTest, GetDefaultACLTests)
     char *jsonStr = ReadFile(DEFAULT_ACL_JSON_FILE_NAME);
     if (jsonStr)
     {
-        OicSecAcl_t * acl = JSONToAclBin(jsonStr);
+        OicSecAcl_t * acl = JSONToAclBin(jsonStr, true);
         EXPECT_TRUE(NULL != acl);
 
         // Invoke API to generate default ACL
@@ -140,7 +142,7 @@ TEST(ACLResourceTest, ACLPostTest)
     OCEntityHandlerRequest ehReq =  OCEntityHandlerRequest();
 
     // Read an ACL from the file
-    char *jsonStr = ReadFile(ACL1_JSON_FILE_NAME);
+    char *jsonStr = ReadFile(ACL_JSON_PAYLOAD_FILE_NAME);
     if (jsonStr)
     {
         static OCPersistentStorage ps = OCPersistentStorage();
@@ -155,7 +157,7 @@ TEST(ACLResourceTest, ACLPostTest)
         EXPECT_TRUE(OC_EH_ERROR == ehRet);
 
         // Convert JSON into OicSecAcl_t for verification
-        OicSecAcl_t * acl = JSONToAclBin(jsonStr);
+        OicSecAcl_t * acl = JSONToAclBin(jsonStr, false);
         EXPECT_TRUE(NULL != acl);
 
         // Verify if SRM contains ACL for the subject
@@ -179,10 +181,10 @@ TEST(ACLResourceTest, GetACLResourceTests)
     extern OicSecAcl_t  *gAcl;
 
     // Read an ACL from the file
-    char *jsonStr = ReadFile(ACL1_JSON_FILE_NAME);
+    char *jsonStr = ReadFile(ACL_JSON_PAYLOAD_FILE_NAME);
     if (jsonStr)
     {
-        gAcl = JSONToAclBin(jsonStr);
+        gAcl = JSONToAclBin(jsonStr, false);
         EXPECT_TRUE(NULL != gAcl);
 
         // Verify that ACL file contains 2 ACE entries for 'WILDCARD' subject
@@ -253,7 +255,7 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == populateAcl(&acl, 1)), ERROR);
 
     //GET json POST payload
-    jsonStr = BinToAclJSON(&acl);
+    jsonStr = BinToAclJSON(&acl, false);
     VERIFY_NON_NULL(TAG, jsonStr, ERROR);
 
     // Create Entity Handler POST request payload
@@ -310,7 +312,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == populateAcl(&acl, 2)), ERROR);
 
     //GET json POST payload
-    jsonStr = BinToAclJSON(&acl);
+    jsonStr = BinToAclJSON(&acl, false);
     VERIFY_NON_NULL(TAG, jsonStr, ERROR);
 
     // Create Entity Handler POST request payload
@@ -333,12 +335,6 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
 
     ehRet = ACLEntityHandler(OC_REQUEST_FLAG, &ehReq);
     EXPECT_TRUE(OC_EH_ERROR == ehRet);
-
-    // Verify if SRM contains ACL for the subject but only with one resource
-    savePtr = NULL;
-    subjectAcl2 = GetACLResourceData(&acl.subject, &savePtr);
-    EXPECT_TRUE(NULL != subjectAcl2);
-    EXPECT_TRUE(subjectAcl2->resourcesLen == 1);
 
 exit:
     // Perform cleanup
@@ -368,7 +364,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == populateAcl(&acl, 1)), ERROR);
 
     //GET json POST payload
-    jsonStr = BinToAclJSON(&acl);
+    jsonStr = BinToAclJSON(&acl, false);
     VERIFY_NON_NULL(TAG, jsonStr, ERROR);
 
     //Create Entity Handler POST request payload

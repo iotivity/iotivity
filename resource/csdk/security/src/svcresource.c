@@ -61,18 +61,26 @@ void DeleteSVCList(OicSecSvc_t* svc)
  * Note: Caller needs to invoke 'free' when finished done using
  * return string.
  */
-char * BinToSvcJSON(const OicSecSvc_t * svc)
+char * BinToSvcJSON(const OicSecSvc_t * svc, const bool isIncResName)
 {
     cJSON *jsonRoot = NULL;
     char *jsonStr = NULL;
 
     if (svc)
     {
-        jsonRoot = cJSON_CreateObject();
-        VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
         cJSON *jsonSvcArray = NULL;
-        cJSON_AddItemToObject (jsonRoot, OIC_JSON_SVC_NAME, jsonSvcArray = cJSON_CreateArray());
+        if(isIncResName)
+        {
+            jsonRoot = cJSON_CreateObject();
+            VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
+
+            cJSON_AddItemToObject (jsonRoot, OIC_JSON_SVC_NAME, jsonSvcArray = cJSON_CreateArray());
+        }
+        else
+        {
+            jsonSvcArray = cJSON_CreateArray();
+            jsonRoot = jsonSvcArray;
+        }
         VERIFY_NON_NULL(TAG, jsonSvcArray, ERROR);
 
         while(svc)
@@ -127,7 +135,7 @@ exit:
 /*
  * This internal method converts JSON SVC into binary SVC.
  */
-OicSecSvc_t * JSONToSvcBin(const char * jsonStr)
+OicSecSvc_t * JSONToSvcBin(const char * jsonStr, const bool isIncResName)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecSvc_t * headSvc = NULL;
@@ -140,7 +148,14 @@ OicSecSvc_t * JSONToSvcBin(const char * jsonStr)
     jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
-    jsonSvcArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_SVC_NAME);
+    if(isIncResName)
+    {
+        jsonSvcArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_SVC_NAME);
+    }
+    else
+    {
+        jsonSvcArray = jsonRoot;
+    }
     VERIFY_NON_NULL(TAG, jsonSvcArray, INFO);
 
     if (cJSON_Array == jsonSvcArray->type)
@@ -230,7 +245,7 @@ exit:
 static OCEntityHandlerResult HandleSVCGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
     // Convert SVC data into JSON for transmission
-    char* jsonStr = BinToSvcJSON(gSvc);
+    char* jsonStr = BinToSvcJSON(gSvc, false);
 
     OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
 
@@ -248,7 +263,7 @@ static OCEntityHandlerResult HandleSVCPostRequest (const OCEntityHandlerRequest 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert JSON SVC data into binary. This will also validate the SVC data received.
-    OicSecSvc_t* newSvc = JSONToSvcBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
+    OicSecSvc_t* newSvc = JSONToSvcBin(((OCSecurityPayload*)ehRequest->payload)->securityData, false);
 
     if (newSvc)
     {
@@ -256,7 +271,7 @@ static OCEntityHandlerResult HandleSVCPostRequest (const OCEntityHandlerRequest 
         LL_APPEND(gSvc, newSvc);
 
         // Convert SVC data into JSON for update to persistent storage
-        char *jsonStr = BinToSvcJSON(gSvc);
+        char *jsonStr = BinToSvcJSON(gSvc, true);
         if (jsonStr)
         {
             cJSON *jsonSvc = cJSON_Parse(jsonStr);
@@ -351,7 +366,7 @@ OCStackResult InitSVCResource()
     if (jsonSVRDatabase)
     {
         // Convert JSON SVC into binary format
-        gSvc = JSONToSvcBin(jsonSVRDatabase);
+        gSvc = JSONToSvcBin(jsonSVRDatabase, true);
         OICFree(jsonSVRDatabase);
     }
 

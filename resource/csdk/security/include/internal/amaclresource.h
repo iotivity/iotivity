@@ -67,10 +67,11 @@ OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsId);
  * Caller needs to invoke 'free' when done using
  * returned string.
  * @param Amacl  instance of OicSecAmacl_t structure.
+ * @param isIncResName Decide whether or not to include the name of the resource in output.
  *
  * @retval  pointer to Amacl in json format.
  */
-char* BinToAmaclJSON(const OicSecAmacl_t * amacl);
+char* BinToAmaclJSON(const OicSecAmacl_t * amacl, const bool isIncResName);
 
 #ifdef __cplusplus
 }

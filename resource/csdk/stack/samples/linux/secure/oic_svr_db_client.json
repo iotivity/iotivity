@@ -1,8 +1,8 @@
 {
     "acl": [
         {
-            "sub": "Kg==",
-            "rsrc": [
+            "subject": "Kg==",
+            "resources": [
                 "/oic/res",
                 "/oic/d",
                 "/oic/p",
@@ -11,17 +11,17 @@
                 "/oic/sec/acl",
                 "/oic/sec/amacl"
 			],
-			"perms": 2,
-			"ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+			"permission": 2,
+			"rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 		},
         {
-            "sub": "Kg==",
-            "rsrc": [
+            "subject": "Kg==",
+            "resources": [
                 "/oic/sec/doxm",
                 "/oic/sec/pstat"
              ],
-             "perms": 2,
-             "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+             "permission": 2,
+             "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
         }
 	],
 	"pstat":	{
@@ -39,14 +39,14 @@
 		"sct": 1,
 		"owned": true,
 		"deviceid":	"MjIyMjIyMjIyMjIyMjIyMg==",
-		"ownr":	"MjIyMjIyMjIyMjIyMjIyMg=="
+		"devowner":	"MjIyMjIyMjIyMjIyMjIyMg=="
 	},
     "cred":	[{
 		"credid": 1,
-		"sub": "MTExMTExMTExMTExMTExMQ==",
-		"credtyp": 1,
-		"prd": "20150630T060000/20990920T220000",
-		"pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
-        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+		"subjectid": "MTExMTExMTExMTExMTExMQ==",
+		"credtype": 1,
+		"period": "20150630T060000/20990920T220000",
+		"privatedata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 	}]
 }

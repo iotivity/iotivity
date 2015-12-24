@@ -1,8 +1,8 @@
 {
     "acl": [
         {
-            "sub": "Kg==",
-            "rsrc": [
+            "subject": "Kg==",
+            "resources": [
                 "/oic/res",
                 "/oic/d",
                 "/oic/p",
@@ -11,52 +11,52 @@
                 "/oic/sec/acl",
                 "/oic/sec/amacl"
 			],
-			"perms": 2,
-			"ownrs" : ["MTExMTExMTExMTExMTExMQ=="]
+			"permission": 2,
+			"rowners" : ["MTExMTExMTExMTExMTExMQ=="]
 		},
         {
-            "sub": "Kg==",
-            "rsrc": [
+            "subject": "Kg==",
+            "resources": [
                 "/oic/sec/doxm",
                 "/oic/sec/pstat"
              ],
-             "perms": 2,
-             "ownrs" : ["MTExMTExMTExMTExMTExMQ=="]
+             "permission": 2,
+             "rowners" : ["MTExMTExMTExMTExMTExMQ=="]
         },
         {
-            "sub": "MjIyMjIyMjIyMjIyMjIyMg==",
-            "rsrc": ["/oic/sec/acl",
+            "subject": "MjIyMjIyMjIyMjIyMjIyMg==",
+            "resources": ["/oic/sec/acl",
                       "/oic/sec/cred"],
-            "perms": 8,
-            "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+            "permission": 8,
+            "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
         },
         {
-            "sub": "MjIyMjIyMjIyMjIyMjIyMg==",
-            "rsrc": ["/a/led"],
-            "perms": 6,
-            "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+            "subject": "MjIyMjIyMjIyMjIyMjIyMg==",
+            "resources": ["/a/led"],
+            "permission": 6,
+            "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
         },
         {
-            "sub": "MTExMTIyMjIzMzMzNDQ0NA==",
-            "rsrc": ["/a/led"],
-            "perms": 6,
-            "prds" : ["20150630T060000/20150630T220000", "20150630T060000/20150630T200000"],
-            "recurs" : ["FREQ=DAILY; BYDAY=MO, WE, FR", "FREQ=DAILY; BYDAY=TU, TH; UNTIL=20160630"],
-            "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+            "subject": "MTExMTIyMjIzMzMzNDQ0NA==",
+            "resources": ["/a/led"],
+            "permission": 6,
+            "periods" : ["20150630T060000/20150630T220000", "20150630T060000/20150630T200000"],
+            "recurrence" : ["FREQ=DAILY; BYDAY=MO, WE, FR", "FREQ=DAILY; BYDAY=TU, TH; UNTIL=20160630"],
+            "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
         },
         {
-            "sub": "Nzc3Nzc3Nzc3Nzc3Nzc3Nw==",
-            "rsrc": ["/a/led"],
-            "perms": 6,
-            "prds" : ["20150630T060000/20150630T220000"],
-            "recurs" : ["FREQ=DAILY; UNTIL=20150630"],
-            "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+            "subject": "Nzc3Nzc3Nzc3Nzc3Nzc3Nw==",
+            "resources": ["/a/led"],
+            "permission": 6,
+            "periods" : ["20150630T060000/20150630T220000"],
+            "recurrence" : ["FREQ=DAILY; UNTIL=20150630"],
+            "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
         }
 	],
 	"amacl": [{
-		"rsrc" : ["/a/led"],
+		"resources" : ["/a/led"],
 		"amss" : ["MTkxOTE5MTkxOTE5MTkxOQ=="],
-		"ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+		"rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 	}],
 	"pstat":	{
 		"isop":	true,
@@ -73,41 +73,41 @@
 		"sct": 1,
 		"owned": true,
 		"deviceid":	"MTExMTExMTExMTExMTExMQ==",
-		"ownr":	"YWRtaW5EZXZpY2VVVUlEAA=="
+		"devowner":	"YWRtaW5EZXZpY2VVVUlEAA=="
 	},
     "cred":	[{
 		"credid": 1,
-		"sub": "MjIyMjIyMjIyMjIyMjIyMg==",
-		"credtyp": 1,
-		"pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
-        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+		"subjectid": "MjIyMjIyMjIyMjIyMjIyMg==",
+		"credtype": 1,
+		"privatedata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 	},
 	{
 	    "credid": 2,
-	    "sub": "MTExMTIyMjIzMzMzNDQ0NA==",
-	    "credtyp": 1,
-	    "pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
-        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	    "subjectid": "MTExMTIyMjIzMzMzNDQ0NA==",
+	    "credtype": 1,
+	    "privatedata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 	},
 	{
 	    "credid": 3,
-	    "sub": "Nzc3Nzc3Nzc3Nzc3Nzc3Nw==",
-	    "credtyp": 1,
-	    "pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
-        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	    "subjectid": "Nzc3Nzc3Nzc3Nzc3Nzc3Nw==",
+	    "credtype": 1,
+	    "privatedata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 	},
 	{
 	    "credid": 4,
-	    "sub": "NDQ0NDMzMzMyMjIyMTExMQ==",
-	    "credtyp": 1,
-	    "pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
-        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	    "subjectid": "NDQ0NDMzMzMyMjIyMTExMQ==",
+	    "credtype": 1,
+	    "privatedata": "QUFBQUFBQUFBQUFBQUFBQQ==",
+        "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 	},
 	{
 	    "credid": 5,
-	    "sub": "MTkxOTE5MTkxOTE5MTkxOQ==",
-	    "credtyp": 1,
-	    "pvdata": "QkJCQkJCQkJCQkJCQkJCQg==",
-        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+	    "subjectid": "MTkxOTE5MTkxOTE5MTkxOQ==",
+	    "credtype": 1,
+	    "privatedata": "QkJCQkJCQkJCQkJCQkJCQg==",
+        "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 	}]
 }

@@ -99,12 +99,13 @@ void DeleteCredList(OicSecCred_t* cred)
  * Caller needs to invoke 'free' when done using
  * returned string.
  * @param cred  pointer to instance of OicSecCred_t structure.
+ * @param isIncResName Decide whether or not to include the resource name in output.
  *
  * @retval
  *      pointer to JSON credential representation - if credential for subjectId found
  *      NULL                                      - if credential for subjectId not found
  */
-char * BinToCredJSON(const OicSecCred_t * cred)
+char * BinToCredJSON(const OicSecCred_t * cred, const bool isIncResName)
 {
     cJSON *jsonRoot = NULL;
     char *jsonStr = NULL;
@@ -114,13 +115,20 @@ char * BinToCredJSON(const OicSecCred_t * cred)
         char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
         uint32_t outLen = 0;
         B64Result b64Ret = B64_OK;
-
-        jsonRoot = cJSON_CreateObject();
-        VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
         cJSON *jsonCredArray = NULL;
-        cJSON_AddItemToObject(jsonRoot, OIC_JSON_CRED_NAME,
-                jsonCredArray = cJSON_CreateArray());
+
+        if(isIncResName)
+        {
+            jsonRoot = cJSON_CreateObject();
+            VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
+            cJSON_AddItemToObject(jsonRoot, OIC_JSON_CRED_NAME,
+                                  jsonCredArray = cJSON_CreateArray());
+        }
+        else
+        {
+            jsonCredArray = cJSON_CreateArray();
+            jsonRoot = jsonCredArray;
+        }
         VERIFY_NON_NULL(TAG, jsonCredArray, ERROR);
 
         while(cred)
@@ -137,7 +145,7 @@ char * BinToCredJSON(const OicSecCred_t * cred)
             b64Ret = b64Encode(cred->subject.id, sizeof(cred->subject.id), base64Buff,
                    sizeof(base64Buff), &outLen);
             VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-            cJSON_AddStringToObject(jsonCred, OIC_JSON_SUBJECT_NAME, base64Buff);
+            cJSON_AddStringToObject(jsonCred, OIC_JSON_SUBJECTID_NAME, base64Buff);
 
             //Note: Need further clarification on roleID data type
 #if 0
@@ -234,7 +242,7 @@ exit:
 /*
  * This internal method converts JSON cred into binary cred.
  */
-OicSecCred_t * JSONToCredBin(const char * jsonStr)
+OicSecCred_t * JSONToCredBin(const char * jsonStr, const bool isIncResName)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecCred_t * headCred = NULL;
@@ -244,8 +252,16 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
     cJSON *jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
-    jsonCredArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRED_NAME);
+    if(isIncResName)
+    {
+        jsonCredArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRED_NAME);
+    }
+    else
+    {
+        jsonCredArray = jsonRoot;
+    }
     VERIFY_NON_NULL(TAG, jsonCredArray, ERROR);
+
     if (cJSON_Array == jsonCredArray->type)
     {
         int numCred = cJSON_GetArraySize(jsonCredArray);
@@ -281,7 +297,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             }
 
             //subject -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_SUBJECT_NAME);
+            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_SUBJECTID_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
             outLen = 0;
@@ -483,7 +499,7 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
     bool ret = false;
 
     // Convert Cred data into JSON for update to persistent storage
-    char *jsonStr = BinToCredJSON(cred);
+    char *jsonStr = BinToCredJSON(cred, true);
     if (jsonStr)
     {
         cJSON *jsonCred = cJSON_Parse(jsonStr);
@@ -663,7 +679,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
     OCEntityHandlerResult ret = OC_EH_ERROR;
 
     //Get binary representation of json
-    OicSecCred_t * cred  = JSONToCredBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
+    OicSecCred_t * cred  = JSONToCredBin(((OCSecurityPayload*)ehRequest->payload)->securityData, false);
 
     if(cred)
     {
@@ -694,7 +710,7 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
    ParseQueryIterInit((unsigned char *)ehRequest->query, &parseIter);
    while(GetNextQuery(&parseIter))
    {
-       if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECT_NAME,
+       if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECTID_NAME,
                parseIter.attrLen) == 0)
        {
            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
@@ -801,7 +817,7 @@ OCStackResult InitCredResource()
     if (jsonSVRDatabase)
     {
         //Convert JSON Cred into binary format
-        gCred = JSONToCredBin(jsonSVRDatabase);
+        gCred = JSONToCredBin(jsonSVRDatabase, true);
     }
     /*
      * If SVR database in persistent storage got corrupted or

@@ -1,28 +1,28 @@
 {
     "acl": [
         {
-            "sub": "Kg==",
-            "rsrc": [
+            "subject": "Kg==",
+            "resources": [
                 "/oic/res",
                 "/oic/d",
                 "/oic/p",
                 "/oic/res/types/d",
                 "/oic/ad"
   			],
-			"perms": 2,
-			"ownrs" : [
+			"permission": 2,
+			"rowners" : [
 				"MjIyMjIyMjIyMjIyMjIyMg=="
 			]
 		},
         {
-            "sub": "Kg==",
-            "rsrc": [
+            "subject": "Kg==",
+            "resources": [
                 "/oic/sec/doxm",
                 "/oic/sec/pstat",
                 "/oic/sec/acl"
            ],
-             "perms": 6,
-             "ownrs" : [
+             "permission": 6,
+             "rowners" : [
                  "MjIyMjIyMjIyMjIyMjIyMg=="
              ]
         }

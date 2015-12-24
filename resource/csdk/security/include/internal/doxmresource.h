@@ -54,12 +54,13 @@ const OicSecDoxm_t* GetDoxmResourceData();
  * or received as PUT/POST request.
  *
  * @param[in] jsonStr  doxm data in json string.
+ * @param[in] isIncResName if resource name is included into payload, it is true.
  * @return pointer to OicSecDoxm_t.
  *
  * @note Caller needs to invoke OCFree after done
  *       using the return pointer
  */
-OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
+OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr, const bool isIncResName);
 
 /**
  * This method converts DOXM data into JSON format.
@@ -67,12 +68,13 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
  * return string
  *
  * @param[in] doxm  Pointer to OicSecDoxm_t.
+ * @param[in] isIncResName Decide whether or not to include the resource name in output.
  * @return pointer to json string.
  *
  * @note Caller needs to invoke OCFree after done
  *       using the return pointer
  */
-char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
+char * BinToDoxmJSON(const OicSecDoxm_t * doxm, const bool isIncResName);
 
 /**
  * This method returns the SRM device ID for this device.

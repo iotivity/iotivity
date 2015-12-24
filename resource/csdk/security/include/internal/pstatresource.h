@@ -43,17 +43,19 @@ OCStackResult DeInitPstatResource();
  * This method converts JSON PSTAT into binary PSTAT.
  *
  * @param[in] jsonStr  pstat data in json string.
+ * @param[in] isIncResName if resource name is included into payload, it is true.
  * @return pointer to OicSecPstat_t.
  */
-OicSecPstat_t * JSONToPstatBin(const char * jsonStr);
+OicSecPstat_t * JSONToPstatBin(const char * jsonStr, const bool isIncResName);
 
 /**
  * This method converts pstat data into JSON format.
  *
  * @param[in] pstat  pstat data in binary format.
+ * @param[in] isIncResName Decide whether or not to include the resource name in output.
  * @return pointer to pstat json string.
  */
-char * BinToPstatJSON(const OicSecPstat_t * pstat);
+char * BinToPstatJSON(const OicSecPstat_t * pstat, const bool isIncResName);
 
 /** This function deallocates the memory for OicSecPstat_t.
  *

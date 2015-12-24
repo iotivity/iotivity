@@ -1,8 +1,8 @@
 {
     "acl": [
         {
-            "sub": "Kg==",
-            "rsrc": [
+            "subject": "Kg==",
+            "resources": [
                 "/oic/res",
                 "/oic/d",
                 "/oic/p",
@@ -10,17 +10,17 @@
                 "/oic/ad",
                 "/oic/sec/amacl"
 			],
-			"perms": 2,
-			"ownrs" : ["YWRtaW5EZXZpY2VVVUlEMA=="]
+			"permission": 2,
+			"rowners" : ["YWRtaW5EZXZpY2VVVUlEMA=="]
 		},
         {
-            "sub": "Kg==",
-            "rsrc": [
+            "subject": "Kg==",
+            "resources": [
                 "/oic/sec/doxm",
                 "/oic/sec/pstat"
              ],
-             "perms": 2,
-             "ownrs" : ["YWRtaW5EZXZpY2VVVUlEMA=="]
+             "permission": 2,
+             "rowners" : ["YWRtaW5EZXZpY2VVVUlEMA=="]
         }
 	],
 	"pstat":	{
@@ -38,6 +38,6 @@
 		"sct": 1,
 		"owned": true,
 		"deviceid":	"YWRtaW5EZXZpY2VVVUlEMA==",
-		"ownr":	"YWRtaW5EZXZpY2VVVUlEMA=="
+		"devowner":	"YWRtaW5EZXZpY2VVVUlEMA=="
 	}
 }
