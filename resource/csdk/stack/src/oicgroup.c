@@ -653,6 +653,7 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
     VARIFY_POINTER_NULL(*set, result, exit)
 
     iterToken = (char *) strtok_r(actiondesc, ACTION_DELIMITER, &iterTokenPtr);
+    VARIFY_POINTER_NULL(iterToken, result, exit);
 
     // ActionSet Name
     memset(*set, 0, sizeof(OCActionSet));
@@ -704,6 +705,7 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
 
             attrIterToken = (char *) strtok_r(NULL, ATTR_ASSIGN,
                     &attrIterTokenPtr);
+            VARIFY_POINTER_NULL(attrIterToken, result, exit);
             value = (char *) OICMalloc(strlen(attrIterToken) + 1);
             VARIFY_POINTER_NULL(value, result, exit)
             VARIFY_PARAM_NULL(attrIterToken, result, exit)
@@ -785,14 +787,31 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
     char temp[1024] = { 0 };
     size_t remaining = sizeof(temp) - 1;
     OCStackResult res = OC_STACK_ERROR;
+    char* actionTypeStr = NULL;
 
     OCAction *action = actionset->head;
 
     if (remaining >= strlen(actionset->actionsetName) + 1)
     {
-        strcat(temp, actionset->actionsetName);
+        strncat(temp, actionset->actionsetName, strlen(actionset->actionsetName));
         remaining -= strlen(actionset->actionsetName);
-        strcat(temp, ACTION_DELIMITER);
+        strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER));
+        remaining--;
+    }
+    else
+    {
+        res = OC_STACK_ERROR;
+        goto exit;
+    }
+
+    actionTypeStr = (char *)malloc(1024);
+    if(actionTypeStr != NULL)
+    {
+        sprintf(actionTypeStr, "%ld %u", actionset->timesteps, actionset->type);
+        strncat(temp, actionTypeStr, strlen(actionTypeStr));
+        remaining -= strlen(actionTypeStr);
+        free(actionTypeStr);
+        strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER));
         remaining--;
     }
     else
@@ -946,7 +965,7 @@ OCStackResult BuildActionJSON(OCAction* action, unsigned char* bufferPtr,
     jsonLen = strlen(jsonStr);
     if (jsonLen < *remaining)
     {
-        strcat((char*) bufferPtr, jsonStr);
+        strncat((char*) bufferPtr, jsonStr, jsonLen);
         *remaining -= jsonLen;
         bufferPtr += jsonLen;
         ret = OC_STACK_OK;

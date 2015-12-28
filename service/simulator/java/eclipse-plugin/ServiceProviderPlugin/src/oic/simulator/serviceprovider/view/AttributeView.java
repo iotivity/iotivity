@@ -16,20 +16,15 @@
 
 package oic.simulator.serviceprovider.view;
 
-import java.util.List;
-import java.util.Map;
-
 import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.IAutomationUIListener;
-import oic.simulator.serviceprovider.listener.IResourceModelChangedUIListener;
-import oic.simulator.serviceprovider.listener.ISelectionChangedUIListener;
+import oic.simulator.serviceprovider.listener.IAutomationListener;
+import oic.simulator.serviceprovider.listener.IDataChangeListener;
+import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
 import oic.simulator.serviceprovider.manager.ResourceManager;
 import oic.simulator.serviceprovider.manager.UiListenerHandler;
-import oic.simulator.serviceprovider.model.CollectionResource;
-import oic.simulator.serviceprovider.model.Device;
-import oic.simulator.serviceprovider.model.LocalResourceAttribute;
+import oic.simulator.serviceprovider.model.AttributeElement;
 import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.SRMItem;
+import oic.simulator.serviceprovider.model.ResourceRepresentation;
 import oic.simulator.serviceprovider.model.SingleResource;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.utils.Utility;
@@ -41,6 +36,8 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
@@ -55,34 +52,33 @@ import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.SimulatorResourceAttribute;
-import org.oic.simulator.SimulatorResourceModel;
 
 /**
  * This class manages and shows the attribute view in the perspective.
  */
 public class AttributeView extends ViewPart {
 
-    public static final String              VIEW_ID        = "oic.simulator.serviceprovider.view.attribute";
+    public static final String        VIEW_ID        = "oic.simulator.serviceprovider.view.attribute";
 
-    private TreeViewer                      attViewer;
+    private TreeViewer                attViewer;
 
-    private AttributeEditingSupport         attributeEditor;
+    private AttributeEditingSupport   attributeEditor;
 
-    private ISelectionChangedUIListener     resourceSelectionChangedListener;
-    private IResourceModelChangedUIListener resourceModelChangedUIListener;
-    private IAutomationUIListener           automationUIListener;
+    private ISelectionChangedListener resourceSelectionChangedListener;
+    private IAutomationListener       automationUIListener;
+    private IDataChangeListener       dataChangeListener;
 
-    private final String[]                  attTblHeaders  = { "Name", "Value",
-            "Automation"                                  };
-    private final Integer[]                 attTblColWidth = { 150, 190, 150 };
+    private final String[]            attTblHeaders  = { "Name", "Value",
+            "Automation"                            };
+    private final Integer[]           attTblColWidth = { 150, 190, 150 };
 
-    private ResourceManager                 resourceManager;
+    private ResourceManager           resourceManager;
 
     public AttributeView() {
 
         resourceManager = Activator.getDefault().getResourceManager();
 
-        resourceSelectionChangedListener = new ISelectionChangedUIListener() {
+        resourceSelectionChangedListener = new ISelectionChangedListener() {
 
             @Override
             public void onResourceSelectionChange(final Resource resource) {
@@ -90,61 +86,31 @@ public class AttributeView extends ViewPart {
                     @Override
                     public void run() {
                         if (null != attViewer) {
-                            updateViewer(getData(resource));
                             Tree tree = attViewer.getTree();
-                            if (!tree.isDisposed()) {
-                                if (null != resource
-                                        && (resource instanceof SingleResource && ((SingleResource) resource)
-                                                .isResourceAutomationInProgress())) {
+                            if (null == tree || tree.isDisposed()) {
+                                return;
+                            }
+
+                            // Enabling/disabling the tree based on the resource
+                            // and automation status.
+                            if (resource instanceof SingleResource)
+                                if (((SingleResource) resource)
+                                        .isResourceAutomationInProgress())
                                     tree.setEnabled(false);
-                                } else {
+                                else
                                     tree.setEnabled(true);
-                                }
-                            }
-                        }
-                    }
-                });
-            }
 
-            @Override
-            public void onDeviceSelectionChange(Device dev) {
-                Display.getDefault().asyncExec(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateViewer(null);
-                    }
-                });
-            }
-        };
+                            if (null != resource
+                                    && null != resource
+                                            .getResourceRepresentation()) {
+                                attViewer.setInput(resource
+                                        .getResourceRepresentation());
+                                attViewer.expandAll();
+                                tree.setLinesVisible(true);
 
-        resourceModelChangedUIListener = new IResourceModelChangedUIListener() {
-
-            @Override
-            public void onResourceModelChange(final Resource resource) {
-                Display.getDefault().asyncExec(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Handle the notification only if it is for the current
-                        // resource in selection
-                        Resource resourceInSelection = resourceManager
-                                .getCurrentResourceInSelection();
-                        if (null == resourceInSelection) {
-                            return;
-                        }
-                        if (resource != resourceInSelection) {
-                            // This notification is for a different resource
-                            // whose attributes are not
-                            // currently not being shown in UI. So ignoring this
-                            // notification.
-                            return;
-                        }
-                        // Refresh the table viewers which will display
-                        // the updated values
-                        if (null != attViewer) {
-                            if (resource instanceof CollectionResource) {
-                                updateViewer(getData(resource));
                             } else {
-                                updateViewer(getData(resource));
+                                attViewer.setInput(null);
+                                tree.setLinesVisible(false);
                             }
                         }
                     }
@@ -152,7 +118,43 @@ public class AttributeView extends ViewPart {
             }
         };
 
-        automationUIListener = new IAutomationUIListener() {
+        dataChangeListener = new IDataChangeListener() {
+
+            @Override
+            public void add(final AttributeElement attribute) {
+                Display.getDefault().asyncExec(new Runnable() {
+                    @Override
+                    public void run() {
+                        attViewer.refresh(attribute.getParent());
+                        attViewer.expandAll();
+                    }
+                });
+            }
+
+            @Override
+            public void remove(final AttributeElement attribute) {
+                Display.getDefault().asyncExec(new Runnable() {
+                    @Override
+                    public void run() {
+                        attViewer.refresh(attribute.getParent());
+                        attViewer.expandAll();
+                    }
+                });
+            }
+
+            @Override
+            public void update(final AttributeElement attribute) {
+                Display.getDefault().asyncExec(new Runnable() {
+                    @Override
+                    public void run() {
+                        attViewer.update(attribute, null);
+                        attViewer.expandAll();
+                    }
+                });
+            }
+        };
+
+        automationUIListener = new IAutomationListener() {
 
             @Override
             public void onResourceAutomationStart(final SingleResource resource) {
@@ -213,23 +215,8 @@ public class AttributeView extends ViewPart {
                         Tree tree;
                         tree = attViewer.getTree();
                         if (!tree.isDisposed()) {
-                            if (null != attName) {
-                                // Attribute level automation has stopped
-                                LocalResourceAttribute att = resourceManager
-                                        .getAttributeByResourceURI(resource,
-                                                attName);
-                                if (null == att) {
-                                    return;
-                                } else {
-                                    attViewer.update(att, null);
-                                }
-                            } else {
-                                // Resource level automation has stopped
-                                // Enabling the table which was disabled at the
-                                // beginning of automation
-                                tree.setEnabled(true);
-                                attViewer.refresh();
-                            }
+                            tree.setEnabled(true);
+                            attViewer.refresh();
                         }
                     }
                 });
@@ -272,10 +259,9 @@ public class AttributeView extends ViewPart {
         addManagerListeners();
 
         // Check whether there is any resource selected already
-        List<LocalResourceAttribute> propertyList = getData(resourceManager
-                .getCurrentResourceInSelection());
-        if (null != propertyList) {
-            updateViewer(propertyList);
+        Resource resource = resourceManager.getCurrentResourceInSelection();
+        if (resource != null) {
+            attViewer.setInput(resource.getResourceRepresentation());
         }
     }
 
@@ -291,6 +277,7 @@ public class AttributeView extends ViewPart {
         TreeColumn attValue = new TreeColumn(tree, SWT.NONE);
         attValue.setWidth(attTblColWidth[1]);
         attValue.setText(attTblHeaders[1]);
+
         TreeViewerColumn attValueVwrCol = new TreeViewerColumn(attViewer,
                 attValue);
         attValueVwrCol.setEditingSupport(attributeEditor
@@ -303,46 +290,34 @@ public class AttributeView extends ViewPart {
                 automation);
         automationVwrCol.setEditingSupport(attributeEditor
                 .createAutomationEditor(attViewer));
+
+        addColumnListeners();
+    }
+
+    private void addColumnListeners() {
+        TreeColumn[] columns = attViewer.getTree().getColumns();
+        for (TreeColumn column : columns) {
+            column.addSelectionListener(new SelectionAdapter() {
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    // Refreshing the viewer. If combo list is open,
+                    // then click events on other parts of the view or outside
+                    // the combo should hide the editor.
+                    // Refreshing the viewer hides the combo and other editors
+                    // which are active.
+                    attViewer.refresh();
+                }
+            });
+        }
     }
 
     private void addManagerListeners() {
         UiListenerHandler.getInstance().addResourceSelectionChangedUIListener(
                 resourceSelectionChangedListener);
-        UiListenerHandler.getInstance().addResourceModelChangedUIListener(
-                resourceModelChangedUIListener);
+        UiListenerHandler.getInstance().addDataChangeListener(
+                dataChangeListener);
         UiListenerHandler.getInstance().addAutomationUIListener(
                 automationUIListener);
-    }
-
-    private List<LocalResourceAttribute> getData(Resource resource) {
-        if (null != resource) {
-            List<LocalResourceAttribute> attList = resourceManager
-                    .getAttributes((Resource) resource);
-            // List<LocalResourceAttribute> attList =
-            // Utility.getDummyAttributes();
-            return attList;
-        } else {
-            return null;
-        }
-    }
-
-    private void updateViewer(List<LocalResourceAttribute> attList) {
-        Tree tree = attViewer.getTree();;
-        if (null != attList) {
-            if (null != tree && !tree.isDisposed()) {
-                tree.setLinesVisible(true);
-                attViewer.setInput(attList.toArray());
-            }
-        } else {
-            // Clear the attributes table viewer
-            if (null != attViewer) {
-                if (null != tree && !tree.isDisposed()) {
-                    // tbl.deselectAll();
-                    tree.removeAll();
-                    tree.setLinesVisible(false);
-                }
-            }
-        }
     }
 
     class AttributeContentProvider implements ITreeContentProvider {
@@ -352,121 +327,42 @@ public class AttributeView extends ViewPart {
         }
 
         @Override
-        public void inputChanged(Viewer arg0, Object arg1, Object arg2) {
+        public void inputChanged(Viewer viewer, Object oldAttribute,
+                Object newAttribute) {
         }
 
         @Override
-        public Object[] getChildren(Object element) {
-            if (element instanceof SimulatorResourceAttribute
-                    || element instanceof LocalResourceAttribute) {
-                SimulatorResourceAttribute att;
-                if (element instanceof LocalResourceAttribute) {
-                    LocalResourceAttribute localAtt = (LocalResourceAttribute) element;
-                    att = localAtt.getResourceAttributeRef();
-                    if (null == att) {
-                        return new Object[1];
-                    }
-                } else {
-                    att = (SimulatorResourceAttribute) element;
-                }
-                AttributeValue val = att.value();
-                if (null == val) {
-                    return new Object[1];
-                }
-                TypeInfo type = val.typeInfo();
-                if (type.mType == ValueType.RESOURCEMODEL) {
-                    SimulatorResourceModel model = (SimulatorResourceModel) val
-                            .get();
-                    if (null == model) {
-                        return new Object[1];
-                    }
-                    return resourceManager.getAttributes(model).toArray();
-                } else if (type.mType == ValueType.ARRAY
-                        && type.mBaseType == ValueType.RESOURCEMODEL
-                        && type.mDepth == 1) {
-                    SimulatorResourceModel[] model = (SimulatorResourceModel[]) val
-                            .get();
-                    if (null == model || model.length < 1) {
-                        return new Object[1];
-                    }
-                    return resourceManager.getIndexedAttributes(model)
-                            .toArray();
-                }
-            } else if (element instanceof SRMItem) {
-                SRMItem item = (SRMItem) element;
-                SimulatorResourceModel model = (SimulatorResourceModel) item
-                        .getModel();
-                if (null == model) {
-                    return new Object[1];
-                }
-                return resourceManager.getAttributes(model).toArray();
+        public Object[] getChildren(Object attribute) {
+            if (attribute instanceof AttributeElement) {
+                return ((AttributeElement) attribute).getChildren().values()
+                        .toArray();
             }
-            return new Object[1];
+
+            return new Object[0];
         }
 
         @Override
-        public Object[] getElements(Object element) {
-            Object[] elements = (Object[]) element;
-            return elements;
-        }
-
-        @Override
-        public Object getParent(Object element) {
+        public Object getParent(Object attribute) {
+            if (attribute instanceof AttributeElement)
+                return ((AttributeElement) attribute).getParent();
             return null;
         }
 
         @Override
-        public boolean hasChildren(Object element) {
-            if (element instanceof SimulatorResourceAttribute
-                    || element instanceof LocalResourceAttribute) {
-                SimulatorResourceAttribute att;
-                if (element instanceof LocalResourceAttribute) {
-                    LocalResourceAttribute localAtt = (LocalResourceAttribute) element;
-                    att = localAtt.getResourceAttributeRef();
-                    if (null == att) {
-                        return false;
-                    }
-                } else {
-                    att = (SimulatorResourceAttribute) element;
-                }
-                AttributeValue val = att.value();
-                if (null == val) {
-                    return false;
-                }
-                TypeInfo type = val.typeInfo();
-                if (type.mType == ValueType.RESOURCEMODEL) {
-                    SimulatorResourceModel model = (SimulatorResourceModel) val
-                            .get();
-                    if (null == model) {
-                        return false;
-                    }
-                    Map<String, SimulatorResourceAttribute> attributes = model
-                            .getAttributes();
-                    if (null != attributes && attributes.size() > 0) {
-                        return true;
-                    }
-                } else if (type.mType == ValueType.ARRAY
-                        && type.mBaseType == ValueType.RESOURCEMODEL
-                        && type.mDepth == 1) {
-                    SimulatorResourceModel[] model = (SimulatorResourceModel[]) val
-                            .get();
-                    if (null != model && model.length > 0) {
-                        return true;
-                    }
-                }
-            } else if (element instanceof SRMItem) {
-                SRMItem srmItem = (SRMItem) element;
-                SimulatorResourceModel model = srmItem.getModel();
-                if (null == model) {
-                    return false;
-                }
-                Map<String, SimulatorResourceAttribute> attributes = model
-                        .getAttributes();
-                if (null != attributes && attributes.size() > 0) {
-                    return true;
-                }
-            }
+        public boolean hasChildren(Object attribute) {
+            if (attribute instanceof AttributeElement)
+                return ((AttributeElement) attribute).hasChildren();
             return false;
+        }
+
+        @Override
+        public Object[] getElements(Object resourceModel) {
+            if (resourceModel instanceof ResourceRepresentation) {
+                return ((ResourceRepresentation) resourceModel).getAttributes()
+                        .values().toArray();
+            }
+
+            return new Object[0];
         }
     }
 
@@ -493,110 +389,86 @@ public class AttributeView extends ViewPart {
         @Override
         public Image getColumnImage(Object element, int col) {
             if (col == 2) {
-                if (element instanceof SimulatorResourceAttribute
-                        || element instanceof LocalResourceAttribute) {
-                    SimulatorResourceAttribute att;
-                    if (element instanceof LocalResourceAttribute) {
-                        LocalResourceAttribute localAtt = (LocalResourceAttribute) element;
-                        att = localAtt.getResourceAttributeRef();
-                    } else {
-                        att = (SimulatorResourceAttribute) element;
-                    }
-                    AttributeValue val = att.value();
-                    if (null == val) {
-                        return null;
-                    }
-                    TypeInfo type = val.typeInfo();
-                    if (type.mType == ValueType.RESOURCEMODEL
-                            || type.mType == ValueType.ARRAY) {
-                        return null;
-                    }
-                    if (element instanceof LocalResourceAttribute) {
-                        if (!resourceManager.isAttHasRangeOrAllowedValues(att)) {
-                            System.out.println("No range or allowed values");
-                            return null;
+                if (element instanceof AttributeElement) {
+                    // Ignore for non-single resource
+                    Resource res = resourceManager
+                            .getCurrentResourceInSelection();
+                    if (res instanceof SingleResource) {
+                        AttributeElement attrElement = (AttributeElement) element;
+                        if (attrElement.isAutoUpdateSupport()
+                                && !attrElement.isReadOnly()) {
+                            if (attrElement.isAutoUpdateInProgress()) {
+                                return Activator.getDefault()
+                                        .getImageRegistry()
+                                        .get(Constants.CHECKED);
+                            } else {
+                                return Activator.getDefault()
+                                        .getImageRegistry()
+                                        .get(Constants.UNCHECKED);
+                            }
                         }
-                        if (((LocalResourceAttribute) element)
-                                .isAutomationInProgress()) {
-                            return Activator.getDefault().getImageRegistry()
-                                    .get(Constants.CHECKED);
-                        }
-                        return Activator.getDefault().getImageRegistry()
-                                .get(Constants.UNCHECKED);
                     }
-                    return null;
                 }
             }
             return null;
         }
 
         @Override
-        public String getColumnText(Object element, int col) {
-            if (element instanceof SimulatorResourceAttribute
-                    || element instanceof LocalResourceAttribute) {
-                SimulatorResourceAttribute att;
-                if (element instanceof LocalResourceAttribute) {
-                    LocalResourceAttribute localAtt = (LocalResourceAttribute) element;
-                    att = localAtt.getResourceAttributeRef();
-                } else {
-                    att = (SimulatorResourceAttribute) element;
-                }
-                AttributeValue val = att.value();
-                if (null == val) {
-                    return "";
-                }
-                TypeInfo type = val.typeInfo();
-                switch (col) {
-                    case 0:
-                        return att.name();
-                    case 1:
-                        if (!(type.mType == ValueType.RESOURCEMODEL || (type.mType == ValueType.ARRAY && type.mBaseType == ValueType.RESOURCEMODEL))) {
-                            String value = Utility
-                                    .getAttributeValueAsString(val);
-                            if (null == value) {
-                                value = "";
-                            }
-                            return value;
-                        } else {
-                            return "";
-                        }
-                    case 2:
+        public String getColumnText(Object element, int column) {
+            if (element instanceof AttributeElement) {
+                AttributeElement attrElement = (AttributeElement) element;
+                switch (column) {
+                    case 0: // Attribute name column
+                    {
+                        SimulatorResourceAttribute attribute = attrElement
+                                .getSimulatorResourceAttribute();
+                        return attribute.name();
+                    }
+
+                    case 1: // Attribute value column
+                    {
+                        SimulatorResourceAttribute attribute = attrElement
+                                .getSimulatorResourceAttribute();
+
+                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL)
+                            return Utility.getAttributeValueAsString(attribute
+                                    .value());
+                        return null;
+                    }
+
+                    case 2: {
+                        // Ignore for non-single resource
                         Resource res = resourceManager
                                 .getCurrentResourceInSelection();
-                        if (null != res && res instanceof CollectionResource) {
-                            return "-";
+                        if (res instanceof SingleResource) {
+                            SimulatorResourceAttribute attribute = attrElement
+                                    .getSimulatorResourceAttribute();
+                            TypeInfo type = attribute.value().typeInfo();
+                            if (type.mType == AttributeValue.ValueType.ARRAY) {
+                                if (type.mBaseType != AttributeValue.ValueType.RESOURCEMODEL) {
+                                    return "NA";
+                                }
+                            } else if (type.mType != AttributeValue.ValueType.RESOURCEMODEL) {
+                                Object parent = attrElement.getParent();
+                                if (null != parent
+                                        && !(parent instanceof ResourceRepresentation)) {
+                                    return "NA";
+                                } else if (attrElement.isReadOnly()) {
+                                    return "Read-only";
+                                } else if (attrElement.isAutoUpdateSupport()) {
+                                    if (attrElement.isAutoUpdateInProgress())
+                                        return Constants.ENABLED;
+                                    else
+                                        return Constants.DISABLED;
+                                }
+                            }
                         }
 
-                        if (type.mType == ValueType.RESOURCEMODEL
-                                || type.mType == ValueType.ARRAY) {
-                            return "";
-                        }
-                        if (element instanceof LocalResourceAttribute) {
-                            if (!resourceManager
-                                    .isAttHasRangeOrAllowedValues(att)) {
-                                System.out
-                                        .println("No range or allowed values");
-                                return "Read Only";
-                            }
-                            if (((LocalResourceAttribute) element)
-                                    .isAutomationInProgress()) {
-                                return Constants.ENABLED;
-                            }
-                            return Constants.DISABLED;
-                        }
-                        return "NA";
-                }
-            } else if (element instanceof SRMItem) {
-                SRMItem item = (SRMItem) element;
-                switch (col) {
-                    case 0:
-                        return "[" + item.getIndex() + "]";
-                    case 1:
                         return "";
-                    case 2:
-                        return "";
+                    }
                 }
             }
+
             return null;
         }
 
@@ -611,11 +483,10 @@ public class AttributeView extends ViewPart {
                             resourceSelectionChangedListener);
         }
 
-        // Unregister the model change listener
-        if (null != resourceModelChangedUIListener) {
-            UiListenerHandler.getInstance()
-                    .removeResourceModelChangedUIListener(
-                            resourceModelChangedUIListener);
+        // Unregister the data model change listener
+        if (null != dataChangeListener) {
+            UiListenerHandler.getInstance().removeDataChangeListener(
+                    dataChangeListener);
         }
 
         // Unregister the automation complete listener

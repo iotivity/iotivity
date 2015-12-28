@@ -60,14 +60,14 @@ namespace OIC
                 * @return void
                 */
                 virtual void activateBundle(ResourceContainerBundleAPI *resourceContainer,
-                                            std::string bundleId) { };
+                                            std::string bundleId) = 0;
 
                 /**
                 * Deactivate the Bundle to stop working and destroy bundle resources
                 *
                 * @return void
                 */
-                virtual void deactivateBundle() { };
+                virtual void deactivateBundle() = 0;
 
                 /**
                 * Create Bundle Resource instance and register the resource in the container

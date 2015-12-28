@@ -270,19 +270,20 @@ Java_org_oic_simulator_SimulatorManager_setDeviceInfo
 
 JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorManager_findDevices
-(JNIEnv *env, jobject object, jobject listener)
+(JNIEnv *env, jobject object, jstring hostUri, jobject listener)
 {
     VALIDATE_CALLBACK(env, listener)
 
-    DeviceInfoCallback callback =  std::bind([](DeviceInfo & deviceInfo,
+    DeviceInfoCallback callback =  std::bind([](const std::string & host, DeviceInfo & deviceInfo,
                                    const std::shared_ptr<JniListenerHolder> &listenerRef)
     {
-        onDeviceInfoReceived(listenerRef->get(), deviceInfo);
-    }, std::placeholders::_1, JniListenerHolder::create(env, listener));
+        onDeviceInfoReceived(listenerRef->get(), host, deviceInfo);
+    }, std::placeholders::_1, std::placeholders::_2, JniListenerHolder::create(env, listener));
 
     try
     {
-        SimulatorManager::getInstance()->getDeviceInfo(callback);
+        JniString jniHostUri(env, hostUri);
+        SimulatorManager::getInstance()->getDeviceInfo(jniHostUri.get(), callback);
     }
     catch (InvalidArgsException &e)
     {
@@ -314,19 +315,20 @@ Java_org_oic_simulator_SimulatorManager_setPlatformInfo
 
 JNIEXPORT void JNICALL
 Java_org_oic_simulator_SimulatorManager_getPlatformInformation
-(JNIEnv *env, jobject object, jobject listener)
+(JNIEnv *env, jobject object, jstring hostUri, jobject listener)
 {
     VALIDATE_CALLBACK(env, listener)
 
-    PlatformInfoCallback callback =  std::bind([](PlatformInfo & platformInfo,
+    PlatformInfoCallback callback =  std::bind([](const std::string & host, PlatformInfo & platformInfo,
                                      const std::shared_ptr<JniListenerHolder> &listenerRef)
     {
-        onPlatformInfoReceived(listenerRef->get(), platformInfo);
-    }, std::placeholders::_1, JniListenerHolder::create(env, listener));
+        onPlatformInfoReceived(listenerRef->get(), host, platformInfo);
+    }, std::placeholders::_1, std::placeholders::_2, JniListenerHolder::create(env, listener));
 
     try
     {
-        SimulatorManager::getInstance()->getPlatformInfo(callback);
+        JniString jniHostUri(env, hostUri);
+        SimulatorManager::getInstance()->getPlatformInfo(jniHostUri.get(), callback);
     }
     catch (InvalidArgsException &e)
     {

@@ -148,11 +148,14 @@ public class SimulatorManager {
     /**
      * API to search for devices in the network.
      *
+     * @param hostUri
+     *            URI of the host device.
      * @param listener
      *            Listener for receiving the device information.
      */
-    public static native void findDevices(DeviceListener listener)
-            throws InvalidArgsException, SimulatorException;
+    public static native void findDevices(String hostUri,
+            DeviceListener listener) throws InvalidArgsException,
+            SimulatorException;
 
     /**
      * API to set the platform information.
@@ -166,11 +169,14 @@ public class SimulatorManager {
     /**
      * API to find all devices' platform information in the network.
      *
+     * @param hostUri
+     *            URI of the host device.
      * @param listener
      *            Listener for receiving the platform information.
      */
-    public static native void getPlatformInformation(PlatformListener listener)
-            throws InvalidArgsException, SimulatorException;
+    public static native void getPlatformInformation(String hostUri,
+            PlatformListener listener) throws InvalidArgsException,
+            SimulatorException;
 
     /**
      * API to set the listener for receiving log messages.

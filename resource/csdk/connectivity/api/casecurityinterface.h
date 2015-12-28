@@ -31,6 +31,7 @@
 #include "pki.h"
 #endif //__WITH_X509__
 
+#include "cacommon.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -68,6 +69,13 @@ typedef enum
 typedef int (*CAGetDTLSPskCredentialsHandler)( CADtlsPskCredType_t type,
 		      const unsigned char *desc, size_t desc_len,
 		      unsigned char *result, size_t result_length);
+
+/**
+ * Register callback to receive the result of DTLS handshake.
+ * @param[in] dtlsHandshakeCallback callback for get dtls handshake result
+ * @return ::CA_STATUS_OK
+ */
+CAResult_t CARegisterDTLSHandshakeCallback(CAErrorCallback dtlsHandshakeCallback);
 
 /**
  * Register callback to get DTLS PSK credentials.

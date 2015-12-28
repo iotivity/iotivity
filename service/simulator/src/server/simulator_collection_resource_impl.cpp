@@ -31,6 +31,9 @@ SimulatorCollectionResourceImpl::SimulatorCollectionResourceImpl()
         m_resourceHandle(NULL)
 {
     m_property = static_cast<OCResourceProperty>(OC_DISCOVERABLE | OC_OBSERVABLE);
+
+    std::vector<SimulatorResourceModel> links;
+    m_resModel.add("links", links);
 }
 
 std::string SimulatorCollectionResourceImpl::getName() const
@@ -227,6 +230,11 @@ void SimulatorCollectionResourceImpl::setResourceModel(const SimulatorResourceMo
 {
     std::lock_guard<std::mutex> lock(m_modelLock);
     m_resModel = resModel;
+}
+
+void SimulatorCollectionResourceImpl::setActionType(std::map<RAML::ActionType, RAML::ActionPtr> &actionType)
+{
+    m_actionTypes = actionType;
 }
 
 std::vector<ObserverInfo> SimulatorCollectionResourceImpl::getObserversList()
@@ -426,6 +434,15 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
     std::shared_ptr<OC::OCResourceRequest> request)
 {
     std::shared_ptr<OC::OCResourceResponse> response;
+
+    RAML::ActionType type = getActionType(request->getRequestType());
+
+    if (!m_actionTypes.empty())
+    {
+        if (m_actionTypes.end() == m_actionTypes.find(type))
+            return response;
+    }
+
     if ("GET" == request->getRequestType())
     {
         // Construct the representation
@@ -455,6 +472,15 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
 {
     std::lock_guard<std::mutex> lock(m_childResourcesLock);
     std::shared_ptr<OC::OCResourceResponse> response;
+
+    RAML::ActionType type = getActionType(request->getRequestType());
+
+    if (!m_actionTypes.empty())
+    {
+        if (m_actionTypes.end() == m_actionTypes.find(type))
+            return response;
+    }
+
     if ("GET" == request->getRequestType())
     {
         // Construct the representation
@@ -523,7 +549,8 @@ void SimulatorCollectionResourceImpl::addLink(SimulatorResourceSP &resource)
 
     // Add OIC Link if it is not present
     bool found = false;
-    std::vector<SimulatorResourceModel> links = m_resModel.get<std::vector<SimulatorResourceModel>>("links");
+    std::vector<SimulatorResourceModel> links =
+        m_resModel.get<std::vector<SimulatorResourceModel>>("links");
     for (auto &link : links)
     {
         std::string linkURI = link.get<std::string>("href");
@@ -548,15 +575,33 @@ void SimulatorCollectionResourceImpl::removeLink(std::string uri)
         return;
 
     // Add OIC Link if it is not present
-    std::vector<SimulatorResourceModel> links = m_resModel.get<std::vector<SimulatorResourceModel>>("links");
+    std::vector<SimulatorResourceModel> links =
+        m_resModel.get<std::vector<SimulatorResourceModel>>("links");
     for (size_t i = 0; i < links.size(); i++)
     {
         std::string linkURI = links[i].get<std::string>("href");
         if (linkURI == uri)
         {
-            links.erase(links.begin()+i);
+            links.erase(links.begin() + i);
             m_resModel.updateValue("links", links);
             break;
         }
     }
+}
+
+RAML::ActionType SimulatorCollectionResourceImpl::getActionType(std::string requestType)
+{
+    if (!requestType.compare("GET"))
+        return RAML::ActionType::GET;
+
+    if (!requestType.compare("PUT"))
+        return RAML::ActionType::PUT;
+
+    if (!requestType.compare("POST"))
+        return RAML::ActionType::POST;
+
+    if (!requestType.compare("DELETE"))
+        return RAML::ActionType::DELETE;
+
+    return RAML::ActionType::NONE;
 }

@@ -611,7 +611,7 @@ public class SimulatorManagerTest extends TestCase {
 
         try {
             SimulatorManager.setDeviceInfo("Samsung");
-            SimulatorManager.findDevices(listener);
+            SimulatorManager.findDevices(null, listener);
             syncResult = true;
         } catch (InvalidArgsException e) {
             e.printStackTrace();
@@ -634,7 +634,7 @@ public class SimulatorManagerTest extends TestCase {
         ExceptionType exType = ExceptionType.UNKNOWN;
 
         try {
-            SimulatorManager.findDevices(null);
+            SimulatorManager.findDevices(null, null);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -652,7 +652,7 @@ public class SimulatorManagerTest extends TestCase {
                 infoHolder);
 
         try {
-            SimulatorManager.getPlatformInformation(listener);
+            SimulatorManager.getPlatformInformation(null, listener);
             syncResult = true;
         } catch (InvalidArgsException e) {
             e.printStackTrace();
@@ -675,7 +675,7 @@ public class SimulatorManagerTest extends TestCase {
         ExceptionType exType = ExceptionType.UNKNOWN;
 
         try {
-            SimulatorManager.getPlatformInformation(null);
+            SimulatorManager.getPlatformInformation(null, null);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {

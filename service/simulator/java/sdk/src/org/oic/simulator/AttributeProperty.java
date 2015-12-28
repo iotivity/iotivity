@@ -21,10 +21,10 @@ package org.oic.simulator;
  */
 public class AttributeProperty {
 
-    private Type             mType     = Type.UNKNOWN;
-    private double           mMin      = -1;
-    private double           mMax      = -1;
-    private AttributeValue[] mValueSet = null;
+    private Type              mType          = Type.UNKNOWN;
+    private double            mMin           = -1;
+    private double            mMax           = -1;
+    private AttributeValue[]  mValueSet      = null;
     private AttributeProperty mChildProperty = null;
 
     /**
@@ -146,8 +146,8 @@ public class AttributeProperty {
      * API to set child attribute propety.
      *
      * @param childProperty
-     *            Child element property this property used if the
-     *            Attribute value is of array type.
+     *            Child element property this property used if the Attribute
+     *            value is of array type.
      */
     public void setChildProperty(AttributeProperty childProperty) {
         mChildProperty = childProperty;

@@ -147,6 +147,20 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 }
 
 #ifdef __WITH_DTLS__
+CAResult_t CARegisterDTLSHandshakeCallback(CAErrorCallback dtlsHandshakeCallback)
+{
+    OIC_LOG(DEBUG, TAG, "CARegisterDTLSHandshakeCallback");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CADTLSSetHandshakeCallback(dtlsHandshakeCallback);
+
+    return CA_STATUS_OK;
+}
+
 CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentialsHandler)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSCredentialsHandler");
@@ -387,7 +401,6 @@ CAResult_t CAHandleRequestResponse()
 }
 
 #ifdef __WITH_DTLS__
-
 CAResult_t CASelectCipherSuite(const uint16_t cipher)
 {
     OIC_LOG_V(DEBUG, TAG, "CASelectCipherSuite");

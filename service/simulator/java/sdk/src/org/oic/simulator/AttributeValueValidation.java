@@ -1,6 +1,7 @@
 package org.oic.simulator;
 
-public class AttributeValueValidation implements AttributeValueVisitor.VisitingMethods<Boolean> {
+public class AttributeValueValidation implements
+        AttributeValueVisitor.VisitingMethods<Boolean> {
     private AttributeProperty mProperty = null;
 
     public AttributeValueValidation(AttributeProperty property) {
@@ -67,7 +68,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
             return false;
 
         if (mProperty.getChildProperty() != null) {
-            AttributeValueValidation rangeValidation = new AttributeValueValidation(mProperty.getChildProperty());
+            AttributeValueValidation rangeValidation = new AttributeValueValidation(
+                    mProperty.getChildProperty());
             for (Integer value : values) {
                 if (rangeValidation.visitingValue(value) == false)
                     return false;
@@ -86,7 +88,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
             return false;
 
         if (mProperty.getChildProperty() != null) {
-            AttributeValueValidation rangeValidation = new AttributeValueValidation(mProperty.getChildProperty());
+            AttributeValueValidation rangeValidation = new AttributeValueValidation(
+                    mProperty.getChildProperty());
             for (Double value : values) {
                 if (rangeValidation.visitingValue(value) == false)
                     return false;
@@ -105,7 +108,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
             return false;
 
         if (mProperty.getChildProperty() != null) {
-            AttributeValueValidation rangeValidation = new AttributeValueValidation(mProperty.getChildProperty());
+            AttributeValueValidation rangeValidation = new AttributeValueValidation(
+                    mProperty.getChildProperty());
             for (Boolean value : values) {
                 if (rangeValidation.visitingValue(value) == false)
                     return false;
@@ -124,7 +128,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
             return false;
 
         if (mProperty.getChildProperty() != null) {
-            AttributeValueValidation rangeValidation = new AttributeValueValidation(mProperty.getChildProperty());
+            AttributeValueValidation rangeValidation = new AttributeValueValidation(
+                    mProperty.getChildProperty());
             for (String value : values) {
                 if (rangeValidation.visitingValue(value) == false)
                     return false;
@@ -148,7 +153,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
             return false;
 
         if (mProperty.getChildProperty() != null) {
-            AttributeValueValidation rangeValidation = new AttributeValueValidation(mProperty.getChildProperty());
+            AttributeValueValidation rangeValidation = new AttributeValueValidation(
+                    mProperty.getChildProperty());
             for (Integer[] value : values) {
                 if (rangeValidation.visitingValue(value) == false)
                     return false;
@@ -167,7 +173,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
             return false;
 
         if (mProperty.getChildProperty() != null) {
-            AttributeValueValidation rangeValidation = new AttributeValueValidation(mProperty.getChildProperty());
+            AttributeValueValidation rangeValidation = new AttributeValueValidation(
+                    mProperty.getChildProperty());
             for (Double[] value : values) {
                 if (rangeValidation.visitingValue(value) == false)
                     return false;
@@ -186,7 +193,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
             return false;
 
         if (mProperty.getChildProperty() != null) {
-            AttributeValueValidation rangeValidation = new AttributeValueValidation(mProperty.getChildProperty());
+            AttributeValueValidation rangeValidation = new AttributeValueValidation(
+                    mProperty.getChildProperty());
             for (Boolean[] value : values) {
                 if (rangeValidation.visitingValue(value) == false)
                     return false;
@@ -205,7 +213,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
             return false;
 
         if (mProperty.getChildProperty() != null) {
-            AttributeValueValidation rangeValidation = new AttributeValueValidation(mProperty.getChildProperty());
+            AttributeValueValidation rangeValidation = new AttributeValueValidation(
+                    mProperty.getChildProperty());
             for (String[] value : values) {
                 if (rangeValidation.visitingValue(value) == false)
                     return false;
@@ -229,7 +238,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
             return false;
 
         if (mProperty.getChildProperty() != null) {
-            AttributeValueValidation rangeValidation = new AttributeValueValidation(mProperty.getChildProperty());
+            AttributeValueValidation rangeValidation = new AttributeValueValidation(
+                    mProperty.getChildProperty());
             for (Integer[][] value : values) {
                 if (rangeValidation.visitingValue(value) == false)
                     return false;
@@ -248,7 +258,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
             return false;
 
         if (mProperty.getChildProperty() != null) {
-            AttributeValueValidation rangeValidation = new AttributeValueValidation(mProperty.getChildProperty());
+            AttributeValueValidation rangeValidation = new AttributeValueValidation(
+                    mProperty.getChildProperty());
             for (Double[][] value : values) {
                 if (rangeValidation.visitingValue(value) == false)
                     return false;
@@ -267,7 +278,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
             return false;
 
         if (mProperty.getChildProperty() != null) {
-            AttributeValueValidation rangeValidation = new AttributeValueValidation(mProperty.getChildProperty());
+            AttributeValueValidation rangeValidation = new AttributeValueValidation(
+                    mProperty.getChildProperty());
             for (Boolean[][] value : values) {
                 if (rangeValidation.visitingValue(value) == false)
                     return false;
@@ -286,7 +298,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
             return false;
 
         if (mProperty.getChildProperty() != null) {
-            AttributeValueValidation rangeValidation = new AttributeValueValidation(mProperty.getChildProperty());
+            AttributeValueValidation rangeValidation = new AttributeValueValidation(
+                    mProperty.getChildProperty());
             for (String[][] value : values) {
                 if (rangeValidation.visitingValue(value) == false)
                     return false;
@@ -311,7 +324,8 @@ public class AttributeValueValidation implements AttributeValueVisitor.VisitingM
     }
 
     private <T> boolean checkValueSet(T value) {
-        if (AttributeProperty.Type.VALUESET == mProperty.type() && null != mProperty.valueSet()) {
+        if (AttributeProperty.Type.VALUESET == mProperty.type()
+                && null != mProperty.valueSet()) {
             for (AttributeValue allowedValue : mProperty.valueSet()) {
                 if (allowedValue.get().equals(value))
                     return true;

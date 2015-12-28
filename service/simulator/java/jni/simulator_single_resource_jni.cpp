@@ -156,7 +156,7 @@ Java_org_oic_simulator_server_SimulatorSingleResource_removeAttribute
 
 JNIEXPORT jint JNICALL
 Java_org_oic_simulator_server_SimulatorSingleResource_startResourceUpdation
-(JNIEnv *env, jobject object, jint type, jint interval, jobject listener)
+(JNIEnv *env, jobject object, jobject type, jint interval, jobject listener)
 {
     VALIDATE_CALLBACK_RET(env, listener, -1)
 
@@ -171,8 +171,8 @@ Java_org_oic_simulator_server_SimulatorSingleResource_startResourceUpdation
 
     try
     {
-        int id = singleResource->startResourceUpdation((1 == type) ? AutomationType::RECURRENT :
-                 AutomationType::NORMAL, interval, callback);
+        AutomationType automationType = AutomationTypeToCpp(env, type);
+        int id = singleResource->startResourceUpdation(automationType, interval, callback);
         return id;
     }
     catch (InvalidArgsException &e)

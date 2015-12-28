@@ -171,6 +171,11 @@ void ResourceUpdateAutomation::updateAttributes(
     }
     while (!m_stopRequested && AutomationType::RECURRENT == m_type);
 
+    if (!m_stopRequested)
+    {
+        SIM_LOG(ILogger::INFO, "Resource update automation complete [id: " << m_id << "]");
+    }
+
     // Notify application
     if (m_callback)
         m_callback(m_resource->getURI(), m_id);

@@ -38,8 +38,8 @@
 #include "simulator_exceptions.h"
 #include "simulator_logger.h"
 
-typedef std::function<void(DeviceInfo &deviceInfo)> DeviceInfoCallback;
-typedef std::function<void(PlatformInfo &platformInfo)> PlatformInfoCallback;
+typedef std::function<void(const std::string &hostUri, DeviceInfo &deviceInfo)> DeviceInfoCallback;
+typedef std::function<void(const std::string &hostUri, PlatformInfo &platformInfo)> PlatformInfoCallback;
 
 /**
  * @class   SimulatorManager
@@ -124,7 +124,7 @@ class SimulatorManager
          *
          * NOTE: API throws @InvalidArgsException and @SimulatorException on error.
          */
-        void getDeviceInfo(DeviceInfoCallback callback);
+        void getDeviceInfo(const std::string &host, DeviceInfoCallback callback);
 
         /**
          * API for registering device information with stack.
@@ -145,7 +145,7 @@ class SimulatorManager
          *
          * NOTE: API throws @InvalidArgsException and @SimulatorException on error.
          */
-        void getPlatformInfo(PlatformInfoCallback callback);
+        void getPlatformInfo(const std::string &host, PlatformInfoCallback callback);
 
         /**
          * API for registering platform information with stack.

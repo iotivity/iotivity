@@ -16,17 +16,8 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.Date;
-
-import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-import oic.simulator.serviceprovider.view.dialogs.MainPage.ResourceOption;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -38,8 +29,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
-import org.oic.simulator.ILogger.Level;
-import org.oic.simulator.SimulatorException;
 
 public class UpdatePropertiesPage extends WizardPage {
 
@@ -126,7 +115,6 @@ public class UpdatePropertiesPage extends WizardPage {
             public void modifyText(ModifyEvent e) {
                 resName = resNameTxt.getText();
                 setPageComplete(isSelectionDone());
-                // getWizard().getContainer().updateButtons();
             }
         });
 
@@ -134,21 +122,17 @@ public class UpdatePropertiesPage extends WizardPage {
             @Override
             public void modifyText(ModifyEvent e) {
                 resURI = resUriTxt.getText();
+                if (null == resURI) {
+                    return;
+                }
+
                 setPageComplete(isSelectionDone());
-                // getWizard().getContainer().updateButtons();
             }
         });
     }
 
     @Override
     public boolean canFlipToNextPage() {
-        CreateResourceWizard createWizard = (CreateResourceWizard) getWizard();
-        if (isSelectionDone()
-                && (createWizard.getMainPage().getResourceOption() == ResourceOption.COLLECTION_FROM_RAML)
-                && Activator.getDefault().getResourceManager()
-                        .isAnyResourceExist()) {
-            return true;
-        }
         return false;
     }
 
@@ -163,50 +147,7 @@ public class UpdatePropertiesPage extends WizardPage {
 
     @Override
     public IWizardPage getNextPage() {
-        final boolean done[] = new boolean[1];
-        CreateResourceWizard createWizard = (CreateResourceWizard) getWizard();
-        // Checking whether the uri is used by any other resource.
-        if (Activator.getDefault().getResourceManager().isResourceExist(resURI)) {
-            MessageDialog
-                    .openError(getShell(), "Resource URI in use",
-                            "Entered resource URI is in use. Please try a different one.");
-            // TODO: Instead of MessageDialog, errors may be shown on wizard
-            // itself.
-            return null;
-        }
-        try {
-            getContainer().run(true, true, new IRunnableWithProgress() {
-
-                @Override
-                public void run(IProgressMonitor monitor)
-                        throws InvocationTargetException, InterruptedException {
-                    try {
-                        monitor.beginTask(
-                                "Completing Collection Resource Creation With RAML",
-                                2);
-                        monitor.worked(1);
-                        done[0] = completeCollectionResourceCreationWithRAML();
-                        monitor.worked(1);
-                    } finally {
-                        monitor.done();
-                    }
-                }
-            });
-        } catch (InvocationTargetException e) {
-            Activator.getDefault().getLogManager()
-                    .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
-            e.printStackTrace();
-            return null;
-        } catch (InterruptedException e) {
-            Activator.getDefault().getLogManager()
-                    .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-        if (!done[0]) {
-            return null;
-        }
-        return createWizard.getAddResourcesToCollectionPage();
+        return null;
     }
 
     public void setResName(String resName) {
@@ -227,29 +168,5 @@ public class UpdatePropertiesPage extends WizardPage {
 
     public String getResURI() {
         return resURI;
-    }
-
-    private boolean completeCollectionResourceCreationWithRAML() {
-        boolean result = false;
-        String status;
-        CreateResourceWizard createWizard = (CreateResourceWizard) getWizard();
-        try {
-            result = Activator
-                    .getDefault()
-                    .getResourceManager()
-                    .completeCollectionResourceCreationByRAML(
-                            createWizard.getLoadRamlPage().getResource(),
-                            resURI, resName);
-            if (result)
-                status = "Resource created.";
-            else {
-                status = "Failed to create resource.";
-            }
-        } catch (SimulatorException e) {
-            status = "Failed to create resource.\n"
-                    + Utility.getSimulatorErrorString(e, null);
-        }
-        createWizard.setStatus(status);
-        return result;
     }
 }

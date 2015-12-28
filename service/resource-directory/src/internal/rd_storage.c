@@ -136,7 +136,7 @@ OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *
     // not null it will continue execution.
     if (!resourceType && !interfaceType)
     {
-        OC_LOG(DEBUG, TAG, "Missing resource type and interace type.");
+        OC_LOG(DEBUG, TAG, "Missing resource type or interace type.");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -153,7 +153,7 @@ OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *
                     // If either rt or itf are NULL, it should skip remaining code execution.
                     if (!tLinks->rt || !tLinks->itf)
                     {
-                        OC_LOG(DEBUG, TAG, "Either resource type and interface type are missing.");
+                        OC_LOG(DEBUG, TAG, "Either resource type or interface type is missing.");
                         continue;
                     }
                     if (resourceType)

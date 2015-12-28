@@ -135,46 +135,54 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* /*ctx*/, OCDoHandle /*h
         if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_PS, &ps)) {
 
             if (ps == 1) {
-                input = input->next;
-                continue;
+                OIC_LOG_V(DEBUG, ES_PROV_TAG, "PS is proper");
             }
             else {
-                OIC_LOG_V(DEBUG, ES_PROV_TAG, "PS is NOT proper");
+                OIC_LOG_V(ERROR, ES_PROV_TAG, "PS is NOT proper");
                 goto Error;
 
             }
+        }
+        else {
+            OIC_LOG_V(ERROR, ES_PROV_TAG, "PS is NOT proper");
+            goto Error;
         }
 
         if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_TNN, &tnn)) {
             if (!strcmp(tnn, netProvInfo->netAddressInfo.WIFI.ssid)) {
                 OIC_LOG_V(DEBUG, ES_PROV_TAG, "SSID is proper");
-                input = input->next;
-                continue;
+                OICFree(tnn);
             }
             else {
-                OIC_LOG_V(DEBUG, ES_PROV_TAG, "SSID is NOT proper");
+                OIC_LOG_V(ERROR, ES_PROV_TAG, "SSID is NOT proper");
+                OICFree(tnn);
                 goto Error;
             }
+        }
+        else {
+            OIC_LOG_V(ERROR, ES_PROV_TAG, "SSID is NOT proper");
+            goto Error;
         }
 
         if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd)) {
             if (!strcmp(cd, netProvInfo->netAddressInfo.WIFI.pwd)) {
                 OIC_LOG_V(DEBUG, ES_PROV_TAG, "Password is proper");
-                input = input->next;
-                continue;
+                OICFree(cd);
             }
             else {
-                OIC_LOG_V(DEBUG, ES_PROV_TAG, "Password is NOT proper");
+                OIC_LOG_V(ERROR, ES_PROV_TAG, "Password is NOT proper");
+                OICFree(cd);
                 goto Error;
             }
+        }
+        else {
+            OIC_LOG_V(ERROR, ES_PROV_TAG, "Password  is NOT proper");
+            goto Error;
         }
 
         LogProvisioningResponse(input->values);
 
         input = input->next;
-
-        OICFree(tnn);
-        OICFree(cd);
     }
 
     SuccessCallback(clientResponse);
@@ -183,14 +191,9 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* /*ctx*/, OCDoHandle /*h
 
     Error:
     {
-        OICFree(tnn);
-        OICFree(cd);
-
         ErrorCallback(DEVICE_NOT_PROVISIONED);
-
         return OC_STACK_DELETE_TRANSACTION;
     }
-
 }
 
 OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo_t *netInfo,

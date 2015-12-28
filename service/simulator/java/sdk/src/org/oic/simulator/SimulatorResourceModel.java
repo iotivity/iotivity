@@ -127,9 +127,6 @@ public class SimulatorResourceModel {
      *         corresponding {@link SimulatorResourceAttribute} as value.
      */
     public Map<String, SimulatorResourceAttribute> getAttributes() {
-        if (mValues.size() == 0)
-            return null;
-
         Map<String, SimulatorResourceAttribute> attributes = new HashMap<>();
         for (Map.Entry<String, AttributeValue> entry : mValues.entrySet()) {
             SimulatorResourceAttribute attribute = new SimulatorResourceAttribute(
@@ -180,8 +177,7 @@ public class SimulatorResourceModel {
      * @param attrName
      *            Name of the attribute.
      *
-     * @return Attribute value type information         {@AttributeValue.TypeInfo
-     * }.
+     * @return Attribute value type information {@AttributeValue.TypeInfo}.
      */
     public AttributeValue.TypeInfo getAttributeType(String attrName) {
         if (mValues.containsKey(attrName))
@@ -216,6 +212,32 @@ public class SimulatorResourceModel {
      */
     public int size() {
         return mValues.size();
+    }
+
+    /**
+     * API to update the attribute values from given
+     * {@link SimulatorResourceModel}.
+     */
+    public void update(SimulatorResourceModel resourceModel) {
+        if (null == resourceModel || 0 == resourceModel.size())
+            return;
+
+        for (Map.Entry<String, SimulatorResourceAttribute> entry : resourceModel
+                .getAttributes().entrySet()) {
+            SimulatorResourceAttribute newAttribute = entry.getValue();
+            SimulatorResourceAttribute attribute = getAttribute(entry.getKey());
+            if (null != newAttribute && null != attribute) {
+                if (null != attribute.property()) {
+                    AttributeValueValidation validation = new AttributeValueValidation(
+                            attribute.property());
+                    if (!validation.validate(newAttribute.value())) {
+                        mValues.put(entry.getKey(), newAttribute.value());
+                    }
+                } else {
+                    mValues.put(entry.getKey(), newAttribute.value());
+                }
+            }
+        }
     }
 
     // Methods used in native code

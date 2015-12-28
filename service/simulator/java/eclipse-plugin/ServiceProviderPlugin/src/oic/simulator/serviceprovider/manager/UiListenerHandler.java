@@ -20,40 +20,44 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import oic.simulator.serviceprovider.listener.IAutomationUIListener;
-import oic.simulator.serviceprovider.listener.IObserverListChangedUIListener;
-import oic.simulator.serviceprovider.listener.IPropertiesChangedUIListener;
-import oic.simulator.serviceprovider.listener.IResourceListChangedUIListener;
-import oic.simulator.serviceprovider.listener.IResourceModelChangedUIListener;
-import oic.simulator.serviceprovider.listener.ISelectionChangedUIListener;
-import oic.simulator.serviceprovider.model.Device;
+import oic.simulator.serviceprovider.listener.IAutomationListener;
+import oic.simulator.serviceprovider.listener.IDataChangeListener;
+import oic.simulator.serviceprovider.listener.IDeviceInfoListener;
+import oic.simulator.serviceprovider.listener.IObserverListChangedListener;
+import oic.simulator.serviceprovider.listener.IPropertiesChangedListener;
+import oic.simulator.serviceprovider.listener.IResourceListChangedListener;
+import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
+import oic.simulator.serviceprovider.model.AttributeElement;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.ResourceType;
 import oic.simulator.serviceprovider.model.SingleResource;
 
 public class UiListenerHandler {
 
-    private static UiListenerHandler              uiHandler;
+    private static UiListenerHandler           uiHandler;
 
-    private List<IResourceListChangedUIListener>  resourceListChangedUIListeners;
+    private List<IResourceListChangedListener> resourceListChangedUIListeners;
 
-    private List<ISelectionChangedUIListener>     selectionChangedUIListeners;
+    private List<ISelectionChangedListener>    selectionChangedUIListeners;
 
-    private List<IResourceModelChangedUIListener> resourceModelChangedUIListeners;
+    private List<IAutomationListener>          automationUIListeners;
 
-    private List<IAutomationUIListener>           automationUIListeners;
+    private List<IObserverListChangedListener> observerUIListeners;
 
-    private List<IObserverListChangedUIListener>  observerUIListeners;
+    private List<IPropertiesChangedListener>   propertiesChangedUIListeners;
 
-    private List<IPropertiesChangedUIListener>    propertiesChangedUIListeners;
+    private List<IDeviceInfoListener>          deviceInfoUIListeners;
+
+    private List<IDataChangeListener>          dataChangeListeners;
 
     private UiListenerHandler() {
-        resourceListChangedUIListeners = new ArrayList<IResourceListChangedUIListener>();
-        selectionChangedUIListeners = new ArrayList<ISelectionChangedUIListener>();
-        resourceModelChangedUIListeners = new ArrayList<IResourceModelChangedUIListener>();
-        automationUIListeners = new ArrayList<IAutomationUIListener>();
-        observerUIListeners = new ArrayList<IObserverListChangedUIListener>();
-        propertiesChangedUIListeners = new ArrayList<IPropertiesChangedUIListener>();
+        resourceListChangedUIListeners = new ArrayList<IResourceListChangedListener>();
+        selectionChangedUIListeners = new ArrayList<ISelectionChangedListener>();
+        automationUIListeners = new ArrayList<IAutomationListener>();
+        observerUIListeners = new ArrayList<IObserverListChangedListener>();
+        propertiesChangedUIListeners = new ArrayList<IPropertiesChangedListener>();
+        deviceInfoUIListeners = new ArrayList<IDeviceInfoListener>();
+        dataChangeListeners = new ArrayList<IDataChangeListener>();
     }
 
     public static UiListenerHandler getInstance() {
@@ -64,50 +68,48 @@ public class UiListenerHandler {
     }
 
     public void addResourceListChangedUIListener(
-            IResourceListChangedUIListener resourceListChangedUIListener) {
+            IResourceListChangedListener resourceListChangedUIListener) {
         synchronized (resourceListChangedUIListeners) {
             resourceListChangedUIListeners.add(resourceListChangedUIListener);
         }
     }
 
     public void addResourceSelectionChangedUIListener(
-            ISelectionChangedUIListener resourceSelectionChangedUIListener) {
+            ISelectionChangedListener resourceSelectionChangedUIListener) {
         synchronized (selectionChangedUIListeners) {
             selectionChangedUIListeners.add(resourceSelectionChangedUIListener);
         }
     }
 
-    public void addResourceModelChangedUIListener(
-            IResourceModelChangedUIListener resourceModelChangedUIListener) {
-        synchronized (resourceModelChangedUIListeners) {
-            resourceModelChangedUIListeners.add(resourceModelChangedUIListener);
-        }
-    }
-
-    public void addAutomationUIListener(
-            IAutomationUIListener automationUIListener) {
+    public void addAutomationUIListener(IAutomationListener automationUIListener) {
         synchronized (automationUIListeners) {
             automationUIListeners.add(automationUIListener);
         }
     }
 
     public void addObserverListChangedUIListener(
-            IObserverListChangedUIListener observerListChangedUIListener) {
+            IObserverListChangedListener observerListChangedUIListener) {
         synchronized (observerUIListeners) {
             observerUIListeners.add(observerListChangedUIListener);
         }
     }
 
     public void addResourcePropertiesChangedUIListener(
-            IPropertiesChangedUIListener resourcePropertiesChangedUIListener) {
+            IPropertiesChangedListener resourcePropertiesChangedUIListener) {
         synchronized (propertiesChangedUIListeners) {
             propertiesChangedUIListeners
                     .add(resourcePropertiesChangedUIListener);
         }
     }
 
+    public void addDataChangeListener(IDataChangeListener dataChangeListener) {
+        synchronized (dataChangeListeners) {
+            dataChangeListeners.add(dataChangeListener);
+        }
+    }
+
     public void removeResourceListChangedUIListener(
-            IResourceListChangedUIListener listener) {
+            IResourceListChangedListener listener) {
         synchronized (resourceListChangedUIListeners) {
             if (null != listener && resourceListChangedUIListeners.size() > 0) {
                 resourceListChangedUIListeners.remove(listener);
@@ -116,7 +118,7 @@ public class UiListenerHandler {
     }
 
     public void removeResourceSelectionChangedUIListener(
-            ISelectionChangedUIListener listener) {
+            ISelectionChangedListener listener) {
         synchronized (selectionChangedUIListeners) {
             if (null != listener && selectionChangedUIListeners.size() > 0) {
                 selectionChangedUIListeners.remove(listener);
@@ -124,16 +126,7 @@ public class UiListenerHandler {
         }
     }
 
-    public void removeResourceModelChangedUIListener(
-            IResourceModelChangedUIListener listener) {
-        synchronized (resourceModelChangedUIListeners) {
-            if (null != listener && resourceModelChangedUIListeners.size() > 0) {
-                resourceModelChangedUIListeners.remove(listener);
-            }
-        }
-    }
-
-    public void removeAutomationUIListener(IAutomationUIListener listener) {
+    public void removeAutomationUIListener(IAutomationListener listener) {
         synchronized (automationUIListeners) {
             if (null != listener && automationUIListeners.size() > 0) {
                 automationUIListeners.remove(listener);
@@ -142,7 +135,7 @@ public class UiListenerHandler {
     }
 
     public void removeObserverListChangedUIListener(
-            IObserverListChangedUIListener listener) {
+            IObserverListChangedListener listener) {
         synchronized (observerUIListeners) {
             if (null != listener && observerUIListeners.size() > 0) {
                 observerUIListeners.remove(listener);
@@ -151,18 +144,37 @@ public class UiListenerHandler {
     }
 
     public void removeResourcePropertiesChangedUIListener(
-            IPropertiesChangedUIListener resourcePropertiesChangedUIListener) {
+            IPropertiesChangedListener resourcePropertiesChangedUIListener) {
         synchronized (propertiesChangedUIListeners) {
             propertiesChangedUIListeners
                     .remove(resourcePropertiesChangedUIListener);
         }
     }
 
+    public void removeDataChangeListener(IDataChangeListener dataChangeListener) {
+        synchronized (dataChangeListeners) {
+            dataChangeListeners.remove(dataChangeListener);
+        }
+    }
+
+    public void addDeviceInfoUIListener(IDeviceInfoListener deviceUIListener) {
+        synchronized (deviceInfoUIListeners) {
+            deviceInfoUIListeners.add(deviceUIListener);
+        }
+    }
+
+    public void removeDeviceInfoUIListener(
+            IDeviceInfoListener platformUIListener) {
+        synchronized (deviceInfoUIListeners) {
+            deviceInfoUIListeners.remove(platformUIListener);
+        }
+    }
+
     public void resourceCreatedUINotification(ResourceType type) {
         synchronized (resourceListChangedUIListeners) {
             if (resourceListChangedUIListeners.size() > 0) {
-                IResourceListChangedUIListener listener;
-                Iterator<IResourceListChangedUIListener> listenerItr = resourceListChangedUIListeners
+                IResourceListChangedListener listener;
+                Iterator<IResourceListChangedListener> listenerItr = resourceListChangedUIListeners
                         .iterator();
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
@@ -177,8 +189,8 @@ public class UiListenerHandler {
     public void resourceDeletedUINotification(ResourceType type) {
         synchronized (resourceListChangedUIListeners) {
             if (resourceListChangedUIListeners.size() > 0) {
-                IResourceListChangedUIListener listener;
-                Iterator<IResourceListChangedUIListener> listenerItr = resourceListChangedUIListeners
+                IResourceListChangedListener listener;
+                Iterator<IResourceListChangedListener> listenerItr = resourceListChangedUIListeners
                         .iterator();
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
@@ -193,8 +205,8 @@ public class UiListenerHandler {
     public void resourceListUpdateUINotification(ResourceType type) {
         synchronized (resourceListChangedUIListeners) {
             if (resourceListChangedUIListeners.size() > 0) {
-                IResourceListChangedUIListener listener;
-                Iterator<IResourceListChangedUIListener> listenerItr = resourceListChangedUIListeners
+                IResourceListChangedListener listener;
+                Iterator<IResourceListChangedListener> listenerItr = resourceListChangedUIListeners
                         .iterator();
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
@@ -209,8 +221,8 @@ public class UiListenerHandler {
     public void resourceSelectionChangedUINotification(Resource resource) {
         synchronized (selectionChangedUIListeners) {
             if (selectionChangedUIListeners.size() > 0) {
-                ISelectionChangedUIListener listener;
-                Iterator<ISelectionChangedUIListener> listenerItr = selectionChangedUIListeners
+                ISelectionChangedListener listener;
+                Iterator<ISelectionChangedListener> listenerItr = selectionChangedUIListeners
                         .iterator();
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
@@ -222,32 +234,48 @@ public class UiListenerHandler {
         }
     }
 
-    public void deviceSelectionChangedUINotification(Device dev) {
-        synchronized (selectionChangedUIListeners) {
-            if (selectionChangedUIListeners.size() > 0) {
-                ISelectionChangedUIListener listener;
-                Iterator<ISelectionChangedUIListener> listenerItr = selectionChangedUIListeners
+    public void attributeUpdatedUINotification(AttributeElement attribute) {
+        synchronized (dataChangeListeners) {
+            if (dataChangeListeners.size() > 0 && null != attribute) {
+                IDataChangeListener listener;
+                Iterator<IDataChangeListener> listenerItr = dataChangeListeners
                         .iterator();
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
                     if (null != listener) {
-                        listener.onDeviceSelectionChange(dev);
+                        listener.update(attribute);
                     }
                 }
             }
         }
     }
 
-    public void resourceModelChangedUINotification(Resource resource) {
-        synchronized (resourceModelChangedUIListeners) {
-            if (resourceModelChangedUIListeners.size() > 0 && null != resource) {
-                IResourceModelChangedUIListener listener;
-                Iterator<IResourceModelChangedUIListener> listenerItr = resourceModelChangedUIListeners
+    public void attributeAddedUINotification(AttributeElement attribute) {
+        synchronized (dataChangeListeners) {
+            if (dataChangeListeners.size() > 0 && null != attribute) {
+                IDataChangeListener listener;
+                Iterator<IDataChangeListener> listenerItr = dataChangeListeners
                         .iterator();
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
                     if (null != listener) {
-                        listener.onResourceModelChange(resource);
+                        listener.add(attribute);
+                    }
+                }
+            }
+        }
+    }
+
+    public void attributeRemovedUINotification(AttributeElement attribute) {
+        synchronized (dataChangeListeners) {
+            if (dataChangeListeners.size() > 0 && null != attribute) {
+                IDataChangeListener listener;
+                Iterator<IDataChangeListener> listenerItr = dataChangeListeners
+                        .iterator();
+                while (listenerItr.hasNext()) {
+                    listener = listenerItr.next();
+                    if (null != listener) {
+                        listener.remove(attribute);
                     }
                 }
             }
@@ -257,8 +285,8 @@ public class UiListenerHandler {
     public void resourceAutomationStartedUINotification(SingleResource resource) {
         synchronized (automationUIListeners) {
             if (automationUIListeners.size() > 0 && null != resource) {
-                IAutomationUIListener listener;
-                Iterator<IAutomationUIListener> listenerItr = automationUIListeners
+                IAutomationListener listener;
+                Iterator<IAutomationListener> listenerItr = automationUIListeners
                         .iterator();
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
@@ -274,8 +302,8 @@ public class UiListenerHandler {
             String attName) {
         synchronized (automationUIListeners) {
             if (automationUIListeners.size() > 0 && null != resource) {
-                IAutomationUIListener listener;
-                Iterator<IAutomationUIListener> listenerItr = automationUIListeners
+                IAutomationListener listener;
+                Iterator<IAutomationListener> listenerItr = automationUIListeners
                         .iterator();
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
@@ -290,8 +318,8 @@ public class UiListenerHandler {
     public void observerListChangedUINotification(Resource resource) {
         synchronized (observerUIListeners) {
             if (observerUIListeners.size() > 0 && null != resource) {
-                IObserverListChangedUIListener listener;
-                Iterator<IObserverListChangedUIListener> listenerItr = observerUIListeners
+                IObserverListChangedListener listener;
+                Iterator<IObserverListChangedListener> listenerItr = observerUIListeners
                         .iterator();
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
@@ -303,20 +331,34 @@ public class UiListenerHandler {
         }
     }
 
-    public void propertiesChangedUINotification(Class targetClass) {
+    public void propertiesChangedUINotification(Class<?> targetClass) {
         synchronized (propertiesChangedUIListeners) {
             if (propertiesChangedUIListeners.size() > 0) {
-                IPropertiesChangedUIListener listener;
-                Iterator<IPropertiesChangedUIListener> listenerItr = propertiesChangedUIListeners
+                IPropertiesChangedListener listener;
+                Iterator<IPropertiesChangedListener> listenerItr = propertiesChangedUIListeners
                         .iterator();
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
                     if (null != listener) {
                         if (targetClass == Resource.class) {
                             listener.onResourcePropertyChange();
-                        } else {
-                            listener.onDevicePropertyChange();
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    public void deviceInfoReceivedNotification() {
+        synchronized (deviceInfoUIListeners) {
+            if (deviceInfoUIListeners.size() > 0) {
+                IDeviceInfoListener listener;
+                Iterator<IDeviceInfoListener> listenerItr = deviceInfoUIListeners
+                        .iterator();
+                while (listenerItr.hasNext()) {
+                    listener = listenerItr.next();
+                    if (null != listener) {
+                        listener.onDeviceInfoFound();
                     }
                 }
             }

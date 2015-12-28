@@ -22,6 +22,7 @@ import oic.simulator.clientcontroller.Activator;
 import oic.simulator.clientcontroller.listener.IDevicePlatformInfoUIListener;
 import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
 import oic.simulator.clientcontroller.manager.ResourceManager;
+import oic.simulator.clientcontroller.manager.UiListenerHandler;
 import oic.simulator.clientcontroller.remoteresource.MetaProperty;
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
 
@@ -94,8 +95,9 @@ public class MetaPropertiesView extends ViewPart {
 
                     @Override
                     public void run() {
-                        if (null != deviceTblViewer) {
-                            updateViewer(deviceTblViewer, getDevicePropData());
+                        if (null != platformTblViewer) {
+                            updateViewer(platformTblViewer,
+                                    getPlatformPropData());
                         }
                     }
                 });
@@ -108,9 +110,8 @@ public class MetaPropertiesView extends ViewPart {
 
                     @Override
                     public void run() {
-                        if (null != platformTblViewer) {
-                            updateViewer(platformTblViewer,
-                                    getPlatformPropData());
+                        if (null != deviceTblViewer) {
+                            updateViewer(deviceTblViewer, getDevicePropData());
                         }
                     }
                 });
@@ -323,10 +324,10 @@ public class MetaPropertiesView extends ViewPart {
     }
 
     private void addManagerListeners() {
-        resourceManager
-                .addResourceSelectionChangedUIListener(resourceSelectionChangedListener);
-        resourceManager
-                .addDevicePlatformInfoUIListener(devicePlatformInfoUIListener);
+        UiListenerHandler.getInstance().addResourceSelectionChangedUIListener(
+                resourceSelectionChangedListener);
+        UiListenerHandler.getInstance().addDevicePlatformInfoUIListener(
+                devicePlatformInfoUIListener);
     }
 
     class PropertycontentProvider implements IStructuredContentProvider {
@@ -349,8 +350,9 @@ public class MetaPropertiesView extends ViewPart {
     public void dispose() {
         // Unregister the listener
         if (null != resourceSelectionChangedListener) {
-            resourceManager
-                    .removeResourceSelectionChangedUIListener(resourceSelectionChangedListener);
+            UiListenerHandler.getInstance()
+                    .removeResourceSelectionChangedUIListener(
+                            resourceSelectionChangedListener);
         }
         super.dispose();
     }

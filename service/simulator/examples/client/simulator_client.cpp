@@ -71,7 +71,7 @@ class ClientController
                 int choice = -1;
                 std::cout << "Enter your choice: ";
                 std::cin >> choice;
-                if (choice < 0 || choice > 12)
+                if (choice < 0 || choice > 14)
                 {
                     std::cout << "Invaild choice !" << std::endl; continue;
                 }
@@ -89,7 +89,9 @@ class ClientController
                     case 9: sendAllPUTRequests(); break;
                     case 10: sendAllPOSTRequests(); break;
                     case 11: configure(); break;
-                    case 12: printMenu(); break;
+                    case 12: getDeviceInfo(); break;
+                    case 13: getPlatformInfo(); break;
+                    case 14: printMenu(); break;
                     case 0: cont = false;
                 }
             }
@@ -110,7 +112,9 @@ class ClientController
             std::cout << "9. Send All PUT requests" << std::endl;
             std::cout << "10. Send All POST requests" << std::endl;
             std::cout << "11. Configure (using RAML file)" << std::endl;
-            std::cout << "12: Help" << std::endl;
+            std::cout << "12. Get Device Information" << std::endl;
+            std::cout << "13. Get Platform Information" << std::endl;
+            std::cout << "14: Help" << std::endl;
             std::cout << "0. Exit" << std::endl;
             std::cout << "###################################################" << std::endl;
         }
@@ -315,9 +319,9 @@ class ClientController
             try
             {
                 SimulatorResourceModelSP rep = std::make_shared<SimulatorResourceModel>();
-                std::string value = "off";
+                bool value = false;
                 rep->add("power", value);
-                rep->add("intensity", 5);
+                rep->add("intensity", 15);
 
                 resource->put(std::map <std::string, std::string>(), rep, callback);
                 std::cout << "PUT is successful!" << std::endl;
@@ -358,9 +362,9 @@ class ClientController
             try
             {
                 SimulatorResourceModelSP rep = std::make_shared<SimulatorResourceModel>();
-                std::string value = "on";
+                bool value = true;
                 rep->add("power", value);
-                rep->add("intensity", 7);
+                rep->add("intensity", 17);
 
                 resource->post(std::map <std::string, std::string>(), rep, callback);
                 std::cout << "POST is successful!" << std::endl;
@@ -539,6 +543,81 @@ class ClientController
             }
         }
 
+        void getDeviceInfo()
+        {
+            SimulatorRemoteResourceSP resource = selectResource();
+            if (!resource)
+                return;
+
+            try
+            {
+                SimulatorManager::getInstance()->getDeviceInfo(resource->getHost(),
+                    std::bind([](const std::string & host, DeviceInfo & deviceInfo)
+                {
+                    std::cout << "###Device Information received...." << std::endl;
+                    std::ostringstream out;
+                    out << "Host URI: " << host << std::endl;
+                    out << "Device name: " << deviceInfo.getName() << std::endl;
+                    out << "Device ID: " << deviceInfo.getID() << std::endl;
+                    out << "Device Spec version: " << deviceInfo.getSpecVersion() << std::endl;
+                    out << "Device dat model version: " << deviceInfo.getDataModelVersion() << std::endl;
+
+                    std::cout << out.str() << std::endl;
+                }, std::placeholders::_1, std::placeholders::_2));
+            }
+            catch (InvalidArgsException &e)
+            {
+                std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]"
+                          << std::endl;
+            }
+            catch (SimulatorException &e)
+            {
+                std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" <<
+                          std::endl;
+            }
+        }
+
+        void getPlatformInfo()
+        {
+            SimulatorRemoteResourceSP resource = selectResource();
+            if (!resource)
+                return;
+
+            try
+            {
+                SimulatorManager::getInstance()->getPlatformInfo(resource->getHost(),
+                    std::bind([](const std::string & host, PlatformInfo & platformInfo)
+                {
+                    std::cout << "###Platform Information received...." << std::endl;
+                    std::ostringstream out;
+                    out << "Host URI: " << host << std::endl;
+                    out << "Platform ID: " << platformInfo.getPlatformID() << std::endl;
+                    out << "Platform version: " << platformInfo.getPlatformVersion() << std::endl;
+                    out << "Manufacturer name: " << platformInfo.getManufacturerName() << std::endl;
+                    out << "Manufacturer url: " << platformInfo.getManufacturerUrl() << std::endl;
+                    out << "Modle number: " << platformInfo.getModelNumber() << std::endl;
+                    out << "Date of manufacture: " << platformInfo.getDateOfManfacture() << std::endl;
+                    out << "Operatio system version: " << platformInfo.getOSVersion() << std::endl;
+                    out << "Hardware version: " << platformInfo.getHardwareVersion() << std::endl;
+                    out << "Firmware version: " << platformInfo.getFirmwareVersion() << std::endl;
+                    out << "Support url: " << platformInfo.getSupportUrl() << std::endl;
+                    out << "System time: " << platformInfo.getSystemTime() << std::endl;
+
+                    std::cout << out.str() << std::endl;
+                }, std::placeholders::_1, std::placeholders::_2));
+            }
+            catch (InvalidArgsException &e)
+            {
+                std::cout << "InvalidArgsException occured [code : " << e.code()
+                        << " Detail: " << e.what() << "]" << std::endl;
+            }
+            catch (SimulatorException &e)
+            {
+                std::cout << "SimulatorException occured [code : " << e.code()
+                        << " Detail: " << e.what() << "]" << std::endl;
+            }
+        }
+
     private:
         std::recursive_mutex m_mutex;
         std::map<std::string, SimulatorRemoteResourceSP> m_resList;
@@ -548,10 +627,8 @@ void printMainMenu()
 {
     std::cout << "############### MAIN MENU###############" << std::endl;
     std::cout << "1. Client Controller Test" << std::endl;
-    std::cout << "2. Get device information" << std::endl;
-    std::cout << "3. Get platform information" << std::endl;
-    std::cout << "4. Set Logger" << std::endl;
-    std::cout << "5. Help" << std::endl;
+    std::cout << "2. Set Logger" << std::endl;
+    std::cout << "3. Help" << std::endl;
     std::cout << "0. Exit" << std::endl;
     std::cout << "######################################" << std::endl;
 }
@@ -615,74 +692,9 @@ int main(void)
                 std::cout << "Welcome back to main menu !" << std::endl;
                 break;
 
-            case 2:
-                {
-                    try
-                    {
-                        SimulatorManager::getInstance()->getDeviceInfo(std::bind([](DeviceInfo & deviceInfo)
-                        {
-                            std::cout << "###Device Information received...." << std::endl;
-                            std::ostringstream out;
-                            out << "Device name: " << deviceInfo.getName() << std::endl;
-                            out << "Device ID: " << deviceInfo.getID() << std::endl;
-                            out << "Device Spec version: " << deviceInfo.getSpecVersion() << std::endl;
-                            out << "Device dat model version: " << deviceInfo.getDataModelVersion() << std::endl;
+            case 2: setLogger(); break;
 
-                            std::cout << out.str() << std::endl;
-                        }, std::placeholders::_1));
-                    }
-                    catch (InvalidArgsException &e)
-                    {
-                        std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: " << e.what() << "]"
-                                  << std::endl;
-                    }
-                    catch (SimulatorException &e)
-                    {
-                        std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " << e.what() << "]" <<
-                                  std::endl;
-                    }
-                }
-                break;
-
-            case 3:
-                {
-                    try
-                    {
-                        SimulatorManager::getInstance()->getPlatformInfo(std::bind([](PlatformInfo & platformInfo)
-                        {
-                            std::cout << "###Platform Information received...." << std::endl;
-                            std::ostringstream out;
-                            out << "Platform ID: " << platformInfo.getPlatformID() << std::endl;
-                            out << "Platform version: " << platformInfo.getPlatformVersion() << std::endl;
-                            out << "Manufacturer name: " << platformInfo.getManufacturerName() << std::endl;
-                            out << "Manufacturer url: " << platformInfo.getManufacturerUrl() << std::endl;
-                            out << "Modle number: " << platformInfo.getModelNumber() << std::endl;
-                            out << "Date of manufacture: " << platformInfo.getDateOfManfacture() << std::endl;
-                            out << "Operatio system version: " << platformInfo.getOSVersion() << std::endl;
-                            out << "Hardware version: " << platformInfo.getHardwareVersion() << std::endl;
-                            out << "Firmware version: " << platformInfo.getFirmwareVersion() << std::endl;
-                            out << "Support url: " << platformInfo.getSupportUrl() << std::endl;
-                            out << "System time: " << platformInfo.getSystemTime() << std::endl;
-
-                            std::cout << out.str() << std::endl;
-                        }, std::placeholders::_1));
-                    }
-                    catch (InvalidArgsException &e)
-                    {
-                        std::cout << "InvalidArgsException occured [code : " << e.code()
-                                << " Detail: " << e.what() << "]" << std::endl;
-                    }
-                    catch (SimulatorException &e)
-                    {
-                        std::cout << "SimulatorException occured [code : " << e.code()
-                                << " Detail: " << e.what() << "]" << std::endl;
-                    }
-                }
-                break;
-
-            case 4: setLogger(); break;
-
-            case 5: printMainMenu(); break;
+            case 3: printMainMenu(); break;
 
             case 0: cont = false;
         }

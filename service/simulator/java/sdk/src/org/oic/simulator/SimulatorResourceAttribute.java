@@ -78,10 +78,9 @@ public class SimulatorResourceAttribute {
     }
 
     /**
-     * API to get propety of attribute's value.
+     * API to get property of attribute's value.
      *
-     * @return Attribute's value property        {@AttributeProperty
-     * }.
+     * @return Attribute's value property {@AttributeProperty}.
      */
     public AttributeProperty property() {
         return mProperty;
@@ -89,11 +88,21 @@ public class SimulatorResourceAttribute {
 
     /**
      * API to set the value of attribute.
-     * 
+     *
      * @param value
      *            Value of the attribute.
      */
     public void setValue(AttributeValue value) {
         this.mValue = value;
+    }
+
+    /**
+     * API to set the property of attribute.
+     *
+     * @param value
+     *            Property of the attribute.
+     */
+    public void setProperty(AttributeProperty property) {
+        this.mProperty = property;
     }
 }

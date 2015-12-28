@@ -1,7 +1,7 @@
 package org.oic.simulator;
 
 public class AttributeValueVisitor {
-    private AttributeValue mValue;
+    private AttributeValue  mValue;
     private VisitingMethods mListener;
 
     public interface VisitingMethods<T extends Object> {
@@ -65,7 +65,8 @@ public class AttributeValueVisitor {
                 if (2 == typeInfo.mDepth)
                     return mListener.visitingValue((Integer[][]) mValue.get());
                 if (3 == typeInfo.mDepth)
-                    return mListener.visitingValue((Integer[][][]) mValue.get());
+                    return mListener
+                            .visitingValue((Integer[][][]) mValue.get());
             }
         } else if (AttributeValue.ValueType.DOUBLE == typeInfo.mBaseType) {
             if (AttributeValue.ValueType.DOUBLE == typeInfo.mType)
@@ -87,7 +88,8 @@ public class AttributeValueVisitor {
                 if (2 == typeInfo.mDepth)
                     return mListener.visitingValue((Boolean[][]) mValue.get());
                 if (3 == typeInfo.mDepth)
-                    return mListener.visitingValue((Boolean[][][]) mValue.get());
+                    return mListener
+                            .visitingValue((Boolean[][][]) mValue.get());
             }
         } else if (AttributeValue.ValueType.STRING == typeInfo.mBaseType) {
             if (AttributeValue.ValueType.STRING == typeInfo.mType)
@@ -102,14 +104,21 @@ public class AttributeValueVisitor {
             }
         } else if (AttributeValue.ValueType.RESOURCEMODEL == typeInfo.mBaseType) {
             if (AttributeValue.ValueType.RESOURCEMODEL == typeInfo.mType)
-                return mListener.visitingValue((SimulatorResourceModel) mValue.get());
+                return mListener.visitingValue((SimulatorResourceModel) mValue
+                        .get());
             else if (AttributeValue.ValueType.ARRAY == typeInfo.mType) {
                 if (1 == typeInfo.mDepth)
-                    return mListener.visitingValue((SimulatorResourceModel[]) mValue.get());
+                    return mListener
+                            .visitingValue((SimulatorResourceModel[]) mValue
+                                    .get());
                 if (2 == typeInfo.mDepth)
-                    return mListener.visitingValue((SimulatorResourceModel[][]) mValue.get());
+                    return mListener
+                            .visitingValue((SimulatorResourceModel[][]) mValue
+                                    .get());
                 if (3 == typeInfo.mDepth)
-                    return mListener.visitingValue((SimulatorResourceModel[][][]) mValue.get());
+                    return mListener
+                            .visitingValue((SimulatorResourceModel[][][]) mValue
+                                    .get());
             }
         }
 

@@ -53,7 +53,7 @@ if ca_os not in ['darwin']:
 if secured == '1':
 	current_dir=env.get('SRC_DIR')
 	sample_env.AppendUnique(CPPPATH = [root_dir + 'external/inc/'])
-	sample_env.AppendUnique(LIBS = ['tinydtls'])
+	sample_env.AppendUnique(LIBS = ['timer','tinydtls'])
 	casample =sample_env.Program('casample', [sample_src])
 else:
 	casample =sample_env.Program('casample', [sample_src])

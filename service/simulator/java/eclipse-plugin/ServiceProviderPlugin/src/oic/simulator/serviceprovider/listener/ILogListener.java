@@ -16,12 +16,15 @@
 
 package oic.simulator.serviceprovider.listener;
 
-import oic.simulator.serviceprovider.model.Resource;
+import java.util.List;
+
+import oic.simulator.logger.LogEntry;
 
 /**
- * Interface through which the resource observer events are sent to the UI
- * listeners.
+ * Interface through which the log events are sent to the UI listeners.
  */
-public interface IObserverListChangedUIListener {
-    public void onObserverListChanged(Resource resource);
+public interface ILogListener {
+    public void logAdded(LogEntry added);
+
+    public void logChanged(List<LogEntry> entry);
 }
