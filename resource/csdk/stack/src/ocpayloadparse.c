@@ -112,12 +112,14 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* r
 
     bool err = false;
     char * securityData = NULL;
-    CborValue map;
-    size_t len;
+    CborValue strVal = {0};
+    size_t len = 0;
 
-    err = err || cbor_value_enter_container(rootValue, &map);
-    err = err || cbor_value_dup_text_string(&map, &securityData, &len, NULL);
-    err = err || cbor_value_leave_container(rootValue, &map);
+    err = cbor_value_enter_container(rootValue, &strVal);
+    if(CborNoError == err && cbor_value_is_text_string(&strVal))
+    {
+        err = cbor_value_dup_text_string(&strVal, &securityData, &len, NULL);
+    }
 
     if(err)
     {
