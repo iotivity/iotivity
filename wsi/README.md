@@ -17,6 +17,9 @@ A simplified app framework for developing new kinds of IoT based applications.
     sudo apt-get install npm nodejs nodejs-lecgacy mongodb libkrb5-dev
     git clone https://github.com/otcshare/iotivity-node.git
     cd iotivity-node
+    export IOTIVITY_DIR="/home/developer/demo/iotivity/"
+    export OCTBSTACK_CFLAGS="-I$IOTIVITY_DIR/resource/csdk/stack/include -I${IOTIVITY_DIR}/resource/c_common -I${IOTIVITY_DIR}/resource/c_common/ocrandom/include"
+    export OCTBSTACK_LIBS="-L${IOTIVITY_DIR}/out/linux/x86_64/release/ -loctbstack -Wl,-rpath=${IOTIVITY_DIR}/out/linux/x86_64/release/"
     npm install
     cd ..
     npm install
@@ -27,3 +30,4 @@ from browser
     localhost:8080
 
 Use the web service interface to integrate iotivity and web services.
+
