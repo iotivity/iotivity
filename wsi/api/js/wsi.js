@@ -38,7 +38,8 @@
      * Call this method first to set your authentication key.
      * @param {String} API Token
      */
-    WSISDK.Initialize = function(config) {
+    WSISDK.initialize = function(config) {
+	console.log("WSI SDK Initialized.");
         WSISDK._initialize(config);
     };
     /**
