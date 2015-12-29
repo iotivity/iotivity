@@ -51,14 +51,13 @@ AttributeUpdateAutomation::AttributeUpdateAutomation(int id, SimulatorSingleReso
 
 void AttributeUpdateAutomation::start()
 {
-    m_thread = new std::thread(&AttributeUpdateAutomation::updateAttribute, this);
+    m_thread = std::make_shared<std::thread>(&AttributeUpdateAutomation::updateAttribute, this);
+    m_thread->detach();
 }
 
 void AttributeUpdateAutomation::stop()
 {
     m_stopRequested = true;
-    if (m_thread)
-        m_thread->join();
 }
 
 void AttributeUpdateAutomation::updateAttribute()
@@ -76,11 +75,16 @@ void AttributeUpdateAutomation::updateAttribute()
             SimulatorResourceModel::Attribute attribute;
             while (!m_stopRequested && true == m_attributeGen.next(attribute))
             {
-                if (false == m_resource->updateAttributeValue(attribute))
+                try
                 {
-                    OC_LOG_V(ERROR, ATAG, "Failed to update the attribute![%s]", attribute.getName().c_str());
-                    continue;
+                    if (false == m_resource->updateAttributeValue(attribute))
+                    {
+                        OC_LOG_V(ERROR, ATAG, "Failed to update the attribute![%s]", attribute.getName().c_str());
+                        continue;
+                    }
                 }
+                catch(SimulatorException &e) {}
+
                 resourceImpl->notifyApp();
 
                 SLEEP_FOR(m_updateInterval);
@@ -105,7 +109,7 @@ void AttributeUpdateAutomation::updateAttribute()
     if (m_callback)
         m_callback(m_resource->getURI(), m_id);
 
-    if (m_finishedCallback && !m_stopRequested)
+    if (m_finishedCallback)
         m_finishedCallback(m_id);
 }
 
@@ -135,14 +139,13 @@ void ResourceUpdateAutomation::start()
         throw SimulatorException(SIMULATOR_ERROR, "Resource has zero attributes!");
     }
 
-    m_thread = new std::thread(&ResourceUpdateAutomation::updateAttributes, this, attributes);
+    m_thread = std::make_shared<std::thread>(&ResourceUpdateAutomation::updateAttributes, this, attributes);
+    m_thread->detach();
 }
 
 void ResourceUpdateAutomation::stop()
 {
     m_stopRequested = true;
-    if (m_thread)
-        m_thread->join();
 }
 
 void ResourceUpdateAutomation::updateAttributes(
@@ -162,7 +165,11 @@ void ResourceUpdateAutomation::updateAttributes(
         {
             for (auto &attributeEntry : resModel.getAttributes())
             {
-                resourceImpl->updateAttributeValue(attributeEntry.second);
+                try
+                {
+                    resourceImpl->updateAttributeValue(attributeEntry.second);
+                }
+                catch(SimulatorException &e) {}
             }
 
             resourceImpl->notifyApp();
@@ -180,7 +187,7 @@ void ResourceUpdateAutomation::updateAttributes(
     if (m_callback)
         m_callback(m_resource->getURI(), m_id);
 
-    if (m_finishedCallback && !m_stopRequested)
+    if (m_finishedCallback)
         m_finishedCallback(m_id);
 }
 

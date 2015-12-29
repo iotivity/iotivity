@@ -50,7 +50,7 @@ class AttributeUpdateAutomation
         AttributeGenerator m_attributeGen;
         updateCompleteCallback m_callback;
         std::function<void (const int)> m_finishedCallback;
-        std::thread *m_thread;
+        std::shared_ptr<std::thread> m_thread;
 };
 
 typedef std::shared_ptr<AttributeUpdateAutomation> AttributeUpdateAutomationSP;
@@ -77,7 +77,7 @@ class ResourceUpdateAutomation
         int m_updateInterval;
         updateCompleteCallback m_callback;
         std::function<void (const int)> m_finishedCallback;
-        std::thread *m_thread;
+        std::shared_ptr<std::thread> m_thread;
 };
 
 typedef std::shared_ptr<ResourceUpdateAutomation> ResourceUpdateAutomationSP;

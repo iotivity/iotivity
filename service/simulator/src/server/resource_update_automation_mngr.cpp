@@ -112,13 +112,11 @@ void UpdateAutomationMngr::stop(int id)
     if (m_resourceUpdationList.end() != m_resourceUpdationList.find(id))
     {
         m_resourceUpdationList[id]->stop();
-        m_resourceUpdationList.erase(m_resourceUpdationList.find(id));
         return;
     }
     else if (m_attrUpdationList.end() != m_attrUpdationList.find(id))
     {
         m_attrUpdationList[id]->stop();
-        m_attrUpdationList.erase(m_attrUpdationList.find(id));
         return;
     }
 }
