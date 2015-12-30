@@ -27,7 +27,6 @@
 
 #include "cacommon.h"
 #include "cathreadpool.h"
-#include "uarraylist.h"
 #include "caedrinterface.h"
 #include "jni.h"
 

@@ -40,6 +40,12 @@
 #define MICROSECS_PER_SEC 1000000
 
 /**
+ * Maximum CoAP over TCP header length
+ * to know the total data length.
+ */
+#define EDR_MAX_HEADER_LEN  6
+
+/**
  * Mutex to synchronize the access to Bluetooth device information list.
  */
 static ca_mutex g_edrDeviceListMutex = NULL;
@@ -947,18 +953,95 @@ void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
     }
     ca_mutex_unlock(g_edrDeviceListMutex);
 
+    //: TODO Need to check if 'check required for socket still connected or not'
     if (!device)
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "There is no device!");
         return;
     }
 
-    uint32_t sentLength = 0;
+    CAConnectedDeviceInfo_t *deviceInfo =
+        (CAConnectedDeviceInfo_t *) CAEDRGetDeviceInfoFromAddress(device->remoteAddress);
 
-    g_edrPacketReceivedCallback(device->remoteAddress,
-                                (uint8_t *) data->data,
-                                (uint32_t) data->data_size,
-                                &sentLength);
+    if (!deviceInfo)
+    {
+        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Received Data from new device");
+        deviceInfo = (CAConnectedDeviceInfo_t *) OICCalloc(1, sizeof(*deviceInfo));
+        if (!deviceInfo)
+        {
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Out of memory");
+            return;
+        }
+
+        deviceInfo->state = STATE_CONNECTED;
+        deviceInfo->recvData = NULL;
+        deviceInfo->recvDataLen = 0;
+        deviceInfo->totalDataLen = 0;
+        result = CAEDRAddDeviceInfoToList(device->remoteAddress, deviceInfo);
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Could not add device info to list!");
+            OICFree(deviceInfo);
+            return;
+        }
+    }
+
+    if (!deviceInfo->recvData)
+    {
+        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Callocing deviceInfo->recvData");
+        deviceInfo->recvData = OICCalloc(data->data_size, sizeof(uint8_t));
+        if (!deviceInfo->recvData)
+        {
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "out of memory");
+            return;
+        }
+    }
+
+    memcpy(deviceInfo->recvData + deviceInfo->recvDataLen, (const char*)data->data,
+           data->data_size);
+    deviceInfo->recvDataLen += data->data_size;
+
+    if (!deviceInfo->totalDataLen)
+    {
+        coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+                ((unsigned char *)deviceInfo->recvData)[0] >> 4);
+        size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
+
+        if (deviceInfo->recvDataLen >= headerLen)
+        {
+            // get actual data length from coap over tcp header
+            deviceInfo->totalDataLen = coap_get_total_message_length(deviceInfo->recvData,
+                                                                     deviceInfo->recvDataLen);
+            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "total data length [%d] bytes", deviceInfo->totalDataLen);
+
+            uint8_t *newBuf = OICRealloc(deviceInfo->recvData, deviceInfo->totalDataLen);
+            if (!newBuf)
+            {
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "out of memory");
+                //Memory free
+                return;
+            }
+            deviceInfo->recvData = newBuf;
+        }
+    }
+
+    if (deviceInfo->totalDataLen == deviceInfo->recvDataLen)
+    {
+        if (g_edrPacketReceivedCallback)
+        {
+            OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG,"data will be sent to callback routine: %s, %d",
+                      deviceInfo->recvData, deviceInfo->recvDataLen);
+
+            uint32_t sentLength = 0;
+            g_edrPacketReceivedCallback(device->remoteAddress, (void*) deviceInfo->recvData,
+                                        deviceInfo->recvDataLen, &sentLength);
+
+            OICFree(deviceInfo->recvData);
+            deviceInfo->recvData = NULL;
+            deviceInfo->recvDataLen = 0;
+            deviceInfo->totalDataLen = 0;
+        }
+    }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
