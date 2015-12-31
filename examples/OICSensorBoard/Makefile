@@ -1,6 +1,6 @@
 #Set the two variables below for the client build.
-CLIENTARCH=x86
-BUILDTYPE=release
+CLIENTARCH?=x86
+BUILDTYPE?=release
 ##
 
 YOCTOCXXFLAGS=-I$(SDKTARGETSYSROOT)/usr/include/iotivity/resource/ -I$(SDKTARGETSYSROOT)/usr/include/iotivity/resource/stack -I$(SDKTARGETSYSROOT)/usr/include/iotivity/resource/ocrandom -I$(SDKTARGETSYSROOT)/usr/include/iotivity/resource/logger -I$(SDKTARGETSYSROOT)/usr/include/iotivity/resource/oc_logger
