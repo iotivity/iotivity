@@ -63,7 +63,7 @@ public class ResourceContainerActivity extends Activity {
     // private static final String LOG_TAG =
     // ResourceContainerActivity.class.getSimpleName();
 
-    private final String                     LOG_TAG = "[ContainerSampleApp] "
+    private final String                     LOG_TAG = "[RCSampleServerApp] "
             + this.getClass()
             .getSimpleName();
     private static ResourceContainerActivity resourceContainerActivityInstance;
