@@ -25,6 +25,7 @@
 #include "InternalTypes.h"
 
 #define CONTAINER_TAG "RESOURCE_CONTAINER"
+#define DISCOVER_TAG "DISCOVER_RESOURCE_UNIT"
 
 namespace OIC
 {

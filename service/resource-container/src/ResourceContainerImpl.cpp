@@ -274,7 +274,8 @@ namespace OIC
             RCSResourceObject::Ptr server = nullptr;
 
             OC_LOG_V(INFO, CONTAINER_TAG, "Registration of resource (%s)" ,
-                     std::string(strUri + ", " + strResourceType + "," + resource->m_bundleId).c_str());
+                     std::string(strUri + ", " + strResourceType + "," +
+                             resource->m_bundleId).c_str());
 
             registrationLock.lock();
             if (m_mapResources.find(strUri) == m_mapResources.end())
@@ -300,14 +301,14 @@ namespace OIC
                     if (m_config->isHasInput(resource->m_bundleId))
                     {
                         OC_LOG_V(INFO, CONTAINER_TAG, "Resource has input (%s)",
-                                                                        std::string(strUri + ", " +
-                                                                                    strResourceType).c_str());
+                              std::string(strUri + ", " +
+                              strResourceType).c_str());
                         discoverInputResource(strUri);
                     }
                     else{
                         OC_LOG_V(INFO, CONTAINER_TAG, "Resource has no input (%s)",
-                                                                                                std::string(strUri + ", " +
-                                                                                                            strResourceType).c_str());
+                                 std::string(strUri + ", " +
+                                 strResourceType).c_str());
                     }
                     OC_LOG_V(INFO, CONTAINER_TAG, "Registration finished (%s)",
                                                 std::string(strUri + ", " +
@@ -811,7 +812,7 @@ namespace OIC
                         std::string attributeName = makeValue(INPUT_RESOURCE_ATTRIBUTENAME);
 
 
-                        OC_LOG_V(DEBUG, CONTAINER_TAG, "Start discovery %s, %s, %s", uri.c_str(),
+                        OC_LOG_V(DEBUG, CONTAINER_TAG, "Start discovery: %s, %s, %s", uri.c_str(),
                                 type.c_str(), attributeName.c_str());
                         DiscoverResourceUnit::Ptr newDiscoverUnit = std::make_shared
                                 < DiscoverResourceUnit > (outputResourceUri);
