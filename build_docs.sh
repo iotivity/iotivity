@@ -9,7 +9,7 @@ pushd `dirname $0` > /dev/null
 rm -rf docs
 
 # JavaDoc now... from Uze's script
-ANDROID_JAR="$ANDROID_HOME/platforms/android-21/android.jar"
+ANDROID_JAR="$ANDROID_HOME/platforms/android-23/android.jar"
 
 if [ ! -e "$ANDROID_JAR" ]; then
     echo "Android platform not found. Expected '$ANDROID_JAR'"

@@ -118,7 +118,7 @@ for tc_ver in ['4.7', '4.8', '4.9', '']:
 
 cmd = [ndk_build_cmd]
 cmd.append('APP_ABI=' + target_arch)
-cmd.append('APP_PLATFORM=android-21')
+cmd.append('APP_PLATFORM=android-23')
 cmd.append('APP_STL=gnustl_shared')
 if env.get('RELEASE'):
 	cmd.append('APP_OPTIM=release')
