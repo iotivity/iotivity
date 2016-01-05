@@ -90,8 +90,8 @@ namespace OIC
              *
              * @see discoverResource
              */
-            typedef std::function< void(std::shared_ptr< RCSRemoteResourceObject >)
-                    > ResourceDiscoveredCallback;
+            typedef std::function< void(std::shared_ptr< RCSRemoteResourceObject >) >
+                        ResourceDiscoveredCallback;
 
             /**
              * @return RCSDiscoveryManager instance.

@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "RCSDiscoveryManager.h"
+
 #include "RCSDiscoveryManagerImpl.h"
 
 namespace OIC
@@ -25,18 +26,21 @@ namespace OIC
     namespace Service
     {
         RCSDiscoveryManager::DiscoveryTask::DiscoveryTask(unsigned int id) :
-                m_id { id }
+                m_id{ id }
         {
         }
 
         bool RCSDiscoveryManager::DiscoveryTask::isCanceled()
         {
-            return RCSDiscoveryManagerImpl::getInstance()->isCanceled(m_id);
+            return m_id == RCSDiscoveryManagerImpl::INVALID_ID;
         }
 
         void RCSDiscoveryManager::DiscoveryTask::cancel()
         {
+            if (isCanceled()) return;
+
             RCSDiscoveryManagerImpl::getInstance()->cancel(m_id);
+            m_id = RCSDiscoveryManagerImpl::INVALID_ID;
         }
 
         RCSDiscoveryManager* RCSDiscoveryManager::getInstance()
