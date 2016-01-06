@@ -29,7 +29,8 @@ namespace RAML
 {
     class RamlResource;
     class Properties;
-    class Items;
+    class JsonSchema;
+    class RamlParser;
 }
 
 class SimulatorResourceFactory
@@ -87,9 +88,11 @@ class SimulatorResourceFactory
             const std::string &name, const std::string &uri, const std::string &resourceType);
 
     private:
+        template <typename T>
+        void buildValueProperty(SimulatorResourceModel::Attribute &attribute,
+                                const std::vector<RAML::ValuePropertyPtr> &valueProperties, T);
         SimulatorResourceModel::Attribute buildAttribute(
             std::shared_ptr<RAML::Properties> propertyElement);
-        SimulatorResourceModel buildResourceModel(std::shared_ptr<RAML::Items> item);
         SimulatorResourceModel buildModelFromResponseBody(
             RAML::RequestResponseBodyPtr responseBody, std::string &resourceType,
             std::vector<std::string> &interfaceType);

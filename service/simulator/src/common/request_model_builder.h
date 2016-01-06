@@ -35,6 +35,11 @@ class RequestModelBuilder
         ResponseModelSP createResponseModel(int code, const RAML::ResponsePtr &response);
         SimulatorResourceModelSP createRepSchema(const RAML::RequestResponseBodyPtr &rep);
         RequestType getRequestType(RAML::ActionType actionType);
+        SimulatorResourceModel::Attribute buildAttribute(
+            std::shared_ptr<RAML::Properties> propertyElement);
+        template <typename T>
+        void buildValueProperty(SimulatorResourceModel::Attribute &attribute,
+                                const std::vector<RAML::ValuePropertyPtr> &valueProperties, T);
 
         std::shared_ptr<RAML::Raml> m_raml;
 };
