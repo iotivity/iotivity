@@ -26,7 +26,7 @@ Import('env')
 
 target_os = env.get('TARGET_OS')
 
-if target_os not in ['arduino','darwin']:
+if target_os not in ['arduino','darwin', 'ios']:
     # Build things manager project
     SConscript('things-manager/SConscript')
 
