@@ -654,15 +654,6 @@ CAResult_t CAStartLEGattClient()
 {
     OIC_LOG(DEBUG, TZ_BLE_CLIENT_TAG, "IN");
 
-    CAResult_t retVal = CAInitGattClientMutexVariables();
-
-    if (CA_STATUS_OK != retVal)
-    {
-        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "CAInitGattClientMutexVariables failed!");
-        CATerminateGattClientMutexVariables();
-        return CA_STATUS_FAILED;
-    }
-
     ca_mutex_lock(g_bleClientThreadPoolMutex);
     if (NULL == g_bleClientThreadPool)
     {
@@ -789,6 +780,21 @@ void CAStopLEGattClient()
     ca_mutex_unlock(g_bleClientStateMutex);
 
     OIC_LOG(DEBUG,  TZ_BLE_CLIENT_TAG, "OUT");
+}
+
+CAResult_t CAInitializeLEGattClient()
+{
+    OIC_LOG(DEBUG, TAG, "Initialize GATT Client");
+
+    CAResult_t res = CAInitGattClientMutexVariables();
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TZ_BLE_CLIENT_TAG, "CAInitGattClientMutexVariables failed!");
+        CATerminateGattClientMutexVariables();
+        return CA_STATUS_FAILED;
+    }
+
+    return res;
 }
 
 void CATerminateLEGattClient()

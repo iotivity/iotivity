@@ -999,23 +999,6 @@ CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
     return CA_STATUS_OK;
 }
 
-CAResult_t CAInitLENetworkMonitorMutexVariables()
-{
-    /*
-      This CA LE interface implementation doesn't use a network
-      monitor as the other platform implementationd do.
-    */
-    return CA_STATUS_OK;
-}
-
-void CATerminateLENetworkMonitorMutexVariables()
-{
-    /*
-      This CA LE interface implementation doesn't use a network
-      monitor as the other platform implementationd do.
-    */
-}
-
 CAResult_t CAGetLEAddress(char **local_address)
 {
     OIC_LOG(DEBUG, TAG, "Get Linux BLE local device information.");
@@ -1134,6 +1117,11 @@ CAResult_t CAStopLEGattServer()
     return result;
 }
 
+CAResult_t CAInitializeLEGattServer()
+{
+    return CA_STATUS_OK;
+}
+
 void CATerminateLEGattServer()
 {
     CALETerminate();
@@ -1185,6 +1173,11 @@ void CAStopLEGattClient()
 {
     (void) CACentralStop(&g_context);
     (void) CALEStop();
+}
+
+CAResult_t CAInitializeLEGattClient()
+{
+    return CA_STATUS_OK;
 }
 
 void CATerminateLEGattClient()

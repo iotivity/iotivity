@@ -1644,6 +1644,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitBleAdapterMutex failed!");
         return CA_STATUS_FAILED;
     }
+
     result = CAInitializeLENetworkMonitor();
     if (CA_STATUS_OK != result)
     {
@@ -1654,8 +1655,23 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     CAInitializeLEAdapter();
 
     CASetLEClientThreadPoolHandle(handle);
+
+    result = CAInitializeLEGattClient();
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitializeLEGattClient() failed");
+        return CA_STATUS_FAILED;
+    }
+
     CASetLEReqRespClientCallback(CALEAdapterClientReceivedData);
     CASetLEServerThreadPoolHandle(handle);
+    result = CAInitializeLEGattServer();
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitializeLEGattServer() failed");
+        return CA_STATUS_FAILED;
+    }
+
     CASetLEAdapterThreadPoolHandle(handle);
     CASetLEReqRespServerCallback(CALEAdapterServerReceivedData);
     CASetLEReqRespAdapterCallback(reqRespCallback);

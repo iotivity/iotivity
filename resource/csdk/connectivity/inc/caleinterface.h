@@ -141,23 +141,6 @@ void CATerminateLENetworkMonitor();
 CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback);
 
 /**
- * Initialize all the mutex variables required to operate the LE
- * network monitor layer.
- *
- * @return ::CA_STATUS_OK or Appropriate error code
- * @retval ::CA_STATUS_OK  Successful
- * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
- * @retval ::CA_STATUS_FAILED Operation failed
- */
-CAResult_t CAInitLENetworkMonitorMutexVariables();
-
-/**
- * Used to terminate all the mutex variables required to operate the LE
- * network monitor layer.
- */
-void CATerminateLENetworkMonitorMutexVariables();
-
-/**
  * Provides the MAC address of the local Bluetooth adapter.
  *
  * @param[out] local_address Pointer to the location where bd address
@@ -190,6 +173,15 @@ CAResult_t CAStartLEGattServer();
  * @retval ::CA_STATUS_FAILED Operation failed
  */
 CAResult_t CAStopLEGattServer();
+
+/**
+ * initialize gatt server
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code
+ * @retval ::CA_STATUS_OK  Successful
+ * @retval ::CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAInitializeLEGattServer();
 
 /**
  * Stop Gatt Server thread and remove service registration, stop
@@ -257,6 +249,15 @@ CAResult_t CAStartLEGattClient();
  * @retval ::CA_STATUS_FAILED Operation failed
  */
 void CAStopLEGattClient();
+
+/**
+ * initialize Client
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code
+ * @retval ::CA_STATUS_OK  Successful
+ * @retval ::CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CAInitializeLEGattClient();
 
 /**
  * Unset all the callbacks and stop service discovery

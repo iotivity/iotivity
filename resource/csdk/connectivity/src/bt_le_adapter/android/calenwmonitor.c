@@ -76,9 +76,6 @@ CAResult_t CAInitializeLEAdapter()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    CALENetworkMonitorJNISetContext();
-    CALENetworkMonitorJniInit();
-
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -173,6 +170,9 @@ CAResult_t CAInitializeLENetworkMonitor()
         OIC_LOG(ERROR, TAG, "CAInitLENwkMonitorMutexVaraibles has failed");
         return CA_STATUS_FAILED;
     }
+
+    CALENetworkMonitorJNISetContext();
+    CALENetworkMonitorJniInit();
 
     OIC_LOG(DEBUG, TAG, "OUT");
 

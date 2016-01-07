@@ -47,7 +47,6 @@ static CAPacketReceiveCallback g_packetReceiveCallback = NULL;
 static CABLEErrorHandleCallback g_serverErrorCallback;
 
 static u_arraylist_t *g_connectedDeviceList = NULL;
-static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 static bool g_isStartServer = false;
 static bool g_isInitializedServer = false;
@@ -1388,7 +1387,7 @@ CAResult_t CALEServerSend(JNIEnv *env, jobject bluetoothDevice, jbyteArray respo
     return result;
 }
 
-CAResult_t CALEServerInitialize(ca_thread_pool_t handle)
+CAResult_t CALEServerInitialize()
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEServerInitialize");
 
@@ -1427,8 +1426,6 @@ CAResult_t CALEServerInitialize(ca_thread_pool_t handle)
         }
         return ret;
     }
-
-    g_threadPoolHandle = handle;
 
     ret = CALEServerInitMutexVaraibles();
     if (CA_STATUS_OK != ret)
@@ -1471,77 +1468,10 @@ void CALEServerTerminate()
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEServerTerminate");
 
-    if (!g_jvm)
-    {
-        OIC_LOG(ERROR, TAG, "g_jvm is null");
-        return;
-    }
-
-    bool isAttached = false;
-    JNIEnv* env;
-    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
-    if (JNI_OK != res)
-    {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
-        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
-
-        if (JNI_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
-            return;
-        }
-        isAttached = true;
-    }
-
-    CAResult_t ret = CALEServerGattClose(env, g_bluetoothGattServer);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerGattClose has failed");
-    }
-
-    ret = CALEServerStopMulticastServer(0);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerStopMulticastServer has failed");
-    }
-
-    ret = CALEServerDisconnectAllDevices(env);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerDisconnectAllDevices has failed");
-    }
-
-    ret = CALEServerRemoveAllDevices(env);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerRemoveAllDevices has failed");
-    }
-
-    if (g_leAdvertiseCallback)
-    {
-        (*env)->DeleteGlobalRef(env, g_leAdvertiseCallback);
-    }
-
-    if (g_bluetoothGattServer)
-    {
-        (*env)->DeleteGlobalRef(env, g_bluetoothGattServer);
-    }
-
-    if (g_bluetoothGattServerCallback)
-    {
-        (*env)->DeleteGlobalRef(env, g_bluetoothGattServerCallback);
-    }
-
     CALEServerTerminateMutexVaraibles();
     CALEServerTerminateConditionVaraibles();
 
-    g_isStartServer = false;
     g_isInitializedServer = false;
-
-    if (isAttached)
-    {
-        (*g_jvm)->DetachCurrentThread(g_jvm);
-    }
 
     OIC_LOG(DEBUG, TAG, "OUT - CALEServerTerminate");
 }
@@ -2309,22 +2239,6 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartFailureCallback(JNIEn
 
 CAResult_t CAStartLEGattServer()
 {
-    CAResult_t ret = CALEServerInitMutexVaraibles();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerInitMutexVaraibles has failed!");
-        CALEServerTerminateMutexVaraibles();
-        return CA_SERVER_NOT_STARTED;
-    }
-
-    ret = CALEServerInitConditionVaraibles();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerInitConditionVaraibles has failed!");
-        CALEServerTerminateConditionVaraibles();
-        return CA_SERVER_NOT_STARTED;
-    }
-
     // start gatt service
     CALEServerStartMulticastServer();
 
@@ -2333,13 +2247,92 @@ CAResult_t CAStartLEGattServer()
 
 CAResult_t CAStopLEGattServer()
 {
-    OIC_LOG(DEBUG, TAG, "this method is not supported");
+    OIC_LOG(DEBUG, TAG, "CAStopLEGattServer");
+
+    if (!g_jvm)
+    {
+        OIC_LOG(ERROR, TAG, "g_jvm is null");
+        return CA_STATUS_FAILED;
+    }
+
+    bool isAttached = false;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
+    if (JNI_OK != res)
+    {
+        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if (JNI_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
+            return CA_STATUS_FAILED;
+        }
+        isAttached = true;
+    }
+
+    CAResult_t ret = CALEServerGattClose(env, g_bluetoothGattServer);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerGattClose has failed");
+        return CA_STATUS_FAILED;
+    }
+
+    ret = CALEServerStopMulticastServer();
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerStopMulticastServer has failed");
+        return CA_STATUS_FAILED;
+    }
+
+    ret = CALEServerDisconnectAllDevices(env);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerDisconnectAllDevices has failed");
+        return CA_STATUS_FAILED;
+    }
+
+    ret = CALEServerRemoveAllDevices(env);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerRemoveAllDevices has failed");
+        return CA_STATUS_FAILED;
+    }
+
+    if (g_leAdvertiseCallback)
+    {
+        (*env)->DeleteGlobalRef(env, g_leAdvertiseCallback);
+    }
+
+    if (g_bluetoothGattServer)
+    {
+        (*env)->DeleteGlobalRef(env, g_bluetoothGattServer);
+    }
+
+    if (g_bluetoothGattServerCallback)
+    {
+        (*env)->DeleteGlobalRef(env, g_bluetoothGattServerCallback);
+    }
+
+    g_isStartServer = false;
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
     return CA_STATUS_OK;
+}
+
+CAResult_t CAInitializeLEGattServer()
+{
+    OIC_LOG(DEBUG, TAG, "Initialize Gatt Server");
+    return CALEServerInitialize();
 }
 
 void CATerminateLEGattServer()
 {
-    OIC_LOG(DEBUG, TAG, "Terminat Gatt Server");
+    OIC_LOG(DEBUG, TAG, "Terminate Gatt Server");
     CALEServerTerminate();
 }
 
@@ -2383,7 +2376,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const uint8_t *charValue,
 
 void CASetLEServerThreadPoolHandle(ca_thread_pool_t handle)
 {
-    CALEServerInitialize(handle);
+    OIC_LOG(INFO, TAG, "CASetLEServerThreadPoolHandle is not support");
 }
 
 CAResult_t CALEServerInitMutexVaraibles()
@@ -2418,12 +2411,6 @@ CAResult_t CALEServerInitMutexVaraibles()
         }
     }
 
-    return CA_STATUS_OK;
-}
-
-CAResult_t CALEServerInitConditionVaraibles()
-{
-    OIC_LOG(DEBUG, TAG, "this method is not supported");
     return CA_STATUS_OK;
 }
 
