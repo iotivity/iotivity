@@ -87,6 +87,13 @@ CAResult_t CAStartLEAdapter()
     return CA_STATUS_OK;
 }
 
+CAResult_t CAStopLEAdapter()
+{
+    // Nothing to do.
+
+    return CA_STATUS_OK;
+}
+
 CAResult_t CAInitLENwkMonitorMutexVaraibles()
 {
     OIC_LOG(DEBUG, TAG, "IN");

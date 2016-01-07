@@ -99,6 +99,19 @@ CAResult_t CAInitializeLEAdapter();
 CAResult_t CAStartLEAdapter();
 
 /**
+ * Stop the LE adapter layer.
+ *
+ * This function will be invoked from the CA layer when the LE
+ * "network" is unselected via @c CAUnselectNetwork().  It gives an
+ * opportunity for LE adapter implementations to perform operations
+ * after stopping a GATT client or server.  Most LE adapter
+ * implementations will simply implement this function as no-op.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code
+ */
+CAResult_t CAStopLEAdapter();
+
+/**
  * Used to get the current state of the LE adapter.
  *
  * @return ::CA_STATUS_OK or Appropriate error code

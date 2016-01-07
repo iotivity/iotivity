@@ -114,11 +114,6 @@ static void CALEOnInterfaceProxyPropertiesChanged(
     (void)manager;
     (void)object_proxy;
     (void)invalidated_properties;
-    OIC_LOG_V(DEBUG,
-              TAG,
-              "Properties Changed on %s:\n",
-              g_dbus_object_get_object_path(
-                  G_DBUS_OBJECT(object_proxy)));
 
     char const * const interface_name =
         g_dbus_proxy_get_interface_name(interface_proxy);
@@ -135,12 +130,23 @@ static void CALEOnInterfaceProxyPropertiesChanged(
         return;
     }
 
+    OIC_LOG_V(DEBUG,
+              TAG,
+              "%s properties Changed on %s:\n",
+              interface_name,
+              g_dbus_proxy_get_object_path(interface_proxy));
+
     CALEContext * const context = user_data;
 
     GVariantIter iter;
     gchar const * key   = NULL;
     GVariant    * value = NULL;
 
+    /**
+     * @todo Since we're only looking up one value here,
+     *       i.e. "Powered", can't we just use
+     *       g_variant_lookup_value() instead of this while() loop?
+     */
     g_variant_iter_init(&iter, changed_properties);
     while (g_variant_iter_next(&iter, "{&sv}", &key, &value))
     {
@@ -150,25 +156,9 @@ static void CALEOnInterfaceProxyPropertiesChanged(
               Report a change in the availability of the bluetooth
               adapter.
             */
-
             gboolean const powered = g_variant_get_boolean(value);
             CAAdapterState_t const status =
                 (powered ? CA_ADAPTER_ENABLED : CA_ADAPTER_DISABLED);
-
-            CAEndpoint_t info =
-                {
-                    .adapter = CA_ADAPTER_GATT_BTLE,
-                };
-
-            GVariant * const prop =
-                g_dbus_proxy_get_cached_property(interface_proxy,
-                                                 "Address");
-
-            gchar const * const address = g_variant_get_string(prop, NULL);
-
-            OICStrcpy(info.addr, sizeof(info.addr), address);
-
-            g_variant_unref(prop);
 
             /**
              * @todo Should we acquire the context lock here to
@@ -346,6 +336,11 @@ static void CALEOnInterfacesRemoved(GDBusConnection * connection,
             if (strcmp(path,
                        g_dbus_proxy_get_object_path(proxy)) == 0)
             {
+                /**
+                 * @todo If a BlueZ Device was removed, update the
+                 *       characteristic map, accordingly.
+                 */
+
                 // Found a match!
                 g_object_unref(proxy);
 
@@ -364,40 +359,6 @@ static void CALEOnInterfacesRemoved(GDBusConnection * connection,
     {
         g_variant_iter_free(iter);
     }
-}
-
-static void CALEOnPropertiesChanged(GDBusConnection * connection,
-                                    char const * sender_name,
-                                    char const * object_path,
-                                    char const * interface_name,
-                                    char const * signal_name,
-                                    GVariant   * parameters,
-                                    gpointer     user_data)
-{
-    (void)connection;
-    (void)user_data;
-    CALEDumpDBusSignalParameters(sender_name,
-                                 object_path,
-                                 interface_name,
-                                 signal_name,
-                                 parameters);
-}
-
-static void CALEOnPropertyChanged(GDBusConnection * connection,
-                                  char const * sender_name,
-                                  char const * object_path,
-                                  char const * interface_name,
-                                  char const * signal_name,
-                                  GVariant   * parameters,
-                                  gpointer     user_data)
-{
-    (void)connection;
-    (void)user_data;
-    CALEDumpDBusSignalParameters(sender_name,
-                                 object_path,
-                                 interface_name,
-                                 signal_name,
-                                 parameters);
 }
 
 static void CALESubscribeToSignals(CALEContext * context,
@@ -437,52 +398,6 @@ static void CALESubscribeToSignals(CALEContext * context,
             NULL,  // user_data
             NULL);
 
-#if GLIB_CHECK_VERSION(2,38,0)
-    /*
-      The G_DBUS_SIGNAL_FLAGS_MATCH_ARG0_PATH flag was introduced in
-      GLib 2.38.
-    */
-    static GDBusSignalFlags const device_signal_flags =
-        G_DBUS_SIGNAL_FLAGS_MATCH_ARG0_PATH;
-#else
-    static GDBusSignalFlags const device_signal_flags =
-        G_DBUS_SIGNAL_FLAGS_NONE;
-#endif
-
-    /**
-     * @todo Verify that this signal subscription is needed.
-     *
-     * @bug The arg0 argument below should be a D-Bus object path, not
-     *      interface name.
-     */
-    guint const properties_changed_sub_id =
-        g_dbus_connection_signal_subscribe(
-            connection,
-            NULL,  // sender
-            "org.freedesktop.DBus.Properties",
-            "PropertiesChanged",
-            NULL,  // object path
-            "org.bluez.Device1",  // arg0
-            device_signal_flags,
-            CALEOnPropertiesChanged,
-            NULL,  // user_data
-            NULL);
-
-    /**
-     * @todo Verify that this signal subscription is needed.
-     */
-    guint const property_changed_sub_id =
-        g_dbus_connection_signal_subscribe(connection,
-                                           NULL,  // sender
-                                           BLUEZ_ADAPTER_INTERFACE,
-                                           "PropertyChanged",
-                                           NULL,  // object path
-                                           NULL,  // arg0
-                                           G_DBUS_SIGNAL_FLAGS_NONE,
-                                           CALEOnPropertyChanged,
-                                           NULL,  // user_data
-                                           NULL);
-
     g_signal_connect(object_manager,
                      "interface-proxy-properties-changed",
                      G_CALLBACK(CALEOnInterfaceProxyPropertiesChanged),
@@ -492,8 +407,6 @@ static void CALESubscribeToSignals(CALEContext * context,
 
     context->interfaces_added_sub_id   = interfaces_added_sub_id;
     context->interfaces_removed_sub_id = interfaces_removed_sub_id;
-    context->properties_changed_sub_id = properties_changed_sub_id;
-    context->property_changed_sub_id   = property_changed_sub_id;
 
     ca_mutex_unlock(context->lock);
 }
@@ -594,13 +507,9 @@ static void CALETearDownDBus(CALEContext * context)
 
     guint const interfaces_added   = context->interfaces_added_sub_id;
     guint const interfaces_removed = context->interfaces_removed_sub_id;
-    guint const properties_changed = context->properties_changed_sub_id;
-    guint const property_changed   = context->property_changed_sub_id;
 
     context->interfaces_added_sub_id   = 0;
     context->interfaces_removed_sub_id = 0;
-    context->properties_changed_sub_id = 0;
-    context->property_changed_sub_id   = 0;
 
     ca_mutex_unlock(context->lock);
 
@@ -626,10 +535,6 @@ static void CALETearDownDBus(CALEContext * context)
                                              interfaces_added);
         g_dbus_connection_signal_unsubscribe(connection,
                                              interfaces_removed);
-        g_dbus_connection_signal_unsubscribe(connection,
-                                             properties_changed);
-        g_dbus_connection_signal_unsubscribe(connection,
-                                             property_changed);
         g_object_unref(connection);
     }
 }
@@ -675,7 +580,6 @@ static bool CALEDeviceFilter(GDBusProxy * device)
 
     return accepted;
 }
-
 
 static bool CALESetUpBlueZObjects(CALEContext * context)
 {
@@ -734,8 +638,6 @@ static bool CALESetUpBlueZObjects(CALEContext * context)
         ca_mutex_unlock(context->lock);
     }
 
-    /* success = CAGattClientInitialize(context); */
-
     return success;
 }
 
@@ -749,13 +651,6 @@ static void CALEStartEventLoop(void * data)
     GMainContext * const loop_context = g_main_context_new();
     GMainLoop * const event_loop = g_main_loop_new(loop_context, FALSE);
 
-    ca_mutex_lock(context->lock);
-
-    assert(context->event_loop == NULL);
-    context->event_loop = event_loop;
-
-    ca_mutex_unlock(context->lock);
-
     g_main_context_push_thread_default(loop_context);
 
     /*
@@ -764,12 +659,40 @@ static void CALEStartEventLoop(void * data)
       signal handling occurs in the same thread as the one running the
       GLib event loop.
     */
-    if (!CALESetUpDBus(&g_context))
-        return;
+    if (CALESetUpDBus(&g_context))
+    {
+        /*
+          Notify the upper LE stack of the availability of Bluetooth
+          adapters, if any are already powered on.
+        */
+        if (CAGetLEAdapterState() == CA_STATUS_OK)
+        {
+            /**
+             * @todo Should we acquire the context lock here to
+             *       prevent the @c CALEDeviceStateChangedCallback
+             *       from being potentially yanked out from under us
+             *       if the CA adapters are stopped/terminated as
+             *       we're about to invoke this callback?
+             */
+            g_context.on_device_state_changed(CA_ADAPTER_ENABLED);
+        }
 
-    ca_cond_signal(g_context.condition);
+        ca_mutex_lock(context->lock);
 
-    g_main_loop_run(event_loop);
+        assert(context->event_loop == NULL);
+        context->event_loop = event_loop;
+
+        ca_mutex_unlock(context->lock);
+
+        g_main_loop_run(event_loop);  // Blocks until loop is quit.
+    }
+
+    /*
+      Clean up in the same thread to avoid having to explicitly bump
+      the ref count to retain ownership.
+    */
+    g_main_context_unref(loop_context);
+    g_main_loop_unref(event_loop);
 }
 
 static void CALEStopEventLoop(CALEContext * context)
@@ -791,10 +714,7 @@ static void CALEStopEventLoop(CALEContext * context)
         if (loop_context != NULL)
         {
             g_main_context_wakeup(loop_context);
-            g_main_context_unref(loop_context);
         }
-
-        g_main_loop_unref(event_loop);
     }
 }
 
@@ -818,7 +738,7 @@ static bool CALEWaitForNonEmptyList(GList * const * list,
     {
         if (ca_cond_wait_for(g_context.condition,
                              g_context.lock,
-                             timeout) == 0)
+                             timeout) == CA_WAIT_SUCCESS)
         {
             /*
               Condition variable was signaled before the timeout was
@@ -840,39 +760,15 @@ static CAResult_t CALEStop()
     OIC_LOG(DEBUG, TAG, "Stop Linux BLE adapter.");
 
     // Only stop if we were previously started.
-    if (!CALECheckStarted())
+    if (CALECheckStarted())
     {
-        return result;
+        // Stop the event loop thread regardless of previous errors.
+        CALEStopEventLoop(&g_context);
+        CALETearDownDBus(&g_context);
+        result = CA_STATUS_OK;
     }
 
-    // Stop the event loop thread regardless of previous errors.
-    CALEStopEventLoop(&g_context);
-
-    CALETearDownDBus(&g_context);
-
     return result;
-}
-
-static void CALETerminate()
-{
-    OIC_LOG(DEBUG, TAG, "Terminate BLE adapter.");
-
-    CAPeripheralFinalize();
-
-    ca_mutex_lock(g_context.lock);
-
-    g_context.on_device_state_changed = NULL;
-    g_context.on_server_received_data = NULL;
-    g_context.on_client_received_data = NULL;
-    g_context.client_thread_pool      = NULL;
-    g_context.server_thread_pool      = NULL;
-    g_context.on_client_error         = NULL;
-    g_context.on_server_error         = NULL;
-
-    ca_mutex_unlock(g_context.lock);
-
-    ca_cond_free(g_context.condition);
-    ca_mutex_free(g_context.lock);
 }
 
 // -----------------------------------------------------------------------
@@ -889,11 +785,6 @@ CAResult_t CAInitializeLEAdapter()
     g_type_init();
 #endif
 
-    g_context.lock      = ca_mutex_new();
-    g_context.condition = ca_cond_new();
-
-    CAPeripheralInitialize();
-
     return CA_STATUS_OK;
 }
 
@@ -906,12 +797,10 @@ CAResult_t CAStartLEAdapter()
 
     OIC_LOG(DEBUG, TAG, __func__);
 
-    CAResult_t result = CA_STATUS_FAILED;
-
     // Only start if we were previously stopped.
     if (CALECheckStarted())
     {
-      return result;
+        return CA_STATUS_FAILED;
     }
 
     /**
@@ -926,71 +815,129 @@ CAResult_t CAStartLEAdapter()
      *       thread pool before the transport adapters prevents us
      *       from doing that without potentially triggering a
      *       @c pthread_join() call that blocks indefinitely due to
-     *       this event loop not be stopped.  See the comments in the
-     *       @c CAGetLEInterfaceInformation() function below for
+     *       this event loop not being stopped.  See the comments in
+     *       the @c CAGetLEInterfaceInformation() function below for
      *       further details.
      */
-    result = ca_thread_pool_add_task(g_context.client_thread_pool,
-                                     CALEStartEventLoop,
-                                     &g_context);
+    return ca_thread_pool_add_task(g_context.client_thread_pool,
+                                   CALEStartEventLoop,
+                                   &g_context);
+}
 
-    if (result != CA_STATUS_OK)
-    {
-        return result;
-    }
-
+CAResult_t CAStopLEAdapter()
+{
     /*
-      Wait until initialization completes before continuing, basically
-      until some Bluetooth adapters were found.
+      This function is called by the connectivity abstraction when
+      CAUnselectNetwork(CA_ADAPTER_GATT_BTLE) is called by the user.
     */
 
-    // Number of times to wait for initialization to complete.
-    static int const retries = 2;
+    OIC_LOG(DEBUG, TAG, __func__);
 
-    static uint64_t const timeout =
-        2 * MICROSECS_PER_SEC;  // Microseconds
-
-    if (CALEWaitForNonEmptyList(&g_context.adapters, retries, timeout))
-    {
-        result = CA_STATUS_OK;
-    }
-
-    return result;
+    return CALEStop();
 }
+
 
 CAResult_t CAGetLEAdapterState()
 {
-    /**
-     * @todo To be implemented shortly as part of the effort to
-     *       address a critical code review that stated this BLE
-     *       transport should implement the interface defined in
-     *       caleinterface.h.
-     */
-    return CA_NOT_SUPPORTED;
+    CAResult_t result = CA_ADAPTER_NOT_ENABLED;
+
+    ca_mutex_lock(g_context.lock);
+
+    for (GList * l = g_context.adapters; l != NULL; l = l->next)
+    {
+        GDBusProxy * const adapter = G_DBUS_PROXY(l->data);
+        GVariant * const prop =
+            g_dbus_proxy_get_cached_property(adapter, "Powered");
+
+        if (prop == NULL)
+        {
+            // This should never happen!
+            result = CA_STATUS_FAILED;
+            break;
+        }
+
+        gboolean const powered = g_variant_get_boolean(prop);
+        g_variant_unref(prop);
+
+        if (powered)
+        {
+            result = CA_STATUS_OK;
+            break;
+
+            /*
+              No need to continue iterating since we have at least
+              one enabled Bluetooth adapter.
+            */
+        }
+    }
+
+    ca_mutex_unlock(g_context.lock);
+
+    return result;
 }
 
 CAResult_t CAInitializeLENetworkMonitor()
 {
     /**
-     * @todo To be implemented shortly as part of the effort to
-     *       address a critical code review that stated this BLE
-     *       transport should implement the interface defined in
-     *       caleinterface.h.
+     * @note "Network monitor" operations are started in the
+     *       @c CAStartLEAdapter() function rather than this function
+     *       due to glib/D-Bus signal handling threads related
+     *       issues.
+     *
+     * @see @c CAStartLEAdapter() for further details.
      */
+
+    g_context.lock      = ca_mutex_new();
+    g_context.condition = ca_cond_new();
+
+    /*
+      The CA LE interface doesn't expose a CAInitializeLEGattServer()
+      function so perform initialization here.
+     */
+    CAPeripheralInitialize();
+
     return CA_STATUS_OK;
 }
 
 void CATerminateLENetworkMonitor()
 {
     /**
-     * @todo To be implemented shortly as part of the effort to
-     *       address a critical code review that stated this BLE
-     *       transport should implement the interface defined in
-     *       caleinterface.h.
+     * @note "Network monitor" operations are stopped in @c CALEStop()
+     *       since they are started in @c CAStartLEAdapter() rather
+     *       than @c CAInitializeLENetworkMonitor().
+     *
+     * @see @c CAStartLEAdapter() for further details.
      */
+
+    /*
+      Since the CA LE interface doesn't expose a
+      CAInitializeLEGattServer() function, finalize the LE server
+      (peripheral) here rather than in CATerminateLEGattServer() to
+      ensure finalization is correctly paired with initialization.
+     */
+    CAPeripheralFinalize();
+
+    ca_mutex_lock(g_context.lock);
+
+    g_context.on_device_state_changed = NULL;
+    g_context.on_server_received_data = NULL;
+    g_context.on_client_received_data = NULL;
+    g_context.client_thread_pool      = NULL;
+    g_context.server_thread_pool      = NULL;
+    g_context.on_client_error         = NULL;
+    g_context.on_server_error         = NULL;
+
+    ca_cond_free(g_context.condition);
+    g_context.condition = NULL;
+
+    ca_mutex_unlock(g_context.lock);
+
+    ca_mutex_free(g_context.lock);
+    g_context.lock = NULL;
 }
 
-CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
+CAResult_t CASetLEAdapterStateChangedCb(
+    CALEDeviceStateChangedCallback callback)
 {
     ca_mutex_lock(g_context.lock);
     g_context.on_device_state_changed = callback;
@@ -1106,15 +1053,7 @@ CAResult_t CAStartLEGattServer()
 
 CAResult_t CAStopLEGattServer()
 {
-    CAResult_t result    = CAPeripheralStop();
-    CAResult_t const tmp = CALEStop();
-
-    if (result == CA_STATUS_OK && tmp != CA_STATUS_OK)
-    {
-        result = tmp;
-    }
-
-    return result;
+    return CAPeripheralStop();
 }
 
 CAResult_t CAInitializeLEGattServer()
@@ -1124,7 +1063,10 @@ CAResult_t CAInitializeLEGattServer()
 
 void CATerminateLEGattServer()
 {
-    CALETerminate();
+    /*
+      See CATerminateLENetworkMonitor() to understand why the LE
+      peripheral is not finalized here.
+     */
 }
 
 void CASetLEReqRespServerCallback(CABLEDataReceivedCallback callback)
@@ -1138,95 +1080,25 @@ CAResult_t CAUpdateCharacteristicsToGattClient(char const * address,
                                                uint8_t const * value,
                                                uint32_t valueLen)
 {
-    (void)address;
-    (void)value;
-    (void)valueLen;
-    /**
-     * @todo To be implemented shortly as part of the effort to
-     *       address a critical code review that stated this BLE
-     *       transport should implement the interface defined in
-     *       caleinterface.h.
-     */
-    return CA_NOT_SUPPORTED;
+    return CAGattServerSendResponseNotification(address,
+                                                value,
+                                                valueLen);
 }
 
 CAResult_t CAUpdateCharacteristicsToAllGattClients(uint8_t const * value,
                                                    uint32_t valueLen)
 {
-    (void)value;
-    (void)valueLen;
-    /**
-     * @todo To be implemented shortly as part of the effort to
-     *       address a critical code review that stated this BLE
-     *       transport should implement the interface defined in
-     *       caleinterface.h.
-     */
-    return CA_NOT_SUPPORTED;
+    return CAGattServerSendResponseNotificationToAll(value, valueLen);
 }
 
 CAResult_t CAStartLEGattClient()
 {
-    return CACentralStart(&g_context);
-}
+    CAResult_t result = CACentralStart(&g_context);
 
-void CAStopLEGattClient()
-{
-    (void) CACentralStop(&g_context);
-    (void) CALEStop();
-}
-
-CAResult_t CAInitializeLEGattClient()
-{
-    return CA_STATUS_OK;
-}
-
-void CATerminateLEGattClient()
-{
-    CALETerminate();
-}
-
-void CACheckLEData()
-{
-    /*
-      This function is only used in single-threaded builds, but this
-      CA LE adapter implementation is multi-threaded.  Consequently,
-      this function is a no-op.
-     */
-}
-
-CAResult_t CAUpdateCharacteristicsToGattServer(
-    char const * remoteAddress,
-    uint8_t const * data,
-    uint32_t dataLen,
-    CALETransferType_t type,
-    int32_t position)
-{
-    (void)remoteAddress;
-    (void)data;
-    (void)dataLen;
-    (void)type;
-    (void)position;
-    /**
-     * @todo To be implemented shortly as part of the effort to
-     *       address a critical code review that stated this BLE
-     *       transport should implement the interface defined in
-     *       caleinterface.h.
-     */
-    return CA_NOT_SUPPORTED;
-}
-
-CAResult_t CAUpdateCharacteristicsToAllGattServers(uint8_t const * data,
-                                                   uint32_t length)
-{
-    OIC_LOG(DEBUG, TAG, "Send data to all");
-
-    /*
-      Multicast data is only sent when a request is sent from a client
-      across all endpoints.  We need not worry about sending a
-      response from a server here.
-    */
-
-    CAResult_t result = CA_STATUS_FAILED;
+    if (result != CA_STATUS_OK)
+    {
+        return result;
+    }
 
     ca_mutex_lock(g_context.lock);
     bool found_peripherals = (g_context.devices != NULL);
@@ -1234,17 +1106,6 @@ CAResult_t CAUpdateCharacteristicsToAllGattServers(uint8_t const * data,
 
     if (!found_peripherals)
     {
-        /*
-          Start discovery of LE peripherals that advertise the OIC
-          Transport Profile.
-        */
-        result = CACentralStartDiscovery(&g_context);
-
-        if (result != CA_STATUS_OK)
-        {
-            return -1;
-        }
-
         // Wait for LE peripherals to be discovered.
 
         // Number of times to wait for discovery to complete.
@@ -1257,17 +1118,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattServers(uint8_t const * data,
                                      retries,
                                      timeout))
         {
-            return -1;
-        }
-
-        ca_mutex_lock(g_context.lock);
-        found_peripherals = (g_context.devices == NULL);
-        ca_mutex_unlock(g_context.lock);
-
-        if (!found_peripherals)
-        {
-            // No peripherals discovered!
-            return -1;
+            return result;
         }
     }
 
@@ -1281,32 +1132,87 @@ CAResult_t CAUpdateCharacteristicsToAllGattServers(uint8_t const * data,
 
     if (result != CA_STATUS_OK)
     {
-        return -1;
+        return result;
     }
 
     bool const connected = CACentralConnectToAll(&g_context);
 
     if (!connected)
     {
-        return -1;
+        return result;
     }
 
     /**
-     * @todo Start notifications on all response characteristics.
+     * @todo Verify notifications have been enabled on all response
+     *       characteristics.
      */
+
+    return CAGattClientInitialize(&g_context);
+}
+
+void CAStopLEGattClient()
+{
+    CAGattClientDestroy();
+    (void) CACentralStop(&g_context);
+}
+
+CAResult_t CAInitializeLEGattClient()
+{
+    return CA_STATUS_OK;
+}
+
+void CATerminateLEGattClient()
+{
+}
+
+CAResult_t CAUpdateCharacteristicsToGattServer(
+    char const * remoteAddress,
+    uint8_t const * data,
+    uint32_t dataLen,
+    CALETransferType_t type,
+    int32_t position)
+{
+    (void) position;
+
+    if (type != LE_UNICAST)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    /*
+      We can assume that we're already connected to the BLE device
+      with the given remote address - we wouldn't have a remote
+      address otherwise - so there is no need to start scanning for
+      BLE devices.
+    */
+
+    return CAGattClientSendData(remoteAddress,
+                                data,
+                                dataLen,
+                                &g_context);
+}
+
+CAResult_t CAUpdateCharacteristicsToAllGattServers(uint8_t const * data,
+                                                   uint32_t length)
+{
+    /*
+      Check if the client has actually started.  In some cases, the
+      caller may not properly handle the asynchronous initialization
+      or check for successful initialization prior to sending out a
+      multicast style request.
+    */
+    if (!CALECheckStarted())
+    {
+        OIC_LOG(ERROR, TAG, "Client not yet started.");
+
+        return CA_STATUS_FAILED;
+    }
 
     /*
       Now send the request through all BLE connections through the
       corresponding OIC GATT request characterstics.
     */
-
-    CAGattRequestInfo const info =
-        {
-            .characteristic_info = NULL,  // g_context.characteristics
-            .context = &g_context
-        };
-
-    return CAGattClientSendDataToAll(&info, data, length);
+    return CAGattClientSendDataToAll(data, length, &g_context);
 
     /**
      * @todo Should we restart discovery after the send?

@@ -76,28 +76,6 @@ typedef struct _CALEContext
     GList * devices;
 
     /**
-     * Bluetooth MAC address to GATT characteristic map.
-     *
-     * Hash table that maps Bluetooth MAC address to a OIC Transport
-     * Profile GATT characteristic.  The key is a string containing
-     * the peer Bluetooth adapter MAC address.   The value is an
-     * interface proxy (@c GDBusProxy) to an
-     * @c org.bluez.GattCharacteristic1 object.
-     *
-     * On the client side, this maps a Bluetooth peripheral MAC
-     * address to the corresponding request characteristic proxy.  On
-     * the server side, this maps Bluetooth central MAC address to the
-     * corresponding response characteristic proxy.
-     *
-     * @note On the server side a map is overkill since only one
-     *       client is ever connected to the server.  No?
-     *
-     * @todo We may want to have a seperate server-side map to reduce
-     *       contention on this map.
-     */
-    GHashTable * characteristic_map;
-
-    /**
      * GATT characteristics to Bluetooth MAC address map.
      *
      * Hash table that maps OIC Transport Profile GATT characteristic
@@ -125,8 +103,6 @@ typedef struct _CALEContext
      *
      * @li @c org.freedesktop.DBus.ObjectManager.InterfacesAdded
      * @li @c org.freedesktop.DBus.ObjectManager.InterfacesRemoved
-     * @li @c org.freedesktop.DBus.Properties.PropertiesChanged
-     * @li @c org.bluez.Adapter1.PropertyChanged
      *
      * These subscription identifiers are only used when unsubscribing
      * from the signals when stopping the LE transport.
@@ -137,8 +113,6 @@ typedef struct _CALEContext
     //@{
     guint interfaces_added_sub_id;
     guint interfaces_removed_sub_id;
-    guint properties_changed_sub_id;
-    guint property_changed_sub_id;
     //@}
 
     /// Glib event loop that drives D-Bus signal handling.
