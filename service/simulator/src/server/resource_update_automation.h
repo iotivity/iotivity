@@ -24,6 +24,8 @@
 #include "simulator_single_resource.h"
 #include "attribute_generator.h"
 #include <thread>
+#include <condition_variable>
+#include <atomic>
 
 class AttributeUpdateAutomation
 {
@@ -33,6 +35,8 @@ class AttributeUpdateAutomation
                                   AutomationType type, int interval,
                                   updateCompleteCallback callback,
                                   std::function<void (const int)> finishedCallback);
+
+        ~AttributeUpdateAutomation();
 
         void start();
 
@@ -50,7 +54,10 @@ class AttributeUpdateAutomation
         AttributeGenerator m_attributeGen;
         updateCompleteCallback m_callback;
         std::function<void (const int)> m_finishedCallback;
-        std::shared_ptr<std::thread> m_thread;
+        std::unique_ptr<std::thread> m_thread;
+
+        std::mutex m_lock;
+        std::condition_variable m_condVariable;
 };
 
 typedef std::shared_ptr<AttributeUpdateAutomation> AttributeUpdateAutomationSP;
@@ -62,6 +69,8 @@ class ResourceUpdateAutomation
                                  AutomationType type, int interval,
                                  updateCompleteCallback callback,
                                  std::function<void (const int)> finishedCallback);
+
+        ~ResourceUpdateAutomation();
 
         void start();
 
@@ -77,7 +86,10 @@ class ResourceUpdateAutomation
         int m_updateInterval;
         updateCompleteCallback m_callback;
         std::function<void (const int)> m_finishedCallback;
-        std::shared_ptr<std::thread> m_thread;
+        std::unique_ptr<std::thread> m_thread;
+
+        std::mutex m_lock;
+        std::condition_variable m_condVariable;
 };
 
 typedef std::shared_ptr<ResourceUpdateAutomation> ResourceUpdateAutomationSP;

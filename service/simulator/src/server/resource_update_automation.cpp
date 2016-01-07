@@ -28,8 +28,6 @@
 #define ATAG "ATTRIBUTE_AUTOMATION"
 #define RTAG "RESOURCE_AUTOMATION"
 
-#define SLEEP_FOR(X) if (X > 0) std::this_thread::sleep_for(std::chrono::milliseconds(X));
-
 AttributeUpdateAutomation::AttributeUpdateAutomation(int id, SimulatorSingleResource *resource,
         const SimulatorResourceModel::Attribute &attribute, AutomationType type, int interval,
         updateCompleteCallback callback, std::function<void (const int)> finishedCallback)
@@ -49,15 +47,26 @@ AttributeUpdateAutomation::AttributeUpdateAutomation(int id, SimulatorSingleReso
     }
 }
 
+AttributeUpdateAutomation::~AttributeUpdateAutomation()
+{
+    if(!m_stopRequested)
+        m_thread->detach();
+}
+
 void AttributeUpdateAutomation::start()
 {
-    m_thread = std::make_shared<std::thread>(&AttributeUpdateAutomation::updateAttribute, this);
-    m_thread->detach();
+    m_thread.reset(new std::thread(&AttributeUpdateAutomation::updateAttribute, this));
 }
 
 void AttributeUpdateAutomation::stop()
 {
-    m_stopRequested = true;
+    {
+        std::lock_guard<std::mutex> lock(m_lock);
+        m_stopRequested = true;
+    }
+    m_condVariable.notify_one();
+    if(m_thread)
+        m_thread->join();
 }
 
 void AttributeUpdateAutomation::updateAttribute()
@@ -68,6 +77,8 @@ void AttributeUpdateAutomation::updateAttribute()
     if (!resourceImpl)
         return;
 
+    std::unique_lock<std::mutex> lock(m_lock);
+    std::chrono::system_clock::time_point now;
     do
     {
         try
@@ -87,7 +98,9 @@ void AttributeUpdateAutomation::updateAttribute()
 
                 resourceImpl->notifyApp();
 
-                SLEEP_FOR(m_updateInterval);
+                now = std::chrono::system_clock::now();
+                m_condVariable.wait_until(lock, now + std::chrono::milliseconds(m_updateInterval),
+                    [this]{ return m_stopRequested; });
             }
 
             m_attributeGen.reset();
@@ -109,8 +122,11 @@ void AttributeUpdateAutomation::updateAttribute()
     if (m_callback)
         m_callback(m_resource->getURI(), m_id);
 
-    if (m_finishedCallback)
-        m_finishedCallback(m_id);
+    if (m_finishedCallback && !m_stopRequested)
+    {
+        std::thread notifyManager(m_finishedCallback, m_id);
+        notifyManager.detach();
+    }
 }
 
 ResourceUpdateAutomation::ResourceUpdateAutomation(int id, SimulatorSingleResource *resource,
@@ -124,6 +140,12 @@ ResourceUpdateAutomation::ResourceUpdateAutomation(int id, SimulatorSingleResour
         m_callback(callback),
         m_finishedCallback(finishedCallback),
         m_thread(nullptr) {}
+
+ResourceUpdateAutomation::~ResourceUpdateAutomation()
+{
+    if(!m_stopRequested)
+        m_thread->detach();
+}
 
 void ResourceUpdateAutomation::start()
 {
@@ -139,13 +161,18 @@ void ResourceUpdateAutomation::start()
         throw SimulatorException(SIMULATOR_ERROR, "Resource has zero attributes!");
     }
 
-    m_thread = std::make_shared<std::thread>(&ResourceUpdateAutomation::updateAttributes, this, attributes);
-    m_thread->detach();
+    m_thread.reset(new std::thread(&ResourceUpdateAutomation::updateAttributes, this, attributes));
 }
 
 void ResourceUpdateAutomation::stop()
 {
-    m_stopRequested = true;
+    {
+        std::lock_guard<std::mutex> lock(m_lock);
+        m_stopRequested = true;
+    }
+    m_condVariable.notify_one();
+    if(m_thread)
+        m_thread->join();
 }
 
 void ResourceUpdateAutomation::updateAttributes(
@@ -157,6 +184,8 @@ void ResourceUpdateAutomation::updateAttributes(
     if (!resourceImpl)
         return;
 
+    std::unique_lock<std::mutex> lock(m_lock);
+    std::chrono::system_clock::time_point now;
     do
     {
         AttributeCombinationGen attrCombGen(attributes);
@@ -173,7 +202,11 @@ void ResourceUpdateAutomation::updateAttributes(
             }
 
             resourceImpl->notifyApp();
-            SLEEP_FOR(m_updateInterval);
+
+            now = std::chrono::system_clock::now();
+            m_condVariable.wait_until(lock, now + std::chrono::milliseconds(m_updateInterval),
+                [this]{ return m_stopRequested; });
+
         }
     }
     while (!m_stopRequested && AutomationType::RECURRENT == m_type);
@@ -187,7 +220,10 @@ void ResourceUpdateAutomation::updateAttributes(
     if (m_callback)
         m_callback(m_resource->getURI(), m_id);
 
-    if (m_finishedCallback)
-        m_finishedCallback(m_id);
+    if (m_finishedCallback && !m_stopRequested)
+    {
+        std::thread notifyManager(m_finishedCallback, m_id);
+        notifyManager.detach();
+    }
 }
 
