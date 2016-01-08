@@ -103,7 +103,7 @@ else:
 		'caqueueingthread.c',
 		'caretransmission.c',
 		]
-	if (('BT' in ca_transport) or ('IP' in ca_transport) or ('ALL' in ca_transport)):
+	if (('IP' in ca_transport) or ('ALL' in ca_transport)):
 		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'cablockwisetransfer.c') ])
 		env.AppendUnique(CPPDEFINES = ['WITH_BWT'])
 	if secured == '1':
