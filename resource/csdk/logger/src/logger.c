@@ -54,7 +54,7 @@
 static oc_log_ctx_t *logCtx = 0;
 #endif
 #ifdef __ANDROID__
-#elif defined __linux__ || defined __APPLE__
+#elif defined __linux__ || defined __APPLE__ || defined __msys_nt__
 static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO,
                                       OC_LOG_WARNING, OC_LOG_ERROR, OC_LOG_FATAL};
 #endif
@@ -206,7 +206,7 @@ void OCLog(LogLevel level, const char * tag, const char * logStr)
        __android_log_write(LEVEL[level], tag, logStr);
    #endif
 
-   #elif defined __linux__ || defined __APPLE__
+   #else
        if (logCtx && logCtx->write_level)
        {
            logCtx->write_level(logCtx, LEVEL_XTABLE[level], logStr);

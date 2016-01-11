@@ -56,6 +56,9 @@ examples_env.AppendUnique(LIBS = ['oc_logger'])
 examples_env.AppendUnique(LIBS = ['octbstack'])
 examples_env.AppendUnique(LIBS = ['oc'])
 
+if target_os in ['msys_nt', 'windows']:
+	examples_env.PrependUnique(LIBS = ['mswsock', 'ws2_32', 'iphlpapi', 'ole32'])
+
 if env.get('SECURED') == '1':
     examples_env.AppendUnique(LIBS = ['tinydtls'])
 
@@ -69,6 +72,8 @@ if target_os == 'android':
 if target_os in ['darwin', 'ios']:
 	examples_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
+if env.get('LOGGING'):
+	examples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 ######################################################################
 # Source files and Targets
 ######################################################################

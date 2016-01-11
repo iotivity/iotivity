@@ -23,10 +23,10 @@ print"Reading ca script %s"%ca_transport
 
 env.PrependUnique(CPPPATH = [ os.path.join(root_dir, 'api') ])
 env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
-                             os.path.join(root_dir, 'lib/libcoap-4.1.1'),
-                             os.path.join(src_dir, '/resource/csdk/logger/include/'),
-                             os.path.join(root_dir, 'common/inc'),
-                             os.path.join(root_dir, 'util/inc') ])
+                             os.path.join(root_dir, 'lib', 'libcoap-4.1.1'),
+                             os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
+                             os.path.join(root_dir, 'common', 'inc'),
+                             os.path.join(root_dir, 'util', 'inc') ])
 
 if ca_os not in ['arduino', 'windows', 'winrt']:
 	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
@@ -38,10 +38,10 @@ if ca_os in ['darwin','ios']:
 	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
 # Getting common source files
-env.SConscript('./../common/SConscript')
+env.SConscript(os.path.join(root_dir, 'common', 'SConscript'))
 
 # Getting util source files
-env.SConscript(root_dir + '/util/SConscript')
+env.SConscript(os.path.join(root_dir, 'util', 'SConscript'))
 
 # The tinydtls library is found in '#extlibs/tinydtls', where the '#'
 # is interpreted by SCons as the top-level iotivity directory where
@@ -170,7 +170,10 @@ if ca_os in ['android', 'tizen']:
 		lib_env.AppendUnique(LIBS = ['timer'])
 	if ca_os != 'android':
 		lib_env.AppendUnique(LIBS = ['rt'])
-	calib = lib_env.SharedLibrary('connectivity_abstraction', lib_env.get('CA_SRC'))
+	calib = lib_env.SharedLibrary('connectivity_abstraction', env.get('CA_SRC'))
+elif ca_os in ['msys_nt']:
+	lib_env.AppendUnique(LIBS = ['coap', 'mswsock', 'ws2_32', 'iphlpapi', 'logger'])
+	calib = lib_env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
 else:
 	calib = lib_env.StaticLibrary('connectivity_abstraction', lib_env.get('CA_SRC'))
 lib_env.InstallTarget(calib, 'libconnectivity_abstraction')

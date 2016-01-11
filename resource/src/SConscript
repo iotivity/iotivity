@@ -43,8 +43,8 @@ oclib_env.AppendUnique(CPPPATH = [
 
 oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger'])
-oclib_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+oclib_env.AppendUnique(LIBS = ['oc_logger'])
+oclib_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction', 'ocsrm'])
 
 target_os = env.get('TARGET_OS')
 if target_os == 'linux':
@@ -66,6 +66,8 @@ if target_os == 'tizen':
 
 if target_os in ['linux'] and env.get('SIMULATOR', False):
     oclib_env.Append( RPATH = env.Literal('\\$$ORIGIN'))
+if target_os in ['msys_nt']:
+	oclib_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi'])
 
 ######################################################################
 # Source files and Targets

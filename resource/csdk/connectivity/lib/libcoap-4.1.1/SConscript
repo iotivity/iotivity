@@ -29,13 +29,17 @@ if target_os == 'arduino':
 		env.get('ARDUINO_HOME')+'/libraries/Ethernet/src/utility',
 		])
 
-if target_os not in ['arduino', 'windows', 'winrt']:
+if target_os not in ['arduino', 'windows', 'winrt', 'msys_nt']:
 	libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '_DEFAULT_SOURCE'])
 	libcoap_env.AppendUnique(CFLAGS = ['-std=gnu99','-fPIC'])
 
 if target_os not in ['windows', 'winrt']:
 	libcoap_env.AppendUnique(CFLAGS = ['-Wall', '-ffunction-sections',
 			'-fdata-sections', '-fno-exceptions'])
+
+if target_os == 'msys_nt':
+	libcoap_env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '_DEFAULT_SOURCE'])
+	libcoap_env.AppendUnique(CFLAGS = ['-std=c99'])
 
 if target_os in ['linux', 'tizen', 'android', 'ios', 'arduino']:
 	if with_tcp == True:

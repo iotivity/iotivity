@@ -10,6 +10,7 @@ host_target_map = {
 		'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
 		'windows': ['windows', 'winrt', 'android', 'arduino'],
 		'darwin': ['darwin', 'ios', 'android', 'arduino'],
+		'msys_nt' :['msys_nt'],
 		}
 
 # Map of os and allowed archs (os: allowed archs)
@@ -18,6 +19,7 @@ os_arch_map = {
 		'tizen': ['x86', 'x86_64', 'arm', 'arm64', 'armeabi-v7a'],
 		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
 		'windows': ['x86', 'amd64', 'arm'],
+		'msys_nt':['x86', 'x86_64'],
 		'winrt': ['arm'],
 		'darwin': ['i386', 'x86_64'],
 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
@@ -26,6 +28,11 @@ os_arch_map = {
 		}
 
 host = platform.system().lower()
+
+# the host string contains version of windows. 6.3, 6.4, 10.0 which is 8.0, 8.1, and 10 respectively.
+# Let's canonicalize the msys_nt-XX.X system name  by stripping version off.
+if 'msys_nt' in host:
+	host = 'msys_nt'
 
 if not host_target_map.has_key(host):
 	print "\nError: Current system (%s) isn't supported\n" % host

@@ -72,7 +72,7 @@ if target_os not in ['windows', 'winrt']:
 
 liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
-if target_os in ['android', 'linux', 'tizen']:
+if target_os in ['android', 'linux', 'tizen', 'msys_nt']:
 	liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
 
 	if with_ra_ibb:
@@ -92,7 +92,7 @@ if target_os not in ['android', 'arduino', 'windows', 'winrt']:
 
 if target_os == 'arduino':
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['NDEBUG', 'WITH_ARDUINO'])
-elif target_os not in ['darwin','ios']:
+elif target_os not in ['darwin','ios', 'msys_nt']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-fPIC'])
 if target_os in ['darwin', 'ios']:
 	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
@@ -118,6 +118,9 @@ if env.get('WITH_RD') == '1':
 	liboctbstack_env.AppendUnique(LIBS = ['resource_directory'])
 
 liboctbstack_env.Append(LIBS = ['c_common'])
+
+if target_os in ['msys_nt']:
+	liboctbstack_env.Append(LIBS = ['ws2_32', 'iphlpapi'])
 
 if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
 	liboctbstack_env.Prepend(LIBS = ['routingmanager'])
