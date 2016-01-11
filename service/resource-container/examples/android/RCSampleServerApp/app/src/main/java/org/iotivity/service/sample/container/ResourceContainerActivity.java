@@ -76,6 +76,7 @@ public class ResourceContainerActivity extends Activity {
     public List<String>                      sensors;
     public List<String>                      diApiList;
     public List<String>                      bmiApiList;
+    public List<String>                      diAndroidApiList;
     HashMap<String, List<String>>            listChild;
 
     private static Handler                   mHandler;
@@ -118,30 +119,32 @@ public class ResourceContainerActivity extends Activity {
         logs = (EditText) findViewById(R.id.log);
 
         sensors = new ArrayList<String>();
-        diApiList = new ArrayList<String>();
         bmiApiList = new ArrayList<String>();
+        diApiList = new ArrayList<String>();
+        diAndroidApiList = new ArrayList<String>();
         listChild = new HashMap<String, List<String>>();
 
         // Adding list items (header)
-        sensors.add("Discomfort Index Sensor");
         sensors.add("BMI Sensor");
+        sensors.add("Discomfort Index Sensor");
+        sensors.add("Android Discomfort Index Sensor");
+
+        // Adding child data [BMI sensor]
+        bmiApiList.add("1. Add BMI sensor bundle");
+        bmiApiList.add("2. Start BMI sensor bundle");
+        bmiApiList.add("3. List bundle resources");
+        bmiApiList.add("4. Stop BMI sensor bundle");
+        bmiApiList.add("5. Remove BMI sensor bundle");
 
         // Adding child data [discomfort Index sensor]
         diApiList.add("1. List bundle resources");
-        diApiList.add("2. Add Resource");
-        diApiList.add("3. Remove Resource");
 
-        // Adding child data [BMI sensor]
-        bmiApiList.add("1. Add Bundle");
-        bmiApiList.add("2. Start Bundle");
-        bmiApiList.add("3. List bundle resources");
-        bmiApiList.add("4. Add Resource ");
-        bmiApiList.add("5. Remove Resource");
-        bmiApiList.add("6. Stop Bundle");
-        bmiApiList.add("7. Remove Bundle");
+        // Adding child data [discomfort Index sensor - android]
+        diAndroidApiList.add("1. List bundle resources");
 
-        listChild.put(sensors.get(0), diApiList);
-        listChild.put(sensors.get(1), bmiApiList);
+        listChild.put(sensors.get(0), bmiApiList);
+        listChild.put(sensors.get(1), diApiList);
+        listChild.put(sensors.get(2), diAndroidApiList);
         listAdapter = new ExpandableList(this, sensors, listChild);
 
         // getting the sd card path
@@ -212,35 +215,30 @@ public class ResourceContainerActivity extends Activity {
                     public boolean onChildClick(ExpandableListView parent,
                                                 View v, int groupPosition, int childPosition,
                                                 long id) {
-
                         if (0 == groupPosition) {
-                            if (childPosition == 0) {
-                                resourceContainerInstance
-                                        .listDIBundleResources();
-                            } else if (childPosition == 1) {
-                                resourceContainerInstance.addDIResourceConfig();
-                            } else if (childPosition == 2) {
-                                resourceContainerInstance
-                                        .removeDIResourceConfig();
-                            }
-                        } else {
                             if (childPosition == 0) {
                                 resourceContainerInstance.addBMIBundle();
                             } else if (childPosition == 1) {
                                 resourceContainerInstance.startBMIBundle();
                             } else if (childPosition == 2) {
                                 resourceContainerInstance
-                                        .listBMIBundleResources();
+                                        .listBundleResources("oic.bundle.BMISensor");
                             } else if (childPosition == 3) {
-                                resourceContainerInstance
-                                        .addBMIResourceConfig();
-                            } else if (childPosition == 4) {
-                                resourceContainerInstance
-                                        .removeBMIResourceConfig();
-                            } else if (childPosition == 5) {
                                 resourceContainerInstance.stopBMIBundle();
-                            } else if (childPosition == 6) {
+                            } else if (childPosition == 4) {
                                 resourceContainerInstance.removeBMIBundle();
+                            }
+                        }
+                        else if (1 == groupPosition) {
+                            if (childPosition == 0) {
+                                resourceContainerInstance
+                                        .listBundleResources("oic.bundle.discomfortIndexSensor");
+
+                            }
+                        } else if (2 == groupPosition) {
+                            if (childPosition == 0) {
+                                resourceContainerInstance
+                                        .listBundleResources("oic.android.sample");
                             }
                         }
                         return false;
