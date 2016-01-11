@@ -259,16 +259,16 @@ CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
     return CAGetNetworkInformationInternal(info, size);
 }
 
-CAResult_t CASendRequest(const CAEndpoint_t *object,const CARequestInfo_t *requestInfo)
+CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo)
 {
-    OIC_LOG(DEBUG, TAG, "CASendGetRequest");
+    OIC_LOG(DEBUG, TAG, "CASendRequest");
 
     if(!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
 
-    return CADetachRequestMessage(object, requestInfo);
+    return CADetachSendMessage(object, requestInfo, CA_REQUEST_DATA);
 }
 
 CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
@@ -280,7 +280,7 @@ CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *re
         return CA_STATUS_NOT_INITIALIZED;
     }
 
-    return CADetachResponseMessage(object, responseInfo);
+    return CADetachSendMessage(object, responseInfo, CA_RESPONSE_DATA);
 }
 
 CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)

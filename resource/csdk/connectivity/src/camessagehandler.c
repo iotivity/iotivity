@@ -941,10 +941,11 @@ static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sen
     return cadata;
 }
 
-CAResult_t CADetachRequestMessage(const CAEndpoint_t *object, const CARequestInfo_t *request)
+CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg,
+                               CADataType_t dataType)
 {
-    VERIFY_NON_NULL(object, TAG, "object");
-    VERIFY_NON_NULL(request, TAG, "request");
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint");
+    VERIFY_NON_NULL(sendMsg, TAG, "sendMsg");
 
     if (false == CAIsSelectedNetworkAvailable())
     {
@@ -960,7 +961,7 @@ CAResult_t CADetachRequestMessage(const CAEndpoint_t *object, const CARequestInf
     }
 #endif /* ARDUINO */
 
-    CAData_t *data = CAPrepareSendData(object, request, CA_REQUEST_DATA);
+    CAData_t *data = CAPrepareSendData(endpoint, sendMsg, dataType);
     if(!data)
     {
         OIC_LOG(ERROR, TAG, "CAPrepareSendData failed");
@@ -972,15 +973,16 @@ CAResult_t CADetachRequestMessage(const CAEndpoint_t *object, const CARequestInf
     if(CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, TAG, "CAProcessSendData failed");
+        CADestroyData(data, sizeof(CAData_t));
         return result;
     }
 
     CADestroyData(data, sizeof(CAData_t));
 #else
 #ifdef WITH_BWT
-    if (CA_ADAPTER_GATT_BTLE != object->adapter
+    if (CA_ADAPTER_GATT_BTLE != endpoint->adapter
 #ifdef TCP_ADAPTER
-            && CA_ADAPTER_TCP != object->adapter
+            && CA_ADAPTER_TCP != endpoint->adapter
 #endif
             )
     {
@@ -1003,66 +1005,7 @@ CAResult_t CADetachRequestMessage(const CAEndpoint_t *object, const CARequestInf
     {
         CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
     }
-#endif
-
-    return CA_STATUS_OK;
-}
-
-CAResult_t CADetachResponseMessage(const CAEndpoint_t *object,
-                                   const CAResponseInfo_t *response)
-{
-    VERIFY_NON_NULL(object, TAG, "object");
-    VERIFY_NON_NULL(response, TAG, "response");
-
-    if (false == CAIsSelectedNetworkAvailable())
-    {
-        return CA_STATUS_FAILED;
-    }
-
-    CAData_t *data = CAPrepareSendData(object, response, CA_RESPONSE_DATA);
-    if(!data)
-    {
-        OIC_LOG(ERROR, TAG, "CAPrepareSendData failed");
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-
-#ifdef SINGLE_THREAD
-    CAResult_t result = CAProcessSendData(data);
-    if(result != CA_STATUS_OK)
-    {
-        OIC_LOG(ERROR, TAG, "CAProcessSendData failed");
-        return result;
-    }
-
-    CADestroyData(data, sizeof(CAData_t));
-#else
-#ifdef WITH_BWT
-    if (CA_ADAPTER_GATT_BTLE != object->adapter
-#ifdef TCP_ADAPTER
-            && CA_ADAPTER_TCP != object->adapter
-#endif
-            )
-    {
-        // send block data
-        CAResult_t res = CASendBlockWiseData(data);
-        if(CA_NOT_SUPPORTED == res)
-        {
-            OIC_LOG(DEBUG, TAG, "normal msg will be sent");
-            CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
-            return CA_STATUS_OK;
-        }
-        else
-        {
-            CADestroyData(data, sizeof(CAData_t));
-        }
-        return res;
-    }
-    else
-#endif
-    {
-        CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
-    }
-#endif
+#endif /* SINGLE_THREAD */
 
     return CA_STATUS_OK;
 }
