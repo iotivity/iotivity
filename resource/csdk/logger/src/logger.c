@@ -72,9 +72,6 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
     static android_LogPriority LEVEL[] =
     {ANDROID_LOG_DEBUG, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR, ANDROID_LOG_FATAL};
 #endif
-#elif defined (__linux__) || defined (__APPLE__)
-    static const char *LEVEL[] __attribute__ ((unused)) =
-    {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
 #elif defined ARDUINO
 #include <stdarg.h>
 #include "Arduino.h"
@@ -98,7 +95,10 @@ static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
 #else
     #define GET_PROGMEM_BUFFER(buffer, addr) { buffer[0] = '\0';}
 #endif
-#endif // __ANDROID__
+#else // !defined(__ANDROID__) && !defined(ARDUINO)
+    static const char *LEVEL[] __attribute__ ((unused)) =
+    {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
+#endif
 
 #ifndef ARDUINO
 
@@ -155,7 +155,7 @@ void OCLogInit()
 
 void OCLogShutdown()
 {
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__msys_nt__)
     if (logCtx && logCtx->destroy)
     {
         logCtx->destroy(logCtx);

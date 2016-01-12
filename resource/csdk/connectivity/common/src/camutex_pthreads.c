@@ -187,7 +187,7 @@ ca_cond ca_cond_new(void)
             return retVal;
         }
 
-#if defined(__ANDROID__) || _POSIX_TIMERS > 0
+#if (defined(__ANDROID__) || _POSIX_TIMERS > 0) && !defined(__msys_nt__)
 #ifdef __ANDROID__
         if (camutex_condattr_setclock) {
             ret = camutex_condattr_setclock(&(eventInfo->condattr), CLOCK_MONOTONIC);
@@ -204,7 +204,7 @@ ca_cond ca_cond_new(void)
                 return retVal;
             }
         }
-#endif /* defined(__ANDROID__) || _POSIX_TIMERS > 0 */
+#endif /* (defined(__ANDROID__) || _POSIX_TIMERS > 0) && !defined(__msys_nt__)*/
         ret = pthread_cond_init(&(eventInfo->cond), &(eventInfo->condattr));
         if (0 == ret)
         {

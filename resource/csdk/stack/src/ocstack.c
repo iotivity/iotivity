@@ -81,8 +81,12 @@
 #include "utlist.h"
 #include "pdu.h"
 
-#ifndef ARDUINO
+#if !defined(WITH_ARDUINO) && !defined(__msys_nt__)
 #include <arpa/inet.h>
+#endif
+
+#if defined(__msys_nt__)
+#include <winsock2.h>
 #endif
 
 #ifndef UINT32_MAX

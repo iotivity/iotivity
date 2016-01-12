@@ -34,6 +34,21 @@ static const char UNTIL[] = "UNTIL";
 static const char BYDAY[] = "BYDAY";
 static const char DAILY[] = "DAILY";
 
+#if defined(__msys_nt__)
+//  ### to be fixed later
+#define    strptime(a,b,c)   NULL
+#endif
+
+/**
+ * Parses periodStr and populate struct IotvtICalPeriod_t
+ *
+ * @param periodStr string to be parsed.
+ * @param period    IotvtICalPeriod_t struct to be populated.
+ *
+ * @return  IOTVTICAL_INVALID_PARAMETER -- if parameter are invalid
+ *          IOTVTICAL_INVALID_PERIOD    -- if period string has invalid format
+ *          IOTVTICAL_INVALID_SUCCESS   -- if no error while parsing
+ */
 IotvtICalResult_t ParsePeriod(const char *periodStr, IotvtICalPeriod_t *period)
 {
     if ((NULL == periodStr) || (NULL == period))

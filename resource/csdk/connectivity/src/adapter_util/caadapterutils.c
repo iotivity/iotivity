@@ -26,10 +26,15 @@
 #include "oic_malloc.h"
 #include <errno.h>
 
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO) && !defined(__msys_nt__)
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#endif
+
+#if defined(__msys_nt__)
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #endif
 
 #ifdef __ANDROID__
@@ -137,6 +142,7 @@ void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sock
                         NI_NUMERICHOST|NI_NUMERICSERV);
     if (r)
     {
+#if defined(EAI_SYSTEM)
         if (EAI_SYSTEM == r)
         {
             OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
@@ -147,6 +153,13 @@ void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sock
             OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
                             "getnameinfo failed: %s", gai_strerror(r));
         }
+#elif defined(__msys_nt__) || defined(_WIN32)
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
+                            "getnameinfo failed: errno %i", WSAGetLastError());
+#else
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
+                        "getnameinfo failed: %s", gai_strerror(r));
+#endif
         return;
     }
     *port = ntohs(((struct sockaddr_in *)sockAddr)->sin_port); // IPv4 and IPv6
@@ -165,6 +178,7 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
     int r = getaddrinfo(host, NULL, &hints, &addrs);
     if (r)
     {
+#if defined(EAI_SYSTEM)
         if (EAI_SYSTEM == r)
         {
             OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
@@ -175,6 +189,13 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
             OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
                             "getaddrinfo failed: %s", gai_strerror(r));
         }
+#elif defined(__msys_nt__) || defined(_WIN32)
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
+                            "getaddrinfo failed: errno %i", WSAGetLastError());
+#else
+        OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
+                        "getaddrinfo failed: %s", gai_strerror(r));
+#endif
         return;
     }
     // assumption: in this case, getaddrinfo will only return one addrinfo

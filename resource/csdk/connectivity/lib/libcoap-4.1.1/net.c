@@ -31,6 +31,10 @@
 #include <arpa/inet.h>
 #endif
 
+#if defined(_WIN32)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
 #ifdef WITH_LWIP
 #include <lwip/pbuf.h>
 #include <lwip/udp.h>

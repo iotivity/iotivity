@@ -94,8 +94,13 @@ uint64_t getCurrentTimeInMicroSeconds();
  */
 static uint64_t CAGetTimeoutValue()
 {
+#if !defined(__msys_nt__)
     return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * (random() & 0xFF)) >> 8)) *
             (uint64_t) 1000;
+#else
+    return ((DEFAULT_ACK_TIMEOUT_SEC * 1000) + ((1000 * (rand() & 0xFF)) >> 8)) *
+            (uint64_t) 1000;
+#endif
 }
 
 CAResult_t CARetransmissionStart(CARetransmission_t *context)

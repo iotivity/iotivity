@@ -29,6 +29,11 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 
+#if defined(__msys_nt__)
+#include <Windows.h>
+#define sleep(x) Sleep(1000*x)
+#endif
+
 using namespace OC;
 
 struct dereference_compare

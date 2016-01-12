@@ -24,6 +24,7 @@
 /// (properties and methods) and host this resource on the server.
 ///
 
+#include <unistd.h>
 #include <functional>
 
 #include <pthread.h>

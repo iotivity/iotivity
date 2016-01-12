@@ -32,8 +32,13 @@
 #include <jni.h>
 #endif
 
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO) && !defined(__msys_nt__)
 #include <sys/socket.h>
+#endif
+
+#if defined(_WIN32)
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #endif
 
 #include "cacommon.h"

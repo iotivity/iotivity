@@ -30,7 +30,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
+#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__) || defined(__msys_nt__)
 #include "fcntl.h"
 #include "unistd.h"
 #include <stdlib.h>
@@ -104,7 +104,7 @@ uint8_t GetRandomBit()
 
 int8_t OCSeedRandom()
 {
-#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__) || defined(__TIZEN__)
+#ifndef ARDUINO
     // Get current time to Seed.
     uint64_t currentTime = 0;
 #ifdef __ANDROID__
@@ -120,7 +120,7 @@ int8_t OCSeedRandom()
     gettimeofday(&tv, NULL);
     currentTime = tv.tv_sec * (uint64_t)1000000 + tv.tv_usec;
 #endif
-
+#if defined(__unix__) || defined(__APPLE__)
     int32_t fd = open("/dev/urandom", O_RDONLY);
     if (fd >= 0)
     {
@@ -140,6 +140,7 @@ int8_t OCSeedRandom()
         srand(randomSeed | currentTime);
     }
     else
+#endif
     {
         // Do time based seed when problem in accessing "/dev/urandom"
         srand(currentTime);
@@ -184,7 +185,7 @@ uint32_t OCGetRandom()
 
 uint8_t OCGetRandomByte(void)
 {
-#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
+#if defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__) || defined(__msys_nt__)
     return rand() & 0x00FF;
 #elif defined ARDUINO
 #ifdef HAVE_SRANDOM
@@ -273,7 +274,7 @@ OCRandomUuidResult OCGenerateUuid(uint8_t uuid[UUID_SIZE])
     uuid[15] = parseUuidPart(&uuidString[34]);
 
     return RAND_UUID_OK;
-#elif !defined(__ANDROID__) && (defined(__linux__) || defined(__APPLE__))
+#elif (!defined(__ANDROID__) && !defined(__msys_nt__)) && (defined(__linux__) || defined(__APPLE__))
     // note: uuid_t is typedefed as unsigned char[16] on linux/apple
     uuid_generate(uuid);
     return RAND_UUID_OK;

@@ -36,6 +36,11 @@
 #include <sys/socket.h>
 #endif
 
+#if defined(__msys_nt__)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+
 #ifdef WITH_ARDUINO
 #define DEV_ADDR_SIZE_MAX (16)
 #endif

@@ -32,6 +32,11 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 
+#if defined(__msys_nt__)
+#include <Windows.h>
+#define sleep(x) Sleep(1000*x)
+#endif
+
 using namespace OC;
 using namespace std;
 namespace PH = std::placeholders;
@@ -214,9 +219,9 @@ public:
         }
     }
 
-    void addInterface(const std::string& interface) const
+    void addInterface(const std::string& iface) const
     {
-        OCStackResult result = OCPlatform::bindInterfaceToResource(m_resourceHandle, interface);
+        OCStackResult result = OCPlatform::bindInterfaceToResource(m_resourceHandle, iface);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";

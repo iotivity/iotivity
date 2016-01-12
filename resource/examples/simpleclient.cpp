@@ -20,6 +20,7 @@
 
 // OCClient.cpp : Defines the entry point for the console application.
 //
+#include <unistd.h>
 #include <string>
 #include <map>
 #include <cstdlib>

@@ -25,7 +25,13 @@
 #include "oic_string.h"
 #include "global.h"
 #include "timer.h"
+
+#if defined(__msys_nt__)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <netdb.h>
+#endif
 
 /* tinyDTLS library error code */
 #define TINY_DTLS_ERROR (-1)
