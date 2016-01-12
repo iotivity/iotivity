@@ -158,18 +158,30 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
     g_errorCallback = errorCallback;
 
     // Initialize EDR Network Monitor
-    CAResult_t err = CAEDRInitializeNetworkMonitor(handle);
-    if (CA_STATUS_OK != err)
+    CAResult_t res = CAEDRInitializeNetworkMonitor(handle);
+    if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "EDR N/w Monitor Initialize failed!, error number [%d]",
-                  err);
-        return err;
+                  res);
+        return res;
     }
 
     CAEDRSetNetworkChangeCallback(CAEDRNotifyNetworkStatus);
     CAEDRSetPacketReceivedCallback(CAAdapterRecvData);
     CAEDRSetErrorHandler(CAEDRErrorHandler);
-    CAEDRInitializeClient(handle);
+    res = CAEDRClientInitialize();
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "EDR Client Initialize failed, error number [%d]", res);
+        return res;
+    }
+
+    res = CAEDRServerInitialize(handle);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "EDR Server Initialize failed, error number [%d]", res);
+        return res;
+    }
 
     static const CAConnectivityHandler_t handler =
         {
@@ -392,7 +404,7 @@ CAResult_t CAStartServer()
     }
 
     CAResult_t err = CA_STATUS_OK;
-    if (CA_STATUS_OK != (err = CAEDRServerStart(g_edrThreadPool)))
+    if (CA_STATUS_OK != (err = CAEDRServerStart()))
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to start RFCOMM server!, error num [%d]",
                   err);

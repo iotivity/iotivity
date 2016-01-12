@@ -163,8 +163,9 @@ void CAEDRClientUnsetCallbacks();
 
 /**
  * Used to initialize the EDR client module where mutex is initialized.
+ * @return ::CA_STATUS_OK or Appropriate error code.
  */
-void CAEDRInitializeClient(ca_thread_pool_t handle);
+CAResult_t CAEDRClientInitialize();
 
 /**
  * Destroys the Device list and mutex.
@@ -220,15 +221,13 @@ CAResult_t CAEDRGetInterfaceInformation(CAEndpoint_t **info);
 /**
  * Start RFCOMM server for given service UUID
  *
- * @param[in]  handle       Threadpool Handle.
- *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
  * @retval ::CA_STATUS_FAILED Operation failed.
  *
  */
-CAResult_t CAEDRServerStart(ca_thread_pool_t handle);
+CAResult_t CAEDRServerStart();
 
 /**
  * Stop RFCOMM server
@@ -238,6 +237,13 @@ CAResult_t CAEDRServerStart(ca_thread_pool_t handle);
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAEDRServerStop();
+
+/**
+ * Used to initialize the EDR server module where mutex is initialized.
+ * @param[in]  threadPool   Threadpool Handle.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAEDRServerInitialize(ca_thread_pool_t handle);
 
 /**
  * Terminate server for EDR.

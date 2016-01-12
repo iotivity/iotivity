@@ -51,8 +51,6 @@ static const char CLASSPATH_BT_UUID[] = "java/util/UUID";
 static const char CLASSPATH_CONTEXT[] = "android/content/Context";
 static const char CLASSPATH_OUTPUT[] = "java/io/OutputStream";
 
-static ca_thread_pool_t g_threadPoolHandle = NULL;
-
 static JavaVM *g_jvm;
 static jobject g_context;
 
@@ -396,18 +394,21 @@ static CAResult_t CAEDRCreateMutex()
     return CA_STATUS_OK;
 }
 
-void CAEDRInitialize(ca_thread_pool_t handle)
+CAResult_t CAEDRInitialize()
 {
     OIC_LOG(DEBUG, TAG, "CAEDRInitialize");
-
-    g_threadPoolHandle = handle;
 
     CAEDRCoreJniInit();
 
     CAEDRJniInitContext();
 
     // init mutex
-    CAEDRCreateMutex();
+    CAResult_t result = CAEDRCreateMutex();
+    if(CA_STATUS_OK != result)
+    {
+        OIC_LOG(ERROR, TAG, "CAEDRInitialize - Could not create mutex");
+        return result;
+    }
 
     bool isAttached = false;
     JNIEnv* env;
@@ -420,7 +421,7 @@ void CAEDRInitialize(ca_thread_pool_t handle)
         if (JNI_OK != res)
         {
             OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
-            return;
+            return CA_STATUS_NOT_INITIALIZED;
         }
         isAttached = true;
     }
@@ -452,6 +453,8 @@ void CAEDRInitialize(ca_thread_pool_t handle)
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
+
+    return result;
 }
 
 void CAEDRTerminate()
@@ -1187,9 +1190,10 @@ void CAEDRNativeSocketClose(JNIEnv *env, const char *address)
     OIC_LOG(DEBUG, TAG, "disconnected");
 }
 
-void CAEDRInitializeClient(ca_thread_pool_t handle)
+CAResult_t CAEDRClientInitialize()
 {
-    CAEDRInitialize(handle);
+    CAResult_t result = CAEDRInitialize();
+    return result;
 }
 
 void CAEDRSetErrorHandler(CAEDRErrorHandleCallback errorHandleCallback)

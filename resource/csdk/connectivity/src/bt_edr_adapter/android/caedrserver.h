@@ -44,13 +44,6 @@ typedef void (*CAPacketReceiveCallback)(const char *address, const char *data);
 void CAEDRServerJniInit();
 
 /**
- * Initialize server for EDR.
- * @param[in]   handle           thread pool handle object.
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-CAResult_t CAEDRServerInitialize(ca_thread_pool_t handle);
-
-/**
  * Start Accept Thread.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */

@@ -35,7 +35,7 @@
 #include "oic_string.h"
 
 //#define DEBUG_MODE
-#define TAG PCF("CA_EDR_SERVER")
+#define TAG PCF("OIC_CA_EDR_SERVER")
 #define MAX_PDU_BUFFER (1024)
 
 static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAdapter;";
@@ -150,6 +150,12 @@ static void CAReceiveHandler(void *data)
 
     while (true != *(ctx->stopFlag))
     {
+        if (!CAEDRNativeIsEnableBTAdapter(env))
+        {
+            OIC_LOG(ERROR, TAG, "BT adpater is not enable");
+            break;
+        }
+
         // if new socket object is added in socket list after below logic is ran.
         // new socket will be started to read after next while loop
         uint32_t length = CAEDRGetSocketListLength();
@@ -251,17 +257,18 @@ static void CAAcceptHandler(void *data)
     return;
 }
 
-CAResult_t CAEDRServerStart(ca_thread_pool_t handle)
+/**
+ * implement for adapter common method.
+ */
+CAResult_t CAEDRServerStart()
 {
-    CAResult_t res = CAEDRServerInitialize(handle);
-    if (CA_STATUS_OK != res)
+    if (!g_threadPoolHandle)
     {
-        OIC_LOG(ERROR, TAG, "CAEDRServerInitialize failed");
-        CAEDRServerStop();
-        return CA_STATUS_FAILED;
+        return CA_STATUS_NOT_INITIALIZED;
     }
 
-    res = CAEDRStartUnicastServer(false);
+    CAEDRServerStartAcceptThread();
+    CAResult_t res = CAEDRStartUnicastServer(false);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "CAEDRStartUnicastServer failed");
@@ -423,33 +430,17 @@ void CAEDRServerJniInit()
 CAResult_t CAEDRServerInitialize(ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "CAEDRServerInitialize");
-
+    VERIFY_NON_NULL(handle, TAG, "handle is NULL");
     g_threadPoolHandle = handle;
+    CAEDRServerJniInit();
 
-    CAResult_t res = CAEDRServerStartAcceptThread();
-    if (CA_STATUS_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "CAEDRServerCreateMutex failed");
-        return res;
-    }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
-
-    return res;
+    // init mutex
+    CAResult_t result = CAEDRServerCreateMutex();
+    return result;
 }
 
 CAResult_t CAEDRServerStartAcceptThread()
 {
-    CAEDRServerJniInit();
-
-    // init mutex
-    CAResult_t ret = CAEDRServerCreateMutex();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CAEDRServerCreateMutex failed");
-        return ret;
-    }
-
     bool isAttached = false;
     JNIEnv* env;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
@@ -650,12 +641,6 @@ CAResult_t CAEDRStopMulticastServer()
 
 CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t type)
 {
-    if (!CAEDRNativeIsEnableBTAdapter(env))
-    {
-        OIC_LOG(ERROR, TAG, "BT adpater is not enable");
-        return CA_STATUS_INVALID_PARAM;
-    }
-
     if ((*env)->ExceptionCheck(env))
     {
         (*env)->ExceptionDescribe(env);

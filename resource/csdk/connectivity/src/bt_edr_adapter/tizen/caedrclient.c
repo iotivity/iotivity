@@ -73,7 +73,7 @@ static ca_mutex g_multicastDataListMutex = NULL;
 /**
  * This function creates mutex.
  */
-static void CAEDRManagerInitializeMutex(void);
+static CAResult_t CAEDRManagerInitializeMutex(void);
 
 /**
  * This function frees mutex.
@@ -552,8 +552,9 @@ void CAEDRClientUnsetCallbacks(void)
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
-void CAEDRManagerInitializeMutex(void)
+CAResult_t CAEDRManagerInitializeMutex(void)
 {
+    CAResult_t result = CA_STATUS_OK;
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
     if (!g_edrDeviceListMutex)
@@ -566,7 +567,14 @@ void CAEDRManagerInitializeMutex(void)
         g_multicastDataListMutex = ca_mutex_new();
     }
 
+    if (!g_edrDeviceListMutex || !g_multicastDataListMutex)
+    {
+        result = CA_STATUS_NOT_INITIALIZED;
+    }
+
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
+
+    return result;
 }
 
 void CAEDRManagerTerminateMutex(void)
@@ -588,11 +596,12 @@ void CAEDRManagerTerminateMutex(void)
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
 }
 
-void CAEDRInitializeClient(ca_thread_pool_t handle)
+CAResult_t CAEDRClientInitialize()
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
-    CAEDRManagerInitializeMutex();
+    CAResult_t result = CAEDRManagerInitializeMutex();
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    return result;
 }
 
 void CAEDRClientTerminate()
