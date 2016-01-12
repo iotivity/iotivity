@@ -56,7 +56,7 @@ static CAQueueingThread_t g_receiveThread;
 
 #else
 #define CA_MAX_RT_ARRAY_SIZE    3
-#endif  /* SINGLE_THREAD */
+#endif  // SINGLE_THREAD
 
 #define TAG "CA_MSG_HNDLR"
 
@@ -243,9 +243,8 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
     cadata->remoteEndpoint = ep;
     cadata->dataType = dataType;
 
-    return cadata;
-
     OIC_LOG(DEBUG, TAG, "CAGenerateHandlerData OUT");
+    return cadata;
 }
 
 static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uint32_t size)
@@ -376,16 +375,13 @@ static void CAProcessReceivedData(CAData_t *data)
         g_errorHandler(rep, data->errorInfo);
     }
 
-#ifdef SINGLE_THREAD
     CADestroyData(data, sizeof(CAData_t));
-#endif
 
     OIC_LOG(DEBUG, TAG, "CAProcessReceivedData OUT");
 }
 #endif
 
 #ifndef SINGLE_THREAD
-
 static void CAReceiveThreadProcess(void *threadData)
 {
 #ifndef SINGLE_HANDLE
@@ -395,7 +391,7 @@ static void CAReceiveThreadProcess(void *threadData)
     (void)threadData;
 #endif
 }
-#endif
+#endif // SINGLE_THREAD
 
 static CAResult_t CAProcessSendData(const CAData_t *data)
 {
@@ -476,7 +472,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                     }
                 }
             }
-#endif
+#endif // WITH_BWT
             CALogPDUInfo(pdu, data->remoteEndpoint);
 
             res = CASendUnicastData(data->remoteEndpoint, pdu->hdr, pdu->length);
@@ -543,7 +539,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                         )
                 {
                     // Blockwise transfer
-                    CAResult_t res = CAAddBlockOption(&pdu, &data->requestInfo->info,
+                    CAResult_t res = CAAddBlockOption(&pdu, info,
                                                       data->remoteEndpoint,
                                                       &options);
                     if (CA_STATUS_OK != res)
@@ -555,7 +551,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                         return res;
                     }
                 }
-#endif
+#endif // WITH_BWT
             }
             else
             {
@@ -597,7 +593,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                         }
                     }
                 }
-#endif
+#endif // WITH_BWT
             }
             else
             {
@@ -640,7 +636,6 @@ static void CASendThreadProcess(void *threadData)
     CAData_t *data = (CAData_t *) threadData;
     CAProcessSendData(data);
 }
-
 #endif
 
 /*
@@ -809,7 +804,7 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
     {
         CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
     }
-#endif
+#endif // SINGLE_THREAD
 
     coap_delete_pdu(pdu);
 }
@@ -875,8 +870,8 @@ void CAHandleRequestResponseCallbacks()
     CADestroyData(msg, sizeof(CAData_t));
     OICFree(item);
 
-#endif /* SINGLE_HANDLE */
-#endif
+#endif // SINGLE_HANDLE
+#endif // SINGLE_THREAD
 }
 
 static CAData_t* CAPrepareSendData(const CAEndpoint_t *endpoint, const void *sendData,
@@ -959,7 +954,7 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
         OIC_LOG(ERROR, TAG, "max RT queue size reached!");
         return CA_SEND_FAILED;
     }
-#endif /* ARDUINO */
+#endif // ARDUINO
 
     CAData_t *data = CAPrepareSendData(endpoint, sendMsg, dataType);
     if(!data)
@@ -1001,11 +996,11 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
         return res;
     }
     else
-#endif
+#endif // WITH_BWT
     {
         CAQueueingThreadAddData(&g_sendThread, data, sizeof(CAData_t));
     }
-#endif /* SINGLE_THREAD */
+#endif // SINGLE_THREAD
 
     return CA_STATUS_OK;
 }
@@ -1040,7 +1035,6 @@ CAResult_t CAInitializeMessageHandler()
 #ifndef SINGLE_THREAD
     // create thread pool
     CAResult_t res = ca_thread_pool_init(MAX_THREAD_POOL_SIZE, &g_threadPoolHandle);
-
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "thread pool initialize error.");
@@ -1048,58 +1042,91 @@ CAResult_t CAInitializeMessageHandler()
     }
 
     // send thread initialize
-    if (CA_STATUS_OK != CAQueueingThreadInitialize(&g_sendThread, g_threadPoolHandle,
-                                                   CASendThreadProcess, CADestroyData))
-    {
-        OIC_LOG(ERROR, TAG, "Failed to Initialize send queue thread");
-        return CA_STATUS_FAILED;
-    }
-
-    // start send thread
-    res = CAQueueingThreadStart(&g_sendThread);
-
+    res = CAQueueingThreadInitialize(&g_sendThread, g_threadPoolHandle,
+                                     CASendThreadProcess, CADestroyData);
     if (CA_STATUS_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "thread start error(send thread).");
+        OIC_LOG(ERROR, TAG, "Failed to Initialize send queue thread");
         ca_thread_pool_free(g_threadPoolHandle);
         g_threadPoolHandle = NULL;
         return res;
     }
 
+    // start send thread
+    res = CAQueueingThreadStart(&g_sendThread);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "thread start error(send thread).");
+        ca_thread_pool_free(g_threadPoolHandle);
+        g_threadPoolHandle = NULL;
+        CAQueueingThreadDestroy(&g_sendThread);
+        return res;
+    }
+
     // receive thread initialize
-    if (CA_STATUS_OK != CAQueueingThreadInitialize(&g_receiveThread, g_threadPoolHandle,
-                                                   CAReceiveThreadProcess, CADestroyData))
+    res = CAQueueingThreadInitialize(&g_receiveThread, g_threadPoolHandle,
+                                     CAReceiveThreadProcess, CADestroyData);
+    if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to Initialize receive queue thread");
-        return CA_STATUS_FAILED;
+        ca_thread_pool_free(g_threadPoolHandle);
+        g_threadPoolHandle = NULL;
+        CAQueueingThreadDestroy(&g_sendThread);
+        return res;
     }
 
 #ifndef SINGLE_HANDLE // This will be enabled when RI supports multi threading
     // start receive thread
     res = CAQueueingThreadStart(&g_receiveThread);
-
-    if (res != CA_STATUS_OK)
+    if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "thread start error(receive thread).");
+        ca_thread_pool_free(g_threadPoolHandle);
+        g_threadPoolHandle = NULL;
+        CAQueueingThreadDestroy(&g_sendThread);
+        CAQueueingThreadDestroy(&g_receiveThread);
         return res;
     }
-#endif /* SINGLE_HANDLE */
+#endif // SINGLE_HANDLE
 
     // retransmission initialize
-    CARetransmissionInitialize(&g_retransmissionContext, g_threadPoolHandle, CASendUnicastData,
-                               CATimeoutCallback, NULL);
+    res = CARetransmissionInitialize(&g_retransmissionContext, g_threadPoolHandle,
+                                     CASendUnicastData, CATimeoutCallback, NULL);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to Initialize Retransmission.");
+        ca_thread_pool_free(g_threadPoolHandle);
+        g_threadPoolHandle = NULL;
+        CAQueueingThreadDestroy(&g_sendThread);
+        CAQueueingThreadDestroy(&g_receiveThread);
+        return res;
+    }
 
 #ifdef WITH_BWT
     // block-wise transfer initialize
-    CAInitializeBlockWiseTransfer(CAAddDataToSendThread, CAAddDataToReceiveThread);
+    res = CAInitializeBlockWiseTransfer(CAAddDataToSendThread, CAAddDataToReceiveThread);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to Initialize BlockWiseTransfer.");
+        ca_thread_pool_free(g_threadPoolHandle);
+        g_threadPoolHandle = NULL;
+        CAQueueingThreadDestroy(&g_sendThread);
+        CAQueueingThreadDestroy(&g_receiveThread);
+        CARetransmissionDestroy(&g_retransmissionContext);
+        return res;
+    }
 #endif
 
     // start retransmission
     res = CARetransmissionStart(&g_retransmissionContext);
-
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "thread start error(retransmission thread).");
+        ca_thread_pool_free(g_threadPoolHandle);
+        g_threadPoolHandle = NULL;
+        CAQueueingThreadDestroy(&g_sendThread);
+        CAQueueingThreadDestroy(&g_receiveThread);
+        CARetransmissionDestroy(&g_retransmissionContext);
         return res;
     }
 
@@ -1107,10 +1134,16 @@ CAResult_t CAInitializeMessageHandler()
     CAInitializeAdapters(g_threadPoolHandle);
 #else
     // retransmission initialize
-    CARetransmissionInitialize(&g_retransmissionContext, NULL, CASendUnicastData,
-                               CATimeoutCallback, NULL);
+    CAResult_t res = CARetransmissionInitialize(&g_retransmissionContext, NULL, CASendUnicastData,
+                                                CATimeoutCallback, NULL);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to Initialize Retransmission.");
+        return res;
+    }
+
     CAInitializeAdapters();
-#endif
+#endif // SINGLE_THREAD
 
     return CA_STATUS_OK;
 }
@@ -1155,7 +1188,7 @@ void CATerminateMessageHandler()
     {
 #ifndef SINGLE_HANDLE // This will be enabled when RI supports multi threading
         CAQueueingThreadStop(&g_receiveThread);
-#endif /* SINGLE_HANDLE */
+#endif
     }
 
     // destroy thread pool
@@ -1181,7 +1214,7 @@ void CATerminateMessageHandler()
     // stop retransmission
     CARetransmissionStop(&g_retransmissionContext);
     CARetransmissionDestroy(&g_retransmissionContext);
-#endif
+#endif // SINGLE_THREAD
 }
 
 void CALogPDUInfo(coap_pdu_t *pdu, const CAEndpoint_t *endpoint)
@@ -1253,7 +1286,6 @@ void CAErrorHandler(const CAEndpoint_t *endpoint,
     OIC_LOG(DEBUG, TAG, "CAErrorHandler IN");
 
 #ifndef SINGLE_THREAD
-
     VERIFY_NON_NULL_VOID(endpoint, TAG, "remoteEndpoint");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
 
@@ -1292,7 +1324,7 @@ static void CASendErrorInfo(const CAEndpoint_t *endpoint, const CAInfo_t *info, 
     CAData_t *cadata = (CAData_t *) OICCalloc(1, sizeof(CAData_t));
     if (!cadata)
     {
-        OIC_LOG(ERROR, TAG, "memory allocation failed");
+        OIC_LOG(ERROR, TAG, "cadata memory allocation failed");
         return;
     }
 
@@ -1307,6 +1339,7 @@ static void CASendErrorInfo(const CAEndpoint_t *endpoint, const CAInfo_t *info, 
     CAErrorInfo_t *errorInfo = (CAErrorInfo_t *)OICCalloc(1, sizeof (CAErrorInfo_t));
     if (!errorInfo)
     {
+        OIC_LOG(ERROR, TAG, "errorInfo memory allocation failed");
         OICFree(cadata);
         CAFreeEndpoint(ep);
         return;
@@ -1315,6 +1348,7 @@ static void CASendErrorInfo(const CAEndpoint_t *endpoint, const CAInfo_t *info, 
     CAResult_t res = CACloneInfo(info, &errorInfo->info);
     if (CA_STATUS_OK != res)
     {
+        OIC_LOG(ERROR, TAG, "info clone failed");
         OICFree(cadata);
         OICFree(errorInfo);
         CAFreeEndpoint(ep);
