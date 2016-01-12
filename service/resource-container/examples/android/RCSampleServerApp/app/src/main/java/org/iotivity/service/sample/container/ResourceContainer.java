@@ -21,8 +21,6 @@
 package org.iotivity.service.sample.container;
 
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.os.Message;
 
 import android.os.PowerManager;
@@ -35,8 +33,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import dalvik.system.DexFile;
 
 /**
  * For calling the Resource Container APIs as per user selection on UI and for
@@ -56,8 +52,6 @@ public class ResourceContainer {
     public static boolean                    isInitialized = false;
     PowerManager pm = null;
     PowerManager.WakeLock wl = null;
-
-
 
     // constructor
     public ResourceContainer() {
@@ -277,6 +271,5 @@ public class ResourceContainer {
         msg = Message.obtain();
         msg.what = 1;
         resourceContainerActivityInstance.getHandler().sendMessage(msg);
-        //containerInstance.registerAndroidResource("testBundle", testResource);
     }
 }

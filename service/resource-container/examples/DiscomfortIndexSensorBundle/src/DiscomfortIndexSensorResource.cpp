@@ -51,7 +51,7 @@ void DiscomfortIndexSensorResource::executeLogic()
 
     m_pDiscomfortIndexSensor->executeDISensorLogic(&m_mapInputData, &strDiscomfortIndex);
 
-    setAttribute("discomfortIndex", RCSResourceAttributes::Value(strDiscomfortIndex.c_str()));
+    setAttribute("discomfortIndex", RCSResourceAttributes::Value(strDiscomfortIndex.c_str()), true);
 
     for (auto it : m_mapInputData)
     {
