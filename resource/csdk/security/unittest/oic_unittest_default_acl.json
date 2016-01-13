@@ -1,8 +1,8 @@
 {
     "acl": [
         {
-            "subject": "Kg==",
-            "resources": [
+            "sub": "Kg==",
+            "rsrc": [
                 "/oic/res",
                 "/oic/d",
                 "/oic/p",
@@ -12,8 +12,8 @@
                 "/oic/sec/doxm",
                 "/oic/sec/pstat"
 			],
-			"permission": 2,
-			"rowners" : [
+			"perms": 2,
+			"ownrs" : [
 				"MjIyMjIyMjIyMjIyMjIyMg=="
 			]
 		}

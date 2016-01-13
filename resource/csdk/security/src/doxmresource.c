@@ -55,6 +55,8 @@ static OCResourceHandle    gDoxmHandle = NULL;
 static OicSecOxm_t gOicSecDoxmJustWorks = OIC_JUST_WORKS;
 static OicSecDoxm_t gDefaultDoxm =
 {
+    NULL,                   /* OicUrn_t *oxmType */
+    0,                      /* size_t oxmTypeLen */
     &gOicSecDoxmJustWorks,  /* uint16_t *oxm */
     1,                      /* size_t oxmLen */
     OIC_JUST_WORKS,         /* uint16_t oxmSel */
@@ -68,6 +70,13 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm)
 {
     if (doxm)
     {
+        //Clean oxmType
+        for (size_t i = 0; i < doxm->oxmTypeLen; i++)
+        {
+            OICFree(doxm->oxmType[i]);
+        }
+        OICFree(doxm->oxmType);
+
         //clean oxm
         OICFree(doxm->oxm);
 
@@ -76,7 +85,7 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm)
     }
 }
 
-char * BinToDoxmJSON(const OicSecDoxm_t * doxm, const bool isIncResName)
+char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
 {
     if (NULL == doxm)
     {
@@ -92,15 +101,20 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm, const bool isIncResName)
     cJSON *jsonRoot = cJSON_CreateObject();
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
-    if(isIncResName)
+    jsonDoxm = cJSON_CreateObject();
+    VERIFY_NON_NULL(TAG, jsonDoxm, ERROR);
+    cJSON_AddItemToObject(jsonRoot, OIC_JSON_DOXM_NAME, jsonDoxm );
+
+    //OxmType -- Not Mandatory
+    if(doxm->oxmTypeLen > 0)
     {
-        jsonDoxm = cJSON_CreateObject();
-        VERIFY_NON_NULL(TAG, jsonDoxm, ERROR);
-        cJSON_AddItemToObject(jsonRoot, OIC_JSON_DOXM_NAME, jsonDoxm );
-    }
-    else
-    {
-        jsonDoxm = jsonRoot;
+        cJSON *jsonOxmTyArray = cJSON_CreateArray();
+        VERIFY_NON_NULL(TAG, jsonOxmTyArray, ERROR);
+        cJSON_AddItemToObject (jsonDoxm, OIC_JSON_OXM_TYPE_NAME, jsonOxmTyArray );
+        for (size_t i = 0; i < doxm->oxmTypeLen; i++)
+        {
+            cJSON_AddItemToArray (jsonOxmTyArray, cJSON_CreateString(doxm->oxmType[i]));
+        }
     }
 
     //Oxm -- Not Mandatory
@@ -142,14 +156,6 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm, const bool isIncResName)
     b64Ret = b64Encode(doxm->owner.id, sizeof(doxm->owner.id), base64Buff,
                     sizeof(base64Buff), &outLen);
     VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-    cJSON_AddStringToObject(jsonDoxm, OIC_JSON_DEV_OWNER_NAME, base64Buff);
-
-    outLen = 0;
-    b64Ret = b64Encode(doxm->owner.id, sizeof(doxm->owner.id), base64Buff,
-                    sizeof(base64Buff), &outLen);
-    VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-
-    //Rowner -- Mandatory
     cJSON_AddStringToObject(jsonDoxm, OIC_JSON_OWNER_NAME, base64Buff);
 
     jsonStr = cJSON_PrintUnformatted(jsonRoot);
@@ -162,7 +168,7 @@ exit:
     return jsonStr;
 }
 
-OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr, const bool isIncResName)
+OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
 {
 
     if (NULL == jsonStr)
@@ -183,18 +189,33 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr, const bool isIncResName)
     cJSON *jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
-    if(isIncResName)
-   {
-        jsonDoxm = cJSON_GetObjectItem(jsonRoot, OIC_JSON_DOXM_NAME);
-        VERIFY_NON_NULL(TAG, jsonDoxm, ERROR);
-    }
-    else
-    {
-        jsonDoxm = jsonRoot;
-    }
+    jsonDoxm = cJSON_GetObjectItem(jsonRoot, OIC_JSON_DOXM_NAME);
+    VERIFY_NON_NULL(TAG, jsonDoxm, ERROR);
 
     doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
     VERIFY_NON_NULL(TAG, doxm, ERROR);
+
+    //OxmType -- not Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_TYPE_NAME);
+    if ((jsonObj) && (cJSON_Array == jsonObj->type))
+    {
+        doxm->oxmTypeLen = cJSON_GetArraySize(jsonObj);
+        VERIFY_SUCCESS(TAG, doxm->oxmTypeLen > 0, ERROR);
+
+        doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(char *));
+        VERIFY_NON_NULL(TAG, (doxm->oxmType), ERROR);
+
+        for (size_t i  = 0; i < doxm->oxmTypeLen ; i++)
+        {
+            cJSON *jsonOxmTy = cJSON_GetArrayItem(jsonObj, i);
+            VERIFY_NON_NULL(TAG, jsonOxmTy, ERROR);
+
+            jsonObjLen = strlen(jsonOxmTy->valuestring) + 1;
+            doxm->oxmType[i] = (char*)OICMalloc(jsonObjLen);
+            VERIFY_NON_NULL(TAG, doxm->oxmType[i], ERROR);
+            strncpy((char *)doxm->oxmType[i], (char *)jsonOxmTy->valuestring, jsonObjLen);
+        }
+    }
 
     //Oxm -- not Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_NAME);
@@ -279,7 +300,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr, const bool isIncResName)
     }
 
     //Owner -- will be empty when device status is unowned.
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEV_OWNER_NAME);
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OWNER_NAME);
     if(true == doxm->owned)
     {
         VERIFY_NON_NULL(TAG, jsonObj, ERROR);
@@ -318,7 +339,7 @@ static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
     if (NULL != doxm)
     {
         // Convert Doxm data into JSON for update to persistent storage
-        char *jsonStr = BinToDoxmJSON(doxm, true);
+        char *jsonStr = BinToDoxmJSON(doxm);
         if (jsonStr)
         {
             cJSON *jsonDoxm = cJSON_Parse(jsonStr);
@@ -426,7 +447,7 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
      * return valid doxm resource json.
      */
 
-    jsonStr = (ehRet == OC_EH_OK) ? BinToDoxmJSON(gDoxm, false) : NULL;
+    jsonStr = (ehRet == OC_EH_OK) ? BinToDoxmJSON(gDoxm) : NULL;
 
     // Send response payload to request originator
     if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, jsonStr))
@@ -496,7 +517,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
      * Convert JSON Doxm data into binary. This will also validate
      * the Doxm data received.
      */
-    OicSecDoxm_t* newDoxm = JSONToDoxmBin(((OCSecurityPayload*)ehRequest->payload)->securityData, false);
+    OicSecDoxm_t* newDoxm = JSONToDoxmBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if (newDoxm)
     {
@@ -810,7 +831,7 @@ OCStackResult InitDoxmResource()
     if(jsonSVRDatabase)
     {
         //Convert JSON DOXM into binary format
-        gDoxm = JSONToDoxmBin(jsonSVRDatabase, true);
+        gDoxm = JSONToDoxmBin(jsonSVRDatabase);
     }
     /*
      * If SVR database in persistent storage got corrupted or

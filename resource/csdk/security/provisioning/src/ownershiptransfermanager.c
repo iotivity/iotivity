@@ -515,7 +515,7 @@ static OCStackApplicationResult ListMethodsHandler(void *ctx, OCDoHandle UNUSED,
         }
 
         OicSecPstat_t* pstat = JSONToPstatBin(
-                ((OCSecurityPayload*)clientResponse->payload)->securityData, false);
+                ((OCSecurityPayload*)clientResponse->payload)->securityData);
         if(NULL == pstat)
         {
             OC_LOG(ERROR, TAG, "Error while converting json to pstat bin");
@@ -881,7 +881,7 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx,
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToPstatJSON(deviceInfo->pstat, false);
+    secPayload->securityData = BinToPstatJSON(deviceInfo->pstat);
     if (NULL == secPayload->securityData)
     {
         OICFree(secPayload);
@@ -1120,7 +1120,7 @@ static OCStackApplicationResult ProvisionDefaultACLCB(void *ctx, OCDoHandle UNUS
             return OC_STACK_NO_MEMORY;
         }
         secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-        secPayload->securityData = BinToPstatJSON(otmCtx->selectedDeviceInfo->pstat, false);
+        secPayload->securityData = BinToPstatJSON(otmCtx->selectedDeviceInfo->pstat);
         if (NULL == secPayload->securityData)
         {
             OICFree(secPayload);
@@ -1223,7 +1223,7 @@ OCStackResult FinalizeProvisioning(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToAclJSON(&defaultAcl, false);
+    secPayload->securityData = BinToAclJSON(&defaultAcl);
     OICFree(defaultAcl.owners);
     if(!secPayload->securityData)
     {

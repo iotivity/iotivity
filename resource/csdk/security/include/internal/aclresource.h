@@ -57,11 +57,10 @@ const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **
  * Caller needs to invoke 'free' when done using
  * returned string.
  * @param acl  instance of OicSecAcl_t structure.
- * @param isIncResName decide whether or not to include the resource name in output.
  *
  * @retval  pointer to ACL in json format.
  */
-char* BinToAclJSON(const OicSecAcl_t * acl, const bool isIncResName);
+char* BinToAclJSON(const OicSecAcl_t * acl);
 
 
 /**
@@ -75,11 +74,10 @@ void DeleteACLList(OicSecAcl_t* acl);
 /**
  * This function installs a new ACL.
  * @param newJsonStr JSON string representing a new ACL.
- * @param isIncResName if resource name is included into payload, it is true.
  *
  * @retval  OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult InstallNewACL(const char* newJsonStr, const bool isIncResName);
+OCStackResult InstallNewACL(const char* newJsonStr);
 
 
 #ifdef __cplusplus

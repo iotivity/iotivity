@@ -51,16 +51,16 @@ char* GetBase64CRL();
 void  GetDerCrl(ByteArray crlArray);
 
 /**
- * This method converts JSON CRL into binary CRL.
- * The JSON CRL can be from persistent database or received as PUT/POST request.
+ * This function get CRL from SRM
  *
- * @param[in] jsonStr  CRL data in json string.
- * @param[in] isIncResName if resource name is included into payload, it is true.
- * @return pointer to OicSecCrl_t.
+ * @param crl [out] - pointer to buffer that contains crl. Shoul be not NULL. Buffer
+ * will be allocated by the function and content of *crl will be ignored.
+ * @param outlen [out] - pointer to length of the CRL buffer. Shoul be not NULL.
  *
- * @note Caller needs to invoke OCFree after done using the return pointer
+ * @returns OC_STACK_OK if success and errorcode otherwise.
+ * @note Caller responsible for crl buffer memory (use OICFree to free it)
  */
-OicSecCrl_t * JSONToCrlBin(const char * jsonStr, const bool isIncResName);
+OicSecCrl_t * JSONToCrlBin(const char * jsonStr);
 
 /**
  * Initialize CLR resource by loading data from persistent storage.

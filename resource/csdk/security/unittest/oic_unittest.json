@@ -1,24 +1,24 @@
 {
     "acl": [
         {
-            "subject": "MTExMTExMTExMTExMTExMQ==",
-            "resources": [
+            "sub": "MTExMTExMTExMTExMTExMQ==",
+            "rsrc": [
 				"/oic/light",
 				"/oic/fan"
 			],
-			"permission": 255,
-			"rowners" : [
+			"perms": 255,
+			"ownrs" : [
 				"MjIyMjIyMjIyMjIyMjIyMg=="
 			]
 		},
 		{
-            "subject": "MzMzMzMzMzMzMzMzMzMzMw==",
-            "resources": [
+            "sub": "MzMzMzMzMzMzMzMzMzMzMw==",
+            "rsrc": [
 				"/oic/light",
 				"/oic/garage"
 			],
-			"permission": 255,
-			"rowners" : [
+			"perms": 255,
+			"ownrs" : [
 				"MjIyMjIyMjIyMjIyMjIyMg==",
                 "NDQ0NDQ0NDQ0NDQ0NDQ0NA=="
 			]
@@ -37,22 +37,22 @@
 
     "amacl": [
         {
-            "resources": ["/a/led", "/a/fan"],
+            "rsrc": ["/a/led", "/a/fan"],
             "amss": [
                 "NTU1NTU1NTU1NTU1NTU1NQ==", 
                 "NjY2NjY2NjY2NjY2NjY2Ng=="
             ],
-			"rowners" : [
+			"ownrs" : [
 				"MjIyMjIyMjIyMjIyMjIyMg=="
 			]
 		},
         {
-            "resources": ["/b/led", "/b/fan"],
+            "rsrc": ["/b/led", "/b/fan"],
             "amss": [
                 "NTU1NTU1NTU1NTU1NTU1NQ==", 
                 "NjY2NjY2NjY2NjY2NjY2Ng=="
             ],
-			"rowners" : [
+			"ownrs" : [
 				"MjIyMjIyMjIyMjIyMjIyMg=="
 			]
 		}
@@ -60,16 +60,16 @@
 
 "svc": [
         {
-            "svcid": "NTU1NTU1NTU1NTU1NTU1NQ==",
+            "svcdid": "NTU1NTU1NTU1NTU1NTU1NQ==",
 			"svct": 1,
-			"rowners" : [
+			"ownrs" : [
 				"OTk5OTk5OTk5OTk5OTk5OQ=="
 			]
 		},
         {
-            "svcid": "NjY2NjY2NjY2NjY2NjY2Ng==",
+            "svcdid": "NjY2NjY2NjY2NjY2NjY2Ng==",
 			"svct": 1,
-			"rowners" : [
+			"ownrs" : [
 				"OTk5OTk5OTk5OTk5OTk5OQ=="
 			]
 		}

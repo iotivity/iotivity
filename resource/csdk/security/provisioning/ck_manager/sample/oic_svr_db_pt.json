@@ -1,27 +1,27 @@
 {
     "acl": [
         {
-            "subject": "Kg==",
-            "resources": [
+            "sub": "Kg==",
+            "rsrc": [
                 "/oic/res",
                 "/oic/d",
                 "/oic/p",
                 "/oic/res/types/d",
                 "/oic/ad"
 			],
-			"permission": 2,
-			"rowners" : ["YWRtaW5EZXZpY2VVVUlEMA=="]
+			"perms": 2,
+			"ownrs" : ["YWRtaW5EZXZpY2VVVUlEMA=="]
 		},
         {
-            "subject": "Kg==",
-            "resources": [
+            "sub": "Kg==",
+            "rsrc": [
                 "/oic/sec/doxm",
                 "/oic/sec/pstat",
                 "/oic/sec/acl",
                 "/oic/sec/cred"
              ],
-             "permission": 7,
-             "rowners" : ["YWRtaW5EZXZpY2VVVUlEMA=="]
+             "perms": 7,
+             "ownrs" : ["YWRtaW5EZXZpY2VVVUlEMA=="]
         }
 	],
 	"pstat":	{
@@ -39,6 +39,6 @@
 		"sct": 1,
 		"owned": true,
 		"deviceid":	"YWRtaW5EZXZpY2VVVUlEMA==",
-		"devowner":	"YWRtaW5EZXZpY2VVVUlEMA=="
+		"ownr":	"YWRtaW5EZXZpY2VVVUlEMA=="
 	}
 }

@@ -289,7 +289,7 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToCredJSON(cred, false);
+    secPayload->securityData = BinToCredJSON(cred);
     if(NULL == secPayload->securityData)
     {
         OICFree(secPayload);
@@ -441,7 +441,7 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     }
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToCrlJSON(crl, false);
+    secPayload->securityData = BinToCrlJSON(crl);
     if (NULL == secPayload->securityData)
     {
         OICFree(secPayload);
@@ -527,7 +527,7 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToCredJSON(cred, false);
+    secPayload->securityData = BinToCredJSON(cred);
 
     if (NULL == secPayload->securityData)
     {
@@ -834,7 +834,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToAclJSON(acl, false);
+    secPayload->securityData = BinToAclJSON(acl);
     if(NULL == secPayload->securityData)
     {
         OICFree(secPayload);

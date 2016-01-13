@@ -76,26 +76,18 @@ void DeleteAmaclList(OicSecAmacl_t* amacl)
  *
  * Note: Caller needs to invoke 'free' when finished using the return string.
  */
-char * BinToAmaclJSON(const OicSecAmacl_t * amacl, const bool isIncResName)
+char * BinToAmaclJSON(const OicSecAmacl_t * amacl)
 {
     cJSON *jsonRoot = NULL;
     char *jsonStr = NULL;
 
     if (amacl)
     {
+        jsonRoot = cJSON_CreateObject();
+        VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
+
         cJSON *jsonAmaclArray = NULL;
-        if(isIncResName)
-        {
-            jsonRoot = cJSON_CreateObject();
-            VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-            cJSON_AddItemToObject(jsonRoot, OIC_JSON_AMACL_NAME,
-                                  jsonAmaclArray = cJSON_CreateArray());
-        }
-        else
-        {
-            jsonAmaclArray = cJSON_CreateArray();
-            jsonRoot = jsonAmaclArray;
-        }
+        cJSON_AddItemToObject (jsonRoot, OIC_JSON_AMACL_NAME, jsonAmaclArray = cJSON_CreateArray());
         VERIFY_NON_NULL(TAG, jsonAmaclArray, ERROR);
 
         while(amacl)
@@ -170,7 +162,7 @@ exit:
 /*
  * This internal method converts JSON AMACL into binary AMACL.
  */
-OicSecAmacl_t * JSONToAmaclBin(const char * jsonStr, const bool isIncResName)
+OicSecAmacl_t * JSONToAmaclBin(const char * jsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecAmacl_t * headAmacl = NULL;
@@ -183,14 +175,7 @@ OicSecAmacl_t * JSONToAmaclBin(const char * jsonStr, const bool isIncResName)
     jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
-    if(isIncResName)
-    {
-        jsonAmaclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_AMACL_NAME);
-    }
-    else
-    {
-        jsonAmaclArray = jsonRoot;
-    }
+    jsonAmaclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_AMACL_NAME);
     VERIFY_NON_NULL(TAG, jsonAmaclArray, INFO);
 
     if (cJSON_Array == jsonAmaclArray->type)
@@ -265,7 +250,7 @@ exit:
 static OCEntityHandlerResult HandleAmaclGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
     // Convert Amacl data into JSON for transmission
-    char* jsonStr = BinToAmaclJSON(gAmacl, false);
+    char* jsonStr = BinToAmaclJSON(gAmacl);
 
     OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
 
@@ -283,7 +268,7 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert JSON Amacl data into binary. This will also validate the Amacl data received.
-    OicSecAmacl_t* newAmacl = JSONToAmaclBin(((OCSecurityPayload*)ehRequest->payload)->securityData, false);
+    OicSecAmacl_t* newAmacl = JSONToAmaclBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if (newAmacl)
     {
@@ -291,7 +276,7 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
         LL_APPEND(gAmacl, newAmacl);
 
         // Convert Amacl data into JSON for update to persistent storage
-        char *jsonStr = BinToAmaclJSON(gAmacl, true);
+        char *jsonStr = BinToAmaclJSON(gAmacl);
         if (jsonStr)
         {
             cJSON *jsonAmacl = cJSON_Parse(jsonStr);
@@ -389,7 +374,7 @@ OCStackResult InitAmaclResource()
     if (jsonSVRDatabase)
     {
         // Convert JSON Amacl into binary format
-        gAmacl = JSONToAmaclBin(jsonSVRDatabase, true);
+        gAmacl = JSONToAmaclBin(jsonSVRDatabase);
         OICFree(jsonSVRDatabase);
     }
 

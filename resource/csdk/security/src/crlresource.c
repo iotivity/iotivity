@@ -69,7 +69,7 @@ void DeleteCrlBinData(OicSecCrl_t *crl)
     }
 }
 
-char *BinToCrlJSON(const OicSecCrl_t *crl, const bool isIncResName)
+char *BinToCrlJSON(const OicSecCrl_t *crl)
 {
     if (NULL == crl)
     {
@@ -81,21 +81,12 @@ char *BinToCrlJSON(const OicSecCrl_t *crl, const bool isIncResName)
     uint32_t base64CRLLen = 0;
     B64Result b64Ret = B64_OK;
     char *jsonStr = NULL;
-
     cJSON *jsonRoot = cJSON_CreateObject();
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
+    cJSON *jsonCrl = cJSON_CreateObject();
+    VERIFY_NON_NULL(TAG, jsonCrl, ERROR);
 
-    cJSON *jsonCrl = NULL;
-    if(isIncResName)
-    {
-        jsonCrl = cJSON_CreateObject();
-        VERIFY_NON_NULL(TAG, jsonCrl, ERROR);
-        cJSON_AddItemToObject(jsonRoot, OIC_JSON_CRL_NAME, jsonCrl);
-    }
-    else
-    {
-        jsonCrl = jsonRoot;
-    }
+    cJSON_AddItemToObject(jsonRoot, OIC_JSON_CRL_NAME, jsonCrl);
 
     //CRLId -- Mandatory
     cJSON_AddNumberToObject(jsonCrl, OIC_JSON_CRL_ID, (int)crl->CrlId);
@@ -130,7 +121,7 @@ exit:
     return jsonStr;
 }
 
-OicSecCrl_t *JSONToCrlBin(const char * jsonStr, const bool isIncResName)
+OicSecCrl_t *JSONToCrlBin(const char * jsonStr)
 {
     if (NULL == jsonStr)
     {
@@ -150,16 +141,8 @@ OicSecCrl_t *JSONToCrlBin(const char * jsonStr, const bool isIncResName)
     cJSON *jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
-    if(isIncResName)
-    {
-        jsonCrl = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRL_NAME);
-    }
-    else
-    {
-        jsonCrl = jsonRoot;
-    }
+    jsonCrl = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRL_NAME);
     VERIFY_NON_NULL(TAG, jsonCrl, ERROR);
-
     crl = (OicSecCrl_t *)OICCalloc(1, sizeof(OicSecCrl_t));
     VERIFY_NON_NULL(TAG, crl, ERROR);
 
@@ -261,7 +244,7 @@ OCStackResult UpdateCRLResource(const OicSecCrl_t *crl)
     char *jsonStr = NULL;
     OCStackResult res = OC_STACK_ERROR;
 
-    jsonStr = BinToCrlJSON((OicSecCrl_t *) crl, true);
+    jsonStr = BinToCrlJSON((OicSecCrl_t *) crl);
     if (!jsonStr)
     {
         return OC_STACK_ERROR;
@@ -294,7 +277,7 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
 
         cJSON *jsonObj = cJSON_Parse(jsonCRL);
         OicSecCrl_t *crl = NULL;
-        crl = JSONToCrlBin(jsonCRL, false);
+        crl = JSONToCrlBin(jsonCRL);
         if (!crl)
         {
             OC_LOG(ERROR, TAG, "Error JSONToCrlBin");
@@ -437,7 +420,7 @@ OCStackResult InitCRLResource()
     if (jsonSVRDatabase)
     {
         //Convert JSON CRL into binary format
-        gCrl = JSONToCrlBin(jsonSVRDatabase, true);
+        gCrl = JSONToCrlBin(jsonSVRDatabase);
     }
     /*
      * If SVR database in persistent storage got corrupted or
@@ -475,7 +458,7 @@ OicSecCrl_t *GetCRLResource()
     if (jsonSVRDatabase)
     {
         //Convert JSON CRL into binary format
-        crl = JSONToCrlBin(jsonSVRDatabase, true);
+        crl = JSONToCrlBin(jsonSVRDatabase);
     }
     /*
      * If SVR database in persistent storage got corrupted or

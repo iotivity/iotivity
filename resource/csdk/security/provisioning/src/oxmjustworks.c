@@ -40,7 +40,7 @@ char* CreateJustWorksSelectOxmPayload(OTMContext_t* otmCtx)
     }
 
     otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_JUST_WORKS;
-    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm, false);
+    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
 
 char* CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx)
@@ -60,7 +60,7 @@ char* CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx)
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
     otmCtx->selectedDeviceInfo->doxm->owned = true;
 
-    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm, false);
+    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
 
 OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM)

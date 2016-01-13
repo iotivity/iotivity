@@ -90,8 +90,6 @@ srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
 srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_unittest_acl1.json'))
 srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
-    unittest_src_dir + 'oic_unittest_acl_payload.json'))
-srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_unittest_default_acl.json'))
 
 env.AppendTarget('test')

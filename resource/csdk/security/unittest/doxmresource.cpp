@@ -38,8 +38,8 @@ extern "C" {
 OCStackResult CreateDoxmResource();
 OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
                 OCEntityHandlerRequest * ehRequest);
-char * BinToDoxmJSON(const OicSecDoxm_t * doxm, const bool isIncResName);
-OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr, const bool isIncResName);
+char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
+OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
 void InitSecDoxmInstance(OicSecDoxm_t * doxm);
 OCEntityHandlerResult HandleDoxmPostRequest (const OCEntityHandlerRequest * ehRequest);
 void DeleteDoxmBinData(OicSecDoxm_t* doxm);
@@ -56,10 +56,28 @@ OicSecDoxm_t * getBinDoxm()
     {
         return NULL;
     }
-    doxm->oxmLen = 1;
+    doxm->oxmTypeLen =  1;
+    doxm->oxmType    = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(char *));
+    if(!doxm->oxmType)
+    {
+        OICFree(doxm);
+        return NULL;
+    }
+    doxm->oxmType[0] = (char*)OICMalloc(strlen(OXM_JUST_WORKS) + 1);
+    if(!doxm->oxmType[0])
+    {
+        OICFree(doxm->oxmType);
+        OICFree(doxm);
+        return NULL;
+    }
+
+    strcpy(doxm->oxmType[0], OXM_JUST_WORKS);
+    doxm->oxmLen     = 1;
     doxm->oxm        = (OicSecOxm_t *)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
     if(!doxm->oxm)
     {
+        OICFree(doxm->oxmType[0]);
+        OICFree(doxm->oxmType);
         OICFree(doxm);
         return NULL;
     }
@@ -138,7 +156,7 @@ TEST(DoxmEntityHandlerTest, DoxmEntityHandlerDeviceIdQuery)
 //BinToDoxmJSON Tests
 TEST(BinToDoxmJSONTest, BinToDoxmJSONNullDoxm)
 {
-    char* value = BinToDoxmJSON(NULL, true);
+    char* value = BinToDoxmJSON(NULL);
     EXPECT_TRUE(value == NULL);
 }
 
@@ -146,7 +164,7 @@ TEST(BinToDoxmJSONTest, BinToDoxmJSONValidDoxm)
 {
     OicSecDoxm_t * doxm =  getBinDoxm();
 
-    char * json = BinToDoxmJSON(doxm, true);
+    char * json = BinToDoxmJSON(doxm);
     OC_LOG_V(INFO, TAG, "BinToDoxmJSON:%s", json);
     EXPECT_TRUE(json != NULL);
 
@@ -158,10 +176,10 @@ TEST(BinToDoxmJSONTest, BinToDoxmJSONValidDoxm)
 TEST(JSONToDoxmBinTest, JSONToDoxmBinValidJSON)
 {
     OicSecDoxm_t * doxm1 =  getBinDoxm();
-    char * json = BinToDoxmJSON(doxm1, true);
+    char * json = BinToDoxmJSON(doxm1);
     EXPECT_TRUE(json != NULL);
 
-    OicSecDoxm_t *doxm2 = JSONToDoxmBin(json, true);
+    OicSecDoxm_t *doxm2 = JSONToDoxmBin(json);
     EXPECT_TRUE(doxm2 != NULL);
 
     DeleteDoxmBinData(doxm1);
@@ -171,7 +189,7 @@ TEST(JSONToDoxmBinTest, JSONToDoxmBinValidJSON)
 
 TEST(JSONToDoxmBinTest, JSONToDoxmBinNullJSON)
 {
-    OicSecDoxm_t *doxm = JSONToDoxmBin(NULL, true);
+    OicSecDoxm_t *doxm = JSONToDoxmBin(NULL);
     EXPECT_TRUE(doxm == NULL);
 }
 
@@ -188,7 +206,7 @@ TEST(HandleDoxmPostRequestTest, HandleDoxmPostRequestValidInput)
     svRequest.addressInfo.IP.port = 2345;
     svRequest.connectivityType = CA_ETHERNET;
 
-    ehRequest.reqJSONPayload = (unsigned char *) BinToDoxmJSON(doxm, true);
+    ehRequest.reqJSONPayload = (unsigned char *) BinToDoxmJSON(doxm);
     ehRequest.requestHandle = (OCRequestHandle) &svRequest;
 
     EXPECT_EQ(OC_EH_ERROR, HandleDoxmPostRequest(&ehRequest));

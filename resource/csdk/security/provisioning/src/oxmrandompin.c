@@ -55,7 +55,7 @@ char* CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx)
     }
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id, UUID_LENGTH);
 
-    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm, false);
+    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
 
 char* CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx)
@@ -75,7 +75,7 @@ char* CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx)
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
     otmCtx->selectedDeviceInfo->doxm->owned = true;
 
-    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm, false);
+    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
 
 OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)

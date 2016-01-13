@@ -65,13 +65,12 @@ const OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
  * Caller needs to invoke 'free' when done using
  * returned string.
  * @param cred  pointer to instance of OicSecCred_t structure.
- * @param isIncResName Decide whether or not to include the resource name in output.
  *
  * @retval
  *      pointer to JSON credential representation - if credential for subjectId found
  *      NULL                                      - if credential for subjectId not found
  */
-char* BinToCredJSON(const OicSecCred_t* cred, const bool isIncResName);
+char* BinToCredJSON(const OicSecCred_t* cred);
 
 /**
  * This function generates the bin credential data.

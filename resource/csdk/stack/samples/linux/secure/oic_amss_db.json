@@ -1,8 +1,8 @@
 {
     "acl": [
         {
-            "subject": "Kg==",
-            "resources": [
+            "sub": "Kg==",
+            "rsrc": [
                 "/oic/res",
                 "/oic/d",
                 "/oic/p",
@@ -11,30 +11,30 @@
                 "/oic/sec/acl",
                 "/oic/sec/amacl"
 			],
-			"permission": 2,
-			"rowners" : ["MTExMTExMTExMTExMTExMQ=="]
+			"perms": 2,
+			"ownrs" : ["MTExMTExMTExMTExMTExMQ=="]
 		},
         {
-            "subject": "Kg==",
-            "resources": [
+            "sub": "Kg==",
+            "rsrc": [
                 "/oic/sec/doxm",
                 "/oic/sec/pstat"
              ],
-             "permission": 2,
-             "rowners" : ["MTExMTExMTExMTExMTExMQ=="]
+             "perms": 2,
+             "ownrs" : ["MTExMTExMTExMTExMTExMQ=="]
         },
         {
-            "subject": "MjIyMjIyMjIyMjIyMjIyMg==",
-            "resources": ["/oic/sec/acl",
+            "sub": "MjIyMjIyMjIyMjIyMjIyMg==",
+            "rsrc": ["/oic/sec/acl",
                       "/oic/sec/cred"],
-            "permission": 8,
-            "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+            "perms": 8,
+            "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
         },
         {
-            "subject": "NDQ0NDMzMzMyMjIyMTExMQ==",
-            "resources": ["/a/led"],
-            "permission": 6,
-            "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+            "sub": "NDQ0NDMzMzMyMjIyMTExMQ==",
+            "rsrc": ["/a/led"],
+            "perms": 6,
+            "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
         }
 	],
 	"pstat":	{
@@ -52,13 +52,13 @@
 		"sct": 1,
 		"owned": true,
 		"deviceid":	"MTkxOTE5MTkxOTE5MTkxOQ==",
-		"devowner":	"YWRtaW5EZXZpY2VVVUlEAA=="
+		"ownr":	"YWRtaW5EZXZpY2VVVUlEAA=="
 	},
 	"cred":	[{
 		"credid": 1,
-		"subjectid": "MTExMTExMTExMTExMTExMQ==",
-		"credtype": 1,
-		"privatedata": "QkJCQkJCQkJCQkJCQkJCQg==",
-        "rowners" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
+		"sub": "MTExMTExMTExMTExMTExMQ==",
+		"credtyp": 1,
+		"pvdata": "QkJCQkJCQkJCQkJCQkJCQg==",
+        "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 	}]
 }

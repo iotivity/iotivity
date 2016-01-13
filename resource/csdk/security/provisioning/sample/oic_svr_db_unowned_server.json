@@ -1,8 +1,8 @@
 {
     "acl": [
         {
-            "subject": "Kg==",
-            "resources": [
+            "sub": "Kg==",
+            "rsrc": [
                 "/oic/res",
                 "/oic/d",
                 "/oic/p",
@@ -12,17 +12,17 @@
                 "/oic/sec/svc",
                 "/oic/sec/amacl"
 			],
-			"permission": 2,
-			"rowners" : ["MTExMTExMTExMTExMTExMQ=="]
+			"perms": 2,
+			"ownrs" : ["MTExMTExMTExMTExMTExMQ=="]
 		},
         {
-            "subject": "Kg==",
-            "resources": [
+            "sub": "Kg==",
+            "rsrc": [
                 "/oic/sec/doxm",
                 "/oic/sec/pstat"
              ],
-             "permission": 6,
-             "rowners" : ["MTExMTExMTExMTExMTExMQ=="]
+             "perms": 6,
+             "ownrs" : ["MTExMTExMTExMTExMTExMQ=="]
         }
     ],
 	"pstat":	{

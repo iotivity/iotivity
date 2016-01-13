@@ -112,25 +112,18 @@ void DeleteACLList(OicSecAcl_t* acl)
  * Note: Caller needs to invoke 'free' when finished done using
  * return string.
  */
-char * BinToAclJSON(const OicSecAcl_t * acl, const bool isIncResName)
+char * BinToAclJSON(const OicSecAcl_t * acl)
 {
     cJSON *jsonRoot = NULL;
     char *jsonStr = NULL;
 
     if (acl)
     {
+        jsonRoot = cJSON_CreateObject();
+        VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
+
         cJSON *jsonAclArray = NULL;
-        if(isIncResName)
-        {
-            jsonRoot = cJSON_CreateObject();
-            VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-            cJSON_AddItemToObject (jsonRoot, OIC_JSON_ACL_NAME, jsonAclArray=cJSON_CreateArray());
-        }
-        else
-        {
-            jsonAclArray = cJSON_CreateArray();
-            jsonRoot = jsonAclArray;
-        }
+        cJSON_AddItemToObject (jsonRoot, OIC_JSON_ACL_NAME, jsonAclArray = cJSON_CreateArray());
         VERIFY_NON_NULL(TAG, jsonAclArray, ERROR);
 
         while(acl)
@@ -231,7 +224,7 @@ exit:
 /*
  * This internal method converts JSON ACL into binary ACL.
  */
-OicSecAcl_t * JSONToAclBin(const char * jsonStr, const bool isIncResName)
+OicSecAcl_t * JSONToAclBin(const char * jsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecAcl_t * headAcl = NULL;
@@ -244,14 +237,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr, const bool isIncResName)
     jsonRoot = cJSON_Parse(jsonStr);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
-    if(isIncResName)
-    {
-        jsonAclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_ACL_NAME);
-    }
-    else
-    {
-        jsonAclArray = jsonRoot;
-    }
+    jsonAclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_ACL_NAME);
     VERIFY_NON_NULL(TAG, jsonAclArray, ERROR);
 
     if (cJSON_Array == jsonAclArray->type)
@@ -422,7 +408,7 @@ exit:
 static bool UpdatePersistentStorage(const OicSecAcl_t *acl)
 {
     // Convert ACL data into JSON for update to persistent storage
-    char *jsonStr = BinToAclJSON(acl, true);
+    char *jsonStr = BinToAclJSON(acl);
     if (jsonStr)
     {
         cJSON *jsonAcl = cJSON_Parse(jsonStr);
@@ -646,7 +632,7 @@ static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest *
                              0 == strcmp(WILDCARD_RESOURCE_URI, currentAce->resources[n])))
                     {
                         // Convert ACL data into JSON for transmission
-                        jsonStr = BinToAclJSON(currentAce, false);
+                        jsonStr = BinToAclJSON(currentAce);
                         goto exit;
                     }
                 }
@@ -654,7 +640,7 @@ static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest *
             else
             {
                 // Convert ACL data into JSON for transmission
-                jsonStr = BinToAclJSON(currentAce, false);
+                jsonStr = BinToAclJSON(currentAce);
                 goto exit;
             }
         }
@@ -662,7 +648,7 @@ static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest *
     else
     {
         // Convert ACL data into JSON for transmission
-        jsonStr = BinToAclJSON(gAcl, false);
+        jsonStr = BinToAclJSON(gAcl);
     }
 
 exit:
@@ -682,7 +668,7 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert JSON ACL data into binary. This will also validate the ACL data received.
-    OicSecAcl_t* newAcl = JSONToAclBin(((OCSecurityPayload*)ehRequest->payload)->securityData, false);
+    OicSecAcl_t* newAcl = JSONToAclBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
 
     if (newAcl)
     {
@@ -899,7 +885,7 @@ OCStackResult InitACLResource()
     if (jsonSVRDatabase)
     {
         // Convert JSON ACL into binary format
-        gAcl = JSONToAclBin(jsonSVRDatabase, true);
+        gAcl = JSONToAclBin(jsonSVRDatabase);
         OICFree(jsonSVRDatabase);
     }
     /*
@@ -1000,12 +986,12 @@ const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **
 }
 
 
-OCStackResult InstallNewACL(const char* newJsonStr, const bool isIncResName)
+OCStackResult InstallNewACL(const char* newJsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
     // Convert JSON ACL data into binary. This will also validate the ACL data received.
-    OicSecAcl_t* newAcl = JSONToAclBin(newJsonStr, isIncResName);
+    OicSecAcl_t* newAcl = JSONToAclBin(newJsonStr);
 
     if (newAcl)
     {
@@ -1013,7 +999,7 @@ OCStackResult InstallNewACL(const char* newJsonStr, const bool isIncResName)
         LL_APPEND(gAcl, newAcl);
 
         // Convert ACL data into JSON for update to persistent storage
-        char *jsonStr = BinToAclJSON(gAcl, true);
+        char *jsonStr = BinToAclJSON(gAcl);
         if (jsonStr)
         {
             cJSON *jsonAcl = cJSON_Parse(jsonStr);

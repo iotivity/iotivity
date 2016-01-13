@@ -33,7 +33,6 @@
 #include "cJSON.h"
 #include "utlist.h"
 #include "ocpayload.h"
-#include "payload_logging.h"
 
 #include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h" //@note: SRM's internal header
@@ -207,6 +206,7 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
 
         memcpy(newDev->doxm, src->doxm, sizeof(OicSecDoxm_t));
         // We have to assign NULL for not necessary information to prevent memory corruption.
+        newDev->doxm->oxmType = NULL;
         newDev->doxm->oxm = NULL;
     }
 
@@ -411,8 +411,6 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
         }
         else
         {
-            OC_LOG_PAYLOAD(DEBUG, clientResponse->payload);
-
             if (PAYLOAD_TYPE_DISCOVERY != clientResponse->payload->type)
             {
                 OC_LOG(INFO, TAG, "Wrong payload type");
@@ -486,15 +484,13 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
         }
         else
         {
-            OC_LOG_PAYLOAD(DEBUG, clientResponse->payload);
-
             if (PAYLOAD_TYPE_SECURITY != clientResponse->payload->type)
             {
                 OC_LOG(INFO, TAG, "Unknown payload type");
                 return OC_STACK_KEEP_TRANSACTION;
             }
             OicSecDoxm_t *ptrDoxm = JSONToDoxmBin(
-                            ((OCSecurityPayload*)clientResponse->payload)->securityData, false);
+                            ((OCSecurityPayload*)clientResponse->payload)->securityData);
             if (NULL == ptrDoxm)
             {
                 OC_LOG(INFO, TAG, "Ignoring malformed JSON");

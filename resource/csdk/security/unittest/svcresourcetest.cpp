@@ -38,8 +38,8 @@ using namespace std;
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern char * BinToSvcJSON(const OicSecSvc_t * svc, const bool isIncResName);
-extern OicSecSvc_t * JSONToSvcBin(const char * jsonStr, const bool isIncResName);
+extern char * BinToSvcJSON(const OicSecSvc_t * svc);
+extern OicSecSvc_t * JSONToSvcBin(const char * jsonStr);
 extern void DeleteSVCList(OicSecSvc_t* svc);
 #ifdef __cplusplus
 }
@@ -56,7 +56,7 @@ TEST(SVCResourceTest, JSONMarshallingTests)
     char *jsonStr1 = ReadFile(JSON_FILE_NAME);
     if (jsonStr1)
     {
-        OicSecSvc_t * svc = JSONToSvcBin(jsonStr1, true);
+        OicSecSvc_t * svc = JSONToSvcBin(jsonStr1);
         EXPECT_TRUE(NULL != svc);
 
         int cnt = 0;
@@ -70,7 +70,7 @@ TEST(SVCResourceTest, JSONMarshallingTests)
         }
         EXPECT_EQ(cnt, NUM_SVC_IN_JSON_DB);
 
-        char * jsonStr2 = BinToSvcJSON(svc, true);
+        char * jsonStr2 = BinToSvcJSON(svc);
         EXPECT_TRUE(NULL != jsonStr2);
 
         OICFree(jsonStr1);

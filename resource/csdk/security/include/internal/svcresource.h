@@ -44,11 +44,10 @@ void DeInitSVCResource();
  * Caller needs to invoke 'free' when done using
  * returned string.
  * @param svc  instance of OicSecSvc_t structure.
- * @param isIncResName Decide whether or not to include the resource name in output.
  *
  * @retval  pointer to SVC in json format.
  */
-char* BinToSvcJSON(const OicSecSvc_t * svc, const bool isIncResName);
+char* BinToSvcJSON(const OicSecSvc_t * svc);
 
 #ifdef __cplusplus
 }

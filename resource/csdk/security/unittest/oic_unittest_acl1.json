@@ -1,8 +1,8 @@
 {
     "acl": [
         {
-            "subject": "Kg==",
-            "resources": [
+            "sub": "Kg==",
+            "rsrc": [
                 "/oic/res",
                 "/oic/d",
                 "/oic/p",
@@ -10,41 +10,41 @@
                 "/oic/ad",
                 "/oic/sec/acl"
 			],
-			"permission": 2,
-			"rowners" : [
+			"perms": 2,
+			"ownrs" : [
 				"MjIyMjIyMjIyMjIyMjIyMg=="
 			]
 		},
         {
-            "subject": "Kg==",
-            "resources": [
+            "sub": "Kg==",
+            "rsrc": [
                 "/oic/sec/doxm",
                 "/oic/sec/pstat"
 			],
-			"permission": 6,
-			"rowners" : [
+			"perms": 6,
+			"ownrs" : [
 				"MjIyMjIyMjIyMjIyMjIyMg=="
 			]
 		},
         {
-            "subject": "MTExMTExMTExMTExMTExMQ==",
-            "resources": [
+            "sub": "MTExMTExMTExMTExMTExMQ==",
+            "rsrc": [
 				"/oic/light",
 				"/oic/fan"
 			],
-			"permission": 255,
-			"rowners" : [
+			"perms": 255,
+			"ownrs" : [
 				"MjIyMjIyMjIyMjIyMjIyMg=="
 			]
 		},
 		{
-            "subject": "MzMzMzMzMzMzMzMzMzMzMw==",
-            "resources": [
+            "sub": "MzMzMzMzMzMzMzMzMzMzMw==",
+            "rsrc": [
 				"/oic/light",
 				"/oic/garage"
 			],
-			"permission": 255,
-			"rowners" : [
+			"perms": 255,
+			"ownrs" : [
 				"MjIyMjIyMjIyMjIyMjIyMg==",
                 "NDQ0NDQ0NDQ0NDQ0NDQ0NA=="
 			]
