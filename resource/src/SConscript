@@ -23,11 +23,14 @@
 ##
 Import('env')
 
+import os
+
 # Add third party libraries
 lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 
 oclib_env = lib_env.Clone()
+secured = lib_env.get('SECURED')
 ######################################################################
 # Build flags
 ######################################################################
@@ -66,8 +69,16 @@ if target_os == 'tizen':
 
 if target_os in ['linux'] and env.get('SIMULATOR', False):
     oclib_env.Append( RPATH = env.Literal('\\$$ORIGIN'))
+
+
 if target_os in ['msys_nt']:
-	oclib_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi'])
+	oclib_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'oc_logger')])
+	oclib_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])
+	oclib_env.AppendUnique(LIBS=['octbstack', 'logger', 'oc_logger','connectivity_abstraction', 'ocsrm', 'c_common', 'routingmanager'])
+	if oclib_env.get('SECURED') == '1':
+		oclib_env.AppendUnique(LIBS=['tinydtls'])
+	oclib_env.AppendUnique(LIBS=[ 'coap', 'ws2_32' ,'iphlpapi'])
+
 
 ######################################################################
 # Source files and Targets

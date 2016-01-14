@@ -153,12 +153,12 @@ void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sock
             OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
                             "getnameinfo failed: %s", gai_strerror(r));
         }
-#elif defined(__msys_nt__) || defined(_WIN32)
+#elif defined(_WIN32)
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
                             "getnameinfo failed: errno %i", WSAGetLastError());
 #else
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
-                        "getnameinfo failed: %s", gai_strerror(r));
+                            "getnameinfo failed: %s", gai_strerror(r));
 #endif
         return;
     }
@@ -189,12 +189,12 @@ void CAConvertNameToAddr(const char *host, uint16_t port, struct sockaddr_storag
             OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
                             "getaddrinfo failed: %s", gai_strerror(r));
         }
-#elif defined(__msys_nt__) || defined(_WIN32)
+#elif defined(_WIN32)
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
                             "getaddrinfo failed: errno %i", WSAGetLastError());
 #else
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
-                        "getaddrinfo failed: %s", gai_strerror(r));
+                            "getaddrinfo failed: %s", gai_strerror(r));
 #endif
         return;
     }

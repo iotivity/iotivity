@@ -67,6 +67,12 @@ typedef enum {
     FATAL = DLOG_ERROR
 } LogLevel;
 #else
+
+/** @todo temporary work-around until better names with prefixes are used for the enum values. */
+#ifdef ERROR
+#undef ERROR
+#endif
+
 typedef enum {
     DEBUG = 0,
     INFO,

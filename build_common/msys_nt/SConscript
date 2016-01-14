@@ -22,8 +22,8 @@ if env['CC'] == 'gcc':
 	env.AppendUnique(CFLAGS = ['-std=c99'])
 	env.AppendUnique(CXXFLAGS = ['-std=c++11'])
 	env.AppendUnique(CCFLAGS = ['-Wall', '-Wextra', '-Wa,-mbig-obj'])
-	env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '_GNU_SOURCE', '__msys_nt__'])
-
+	env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '_GNU_SOURCE', '__msys_nt__', '_WIN32_WINNT=0x0600'])
+	
 	# Set arch flags
 	if target_arch in ['x86']:
 		env.AppendUnique(CCFLAGS = ['-m32'])

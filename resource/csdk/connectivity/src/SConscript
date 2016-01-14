@@ -157,11 +157,14 @@ if ca_os in ['linux', 'tizen', 'android', 'arduino', 'ios']:
 
 print "Include path is %s" % env.get('CPPPATH')
 print "Files path is %s" % env.get('CA_SRC')
-		
+
 lib_env = env.Clone()
 
+if env.get('LOGGING'):
+	lib_env.AppendUnique(CPPDEFINES=['TB_LOG'])
+
 if ca_os == 'android':
-    lib_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libconnectivity_abstraction.so'])
+	lib_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libconnectivity_abstraction.so'])
 
 if ca_os in ['android', 'tizen']:
 	lib_env.AppendUnique(LIBS = ['coap'])

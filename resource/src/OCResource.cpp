@@ -23,7 +23,12 @@
 
 #include <boost/lexical_cast.hpp>
 #include <sstream>
+#if !defined(_WIN32)
 #include <arpa/inet.h>
+#else
+#include <ws2tcpip.h>
+#include <in6addr.h>
+#endif
 
 namespace OC {
 
