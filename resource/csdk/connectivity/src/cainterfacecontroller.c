@@ -266,7 +266,7 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
     }
 
     CAEndpoint_t *tempInfo[CA_TRANSPORT_TYPE_NUM] = { 0 };
-    size_t tempSize[CA_TRANSPORT_TYPE_NUM] = { 0 };
+    uint32_t tempSize[CA_TRANSPORT_TYPE_NUM] = { 0 };
 
     CAResult_t res = CA_STATUS_FAILED;
     size_t resSize = 0;
@@ -286,14 +286,14 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
 
             OIC_LOG_V(DEBUG,
                       TAG,
-                      "%d adapter network info size is %" PRIu32 " res:%d",
+                      "%zu adapter network info size is %" PRIu32 " res:%d",
                       index,
                       tempSize[index],
                       res);
         }
     }
 
-    OIC_LOG_V(DEBUG, TAG, "network info total size is %d!", resSize);
+    OIC_LOG_V(DEBUG, TAG, "network info total size is %zu!", resSize);
 
     if (resSize == 0)
     {
