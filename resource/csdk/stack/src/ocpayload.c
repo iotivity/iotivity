@@ -447,7 +447,7 @@ bool OCRepPayloadSetUri(OCRepPayload* payload, const char*  uri)
     {
         return false;
     }
-
+    OICFree(payload->uri);
     payload->uri = OICStrdup(uri);
     return payload->uri != NULL;
 }
