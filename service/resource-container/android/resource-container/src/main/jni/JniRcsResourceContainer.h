@@ -40,7 +40,7 @@ extern "C" {
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStartContainer
-(JNIEnv *, jobject, jstring configFile);
+(JNIEnv *, jobject, jstring);
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStopContainer

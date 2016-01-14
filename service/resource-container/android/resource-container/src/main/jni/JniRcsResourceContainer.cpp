@@ -25,6 +25,7 @@
 #include "JNIEnvWrapper.h"
 #include "Log.h"
 #include "Verify.h"
+#include <dlfcn.h>
 
 #include "ResourceContainerBundleAPI.h"
 #include "JniBundleResource.h"
@@ -116,6 +117,15 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStartCont
 {
     LOGD("nativeStartContainer");
 
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
+
     EXPECT(configFileObj, "ConfigFile is null.");
 
     auto configFile = toStdString(env, configFileObj);
@@ -126,10 +136,18 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStartCont
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStopContainer
-(JNIEnv *env, jobject)
+Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStopContainer(JNIEnv *env, jobject)
 {
     LOGD("nativeStopContainers");
+
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
 
     RCSResourceContainer::getInstance()->stopContainer();
 }
@@ -140,6 +158,15 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeAddBundle
  jobject paramsObj)
 {
     LOGD("nativeAddBundle");
+
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
 
     EXPECT(idObj, "BundleId is null.");
     EXPECT(pathObj, "BundlePath is null.");
@@ -169,6 +196,15 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRemoveBun
 {
     LOGD("nativeRemoveBundle");
 
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
+
     EXPECT(idObj, "BundleId is null.");
 
     auto id = toStdString(env, idObj);
@@ -183,6 +219,15 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeListBundl
 (JNIEnv *env, jobject)
 {
     LOGD("nativeListBundles");
+
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
 
     JNIEnvWrapper envWrapper(env);
 
@@ -208,7 +253,16 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStartBundle
 (JNIEnv *env, jobject, jstring idObj)
 {
-    LOGD("nativeStartBundle2");
+    LOGD("nativeStartBundle");
+
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
 
     EXPECT(idObj, "BundleId is null.");
 
@@ -223,6 +277,15 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStopBundl
 (JNIEnv *env, jobject, jstring idObj)
 {
     LOGD("nativeStopBundle");
+
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
 
     EXPECT(idObj, "BundleId is null.");
 
@@ -314,11 +377,14 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRegisterB
     JNIEnvWrapper envWrapper(env);
     LOGD("nativeRegisterJniBundleResource");
     auto str_bundle_id = toStdString(&envWrapper, bundleId);
-    __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved bundle id: %s.", str_bundle_id.c_str());
+    __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved bundle id: %s.",
+            str_bundle_id.c_str());
     auto str_uri = toStdString(&envWrapper, uri);
-    __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved uri: %s.", str_uri.c_str());
+    __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved uri: %s.",
+            str_uri.c_str());
     auto str_resourceType = toStdString(&envWrapper, resourceType);
-    __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved resource type: %s.", str_resourceType.c_str());
+    __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved resource type: %s.",
+            str_resourceType.c_str());
     auto str_res_name = toStdString(&envWrapper, res_name);
     LOGD("retrieved res name.");
     JniBundleResource res;
