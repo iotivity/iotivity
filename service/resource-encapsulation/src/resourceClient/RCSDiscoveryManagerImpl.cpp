@@ -28,6 +28,7 @@
 
 namespace
 {
+    constexpr char ALL_RESOURCE_TYPE[] = "";
     constexpr unsigned int POLLING_INTERVAL_TIME = 60000;
 
     std::string makeResourceId(const std::shared_ptr< OIC::Service::PrimitiveResource >& resource)
@@ -46,7 +47,8 @@ namespace OIC
         {
             subscribePresenceWithMuticast();
 
-            m_timer.post(POLLING_INTERVAL_TIME, std::bind(&RCSDiscoveryManagerImpl::onPolling, this));
+            m_timer.post(POLLING_INTERVAL_TIME,
+                    std::bind(&RCSDiscoveryManagerImpl::onPolling, this));
         }
 
         RCSDiscoveryManagerImpl* RCSDiscoveryManagerImpl::getInstance()
@@ -55,11 +57,12 @@ namespace OIC
             return &instance;
         }
 
-        void RCSDiscoveryManagerImpl::onResourceFound(std::shared_ptr<PrimitiveResource> resource,
-                ID discoveryId, const RCSDiscoveryManager::ResourceDiscoveredCallback& discoverCB)
+        void RCSDiscoveryManagerImpl::onResourceFound(
+                std::shared_ptr< PrimitiveResource > resource, ID discoveryId,
+                const RCSDiscoveryManager::ResourceDiscoveredCallback& discoverCB)
         {
             {
-                std::lock_guard< std::mutex > lock(m_mutex);
+                std::lock_guard < std::mutex > lock(m_mutex);
                 auto it = m_discoveryMap.find(discoveryId);
 
                 if (it == m_discoveryMap.end()) return;
@@ -67,32 +70,42 @@ namespace OIC
 
                 it->second.addKnownResource(resource);
             }
-            discoverCB(std::make_shared< RCSRemoteResourceObject > (resource));
+            discoverCB(std::make_shared < RCSRemoteResourceObject > (resource));
         }
 
         RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManagerImpl::startDiscovery(
                 const RCSAddress& address, const std::string& relativeUri,
-                const std::string& resourceType, RCSDiscoveryManager::ResourceDiscoveredCallback cb)
+                const std::vector< std::string >& resourceTypes,
+                RCSDiscoveryManager::ResourceDiscoveredCallback cb)
         {
             if (!cb)
             {
                 throw RCSInvalidParameterException{ "Callback is empty" };
             }
 
+            for(const auto& it : resourceTypes)
+            {
+                if (it.compare(ALL_RESOURCE_TYPE) == 0)
+                {
+                    throw RCSInvalidParameterException{ "ResourceType is duplicated!" };
+                }
+            }
+
             const ID discoveryId = createId();
 
-            DiscoveryRequestInfo discoveryInfo(address, relativeUri, resourceType,
+            DiscoveryRequestInfo discoveryInfo(address, relativeUri, resourceTypes,
                     std::bind(&RCSDiscoveryManagerImpl::onResourceFound, this,
                             std::placeholders::_1, discoveryId, std::move(cb)));
+
             discoveryInfo.discover();
 
             {
-                std::lock_guard< std::mutex > lock(m_mutex);
+                std::lock_guard < std::mutex > lock(m_mutex);
                 m_discoveryMap.insert(std::make_pair(discoveryId, std::move(discoveryInfo)));
             }
 
-            return std::unique_ptr< RCSDiscoveryManager::DiscoveryTask >(
-                    new RCSDiscoveryManager::DiscoveryTask(discoveryId));
+            return std::unique_ptr < RCSDiscoveryManager::DiscoveryTask
+                    > (new RCSDiscoveryManager::DiscoveryTask(discoveryId));
         }
 
         void RCSDiscoveryManagerImpl::subscribePresenceWithMuticast()
@@ -110,14 +123,15 @@ namespace OIC
         void RCSDiscoveryManagerImpl::onPolling()
         {
             {
-                std::lock_guard< std::mutex > lock(m_mutex);
+                std::lock_guard < std::mutex > lock(m_mutex);
 
                 for (const auto& it : m_discoveryMap)
                 {
                     it.second.discover();
                 }
             }
-            m_timer.post(POLLING_INTERVAL_TIME, std::bind(&RCSDiscoveryManagerImpl::onPolling, this));
+            m_timer.post(POLLING_INTERVAL_TIME,
+                    std::bind(&RCSDiscoveryManagerImpl::onPolling, this));
         }
 
         void RCSDiscoveryManagerImpl::onPresence(OCStackResult result, const unsigned int /*seq*/,
@@ -125,7 +139,7 @@ namespace OIC
         {
             if (result != OC_STACK_OK && result != OC_STACK_RESOURCE_CREATED) return;
 
-            std::lock_guard< std::mutex > lock(m_mutex);
+            std::lock_guard < std::mutex > lock(m_mutex);
             for (const auto& it : m_discoveryMap)
             {
                 if (it.second.isMatchedAddress(address))
@@ -139,7 +153,7 @@ namespace OIC
         {
             static ID s_nextId = INVALID_ID + 1;
 
-            std::lock_guard< std::mutex > lock(m_mutex);
+            std::lock_guard < std::mutex > lock(m_mutex);
 
             while (s_nextId == INVALID_ID || m_discoveryMap.find(s_nextId) != m_discoveryMap.end())
             {
@@ -153,24 +167,31 @@ namespace OIC
 
         void RCSDiscoveryManagerImpl::cancel(ID id)
         {
-            std::lock_guard< std::mutex > lock(m_mutex);
+            std::lock_guard < std::mutex > lock(m_mutex);
             m_discoveryMap.erase(id);
         }
 
         DiscoveryRequestInfo::DiscoveryRequestInfo(const RCSAddress& address,
-                const std::string& relativeUri, const std::string& resourceType,
+                const std::string& relativeUri, const std::vector< std::string >& resourceTypes,
                 DiscoverCallback cb) :
                 m_address{ address },
                 m_relativeUri{ relativeUri },
-                m_resourceType{ resourceType },
+                m_resourceTypes{ resourceTypes },
                 m_knownResourceIds{ },
                 m_discoverCb{ std::move(cb) }
         {
+            if (m_resourceTypes.empty())
+            {
+                m_resourceTypes.push_back(ALL_RESOURCE_TYPE);
+            }
         }
 
         void DiscoveryRequestInfo::discover() const
         {
-            discoverResource(m_address, m_relativeUri + "?rt=" + m_resourceType, m_discoverCb);
+            for (const auto& it : m_resourceTypes)
+            {
+                discoverResource(m_address, m_relativeUri + "?rt=" + it, m_discoverCb);
+            }
         }
 
         bool DiscoveryRequestInfo::isKnownResource(
@@ -187,8 +208,8 @@ namespace OIC
 
         bool DiscoveryRequestInfo::isMatchedAddress(const std::string& address) const
         {
-            return RCSAddressDetail::getDetail(m_address)->isMulticast() ||
-                    RCSAddressDetail::getDetail(m_address)->getAddress() == address;
+            return RCSAddressDetail::getDetail(m_address)->isMulticast()
+                    || RCSAddressDetail::getDetail(m_address)->getAddress() == address;
         }
     }
 }

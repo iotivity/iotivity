@@ -52,8 +52,8 @@ namespace OIC
         class DiscoveryRequestInfo
         {
             public:
-                DiscoveryRequestInfo(const RCSAddress&, const std::string&, const std::string&,
-                        DiscoverCallback);
+                DiscoveryRequestInfo(const RCSAddress&, const std::string&,
+                        const std::vector< std::string >&, DiscoverCallback);
 
             public:
                 void discover() const;
@@ -64,7 +64,7 @@ namespace OIC
             private:
                 RCSAddress m_address;
                 std::string m_relativeUri;
-                std::string m_resourceType;
+                std::vector< std::string > m_resourceTypes;
                 std::unordered_set< std::string > m_knownResourceIds;
                 DiscoverCallback m_discoverCb;
         };
@@ -107,7 +107,8 @@ namespace OIC
                  * @see RCSDiscoveryManager
                  */
                 RCSDiscoveryManager::DiscoveryTask::Ptr startDiscovery(const RCSAddress& address,
-                        const std::string& relativeURI,const std::string& resourceType,
+                        const std::string& relativeURI,
+                        const std::vector< std::string >& resourceTypes,
                         RCSDiscoveryManager::ResourceDiscoveredCallback cb);
 
                 void cancel(ID);
@@ -127,7 +128,7 @@ namespace OIC
                  *
                  * @see PrimitiveResource
                  */
-                void onResourceFound(std::shared_ptr<PrimitiveResource> resource, ID discoveryId,
+                void onResourceFound(std::shared_ptr< PrimitiveResource > resource, ID discoveryId,
                         const RCSDiscoveryManager::ResourceDiscoveredCallback& cb);
 
                 /**
