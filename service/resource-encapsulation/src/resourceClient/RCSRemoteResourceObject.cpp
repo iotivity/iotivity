@@ -132,8 +132,14 @@ namespace OIC
         {
             SCOPE_LOG_F(DEBUG, TAG);
 
-            stopCaching();
-            stopMonitoring();
+            try{
+                stopCaching();
+                stopMonitoring();
+            }
+            catch(std::exception &e){
+                OC_LOG_V(ERROR, TAG, "%s", e.what());
+            }
+
         }
 
         bool RCSRemoteResourceObject::isMonitoring() const
@@ -238,7 +244,9 @@ namespace OIC
                 return;
             }
 
+            OC_LOG(DEBUG, TAG, "cancel resource cache");
             ResourceCacheManager::getInstance()->cancelResourceCache(m_cacheId);
+            OC_LOG(DEBUG, TAG, "After resource cache manager cancel resource cache");
             m_cacheId = 0;
         }
 

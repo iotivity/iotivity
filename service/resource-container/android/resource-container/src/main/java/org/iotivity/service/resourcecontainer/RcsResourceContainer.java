@@ -36,6 +36,8 @@ import dalvik.system.DexFile;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 
+import java.util.Hashtable;
+
 // TODO null check for parameters
 /**
  * This class provides APIs for managing the container and bundles in the
@@ -98,6 +100,8 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
     public RcsResourceContainer(Context appContext){
         this.appContext = appContext;
     }
+    
+    private Hashtable<String, BundleActivator> activators = new Hashtable<String, BundleActivator>();
 
     /**
      * API for starting the Container
@@ -135,8 +139,11 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
                     Log.d(TAG, "Loading activator: " + className);
                     Class activatorClass = df.loadClass(className, cl);
                     if(activatorClass!= null){
-                        BundleActivator activator = (BundleActivator) activatorClass.getConstructor(RcsResourceContainerBundleAPI.class, Context.class).newInstance(this, appContext);
+                        BundleActivator activator = (BundleActivator) activatorClass.
+                                getConstructor(RcsResourceContainerBundleAPI.class, Context.class).
+                                newInstance(this, appContext);
                         activator.activateBundle();
+                        activators.put(bundleInfo.getID(), activator);
                     }else{
                         Log.e(TAG, "Activator is null.");
                     }
@@ -153,6 +160,10 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      * API for stopping the Container
      */
     public void stopContainer() {
+        // stop all android bundles
+        for(BundleActivator activator :activators.values()){
+            activator.deactivateBundle();
+        }
         nativeStopContainer();
     }
 
@@ -199,6 +210,10 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      *
      */
     public void removeBundle(String bundleId) {
+        if(activators.contains(bundleId)){
+            // deactivate android bundle
+            activators.get(bundleId).deactivateBundle();
+        }
         nativeRemoveBundle(bundleId);
     }
 
@@ -212,16 +227,49 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
     public void startBundle(String bundleId) {
         Log.d(TAG, "startBundle");
         List<RcsBundleInfo> bundles = listBundles();
-        boolean androidBundle =false;
-        for(RcsBundleInfo bundleInfo : bundles){
+       
+        for(RcsBundleInfo bundleInfo : bundles){          
             if(bundleInfo.getID().equals(bundleId) && bundleInfo.getLibraryPath().endsWith(".apk")){
-                androidBundle = true;
                 Log.d(TAG, "Have to start android bundle");
+                Log.d(TAG, "bundle-id: " + bundleInfo.getID() + ", " + bundleInfo.getPath());
+                if(bundleInfo.getPath().endsWith(".apk")){
+                    String packageName = bundleInfo.getPath().replace(".apk", "");
+                    try{
+                        PackageManager packageManager = appContext.getPackageManager();
+                        ApplicationInfo appInfo = packageManager.getApplicationInfo(packageName, 0);
+                        DexFile df = new DexFile(appInfo.sourceDir);
+                        ClassLoader cl = appContext.getClassLoader();
+                        for (Enumeration<String> iter = df.entries(); iter.hasMoreElements(); ) {
+                            String classN = iter.nextElement();
+                            if (classN.contains(packageName)) {
+                                Log.d(TAG,"Class: " + classN);
+                                df.loadClass(classN, cl);
+                            }
+                        }
+                        
+                        String className = bundleInfo.getActivatorName();
+                        Log.d(TAG, "Loading activator: " + className);
+                        Class activatorClass = df.loadClass(className, cl);
+                        if(activatorClass!= null){
+                            BundleActivator activator = (BundleActivator) activatorClass.
+                                    getConstructor(RcsResourceContainerBundleAPI.class, 
+                                            Context.class).
+                                    newInstance(this, appContext);
+                            activator.activateBundle();
+                        }else{
+                            Log.e(TAG, "Activator is null.");
+                        }
+                    }
+                    catch(Exception e){
+                        Log.e(TAG, e.getMessage(), e);
+                    }
+                    Log.d(TAG, "Have to register android bundle");
+                }
+            }else{
+                nativeStartBundle(bundleId);
             }
         }
-        if(!androidBundle){
-            nativeStartBundle(bundleId);
-        }
+      
     }
 
     /**

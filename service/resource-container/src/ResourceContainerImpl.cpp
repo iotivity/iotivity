@@ -337,14 +337,24 @@ namespace OIC
 
             if (m_config->isHasInput(resource->m_bundleId))
             {
+                OC_LOG_V(INFO, CONTAINER_TAG, "Calling undiscover (%s)",
+                                     std::string(resource->m_uri + ", " +
+                                                 resource->m_resourceType).c_str());
                 undiscoverInputResource(strUri);
             }
 
             if (m_mapServers.find(strUri) != m_mapServers.end())
             {
+                OC_LOG_V(INFO, CONTAINER_TAG, "Resetting server (%s)",
+                                     std::string(resource->m_uri + ", " +
+                                                 resource->m_resourceType).c_str());
                 m_mapServers[strUri].reset();
 
                 m_mapResources.erase(m_mapResources.find(strUri));
+
+                OC_LOG_V(INFO, CONTAINER_TAG, "Remove bundle resource (%s)",
+                                     std::string(resource->m_uri + ", " +
+                                                 resource->m_resourceType).c_str());
                 m_mapBundleResources[resource->m_bundleId].remove(strUri);
             }
         }
@@ -763,7 +773,9 @@ namespace OIC
             auto foundDiscoverResource = m_mapDiscoverResourceUnits.find(outputResourceUri);
             if (foundDiscoverResource != m_mapDiscoverResourceUnits.end())
             {
+                OC_LOG(DEBUG, CONTAINER_TAG, "Erase discover resource.");
                 m_mapDiscoverResourceUnits.erase(foundDiscoverResource);
+                OC_LOG(DEBUG, CONTAINER_TAG, "Erase discover resource done.");
             }
         }
 

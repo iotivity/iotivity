@@ -113,6 +113,11 @@ public abstract class BundleResource {
      *            new value of the attribute
      */
     public abstract void handleSetAttributesRequest(RcsResourceAttributes value);
+    
+    /**
+     * Deactivates the resource
+     */ 
+    public abstract void deactivateResource();
 
     /**
      * Retrieve the attribute (only data)
