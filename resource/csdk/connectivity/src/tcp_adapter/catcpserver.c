@@ -260,7 +260,7 @@ static void CAAcceptConnection()
 
         svritem->fd = sockfd;
         CAConvertAddrToName((struct sockaddr_storage *)&clientaddr, clientlen,
-                            (char *) &svritem->endpoint.addr, &svritem->endpoint.port);
+                            (char *) &svritem->sep.endpoint.addr, &svritem->sep.endpoint.port);
 
         ca_mutex_lock(g_mutexObjectList);
         bool result = u_arraylist_add(caglobals.tcp.svrlist, svritem);
@@ -342,8 +342,8 @@ static void CAReceiveMessage(int fd)
     // #5. pass the received data information to upper layer.
     if ((svritem->totalDataLen == svritem->recvDataLen) && g_packetReceivedCallback)
     {
-        svritem->endpoint.adapter = CA_ADAPTER_TCP;
-        g_packetReceivedCallback(&svritem->endpoint, svritem->recvData, svritem->recvDataLen);
+        svritem->sep.endpoint.adapter = CA_ADAPTER_TCP;
+        g_packetReceivedCallback(&svritem->sep, svritem->recvData, svritem->recvDataLen);
         OIC_LOG_V(DEBUG, TAG, "total received data len:%d", svritem->recvDataLen);
 
         // initialize data info to receive next message.
@@ -367,7 +367,7 @@ static int CATCPCreateSocket(int family, CATCPSessionInfo_t *tcpServerInfo)
     }
 
     struct sockaddr_storage sa = { .ss_family = family };
-    CAConvertNameToAddr(tcpServerInfo->endpoint.addr, tcpServerInfo->endpoint.port, &sa);
+    CAConvertNameToAddr(tcpServerInfo->sep.endpoint.addr, tcpServerInfo->sep.endpoint.port, &sa);
     socklen_t socklen = sizeof (struct sockaddr_in);
 
     // connect to TCP server
@@ -713,8 +713,8 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
         OIC_LOG(ERROR, TAG, "Out of memory");
         return NULL;
     }
-    memcpy(svritem->endpoint.addr, endpoint->addr, sizeof(svritem->endpoint.addr));
-    svritem->endpoint.port = endpoint->port;
+    memcpy(svritem->sep.endpoint.addr, endpoint->addr, sizeof(svritem->sep.endpoint.addr));
+    svritem->sep.endpoint.port = endpoint->port;
 
     // #2. create the socket and connect to TCP server
     if (caglobals.tcp.ipv4tcpenabled)
@@ -805,8 +805,8 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
             continue;
         }
 
-        if (!strncmp(svritem->endpoint.addr, endpoint->addr, sizeof(svritem->endpoint.addr))
-                && (svritem->endpoint.port == endpoint->port))
+        if (!strncmp(svritem->sep.endpoint.addr, endpoint->addr, sizeof(svritem->sep.endpoint.addr))
+                && (svritem->sep.endpoint.port == endpoint->port))
         {
             *index = i;
             return svritem;

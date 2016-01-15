@@ -39,7 +39,7 @@ extern "C"
  */
 typedef struct
 {
-    CAEndpoint_t endpoint;              /**< endpoint information */
+    CASecureEndpoint_t sep;             /**< secure endpoint information */
     int fd;                             /**< file descriptor info */
     void *recvData;                     /**< received data from remote device*/
     size_t recvDataLen;                 /**< received data length */

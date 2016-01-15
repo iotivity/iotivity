@@ -46,7 +46,7 @@ extern "C"
  * @param[in]  dataLength    Length of data in bytes.
  * @pre  Callback must be registered using CAIPSetPacketReceiveCallback().
  */
-typedef void (*CATCPPacketReceivedCallback)(const CAEndpoint_t *endpoint,
+typedef void (*CATCPPacketReceivedCallback)(const CASecureEndpoint_t *endpoint,
                                            const void *data,
                                            uint32_t dataLength);
 

@@ -77,7 +77,7 @@ static CANetworkChangeCallback g_networkChangeCallback = NULL;
  */
 static CAErrorHandleCallback g_errorCallback = NULL;
 
-static void CATCPPacketReceivedCB(const CAEndpoint_t *endpoint,
+static void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep,
                                   const void *data, uint32_t dataLength);
 
 static CAResult_t CATCPInitializeQueueHandles();
@@ -136,17 +136,17 @@ void CATCPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status)
     (void)status;
 }
 
-void CATCPPacketReceivedCB(const CAEndpoint_t *endpoint, const void *data,
+void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
                            uint32_t dataLength)
 {
-    VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
+    VERIFY_NON_NULL_VOID(sep, TAG, "sep is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
 
-    OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", endpoint->addr, endpoint->port);
+    OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", sep->endpoint.addr, sep->endpoint.port);
 
     if (g_networkPacketCallback)
     {
-        g_networkPacketCallback(endpoint, data, dataLength);
+        g_networkPacketCallback(sep, data, dataLength);
     }
 }
 
