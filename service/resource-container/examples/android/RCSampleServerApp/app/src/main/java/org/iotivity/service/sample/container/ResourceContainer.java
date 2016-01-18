@@ -49,7 +49,6 @@ public class ResourceContainer {
     private static Message                   msg;
     public static boolean                    startBundleFlag;
     private static boolean                   isStarted     = false;
-    public static boolean                    isInitialized = false;
     PowerManager pm = null;
     PowerManager.WakeLock wl = null;
 
@@ -85,6 +84,22 @@ public class ResourceContainer {
             msg = Message.obtain();
             msg.what = 0;
             resourceContainerActivityInstance.getHandler().sendMessage(msg);
+
+            // initialize the information of the bundles
+            // which registered at the starting time of the container
+            List<RcsBundleInfo> bundleList = containerInstance.listBundles();
+            Iterator<RcsBundleInfo> it = bundleList.iterator();
+
+            while (it.hasNext())
+            {
+                String id = ((RcsBundleInfo) it.next()).getID();
+                if (id.equals(ExampleBundleDescription.DIBundle.mBundleId)) {
+                    ExampleBundleDescription.DIBundle.isStarted = true;
+                }
+                else if (id.equals(ExampleBundleDescription.DIAndroidBundle.mBundleId)) {
+                    ExampleBundleDescription.DIAndroidBundle.isStarted = true;
+                }
+            }
         }
     }
 
@@ -169,30 +184,25 @@ public class ResourceContainer {
         return false;
     }
 
-    // Add BMI Bundles
-    public void addBMIBundle() {
-        Map<String, String> bundleParams = new HashMap<String, String>();
-
-        if (bundleExists("oic.bundle.BMISensor"))
-            logMessage = "Bundle already added" + "\n";
+    // add Bundles
+    public void addBundle(BundleInformation bundle) {
+        if (bundleExists(bundle.mBundleId))
+            logMessage = "Bundle \'" + bundle.mBundleId + "\' already added" + "\n";
 
         else {
             containerInstance
-                    .addBundle(
-                            "oic.bundle.BMISensor",
-                            "",
-                            "/data/data/org.iotivity.service.sample.resourcecontainer/files/libBMISensorBundle.so",
-                            "bmisensor", bundleParams);
+                    .addBundle(bundle.mBundleId, bundle.mBundleUri,
+                            bundle.mBundlePath, bundle.mActivator, bundle.mBundleParams);
 
             logMessage = "bundle to add : " + "\n";
-            logMessage = logMessage + "ID :" + "oic.bundle.BMISensor" + "\n";
-            logMessage = logMessage + "Uri: " + "xyz" + "\n";
+            logMessage = logMessage + "ID : " + bundle.mBundleId + "\n";
+            logMessage = logMessage + "Uri: " + bundle.mBundleUri + "\n";
             logMessage = logMessage
                     + "Path : "
-                    + "/data/data/org.iotivity.service.sample.server/files/libBMISensorBundle.so"
+                    + bundle.mBundlePath
                     + "\n\n";
             logMessage = logMessage + "bundle added successfully" + "\n";
-            }
+        }
 
         ResourceContainerActivity.setMessageLog(logMessage);
         msg = Message.obtain();
@@ -200,18 +210,18 @@ public class ResourceContainer {
         resourceContainerActivityInstance.getHandler().sendMessage(msg);
     }
 
-    // Remove Bundle BMI
-    public void removeBMIBundle() {
+    // remove Bundles
+    public void removeBundle(BundleInformation bundle) {
 
-        if (!bundleExists("oic.bundle.BMISensor"))
-            logMessage = "BMI Bundle not added" + "\n";
+        if (!bundleExists(bundle.mBundleId))
+            logMessage = "Bundle \'" + bundle.mBundleId + "\' not added" + "\n";
 
         else {
-            containerInstance.removeBundle("oic.bundle.BMISensor");
+            containerInstance.removeBundle(bundle.mBundleId);
 
-            startBundleFlag = false;
+            bundle.isStarted = false;
             logMessage = "bundle to remove : " + "\n";
-            logMessage = logMessage + "ID :" + "oic.bundle.BMISensor" + "\n\n";
+            logMessage = logMessage + "ID : " + bundle.mBundleId + "\n\n";
             logMessage = logMessage + " bundle removed  successfully" + "\n";
         }
 
@@ -221,19 +231,19 @@ public class ResourceContainer {
         resourceContainerActivityInstance.getHandler().sendMessage(msg);
     }
 
-    // Start Bundle BMI
-    public void startBMIBundle() {
+    // start Bundles
+    public void startBundle(BundleInformation bundle) {
 
-        if (!bundleExists("oic.bundle.BMISensor")) {
-            logMessage = "BMI bundle not added" + "\n";
-        } else if (true == startBundleFlag) {
-            logMessage = "Bundle already started" + "\n";
+        if (!bundleExists(bundle.mBundleId)) {
+            logMessage = "Bundle \'" + bundle.mBundleId + "\' not added" + "\n";
+        } else if (bundle.isStarted) {
+            logMessage = "Bundle \'" + bundle.mBundleId + "\' already started" + "\n";
         } else {
-            startBundleFlag = true;
-            containerInstance.startBundle("oic.bundle.BMISensor");
+            bundle.isStarted = true;
+            containerInstance.startBundle(bundle.mBundleId);
 
             logMessage = " bundle to start" + "\n";
-            logMessage += " ID : oic.bundle.BMISensor" + "\n\n";
+            logMessage += " ID : " + bundle.mBundleId + "\n\n";
             logMessage += " bundle started successfully" + "\n";
         }
 
@@ -243,20 +253,20 @@ public class ResourceContainer {
         resourceContainerActivityInstance.getHandler().sendMessage(msg);
     }
 
-    // Stop Bundle BMI
-    public void stopBMIBundle() {
+    // Stop Bundles
+    public void stopBundle(BundleInformation bundle) {
 
-        if (!bundleExists("oic.bundle.BMISensor")) {
-            logMessage = "BMI Bundle not added" + "\n";
+        if (!bundleExists(bundle.mBundleId)) {
+            logMessage = "Bundle \'" + bundle.mBundleId + "\' not added" + "\n";
         }
-        else if (false == startBundleFlag) {
-            logMessage = "Bundle is not Started" + "\n";
+        else if (!bundle.isStarted) {
+            logMessage = "Bundle \'" + bundle.mBundleId + "\' is not Started" + "\n";
         } else {
-                containerInstance.stopBundle("oic.bundle.BMISensor");
-                startBundleFlag = false;
-                logMessage = " bundle to stop" + "\n";
-                logMessage = logMessage + " ID : oic.bundle.BMISensor" + "\n\n";
-                logMessage = logMessage + " bundle stopped successfully" + "\n";
+            containerInstance.stopBundle(bundle.mBundleId);
+            bundle.isStarted = false;
+            logMessage = " bundle to stop" + "\n";
+            logMessage = logMessage + " ID : " + bundle.mBundleId  + "\n\n";
+            logMessage = logMessage + " bundle stopped successfully" + "\n";
         }
 
         ResourceContainerActivity.setMessageLog(logMessage);
@@ -264,12 +274,46 @@ public class ResourceContainer {
         msg.what = 1;
         resourceContainerActivityInstance.getHandler().sendMessage(msg);
     }
+}
 
-    public void addAndroidResource(){
-        logMessage = "Add android resource " + "\n";
-        ResourceContainerActivity.setMessageLog(logMessage);
-        msg = Message.obtain();
-        msg.what = 1;
-        resourceContainerActivityInstance.getHandler().sendMessage(msg);
+class ExampleBundleDescription
+{
+    static final BundleInformation BMIBundle =
+            new BundleInformation ("oic.bundle.BMISensor", "",
+                    "/data/data/org.iotivity.service.sample.resourcecontainer/files/" +
+                            "libBMISensorBundle.so",
+                    "bmisensor", new HashMap<String, String>());
+
+    static final BundleInformation DIBundle =
+            new BundleInformation ("oic.bundle.discomfortIndexSensor", "",
+                    "/data/data/org.iotivity.service.sample.resourcecontainer/files/" +
+                            "libDISensorBundle.so",
+                    "disensor", new HashMap<String, String>());
+
+    static final BundleInformation DIAndroidBundle =
+            new BundleInformation ("oic.android.sample", "",
+                    "org.iotivity.service.sample.androidbundle.apk",
+                    "org.iotivity.service.sample.androidbundle.SampleActivator",
+                    new HashMap<String, String>());
+}
+
+class BundleInformation
+{
+    String mBundleId;
+    String mBundleUri;
+    String mBundlePath;
+    String mActivator;
+    Map<String, String> mBundleParams;
+
+    Boolean isStarted;
+
+    public BundleInformation(String id, String uri, String path, String activator, Map<String, String> params)
+    {
+        mBundleId = id;
+        mBundleUri = uri;
+        mBundlePath = path;
+        mActivator = activator;
+        mBundleParams = params;
+        isStarted = false;
     }
 }

@@ -60,8 +60,6 @@ import java.util.List;
  * for updating UI.
  */
 public class ResourceContainerActivity extends Activity {
-    // private static final String LOG_TAG =
-    // ResourceContainerActivity.class.getSimpleName();
 
     private final String                     LOG_TAG = "[RCSampleServerApp] "
             + this.getClass()
@@ -73,6 +71,8 @@ public class ResourceContainerActivity extends Activity {
     private Context                          context;
     public ExpandableListAdapter             listAdapter;
     public ExpandableListView                expListView;
+    private int lastExpandedPosition = -1;
+
     public List<String>                      sensors;
     public List<String>                      diApiList;
     public List<String>                      bmiApiList;
@@ -137,10 +137,18 @@ public class ResourceContainerActivity extends Activity {
         bmiApiList.add("5. Remove BMI sensor bundle");
 
         // Adding child data [discomfort Index sensor]
-        diApiList.add("1. List bundle resources");
+        diApiList.add("1. Add DI sensor bundle");
+        diApiList.add("2. Start DI sensor bundle");
+        diApiList.add("3. List bundle resources");
+        diApiList.add("4. Stop DI sensor bundle");
+        diApiList.add("5. Remove DI sensor bundle");
 
         // Adding child data [discomfort Index sensor - android]
-        diAndroidApiList.add("1. List bundle resources");
+        diAndroidApiList.add("1. Add Android DI sensor bundle");
+        diAndroidApiList.add("2. Start Android DI sensor bundle");
+        diAndroidApiList.add("3. List bundle resources");
+        diAndroidApiList.add("4. Stop Android DI sensor bundle");
+        diAndroidApiList.add("5. Remove Android DI sensor bundle");
 
         listChild.put(sensors.get(0), bmiApiList);
         listChild.put(sensors.get(1), diApiList);
@@ -207,7 +215,18 @@ public class ResourceContainerActivity extends Activity {
             }
         });
 
-        // Listener for the expandable list
+
+        expListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
+            @Override
+            public void onGroupExpand(int groupPosition) {
+                if (lastExpandedPosition != -1
+                        && groupPosition != lastExpandedPosition) {
+                    expListView.collapseGroup(lastExpandedPosition);
+                }
+                lastExpandedPosition = groupPosition;
+            }
+        });
+
         expListView
                 .setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
 
@@ -215,33 +234,51 @@ public class ResourceContainerActivity extends Activity {
                     public boolean onChildClick(ExpandableListView parent,
                                                 View v, int groupPosition, int childPosition,
                                                 long id) {
-                        if (0 == groupPosition) {
-                            if (childPosition == 0) {
-                                resourceContainerInstance.addBMIBundle();
-                            } else if (childPosition == 1) {
-                                resourceContainerInstance.startBMIBundle();
-                            } else if (childPosition == 2) {
-                                resourceContainerInstance
-                                        .listBundleResources("oic.bundle.BMISensor");
-                            } else if (childPosition == 3) {
-                                resourceContainerInstance.stopBMIBundle();
-                            } else if (childPosition == 4) {
-                                resourceContainerInstance.removeBMIBundle();
-                            }
-                        }
-                        else if (1 == groupPosition) {
-                            if (childPosition == 0) {
-                                resourceContainerInstance
-                                        .listBundleResources("oic.bundle.discomfortIndexSensor");
+                        BundleInformation bundleToTest;
 
-                            }
-                        } else if (2 == groupPosition) {
-                            if (childPosition == 0) {
-                                resourceContainerInstance
-                                        .listBundleResources("oic.android.sample");
-                            }
+                        switch (groupPosition) {
+                            case 0:
+                                bundleToTest = ExampleBundleDescription.BMIBundle;
+                                break;
+
+                            case 1:
+                                bundleToTest = ExampleBundleDescription.DIBundle;
+                                break;
+
+                            case 2:
+                                bundleToTest = ExampleBundleDescription.DIAndroidBundle;
+                                break;
+
+                            default:
+                                return false;
                         }
-                        return false;
+
+                        switch (childPosition) {
+                            case 0:
+                                resourceContainerInstance.addBundle(bundleToTest);
+                                break;
+
+                            case 1:
+                                resourceContainerInstance.startBundle(bundleToTest);
+                                break;
+
+                            case 2:
+                                resourceContainerInstance
+                                        .listBundleResources(bundleToTest.mBundleId);
+                                break;
+
+                            case 3:
+                                resourceContainerInstance.stopBundle(bundleToTest);
+                                break;
+
+                            case 4:
+                                resourceContainerInstance.removeBundle(bundleToTest);
+                                break;
+
+                            default:
+                                return false;
+                        }
+                        return true;
                     }
                 });
     }
