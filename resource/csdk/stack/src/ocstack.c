@@ -60,6 +60,10 @@
 #endif
 #endif
 
+#ifdef TCP_ADAPTER
+#include "oickeepalive.h"
+#endif
+
 #ifdef WITH_ARDUINO
 #include "Time.h"
 #else
@@ -608,6 +612,7 @@ OCStackResult CAToOCStackResult(CAResponseResult_t caCode)
             break;
         case CA_CHANGED:
         case CA_CONTENT:
+        case CA_VALID:
             ret = OC_STACK_OK;
             break;
         case CA_BAD_REQ:
@@ -1187,6 +1192,12 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                     {
                         type = PAYLOAD_TYPE_RD;
                     }
+#ifdef TCP_ADAPTER
+                    else if (strcmp(cbNode->requestUri, KEEPALIVE_RESOURCE_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_REPRESENTATION;
+                    }
+#endif
                     else
                     {
                         OIC_LOG_V(ERROR, TAG, "Unknown Payload type in Discovery: %d %s",
@@ -1502,6 +1513,15 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     RMUpdateInfo((CAHeaderOption_t **) &(requestInfo->info.options),
                  (uint8_t *) &(requestInfo->info.numOptions),
                  (CAEndpoint_t *) endPoint);
+#endif
+
+#ifdef TCP_ADAPTER
+    if (requestInfo->info.resourceUri &&
+            strcmp(requestInfo->info.resourceUri, KEEPALIVE_RESOURCE_URI) == 0)
+    {
+        HandleKeepAliveRequest(endPoint, requestInfo);
+        return;
+    }
 #endif
 
     OCStackResult requestResult = OC_STACK_ERROR;
@@ -1916,6 +1936,10 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     }
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
+#ifdef TCP_ADAPTER
+    CARegisterKeepAliveHandler(HandleKeepAliveConnCB, HandleKeepAliveDisconnCB);
+#endif
+
 #ifdef WITH_PRESENCE
     PresenceTimeOutSize = sizeof (PresenceTimeOut) / sizeof (PresenceTimeOut[0]) - 1;
 #endif // WITH_PRESENCE
@@ -1940,6 +1964,13 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     if (OC_GATEWAY == myStackMode)
     {
         result = RMInitialize();
+    }
+#endif
+
+#ifdef TCP_ADAPTER
+    if(result == OC_STACK_OK)
+    {
+        result = InitializeKeepAlive();
     }
 #endif
 
@@ -1982,6 +2013,10 @@ OCStackResult OCStop()
     {
         RMTerminate();
     }
+#endif
+
+#ifdef TCP_ADAPTER
+    TerminateKeepAlive();
 #endif
 
     // Free memory dynamically allocated for resources
@@ -2785,6 +2820,10 @@ OCStackResult OCProcess()
 
 #ifdef ROUTING_GATEWAY
     RMProcess();
+#endif
+
+#ifdef TCP_ADAPTER
+    ProcessKeepAlive();
 #endif
     return OC_STACK_OK;
 }

@@ -28,6 +28,7 @@
 #include "cacommon.h"
 #include "caadapterinterface.h"
 #include "cathreadpool.h"
+#include "cainterface.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -149,6 +150,15 @@ CAResult_t CAStopTCP();
  * Configuration information will be deleted from further use.
  */
 void CATerminateTCP();
+
+/**
+ * Set connected callback and disconnected callback to process KeepAlive.
+ * connection informations are delivered these callbacks.
+ * @param[in]   ConnHandler     Connected callback.
+ * @param[in]   DisconnHandler  Disconnected Callback.
+ */
+void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectedCallback ConnHandler,
+                                CAKeepAliveDisconnectedCallback DisconnHandler);
 
 #ifdef __cplusplus
 } /* extern "C" */

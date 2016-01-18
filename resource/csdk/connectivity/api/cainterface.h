@@ -64,6 +64,28 @@ typedef struct
 
 #endif //RA_ADAPTER
 
+#ifdef TCP_ADAPTER
+/**
+ * Callback function to pass the connection information from CA to RI.
+ * @param[out]   object           remote device information.
+ */
+typedef void (*CAKeepAliveConnectedCallback)(const CAEndpoint_t *object);
+
+/**
+ * Callback function to pass the disconnection information from CA to RI.
+ * @param[out]   object           remote device information.
+ */
+typedef void (*CAKeepAliveDisconnectedCallback)(const CAEndpoint_t *object);
+
+/**
+ * Register connected callback and disconnected callback to process KeepAlive.
+ * connection informations are delivered these callbacks.
+ * @param[in]   ConnHandler     Connected callback.
+ * @param[in]   DisconnHandler  Disconnected Callback.
+ */
+void CARegisterKeepAliveHandler(CAKeepAliveConnectedCallback ConnHandler,
+                                CAKeepAliveDisconnectedCallback DisconnHandler);
+#endif
 /**
  * Initialize the connectivity abstraction module.
  * It will initialize adapters, thread pool and other modules based on the platform

@@ -63,12 +63,30 @@ typedef void (*CATCPErrorHandleCallback)(const CAEndpoint_t *endpoint, const voi
                                          uint32_t dataLength, CAResult_t result);
 
 /**
+  * Callback to notify connection information in the TCP adapter.
+  *
+  * @param[in]  addr    connected device address.
+  * @param[in]  port    connected port info.
+  * @param[in]  isConnected    Whether keepalive message needs to be sent.
+  * @see  Callback must be registered using CATCPSetKeepAliveCallback().
+ */
+typedef void (*CATCPKeepAliveHandleCallback)(const char *addr, uint16_t port, bool isConnected);
+
+/**
  * set error callback to notify error in TCP adapter.
  *
  * @param[in]  errorHandleCallback Callback function to notify the error
  * in the TCP adapter.
  */
 void CATCPSetErrorHandler(CATCPErrorHandleCallback errorHandleCallback);
+
+/**
+ * set keepalive callback to notify connection information in TCP adapter.
+ *
+ * @param[in]  keepaliveHandler Callback function to notify the connection information.
+ * in the TCP adapter.
+ */
+void CATCPSetKeepAliveCallback(CATCPKeepAliveHandleCallback keepaliveHandler);
 
 /**
  * Start TCP server.

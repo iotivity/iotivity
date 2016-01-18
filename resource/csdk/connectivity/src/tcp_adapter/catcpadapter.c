@@ -26,6 +26,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#include "cainterface.h"
 #include "catcpadapter.h"
 #include "catcpinterface.h"
 #include "caqueueingthread.h"
@@ -79,6 +80,16 @@ static CAErrorHandleCallback g_errorCallback = NULL;
 
 static void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep,
                                   const void *data, uint32_t dataLength);
+
+/**
+ * KeepAlive Connected Callback to CA adapter.
+ */
+static CAKeepAliveConnectedCallback g_connCallback = NULL;
+
+/**
+ * KeepAlive Disconnected Callback to CA adapter.
+ */
+static CAKeepAliveDisconnectedCallback g_disconnCallback = NULL;
 
 static CAResult_t CATCPInitializeQueueHandles();
 
@@ -160,6 +171,31 @@ void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
     {
         g_errorCallback(endpoint, data, dataLength, result);
     }
+}
+
+static void CATCPKeepAliveHandler(const char *addr, uint16_t port, bool isConnected)
+{
+    CAEndpoint_t endpoint = { .adapter =  CA_ADAPTER_TCP,
+                              .port = port };
+    OICStrcpy(endpoint.addr, sizeof(endpoint.addr), addr);
+
+    if (isConnected)
+    {
+        g_connCallback(&endpoint);
+    }
+    else
+    {
+        g_disconnCallback(&endpoint);
+    }
+}
+
+void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectedCallback ConnHandler,
+                                CAKeepAliveDisconnectedCallback DisconnHandler)
+{
+    g_connCallback = ConnHandler;
+    g_disconnCallback = DisconnHandler;
+
+    CATCPSetKeepAliveCallback(CATCPKeepAliveHandler);
 }
 
 static void CAInitializeTCPGlobals()

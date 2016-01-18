@@ -31,6 +31,7 @@ liboctbstack_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
 with_ra = env.get('WITH_RA')
 with_ra_ibb = env.get('WITH_RA_IBB')
+with_tcp = env.get('WITH_TCP')
 # As in the source code, it includes arduino Time library (C++)
 # It requires compile the .c with g++
 if target_os == 'arduino':
@@ -48,6 +49,7 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'stack/include/internal',
 		'../oc_logger/include',
 		'connectivity/lib/libcoap-4.1.1',
+		'connectivity/common/inc',
 		'connectivity/inc',
 		'connectivity/api',
 		'connectivity/external/inc',
@@ -136,6 +138,9 @@ liboctbstack_src = [
 	OCTBSTACK_SRC + 'oicgroup.c',
 	OCTBSTACK_SRC + "rdpayload.c"
 	]
+
+if with_tcp == True:
+	liboctbstack_src.append(OCTBSTACK_SRC + 'oickeepalive.c')
 
 liboctbstack_src.extend(env['cbor_files'])
 
