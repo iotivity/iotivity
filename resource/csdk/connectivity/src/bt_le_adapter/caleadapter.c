@@ -62,27 +62,6 @@ typedef enum
 } CABLEAdapter_t;
 
 /**
- * Stores the information of the Data to be sent from the queues.
- *
- * This structure will be pushed to the sender/receiver queue for
- * processing.
- */
-typedef struct
-{
-    /// Remote endpoint contains the information of remote device.
-    CAEndpoint_t *remoteEndpoint;
-
-    /// Data to be transmitted over LE transport.
-    uint8_t *data;
-
-    /// Length of the data being transmitted.
-    uint32_t dataLen;
-
-    /// Sender information list
-    u_arraylist_t * senderInfo;
-} CALEData_t;
-
-/**
  * Callback to provide the status of the network change to CA layer.
  */
 static CANetworkChangeCallback g_networkCallback = NULL;
@@ -810,8 +789,8 @@ static void CALEDataReceiverHandler(void *threadData)
             memcpy(senderInfo->defragData + senderInfo->recvDataLen, bleData->data,
                    bleData->dataLen);
             senderInfo->recvDataLen += bleData->dataLen ;
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "totalDatalength  [%d] received Data lenhth [%d]",
-                      senderInfo->totalDataLen, senderInfo->recvDataLen);
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "totalDatalength  [%d] received Datalen [%d]",
+                                                senderInfo->totalDataLen, senderInfo->recvDataLen);
         }
 
         if (senderInfo->totalDataLen == senderInfo->recvDataLen)
@@ -1736,8 +1715,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitializeLENetworkMonitor() failed");
         return CA_STATUS_FAILED;
     }
-
-    CAInitializeLEAdapter();
+    CAInitializeLEAdapter(handle);
 
     CASetLEClientThreadPoolHandle(handle);
 

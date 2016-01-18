@@ -31,6 +31,7 @@
 
 #include "cacommon.h"
 #include "cathreadpool.h"
+#include "uarraylist.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -48,6 +49,27 @@ typedef enum
     LE_MULTICAST,    /**< When this enum is selected, data will be updated to all OIC servers. */
     LE_UNICAST       /**< When this enum is selected, data will be updated to desired OIC Server. */
 } CALETransferType_t;
+
+/**
+ * Stores the information of the Data to be sent from the queues.
+ *
+ * This structure will be pushed to the sender/receiver queue for
+ * processing.
+ */
+typedef struct
+{
+    /// Remote endpoint contains the information of remote device.
+    CAEndpoint_t *remoteEndpoint;
+
+    /// Data to be transmitted over LE transport.
+    uint8_t *data;
+
+    /// Length of the data being transmitted.
+    uint32_t dataLen;
+
+    /// Sender information list
+    u_arraylist_t * senderInfo;
+} CALEData_t;
 
 /**
  * This will be used to notify device status changes to the LE adapter layer.
@@ -78,12 +100,13 @@ typedef CAResult_t (*CABLEDataReceivedCallback)(const char *remoteAddress,
  * Initialize the LE adapter layer. This will be invoked from the CA
  * layer.
  *
+ * @param[in] threadPool Thread pool handle
  * @return ::CA_STATUS_OK or Appropriate error code
  * @retval ::CA_STATUS_OK  Successful
  * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
  * @retval ::CA_STATUS_FAILED Operation failed
  */
-CAResult_t CAInitializeLEAdapter();
+CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool);
 
 /**
  * Start the LE adapter layer.
