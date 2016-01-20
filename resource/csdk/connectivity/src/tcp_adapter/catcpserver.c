@@ -555,7 +555,6 @@ void CATCPStopServer()
 
     // set terminate flag
     caglobals.tcp.terminate = true;
-    caglobals.tcp.started = false;
 
     if (caglobals.tcp.shutdownFds[1] != -1)
     {
@@ -563,7 +562,11 @@ void CATCPStopServer()
         // receive thread will stop immediately
     }
 
-    ca_cond_wait(g_condObjectList, g_mutexObjectList);
+    if (caglobals.tcp.started)
+    {
+        ca_cond_wait(g_condObjectList, g_mutexObjectList);
+    }
+    caglobals.tcp.started = false;
 
     // mutex unlock
     ca_mutex_unlock(g_mutexObjectList);

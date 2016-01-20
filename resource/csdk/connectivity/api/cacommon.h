@@ -503,9 +503,6 @@ typedef struct
     struct calayer
     {
         CAHistory_t requestHistory;  /**< filter IP family in requests */
-        CAHistory_t responseHistory; /**< filter IP family in responses */
-        CATransportFlags_t previousRequestFlags;/**< address family filtering */
-        uint16_t previousRequestMessageId;      /**< address family filtering */
     } ca;
 
 #ifdef TCP_ADAPTER

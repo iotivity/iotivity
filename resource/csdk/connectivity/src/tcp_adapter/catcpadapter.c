@@ -311,8 +311,8 @@ CAResult_t CAStopTCP()
         CAQueueingThreadStop(g_sendQueueHandle);
     }
 
-    CATCPDeinitializeQueueHandles();
     CATCPStopServer();
+
     //Re-initializing the Globals to start them again
     CAInitializeTCPGlobals();
 

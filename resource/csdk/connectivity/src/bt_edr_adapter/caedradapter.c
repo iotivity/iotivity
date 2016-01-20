@@ -209,14 +209,6 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
     handler.terminate = CATerminateEDR;
     registerCallback(handler, CA_ADAPTER_RFCOMM_BTEDR);
 
-    // Initialize Send/Receive data message queues
-    if (CA_STATUS_OK != CAEDRInitializeQueueHandlers())
-    {
-        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "CAAdapterInitializeQueues API failed");
-        CATerminateEDR();
-        return CA_STATUS_FAILED;
-    }
-
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -253,6 +245,16 @@ CAResult_t CAStartEDR()
                   ret);
     }
 
+    // Initialize Send/Receive data message queues
+    if (CA_STATUS_OK != (ret = CAEDRInitializeQueueHandlers()))
+    {
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG,
+                  "CAAdapterInitializeQueues failed!, error number [%d] ", ret);
+        CATerminateEDR();
+        return CA_STATUS_FAILED;
+    }
+
+    // Start Send/Receive data message queues
     if (CA_STATUS_OK != (ret = CAAdapterStartQueue()))
     {
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "CAAdapterStartQueue failed!, error number [%d] ", ret);

@@ -398,8 +398,6 @@ CAResult_t CAStopIP()
     {
         CAQueueingThreadStop(g_sendQueueHandle);
     }
-
-    CAIPDeinitializeQueueHandles();
 #endif
 
     CAIPStopNetworkMonitor();
