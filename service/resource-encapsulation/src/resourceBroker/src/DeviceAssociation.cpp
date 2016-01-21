@@ -56,13 +56,13 @@ namespace OIC
 
         DevicePresencePtr DeviceAssociation::findDevice(const std::string & address)
         {
-            OC_LOG_V(DEBUG,BROKER_TAG,"findDevice()");
+            OIC_LOG_V(DEBUG,BROKER_TAG,"findDevice()");
             DevicePresencePtr retDevice = nullptr;
             for(auto it : s_deviceList)
             {
                 if(address == it->getAddress())
                 {
-                    OC_LOG_V(DEBUG,BROKER_TAG,"find device in deviceList");
+                    OIC_LOG_V(DEBUG,BROKER_TAG,"find device in deviceList");
                     retDevice = it;
                     break;
                 }
@@ -73,22 +73,22 @@ namespace OIC
 
         void DeviceAssociation::addDevice(DevicePresencePtr dPresence)
         {
-            OC_LOG_V(DEBUG,BROKER_TAG,"addDevice()");
+            OIC_LOG_V(DEBUG,BROKER_TAG,"addDevice()");
             DevicePresencePtr foundDevice = findDevice(dPresence->getAddress());
             if(foundDevice == nullptr)
             {
-                OC_LOG_V(DEBUG,BROKER_TAG,"add device in deviceList");
+                OIC_LOG_V(DEBUG,BROKER_TAG,"add device in deviceList");
                 s_deviceList.push_back(dPresence);
             }
         }
 
         void DeviceAssociation::removeDevice(DevicePresencePtr dPresence)
         {
-            OC_LOG_V(DEBUG,BROKER_TAG,"removeDevice()");
+            OIC_LOG_V(DEBUG,BROKER_TAG,"removeDevice()");
             DevicePresencePtr foundDevice = findDevice(dPresence->getAddress());
             if(foundDevice != nullptr)
             {
-                OC_LOG_V(DEBUG,BROKER_TAG,"remove device in deviceList");
+                OIC_LOG_V(DEBUG,BROKER_TAG,"remove device in deviceList");
                 s_deviceList.remove(foundDevice);
                 foundDevice.reset();
             }
@@ -96,7 +96,7 @@ namespace OIC
 
         bool DeviceAssociation::isEmptyDeviceList()
         {
-            OC_LOG_V(DEBUG,BROKER_TAG,"isEmptyDeviceList()");
+            OIC_LOG_V(DEBUG,BROKER_TAG,"isEmptyDeviceList()");
             return s_deviceList.empty();
         }
     } // namespace Service

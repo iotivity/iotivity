@@ -1011,7 +1011,7 @@ bool SimulatorResourceModel::setAttributeValue(const std::string &key,
 {
     if (key.empty())
     {
-        OC_LOG(ERROR, TAG, "key is empty!");
+        OIC_LOG(ERROR, TAG, "key is empty!");
         return false;
     }
 

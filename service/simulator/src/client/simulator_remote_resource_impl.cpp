@@ -144,7 +144,7 @@ void SimulatorRemoteResourceImpl::get(const std::string &interfaceType,
 
     if (!m_getRequestSender)
     {
-        OC_LOG(ERROR, TAG, "Invalid GET request sender!");
+        OIC_LOG(ERROR, TAG, "Invalid GET request sender!");
         throw NoSupportException("Can not send GET request on this resource!");
     }
 
@@ -161,7 +161,7 @@ void SimulatorRemoteResourceImpl::get(const std::map<std::string, std::string> &
 
     if (!m_getRequestSender)
     {
-        OC_LOG(ERROR, TAG, "Invalid GET request sender !");
+        OIC_LOG(ERROR, TAG, "Invalid GET request sender !");
         throw NoSupportException("Can not send GET request on this resource!");
     }
 
@@ -180,7 +180,7 @@ void SimulatorRemoteResourceImpl::put(const std::string &interfaceType,
 
     if (!m_putRequestSender)
     {
-        OC_LOG(ERROR, TAG, "Invalid PUT request sender !");
+        OIC_LOG(ERROR, TAG, "Invalid PUT request sender !");
         throw NoSupportException("Can not send PUT request on this resource!");
     }
 
@@ -198,7 +198,7 @@ void SimulatorRemoteResourceImpl::put(const std::map<std::string, std::string> &
 
     if (!m_putRequestSender)
     {
-        OC_LOG(ERROR, TAG, "Invalid PUT request sender !");
+        OIC_LOG(ERROR, TAG, "Invalid PUT request sender !");
         throw NoSupportException("Can not send PUT request on this resource!");
     }
 
@@ -217,7 +217,7 @@ void SimulatorRemoteResourceImpl::post(const std::string &interfaceType,
 
     if (!m_postRequestSender)
     {
-        OC_LOG(ERROR, TAG, "Invalid POST request sender !");
+        OIC_LOG(ERROR, TAG, "Invalid POST request sender !");
         throw NoSupportException("Can not send POST request on this resource!");
     }
 
@@ -235,7 +235,7 @@ void SimulatorRemoteResourceImpl::post(const std::map<std::string, std::string> 
 
     if (!m_postRequestSender)
     {
-        OC_LOG(ERROR, TAG, "Invalid POST request sender !");
+        OIC_LOG(ERROR, TAG, "Invalid POST request sender !");
         throw NoSupportException("Can not send POST request on this resource!");
     }
 
@@ -252,7 +252,7 @@ int SimulatorRemoteResourceImpl::startVerification(RequestType type,
 
     if (!m_autoRequestGenMngr)
     {
-        OC_LOG(ERROR, TAG, "Invalid auto request generation manager !");
+        OIC_LOG(ERROR, TAG, "Invalid auto request generation manager !");
         throw NoSupportException("Resource is not configured with RAML!");
     }
 
@@ -309,13 +309,13 @@ void SimulatorRemoteResourceImpl::stopVerification(int id)
 {
     if (id < 0)
     {
-        OC_LOG(ERROR, TAG, "Invalid session id!");
+        OIC_LOG(ERROR, TAG, "Invalid session id!");
         throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Invalid ID!");
     }
 
     if (!m_autoRequestGenMngr)
     {
-        OC_LOG(ERROR, TAG, "Invalid auto request generation manager !");
+        OIC_LOG(ERROR, TAG, "Invalid auto request generation manager !");
         throw NoSupportException("Resource is not configured with RAML!");
     }
 

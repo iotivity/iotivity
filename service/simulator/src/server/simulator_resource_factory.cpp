@@ -44,7 +44,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::createResource(
     if (0 == raml->getResources().size()
         || nullptr == (ramlResource = raml->getResources().begin()->second))
     {
-        OC_LOG(ERROR, TAG, "Zero resources detected from RAML!");
+        OIC_LOG(ERROR, TAG, "Zero resources detected from RAML!");
         return nullptr;
     }
 
@@ -65,7 +65,7 @@ std::vector<std::shared_ptr<SimulatorResource> > SimulatorResourceFactory::creat
     if (0 == raml->getResources().size()
         || nullptr == (ramlResource = raml->getResources().begin()->second))
     {
-        OC_LOG(ERROR, TAG, "Zero resources detected from RAML!");
+        OIC_LOG(ERROR, TAG, "Zero resources detected from RAML!");
         return resources;
     }
 
@@ -74,7 +74,7 @@ std::vector<std::shared_ptr<SimulatorResource> > SimulatorResourceFactory::creat
         std::shared_ptr<SimulatorResource> resource = buildResource(ramlResource);
         if (!resource)
         {
-            OC_LOG(ERROR, TAG, "Failed to create resource!");
+            OIC_LOG(ERROR, TAG, "Failed to create resource!");
             return resources;
         }
 
@@ -217,21 +217,21 @@ RAML::RequestResponseBodyPtr SimulatorResourceFactory::getRAMLResponseBody(
     RAML::ActionPtr action = ramlResource->getAction(type);
     if (!action)
     {
-        OC_LOG(ERROR, TAG, "Resource does not possess the request!");
+        OIC_LOG(ERROR, TAG, "Resource does not possess the request!");
         return nullptr;
     }
 
     RAML::ResponsePtr response = action->getResponse(responseCode);
     if (!response)
     {
-        OC_LOG(ERROR, TAG, "Resource does not provide valid GET response!");
+        OIC_LOG(ERROR, TAG, "Resource does not provide valid GET response!");
         return nullptr;
     }
 
     RAML::RequestResponseBodyPtr responseBody = response->getResponseBody("application/json");
     if (!responseBody)
     {
-        OC_LOG(ERROR, TAG, "GET response is not of type \"application/json\" ");
+        OIC_LOG(ERROR, TAG, "GET response is not of type \"application/json\" ");
         return nullptr;
     }
 

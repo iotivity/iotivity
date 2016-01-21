@@ -44,7 +44,7 @@ void GETRequestGenerator::startSending()
     std::lock_guard<std::mutex> lock(m_statusLock);
     if (m_status)
     {
-        OC_LOG(ERROR, TAG, "Operation already in progress !");
+        OIC_LOG(ERROR, TAG, "Operation already in progress !");
         throw OperationInProgressException("Another GET request generation session is already in progress!");
     }
 
@@ -62,7 +62,7 @@ void GETRequestGenerator::stopSending()
 void GETRequestGenerator::SendAllRequests()
 {
     // Notify the progress status
-    OC_LOG(DEBUG, TAG, "Sending OP_START event");
+    OIC_LOG(DEBUG, TAG, "Sending OP_START event");
     m_callback(m_id, OP_START);
 
     do
@@ -95,7 +95,7 @@ void GETRequestGenerator::SendAllRequests()
 void GETRequestGenerator::onResponseReceived(SimulatorResult result,
         SimulatorResourceModelSP repModel)
 {
-    OC_LOG_V(INFO, TAG, "Response recieved result:%d", result);
+    OIC_LOG_V(INFO, TAG, "Response recieved result:%d", result);
     m_responseCnt++;
     completed();
 }
@@ -106,12 +106,12 @@ void GETRequestGenerator::completed()
     {
         if (m_stopRequested)
         {
-            OC_LOG(DEBUG, TAG, "Sending OP_ABORT event");
+            OIC_LOG(DEBUG, TAG, "Sending OP_ABORT event");
             m_callback(m_id, OP_ABORT);
         }
         else
         {
-            OC_LOG(DEBUG, TAG, "Sending OP_COMPLETE event");
+            OIC_LOG(DEBUG, TAG, "Sending OP_COMPLETE event");
             m_callback(m_id, OP_COMPLETE);
         }
     }

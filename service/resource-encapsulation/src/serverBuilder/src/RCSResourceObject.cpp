@@ -72,7 +72,7 @@ namespace
         }
         catch (const OC::OCException& e)
         {
-            OC_LOG_V(WARNING, LOG_TAG, "Error (%s)", e.what());
+            OIC_LOG_V(WARNING, LOG_TAG, "Error (%s)", e.what());
         }
 
         return OC_EH_ERROR;
@@ -222,7 +222,7 @@ namespace OIC
                 }
                 catch (...)
                 {
-                    OC_LOG(WARNING, LOG_TAG, "Failed to unregister resource.");
+                    OIC_LOG(WARNING, LOG_TAG, "Failed to unregister resource.");
                 }
             }
         }
@@ -432,7 +432,7 @@ namespace OIC
         OCEntityHandlerResult RCSResourceObject::entityHandler(
                 const std::shared_ptr< OC::OCResourceRequest >& request)
         {
-            OC_LOG(WARNING, LOG_TAG, "entityHandler");
+            OIC_LOG(WARNING, LOG_TAG, "entityHandler");
             if (!request)
             {
                 return OC_EH_ERROR;
@@ -452,12 +452,12 @@ namespace OIC
             }
             catch (const std::exception& e)
             {
-                OC_LOG_V(WARNING, LOG_TAG, "Failed to handle request : %s", e.what());
+                OIC_LOG_V(WARNING, LOG_TAG, "Failed to handle request : %s", e.what());
                 throw;
             }
             catch (...)
             {
-                OC_LOG(WARNING, LOG_TAG, "Failed to handle request.");
+                OIC_LOG(WARNING, LOG_TAG, "Failed to handle request.");
                 throw;
             }
 
@@ -502,7 +502,7 @@ namespace OIC
             auto replaced = requestHandler->applyAcceptanceMethod(response.getAcceptanceMethod(),
                     *this, requstAttrs);
 
-            OC_LOG_V(WARNING, LOG_TAG, "replaced num %zu", replaced.size());
+            OIC_LOG_V(WARNING, LOG_TAG, "replaced num %zu", replaced.size());
             for (const auto& attrKeyValPair : replaced)
             {
                 std::shared_ptr< AttributeUpdatedListener > foundListener;
@@ -540,7 +540,7 @@ namespace OIC
                 autoNotify(attrsChanged, m_autoNotifyPolicy);
                 return sendResponse(*this, request, response);
             } catch (const RCSPlatformException& e) {
-                OC_LOG_V(ERROR, LOG_TAG, "Error : %s ", e.what());
+                OIC_LOG_V(ERROR, LOG_TAG, "Error : %s ", e.what());
                 return OC_EH_ERROR;
             }
         }

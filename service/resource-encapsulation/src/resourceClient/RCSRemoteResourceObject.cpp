@@ -162,7 +162,7 @@ namespace OIC
 
             if (isMonitoring())
             {
-                OC_LOG(DEBUG, TAG, "startMonitoring : already started");
+                OIC_LOG(DEBUG, TAG, "startMonitoring : already started");
                 throw RCSBadRequestException{ "Monitoring already started." };
             }
 
@@ -176,7 +176,7 @@ namespace OIC
 
             if (!isMonitoring())
             {
-                OC_LOG(DEBUG, TAG, "stopMonitoring : Not started");
+                OIC_LOG(DEBUG, TAG, "stopMonitoring : Not started");
                 return;
             }
 
@@ -208,7 +208,7 @@ namespace OIC
 
             if (isCaching())
             {
-                OC_LOG(DEBUG, TAG, "startCaching : already Started");
+                OIC_LOG(DEBUG, TAG, "startCaching : already Started");
                 throw RCSBadRequestException{ "Caching already started." };
             }
 
@@ -225,7 +225,7 @@ namespace OIC
                         m_primitiveResource, { }, REPORT_FREQUENCY::NONE, 0);
             }
 
-            OC_LOG_V(DEBUG, TAG, "startCaching CACHE ID %d", m_cacheId);
+            OIC_LOG_V(DEBUG, TAG, "startCaching CACHE ID %d", m_cacheId);
         }
 
         void RCSRemoteResourceObject::stopCaching()
@@ -234,7 +234,7 @@ namespace OIC
 
             if (!isCaching())
             {
-                OC_LOG(DEBUG, TAG, "Caching already terminated");
+                OIC_LOG(DEBUG, TAG, "Caching already terminated");
                 return;
             }
 
