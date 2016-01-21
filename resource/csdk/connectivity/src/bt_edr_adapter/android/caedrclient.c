@@ -35,7 +35,7 @@
 #include "caremotehandler.h"
 
 //#define DEBUG_MODE
-#define TAG PCF("CA_EDR_CLIENT")
+#define TAG PCF("OIC_CA_EDR_CLIENT")
 
 static const char METHODID_CONTEXTNONPARAM[] = "()Landroid/content/Context;";
 static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAdapter;";

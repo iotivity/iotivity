@@ -35,7 +35,7 @@
 #include "oic_string.h"
 
 //#define DEBUG_MODE
-#define TAG PCF("CA_EDR_SERVER")
+#define TAG PCF("OIC_CA_EDR_SERVER")
 #define MAX_PDU_BUFFER (1024)
 
 static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAdapter;";

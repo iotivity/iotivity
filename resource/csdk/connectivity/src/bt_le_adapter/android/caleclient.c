@@ -37,7 +37,7 @@
 #include "uarraylist.h"
 #include "org_iotivity_ca_CaLeClientInterface.h"
 
-#define TAG PCF("CA_LE_CLIENT")
+#define TAG PCF("OIC_CA_LE_CLIENT")
 
 #define MICROSECS_PER_SEC 1000000
 

@@ -43,7 +43,7 @@
 #include "camutex.h"
 #include "logger.h"
 
-#define TAG "CA_BWT"
+#define TAG "OIC_CA_BWT"
 
 #define BLOCKWISE_OPTION_BUFFER    (sizeof(unsigned int))
 #define BLOCK_NUMBER_IDX           4

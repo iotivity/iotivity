@@ -35,7 +35,7 @@
 #include "uarraylist.h"
 #include "org_iotivity_ca_CaLeServerInterface.h"
 
-#define TAG PCF("CA_LE_SERVER")
+#define TAG PCF("OIC_CA_LE_SERVER")
 
 static JavaVM *g_jvm = NULL;
 static jobject g_context = NULL;

@@ -36,7 +36,7 @@
 #include <jni.h>
 #endif
 
-#define CA_ADAPTER_UTILS_TAG "CA_ADAPTER_UTILS"
+#define CA_ADAPTER_UTILS_TAG "OIC_CA_ADAP_UTILS"
 
 #ifdef __ANDROID__
 /**

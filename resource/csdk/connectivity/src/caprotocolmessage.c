@@ -43,7 +43,7 @@
 #include "ocrandom.h"
 #include "cacommonutil.h"
 
-#define TAG "CA_PRTCL_MSG"
+#define TAG "OIC_CA_PRTCL_MSG"
 
 #define CA_BUFSIZE (128)
 #define CA_PDU_MIN_SIZE (4)

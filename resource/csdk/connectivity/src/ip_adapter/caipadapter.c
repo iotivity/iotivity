@@ -40,7 +40,7 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "IP_ADAP"
+#define TAG "OIC_CA_IP_ADAP"
 
 #ifndef SINGLE_THREAD
 /**

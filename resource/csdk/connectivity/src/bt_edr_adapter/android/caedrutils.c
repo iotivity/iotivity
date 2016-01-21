@@ -29,7 +29,7 @@
 #include "uarraylist.h"
 
 #define ERROR_CODE (-1)
-#define TAG PCF("CA_EDR_UTILS")
+#define TAG PCF("OIC_CA_EDR_UTILS")
 
 static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAdapter;";
 static const char METHODID_STRINGNONPARAM[] = "()Ljava/lang/String;";

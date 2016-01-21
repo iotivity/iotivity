@@ -50,7 +50,7 @@
 /*
  * Logging tag for module name
  */
-#define TAG "IP_SERVER"
+#define TAG "OIC_CA_IP_SERVER"
 
 #define SELECT_TIMEOUT 1     // select() seconds (and termination latency)
 

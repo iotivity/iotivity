@@ -61,7 +61,7 @@
 #include "oic_malloc.h"
 #include "logger.h"
 
-#define TAG "CA_RETRANS"
+#define TAG "OIC_CA_RETRANS"
 
 typedef struct
 {

@@ -25,7 +25,7 @@
 #include "uarraylist.h"
 #include "logger.h"
 
-#define TAG "CA_NW_CONFIG"
+#define TAG "OIC_CA_NW_CONFIG"
 
 static u_arraylist_t *g_selectedNetworkList = NULL;
 static uint32_t NETWORK_IP = CA_ADAPTER_IP;

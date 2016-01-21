@@ -58,7 +58,7 @@ static CAQueueingThread_t g_receiveThread;
 #define CA_MAX_RT_ARRAY_SIZE    3
 #endif  // SINGLE_THREAD
 
-#define TAG "CA_MSG_HNDLR"
+#define TAG "OIC_CA_MSG_HANDLE"
 
 static CARetransmission_t g_retransmissionContext;
 

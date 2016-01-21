@@ -42,7 +42,7 @@
 CAGlobals_t caglobals = { .clientFlags = 0,
                           .serverFlags = 0, };
 
-#define TAG "CA_CONN_MGR"
+#define TAG "OIC_CA_CONN_MGR"
 
 static bool g_isInitialized = false;
 

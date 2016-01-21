@@ -45,7 +45,7 @@
  * @def NET_DTLS_TAG
  * @brief Logging tag for module name
  */
-#define NET_DTLS_TAG "NET_DTLS"
+#define NET_DTLS_TAG "OIC_CA_NET_DTLS"
 
 /**
  * @var g_caDtlsContext

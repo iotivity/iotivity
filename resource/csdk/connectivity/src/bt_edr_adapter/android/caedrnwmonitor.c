@@ -36,7 +36,7 @@
 #include "org_iotivity_ca_CaEdrInterface.h"
 
 //#define DEBUG_MODE
-#define TAG PCF("CA_EDR_MONITOR")
+#define TAG PCF("OIC_CA_EDR_MONITOR")
 
 static JavaVM *g_jvm;
 static jobject g_context;

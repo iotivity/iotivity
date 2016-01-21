@@ -37,7 +37,7 @@
 /**
  * Logging tag for module name.
  */
-#define CALEADAPTER_TAG "LAD"
+#define CALEADAPTER_TAG "OIC_LE_ADAP"
 
 
 /**

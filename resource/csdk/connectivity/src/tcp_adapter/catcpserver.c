@@ -48,7 +48,7 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "TCP_SERVER"
+#define TAG "OIC_CA_TCP_SERVER"
 
 /**
  * Server port number for local test.

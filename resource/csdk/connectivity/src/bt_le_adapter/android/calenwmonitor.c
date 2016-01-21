@@ -33,7 +33,7 @@
 
 #include "org_iotivity_ca_CaLeClientInterface.h"
 
-#define TAG PCF("CA_LE_MONITOR")
+#define TAG PCF("OIC_CA_LE_MONITOR")
 
 #define BT_STATE_ON (12)
 #define BT_STATE_OFF (10)

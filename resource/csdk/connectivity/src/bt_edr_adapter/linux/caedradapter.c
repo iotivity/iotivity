@@ -25,7 +25,7 @@
 #include "caedradapter.h"
 #include "logger.h"
 
-#define TAG PCF("CA")
+#define TAG PCF("OIC_CA")
 
 static CANetworkPacketReceivedCallback g_edrReceivedCallback = NULL;
 static ca_thread_pool_t g_threadPoolHandle = NULL;

@@ -38,7 +38,7 @@
  * @var EDR_ADAPTER_TAG
  * @brief Logging tag for module name.
  */
-#define EDR_ADAPTER_TAG "CA_EDR_ADAPTER"
+#define EDR_ADAPTER_TAG "OIC_CA_EDR_ADAP"
 
 /**
  * @var g_edrThreadPool

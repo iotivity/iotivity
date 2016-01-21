@@ -40,7 +40,7 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "TCP_ADAP"
+#define TAG "OIC_CA_TCP_ADAP"
 
 /**
  * Holds internal thread TCP data information.

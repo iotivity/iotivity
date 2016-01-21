@@ -43,7 +43,7 @@
 #include "catcpadapter.h"
 #endif
 
-#define TAG "CA_INTRFC_CNTRLR"
+#define TAG "OIC_CA_INF_CTR"
 
 #define CA_MEMORY_ALLOC_CHECK(arg) {if (arg == NULL) \
     {OIC_LOG(ERROR, TAG, "memory error");goto memory_error_exit;} }

@@ -36,7 +36,7 @@
 #include "oic_string.h"
 #include "org_iotivity_ca_CaIpInterface.h"
 
-#define TAG "IP_MONITOR"
+#define TAG "OIC_CA_IP_MONITOR"
 
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
                                          uint32_t addr, int flags);

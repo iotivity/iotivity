@@ -49,7 +49,7 @@
 /**
  * Logging tag for module name.
  */
-#define RA_ADAPTER_TAG "RA_ADAP_IBB"
+#define RA_ADAPTER_TAG "OIC_RA_ADAP_IBB"
 
 /**
  * Network Packet Received Callback to CA.
