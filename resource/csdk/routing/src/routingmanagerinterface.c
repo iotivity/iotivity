@@ -31,7 +31,7 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "RM_INTERFACE"
+#define TAG "OIC_RM_INTERFACE"
 
 /**
  * Name of resource type.

@@ -35,12 +35,12 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "RM"
+#define TAG "OIC_RM"
 
 /**
  * Tag for printing the logs of forwarding the packet.
  */
-#define RM_TAG "RAP"
+#define RM_TAG "OIC_RM_RAP"
 
 
 /**

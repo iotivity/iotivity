@@ -29,12 +29,12 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "RTM"
+#define TAG "OIC_RM_TM"
 
 /**
  * Tag for printing the Routing table.
  */
-#define RM_TAG "RAP"
+#define RM_TAG "OIC_RM_RAP"
 
 
 /**

@@ -32,7 +32,7 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "RPM"
+#define TAG "OIC_RM_PARSER"
 
 /**
  * Table key to parser Payload Table.
