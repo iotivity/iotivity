@@ -45,11 +45,14 @@ typedef enum
     STATE_CONNECTED     /**< State is Connected. */
 } CAConnectedState_t;
 
-typedef struct connected_state
+typedef struct connected_device
 {
     uint8_t address[CA_MACADDR_SIZE];
     CAConnectedState_t state;
-} state_t;
+    uint8_t *recvData;
+    size_t recvDataLen;
+    size_t totalDataLen;
+} CAConnectedDeviceInfo_t;
 
 /**
  * Enum for defining different server types.

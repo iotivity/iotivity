@@ -183,8 +183,6 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
         transport = coap_get_tcp_header_type_from_initbyte(((unsigned char *)data)[0] >> 4);
     }
     else
-#else
-    (void) endpoint;
 #endif
     {
         transport = coap_udp;
@@ -695,8 +693,6 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
         transport = coap_get_tcp_header_type_from_initbyte(((unsigned char *)pdu->hdr)[0] >> 4);
     }
     else
-#else
-    (void) endpoint;
 #endif
     {
         transport = coap_udp;
