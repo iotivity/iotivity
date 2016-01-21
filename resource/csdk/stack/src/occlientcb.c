@@ -36,7 +36,7 @@
 #include "cainterface.h"
 
 /// Module Name
-#define TAG "occlientcb"
+#define TAG "OIC_RI_CLIENTCB"
 
 struct ClientCB *cbList = NULL;
 static OCMulticastNode * mcPresenceNodes = NULL;

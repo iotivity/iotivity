@@ -29,7 +29,8 @@
 #include "logger.h"
 #include "rdpayload.h"
 
-#define TAG "OCPayload"
+#define TAG "OIC_RI_PAYLOAD"
+
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val);
 static void FreeOCDiscoveryResource(OCResourcePayload* payload);
 

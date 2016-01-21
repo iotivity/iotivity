@@ -123,7 +123,7 @@ static const char COAP_TCP[] = "coap+tcp:";
 //-----------------------------------------------------------------------------
 // Macros
 //-----------------------------------------------------------------------------
-#define TAG  "OCStack"
+#define TAG  "OIC_RI_STACK"
 #define VERIFY_SUCCESS(op, successCode) { if ((op) != (successCode)) \
             {OC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 #define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OC_LOG((logLevel), \

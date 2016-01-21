@@ -50,7 +50,8 @@
 #endif
 
 /// Module Name
-#define TAG "ocresource"
+#define TAG "OIC_RI_RESOURCE"
+
 #define VERIFY_SUCCESS(op, successCode) { if (op != successCode) \
             {OC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 

@@ -41,7 +41,7 @@
 // Module Name
 #define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 
-#define TAG  "ocserverrequest"
+#define TAG  "OIC_RI_SERVERREQUEST"
 
 static struct OCServerRequest * serverRequestList = NULL;
 static struct OCServerResponse * serverResponseList = NULL;

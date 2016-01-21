@@ -30,7 +30,8 @@
 #include "cbor.h"
 #include "rdpayload.h"
 
-#define TAG "OCPayloadConvert"
+#define TAG "OIC_RI_PAYLOADCONVERT"
+
 // Arbitrarily chosen size that seems to contain the majority of packages
 #define INIT_SIZE (255)
 

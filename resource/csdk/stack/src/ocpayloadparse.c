@@ -39,7 +39,7 @@
 #include "payload_logging.h"
 #include "rdpayload.h"
 
-#define TAG "OCPayloadParse"
+#define TAG "OIC_RI_PAYLOADPARSE"
 
 static OCStackResult OCParseDiscoveryPayload(OCPayload** outPayload, CborValue* arrayVal);
 static OCStackResult OCParseDevicePayload(OCPayload** outPayload, CborValue* arrayVal);

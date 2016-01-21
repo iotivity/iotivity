@@ -26,7 +26,7 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 
-#define TAG "OCRDPayload"
+#define TAG "OIC_RI_RDPAYLOAD"
 
 #define CBOR_ROOT_ARRAY_LENGTH 1
 

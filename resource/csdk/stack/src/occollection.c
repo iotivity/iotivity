@@ -44,7 +44,7 @@
 
 #include "oicgroup.h"
 
-#define TAG "occollection"
+#define TAG "OIC_RI_COLLECTION"
 
 #define NUM_PARAM_IN_QUERY   2 // The expected number of parameters in a query
 #define NUM_FIELDS_IN_QUERY  2 // The expected number of fields in a query

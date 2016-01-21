@@ -38,7 +38,7 @@
 // Module Name
 #define MOD_NAME "ocobserve"
 
-#define TAG  "OCStackObserve"
+#define TAG  "OIC_RI_OBSERVE"
 
 #define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 

@@ -36,7 +36,7 @@
 #include <pthread.h>
 #endif
 
-#define TAG "OICGROUP"
+#define TAG "OIC_RI_GROUP"
 
 #define DESC_DELIMITER          "\""
 #define ACTION_DELIMITER        "*"
