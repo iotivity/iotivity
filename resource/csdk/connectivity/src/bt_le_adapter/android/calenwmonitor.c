@@ -237,22 +237,12 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
         CALEClientCreateDeviceList();
         CALEServerCreateCachedDeviceList();
 
-        CAResult_t res = CALEClientStartScan();
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
-        }
-
-        res = CALEStartAdvertise();
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "CALEStartAdvertise has failed");
-        }
-
         gCALEDeviceStateChangedCallback(newStatus);
     }
     else if (BT_STATE_OFF == status) // STATE_OFF:10
     {
+        CALEClientStopMulticastServer();
+
         // remove obj for client
         CAResult_t res = CALEClientRemoveAllGattObjs(env);
         if (CA_STATUS_OK != res)
