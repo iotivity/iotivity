@@ -1,3 +1,5 @@
+default: all
+
 #Set the two variables below for the client build.
 CLIENTARCH=x86
 BUILDTYPE=release
@@ -7,9 +9,20 @@ YOCTOCXXFLAGS=-I$(SDKTARGETSYSROOT)/usr/include/iotivity/resource/ -I$(SDKTARGET
 
 YOCTOLDFLAGS=-loc -loctbstack -loc_logger -lmraa
 
-CXXFLAGS=-I../../resource/include -I../../resource/csdk/stack/include -I../../resource/csdk/ocrandom/include -I../../resource/csdk/logger/include -I../../resource/oc_logger/include
+CXXFLAGS=-I../../resource/include -I../../resource/csdk/stack/include -I../../resource/csdk/ocrandom/include -I../../resource/csdk/logger/include -I../../resource/oc_logger/include -I../../resource/c_common/
 
 LDFLAGS=-L../../out/linux/$(CLIENTARCH)/$(BUILDTYPE) -loc -loctbstack -loc_logger
+
+install_dir?=${DESTDIR}/usr/lib/iotivity/examples/OICSensorBoard
+
+exes?=client
+ifneq ($(SDKTARGETSYSROOT),)
+exes+=server
+endif
+
+
+all: client
+	@echo "server depends on mraa"
 
 client: client.o
 	g++ -o client client.o $(LDFLAGS)
@@ -32,3 +45,7 @@ server: server.o observer.o
 
 clean:
 	rm -rf server client *.o
+
+install: ${exes}
+	install -d ${install_dir}
+	install $^ ${install_dir}
