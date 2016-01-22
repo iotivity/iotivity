@@ -57,7 +57,9 @@ static bool CALECheckStarted()
 {
     ca_mutex_lock(g_context.lock);
 
-    bool const started = (g_context.event_loop != NULL);
+    bool const started =
+        (g_context.event_loop != NULL
+         && g_main_loop_is_running(g_context.event_loop));
 
     ca_mutex_unlock(g_context.lock);
 
@@ -641,6 +643,20 @@ static bool CALESetUpBlueZObjects(CALEContext * context)
     return success;
 }
 
+/**
+ * Inform thread waiting for the event loop to start that the loop has
+ * started.  This is done in the context of the event loop itself so
+ * that we can be certain that the event loop is indeed running.
+ */
+static gboolean CALEEventLoopStarted(gpointer user_data)
+{
+    sem_t * const sem = user_data;
+
+    (void) sem_post(sem);
+
+    return G_SOURCE_REMOVE;
+}
+
 static void CALEStartEventLoop(void * data)
 {
     CALEContext * const context = data;
@@ -661,22 +677,6 @@ static void CALEStartEventLoop(void * data)
     */
     if (CALESetUpDBus(&g_context))
     {
-        /*
-          Notify the upper LE stack of the availability of Bluetooth
-          adapters, if any are already powered on.
-        */
-        if (CAGetLEAdapterState() == CA_STATUS_OK)
-        {
-            /**
-             * @todo Should we acquire the context lock here to
-             *       prevent the @c CALEDeviceStateChangedCallback
-             *       from being potentially yanked out from under us
-             *       if the CA adapters are stopped/terminated as
-             *       we're about to invoke this callback?
-             */
-            g_context.on_device_state_changed(CA_ADAPTER_ENABLED);
-        }
-
         ca_mutex_lock(context->lock);
 
         assert(context->event_loop == NULL);
@@ -684,7 +684,24 @@ static void CALEStartEventLoop(void * data)
 
         ca_mutex_unlock(context->lock);
 
+        /*
+          Add an idle handler that notifies a thread waiting for the
+          GLib event loop to run that the event loop is actually
+          running.  We do this in the context of the event loop itself
+          to avoid race conditions.
+        */
+        GSource * const source = g_idle_source_new();
+        g_source_set_priority(source, G_PRIORITY_HIGH_IDLE);
+        g_source_set_callback(source,
+                              CALEEventLoopStarted,
+                              &context->le_started,  // data
+                              NULL);                 // notify
+        (void) g_source_attach(source, loop_context);
+        g_source_unref(source);
+
         g_main_loop_run(event_loop);  // Blocks until loop is quit.
+
+        CALETearDownDBus(&g_context);
     }
 
     /*
@@ -753,24 +770,6 @@ static bool CALEWaitForNonEmptyList(GList * const * list,
     return success;
 }
 
-static CAResult_t CALEStop()
-{
-    CAResult_t result = CA_STATUS_FAILED;
-
-    OIC_LOG(DEBUG, TAG, "Stop Linux BLE adapter.");
-
-    // Only stop if we were previously started.
-    if (CALECheckStarted())
-    {
-        // Stop the event loop thread regardless of previous errors.
-        CALEStopEventLoop(&g_context);
-        CALETearDownDBus(&g_context);
-        result = CA_STATUS_OK;
-    }
-
-    return result;
-}
-
 // -----------------------------------------------------------------------
 
 CAResult_t CAInitializeLEAdapter()
@@ -797,10 +796,12 @@ CAResult_t CAStartLEAdapter()
 
     OIC_LOG(DEBUG, TAG, __func__);
 
+    CAResult_t result = CA_STATUS_FAILED;
+
     // Only start if we were previously stopped.
     if (CALECheckStarted())
     {
-        return CA_STATUS_FAILED;
+        return result;
     }
 
     /**
@@ -819,9 +820,41 @@ CAResult_t CAStartLEAdapter()
      *       the @c CAGetLEInterfaceInformation() function below for
      *       further details.
      */
-    return ca_thread_pool_add_task(g_context.client_thread_pool,
-                                   CALEStartEventLoop,
-                                   &g_context);
+    result = ca_thread_pool_add_task(g_context.client_thread_pool,
+                                     CALEStartEventLoop,
+                                     &g_context);
+
+    /*
+      Wait for the GLib event loop to actually run before returning.
+
+      This addresses corner cases where operations are incorrectly
+      permitted to run in parallel before the event loop is run. For
+      example, the LE transport could have been stopped in a thread
+      parallel to the one starting the event loop start.  In that case
+      the GLib event loop may never exit since the stop operation that
+      causes the event loop to exit occurred before event loop
+      started.  That ultimately causes the CA layer termination to
+      block indefinitely on a pthread_join().  The solution is to only
+      return from the LE transport start operation once we know the
+      event loop is up and running.
+    */
+    struct timespec abs_timeout;
+    if (result == CA_STATUS_OK
+        && clock_gettime(CLOCK_REALTIME, &abs_timeout) == 0)
+    {
+        static time_t const relative_timeout = 2;  // seconds
+        abs_timeout.tv_sec += relative_timeout;
+
+        int const wait_result =
+            sem_timedwait(&g_context.le_started, &abs_timeout);
+
+        if (wait_result == 0)
+        {
+            result = CA_STATUS_OK;
+        }
+    }
+
+    return result;
 }
 
 CAResult_t CAStopLEAdapter()
@@ -831,9 +864,17 @@ CAResult_t CAStopLEAdapter()
       CAUnselectNetwork(CA_ADAPTER_GATT_BTLE) is called by the user.
     */
 
-    OIC_LOG(DEBUG, TAG, __func__);
+    OIC_LOG(DEBUG, TAG, "Stop Linux BLE adapter.");
 
-    return CALEStop();
+    // Only stop if we were previously started.
+    if (!CALECheckStarted())
+    {
+        return CA_STATUS_FAILED;
+    }
+
+    CALEStopEventLoop(&g_context);
+
+    return CA_STATUS_OK;
 }
 
 
@@ -890,6 +931,14 @@ CAResult_t CAInitializeLENetworkMonitor()
     g_context.lock      = ca_mutex_new();
     g_context.condition = ca_cond_new();
 
+    static int const PSHARED        = 0;  // shared between threads
+    static unsigned int const VALUE = 0;  // force sem_wait() to block
+
+    if (sem_init(&g_context.le_started, PSHARED, VALUE) != 0)
+    {
+        return CA_STATUS_FAILED;
+    }
+
     /*
       The CA LE interface doesn't expose a CAInitializeLEGattServer()
       function so perform initialization here.
@@ -916,6 +965,8 @@ void CATerminateLENetworkMonitor()
       ensure finalization is correctly paired with initialization.
      */
     CAPeripheralFinalize();
+
+    (void) sem_destroy(&g_context.le_started);
 
     ca_mutex_lock(g_context.lock);
 
@@ -1195,19 +1246,6 @@ CAResult_t CAUpdateCharacteristicsToGattServer(
 CAResult_t CAUpdateCharacteristicsToAllGattServers(uint8_t const * data,
                                                    uint32_t length)
 {
-    /*
-      Check if the client has actually started.  In some cases, the
-      caller may not properly handle the asynchronous initialization
-      or check for successful initialization prior to sending out a
-      multicast style request.
-    */
-    if (!CALECheckStarted())
-    {
-        OIC_LOG(ERROR, TAG, "Client not yet started.");
-
-        return CA_STATUS_FAILED;
-    }
-
     /*
       Now send the request through all BLE connections through the
       corresponding OIC GATT request characterstics.

@@ -41,7 +41,9 @@ static bool CAPeripheralCheckStarted()
 {
     ca_mutex_lock(g_context.lock);
 
-    bool const started = (g_context.base != NULL);
+    bool const started =
+        (g_context.event_loop != NULL
+         && g_main_loop_is_running(g_context.event_loop));
 
     ca_mutex_unlock(g_context.lock);
 
@@ -438,6 +440,20 @@ static void CAPeripheralOnNameLost(GDBusConnection * connection,
               "Lost name \"%s\" on D-Bus!", name);
 }
 
+/**
+ * Inform thread waiting for the event loop to start that the loop has
+ * started.  This is done in the context of the event loop itself so
+ * that we can be certain that the event loop is indeed running.
+ */
+static gboolean CAPeripheralEventLoopStarted(gpointer user_data)
+{
+    ca_cond const condition = user_data;
+
+    ca_cond_signal(condition);  // For service registration
+
+    return G_SOURCE_REMOVE;
+}
+
 static void CAPeripheralStartEventLoop(void * data)
 {
     CALEContext * const context = data;
@@ -528,7 +544,20 @@ static void CAPeripheralStartEventLoop(void * data)
 
     ca_mutex_unlock(g_context.lock);
 
-    ca_cond_signal(g_context.condition);
+    /*
+      Add an idle handler that notifies a thread waiting for the
+      GLib event loop to run that the event loop is actually
+      running.  We do this in the context of the event loop itself
+      to avoid race conditions.
+    */
+    GSource * const source = g_idle_source_new();
+    g_source_set_priority(source, G_PRIORITY_HIGH_IDLE);
+    g_source_set_callback(source,
+                          CAPeripheralEventLoopStarted,
+                          g_context.condition,  // data
+                          NULL);                // notify
+    (void) g_source_attach(source, loop_context);
+    g_source_unref(source);
 
     g_main_loop_run(event_loop);  // Blocks until loop is quit.
 
@@ -613,8 +642,9 @@ CAResult_t CAPeripheralStart(CALEContext * context)
     }
 
     /*
-      Wait until initialization completes before proceeding to
-      service and advertisement registration.
+      Wait until initialization completes and the event loop is up and
+      running before proceeding to service and advertisement
+      registration.
     */
 
     // Number of times to wait for initialization to complete.
@@ -674,7 +704,6 @@ CAResult_t CAPeripheralStop()
     // Only stop if we were previously started.
     if (!CAPeripheralCheckStarted())
     {
-        result = CA_STATUS_OK;
         return result;
     }
 

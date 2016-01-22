@@ -25,6 +25,7 @@
 #include "caleinterface.h"
 
 #include <gio/gio.h>
+#include <semaphore.h>
 
 
 /**
@@ -163,6 +164,21 @@ typedef struct _CALEContext
      * @see @c GMainLoop documentation for further details.
      */
     ca_cond condition;
+
+    /**
+     * Semaphore that indicates completed start of the LE transport.
+     *
+     * In some corner cases the transport stop will complete before
+     * transport start completes.  In such cases, the event loop
+     * run during LE transport start will never exit since the
+     * transport stop will have completed before the event loop that
+     * drives was
+     * run.  This semaphore is used to force the call to
+     * ::CAStartLEAdapter() to wait for the thread that runs the GLib
+     * event loop that drives D-Bus signal handling to completely
+     * start.
+     */
+    sem_t le_started;
 
 } CALEContext;
 
