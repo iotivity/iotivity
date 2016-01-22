@@ -79,7 +79,7 @@ namespace OIC
                 virtual void createResource(resourceInfo resourceInfo) = 0;
 
                 /**
-                * Destroy Bundle Resource instance and register the resource in the container
+                * Unregister the resource in the container and destroy the Bundle Resource
                 *
                 * @param pBundleResource Bundle resource to be destroyed
                 *
