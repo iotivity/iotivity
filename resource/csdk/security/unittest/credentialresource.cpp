@@ -120,21 +120,21 @@ static void printCred(const OicSecCred_t * cred)
     const OicSecCred_t *credTmp1 = NULL;
     for(credTmp1 = cred; credTmp1; credTmp1 = credTmp1->next)
     {
-        OC_LOG_V(INFO, TAG, "\ncred->credId = %d", credTmp1->credId);
-        OC_LOG_V(INFO, TAG, "cred->subject.id = %s", credTmp1->subject.id);
-        OC_LOG_V(INFO, TAG, "cred->credType = %d", credTmp1->credType);
+        OIC_LOG_V(INFO, TAG, "\ncred->credId = %d", credTmp1->credId);
+        OIC_LOG_V(INFO, TAG, "cred->subject.id = %s", credTmp1->subject.id);
+        OIC_LOG_V(INFO, TAG, "cred->credType = %d", credTmp1->credType);
         if(credTmp1->privateData.data)
         {
-            OC_LOG_V(INFO, TAG, "cred->privateData.data = %s", credTmp1->privateData.data);
+            OIC_LOG_V(INFO, TAG, "cred->privateData.data = %s", credTmp1->privateData.data);
         }
         if(credTmp1->publicData.data)
         {
-           OC_LOG_V(INFO, TAG, "cred->publicData.data = %s", credTmp1->publicData.data);
+           OIC_LOG_V(INFO, TAG, "cred->publicData.data = %s", credTmp1->publicData.data);
         }
-        OC_LOG_V(INFO, TAG, "cred->ownersLen = %zu", credTmp1->ownersLen);
+        OIC_LOG_V(INFO, TAG, "cred->ownersLen = %zu", credTmp1->ownersLen);
         for(size_t i = 0; i < cred->ownersLen; i++)
         {
-            OC_LOG_V(INFO, TAG, "cred->owners[%zu].id = %s", i, credTmp1->owners[i].id);
+            OIC_LOG_V(INFO, TAG, "cred->owners[%zu].id = %s", i, credTmp1->owners[i].id);
         }
     }
 }
@@ -246,7 +246,7 @@ TEST(BinToCredJSONTest, BinToCredJSONValidCred)
 
     json = BinToCredJSON(cred);
 
-    OC_LOG_V(INFO, TAG, "BinToCredJSON:%s\n", json);
+    OIC_LOG_V(INFO, TAG, "BinToCredJSON:%s\n", json);
     EXPECT_TRUE(json != NULL);
     DeleteCredList(cred);
     OICFree(json);

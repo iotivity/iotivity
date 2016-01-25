@@ -54,7 +54,7 @@ static void FreeACE(OicSecAcl_t *ace)
     size_t i;
     if(NULL == ace)
     {
-        OC_LOG (ERROR, TAG, "Invalid Parameter");
+        OIC_LOG (ERROR, TAG, "Invalid Parameter");
         return;
     }
 
@@ -437,7 +437,7 @@ static bool UpdatePersistentStorage(const OicSecAcl_t *acl)
 static OCStackResult RemoveACE(const OicUuid_t * subject,
                                const char * resource)
 {
-    OC_LOG(DEBUG, TAG, "IN RemoveACE");
+    OIC_LOG(DEBUG, TAG, "IN RemoveACE");
 
     OicSecAcl_t *acl = NULL;
     OicSecAcl_t *tempAcl = NULL;
@@ -446,7 +446,7 @@ static OCStackResult RemoveACE(const OicUuid_t * subject,
 
     if(memcmp(subject->id, &WILDCARD_SUBJECT_ID, sizeof(subject->id)) == 0)
     {
-        OC_LOG_V (ERROR, TAG, "%s received invalid parameter", __func__ );
+        OIC_LOG_V (ERROR, TAG, "%s received invalid parameter", __func__ );
         return  OC_STACK_INVALID_PARAM;
     }
 
@@ -597,7 +597,7 @@ static OCEntityHandlerResult HandleACLGetRequest (const OCEntityHandlerRequest *
     // Process the REST querystring parameters
     if(ehRequest->query)
     {
-        OC_LOG (DEBUG, TAG, "HandleACLGetRequest processing query");
+        OIC_LOG (DEBUG, TAG, "HandleACLGetRequest processing query");
 
         OicUuid_t subject = {.id={0}};
         char resource[MAX_URI_LENGTH] = {0};
@@ -659,7 +659,7 @@ exit:
 
     OICFree(jsonStr);
 
-    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
+    OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -684,13 +684,13 @@ static OCEntityHandlerResult HandleACLPostRequest (const OCEntityHandlerRequest 
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
-    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
+    OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
 static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest *ehRequest)
 {
-    OC_LOG (DEBUG, TAG, "Processing ACLDeleteRequest");
+    OIC_LOG (DEBUG, TAG, "Processing ACLDeleteRequest");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t subject = {.id={0}};
     char resource[MAX_URI_LENGTH] = {0};
@@ -724,7 +724,7 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParameter)
 {
-    OC_LOG(DEBUG, TAG, "Received request ACLEntityHandler");
+    OIC_LOG(DEBUG, TAG, "Received request ACLEntityHandler");
     (void)callbackParameter;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
@@ -736,7 +736,7 @@ OCEntityHandlerResult ACLEntityHandler (OCEntityHandlerFlag flag,
     if (flag & OC_REQUEST_FLAG)
     {
         // TODO :  Handle PUT method
-        OC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -777,7 +777,7 @@ OCStackResult CreateACLResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (FATAL, TAG, "Unable to instantiate ACL resource");
+        OIC_LOG (FATAL, TAG, "Unable to instantiate ACL resource");
         DeInitACLResource();
     }
     return ret;

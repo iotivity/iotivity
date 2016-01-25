@@ -81,7 +81,7 @@ char * GetSVRDatabase()
     int size = GetSVRDatabaseSize(ps);
     if (0 == size)
     {
-        OC_LOG (ERROR, TAG, "FindSVRDatabaseSize failed");
+        OIC_LOG (ERROR, TAG, "FindSVRDatabaseSize failed");
         return NULL;
     }
 
@@ -96,13 +96,13 @@ char * GetSVRDatabase()
             size_t bytesRead = ps->read(jsonStr, 1, size, fp);
             jsonStr[bytesRead] = '\0';
 
-            OC_LOG_V(DEBUG, TAG, "Read %zu bytes from SVR database file", bytesRead);
+            OIC_LOG_V(DEBUG, TAG, "Read %zu bytes from SVR database file", bytesRead);
             ps->close(fp);
             fp = NULL;
         }
         else
         {
-            OC_LOG (ERROR, TAG, "Unable to open SVR database file!!");
+            OIC_LOG (ERROR, TAG, "Unable to open SVR database file!!");
         }
     }
 
@@ -190,13 +190,13 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
             {
                 ret = OC_STACK_OK;
             }
-            OC_LOG_V(DEBUG, TAG, "Written %zu bytes into SVR database file", bytesWritten);
+            OIC_LOG_V(DEBUG, TAG, "Written %zu bytes into SVR database file", bytesWritten);
             ps->close(fp);
             fp = NULL;
         }
         else
         {
-            OC_LOG (ERROR, TAG, "Unable to open SVR database file!! ");
+            OIC_LOG (ERROR, TAG, "Unable to open SVR database file!! ");
         }
     }
 
