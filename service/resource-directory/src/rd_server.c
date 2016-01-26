@@ -67,7 +67,7 @@ static OCEntityHandlerResult handleGetRequest(const OCEntityHandlerRequest *ehRe
         return OC_STACK_NO_MEMORY;
     }
 
-    OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
+    OC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
 
     if (sendResponse(ehRequest, rdPayload) != OC_STACK_OK)
     {
@@ -107,7 +107,7 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
         return OC_STACK_NO_MEMORY;
     }
 
-    OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
+    OC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
 
     if (sendResponse(ehRequest, rdPayload) != OC_STACK_OK)
     {
