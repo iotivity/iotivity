@@ -18,22 +18,34 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <RCSRequest.h>
+#include "RCSRequest.h"
+
+#include "OCResourceRequest.h"
 
 namespace OIC
 {
     namespace Service
     {
 
-        RCSRequest::RCSRequest(const std::string& resourceUri) :
-                m_resourceUri{ resourceUri }
+        RCSRequest::RCSRequest(const std::shared_ptr< OC::OCResourceRequest >& ocRequest) :
+                m_ocRequest{ ocRequest }
         {
+        }
+
+        RCSRequest::RCSRequest(const std::string& resourceUri) :
+                m_ocRequest{ std::make_shared< OC::OCResourceRequest >() }
+        {
+            m_ocRequest->setResourceUri(resourceUri);
         }
 
         std::string RCSRequest::getResourceUri() const
         {
-            return m_resourceUri;
+            return m_ocRequest->getResourceUri();
         }
 
+        const std::shared_ptr< OC::OCResourceRequest >& RCSRequest::getOCRequest() const
+        {
+            return m_ocRequest;
+        }
     }
 }

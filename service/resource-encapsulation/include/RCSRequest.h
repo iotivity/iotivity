@@ -26,7 +26,12 @@
 #ifndef SERVERBUILDER_PRIMITIVEREQUEST_H
 #define SERVERBUILDER_PRIMITIVEREQUEST_H
 
-#include <string>
+#include <memory>
+
+namespace OC
+{
+    class OCResourceRequest;
+}
 
 namespace OIC
 {
@@ -44,7 +49,9 @@ namespace OIC
                 *
                 * @param resourceUri URI of the resource for which the request is generated.
                 */
-                explicit RCSRequest(const std::string &resourceUri);
+                explicit RCSRequest(const std::string& resourceUri);
+
+                explicit RCSRequest(const std::shared_ptr< OC::OCResourceRequest >&);
 
                 RCSRequest &operator=(RCSRequest &) = delete;
 
@@ -54,8 +61,10 @@ namespace OIC
                 */
                 std::string getResourceUri() const;
 
+                const std::shared_ptr< OC::OCResourceRequest >& getOCRequest() const;
+
             private:
-                std::string m_resourceUri;
+                const std::shared_ptr< OC::OCResourceRequest > m_ocRequest;
         };
 
     }
