@@ -14,14 +14,14 @@ ANDROID_SECURED = env.get('SECURED')
 os.environ['ANDROID_HOME'] = env.get('ANDROID_HOME')
 os.environ['ANDROID_NDK_HOME'] = env.get('ANDROID_NDK')
 
-if not os.path.exists(android_home + '/platforms/android-23') or not os.path.exists(android_home + '/build-tools/23.0.1'):
+if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exists(android_home + '/build-tools/20.0.0'):
     print '''
 ***************************************** Info ********************************
-*   Either 'Android API 23' is not installed or 'Android SDK Build Tools      *
-*   23.0.1' is not installed. The Android SDK Manager will now open. Please   *
+*   Either 'Android API 21' is not installed or 'Android SDK Build Tools      *
+*   20.0.0' is not installed. The Android SDK Manager will now open. Please   *
 *   be sure to deselect all options, then select the following 2 packages:    *
-*       1. Under "Tools" select "Android SDK Build-tools" Revision 23.0.1.    *
-*       2. Under "Android 6.0 (API 23)" select "SDK Platform"                 *
+*       1. Under "Tools" select "Android SDK Build-tools" Revision 20.        *
+*       2. Under "Android 5.0.1 (API 21)" select "SDK Platform"               *
 *       3. Continue by selecting "Install 2 Packages"                         *
 *                                                                             *
 *   NOTE: If you have an http proxy, please press ctrl+c now and edit/create  *

@@ -21,8 +21,8 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.1"
+    compileSdkVersion 21
+    buildToolsVersion "20.0.0"
     archivesBaseName = "iotivity"
 
     libraryVariants.all { variant ->
@@ -37,7 +37,7 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 23
+        targetSdkVersion 21
         versionCode 1
         versionName "1.0"
     }
