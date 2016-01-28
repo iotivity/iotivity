@@ -16,6 +16,9 @@
 
 package oic.simulator.clientcontroller.view.dialogs;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import oic.simulator.clientcontroller.Activator;
 import oic.simulator.clientcontroller.remoteresource.AttributeElement;
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
@@ -32,12 +35,17 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
@@ -50,6 +58,11 @@ import org.oic.simulator.SimulatorResourceAttribute;
 public class PutRequestDialog extends TitleAreaDialog {
 
     private TreeViewer              attViewer;
+    private Combo                   ifTypesCmb;
+
+    private String                  ifType;
+
+    private Map<String, String>     ifTypes;
 
     private AttributeEditingSupport attributeEditor;
 
@@ -73,9 +86,43 @@ public class PutRequestDialog extends TitleAreaDialog {
     protected Control createDialogArea(Composite parent) {
         Composite compLayout = (Composite) super.createDialogArea(parent);
 
+        Group paramsGrp = new Group(compLayout, SWT.NONE);
+        paramsGrp.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        GridLayout layout = new GridLayout(2, false);
+        layout.verticalSpacing = 10;
+        layout.marginTop = 10;
+        paramsGrp.setLayout(layout);
+
+        Label ifTypeLbl = new Label(paramsGrp, SWT.NONE);
+        ifTypeLbl.setText("Interface Type");
+
+        ifTypesCmb = new Combo(paramsGrp, SWT.NULL);
+        GridData gd = new GridData();
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalAlignment = SWT.FILL;
+        ifTypesCmb.setLayoutData(gd);
+        ifTypesCmb.addModifyListener(new ModifyListener() {
+            @Override
+            public void modifyText(ModifyEvent e) {
+                ifType = ifTypesCmb.getText();
+            }
+        });
+
+        // Set the interface types.
+        Map<String, String> ifTypes = Utility.getResourceInterfaces();
+        if (null != ifTypes && !ifTypes.isEmpty()) {
+            this.ifTypes = new HashMap<String, String>();
+            String key;
+            for (Map.Entry<String, String> entry : ifTypes.entrySet()) {
+                key = entry.getValue() + " (" + entry.getKey() + ")";
+                this.ifTypes.put(key, entry.getKey());
+                ifTypesCmb.add(key);
+            }
+        }
+
         Composite container = new Composite(compLayout, SWT.NONE);
         container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        GridLayout layout = new GridLayout(1, false);
+        layout = new GridLayout(1, false);
         layout.verticalSpacing = 10;
         layout.marginTop = 10;
         container.setLayout(layout);
@@ -253,4 +300,12 @@ public class PutRequestDialog extends TitleAreaDialog {
     public ResourceRepresentation getUpdatedRepresentation() {
         return updatedRepresentation;
     }
+
+    public String getIfType() {
+        if (ifTypes.containsKey(ifType)) {
+            return ifTypes.get(ifType);
+        }
+        return ifType;
+    }
+
 }

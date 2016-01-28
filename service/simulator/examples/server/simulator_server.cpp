@@ -376,7 +376,9 @@ void printMainMenu()
     std::cout << "9. Set Logger" << std::endl;
     std::cout << "10. Set Device Info" << std::endl;
     std::cout << "11. Set Platform Info" << std::endl;
-    std::cout << "12. Help" << std::endl;
+    std::cout << "12. Add Interface" << std::endl;
+    std::cout << "13. Remove Interface" << std::endl;
+    std::cout << "14. Help" << std::endl;
     std::cout << "0. Exit" << std::endl;
     std::cout << "######################################" << std::endl;
 }
@@ -439,6 +441,36 @@ void setPlatformInfo()
     std::cout << "Setting Platform Info is successful" << std::endl;
 }
 
+void addInterface()
+{
+    int index = selectResource();
+    if (-1 == index)
+        return;
+
+    SimulatorSingleResourceSP resource = g_singleResources[index - 1];
+
+    std::vector<std::string> interfaces;
+    interfaces.push_back("oic.if.s");
+    interfaces.push_back("oic.if.a");
+
+    resource->addInterface(interfaces);
+}
+
+void removeInterface()
+{
+    int index = selectResource();
+    if (-1 == index)
+        return;
+
+    SimulatorSingleResourceSP resource = g_singleResources[index - 1];
+
+    std::vector<std::string> interfaces;
+    interfaces.push_back("oic.if.s");
+    interfaces.push_back("oic.if.a");
+
+    resource->removeInterface(interfaces);
+}
+
 int main(int argc, char *argv[])
 {
     printMainMenu();
@@ -448,7 +480,7 @@ int main(int argc, char *argv[])
         int choice = -1;
         std::cout << "Enter your choice: ";
         std::cin >> choice;
-        if (choice < 0 || choice > 12)
+        if (choice < 0 || choice > 14)
         {
             std::cout << "Invaild choice !" << std::endl; continue;
         }
@@ -466,7 +498,9 @@ int main(int argc, char *argv[])
             case 9 : setLogger(); break;
             case 10: setDeviceInfo(); break;
             case 11: setPlatformInfo(); break;
-            case 12: printMainMenu(); break;
+            case 12: addInterface(); break;
+            case 13: removeInterface(); break;
+            case 14: printMainMenu(); break;
             case 0: cont = false;
         }
     }

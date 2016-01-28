@@ -21,6 +21,11 @@ import java.util.Vector;
 import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorException;
 
+/**
+ * This class represents a collection type resource which provides a set of APIs
+ * that are specific to collection resource for adding/removing child resources
+ * and obtaining all child resources from the collection.
+ */
 public final class SimulatorCollectionResource extends SimulatorResource {
 
     private SimulatorCollectionResource(long nativeHandle) {

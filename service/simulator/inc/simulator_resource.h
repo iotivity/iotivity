@@ -145,7 +145,32 @@ class SimulatorResource : public UnCopyable
          *
          * NOTE: API throws @InvalidArgsException, @SimulatorException exceptions.
          */
-        virtual void addInterface(std::string interfaceType) = 0;
+        virtual void addInterface(const std::string &interfaceType) = 0;
+
+        /**
+         * API to add a list of interface types for the resource.
+         *
+         * @param interfaceList - List of interfaces to be added for the resource.
+         *
+         * NOTE: API throws @InvalidArgsException, @SimulatorException exceptions.
+         */
+        virtual void addInterface(const std::vector<std::string> &interfaceList) = 0;
+
+        /**
+         * API to remove interface type for resource.
+         *
+         * @param interfaceType - interface to be removed for resource.
+         *
+         */
+        virtual void removeInterface(const std::string &interfaceType) = 0;
+
+        /**
+         * API to remove a list of interface types for the resource.
+         *
+         * @param interfaceList - List of interfaces to be removed for the resource.
+         *
+         */
+        virtual void removeInterface(const std::vector<std::string> &interfaceList) = 0;
 
         /**
          * API to make the resource observable or not.

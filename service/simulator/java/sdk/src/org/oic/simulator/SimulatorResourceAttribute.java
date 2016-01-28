@@ -27,8 +27,8 @@ public class SimulatorResourceAttribute {
     private AttributeProperty mProperty = null;
 
     /**
-     * Constructs {@SimulatorResourceAttribute}
-     * with attribute name, value and its property.
+     * Constructs {@link SimulatorResourceAttribute} with the given attribute
+     * name, value and its property.
      *
      * @param name
      *            Name of the attribute.
@@ -45,8 +45,8 @@ public class SimulatorResourceAttribute {
     }
 
     /**
-     * Constructs {@SimulatorResourceAttribute}
-     * with attribute name, value.
+     * Constructs {@link SimulatorResourceAttribute} with the given attribute
+     * name and value.
      *
      * @param name
      *            Name of the attribute.
@@ -71,7 +71,7 @@ public class SimulatorResourceAttribute {
     /**
      * API to get value of attribute.
      *
-     * @return Attribute's value {@AttributeValue}.
+     * @return Attribute's value {@link AttributeValue}.
      */
     public AttributeValue value() {
         return mValue;
@@ -80,7 +80,8 @@ public class SimulatorResourceAttribute {
     /**
      * API to get property of attribute's value.
      *
-     * @return Attribute's value property {@AttributeProperty}.
+     * @return Attribute's value property {@link AttributeProperty
+     * }.
      */
     public AttributeProperty property() {
         return mProperty;
@@ -99,7 +100,7 @@ public class SimulatorResourceAttribute {
     /**
      * API to set the property of attribute.
      *
-     * @param value
+     * @param property
      *            Property of the attribute.
      */
     public void setProperty(AttributeProperty property) {

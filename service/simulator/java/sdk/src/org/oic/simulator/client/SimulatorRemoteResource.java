@@ -59,6 +59,10 @@ public final class SimulatorRemoteResource {
         }
     }
 
+    /**
+     * Enum to represent the verification types which can be used by the client
+     * to verify the resource model of the remote resource.
+     */
     public enum VerificationType {
         GET, PUT, POST, DELETE;
     }
@@ -66,7 +70,7 @@ public final class SimulatorRemoteResource {
     /**
      * API to get the URI for this resource.
      *
-     * @return Resource URI
+     * @return Resource URI.
      */
     public String getURI() {
         return mUri;
@@ -84,7 +88,7 @@ public final class SimulatorRemoteResource {
     /**
      * API to get the list of resource types.
      *
-     * @return Array of resource types.
+     * @return Resource types.
      */
     public Vector<String> getResourceTypes() {
         return mResTypes;
@@ -93,14 +97,14 @@ public final class SimulatorRemoteResource {
     /**
      * API to get the list of resource interfaces.
      *
-     * @return Array of resource interfaces.
+     * @return Resource interfaces.
      */
     public Vector<String> getResourceInterfaces() {
         return mResInterfaces;
     }
 
     /**
-     * API to get host address and port information of the resource.
+     * API to get the address detail of the resource.
      *
      * @return Host address.
      */
@@ -109,7 +113,7 @@ public final class SimulatorRemoteResource {
     }
 
     /**
-     * API to get a unique Id of the resource .
+     * API to get a unique Id of the resource.
      *
      * @return Unique ID.
      */
@@ -128,7 +132,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to send GET request to the resource. Response will be notified
-     * asynchronously via callback set for {@link IGetListener}.
+     * asynchronously via callback set for {@link GetResponseListener}.
      *
      * @param queryParams
      *            Map which can have the query parameter name and value.
@@ -150,7 +154,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to send GET request to the resource. Response will be notified
-     * asynchronously via callback set for {@link IGetListener}.
+     * asynchronously via callback set for {@link GetResponseListener}.
      *
      * @param resourceInterface
      *            Interface type of the resource to operate on.
@@ -178,7 +182,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to send PUT request to the resource. Response will be notified
-     * asynchronously via callback set for {@link IPutListener}.
+     * asynchronously via callback set for {@link PutResponseListener}.
      *
      * @param queryParams
      *            Map which can have the query parameter name and value.
@@ -204,7 +208,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to send PUT request to the resource. Response will be notified
-     * asynchronously via callback set for {@link IPutListener}.
+     * asynchronously via callback set for {@link PutResponseListener}.
      *
      * @param resourceInterface
      *            Interface type of the resource to operate on.
@@ -236,7 +240,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to send POST request to the resource. Response will be notified
-     * asynchronously via callback set for {@link IPostListener}.
+     * asynchronously via callback set for {@link PostResponseListener}.
      *
      * @param queryParams
      *            Map which can have the query parameter name and value.
@@ -262,7 +266,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to send POST request to the resource. Response will be notified
-     * asynchronously via callback set for {@link IPostListener}.
+     * asynchronously via callback set for {@link PostResponseListener}.
      *
      * @param resourceInterface
      *            Interface type of the resource to operate on.
@@ -332,7 +336,7 @@ public final class SimulatorRemoteResource {
      * @param path
      *            Path to RAML file.
      *
-     * @return representation {@link SimulatorResourceModel} holding the
+     * @return Representation {@link SimulatorResourceModel} holding the
      *         representation of the remote resource.
      *
      * @throws InvalidArgsException
@@ -377,7 +381,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to stop sending requests which has been started using
-     * {@link setConfigInfo}.
+     * {@link startVerification}.
      *
      * @param id
      *            Automation ID.

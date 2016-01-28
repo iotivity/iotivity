@@ -48,8 +48,15 @@ std::shared_ptr<SimulatorResource> SimulatorManager::createResource(
 {
     VALIDATE_INPUT(configPath.empty(), "Empty path!")
 
-    std::shared_ptr<SimulatorResource> resource =
-        SimulatorResourceFactory::getInstance()->createResource(configPath);
+    std::shared_ptr<SimulatorResource> resource;
+    try
+    {
+        resource = SimulatorResourceFactory::getInstance()->createResource(configPath);
+    }
+    catch(RAML::RamlException &e)
+    {
+        resource = nullptr;
+    }
     if (!resource)
         throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
     return resource;
@@ -61,8 +68,15 @@ std::vector<std::shared_ptr<SimulatorResource>> SimulatorManager::createResource
     VALIDATE_INPUT(configPath.empty(), "Empty path!")
     VALIDATE_INPUT(!count, "Count is zero!")
 
-    std::vector<std::shared_ptr<SimulatorResource>> resources =
-                SimulatorResourceFactory::getInstance()->createResource(configPath, count);
+    std::vector<std::shared_ptr<SimulatorResource>> resources;
+    try
+    {
+        resources = SimulatorResourceFactory::getInstance()->createResource(configPath, count);
+    }
+    catch(RAML::RamlException &e)
+    {
+        throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
+    }
     if (!resources.size())
         throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
     return resources;

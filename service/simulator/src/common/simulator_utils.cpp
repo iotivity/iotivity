@@ -29,7 +29,7 @@ std::string getPayloadString(const OC::OCRepresentation &rep)
         return "Empty payload";
     }
     std::ostringstream data;
-    std::ostringstream dummy;
+    std::ostringstream valueStr;
 
     std::string payloadType;
     OCStringLL *types;
@@ -54,16 +54,16 @@ std::string getPayloadString(const OC::OCRepresentation &rep)
         {
             if (NULL != types->value && strlen(types->value) > 0)
             {
-                dummy << types->value;
+                valueStr << types->value;
                 if (types->next)
-                    dummy << ", ";
+                    valueStr << ", ";
             }
             types = types->next;
         }
-        if (!dummy.str().empty())
+        if (!valueStr.str().empty())
         {
-            data << "Types: " << dummy.str() << std::endl;
-            dummy.str("");
+            data << "Types: " << valueStr.str() << std::endl;
+            valueStr.str("");
         }
 
         // Interfaces
@@ -72,30 +72,30 @@ std::string getPayloadString(const OC::OCRepresentation &rep)
         {
             if (NULL != interfaces->value && strlen(interfaces->value) > 0)
             {
-                dummy << interfaces->value;
+                valueStr << interfaces->value;
                 if (interfaces->next)
-                    dummy << ", ";
+                    valueStr << ", ";
             }
             interfaces = interfaces->next;
         }
-        if (!dummy.str().empty())
+        if (!valueStr.str().empty())
         {
-            data << "Interfaces: " << dummy.str() << std::endl;
-            dummy.str("");
+            data << "Interfaces: " << valueStr.str() << std::endl;
+            valueStr.str("");
         }
 
         // Values
         values = payload->values;
         while (values)
         {
-            dummy << "\t" << values->name << ":" << rep.getValueToString(values->name) << std::endl;
+            valueStr << "\t" << values->name << ":" << rep.getValueToString(values->name) << std::endl;
             values = values->next;
         }
-        if (!dummy.str().empty())
+        if (!valueStr.str().empty())
         {
             data << "Values:-" << std::endl;
-            data << dummy.str();
-            dummy.str("");
+            data << valueStr.str();
+            valueStr.str("");
         }
         payload = payload->next;
         if (payload)
@@ -139,15 +139,15 @@ std::string getRequestString(const std::map<std::string, std::string> &queryPara
                              const OC::OCRepresentation &rep)
 {
     std::ostringstream data;
-    std::ostringstream dummy;
+    std::ostringstream queryParamsStr;
     if (queryParams.size() > 0)
     {
         for (auto &qp : queryParams)
-            dummy << qp.second << ",";
+            queryParamsStr << qp.first << "=" << qp.second << ";";
     }
-    if (!dummy.str().empty())
+    if (!queryParamsStr.str().empty())
     {
-        data << "qp: " << dummy.str() << std::endl;
+        data << "qp: " << queryParamsStr.str() << std::endl;
     }
     data << getPayloadString(rep);
     return data.str();
@@ -156,15 +156,15 @@ std::string getRequestString(const std::map<std::string, std::string> &queryPara
 std::string getRequestString(const std::map<std::string, std::string> &queryParams)
 {
     std::ostringstream data;
-    std::ostringstream dummy;
+    std::ostringstream queryParamsStr;
     if (queryParams.size() > 0)
     {
         for (auto &qp : queryParams)
-            dummy << qp.second << ",";
+            queryParamsStr << qp.first << "=" << qp.second << ";";
     }
-    if (!dummy.str().empty())
+    if (!queryParamsStr.str().empty())
     {
-        data << "qp: " << dummy.str() << std::endl;
+        data << "qp: " << queryParamsStr.str() << std::endl;
     }
     data << "Payload:  No payload";
     return data.str();

@@ -27,8 +27,8 @@
 
 SimulatorCollectionResourceImpl::SimulatorCollectionResourceImpl()
     :   m_type(SimulatorResource::Type::COLLECTION_RESOURCE),
-        m_interfaces {OC::DEFAULT_INTERFACE, OC::LINK_INTERFACE},
-        m_resourceHandle(NULL)
+        m_resourceHandle(NULL),
+        m_interfaces {OC::DEFAULT_INTERFACE, OC::LINK_INTERFACE}
 {
     m_property = static_cast<OCResourceProperty>(OC_DISCOVERABLE | OC_OBSERVABLE);
 
@@ -63,19 +63,13 @@ std::vector<std::string> SimulatorCollectionResourceImpl::getInterface() const
 
 void SimulatorCollectionResourceImpl::setInterface(const std::vector<std::string> &interfaces)
 {
-    m_interfaces = interfaces;
+    if (!interfaces.empty())
+        m_interfaces = interfaces;
 }
 
 void SimulatorCollectionResourceImpl::setName(const std::string &name)
 {
     VALIDATE_INPUT(name.empty(), "Name is empty!")
-
-    std::lock_guard<std::recursive_mutex> lock(m_objectLock);
-    if (m_resourceHandle)
-    {
-        throw SimulatorException(SIMULATOR_OPERATION_NOT_ALLOWED,
-                                 "Name can not be set when collection is started!");
-    }
 
     m_name = name;
 }
@@ -108,25 +102,80 @@ void SimulatorCollectionResourceImpl::setResourceType(const std::string &resourc
     m_resourceType = resourceType;
 }
 
-void SimulatorCollectionResourceImpl::addInterface(std::string interfaceType)
+void SimulatorCollectionResourceImpl::addInterface(const std::string &interfaceType)
 {
     VALIDATE_INPUT(interfaceType.empty(), "Interface type is empty!")
 
-    if (interfaceType == OC::GROUP_INTERFACE)
+    if (interfaceType == OC::LINK_INTERFACE
+        || interfaceType == OC::BATCH_INTERFACE
+        || interfaceType == OC::DEFAULT_INTERFACE)
     {
-        throw NoSupportException("Collection resource does not support this interface type!");
+        if (m_interfaces.end() != std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType))
+        {
+            SIM_LOG(ILogger::ERROR, "Resource already supports " << interfaceType << " interface!");
+            return;
+        }
+
+        std::lock_guard<std::recursive_mutex> lock(m_objectLock);
+        typedef OCStackResult (*bindInterfaceToResource)(const OCResourceHandle &,
+                    const std::string &);
+
+        try
+        {
+            invokeocplatform(static_cast<bindInterfaceToResource>(
+                             OC::OCPlatform::bindInterfaceToResource), m_resourceHandle,
+                             interfaceType);
+        }
+        catch (SimulatorException &e)
+        {
+            throw;
+        }
+    }
+    else
+    {
+        throw NoSupportException("Resource does not support this interface!");
     }
 
-    std::lock_guard<std::recursive_mutex> lock(m_objectLock);
-    if (m_resourceHandle)
+    m_interfaces.push_back(interfaceType);
+}
+
+void SimulatorCollectionResourceImpl::removeInterface(const std::string &interfaceType)
+{
+    if (m_interfaces.end() == std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType))
     {
-        throw SimulatorException(SIMULATOR_OPERATION_NOT_ALLOWED,
-                                 "Interface type can not be set when resource is started!");
+        SIM_LOG(ILogger::ERROR, "Resource does not support " << interfaceType << " interface currently!");
+        return;
     }
 
-    auto found = std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType);
-    if (found != m_interfaces.end())
-        m_interfaces.push_back(interfaceType);
+    m_interfaces.erase(std::remove(m_interfaces.begin(), m_interfaces.end(), interfaceType), m_interfaces.end());
+}
+
+void SimulatorCollectionResourceImpl::addInterface(const std::vector<std::string> &interfaceList)
+{
+    if (!interfaceList.size())
+    {
+        SIM_LOG(ILogger::ERROR, "Interface list is empty!");
+        return;
+    }
+
+    for (auto interfaceType : interfaceList)
+    {
+        addInterface(interfaceType);
+    }
+}
+
+void SimulatorCollectionResourceImpl::removeInterface(const std::vector<std::string> &interfaceList)
+{
+    if (!interfaceList.size())
+    {
+        SIM_LOG(ILogger::ERROR, "Interface list is empty!");
+        return;
+    }
+
+    for (auto interfaceType : interfaceList)
+    {
+        removeInterface(interfaceType);
+    }
 }
 
 void SimulatorCollectionResourceImpl::setObservable(bool state)

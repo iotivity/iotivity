@@ -114,9 +114,11 @@ public class ResourceManager {
                             return;
                         }
 
-                        // Ignore the response if the resource is a device or platform.
+                        // Ignore the response if the resource is a device or
+                        // platform.
                         Vector<String> resTypes = resourceN.getResourceTypes();
-                        if(null != resTypes && resTypes.contains("oic.wk.d") || resTypes.contains("oic.wk.p")) {
+                        if (null != resTypes && resTypes.contains("oic.wk.d")
+                                || resTypes.contains("oic.wk.p")) {
                             return;
                         }
 
@@ -174,9 +176,16 @@ public class ResourceManager {
                                                 + "].");
 
                         // Send an initial GET request to get the resource
-                        // attributes.
+                        // attributes on an interface supported by the resource.
                         try {
-                            resourceN.get(null, getListener);
+                            String ifType = null;
+                            Vector<String> resInterfaces = resourceN
+                                    .getResourceInterfaces();
+                            if (null != resInterfaces) {
+                                ifType = resInterfaces.get(0);
+                            }
+                            resourceN.get(formQueryParameters(ifType, null),
+                                    getListener);
                         } catch (SimulatorException e) {
                             Activator
                                     .getDefault()
@@ -1185,7 +1194,8 @@ public class ResourceManager {
         return values;
     }
 
-    public void sendGetRequest(RemoteResource resource) {
+    public void sendGetRequest(String ifType, String query,
+            RemoteResource resource) {
         if (null == resource) {
             return;
         }
@@ -1194,8 +1204,9 @@ public class ResourceManager {
             return;
         }
 
+        Map<String, String> queryParams = formQueryParameters(ifType, query);
         try {
-            resourceN.get(null, getListener);
+            resourceN.get(queryParams, getListener);
         } catch (SimulatorException e) {
             Activator
                     .getDefault()
@@ -1205,7 +1216,7 @@ public class ResourceManager {
         }
     }
 
-    public void sendPutRequest(RemoteResource resource,
+    public void sendPutRequest(String ifType, RemoteResource resource,
             SimulatorResourceModel model) {
         if (null == resource || null == model) {
             return;
@@ -1214,8 +1225,9 @@ public class ResourceManager {
         if (null == resourceN) {
             return;
         }
+        Map<String, String> queryParams = formQueryParameters(ifType, null);
         try {
-            resourceN.put(null, model, putListener);
+            resourceN.put(queryParams, model, putListener);
         } catch (Exception e) {
             String addlInfo;
             addlInfo = "Invalid Attribute Value. Cannot send PUT request.";
@@ -1227,7 +1239,7 @@ public class ResourceManager {
         }
     }
 
-    public void sendPostRequest(RemoteResource resource,
+    public void sendPostRequest(String ifType, RemoteResource resource,
             SimulatorResourceModel model) {
         if (null == resource || null == model) {
             return;
@@ -1236,8 +1248,9 @@ public class ResourceManager {
         if (null == resourceN) {
             return;
         }
+        Map<String, String> queryParams = formQueryParameters(ifType, null);
         try {
-            resourceN.post(null, model, postListener);
+            resourceN.post(queryParams, model, postListener);
         } catch (Exception e) {
             String addlInfo;
             addlInfo = "Invalid Attribute Value. Cannot send POST request.";
@@ -1272,6 +1285,35 @@ public class ResourceManager {
             return false;
         }
         return true;
+    }
+
+    private Map<String, String> formQueryParameters(String ifType, String query) {
+        Map<String, String> queryParams = new HashMap<String, String>();
+
+        // Including the interface type, if given,
+        if (null != ifType) {
+            ifType = ifType.trim();
+            if (ifType.length() > 0)
+                queryParams.put("if", ifType);
+        }
+
+        // Including other queries, if given.
+        if (null != query) {
+            query = query.trim();
+            if (query.length() > 0) {
+                // Parse the query parameters and fill the map.
+                String queries[] = query.split(";");
+                if (queries.length > 0) {
+                    for (String pair : queries) {
+                        String tok[] = pair.split("=");
+                        if (null != tok && tok.length == 2) {
+                            queryParams.put(tok[0].trim(), tok[1].trim());
+                        }
+                    }
+                }
+            }
+        }
+        return queryParams;
     }
 
     public boolean sendCancelObserveRequest(RemoteResource resource,
@@ -1319,16 +1361,21 @@ public class ResourceManager {
             autoId = resourceN.startVerification(reqType, verifyListener);
             if (autoId != -1) {
                 if (reqType == VerificationType.GET) {
-                    // resource.setGetAutomtnInProgress(true);
                     resource.setGetAutomtnId(autoId);
                 } else if (reqType == VerificationType.PUT) {
-                    // resource.setPutAutomtnInProgress(true);
                     resource.setPutAutomtnId(autoId);
-                } else {// if(reqType == Constants.POST_AUTOMATION_INDEX) {
-                    // resource.setPostAutomtnInProgress(true);
+                } else {
                     resource.setPostAutomtnId(autoId);
                 }
             }
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.INFO.ordinal(),
+                            new Date(),
+                            "[" + reqType.toString()
+                                    + "] Verification Started for \""
+                                    + resourceN.getURI() + "\".");
         } catch (SimulatorException e) {
             Activator
                     .getDefault()
@@ -1354,7 +1401,7 @@ public class ResourceManager {
         } else if (reqType == VerificationType.PUT) {
             resource.setPutAutomtnInProgress(false);
             autoId = resource.getPutAutomtnId();
-        } else {// if(reqType == Constants.POST_AUTOMATION_INDEX) {
+        } else {
             resource.setPostAutomtnInProgress(false);
             autoId = resource.getPostAutomtnId();
         }

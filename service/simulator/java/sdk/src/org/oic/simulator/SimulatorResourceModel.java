@@ -20,7 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class represents the resource model of a resource.
+ * This class represents the resource model of a resource. A resource model
+ * contains a set of attributes and their properties. It represents the complex
+ * value type of an attribute.
  */
 public class SimulatorResourceModel {
 
@@ -28,7 +30,7 @@ public class SimulatorResourceModel {
     private Map<String, AttributeProperty> mProperties = null;
 
     /**
-     * Constructs new {@SimulatorResourceModel} object.
+     * Constructs new {@link SimulatorResourceModel} object.
      */
     public SimulatorResourceModel() {
         mValues = new HashMap<>();
@@ -61,7 +63,7 @@ public class SimulatorResourceModel {
      * API to add an attribute to resource model.
      *
      * @param attribute
-     *            {@link SimulatorResourceAttribute} to be add to resource
+     *            {@link SimulatorResourceAttribute} to be added to resource
      *            model.
      *
      * @throws InvalidArgsException
@@ -157,7 +159,7 @@ public class SimulatorResourceModel {
     }
 
     /**
-     * API to check whether resource model has attribute.
+     * API to check whether resource model has an attribute with given name.
      *
      * @param attrName
      *            Name of the attribute.
@@ -177,7 +179,9 @@ public class SimulatorResourceModel {
      * @param attrName
      *            Name of the attribute.
      *
-     * @return Attribute value type information {@AttributeValue.TypeInfo}.
+     * @return Attribute value type information {@link AttributeValue.TypeInfo
+     * 
+     * }.
      */
     public AttributeValue.TypeInfo getAttributeType(String attrName) {
         if (mValues.containsKey(attrName))
@@ -191,8 +195,8 @@ public class SimulatorResourceModel {
      * @param attrName
      *            Name of the attribute.
      *
-     * @return true if resource model has attribute it is removed, otherwise
-     *         false.
+     * @return true if resource model has an attribute with the given name,
+     *         otherwise false.
      */
     public boolean removeAttribute(String attrName) {
         if (mValues.containsKey(attrName)) {
@@ -217,6 +221,10 @@ public class SimulatorResourceModel {
     /**
      * API to update the attribute values from given
      * {@link SimulatorResourceModel}.
+     * 
+     * @param resourceModel
+     *            {@link SimulatorResourceModel} holding the new attribute
+     *            values.
      */
     public void update(SimulatorResourceModel resourceModel) {
         if (null == resourceModel || 0 == resourceModel.size())
@@ -240,7 +248,6 @@ public class SimulatorResourceModel {
         }
     }
 
-    // Methods used in native code
     private SimulatorResourceModel(Map<String, AttributeValue> values,
             Map<String, AttributeProperty> properties) {
         mValues = values;

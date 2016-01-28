@@ -17,7 +17,7 @@
 package org.oic.simulator;
 
 /**
- * This class represents the resource attribute's vaule property.
+ * This class represents the resource attribute's value property.
  */
 public class AttributeProperty {
 
@@ -28,19 +28,18 @@ public class AttributeProperty {
     private AttributeProperty mChildProperty = null;
 
     /**
-     * Enum to represent propety type.
+     * Enum to represent property type.
      */
     public enum Type {
         UNKNOWN, RANGE, VALUESET
     }
 
     /**
-     * Constructs {@AttributeProperty} of type
-     * {@AttributeProperty.Type.Range} with min
-     * and max values.
+     * Constructs {@link AttributeProperty} of type
+     * {@link AttributeProperty.Type#RANGE} with min and max values.
      *
      * @param min
-     *            Minimun value the attribute can have.
+     *            Minimum value the attribute can have.
      * @param max
      *            Maximum value the attribute can have.
      */
@@ -51,9 +50,8 @@ public class AttributeProperty {
     }
 
     /**
-     * Constructs {@AttributeProperty} of type
-     * {@AttributeProperty.Type.VALUESET} with
-     * array of integer.
+     * Constructs {@link AttributeProperty} of type
+     * {@link AttributeProperty.Type#VALUESET} with array of integer.
      *
      * @param values
      *            Array of int type values.
@@ -66,9 +64,8 @@ public class AttributeProperty {
     }
 
     /**
-     * Constructs {@AttributeProperty} of type
-     * {@AttributeProperty.Type.VALUESET} with
-     * array of double.
+     * Constructs {@link AttributeProperty} of type
+     * {@link AttributeProperty.Type#VALUESET} with array of double.
      *
      * @param values
      *            Array of double type values.
@@ -81,9 +78,8 @@ public class AttributeProperty {
     }
 
     /**
-     * Constructs {@AttributeProperty} of type
-     * {@AttributeProperty.Type.VALUESET} with
-     * array of boolean.
+     * Constructs {@link AttributeProperty} of type
+     * {@link AttributeProperty.Type#VALUESET} with array of boolean.
      *
      * @param values
      *            Array of boolean type values.
@@ -96,12 +92,11 @@ public class AttributeProperty {
     }
 
     /**
-     * Constructs {@AttributeProperty} of type
-     * {@AttributeProperty.Type.VALUESET} with
-     * array of Strings.
+     * Constructs {@link AttributeProperty} of type
+     * {@link AttributeProperty.Type#VALUESET} with array of Strings.
      *
      * @param values
-     *            Array of strings.
+     *            Array of string type values.
      */
     public AttributeProperty(String[] values) {
         mType = Type.VALUESET;
@@ -113,7 +108,7 @@ public class AttributeProperty {
     /**
      * API to get type of property.
      *
-     * @return {@AttributeProperty.Type}.
+     * @return {@link AttributeProperty.Type}.
      */
     public Type type() {
         return mType;
@@ -121,6 +116,8 @@ public class AttributeProperty {
 
     /**
      * API to get minimum value which was set as property.
+     *
+     * @return Minimum value.
      */
     public double min() {
         return mMin;
@@ -128,6 +125,8 @@ public class AttributeProperty {
 
     /**
      * API to get maximum value which was set as property.
+     *
+     * @return Maximum value.
      */
     public double max() {
         return mMax;
@@ -136,25 +135,25 @@ public class AttributeProperty {
     /**
      * API to get array of values which was set as property.
      *
-     * @return array of {@AttributeValue}.
+     * @return Array of {@link AttributeValue}.
      */
     public AttributeValue[] valueSet() {
         return mValueSet;
     }
 
     /**
-     * API to set child attribute propety.
+     * API to set child attribute property.
      *
      * @param childProperty
-     *            Child element property this property used if the Attribute
-     *            value is of array type.
+     *            Child element property used if the Attribute value is of array
+     *            type.
      */
     public void setChildProperty(AttributeProperty childProperty) {
         mChildProperty = childProperty;
     }
 
     /**
-     * API to get child attribute propety.
+     * API to get child attribute property.
      *
      * @return Child element property.
      */

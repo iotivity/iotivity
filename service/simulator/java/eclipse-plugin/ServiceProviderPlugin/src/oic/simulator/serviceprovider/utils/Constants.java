@@ -164,6 +164,11 @@ public class Constants {
                                                                                           + "It should not contain # or ? or % or "
                                                                                           + "consecutive '/' or '/./' or "
                                                                                           + "'/..'(more than one dot following a slash).";
+
+    public static final String         INVALID_RESOURCE_TYPE_MESSAGE              = "Resource Type should start with an alphabet.\n"
+                                                                                          + "It should contain only lowercase alphabets, "
+                                                                                          + "numbers(0-9), dot(.) and hyphen(-).";
+
     public static final int            TREE_EXPANSION_LEVEL                       = 10;
 
     public static final String         BASELINE_INTERFACE                         = "oic.if.baseline";

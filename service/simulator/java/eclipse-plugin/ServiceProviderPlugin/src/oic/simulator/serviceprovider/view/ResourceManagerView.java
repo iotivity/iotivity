@@ -96,7 +96,7 @@ public class ResourceManagerView extends ViewPart {
 
             @Override
             public void onResourceCreation(final ResourceType type) {
-                Display.getDefault().asyncExec(new Runnable() {
+                Display.getDefault().syncExec(new Runnable() {
 
                     @Override
                     public void run() {
@@ -301,12 +301,6 @@ public class ResourceManagerView extends ViewPart {
 
                                             resourceManager
                                                     .resourceSelectionChanged(null);
-
-                                            MessageDialog.openInformation(
-                                                    Display.getDefault()
-                                                            .getActiveShell(),
-                                                    "Deleted",
-                                                    "Resource deleted.");
                                         } catch (SimulatorException e1) {
                                             MessageDialog
                                                     .openInformation(Display
@@ -345,7 +339,6 @@ public class ResourceManagerView extends ViewPart {
                                     "Attribute level automation for this resource is already in progress!!!\nPlease stop all "
                                             + "running attribute level automations to start resource level automation.");
                 } else {
-
                     // Start the automation
                     // Fetch the settings data
                     List<AutomationSettingHelper> automationSettings;
@@ -369,11 +362,12 @@ public class ResourceManagerView extends ViewPart {
                         boolean status = resourceManager
                                 .startResourceAutomationUIRequest(autoType,
                                         updFreq, selectedResource);
-                        String statusMsg = status ? "Automation started successfully!!!"
-                                : "Automation request failed!!!";
-                        MessageDialog.openInformation(Display.getDefault()
-                                .getActiveShell(), "Automation Status",
-                                statusMsg);
+                        if (!status) {
+                            String statusMsg = "Automation request failed!!!";
+                            MessageDialog.openInformation(Display.getDefault()
+                                    .getActiveShell(), "Automation Status",
+                                    statusMsg);
+                        }
                     }
                 }
             }
@@ -386,10 +380,11 @@ public class ResourceManagerView extends ViewPart {
             public void widgetSelected(SelectionEvent e) {
                 boolean status = resourceManager
                         .stopResourceAutomationUIRequest(selectedResource);
-                String statusMsg = status ? "Automation stopped!!!"
-                        : "Automation stop failed.";
-                MessageDialog.openInformation(Display.getDefault()
-                        .getActiveShell(), "Automation Status", statusMsg);
+                if (!status) {
+                    String statusMsg = "Automation stop failed.";
+                    MessageDialog.openInformation(Display.getDefault()
+                            .getActiveShell(), "Automation Status", statusMsg);
+                }
             }
         });
 
@@ -476,11 +471,14 @@ public class ResourceManagerView extends ViewPart {
                         int open = wizardDialog.open();
                         if (open == Window.OK) {
                             singleResTreeViewer.refresh();
-                            MessageDialog.openInformation(Display.getDefault()
-                                    .getActiveShell(),
-                                    "Resource Deletion Status", deleteWizard
-                                            .getStatus());
 
+                            if (!deleteWizard.getStatus()) {
+                                MessageDialog
+                                        .openInformation(Display.getDefault()
+                                                .getActiveShell(),
+                                                "Resource Deletion Failed",
+                                                "Failed to delete the resources. Please try again.");
+                            }
                             changeDeleteVisibility();
                         }
                     }

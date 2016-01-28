@@ -27,9 +27,14 @@
 
 SimulatorSingleResourceImpl::SimulatorSingleResourceImpl()
     :   m_type(SimulatorResource::Type::SINGLE_RESOURCE),
-        m_interfaces {OC::DEFAULT_INTERFACE},
-        m_resourceHandle(NULL)
+        m_resourceHandle(NULL),
+        m_interfaces {OC::DEFAULT_INTERFACE}
 {
+    m_requestTypes[OC::DEFAULT_INTERFACE] = {"GET", "PUT", "POST"};
+    m_requestTypes[OC::READ_INTERFACE] = {"GET"};
+    m_requestTypes[OC::READWRITE_INTERFACE] = {"GET", "PUT", "POST"};
+    m_requestTypes[OC::ACTUATOR_INTERFACE] = {"GET", "PUT", "POST"};
+    m_requestTypes[OC::SENSOR_INTERFACE] = {"GET"};
     m_property = static_cast<OCResourceProperty>(OC_DISCOVERABLE | OC_OBSERVABLE);
 }
 
@@ -60,19 +65,14 @@ std::vector<std::string> SimulatorSingleResourceImpl::getInterface() const
 
 void SimulatorSingleResourceImpl::setInterface(const std::vector<std::string> &interfaces)
 {
-    m_interfaces = interfaces;
+    // Replace m_interfaces if the list is not empty
+    if (!interfaces.empty())
+        m_interfaces = interfaces;
 }
 
 void SimulatorSingleResourceImpl::setName(const std::string &name)
 {
     VALIDATE_INPUT(name.empty(), "Name is empty!")
-
-    std::lock_guard<std::recursive_mutex> lock(m_objectLock);
-    if (m_resourceHandle)
-    {
-        throw SimulatorException(SIMULATOR_OPERATION_NOT_ALLOWED,
-                                 "Name can not be set when resource is started!");
-    }
 
     m_name = name;
 }
@@ -99,33 +99,80 @@ void SimulatorSingleResourceImpl::setResourceType(const std::string &resourceTyp
     if (m_resourceHandle)
     {
         throw SimulatorException(SIMULATOR_OPERATION_NOT_ALLOWED,
-                                 "Resource type can not be set when resource is started!");
+                                 "Resource type cannot be set when resource is started!");
     }
 
     m_resourceType = resourceType;
 }
 
-void SimulatorSingleResourceImpl::addInterface(std::string interfaceType)
+void SimulatorSingleResourceImpl::addInterface(const std::string &interfaceType)
 {
     VALIDATE_INPUT(interfaceType.empty(), "Interface type is empty!")
 
-    if (interfaceType == OC::LINK_INTERFACE
-        || interfaceType == OC::BATCH_INTERFACE
-        || interfaceType == OC::GROUP_INTERFACE)
+    if (interfaceType == OC::READ_INTERFACE
+        || interfaceType == OC::READWRITE_INTERFACE
+        || interfaceType == OC::ACTUATOR_INTERFACE
+        || interfaceType == OC::SENSOR_INTERFACE
+        || interfaceType == OC::DEFAULT_INTERFACE)
     {
-        throw NoSupportException("Single type resource does not support this interface!");
+        if (m_interfaces.end() != std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType))
+        {
+            SIM_LOG(ILogger::ERROR, "Interface " << interfaceType << " is already supported!");
+            return;
+        }
+
+        std::lock_guard<std::recursive_mutex> lock(m_objectLock);
+        typedef OCStackResult (*bindInterfaceToResource)(const OCResourceHandle &,
+                    const std::string &);
+
+        try
+        {
+            invokeocplatform(static_cast<bindInterfaceToResource>(
+                             OC::OCPlatform::bindInterfaceToResource), m_resourceHandle,
+                             interfaceType);
+        }
+        catch (SimulatorException &e)
+        {
+            throw;
+        }
+    }
+    else
+    {
+        throw NoSupportException("Interface is not supported!");
     }
 
-    std::lock_guard<std::recursive_mutex> lock(m_objectLock);
-    if (m_resourceHandle)
+    m_interfaces.push_back(interfaceType);
+}
+
+void SimulatorSingleResourceImpl::removeInterface(const std::string &interfaceType)
+{
+    if (m_interfaces.end() == std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType))
     {
-        throw SimulatorException(SIMULATOR_OPERATION_NOT_ALLOWED,
-                                 "Interface type can not be set when resource is started!");
+        SIM_LOG(ILogger::ERROR, "Interface " << interfaceType << " is not being supported currently!");
+        return;
     }
 
-    auto found = std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType);
-    if (found != m_interfaces.end())
-        m_interfaces.push_back(interfaceType);
+    m_interfaces.erase(std::remove(m_interfaces.begin(), m_interfaces.end(), interfaceType), m_interfaces.end());
+}
+
+void SimulatorSingleResourceImpl::addInterface(const std::vector<std::string> &interfaceList)
+{
+    VALIDATE_INPUT(!interfaceList.size(), "Interface list is empty!")
+
+    for (auto interfaceType : interfaceList)
+    {
+        addInterface(interfaceType);
+    }
+}
+
+void SimulatorSingleResourceImpl::removeInterface(const std::vector<std::string> &interfaceList)
+{
+    VALIDATE_INPUT(!interfaceList.size(), "Interface list is empty!")
+
+    for (auto interfaceType : interfaceList)
+    {
+        removeInterface(interfaceType);
+    }
 }
 
 void SimulatorSingleResourceImpl::setObservable(bool state)
@@ -472,21 +519,53 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleRequests(
                     << " request received. \n**Payload details**\n" << payload)
         }
 
-        // TODO: Handover the request to appropriate interface handler
+        std::string interfaceType(OC::DEFAULT_INTERFACE);
+        OC::QueryParamsMap queryParams = request->getQueryParameters();
+        if (queryParams.end() != queryParams.find("if"))
+        {
+            interfaceType = queryParams["if"];
+        }
 
         std::shared_ptr<OC::OCResourceResponse> response;
-        response = requestOnBaseLineInterface(request);
+
+        // Check if the interface type is supported by the resource
+        if (m_interfaces.end() == std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType))
+        {
+            return sendErrorResponse(request, 403, OC_EH_FORBIDDEN);
+        }
+
+        //Check if requestType is supported by interface.
+        std::map<std::string, std::vector<std::string>>::iterator it = m_requestTypes.find(interfaceType);
+        if (it != m_requestTypes.end())
+        {
+            if (it->second.end() == std::find(it->second.begin(), it->second.end(), request->getRequestType()))
+            {
+                return sendErrorResponse(request, 405, OC_EH_ERROR);
+            }
+        }
+
+        if ("GET" == request->getRequestType())
+        {
+            response = handleReadRequest(request, interfaceType);
+        }
+        else if ("PUT" == request->getRequestType()
+                 || "POST" == request->getRequestType())
+        {
+            response = handleWriteRequest(request, interfaceType);
+        }
+        else if ("DELETE" == request->getRequestType())
+        {
+            SIM_LOG(ILogger::ERROR, "[" << m_name << "] " << "Unsupported request received!")
+            return OC_EH_ERROR;
+        }
 
         // Send response if the request handled by resource
         if (response)
         {
+            response->setRequestHandle(request->getRequestHandle());
+            response->setResourceHandle(request->getResourceHandle());
             if (OC_STACK_OK != OC::OCPlatform::sendResponse(response))
                 return OC_EH_ERROR;
-        }
-        else
-        {
-            SIM_LOG(ILogger::ERROR, "[" << m_name << "] " << "Unsupported request received!")
-            return OC_EH_ERROR;
         }
     }
 
@@ -510,88 +589,9 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleRequests(
             SIM_LOG(ILogger::INFO, "[" << m_uri << "] OBSERVE UNREGISTER request received");
             removeObserver(observationInfo);
         }
-        errCode = OC_EH_OK;
     }
 
-    return errCode;
-}
-
-std::shared_ptr<OC::OCResourceResponse> SimulatorSingleResourceImpl::requestOnBaseLineInterface(
-    std::shared_ptr<OC::OCResourceRequest> request)
-{
-    std::shared_ptr<OC::OCResourceResponse> response;
-
-    RAML::ActionType type = getActionType(request->getRequestType());
-
-    if (!m_actionTypes.empty())
-    {
-        if (m_actionTypes.end() == m_actionTypes.find(type))
-            return response;
-    }
-
-    if ("GET" == request->getRequestType())
-    {
-        OC::OCRepresentation ocRep = m_resModel.getOCRepresentation();
-        response = std::make_shared<OC::OCResourceResponse>();
-        response->setErrorCode(200);
-        response->setResponseResult(OC_EH_OK);
-        response->setResourceRepresentation(ocRep);
-        std::string resPayload = getPayloadString(ocRep);
-        SIM_LOG(ILogger::INFO, "[" << m_uri <<
-                "] Sending response for GET request. \n**Payload details**" << resPayload)
-    }
-    else if ("PUT" == request->getRequestType()
-             || "POST" == request->getRequestType())
-    {
-        OC::OCRepresentation requestRep = request->getResourceRepresentation();
-        SimulatorResourceModel resModel;
-        if (true == updateResourceModel(requestRep, resModel))
-        {
-            notifyAll(resModel);
-            notifyApp(resModel);
-
-            response = std::make_shared<OC::OCResourceResponse>();
-            response->setErrorCode(200);
-            response->setResponseResult(OC_EH_OK);
-            response->setResourceRepresentation(resModel.getOCRepresentation());
-            std::string resPayload = getPayloadString(resModel.getOCRepresentation());
-            SIM_LOG(ILogger::INFO, "[" << m_uri <<
-                    "] Sending response for " << request->getRequestType() << " request. \n**Payload details**" <<
-                    resPayload)
-        }
-        else
-        {
-            response = std::make_shared<OC::OCResourceResponse>();
-            response->setErrorCode(403);
-            response->setResponseResult(OC_EH_ERROR);
-            if ("PUT" == request->getRequestType())
-            {
-                if (m_putErrorResModel.getOCRepresentation().empty())
-                    response->setResourceRepresentation(m_resModel.getOCRepresentation());
-                else
-                    response->setResourceRepresentation(m_putErrorResModel.getOCRepresentation());
-            }
-            else
-            {
-                if (m_postErrorResModel.getOCRepresentation().empty())
-                    response->setResourceRepresentation(m_resModel.getOCRepresentation());
-                else
-                    response->setResourceRepresentation(m_postErrorResModel.getOCRepresentation());
-            }
-        }
-    }
-    else if ("DELETE" == request->getRequestType())
-    {
-        // TODO: Handle this request
-    }
-
-    if (response)
-    {
-        response->setRequestHandle(request->getRequestHandle());
-        response->setResourceHandle(request->getResourceHandle());
-    }
-
-    return response;
+    return OC_EH_OK;
 }
 
 void SimulatorSingleResourceImpl::addObserver(OC::ObservationInfo ocObserverInfo)
@@ -645,4 +645,104 @@ RAML::ActionType SimulatorSingleResourceImpl::getActionType(std::string requestT
         return RAML::ActionType::DELETE;
 
     return RAML::ActionType::NONE;
+}
+
+OCEntityHandlerResult SimulatorSingleResourceImpl::sendErrorResponse
+    (std::shared_ptr<OC::OCResourceRequest> request, const int errCode,
+     OCEntityHandlerResult responseCode)
+{
+    std::shared_ptr<OC::OCResourceResponse> response;
+
+    response = std::make_shared<OC::OCResourceResponse>();
+    response->setErrorCode(errCode);
+    response->setResponseResult(responseCode);
+
+    // Setting error response body as representation in response if available in RAML file
+    if ("PUT" == request->getRequestType())
+    {
+        if (!m_putErrorResModel.getOCRepresentation().empty())
+            response->setResourceRepresentation(m_putErrorResModel.getOCRepresentation());
+    }
+
+    if ("POST" == request->getRequestType())
+    {
+        if (!m_postErrorResModel.getOCRepresentation().empty())
+            response->setResourceRepresentation(m_postErrorResModel.getOCRepresentation());
+    }
+
+    response->setRequestHandle(request->getRequestHandle());
+    response->setResourceHandle(request->getResourceHandle());
+    if (OC_STACK_OK != OC::OCPlatform::sendResponse(response))
+        return OC_EH_ERROR;
+
+    return OC_EH_OK;
+}
+
+std::shared_ptr<OC::OCResourceResponse> SimulatorSingleResourceImpl::handleReadRequest
+    (std::shared_ptr<OC::OCResourceRequest> request, const std::string &interfaceType)
+{
+    std::shared_ptr<OC::OCResourceResponse> response;
+    OC::OCRepresentation ocRep;
+
+    response = std::make_shared<OC::OCResourceResponse>();
+    response->setErrorCode(200);
+    response->setResponseResult(OC_EH_OK);
+
+    if (OC::ACTUATOR_INTERFACE == interfaceType ||
+        OC::SENSOR_INTERFACE == interfaceType)
+    {
+        // Only send the representation without the common properties.
+        ocRep = m_resModel.getOCRepresentation();
+        response->setResourceRepresentation(ocRep, interfaceType);
+    }
+    else
+    {
+        // Send the representation along with common properties for the resource.
+        SimulatorResourceModel resModel = m_resModel;
+        setCommonProperties(resModel);
+        ocRep = resModel.getOCRepresentation();
+        response->setResourceRepresentation(ocRep, interfaceType);
+    }
+
+    std::string resPayload = getPayloadString(ocRep);
+    SIM_LOG(ILogger::INFO, "[" << m_uri <<
+            "] Sending response for GET request. \n**Payload details**" << resPayload)
+
+    return response;
+}
+
+std::shared_ptr<OC::OCResourceResponse> SimulatorSingleResourceImpl::handleWriteRequest
+    (std::shared_ptr<OC::OCResourceRequest> request, const std::string &interfaceType)
+{
+    std::shared_ptr<OC::OCResourceResponse> response;
+    OC::OCRepresentation requestRep = request->getResourceRepresentation();
+    SimulatorResourceModel resModel;
+    if (true == updateResourceModel(requestRep, resModel))
+    {
+        notifyAll(resModel);
+        notifyApp(resModel);
+
+        response = std::make_shared<OC::OCResourceResponse>();
+        response->setErrorCode(200);
+        response->setResponseResult(OC_EH_OK);
+        response->setResourceRepresentation(resModel.getOCRepresentation(), interfaceType);
+        std::string resPayload = getPayloadString(resModel.getOCRepresentation());
+        SIM_LOG(ILogger::INFO, "[" << m_uri <<
+             "] Sending response for " << request->getRequestType() << " request. \n**Payload details**" <<
+             resPayload)
+    }
+    else
+    {
+        sendErrorResponse(request, 400, OC_EH_ERROR);
+    }
+
+    return response;
+}
+
+void SimulatorSingleResourceImpl::setCommonProperties(SimulatorResourceModel &resModel)
+{
+    resModel.add("rt", m_resourceType);
+    resModel.add("if", m_interfaces);
+    resModel.add("p", m_property);
+    resModel.add("n", m_name);
 }

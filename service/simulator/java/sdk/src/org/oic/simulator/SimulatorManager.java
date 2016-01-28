@@ -36,7 +36,7 @@ public class SimulatorManager {
      * @param configPath
      *            Path to RAML configuration file.
      *
-     * @return {@link SimulatorResourceServer} - Created resource on success,
+     * @return {@link SimulatorResource} - Created resource on success,
      *         otherwise null.
      *
      * @throws InvalidArgsException
@@ -55,8 +55,8 @@ public class SimulatorManager {
      * @param count
      *            Number of resources to be created.
      *
-     * @return Returns an array of {@link SimulatorResourceServer} objects one
-     *         for each created resource on success, otherwise null.
+     * @return Returns an array of {@link SimulatorResource} objects one for
+     *         each created resource on success, otherwise null.
      *
      * @throws InvalidArgsException
      *             Thrown if the input parameters are empty.
@@ -71,10 +71,16 @@ public class SimulatorManager {
     /**
      * API for creating a resource either single or collection type.
      *
-     * @param configPath
-     *            Path to RAML configuration file.
+     * @param type
+     *            Indicates whether single or collection type.
+     * @param name
+     *            Resource Name.
+     * @param uri
+     *            Resource URI.
+     * @param resourceType
+     *            Resource Type.
      *
-     * @return {@link SimulatorResourceServer} - Created resource on success,
+     * @return {@link SimulatorResource} - Created resource on success,
      *         otherwise null.
      *
      * @throws InvalidArgsException
@@ -115,7 +121,7 @@ public class SimulatorManager {
      * is called when a resource is discovered in the network.
      *
      * @param resourceType
-     *            Required resource type
+     *            Required resource type.
      * @param listener
      *            Interface to receive the discovered remote resources.
      *
@@ -141,17 +147,27 @@ public class SimulatorManager {
      *
      * @param deviceInfo
      *            Device information.
+     *
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
     public static native void setDeviceInfo(String deviceInfo)
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * API to search for devices in the network.
+     * API to search for devices on the given host in the network.
      *
      * @param hostUri
      *            URI of the host device.
      * @param listener
      *            Listener for receiving the device information.
+     *
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
     public static native void findDevices(String hostUri,
             DeviceListener listener) throws InvalidArgsException,
@@ -162,17 +178,27 @@ public class SimulatorManager {
      *
      * @param platformInfo
      *            {@link PlatformInfo} - Platform information.
+     *
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
     public static native void setPlatformInfo(PlatformInfo platformInfo)
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * API to find all devices' platform information in the network.
+     * API to find the platform information of the given host in the network.
      *
      * @param hostUri
      *            URI of the host device.
      * @param listener
      *            Listener for receiving the platform information.
+     *
+     * @throws InvalidArgsException
+     *             Thrown if the input parameter is empty.
+     * @throws SimulatorException
+     *             Thrown for other errors.
      */
     public static native void getPlatformInformation(String hostUri,
             PlatformListener listener) throws InvalidArgsException,
@@ -184,8 +210,7 @@ public class SimulatorManager {
      * @param logger
      *            {@link ILogger} to receive the log messages.
      */
-    public static native void setLogger(ILogger logger)
-            throws SimulatorException;
+    public static native void setLogger(ILogger logger);
 
     private static native Vector<SimulatorResource> createResources(
             String configPath, int count);

@@ -43,7 +43,7 @@ public class DeleteResourceWizard extends Wizard {
 
     private DeleteResourcePage page;
 
-    private String             status;
+    private boolean            success;
 
     public DeleteResourceWizard() {
         setWindowTitle("Delete resources");
@@ -95,9 +95,9 @@ public class DeleteResourceWizard extends Wizard {
                             }
                         }
                         monitor.worked(1);
-                        status = "Resources deleted.";
+                        success = true;
                     } catch (SimulatorException e) {
-                        status = "Failed to delete some of the resources. Please try again.";
+                        success = false;
                     } finally {
                         monitor.done();
                     }
@@ -113,7 +113,7 @@ public class DeleteResourceWizard extends Wizard {
         return true;
     }
 
-    public String getStatus() {
-        return status;
+    public boolean getStatus() {
+        return success;
     }
 }

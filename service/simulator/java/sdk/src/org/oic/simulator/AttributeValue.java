@@ -31,7 +31,7 @@ public class AttributeValue {
     }
 
     /**
-     * Class provides the value type information in detail.
+     * Class which provides the value type information in detail.
      */
     public class TypeInfo {
         public ValueType mType;
@@ -39,8 +39,7 @@ public class AttributeValue {
         public int       mDepth;
 
         /**
-         * Constructs {@AttributeValue.TypeInfo} with
-         * default values.
+         * Constructs {@link AttributeValue.TypeInfo} with default values.
          */
         TypeInfo() {
             mType = ValueType.UNKNOWN;
@@ -49,8 +48,8 @@ public class AttributeValue {
         }
 
         /**
-         * Constructs {@AttributeValue.TypeInfo} with
-         * given {AttributeValue.ValueType}.
+         * Constructs {@link AttributeValue.TypeInfo} with given
+         * {AttributeValue.ValueType}.
          *
          * @param type
          *            Value type.
@@ -62,17 +61,17 @@ public class AttributeValue {
         }
 
         /**
-         * Constructs {@AttributeValue.TypeInfo} with
-         * given {AttributeValue.ValueType}s and depth information.
+         * Constructs {@link AttributeValue.TypeInfo} with given
+         * {AttributeValue.ValueType}s and depth information.
          *
          * @param type
          *            Value type.
          * @param baseType
-         *            Value base type. This type is useful when vaule is of
+         *            Value base type. This type is useful when value is of
          *            array type.
          * @param depth
-         *            Depth of array type value. This type is useful when vaule
-         *            is of array type.
+         *            Depth of array type value. This is useful when value is of
+         *            array type.
          */
         TypeInfo(ValueType type, ValueType baseType, int depth) {
             mType = type;
@@ -82,7 +81,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with int type value.
+     * Constructs {@link AttributeValue} with int type value.
      *
      * @param value
      *            int type value.
@@ -92,7 +91,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with double type value.
+     * Constructs {@link AttributeValue} with double type value.
      *
      * @param value
      *            double type value.
@@ -102,7 +101,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with boolean type value.
+     * Constructs {@link AttributeValue} with boolean type value.
      *
      * @param value
      *            boolean type value.
@@ -112,7 +111,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with String type value.
+     * Constructs {@link AttributeValue} with string type value.
      *
      * @param value
      *            String type value.
@@ -122,8 +121,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with SimulatorResourceModel
-     * type value.
+     * Constructs {@link AttributeValue} with SimulatorResourceModel type value.
      *
      * @param value
      *            SimulatorResourceModel type value.
@@ -133,8 +131,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of int type
-     * values.
+     * Constructs {@link AttributeValue} with array of int type values.
      *
      * @param values
      *            Array of int type values.
@@ -147,8 +144,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of Integer type
-     * values.
+     * Constructs {@link AttributeValue} with array of Integer type values.
      *
      * @param values
      *            Array of Integer type values.
@@ -158,8 +154,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of double type
-     * values.
+     * Constructs {@link AttributeValue} with array of double type values.
      *
      * @param values
      *            Array of double type values.
@@ -172,8 +167,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of Double type
-     * values.
+     * Constructs {@link AttributeValue} with array of Double type values.
      *
      * @param values
      *            Array of Double type values.
@@ -183,8 +177,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of boolean type
-     * values.
+     * Constructs {@link AttributeValue} with array of boolean type values.
      *
      * @param values
      *            Array of boolean type values.
@@ -197,8 +190,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of Boolean type
-     * values.
+     * Constructs {@link AttributeValue} with array of Boolean type values.
      *
      * @param values
      *            Array of Boolean type values.
@@ -208,8 +200,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of String type
-     * values.
+     * Constructs {@link AttributeValue} with array of String type values.
      *
      * @param values
      *            Array of String type values.
@@ -219,8 +210,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with array of
-     * SimulatorResourceModel type values.
+     * Constructs {@link AttributeValue} with array of SimulatorResourceModel
+     * type values.
      *
      * @param values
      *            Array of SimulatorResourceModel type values.
@@ -230,8 +221,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of
-     * int type values.
+     * Constructs {@link AttributeValue} with 2 dimensional array of int type
+     * values.
      *
      * @param values
      *            2 dimensional array of int type values.
@@ -248,8 +239,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of
-     * Integer type values.
+     * Constructs {@link AttributeValue} with 2 dimensional array of Integer
+     * type values.
      *
      * @param values
      *            2 dimensional array of Integer type values.
@@ -259,8 +250,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of
-     * double type values.
+     * Constructs {@link AttributeValue} with 2 dimensional array of double type
+     * values.
      *
      * @param values
      *            2 dimensional array of double type values.
@@ -277,8 +268,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of
-     * Double type values.
+     * Constructs {@link AttributeValue} with 2 dimensional array of Double type
+     * values.
      *
      * @param values
      *            2 dimensional array of Double type values.
@@ -288,8 +279,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of
-     * boolean type values.
+     * Constructs {@link AttributeValue} with 2 dimensional array of boolean
+     * type values.
      *
      * @param values
      *            2 dimensional array of boolean type values.
@@ -306,8 +297,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of
-     * Boolean type values.
+     * Constructs {@link AttributeValue} with 2 dimensional array of Boolean
+     * type values.
      *
      * @param values
      *            2 dimensional array of Boolean type values.
@@ -317,8 +308,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of
-     * String type values.
+     * Constructs {@link AttributeValue} with 2 dimensional array of String type
+     * values.
      *
      * @param values
      *            2 dimensional array of String type values.
@@ -328,7 +319,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 2 dimensional array of
+     * Constructs {@link AttributeValue} with 2 dimensional array of
      * SimulatorResourceModel type values.
      *
      * @param values
@@ -339,8 +330,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 3 dimensional array of
-     * int type values.
+     * Constructs {@link AttributeValue} with 3 dimensional array of int type
+     * values.
      *
      * @param values
      *            3 dimensional array of int type values.
@@ -360,8 +351,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 3 dimensional array of
-     * Integer type values.
+     * Constructs {@link AttributeValue} with 3 dimensional array of Integer
+     * type values.
      *
      * @param values
      *            3 dimensional array of Integer type values.
@@ -371,8 +362,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 3 dimensional array of
-     * double type values.
+     * Constructs {@link AttributeValue} with 3 dimensional array of double type
+     * values.
      *
      * @param values
      *            3 dimensional array of double type values.
@@ -392,8 +383,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 3 dimensional array of
-     * Double type values.
+     * Constructs {@link AttributeValue} with 3 dimensional array of Double type
+     * values.
      *
      * @param values
      *            3 dimensional array of Double type values.
@@ -403,8 +394,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 3 dimensional array of
-     * boolean type values.
+     * Constructs {@link AttributeValue} with 3 dimensional array of boolean
+     * type values.
      *
      * @param values
      *            3 dimensional array of boolean type values.
@@ -424,8 +415,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 3 dimensional array of
-     * Boolean type values.
+     * Constructs {@link AttributeValue} with 3 dimensional array of Boolean
+     * type values.
      *
      * @param values
      *            3 dimensional array of Boolean type values.
@@ -435,8 +426,8 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 3 dimensional array of
-     * String type values.
+     * Constructs {@link AttributeValue} with 3 dimensional array of String type
+     * values.
      *
      * @param values
      *            3 dimensional array of String type values.
@@ -446,7 +437,7 @@ public class AttributeValue {
     }
 
     /**
-     * Constructs {@AttributeValue} with 3 dimensional array of
+     * Constructs {@link AttributeValue} with 3 dimensional array of
      * SimulatorResourceModel type values.
      *
      * @param values
@@ -459,7 +450,7 @@ public class AttributeValue {
     /**
      * API to get value type information.
      *
-     * @return {@AttributeValue.TypeInfo}.
+     * @return {@link AttributeValue.TypeInfo}.
      */
     public TypeInfo typeInfo() {
         return createTypeInfo(mValue);

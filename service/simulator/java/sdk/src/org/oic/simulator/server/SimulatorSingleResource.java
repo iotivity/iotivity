@@ -20,8 +20,13 @@ import org.oic.simulator.AttributeValue;
 import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorResourceAttribute;
-import org.oic.simulator.SimulatorResourceModel;
 
+/**
+ * This class represents a single type resource(Non-collection resource). It
+ * provides APIs specific to single resource for manipulating the resource model
+ * by adding/removing the attributes, and updating the attribute values manually
+ * and automatically.
+ */
 public final class SimulatorSingleResource extends SimulatorResource {
 
     private SimulatorSingleResource(long nativeHandle) {
@@ -35,7 +40,7 @@ public final class SimulatorSingleResource extends SimulatorResource {
      *            Name of the attribute
      *
      * @return An object of {@link SimulatorResourceAttribute}, or null if
-     *         resource doest not have attribute of this name.
+     *         resource does not have attribute of this name.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the attribute name is
@@ -50,8 +55,6 @@ public final class SimulatorSingleResource extends SimulatorResource {
     /**
      * API to add an attribute to resource's representation model.
      *
-     * @param attrName
-     *            Name of the attribute.
      * @param attribute
      *            Attribute to be added to resource's representation model.
      *
@@ -99,12 +102,12 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * sequentially.
      *
      * @param type
-     *            {@link AutomationType} indicating whether the automation is
+     *            {@link AutoUpdateType} indicating whether the automation is
      *            one-time or recursive.
      * @param interval
      *            Interval time in milliseconds.
      * @param listener
-     *            Listener to be notified when value updation ends.
+     *            Listener to be notified when automation ends.
      *
      * @return Automation ID using which the automation can be stopped.
      *
@@ -125,7 +128,7 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @param attrName
      *            Name of the attribute to be automated.
      * @param type
-     *            {@link AutomationType} indicating whether the automation is
+     *            {@link AutoUpdateType} indicating whether the automation is
      *            one-time or recursive.
      * @param interval
      *            Interval time in milliseconds.

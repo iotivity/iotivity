@@ -42,7 +42,10 @@ class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
         void setName(const std::string &name);
         void setURI(const std::string &uri);
         void setResourceType(const std::string &resourceType);
-        void addInterface(std::string interfaceType);
+        void addInterface(const std::string &interfaceType);
+        void removeInterface(const std::string &interfaceType);
+        void addInterface(const std::vector<std::string> &interfaceList);
+        void removeInterface(const std::vector<std::string> &interfaceList);
         void setObservable(bool state);
         void setObserverCallback(ObserverCallback callback);
         void setModelChangeCallback(ResourceModelChangedCallback callback);

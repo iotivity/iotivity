@@ -40,7 +40,10 @@ class SimulatorSingleResourceImpl : public SimulatorSingleResource
         void setName(const std::string &name);
         void setURI(const std::string &uri);
         void setResourceType(const std::string &resourceType);
-        void addInterface(std::string interfaceType);
+        void addInterface(const std::string &interfaceType);
+        void removeInterface(const std::string &interfaceType);
+        void addInterface(const std::vector<std::string> &interfaceList);
+        void removeInterface(const std::vector<std::string> &interfaceList);
         void setObservable(bool state);
         void setObserverCallback(ObserverCallback callback);
         bool isObservable();
@@ -83,9 +86,13 @@ class SimulatorSingleResourceImpl : public SimulatorSingleResource
     private:
         SimulatorSingleResourceImpl();
         OCEntityHandlerResult handleRequests(std::shared_ptr<OC::OCResourceRequest> request);
-        std::shared_ptr<OC::OCResourceResponse> requestOnBaseLineInterface(
-            std::shared_ptr<OC::OCResourceRequest> request);
-        void resourceModified();
+        std::shared_ptr<OC::OCResourceResponse> handleReadRequest(
+            std::shared_ptr<OC::OCResourceRequest> request, const std::string &interfaceType);
+        std::shared_ptr<OC::OCResourceResponse> handleWriteRequest(
+            std::shared_ptr<OC::OCResourceRequest> request, const std::string &interfaceType);
+        OCEntityHandlerResult sendErrorResponse(std::shared_ptr<OC::OCResourceRequest> request,
+            const int errCode, OCEntityHandlerResult responseCode);
+        void setCommonProperties(SimulatorResourceModel &resModel);
         bool updateResourceModel(OC::OCRepresentation &ocRep, SimulatorResourceModel &resModel);
         void addObserver(OC::ObservationInfo ocObserverInfo);
         void removeObserver(OC::ObservationInfo ocObserverInfo);
@@ -96,6 +103,7 @@ class SimulatorSingleResourceImpl : public SimulatorSingleResource
         std::string m_uri;
         std::string m_resourceType;
         std::vector<std::string> m_interfaces;
+        std::map<std::string, std::vector<std::string>> m_requestTypes;
 
         std::recursive_mutex m_objectLock;
         std::mutex m_modelLock;

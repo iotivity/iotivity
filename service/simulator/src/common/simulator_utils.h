@@ -58,6 +58,18 @@ invokeocplatform(FnT fn, ArgsT &&...args)
 
 namespace OC
 {
+    // Read-Only interface
+    const std::string READ_INTERFACE = "oic.if.r";
+
+    // Read-Write Interface
+    const std::string READWRITE_INTERFACE = "oic.if.rw";
+
+    // Actuator Interface
+    const std::string ACTUATOR_INTERFACE = "oic.if.a";
+
+    // Sensor Interface
+    const std::string SENSOR_INTERFACE = "oic.if.s";
+
     class OCRepresentation;
 }
 

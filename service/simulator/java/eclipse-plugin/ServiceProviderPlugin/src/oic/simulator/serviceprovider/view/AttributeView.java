@@ -162,7 +162,7 @@ public class AttributeView extends ViewPart {
 
                     @Override
                     public void run() {
-                        if (null == resource) {
+                        if (null == resource || null == attViewer) {
                             return;
                         }
                         Resource resourceInSelection = resourceManager
@@ -177,8 +177,6 @@ public class AttributeView extends ViewPart {
                             Tree tree;
                             tree = attViewer.getTree();
                             if (!tree.isDisposed()) {
-                                attViewer.refresh();
-
                                 // Disabling the table to prevent interactions
                                 // during the automation
                                 tree.setEnabled(false);
@@ -216,7 +214,6 @@ public class AttributeView extends ViewPart {
                         tree = attViewer.getTree();
                         if (!tree.isDisposed()) {
                             tree.setEnabled(true);
-                            attViewer.refresh();
                         }
                     }
                 });

@@ -178,8 +178,7 @@ public class AttributeEditingSupport {
             }
 
             // If selected resource is not a single resource, then editor
-            // support is not
-            // required.
+            // support is not required.
             if (!(res instanceof SingleResource)) {
                 return null;
             }
@@ -561,9 +560,6 @@ public class AttributeEditingSupport {
                 // Stop the automation
                 resourceManager.stopAutomation((SingleResource) resource, att,
                         att.getAutoUpdateId());
-                MessageDialog.openInformation(Display.getDefault()
-                        .getActiveShell(), "Automation Status",
-                        "Automation stopped.");
             }
         }
     }

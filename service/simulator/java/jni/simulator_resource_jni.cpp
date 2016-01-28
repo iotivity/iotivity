@@ -235,10 +235,6 @@ Java_org_oic_simulator_server_SimulatorResource_setName
     {
         throwInvalidArgsException(env, e.code(), e.what());
     }
-    catch (SimulatorException &e)
-    {
-        throwInvalidArgsException(env, e.code(), e.what());
-    }
 }
 
 JNIEXPORT void JNICALL
@@ -261,7 +257,7 @@ Java_org_oic_simulator_server_SimulatorResource_setURI
     }
     catch (SimulatorException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        throwSimulatorException(env, e.code(), e.what());
     }
 }
 
@@ -285,7 +281,7 @@ Java_org_oic_simulator_server_SimulatorResource_setResourceType
     }
     catch (SimulatorException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        throwSimulatorException(env, e.code(), e.what());
     }
 }
 
@@ -313,8 +309,64 @@ Java_org_oic_simulator_server_SimulatorResource_addInterface
     }
     catch (SimulatorException &e)
     {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_server_SimulatorResource_removeInterface
+(JNIEnv *env, jobject object, jstring interfaceType)
+{
+    VALIDATE_INPUT(env, !interfaceType, "Interface type is null!")
+
+    SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
+    VALIDATE_OBJECT(env, resource)
+
+    JniString jniInterfaceType(env, interfaceType);
+    resource->removeInterface(jniInterfaceType.get());
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_server_SimulatorResource_addInterfaces
+(JNIEnv *env, jobject object, jobject interfaceType)
+{
+    VALIDATE_INPUT(env, !interfaceType, "Interface type is null!")
+
+    SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
+    VALIDATE_OBJECT(env, resource)
+
+    std::vector<std::string> interfaceList = JniVector(env).toCpp<std::string>(interfaceType);
+
+    try
+    {
+        resource->addInterface(interfaceList);
+    }
+    catch (InvalidArgsException &e)
+    {
         throwInvalidArgsException(env, e.code(), e.what());
     }
+    catch (NoSupportException &e)
+    {
+        throwNoSupportException(env, e.what());
+    }
+    catch (SimulatorException &e)
+    {
+        throwSimulatorException(env, e.code(), e.what());
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_oic_simulator_server_SimulatorResource_removeInterfaces
+(JNIEnv *env, jobject object, jobject interfaceType)
+{
+    VALIDATE_INPUT(env, !interfaceType, "Interface type is null!")
+
+    SimulatorResourceSP resource = SimulatorResourceToCpp(env, object);
+    VALIDATE_OBJECT(env, resource)
+
+    std::vector<std::string> interfaceList = JniVector(env).toCpp<std::string>(interfaceType);
+
+    resource->removeInterface(interfaceList);
 }
 
 JNIEXPORT void JNICALL
@@ -330,7 +382,7 @@ Java_org_oic_simulator_server_SimulatorResource_setObservable
     }
     catch (SimulatorException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        throwSimulatorException(env, e.code(), e.what());
     }
 }
 

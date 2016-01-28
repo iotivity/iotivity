@@ -34,6 +34,14 @@ public enum SimulatorResult {
 
     SIMULATOR_ERROR;
 
+    /**
+     * This method returns the {@link SimulatorResult} at the given
+     * position(ordinal).
+     *
+     * @param ordinal
+     *            Index of the constant.
+     * @return {@link SimulatorResult} constant at the given index.
+     */
     public static SimulatorResult get(int ordinal) {
 
         SimulatorResult result;

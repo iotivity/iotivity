@@ -22,6 +22,13 @@ import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorResourceModel;
 
+/**
+ * This class serves as a base class type for all the resources in the
+ * simulator. It provides APIs to get and update the resource details, and
+ * register listeners to get notifications for resource model changes and
+ * observe requests from clients, and APIs to register/ unregister the resource
+ * with the platform.
+ */
 public class SimulatorResource {
 
     private native void dispose();
@@ -42,10 +49,16 @@ public class SimulatorResource {
         }
     }
 
+    /**
+     * Enum to represent the type of resource.
+     */
     public enum Type {
         SINGLE, COLLECTION
     }
 
+    /**
+     * Enum to represent the update type of automation.
+     */
     public enum AutoUpdateType {
         ONE_TIME, REPEAT
     }
@@ -98,7 +111,7 @@ public class SimulatorResource {
     /**
      * API to get the interfaces resource is bound with.
      *
-     * @return Interface type.
+     * @return Interface types.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
@@ -145,7 +158,7 @@ public class SimulatorResource {
      * API to set the name of the resource.
      *
      * @param name
-     *            - Name to be set.
+     *            Name to be set.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the resource name is
@@ -161,13 +174,14 @@ public class SimulatorResource {
      * API to set the resource URI.
      *
      * @param uri
-     *            - URI to be set.
+     *            URI to be set.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the resource URI is invalid.
      * @throws SimulatorException
-     *             This exception will be thrown if the native resource object
-     *             does not exist or for some general errors.
+     *             A resource needs to be stopped by calling the stop() before
+     *             calling this API. This exception will be thrown if the native
+     *             resource object has not yet been stopped.
      */
     public native void setURI(String uri) throws InvalidArgsException,
             SimulatorException;
@@ -176,7 +190,7 @@ public class SimulatorResource {
      * API to set the resource type.
      *
      * @param resourceType
-     *            - resource type string.
+     *            Resource type string.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the resource type is
@@ -192,7 +206,7 @@ public class SimulatorResource {
      * API to add interface type for resource.
      *
      * @param interfaceType
-     *            - interface to be added for resource.
+     *            Interface to be added for resource.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the interface type is
@@ -205,10 +219,56 @@ public class SimulatorResource {
             throws InvalidArgsException, SimulatorException;
 
     /**
+     * API to remove interface type for resource.
+     *
+     * @param interfaceType
+     *            Interface to be remove for resource.
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the interface type is
+     *             invalid.
+     * @throws SimulatorException
+     *             This exception will be thrown if the native resource object
+     *             does not exist or for some general errors.
+     */
+    public native void removeInterface(String interfaceType)
+            throws InvalidArgsException, SimulatorException;
+
+    /**
+     * API to add a list of interfaces for resource.
+     *
+     * @param interfaceType
+     *            List of interfaces to be added to the resource.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the interface type is
+     *             invalid.
+     * @throws SimulatorException
+     *             This exception will be thrown if the native resource object
+     *             does not exist or for some general errors.
+     */
+    public native void addInterfaces(Vector<String> interfaceType)
+            throws InvalidArgsException, SimulatorException;
+
+    /**
+     * API to remove interface type for resource.
+     *
+     * @param interfaceType
+     *            List of interfaces to be removed from the resource.
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the interface type is
+     *             invalid.
+     * @throws SimulatorException
+     *             This exception will be thrown if the native resource object
+     *             does not exist or for some general errors.
+     */
+    public native void removeInterfaces(Vector<String> interfaceType)
+            throws InvalidArgsException, SimulatorException;
+
+    /**
      * API to make the resource observable or not.
      *
      * @param state
-     *            - true make the resource observable, otherwise non-observable.
+     *            True makes the resource observable, otherwise non-observable.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
@@ -221,7 +281,7 @@ public class SimulatorResource {
      * registered or unregistered with resource.
      *
      * @param listener
-     *            - Callback to be set for receiving the notifications.
+     *            Callback to be set for receiving the notifications.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the listener is invalid.
@@ -249,7 +309,7 @@ public class SimulatorResource {
             SimulatorException;
 
     /**
-     * API to start the resource.
+     * API to start(register) the resource.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
@@ -258,7 +318,7 @@ public class SimulatorResource {
     public native void start() throws SimulatorException;
 
     /**
-     * API to stop the resource.
+     * API to stop(unregister) the resource.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
@@ -278,10 +338,10 @@ public class SimulatorResource {
     public native Vector<Observer> getObservers() throws SimulatorException;
 
     /**
-     * API to notify current resource model to specific observer.
+     * API to notify current resource model to a specific observer.
      *
      * @param observerId
-     *            - Observer ID to notify.
+     *            Observer ID to notify.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
@@ -290,7 +350,7 @@ public class SimulatorResource {
     public native void notifyObserver(int observerId) throws SimulatorException;
 
     /**
-     * API to notify all registered observers.
+     * API to notify current resource model to all registered observers.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
@@ -304,23 +364,24 @@ public class SimulatorResource {
      */
     public interface ObserverListener {
         /**
-         * Method will be invoked when a observer is registered with resource.
+         * Method will be invoked when an observer is registered with resource.
          *
-         * @param uri
+         * @param resourceURI
          *            URI of the resource.
          * @param observer
-         *            {@link ObserverInfo} object containing the details of
+         *            {@link Observer} object containing the details of
          *            observer.
          */
         public void onObserverAdded(String resourceURI, Observer observer);
 
         /**
-         * Method will be invoked when a observer is Unregistered with resource.
+         * Method will be invoked when an observer is unregistered from the
+         * resource.
          *
          * @param resourceURI
          *            URI of the resource.
          * @param observer
-         *            {@link ObserverInfo} object containing the details of
+         *            {@link Observer} object containing the details of
          *            observer.
          */
         public void onObserverRemoved(String resourceURI, Observer observer);

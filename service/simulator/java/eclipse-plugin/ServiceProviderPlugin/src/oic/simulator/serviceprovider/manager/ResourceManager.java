@@ -19,6 +19,7 @@ package oic.simulator.serviceprovider.manager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +36,7 @@ import oic.simulator.serviceprovider.model.SingleResource;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.utils.Utility;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Display;
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeProperty.Type;
@@ -90,44 +92,6 @@ public class ResourceManager {
     public ResourceManager() {
         data = new Data();
 
-        // Set the default device and platform information
-        deviceName = "IoTivity Simulator";
-        try {
-            SimulatorManager.setDeviceInfo(deviceName);
-        } catch (SimulatorException e) {
-            Activator
-                    .getDefault()
-                    .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "Error while registering the device info.\n"
-                                    + Utility.getSimulatorErrorString(e, null));
-        }
-
-        platformInfo = new PlatformInfo();
-        platformInfo.setPlatformID("Samsung Platform Identifier");
-        platformInfo.setManufacturerName("Samsung");
-        platformInfo.setManufacturerUrl("www.samsung.com");
-        platformInfo.setModelNumber("Samsung Model Num01");
-        platformInfo.setDateOfManufacture("2015-09-10T11:10:30Z");
-        platformInfo.setPlatformVersion("PlatformVersion01");
-        platformInfo.setOperationSystemVersion("OSVersion01");
-        platformInfo.setHardwareVersion("HardwareVersion01");
-        platformInfo.setFirmwareVersion("FirwareVersion01");
-        platformInfo.setSupportUrl("http://www.samsung.com/support");
-        platformInfo.setSystemTime("2015-09-10T11:10:30Z");
-        try {
-            SimulatorManager.setPlatformInfo(platformInfo);
-        } catch (SimulatorException e) {
-            Activator
-                    .getDefault()
-                    .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "Error while registering the platform info.\n"
-                                    + Utility.getSimulatorErrorString(e, null));
-        }
-
         deviceListener = new DeviceListener() {
 
             @Override
@@ -155,19 +119,6 @@ public class ResourceManager {
                 });
             }
         };
-
-        // Get the device information to show other details of the device in UI.
-        try {
-            SimulatorManager.findDevices("", deviceListener);
-        } catch (SimulatorException e) {
-            Activator
-                    .getDefault()
-                    .getLogManager()
-                    .log(Level.ERROR.ordinal(),
-                            new Date(),
-                            "Failed to get the local device information.\n"
-                                    + Utility.getSimulatorErrorString(e, null));
-        }
 
         resourceModelChangeListener = new ResourceModelChangeListener() {
 
@@ -292,6 +243,58 @@ public class ResourceManager {
         threadHandle = new Thread(synchronizerThread);
         threadHandle.setName("Simulator service provider event queue");
         threadHandle.start();
+
+        // Set the default device name.
+        deviceName = "IoTivity Simulator";
+        try {
+            SimulatorManager.setDeviceInfo(deviceName);
+        } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "Error while registering the device info.\n"
+                                    + Utility.getSimulatorErrorString(e, null));
+        }
+
+        // Set the default platform information.
+        platformInfo = new PlatformInfo();
+        platformInfo.setPlatformID("Samsung Platform Identifier");
+        platformInfo.setManufacturerName("Samsung");
+        platformInfo.setManufacturerUrl("www.samsung.com");
+        platformInfo.setModelNumber("Samsung Model Num01");
+        platformInfo.setDateOfManufacture("2015-09-10T11:10:30Z");
+        platformInfo.setPlatformVersion("PlatformVersion01");
+        platformInfo.setOperationSystemVersion("OSVersion01");
+        platformInfo.setHardwareVersion("HardwareVersion01");
+        platformInfo.setFirmwareVersion("FirwareVersion01");
+        platformInfo.setSupportUrl("http://www.samsung.com/support");
+        platformInfo.setSystemTime("2015-09-10T11:10:30Z");
+        try {
+            SimulatorManager.setPlatformInfo(platformInfo);
+        } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "Error while registering the platform info.\n"
+                                    + Utility.getSimulatorErrorString(e, null));
+        }
+
+        // Get the device information to show other details of the device in UI.
+        try {
+            SimulatorManager.findDevices("", deviceListener);
+        } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "Failed to get the local device information.\n"
+                                    + Utility.getSimulatorErrorString(e, null));
+        }
     }
 
     private static class NotificationSynchronizerThread implements Runnable {
@@ -576,9 +579,14 @@ public class ResourceManager {
             jSimulatorSingleResource.start();
             resource.setStarted(true);
 
-            // Get the resource interfaces
-            resource.setResourceInterfaces(Utility
-                    .convertVectorToSet(jSimulatorSingleResource.getInterface()));
+            // Add the resource interfaces
+            Set<String> newIfSet = resource.getResourceInterfaces();
+            // Get the default interface(s) if any configured by the platform.
+            // These interfaces will be overwritten by the new interfaces.
+            Set<String> ifSetFromPlatform = Utility
+                    .convertVectorToSet(jSimulatorSingleResource.getInterface());
+            resource.setResourceInterfaces(ifSetFromPlatform);
+            updateResourceInterfaces(resource, newIfSet);
         } catch (SimulatorException e) {
             Activator
                     .getDefault()
@@ -729,19 +737,28 @@ public class ResourceManager {
         return true;
     }
 
-    public int createSingleResourceMultiInstances(String configFile, int count)
+    public Set<SingleResource> createSingleResourceMultiInstances(
+            String configFile, int count, IProgressMonitor progressMonitor)
             throws SimulatorException {
-        int createCount = 0;
+        Set<SingleResource> resultSet;
         try {
+            resultSet = new HashSet<SingleResource>();
             Vector<SimulatorResource> jSimulatorResources = SimulatorManager
                     .createResource(configFile, count);
             if (null == jSimulatorResources || jSimulatorResources.size() < 1) {
-                return 0;
+                return null;
             }
             SimulatorSingleResource jResource;
             SingleResource resource;
             boolean result;
             for (SimulatorResource jSimulatorResource : jSimulatorResources) {
+                // If the resource creation progress is canceled, then stop the
+                // creation and stop/delete
+                // the resources created already.
+                if (progressMonitor.isCanceled()) {
+                    removeSingleResources(resultSet);
+                    return null;
+                }
                 jResource = (SimulatorSingleResource) jSimulatorResource;
                 resource = new SingleResource();
                 resource.setSimulatorResource(jResource);
@@ -749,7 +766,7 @@ public class ResourceManager {
                     result = completeSingleResourceCreationByRAML(resource,
                             jResource.getURI(), jResource.getName(), true);
                     if (result) {
-                        createCount++;
+                        resultSet.add(resource);
                     }
                 } catch (SimulatorException eInner) {
                     Activator
@@ -760,10 +777,7 @@ public class ResourceManager {
                                     Utility.getSimulatorErrorString(eInner,
                                             null));
                 }
-            }
-            if (createCount > 0) {
-                UiListenerHandler.getInstance().resourceCreatedUINotification(
-                        ResourceType.SINGLE);
+                progressMonitor.worked(1);
             }
         } catch (SimulatorException eOuter) {
             Activator
@@ -773,7 +787,7 @@ public class ResourceManager {
                             Utility.getSimulatorErrorString(eOuter, null));
             throw eOuter;
         }
-        return createCount;
+        return resultSet;
     }
 
     public List<Resource> getResourceList() {
@@ -875,6 +889,20 @@ public class ResourceManager {
                     propValue = resource.getResourceURI();
                 } else if (propName.equals(Constants.RESOURCE_TYPE)) {
                     propValue = resource.getResourceType();
+                } else if (propName.equals(Constants.INTERFACE_TYPES)) {
+                    Set<String> ifTypes = resource.getResourceInterfaces();
+                    if (null != ifTypes && !ifTypes.isEmpty()) {
+                        propValue = "";
+                        Iterator<String> itr = ifTypes.iterator();
+                        while (itr.hasNext()) {
+                            propValue += itr.next();
+                            if (itr.hasNext()) {
+                                propValue += ", ";
+                            }
+                        }
+                    } else {
+                        propValue = null;
+                    }
                 } else {
                     propValue = null;
                 }
@@ -1057,6 +1085,84 @@ public class ResourceManager {
         return true;
     }
 
+    public boolean updateResourceInterfaces(Resource resource,
+            Set<String> newIfSet) throws SimulatorException {
+        if (null == resource || null == newIfSet || newIfSet.isEmpty()) {
+            return false;
+        }
+        SimulatorResource jResource = resource.getSimulatorResource();
+        if (null == jResource) {
+            return false;
+        }
+        Set<String> curIfSet = resource.getResourceInterfaces();
+        Iterator<String> itr = curIfSet.iterator();
+        String interfaceType;
+        boolean resourceRestartRequired = false;
+        while (itr.hasNext()) {
+            interfaceType = itr.next();
+            if (newIfSet.contains(interfaceType)) {
+                newIfSet.remove(interfaceType);
+            } else {
+                // Remove this interface support from the resource.
+                try {
+                    if (!resourceRestartRequired) {
+                        resourceRestartRequired = true;
+                    }
+                    jResource.removeInterface(interfaceType);
+                    itr.remove();
+                } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "There is an error while removing the interface type("
+                                            + interfaceType
+                                            + ").\n"
+                                            + Utility.getSimulatorErrorString(
+                                                    e, null));
+                    throw e;
+                }
+            }
+        }
+
+        // Add all remaining interfaces.
+        itr = newIfSet.iterator();
+        while (itr.hasNext()) {
+            interfaceType = itr.next();
+            // Add this interface support to the resource.
+            try {
+                jResource.addInterface(interfaceType);
+                curIfSet.add(interfaceType);
+            } catch (SimulatorException e) {
+                Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(),
+                                new Date(),
+                                "There is an error while adding the interface type("
+                                        + interfaceType
+                                        + ").\n"
+                                        + Utility.getSimulatorErrorString(e,
+                                                null));
+                throw e;
+            }
+        }
+
+        // As there is no support from native layer for interface removal,
+        // supporting it from the simulator requires restarting the resource if
+        // any existing interfaces are removed.
+        if (resourceRestartRequired) {
+            stopResource(resource);
+            startResource(resource);
+        }
+
+        // Set the resource interfaces.
+        resource.setResourceInterfaces(curIfSet);
+
+        return true;
+    }
+
     public boolean attributeValueUpdated(SingleResource resource,
             String attributeName, AttributeValue value) {
         if (null != resource && null != attributeName && null != value) {
@@ -1232,7 +1338,6 @@ public class ResourceManager {
             return false;
         }
         boolean status = false;
-        changeResourceLevelAutomationStatus(resource, true);
         // Invoke the native automation method
         SimulatorSingleResource resourceServer = (SimulatorSingleResource) resource
                 .getSimulatorResource();
@@ -1249,12 +1354,10 @@ public class ResourceManager {
                                 Utility.getSimulatorErrorString(e, null));
                 autoId = -1;
             }
-            if (-1 == autoId) {
-                // Automation request failed and hence status is being
-                // rolled back
-                changeResourceLevelAutomationStatus(resource, false);
-            } else {
+            if (-1 != autoId) {
                 // Automation request accepted.
+                changeResourceLevelAutomationStatus(resource, true);
+
                 resource.setAutomationId(autoId);
 
                 // Notify the UI listeners in a different thread.

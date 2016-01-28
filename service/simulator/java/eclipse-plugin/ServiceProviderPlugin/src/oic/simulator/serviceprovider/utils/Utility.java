@@ -522,6 +522,22 @@ public class Utility {
         return true;
     }
 
+    public static boolean isResourceTypeValid(String resType) {
+        if (null == resType || resType.isEmpty()) {
+            return false;
+        }
+
+        char[] ch = resType.toCharArray();
+        for (char c : ch) {
+            if (c != '.' && c != '-' && (c < 'a' || c > 'z')
+                    && (c < '0' || c > '9')) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public static Map<String, String> getResourceInterfaces(
             Class<? extends Resource> resourceClass) {
         Map<String, String> ifTypes = null;
@@ -535,5 +551,4 @@ public class Utility {
         }
         return ifTypes;
     }
-
 }
