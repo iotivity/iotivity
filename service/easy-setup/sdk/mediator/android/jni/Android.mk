@@ -55,6 +55,7 @@ NDK_ROOT         := /home/madan/android-ndk-r10d
 LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 					$(LOCAL_PATH)/jniutil/inc \
 					$(LOCAL_PATH)/../../../../../../service/easy-setup/sdk/mediator/inc \
+					$(LOCAL_PATH)/../../../../../../service/easy-setup/sdk/mediator/src \
 					$(LOCAL_PATH)/../../../../../../service/easy-setup/sdk/common \
 					$(LOCAL_PATH)/../../../../../../resource/csdk/logger/include \
 					$(LOCAL_PATH)/../../../../../../resource/csdk/connectivity/common/inc \

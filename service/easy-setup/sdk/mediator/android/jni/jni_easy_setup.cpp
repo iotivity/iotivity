@@ -155,7 +155,7 @@ JNIProvisionEnrollee(JNIEnv
 	LOGI("JNI JNIProvisionEnrollee : netPWD is : %s",netPWD);
 
 	OCConnectivityType connecitivityType;
-	EnrolleeNWProvInfo_t netInfo =
+	EnrolleeNWProvInfo netInfo =
 	{	0};
 	strncpy(netInfo
 			.netAddressInfo.WIFI.ipAddress, ipAddress, IPV4_ADDR_SIZE-1);

@@ -26,13 +26,21 @@
 #include <sstream>
 
 #include "prov_adapter.h"
+#include "oic_string.h"
+
 
 #define ES_PROV_ADAP_TAG "ES_PROVISIONING_ADAPTER"
 
 //Use ipv4addr for both InitDiscovery and InitDeviceDiscovery
 char ipv4addr[IPV4_ADDR_SIZE] = {0};
 
-static const char * UNICAST_PROVISIONING_QUERY = "coap://%s:%d/oic/res?rt=oic.r.prov";
+#ifdef REMOTE_ARDUINO_ENROLEE
+    //Arduino Enrollee needs mediator application provide IP and port55555 which is specific
+    // to Arduino WiFi enrollee
+    static const char * UNICAST_PROVISIONING_QUERY = "coap://%s:%d/oic/res?rt=oic.r.prov";
+#else
+    static const char * UNICAST_PROVISIONING_QUERY = "/oic/res?rt=oic.r.prov";
+#endif
 
 volatile static OCProvisioningStatusCB cbData = NULL;
 
@@ -80,8 +88,15 @@ void UnRegisterCallback() {
 OCStackResult StartProvisioning(const EnrolleeNWProvInfo *netInfo) {
 
     char findQuery[64] = {0};
+
+#ifdef REMOTE_ARDUINO_ENROLEE
+    //Arduino Enrollee needs mediator application provide IP and port55555 which is specific
+    // to Arduino WiFi enrollee
     snprintf(findQuery, sizeof(findQuery) - 1, UNICAST_PROVISIONING_QUERY,
              netInfo->netAddressInfo.WIFI.ipAddress, IP_PORT);
+#else
+    OICStrcpy(findQuery, sizeof(UNICAST_PROVISIONING_QUERY), UNICAST_PROVISIONING_QUERY);
+#endif
 
     return StartProvisioningProcess(netInfo, cbData, findQuery);
 }

@@ -48,7 +48,7 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
     EnrolleeInfo connectedDevice;
     private EasySetupManager easySetupManagerNativeInstance;
     ProvisionEnrollee provisionEnrolleInstance;
-    Timer myTimer;
+    Timer myTimer = null;
 
     IOnBoardingStatus deviceScanListener = new IOnBoardingStatus() {
 
@@ -122,7 +122,10 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
 
     protected void stopOnBoardingProcess() {
         Log.i(TAG, "Stopping on boarding process");
-        myTimer.cancel();
+        if(myTimer != null)
+        {
+            myTimer.cancel();
+        }
         boolean status = mWifiSoftAPManager.setWifiApEnabled(null, false);
         Log.i(TAG, "Soft AP is disabled with status " + status);
     }

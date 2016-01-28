@@ -70,8 +70,19 @@ OCStackApplicationResult GetProvisioningStatusResponse(void* /*ctx*/,
 
     strncpy(resURI, input->uri, sizeof(resURI) - 1);
 
+
+#ifdef REMOTE_ARDUINO_ENROLEE
+    //Arduino Enrollee needs mediator application provide IP and port55555 which is specific
+    // to Arduino WiFi enrollee
+    // REMOTE_ARDUINO_ENROLEE has to be defined if Mediator is being tested with Arduino
     snprintf(query, sizeof(query), UNICAST_PROV_STATUS_QUERY, clientResponse->addr->addr, IP_PORT,
-             resURI);
+            resURI);
+#else
+    snprintf(query, sizeof(query), UNICAST_PROV_STATUS_QUERY, clientResponse->addr->addr,
+            clientResponse->addr->port,
+            resURI);
+#endif
+
 
     if (ProvisionEnrollee(OC_HIGH_QOS, query, OC_RSRVD_ES_URI_PROV, clientResponse->addr, 0)
         != OC_STACK_OK) {
@@ -118,7 +129,8 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* /*ctx*/,
                                                             OCDoHandle /*handle*/,
                                                             OCClientResponse *clientResponse) {
 
-    OC_LOG(INFO, ES_WIFI_PROV_TAG, PCF("Entering FindProvisioningResourceResponse"));
+    OC_LOG_V(INFO, ES_WIFI_PROV_TAG, "Entering FindProvisioningResourceResponse %s",
+            clientResponse->devAddr.addr);
 
     // If user stopped the process then return from this function;
     if (IsSetupStopped()) {
@@ -126,7 +138,6 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* /*ctx*/,
         ClearMemory();
         return OC_STACK_DELETE_TRANSACTION;
     }
-
 
     if (!ValidateFinddResourceResponse(clientResponse)) {
         ErrorCallback(DEVICE_NOT_PROVISIONED);
@@ -139,8 +150,20 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* /*ctx*/,
 
     OC_LOG_V(DEBUG, ES_WIFI_PROV_TAG, "resUri = %s", discoveryPayload->resources->uri);
 
+#ifdef REMOTE_ARDUINO_ENROLEE
+    //Arduino Enrollee needs mediator application provide IP and port55555 which is specific
+    // to Arduino WiFi enrollee
+    // REMOTE_ARDUINO_ENROLEE has to be defined if Mediator is being tested with Arduino
     snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PROV_STATUS_QUERY,
-             clientResponse->devAddr.addr, IP_PORT, discoveryPayload->resources->uri);
+             clientResponse->addr->addr,
+             IP_PORT,
+             discoveryPayload->resources->uri);
+#else
+    snprintf(szQueryUri, sizeof(szQueryUri), UNICAST_PROV_STATUS_QUERY,
+             clientResponse->devAddr.addr,
+             clientResponse->devAddr.port,
+             discoveryPayload->resources->uri);
+#endif
 
     OC_LOG_V(DEBUG, ES_WIFI_PROV_TAG, "query before GetProvisioningStatus call = %s", szQueryUri);
 

@@ -134,7 +134,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* /*ctx*/, OCDoHandle /*h
         int64_t ps;
         if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_PS, &ps)) {
 
-            if (ps == 1) {
+            if (ps == 2) {
                 input = input->next;
                 continue;
             }

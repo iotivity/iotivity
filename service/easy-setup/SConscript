@@ -29,7 +29,6 @@ easysetup_path = os.curdir
 ######################################################################
 #building Resource client, resourceBroker and resourceCache
 ######################################################################
-
 if env.get('RELEASE'):
     env.AppendUnique(CCFLAGS = ['-Os'])
     env.AppendUnique(CPPDEFINES = ['NDEBUG'])
@@ -38,7 +37,19 @@ else:
 
 if env.get('LOGGING'):
     env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-    
+
+# Easysetup provides reference implemenation of Arduino Enrollee.
+# Mediator applications developed on different platforms will be default defining the
+# flag 'REMOTE_ARDUINO_ENROLEE'. If the target Enrollee is not Arduino, the below commented
+# modifications must be enabled instead (and the existing define must be commented).
+#
+##### The following lines must be uncommented, if target Enrollee is not Arduino
+target_enrollee = env.get('TARGET_ENROLLEE')
+if target_enrollee == 'arduino':
+	print "REMOTE_ARDUINO_ENROLEE flag is defined."
+	print "The Mediator application will be working only with Arduino Enrollee."
+	env.AppendUnique(CPPDEFINES = ['REMOTE_ARDUINO_ENROLEE'])
+
 # Add third party libraries
 lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
