@@ -121,11 +121,20 @@ find . -iname "lib*.a" -exec install "{}" %{buildroot}%{_libdir}/ \;
 find . -iname "lib*.so" -exec install "{}" %{buildroot}%{_libdir}/ \;
 
 find resource service -iname "include" -o -iname 'inc' -a -type d\
-    | grep -v example | while read include ; do \
+    | grep -v example | grep -v csdk | while read include ; do \
     dirname=$(dirname -- "$include") ; \
     install -d %{buildroot}%{_includedir}/%{name}/${dirname} ; \
     install $include/*.* %{buildroot}%{_includedir}/%{name}/${dirname}/ ; \
 done
+
+cd resource/csdk
+find . -iname "include" -o -iname 'inc' -a -type d\
+    | while read include ; do \
+    dirname=$(dirname -- "$include") ; \
+    install -d %{buildroot}%{_includedir}/%{name}/resource/${dirname} ; \
+    install $include/*.* %{buildroot}%{_includedir}/%{name}/resource/${dirname}/ ; \
+done
+cd -
 
 install -d %{buildroot}%{_includedir}/%{name}/resource/oc_logger/targets/
 install ./resource/oc_logger/include/targets/*.* %{buildroot}%{_includedir}/%{name}/resource/oc_logger/targets/
