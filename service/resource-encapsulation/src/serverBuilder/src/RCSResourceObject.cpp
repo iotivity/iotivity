@@ -30,6 +30,7 @@
 #include "ResourceAttributesConverter.h"
 #include "ResourceAttributesUtils.h"
 #include "RCSRequest.h"
+#include "RCSRepresentation.h"
 
 #include "logger.h"
 #include "OCPlatform.h"
@@ -55,11 +56,15 @@ namespace
         return base & ~target;
     }
 
-    template <typename RESPONSE>
-    OCEntityHandlerResult sendResponse(RCSResourceObject& resource,
-            const std::shared_ptr< OC::OCResourceRequest >& ocRequest, RESPONSE&& response)
+    inline bool requestContainsInterface(const std::shared_ptr< OC::OCResourceRequest >& request,
+            const std::string& interface)
     {
-        auto ocResponse = response.getHandler()->buildResponse(resource);
+        return request->getQueryParameters().find(interface) != request->getQueryParameters().end();
+    }
+
+    OCEntityHandlerResult sendResponse(const std::shared_ptr< OC::OCResourceRequest >& ocRequest,
+            const std::shared_ptr< OC::OCResourceResponse >& ocResponse)
+    {
         ocResponse->setRequestHandle(ocRequest->getRequestHandle());
         ocResponse->setResourceHandle(ocRequest->getResourceHandle());
 
@@ -76,6 +81,14 @@ namespace
         }
 
         return OC_EH_ERROR;
+    }
+
+
+    template <typename RESPONSE>
+    OCEntityHandlerResult sendResponse(RCSResourceObject& resource,
+            const std::shared_ptr< OC::OCResourceRequest >& ocRequest, RESPONSE&& response)
+    {
+        return sendResponse(ocRequest, response.getHandler()->buildResponse(resource));
     }
 
     RCSResourceAttributes getAttributesFromOCRequest(
@@ -122,8 +135,29 @@ namespace
         }
         return {};
     }
-} // unnamed namespace
 
+    OCEntityHandlerResult handleBatchInterfaceGetRequest(
+            const std::shared_ptr< OC::OCResourceRequest >& request,
+            const RCSResourceObject* resourceObject)
+    {
+        auto rcsRep = resourceObject->toRepresentation();
+
+        for (const auto& bound : resourceObject->getBoundResources())
+        {
+            rcsRep.addChild(bound->toRepresentation());
+        }
+
+        auto response = std::make_shared< OC::OCResourceResponse >();
+
+        response->setResponseResult(OC_EH_OK);
+        response->setErrorCode(200);
+        response->setResourceRepresentation(
+                RCSRepresentation::toOCRepresentation(std::move(rcsRep)));
+
+        return sendResponse(request, response);
+    }
+
+} // unnamed namespace
 
 namespace OIC
 {
@@ -133,11 +167,35 @@ namespace OIC
         RCSResourceObject::Builder::Builder(const std::string& uri, const std::string& type,
                 const std::string& interface) :
                 m_uri{ uri },
-                m_type{ type },
-                m_interface{ interface },
+                m_types{ type },
+                m_interfaces{ interface },
                 m_properties{ OC_DISCOVERABLE | OC_OBSERVABLE },
                 m_resourceAttributes{ }
         {
+        }
+
+        RCSResourceObject::Builder& RCSResourceObject::Builder::addInterface(
+                const std::string& interface)
+        {
+            return addInterface(std::string{ interface });
+        }
+
+        RCSResourceObject::Builder& RCSResourceObject::Builder::addInterface(
+                std::string&& interface)
+        {
+            m_interfaces.push_back(std::move(interface));
+            return *this;
+        }
+
+        RCSResourceObject::Builder& RCSResourceObject::Builder::addType(const std::string& type)
+        {
+            return addType(std::string{ type });
+        }
+
+        RCSResourceObject::Builder& RCSResourceObject::Builder::addType(std::string&& type)
+        {
+            m_types.push_back(std::move(type));
+            return *this;
         }
 
         RCSResourceObject::Builder& RCSResourceObject::Builder::setDiscoverable(
@@ -179,7 +237,7 @@ namespace OIC
             OCResourceHandle handle{ nullptr };
 
             RCSResourceObject::Ptr server {
-                new RCSResourceObject{ m_properties, std::move(m_resourceAttributes) } };
+                new RCSResourceObject{ m_uri, m_properties, std::move(m_resourceAttributes) } };
 
             OC::EntityHandler entityHandler{ std::bind(&RCSResourceObject::entityHandler,
                     server.get(), std::placeholders::_1) };
@@ -188,22 +246,39 @@ namespace OIC
                     const std::string&, const std::string&, OC::EntityHandler, uint8_t);
 
             invokeOCFunc(static_cast<RegisterResource>(OC::OCPlatform::registerResource),
-                    handle, m_uri, m_type, m_interface, entityHandler, m_properties);
+                    handle, m_uri, m_types[0], m_interfaces[0], entityHandler, m_properties);
+
+            std::for_each(m_interfaces.begin() + 1, m_interfaces.end(),
+                    [&handle](const std::string& interfaceName){
+                invokeOCFunc(OC::OCPlatform::bindInterfaceToResource, handle, interfaceName);
+            });
+
+            std::for_each(m_types.begin() + 1, m_types.end(),
+                    [&handle](const std::string& typeName){
+                invokeOCFunc(OC::OCPlatform::bindTypeToResource, handle, typeName);
+            });
+
 
             server->m_resourceHandle = handle;
+            server->m_interfaces = m_interfaces;
+            server->m_types = m_types;
 
             return server;
         }
 
 
-        RCSResourceObject::RCSResourceObject(uint8_t properties, RCSResourceAttributes&& attrs) :
-                m_properties { properties },
+        RCSResourceObject::RCSResourceObject(const std::string& uri,
+                uint8_t properties, RCSResourceAttributes&& attrs) :
+                m_properties{ properties },
+                m_uri{ uri },
+                m_interfaces{ },
+                m_types{ },
                 m_resourceHandle{ },
                 m_resourceAttributes{ std::move(attrs) },
                 m_getRequestHandler{ },
                 m_setRequestHandler{ },
-                m_autoNotifyPolicy { AutoNotifyPolicy::UPDATED },
-                m_setRequestHandlerPolicy { SetRequestHandlerPolicy::NEVER },
+                m_autoNotifyPolicy{ AutoNotifyPolicy::UPDATED },
+                m_setRequestHandlerPolicy{ SetRequestHandlerPolicy::NEVER },
                 m_attributeUpdatedListeners{ },
                 m_lockOwner{ },
                 m_mutex{ },
@@ -414,6 +489,56 @@ namespace OIC
             return m_setRequestHandlerPolicy;
         }
 
+        void RCSResourceObject::bindResource(const RCSResourceObject::Ptr& resource)
+        {
+            if (!resource || resource.get() == this)
+            {
+                throw RCSInvalidParameterException("The resource is invalid!");
+            }
+
+            invokeOCFunc(OC::OCPlatform::bindResource,
+                    m_resourceHandle, resource->m_resourceHandle);
+
+            std::lock_guard< std:: mutex > lock{ m_mutexForBoundResources };
+            m_boundResources.push_back(resource);
+        }
+
+        void RCSResourceObject::unbindResource(const RCSResourceObject::Ptr& resource)
+        {
+            if (!resource || resource.get() == this)
+            {
+                throw RCSInvalidParameterException("The resource is invalid!");
+            }
+
+            invokeOCFunc(OC::OCPlatform::unbindResource,
+                    m_resourceHandle, resource->m_resourceHandle);
+
+            std::lock_guard< std:: mutex > lock{ m_mutexForBoundResources };
+            m_boundResources.erase(std::find(m_boundResources.begin(), m_boundResources.end(),
+                    resource));
+        }
+
+        std::vector< RCSResourceObject::Ptr > RCSResourceObject::getBoundResources() const
+        {
+            std::lock_guard< std:: mutex > lock{ m_mutexForBoundResources };
+            return m_boundResources;
+        }
+
+        std::vector< std::string > RCSResourceObject::getInterfaces() const
+        {
+            return m_interfaces;
+        }
+
+        std::vector< std::string > RCSResourceObject::getTypes() const
+        {
+            return m_types;
+        }
+
+        RCSRepresentation RCSResourceObject::toRepresentation() const
+        {
+            return RCSRepresentation{ m_uri, m_interfaces, m_types, m_resourceAttributes };
+         }
+
         void RCSResourceObject::autoNotify(bool isAttributesChanged) const
         {
             autoNotify(isAttributesChanged, m_autoNotifyPolicy);
@@ -486,6 +611,11 @@ namespace OIC
                 const std::shared_ptr< OC::OCResourceRequest >& request)
         {
             assert(request != nullptr);
+
+            if (requestContainsInterface(request, OC::BATCH_INTERFACE))
+            {
+                return handleBatchInterfaceGetRequest(request, this);
+            }
 
             auto attrs = getAttributesFromOCRequest(request);
 

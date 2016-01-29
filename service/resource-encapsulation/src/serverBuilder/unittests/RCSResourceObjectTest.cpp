@@ -86,6 +86,39 @@ TEST_F(ResourceObjectBuilderTest, ResourceServerHasAttrsSetByBuilder)
     EXPECT_EQ(attrs, serverResource->getAttributes());
 }
 
+TEST_F(ResourceObjectBuilderTest, TypesAddedInBuilderWillBeBound)
+{
+    int count = 0;
+    mocks.OnCallFunc(OCPlatform::bindTypeToResource).Do(
+            [&count](const OCResourceHandle&, const std::string&)
+            {
+                ++count;
+                return OC_STACK_OK;
+            }
+    );
+
+    auto serverResource = RCSResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
+            addType("1").addType("2").build();
+
+    EXPECT_EQ(2, count);
+}
+
+TEST_F(ResourceObjectBuilderTest, InterfaceAddedInBuilderWillBeBound)
+{
+    int count = 0;
+    mocks.OnCallFunc(OCPlatform::bindInterfaceToResource).Do(
+            [&count](const OCResourceHandle&, const std::string&)
+            {
+                ++count;
+                return OC_STACK_OK;
+            }
+    );
+
+    auto serverResource = RCSResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, "").
+            addInterface("1").addInterface("2").build();
+
+    EXPECT_EQ(2, count);
+}
 
 class ResourceObjectTest: public TestWithMock
 {
@@ -164,7 +197,35 @@ TEST_F(ResourceObjectTest, SettingNestedVectorAttributesIsSameToGettingNestedVec
 
     server->setAttribute(KEY, arr31);
 
-    ASSERT_EQ(arr31, server->getAttribute<vector<vector<vector<int>>>>(KEY));
+    ASSERT_EQ(arr31, server->getAttributeValue(KEY));
+}
+
+TEST_F(ResourceObjectTest, ThrowIfResourceToBindIsInvalid)
+{
+    ASSERT_THROW(server->bindResource(server), RCSInvalidParameterException);
+}
+
+TEST_F(ResourceObjectTest, ThrowIfBindResourceFailed)
+{
+    mocks.OnCallFunc(OCBindResource).Return(OC_STACK_ERROR);
+
+    ASSERT_THROW(server->bindResource(
+            RCSResourceObject::Builder("a/temp", RESOURCE_TYPE, "").build()), RCSPlatformException);
+}
+
+TEST_F(ResourceObjectTest, ThrowIfResourceToUnbindIsInvalid)
+{
+    ASSERT_THROW(server->unbindResource(server), RCSInvalidParameterException);
+}
+
+TEST_F(ResourceObjectTest, BoundResourceCanBeRetrieved)
+{
+    mocks.OnCallFunc(OCBindResource).Return(OC_STACK_OK);
+
+    auto boundResource = RCSResourceObject::Builder("a/temp", RESOURCE_TYPE, "").build();
+    server->bindResource(boundResource);
+
+    ASSERT_EQ(boundResource, server->getBoundResources()[0]);
 }
 
 
@@ -415,7 +476,7 @@ TEST_F(ResourceObjectHandlingRequestTest, SendSetResponseWithCustomAttrs)
             }
     ).Return(OC_STACK_OK);
 
-    ASSERT_EQ(OC_EH_OK, handler(createRequest(OC_REST_PUT)));
+    ASSERT_EQ(OC_EH_OK, handler(createRequest(OC_REST_POST)));
 }
 
 
@@ -458,7 +519,7 @@ TEST_F(SetRequestHandlerPolicyTest, WithNeverPolicy_DeniedIfKeyIsNew)
 {
     server->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::NEVER);
 
-    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
+    handler(createRequest(OC_REST_POST, createOCRepresentation()));
 
     RCSResourceObject::LockGuard guard{ server };
     ASSERT_FALSE(server->getAttributes().contains(KEY));
@@ -468,7 +529,7 @@ TEST_F(SetRequestHandlerPolicyTest, WithAcceptancePolicy_AcceptedEvenIfKeyIsNew)
 {
     server->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
 
-    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
+    handler(createRequest(OC_REST_POST, createOCRepresentation()));
 
     RCSResourceObject::LockGuard guard{ server };
     ASSERT_TRUE(server->getAttributes().contains(KEY));
@@ -557,7 +618,7 @@ TEST_F(ResourceObjectSynchronizationTest, MultipleAccessToServerResourceWithRequ
             for (int i=0; i<10000; ++i)
             {
                 if (i % 5 == 0) handler(createRequest(OC_REST_OBSERVE));
-                handler(createRequest((i & 1) ? OC_REST_GET : OC_REST_PUT));
+                handler(createRequest((i & 1) ? OC_REST_GET : OC_REST_POST));
             }
         }
     });
@@ -600,6 +661,8 @@ class AttributeUpdatedListener
 public:
     virtual void onUpdated(const OIC::Service::RCSResourceAttributes::Value&,
         const OIC::Service::RCSResourceAttributes::Value&)=0;
+
+    virtual ~AttributeUpdatedListener() {}
 };
 
 
@@ -627,7 +690,7 @@ TEST_F(AttributeUpdatedListenerTest, AddListenerRunsAddedFunction)
 
     mocks.ExpectCall(listener, AttributeUpdatedListener::onUpdated);
 
-    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
+    handler(createRequest(OC_REST_POST, createOCRepresentation()));
 }
 
 TEST_F(AttributeUpdatedListenerTest, ListenerWithSameKeyOverridesPreviousOne)
@@ -643,7 +706,7 @@ TEST_F(AttributeUpdatedListenerTest, ListenerWithSameKeyOverridesPreviousOne)
     server->addAttributeUpdatedListener(KEY,
             std::bind(&AttributeUpdatedListener::onUpdated, second, _1, _2));
 
-    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
+    handler(createRequest(OC_REST_POST, createOCRepresentation()));
 }
 
 TEST_F(AttributeUpdatedListenerTest, RemovedListenerNotBeInvoked)
@@ -656,5 +719,5 @@ TEST_F(AttributeUpdatedListenerTest, RemovedListenerNotBeInvoked)
 
     server->removeAttributeUpdatedListener(KEY);
 
-    handler(createRequest(OC_REST_PUT, createOCRepresentation()));
+    handler(createRequest(OC_REST_POST, createOCRepresentation()));
 }
