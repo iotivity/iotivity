@@ -19,19 +19,20 @@
  ******************************************************************/
 
 #include <wifi.h>
-#include "logger.h"
 #include <unistd.h>
-#include "logger.h"
-#include "networkHandler.h"
-#define LOG_TAG "Tizen ES"
 
-const char *g_ssid;
-const char *g_pass;
-char *g_ipaddress;
-bool is_connected = false;
-wifi_ap_h connected_wifi;
-NetworkEventCallback g_cb;
-static void activate_wifi();
+#include "logger.h"
+#include "easysetup.h"
+#include "networkHandler.h"
+
+#define LOG_TAG "TIZEN ES"
+
+const char *gSsid = "DLNA_LISMORE1";
+const char *gPass = "dlna@010203";
+char *gIpAddress;
+wifi_ap_h connectedWifi;
+NetworkEventCallback gNetworkEventCb;
+static void ESActivateWifi();
 
 static const char*
 print_state(wifi_connection_state_e state)
@@ -52,10 +53,9 @@ print_state(wifi_connection_state_e state)
 void __wifi_connected_cb(wifi_error_e error_code, void *user_data)
 {
     OC_LOG(INFO,LOG_TAG,"#### __connected ");
-    is_connected = true;
-    wifi_ap_get_ip_address(connected_wifi, WIFI_ADDRESS_FAMILY_IPV4, &g_ipaddress);
-    OC_LOG_V(INFO,LOG_TAG,"#### __connected, Ipaddress=%s", g_ipaddress);
-    g_cb(ES_OK);
+    wifi_ap_get_ip_address(connectedWifi, WIFI_ADDRESS_FAMILY_IPV4, &gIpAddress);
+    OC_LOG_V(INFO,LOG_TAG,"#### __connected, Ipaddress=%s", gIpAddress);
+    gNetworkEventCb(ES_OK);
 
 }
 
@@ -83,11 +83,11 @@ bool __wifi_found_ap_cb(wifi_ap_h ap, void *user_data)
     }
     OC_LOG_V(INFO,LOG_TAG,"#### AP name : %s, state : %s", ap_name, print_state(state));
 
-    if (strcmp(ap_name, g_ssid) == 0)
+    if (strcmp(ap_name, gSsid) == 0)
     {
         OC_LOG(INFO,LOG_TAG,"#### network found");
-        wifi_ap_set_passphrase(ap, g_pass);
-        connected_wifi = ap;
+        wifi_ap_set_passphrase(ap, gPass);
+        connectedWifi = ap;
         error_code = wifi_connect(ap, __wifi_connected_cb, NULL);
         OC_LOG_V(INFO,LOG_TAG,"Code=%d", error_code);
     }
@@ -115,7 +115,7 @@ static void __wifi_activated_cb(wifi_error_e result, void *user_data)
     wifi_scan(__scan_request_cb, NULL);
 
 }
-static void activate_wifi()
+static void ESActivateWifi()
 {
     int error_code;
     error_code = wifi_initialize();
@@ -140,23 +140,17 @@ static void activate_wifi()
 
 static void start()
 {
-
     OC_LOG(INFO, LOG_TAG, "START");
-    activate_wifi();
+    ESActivateWifi();
 }
 
-ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback cb)
+void ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback cb)
 {
     OC_LOG_V(INFO, LOG_TAG, "ConnectToWiFiNetwork %s %s",ssid,pass);
-    g_pass = pass;
-    g_ssid = ssid;
-    g_cb = cb;
+    gPass = pass;
+    gSsid = ssid;
+    gNetworkEventCb = cb;
     start();
-    //sleep(5000);
-    //if (is_connected)
-    return ES_NETWORKCONNECTED;
-    //else
-    //return ES_NETWORKNOTCONNECTED;
 }
 
 ESResult getCurrentNetworkInfo(OCConnectivityType targetType, NetworkInfo *info)
@@ -164,10 +158,10 @@ ESResult getCurrentNetworkInfo(OCConnectivityType targetType, NetworkInfo *info)
     if (targetType == CT_ADAPTER_IP)
     {
         info->type = CT_ADAPTER_IP;
-        info->ipaddr = g_ipaddress;
-        if (strlen(g_ssid) <= MAXSSIDLEN)
+        info->ipaddr = gIpAddress;
+        if (strlen(gSsid) <= MAXSSIDLEN)
         {
-            strcpy(info->ssid, g_ssid);
+            strcpy(info->ssid, gSsid);
             return ES_OK;
         }
         else

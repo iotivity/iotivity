@@ -1,5 +1,5 @@
 Name: iotivity
-Version: 0.9.2
+Version: 1.0.0
 Release: 0
 Summary: IoTivity Base Stack & IoTivity Services
 Group: System Environment/Libraries
@@ -8,7 +8,7 @@ URL: https://www.iotivity.org/
 Source0: %{name}-%{version}.tar.bz2
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
-BuildRequires:	gettext, expat-devel
+BuildRequires:	gettext
 BuildRequires:	python, libcurl-devel
 BuildRequires:	scons
 BuildRequires:	openssl-devel
@@ -134,6 +134,12 @@ cp resource/csdk/ocrandom/include/*.h %{buildroot}%{_includedir}
 cp -r resource/oc_logger/include/* %{buildroot}%{_includedir}
 cp resource/include/*.h %{buildroot}%{_includedir}
 
+cp resource/c_common/*.h %{buildroot}%{_includedir}
+
+cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
+cp service/easy-setup/sdk/common/*.h %{buildroot}%{_includedir}
+cp service/easy-setup/sdk/enrollee/api/*.h %{buildroot}%{_includedir}
+
 cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 
 %post -p /sbin/ldconfig
@@ -162,6 +168,7 @@ cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 %{_libdir}/librcs_common.so
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
+%{_libdir}/libESSDKLibrary.so
 
 %files test
 %manifest %{name}-test.manifest

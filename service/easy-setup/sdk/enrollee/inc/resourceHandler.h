@@ -19,7 +19,6 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 // Do not remove the include below
-#include "Arduino.h"
 
 #include <string.h>
 #include "logger.h"

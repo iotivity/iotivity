@@ -30,11 +30,11 @@
 #include "octypes.h"
 
 // Defines
-#define OIC_STRING_MAX_VALUE 100
-#define IPV4_ADDR_SIZE 16
-#define IP_PORT 55555
-#define NET_WIFI_SSID_SIZE 100
-#define NET_WIFI_PWD_SIZE 100
+#define OIC_STRING_MAX_VALUE    100
+#define IPV4_ADDR_SIZE          16
+#define IP_PORT                 55555
+#define NET_WIFI_SSID_SIZE      100
+#define NET_WIFI_PWD_SIZE       100
 
 /**
  * @brief Mac address length for BT port
@@ -56,12 +56,30 @@
 /**
  * @brief Defines for Provisioning status accepted values
  */
-#define ES_PS_NEED_PROVISIONING 1
-#define ES_PS_PROVISIONING_COMPLETED 2
+#define ES_PS_NEED_PROVISIONING         1
+#define ES_PS_PROVISIONING_COMPLETED    2
+
+/**
+* Device Roles defined for each device type used in easy setup
+*/
+typedef enum
+{
+    ENROLLEE,
+    MEDIATOR,
+    ENROLLER,
+} DeviceRole;
+
+/**
+* On-boarding connection to create Adhoc network.
+*/
+typedef enum
+{
+    SOFTAP,
+    BLE,
+} OBConnection;
 
 typedef enum
 {
-
     ES_ERROR = -1,
     ES_OK = 0,
     ES_NETWORKFOUND = 1,
@@ -77,58 +95,62 @@ typedef enum
 typedef enum
 {
     /**
-        * Default state of the device
-        */
+     * Default state of the device
+     */
     ES_INIT_STATE,
 
     /**
-        * Device will move to this state once the on boarding begins
-        */
+     * Device will move to this state once the on boarding begins
+     */
     ES_ON_BOARDING_STATE,
 
     /**
-        * Device will move to this state after successful on-boarding of the device
-        */
+     * Device will move to this state after successful on-boarding of the device
+     */
     ES_ON_BOARDED_STATE,
 
     /**
-        * Device will move to this state once the on boarding is done
-        */
+     * Device will move to this state once the on boarding is done
+     */
     ES_PROVISIONING_STATE,
 
     /**
-        * Easy setup process is successful.
-        */
+     * Easy setup process is successful.
+     */
     ES_PROVISIONED_STATE,
 
     /**
-        * This state is arbitrary one, any time device can come into this state
-        * Device will move to this state if the ownership transfer initiated  by the Application
-        */
+     * This state is arbitrary one, any time device can come into this state
+     * Device will move to this state if the ownership transfer initiated  by the Application
+     */
     ES_OWNERSHIP_TRANSFERRING_STATE,
 
     /**
-        * This state is arbitrary one, any time device can come into this state
-        * Device will move to this state if the ownership transfer is completed
-        */
+     * This state is arbitrary one, any time device can come into this state
+     * Device will move to this state if the ownership transfer is completed
+     */
     ES_OWNERSHIP_TRANSFERRED_STATE,
 
     /**
-        * This state is arbitrary one, any time device can come into this state
-        * Device will move to this state once the Application factory reset the device
-        */
+     * This state is arbitrary one, any time device can come into this state
+     * Device will move to this state once the Application factory reset the device
+     */
     ES_FACTORY_RESET_STATE,
+
+    /**
+     * Enrollee moves to this state after connecting to target network
+     */
+    ES_ON_BOARDED_TARGET_NETWORK_STATE,
 }EnrolleeState;
-
-
 
 /**
  * Provisioning Device Status
  */
-typedef struct {
-    /// Address of remote server
+typedef struct
+{
+    // Address of remote server
     OCDevAddr * addr;
-    /// Indicates adaptor type on which the response was received
+    // Indicates adaptor type on which the response was received
     OCConnectivityType connType;
 } EasySetupDeviceInfo;
 
@@ -143,12 +165,11 @@ typedef enum
     DEVICE_NOT_OWNED
 } EasySetupState, ProvStatus;
 
-
-
 /**
  * Response from queries to remote servers.
  */
-typedef struct {
+typedef struct
+{
     // EasySetup Status
     EasySetupState provStatus;
     // EasySetup Device Info

@@ -29,6 +29,7 @@
 
 
 #include <string.h>
+#include "easysetup.h"
 #include "logger.h"
 #include "escommon.h"
 
@@ -55,7 +56,7 @@ typedef struct
     //byte mac[6];
 } NetworkInfo;
 
-ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback);
+void ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback);
 ESResult getCurrentNetworkInfo(OCConnectivityType targetType, NetworkInfo *info);
 
 #endif

@@ -27,7 +27,6 @@
 #ifndef EASYSETUP_ENROLLEE_H__
 #define EASYSETUP_ENROLLEE_H__
 
-#include "Arduino.h"
 #include "escommon.h"
 
 #ifdef __cplusplus

@@ -49,7 +49,6 @@ if target_os not in ['arduino','darwin']:
         SConscript('resource-directory/SConscript')
 
 # Build EasySetup module
-if target_os in ['arduino','android', 'linux']:
+if target_os in ['arduino', 'android', 'linux','tizen']:
     SConscript('easy-setup/SConscript')
 
-	

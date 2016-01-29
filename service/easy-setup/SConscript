@@ -141,6 +141,7 @@ if target_os == 'tizen':
 if target_os == 'arduino':
 	es_sdk_static = easy_setup_env.StaticLibrary('ESSDKLibrary',
 					['sdk/enrollee/src/easysetup.cpp',
+					'sdk/enrollee/src/onboarding.cpp',
 					'sdk/enrollee/src/resourceHandler.cpp',
 					'sdk/enrollee/arduino/wifi/networkHandler.cpp'])
 	easy_setup_env.InstallTarget(es_sdk_static, 'libESSDK')
@@ -153,11 +154,14 @@ if target_os == 'android':
 	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 if target_os == 'tizen':
-	es_sdk_shared = easy_setup_env.SharedLibrary('ESSDKLibrary',
-					['sdk/enrollee/src/easysetup.cpp',
-					'sdk/enrollee/src/resourceHandler.cpp',
-					'sdk/enrollee/tizen/wifi/networkHandler.cpp'])
-	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
+        es_sdk_shared = easy_setup_env.SharedLibrary('ESSDKLibrary',
+                                        ['sdk/enrollee/src/easysetup.cpp',
+                                        'sdk/enrollee/src/onboarding.cpp',
+                                        'sdk/enrollee/src/softap.cpp',
+                                        'sdk/enrollee/src/resourceHandler.cpp',
+                                        'sdk/enrollee/tizen/wifi/networkHandler.cpp',
+                                        'sdk/enrollee/tizen/wifi/softapnative.cpp'])
+        easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
 
 print"easysetup_path %s" % easysetup_path
 

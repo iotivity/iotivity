@@ -38,7 +38,7 @@ target_os = env.get('TARGET_OS')
 # Source files and Targets
 ######################################################################
 if target_os == 'arduino' :
-	# Build linux sample app
+	# Build arduino sample app
 	SConscript('enrollee/arduino/SConscript')
 
 if target_os == 'linux' :

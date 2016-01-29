@@ -44,7 +44,8 @@ cp ./SConstruct ./tmp
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm ./tmp
 cp ./tools/tizen/.gbs.conf ./tmp
-
+cp ./tools/tizen/*.rpm $sourcedir/tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
+cp ./tools/tizen/.gbs.conf ./tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
 cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 
 cd $sourcedir/tmp
@@ -68,6 +69,28 @@ if eval $gbscommand; then
    echo "Build is successful"
 else
    echo "Build failed!"
+   exit 1
+fi
+
+cd service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
+echo `pwd`
+
+if [ ! -d .git ]; then
+      git init ./
+      git config user.email "you@example.com"
+      git config user.name "Your Name"
+      git add ./
+      git commit -m "Initial commit"
+fi
+
+echo "Calling sample gbs build command"
+gbscommand="gbs build -A armv7l -B ~/GBS-ROOT --include-all --repository ./ --define 'TARGET_TRANSPORT IP' --define 'SECURED 0' --define 'RELEASE 0' --define 'LOGGING True' --define 'ROUTING EP' --define 'TARGET_ENROLLEE tizen
+'"
+echo $gbscommand
+if eval $gbscommand; then
+   echo "Sample build is successful"
+else
+   echo "Sample build is failed. "
    exit 1
 fi
 
