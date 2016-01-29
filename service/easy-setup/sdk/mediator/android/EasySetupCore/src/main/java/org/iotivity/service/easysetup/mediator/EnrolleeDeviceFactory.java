@@ -53,16 +53,24 @@ public class EnrolleeDeviceFactory {
      * @return Instance of the Enrollee device created natively.
      */
 
-    public EnrolleeDevice newEnrolleeDevice(OnBoardingConfig onboardingConfig, ProvisioningConfig provConfig) {
+    public EnrolleeDevice newEnrolleeDevice(ProvisioningConfig provConfig, OnBoardingConfig onboardingConfig) {
 
         if (onboardingConfig.getConnType() != OnBoardingConfig.ConnType.WiFi) {
             throw new IllegalArgumentException("OnBoarding configuration is not supported");
         }
 
-        EnrolleeDevice enrolleeDevice;
-        enrolleeDevice = new EnrolleeDeviceWiFiOnboarding(mContext, onboardingConfig, provConfig);
+        return new EnrolleeDeviceWiFiOnboarding(mContext, onboardingConfig, provConfig);
+    }
 
-        return enrolleeDevice;
+    /**
+     * This method create & returns instance of Enrollee device of supported configuration
+     * [When SoftAP is going to be created on Enrollee side]
+     *
+     * @param provConfig       Contains details about the network to which Enrollee device is going to connect.
+     * @return Instance of the Enrollee device created natively.
+     */
+    public EnrolleeDevice newEnrolleeDevice(ProvisioningConfig provConfig){
+        return new EnrolleeDeviceWiFiOnboarding(mContext, new IpOnBoardingConnection(true), provConfig);
     }
 
 }

@@ -29,6 +29,25 @@ public class IpOnBoardingConnection implements OnBoardingConnection {
     private String mHardwareAddress;
     private String mDeviceName;
 
+    /**
+     * @mThrottlingDelay
+     * After creating the Soft AP at Mediator & on-boarding the-
+     * -Enrollee device on it provisioning needs to be delayed by at least 2000 ms for Android Mediator
+     */
+    private int mThrottlingDelay = 2000 ;
+
+    int getThrottlingDelay() {
+        return mThrottlingDelay;
+    }
+
+    IpOnBoardingConnection(boolean enrolleeOnboarded) {
+        mThrottlingDelay = 0;
+        mIp = "0.0.0.01";
+        mIsConnected = enrolleeOnboarded; // Always true for this constructor
+    }
+
+    IpOnBoardingConnection(){}
+
     public void setHardwareAddress(String address) {
         mHardwareAddress = address;
     }

@@ -102,14 +102,12 @@ public class EasySetupService {
 
         mEnrolleeDeviceList.add(enrolledevice);
 
-
         // Starts the provisioning directly if the device is already on boarded on the network.
         if (enrolledevice.onBoarded()) {
             enrolledevice.startProvisioning(mProvisioningCallback);
             return;
         }
         enrolledevice.mState = EnrolleeState.DEVICE_ON_BOARDING_STATE;
-
         mCallback.onProgress(enrolledevice);
         enrolledevice.startOnBoarding(new OnBoardingCallback() {
 
@@ -121,6 +119,11 @@ public class EasySetupService {
                     enrolledevice.mState = EnrolleeState.DEVICE_ON_BOARDED_STATE;
                     mCallback.onProgress(enrolledevice);
                     enrolledevice.setConnection(connection);
+
+                    /* Delay is set according to Soft AP host and Mediator platform;
+                    *  For Android with Soft AP it is 2000 ms
+                    */
+                    delayProvisioning(connection);
                     enrolledevice.startProvisioning(mProvisioningCallback);
                 } else {
                     enrolledevice.mState = EnrolleeState.DEVICE_INIT_STATE;
@@ -184,5 +187,16 @@ public class EasySetupService {
         }
 
 
+    }
+
+    private void delayProvisioning(OnBoardingConnection conn) {
+        if (((IpOnBoardingConnection)conn).getThrottlingDelay()>0) {
+            try {
+                Log.i(TAG, "waiting for 20 seconds to start provisioning");
+                Thread.sleep(20000);//Sleep for allowing thin device to start the services
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

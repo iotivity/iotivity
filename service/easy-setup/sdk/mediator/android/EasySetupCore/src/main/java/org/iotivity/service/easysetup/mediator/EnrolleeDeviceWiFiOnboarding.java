@@ -97,6 +97,15 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
         mWifiSoftAPManager = new WiFiSoftAPManager(mContext);
     }
 
+    protected EnrolleeDeviceWiFiOnboarding(Context context, IpOnBoardingConnection conn,
+                                           ProvisioningConfig provConfig) {
+        super(new WiFiOnBoardingConfig(), provConfig);
+        mContext = context;
+        mConnection = conn;
+        mState = EnrolleeState.DEVICE_ON_BOARDED_STATE;
+        mWifiSoftAPManager = new WiFiSoftAPManager(mContext);
+    }
+
     @Override
     protected void startOnBoardingProcess() {
         Log.i(TAG, "Starting on boarding process");
@@ -132,12 +141,6 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
 
     @Override
     protected void startProvisioningProcess(OnBoardingConnection conn) {
-        try {
-            Log.i(TAG, "waiting for 20 seconds to start provisioning");
-            Thread.sleep(20000);//Sleep for allowing thin device to start the services
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
         mState = EnrolleeState.DEVICE_PROVISIONING_STATE;
         mProvisioningCallback.onProgress(this);
@@ -171,4 +174,6 @@ public class EnrolleeDeviceWiFiOnboarding extends EnrolleeDevice {
                     .getSsId(), wifiProvConfig.getPassword(), 1);
         }
     }
+
+
 }

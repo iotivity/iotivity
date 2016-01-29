@@ -159,7 +159,7 @@ public abstract class EnrolleeDevice {
      */
 
     protected boolean onBoarded() {
-        return (mState == EnrolleeState.DEVICE_PROVISIONING_STATE) ? true : false;
+        return (mState == EnrolleeState.DEVICE_ON_BOARDED_STATE) ? true : false;
     }
 
 

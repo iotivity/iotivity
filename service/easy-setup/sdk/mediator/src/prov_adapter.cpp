@@ -95,7 +95,7 @@ OCStackResult StartProvisioning(const EnrolleeNWProvInfo *netInfo) {
     snprintf(findQuery, sizeof(findQuery) - 1, UNICAST_PROVISIONING_QUERY,
              netInfo->netAddressInfo.WIFI.ipAddress, IP_PORT);
 #else
-    OICStrcpy(findQuery, sizeof(UNICAST_PROVISIONING_QUERY), UNICAST_PROVISIONING_QUERY);
+    OICStrcpy(findQuery, sizeof(findQuery)-1, UNICAST_PROVISIONING_QUERY);
 #endif
 
     return StartProvisioningProcess(netInfo, cbData, findQuery);
