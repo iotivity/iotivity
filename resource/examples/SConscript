@@ -60,7 +60,8 @@ if target_os in ['msys_nt', 'windows']:
 	examples_env.PrependUnique(LIBS = ['mswsock', 'ws2_32', 'iphlpapi', 'ole32'])
 
 if env.get('SECURED') == '1':
-    examples_env.AppendUnique(LIBS = ['tinydtls'])
+	examples_env.AppendUnique(LIBS = ['tinydtls'])
+	examples_env.AppendUnique(CPPDEFINES = ['_WITH_DTLS_'])
 
 if target_os == 'android':
 	examples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])

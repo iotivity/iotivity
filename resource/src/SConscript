@@ -75,10 +75,9 @@ if target_os in ['msys_nt']:
 	oclib_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'oc_logger')])
 	oclib_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])
 	oclib_env.AppendUnique(LIBS=['octbstack', 'logger', 'oc_logger','connectivity_abstraction', 'ocsrm', 'c_common', 'routingmanager'])
-	if oclib_env.get('SECURED') == '1':
-		oclib_env.AppendUnique(LIBS=['tinydtls'])
 	oclib_env.AppendUnique(LIBS=[ 'coap', 'ws2_32' ,'iphlpapi'])
-
+	if secured == '1':
+		oclib_env.AppendUnique(LIBS=['tinydtls'])
 
 ######################################################################
 # Source files and Targets

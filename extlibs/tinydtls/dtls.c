@@ -28,6 +28,10 @@
 #include "dtls_config.h"
 #include "dtls_time.h"
 
+#if defined(__msys_nt__)
+#define _CRT_RAND_S
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_ASSERT_H
@@ -4584,7 +4588,11 @@ dtls_context_t *
 dtls_new_context(void *app_data) {
   dtls_context_t *c;
   dtls_tick_t now;
-#ifndef WITH_CONTIKI
+#if defined(__msys_nt__)
+  unsigned int randValue;
+  errno_t err;
+#endif
+#if !defined(WITH_CONTIKI) && !defined(__msys_nt__)
   FILE *urandom = fopen("/dev/urandom", "r");
   unsigned char buf[sizeof(unsigned long)];
 #endif /* WITH_CONTIKI */
@@ -4593,6 +4601,14 @@ dtls_new_context(void *app_data) {
 #ifdef WITH_CONTIKI
   /* FIXME: need something better to init PRNG here */
   dtls_prng_init(now);
+#elif defined(__msys_nt__)
+  err = rand_s(&randValue);
+  if (err != 0)
+  {
+    dtls_emerg("cannot initialize PRNG\n");
+    return NULL;
+  }
+  dtls_prng_init(randValue);
 #else /* WITH_CONTIKI */
   if (!urandom) {
     dtls_emerg("cannot initialize PRNG\n");

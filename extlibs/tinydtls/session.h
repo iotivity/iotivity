@@ -25,7 +25,7 @@
 
 #ifndef _DTLS_SESSION_H_
 #define _DTLS_SESSION_H_
-
+#include <stdint.h>
 #include <string.h>
 
 #include "tinydtls.h"
@@ -41,11 +41,14 @@ typedef struct {
 } session_t;
 
 #else /* WITH_CONTIKI */
-
+#if defined(__msys_nt__)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
+#endif
 typedef struct {
   socklen_t size;		/**< size of addr */
   union {

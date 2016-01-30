@@ -40,7 +40,7 @@ dtls_env.AppendUnique(CPPPATH = [root_dir+'aes/'])
 dtls_env.AppendUnique(CPPPATH = [root_dir+'ecc/'])
 dtls_env.AppendUnique(CPPPATH = [root_dir+'sha2/'])
 
-if target_os not in ['arduino', 'windows', 'winrt']:
+if target_os not in ['arduino', 'windows', 'winrt', 'msys_nt']:
 	dtls_env.AppendUnique(CPPDEFINES = ['HAVE_SYS_TIME_H'])
 
 ######################################################################

@@ -19,12 +19,23 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Not supported on Arduino due lack of absolute time need to implement iCalendar
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO)
 
 #define _XOPEN_SOURCE  //Needed by strptime
 #include <string.h>
 #include "iotvticalendar.h"
 #include "oic_string.h"
+
+#define HAVE_STRPTIME 1
+
+#if defined(_WIN32)
+#undef HAVE_STRPTIME
+#endif
+
+#if !defined(HAVE_STRPTIME)
+// ### to be fixed later
+#define    strptime(a,b,c)   NULL
+#endif
 
 static char dtFormat[] =  "%Y%m%dT%H%M%S"; //date-time format
 static char dFormat[] =  "%Y%m%d";         // date format
@@ -33,11 +44,6 @@ static const char FREQ[]  = "FREQ";
 static const char UNTIL[] = "UNTIL";
 static const char BYDAY[] = "BYDAY";
 static const char DAILY[] = "DAILY";
-
-#if defined(__msys_nt__)
-//  ### to be fixed later
-#define    strptime(a,b,c)   NULL
-#endif
 
 /**
  * Parses periodStr and populate struct IotvtICalPeriod_t

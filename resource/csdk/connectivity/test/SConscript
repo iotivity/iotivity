@@ -59,7 +59,8 @@ if target_os not in ['arduino', 'darwin', 'ios', 'msys_nt']:
 	catest_env.AppendUnique(LIBS=['rt'])
 
 if env.get('SECURED') == '1':
-    catest_env.AppendUnique(LIBS = ['tinydtls'])
+	catest_env.AppendUnique(LIBS = ['tinydtls'])
+	catest_env.AppendUnique(LIBS = ['timer'])
 
 if env.get('LOGGING'):
 	catest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

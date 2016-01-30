@@ -176,6 +176,9 @@ if ca_os in ['android', 'tizen']:
 	calib = lib_env.SharedLibrary('connectivity_abstraction', env.get('CA_SRC'))
 elif ca_os in ['msys_nt']:
 	lib_env.AppendUnique(LIBS = ['coap', 'mswsock', 'ws2_32', 'iphlpapi', 'logger'])
+	if lib_env.get('SECURED') == '1':
+		lib_env.AppendUnique(LIBS = ['tinydtls'])
+		lib_env.AppendUnique(LIBS = ['timer'])
 	calib = lib_env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
 else:
 	calib = lib_env.StaticLibrary('connectivity_abstraction', lib_env.get('CA_SRC'))
