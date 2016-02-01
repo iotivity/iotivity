@@ -28,7 +28,6 @@
 
 namespace
 {
-    constexpr char ALL_RESOURCE_TYPE[] = "";
     constexpr unsigned int POLLING_INTERVAL_TIME = 60000;
 
     std::string makeResourceId(const std::shared_ptr< OIC::Service::PrimitiveResource >& resource)
@@ -42,6 +41,7 @@ namespace OIC
     namespace Service
     {
         constexpr RCSDiscoveryManagerImpl::ID RCSDiscoveryManagerImpl::INVALID_ID;
+        constexpr char const* RCSDiscoveryManagerImpl::ALL_RESOURCE_TYPE;
 
         RCSDiscoveryManagerImpl::RCSDiscoveryManagerImpl()
         {
@@ -83,11 +83,11 @@ namespace OIC
                 throw RCSInvalidParameterException{ "Callback is empty" };
             }
 
-            for(const auto& it : resourceTypes)
+            for(auto it = resourceTypes.begin()+1; it < resourceTypes.end(); it++)
             {
-                if (it.compare(ALL_RESOURCE_TYPE) == 0)
+                if ((*it).compare(ALL_RESOURCE_TYPE) == 0)
                 {
-                    throw RCSInvalidParameterException{ "ResourceType is duplicated!" };
+                   throw RCSInvalidParameterException{ "ResourceType is duplicated!" };
                 }
             }
 
@@ -182,7 +182,7 @@ namespace OIC
         {
             if (m_resourceTypes.empty())
             {
-                m_resourceTypes.push_back(ALL_RESOURCE_TYPE);
+                m_resourceTypes.push_back(RCSDiscoveryManagerImpl::ALL_RESOURCE_TYPE);
             }
         }
 
