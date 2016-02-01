@@ -31,10 +31,25 @@
 
 #include "RCSResourceAttributes.h"
 
+namespace OC
+{
+    class OCResource;
+
+    namespace HeaderOption
+    {
+        class OCHeaderOption;
+    }
+}
+
 namespace OIC
 {
     namespace Service
     {
+
+        class RCSRepresentation;
+
+        typedef std::vector< OC::HeaderOption::OCHeaderOption > HeaderOpts;
+
         /**
          * The states of caching.
          *
@@ -67,6 +82,36 @@ namespace OIC
         };
 
         class PrimitiveResource;
+
+        class RCSQueryParams
+        {
+        public:
+            typedef std::unordered_map< std::string, std::string > Map;
+
+        public:
+            RCSQueryParams& setResourceInterface(const std::string&);
+            RCSQueryParams& setResourceInterface(std::string&&);
+
+            RCSQueryParams& setResuorceType(const std::string&);
+            RCSQueryParams& setResuorceType(std::string&&);
+
+            RCSQueryParams& put(const std::string&, const std::string&);
+            RCSQueryParams& put(std::string&&, std::string&&);
+            RCSQueryParams& put(const std::string&, std::string&&);
+            RCSQueryParams& put(std::string&&, const std::string&);
+
+            std::string getResourceInterface() const;
+            std::string getResourceType() const;
+            std::string get(const std::string&) const;
+
+            const Map& getAll() const;
+
+        private:
+            std::string m_resourceInterface;
+            std::string m_resourceType;
+
+            std::unordered_map< std::string, std::string > m_map;
+        };
 
         /**
          *
@@ -111,6 +156,9 @@ namespace OIC
             typedef std::function< void(const RCSResourceAttributes& attrs, int eCode) >
                 RemoteAttributesGetCallback;
 
+            typedef std::function< void(const HeaderOpts&, const RCSRepresentation& rep, int eCode) >
+                GetCallback;
+
             /**
              * Callback definition to be invoked when the response of setRemoteAttributes is
              * received.
@@ -123,6 +171,9 @@ namespace OIC
             typedef std::function< void(const RCSResourceAttributes&, int) >
                 RemoteAttributesSetCallback;
 
+            typedef std::function< void(const HeaderOpts&, const RCSRepresentation& rep, int eCode) >
+                SetCallback;
+
         private:
             typedef int CacheID;
             typedef unsigned int BrokerID;
@@ -133,6 +184,8 @@ namespace OIC
             //! @endcond
 
             ~RCSRemoteResourceObject();
+
+            static RCSRemoteResourceObject::Ptr fromOCResource(std::shared_ptr< OC::OCResource >);
 
             /**
              * Returns whether monitoring is enabled.
@@ -309,6 +362,9 @@ namespace OIC
              */
             void getRemoteAttributes(RemoteAttributesGetCallback cb);
 
+            void get(GetCallback cb);
+            void get(const RCSQueryParams&, GetCallback cb);
+
             /**
              * Sends a set request with resource attributes to the server.
              *
@@ -327,6 +383,9 @@ namespace OIC
              */
             void setRemoteAttributes(const RCSResourceAttributes& attributes,
                     RemoteAttributesSetCallback cb);
+
+            void set(const RCSResourceAttributes& attributes, SetCallback cb);
+            void set(const RCSQueryParams&, const RCSResourceAttributes& attributes,  SetCallback cb);
 
             /**
              * Returns the uri of the resource.

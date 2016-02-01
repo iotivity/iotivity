@@ -111,18 +111,27 @@ namespace OIC
 
             void requestSet(const RCSResourceAttributes& attrs, SetCallback callback)
             {
+                requestSetWith("", "", {}, attrs, std::move(callback));
+            }
+
+            void requestSetWith(const std::string& resourceType,
+                          const std::string& resourceInterface,
+                          const OC::QueryParamsMap& queryParametersMap,
+                          const RCSResourceAttributes& attrs, GetCallback callback)
+            {
                 using namespace std::placeholders;
 
-                typedef OCStackResult(BaseResource::*PostFunc)(
-                        const OC::OCRepresentation&,
-                        const OC::QueryParamsMap&, OC::PostCallback);
+                typedef OCStackResult (BaseResource::*PostFunc)(const std::string&,
+                        const std::string&, const OC::OCRepresentation&, const OC::QueryParamsMap&,
+                        OC::GetCallback);
 
                 invokeOC(m_baseResource, static_cast< PostFunc >(&BaseResource::post),
-                        ResourceAttributesConverter::toOCRepresentation(attrs),
-                        OC::QueryParamsMap{ },
-                        std::bind(safeCallback< SetCallback >, WeakFromThis(),
-                                std::move(callback), _1, _2, _3));
+                        resourceType, resourceInterface,
+                        ResourceAttributesConverter::toOCRepresentation(attrs), queryParametersMap,
+                        std::bind(safeCallback< SetCallback >, WeakFromThis(), std::move(callback),
+                                _1, _2, _3));
             }
+
 
             void requestPut(const RCSResourceAttributes& attrs, PutCallback callback)
             {

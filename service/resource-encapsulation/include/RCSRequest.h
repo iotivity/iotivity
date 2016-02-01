@@ -27,6 +27,7 @@
 #define SERVERBUILDER_PRIMITIVEREQUEST_H
 
 #include <memory>
+#include <map>
 
 namespace OC
 {
@@ -62,6 +63,10 @@ namespace OIC
                 std::string getResourceUri() const;
 
                 const std::shared_ptr< OC::OCResourceRequest >& getOCRequest() const;
+
+                const std::map< std::string, std::string >& getQueryParams() const;
+
+                std::string getInterface() const;
 
             private:
                 const std::shared_ptr< OC::OCResourceRequest > m_ocRequest;

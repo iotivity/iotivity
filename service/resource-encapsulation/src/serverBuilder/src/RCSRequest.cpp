@@ -47,5 +47,21 @@ namespace OIC
         {
             return m_ocRequest;
         }
+
+        const std::map< std::string, std::string >& RCSRequest::getQueryParams() const
+        {
+            return m_ocRequest->getQueryParameters();
+        }
+
+        std::string RCSRequest::getInterface() const
+        {
+            const auto& params = m_ocRequest->getQueryParameters();
+
+            auto it = params.find(OC::Key::INTERFACESKEY);
+
+            if (it == params.end()) return "";
+
+            return it->second;
+        }
     }
 }

@@ -106,7 +106,7 @@ namespace
     {
         if (handler)
         {
-            return (*handler)(RCSRequest{ ocRequest->getResourceUri() }, attrs);
+            return (*handler)(RCSRequest{ ocRequest }, attrs);
         }
 
         return RESPONSE::defaultAction();
@@ -257,7 +257,6 @@ namespace OIC
                     [&handle](const std::string& typeName){
                 invokeOCFunc(OC::OCPlatform::bindTypeToResource, handle, typeName);
             });
-
 
             server->m_resourceHandle = handle;
             server->m_interfaces = m_interfaces;

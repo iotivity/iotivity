@@ -41,7 +41,7 @@ public:
     virtual OCStackResult put(
             const OC::OCRepresentation&, const OC::QueryParamsMap&, OC::PutCallback) = 0;
 
-    virtual OCStackResult post(
+    virtual OCStackResult post(const std::string&, const std::string&,
             const OC::OCRepresentation&, const OC::QueryParamsMap&, OC::PostCallback) = 0;
 
     virtual OCStackResult observe(
@@ -111,7 +111,8 @@ TEST_F(PrimitiveResourceTest, RequestSetPassResourceAttributesToOCResourcePost)
     RCSResourceAttributes attrs;
 
     mocks.ExpectCall(fakeResource, FakeOCResource::post).Match(
-            [](const OC::OCRepresentation& ocRep, const OC::QueryParamsMap&, OC::PutCallback)
+            [](const std::string&, const std::string&, const OC::OCRepresentation& ocRep,
+                    const OC::QueryParamsMap&, OC::PutCallback)
             {
                 return ocRep.getValue<int>(KEY) == value;
             }
