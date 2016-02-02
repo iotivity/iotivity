@@ -42,6 +42,7 @@
 
 #if defined(_WIN32)
 #include <mswsock.h>
+#include <winsock2.h>
 #endif
 
 #ifdef __cplusplus
@@ -497,7 +498,11 @@ typedef struct
         CASocket_t m4;              /**< multicast IPv4 */
         CASocket_t m4s;             /**< multicast IPv4 secure */
         int netlinkFd;              /**< netlink */
-        int shutdownFds[2];         /**< shutdown pipe */
+#if defined(_WIN32)
+        WSAEVENT shutdownEvent;     /**< Event used to signal threads to stop */
+#else
+        int shutdownFds[2];         /**< fds used to signal threads to stop */
+#endif
         int selectTimeout;          /**< in seconds */
         int maxfd;                  /**< highest fd (for select) */
         bool started;               /**< the IP adapter has started */
