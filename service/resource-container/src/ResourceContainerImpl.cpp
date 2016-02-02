@@ -302,7 +302,7 @@ namespace OIC
                     }
 
                     // to get notified if bundle resource attributes are updated
-                    resource->registerObserver((NotificationReceiver *) this);
+                    resource->registerObserver(this);
                     ret = 0;
                 }
             }
@@ -480,8 +480,10 @@ namespace OIC
         }
 
         void ResourceContainerImpl::addBundle(const std::string &bundleId,
-                                              const std::string &bundleUri, const std::string &bundlePath,
-                                              const std::string &activator, std::map< string, string > params)
+                                              const std::string &bundleUri,
+                                              const std::string &bundlePath,
+                                              const std::string &activator,
+                                              std::map< string, string > params)
         {
             (void) bundleUri;
 

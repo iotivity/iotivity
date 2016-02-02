@@ -35,12 +35,12 @@ DiscomfortIndexSensorResource::~DiscomfortIndexSensorResource()
 }
 
 void DiscomfortIndexSensorResource::handleSetAttributesRequest(
-    RCSResourceAttributes &value)
+    const RCSResourceAttributes &value)
 {
     BundleResource::setAttributes(value);
 }
 
-RCSResourceAttributes &DiscomfortIndexSensorResource::handleGetAttributesRequest()
+RCSResourceAttributes DiscomfortIndexSensorResource::handleGetAttributesRequest()
 {
     return BundleResource::getAttributes();
 }
