@@ -43,6 +43,7 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 scenemanager_env.AppendUnique(CPPPATH = ['./include'])
 scenemanager_env.AppendUnique(CPPPATH = ['./src'])
+scenemanager_env.AppendUnique(CPPPATH = ['../../resource/csdk/connectivity/api'])
 scenemanager_env.AppendUnique(CPPPATH = ['../resource-encapsulation/include'])
 scenemanager_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/common/primitiveResource/include'])
 scenemanager_env.AppendUnique(CPPPATH = ['../resource-encapsulation/src/common/expiryTimer/include'])
@@ -83,7 +84,11 @@ scenemanager_src = [
         SCENE_SRC_DIR + 'SceneMemberObject.cpp',
         SCENE_SRC_DIR + 'SceneAction.cpp',
         SCENE_SRC_DIR + 'Scene.cpp',
-        SCENE_SRC_DIR + 'SceneList.cpp'
+        SCENE_SRC_DIR + 'SceneList.cpp',
+        SCENE_SRC_DIR + 'SceneListResourceObject.cpp',
+        SCENE_SRC_DIR + 'SceneCollectionResourceObject.cpp',
+        SCENE_SRC_DIR + 'SceneMemberResourceObject.cpp',
+        SCENE_SRC_DIR + 'SceneUtils.cpp'
         ]
 
 if target_os in ['tizen','android'] :
