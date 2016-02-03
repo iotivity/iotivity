@@ -119,7 +119,7 @@ static bool CAGattDescriptorInitialize(CAGattCharacteristic * c,
                                 g_variant_new_bytestring(value));
 
     // Readable, no encryption, no authorization.
-    static char const * flags[] = { "read", NULL };
+    static char const * const flags[] = { "read", NULL };
     gatt_descriptor1_set_flags(d->descriptor, flags);
 
     /*

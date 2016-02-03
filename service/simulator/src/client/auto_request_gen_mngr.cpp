@@ -169,11 +169,11 @@ void AutoRequestGenMngr::stop(int id)
     if (m_requestGenList.end() != m_requestGenList.find(id))
     {
         m_requestGenList[id]->stop();
-        OC_LOG_V(INFO, TAG, "Auto request generation session stopped [%d]", id);
+        OIC_LOG_V(INFO, TAG, "Auto request generation session stopped [%d]", id);
         return;
     }
 
-    OC_LOG_V(ERROR, TAG, "Invalid verification id : %d", id);
+    OIC_LOG_V(ERROR, TAG, "Invalid verification id : %d", id);
 }
 
 void AutoRequestGenMngr::onProgressChange(int sessionId, OperationState state,

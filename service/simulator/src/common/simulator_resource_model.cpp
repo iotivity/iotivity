@@ -385,7 +385,8 @@ class SimulatorResourceModelBuilder
                 std::vector<std::vector<std::vector<OC::OCRepresentation>>> ocSubRepArray =
                     ocAttribute.getValue<std::vector<std::vector<std::vector<OC::OCRepresentation>>>>();
 
-                std::vector<std::vector<std::vector<SimulatorResourceModel>>> subResModelArray(ocSubRepArray.size());
+                std::vector<std::vector<std::vector<SimulatorResourceModel>>> subResModelArray(
+                    ocSubRepArray.size());
                 for  (size_t i = 0; i < ocSubRepArray.size(); i++)
                 {
                     std::vector<std::vector<SimulatorResourceModel>> innerArray1(ocSubRepArray[i].size());
@@ -785,7 +786,8 @@ void SimulatorResourceModel::AttributeProperty::setChildProperty(AttributeProper
     m_childProperty.reset(new SimulatorResourceModel::AttributeProperty(childProperty));
 }
 
-std::shared_ptr<SimulatorResourceModel::AttributeProperty> SimulatorResourceModel::AttributeProperty::getChildProperty()
+std::shared_ptr<SimulatorResourceModel::AttributeProperty>
+SimulatorResourceModel::AttributeProperty::getChildProperty()
 {
     return m_childProperty;
 }
@@ -1009,7 +1011,7 @@ bool SimulatorResourceModel::setAttributeValue(const std::string &key,
 {
     if (key.empty())
     {
-        OC_LOG(ERROR, TAG, "key is empty!");
+        OIC_LOG(ERROR, TAG, "key is empty!");
         return false;
     }
 
@@ -1092,7 +1094,8 @@ bool SimulatorResourceModel::match(const SimulatorResourceModel &resModel, bool 
             && SimulatorResourceModel::AttributeProperty::Type::UNKNOWN != prop.type())
         {
             RangeValidator rangeValidator(prop);
-            return boost::apply_visitor(rangeValidator, element.second);
+            if (false == boost::apply_visitor(rangeValidator, element.second))
+                return false;
         }
     }
 

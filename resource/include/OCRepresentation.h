@@ -25,8 +25,8 @@
  * to OCRepresentation.
  */
 
-#ifndef __OCREPRESENTATION_H
-#define __OCREPRESENTATION_H
+#ifndef OC_REPRESENTATION_H_
+#define OC_REPRESENTATION_H_
 
 
 #include <string>
@@ -109,6 +109,10 @@ namespace OC
 
             virtual ~OCRepresentation(){}
 
+            void setDevAddr(const OCDevAddr addr);
+
+            const std::string getHost() const;
+
             OCRepPayload* getPayload() const;
 
             void addChild(const OCRepresentation&);
@@ -164,8 +168,16 @@ namespace OC
 
                 if(x!= m_values.end())
                 {
-                    val = boost::get<T>(x->second);
-                    return true;
+                    try
+                    {
+                        val = boost::get<T>(x->second);
+                        return true;
+                    }
+                    catch (boost::bad_get& e)
+                    {
+                        val = T();
+                        return false;
+                    }
                 }
                 else
                 {
@@ -189,7 +201,14 @@ namespace OC
                 auto x = m_values.find(str);
                 if(x != m_values.end())
                 {
-                    val = boost::get<T>(x->second);
+                    try
+                    {
+                        val = boost::get<T>(x->second);
+                    }
+                    catch (boost::bad_get& e)
+                    {
+                        return val;
+                    }
                 }
                 return val;
             }
@@ -224,6 +243,9 @@ namespace OC
 
             bool isNULL(const std::string& str) const;
 
+        private:
+            std::string m_host;
+
             // STL Container stuff
         public:
             class iterator;
@@ -243,7 +265,15 @@ namespace OC
                     template<typename T>
                     T getValue() const
                     {
-                        return boost::get<T>(m_values[m_attrName]);
+                        try
+                        {
+                            return boost::get<T>(m_values[m_attrName]);
+                        }
+                        catch (boost::bad_get& e)
+                        {
+                            T val = T();
+                            return val;
+                        }
                     }
 
                     std::string getValueToString() const;
@@ -423,5 +453,5 @@ namespace OC
 } // namespace OC
 
 
-#endif //__OCREPRESENTATION_H
+#endif // OC_REPRESENTATION_H_
 

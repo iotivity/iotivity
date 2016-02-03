@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package oic.simulator.serviceprovider.view.dialogs;
 
 import java.util.ArrayList;
@@ -20,7 +36,6 @@ import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.window.Window;
-import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -84,7 +99,7 @@ public class SimpleResourceAddAttributePage extends WizardPage {
 
         createAttributeColumns(attTblViewer);
 
-        // make lines and header visible
+        // Make lines and header visible
         Table table = attTblViewer.getTable();
         table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         table.setHeaderVisible(true);
@@ -259,7 +274,7 @@ public class SimpleResourceAddAttributePage extends WizardPage {
                     return;
                 }
                 // Opening the dialog for edit operation.
-                // Passing the attribute to pre-fill the UI controls.
+                // Passing the attribute to populate UI controls with data.
                 Set<String> rTypes = Utility.getAttributeTypes();
                 AddAttributeDialog dialog = new AddAttributeDialog(Display
                         .getDefault().getActiveShell(), att, rTypes, attributes);
@@ -274,8 +289,6 @@ public class SimpleResourceAddAttributePage extends WizardPage {
                     att.setAllowedValues(newAtt.getAllowedValues());
                 }
                 attTblViewer.update(att, null);
-                System.out.println("Attribute data after closing edit dialog: "
-                        + att);
             }
         });
 
@@ -285,11 +298,9 @@ public class SimpleResourceAddAttributePage extends WizardPage {
                 IStructuredSelection selection = (IStructuredSelection) attTblViewer
                         .getSelection();
                 if (null != selection) {
-                    System.out.println(selection.size());
                     Iterator<?> itr = selection.iterator();
                     while (itr.hasNext()) {
                         AttributeHelper att = (AttributeHelper) itr.next();
-                        System.out.println(att.getAttributeName());
                         attTblViewer.remove(att);
                         attributes.remove(att);
                         AttributeContentProvider provider = (AttributeContentProvider) attTblViewer
@@ -309,7 +320,6 @@ public class SimpleResourceAddAttributePage extends WizardPage {
 
                     @Override
                     public void selectionChanged(SelectionChangedEvent event) {
-                        System.out.println("table selection changed");
                         remBtn.setEnabled(true);
                         IStructuredSelection selection = (IStructuredSelection) event
                                 .getSelection();

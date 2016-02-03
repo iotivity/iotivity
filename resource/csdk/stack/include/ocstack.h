@@ -70,7 +70,7 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode);
  * @brief   Set Remote Access information for XMPP Client.
  * @param   raInfo            [IN] remote access info.
  *
- * @return  #CA_STATUS_OK
+ * @return  ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCSetRAInfo(const OCRAInfo_t *raInfo);
 #endif

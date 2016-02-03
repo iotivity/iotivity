@@ -86,7 +86,7 @@ int DeriveCryptoKeyFromPassword(const unsigned char *passwd, size_t pLen,
     ctx = dtls_hmac_new( (const unsigned char *)passwd, pLen);
     if (NULL == ctx)
     {
-        OC_LOG(ERROR, TAG, "DTLS HMAC Context is NULL");
+        OIC_LOG(ERROR, TAG, "DTLS HMAC Context is NULL");
         goto bail;
     }
 
@@ -109,7 +109,7 @@ int DeriveCryptoKeyFromPassword(const unsigned char *passwd, size_t pLen,
                 int len = dtls_hmac_finalize(ctx, buf);
                 if (DTLS_HMAC_DIGEST_SIZE != len)
                 {
-                    OC_LOG(ERROR, TAG, "DTLS HMAC is failed");
+                    OIC_LOG(ERROR, TAG, "DTLS HMAC is failed");
                     res = -1;
                 }
                 memcpy(uBuf, buf, DTLS_HMAC_DIGEST_SIZE);
@@ -121,7 +121,7 @@ int DeriveCryptoKeyFromPassword(const unsigned char *passwd, size_t pLen,
                 int len = dtls_hmac_finalize(ctx, buf);
                 if (DTLS_HMAC_DIGEST_SIZE != len)
                 {
-                    OC_LOG(ERROR, TAG, "DTLS HMAC is failed");
+                    OIC_LOG(ERROR, TAG, "DTLS HMAC is failed");
                     res = -1;
                 }
                 XOR_BUF(buf, uBuf, DTLS_HMAC_DIGEST_SIZE);

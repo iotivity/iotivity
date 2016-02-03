@@ -245,15 +245,15 @@ void coap_delete_pdu(coap_pdu_t *pdu)
 #ifdef WITH_TCP
 coap_transport_type coap_get_tcp_header_type_from_size(unsigned int size)
 {
-    if (COAP_TCP_LENGTH_LIMIT_8_BIT < size && COAP_TCP_LENGTH_LIMIT_16_BIT >= size)
+    if (COAP_TCP_LENGTH_FIELD_8_BIT < size && COAP_TCP_LENGTH_FIELD_16_BIT >= size)
     {
         return coap_tcp_8bit;
     }
-    else if (COAP_TCP_LENGTH_LIMIT_16_BIT < size && COAP_TCP_LENGTH_LIMIT_32_BIT >= size)
+    else if (COAP_TCP_LENGTH_FIELD_16_BIT < size && COAP_TCP_LENGTH_FIELD_32_BIT >= size)
     {
         return coap_tcp_16bit;
     }
-    else if (COAP_TCP_LENGTH_LIMIT_32_BIT < size)
+    else if (COAP_TCP_LENGTH_FIELD_32_BIT < size)
     {
         return coap_tcp_32bit;
     }

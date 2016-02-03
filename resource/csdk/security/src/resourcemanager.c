@@ -50,7 +50,7 @@
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, const char *rspPayload)
 {
-    OC_LOG (DEBUG, TAG, "SRM sending SRM response");
+    OIC_LOG (DEBUG, TAG, "SRM sending SRM response");
     OCEntityHandlerResponse response = {.requestHandle = NULL};
     if (ehRequest)
     {

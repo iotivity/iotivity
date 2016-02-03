@@ -126,35 +126,22 @@ public class SerializedServiceProvider implements Serializable {
         this.m_resourceAttributesMap = resourceAttributesMap;
     }
 
-    public void serialize(String filePath) throws SimulatorPluginException {
-        try {
-            FileOutputStream fileOut = new FileOutputStream(filePath);
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
-            out.writeObject(this);
-            out.close();
-            fileOut.close();
-        } catch (IOException i) {
-            throw new SimulatorPluginException(
-                    "Failed to Serialize data : IOException");
-        }
+    public void serialize(String filePath) throws IOException {
+        FileOutputStream fileOut = new FileOutputStream(filePath);
+        ObjectOutputStream out = new ObjectOutputStream(fileOut);
+        out.writeObject(this);
+        out.close();
+        fileOut.close();
     }
 
     public static SerializedServiceProvider deSerialize(String filePath)
-            throws SimulatorPluginException {
+            throws Exception {
         SerializedServiceProvider r = null;
-        try {
-            FileInputStream fileIn = new FileInputStream(filePath);
-            ObjectInputStream in = new ObjectInputStream(fileIn);
-            r = (SerializedServiceProvider) in.readObject();
-            in.close();
-            fileIn.close();
-        } catch (IOException i) {
-            throw new SimulatorPluginException(
-                    "Failed to DeSerialize data : IOException");
-        } catch (ClassNotFoundException c) {
-            throw new SimulatorPluginException(
-                    "Failed to DeSerialize data : ClassNotFound");
-        }
+        FileInputStream fileIn = new FileInputStream(filePath);
+        ObjectInputStream in = new ObjectInputStream(fileIn);
+        r = (SerializedServiceProvider) in.readObject();
+        in.close();
+        fileIn.close();
         return r;
     }
 

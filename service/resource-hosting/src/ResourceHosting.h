@@ -21,39 +21,30 @@
 #ifndef RH_RESOURCEHOSTING_H_
 #define RH_RESOURCEHOSTING_H_
 
-#include <cstdbool>
-#include <iostream>
+#include <atomic>
+#include <functional>
 #include <list>
 #include <memory>
-#include <functional>
-#include <string>
-#include <atomic>
+#include <mutex>
 
-#include "octypes.h"
-#include "RCSAddress.h"
-#include "PresenceSubscriber.h"
-#include "HostingObject.h"
-#include "PrimitiveResource.h"
 #include "RCSDiscoveryManager.h"
+#include "RCSRemoteResourceObject.h"
+#include "HostingObject.h"
 
 namespace OIC
 {
 namespace Service
 {
 
-class RCSDiscoveryManager;
 class ResourceHosting
 {
 private:
-    typedef std::shared_ptr<HostingObject> HostingObjectPtr;
-    typedef std::weak_ptr<HostingObject> HostingObjectWeakPtr;
+    typedef RCSRemoteResourceObject::Ptr RemoteObjectPtr;
+    typedef std::lock_guard<std::mutex> RHLock;
+    typedef std::string HostingObjectKey;
 
-    typedef std::shared_ptr<RCSRemoteResourceObject> RemoteObjectPtr;
-    typedef std::shared_ptr<PrimitiveResource> PrimiteveResourcePtr;
-
-    typedef std::function<
-            void(std::shared_ptr<RCSRemoteResourceObject>)> DiscoveryCallback;
-    typedef std::function<void()> DestroyedCallback;
+    typedef std::function<void(RemoteObjectPtr)> DiscoveryCallback;
+    typedef HostingObject::DestroyedCallback DestroyedCallback;
 
 public:
     void startHosting();
@@ -65,33 +56,32 @@ private:
     ResourceHosting();
     ~ResourceHosting() = default;
 
-    ResourceHosting(const ResourceHosting&) = delete;
     ResourceHosting(ResourceHosting&&) = delete;
-    ResourceHosting& operator=(const ResourceHosting&) const = delete;
-    ResourceHosting& operator=(ResourceHosting&&) const = delete;
+    ResourceHosting(const ResourceHosting&) = delete;
+    ResourceHosting& operator=(ResourceHosting&&) = delete;
+    ResourceHosting& operator=(const ResourceHosting&) = delete;
 
-    static ResourceHosting * s_instance;
-    static std::mutex s_mutexForCreation;
-    std::mutex mutexForList;
+    std::mutex m_mutexForList;
+    std::atomic_bool m_isStartedHosting;
 
-    std::list<HostingObjectPtr> hostingObjectList;
+    std::unordered_map<HostingObjectKey, HostingObject::Ptr> m_hostingObjects;
+    RCSDiscoveryManager::DiscoveryTask::Ptr m_discoveryTask;
 
-    RCSDiscoveryManager * discoveryManager;
-    std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
+    void createDiscoveryListener();
+    void discoveryHandler(RemoteObjectPtr remoteResource);
 
-    DiscoveryCallback pDiscoveryCB;
+    inline HostingObjectKey generateHostingObjectKey(std::string address, std::string uri)
+    {
+        return HostingObjectKey(address + uri);
+    }
+    inline HostingObjectKey generateHostingObjectKey(RemoteObjectPtr rResource)
+    {
+        return HostingObjectKey(rResource->getAddress() + rResource->getUri());
+    }
 
-    void initializeResourceHosting();
+    HostingObject::Ptr findRemoteResource(RemoteObjectPtr remoteResource);
 
-    void requestMulticastDiscovery();
-
-    void discoverHandler(RemoteObjectPtr remoteResource);
-
-    HostingObjectPtr findRemoteResource(RemoteObjectPtr remoteResource);
-    bool isSameRemoteResource(RemoteObjectPtr remoteResource_1, RemoteObjectPtr remoteResource_2);
-
-    void destroyedHostingObject(HostingObjectWeakPtr destroyedWeakPtr);
-
+    void destroyedHostingObject(const HostingObjectKey & key);
 };
 
 } /* namespace Service */

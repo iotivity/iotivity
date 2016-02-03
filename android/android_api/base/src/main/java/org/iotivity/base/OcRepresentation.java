@@ -278,6 +278,8 @@ public class OcRepresentation {
 
     public native String getUri();
 
+    public native String getHost();
+
     public native void setUri(String uri);
 
     /**

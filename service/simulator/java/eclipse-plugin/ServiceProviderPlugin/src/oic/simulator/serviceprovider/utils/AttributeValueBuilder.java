@@ -70,14 +70,23 @@ public class AttributeValueBuilder {
         if (0 != findDepth(valueString))
             return null;
 
-        if (valueType == AttributeValue.ValueType.INTEGER)
-            return new AttributeValue(Integer.parseInt(valueString));
-        else if (valueType == AttributeValue.ValueType.DOUBLE)
-            return new AttributeValue(Double.parseDouble(valueString));
-        else if (valueType == AttributeValue.ValueType.BOOLEAN)
-            return new AttributeValue(Boolean.parseBoolean(valueString));
-        else if (valueType == AttributeValue.ValueType.STRING)
-            return new AttributeValue(valueString);
+        try {
+            if (valueType == AttributeValue.ValueType.INTEGER)
+                return new AttributeValue(Integer.parseInt(valueString));
+            else if (valueType == AttributeValue.ValueType.DOUBLE) {
+                Double value = Double.parseDouble(valueString);
+                if (!value.isInfinite()) {
+                    return new AttributeValue(value);
+                }
+            } else if (valueType == AttributeValue.ValueType.BOOLEAN) {
+                if (valueString.equalsIgnoreCase("true")
+                        || valueString.equalsIgnoreCase("false"))
+                    return new AttributeValue(Boolean.parseBoolean(valueString));
+            } else if (valueType == AttributeValue.ValueType.STRING)
+                return new AttributeValue(valueString);
+        } catch (Exception e) {
+            return null;
+        }
         return null;
     }
 

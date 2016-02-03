@@ -22,8 +22,10 @@ import java.util.Date;
 
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.SingleResource;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.utils.Utility;
+import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -41,6 +43,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
@@ -211,12 +214,8 @@ public class LoadRamlPage extends WizardPage {
             resourceCount = -1;
         }
         if (null != configFilePath && configFilePath.trim().length() > 0) {
-            if (typeOfResource == Type.COLLECTION) {
+            if (resourceCount == 1) {
                 done = true;
-            } else {
-                if (resourceCount == 1) {
-                    done = true;
-                }
             }
         }
         return done;
@@ -230,19 +229,15 @@ public class LoadRamlPage extends WizardPage {
             resourceCount = -1;
         }
         if (null != configFilePath && configFilePath.trim().length() > 0) {
-            if (typeOfResource == Type.COLLECTION) {
+            if (resourceCount >= 1) {
                 done = true;
-            } else {
-                if (resourceCount >= 1) {
-                    done = true;
-                }
             }
         }
         return done;
     }
 
     public boolean isMultiResourceCreation() {
-        if (typeOfResource != Type.COLLECTION && resourceCount > 1) {
+        if (typeOfResource == Type.SINGLE && resourceCount > 1) {
             return true;
         }
         return false;
@@ -261,10 +256,20 @@ public class LoadRamlPage extends WizardPage {
             // itself.
             return null;
         }
+
+        // Checking the resource count
+        if ((Activator.getDefault().getResourceManager().getResourceCount() + resourceCount) > Constants.MAX_RESOURCE_COUNT) {
+            MessageDialog
+                    .openInformation(Display.getDefault().getActiveShell(),
+                            "Resource limit exceeded",
+                            "Exceeded the limit of resources that can exist in the server.");
+            return null;
+        }
+
         final CreateResourceWizard wizard = ((CreateResourceWizard) getWizard());
 
         try {
-            getContainer().run(true, true, new IRunnableWithProgress() {
+            getContainer().run(true, false, new IRunnableWithProgress() {
                 @Override
                 public void run(IProgressMonitor monitor)
                         throws InvocationTargetException, InterruptedException {
@@ -295,6 +300,18 @@ public class LoadRamlPage extends WizardPage {
             wizard.setStatus("Failed to create Resource.");
             wizard.getWizardDialog().close();
             return null;
+        } else {
+            // Checking whether the resource is of type single.
+            Option intendedResource = wizard.getMainPage().getOption();
+            if ((intendedResource == Option.SIMPLE_FROM_RAML && !(resource instanceof SingleResource))) {
+                MessageDialog
+                        .openError(
+                                getShell(),
+                                "Invalid RAML",
+                                "Uploaded RAML is not of simple type. "
+                                        + "Please upload the proper RAML of simple type.");
+                return null;
+            }
         }
         UpdatePropertiesPage updatePageRef = wizard.getUpdatePropPage();
         updatePageRef.setResName(resource.getResourceName());

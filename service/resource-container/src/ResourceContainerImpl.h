@@ -81,7 +81,7 @@ namespace OIC
 
                 static ResourceContainerImpl *getImplInstance();
                 static RCSResourceObject::Ptr buildResourceObject(const std::string &strUri,
-                        const std::string &strResourceType);
+                        const std::string &strResourceType, const std::string &strInterface);
 
                 void startBundle(const std::string &bundleId);
                 void stopBundle(const std::string &bundleId);

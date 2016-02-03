@@ -25,8 +25,8 @@
  * OCHeaderOption.
  */
 
-#ifndef __OCHEADEROPTION_H
-#define __OCHEADEROPTION_H
+#ifndef OC_HEADEROPTION_H_
+#define OC_HEADEROPTION_H_
 
 #include <OCException.h>
 #include <StringConstants.h>
@@ -97,4 +97,4 @@ namespace OC
     } // namespace HeaderOption
 } // namespace OC
 
-#endif //__OCHEADEROPTION_H
+#endif // OC_HEADEROPTION_H_

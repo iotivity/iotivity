@@ -11,6 +11,7 @@ ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
 with_ra = env.get ('WITH_RA')
 with_tcp = env.get('WITH_TCP')
+src_dir = env.get('SRC_DIR')
 root_dir = os.pardir
 ca_path = os.curdir
 
@@ -23,6 +24,7 @@ print"Reading ca script %s"%ca_transport
 env.PrependUnique(CPPPATH = [ os.path.join(root_dir, 'api') ])
 env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
                              os.path.join(root_dir, 'lib/libcoap-4.1.1'),
+                             os.path.join(src_dir, '/resource/csdk/logger/include/'),
                              os.path.join(root_dir, 'common/inc') ])
 
 if ca_os not in ['arduino', 'windows', 'winrt']:
@@ -45,18 +47,24 @@ if env.get('SECURED') == '1':
 		env.SConscript(os.path.join(root_dir, 'extlibs/tinydtls/SConscript'))
 	else:
 		env.SConscript('#extlibs/tinydtls/SConscript')
+	if ca_os == 'tizen' and os.path.exists(root_dir + '/extlibs/timer'):
+		env.SConscript(os.path.join(root_dir, 'extlibs/timer/SConscript'))
+		env.AppendUnique(CPPPATH = [os.path.join(root_dir, 'extlibs/timer')])
+	else:
+		env.SConscript('#extlibs/timer/SConscript')
+		env.AppendUnique(CPPPATH = ['#extlibs/timer'])
 
 env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                         'adapter_util/caadapterutils.c')])
 env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                         'adapter_util/cafragmentation.c')])
+
 if env.get('SECURED') == '1':
 	env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                                 'adapter_util/caadapternetdtls.c')])
 	env.AppendUnique(CPPPATH = [os.path.join(root_dir,
                                                  'external/inc')])
 if env.get('DTLS_WITH_X509') == '1':
-	src_dir = env.get('SRC_DIR')
 	env.AppendUnique(CPPPATH = [src_dir + '/resource/csdk/connectivity/inc/pkix'])
 	env.AppendUnique(CPPPATH = [src_dir + '/extlibs/tinydtls/ecc/'])
 	env.AppendUnique(CPPPATH = [src_dir + '/extlibs/tinydtls/sha2/'])
@@ -95,7 +103,7 @@ else:
 		'caqueueingthread.c',
 		'caretransmission.c',
 		]
-	if (('BT' in ca_transport) or ('IP' in ca_transport) or ('ALL' in ca_transport)):
+	if (('IP' in ca_transport) or ('ALL' in ca_transport)):
 		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'cablockwisetransfer.c') ])
 		env.AppendUnique(CPPDEFINES = ['WITH_BWT'])
 	if secured == '1':
@@ -112,9 +120,6 @@ env.AppendUnique(CA_SRC = ca_common_src)
 
 if 'ALL' in ca_transport:
 		transports = [ 'ip_adapter', 'bt_edr_adapter', 'bt_le_adapter']
-		if ca_os == 'linux':
-			if with_tcp:
-				transports.append ('tcp_adapter')
 		if with_ra:
 				transports.append ('ra_adapter')
 		env.SConscript(dirs = [
@@ -129,6 +134,10 @@ if 'BT' in ca_transport:
 if 'BLE' in ca_transport:
 	env.SConscript(os.path.join(ca_path, 'bt_le_adapter/SConscript'))
 
+if ca_os in ['linux', 'tizen', 'android']:
+	if with_tcp == True:
+		env.SConscript(os.path.join(ca_path, 'tcp_adapter/SConscript'))
+		env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
 
 print "Include path is %s" % env.get('CPPPATH')
 print "Files path is %s" % env.get('CA_SRC')
@@ -136,11 +145,11 @@ if ca_os in ['android', 'tizen']:
 	env.AppendUnique(LIBS = ['coap'])
 	if env.get('SECURED') == '1':
 		env.AppendUnique(LIBS = ['tinydtls'])
+		env.AppendUnique(LIBS = ['timer'])
 	if ca_os != 'android':
 		env.AppendUnique(LIBS = ['rt'])
 	calib = env.SharedLibrary('connectivity_abstraction', env.get('CA_SRC'))
 else:
 	calib = env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
 env.InstallTarget(calib, 'libconnectivity_abstraction')
-env.UserInstallTargetLib(calib, 'libconnectivity_abstraction')
 

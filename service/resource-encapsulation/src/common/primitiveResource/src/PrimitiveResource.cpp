@@ -18,13 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <PrimitiveResource.h>
+#include "PrimitiveResource.h"
 
-#include <PrimitiveResourceImpl.h>
-#include <AssertUtils.h>
-#include <RCSAddressDetail.h>
+#include "PrimitiveResourceImpl.h"
+#include "AssertUtils.h"
+#include "RCSAddressDetail.h"
 
-#include <OCPlatform.h>
+#include "OCPlatform.h"
 
 namespace OIC
 {

@@ -80,15 +80,20 @@ CAResult_t CALEClientCreateJniInterfaceObject();
 
 /**
  * initialize client for BLE.
- * @param[in]   handle                thread pool handle object.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEClientInitialize(ca_thread_pool_t handle);
+CAResult_t CALEClientInitialize();
 
 /**
  * terminate client for BLE.
  */
 void CALEClientTerminate();
+
+/**
+ * destroy interface object and terminate the interface.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientDestroyJniInterface();
 
 /**
  * for destroy sending routine.

@@ -37,7 +37,7 @@
 /**
  * Logging tag for module name.
  */
-#define CALEADAPTER_TAG "LAD"
+#define CALEADAPTER_TAG "OIC_LE_ADAP"
 
 
 /**
@@ -72,6 +72,14 @@ typedef struct
     CAEndpoint_t *remoteEndpoint;
  } CABLESenderInfo_t;
 
+typedef enum
+{
+    ADAPTER_EMPTY = 1,
+    ADAPTER_BOTH_CLIENT_SERVER,
+    ADAPTER_CLIENT,
+    ADAPTER_SERVER
+} CABLEAdapter_t;
+
 /**
  * Callback to provide the status of the network change to CA layer.
  */
@@ -86,7 +94,7 @@ static char g_localBLEAddress[18] = { 0 };
 /**
  * Variable to differentiate btw GattServer and GattClient.
  */
-static bool g_isServer = false;
+static CABLEAdapter_t g_adapterType = ADAPTER_EMPTY;
 
 /**
  * Mutex to synchronize the task to be executed on the GattServer
@@ -148,28 +156,6 @@ static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
  * Callback to notify error from the BLE adapter.
  */
 static CAErrorHandleCallback g_errorHandler = NULL;
-
-/**
- * Storing Adapter state information.
- */
-static CAAdapterState_t g_bleAdapterState = CA_ADAPTER_DISABLED;
-
-/**
- * BLE Server Status.
- *
- * This enumeration provides information of LE Adapter Server status.
- */
-typedef enum
-{
-    CA_SERVER_NOTSTARTED = 0,
-    CA_LISTENING_SERVER,
-    CA_DISCOVERY_SERVER
-} CALeServerStatus;
-
-/**
- * Structure to maintain the status of the server.
- */
-static CALeServerStatus gLeServerStatus = CA_SERVER_NOTSTARTED;
 
 /**
  * Register network change notification callback.
@@ -544,14 +530,6 @@ static CAResult_t CAInitLEServerSenderQueue()
         return CA_STATUS_FAILED;
     }
 
-    if (CA_STATUS_OK != CAQueueingThreadStart(g_bleServerSendQueueHandle))
-    {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_thread_pool_add_task failed ");
-        OICFree(g_bleServerSendQueueHandle);
-        g_bleServerSendQueueHandle = NULL;
-        return CA_STATUS_FAILED;
-    }
-
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -606,14 +584,6 @@ static CAResult_t CAInitLEClientSenderQueue()
         return CA_STATUS_FAILED;
     }
 
-    if (CA_STATUS_OK != CAQueueingThreadStart(g_bleClientSendQueueHandle))
-    {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "ca_thread_pool_add_task failed ");
-        OICFree(g_bleClientSendQueueHandle);
-        g_bleClientSendQueueHandle = NULL;
-        return CA_STATUS_FAILED;
-    }
-
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -621,20 +591,6 @@ static CAResult_t CAInitLEClientSenderQueue()
 static void CAStopLEQueues()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
-
-    ca_mutex_lock(g_bleClientSendDataMutex);
-    if (NULL != g_bleClientSendQueueHandle)
-    {
-        CAQueueingThreadStop(g_bleClientSendQueueHandle);
-    }
-    ca_mutex_unlock(g_bleClientSendDataMutex);
-
-    ca_mutex_lock(g_bleServerSendDataMutex);
-    if (NULL != g_bleServerSendQueueHandle)
-    {
-        CAQueueingThreadStop(g_bleServerSendQueueHandle);
-    }
-    ca_mutex_unlock(g_bleServerSendDataMutex);
 
     ca_mutex_lock(g_bleReceiveDataMutex);
     if (NULL != g_bleReceiverQueue)
@@ -1624,6 +1580,117 @@ static CAResult_t CALEAdapterClientSendData(const CAEndpoint_t *remoteEndpoint,
                                             const uint8_t *data,
                                             uint32_t dataLen);
 
+static CAResult_t CALEAdapterGattServerStart()
+{
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "Before CAStartLEGattServer");
+
+    CAResult_t result = CAStartLEGattServer();
+
+#ifndef SINGLE_THREAD
+    /*
+      Don't start the server side sending queue thread until the
+      server itself has actually started.
+    */
+    if (CA_STATUS_OK == result)
+    {
+        ca_mutex_lock(g_bleServerSendDataMutex);
+        result = CAQueueingThreadStart(g_bleServerSendQueueHandle);
+        ca_mutex_unlock(g_bleServerSendDataMutex);
+
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG_V(ERROR,
+                      CALEADAPTER_TAG,
+                      "Unable to start server queuing thread (%d)",
+                      result);
+        }
+    }
+    else
+    {
+        OIC_LOG_V(ERROR,
+                  CALEADAPTER_TAG,
+                  "GATT server failed to start (%d)",
+                  result);
+    }
+#endif
+
+    return result;
+}
+
+static CAResult_t CALEAdapterGattServerStop()
+{
+#ifndef SINGLE_THREAD
+    ca_mutex_lock(g_bleServerSendDataMutex);
+    CAResult_t result = CAQueueingThreadStop(g_bleServerSendQueueHandle);
+    ca_mutex_unlock(g_bleServerSendDataMutex);
+
+    if (CA_STATUS_OK == result)
+    {
+        result = CAStopLEGattServer();
+    }
+
+    return result;
+#else
+    return CAStopLEGattServer();
+#endif
+}
+
+static CAResult_t CALEAdapterGattClientStart()
+{
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "Before CAStartLEGattClient");
+
+    CAResult_t result = CAStartLEGattClient();
+
+#ifndef SINGLE_THREAD
+    /*
+      Don't start the client side sending queue thread until the
+      client itself has actually started.
+    */
+    if (CA_STATUS_OK == result)
+    {
+        ca_mutex_lock(g_bleClientSendDataMutex);
+        result = CAQueueingThreadStart(g_bleClientSendQueueHandle);
+        ca_mutex_unlock(g_bleClientSendDataMutex);
+
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG(ERROR,
+                    CALEADAPTER_TAG,
+                    "Unable to start client queuing thread");
+        }
+    }
+    else
+    {
+        OIC_LOG_V(ERROR,
+                  CALEADAPTER_TAG,
+                  "GATT client failed to start (%d)",
+                  result);
+    }
+#endif
+
+    return result;
+}
+
+static CAResult_t CALEAdapterGattClientStop()
+{
+#ifndef SINGLE_THREAD
+    ca_mutex_lock(g_bleClientSendDataMutex);
+    CAResult_t result = CAQueueingThreadStop(g_bleClientSendQueueHandle);
+    ca_mutex_unlock(g_bleClientSendDataMutex);
+
+    if (CA_STATUS_OK == result)
+    {
+        CAStopLEGattClient();
+    }
+
+    return result;
+#else
+    CAStopLEGattClient();
+
+    return CA_STATUS_OK;
+#endif
+}
+
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
                           CANetworkChangeCallback netCallback,
@@ -1644,6 +1711,7 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitBleAdapterMutex failed!");
         return CA_STATUS_FAILED;
     }
+
     result = CAInitializeLENetworkMonitor();
     if (CA_STATUS_OK != result)
     {
@@ -1654,8 +1722,23 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
     CAInitializeLEAdapter();
 
     CASetLEClientThreadPoolHandle(handle);
+
+    result = CAInitializeLEGattClient();
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitializeLEGattClient() failed");
+        return CA_STATUS_FAILED;
+    }
+
     CASetLEReqRespClientCallback(CALEAdapterClientReceivedData);
     CASetLEServerThreadPoolHandle(handle);
+    result = CAInitializeLEGattServer();
+    if (CA_STATUS_OK != result)
+    {
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitializeLEGattServer() failed");
+        return CA_STATUS_FAILED;
+    }
+
     CASetLEAdapterThreadPoolHandle(handle);
     CASetLEReqRespServerCallback(CALEAdapterServerReceivedData);
     CASetLEReqRespAdapterCallback(reqRespCallback);
@@ -1702,19 +1785,26 @@ static CAResult_t CAStopLE()
 #endif
 
     ca_mutex_lock(g_bleIsServerMutex);
-    if (true == g_isServer)
+    switch (g_adapterType)
     {
-        CAStopLEGattServer();
-    }
-    else
-    {
-        CAStopLEGattClient();
+        case ADAPTER_SERVER:
+            CALEAdapterGattServerStop();
+            break;
+        case ADAPTER_CLIENT:
+            CALEAdapterGattClientStop();
+            break;
+        case ADAPTER_BOTH_CLIENT_SERVER:
+            CALEAdapterGattServerStop();
+            CALEAdapterGattClientStop();
+            break;
+        default:
+            break;
     }
     ca_mutex_unlock(g_bleIsServerMutex);
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
 
-    return CA_STATUS_OK;
+    return CAStopLEAdapter();
 }
 
 static void CATerminateLE()
@@ -1728,14 +1818,22 @@ static void CATerminateLE()
     CATerminateLENetworkMonitor();
 
     ca_mutex_lock(g_bleIsServerMutex);
-    if (true == g_isServer)
+    switch (g_adapterType)
     {
-        CATerminateLEGattServer();
+        case ADAPTER_SERVER:
+            CATerminateLEGattServer();
+            break;
+        case ADAPTER_CLIENT:
+            CATerminateLEGattClient();
+            break;
+        case ADAPTER_BOTH_CLIENT_SERVER:
+            CATerminateLEGattServer();
+            CATerminateLEGattClient();
+            break;
+        default:
+            break;
     }
-    else
-    {
-        CATerminateLEGattClient();
-    }
+    g_adapterType = ADAPTER_EMPTY;
     ca_mutex_unlock(g_bleIsServerMutex);
 
 #ifndef SINGLE_THREAD
@@ -1756,32 +1854,45 @@ static CAResult_t CAStartLEListeningServer()
     if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitLEServerQueues failed");
-        return CA_STATUS_FAILED;
+        return result;
     }
 #endif
 
     result = CAGetLEAdapterState();
-    if (CA_ADAPTER_NOT_ENABLED == result)
-    {
-        gLeServerStatus = CA_LISTENING_SERVER;
-        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Listen Server will be started once BT Adapter is enabled");
-        return CA_STATUS_OK;
-    }
 
     if (CA_STATUS_FAILED == result)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Bluetooth get state failed!");
-        return CA_STATUS_FAILED;
+        return result;
     }
 
-    CAStartLEGattServer();
-
     ca_mutex_lock(g_bleIsServerMutex);
-    g_isServer = true;
+    switch (g_adapterType)
+    {
+        case ADAPTER_CLIENT:
+            g_adapterType = ADAPTER_BOTH_CLIENT_SERVER;
+            break;
+        case ADAPTER_BOTH_CLIENT_SERVER:
+            break;
+        default:
+            g_adapterType = ADAPTER_SERVER;
+    }
     ca_mutex_unlock(g_bleIsServerMutex);
 
+    if (CA_ADAPTER_NOT_ENABLED == result)
+    {
+        OIC_LOG(DEBUG,
+                CALEADAPTER_TAG,
+                "Listen Server will be started once BT Adapter is enabled");
+        result = CA_STATUS_OK;
+    }
+    else
+    {
+        result = CALEAdapterGattServerStart();
+    }
+
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
+    return result;
 #else
     // Routing Gateway only supports BLE client mode.
     OIC_LOG(ERROR, CALEADAPTER_TAG, "LE server not supported in Routing Gateway");
@@ -1804,31 +1915,42 @@ static CAResult_t CAStartLEDiscoveryServer()
     if (CA_STATUS_OK != result)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "CAInitLEClientQueues failed");
-        return CA_STATUS_FAILED;
+        return result;
     }
 #endif
     result = CAGetLEAdapterState();
-    if (CA_ADAPTER_NOT_ENABLED == result)
-    {
-        gLeServerStatus = CA_DISCOVERY_SERVER;
-        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Listen Server will be started once BT Adapter is enabled");
-        return CA_STATUS_OK;
-    }
 
     if (CA_STATUS_FAILED == result)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Bluetooth get state failed!");
-        return CA_STATUS_FAILED;
+        return result;
     }
 
-    CAStartLEGattClient();
-
     ca_mutex_lock(g_bleIsServerMutex);
-    g_isServer = false;
+    switch (g_adapterType)
+    {
+        case ADAPTER_SERVER:
+            g_adapterType = ADAPTER_BOTH_CLIENT_SERVER;
+            break;
+        case ADAPTER_BOTH_CLIENT_SERVER:
+            break;
+        default:
+            g_adapterType = ADAPTER_CLIENT;
+    }
     ca_mutex_unlock(g_bleIsServerMutex);
 
+    if (CA_ADAPTER_NOT_ENABLED == result)
+    {
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Discovery server will be started once BT Adapter is enabled");
+        result = CA_STATUS_OK;
+    }
+    else
+    {
+        result = CALEAdapterGattClientStart();
+    }
+
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
-    return CA_STATUS_OK;
+    return result;
 }
 
 static CAResult_t CAReadLEData()
@@ -1854,31 +1976,34 @@ static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
     CAResult_t result = CA_STATUS_FAILED;
 
     ca_mutex_lock(g_bleIsServerMutex);
-    if (true  == g_isServer)
+    if (ADAPTER_SERVER == g_adapterType || ADAPTER_BOTH_CLIENT_SERVER == g_adapterType)
     {
         result = CALEAdapterServerSendData(endpoint, data, dataLen);
         if (CA_STATUS_OK != result)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "Send unicast data failed\n");
+            ca_mutex_unlock(g_bleIsServerMutex);
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "Send unicast data for server failed");
             if (g_errorHandler)
             {
                 g_errorHandler(endpoint, data, dataLen, result);
             }
-            ca_mutex_unlock(g_bleIsServerMutex);
+
             return -1;
         }
     }
-    else
+
+    if (ADAPTER_CLIENT == g_adapterType || ADAPTER_BOTH_CLIENT_SERVER == g_adapterType)
     {
         result = CALEAdapterClientSendData(endpoint, data, dataLen);
         if (CA_STATUS_OK != result)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "Send unicast data failed \n");
-            if (g_errorHandler)
-            {
-                g_errorHandler(endpoint, data, dataLen, result);
-            }
             ca_mutex_unlock(g_bleIsServerMutex);
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "Send unicast data for client failed" );
+
+             if (g_errorHandler)
+             {
+                 g_errorHandler(endpoint, data, dataLen, result);
+             }
             return -1;
         }
     }
@@ -1906,14 +2031,15 @@ static int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint,
     CAResult_t result = CA_STATUS_FAILED;
 
     ca_mutex_lock(g_bleIsServerMutex);
-    if (true  == g_isServer)
+    if (ADAPTER_SERVER == g_adapterType || ADAPTER_BOTH_CLIENT_SERVER == g_adapterType)
     {
         result = CALEAdapterServerSendData(NULL, data, dataLen);
         if (CA_STATUS_OK != result)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "Send multicast data failed" );
-
             ca_mutex_unlock(g_bleIsServerMutex);
+
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "Send multicast data for server failed" );
+
             if (g_errorHandler)
             {
                 g_errorHandler(endpoint, data, dataLen, result);
@@ -1921,17 +2047,20 @@ static int32_t CASendLEMulticastData(const CAEndpoint_t *endpoint,
             return -1;
         }
     }
-    else
+
+    if (ADAPTER_CLIENT == g_adapterType || ADAPTER_BOTH_CLIENT_SERVER == g_adapterType)
     {
         result = CALEAdapterClientSendData(NULL, data, dataLen);
         if (CA_STATUS_OK != result)
         {
-            OIC_LOG(ERROR, CALEADAPTER_TAG, "Send Multicast data failed" );
+            ca_mutex_unlock(g_bleIsServerMutex);
+
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "Send Multicast data for client failed" );
+
             if (g_errorHandler)
             {
                 g_errorHandler(endpoint, data, dataLen, result);
             }
-            ca_mutex_unlock(g_bleIsServerMutex);
             return -1;
         }
     }
@@ -2037,19 +2166,46 @@ static void CALEDeviceStateChangedCb(CAAdapterState_t adapter_state)
               g_localBLEAddress);
     ca_mutex_unlock(g_bleLocalAddressMutex);
 
-    g_bleAdapterState = adapter_state;
-    // Start a GattServer/Client if gLeServerStatus is SET
-    if (CA_LISTENING_SERVER == gLeServerStatus)
+    if (CA_ADAPTER_ENABLED == adapter_state)
     {
-        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Before CAStartLEGattServer");
-        CAStartLEGattServer();
+        ca_mutex_lock(g_bleIsServerMutex);
+        switch (g_adapterType)
+        {
+            case ADAPTER_SERVER:
+                CALEAdapterGattServerStart();
+                break;
+            case ADAPTER_CLIENT:
+                CALEAdapterGattClientStart();
+                break;
+            case ADAPTER_BOTH_CLIENT_SERVER:
+                CALEAdapterGattServerStart();
+                CALEAdapterGattClientStart();
+                break;
+            default:
+                break;
+        }
+        ca_mutex_unlock(g_bleIsServerMutex);
     }
-    else if (CA_DISCOVERY_SERVER == gLeServerStatus)
+    else
     {
-        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Before CAStartBleGattClient");
-        CAStartLEGattClient();
+        ca_mutex_lock(g_bleIsServerMutex);
+        switch (g_adapterType)
+        {
+            case ADAPTER_SERVER:
+                CALEAdapterGattServerStop();
+                break;
+            case ADAPTER_CLIENT:
+                CALEAdapterGattClientStop();
+                break;
+            case ADAPTER_BOTH_CLIENT_SERVER:
+                CALEAdapterGattServerStop();
+                CALEAdapterGattClientStop();
+                break;
+            default:
+                break;
+        }
+        ca_mutex_unlock(g_bleIsServerMutex);
     }
-    gLeServerStatus = CA_SERVER_NOTSTARTED;
 
     ca_mutex_lock(g_bleNetworkCbMutex);
     if (NULL != g_networkCallback)

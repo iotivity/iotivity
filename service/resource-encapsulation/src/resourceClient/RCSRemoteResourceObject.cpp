@@ -99,7 +99,7 @@ namespace
         return OC_STACK_OK;
     }
 
-    void setCallback(const HeaderOptions&, const ResponseStatement& response, int eCode,
+    void setRemoteAttributesCb(const HeaderOptions&, const ResponseStatement& response, int eCode,
             RCSRemoteResourceObject::RemoteAttributesSetCallback onRemoteAttributesSet)
     {
         SCOPE_LOG_F(DEBUG, TAG);
@@ -107,7 +107,7 @@ namespace
         onRemoteAttributesSet(response.getAttributes(), eCode);
     }
 
-    void getCallback(const HeaderOptions&, const ResponseStatement& response, int eCode,
+    void getRemoteAttributesCb(const HeaderOptions&, const ResponseStatement& response, int eCode,
             RCSRemoteResourceObject::RemoteAttributesGetCallback onRemoteAttributesReceived)
     {
         SCOPE_LOG_F(DEBUG, TAG);
@@ -120,6 +120,76 @@ namespace OIC
 {
     namespace Service
     {
+
+        RCSQueryParams& RCSQueryParams::setResourceInterface(const std::string& resourceInterface)
+        {
+            m_resourceInterface = resourceInterface;
+            return *this;
+        }
+
+        RCSQueryParams& RCSQueryParams::setResourceInterface(std::string&& resourceInterface)
+        {
+            m_resourceInterface = std::move(resourceInterface);
+            return *this;
+        }
+
+        RCSQueryParams& RCSQueryParams::setResuorceType(const std::string& resourceType)
+        {
+            m_resourceType = resourceType;
+            return *this;
+        }
+
+        RCSQueryParams& RCSQueryParams::setResuorceType(std::string&& resourceType)
+        {
+            m_resourceType = std::move(resourceType);
+            return *this;
+        }
+
+        RCSQueryParams& RCSQueryParams::put(const std::string& key, const std::string& value)
+        {
+            m_map[key] = value;
+            return *this;
+        }
+
+        RCSQueryParams& RCSQueryParams::put(std::string&& key, std::string&& value)
+        {
+            m_map[std::move(key)] = std::move(value);
+            return *this;
+        }
+
+        RCSQueryParams& RCSQueryParams::put(const std::string& key, std::string&& value)
+        {
+            m_map[key] = std::move(value);
+            return *this;
+        }
+
+        RCSQueryParams& RCSQueryParams::put(std::string&& key, const std::string& value)
+        {
+            m_map[std::move(key)] = value;
+            return *this;
+        }
+
+        std::string RCSQueryParams::getResourceInterface() const
+        {
+            return m_resourceInterface;
+        }
+
+        std::string RCSQueryParams::getResourceType() const
+        {
+            return m_resourceType;
+        }
+
+        std::string RCSQueryParams::get(const std::string& key) const
+        {
+            return m_map.at(key);
+        }
+
+        const RCSQueryParams::Map& RCSQueryParams::getAll() const
+        {
+            return m_map;
+        }
+
+
         RCSRemoteResourceObject::RCSRemoteResourceObject(
                 std::shared_ptr< PrimitiveResource > pResource) :
                 m_primitiveResource{ pResource },
@@ -134,6 +204,18 @@ namespace OIC
 
             stopCaching();
             stopMonitoring();
+        }
+
+        RCSRemoteResourceObject::Ptr RCSRemoteResourceObject::fromOCResource(
+                std::shared_ptr< OC::OCResource > ocResource)
+        {
+            if (!ocResource)
+            {
+                throw RCSInvalidParameterException("the oc resource must not be nullptr.");
+            }
+
+            return std::make_shared< RCSRemoteResourceObject >(
+                    PrimitiveResource::create(ocResource));
         }
 
         bool RCSRemoteResourceObject::isMonitoring() const
@@ -162,7 +244,7 @@ namespace OIC
 
             if (isMonitoring())
             {
-                OC_LOG(DEBUG, TAG, "startMonitoring : already started");
+                OIC_LOG(DEBUG, TAG, "startMonitoring : already started");
                 throw RCSBadRequestException{ "Monitoring already started." };
             }
 
@@ -176,7 +258,7 @@ namespace OIC
 
             if (!isMonitoring())
             {
-                OC_LOG(DEBUG, TAG, "stopMonitoring : Not started");
+                OIC_LOG(DEBUG, TAG, "stopMonitoring : Not started");
                 return;
             }
 
@@ -208,7 +290,7 @@ namespace OIC
 
             if (isCaching())
             {
-                OC_LOG(DEBUG, TAG, "startCaching : already Started");
+                OIC_LOG(DEBUG, TAG, "startCaching : already Started");
                 throw RCSBadRequestException{ "Caching already started." };
             }
 
@@ -225,7 +307,7 @@ namespace OIC
                         m_primitiveResource, { }, REPORT_FREQUENCY::NONE, 0);
             }
 
-            OC_LOG_V(DEBUG, TAG, "startCaching CACHE ID %d", m_cacheId);
+            OIC_LOG_V(DEBUG, TAG, "startCaching CACHE ID %d", m_cacheId);
         }
 
         void RCSRemoteResourceObject::stopCaching()
@@ -234,7 +316,7 @@ namespace OIC
 
             if (!isCaching())
             {
-                OC_LOG(DEBUG, TAG, "Caching already terminated");
+                OIC_LOG(DEBUG, TAG, "Caching already terminated");
                 return;
             }
 
@@ -320,8 +402,39 @@ namespace OIC
             }
 
             m_primitiveResource->requestGet(
-                    std::bind(getCallback, std::placeholders::_1, std::placeholders::_2,
+                    std::bind(getRemoteAttributesCb, std::placeholders::_1, std::placeholders::_2,
                             std::placeholders::_3, std::move(cb)));
+        }
+
+        void RCSRemoteResourceObject::get(GetCallback cb)
+        {
+            SCOPE_LOG_F(DEBUG, TAG);
+
+            if (!cb)
+            {
+                throw RCSInvalidParameterException{ "get : Callback is empty" };
+            }
+
+            m_primitiveResource->requestGet(std::move(cb));
+        }
+
+        void RCSRemoteResourceObject::get(const RCSQueryParams& queryParams, GetCallback cb)
+        {
+            SCOPE_LOG_F(DEBUG, TAG);
+
+            if (!cb)
+            {
+                throw RCSInvalidParameterException{ "get : Callback is empty" };
+            }
+
+            const auto& paramMap = queryParams.getAll();
+
+            std::cout << queryParams.getResourceInterface() << "??\n";
+
+            m_primitiveResource->requestGetWith(
+                    queryParams.getResourceType(), queryParams.getResourceInterface(),
+                    OC::QueryParamsMap{ paramMap.begin(), paramMap.end() },
+                    std::move(cb));
         }
 
         void RCSRemoteResourceObject::setRemoteAttributes(const RCSResourceAttributes& attribute,
@@ -335,8 +448,39 @@ namespace OIC
             }
 
             m_primitiveResource->requestSet(attribute,
-                    std::bind(setCallback, std::placeholders::_1, std::placeholders::_2,
+                    std::bind(setRemoteAttributesCb, std::placeholders::_1, std::placeholders::_2,
                             std::placeholders::_3, cb));
         }
+
+        void RCSRemoteResourceObject::set(const RCSResourceAttributes& attributes, SetCallback cb)
+        {
+            SCOPE_LOG_F(DEBUG, TAG);
+
+            if (!cb)
+            {
+                throw RCSInvalidParameterException{ "set : Callback is empty" };
+            }
+
+            m_primitiveResource->requestSet(attributes, std::move(cb));
+        }
+
+        void RCSRemoteResourceObject::set(const RCSQueryParams& queryParams,
+                const RCSResourceAttributes& attributes, SetCallback cb)
+        {
+            SCOPE_LOG_F(DEBUG, TAG);
+
+            if (!cb)
+            {
+                throw RCSInvalidParameterException{ "set : Callback is empty" };
+            }
+
+            const auto& paramMap = queryParams.getAll();
+
+            m_primitiveResource->requestSetWith(
+                    queryParams.getResourceType(), queryParams.getResourceInterface(),
+                    OC::QueryParamsMap{ paramMap.begin(), paramMap.end() }, attributes,
+                    std::move(cb));
+        }
+
     }
 }

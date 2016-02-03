@@ -22,6 +22,7 @@
 #define SIMULATOR_COLLECTION_RESOURCE_IMPL_H_
 
 #include "simulator_collection_resource.h"
+#include "RamlParser.h"
 
 class SimulatorResourceFactory;
 class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
@@ -59,6 +60,10 @@ class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
 
         void setResourceModel(const SimulatorResourceModel &resModel);
 
+        void setActionType(std::map<RAML::ActionType, RAML::ActionPtr> &actionType);
+
+        RAML::ActionType getActionType(std::string requestType);
+
     private:
         SimulatorCollectionResourceImpl();
 
@@ -88,6 +93,7 @@ class SimulatorCollectionResourceImpl : public SimulatorCollectionResource
         std::vector<ObserverInfo> m_observersList;
         ObserverCallback m_observeCallback;
         ResourceModelChangedCallback m_modelCallback;
+        std::map<RAML::ActionType , RAML::ActionPtr> m_actionTypes;
 
         OCResourceProperty m_property;
         OCResourceHandle m_resourceHandle;

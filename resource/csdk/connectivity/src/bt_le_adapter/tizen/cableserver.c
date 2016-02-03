@@ -155,14 +155,6 @@ CAResult_t CAStartLEGattServer()
 {
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "IN");
 
-    CAResult_t ret = CAInitGattServerMutexVariables();
-    if (CA_STATUS_OK != ret )
-    {
-        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAInitGattServerMutexVariables failed!");
-        CATerminateGattServerMutexVariables();
-        return CA_SERVER_NOT_STARTED;
-    }
-
     ca_mutex_lock(g_bleServerThreadPoolMutex);
     if (NULL == g_bleServerThreadPool)
     {
@@ -374,6 +366,21 @@ CAResult_t CAStopLEGattServer()
 
     OIC_LOG(DEBUG, TZ_BLE_SERVER_TAG, "OUT");
     return CA_STATUS_OK;
+}
+
+CAResult_t CAInitializeLEGattServer()
+{
+    OIC_LOG(DEBUG, TAG, "Initialize GATT Server");
+
+    CAResult_t ret = CAInitGattServerMutexVariables();
+    if (CA_STATUS_OK != ret )
+    {
+        OIC_LOG(ERROR, TZ_BLE_SERVER_TAG, "CAInitGattServerMutexVariables failed!");
+        CATerminateGattServerMutexVariables();
+        return CA_SERVER_NOT_STARTED;
+    }
+
+    return ret;
 }
 
 void CATerminateLEGattServer()

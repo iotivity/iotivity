@@ -29,7 +29,7 @@
 #include "uarraylist.h"
 #include "caadapterutils.h"
 
-#define TAG PCF("CA_LE_UTILS")
+#define TAG PCF("OIC_CA_LE_UTILS")
 
 #define METHODID_OBJECTNONPARAM   "()Landroid/bluetooth/BluetoothAdapter;"
 #define METHODID_STRINGNONPARAM   "()Ljava/lang/String;"

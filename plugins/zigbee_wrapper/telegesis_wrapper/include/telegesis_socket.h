@@ -36,6 +36,7 @@ extern "C" {
 
 #include "twtypes.h"
 #include "plugininterface.h"
+#include "plugintranslatortypes.h"
 
 typedef enum
 {
@@ -101,7 +102,7 @@ typedef struct TWEntry
  *
  * @param fileLoc The file descriptor location on the file system to start.
  */
-TWResultCode TWStartSock(PIPlugin * plugin, const char * fileLoc);
+TWResultCode TWStartSock(PIPlugin_Zigbee * plugin, const char * fileLoc);
 
 /**
  * Issues command to a specific Telegesis Dongle.
@@ -110,7 +111,7 @@ TWResultCode TWStartSock(PIPlugin * plugin, const char * fileLoc);
  *
  * @param command The command to be issued to the Telegesis Dongle.
  */
-TWResultCode TWIssueATCommand(PIPlugin * plugin, const char * command);
+TWResultCode TWIssueATCommand(PIPlugin_Zigbee * plugin, const char * command);
 
 /**
  * Returns a response/prompt. If NULL, no response or prompts have been issued
@@ -129,7 +130,7 @@ TWResultCode TWIssueATCommand(PIPlugin * plugin, const char * command);
  * function returns NULL. Otherwise, handle the data in TWEntry. Release
  * memory allocated by this function by passing the entry into TWDeleteEntry.
  */
-TWResultCode TWDequeueEntry(PIPlugin * plugin, TWEntry ** entry, TWEntryType type);
+TWResultCode TWDequeueEntry(PIPlugin_Zigbee * plugin, TWEntry ** entry, TWEntryType type);
 
 /**
  * Helper function to deallocate memory of a TWEntry.
@@ -142,7 +143,7 @@ TWResultCode TWDequeueEntry(PIPlugin * plugin, TWEntry ** entry, TWEntryType typ
  *
  * @param entry The entry that was dequeued by calling TWDequeueLine.
  */
-TWResultCode TWDeleteEntry(PIPlugin * plugin, TWEntry * entry);
+TWResultCode TWDeleteEntry(PIPlugin_Zigbee * plugin, TWEntry * entry);
 
 /**
  * Helper function to retrieve the current radio's EUI.
@@ -151,14 +152,14 @@ TWResultCode TWDeleteEntry(PIPlugin * plugin, TWEntry * entry);
  *
  * @param eui The local radio's EUI.
  */
-TWResultCode TWGetEUI(PIPlugin * plugin, char ** eui);
+TWResultCode TWGetEUI(PIPlugin_Zigbee * plugin, char ** eui);
 
 /**
  * Stops socket communication with the Telegesis Dongle within scope of plugin.
  *
  * @param plugin The plugin' scope the socket ops cease to operate within.
  */
-TWResultCode TWStopSock(PIPlugin * plugin);
+TWResultCode TWStopSock(PIPlugin_Zigbee * plugin);
 
 #ifdef __cplusplus
 }

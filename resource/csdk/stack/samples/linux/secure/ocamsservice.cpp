@@ -37,7 +37,7 @@ int main(int /*argc*/, char* /*argv*/[])
 {
     struct timespec timeout;
 
-    OC_LOG(DEBUG, TAG, "OCAMS service is starting...");
+    OIC_LOG(DEBUG, TAG, "OCAMS service is starting...");
 
     // Initialize Persistent Storage for SVR database
     OCPersistentStorage ps = { service_fopen, fread, fwrite, fclose, unlink };
@@ -45,7 +45,7 @@ int main(int /*argc*/, char* /*argv*/[])
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 
@@ -53,23 +53,23 @@ int main(int /*argc*/, char* /*argv*/[])
     timeout.tv_nsec = 100000000L;
 
     // Break from loop with Ctrl-C
-    OC_LOG(INFO, TAG, "Entering ocamsservice main loop...");
+    OIC_LOG(INFO, TAG, "Entering ocamsservice main loop...");
     signal(SIGINT, handleSigInt);
     while (!gQuitFlag)
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
         nanosleep(&timeout, NULL);
     }
 
-    OC_LOG(INFO, TAG, "Exiting ocamsservice main loop...");
+    OIC_LOG(INFO, TAG, "Exiting ocamsservice main loop...");
 
     if (OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack process error");
+        OIC_LOG(ERROR, TAG, "OCStack process error");
     }
 
     return 0;

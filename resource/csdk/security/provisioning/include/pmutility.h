@@ -96,7 +96,7 @@ bool PMGenerateQuery(bool isSecure,
 /**
  * Function to print OCProvisionDev_t for debug purpose.
  *
- * @param[in] pDev Pointer to OCProvisionDev_t. It's information will be printed by OC_LOG_XX
+ * @param[in] pDev Pointer to OCProvisionDev_t. It's information will be printed by OIC_LOG_XX
  *
  */
 void PMPrintOCProvisionDev(const OCProvisionDev_t* pDev);

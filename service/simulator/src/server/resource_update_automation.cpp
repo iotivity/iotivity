@@ -78,7 +78,7 @@ void AttributeUpdateAutomation::updateAttribute()
             {
                 if (false == m_resource->updateAttributeValue(attribute))
                 {
-                    OC_LOG_V(ERROR, ATAG, "Failed to update the attribute![%s]", attribute.getName().c_str());
+                    OIC_LOG_V(ERROR, ATAG, "Failed to update the attribute![%s]", attribute.getName().c_str());
                     continue;
                 }
                 resourceImpl->notifyApp();
@@ -97,7 +97,7 @@ void AttributeUpdateAutomation::updateAttribute()
 
     if (!m_stopRequested)
     {
-        OC_LOG_V(DEBUG, ATAG, "Attribute:%s automation is completed!", m_attrName.c_str());
+        OIC_LOG_V(DEBUG, ATAG, "Attribute:%s automation is completed!", m_attrName.c_str());
         SIM_LOG(ILogger::INFO, "Automation of " << m_attrName << " attribute is completed.");
     }
 
@@ -131,7 +131,7 @@ void ResourceUpdateAutomation::start()
 
     if (0 == attributes.size())
     {
-        OC_LOG(ERROR, RTAG, "Resource has zero attributes!");
+        OIC_LOG(ERROR, RTAG, "Resource has zero attributes!");
         throw SimulatorException(SIMULATOR_ERROR, "Resource has zero attributes!");
     }
 
@@ -170,6 +170,11 @@ void ResourceUpdateAutomation::updateAttributes(
         }
     }
     while (!m_stopRequested && AutomationType::RECURRENT == m_type);
+
+    if (!m_stopRequested)
+    {
+        SIM_LOG(ILogger::INFO, "Resource update automation complete [id: " << m_id << "]");
+    }
 
     // Notify application
     if (m_callback)

@@ -33,7 +33,7 @@ int UpdateAutomationMngr::startResourceAutomation(SimulatorSingleResource *resou
 {
     if (!callback)
     {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
+        OIC_LOG(ERROR, TAG, "Invalid callback!");
         throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
     }
 
@@ -44,7 +44,7 @@ int UpdateAutomationMngr::startResourceAutomation(SimulatorSingleResource *resou
     std::lock_guard<std::mutex> lock(m_lock);
     resourceAutomation->start();
 
-    OC_LOG_V(DEBUG, TAG, "Resource automation successfully started [id: %d]", m_id);
+    OIC_LOG_V(DEBUG, TAG, "Resource automation successfully started [id: %d]", m_id);
     SIM_LOG(ILogger::INFO, "Resource automation successfully started [ id: " << m_id << " ]");
 
     m_resourceUpdationList[m_id] = resourceAutomation;
@@ -57,7 +57,7 @@ int UpdateAutomationMngr::startAttributeAutomation(SimulatorSingleResource *reso
 {
     if (!callback)
     {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
+        OIC_LOG(ERROR, TAG, "Invalid callback!");
         throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
     }
 
@@ -65,7 +65,7 @@ int UpdateAutomationMngr::startAttributeAutomation(SimulatorSingleResource *reso
     SimulatorResourceModel::Attribute attribute;
     if (false == resource->getAttribute(attrName, attribute))
     {
-        OC_LOG_V(ERROR, TAG, "Attribute:%s not present in resource!", attrName.c_str());
+        OIC_LOG_V(ERROR, TAG, "Attribute:%s not present in resource!", attrName.c_str());
         throw SimulatorException(SIMULATOR_ERROR, "Attribute is not present in resource!");
     }
 
@@ -76,7 +76,7 @@ int UpdateAutomationMngr::startAttributeAutomation(SimulatorSingleResource *reso
     std::lock_guard<std::mutex> lock(m_lock);
     attributeAutomation->start();
 
-    OC_LOG_V(DEBUG, TAG, "Attribute automation successfully started [name: %s, id: %d]",
+    OIC_LOG_V(DEBUG, TAG, "Attribute automation successfully started [name: %s, id: %d]",
              attrName.c_str(), m_id);
     SIM_LOG(ILogger::INFO, "Automation for " << attrName << " attribute has successfully started [ id: "
             <<

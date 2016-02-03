@@ -20,9 +20,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import oic.simulator.serviceprovider.utils.Constants;
-
 import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
+
+import oic.simulator.serviceprovider.utils.Constants;
 
 /**
  * This is a helper class for providing the automation settings information to
@@ -64,7 +64,7 @@ public class AutomationSettingHelper {
     }
 
     public static List<AutomationSettingHelper> getAutomationSettings(
-            LocalResourceAttribute attribute) {
+            AttributeElement attribute) {
         List<AutomationSettingHelper> settingList = null;
         boolean invalidSetting;
 
@@ -76,7 +76,7 @@ public class AutomationSettingHelper {
                     .equals(Constants.AUTOMATION_TYPE)) {
                 setting.setSettingID(Constants.AUTOMATION_TYPE);
                 if (null != attribute) {
-                    setting.setSettingValue(attribute.getAutomationType()
+                    setting.setSettingValue(attribute.getAutoUpdateType()
                             .toString());
                 } else {
                     setting.setSettingValue(AutoUpdateType.ONE_TIME.toString());
@@ -90,7 +90,7 @@ public class AutomationSettingHelper {
                 setting.setSettingID(Constants.UPDATE_INTERVAL_IN_MS);
                 if (null != attribute) {
                     setting.setSettingValue(String.valueOf(attribute
-                            .getAutomationUpdateInterval()));
+                            .getAutoUpdateInterval()));
                 } else {
                     setting.setSettingValue(String
                             .valueOf(Constants.DEFAULT_AUTOMATION_INTERVAL));

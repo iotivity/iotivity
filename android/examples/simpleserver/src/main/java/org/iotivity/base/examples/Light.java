@@ -246,7 +246,7 @@ public class Light implements OcPlatform.EntityHandler {
                 mObservationIds.add(observationInfo.getOcObservationId());
                 break;
             case UNREGISTER:
-                mObservationIds.remove(observationInfo.getOcObservationId());
+                mObservationIds.remove((Byte)observationInfo.getOcObservationId());
                 break;
         }
         // Observation happens on a different thread in notifyObservers method.

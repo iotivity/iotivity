@@ -86,7 +86,7 @@ OCStackResult CreateProvisioningResource()
     OCStackResult res = OCCreateResource(&g_prov.handle, "oic.r.prov", OC_RSRVD_INTERFACE_DEFAULT,
             OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
 
-    OC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
 
     return res;
 }
@@ -111,12 +111,12 @@ OCStackResult CreateNetworkResource()
             netInfo.ipaddr[3]);
     sprintf(g_net.cnn, "%s", netInfo.ssid);
 
-    OC_LOG_V(INFO, ES_RH_TAG, "SSID: %s", g_net.cnn);
-    OC_LOG_V(INFO, ES_RH_TAG, "IP Address: %s", g_net.ipaddr);
+    OIC_LOG_V(INFO, ES_RH_TAG, "SSID: %s", g_net.cnn);
+    OIC_LOG_V(INFO, ES_RH_TAG, "IP Address: %s", g_net.ipaddr);
 
     OCStackResult res = OCCreateResource(&g_net.handle, "oic.r.net", OC_RSRVD_INTERFACE_DEFAULT,
             OC_RSRVD_ES_URI_NET, OCEntityHandlerCb,NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
-    OC_LOG_V(INFO, ES_RH_TAG, "Created Net resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, ES_RH_TAG, "Created Net resource with result: %s", getResult(res));
 
     return res;
 }
@@ -127,19 +127,19 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if (!ehRequest)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Request is Null");
+        OIC_LOG(ERROR, ES_RH_TAG, "Request is Null");
         return ehResult;
     }
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
+        OIC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
         return ehResult;
     }
 
     OCRepPayload *getResp = constructResponse(ehRequest);
     if (!getResp)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "constructResponse failed");
+        OIC_LOG(ERROR, ES_RH_TAG, "constructResponse failed");
         return OC_EH_ERROR;
     }
 
@@ -156,14 +156,14 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
+        OIC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
         return ehResult;
     }
 
     OCRepPayload* input = (OCRepPayload*) (ehRequest->payload);
     if (!input)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Failed to parse");
+        OIC_LOG(ERROR, ES_RH_TAG, "Failed to parse");
         return ehResult;
     }
 
@@ -184,7 +184,7 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
     OCRepPayload *getResp = constructResponse(ehRequest);
     if (!getResp)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "constructResponse failed");
+        OIC_LOG(ERROR, ES_RH_TAG, "constructResponse failed");
         return OC_EH_ERROR;
     }
 
@@ -200,19 +200,19 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if (!ehRequest)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Request is Null");
+        OIC_LOG(ERROR, ES_RH_TAG, "Request is Null");
         return ehResult;
     }
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
+        OIC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
         return ehResult;
     }
 
     OCRepPayload* input = (OCRepPayload*) (ehRequest->payload);
     if (!input)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Failed to parse");
+        OIC_LOG(ERROR, ES_RH_TAG, "Failed to parse");
         return ehResult;
     }
     char* tr;
@@ -233,7 +233,7 @@ OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+        OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
         return NULL;
     }
 
@@ -268,12 +268,12 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
     {
         if (OC_REST_GET == entityHandlerRequest->method)
         {
-            OC_LOG(INFO, ES_RH_TAG, "Received GET request");
+            OIC_LOG(INFO, ES_RH_TAG, "Received GET request");
             ehRet = ProcessGetRequest(entityHandlerRequest, &payload);
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
-            OC_LOG(INFO, ES_RH_TAG, "Received PUT request");
+            OIC_LOG(INFO, ES_RH_TAG, "Received PUT request");
 
             if (g_prov.handle != NULL && entityHandlerRequest->resource == g_prov.handle)
             {
@@ -287,7 +287,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             // TODO: As of now, POST request will be not received.
-            OC_LOG(INFO, ES_RH_TAG, "Received OC_REST_POST from client");
+            OIC_LOG(INFO, ES_RH_TAG, "Received OC_REST_POST from client");
             //ehRet = ProcessPostRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
         }
 
@@ -309,7 +309,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             // Send the response
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG(ERROR, ES_RH_TAG, "Error sending response");
+                OIC_LOG(ERROR, ES_RH_TAG, "Error sending response");
                 ehRet = OC_EH_ERROR;
             }
         }

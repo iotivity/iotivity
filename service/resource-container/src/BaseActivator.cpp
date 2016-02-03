@@ -30,9 +30,9 @@ std::map< string, BundleResource::Ptr > java_resources;
 /*
  * Class:     org_iotivity_resourcecontainer_bundle_api_BaseActivator
  * Method:    registerJavaResource
- * Signature: (Lorg/iotivity/resourcecontainer/bundle/api/BundleResource;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+ * Signature: (Lorg/iotivity/resourcecontainer/bundle/api/BundleResource;[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
  */
-JNIEXPORT void JNICALL
+JNIEXPORT jint JNICALL
 Java_org_iotivity_resourcecontainer_bundle_api_BaseActivator_registerJavaResource
 (JNIEnv *env, jobject obj, jobject bundleResource, jobjectArray attributes, jstring bundleId,
  jstring uri, jstring resourceType, jstring res_name)
@@ -41,6 +41,7 @@ Java_org_iotivity_resourcecontainer_bundle_api_BaseActivator_registerJavaResourc
     const char *str_uri = env->GetStringUTFChars(uri, 0);
     const char *str_resourceType = env->GetStringUTFChars(resourceType, 0);
     const char *str_res_name = env->GetStringUTFChars(res_name, 0);
+    int ret;
 
     BundleResource::Ptr javaBundleResource = std::make_shared< JavaBundleResource >
             (env, obj, bundleResource, str_bundleId, attributes);
@@ -49,9 +50,11 @@ Java_org_iotivity_resourcecontainer_bundle_api_BaseActivator_registerJavaResourc
     javaBundleResource->m_uri = string(str_uri, strlen(str_uri));
     javaBundleResource->m_resourceType = string(str_resourceType, strlen(str_resourceType));
     javaBundleResource->m_name = string(str_res_name, strlen(str_res_name));
-    container->registerResource(javaBundleResource);
+    ret = container->registerResource(javaBundleResource);
 
     java_resources[str_uri] = javaBundleResource;
+
+    return ret;
 }
 
 /*

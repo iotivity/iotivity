@@ -44,7 +44,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::createResource(
     if (0 == raml->getResources().size()
         || nullptr == (ramlResource = raml->getResources().begin()->second))
     {
-        OC_LOG(ERROR, TAG, "Zero resources detected from RAML!");
+        OIC_LOG(ERROR, TAG, "Zero resources detected from RAML!");
         return nullptr;
     }
 
@@ -65,7 +65,7 @@ std::vector<std::shared_ptr<SimulatorResource> > SimulatorResourceFactory::creat
     if (0 == raml->getResources().size()
         || nullptr == (ramlResource = raml->getResources().begin()->second))
     {
-        OC_LOG(ERROR, TAG, "Zero resources detected from RAML!");
+        OIC_LOG(ERROR, TAG, "Zero resources detected from RAML!");
         return resources;
     }
 
@@ -74,7 +74,7 @@ std::vector<std::shared_ptr<SimulatorResource> > SimulatorResourceFactory::creat
         std::shared_ptr<SimulatorResource> resource = buildResource(ramlResource);
         if (!resource)
         {
-            OC_LOG(ERROR, TAG, "Failed to create resource!");
+            OIC_LOG(ERROR, TAG, "Failed to create resource!");
             return resources;
         }
 
@@ -217,21 +217,21 @@ RAML::RequestResponseBodyPtr SimulatorResourceFactory::getRAMLResponseBody(
     RAML::ActionPtr action = ramlResource->getAction(type);
     if (!action)
     {
-        OC_LOG(ERROR, TAG, "Resource does not possess the request!");
+        OIC_LOG(ERROR, TAG, "Resource does not possess the request!");
         return nullptr;
     }
 
     RAML::ResponsePtr response = action->getResponse(responseCode);
     if (!response)
     {
-        OC_LOG(ERROR, TAG, "Resource does not provide valid GET response!");
+        OIC_LOG(ERROR, TAG, "Resource does not provide valid GET response!");
         return nullptr;
     }
 
     RAML::RequestResponseBodyPtr responseBody = response->getResponseBody("application/json");
     if (!responseBody)
     {
-        OC_LOG(ERROR, TAG, "GET response is not of type \"application/json\" ");
+        OIC_LOG(ERROR, TAG, "GET response is not of type \"application/json\" ");
         return nullptr;
     }
 
@@ -239,7 +239,8 @@ RAML::RequestResponseBodyPtr SimulatorResourceFactory::getRAMLResponseBody(
 }
 
 SimulatorResourceModel SimulatorResourceFactory::buildModelFromResponseBody(
-    RAML::RequestResponseBodyPtr responseBody, std::string &resourceType, std::vector<std::string> &interfaceType)
+    RAML::RequestResponseBodyPtr responseBody, std::string &resourceType,
+    std::vector<std::string> &interfaceType)
 {
     SimulatorResourceModel resModel;
 
@@ -330,20 +331,21 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
 
     name = ramlResource->getDisplayName();
     uri = ramlResource->getResourceUri();
+    std::map<RAML::ActionType, RAML::ActionPtr> actionType = ramlResource->getActions();
 
     RAML::RequestResponseBodyPtr successResponseBody = getRAMLResponseBody(
-        ramlResource, RAML::ActionType::GET, "200");
+                ramlResource, RAML::ActionType::GET, "200");
     RAML::RequestResponseBodyPtr putErrorResponseBody = getRAMLResponseBody(
-        ramlResource, RAML::ActionType::PUT, "403");
+                ramlResource, RAML::ActionType::PUT, "403");
     RAML::RequestResponseBodyPtr postErrorResponseBody = getRAMLResponseBody(
-        ramlResource, RAML::ActionType::POST, "403");
+                ramlResource, RAML::ActionType::POST, "403");
 
     SimulatorResourceModel successResponseModel = buildModelFromResponseBody(
-        successResponseBody, resourceType, interfaceType);
+                successResponseBody, resourceType, interfaceType);
     SimulatorResourceModel putErrorResponseModel = buildModelFromResponseBody(
-        putErrorResponseBody, rt, ifType);
+                putErrorResponseBody, rt, ifType);
     SimulatorResourceModel postErrorResponseModel = buildModelFromResponseBody(
-        postErrorResponseBody, rt, ifType);
+                postErrorResponseBody, rt, ifType);
 
     // Create simple/collection resource
     std::shared_ptr<SimulatorResource> simResource;
@@ -358,6 +360,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
             collectionRes->setResourceType(resourceType);
             collectionRes->setInterface(interfaceType);
             collectionRes->setURI(ResourceURIFactory::getInstance()->constructURI(uri));
+            collectionRes->setActionType(actionType);
 
             collectionRes->setResourceModel(successResponseModel);
             simResource = std::dynamic_pointer_cast<SimulatorResource>(collectionRes);
@@ -375,6 +378,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
             singleRes->setResourceType(resourceType);
             singleRes->setInterface(interfaceType);
             singleRes->setURI(ResourceURIFactory::getInstance()->constructURI(uri));
+            singleRes->setActionType(actionType);
 
             singleRes->setResourceModel(successResponseModel);
             singleRes->setPutErrorResponseModel(putErrorResponseModel);

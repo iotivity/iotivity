@@ -36,7 +36,7 @@
 #include "org_iotivity_ca_CaEdrInterface.h"
 
 //#define DEBUG_MODE
-#define TAG PCF("CA_EDR_MONITOR")
+#define TAG PCF("OIC_CA_EDR_MONITOR")
 
 static JavaVM *g_jvm;
 static jobject g_context;
@@ -127,7 +127,7 @@ Java_org_iotivity_ca_CaEdrInterface_caEdrStateChangedCallback(JNIEnv *env, jobje
 
     if (NULL == g_networkChangeCb)
     {
-        OIC_LOG_V(DEBUG, TAG, "gNetworkChangeCb is null", status);
+        OIC_LOG(DEBUG, TAG, "gNetworkChangeCb is null");
         return;
     }
 

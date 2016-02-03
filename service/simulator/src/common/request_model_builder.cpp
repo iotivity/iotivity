@@ -54,7 +54,7 @@ std::map<RequestType, RequestModelSP> RequestModelBuilder::build(const std::stri
 
 RequestModelSP RequestModelBuilder::createRequestModel(const RAML::ActionPtr &action)
 {
-    OC_LOG(DEBUG, TAG, "Creating request model");
+    OIC_LOG(DEBUG, TAG, "Creating request model");
 
     // Validate the action type. Only GET, PUT, POST and DELETE are supported.
     RAML::ActionType actionType = action->getType();
@@ -63,7 +63,7 @@ RequestModelSP RequestModelBuilder::createRequestModel(const RAML::ActionPtr &ac
         && actionType != RAML::ActionType::POST
         && actionType != RAML::ActionType::DELETE)
     {
-        OC_LOG(ERROR, TAG, "Failed to create request model as it is of unknown type!");
+        OIC_LOG(ERROR, TAG, "Failed to create request model as it is of unknown type!");
         return nullptr;
     }
 

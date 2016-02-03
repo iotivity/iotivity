@@ -44,7 +44,7 @@ extern "C" {
 
 typedef struct TWSock
 {
-    PIPlugin * plugin; // Handle
+    PIPlugin_Zigbee * plugin; // Handle
     char * eui; // The associated Zigbee radio's EUI.
     int fd;
     char * buffer;
@@ -59,15 +59,15 @@ typedef struct TWSock
     struct TWSock * next;
 } TWSock;
 
-TWResultCode TWAddTWSock(TWSock * sock, PIPlugin * plugin, const char * fileLoc);
+TWResultCode TWAddTWSock(TWSock * sock, PIPlugin_Zigbee * plugin, const char * fileLoc);
 
-TWSock * TWGetSock(PIPlugin * plugin);
+TWSock * TWGetSock(PIPlugin_Zigbee * plugin);
 
 TWResultCode TWDeleteTWSock(TWSock * sock);
 
 TWResultCode TWDeleteAllTWSock();
 
-TWResultCode TWFreeQueue(PIPlugin * plugin);
+TWResultCode TWFreeQueue(PIPlugin_Zigbee * plugin);
 
 #ifdef __cplusplus
 }

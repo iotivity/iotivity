@@ -123,6 +123,12 @@ void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
                                CATransportAdapter_t type);
 
 /**
+ * Register callback to deliver the result of DTLS handshake
+ * @param[in] dtlsHandshakeCallback Callback to receive the result of DTLS handshake.
+ */
+void CADTLSSetHandshakeCallback(CAErrorCallback dtlsHandshakeCallback);
+
+/**
  * Register callback to get DTLS PSK credentials.
  * @param[in]  credCallback    callback to get DTLS PSK credentials.
  */

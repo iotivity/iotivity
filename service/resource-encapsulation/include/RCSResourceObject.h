@@ -44,6 +44,7 @@ namespace OIC
     {
 
         class RCSRequest;
+        class RCSRepresentation;
 
         /**
          * @brief Thrown when lock has not been acquired.
@@ -141,6 +142,12 @@ namespace OIC
                         Builder(const std::string& uri, const std::string& type,
                                 const std::string& interface);
 
+                        Builder& addInterface(const std::string& interface);
+                        Builder& addInterface(std::string&& interface);
+
+                        Builder& addType(const std::string& type);
+                        Builder& addType(std::string&& type);
+
                         /**
                          * Sets whether the resource is discoverable.
                          *
@@ -156,6 +163,14 @@ namespace OIC
                          *
                          */
                         Builder& setObservable(bool observable);
+
+                        /**
+                         * Sets whether the resource should be secure or not.
+                         *
+                         * @param secureFlag whether to be secure or not.
+                         *
+                         */
+                        Builder& setSecureFlag(bool secureFlag);
 
                         /**
                          * Sets attributes for the resource.
@@ -180,8 +195,8 @@ namespace OIC
 
                     private:
                         std::string m_uri;
-                        std::string m_type;
-                        std::string m_interface;
+                        std::vector< std::string > m_types;
+                        std::vector< std::string > m_interfaces;
                         uint8_t m_properties;
                         RCSResourceAttributes m_resourceAttributes;
                 };
@@ -441,8 +456,19 @@ namespace OIC
                  */
                 SetRequestHandlerPolicy getSetRequestHandlerPolicy() const;
 
+                void bindResource(const RCSResourceObject::Ptr&);
+
+                void unbindResource(const RCSResourceObject::Ptr&);
+
+                std::vector< RCSResourceObject::Ptr > getBoundResources() const;
+
+                std::vector< std::string > getInterfaces() const;
+                std::vector< std::string > getTypes() const;
+
+                RCSRepresentation toRepresentation() const;
+
         private:
-            RCSResourceObject(uint8_t, RCSResourceAttributes&&);
+            RCSResourceObject(const std::string&, uint8_t, RCSResourceAttributes&&);
 
             OCEntityHandlerResult entityHandler(const std::shared_ptr< OC::OCResourceRequest >&);
 
@@ -470,6 +496,10 @@ namespace OIC
         private:
             const uint8_t m_properties;
 
+            const std::string m_uri;
+            std::vector< std::string > m_interfaces;
+            std::vector< std::string > m_types;
+
             OCResourceHandle m_resourceHandle;
 
             RCSResourceAttributes m_resourceAttributes;
@@ -487,6 +517,10 @@ namespace OIC
             mutable std::mutex m_mutex;
 
             std::mutex m_mutexAttributeUpdatedListeners;
+
+            mutable std::mutex m_mutexForBoundResources;
+
+            std::vector< RCSResourceObject::Ptr > m_boundResources;
 
         };
 

@@ -43,12 +43,12 @@ namespace OIC
                 /**
                 * Constructor for BundleActivator
                 */
-                BundleActivator();
+                BundleActivator() { };
 
                 /**
                 * Virtual destructor for BundleActivator
                 */
-                virtual ~BundleActivator();
+                virtual ~BundleActivator() { };
 
                 /**
                 * Activate the Bundle to make bundle work and create bundle resources
@@ -60,14 +60,14 @@ namespace OIC
                 * @return void
                 */
                 virtual void activateBundle(ResourceContainerBundleAPI *resourceContainer,
-                                            std::string bundleId);
+                                            std::string bundleId) = 0;
 
                 /**
                 * Deactivate the Bundle to stop working and destroy bundle resources
                 *
                 * @return void
                 */
-                virtual void deactivateBundle();
+                virtual void deactivateBundle() = 0;
 
                 /**
                 * Create Bundle Resource instance and register the resource in the container
@@ -79,7 +79,7 @@ namespace OIC
                 virtual void createResource(resourceInfo resourceInfo) = 0;
 
                 /**
-                * Destroy Bundle Resource instance and register the resource in the container
+                * Unregister the resource in the container and destroy the Bundle Resource
                 *
                 * @param pBundleResource Bundle resource to be destroyed
                 *

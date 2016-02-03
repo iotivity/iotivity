@@ -73,32 +73,26 @@ CAResult_t CAInitializeLENetworkMonitor()
 {
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
 
-    CAResult_t res = CAInitLENetworkMonitorMutexVariables();
-    if (CA_STATUS_OK != res)
+    if (NULL == g_bleDeviceStateChangedCbMutex)
     {
-        OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "CAInitLENetworkMonitorMutexVariables() failed");
-        return CA_STATUS_FAILED;
+        g_bleDeviceStateChangedCbMutex = ca_mutex_new();
+        if (NULL == g_bleDeviceStateChangedCbMutex)
+        {
+            OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "ca_mutex_new failed");
+            return CA_STATUS_FAILED;
+        }
     }
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
 
     return CA_STATUS_OK;
 }
 
-void CATerminateLENetworkMonitorMutexVariables()
+void CATerminateLENetworkMonitor()
 {
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
 
     ca_mutex_free(g_bleDeviceStateChangedCbMutex);
     g_bleDeviceStateChangedCbMutex = NULL;
-
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
-}
-
-void CATerminateLENetworkMonitor()
-{
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
-
-    CATerminateLENetworkMonitorMutexVariables();
 
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
 }
@@ -242,23 +236,6 @@ CAResult_t CAUnSetLEAdapterStateChangedCb()
     {
         OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "bt_adapter_unset_state_changed_cb failed");
         return CA_STATUS_FAILED;
-    }
-
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
-    return CA_STATUS_OK;
-}
-
-CAResult_t CAInitLENetworkMonitorMutexVariables()
-{
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
-    if (NULL == g_bleDeviceStateChangedCbMutex)
-    {
-        g_bleDeviceStateChangedCbMutex = ca_mutex_new();
-        if (NULL == g_bleDeviceStateChangedCbMutex)
-        {
-            OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "ca_mutex_new failed");
-            return CA_STATUS_FAILED;
-        }
     }
 
     OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");

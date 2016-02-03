@@ -68,20 +68,20 @@ void EventCallbackAfterProvisioning(ESResult esResult);
 void EventCallbackInOnboarding(ESResult esResult)
 {
     if (g_cbForEnrolleeStatus != NULL){
-        OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with esResult = %d", esResult);
+        OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with esResult = %d", esResult);
         if(esResult == ES_OK){
-            OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
+            OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
                                                 ES_ON_BOARDED_STATE);
             g_cbForEnrolleeStatus(esResult, ES_ON_BOARDED_STATE);
         }
         else{
-            OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
+            OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
                                                 ES_INIT_STATE);
             g_cbForEnrolleeStatus(esResult, ES_INIT_STATE);
         }
     }
     else{
-        OC_LOG(ERROR, ES_ENROLLEE_TAG, "g_cbForEnrolleeStatus is NULL");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "g_cbForEnrolleeStatus is NULL");
     }
 }
 
@@ -96,7 +96,7 @@ void EventCallbackInProvisioning(ESResult esResult)
 
         if(TerminateEasySetup() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, ES_ENROLLEE_TAG, "Terminating stack failed");
+            OIC_LOG(ERROR, ES_ENROLLEE_TAG, "Terminating stack failed");
             return;
         }
 
@@ -107,12 +107,12 @@ void EventCallbackInProvisioning(ESResult esResult)
         if (g_cbForEnrolleeStatus != NULL)
         {
             if(res == ES_NETWORKCONNECTED){
-                OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
+                OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
                                                     ES_PROVISIONED_STATE);
                 g_cbForEnrolleeStatus(ES_OK, ES_PROVISIONED_STATE);
             }
             else{
-                OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
+                OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
                                                     ES_PROVISIONING_STATE);
                 g_cbForEnrolleeStatus(ES_OK, ES_PROVISIONING_STATE);
             }
@@ -125,18 +125,18 @@ void EventCallbackAfterProvisioning(ESResult esResult)
 {
     if (g_cbForEnrolleeStatus != NULL){
         if(esResult == ES_OK){
-            OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
+            OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
                                                    ES_PROVISIONED_STATE);
             g_cbForEnrolleeStatus(esResult, ES_PROVISIONED_STATE);
         }
         else{
-            OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
+            OIC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "Calling the application with enrolleestate = %d",
                                                    ES_PROVISIONING_STATE);
             g_cbForEnrolleeStatus(esResult, ES_PROVISIONING_STATE);
         }
     }
     else{
-        OC_LOG(ERROR, ES_ENROLLEE_TAG, "g_cbForEnrolleeStatus is NULL");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "g_cbForEnrolleeStatus is NULL");
     }
 }
 
@@ -159,12 +159,12 @@ ESResult FindNetworkForOnboarding(OCConnectivityType networkType,
 
         if(ConnectToWiFiNetwork(ssid, passwd, EventCallbackInOnboarding) != ES_NETWORKCONNECTED)
         {
-            OC_LOG(ERROR, ES_ENROLLEE_TAG, "ConnectToWiFiNetwork Failed");
+            OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ConnectToWiFiNetwork Failed");
             cb(ES_ERROR, ES_ON_BOARDING_STATE);
             return ES_ERROR;
         }
         else{
-            OC_LOG(INFO, ES_ENROLLEE_TAG, "ConnectToWiFiNetwork Success");
+            OIC_LOG(INFO, ES_ENROLLEE_TAG, "ConnectToWiFiNetwork Success");
             cb(ES_OK, ES_ON_BOARDED_STATE);
             return ES_OK;
         }
@@ -178,19 +178,19 @@ ESResult InitEasySetup(OCConnectivityType networkType, const char *ssid, const c
 {
     if(FindNetworkForOnboarding(networkType, ssid, passwd, cb) != ES_OK)
     {
-        OC_LOG(ERROR, ES_ENROLLEE_TAG, "OnBoarding Failed");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "OnBoarding Failed");
         return ES_ERROR;
     }
 
     // Initialize the OC Stack in Server mode
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, ES_ENROLLEE_TAG, "OCStack init error");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "OCStack init error");
         return ES_ERROR;
     }
     else
     {
-        OC_LOG(DEBUG, ES_ENROLLEE_TAG, "OCStack init success");
+        OIC_LOG(DEBUG, ES_ENROLLEE_TAG, "OCStack init success");
         return ES_OK;
     }
 }
@@ -199,12 +199,12 @@ ESResult TerminateEasySetup()
 {
     if(OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, ES_ENROLLEE_TAG, "OCStack stop failed");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "OCStack stop failed");
         return ES_ERROR;
     }
     else
     {
-        OC_LOG(ERROR, ES_ENROLLEE_TAG, "OCStack stop success");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "OCStack stop success");
         return ES_OK;
     }
 }

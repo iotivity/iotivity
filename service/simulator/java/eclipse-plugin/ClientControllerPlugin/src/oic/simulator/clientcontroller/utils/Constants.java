@@ -75,8 +75,7 @@ public class Constants {
     public static final String   DEBUG                         = "Debug";
     public static final String   UNKNOWN                       = "Unknown";
 
-    public static final String[] BROWSE_RAML_FILTER_EXTENSIONS = new String[] {
-            "*.raml", "*"                                     };
+    public static final String[] BROWSE_RAML_FILTER_EXTENSIONS = new String[] { "*.raml" };
     public static final String[] SAVE_LOG_FILTER_EXTENSIONS    = new String[] {
             "*.log", "*"                                      };
 
@@ -103,4 +102,13 @@ public class Constants {
     public static final String   PLATFORM_FIRMWARE_VERSION     = "Firmware Version";
     public static final String   PLATFORM_SUPPORT_URL          = "Support URL";
     public static final String   PLATFORM_SYSTEM_TIME          = "System Time";
+
+    public static final String   BASELINE_INTERFACE            = "oic.if.baseline";
+    public static final String   LINKS_LIST_INTERFACE          = "oic.if.ll";
+    public static final String   BATCH_INTERFACE               = "oic.if.b";
+    public static final String   LINK_BATCH_INTERFACE          = "oic.if.lb";
+    public static final String   READ_ONLY_INTERFACE           = "oic.if.r";
+    public static final String   READ_WRITE_INTERFACE          = "oic.if.rw";
+    public static final String   ACTUATOR_INTERFACE            = "oic.if.a";
+    public static final String   SENSOR_INTERFACE              = "oic.if.s";
 }

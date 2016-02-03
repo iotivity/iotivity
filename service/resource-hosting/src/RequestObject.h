@@ -33,17 +33,20 @@ class RequestObject
 {
 public:
     typedef std::shared_ptr<RequestObject> Ptr;
-    typedef std::shared_ptr<RCSRemoteResourceObject> RemoteObjectPtr;
-    typedef void (*SetRequestCallback)(const RCSResourceAttributes &, RCSResourceAttributes &);
+    typedef std::function<
+            void(const RCSResourceAttributes &, const RCSResourceAttributes &)> SetRequestCallback;
 
     enum class RequestMethod
     {
-        Getter = 0,
-        Setter,
+        Get = 0,
+        Set,
+        Post,
         Delete
     };
 
 private:
+    typedef RCSRemoteResourceObject::Ptr RemoteObjectPtr;
+
     SetRequestCallback pSetRequestCB;
 
 public:
@@ -52,11 +55,11 @@ public:
     ~RequestObject();
 
     void invokeRequest(RemoteObjectPtr remoteObject, RequestMethod method,
-            RCSResourceAttributes & resourceAttibutes);
+            const RCSResourceAttributes & resourceAttibutes);
 
 private:
     void setRequestCB(const RCSResourceAttributes & returnedAttributes,
-            RCSResourceAttributes & putAttibutes);
+            const RCSResourceAttributes & putAttibutes);
 };
 
 } /* namespace Service */

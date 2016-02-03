@@ -91,7 +91,8 @@ class SimulatorResourceFactory
             std::shared_ptr<RAML::Properties> propertyElement);
         SimulatorResourceModel buildResourceModel(std::shared_ptr<RAML::Items> item);
         SimulatorResourceModel buildModelFromResponseBody(
-            RAML::RequestResponseBodyPtr responseBody, std::string &resourceType, std::vector<std::string> &interfaceType);
+            RAML::RequestResponseBodyPtr responseBody, std::string &resourceType,
+            std::vector<std::string> &interfaceType);
         RAML::RequestResponseBodyPtr getRAMLResponseBody(
             std::shared_ptr<RAML::RamlResource> ramlResource, RAML::ActionType type, std::string responseCode);
         std::shared_ptr<SimulatorResource> buildResource(

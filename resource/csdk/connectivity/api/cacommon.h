@@ -26,10 +26,17 @@
 #ifndef CA_COMMON_H_
 #define CA_COMMON_H_
 
+#ifdef TCP_ADAPTER
+#define HAVE_SYS_POLL_H
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -276,6 +283,7 @@ typedef enum
     CA_DESTINATION_DISCONNECTED,    /**< Destination is disconnected */
     CA_NOT_SUPPORTED,               /**< Not supported */
     CA_STATUS_NOT_INITIALIZED,      /**< Not Initialized*/
+    CA_DTLS_AUTHENTICATION_FAILURE, /**< Decryption error in DTLS */
     CA_STATUS_FAILED =255           /**< Failure */
     /* Result code - END HERE */
 } CAResult_t;
@@ -495,9 +503,6 @@ typedef struct
     struct calayer
     {
         CAHistory_t requestHistory;  /**< filter IP family in requests */
-        CAHistory_t responseHistory; /**< filter IP family in responses */
-        CATransportFlags_t previousRequestFlags;/**< address family filtering */
-        uint16_t previousRequestMessageId;      /**< address family filtering */
     } ca;
 
 #ifdef TCP_ADAPTER
@@ -510,6 +515,7 @@ typedef struct
         void *svrlist;          /**< unicast IPv4 TCP server information*/
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
+        int shutdownFds[2];     /**< shutdown pipe */
         int maxfd;              /**< highest fd (for select) */
         bool started;           /**< the TCP adapter has started */
         bool terminate;         /**< the TCP adapter needs to stop */
@@ -519,6 +525,30 @@ typedef struct
 } CAGlobals_t;
 
 extern CAGlobals_t caglobals;
+
+/**
+ * Callback function type for request delivery.
+ * @param[out]   object       Endpoint object from which the request is received.
+ *                            It contains endpoint address based on the connectivity type.
+ * @param[out]   requestInfo  Info for resource model to understand about the request.
+ */
+typedef void (*CARequestCallback)(const CAEndpoint_t *object,
+                                  const CARequestInfo_t *requestInfo);
+
+/**
+ * Callback function type for response delivery.
+ * @param[out]   object           Endpoint object from which the response is received.
+ * @param[out]   responseInfo     Identifier which needs to be mapped with response.
+ */
+typedef void (*CAResponseCallback)(const CAEndpoint_t *object,
+                                   const CAResponseInfo_t *responseInfo);
+/**
+ * Callback function type for error.
+ * @param[out]   object           remote device information.
+ * @param[out]   errorInfo        CA Error information.
+ */
+typedef void (*CAErrorCallback)(const CAEndpoint_t *object,
+                                const CAErrorInfo_t *errorInfo);
 
 #ifdef __cplusplus
 } /* extern "C" */

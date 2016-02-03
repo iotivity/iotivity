@@ -16,11 +16,6 @@
 
 package oic.simulator.clientcontroller.remoteresource;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import oic.simulator.clientcontroller.utils.Constants;
 
 import org.oic.simulator.SimulatorResourceModel;
@@ -32,24 +27,24 @@ import org.oic.simulator.client.SimulatorRemoteResource;
  */
 public class RemoteResource {
 
-    private boolean                              observed;
+    private boolean                 observed;
 
     // Native object references
-    private SimulatorRemoteResource              remoteResourceRef;
-    private SimulatorResourceModel               resourceModelRef;
-    private Map<String, RemoteResourceAttribute> resourceAttributesMap;
+    private SimulatorRemoteResource remoteResourceRef;
+    private SimulatorResourceModel  resourceModelRef;
+    private ResourceRepresentation  mResourceRepresentation;
 
-    private boolean                              configUploaded;
+    private boolean                 configUploaded;
 
-    private boolean                              getAutomtnInProgress;
-    private boolean                              putAutomtnInProgress;
-    private boolean                              postAutomtnInProgress;
+    private boolean                 getAutomtnInProgress;
+    private boolean                 putAutomtnInProgress;
+    private boolean                 postAutomtnInProgress;
 
-    private int                                  getAutomtnId;
-    private int                                  putAutomtnId;
-    private int                                  postAutomtnId;
+    private int                     getAutomtnId;
+    private int                     putAutomtnId;
+    private int                     postAutomtnId;
 
-    private boolean                              isFavorite;
+    private boolean                 isFavorite;
 
     public SimulatorResourceModel getResourceModelRef() {
         return resourceModelRef;
@@ -57,15 +52,6 @@ public class RemoteResource {
 
     public void setResourceModelRef(SimulatorResourceModel resourceModel) {
         this.resourceModelRef = resourceModel;
-    }
-
-    public Map<String, RemoteResourceAttribute> getResourceAttributesMap() {
-        return resourceAttributesMap;
-    }
-
-    public void setResourceAttributesMap(
-            Map<String, RemoteResourceAttribute> resourceAttributesMap) {
-        this.resourceAttributesMap = resourceAttributesMap;
     }
 
     public int getGetAutomtnId() {
@@ -140,41 +126,12 @@ public class RemoteResource {
         this.observed = observed;
     }
 
-    public List<PutPostAttributeModel> getPutPostModel() {
-        Map<String, RemoteResourceAttribute> attMap = getResourceAttributesMap();
-        if (null == attMap || attMap.size() < 1) {
-            return null;
-        }
-        List<PutPostAttributeModel> putPostModelList = new ArrayList<PutPostAttributeModel>();
-        String attName;
-        RemoteResourceAttribute attribute;
-        PutPostAttributeModel putPostModel;
-        Iterator<String> attItr = attMap.keySet().iterator();
-        while (attItr.hasNext()) {
-            attName = attItr.next();
-            attribute = attMap.get(attName);
-            putPostModel = PutPostAttributeModel.getModel(attribute);
-            if (null != putPostModel) {
-                putPostModelList.add(putPostModel);
-            }
-        }
-        return putPostModelList;
-    }
-
-    public String getAttributeValue(String attName) {
-        RemoteResourceAttribute attribute = resourceAttributesMap.get(attName);
-        if (null == attribute) {
-            return null;
-        }
-        return String.valueOf(attribute.getAttributeValue());
-    }
-
     public int getAutomationtype(int autoId) {
         if (getAutomtnId == autoId) {
             return Constants.GET_AUTOMATION_INDEX;
         } else if (putAutomtnId == autoId) {
             return Constants.PUT_AUTOMATION_INDEX;
-        } else {// if(postAutomtnId == autoId) {
+        } else {
             return Constants.POST_AUTOMATION_INDEX;
         }
     }
@@ -184,7 +141,7 @@ public class RemoteResource {
             getAutomtnInProgress = status;
         } else if (putAutomtnId == autoId) {
             putAutomtnInProgress = status;
-        } else {// if(postAutomtnId == autoId) {
+        } else {
             postAutomtnInProgress = status;
         }
     }
@@ -195,5 +152,17 @@ public class RemoteResource {
 
     public void setFavorite(boolean isFavorite) {
         this.isFavorite = isFavorite;
+    }
+
+    public void setResourceRepresentation(SimulatorResourceModel resModel,
+            boolean ramlUploaded) {
+        if (mResourceRepresentation == null)
+            mResourceRepresentation = new ResourceRepresentation(resModel);
+        else
+            mResourceRepresentation.update(resModel, ramlUploaded);
+    }
+
+    public ResourceRepresentation getResourceRepresentation() {
+        return mResourceRepresentation;
     }
 }

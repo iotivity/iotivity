@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _OUT_OF_PROC_SERVER_WRAPPER_H_
-#define _OUT_OF_PROC_SERVER_WRAPPER_H_
+#ifndef OC_OUT_OF_PROC_SERVER_WRAPPER_H_
+#define OC_OUT_OF_PROC_SERVER_WRAPPER_H_
 
 #include <OCApi.h>
 

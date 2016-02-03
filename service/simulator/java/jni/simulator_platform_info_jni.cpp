@@ -87,7 +87,7 @@ std::string JniPlatformInfo::getFieldValue(jobject jPlatformInfo, const std::str
     return value.get();
 }
 
-void onPlatformInfoReceived(jobject listener, PlatformInfo &platformInfo)
+void onPlatformInfoReceived(jobject listener, const std::string &hostUri, PlatformInfo &platformInfo)
 {
     JNIEnv *env = getEnv();
     if (!env)
@@ -95,8 +95,9 @@ void onPlatformInfoReceived(jobject listener, PlatformInfo &platformInfo)
 
     jclass listenerCls = env->GetObjectClass(listener);
     jmethodID listenerMethodId = env->GetMethodID(listenerCls, "onPlatformFound",
-                                 "(Lorg/oic/simulator/PlatformInfo;)V");
+                                 "(Ljava/lang/String;Lorg/oic/simulator/PlatformInfo;)V");
 
+    jstring jHostUri = env->NewStringUTF(hostUri.c_str());
     jobject jPlatformInfo = JniPlatformInfo(env).toJava(platformInfo);
     if (!jPlatformInfo)
     {
@@ -104,7 +105,7 @@ void onPlatformInfoReceived(jobject listener, PlatformInfo &platformInfo)
         return;
     }
 
-    env->CallVoidMethod(listener, listenerMethodId, jPlatformInfo);
+    env->CallVoidMethod(listener, listenerMethodId, jHostUri, jPlatformInfo);
     if (env->ExceptionCheck())
     {
         releaseEnv();

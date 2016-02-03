@@ -16,13 +16,11 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.model.CollectionResource;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.SingleResource;
 import oic.simulator.serviceprovider.utils.Constants;
@@ -32,70 +30,49 @@ import org.eclipse.jface.viewers.CheckboxTreeViewer;
 import org.eclipse.jface.viewers.ICheckStateListener;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.TreeNodeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeItem;
 
 /**
  * This class shows UI for deleting resources.
  */
 public class DeleteResourcePage extends WizardPage {
 
-    private CheckboxTreeViewer       collectionTreeViewer;
-    private CheckboxTreeViewer       singleTreeViewer;
+    private CheckboxTreeViewer    singleTreeViewer;
 
-    private Button                   selectAllSingle;
-    private Button                   selectAllCollection;
-    private Button                   deselectAllSingle;
-    private Button                   deselectAllCollection;
+    private List<SingleResource>  singleSourceList;
 
-    private List<CollectionResource> collectionSourceList;
-    private List<SingleResource>     singleSourceList;
-
-    private Set<CollectionResource>  selectedCollections;
-    private Set<SingleResource>      selectedSingles;
+    private TreeViewContentHelper singleTreeViewContentHelper;
 
     protected DeleteResourcePage() {
         super("Delete Resources");
 
         singleSourceList = Activator.getDefault().getResourceManager()
                 .getSingleResourceList();
-        collectionSourceList = Activator.getDefault().getResourceManager()
-                .getCollectionResourceList();
-
-        selectedCollections = new HashSet<CollectionResource>();
-        selectedSingles = new HashSet<SingleResource>();
     }
 
     @Override
     public void createControl(Composite parent) {
         setPageComplete(false);
         setTitle("Delete Resources");
-        setMessage("Select one or more single and/or collection resources for deletion.");
+        setMessage("Select one or more simple resources for deletion.");
 
         Composite container = new Composite(parent, SWT.NONE);
         container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        GridLayout layout = new GridLayout(5, true);
+        GridLayout layout = new GridLayout(4, true);
         container.setLayout(layout);
 
         createSingleResourcesArea(container);
-
-        createCollectionResourcesArea(container);
-
-        createSelectionControls(container);
 
         setControl(container);
     }
@@ -103,7 +80,7 @@ public class DeleteResourcePage extends WizardPage {
     private void createSingleResourcesArea(Composite container) {
         Composite singleContainer = new Composite(container, SWT.NONE);
         GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
-        gd.horizontalSpan = 2;
+        gd.horizontalSpan = 4;
         singleContainer.setLayoutData(gd);
         GridLayout layout = new GridLayout();
         singleContainer.setLayout(layout);
@@ -111,8 +88,6 @@ public class DeleteResourcePage extends WizardPage {
         Label lbl = new Label(singleContainer, SWT.NONE);
         lbl.setText("Simple Resources:");
         gd = new GridData(SWT.FILL, SWT.FILL, true, true);
-        // gd.grabExcessHorizontalSpace = true;
-        // gd.horizontalAlignment = SWT.FILL;
         lbl.setLayoutData(gd);
 
         Group resourceGroup = new Group(singleContainer, SWT.NONE);
@@ -127,6 +102,10 @@ public class DeleteResourcePage extends WizardPage {
         gd.horizontalSpan = 2;
         resourceGroup.setLayoutData(gd);
 
+        if (null == singleSourceList || singleSourceList.isEmpty()) {
+            return;
+        }
+
         singleTreeViewer = new CheckboxTreeViewer(resourceGroup);
         singleTreeViewer.getTree().setBackground(color);
         gd = new GridData();
@@ -134,198 +113,82 @@ public class DeleteResourcePage extends WizardPage {
         gd.horizontalAlignment = SWT.FILL;
         gd.grabExcessVerticalSpace = true;
         gd.verticalAlignment = SWT.FILL;
-        // gd.heightHint = 300;
+
         singleTreeViewer.getTree().setLayoutData(gd);
         singleTreeViewer
                 .setContentProvider(new SingleResourceContentProvider());
         singleTreeViewer.setLabelProvider(new TreeLabelProvider());
-        singleTreeViewer.setInput(new Object());
+        singleTreeViewer.setInput(new TreeNodeContentProvider());
         singleTreeViewer.addCheckStateListener(new ICheckStateListener() {
 
             @Override
             public void checkStateChanged(CheckStateChangedEvent e) {
-                SingleResource res = (SingleResource) e.getElement();
-                if (null != res) {
-                    if (e.getChecked()) {
-                        selectedSingles.add(res);
-                        System.out.println("Checked" + res.getResourceName());
-                    } else {
-                        selectedSingles.remove(res);
-                        System.out.println("Unchecked:" + res.getResourceName());
-                    }
-                    setPageComplete(isSelectionDone());
-                }
-            }
-        });
-    }
-
-    private void createCollectionResourcesArea(Composite container) {
-        Composite collectionContainer = new Composite(container, SWT.NONE);
-        GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
-        gd.horizontalSpan = 2;
-        collectionContainer.setLayoutData(gd);
-        GridLayout layout = new GridLayout();
-        collectionContainer.setLayout(layout);
-
-        Label lbl = new Label(collectionContainer, SWT.NONE);
-        lbl.setText("Collection Resources:");
-        gd = new GridData(SWT.FILL, SWT.FILL, true, true);
-        // gd.grabExcessHorizontalSpace = true;
-        // gd.horizontalAlignment = SWT.FILL;
-        lbl.setLayoutData(gd);
-
-        Group resourceGroup = new Group(collectionContainer, SWT.NONE);
-
-        Color color = Display.getDefault().getSystemColor(SWT.COLOR_WHITE);
-
-        resourceGroup.setLayout(new GridLayout());
-        gd = new GridData();
-        gd.grabExcessHorizontalSpace = true;
-        gd.horizontalAlignment = SWT.FILL;
-        gd.heightHint = 300;
-        gd.horizontalSpan = 2;
-        resourceGroup.setLayoutData(gd);
-
-        collectionTreeViewer = new CheckboxTreeViewer(resourceGroup);
-        collectionTreeViewer.getTree().setBackground(color);
-        gd = new GridData();
-        gd.grabExcessHorizontalSpace = true;
-        gd.horizontalAlignment = SWT.FILL;
-        gd.grabExcessVerticalSpace = true;
-        gd.verticalAlignment = SWT.FILL;
-        // gd.heightHint = 300;
-        collectionTreeViewer.getTree().setLayoutData(gd);
-        collectionTreeViewer
-                .setContentProvider(new CollectionResourceContentProvider());
-        collectionTreeViewer.setLabelProvider(new TreeLabelProvider());
-        collectionTreeViewer.setInput(new Object());
-        collectionTreeViewer.addCheckStateListener(new ICheckStateListener() {
-
-            @Override
-            public void checkStateChanged(CheckStateChangedEvent e) {
-                CollectionResource res = (CollectionResource) e.getElement();
-                if (null != res) {
-                    if (e.getChecked()) {
-                        selectedCollections.add(res);
-                        System.out.println("Checked" + res.getResourceName());
-                    } else {
-                        selectedCollections.remove(res);
-                        System.out.println("Unchecked:" + res.getResourceName());
-                    }
-                    setPageComplete(isSelectionDone());
-                }
-            }
-        });
-    }
-
-    private void createSelectionControls(Composite container) {
-        Composite innerComp = new Composite(container, SWT.NULL);
-        GridLayout layout = new GridLayout();
-        // layout.verticalSpacing = 10;
-        layout.marginTop = 15;
-        innerComp.setLayout(layout);
-        GridData gd = new GridData();
-        gd.verticalAlignment = SWT.TOP;
-        innerComp.setLayoutData(gd);
-
-        selectAllSingle = new Button(innerComp, SWT.PUSH);
-        selectAllSingle.setText("Select All Simple");
-        gd = new GridData();
-        gd.grabExcessHorizontalSpace = true;
-        gd.horizontalAlignment = SWT.FILL;
-        // gd.widthHint = 70;
-        selectAllSingle.setLayoutData(gd);
-        selectAllSingle.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                check(singleTreeViewer, true);
-            }
-        });
-
-        selectAllCollection = new Button(innerComp, SWT.PUSH);
-        selectAllCollection.setText("Select All Collection");
-        gd = new GridData();
-        gd.grabExcessHorizontalSpace = true;
-        gd.horizontalAlignment = SWT.FILL;
-        // gd.widthHint = 70;
-        selectAllCollection.setLayoutData(gd);
-        selectAllCollection.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                check(collectionTreeViewer, true);
-            }
-        });
-
-        deselectAllSingle = new Button(innerComp, SWT.PUSH);
-        deselectAllSingle.setText("Deselect All Simple");
-        gd = new GridData();
-        gd.grabExcessHorizontalSpace = true;
-        gd.horizontalAlignment = SWT.FILL;
-        // gd.widthHint = 70;
-        deselectAllSingle.setLayoutData(gd);
-        deselectAllSingle.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                check(singleTreeViewer, false);
-            }
-        });
-
-        deselectAllCollection = new Button(innerComp, SWT.PUSH);
-        deselectAllCollection.setText("Deselect All Collection");
-        gd = new GridData();
-        gd.grabExcessHorizontalSpace = true;
-        gd.horizontalAlignment = SWT.FILL;
-        // gd.widthHint = 70;
-        deselectAllCollection.setLayoutData(gd);
-
-        deselectAllCollection.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                check(collectionTreeViewer, false);
-            }
-        });
-    }
-
-    private void check(CheckboxTreeViewer viewer, boolean toCheck) {
-        Tree tree = viewer.getTree();
-        if (null != tree) {
-            TreeItem[] items = tree.getItems();
-            if (null != items && items.length > 0) {
-                Object obj;
-                for (TreeItem item : items) {
-                    obj = item.getData();
-                    if (null != obj) {
-                        viewer.setChecked(obj, toCheck);
-                        updateSelectionList((Resource) obj, toCheck);
+                Object element = e.getElement();
+                if (element instanceof TreeViewContentHelper) {
+                    singleTreeViewer.setGrayed(singleTreeViewContentHelper,
+                            false);
+                    singleTreeViewer.setChecked(singleTreeViewContentHelper,
+                            e.getChecked());
+                    singleTreeViewer.setSubtreeChecked(element, e.getChecked());
+                } else {
+                    Object obj[] = singleTreeViewer.getCheckedElements();
+                    if (null != obj && obj.length > 0) {
+                        int checkedCount = obj.length;
+                        boolean isParentGrayed = singleTreeViewer
+                                .getChecked(singleTreeViewContentHelper);
+                        boolean isParentChecked = singleTreeViewer
+                                .getChecked(singleTreeViewContentHelper);
+                        if (isParentChecked || isParentGrayed) {
+                            checkedCount--;
+                        }
+                        if (checkedCount == singleSourceList.size()) {
+                            singleTreeViewer.setGrayed(
+                                    singleTreeViewContentHelper, false);
+                            singleTreeViewer.setChecked(
+                                    singleTreeViewContentHelper, true);
+                        } else {
+                            if (checkedCount > 0) {
+                                singleTreeViewer.setGrayed(
+                                        singleTreeViewContentHelper, true);
+                                singleTreeViewer.setChecked(
+                                        singleTreeViewContentHelper, true);
+                            } else {
+                                singleTreeViewer.setGrayed(
+                                        singleTreeViewContentHelper, false);
+                                singleTreeViewer.setChecked(
+                                        singleTreeViewContentHelper, false);
+                            }
+                        }
                     }
                 }
                 setPageComplete(isSelectionDone());
             }
-        }
-    }
+        });
+        singleTreeViewer.expandAll();
 
-    private void updateSelectionList(Resource res, boolean isChecked) {
-        if (res instanceof SingleResource) {
-            if (isChecked) {
-                selectedSingles.add((SingleResource) res);
-            } else {
-                selectedSingles.remove((SingleResource) res);
-            }
-        } else {
-            if (isChecked) {
-                selectedCollections.add((CollectionResource) res);
-            } else {
-                selectedCollections.remove((CollectionResource) res);
-            }
-        }
     }
 
     public Set<SingleResource> getSelectedSingleResourcesList() {
-        return selectedSingles;
-    }
+        final Set<SingleResource> singles = new HashSet<SingleResource>();
+        Display.getDefault().syncExec(new Runnable() {
 
-    public Set<CollectionResource> getSelectedCollectionResourcesList() {
-        return selectedCollections;
+            @Override
+            public void run() {
+                if (null == singleTreeViewer) {
+                    return;
+                }
+                Object selection[] = singleTreeViewer.getCheckedElements();
+                if (null == selection || selection.length < 1) {
+                    return;
+                }
+                for (Object obj : selection) {
+                    if (obj instanceof Resource) {
+                        singles.add((SingleResource) obj);
+                    }
+                }
+            }
+        });
+        return singles;
     }
 
     class SingleResourceContentProvider implements ITreeContentProvider {
@@ -340,15 +203,20 @@ public class DeleteResourcePage extends WizardPage {
 
         @Override
         public Object[] getChildren(Object parent) {
+            if (parent instanceof TreeViewContentHelper) {
+                return ((TreeViewContentHelper) parent).getResources()
+                        .toArray();
+            }
             return null;
         }
 
         @Override
         public Object[] getElements(Object parent) {
-            if (null == singleSourceList) {
-                singleSourceList = new ArrayList<SingleResource>();
-            }
-            return singleSourceList.toArray();
+            Object obj[] = new Object[1];
+            singleTreeViewContentHelper = new TreeViewContentHelper(
+                    singleSourceList);
+            obj[0] = singleTreeViewContentHelper;
+            return obj;
         }
 
         @Override
@@ -358,40 +226,9 @@ public class DeleteResourcePage extends WizardPage {
 
         @Override
         public boolean hasChildren(Object parent) {
-            return false;
-        }
-    }
-
-    class CollectionResourceContentProvider implements ITreeContentProvider {
-
-        @Override
-        public void dispose() {
-        }
-
-        @Override
-        public void inputChanged(Viewer arg0, Object arg1, Object arg2) {
-        }
-
-        @Override
-        public Object[] getChildren(Object parent) {
-            return null;
-        }
-
-        @Override
-        public Object[] getElements(Object parent) {
-            if (null == collectionSourceList) {
-                collectionSourceList = new ArrayList<CollectionResource>();
+            if (parent instanceof TreeViewContentHelper) {
+                return true;
             }
-            return collectionSourceList.toArray();
-        }
-
-        @Override
-        public Object getParent(Object child) {
-            return null;
-        }
-
-        @Override
-        public boolean hasChildren(Object parent) {
             return false;
         }
     }
@@ -399,31 +236,47 @@ public class DeleteResourcePage extends WizardPage {
     class TreeLabelProvider extends LabelProvider {
         @Override
         public String getText(Object element) {
+            if (element instanceof TreeViewContentHelper) {
+                return "All";
+            }
             Resource res = (Resource) element;
-            return res.getResourceName();
+            return res.getResourceName() + " (" + res.getResourceURI() + ")";
         }
 
         @Override
         public Image getImage(Object element) {
-            if (element instanceof CollectionResource) {
-                return Activator.getDefault().getImageRegistry()
-                        .get(Constants.COLLECTION_RESOURCE);
-            } else {
+            if (element instanceof SingleResource) {
                 return Activator.getDefault().getImageRegistry()
                         .get(Constants.SINGLE_RESOURCE);
+            } else {
+                return null;
             }
         }
     }
 
+    class TreeViewContentHelper {
+        List<? extends Resource> resources;
+
+        public TreeViewContentHelper(List<? extends Resource> resources) {
+            this.resources = resources;
+        }
+
+        public void setResources(List<? extends Resource> resources) {
+            this.resources = resources;
+        }
+
+        public List<? extends Resource> getResources() {
+            return resources;
+        }
+    }
+
     public boolean isSelectionDone() {
-        boolean done = true;
-        Object obj[] = singleTreeViewer.getCheckedElements();
-        if (null == obj || obj.length < 1) {
-            obj = collectionTreeViewer.getCheckedElements();
-            if (null == obj || obj.length < 1) {
-                done = false;
+        if (null != singleTreeViewer) {
+            Object obj[] = singleTreeViewer.getCheckedElements();
+            if (null != obj && obj.length > 0) {
+                return true;
             }
         }
-        return done;
+        return false;
     }
 }

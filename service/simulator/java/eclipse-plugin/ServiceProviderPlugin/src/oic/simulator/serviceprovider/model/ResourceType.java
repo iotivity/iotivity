@@ -17,5 +17,5 @@
 package oic.simulator.serviceprovider.model;
 
 public enum ResourceType {
-    SINGLE, COLLECTION, DEVICE
+    SINGLE
 }

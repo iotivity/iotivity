@@ -46,8 +46,7 @@ public class AttributeValueValidationTest extends TestCase {
     }
 
     public void testValidateInt_N03() {
-        AttributeValueValidation validation = new AttributeValueValidation(
-                null);
+        AttributeValueValidation validation = new AttributeValueValidation(null);
         assertFalse(validation.validate(new AttributeValue(6)));
     }
 
@@ -164,8 +163,7 @@ public class AttributeValueValidationTest extends TestCase {
     }
 
     public void testValidateDouble_N03() {
-        AttributeValueValidation validation = new AttributeValueValidation(
-                null);
+        AttributeValueValidation validation = new AttributeValueValidation(null);
         assertFalse(validation.validate(new AttributeValue(6.0)));
     }
 

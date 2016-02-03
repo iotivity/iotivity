@@ -47,7 +47,7 @@ void PUTRequestGenerator::startSending()
     // Check the representation
     if (!m_rep)
     {
-        OC_LOG(ERROR, TAG, "Invalid Representation given!");
+        OIC_LOG(ERROR, TAG, "Invalid Representation given!");
         throw SimulatorException(SIMULATOR_ERROR, "Invalid representation detected!");
     }
 
@@ -55,7 +55,7 @@ void PUTRequestGenerator::startSending()
     std::lock_guard<std::mutex> lock(m_statusLock);
     if (m_status)
     {
-        OC_LOG(ERROR, TAG, "Operation already in progress !");
+        OIC_LOG(ERROR, TAG, "Operation already in progress !");
         throw OperationInProgressException("Another PUT request generation session is already in progress!");
     }
 
@@ -72,7 +72,7 @@ void PUTRequestGenerator::stopSending()
 
 void PUTRequestGenerator::SendAllRequests()
 {
-    OC_LOG(DEBUG, TAG, "Sending OP_START event");
+    OIC_LOG(DEBUG, TAG, "Sending OP_START event");
     m_callback(m_id, OP_START);
 
     // Create attribute combination generator for generating resource model
@@ -85,7 +85,7 @@ void PUTRequestGenerator::SendAllRequests()
 
     if (!attributes.size())
     {
-        OC_LOG(ERROR, TAG, "Zero attribute found from resource model!");
+        OIC_LOG(ERROR, TAG, "Zero attribute found from resource model!");
         return;
     }
 
@@ -124,7 +124,7 @@ void PUTRequestGenerator::SendAllRequests()
 void PUTRequestGenerator::onResponseReceived(SimulatorResult result,
         SimulatorResourceModelSP repModel)
 {
-    OC_LOG_V(INFO, TAG, "Response recieved result:%d", result);
+    OIC_LOG_V(INFO, TAG, "Response recieved result:%d", result);
     m_responseCnt++;
     completed();
 }
@@ -135,12 +135,12 @@ void PUTRequestGenerator::completed()
     {
         if (m_stopRequested)
         {
-            OC_LOG(DEBUG, TAG, "Sending OP_ABORT event");
+            OIC_LOG(DEBUG, TAG, "Sending OP_ABORT event");
             m_callback(m_id, OP_ABORT);
         }
         else
         {
-            OC_LOG(DEBUG, TAG, "Sending OP_COMPLETE event");
+            OIC_LOG(DEBUG, TAG, "Sending OP_COMPLETE event");
             m_callback(m_id, OP_COMPLETE);
         }
     }

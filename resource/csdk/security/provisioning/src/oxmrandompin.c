@@ -50,7 +50,7 @@ char* CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx)
     OicUuid_t uuidPT = {.id={0}};
     if (OC_STACK_OK != GetDoxmDeviceID(&uuidPT))
     {
-        OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
+        OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return NULL;
     }
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id, UUID_LENGTH);
@@ -69,7 +69,7 @@ char* CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx)
 
     if (OC_STACK_OK != GetDoxmDeviceID(&uuidPT))
     {
-        OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
+        OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return NULL;
     }
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
@@ -90,14 +90,14 @@ OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)
     OCStackResult res = InputPin((char*)pinData, OXM_RANDOM_PIN_SIZE + 1);
     if(OC_STACK_OK != res)
     {
-        OC_LOG(ERROR, TAG, "Failed to input PIN");
+        OIC_LOG(ERROR, TAG, "Failed to input PIN");
         return res;
     }
 
     OicUuid_t deviceUUID = {.id={0}};
     if (OC_STACK_OK != GetDoxmDeviceID(&deviceUUID))
     {
-        OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
+        OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return OC_STACK_ERROR;
     }
 
@@ -107,7 +107,7 @@ OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)
                            1, &deviceUUID, &otmCtx->subIdForPinOxm);
     if(res != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to save the temporal PSK : %d", res);
+        OIC_LOG_V(ERROR, TAG, "Failed to save the temporal PSK : %d", res);
     }
 
     return res;
@@ -115,7 +115,7 @@ OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)
 
 OCStackResult CreateSecureSessionRandomPinCallbak(OTMContext_t* otmCtx)
 {
-    OC_LOG(INFO, TAG, "IN CreateSecureSessionRandomPinCallbak");
+    OIC_LOG(INFO, TAG, "IN CreateSecureSessionRandomPinCallbak");
 
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -125,18 +125,18 @@ OCStackResult CreateSecureSessionRandomPinCallbak(OTMContext_t* otmCtx)
     CAResult_t caresult = CAEnableAnonECDHCipherSuite(false);
     if (CA_STATUS_OK != caresult)
     {
-        OC_LOG_V(ERROR, TAG, "Unable to disable anon cipher suite");
+        OIC_LOG_V(ERROR, TAG, "Unable to disable anon cipher suite");
         return OC_STACK_ERROR;
     }
-    OC_LOG(INFO, TAG, "Anonymous cipher suite disabled.");
+    OIC_LOG(INFO, TAG, "Anonymous cipher suite disabled.");
 
     caresult  = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256);
     if (CA_STATUS_OK != caresult)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256");
+        OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256");
         return OC_STACK_ERROR;
     }
-    OC_LOG(INFO, TAG, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
+    OIC_LOG(INFO, TAG, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
 
 
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
@@ -151,11 +151,11 @@ OCStackResult CreateSecureSessionRandomPinCallbak(OTMContext_t* otmCtx)
     OICFree(endpoint);
     if (CA_STATUS_OK != caresult)
     {
-        OC_LOG_V(ERROR, TAG, "DTLS handshake failure.");
+        OIC_LOG_V(ERROR, TAG, "DTLS handshake failure.");
         return OC_STACK_ERROR;
     }
 
-    OC_LOG(INFO, TAG, "OUT CreateSecureSessionRandomPinCallbak");
+    OIC_LOG(INFO, TAG, "OUT CreateSecureSessionRandomPinCallbak");
 
     return OC_STACK_OK;
 }

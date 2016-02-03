@@ -77,24 +77,24 @@ ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCa
     // check for the presence of the shield:
     if (WiFi.status() == WL_NO_SHIELD)
     {
-        OC_LOG(ERROR, ES_NH_TAG, "WiFi shield not present");
+        OIC_LOG(ERROR, ES_NH_TAG, "WiFi shield not present");
         return ES_ERROR;
     }
 
     // Verify that WiFi Shield is running the firmware with all UDP fixes
     fwVersion = WiFi.firmwareVersion();
-    OC_LOG_V(INFO, ES_NH_TAG, "WiFi Shield Firmware version %s", fwVersion);
+    OIC_LOG_V(INFO, ES_NH_TAG, "WiFi Shield Firmware version %s", fwVersion);
     if (strncmp(fwVersion, ARDUINO_WIFI_SHIELD_UDP_FW_VER, sizeof(ARDUINO_WIFI_SHIELD_UDP_FW_VER))
             != 0)
     {
-        OC_LOG(DEBUG, ES_NH_TAG, "!!!!! Upgrade WiFi Shield Firmware version !!!!!!");
+        OIC_LOG(DEBUG, ES_NH_TAG, "!!!!! Upgrade WiFi Shield Firmware version !!!!!!");
         return ES_ERROR;
     }
 
     //Retry counter is reset everytime the ConnectToWiFiNetwork is invoked
     g_retryCounter = 0;
 
-    OC_LOG_V(INFO, ES_NH_TAG, "Finding SSID: %s", ssid);
+    OIC_LOG_V(INFO, ES_NH_TAG, "Finding SSID: %s", ssid);
 
     while ((findNetwork(ssid) == 0) && g_retryCounter < ES_MAX_NETWORK_RETRY) // found
     {
@@ -103,8 +103,8 @@ ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCa
     }
 
     if(g_retryCounter == ES_MAX_NETWORK_RETRY){
-        OC_LOG_V(ERROR, ES_NH_TAG, "Connection to network failed after %d attempts",
-                                                                    g_retryCounter);
+        OIC_LOG_V(ERROR, ES_NH_TAG, "Connection to network failed after %d attempts",
+                  g_retryCounter);
         return ES_ERROR;
     }
 
@@ -173,7 +173,7 @@ int ConnectToNetwork(const char *ssid, const char *pass)
     // attempt to connect to Wifi network:
     while (status != WL_CONNECTED && g_retryCounter < ES_MAX_NETWORK_RETRY)
     {
-        OC_LOG_V(INFO, ES_NH_TAG, "Attempting to connect to SSID: %s", ssid);
+        OIC_LOG_V(INFO, ES_NH_TAG, "Attempting to connect to SSID: %s", ssid);
 
         status = WiFi.begin((char *) ssid, (char *) pass);
 
@@ -184,16 +184,16 @@ int ConnectToNetwork(const char *ssid, const char *pass)
     }
 
     if(g_retryCounter == ES_MAX_NETWORK_RETRY){
-        OC_LOG_V(ERROR, ES_NH_TAG, "Connection to network failed after %d attempts",
-                                                                    g_retryCounter);
+        OIC_LOG_V(ERROR, ES_NH_TAG, "Connection to network failed after %d attempts",
+                  g_retryCounter);
         return ES_ERROR;
     }
 
-    OC_LOG(DEBUG, ES_NH_TAG, "Connected to wifi");
+    OIC_LOG(DEBUG, ES_NH_TAG, "Connected to wifi");
 
     enrolleeIP = WiFi.localIP();
-    OC_LOG_V(INFO, ES_NH_TAG, "IP Address:  %d.%d.%d.%d", enrolleeIP[0], enrolleeIP[1],
-                                                          enrolleeIP[2], enrolleeIP[3]);
+    OIC_LOG_V(INFO, ES_NH_TAG, "IP Address:  %d.%d.%d.%d", enrolleeIP[0], enrolleeIP[1],
+                                                           enrolleeIP[2], enrolleeIP[3]);
 
     char buf[50];
     sprintf(buf, "IP Address:  %d.%d.%d.%d", enrolleeIP[0], enrolleeIP[1],

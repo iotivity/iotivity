@@ -23,8 +23,10 @@ public interface DeviceListener {
     /**
      * Method which provides remote device information.
      *
+     * @param hostUri
+     *            Holds the address and port information.
      * @param devInfo
      *            {@link DeviceInfo} object holding the device information.
      */
-    public void onDeviceFound(DeviceInfo devInfo);
+    public void onDeviceFound(String hostUri, DeviceInfo devInfo);
 }

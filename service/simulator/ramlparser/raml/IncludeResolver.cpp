@@ -19,6 +19,7 @@
  ******************************************************************/
 
 #include "IncludeResolver.h"
+#include <algorithm>
 
 namespace RAML
 {

@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __OC_LOG_HPP_20140910
- #define __OC_LOG_HPP_20140910
+#ifndef OC_LOGGER_HPP_
+#define OC_LOGGER_HPP_
 
 #include "oc_logger.h"
 

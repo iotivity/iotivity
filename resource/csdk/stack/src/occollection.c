@@ -44,14 +44,14 @@
 
 #include "oicgroup.h"
 
-#define TAG "occollection"
+#define TAG "OIC_RI_COLLECTION"
 
 #define NUM_PARAM_IN_QUERY   2 // The expected number of parameters in a query
 #define NUM_FIELDS_IN_QUERY  2 // The expected number of fields in a query
 
 static OCStackResult CheckRTParamSupport(const OCResource* resource, const char* rtPtr)
 {
-    if(!resource || !rtPtr)
+    if (!resource || !rtPtr)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -59,7 +59,7 @@ static OCStackResult CheckRTParamSupport(const OCResource* resource, const char*
     OCResourceType* rTPointer = resource->rsrcType;
     while (rTPointer)
     {
-        if( strcmp (rTPointer->resourcetypename, rtPtr) == 0)
+        if (strcmp(rTPointer->resourcetypename, rtPtr) == 0)
         {
             return OC_STACK_OK;
         }
@@ -71,7 +71,7 @@ static OCStackResult CheckRTParamSupport(const OCResource* resource, const char*
 
 static OCStackResult CheckIFParamSupport(const OCResource* resource, const char* ifPtr)
 {
-    if(!resource || !ifPtr)
+    if (!resource || !ifPtr)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -79,7 +79,7 @@ static OCStackResult CheckIFParamSupport(const OCResource* resource, const char*
     OCResourceInterface* iFPointer = resource->rsrcInterface;
     while (iFPointer)
     {
-        if( strcmp (iFPointer->name, ifPtr) == 0)
+        if (strcmp(iFPointer->name, ifPtr) == 0)
         {
             return OC_STACK_OK;
         }
@@ -91,7 +91,7 @@ static OCStackResult CheckIFParamSupport(const OCResource* resource, const char*
 
 static OCStackResult
 ValidateQuery (const char *query, OCResourceHandle resource,
-                             OCStackIfTypes *ifParam, char **rtParam)
+               OCStackIfTypes *ifParam, char **rtParam)
 {
     uint8_t numFields = 0;
     uint8_t numParam;
@@ -99,14 +99,14 @@ ValidateQuery (const char *query, OCResourceHandle resource,
     //TODO: Query and URL validation is being done for virtual resource case
     // using ValidateUrlQuery function. We should be able to merge it with this
     // function.
-    OC_LOG(INFO, TAG, "Entering ValidateQuery");
+    OIC_LOG(INFO, TAG, "Entering ValidateQuery");
 
     if (!query)
     {
         return OC_STACK_ERROR;
     }
 
-    if(!ifParam || !rtParam)
+    if (!ifParam || !rtParam)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -114,7 +114,7 @@ ValidateQuery (const char *query, OCResourceHandle resource,
     if (!(*query))
     {
         // Query string is empty
-        OC_LOG(INFO, TAG, "Empty query string, use default IF and RT");
+        OIC_LOG(INFO, TAG, "Empty query string, use default IF and RT");
         *ifParam = STACK_IF_DEFAULT;
         *rtParam = (char *) OCGetResourceTypeName (resource, 0);
         return OC_STACK_OK;
@@ -172,7 +172,7 @@ ValidateQuery (const char *query, OCResourceHandle resource,
 
     if (ifPtr)
     {
-        if(CheckIFParamSupport((OCResource *)resource, ifPtr) != OC_STACK_OK)
+        if (CheckIFParamSupport((OCResource *)resource, ifPtr) != OC_STACK_OK)
         {
             return OC_STACK_INVALID_QUERY;
         }
@@ -188,7 +188,7 @@ ValidateQuery (const char *query, OCResourceHandle resource,
         {
             *ifParam = STACK_IF_BATCH;
         }
-        else if(strcmp (ifPtr, OC_RSRVD_INTERFACE_GROUP) == 0)
+        else if (strcmp (ifPtr, OC_RSRVD_INTERFACE_GROUP) == 0)
         {
             *ifParam = STACK_IF_GROUP;
         }
@@ -219,7 +219,7 @@ ValidateQuery (const char *query, OCResourceHandle resource,
         // RT not specified in query. Use the first resource type for the resource as default.
         *rtParam = (char *) OCGetResourceTypeName (resource, 0);
     }
-    OC_LOG_V(INFO, TAG, "Query params: IF = %d, RT = %s", *ifParam, *rtParam);
+    OIC_LOG_V(INFO, TAG, "Query params: IF = %d, RT = %s", *ifParam, *rtParam);
 
     return OC_STACK_OK;
 }
@@ -231,36 +231,33 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
 {
     (void)filterOn;
     (void)filterValue;
-    if(!ehRequest)
+    if (!ehRequest)
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCStackResult ret = OC_STACK_OK;
     OCResource *collResource = (OCResource *)ehRequest->resource;
 
     OCRepPayload* payload = NULL;
-
-    if(ret == OC_STACK_OK)
-    {
-        ret = BuildResponseRepresentation(collResource, &payload);
-    }
-
+    OCStackResult ret = BuildResponseRepresentation(collResource, &payload);
     if (ret == OC_STACK_OK)
     {
-        for  (int i = 0; i < MAX_CONTAINED_RESOURCES && ret == OC_STACK_OK; i++)
+        for (size_t i = 0; i < MAX_CONTAINED_RESOURCES && ret == OC_STACK_OK; i++)
         {
-            OCResource* temp = collResource->rsrcResources[i];
-            if (temp)
+            if (collResource)
             {
-                //TODO : Add resource type filtering once collections
-                // start supporting queries.
-                ret = BuildResponseRepresentation(temp, &payload);
+                OCResource* temp = collResource->rsrcResources[i];
+                if (temp)
+                {
+                    //TODO : Add resource type filtering once collections
+                    // start supporting queries.
+                    ret = BuildResponseRepresentation(temp, &payload);
+                }
             }
         }
     }
 
-    if(ret == OC_STACK_OK)
+    if (ret == OC_STACK_OK)
     {
         OCEntityHandlerResponse response = {0};
         response.ehResult = OC_EH_OK;
@@ -282,38 +279,30 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCStackResult stackRet = OC_STACK_OK;
-    OCEntityHandlerResult ehResult = OC_EH_ERROR;
     OCResource * collResource = (OCResource *) ehRequest->resource;
 
     OCRepPayload* payload = OCRepPayloadCreate();
-    if(!payload)
+    if (!payload)
     {
-        stackRet = OC_STACK_NO_MEMORY;
+        return OC_STACK_NO_MEMORY;
     }
 
-    if(stackRet == OC_STACK_OK)
+    if (collResource)
     {
-        if (collResource)
-        {
-            OCRepPayloadSetUri(payload, collResource->uri);
-        }
+        OCRepPayloadSetUri(payload, collResource->uri);
     }
 
-    if(stackRet == OC_STACK_OK)
-    {
-        OCEntityHandlerResponse response = {0};
-        response.ehResult = OC_EH_OK;
-        response.payload = (OCPayload*)payload;
-        response.persistentBufferFlag = 0;
-        response.requestHandle = (OCRequestHandle) ehRequest->requestHandle;
-        response.resourceHandle = (OCResourceHandle) collResource;
-        stackRet = OCDoResponse(&response);
-    }
+    OCEntityHandlerResponse response = {0};
+    response.ehResult = OC_EH_OK;
+    response.payload = (OCPayload*)payload;
+    response.persistentBufferFlag = 0;
+    response.requestHandle = (OCRequestHandle) ehRequest->requestHandle;
+    response.resourceHandle = (OCResourceHandle) collResource;
+    OCStackResult stackRet = OCDoResponse(&response);
 
     if (stackRet == OC_STACK_OK)
     {
-        for  (uint8_t i = 0; i < MAX_CONTAINED_RESOURCES; i++)
+        for (uint8_t i = 0; i < MAX_CONTAINED_RESOURCES; i++)
         {
             OCResource* temp = collResource->rsrcResources[i];
             if (temp)
@@ -323,19 +312,19 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
                 // is ehRequest->resource
                 ehRequest->resource = (OCResourceHandle) temp;
 
-                ehResult = temp->entityHandler(OC_REQUEST_FLAG, ehRequest,
-                                        temp->entityHandlerCallbackParam);
+                OCEntityHandlerResult ehResult = temp->entityHandler(OC_REQUEST_FLAG, ehRequest,
+                                                                     temp->entityHandlerCallbackParam);
 
                 // The default collection handler is returning as OK
-                if(stackRet != OC_STACK_SLOW_RESOURCE)
+                if (stackRet != OC_STACK_SLOW_RESOURCE)
                 {
                     stackRet = OC_STACK_OK;
                 }
                 // if a single resource is slow, then entire response will be treated
                 // as slow response
-                if(ehResult == OC_EH_SLOW)
+                if (ehResult == OC_EH_SLOW)
                 {
-                    OC_LOG(INFO, TAG, "This is a slow resource");
+                    OIC_LOG(INFO, TAG, "This is a slow resource");
                     ((OCServerRequest *)ehRequest->requestHandle)->slowFlag = 1;
                     stackRet = EntityHandlerCodeToOCStackCode(ehResult);
                 }
@@ -352,7 +341,7 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
 uint8_t GetNumOfResourcesInCollection (OCResource *resource)
 {
-    if(resource)
+    if (resource)
     {
         uint8_t num = 0;
         for (uint8_t i = 0; i < MAX_CONTAINED_RESOURCES; i++)
@@ -374,24 +363,22 @@ uint8_t GetNumOfResourcesInCollection (OCResource *resource)
 OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                                               OCEntityHandlerRequest *ehRequest)
 {
-    if(!ehRequest || !ehRequest->query)
+    if (!ehRequest || !ehRequest->query)
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCStackResult result = OC_STACK_ERROR;
-    OCStackIfTypes ifQueryParam = STACK_IF_INVALID;
-    char *rtQueryParam = NULL;
-
-    OC_LOG_V(INFO, TAG, "DefaultCollectionEntityHandler with query %s", ehRequest->query);
+    OIC_LOG_V(INFO, TAG, "DefaultCollectionEntityHandler with query %s", ehRequest->query);
 
     if (flag != OC_REQUEST_FLAG)
     {
         return OC_STACK_ERROR;
     }
 
-    result = ValidateQuery (ehRequest->query,
-                            ehRequest->resource, &ifQueryParam, &rtQueryParam);
+    OCStackIfTypes ifQueryParam = STACK_IF_INVALID;
+    char *rtQueryParam = NULL;
+    OCStackResult result = ValidateQuery (ehRequest->query,
+                                          ehRequest->resource, &ifQueryParam, &rtQueryParam);
 
     if (result != OC_STACK_OK)
     {
@@ -407,15 +394,15 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                     // Get attributes of collection resource and properties of contained resources
                     // M1 release does not support attributes for collection resource, so the GET
                     // operation is same as the GET on LL interface.
-                    OC_LOG(INFO, TAG, "STACK_IF_DEFAULT");
+                    OIC_LOG(INFO, TAG, "STACK_IF_DEFAULT");
                     return HandleLinkedListInterface(ehRequest, STACK_RES_DISCOVERY_NOFILTER, NULL);
 
                 case STACK_IF_LL:
-                    OC_LOG(INFO, TAG, "STACK_IF_LL");
+                    OIC_LOG(INFO, TAG, "STACK_IF_LL");
                     return HandleLinkedListInterface(ehRequest, STACK_RES_DISCOVERY_NOFILTER, NULL);
 
                 case STACK_IF_BATCH:
-                    OC_LOG(INFO, TAG, "STACK_IF_BATCH");
+                    OIC_LOG(INFO, TAG, "STACK_IF_BATCH");
                     ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler =
                                                                             HandleAggregateResponse;
 
@@ -451,8 +438,8 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                     return HandleBatchInterface(ehRequest);
 
                 case STACK_IF_GROUP:
-                    OC_LOG(INFO, TAG, "IF_COLLECTION PUT with request ::\n");
-                    OC_LOG_PAYLOAD(INFO, ehRequest->payload);
+                    OIC_LOG(INFO, TAG, "IF_COLLECTION PUT with request ::\n");
+                    OIC_LOG_PAYLOAD(INFO, ehRequest->payload);
                     return BuildCollectionGroupActionCBORResponse(OC_REST_PUT/*flag*/,
                             (OCResource *) ehRequest->resource, ehRequest);
 
@@ -479,8 +466,8 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                     return HandleBatchInterface(ehRequest);
 
                 case STACK_IF_GROUP:
-                    OC_LOG(INFO, TAG, "IF_COLLECTION POST with request ::\n");
-                    OC_LOG_PAYLOAD(INFO, ehRequest->payload);
+                    OIC_LOG(INFO, TAG, "IF_COLLECTION POST with request ::\n");
+                    OIC_LOG_PAYLOAD(INFO, ehRequest->payload);
                     return BuildCollectionGroupActionCBORResponse(OC_REST_POST/*flag*/,
                             (OCResource *) ehRequest->resource, ehRequest);
 

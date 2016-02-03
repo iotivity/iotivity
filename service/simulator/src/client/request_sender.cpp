@@ -73,7 +73,7 @@ void RequestSender::sendRequest(const std::string &interfaceType,
                                       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, requestId));
     if (OC_STACK_OK != ocResult)
     {
-        OC_LOG_V(ERROR, TAG, "Sending request failed [errorcode: %d]", ocResult);
+        OIC_LOG_V(ERROR, TAG, "Sending request failed [errorcode: %d]", ocResult);
         m_requestList.remove(requestId);
         throw SimulatorException(static_cast<SimulatorResult>(ocResult), "Failed to send request!");
     }

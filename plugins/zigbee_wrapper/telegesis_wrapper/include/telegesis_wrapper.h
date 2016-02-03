@@ -129,10 +129,11 @@ typedef struct
     char eui[SIZE_EUI];
 } TWEnrollee;
 
-typedef void (*TWDeviceFoundCallback)(TWDevice* device);
-typedef void (*TWEnrollmentSucceedCallback)(TWEnrollee* enrollee);
-typedef void (*TWDeviceStatusUpdateCallback)(TWUpdate* update);
-typedef void (*TWInitCompleteCallback)(bool status);
+typedef void (*TWDeviceFoundCallback)(TWDevice* device, PIPlugin_Zigbee* plugin);
+typedef void (*TWEnrollmentSucceedCallback)(TWEnrollee* enrollee, PIPlugin_Zigbee* plugin);
+typedef void (*TWDeviceStatusUpdateCallback)(TWUpdate* update, PIPlugin_Zigbee* plugin);
+typedef void (*TWDeviceNodeIdChangedCallback)(const char* eui, const char* nodeId,
+                                              PIPlugin_Zigbee* plugin);
 
 /**
  *
@@ -141,14 +142,15 @@ typedef void (*TWInitCompleteCallback)(bool status);
  * @param[in] deviceDevPath The device path at which this Telegesis module exists.
  *
  */
-OCStackResult TWInitialize(const char* deviceDevPath);
+OCStackResult TWInitialize(PIPlugin_Zigbee* plugin, const char* deviceDevPath);
 
 /**
  *
  * Initiates necessary operations to find ZigBee devices.
+ * @param[in] plugin The plugin instance to operate with.
  *
  */
-OCStackResult TWDiscover();
+OCStackResult TWDiscover(PIPlugin_Zigbee* plugin);
 
 /**
  *
@@ -161,11 +163,13 @@ OCStackResult TWDiscover();
  * @param[in] attributeId The attribute id from which the attribute belongs.
  * @param[out] outValue The value at the specified attribute.
  * @param[out] outValueLength The length of the value.
+ * @param[in] plugin The plugin instance to operate with.
  *
  */
 OCStackResult TWGetAttribute(char* extendedUniqueId, char* nodeId, char* endpointId,
                              char* clusterId, char* attributeId,
-                             char** outValue, uint8_t* outValueLength);
+                             char** outValue, uint8_t* outValueLength,
+                             PIPlugin_Zigbee* plugin);
 
 /**
  *
@@ -178,11 +182,12 @@ OCStackResult TWGetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
  * @param[in] attributeId The attribute id from which the attribute belongs.
  * @param[in] attributeType The attribute type of the attribute.
  * @param[in] newValue The value to set at the specified attribute.
+ * @param[in] plugin The plugin instance to operate with.
  *
  */
 OCStackResult TWSetAttribute(char* extendedUniqueId, char* nodeId, char* endpointId,
                              char* clusterId, char* attributeId, char* attributeType,
-                             char* newValue);
+                             char* newValue, PIPlugin_Zigbee* plugin);
 
 /**
  *
@@ -191,9 +196,11 @@ OCStackResult TWSetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
  * @param[in] nodeId The node id of the device.
  * @param[in] endpointId The endpoint id from which the attribute belongs.
  * @param[in] newState Use "0" for OFF, "1" for ON, NULL for toggling.
+ * @param[in] plugin The plugin instance to operate with.
  *
  */
-OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState);
+OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState,
+                            PIPlugin_Zigbee* plugin);
 
 /**
  *
@@ -210,11 +217,13 @@ OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState);
  * @param[in] level The The meaning of ‘level’ is device dependent
  *                  e.g. for a light it may mean brightness level.
  *
- * @param[in] transTime The time taken to move to the new level
+ * @param[in] transTime The time taken to move to the new level.
+ * @param[in] plugin The plugin instance to operate with.
  *
  */
 OCStackResult TWMoveToLevel(char* nodeId, char* endpointId,
-                            char* onOffState, char* level, char* transTime);
+                            char* onOffState, char* level, char* transTime,
+                            PIPlugin_Zigbee* plugin);
 
 /**
  *
@@ -223,9 +232,11 @@ OCStackResult TWMoveToLevel(char* nodeId, char* endpointId,
  * @param[in] nodeId The node id of the device.
  * @param[in] endpointId The endpoint id from which the attribute belongs.
  * @param[in] newState Use "0" to Unlock, "1" to Lock ON.
+ * @param[in] plugin The plugin instance to operate with.
  *
  */
-OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newState);
+OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newState,
+                                    PIPlugin_Zigbee* plugin);
 
 /**
  *
@@ -235,10 +246,12 @@ OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newSta
  * @param[in] endpointId The endpoint id from which the attribute belongs.
  * @param[in] colorTemperature 16 bit hexadecimal number.
  * @param[in] transTime The time taken to move to the new level.
+ * @param[in] plugin The plugin instance to operate with.
  *
  */
 OCStackResult TWColorMoveToColorTemperature(char* nodeId, char* endpointId,
-                                            char* colorTemperature, char* transTime);
+                                            char* colorTemperature, char* transTime,
+                                            PIPlugin_Zigbee* plugin);
 
 /**
  *
@@ -246,14 +259,26 @@ OCStackResult TWColorMoveToColorTemperature(char* nodeId, char* endpointId,
  * This callback will be called when TWDiscover() discovers ZigBee device(s).
  *
  */
-OCStackResult TWSetDiscoveryCallback(const TWDeviceFoundCallback callback);
+OCStackResult TWSetDiscoveryCallback(const TWDeviceFoundCallback callback,
+                                     PIPlugin_Zigbee* plugin);
+
+/**
+ *
+ * Sets end device's nodeId changed callback.
+ * This callback will be called when there is a NodeId change for a remote ZigBee device.
+ *
+ */
+OCStackResult TWSetEndDeviceNodeIdChangedCallback(TWDeviceNodeIdChangedCallback callback,
+                                                  PIPlugin_Zigbee* plugin);
+
 /**
  *
  * Sets status update callback.
  * This callback will be called when there is an update on remote ZigBee devices.
  *
  */
-OCStackResult TWSetStatusUpdateCallback(TWDeviceStatusUpdateCallback callback);
+OCStackResult TWSetStatusUpdateCallback(TWDeviceStatusUpdateCallback callback,
+                                        PIPlugin_Zigbee* plugin);
 
 /**
  *
@@ -261,24 +286,27 @@ OCStackResult TWSetStatusUpdateCallback(TWDeviceStatusUpdateCallback callback);
  * A callback TWEnrollSucceedCallback will be invoked when this registration is fulfill.
  * @param[in] nodeId The node id of the remote zone device.
  * @param[in] endpointId The node id of the remote zone device.
+ * @param[in] plugin The plugin instance to operate with.
  *
  *
  */
-OCStackResult TWListenForStatusUpdates(char* nodeId, char* endpointId);
+OCStackResult TWListenForStatusUpdates(char* nodeId, char* endpointId, PIPlugin_Zigbee* plugin);
 
 /**
  *
  * Process TWEntry.
+ * @param[in] plugin The plugin instance to operate with.
  *
  */
-OCStackResult TWProcess();
+OCStackResult TWProcess(PIPlugin_Zigbee* plugin);
 
 /**
  *
  * Uninitializes the Telegesis module.
+ * @param[in] plugin The plugin instance to operate with.
  *
  */
-OCStackResult TWUninitialize();
+OCStackResult TWUninitialize(PIPlugin_Zigbee* plugin);
 
 
 #ifdef __cplusplus

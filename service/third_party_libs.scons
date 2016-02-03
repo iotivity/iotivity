@@ -90,7 +90,7 @@ if target_os == 'android':
 		lib_env.AppendUnique(CCFLAGS = ['-w'])
 
 elif target_os == 'ios':
-	lib_env.AppendUnique(FRAMEWORKS = ['boost', 'expat', 'openssl'])
+	lib_env.AppendUnique(FRAMEWORKS = ['boost', 'openssl'])
 elif target_os == 'darwin':
 	lib_env.AppendUnique(CPPPATH = ['/usr/local/include'])
 	lib_env.AppendUnique(LIBPATH = ['/usr/local/lib'])

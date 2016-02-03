@@ -124,6 +124,8 @@ CAResult_t u_linklist_free(u_linklist_t **linklist)
 
         (*linklist)->size -= 1;
     }
+
+    OICFree(*linklist);
     *linklist=NULL;
 
     return CA_STATUS_OK;
