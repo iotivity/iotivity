@@ -87,7 +87,10 @@ scenemanager_src = [
         SCENE_SRC_DIR + 'SceneListResourceObject.cpp',
         SCENE_SRC_DIR + 'SceneCollectionResourceObject.cpp',
         SCENE_SRC_DIR + 'SceneMemberResourceObject.cpp',
-        SCENE_SRC_DIR + 'SceneUtils.cpp'
+        SCENE_SRC_DIR + 'SceneUtils.cpp',
+        SCENE_SRC_DIR + 'SceneListResourceRequestor.cpp',
+        SCENE_SRC_DIR + 'SceneCollectionResourceRequestor.cpp',
+        SCENE_SRC_DIR + 'SceneMemberResourceRequestor.cpp'
         ]
 
 if target_os in ['tizen','android'] :
