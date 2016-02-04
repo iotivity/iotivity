@@ -19,99 +19,123 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "Scene.h"
+#include "SceneCollectionResourceObject.h"
 
-#include <iostream>
+#include <algorithm>
 
 namespace OIC
 {
     namespace Service
     {
+        Scene::Scene(const std::string& sceneName,
+                SceneCollectionResourceObject::Ptr sceneCollectionResource) :
+                m_name(sceneName), m_sceneCollectionResourceObj(sceneCollectionResource) {}
 
-        Scene::Scene(const std::string& sceneName, ExecuteCallback cb) :
-                m_sceneName(sceneName), m_callback(std::move(cb))
+        SceneAction::Ptr Scene::addNewSceneAction(
+               const RCSRemoteResourceObject::Ptr& RCSRemoteResourceObjectPtr,
+               const std::string& key, const RCSResourceAttributes::Value& value)
         {
+            RCSResourceAttributes resAttr;
+            resAttr[key] = RCSResourceAttributes::Value(value);
+
+            return addNewSceneAction(RCSRemoteResourceObjectPtr, resAttr);
         }
 
-        Scene::Scene(const std::string& sceneName) :
-                m_sceneName(sceneName)
+        SceneAction::Ptr Scene::addNewSceneAction(
+                const RCSRemoteResourceObject::Ptr& RCSRemoteResourceObjectPtr,
+                const RCSResourceAttributes& attr)
         {
-        }
-
-        Scene::~Scene()
-        {
-            m_sceneActionList.clear();
-        }
-
-        bool Scene::addSceneAction(const SceneAction::Ptr& newSceneAction)
-        {
-            if(newSceneAction == nullptr)
+            if(RCSRemoteResourceObjectPtr == nullptr)
             {
-                throw RCSInvalidParameterException { "SceneAction is empty!" };
+                throw RCSInvalidParameterException("RCSRemoteResoureObjectPtr value is null");
             }
 
-            newSceneAction->setCallback(
-                    std::bind(&Scene::onSceneActionExecuteResult, this, std::placeholders::_1,
-                            std::placeholders::_2));
-            m_sceneActionList.push_back(newSceneAction);
+            SceneMemberResourceObject::Ptr sceneMemberResObj;
+            auto members = m_sceneCollectionResourceObj->getSceneMembers();
+            auto check = std::find_if(members.begin(), members.end(), [&RCSRemoteResourceObjectPtr] (
+                    const SceneMemberResourceObject::Ptr it){
+                return it->getRemoteResourceObject() == RCSRemoteResourceObjectPtr;});
 
-            return true;
-        }
-        bool Scene::removeSceneAction(const SceneAction::Ptr& sceneAction)
-        {
-            // TODO
-        }
-
-        void Scene::setCallback(ExecuteCallback cb)
-        {
-            if(cb == nullptr)
+            if(check != members.end())
             {
-                throw RCSInvalidParameterException { "callback is empty!" };
+                sceneMemberResObj = *check;
             }
 
-            m_callback = std::move(cb);
+            else
+            {
+                sceneMemberResObj = SceneMemberResourceObject::createSceneMemberResource(
+                        RCSRemoteResourceObjectPtr);
+                m_sceneCollectionResourceObj->addSceneMember(sceneMemberResObj);
+            }
+
+            SceneAction::Ptr sceneActionPtr(new SceneAction(sceneMemberResObj, m_name, attr));
+            return sceneActionPtr;
         }
 
-        bool Scene::execute()
+        std::vector< SceneAction::Ptr > Scene::getSceneAction( // need to confirm return type vector or Ptr
+                const RCSRemoteResourceObject::Ptr& RCSRemoteResourceObjectPtr) const
         {
-            for (const auto& it : m_sceneActionList)
+            std::vector<SceneAction::Ptr> actions;
+            auto sceneMemberResObjs = m_sceneCollectionResourceObj->getSceneMembers();
+            for(const auto& member: sceneMemberResObjs)
             {
-                if (it->execute() == false)
+                if(member->getRemoteResourceObject() == RCSRemoteResourceObjectPtr)
                 {
-                    return false;
+                    auto mappingInfo = member->getMappingInfo();
+                    for(const auto& it: mappingInfo)
+                    {
+                        if(it.sceneName == m_name)
+                        {
+                            SceneAction::Ptr sceneActionPtr(new SceneAction(
+                                    member, m_name, it.key, it.value));
+                            actions.push_back(sceneActionPtr);
+                        }
+                    }
                 }
             }
-            return true;
+            return actions;
+        }
+
+        std::vector< SceneAction::Ptr > Scene::getSceneActions() const
+        {
+            std::vector<SceneAction::Ptr> actions;
+            auto sceneMemberResObjs = m_sceneCollectionResourceObj->getSceneMembers();
+            for(const auto& member: sceneMemberResObjs)
+            {
+                auto mappingInfo = member->getMappingInfo();
+                for(const auto& it : mappingInfo)
+                {
+                    if(it.sceneName == m_name)
+                    {
+                        SceneAction::Ptr sceneActionPtr(new SceneAction(
+                                member, m_name, it.key, it.value));
+//                        SceneAction::WeakPtr sceneActionWeakPtr(sceneActionPtr);
+                        actions.push_back(sceneActionPtr);
+                    }
+                }
+            }
+            return actions;
         }
 
         std::string Scene::getName() const
         {
-            return m_sceneName;
+            return m_name;
         }
 
-        void Scene::setName(const std::string name)
+        void Scene::removeSceneAction(const SceneAction::Ptr& sceneActionPtr)
         {
-            m_sceneName = name;
+//            TODO
         }
 
-        void Scene::onSceneActionExecuteResult(const RCSResourceAttributes& attributes, int eCode)
+        void Scene::removeSceneAction(
+                const RCSRemoteResourceObject::Ptr& RCSRemoteResourceObjectPtr)
         {
-            if (attributes.empty())
-            {
-                std::cout << "\tattributes is empty" << std::endl;
-            }
-
-            for (const auto& attr : attributes)
-            {
-                std::cout << "\tkey : " << attr.key() << std::endl << "\tvalue : "
-                        << attr.value().toString() << std::endl;
-
-                if (m_callback != nullptr)
-                {
-                    m_callback(attributes, eCode);
-                }
-            }
+//            TODO
         }
 
+        void Scene::execute(ExecuteCallback cb)
+        {
+            m_sceneCollectionResourceObj->execute(m_name, cb);
+        }
     } /* namespace Service */
 } /* namespace OIC */
-

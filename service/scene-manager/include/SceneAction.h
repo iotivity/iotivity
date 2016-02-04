@@ -21,33 +21,42 @@
 #ifndef SM_SCENEACTION_H_
 #define SM_SCENEACTION_H_
 
-#include "SceneMemberObject.h"
+#include "RCSRemoteResourceObject.h"
+#include "RCSResourceAttributes.h"
+
+#include <memory>
 
 namespace OIC
 {
     namespace Service
     {
+        class SceneMemberResourceObject;
         class SceneAction
         {
         public:
             typedef std::shared_ptr< SceneAction > Ptr;
-            typedef std::function< void(const RCSResourceAttributes&, int) > ExecuteCallback;
-
-        public:
-            SceneAction(const SceneMemberObject::Ptr&, const std::string&,
-                    const RCSResourceAttributes::Value&);
-
-            bool execute();
-
-            void setCallback(ExecuteCallback);
 
         private:
+            SceneAction(const std::shared_ptr< SceneMemberResourceObject >,
+                    const std::string&, const RCSResourceAttributes&);
+            SceneAction(const std::shared_ptr< SceneMemberResourceObject >,
+                    const std::string&, const std::string&,
+                    const RCSResourceAttributes::Value&);
+            friend class Scene;
+
+        public:
+            void update(const std::string&, RCSResourceAttributes::Value);
+            void update(const RCSResourceAttributes&);
+
+            const RCSResourceAttributes getAction();
+            RCSRemoteResourceObject::Ptr getRemoteResourceObject() const;
+
+        private:
+            RCSRemoteResourceObject::Ptr m_pRemoteResourceObject;
+            std::string m_sceneName;
+            std::shared_ptr< SceneMemberResourceObject > m_sceneMemberResourceObj;
             RCSResourceAttributes m_attr;
-            SceneMemberObject::Ptr m_sceneMemberPtr;
-            ExecuteCallback m_callback;
         };
     } /* namespace Service */
 } /* namespace OIC */
-
 #endif /* SM_SCENEACTION_H_ */
-

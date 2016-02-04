@@ -81,7 +81,6 @@ if target_os == 'android':
 SCENE_SRC_DIR = './src/' 
 scenemanager_src = [
         SCENE_SRC_DIR + 'SceneCollection.cpp',
-        SCENE_SRC_DIR + 'SceneMemberObject.cpp',
         SCENE_SRC_DIR + 'SceneAction.cpp',
         SCENE_SRC_DIR + 'Scene.cpp',
         SCENE_SRC_DIR + 'SceneList.cpp',

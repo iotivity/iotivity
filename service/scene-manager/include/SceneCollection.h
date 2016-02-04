@@ -21,56 +21,46 @@
 #ifndef SM_SCENECOLLECTION_H_
 #define SM_SCENECOLLECTION_H_
 
-#include <functional>
-#include <memory>
-
-#include "RCSResourceObject.h"
-#include "RCSRemoteResourceObject.h"
-#include "SceneMemberObject.h"
 #include "Scene.h"
+#include <functional>
+#include <map>
 
 namespace OIC
 {
     namespace Service
     {
-        class Scene;
+        class SceneCollectionResourceObject;
         class SceneCollection
         {
         public:
+            class InvalidSceneNameException: public RCSException
+            {
+                public:
+                InvalidSceneNameException(std::string&& what) :
+                    RCSException{ std::move(what) } {}
+            };
+
             typedef std::shared_ptr< SceneCollection > Ptr;
 
+        private:
+            SceneCollection(const std::shared_ptr< SceneCollectionResourceObject >&);
+            friend class SceneList;
+
         public:
-            SceneCollection();
+            Scene::Ptr addNewScene(const std::string&);
+            std::map< const std::string, Scene::Ptr > getScenes() const;
+            Scene::Ptr getScene(const std::string&) const;
+
+            void removeScene(Scene::Ptr);
 
             void setName(const std::string&);
             std::string getName() const;
-
-            std::string getUri() const;
             std::string getId() const;
 
-            Scene::Ptr addScene(const std::string&);
-            const std::vector< Scene::Ptr >& getSceneList();
-            bool removeScene(const Scene::Ptr&);
-
-            SceneMemberObject::Ptr addSceneMember(const RCSRemoteResourceObject::Ptr&);
-            const  std::vector< SceneMemberObject::Ptr >& getSceneMemberList();
-            bool removeSceneMember(SceneMemberObject::Ptr);
-
         private:
-            RCSSetResponse setRequestHandler(const RCSRequest&, RCSResourceAttributes&);
-            RCSSetResponse createSceneRequestHandler(const RCSRequest&, RCSResourceAttributes&);
-            RCSSetResponse executeSceneRequestHandler(const RCSRequest&, RCSResourceAttributes&);
-            RCSSetResponse createSceneMemberRequestHandler(const RCSRequest&,
-                    RCSResourceAttributes&);
+            std::map< const std::string, Scene::Ptr > m_scenes;
+            std::shared_ptr< SceneCollectionResourceObject > m_sceneCollectionResourceObj;
 
-        private:
-            std::string m_Id;
-            std::string m_Uri;
-
-            std::vector< Scene::Ptr > m_SceneList;
-            std::vector< SceneMemberObject::Ptr > m_SceneMemberObjectList;
-
-            RCSResourceObject::Ptr m_sceneCollectionResourcePtr;
         };
     } /* namespace Service */
 } /* namespace OIC */

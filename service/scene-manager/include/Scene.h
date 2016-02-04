@@ -21,48 +21,62 @@
 #ifndef SM_SCENE_H_
 #define SM_SCENE_H_
 
-#include "RCSRemoteResourceObject.h"
-#include "RCSResourceObject.h"
 #include "SceneAction.h"
 
 #include <vector>
-#include <memory>
 
 namespace OIC
 {
     namespace Service
     {
+        class SceneCollectionResourceObject;
         class Scene
         {
         public:
+//            class InvalidRemoteResourceObjectException: public RCSException
+//            {
+//            public:
+//                InvalidRemoteResourceObjectException(std::string&& what) :
+//                    RCSException{ std::move(what) } {}
+//            };
+
+            class InvalidExecuteCallbackException: public RCSException
+            {
+            public:
+                InvalidExecuteCallbackException(std::string&& what) :
+                    RCSException{ std::move(what) } {}
+            };
+
             typedef std::shared_ptr< Scene > Ptr;
-            typedef std::function< void(const RCSResourceAttributes&, int) > ExecuteCallback;
+            typedef std::function< void(int) >  ExecuteCallback;
+
+        private:
+            Scene(const Scene&) = default;
+            Scene(const std::string&, std::shared_ptr<SceneCollectionResourceObject>);
+            friend class SceneCollection;
+
         public:
-            Scene (const std::string&);
-            Scene(const std::string&, ExecuteCallback);
-            ~Scene();
+            SceneAction::Ptr addNewSceneAction(const RCSRemoteResourceObject::Ptr&,
+                    const RCSResourceAttributes&);
+            SceneAction::Ptr addNewSceneAction(const RCSRemoteResourceObject::Ptr&, const std::string&,
+                    const RCSResourceAttributes::Value&);
 
-            bool addSceneAction(const std::shared_ptr< SceneAction >&);
-            bool removeSceneAction(const std::shared_ptr< SceneAction >&);
-
-            bool execute();
-
-            void setCallback(ExecuteCallback);
+            std::vector<SceneAction::Ptr> getSceneAction(const RCSRemoteResourceObject::Ptr&) const;
+            std::vector<SceneAction::Ptr> getSceneActions() const ;
 
             std::string getName() const;
-            void setName(const std::string);
+
+            void removeSceneAction(const SceneAction::Ptr&);
+            void removeSceneAction(const RCSRemoteResourceObject::Ptr&);
+
+            void execute(ExecuteCallback);
 
         private:
-            void onSceneActionExecuteResult(const RCSResourceAttributes& attributes, int);
+            std::string m_name;
+            std::shared_ptr< SceneCollectionResourceObject > m_sceneCollectionResourceObj;
 
-        private:
-            std::string m_sceneName;
-            std::vector< std::shared_ptr< SceneAction > > m_sceneActionList;
-            ExecuteCallback m_callback;
         };
-
     } /* namespace Service */
 } /* namespace OIC */
-
-#endif /* RH_HOSTINGOBJECT_H_ */
+#endif /* SM_SCENE_H_ */
 

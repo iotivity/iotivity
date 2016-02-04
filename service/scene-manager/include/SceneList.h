@@ -21,30 +21,25 @@
 #ifndef SM_SCENELIST_H_
 #define SM_SCENELIST_H_
 
-#include <SceneCollection.h>
+#include "SceneCollection.h"
 
 #include <string>
-#include <memory>
 
 namespace OIC
 {
     namespace Service
     {
-//        class RCSResourceObject;
-        class RCSRemoteResourceObject;
-
+        class SceneListResourceObject;
         class SceneList
         {
-        public:
-            typedef std::shared_ptr< RCSRemoteResourceObject > RemoteObjectPtr;
-
         private:
-            SceneList();
             ~SceneList() = default;
 
         public:
-            static SceneList * getInstance();
-            SceneCollection::Ptr createSceneCollection();
+            static SceneList* getInstance();
+            SceneCollection::Ptr addNewSceneCollection();
+            std::vector<SceneCollection::Ptr> getSceneCollections() const;
+            void removeSceneCollection(SceneCollection::Ptr);
 
             void setName(const std::string&);
             std::string getName() const;

@@ -19,8 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SceneCollection.h"
+#include "SceneCollectionResourceObject.h"
 
-#include "uuid/uuid.h"
 #include "octypes.h"
 #include "ocrandom.h"
 
@@ -28,208 +28,68 @@ namespace OIC
 {
     namespace Service
     {
-        namespace
+        SceneCollection::SceneCollection(
+                const SceneCollectionResourceObject::Ptr& sceneCollectionResource) :
+                m_sceneCollectionResourceObj(sceneCollectionResource) {}
+
+        Scene::Ptr SceneCollection::addNewScene(const std::string& sceneName)
         {
-            unsigned int numSceneCollection = 0;
-
-            const std::string PREFIX_SCENE_COLLECTION_URI = "/a/sceneCollection/";
-            const std::string LAST_SCENE = "lastScene";
-            const std::string SCENE_VALUES = "sceneValues";
-            const std::string SCENE_COLLECTION_NAME = "n";
-            const std::string SCENE_COLLECTION_ID = "id";
-            const std::string SCENE_RTS = "rts";
-            const std::string SCENE_RTS_VALUE = "oic.r.scenemember";
-            const std::string SCENE_PAYLOAD_LINK = "link";
-
-            const std::string SCENE_COLLECTION_RT = "oic.wk.scenecollection";
-
-
-            std::string OICGenerateUUIDStr()
+            if(sceneName.empty())
             {
-                uint8_t uuid[UUID_SIZE] = { 0, };
-                char uuidStr[UUID_STRING_SIZE] = { 0, };
-                if(RAND_UUID_OK == OCGenerateUuid(uuid))
+                throw RCSInvalidParameterException("Scene name is an empty string");
+            }
+
+            m_sceneCollectionResourceObj->addScene(sceneName);
+
+            for (const auto& it : m_scenes)
+            {
+                if (it.first.compare(sceneName) == 0)
                 {
-                    if(RAND_UUID_OK == OCConvertUuidToString(uuid, uuidStr))
-                    {
-                        return std::string(uuidStr);
-                    }
+                    return it.second;
                 }
-                return "";
             }
+
+            Scene::Ptr scenePtr(new Scene(sceneName, m_sceneCollectionResourceObj));
+            m_scenes.insert(std::pair<const std::string, Scene::Ptr>(sceneName, scenePtr));
+
+            return scenePtr;
         }
 
-        SceneCollection::SceneCollection()
-        : m_Id(), m_Uri(PREFIX_SCENE_COLLECTION_URI + std::to_string(numSceneCollection++))
+        std::map< const std::string, Scene::Ptr > SceneCollection::getScenes() const
         {
-            m_Id = OICGenerateUUIDStr();
-            if(m_Id == "")
+            return m_scenes;
+        }
+
+        Scene::Ptr SceneCollection::getScene(const std::string& sceneName) const
+        {
+            auto it = m_scenes.find(sceneName);
+            if (it != m_scenes.end())
             {
-                // TODO handle uuid creation fail.
+                return it->second;
             }
-
-            m_sceneCollectionResourcePtr = RCSResourceObject::Builder(m_Uri, SCENE_COLLECTION_RT,
-                    OC_RSRVD_INTERFACE_DEFAULT).setDiscoverable(true).setObservable(true).build();
-
-            m_sceneCollectionResourcePtr->setAttribute(LAST_SCENE, "");
-            m_sceneCollectionResourcePtr->setAttribute(SCENE_VALUES, std::vector<std::string>());
-            m_sceneCollectionResourcePtr->setAttribute(SCENE_COLLECTION_NAME, "");
-            m_sceneCollectionResourcePtr->setAttribute(SCENE_COLLECTION_ID, m_Id);
-            m_sceneCollectionResourcePtr->setAttribute(SCENE_RTS, SCENE_RTS_VALUE);
-
-
-            m_sceneCollectionResourcePtr->setSetRequestHandler(
-                    std::bind(
-                            &SceneCollection::setRequestHandler, this,
-                            std::placeholders::_1, std::placeholders::_2));
         }
 
-        const std::vector< Scene::Ptr >& SceneCollection::getSceneList()
+        void SceneCollection::removeScene(Scene::Ptr scenePtr)
         {
-            return m_SceneList;
+            if (scenePtr == nullptr)
+            {
+                throw RCSInvalidParameterException("Scene Ptr is empty!");
+            }
         }
 
-        void SceneCollection::setName(const std::string& sceneCollectionName)
+        void SceneCollection::setName(const std::string& name)
         {
-            m_sceneCollectionResourcePtr->setAttribute(SCENE_COLLECTION_NAME, sceneCollectionName);
+            m_sceneCollectionResourceObj->setName(name);
         }
 
         std::string SceneCollection::getName() const
         {
-            return m_sceneCollectionResourcePtr->
-                    getAttributeValue(SCENE_COLLECTION_NAME).get<std::string>();
-        }
-
-        std::string SceneCollection::getUri() const
-        {
-            return m_Uri;
+            return m_sceneCollectionResourceObj->getName();
         }
 
         std::string SceneCollection::getId() const
         {
-            return m_Id;
-        }
-
-        Scene::Ptr SceneCollection::addScene(const std::string& sceneName)
-        {
-            Scene::Ptr m_scene = std::make_shared < Scene > (sceneName);
-            m_SceneList.push_back(m_scene);
-            return m_scene;
-        }
-
-        bool SceneCollection::removeScene(const Scene::Ptr& it)
-        {
-            // remove scene
-            // remove scene Name list
-        }
-
-        SceneMemberObject::Ptr SceneCollection::addSceneMember(
-                const RCSRemoteResourceObject::Ptr& it)
-        {
-            auto newSceneMemberObj = std::make_shared < SceneMemberObject > (it);
-            m_SceneMemberObjectList.push_back(newSceneMemberObj);
-            return newSceneMemberObj;
-        }
-
-        bool SceneCollection::removeSceneMember(SceneMemberObject::Ptr it)
-        {
-        }
-
-        const std::vector< SceneMemberObject::Ptr >& SceneCollection::getSceneMemberList()
-        {
-            return m_SceneMemberObjectList;
-        }
-
-        RCSSetResponse
-        SceneCollection::setRequestHandler(
-                const RCSRequest & request, RCSResourceAttributes & attributes)
-        {
-            if(attributes.contains(SCENE_PAYLOAD_LINK))
-            {
-                return createSceneMemberRequestHandler(request, attributes);
-            }
-
-            if(attributes.contains(SCENE_VALUES))
-            {
-                return createSceneRequestHandler(request, attributes);
-            }
-
-            if(attributes.contains(LAST_SCENE))
-            {
-                return executeSceneRequestHandler(request, attributes);
-            }
-
-
-            return RCSSetResponse::create(attributes, (int)OC_STACK_ERROR)
-            .setAcceptanceMethod(RCSSetResponse::AcceptanceMethod::IGNORE);
-        }
-
-        RCSSetResponse
-        SceneCollection::createSceneMemberRequestHandler(
-                const RCSRequest &, RCSResourceAttributes & attributes)
-        {
-            std::string request_key = attributes.at(SCENE_PAYLOAD_LINK).get<std::string>();
-            // TODO create scene member
-
-            attributes.at(SCENE_COLLECTION_ID) = m_Id;
-
-            return RCSSetResponse::create(attributes)
-            .setAcceptanceMethod(RCSSetResponse::AcceptanceMethod::IGNORE);
-        }
-
-        RCSSetResponse
-        SceneCollection::createSceneRequestHandler(
-                const RCSRequest &, RCSResourceAttributes & attributes)
-        {
-            std::vector<std::string> request_key
-                = attributes.at(SCENE_VALUES).get<std::vector<std::string>>();
-
-            std::vector<std::string> newScene;
-            std::vector<std::string>::iterator iter = request_key.begin();
-            std::vector<Scene::Ptr>::iterator foundScene;
-
-            struct FindSceneName
-            {
-                bool operator()(Scene::Ptr scene) const { return scene->getName() == name; }
-                std::string name;
-            };
-
-            while(iter != request_key.end())
-            {
-                FindSceneName fScene;
-                fScene.name = *iter;
-                foundScene = std::find_if(m_SceneList.begin(), m_SceneList.end(), fScene);
-                if(foundScene == m_SceneList.end())
-                {
-                    newScene.push_back(*iter);
-                }
-                iter++;
-            }
-
-            for(unsigned int i = 0; i < newScene.size(); ++i)
-            {
-                // TODO create scene
-                newScene[i]; //Scene Value
-            }
-
-
-            // success
-            return RCSSetResponse::create(attributes)
-            .setAcceptanceMethod(RCSSetResponse::AcceptanceMethod::IGNORE);
-        }
-
-        RCSSetResponse
-        SceneCollection::executeSceneRequestHandler(
-                const RCSRequest &, RCSResourceAttributes & attributes)
-        {
-            std::string request_key = attributes.at(LAST_SCENE).get<std::string>();
-            m_sceneCollectionResourcePtr->setAttribute(LAST_SCENE, request_key);
-
-            // TODO execute scene
-
-            // success
-            return RCSSetResponse::create(attributes)
-            .setAcceptanceMethod(RCSSetResponse::AcceptanceMethod::IGNORE);
+            return m_sceneCollectionResourceObj->getId();
         }
     } /* namespace Service */
 } /* namespace OIC */

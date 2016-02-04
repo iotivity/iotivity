@@ -19,33 +19,70 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SceneAction.h"
+#include "SceneMemberResourceObject.h"
 
 namespace OIC
 {
     namespace Service
     {
-        SceneAction::SceneAction(const SceneMemberObject::Ptr& SceneMemberObjectPtr,
-                const std::string& key, const RCSResourceAttributes::Value& value) :
-                m_sceneMemberPtr(SceneMemberObjectPtr)
+        SceneAction::SceneAction(const SceneMemberResourceObject::Ptr SceneMemberResource,
+                const std::string& sceneName, const RCSResourceAttributes& attr) :
+                m_pRemoteResourceObject(SceneMemberResource->getRemoteResourceObject()),
+                m_sceneName(sceneName),
+                m_sceneMemberResourceObj(SceneMemberResource)
         {
-            m_attr[key] = RCSResourceAttributes::Value(value);
-        }
-
-        void SceneAction::setCallback(ExecuteCallback cb)
-        {
-            if (cb == nullptr)
+            for (const auto& it : attr)
             {
-                throw RCSInvalidParameterException { "Callback is empty!" };
+                m_sceneMemberResourceObj->addMappingInfo(
+                        SceneMemberResourceObject::MappingInfo(m_sceneName, it.key(), it.value()));
             }
-
-            m_callback = std::move(cb);
         }
 
-        bool SceneAction::execute()
+        SceneAction::SceneAction(const SceneMemberResourceObject::Ptr SceneMemberResource,
+                const std::string& sceneName, const std::string& key,
+                const RCSResourceAttributes::Value& value) :
+                m_pRemoteResourceObject(SceneMemberResource->getRemoteResourceObject()),
+                m_sceneName(sceneName), m_sceneMemberResourceObj(SceneMemberResource)
         {
-            m_sceneMemberPtr->getRemoteResourceObject()->setRemoteAttributes(m_attr, m_callback);
-            return true;
+            m_sceneMemberResourceObj->addMappingInfo(
+                                SceneMemberResourceObject::MappingInfo(m_sceneName, key, value));
         }
+
+        void SceneAction::update(const std::string& key,
+                RCSResourceAttributes::Value value)
+        {
+            m_attr[key] = value;
+            update(m_attr);
+        }
+
+        void SceneAction::update(const RCSResourceAttributes& attr)
+        {
+            for(const auto& it : attr)
+            {
+                m_sceneMemberResourceObj->addMappingInfo(
+                        SceneMemberResourceObject::MappingInfo(m_sceneName, it.key(), it.value()));
+            }
+        }
+
+        const RCSResourceAttributes SceneAction::getAction()
+        {
+            m_attr.clear();
+            auto mappingInfo = m_sceneMemberResourceObj->getMappingInfo();
+            for(const auto& it : mappingInfo)
+            {
+                if(it.sceneName == m_sceneName)
+                {
+                    m_attr[it.key] = RCSResourceAttributes::Value(it.value);
+                }
+            }
+            return m_attr;
+        }
+
+        RCSRemoteResourceObject::Ptr SceneAction::getRemoteResourceObject() const
+        {
+            return m_pRemoteResourceObject;
+        }
+
     } /* namespace Service */
 } /* namespace OIC */
 
