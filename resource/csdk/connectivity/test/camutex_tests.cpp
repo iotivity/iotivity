@@ -68,6 +68,10 @@ uint64_t getAbsTime()
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     currentTime = ts.tv_sec * USECS_PER_SEC + ts.tv_nsec / 1000;
+#elif defined(_WIN32)
+    SYSTEMTIME time;
+    GetSystemTime(&time);
+    currentTime = time.wSecond * 100000 + time.wMilliseconds * 1000;
 #else
     struct timeval tv;
     gettimeofday(&tv, NULL);

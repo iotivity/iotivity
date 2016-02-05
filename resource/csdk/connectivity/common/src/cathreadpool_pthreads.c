@@ -28,7 +28,13 @@
 #define _GNU_SOURCE
 #endif
 #include <errno.h>
+#if !defined(__msys_nt__)
 #include <pthread.h>
+#endif
+
+#if defined(__msys_nt__)
+#include <windows.h>
+#endif
 #include "cathreadpool.h"
 #include "logger.h"
 #include "oic_malloc.h"
@@ -155,8 +161,17 @@ CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func 
     info->func = method;
     info->data = data;
 
+#if defined(__msys_nt__)
+    HANDLE threadHandle;
+    DWORD threadId;
+    threadHandle = CreateThread(NULL, 0, ca_thread_pool_pthreads_delegate, info, 0, &threadId);
+    if (threadHandle == NULL)
+    {
+        OIC_LOG_V(ERROR, TAG, "CreateThread failed with error %i", GetLastError());
+        return CA_STATUS_FAILED;
+    }
+#else
     pthread_t threadHandle;
-
     int result = pthread_create(&threadHandle, NULL, ca_thread_pool_pthreads_delegate, info);
 
     if(result != 0)
@@ -164,7 +179,7 @@ CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func 
         OIC_LOG_V(ERROR, TAG, "Thread start failed with error %d", result);
         return CA_STATUS_FAILED;
     }
-
+#endif
     ca_mutex_lock(thread_pool->details->list_lock);
     bool addResult = u_arraylist_add(thread_pool->details->threads_list, (void*)threadHandle);
     ca_mutex_unlock(thread_pool->details->list_lock);
@@ -193,12 +208,21 @@ void ca_thread_pool_free(ca_thread_pool_t thread_pool)
 
     for(uint32_t i = 0; i<u_arraylist_length(thread_pool->details->threads_list); ++i)
     {
+#if defined(__msys_nt__)
+        HANDLE tid = (HANDLE)u_arraylist_get(thread_pool->details->threads_list, i);
+        DWORD joinres = WaitForSingleObject(tid, INFINITE);
+        if(WAIT_OBJECT_0 != joinres)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to join thread at index %u with error %d", i, joinres);
+        }
+#else
         pthread_t tid = (pthread_t)u_arraylist_get(thread_pool->details->threads_list, i);
         int joinres = pthread_join(tid, NULL);
         if(0 != joinres)
         {
             OIC_LOG_V(ERROR, TAG, "Failed to join thread at index %u with error %d", i, joinres);
         }
+#endif
     }
 
     u_arraylist_free(&(thread_pool->details->threads_list));
