@@ -16,6 +16,8 @@
 
 package org.oic.simulator.server;
 
+import java.util.Map;
+
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorException;
@@ -53,7 +55,24 @@ public final class SimulatorSingleResource extends SimulatorResource {
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * API to add an attribute to resource's representation model.
+     * API to get all the attributes of the resource.
+     *
+     * @return Map of attributes with attribute name as key and its
+     *         corresponding {@link SimulatorResourceAttribute} as value.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the attribute name is
+     *             invalid.
+     * @throws SimulatorException
+     *             This exception will be thrown either if the resource model is
+     *             not found or for some general errors.
+     */
+    public native Map<String, SimulatorResourceAttribute> getAttributes()
+            throws InvalidArgsException, SimulatorException;
+
+    /**
+     * API to add an attribute to resource's representation model. Observers
+     * will be notified on success.
      *
      * @param attribute
      *            Attribute to be added to resource's representation model.
@@ -63,11 +82,27 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void addAttribute(SimulatorResourceAttribute attribute)
+    public native boolean addAttribute(SimulatorResourceAttribute attribute)
             throws InvalidArgsException, SimulatorException;
 
     /**
-     * API to update the value of an attribute.
+     * API to remove an attribute from the simulated resource. Observers will be
+     * notified on success.
+     *
+     * @param attrName
+     *            Name of the attribute to be deleted.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown on invalid input.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
+     */
+    public native boolean removeAttribute(String attrName)
+            throws InvalidArgsException, SimulatorException;
+
+    /**
+     * API to update the value of an attribute. Observers will be notified on
+     * success.
      *
      * @param attrName
      *            Name of the attribute.
@@ -79,21 +114,7 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void updateAttribute(String attrName, AttributeValue value)
-            throws InvalidArgsException, SimulatorException;
-
-    /**
-     * API to remove an attribute from the simulated resource.
-     *
-     * @param attrName
-     *            Name of the attribute to be deleted.
-     *
-     * @throws InvalidArgsException
-     *             This exception will be thrown on invalid input.
-     * @throws SimulatorException
-     *             This exception will be thrown for other errors.
-     */
-    public native void removeAttribute(String attrName)
+    public native boolean updateAttribute(String attrName, AttributeValue value)
             throws InvalidArgsException, SimulatorException;
 
     /**

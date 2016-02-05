@@ -19,6 +19,7 @@ package org.oic.simulator.server;
 import java.util.Vector;
 
 import org.oic.simulator.InvalidArgsException;
+import org.oic.simulator.NoSupportException;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorResourceModel;
 
@@ -64,15 +65,18 @@ public class SimulatorResource {
     }
 
     /**
-     * API to get the name of the resource.
+     * API which indicates whether the resource is collection or single
+     * resource.
      *
-     * @return Name of the resource.
+     * @return True if the resource is collection, otherwise false.
      *
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native String getName() throws SimulatorException;
+    public boolean isCollection() {
+        return (this instanceof SimulatorCollectionResource);
+    }
 
     /**
      * API to get the type which indicates whether resource is single or
@@ -84,7 +88,24 @@ public class SimulatorResource {
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.
      */
-    public native Type getType() throws SimulatorException;
+    public Type getType() {
+        if (this instanceof SimulatorSingleResource) {
+            return Type.SINGLE;
+        } else {
+            return Type.COLLECTION;
+        }
+    }
+
+    /**
+     * API to get the name of the resource.
+     *
+     * @return Name of the resource.
+     *
+     * @throws SimulatorException
+     *             This exception will be thrown if the native resource object
+     *             does not exist or for some general errors.
+     */
+    public native String getName() throws SimulatorException;
 
     /**
      * API to get the resource URI.
@@ -132,6 +153,18 @@ public class SimulatorResource {
     public native boolean isObservable() throws SimulatorException;
 
     /**
+     * API to get the discoverable state of resource.
+     *
+     * @return Discoverable state - true if resource is discoverable, otherwise
+     *         false.
+     *
+     * @throws SimulatorException
+     *             This exception will be thrown if the native resource object
+     *             does not exist or for some general errors.
+     */
+    public native boolean isDiscoverable() throws SimulatorException;
+
+    /**
      * API to get the start state of resource.
      *
      * @return Start state - true if resource is started, otherwise false.
@@ -141,18 +174,6 @@ public class SimulatorResource {
      *             does not exist or for some general errors.
      */
     public native boolean isStarted() throws SimulatorException;
-
-    /**
-     * API to get the {@link SimulatorResourceModel} of the simulated resource.
-     *
-     * @return {@link SimulatorResourceModel} object on success, otherwise null.
-     *
-     * @throws SimulatorException
-     *             This exception will be thrown if simulated resource is not
-     *             proper.
-     */
-    public native SimulatorResourceModel getResourceModel()
-            throws SimulatorException;
 
     /**
      * API to set the name of the resource.
@@ -203,6 +224,47 @@ public class SimulatorResource {
             throws InvalidArgsException, SimulatorException;
 
     /**
+     * API to set interface to resource. Resource should be stopped before
+     * calling this API.
+     *
+     * @param interfaceType
+     *            Interface to be set.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the interface type is
+     *             invalid.
+     * @throws SimulatorException
+     *             This exception will be thrown if the native resource object
+     *             does not exist or resource is still running or for some
+     *             general errors.
+     */
+    public native void setInterface(String interfaceType)
+            throws InvalidArgsException, SimulatorException;
+
+    /**
+     * API to set a list of interfaces to resource. Resource should be stopped
+     * before calling this API.
+     *
+     * @param interfaceTypes
+     *            Interfaces to be set.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the interface type is
+     *             invalid.
+     * @throws SimulatorException
+     *             This exception will be thrown if the native resource object
+     *             does not exist or resource is still running or for some
+     *             general errors.
+     */
+    public void setInterface(Vector<String> interfaceTypes)
+            throws InvalidArgsException, SimulatorException {
+        setInterfaces(interfaceTypes);
+    }
+
+    private native void setInterfaces(Vector<String> interfaceTypes)
+            throws InvalidArgsException, SimulatorException;
+
+    /**
      * API to add interface type for resource.
      *
      * @param interfaceType
@@ -216,56 +278,10 @@ public class SimulatorResource {
      *             does not exist or for some general errors.
      */
     public native void addInterface(String interfaceType)
-            throws InvalidArgsException, SimulatorException;
+            throws InvalidArgsException, NoSupportException, SimulatorException;
 
     /**
-     * API to remove interface type for resource.
-     *
-     * @param interfaceType
-     *            Interface to be remove for resource.
-     * @throws InvalidArgsException
-     *             This exception will be thrown if the interface type is
-     *             invalid.
-     * @throws SimulatorException
-     *             This exception will be thrown if the native resource object
-     *             does not exist or for some general errors.
-     */
-    public native void removeInterface(String interfaceType)
-            throws InvalidArgsException, SimulatorException;
-
-    /**
-     * API to add a list of interfaces for resource.
-     *
-     * @param interfaceType
-     *            List of interfaces to be added to the resource.
-     *
-     * @throws InvalidArgsException
-     *             This exception will be thrown if the interface type is
-     *             invalid.
-     * @throws SimulatorException
-     *             This exception will be thrown if the native resource object
-     *             does not exist or for some general errors.
-     */
-    public native void addInterfaces(Vector<String> interfaceType)
-            throws InvalidArgsException, SimulatorException;
-
-    /**
-     * API to remove interface type for resource.
-     *
-     * @param interfaceType
-     *            List of interfaces to be removed from the resource.
-     * @throws InvalidArgsException
-     *             This exception will be thrown if the interface type is
-     *             invalid.
-     * @throws SimulatorException
-     *             This exception will be thrown if the native resource object
-     *             does not exist or for some general errors.
-     */
-    public native void removeInterfaces(Vector<String> interfaceType)
-            throws InvalidArgsException, SimulatorException;
-
-    /**
-     * API to make the resource observable or not.
+     * API to make the resource observable or not observable.
      *
      * @param state
      *            True makes the resource observable, otherwise non-observable.
@@ -275,6 +291,19 @@ public class SimulatorResource {
      *             does not exist or for some general errors.
      */
     public native void setObservable(boolean state) throws SimulatorException;
+
+    /**
+     * API to make the resource discoverable or not discoverable.
+     *
+     * @param state
+     *            True makes the resource discoverable, otherwise
+     *            non-discoverable.
+     *
+     * @throws SimulatorException
+     *             This exception will be thrown if the native resource object
+     *             does not exist or for some general errors.
+     */
+    public native void setDiscoverable(boolean state) throws SimulatorException;
 
     /**
      * API to set the listener for receiving the notifications when observer is
@@ -325,6 +354,18 @@ public class SimulatorResource {
      *             does not exist or for some general errors.
      */
     public native void stop() throws SimulatorException;
+
+    /**
+     * API to get the {@link SimulatorResourceModel} of the simulated resource.
+     *
+     * @return {@link SimulatorResourceModel} object on success, otherwise null.
+     *
+     * @throws SimulatorException
+     *             This exception will be thrown if simulated resource is not
+     *             proper.
+     */
+    public native SimulatorResourceModel getResourceModel()
+            throws SimulatorException;
 
     /**
      * API to get observers which are registered with resource.

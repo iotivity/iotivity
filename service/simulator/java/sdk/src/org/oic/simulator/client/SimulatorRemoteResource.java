@@ -32,7 +32,6 @@ import org.oic.simulator.SimulatorResult;
  * perform different operations or subscribe for event notifications.
  */
 public final class SimulatorRemoteResource {
-
     private long           mNativeHandle;
     private String         mUri;
     private int            mConnType;
@@ -77,6 +76,24 @@ public final class SimulatorRemoteResource {
     }
 
     /**
+     * API to get the address detail of the resource.
+     *
+     * @return Host address.
+     */
+    public String getHost() {
+        return mHost;
+    }
+
+    /**
+     * API to get a unique Id of the resource.
+     *
+     * @return Unique ID.
+     */
+    public String getId() {
+        return mId;
+    }
+
+    /**
      * API to get the connectivity type for this resource.
      *
      * @return Connectivity type.
@@ -101,24 +118,6 @@ public final class SimulatorRemoteResource {
      */
     public Vector<String> getResourceInterfaces() {
         return mResInterfaces;
-    }
-
-    /**
-     * API to get the address detail of the resource.
-     *
-     * @return Host address.
-     */
-    public String getHost() {
-        return mHost;
-    }
-
-    /**
-     * API to get a unique Id of the resource.
-     *
-     * @return Unique ID.
-     */
-    public String getId() {
-        return mId;
     }
 
     /**
@@ -300,6 +299,29 @@ public final class SimulatorRemoteResource {
     /**
      * API to start observing the resource.
      *
+     * @param type
+     *            Type of observation.
+     * @param onObserveListener
+     *            The handler method which will be invoked with a map of
+     *            attribute names and values whenever there is a change in
+     *            resource model of the remote resource.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if any parameter has invalid
+     *             values.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
+     */
+    public void observe(ObserveNotificationListener onObserveListener)
+            throws InvalidArgsException, SimulatorException {
+        startObserve(null, onObserveListener);
+    }
+
+    /**
+     * API to start observing the resource.
+     *
+     * @param type
+     *            Type of observation.
      * @param queryParams
      *            Map which can have the query parameter names and values.
      * @param onObserveListener
@@ -313,9 +335,15 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void startObserve(Map<String, String> queryParams,
+    public void observe(Map<String, String> queryParams,
             ObserveNotificationListener onObserveListener)
-            throws InvalidArgsException, SimulatorException;
+            throws InvalidArgsException, SimulatorException {
+        if (null == queryParams)
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM,
+                    "Invalid Query Parameters!");
+        startObserve(queryParams, onObserveListener);
+    }
 
     /**
      * API to stop observing the resource.
@@ -517,6 +545,9 @@ public final class SimulatorRemoteResource {
             Map<String, String> queryParams,
             SimulatorResourceModel representation,
             PostResponseListener onPostListener);
+
+    private native void startObserve(Map<String, String> queryParams,
+            ObserveNotificationListener onObserveListener);
 
     private native int startVerification(int type,
             VerificationListener onVerifyListener);

@@ -35,35 +35,35 @@ public class AttributeValueVisitor {
 
         public T visitingValue(SimulatorResourceModel value);
 
-        public T visitingValue(Integer[] value);
+        public T visitingValue(Integer[] values);
 
-        public T visitingValue(Double[] value);
+        public T visitingValue(Double[] values);
 
-        public T visitingValue(Boolean[] value);
+        public T visitingValue(Boolean[] values);
 
-        public T visitingValue(String[] value);
+        public T visitingValue(String[] values);
 
-        public T visitingValue(SimulatorResourceModel[] value);
+        public T visitingValue(SimulatorResourceModel[] values);
 
-        public T visitingValue(Integer[][] value);
+        public T visitingValue(Integer[][] values);
 
-        public T visitingValue(Double[][] value);
+        public T visitingValue(Double[][] values);
 
-        public T visitingValue(Boolean[][] value);
+        public T visitingValue(Boolean[][] values);
 
-        public T visitingValue(String[][] value);
+        public T visitingValue(String[][] values);
 
-        public T visitingValue(SimulatorResourceModel[][] value);
+        public T visitingValue(SimulatorResourceModel[][] values);
 
-        public T visitingValue(Integer[][][] value);
+        public T visitingValue(Integer[][][] values);
 
-        public T visitingValue(Double[][][] value);
+        public T visitingValue(Double[][][] values);
 
-        public T visitingValue(Boolean[][][] value);
+        public T visitingValue(Boolean[][][] values);
 
-        public T visitingValue(String[][][] value);
+        public T visitingValue(String[][][] values);
 
-        public T visitingValue(SimulatorResourceModel[][][] value);
+        public T visitingValue(SimulatorResourceModel[][][] values);
     }
 
     /**
