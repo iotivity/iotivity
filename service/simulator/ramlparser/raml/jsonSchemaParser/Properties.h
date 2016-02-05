@@ -60,7 +60,8 @@ namespace RAML
         BOOLEAN,
         STRING,
         PROPERTY,
-        ARRAY
+        ARRAY,
+        OBJECT
     };
     /**
         * @class   ValueProperty
@@ -426,7 +427,7 @@ namespace RAML
             template <typename T>
             T getValue() const
             {
-                return boost::get<T>(m_value);
+                return boost::get<T>(*(m_value.get()));
             }
 
             /**

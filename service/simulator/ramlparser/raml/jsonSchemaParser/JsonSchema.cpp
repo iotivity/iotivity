@@ -364,6 +364,10 @@ namespace RAML
         {
             readArray(childProperties, property);
         }
+        else if (attType == "object")
+        {
+            readObject(childProperties, property);
+        }
     }
 
     void JsonSchema::readString(cJSON *childProperties, PropertiesPtr &property)
@@ -647,6 +651,68 @@ namespace RAML
             }
             prop->setTypeString(type);
             property->setValue(*prop);
+        }
+    }
+
+    void JsonSchema::readObject(cJSON *childProperties,  PropertiesPtr &property)
+    {
+        property->setTypeString("object");
+
+        cJSON *subProperties = cJSON_GetObjectItem(childProperties, "properties");
+        cJSON *itemRequiredValues = cJSON_GetObjectItem(childProperties, "required");
+        if (subProperties)
+        {
+            cJSON *childProperties = subProperties->child;
+            std::vector<Properties> propertyVector;
+            while (childProperties)
+            {
+                std::string attName = childProperties->string;
+                PropertiesPtr prop = std::make_shared<Properties>(attName);
+                readProp(childProperties, attName);
+                propertyVector.push_back(*prop);
+                childProperties = childProperties->next;
+            }
+            property->setValue(propertyVector);
+            if (itemRequiredValues)
+            {
+                int size = cJSON_GetArraySize(itemRequiredValues);
+                int index = 0;
+                do
+                {
+                    property->setRequiredValue(cJSON_GetArrayItem(itemRequiredValues, index)->valuestring);
+                }
+                while ( ++index < size);
+            }
+        }
+        else
+        {
+            JsonParameters param;
+
+            cJSON *itemAllOf = cJSON_GetObjectItem(childProperties, "allOf");
+            if (itemAllOf)
+            {
+                readAllOf(itemAllOf , param);
+            }
+            cJSON *itemReference = cJSON_GetObjectItem(childProperties, "$ref");
+            if (itemReference)
+            {
+                readJsonRef(itemReference , param);
+            }
+
+            if (param.getType() == "object")
+            {
+                std::vector<Properties> propertyVector;
+                for (auto prop : param.getProperties())
+                {
+                    propertyVector.push_back(*(prop.second));
+                }
+                property->setValue(propertyVector);
+
+                for (auto req : param.getRequired())
+                {
+                    property->setRequiredValue(req);
+                }
+            }
         }
     }
 

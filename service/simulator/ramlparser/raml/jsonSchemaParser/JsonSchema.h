@@ -294,6 +294,7 @@ namespace RAML
             void readDouble( cJSON *childProperties,  PropertiesPtr &property);
             void readArray( cJSON *childProperties,  PropertiesPtr &property);
             void readItems(cJSON *item, PropertiesPtr &property);
+            void readObject(cJSON *childProperties,  PropertiesPtr &property);
 
             void readFile(std::string &fileName , JsonParameters &param);
             void readFile(std::string &fileName , std::string &defName , JsonParameters &param);
