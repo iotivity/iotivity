@@ -21,6 +21,8 @@
 #include "UnitTestHelper.h"
 
 #include "RCSResourceObject.h"
+#include "RCSRequest.h"
+#include "RCSSeparateResponse.h"
 
 #include "OCPlatform.h"
 
@@ -479,6 +481,54 @@ TEST_F(ResourceObjectHandlingRequestTest, SendSetResponseWithCustomAttrs)
     ASSERT_EQ(OC_EH_OK, handler(createRequest(OC_REST_POST)));
 }
 
+TEST_F(ResourceObjectHandlingRequestTest, SeparateResponseIsSlowResponse)
+{
+    server->setGetRequestHandler(
+            [](const RCSRequest&, RCSResourceAttributes&) -> RCSGetResponse
+            {
+                return RCSGetResponse::separate();
+            }
+    );
+
+    ASSERT_EQ(OC_EH_SLOW, handler(createRequest()));
+}
+
+TEST_F(ResourceObjectHandlingRequestTest, SetMethodOfSeparateResponseInvokesSendResponse)
+{
+    RCSRequest aRequest;
+    server->setGetRequestHandler(
+            [&aRequest](const RCSRequest& request, RCSResourceAttributes&) -> RCSGetResponse
+            {
+                aRequest = request;
+                return RCSGetResponse::separate();
+            }
+    );
+    handler(createRequest(OC_REST_GET));
+
+    mocks.ExpectCallFunc(OCPlatform::sendResponse).Return(OC_STACK_OK);
+
+    RCSSeparateResponse(aRequest).set();
+}
+
+
+TEST_F(ResourceObjectHandlingRequestTest, SetMethodOfSeparateResponseThrowsIfTheResourceIsDestroyed)
+{
+    RCSRequest aRequest;
+    server->setGetRequestHandler(
+            [&aRequest](const RCSRequest& request, RCSResourceAttributes&) -> RCSGetResponse
+            {
+                aRequest = request;
+                return RCSGetResponse::separate();
+            }
+    );
+    handler(createRequest(OC_REST_GET));
+
+    RCSSeparateResponse resp(aRequest);
+
+    server.reset();
+
+    EXPECT_THROW(resp.set(), RCSBadRequestException);
+}
 
 
 class SetRequestHandlerPolicyTest: public ResourceObjectHandlingRequestTest

@@ -127,11 +127,16 @@ namespace OIC
              */
             static RCSGetResponse create(RCSResourceAttributes&& attrs, int errorCode);
 
+            static RCSGetResponse separate();
+
+            bool isSeparate() const;
+
             //! @cond
             RequestHandler* getHandler() const;
             //! @endcond
 
         private:
+            RCSGetResponse();
             RCSGetResponse(std::shared_ptr< RequestHandler >&&);
 
         private:
@@ -289,6 +294,9 @@ namespace OIC
              */
             static RCSSetResponse create(RCSResourceAttributes&& attrs, int errorCode);
 
+            static RCSSetResponse separate();
+
+            bool isSeparate() const;
 
             //! @cond
             SetRequestHandler* getHandler() const;
@@ -313,6 +321,7 @@ namespace OIC
             RCSSetResponse& setAcceptanceMethod(AcceptanceMethod method);
 
         private:
+            RCSSetResponse();
             RCSSetResponse(std::shared_ptr< SetRequestHandler >&&);
             RCSSetResponse(std::shared_ptr< SetRequestHandler >&&, AcceptanceMethod);
 

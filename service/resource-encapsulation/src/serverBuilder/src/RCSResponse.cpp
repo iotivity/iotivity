@@ -61,6 +61,20 @@ namespace OIC
                 std::move(attrs), errorCode) };
         }
 
+        RCSGetResponse RCSGetResponse::separate()
+        {
+            return RCSGetResponse();
+        }
+
+        bool RCSGetResponse::isSeparate() const
+        {
+            return !m_handler;
+        }
+
+        RCSGetResponse::RCSGetResponse()
+        {
+        }
+
         RCSGetResponse::RCSGetResponse(std::shared_ptr< RequestHandler >&& handler) :
                 m_handler{ std::move(handler) }
         {
@@ -123,6 +137,16 @@ namespace OIC
             return std::make_shared< SetRequestHandler >(std::move(attrs), errorCode);
         }
 
+        RCSSetResponse RCSSetResponse::separate()
+        {
+            return RCSSetResponse();
+        }
+
+        RCSSetResponse::RCSSetResponse() :
+                m_acceptanceMethod { AcceptanceMethod::DEFAULT }
+        {
+        }
+
         RCSSetResponse::RCSSetResponse(std::shared_ptr< SetRequestHandler >&& handler) :
                 m_acceptanceMethod { AcceptanceMethod::DEFAULT },
                 m_handler{ std::move(handler) }
@@ -136,6 +160,12 @@ namespace OIC
         {
             assert(m_handler);
         }
+
+        bool RCSSetResponse::isSeparate() const
+        {
+            return !m_handler;
+        }
+
 
         SetRequestHandler* RCSSetResponse::getHandler() const
         {

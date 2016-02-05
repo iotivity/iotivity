@@ -38,38 +38,44 @@ namespace OIC
 {
     namespace Service
     {
+        class RCSResourceObject;
+
         /**
         * This class describes the request.
         *
         */
         class RCSRequest
         {
-            public:
-                /**
-                * Constructor to set resource URI.
-                *
-                * @param resourceUri URI of the resource for which the request is generated.
-                */
-                explicit RCSRequest(const std::string& resourceUri);
+        public:
+            RCSRequest() = default;
 
-                explicit RCSRequest(const std::shared_ptr< OC::OCResourceRequest >&);
+            /**
+            * Constructor to set resource URI.
+            *
+            * @param resourceUri URI of the resource for which the request is generated.
+            */
+            explicit RCSRequest(const std::string& resourceUri);
 
-                RCSRequest &operator=(RCSRequest &) = delete;
+            RCSRequest(const std::shared_ptr< RCSResourceObject >&,
+                    const std::shared_ptr< OC::OCResourceRequest >&);
 
-                /**
-                * @return Returns the URI of the request.
-                *
-                */
-                std::string getResourceUri() const;
+            std::weak_ptr< RCSResourceObject > getResourceObject() const noexcept;
 
-                const std::shared_ptr< OC::OCResourceRequest >& getOCRequest() const;
+            /**
+            * @return Returns the URI of the request.
+            *
+            */
+            std::string getResourceUri() const;
 
-                const std::map< std::string, std::string >& getQueryParams() const;
+            const std::shared_ptr< OC::OCResourceRequest >& getOCRequest() const noexcept;
 
-                std::string getInterface() const;
+            const std::map< std::string, std::string >& getQueryParams() const;
 
-            private:
-                const std::shared_ptr< OC::OCResourceRequest > m_ocRequest;
+            std::string getInterface() const;
+
+        private:
+            std::weak_ptr< RCSResourceObject > m_resourceObject;
+            std::shared_ptr< OC::OCResourceRequest > m_ocRequest;
         };
 
     }

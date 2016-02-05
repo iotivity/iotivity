@@ -77,7 +77,7 @@ namespace OIC
          * in instead of overriding SetRequestHandler.
          * </p>
          */
-        class RCSResourceObject
+        class RCSResourceObject : public std::enable_shared_from_this< RCSResourceObject >
         {
             private:
                 class WeakGuard;
@@ -470,7 +470,8 @@ namespace OIC
         private:
             RCSResourceObject(const std::string&, uint8_t, RCSResourceAttributes&&);
 
-            OCEntityHandlerResult entityHandler(const std::shared_ptr< OC::OCResourceRequest >&);
+            static OCEntityHandlerResult entityHandler(const std::weak_ptr< RCSResourceObject >&,
+                    const std::shared_ptr< OC::OCResourceRequest >&);
 
             OCEntityHandlerResult handleRequest(const std::shared_ptr< OC::OCResourceRequest >&);
             OCEntityHandlerResult handleRequestGet(const std::shared_ptr< OC::OCResourceRequest >&);
