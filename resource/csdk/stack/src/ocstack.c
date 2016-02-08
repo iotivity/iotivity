@@ -466,8 +466,7 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
     VERIFY_NON_NULL(requestInfo, FATAL, OC_STACK_INVALID_PARAM);
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
-    OCStackResult rmResult = RMAddInfo(object->routeData, &(requestInfo->info.options),
-                                     &(requestInfo->info.numOptions));
+    OCStackResult rmResult = RMAddInfo(object->routeData, requestInfo, true, NULL);
     if (OC_STACK_OK != rmResult)
     {
         OIC_LOG(ERROR, TAG, "Add destination option failed");
@@ -1059,40 +1058,9 @@ exit:
     return result;
 }
 
-void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
+void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
-    VERIFY_NON_NULL_NR(endPoint, FATAL);
-    VERIFY_NON_NULL_NR(responseInfo, FATAL);
-
-    OIC_LOG(INFO, TAG, "Enter HandleCAResponses");
-
-#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
-#ifdef ROUTING_GATEWAY
-    bool needRIHandling = false;
-    /*
-     * Routing manager is going to update either of endpoint or response or both.
-     * This typecasting is done to avoid unnecessary duplication of Endpoint and responseInfo
-     * RM can update "routeData" option in endPoint so that future RI requests can be sent to proper
-     * destination.
-     */
-    OCStackResult ret = RMHandleResponse((CAResponseInfo_t *)responseInfo, (CAEndpoint_t *)endPoint,
-                                         &needRIHandling);
-    if(ret != OC_STACK_OK || !needRIHandling)
-    {
-        OIC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
-        return;
-    }
-#endif
-
-    /*
-     * Put source in sender endpoint so that the next packet from application can be routed to
-     * proper destination and remove "RM" coap header option before passing request / response to
-     * RI as this option will make no sense to either RI or application.
-     */
-    RMUpdateInfo((CAHeaderOption_t **) &(responseInfo->info.options),
-                 (uint8_t *) &(responseInfo->info.numOptions),
-                 (CAEndpoint_t *) endPoint);
-#endif
+    OC_LOG(DEBUG, TAG, "Enter OCHandleResponse");
 
     if(responseInfo->info.resourceUri &&
         strcmp(responseInfo->info.resourceUri, OC_RSRVD_PRESENCE_URI) == 0)
@@ -1391,6 +1359,46 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
     OIC_LOG(INFO, TAG, "Exit HandleCAResponses");
 }
 
+void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
+{
+    VERIFY_NON_NULL_NR(endPoint, FATAL);
+    VERIFY_NON_NULL_NR(responseInfo, FATAL);
+
+    OC_LOG(INFO, TAG, "Enter HandleCAResponses");
+
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#ifdef ROUTING_GATEWAY
+    bool needRIHandling = false;
+    /*
+     * Routing manager is going to update either of endpoint or response or both.
+     * This typecasting is done to avoid unnecessary duplication of Endpoint and responseInfo
+     * RM can update "routeData" option in endPoint so that future RI requests can be sent to proper
+     * destination.
+     */
+    OCStackResult ret = RMHandleResponse((CAResponseInfo_t *)responseInfo, (CAEndpoint_t *)endPoint,
+                                         &needRIHandling);
+    if(ret != OC_STACK_OK || !needRIHandling)
+    {
+        OC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
+        return;
+    }
+#endif
+
+    /*
+     * Put source in sender endpoint so that the next packet from application can be routed to
+     * proper destination and remove "RM" coap header option before passing request / response to
+     * RI as this option will make no sense to either RI or application.
+     */
+    RMUpdateInfo((CAHeaderOption_t **) &(responseInfo->info.options),
+                 (uint8_t *) &(responseInfo->info.numOptions),
+                 (CAEndpoint_t *) endPoint);
+#endif
+
+    OCHandleResponse(endPoint, responseInfo);
+
+    OIC_LOG(INFO, TAG, "Exit HandleCAResponses");
+}
+
 /*
  * This function handles error response from CA
  * code shall be added to handle the errors
@@ -1423,6 +1431,7 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
         const uint8_t numOptions, const CAHeaderOption_t *options,
         CAToken_t token, uint8_t tokenLength, const char *resourceUri)
 {
+    OIC_LOG(DEBUG, TAG, "Entering SendDirectStackResponse");
     CAResponseInfo_t respInfo = {
         .result = responseResult
     };
@@ -1447,73 +1456,139 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     // Add the destination to route option from the endpoint->routeData.
-    OCStackResult result = RMAddInfo(endPoint->routeData,
-                                     &(respInfo.info.options),
-                                     &(respInfo.info.numOptions));
+    bool doPost = false;
+    OCStackResult result = RMAddInfo(endPoint->routeData, &respInfo, false, &doPost);
     if(OC_STACK_OK != result)
     {
         OIC_LOG_V(ERROR, TAG, "Add routing option failed [%d]", result);
         return result;
     }
-#endif
-
-    CAResult_t caResult = CASendResponse(endPoint, &respInfo);
-
-    // resourceUri in the info field is cloned in the CA layer and
-    // thus ownership is still here.
-    OICFree (respInfo.info.resourceUri);
-    OICFree (respInfo.info.options);
-    if(CA_STATUS_OK != caResult)
+    if (doPost)
     {
-        OIC_LOG(ERROR, TAG, "CASendResponse error");
-        return CAResultToOCResult(caResult);
+        OC_LOG(DEBUG, TAG, "Sending a POST message for EMPTY ACK in Client Mode");
+        CARequestInfo_t reqInfo = {.method = CA_POST };
+        /* The following initialization is not done in a single initializer block as in
+         * arduino, .c file is compiled as .cpp and moves it from C99 to C++11.  The latter
+         * does not have designated initalizers. This is a work-around for now.
+         */
+        reqInfo.info.type = CA_MSG_NONCONFIRM;
+        reqInfo.info.messageId = coapID;
+        reqInfo.info.tokenLength = tokenLength;
+        reqInfo.info.token = token;
+        reqInfo.info.numOptions = respInfo.info.numOptions;
+        reqInfo.info.payload = NULL;
+        reqInfo.info.resourceUri = OICStrdup (OC_RSRVD_GATEWAY_URI);
+        if (reqInfo.info.numOptions)
+        {
+            reqInfo.info.options =
+                (CAHeaderOption_t *)OICCalloc(reqInfo.info.numOptions, sizeof(CAHeaderOption_t));
+            if (NULL == reqInfo.info.options)
+            {
+                OC_LOG(ERROR, TAG, "Calloc failed");
+                return OC_STACK_NO_MEMORY;
+            }
+            memcpy (reqInfo.info.options, respInfo.info.options,
+                    sizeof(CAHeaderOption_t) * reqInfo.info.numOptions);
+
+        }
+        CAResult_t caResult = CASendRequest(endPoint, &reqInfo);
+        OICFree (reqInfo.info.resourceUri);
+        OICFree (reqInfo.info.options);
+        OICFree (respInfo.info.resourceUri);
+        OICFree (respInfo.info.options);
+        if (CA_STATUS_OK != caResult)
+        {
+            OC_LOG(ERROR, TAG, "CASendRequest error");
+            return CAResultToOCResult(caResult);
+        }
     }
+    else
+#endif
+    {
+        CAResult_t caResult = CASendResponse(endPoint, &respInfo);
+
+        // resourceUri in the info field is cloned in the CA layer and
+        // thus ownership is still here.
+        OICFree (respInfo.info.resourceUri);
+        OICFree (respInfo.info.options);
+        if(CA_STATUS_OK != caResult)
+        {
+            OIC_LOG(ERROR, TAG, "CASendResponse error");
+            return CAResultToOCResult(caResult);
+        }
+    }
+    OC_LOG(DEBUG, TAG, "Exit SendDirectStackResponse");
     return OC_STACK_OK;
 }
 
-//This function will be called back by CA layer when a request is received
-void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
+OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 {
-    OIC_LOG(INFO, TAG, "Enter HandleCARequests");
-    if(!endPoint)
+    OIC_LOG(INFO, TAG, "Entering HandleStackRequests (OCStack Layer)");
+    OCStackResult result = OC_STACK_ERROR;
+    if(!protocolRequest)
     {
-        OIC_LOG(ERROR, TAG, "endPoint is NULL");
-        return;
+        OIC_LOG(ERROR, TAG, "protocolRequest is NULL");
+        return OC_STACK_INVALID_PARAM;
     }
 
-    if(!requestInfo)
+    OCServerRequest * request = GetServerRequestUsingToken(protocolRequest->requestToken,
+            protocolRequest->tokenLength);
+    if(!request)
     {
-        OIC_LOG(ERROR, TAG, "requestInfo is NULL");
-        return;
+        OIC_LOG(INFO, TAG, "This is a new Server Request");
+        result = AddServerRequest(&request, protocolRequest->coapID,
+                protocolRequest->delayedResNeeded, 0, protocolRequest->method,
+                protocolRequest->numRcvdVendorSpecificHeaderOptions,
+                protocolRequest->observationOption, protocolRequest->qos,
+                protocolRequest->query, protocolRequest->rcvdVendorSpecificHeaderOptions,
+                protocolRequest->payload, protocolRequest->requestToken,
+                protocolRequest->tokenLength, protocolRequest->resourceUrl,
+                protocolRequest->reqTotalSize, protocolRequest->acceptFormat,
+                &protocolRequest->devAddr);
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "Error adding server request");
+            return result;
+        }
+
+        if(!request)
+        {
+            OIC_LOG(ERROR, TAG, "Out of Memory");
+            return OC_STACK_NO_MEMORY;
+        }
+
+        if(!protocolRequest->reqMorePacket)
+        {
+            request->requestComplete = 1;
+        }
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "This is either a repeated or blocked Server Request");
     }
 
-#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
-#ifdef ROUTING_GATEWAY
-    bool needRIHandling = false;
-    /*
-     * Routing manager is going to update either of endpoint or request or both.
-     * This typecasting is done to avoid unnecessary duplication of Endpoint and requestInfo
-     * RM can update "routeData" option in endPoint so that future RI requests can be sent to proper
-     * destination. It can also remove "RM" coap header option before passing request / response to
-     * RI as this option will make no sense to either RI or application.
-     */
-    OCStackResult ret = RMHandleRequest((CARequestInfo_t *)requestInfo, (CAEndpoint_t *)endPoint,
-                                     &needRIHandling);
-    if(OC_STACK_OK != ret || !needRIHandling)
+    if(request->requestComplete)
     {
-        OIC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
-        return;
+        OIC_LOG(INFO, TAG, "This Server Request is complete");
+        ResourceHandling resHandling = OC_RESOURCE_VIRTUAL;
+        OCResource *resource = NULL;
+        result = DetermineResourceHandling (request, &resHandling, &resource);
+        if (result == OC_STACK_OK)
+        {
+            result = ProcessRequest(resHandling, resource, request);
+        }
     }
-#endif
+    else
+    {
+        OIC_LOG(INFO, TAG, "This Server Request is incomplete");
+        result = OC_STACK_CONTINUE;
+    }
+    return result;
+}
 
-    /*
-     * Put source in sender endpoint so that the next packet from application can be routed to
-     * proper destination and remove RM header option.
-     */
-    RMUpdateInfo((CAHeaderOption_t **) &(requestInfo->info.options),
-                 (uint8_t *) &(requestInfo->info.numOptions),
-                 (CAEndpoint_t *) endPoint);
-#endif
+void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
+{
+    OC_LOG(DEBUG, TAG, "Enter OCHandleRequests");
 
 #ifdef TCP_ADAPTER
     if (requestInfo->info.resourceUri &&
@@ -1714,72 +1789,76 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     // The token is copied in there, and is thus still owned by this function.
     OICFree(serverRequest.payload);
     OICFree(serverRequest.requestToken);
-    OIC_LOG(INFO, TAG, "Exit HandleCARequests");
+    OIC_LOG(INFO, TAG, "Exit OCHandleRequests");
 }
 
-OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
+//This function will be called back by CA layer when a request is received
+void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
 {
-    OIC_LOG(INFO, TAG, "Entering HandleStackRequests (OCStack Layer)");
-    OCStackResult result = OC_STACK_ERROR;
-    ResourceHandling resHandling;
-    OCResource *resource;
-    if(!protocolRequest)
+    OIC_LOG(INFO, TAG, "Enter HandleCARequests");
+    if(!endPoint)
     {
-        OIC_LOG(ERROR, TAG, "protocolRequest is NULL");
-        return OC_STACK_INVALID_PARAM;
+        OIC_LOG(ERROR, TAG, "endPoint is NULL");
+        return;
     }
 
-    OCServerRequest * request = GetServerRequestUsingToken(protocolRequest->requestToken,
-            protocolRequest->tokenLength);
-    if(!request)
+    if(!requestInfo)
     {
-        OIC_LOG(INFO, TAG, "This is a new Server Request");
-        result = AddServerRequest(&request, protocolRequest->coapID,
-                protocolRequest->delayedResNeeded, 0, protocolRequest->method,
-                protocolRequest->numRcvdVendorSpecificHeaderOptions,
-                protocolRequest->observationOption, protocolRequest->qos,
-                protocolRequest->query, protocolRequest->rcvdVendorSpecificHeaderOptions,
-                protocolRequest->payload, protocolRequest->requestToken,
-                protocolRequest->tokenLength, protocolRequest->resourceUrl,
-                protocolRequest->reqTotalSize, protocolRequest->acceptFormat,
-                &protocolRequest->devAddr);
-        if (OC_STACK_OK != result)
-        {
-            OIC_LOG(ERROR, TAG, "Error adding server request");
-            return result;
-        }
+        OIC_LOG(ERROR, TAG, "requestInfo is NULL");
+        return;
+    }
 
-        if(!request)
-        {
-            OIC_LOG(ERROR, TAG, "Out of Memory");
-            return OC_STACK_NO_MEMORY;
-        }
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+#ifdef ROUTING_GATEWAY
+    bool needRIHandling = false;
+    bool isEmptyMsg = false;
+    /*
+     * Routing manager is going to update either of endpoint or request or both.
+     * This typecasting is done to avoid unnecessary duplication of Endpoint and requestInfo
+     * RM can update "routeData" option in endPoint so that future RI requests can be sent to proper
+     * destination. It can also remove "RM" coap header option before passing request / response to
+     * RI as this option will make no sense to either RI or application.
+     */
+    OCStackResult ret = RMHandleRequest((CARequestInfo_t *)requestInfo, (CAEndpoint_t *)endPoint,
+                                        &needRIHandling, &isEmptyMsg);
+    if(OC_STACK_OK != ret || !needRIHandling)
+    {
+        OIC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
+        return;
+    }
+#endif
 
-        if(!protocolRequest->reqMorePacket)
-        {
-            request->requestComplete = 1;
-        }
+    /*
+     * Put source in sender endpoint so that the next packet from application can be routed to
+     * proper destination and remove RM header option.
+     */
+    RMUpdateInfo((CAHeaderOption_t **) &(requestInfo->info.options),
+                 (uint8_t *) &(requestInfo->info.numOptions),
+                 (CAEndpoint_t *) endPoint);
+
+#ifdef ROUTING_GATEWAY
+    if (isEmptyMsg)
+    {
+        /*
+         * In Gateways, the MSGType in route option is used to check if the actual
+         * response is EMPTY message(4 bytes CoAP Header).  In case of Client, the
+         * EMPTY response is sent in the form of POST request which need to be changed
+         * to a EMPTY response by RM.  This translation is done in this part of the code.
+         */
+        OIC_LOG(INFO, TAG, "This is a Empty response from the Client");
+        CAResponseInfo_t respInfo = {.result = CA_EMPTY,
+                                     .info.messageId = requestInfo->info.messageId,
+                                     .info.type = CA_MSG_ACKNOWLEDGE};
+        OCHandleResponse(endPoint, &respInfo);
     }
     else
+#endif
+#endif
     {
-        OIC_LOG(INFO, TAG, "This is either a repeated or blocked Server Request");
+        // Normal handling of the packet
+        OCHandleRequests(endPoint, requestInfo);
     }
-
-    if(request->requestComplete)
-    {
-        OIC_LOG(INFO, TAG, "This Server Request is complete");
-        result = DetermineResourceHandling (request, &resHandling, &resource);
-        if (result == OC_STACK_OK)
-        {
-            result = ProcessRequest(resHandling, resource, request);
-        }
-    }
-    else
-    {
-        OIC_LOG(INFO, TAG, "This Server Request is incomplete");
-        result = OC_STACK_CONTINUE;
-    }
-    return result;
+    OIC_LOG(INFO, TAG, "Exit HandleCARequests");
 }
 
 bool validatePlatformInfo(OCPlatformInfo info)
@@ -1959,12 +2038,14 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
         result = SRMInitPolicyEngine();
         // TODO after BeachHead delivery: consolidate into single SRMInit()
     }
-
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    RMSetStackMode(mode);
 #ifdef ROUTING_GATEWAY
     if (OC_GATEWAY == myStackMode)
     {
         result = RMInitialize();
     }
+#endif
 #endif
 
 #ifdef TCP_ADAPTER

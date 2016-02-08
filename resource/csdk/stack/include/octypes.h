@@ -64,7 +64,7 @@ extern "C" {
 
 /** Resource Type.*/
 #define OC_RSRVD_RESOURCE_TYPES_URI           "/oic/res/types/d"
-#ifdef ROUTING_GATEWAY
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 /** Gateway URI.*/
 #define OC_RSRVD_GATEWAY_URI                  "/oic/gateway"
 #endif

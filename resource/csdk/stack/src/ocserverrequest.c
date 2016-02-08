@@ -157,8 +157,7 @@ static OCStackResult OCSendResponse(const CAEndpoint_t *object, CAResponseInfo_t
 {
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     // Add route info in RM option.
-    OCStackResult rmResult = RMAddInfo(object->routeData, &(responseInfo->info.options),
-                       &(responseInfo->info.numOptions));
+    OCStackResult rmResult = RMAddInfo(object->routeData, responseInfo, false, NULL);
     if(OC_STACK_OK != rmResult)
     {
         OIC_LOG(ERROR, TAG, "Add option failed");

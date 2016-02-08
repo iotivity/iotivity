@@ -906,13 +906,14 @@ uint16_t RMGetMcastSeqNumber()
  */
 
 OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *sender,
-                             bool *selfDestination)
+                             bool *selfDestination, bool *isEmptyMsg)
 {
     RM_NULL_CHECK_WITH_RET(message, RM_TAG, "message");
     RM_NULL_CHECK_WITH_RET(sender, RM_TAG, "sender");
     RM_NULL_CHECK_WITH_RET(selfDestination, RM_TAG, "selfDestination");
 
     bool forward = false;
+    bool isEMPTYPacket = false;
     CAEndpoint_t nextHop = {.adapter = CA_DEFAULT_ADAPTER};
     CAInfo_t *info = NULL;
     if (isRequest)
@@ -1048,6 +1049,13 @@ OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *
     else if (g_GatewayID == routeOption.destGw)
     {
         OIC_LOG(INFO, RM_TAG, "GatewayId found in destination");
+
+        // Check the MSGType of RouteOption to find if the packet is EMPTY packet.
+        if (ACK == routeOption.msgType || RST == routeOption.msgType)
+        {
+            isEMPTYPacket = true;
+        }
+
         /*
          * This unicast packet either belongs to us or any of our connected end devices
          * check if packet belongs to end device.
@@ -1111,7 +1119,8 @@ rewriteandexit:
     if (forward)
     {
         // Don't forward any packet meant for gateway resource.
-        if (info->resourceUri && (0 == strcmp(info->resourceUri, OC_RSRVD_GATEWAY_URI)))
+        if (info->resourceUri && (0 == strcmp(info->resourceUri, OC_RSRVD_GATEWAY_URI)) &&
+            (ACK != routeOption.msgType))
         {
             OIC_LOG(ERROR, RM_TAG, "Not forwarding gateway resource packet");
         }
@@ -1119,6 +1128,30 @@ rewriteandexit:
         {
             OIC_LOG(ERROR, RM_TAG, "This is secured request. Not supported by routing manager");
             return OC_STACK_ERROR;
+        }
+        else if (isEMPTYPacket)
+        {
+            OC_LOG(DEBUG, TAG, "The message to be Forwarded is a EMPTY message");
+            CAResponseInfo_t responseMessage = {.result = CA_EMPTY};
+            if (ACK == routeOption.msgType)
+            {
+                responseMessage.info.type = CA_MSG_ACKNOWLEDGE;
+            }
+            else
+            {
+                responseMessage.info.type = CA_MSG_RESET;
+            }
+
+            responseMessage.info.messageId = info->messageId;
+
+            CAResult_t caRes = CASendResponse(&nextHop, &responseMessage);
+            if (CA_STATUS_OK != caRes)
+            {
+                OC_LOG_V(ERROR, RM_TAG, "Failed to forward response to next hop [%d][%s]",
+                         caRes, nextHop.addr);
+                // Since a response is always unicast, return error here.
+                return OC_STACK_ERROR;
+            }
         }
         else
         {
@@ -1167,13 +1200,44 @@ rewriteandexit:
             }
         }
     }
+    else
+    {
+        if (isEMPTYPacket)
+        {
+            if (isRequest)
+            {
+                OC_LOG(DEBUG, TAG, "POST message with type ACK in Route Option");
+                if (NULL != isEmptyMsg)
+                {
+                    *isEmptyMsg = true;
+                }
+            }
+            else
+            {
+                OC_LOG(DEBUG, TAG, "Response for EMPTY message is received");
+                CAResponseInfo_t *msg = message;
+                if (ACK == (MSGType)routeOption.msgType)
+                {
+                    msg->info.type = CA_MSG_ACKNOWLEDGE;
+                }
+                else
+                {
+                    msg->info.type = CA_MSG_RESET;
+                }
+                msg->result = CA_EMPTY;
+                OICFree(msg->info.token);
+                msg->info.token = NULL;
+                msg->info.tokenLength = 0;
+            }
+        }
+    }
 
     OIC_LOG_V(INFO, RM_TAG, "Sender: [%u] Destination: [%u]", routeOption.srcGw, routeOption.destGw);
     return OC_STACK_OK;
 }
 
 OCStackResult RMHandleRequest(CARequestInfo_t *message, const CAEndpoint_t *sender,
-                              bool *selfDestination)
+                              bool *selfDestination, bool *isEmptyMsg)
 {
     if (!g_isRMInitialized)
     {
@@ -1181,7 +1245,7 @@ OCStackResult RMHandleRequest(CARequestInfo_t *message, const CAEndpoint_t *send
         *selfDestination = true;
         return OC_STACK_OK;
     }
-    OCStackResult res = RMHandlePacket(true, message, sender, selfDestination);
+    OCStackResult res = RMHandlePacket(true, message, sender, selfDestination, isEmptyMsg);
     return res;
 }
 
@@ -1194,6 +1258,6 @@ OCStackResult RMHandleResponse(CAResponseInfo_t *message, const CAEndpoint_t *se
         *selfDestination = true;
         return OC_STACK_OK;
     }
-    OCStackResult res = RMHandlePacket(false, message, sender, selfDestination);
+    OCStackResult res = RMHandlePacket(false, message, sender, selfDestination, NULL);
     return res;
 }

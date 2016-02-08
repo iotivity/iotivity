@@ -85,28 +85,48 @@ extern "C"
             {OC_LOG_V(ERROR, TAG, "%s failed!!", #op); goto exit;} }
 
 /**
- * This structure is used to hold the hopcount, source and destination address.
+ * Message types in RouteOption to differentiate a normal response and Empty response.
+ */
+typedef enum
+{
+   NOR = 0,  /**< Normal Message. */
+   ACK,      /**< Empty Acknowledgement message. */
+   RST,      /**< Empty Reset message. */
+   UNDEFINED /**< Message type not defined. */
+}MSGType;
+
+/**
+ * This structure is used to hold the source address, destination address, message type and
+ * sequence number. This collectively forms the value of Route option in the message.
  */
 typedef struct
 {
     uint32_t srcGw;               /**< Source gateway for this packet. */
     uint32_t destGw;              /**< Destination gateway for this packet. */
-    uint16_t mSeqNum;             /**< HopCount. */
+    uint16_t mSeqNum;             /**< Multicast sequence Number. */
     uint16_t srcEp;               /**< Source endpoint for this packet. */
     uint16_t destEp;              /**< Destination endpoint for this packet. */
+    uint8_t msgType;              /**< Type of Message: Empty or normal. */
 } RMRouteOption_t;
+
+/**
+ * To set the stack mode in Routing manager.
+ */
+void RMSetStackMode(OCMode mode);
 
 /**
  * Adds the destination address to the Route options.
  * If Route option is already present, it adds the destination address information to
  * Route option else creates a new Route option with the destination address info.
  * @param[in]       endpoint        Destination address.
- * @param[in,out]   options         Header options present in the Request/response message.
- * @param[in,out]   numOptions      Number of options present in the message.
+ * @param[in,out]   message         Request/response message to add the route option
+ * @param[in]       isRequest       True if message is request else false.
+ * @param[out]      doPost          True if a POST message be sent for empty packet to
+ *                                  Routing gateway.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-OCStackResult RMAddInfo(const char *destination, CAHeaderOption_t **options,
-                        uint8_t *numOptions);
+OCStackResult RMAddInfo(const char *destination, void *message, bool isRequest,
+                        bool *doPost);
 
 /**
  * Removes the Route Option from the header options.
