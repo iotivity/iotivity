@@ -53,6 +53,7 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
     private Text                resTypeTxt;
 
     private Button              observeBtn;
+    private Button              discoverBtn;
     private Button              addIfTypeBtn;
     private Button              removeIfTypeBtn;
 
@@ -62,6 +63,7 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
     private String              resURI;
     private String              resType;
     private boolean             observable;
+    private boolean             discoverable;
     private Map<String, String> ifTypes;
     private Set<String>         selectedIfTypes;
 
@@ -164,6 +166,11 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
         gd = new GridData(SWT.FILL, SWT.FILL, true, true);
         otherOptionsGrp.setLayoutData(gd);
 
+        discoverBtn = new Button(otherOptionsGrp, SWT.CHECK);
+        discoverBtn.setText("Discoverable");
+        discoverBtn.setSelection(true);
+        discoverable = true;
+
         observeBtn = new Button(otherOptionsGrp, SWT.CHECK);
         observeBtn.setText("Observable");
         observeBtn.setSelection(true);
@@ -213,6 +220,13 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
             public void modifyText(ModifyEvent arg0) {
                 resType = resTypeTxt.getText();
                 getWizard().getContainer().updateButtons();
+            }
+        });
+
+        discoverBtn.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                discoverable = discoverBtn.getSelection();
             }
         });
 
@@ -318,8 +332,6 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
             MessageDialog
                     .openError(getShell(), "Resource URI in use",
                             "Entered resource URI is in use. Please try a different one.");
-            // TODO: Instead of MessageDialog, errors may be shown on wizard
-            // itself.
             return null;
         }
 
@@ -361,5 +373,9 @@ public class SimpleResourceBasicDetailsPage extends WizardPage {
 
     public boolean isObservable() {
         return observable;
+    }
+
+    public boolean isDiscoverable() {
+        return discoverable;
     }
 }

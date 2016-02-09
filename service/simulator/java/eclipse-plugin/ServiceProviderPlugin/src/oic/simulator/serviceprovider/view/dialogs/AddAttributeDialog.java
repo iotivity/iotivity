@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import oic.simulator.serviceprovider.model.AttributeHelper;
+import oic.simulator.serviceprovider.model.AttributeHelper.ValidValuesType;
 import oic.simulator.serviceprovider.utils.Constants;
 
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -290,14 +291,14 @@ public class AddAttributeDialog extends TitleAreaDialog {
             attTypeCmb.select(attTypeCmb.indexOf(attHelper.getAttributeType()));
             updateControls();
             dflValueTxt.setText(attHelper.getAttributeDflValue());
-            Type valuesType = attHelper.getValidValuesType();
-            if (valuesType == Type.RANGE) {
+            ValidValuesType valuesType = attHelper.getValidValuesType();
+            if (valuesType == ValidValuesType.RANGE) {
                 rangeBtn.setSelection(true);
                 noneBtn.setSelection(false);
                 rangeOptionSelected(true);
                 minRangeTxt.setText(attHelper.getMin());
                 maxRangeTxt.setText(attHelper.getMax());
-            } else if (valuesType == Type.VALUESET) {
+            } else if (valuesType == ValidValuesType.VALUESET) {
                 cusValuesBtn.setSelection(true);
                 noneBtn.setSelection(false);
                 customOptionSelected(true);
@@ -627,7 +628,7 @@ public class AddAttributeDialog extends TitleAreaDialog {
                 maxRangeTxt.setFocus();
                 return;
             }
-            attHelper.setValidValuesType(Type.RANGE);
+            attHelper.setValidValuesType(ValidValuesType.RANGE);
             attHelper.setMin(min);
             attHelper.setMax(max);
 
@@ -644,7 +645,7 @@ public class AddAttributeDialog extends TitleAreaDialog {
                 maxRangeTxt.setFocus();
                 return;
             }
-            attHelper.setValidValuesType(Type.VALUESET);
+            attHelper.setValidValuesType(ValidValuesType.VALUESET);
             attHelper.setAllowedValuesByArray(cusItems);
 
             if (editOperation) {
@@ -653,7 +654,7 @@ public class AddAttributeDialog extends TitleAreaDialog {
                 attHelper.setMax(null);
             }
         } else if (noneBtn.isEnabled() && noneBtn.getSelection()) {
-            attHelper.setValidValuesType(Type.UNKNOWN);
+            attHelper.setValidValuesType(ValidValuesType.UNKNOWN);
             if (editOperation) {
                 // Remove min, max and custom values
                 attHelper.setAllowedValues(null);

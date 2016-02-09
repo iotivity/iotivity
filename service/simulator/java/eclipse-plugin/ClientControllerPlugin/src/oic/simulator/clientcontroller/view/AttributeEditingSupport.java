@@ -332,9 +332,27 @@ public class AttributeEditingSupport {
             if (!(element instanceof AttributeElement)) {
                 return;
             }
+
             boolean status = (Boolean) value;
             ((AttributeElement) element).setPostState(status);
             viewer.update(element, null);
+
+            Tree t = viewer.getTree();
+            TreeItem item = t.getSelection()[0];
+            if (null == item) {
+                return;
+            }
+
+            // Set the post state of the top-most parent of this attribute to
+            // false.
+            TreeItem parent = item.getParentItem();
+            if (null != parent) {
+                while (parent.getParentItem() != null) {
+                    parent = parent.getParentItem();
+                }
+                Object data = parent.getData();
+                ((AttributeElement) data).setPostState(status);
+            }
         }
     }
 }

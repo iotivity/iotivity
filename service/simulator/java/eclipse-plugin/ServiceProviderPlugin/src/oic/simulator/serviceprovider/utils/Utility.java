@@ -354,6 +354,16 @@ public class Utility {
         return resultSet;
     }
 
+    public static String[] convertListToStringArray(List<String> valueList) {
+        String[] strArr;
+        if (null != valueList && valueList.size() > 0) {
+            strArr = valueList.toArray(new String[1]);
+        } else {
+            strArr = new String[1];
+        }
+        return strArr;
+    }
+
     public static Comparator<Resource>       resourceComparator       = new Comparator<Resource>() {
                                                                           public int compare(
                                                                                   Resource res1,

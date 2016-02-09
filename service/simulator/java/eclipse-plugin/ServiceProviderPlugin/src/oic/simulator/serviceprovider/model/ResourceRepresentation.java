@@ -21,17 +21,19 @@ import java.util.Map;
 
 import oic.simulator.serviceprovider.manager.UiListenerHandler;
 
+import org.oic.simulator.AttributeValue;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
 
 public class ResourceRepresentation {
     private Map<String, AttributeElement> mAttributes = new HashMap<String, AttributeElement>();
 
-    public ResourceRepresentation(SimulatorResourceModel resourceModel)
+    public ResourceRepresentation(
+            Map<String, SimulatorResourceAttribute> attributes)
             throws NullPointerException {
-        if (resourceModel != null && resourceModel.size() > 0) {
-            for (Map.Entry<String, SimulatorResourceAttribute> entry : resourceModel
-                    .getAttributes().entrySet()) {
+        if (attributes != null && attributes.size() > 0) {
+            for (Map.Entry<String, SimulatorResourceAttribute> entry : attributes
+                    .entrySet()) {
                 mAttributes.put(entry.getKey(), new AttributeElement(this,
                         entry.getValue(), true));
             }
@@ -42,20 +44,21 @@ public class ResourceRepresentation {
         return mAttributes;
     }
 
-    public void update(SimulatorResourceModel resourceModel) {
-        if (null == resourceModel)
+    public void update(SimulatorResourceModel model) {
+        if (null == model)
             return;
 
-        for (Map.Entry<String, SimulatorResourceAttribute> entry : resourceModel
-                .getAttributes().entrySet()) {
+        for (Map.Entry<String, AttributeValue> entry : model.get().entrySet()) {
             AttributeElement attributeElement = mAttributes.get(entry.getKey());
             if (null != attributeElement) {
                 if (!attributeElement.getEditLock())
-                    attributeElement.update(entry.getValue());
-            } else // Display new attribute in UI
-            {
+                    attributeElement.update(new SimulatorResourceAttribute(
+                            entry.getKey(), entry.getValue()));
+            } else {
+                // Display new attribute in UI
                 AttributeElement newAttribute = new AttributeElement(this,
-                        entry.getValue(), true);
+                        new SimulatorResourceAttribute(entry.getKey(),
+                                entry.getValue()), true);
                 mAttributes.put(entry.getKey(), newAttribute);
 
                 UiListenerHandler.getInstance().attributeAddedUINotification(

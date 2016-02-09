@@ -252,8 +252,6 @@ public class LoadRamlPage extends WizardPage {
             MessageDialog
                     .openError(getShell(), "Invalid File",
                             "File doesn't exist. Either the file path or file name is invalid.");
-            // TODO: Instead of MessageDialog, errors may be shown on wizard
-            // itself.
             return null;
         }
 

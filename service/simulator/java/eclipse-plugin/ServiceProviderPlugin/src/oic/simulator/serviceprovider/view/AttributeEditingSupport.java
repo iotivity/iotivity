@@ -221,7 +221,7 @@ public class AttributeEditingSupport {
             String values[] = null;
             List<String> valueSet = resourceManager
                     .getAllValuesOfAttribute(attribute);
-            values = convertListToStringArray(valueSet);
+            values = Utility.convertListToStringArray(valueSet);
 
             ComboBoxCellEditor comboEditor;
             if (type.mType == ValueType.ARRAY) {
@@ -349,16 +349,6 @@ public class AttributeEditingSupport {
                 }
             }
             viewer.update(element, null);
-        }
-
-        public String[] convertListToStringArray(List<String> valueList) {
-            String[] strArr;
-            if (null != valueList && valueList.size() > 0) {
-                strArr = valueList.toArray(new String[1]);
-            } else {
-                strArr = new String[1];
-            }
-            return strArr;
         }
 
         public void updateAttributeValue(SimulatorResourceAttribute att,

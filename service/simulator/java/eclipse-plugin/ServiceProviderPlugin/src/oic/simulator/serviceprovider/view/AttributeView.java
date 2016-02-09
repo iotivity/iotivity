@@ -451,7 +451,7 @@ public class AttributeView extends ViewPart {
                                         && !(parent instanceof ResourceRepresentation)) {
                                     return "NA";
                                 } else if (attrElement.isReadOnly()) {
-                                    return "Read-only";
+                                    return "NA";
                                 } else if (attrElement.isAutoUpdateSupport()) {
                                     if (attrElement.isAutoUpdateInProgress())
                                         return Constants.ENABLED;

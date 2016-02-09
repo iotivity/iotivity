@@ -38,19 +38,24 @@ import oic.simulator.serviceprovider.utils.Utility;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Display;
+import org.oic.simulator.ArrayProperty;
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeProperty.Type;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.BooleanProperty;
 import org.oic.simulator.DeviceInfo;
 import org.oic.simulator.DeviceListener;
+import org.oic.simulator.DoubleProperty;
 import org.oic.simulator.ILogger.Level;
+import org.oic.simulator.IntegerProperty;
 import org.oic.simulator.PlatformInfo;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorManager;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
+import org.oic.simulator.StringProperty;
 import org.oic.simulator.server.Observer;
 import org.oic.simulator.server.SimulatorResource;
 import org.oic.simulator.server.SimulatorResource.AutoUpdateListener;
@@ -140,7 +145,7 @@ public class ResourceManager {
                                         .getResourceByURI(resourceURI);
                                 if (null != resource) {
                                     try {
-                                        resource.setResourceRepresentation(resourceModelN);
+                                        resource.updateResourceRepresentation(resourceModelN);
                                     } catch (NumberFormatException e) {
                                         Activator
                                                 .getDefault()
@@ -544,6 +549,11 @@ public class ResourceManager {
             SimulatorSingleResource jSimulatorSingleResource = (SimulatorSingleResource) jSimulatorResource;
             resource.setSimulatorResource(jSimulatorSingleResource);
 
+            // Cancel discoverable property if requested by user.
+            if (!resource.isDiscoverable()) {
+                jSimulatorSingleResource.setDiscoverable(false);
+            }
+
             // Cancel observable property if requested by user.
             if (!resource.isObservable()) {
                 jSimulatorSingleResource.setObservable(false);
@@ -572,21 +582,18 @@ public class ResourceManager {
                 resource.setResourceModel(jSimulatorSingleResource
                         .getResourceModel());
 
-                resource.setResourceRepresentation(resource.getResourceModel());
+                resource.createResourceRepresentation(jSimulatorSingleResource
+                        .getAttributes());
             }
+
+            // Set the resource interfaces.
+            jSimulatorSingleResource
+                    .setInterface(Utility.convertSetToVectorString(resource
+                            .getResourceInterfaces()));
 
             // Register the resource with the platform.
             jSimulatorSingleResource.start();
             resource.setStarted(true);
-
-            // Add the resource interfaces
-            Set<String> newIfSet = resource.getResourceInterfaces();
-            // Get the default interface(s) if any configured by the platform.
-            // These interfaces will be overwritten by the new interfaces.
-            Set<String> ifSetFromPlatform = Utility
-                    .convertVectorToSet(jSimulatorSingleResource.getInterface());
-            resource.setResourceInterfaces(ifSetFromPlatform);
-            updateResourceInterfaces(resource, newIfSet);
         } catch (SimulatorException e) {
             Activator
                     .getDefault()
@@ -713,7 +720,8 @@ public class ResourceManager {
                                     .getInterface()));
 
             // Fetch the resource attributes.
-            singleRes.setResourceRepresentation(jResModel);
+            singleRes.createResourceRepresentation(jSimulatorSingleResource
+                    .getAttributes());
 
             // Register the resource with the platform.
             jSimulatorSingleResource.start();
@@ -1100,65 +1108,45 @@ public class ResourceManager {
         boolean resourceRestartRequired = false;
         while (itr.hasNext()) {
             interfaceType = itr.next();
-            if (newIfSet.contains(interfaceType)) {
-                newIfSet.remove(interfaceType);
+            if (!newIfSet.contains(interfaceType)) {
+                resourceRestartRequired = true;
+                break;
+            }
+        }
+
+        try {
+            // As there is no support from native layer for interface removal,
+            // supporting it from the simulator requires restarting the resource
+            // if any existing interfaces are removed.
+
+            if (resourceRestartRequired) {
+                stopResource(resource);
+                jResource.setInterface(Utility
+                        .convertSetToVectorString(newIfSet));
+                startResource(resource);
             } else {
-                // Remove this interface support from the resource.
-                try {
-                    if (!resourceRestartRequired) {
-                        resourceRestartRequired = true;
+                // Existing interfaces are not removed.
+                itr = newIfSet.iterator();
+                while (itr.hasNext()) {
+                    interfaceType = itr.next();
+                    if (!curIfSet.contains(interfaceType)) {
+                        jResource.addInterface(interfaceType);
                     }
-                    jResource.removeInterface(interfaceType);
-                    itr.remove();
-                } catch (SimulatorException e) {
-                    Activator
-                            .getDefault()
-                            .getLogManager()
-                            .log(Level.ERROR.ordinal(),
-                                    new Date(),
-                                    "There is an error while removing the interface type("
-                                            + interfaceType
-                                            + ").\n"
-                                            + Utility.getSimulatorErrorString(
-                                                    e, null));
-                    throw e;
                 }
             }
-        }
-
-        // Add all remaining interfaces.
-        itr = newIfSet.iterator();
-        while (itr.hasNext()) {
-            interfaceType = itr.next();
-            // Add this interface support to the resource.
-            try {
-                jResource.addInterface(interfaceType);
-                curIfSet.add(interfaceType);
-            } catch (SimulatorException e) {
-                Activator
-                        .getDefault()
-                        .getLogManager()
-                        .log(Level.ERROR.ordinal(),
-                                new Date(),
-                                "There is an error while adding the interface type("
-                                        + interfaceType
-                                        + ").\n"
-                                        + Utility.getSimulatorErrorString(e,
-                                                null));
-                throw e;
-            }
-        }
-
-        // As there is no support from native layer for interface removal,
-        // supporting it from the simulator requires restarting the resource if
-        // any existing interfaces are removed.
-        if (resourceRestartRequired) {
-            stopResource(resource);
-            startResource(resource);
+        } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "There is an error while changing the interface types."
+                                    + Utility.getSimulatorErrorString(e, null));
+            throw e;
         }
 
         // Set the resource interfaces.
-        resource.setResourceInterfaces(curIfSet);
+        resource.setResourceInterfaces(newIfSet);
 
         return true;
     }
@@ -1263,10 +1251,30 @@ public class ResourceManager {
         if (null == prop) {
             return false;
         }
-        Type attProp = prop.type();
-        if (attProp == Type.UNKNOWN) {
-            return false;
+
+        if (prop.getType() == Type.INTEGER) {
+            IntegerProperty intProperty = prop.asInteger();
+            if (null != intProperty) {
+                return (intProperty.hasRange() || intProperty.hasValues());
+            } else {
+                return false;
+            }
+        } else if (prop.getType() == Type.DOUBLE) {
+            DoubleProperty dblProperty = prop.asDouble();
+            if (null != dblProperty) {
+                return (dblProperty.hasRange() || dblProperty.hasValues());
+            } else {
+                return false;
+            }
+        } else if (prop.getType() == Type.STRING) {
+            StringProperty stringProperty = prop.asString();
+            if (null != stringProperty) {
+                return stringProperty.hasValues();
+            } else {
+                return false;
+            }
         }
+
         return true;
     }
 
@@ -1523,48 +1531,82 @@ public class ResourceManager {
 
         List<String> values = new ArrayList<String>();
 
-        Type valuesType = prop.type();
-
-        if (valuesType == Type.UNKNOWN) {
-            // Adding the default value
-            values.add(Utility.getAttributeValueAsString(val));
-            return values;
-        }
-
         if (type.mType != ValueType.RESOURCEMODEL) {
             if (type.mType == ValueType.ARRAY) {
                 if (type.mDepth == 1) {
-                    AttributeProperty childProp = prop.getChildProperty();
-                    if (null != childProp) {
-                        valuesType = childProp.type();
-                        if (valuesType == Type.RANGE) {
-                            List<String> list = getRangeForPrimitiveNonArrayAttributes(
-                                    childProp, type.mBaseType);
-                            if (null != list) {
-                                values.addAll(list);
-                            }
-                        } else if (valuesType == Type.VALUESET) {
-                            List<String> list = getAllowedValuesForPrimitiveNonArrayAttributes(
-                                    childProp.valueSet(), type.mBaseType);
-                            if (null != list) {
-                                values.addAll(list);
-                            }
+                    ArrayProperty arrayProperty = prop.asArray();
+                    if (null != arrayProperty) {
+                        AttributeProperty childProp = arrayProperty
+                                .getElementProperty();
+                        switch (childProp.getType()) {
+                            case INTEGER:
+                                IntegerProperty intProperty = childProp
+                                        .asInteger();
+                                if (null != intProperty) {
+                                    values.addAll(getAllValues(intProperty,
+                                            Type.INTEGER));
+                                }
+                                break;
+                            case DOUBLE:
+                                DoubleProperty dblProperty = childProp
+                                        .asDouble();
+                                if (null != dblProperty) {
+                                    values.addAll(getAllValues(dblProperty,
+                                            Type.DOUBLE));
+                                }
+                                break;
+                            case BOOLEAN:
+                                BooleanProperty boolProperty = childProp
+                                        .asBoolean();
+                                if (null != boolProperty) {
+                                    values.addAll(getAllValues(boolProperty,
+                                            Type.BOOLEAN));
+                                }
+                                break;
+                            case STRING:
+                                StringProperty stringProperty = childProp
+                                        .asString();
+                                if (null != stringProperty) {
+                                    values.addAll(getAllValues(stringProperty,
+                                            Type.STRING));
+                                }
+                                break;
+                            default:
+                                break;
                         }
                     }
                 }
             } else {
-                if (valuesType == Type.RANGE) {
-                    List<String> list = getRangeForPrimitiveNonArrayAttributes(
-                            prop, type.mType);
-                    if (null != list) {
-                        values.addAll(list);
-                    }
-                } else if (valuesType == Type.VALUESET) {
-                    List<String> list = getAllowedValuesForPrimitiveNonArrayAttributes(
-                            prop.valueSet(), type.mType);
-                    if (null != list) {
-                        values.addAll(list);
-                    }
+                switch (prop.getType()) {
+                    case INTEGER:
+                        IntegerProperty intProperty = prop.asInteger();
+                        if (null != intProperty) {
+                            values.addAll(getAllValues(intProperty,
+                                    Type.INTEGER));
+                        }
+                        break;
+                    case DOUBLE:
+                        DoubleProperty dblProperty = prop.asDouble();
+                        if (null != dblProperty) {
+                            values.addAll(getAllValues(dblProperty, Type.DOUBLE));
+                        }
+                        break;
+                    case BOOLEAN:
+                        BooleanProperty boolProperty = prop.asBoolean();
+                        if (null != boolProperty) {
+                            values.addAll(getAllValues(boolProperty,
+                                    Type.BOOLEAN));
+                        }
+                        break;
+                    case STRING:
+                        StringProperty stringProperty = prop.asString();
+                        if (null != stringProperty) {
+                            values.addAll(getAllValues(stringProperty,
+                                    Type.STRING));
+                        }
+                        break;
+                    default:
+                        break;
                 }
             }
         }
@@ -1572,58 +1614,67 @@ public class ResourceManager {
         return values;
     }
 
-    public List<String> getRangeForPrimitiveNonArrayAttributes(
-            AttributeProperty prop, ValueType type) {
-        if (null == prop) {
-            return null;
-        }
-
-        if (type == ValueType.ARRAY || type == ValueType.RESOURCEMODEL) {
-            return null;
-        }
-
+    public List<String> getAllValues(IntegerProperty intProperty,
+            AttributeProperty.Type type) {
         List<String> values = new ArrayList<String>();
-        switch (type) {
-            case INTEGER:
-                int min = (int) prop.min();
-                int max = (int) prop.max();
-                for (int iVal = min; iVal <= max; iVal++) {
-                    values.add(String.valueOf(iVal));
-                }
-                break;
-            case DOUBLE:
-                double minD = (double) prop.min();
-                double maxD = (double) prop.max();
-                for (double iVal = minD; iVal <= maxD; iVal = iVal + 1.0) {
-                    values.add(String.valueOf(iVal));
-                }
-                break;
-            default:
+
+        if (intProperty.hasRange()) {
+            int min = (int) intProperty.min();
+            int max = (int) intProperty.max();
+            for (int iVal = min; iVal <= max; iVal++) {
+                values.add(String.valueOf(iVal));
+            }
+        } else if (intProperty.hasValues()) {
+            for (Integer val : intProperty.getValues()) {
+                values.add(String.valueOf(val));
+            }
+        } else {
+            // Adding the default value.
+            values.add(String.valueOf(intProperty.getDefaultValue()));
         }
         return values;
     }
 
-    public List<String> getAllowedValuesForPrimitiveNonArrayAttributes(
-            AttributeValue[] attValues, ValueType type) {
-        if (null == attValues || attValues.length < 1) {
-            return null;
-        }
-
-        if (type == ValueType.ARRAY || type == ValueType.RESOURCEMODEL) {
-            return null;
-        }
-
-        Object obj;
+    public List<String> getAllValues(DoubleProperty dblProperty,
+            AttributeProperty.Type type) {
         List<String> values = new ArrayList<String>();
-        for (AttributeValue val : attValues) {
-            if (null == val) {
-                continue;
+
+        if (dblProperty.hasRange()) {
+            double min = (double) dblProperty.min();
+            double max = (double) dblProperty.max();
+            for (double iVal = min; iVal <= max; iVal = iVal + 1) {
+                values.add(String.valueOf(iVal));
             }
-            obj = val.get();
-            if (null == obj) {
-                continue;
+        } else if (dblProperty.hasValues()) {
+            for (Double val : dblProperty.getValues()) {
+                values.add(String.valueOf(val));
             }
-            values.add(String.valueOf(obj));
+        } else {
+            // Adding the default value.
+            values.add(String.valueOf(dblProperty.getDefaultValue()));
+        }
+        return values;
+    }
+
+    public List<String> getAllValues(BooleanProperty boolProperty,
+            AttributeProperty.Type type) {
+        List<String> values = new ArrayList<String>();
+        values.add("true");
+        values.add("false");
+        return values;
+    }
+
+    public List<String> getAllValues(StringProperty stringProperty,
+            AttributeProperty.Type type) {
+        List<String> values = new ArrayList<String>();
+
+        if (stringProperty.hasValues()) {
+            for (String val : stringProperty.getValues()) {
+                values.add(String.valueOf(val));
+            }
+        } else {
+            // Adding the default value.
+            values.add(String.valueOf(stringProperty.getDefaultValue()));
         }
         return values;
     }

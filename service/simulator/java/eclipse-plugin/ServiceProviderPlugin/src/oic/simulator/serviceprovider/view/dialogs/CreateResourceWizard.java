@@ -184,8 +184,6 @@ public class CreateResourceWizard extends Wizard {
                 MessageDialog
                         .openError(getShell(), "Invalid File",
                                 "File doesn't exist. Either the file path or file name is invalid.");
-                // TODO: Instead of MessageDialog, errors may be shown on wizard
-                // itself.
                 return false;
             }
 
@@ -263,8 +261,6 @@ public class CreateResourceWizard extends Wizard {
                 MessageDialog
                         .openError(getShell(), "Resource URI in use",
                                 "Entered resource URI is in use. Please try a different one.");
-                // TODO: Instead of MessageDialog, errors may be shown on wizard
-                // itself.
                 return false;
             }
 
@@ -337,6 +333,8 @@ public class CreateResourceWizard extends Wizard {
         resource.setResourceName(simpleResourceBasicDetailsPage.getResName());
         resource.setResourceType(simpleResourceBasicDetailsPage.getResType());
         resource.setObservable(simpleResourceBasicDetailsPage.isObservable());
+        resource.setDiscoverable(simpleResourceBasicDetailsPage
+                .isDiscoverable());
         resource.setResourceInterfaces(simpleResourceBasicDetailsPage
                 .getInterfaceTypes());
 
