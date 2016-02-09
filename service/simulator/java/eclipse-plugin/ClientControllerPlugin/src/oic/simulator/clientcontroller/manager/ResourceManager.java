@@ -28,14 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.remoteresource.DeviceAndPlatformInfo;
-import oic.simulator.clientcontroller.remoteresource.MetaProperty;
-import oic.simulator.clientcontroller.remoteresource.RemoteResource;
-import oic.simulator.clientcontroller.utils.AttributeValueStringConverter;
-import oic.simulator.clientcontroller.utils.Constants;
-import oic.simulator.clientcontroller.utils.Utility;
-
 import org.oic.simulator.ArrayProperty;
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeProperty.Type;
@@ -64,6 +56,14 @@ import org.oic.simulator.client.SimulatorRemoteResource.PostResponseListener;
 import org.oic.simulator.client.SimulatorRemoteResource.PutResponseListener;
 import org.oic.simulator.client.SimulatorRemoteResource.VerificationListener;
 import org.oic.simulator.client.SimulatorRemoteResource.VerificationType;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.remoteresource.DeviceAndPlatformInfo;
+import oic.simulator.clientcontroller.remoteresource.MetaProperty;
+import oic.simulator.clientcontroller.remoteresource.RemoteResource;
+import oic.simulator.clientcontroller.utils.AttributeValueStringConverter;
+import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.utils.Utility;
 
 /**
  * This class acts as an interface between the simulator java SDK and the

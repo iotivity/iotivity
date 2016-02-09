@@ -16,10 +16,6 @@
 
 package oic.simulator.clientcontroller.view.dialogs;
 
-import java.io.FileInputStream;
-
-import oic.simulator.clientcontroller.utils.Constants;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.swt.SWT;
@@ -35,6 +31,10 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
+
+import java.io.FileInputStream;
+
+import oic.simulator.clientcontroller.utils.Constants;
 
 /**
  * This dialog is used for loading the RAML file.

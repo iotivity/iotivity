@@ -16,20 +16,6 @@
 
 package oic.simulator.serviceprovider.view;
 
-import java.util.Date;
-import java.util.List;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.manager.ResourceManager;
-import oic.simulator.serviceprovider.model.AttributeElement;
-import oic.simulator.serviceprovider.model.AutomationSettingHelper;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.ResourceRepresentation;
-import oic.simulator.serviceprovider.model.SingleResource;
-import oic.simulator.serviceprovider.utils.AttributeValueBuilder;
-import oic.simulator.serviceprovider.utils.Utility;
-import oic.simulator.serviceprovider.view.dialogs.AutomationSettingDialog;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.CheckboxCellEditor;
@@ -48,6 +34,10 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IWorkbenchPartReference;
+
+import java.util.Date;
+import java.util.List;
+
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
@@ -56,6 +46,17 @@ import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.manager.ResourceManager;
+import oic.simulator.serviceprovider.model.AttributeElement;
+import oic.simulator.serviceprovider.model.AutomationSettingHelper;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.ResourceRepresentation;
+import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.AttributeValueBuilder;
+import oic.simulator.serviceprovider.utils.Utility;
+import oic.simulator.serviceprovider.view.dialogs.AutomationSettingDialog;
 
 /**
  * This class provides editing support to the resources attributes table in the

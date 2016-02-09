@@ -19,10 +19,6 @@ package oic.simulator.serviceprovider.model;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.Vector;
-
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
 
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
@@ -32,6 +28,9 @@ import org.oic.simulator.DoubleProperty;
 import org.oic.simulator.IntegerProperty;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.StringProperty;
+
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
 
 public class AttributeHelper {
     private String      attributeName;

@@ -19,10 +19,6 @@ package oic.simulator.serviceprovider.model;
 import java.util.HashMap;
 import java.util.Map;
 
-import oic.simulator.serviceprovider.manager.UiListenerHandler;
-import oic.simulator.serviceprovider.utils.AttributeValueStringConverter;
-import oic.simulator.serviceprovider.utils.Constants;
-
 import org.oic.simulator.ArrayProperty;
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
@@ -34,6 +30,10 @@ import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
 import org.oic.simulator.StringProperty;
 import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
+
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
+import oic.simulator.serviceprovider.utils.AttributeValueStringConverter;
+import oic.simulator.serviceprovider.utils.Constants;
 
 public class AttributeElement {
     private Object                        mParent             = null;

@@ -16,26 +16,6 @@
 
 package oic.simulator.serviceprovider.view;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.IPropertiesChangedListener;
-import oic.simulator.serviceprovider.listener.IResourceListChangedListener;
-import oic.simulator.serviceprovider.manager.ResourceManager;
-import oic.simulator.serviceprovider.manager.UiListenerHandler;
-import oic.simulator.serviceprovider.model.AutomationSettingHelper;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.ResourceType;
-import oic.simulator.serviceprovider.model.SingleResource;
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-import oic.simulator.serviceprovider.view.dialogs.AutomationSettingDialog;
-import oic.simulator.serviceprovider.view.dialogs.CreateResourceWizard;
-import oic.simulator.serviceprovider.view.dialogs.DeleteResourceWizard;
-import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
-import oic.simulator.serviceprovider.view.dialogs.ResourceWizardDialog;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -67,8 +47,29 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.dialogs.PatternFilter;
 import org.eclipse.ui.part.ViewPart;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.listener.IPropertiesChangedListener;
+import oic.simulator.serviceprovider.listener.IResourceListChangedListener;
+import oic.simulator.serviceprovider.manager.ResourceManager;
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
+import oic.simulator.serviceprovider.model.AutomationSettingHelper;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.ResourceType;
+import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
+import oic.simulator.serviceprovider.view.dialogs.AutomationSettingDialog;
+import oic.simulator.serviceprovider.view.dialogs.CreateResourceWizard;
+import oic.simulator.serviceprovider.view.dialogs.DeleteResourceWizard;
+import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
+import oic.simulator.serviceprovider.view.dialogs.ResourceWizardDialog;
 
 /**
  * This class manages and shows the resource manager view in the perspective.

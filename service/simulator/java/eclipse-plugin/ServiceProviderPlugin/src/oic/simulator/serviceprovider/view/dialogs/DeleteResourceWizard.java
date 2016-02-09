@@ -16,16 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
-import java.util.Date;
-import java.util.Set;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.manager.ResourceManager;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.SingleResource;
-
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -33,8 +23,19 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
+
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.util.Date;
+import java.util.Set;
+
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorException;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.manager.ResourceManager;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.SingleResource;
 
 /**
  * This class creates a UI wizard for delete resource operation.

@@ -16,6 +16,9 @@
 
 package oic.simulator.serviceprovider.manager;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.swt.widgets.Display;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -27,17 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.model.AttributeElement;
-import oic.simulator.serviceprovider.model.MetaProperty;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.ResourceType;
-import oic.simulator.serviceprovider.model.SingleResource;
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.swt.widgets.Display;
 import org.oic.simulator.ArrayProperty;
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeProperty.Type;
@@ -63,6 +55,15 @@ import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
 import org.oic.simulator.server.SimulatorResource.ObserverListener;
 import org.oic.simulator.server.SimulatorResource.ResourceModelChangeListener;
 import org.oic.simulator.server.SimulatorSingleResource;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.model.AttributeElement;
+import oic.simulator.serviceprovider.model.MetaProperty;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.ResourceType;
+import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
 
 /**
  * This class acts as an interface between the simulator java SDK and the

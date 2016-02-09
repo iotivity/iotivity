@@ -16,19 +16,6 @@
 
 package oic.simulator.serviceprovider.view;
 
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.IAutomationListener;
-import oic.simulator.serviceprovider.listener.IDataChangeListener;
-import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
-import oic.simulator.serviceprovider.manager.ResourceManager;
-import oic.simulator.serviceprovider.manager.UiListenerHandler;
-import oic.simulator.serviceprovider.model.AttributeElement;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.ResourceRepresentation;
-import oic.simulator.serviceprovider.model.SingleResource;
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -48,10 +35,24 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.ui.part.ViewPart;
+
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.SimulatorResourceAttribute;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.listener.IAutomationListener;
+import oic.simulator.serviceprovider.listener.IDataChangeListener;
+import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
+import oic.simulator.serviceprovider.manager.ResourceManager;
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
+import oic.simulator.serviceprovider.model.AttributeElement;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.ResourceRepresentation;
+import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
 
 /**
  * This class manages and shows the attribute view in the perspective.

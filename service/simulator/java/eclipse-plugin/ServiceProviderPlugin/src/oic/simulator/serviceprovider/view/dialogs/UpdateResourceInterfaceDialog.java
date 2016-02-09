@@ -16,11 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.util.ArrayList;
-import java.util.Map;
-
-import oic.simulator.serviceprovider.utils.Constants;
-
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TrayDialog;
@@ -37,6 +32,11 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Shell;
+
+import java.util.ArrayList;
+import java.util.Map;
+
+import oic.simulator.serviceprovider.utils.Constants;
 
 /**
  * Dialog for starting and stopping the automatic verifications.

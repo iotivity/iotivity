@@ -16,8 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import oic.simulator.serviceprovider.utils.Constants;
-
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -29,7 +27,10 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
+
 import org.oic.simulator.server.SimulatorResource.Type;
+
+import oic.simulator.serviceprovider.utils.Constants;
 
 public class MainPage extends WizardPage {
 

@@ -19,11 +19,11 @@ package oic.simulator.serviceprovider.model;
 import java.util.HashMap;
 import java.util.Map;
 
-import oic.simulator.serviceprovider.manager.UiListenerHandler;
-
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
+
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
 
 public class ResourceRepresentation {
     private Map<String, AttributeElement> mAttributes = new HashMap<String, AttributeElement>();

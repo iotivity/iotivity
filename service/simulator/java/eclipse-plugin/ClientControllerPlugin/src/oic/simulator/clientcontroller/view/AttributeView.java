@@ -16,29 +16,6 @@
 
 package oic.simulator.clientcontroller.view;
 
-import java.util.Date;
-import java.util.Map;
-
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.listener.IConfigurationUpload;
-import oic.simulator.clientcontroller.listener.IGetUIListener;
-import oic.simulator.clientcontroller.listener.IObserveUIListener;
-import oic.simulator.clientcontroller.listener.IPostUIListener;
-import oic.simulator.clientcontroller.listener.IPutUIListener;
-import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
-import oic.simulator.clientcontroller.listener.IVerificationUIListener;
-import oic.simulator.clientcontroller.manager.ResourceManager;
-import oic.simulator.clientcontroller.manager.UiListenerHandler;
-import oic.simulator.clientcontroller.remoteresource.AttributeElement;
-import oic.simulator.clientcontroller.remoteresource.RemoteResource;
-import oic.simulator.clientcontroller.remoteresource.ResourceRepresentation;
-import oic.simulator.clientcontroller.utils.Constants;
-import oic.simulator.clientcontroller.utils.Utility;
-import oic.simulator.clientcontroller.view.dialogs.GetRequestDialog;
-import oic.simulator.clientcontroller.view.dialogs.PostRequestDialog;
-import oic.simulator.clientcontroller.view.dialogs.PutRequestDialog;
-import oic.simulator.clientcontroller.view.dialogs.VerificationDialog;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -61,11 +38,35 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
+
+import java.util.Date;
+import java.util.Map;
+
 import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.client.SimulatorRemoteResource;
 import org.oic.simulator.client.SimulatorRemoteResource.VerificationType;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.listener.IConfigurationUpload;
+import oic.simulator.clientcontroller.listener.IGetUIListener;
+import oic.simulator.clientcontroller.listener.IObserveUIListener;
+import oic.simulator.clientcontroller.listener.IPostUIListener;
+import oic.simulator.clientcontroller.listener.IPutUIListener;
+import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
+import oic.simulator.clientcontroller.listener.IVerificationUIListener;
+import oic.simulator.clientcontroller.manager.ResourceManager;
+import oic.simulator.clientcontroller.manager.UiListenerHandler;
+import oic.simulator.clientcontroller.remoteresource.AttributeElement;
+import oic.simulator.clientcontroller.remoteresource.RemoteResource;
+import oic.simulator.clientcontroller.remoteresource.ResourceRepresentation;
+import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.utils.Utility;
+import oic.simulator.clientcontroller.view.dialogs.GetRequestDialog;
+import oic.simulator.clientcontroller.view.dialogs.PostRequestDialog;
+import oic.simulator.clientcontroller.view.dialogs.PutRequestDialog;
+import oic.simulator.clientcontroller.view.dialogs.VerificationDialog;
 
 /**
  * This class manages and shows the attribute view in the perspective.

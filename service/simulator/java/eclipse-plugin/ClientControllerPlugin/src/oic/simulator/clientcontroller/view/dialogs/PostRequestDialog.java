@@ -16,17 +16,6 @@
 
 package oic.simulator.clientcontroller.view.dialogs;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.remoteresource.AttributeElement;
-import oic.simulator.clientcontroller.remoteresource.RemoteResource;
-import oic.simulator.clientcontroller.remoteresource.ResourceRepresentation;
-import oic.simulator.clientcontroller.utils.Constants;
-import oic.simulator.clientcontroller.utils.Utility;
-import oic.simulator.clientcontroller.view.AttributeEditingSupport;
-
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.viewers.ILabelProviderListener;
@@ -50,8 +39,20 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.SimulatorResourceAttribute;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.remoteresource.AttributeElement;
+import oic.simulator.clientcontroller.remoteresource.RemoteResource;
+import oic.simulator.clientcontroller.remoteresource.ResourceRepresentation;
+import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.utils.Utility;
+import oic.simulator.clientcontroller.view.AttributeEditingSupport;
 
 /**
  * This dialog is used for generating a POST request.

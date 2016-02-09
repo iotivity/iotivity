@@ -16,10 +16,10 @@
 
 package oic.simulator.clientcontroller.remoteresource;
 
-import oic.simulator.clientcontroller.utils.Constants;
-
 import org.oic.simulator.SimulatorResourceModel;
 import org.oic.simulator.client.SimulatorRemoteResource;
+
+import oic.simulator.clientcontroller.utils.Constants;
 
 /**
  * This class represents a remote resource. It maintains all the necessary

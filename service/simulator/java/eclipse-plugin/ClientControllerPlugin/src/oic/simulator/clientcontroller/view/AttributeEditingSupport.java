@@ -16,16 +16,6 @@
 
 package oic.simulator.clientcontroller.view;
 
-import java.util.List;
-
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.manager.ResourceManager;
-import oic.simulator.clientcontroller.remoteresource.AttributeElement;
-import oic.simulator.clientcontroller.remoteresource.RemoteResource;
-import oic.simulator.clientcontroller.utils.AttributeValueBuilder;
-import oic.simulator.clientcontroller.utils.Utility;
-import oic.simulator.clientcontroller.view.dialogs.PostRequestDialog;
-
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.CheckboxCellEditor;
@@ -40,11 +30,22 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
+
+import java.util.List;
+
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorResourceAttribute;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.manager.ResourceManager;
+import oic.simulator.clientcontroller.remoteresource.AttributeElement;
+import oic.simulator.clientcontroller.remoteresource.RemoteResource;
+import oic.simulator.clientcontroller.utils.AttributeValueBuilder;
+import oic.simulator.clientcontroller.utils.Utility;
+import oic.simulator.clientcontroller.view.dialogs.PostRequestDialog;
 
 /**
  * This class provides editing support to the resources attributes table in the

@@ -19,8 +19,6 @@ package oic.simulator.clientcontroller.remoteresource;
 import java.util.HashMap;
 import java.util.Map;
 
-import oic.simulator.clientcontroller.utils.AttributeValueStringConverter;
-
 import org.oic.simulator.ArrayProperty;
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
@@ -28,6 +26,8 @@ import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.ModelProperty;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
+
+import oic.simulator.clientcontroller.utils.AttributeValueStringConverter;
 
 public class AttributeElement {
     private Object                        mParent          = null;

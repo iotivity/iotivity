@@ -28,15 +28,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.SingleResource;
-
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorException;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.SingleResource;
 
 /**
  * This class has common utility methods.

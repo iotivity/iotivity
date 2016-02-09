@@ -16,25 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.io.FileInputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.manager.UiListenerHandler;
-import oic.simulator.serviceprovider.model.AttributeHelper;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.ResourceType;
-import oic.simulator.serviceprovider.model.SingleResource;
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
-
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -46,9 +27,29 @@ import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
+
+import java.io.FileInputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorResourceAttribute;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
+import oic.simulator.serviceprovider.model.AttributeHelper;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.ResourceType;
+import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
+import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
 
 /**
  * This class creates a UI wizard for create resource operation.

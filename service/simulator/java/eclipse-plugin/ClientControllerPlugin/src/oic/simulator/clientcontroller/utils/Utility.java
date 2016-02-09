@@ -25,9 +25,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.oic.simulator.AttributeValue;
-import org.oic.simulator.SimulatorException;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.SimulatorException;
 
 /**
  * This class has common utility methods.

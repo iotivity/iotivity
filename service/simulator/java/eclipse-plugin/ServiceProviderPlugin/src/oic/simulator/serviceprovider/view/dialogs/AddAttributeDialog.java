@@ -16,13 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.util.Iterator;
-import java.util.Set;
-
-import oic.simulator.serviceprovider.model.AttributeHelper;
-import oic.simulator.serviceprovider.model.AttributeHelper.ValidValuesType;
-import oic.simulator.serviceprovider.utils.Constants;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.window.Window;
@@ -45,7 +38,13 @@ import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
-import org.oic.simulator.AttributeProperty.Type;
+
+import java.util.Iterator;
+import java.util.Set;
+
+import oic.simulator.serviceprovider.model.AttributeHelper;
+import oic.simulator.serviceprovider.model.AttributeHelper.ValidValuesType;
+import oic.simulator.serviceprovider.utils.Constants;
 
 public class AddAttributeDialog extends TitleAreaDialog {
 

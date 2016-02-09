@@ -16,14 +16,14 @@
 
 package oic.simulator.clientcontroller.perspective;
 
+import org.eclipse.ui.IPageLayout;
+import org.eclipse.ui.IPerspectiveFactory;
+
 import oic.simulator.clientcontroller.view.AttributeView;
 import oic.simulator.clientcontroller.view.LogView;
 import oic.simulator.clientcontroller.view.MetaPropertiesView;
 import oic.simulator.clientcontroller.view.MultiResourceOrchestrationView;
 import oic.simulator.clientcontroller.view.ResourceManagerView;
-
-import org.eclipse.ui.IPageLayout;
-import org.eclipse.ui.IPerspectiveFactory;
 
 /**
  * This class creates a new eclipse perspective for client controller and

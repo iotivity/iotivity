@@ -16,11 +16,6 @@
 
 package oic.simulator.clientcontroller.view.dialogs;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import oic.simulator.clientcontroller.utils.Utility;
-
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.swt.SWT;
@@ -36,6 +31,11 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import oic.simulator.clientcontroller.utils.Utility;
 
 /**
  * This dialog is used for generating a PUT request.

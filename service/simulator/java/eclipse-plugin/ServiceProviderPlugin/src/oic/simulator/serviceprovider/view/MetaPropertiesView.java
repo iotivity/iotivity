@@ -16,23 +16,6 @@
 
 package oic.simulator.serviceprovider.view;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
-import oic.simulator.serviceprovider.manager.ResourceManager;
-import oic.simulator.serviceprovider.manager.UiListenerHandler;
-import oic.simulator.serviceprovider.model.MetaProperty;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.SingleResource;
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-import oic.simulator.serviceprovider.view.dialogs.UpdateResourceInterfaceDialog;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.EditingSupport;
@@ -57,7 +40,25 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.part.ViewPart;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.oic.simulator.SimulatorException;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
+import oic.simulator.serviceprovider.manager.ResourceManager;
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
+import oic.simulator.serviceprovider.model.MetaProperty;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
+import oic.simulator.serviceprovider.view.dialogs.UpdateResourceInterfaceDialog;
 
 /**
  * This class manages and shows the meta properties view in the perspective.

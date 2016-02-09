@@ -16,22 +16,23 @@
 
 package oic.simulator.serviceprovider.manager;
 
+import org.eclipse.jface.resource.ImageRegistry;
+import org.eclipse.swt.graphics.Image;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
+
+import org.oic.simulator.ILogger;
+import org.oic.simulator.ILogger.Level;
+import org.oic.simulator.SimulatorManager;
 
 import oic.simulator.logger.LogEntry;
 import oic.simulator.logger.LoggerCallback;
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.listener.ILogListener;
 import oic.simulator.serviceprovider.utils.Constants;
-
-import org.eclipse.jface.resource.ImageRegistry;
-import org.eclipse.swt.graphics.Image;
-import org.oic.simulator.ILogger;
-import org.oic.simulator.ILogger.Level;
-import org.oic.simulator.SimulatorManager;
 
 /**
  * Class which handles the native logs, maintains log entries and updates the
