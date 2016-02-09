@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2015 Samsung Electronics All Rights Reserved.
+// Copyright 2016 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -30,21 +30,10 @@
 #include "RCSResourceAttributes.h"
 #include "RCSResourceObject.h"
 
+#include <cJSON.h>
+
 #include "NotificationObject.h"
 
-#define TimeStamp "TIME"
-#define Sender "SENDER"
-#define Ttl "TTL"
-#define Id "ID"
-#define Message "MESSAGE"
-#define IconUrl "ICONURL"
-#define VideoUrl "VIDEOURL"
-#define ObjectType "OBJECTTYPE"
-#define notification_payload "notification-payload"
-#define DeviceName "DeviceName"
-#define notification_id "notificationId"
-#define hostAddress "hostAddress"
-#define notification_ack "notificationAck"
 
 namespace OIC
 {
@@ -63,13 +52,14 @@ namespace OIC
                 std::string m_uri;
                 std::string m_type;
                 std::string m_interface;
-                RCSResourceObject::Ptr mNotificationResource;
+                cJSON *superJson;
+                RCSResourceObject::Ptr m_NotificationResource;
 
             public:
 
                 typedef std::shared_ptr<NotificationProducer> NotificationProducerPtr;
 
-                typedef std::function < void(int, std::string) > notificationIdListener;
+                typedef std::function < void(int, int) > notificationIdListener;
 
                 /**
                  * @brief Constructor.
@@ -79,8 +69,8 @@ namespace OIC
                  * @param type Resource type value to be set.
                  * @param interface Interface value to be set.
                  */
-                NotificationProducer(const std::string& n_uri, const std::string& n_type,
-                                     const std::string& n_interface);
+                NotificationProducer(const std::string &n_uri, const std::string &n_type,
+                                     const std::string &n_interface);
 
                 /**
                  * API to start the Notification Manager.
@@ -94,8 +84,8 @@ namespace OIC
                  * the caller.
                  */
 
-                NotificationProducerPtr startNotificationManager(std::string& notifyDeviceName,
-                                                                           NotificationProducer::notificationIdListener cb);
+                NotificationProducerPtr startNotificationManager(std::string &notifyDeviceName,
+                        NotificationProducer::notificationIdListener cb);
 
                 /**
                  * API to stops the Notification Manager.
@@ -109,8 +99,7 @@ namespace OIC
                  *
                  * @param object NotificationObject containing attributes to be notified.
                  */
-                void sendNotification(NotificationObjectType &type,
-                                           NotificationObject *notificationObjectPtr);
+                void sendNotification(NotificationObject *notificationObjectPtr);
         };
     }
 }

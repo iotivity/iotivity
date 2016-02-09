@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2015 Samsung Electronics All Rights Reserved.
+// Copyright 2016 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -40,6 +40,13 @@ namespace OIC
             Video
         };
 
+        enum class NotificationMessageType
+        {
+            Low = 1,
+            Moderate,
+            Critical
+        };
+
         /**
          * This class is used to declare a basic NotificationObject
          * which is inherited by TextNotification , ImageNotification and
@@ -55,19 +62,22 @@ namespace OIC
             public:
 
                 /** It is used to define the type of notification object to be created. */
-                NotificationObjectType mNotificationObjectType;
+                NotificationObjectType m_NotificationObjectType;
+
+                /** It is used to define the type of notification message to be created. */
+                NotificationMessageType m_NotificationMessageType;
 
                 /** It is used to define the timestamp at which the notification was created. */
-                std::string mNotificationTime;
+                std::string m_NotificationTime;
 
                 /** It is used to define the sender of the notification. */
-                std::string mNotificationSender;
+                std::string m_NotificationSender;
 
                 /** It is used to define a unique Id for the notification. */
-                int mNotificationId;
+                unsigned int m_NotificationId;
 
                 /** It is used to define the ttl of the notification after which it will expire. */
-                int mNotificationTtl;
+                int m_NotificationTtl;
 
                 NotificationObject();
 
@@ -84,14 +94,15 @@ namespace OIC
 
             public:
 
-                std::string mNotificationMessage;
+                std::string m_NotificationMessage;
 
-                void setTextAttributes(const std::string& nNotificationMessage,
-                                       NotificationObjectType& nNotificationObjectType,
-                                       const std::string& nNotificationTime,
-                                       const std::string& nNotificationSender,
-                                       int nNotificationId,
-                                       int nNotificationTtl);
+                void setTextAttributes(const std::string &notificationMessage,
+                                       NotificationObjectType &notificationObjectType,
+                                       NotificationMessageType &notificationMessageType,
+                                       const std::string &notificationTime,
+                                       const std::string &notificationSender,
+                                       unsigned int notificationId,
+                                       int notificationTtl);
         };
 
         /**
@@ -105,16 +116,17 @@ namespace OIC
 
             public:
 
-                std::string mNotificationIconUrl;
-                std::string mNotificationMessage;
+                std::string m_NotificationIconUrl;
+                std::string m_NotificationMessage;
 
-                void setImageAttributes(const std::string& nNotificationIconUrl,
-                                        const std::string nNotificationMessage,
-                                        NotificationObjectType& nNotificationObjectType,
-                                        const std::string& nNotificationTime,
-                                        const std::string& nNotificationSender,
-                                        int nNotificationId,
-                                        int nNotificationTtl);
+                void setImageAttributes(const std::string &notificationIconUrl,
+                                        const std::string notificationMessage,
+                                        NotificationObjectType &notificationObjectType,
+                                        NotificationMessageType &notificationMessageType,
+                                        const std::string &notificationTime,
+                                        const std::string &notificationSender,
+                                        unsigned int notificationId,
+                                        int notificationTtl);
         };
 
         /**
@@ -127,14 +139,15 @@ namespace OIC
         {
             public:
 
-                std::string mNotificationVideoUrl;
+                std::string m_NotificationVideoUrl;
 
-                void setVideoAttributes(const std::string& nNotificationVideoUrl,
-                                        NotificationObjectType& nNotificationObjectType,
-                                        const std::string& nNotificationTime,
-                                        const std::string& nNotificationSender,
-                                        int nNotificationId,
-                                        int nNotificationTtl);
+                void setVideoAttributes(const std::string &notificationVideoUrl,
+                                        NotificationObjectType &notificationObjectType,
+                                        NotificationMessageType &notificationMessageType,
+                                        const std::string &notificationTime,
+                                        const std::string &notificationSender,
+                                        unsigned int notificationId,
+                                        int notificationTtl);
         };
     }
 }

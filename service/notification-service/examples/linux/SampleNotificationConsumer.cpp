@@ -19,6 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <iostream>
+#include <stdlib.h>
+#include <ctime>
 
 #include <RCSAddress.h>
 
@@ -35,8 +37,10 @@ constexpr int INCORRECT_INPUT = 100;
 
 std::shared_ptr<NotificationConsumer> selectedResource;
 std::vector<std::shared_ptr<NotificationConsumer>> notificationResourceList;
-std::vector<int> notificationList;
+std::vector<std::pair<int, std::string>> notificationList;
 std::vector<std::string> DeviceList;
+unsigned int notifyAckId;
+char userOption;
 
 enum Menu
 {
@@ -59,6 +63,142 @@ void displayMenu()
     std::cout << "5 :: Display notification resouce list" << std::endl;
     std::cout << "6 :: Quit Sample Application" << std::endl;
     std::cout << "====================================================" << std::endl;
+}
+
+int checkNotificationList(NotificationObject *notificationObjectPtr,
+                          std::string producerHostAddress)
+{
+    for (unsigned int i = 0; i < notificationList.size(); i++)
+    {
+        if (notificationObjectPtr->m_NotificationId == notificationList[i].first)
+        {
+            if (producerHostAddress == notificationList[i].second)
+            {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+void onResourceUpdated(NotificationObject *notificationObjectPtr, std::string producerHostAddress,
+                       std::shared_ptr<NotificationConsumer> notificationResource)
+{
+    if (notificationObjectPtr == NULL)
+    {
+        std::cout << "ERROR: notification object pointer is NULL" << std::endl;
+        return;
+    }
+
+    if (checkNotificationList(notificationObjectPtr, producerHostAddress))
+    {
+        return;
+    }
+
+    std::cout << "           onResourceUpdated callback.........." << std::endl;
+    std::string messageType;
+
+    if (notificationObjectPtr->m_NotificationMessageType == NotificationMessageType::Low)
+    {
+        messageType = "Low";
+    }
+    if (notificationObjectPtr->m_NotificationMessageType == NotificationMessageType::Moderate)
+    {
+        messageType = "Moderate";
+    }
+    if (notificationObjectPtr->m_NotificationMessageType == NotificationMessageType::Critical)
+    {
+        messageType = "Critical";
+    }
+
+    if (notificationObjectPtr->m_NotificationObjectType == NotificationObjectType::Text)
+    {
+        TextNotification *textNotificationPtr = (TextNotification *) notificationObjectPtr;
+
+        std::string nObjType = "text";
+
+        std::cout << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "============= NOTIFICATION RECIEVED ============" << std::endl;
+        std::cout << "Type                       : " << nObjType << std::endl;
+        std::cout << "Time                        : " << textNotificationPtr->m_NotificationTime;
+        std::cout << "Sender                     : " << textNotificationPtr->m_NotificationSender <<
+                  std::endl;
+        std::cout << "TTL                         : " << textNotificationPtr->m_NotificationTtl <<
+                  std::endl;
+        std::cout << "Message Type              : " << messageType << std::endl;
+        std::cout << "Message                  : " << textNotificationPtr->m_NotificationMessage <<
+                  std::endl;
+        std::cout << "ID                  : " << textNotificationPtr->m_NotificationId <<
+                  std::endl;
+        std::cout << "==========================================" << std::endl;
+
+        notificationList.push_back(std::make_pair(textNotificationPtr->m_NotificationId,
+                                   producerHostAddress));
+
+        notificationResource->sendAcknowledgement(textNotificationPtr->m_NotificationId);
+    }
+
+    if (notificationObjectPtr->m_NotificationObjectType == NotificationObjectType::Image)
+    {
+        ImageNotification *imageNotificationPtr = (ImageNotification *) notificationObjectPtr;
+
+        std::string nObjType = "image";
+
+        std::cout << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "============= NOTIFICATION RECIEVED ============" << std::endl;
+        std::cout << "Type                      : " << nObjType << std::endl;
+        std::cout << "Time                      : " << imageNotificationPtr->m_NotificationTime;
+        std::cout << "Sender                   : " << imageNotificationPtr->m_NotificationSender <<
+                  std::endl;
+        std::cout << "TTL                      : " << imageNotificationPtr->m_NotificationTtl <<
+                  std::endl;
+        std::cout << "Icon                     : " << imageNotificationPtr->m_NotificationIconUrl <<
+                  std::endl;
+        std::cout << "Message Type              : " << messageType << std::endl;
+        std::cout << "Message                : " << imageNotificationPtr->m_NotificationMessage <<
+                  std::endl;
+        std::cout << "ID                  : " << imageNotificationPtr->m_NotificationId <<
+                  std::endl;
+        std::cout << "==========================================" << std::endl;
+
+        notificationList.push_back(std::make_pair(imageNotificationPtr->m_NotificationId,
+                                   producerHostAddress));
+
+        notificationResource->sendAcknowledgement(imageNotificationPtr->m_NotificationId);
+    }
+
+    if (notificationObjectPtr->m_NotificationObjectType == NotificationObjectType::Video)
+    {
+        VideoNotification *videoNotificationPtr = (VideoNotification *) notificationObjectPtr;
+
+        std::string nObjType = "video";
+
+        std::cout << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "============= NOTIFICATION RECIEVED ============" << std::endl;
+        std::cout << "Type                       : " << nObjType << std::endl;
+        std::cout << "Time                       : " << videoNotificationPtr->m_NotificationTime;
+        std::cout << "Sender                    : " << videoNotificationPtr->m_NotificationSender <<
+                  std::endl;
+        std::cout << "TTL                       : " << videoNotificationPtr->m_NotificationTtl <<
+                  std::endl;
+        std::cout << "Message Type              : " << messageType << std::endl;
+        std::cout << "Video                    : " << videoNotificationPtr->m_NotificationVideoUrl <<
+                  std::endl;
+        std::cout << "ID                  : " << videoNotificationPtr->m_NotificationId <<
+                  std::endl;
+        std::cout << "==========================================" << std::endl;
+
+        notificationList.push_back(std::make_pair(videoNotificationPtr->m_NotificationId,
+                                   producerHostAddress));
+
+        notificationResource->sendAcknowledgement(videoNotificationPtr->m_NotificationId);
+    }
 }
 
 int processUserInput()
@@ -86,6 +226,119 @@ void displayNotificationResourceList()
     }
 }
 
+void startSubscribeNotifications()
+{
+    unsigned int userInput;
+    unsigned int resourceOption;
+    displayNotificationResourceList();
+
+    if (notificationResourceList.size() > 0)
+    {
+        std::cout << "Enter the no of resources you want to subscribe to" << std::endl;
+        std::cin >> userInput;
+
+        for (unsigned int i = 0; i < userInput; i++)
+        {
+            std::cout << "Enter the Resource no to which you want to subscribe to" << std::endl;
+            std::cin >> resourceOption;
+
+            if (notificationResourceList[resourceOption - 1] == NULL)
+            {
+                std::cout << "Error: Resource no " << resourceOption << " is NULL...." << std::endl;
+                continue;
+            }
+            if (!notificationResourceList[resourceOption - 1]->isSubscribing())
+            {
+                notificationResourceList[resourceOption - 1]->subscribeNotifications(&onResourceUpdated);
+                std::cout << "\tSubscribing started..." << std::endl;
+            }
+            else
+            {
+                std::cout << "\tAlready Subscribing to the resource....." << std::endl;
+            }
+        }
+    }
+    else
+    {
+        std::cout << "Resource List is empty....." << std::endl;
+    }
+}
+
+void stopSubscribeNotifications()
+{
+    unsigned int userInput;
+    unsigned int resourceOption;
+    displayNotificationResourceList();
+
+    while (1)
+    {
+        if (notificationResourceList.size() > 0)
+        {
+            std::cout << "Do you want to unSubscribe to all the resources (y/n) :" << std::endl;
+            std::cin >> userOption;
+
+            if (userOption == 'y' || userOption == 'Y')
+            {
+                for (unsigned int i = 0; i < notificationResourceList.size(); i++)
+                {
+                    if (notificationResourceList[i] == NULL)
+                    {
+                        std::cout << "Error: Resource no " << i + 1 << " is NULL...." << std::endl;
+                        continue;
+                    }
+                    if (notificationResourceList[i]->isSubscribing())
+                    {
+                        notificationResourceList[i]->unSubscribeNotifications();
+                        std::cout << "\tSubscribing stopped..." << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "\tError: Not Subscribing to the selected resource...." << std::endl;
+                    }
+                }
+                notificationList.clear();
+                break;
+            }
+            else if (userOption == 'n' || userOption == 'N')
+            {
+                std::cout << "Enter the no of resources you want to unSubscribe to" << std::endl;
+                std::cin >> userInput;
+
+                for (unsigned int i = 0; i < userInput; i++)
+                {
+                    std::cout << "Enter the Resource no to which you want to unSubscribe to" << std::endl;
+                    std::cin >> resourceOption;
+
+                    if (notificationResourceList[resourceOption - 1] == NULL)
+                    {
+                        std::cout << "Error: Resource no " << i + 1 << " is NULL...." << std::endl;
+                        continue;
+                    }
+                    if (notificationResourceList[resourceOption - 1]->isSubscribing())
+                    {
+                        notificationResourceList[resourceOption - 1]->unSubscribeNotifications();
+                        std::cout << "\tSubscribing stopped..." << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "\tNot Subscribing to the selected resource...." << std::endl;
+                    }
+                }
+                break;
+            }
+            else
+            {
+                std::cout << "Invalid input, please try again" << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "Resource List is empty....." << std::endl;
+            break;
+        }
+    }
+}
+
 void onGetDeviceName(std::string deviceName)
 {
     DeviceList.push_back(deviceName);
@@ -101,142 +354,12 @@ void onResourceDiscovered(std::shared_ptr<NotificationConsumer> foundResource)
 
 void discoverResource()
 {
+    notificationResourceList.clear();
+    DeviceList.clear();
+    notificationList.clear();
+
     NotificationDiscoveryManager::getInstance()->discoverNotificationResource(RCSAddress::multicast(),
             &onResourceDiscovered);
-}
-
-int checkNotificationList(NotificationObject *m_notificationObjectPtr)
-{
-    for (unsigned int i = 0; i < notificationList.size(); i++)
-    {
-        if (m_notificationObjectPtr->mNotificationId == notificationList[i])
-        {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-void sendNotificationAcknowledgement(int notificationId, std::string hostAddressValue)
-{
-    selectedResource->sendAcknowledgement(notificationId, hostAddressValue);
-}
-
-void onResourceUpdated(NotificationObject *m_notificationObjectPtr)
-{
-    if (m_notificationObjectPtr == NULL)
-    {
-        std::cout << "ERROR: notification object pointer is NULL" << std::endl;
-        return;
-    }
-
-    if (checkNotificationList(m_notificationObjectPtr))
-    {
-        return;
-    }
-
-    std::cout << "           onResourceUpdated callback.........." << std::endl;
-
-    if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Text)
-    {
-        TextNotification *textNotificationPtr = (TextNotification *) m_notificationObjectPtr;
-
-        std::string nObjType = "text";
-
-        std::cout << std::endl;
-        std::cout << std::endl;
-
-        std::cout << "============= NOTIFICATION RECIEVED ============" << std::endl;
-        std::cout << "Type                       : " << nObjType << std::endl;
-        std::cout << "Time                        : " << textNotificationPtr->mNotificationTime;
-        std::cout << "Sender                     : " << textNotificationPtr->mNotificationSender <<
-                  std::endl;
-        std::cout << "TTL                         : " << textNotificationPtr->mNotificationTtl << std::endl;
-        std::cout << "Message                  : " << textNotificationPtr->mNotificationMessage <<
-                  std::endl;
-        std::cout << "ID                  : " << textNotificationPtr->mNotificationId <<
-                  std::endl;
-        std::cout << "==========================================" << std::endl;
-
-        notificationList.push_back(textNotificationPtr->mNotificationId);
-        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
-                                        selectedResource->getAddress());
-    }
-
-    if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Image)
-    {
-        ImageNotification *imageNotificationPtr = (ImageNotification *) m_notificationObjectPtr;
-
-        std::string nObjType = "image";
-
-        std::cout << std::endl;
-        std::cout << std::endl;
-
-        std::cout << "============= NOTIFICATION RECIEVED ============" << std::endl;
-        std::cout << "Type                      : " << nObjType << std::endl;
-        std::cout << "Time                      : " << imageNotificationPtr->mNotificationTime;
-        std::cout << "Sender                   : " << imageNotificationPtr->mNotificationSender <<
-                  std::endl;
-        std::cout << "TTL                      : " << imageNotificationPtr->mNotificationTtl <<
-                  std::endl;
-        std::cout << "Icon                     : " << imageNotificationPtr->mNotificationIconUrl <<
-                  std::endl;
-        std::cout << "Message                : " << imageNotificationPtr->mNotificationMessage <<
-                  std::endl;
-        std::cout << "ID                  : " << imageNotificationPtr->mNotificationId <<
-                  std::endl;
-        std::cout << "==========================================" << std::endl;
-
-        notificationList.push_back(imageNotificationPtr->mNotificationId);
-        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
-                                        selectedResource->getAddress());
-    }
-
-    if (m_notificationObjectPtr->mNotificationObjectType == NotificationObjectType::Video)
-    {
-        VideoNotification *videoNotificationPtr = (VideoNotification *) m_notificationObjectPtr;
-
-        std::string nObjType = "video";
-
-        std::cout << std::endl;
-        std::cout << std::endl;
-
-        std::cout << "============= NOTIFICATION RECIEVED ============" << std::endl;
-        std::cout << "Type                       : " << nObjType << std::endl;
-        std::cout << "Time                       : " << videoNotificationPtr->mNotificationTime;
-        std::cout << "Sender                    : " << videoNotificationPtr->mNotificationSender <<
-                  std::endl;
-        std::cout << "TTL                       : " << videoNotificationPtr->mNotificationTtl <<
-                  std::endl;
-        std::cout << "Video                    : " << videoNotificationPtr->mNotificationVideoUrl <<
-                  std::endl;
-        std::cout << "ID                  : " << videoNotificationPtr->mNotificationId <<
-                  std::endl;
-        std::cout << "==========================================" << std::endl;
-
-        notificationList.push_back(videoNotificationPtr->mNotificationId);
-        sendNotificationAcknowledgement(m_notificationObjectPtr->mNotificationId,
-                                        selectedResource->getAddress());
-    }
-}
-
-void startSubscribeNotifications()
-{
-    unsigned int userInput;
-    displayNotificationResourceList();
-
-    std::cout << "Enter the resource you want to subscribe to" << std::endl;
-    std::cin >> userInput;
-
-    selectedResource = notificationResourceList[userInput - 1];
-    selectedResource->subscribeNotifications(&onResourceUpdated);
-    std::cout << "\tSubscribing started..." << std::endl;
-}
-
-void stopSubscribeNotifications()
-{
-    selectedResource->unSubscribeNotifications();
-    std::cout << "\tSubscribing stopped..." << std::endl;
 }
 
 void checkSubscribeStatus()
@@ -297,7 +420,7 @@ void process()
 
         int ret = selectConsumerMenu();
 
-        if (ret == QUIT || ret == INCORRECT_INPUT)
+        if (ret == QUIT )
             break;
     }
 }

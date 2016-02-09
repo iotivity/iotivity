@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2015 Samsung Electronics All Rights Reserved.
+// Copyright 2016 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -54,7 +54,8 @@ namespace OIC
                  *
                  *@see RCSResourceAttributes
                  */
-                typedef std::function<void(NotificationObject *)> SubscribedCallback;
+                typedef std::function<void(NotificationObject *, std::string, notificationConsumerPtr)>
+                SubscribedCallback;
 
                 NotificationConsumer(std::shared_ptr<RCSRemoteResourceObject>);
 
@@ -87,6 +88,13 @@ namespace OIC
                 void unSubscribeNotifications();
 
                 /**
+                  * Returns whether subscribing is enabled.
+                  *
+                  * @see subscribeNotifications()
+                  */
+                bool isSubscribing();
+
+                /**
                   * @return Returns the uri of the resource.
                   */
                 std::string getUri() const;
@@ -104,10 +112,17 @@ namespace OIC
                   */
                 void getDeviceName(onGetDeviceName cb);
 
-                void sendAcknowledgement(int notificationId, std::string hostAddressValue);
+                /**
+                 * It is used send the acknowledment when a
+                 * notification is received.
+                 *
+                 *@param unique Id of the notification received.
+                 *@param unique Id of the aknowledgement being sent.
+                 */
+                void sendAcknowledgement(int notificationId);
 
             private:
-                std::shared_ptr<RCSRemoteResourceObject> m_NotificationResource;
+                RCSRemoteResourceObject::Ptr m_NotificationResource;
 
         };
     }

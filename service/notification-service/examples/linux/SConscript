@@ -38,6 +38,7 @@ NMProducer_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=
 NMProducer_env.AppendUnique(LIBS = ['nmservice', 'rcs_server', 'rcs_client', 'rcs_common','oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'pthread'])
 NMProducer_env.AppendUnique(CPPPATH = ['../../include'])
 NMProducer_env.AppendUnique(CPPPATH = ['../../../resource-encapsulation/include'])
+NMProducer_env.AppendUnique(CPPPATH = ['../../../../extlibs/cjson'])
 
 ######################################################################
 # ##### Notification Consumer #####
@@ -48,6 +49,7 @@ NMConsumer_env.AppendUnique(LIBS = ['nmservice', 'rcs_server', 'rcs_client', 'rc
 NMConsumer_env.AppendUnique(CPPPATH = ['../../include'])
 NMConsumer_env.AppendUnique(CPPPATH = ['../../../resource-encapsulation/include'])
 NMConsumer_env.AppendUnique(CPPPATH = ['../../../resource-encapsulation/src/common/primitiveResource/include'])
+NMConsumer_env.AppendUnique(CPPPATH = ['../../extlibs/cjson'])
 
 if env.get('SECURED') == '1':
     NMProducer_env.AppendUnique(LIBS = ['tinydtls'])

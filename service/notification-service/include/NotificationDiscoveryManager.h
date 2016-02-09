@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2015 Samsung Electronics All Rights Reserved.
+// Copyright 2016 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -74,8 +74,8 @@ namespace OIC
                  *
                  *@note The callback will be invoked in an internal thread.
                  */
-                void discoverNotificationResource(const RCSAddress& address,
-                                            ResourceDiscoveredCallback cb);
+                void discoverNotificationResource(const RCSAddress &address,
+                                                  ResourceDiscoveredCallback cb);
 
             private:
 

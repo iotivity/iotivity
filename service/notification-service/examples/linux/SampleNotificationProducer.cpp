@@ -21,6 +21,8 @@
 
 #include <NotificationProducer.h>
 
+#include <NotificationUtility.h>
+
 using namespace OIC::Service;
 
 constexpr int CORRECT_INPUT = 99;
@@ -31,8 +33,7 @@ std::string resourceType = "oic.r.notify";
 std::string resourceInterface = "oic.if.";
 std::string notificationSender;
 std::string space;
-std::vector<std::pair<int, std::pair<std::string, int>>> notificationList;
-#define notify_ttl 20
+std::vector<std::pair<int, std::pair<int, int>>> notificationList;
 
 NotificationProducer notificationProducer(resourceUri, resourceType, resourceInterface);
 
@@ -88,21 +89,28 @@ void displayNotificationObjectMenu()
     std::cout << "=================================" << std::endl;
 }
 
-void notificationIdListener(int notificationId, std::string hostAddressValue)
+void displayNotificationMessageMenu()
 {
+    std::cout << "=========Notification Message Type==========" << std::endl;
+    std::cout << "1. Low " << std::endl;
+    std::cout << "2. Moderate " << std::endl;
+    std::cout << "3. Critical " << std::endl;
+    std::cout << "=================================" << std::endl;
+}
 
+void notificationIdListener(int notificationId, int notifyAckIdValue)
+{
     for (unsigned int i = 0; i < notificationList.size(); i++)
     {
         if (notificationList[i].first == notificationId)
         {
-            if (notificationList[i].second.first != hostAddressValue)
+            if (notificationList[i].second.first != notifyAckIdValue)
             {
                 notificationList[i].second.second++;
             }
         }
     }
     displayNotificationList();
-
 }
 
 void startNotificationProducer(std::string notificationSender)
@@ -112,28 +120,69 @@ void startNotificationProducer(std::string notificationSender)
 
 void sendNotification()
 {
-    int userInput;
+    int messageTypeInput;
+    int messagePriorityInput;
     NotificationObject *notificationObjectPtr = new NotificationObject();
-    std::string notificationMessageType;
     std::string notificationMessage;
     std::string notificationIconUrl;
     std::string notificationVideoUrl;
 
-    std::string notificationTime = notificationObjectPtr->mNotificationTime;
+    std::string notificationTime = notificationObjectPtr->m_NotificationTime;
     int notificationTtl = notify_ttl;
-    int notificationId = notificationObjectPtr->mNotificationId;
+    unsigned int notificationId = notificationObjectPtr->m_NotificationId;
 
-    NotificationObjectType nText = NotificationObjectType::Text;
-    NotificationObjectType nImage = NotificationObjectType::Image;
-    NotificationObjectType nVideo = NotificationObjectType::Video;
+    NotificationObjectType notificationTextType = NotificationObjectType::Text;
+    NotificationObjectType notificationImageType = NotificationObjectType::Image;
+    NotificationObjectType notificationVideoType = NotificationObjectType::Video;
 
-    std::cout << "Enter the type of object you want to create : " << std::endl;
-    displayNotificationObjectMenu();
-    userInput = processUserInput();
+    NotificationMessageType notificationMessageType;
+
+    while (1)
+    {
+        std::cout << "Enter the type of object you want to create : " << std::endl;
+        displayNotificationObjectMenu();
+        messageTypeInput = processUserInput();
+
+        if (messageTypeInput < 1 || messageTypeInput > 3)
+        {
+            std::cout << "Invalid input, please try again" << std::endl;
+        }
+        else
+            break;
+
+    }
+
+    while (1)
+    {
+        std::cout << "Enter the type of message you want to create : " << std::endl;
+        displayNotificationMessageMenu();
+        messagePriorityInput = processUserInput();
+
+
+        if (messagePriorityInput == 1)
+        {
+            notificationMessageType = NotificationMessageType::Low;
+            break;
+        }
+        else if (messagePriorityInput == 2)
+        {
+            notificationMessageType = NotificationMessageType::Moderate;
+            break;
+        }
+        else if (messagePriorityInput == 3)
+        {
+            notificationMessageType = NotificationMessageType::Critical;
+            break;
+        }
+        else
+        {
+            std::cout << "Invalid input, please try again" << std::endl;
+        }
+    }
 
     std::getline(std::cin, space);
 
-    switch (userInput)
+    switch (messageTypeInput)
     {
         case 1:
             {
@@ -142,15 +191,16 @@ void sendNotification()
 
                 TextNotification textNotificationObject;
 
-                textNotificationObject.setTextAttributes(notificationMessage, nText ,
+                textNotificationObject.setTextAttributes(notificationMessage, notificationTextType ,
+                        notificationMessageType,
                         notificationTime, notificationSender,
                         notificationId,
                         notificationTtl);
 
                 notificationObjectPtr = &textNotificationObject;
-                notificationList.push_back(std::make_pair(notificationId, std::make_pair(" ", 0)));
+                notificationList.push_back(std::make_pair(notificationId, std::make_pair(0, 0)));
 
-                notificationProducer.sendNotification(nText, notificationObjectPtr);
+                notificationProducer.sendNotification(notificationObjectPtr);
                 break;
             }
 
@@ -165,15 +215,16 @@ void sendNotification()
                 ImageNotification imageNotificationObject;
 
                 imageNotificationObject.setImageAttributes(notificationIconUrl, notificationMessage,
-                        nImage,
+                        notificationImageType,
+                        notificationMessageType,
                         notificationTime, notificationSender,
                         notificationId,
                         notificationTtl);
 
                 notificationObjectPtr = &imageNotificationObject;
-                notificationList.push_back(std::make_pair(notificationId, std::make_pair(" ", 0)));
+                notificationList.push_back(std::make_pair(notificationId, std::make_pair(0, 0)));
 
-                notificationProducer.sendNotification(nImage, notificationObjectPtr);
+                notificationProducer.sendNotification(notificationObjectPtr);
                 break;
             }
 
@@ -184,16 +235,17 @@ void sendNotification()
 
                 VideoNotification videoNotificationObject;
 
-                videoNotificationObject.setVideoAttributes(notificationVideoUrl, nVideo,
+                videoNotificationObject.setVideoAttributes(notificationVideoUrl, notificationVideoType,
+                        notificationMessageType,
                         notificationTime, notificationSender,
                         notificationId,
                         notificationTtl);
 
                 notificationObjectPtr = &videoNotificationObject;
 
-                notificationList.push_back(std::make_pair(notificationId, std::make_pair(" ", 0)));
+                notificationList.push_back(std::make_pair(notificationId, std::make_pair(0, 0)));
 
-                notificationProducer.sendNotification(nVideo, notificationObjectPtr);
+                notificationProducer.sendNotification(notificationObjectPtr);
                 break;
             }
 
@@ -252,7 +304,7 @@ void process()
 
         int ret = selectProviderMenu();
 
-        if (ret == QUIT || ret == INCORRECT_INPUT)
+        if (ret == QUIT)
             break;
     }
 }

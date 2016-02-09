@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2015 Samsung Electronics All Rights Reserved.
+// Copyright 2016 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -17,78 +17,76 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include <NotificationObject.h>
 
+#include <stdlib.h>
 #include <ctime>
 #include <limits.h>
-
-#include <NotificationObject.h>
 
 namespace OIC
 {
     namespace Service
     {
-        static int sNotificationId = 0;
-
         NotificationObject::NotificationObject()
         {
             time_t now = time(0);
             char *dt = ctime(&now);
-            mNotificationTime = dt;
-            if (mNotificationId < INT_MAX)
-            {
-                mNotificationId = ++sNotificationId;
-            }
-            else
-            {
-                mNotificationId = 0;
-            }
+            m_NotificationTime = dt;
+            srand(time(NULL));
+            m_NotificationId = rand();
         }
 
-        void TextNotification::setTextAttributes(const std::string &nNotificationMessage,
-                NotificationObjectType &nNotificationObjectType,
-                const std::string &nNotificationTime,
-                const std::string &nNotificationSender,
-                int nNotificationId,
-                int nNotificationTtl)
+        void TextNotification::setTextAttributes(const std::string &notificationMessage,
+                NotificationObjectType &notificationObjectType,
+                NotificationMessageType &notificationMessageType,
+                const std::string &notificationTime,
+                const std::string &notificationSender,
+                unsigned int notificationId,
+                int notificationTtl)
         {
-            mNotificationMessage = nNotificationMessage;
-            mNotificationObjectType = nNotificationObjectType;
-            mNotificationTime = nNotificationTime;
-            mNotificationSender = nNotificationSender;
-            mNotificationId = nNotificationId;
-            mNotificationTtl = nNotificationTtl;
+            m_NotificationMessage = notificationMessage;
+            m_NotificationObjectType = notificationObjectType;
+            m_NotificationMessageType = notificationMessageType;
+            m_NotificationTime = notificationTime;
+            m_NotificationSender = notificationSender;
+            m_NotificationId = notificationId;
+            m_NotificationTtl = notificationTtl;
         }
 
-        void ImageNotification::setImageAttributes(const std::string &nNotificationIconUrl,
-                const std::string nNotificationMessage,
-                NotificationObjectType &nNotificationObjectType,
-                const std::string &nNotificationTime,
-                const std::string &nNotificationSender,
-                int nNotificationId,
-                int nNotificationTtl)
+        void ImageNotification::setImageAttributes(const std::string &notificationIconUrl,
+                const std::string notificationMessage,
+                NotificationObjectType &notificationObjectType,
+                NotificationMessageType &notificationMessageType,
+                const std::string &notificationTime,
+                const std::string &notificationSender,
+                unsigned int notificationId,
+                int notificationTtl)
         {
-            mNotificationIconUrl = nNotificationIconUrl;
-            mNotificationMessage = nNotificationMessage;
-            mNotificationObjectType = nNotificationObjectType;
-            mNotificationTime = nNotificationTime;
-            mNotificationSender = nNotificationSender;
-            mNotificationId = nNotificationId;
-            mNotificationTtl = nNotificationTtl;
+            m_NotificationIconUrl = notificationIconUrl;
+            m_NotificationMessage = notificationMessage;
+            m_NotificationObjectType = notificationObjectType;
+            m_NotificationMessageType = notificationMessageType;
+            m_NotificationTime = notificationTime;
+            m_NotificationSender = notificationSender;
+            m_NotificationId = notificationId;
+            m_NotificationTtl = notificationTtl;
         }
 
-        void VideoNotification::setVideoAttributes(const std::string &nNotificationVideoUrl,
-                NotificationObjectType &nNotificationObjectType,
-                const std::string &nNotificationTime,
-                const std::string &nNotificationSender,
-                int nNotificationId,
-                int nNotificationTtl)
+        void VideoNotification::setVideoAttributes(const std::string &notificationVideoUrl,
+                NotificationObjectType &notificationObjectType,
+                NotificationMessageType &notificationMessageType,
+                const std::string &notificationTime,
+                const std::string &notificationSender,
+                unsigned int notificationId,
+                int notificationTtl)
         {
-            mNotificationVideoUrl = nNotificationVideoUrl;
-            mNotificationObjectType = nNotificationObjectType;
-            mNotificationTime = nNotificationTime;
-            mNotificationSender = nNotificationSender;
-            mNotificationId = nNotificationId;
-            mNotificationTtl = nNotificationTtl;
+            m_NotificationVideoUrl = notificationVideoUrl;
+            m_NotificationObjectType = notificationObjectType;
+            m_NotificationMessageType = notificationMessageType;
+            m_NotificationTime = notificationTime;
+            m_NotificationSender = notificationSender;
+            m_NotificationId = notificationId;
+            m_NotificationTtl = notificationTtl;
         }
     }
 }

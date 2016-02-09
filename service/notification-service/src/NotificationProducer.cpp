@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2015 Samsung Electronics All Rights Reserved.
+// Copyright 2016 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -27,9 +27,10 @@
 
 #include <logger.h>
 #include <OCPlatform.h>
-#include "cJSON.h"
+#include <cJSON.h>
 
 #include <NotificationObject.h>
+#include <NotificationUtility.h>
 
 constexpr char TAG[] { "NotificationProducer" };
 
@@ -44,10 +45,10 @@ namespace
         char *nAck = &ack[0];
         cJSON *putJson = cJSON_Parse(nAck);
 
-        std::string notificationHostAddress(cJSON_GetObjectItem(putJson, hostAddress)->valuestring);
+        int notificationAckId = cJSON_GetObjectItem(putJson, notifyAck)->valueint;
         int notificationId = cJSON_GetObjectItem(putJson, notification_id)->valueint;
 
-        cb(notificationId, notificationHostAddress);
+        cb(notificationId, notificationAckId);
     }
 }
 namespace OIC
@@ -57,7 +58,7 @@ namespace OIC
         std::string Key;
         std::string Value;
         int IdValue;
-        std::string hostAddressValue;
+        int notifyAckIdValue;
 
         NotificationProducer::NotificationProducer(const std::string &uri,
                 const std::string &type,
@@ -71,12 +72,13 @@ namespace OIC
         NotificationProducer::NotificationProducerPtr NotificationProducer::startNotificationManager(
             std::string &notifyDeviceName, NotificationProducer::notificationIdListener cb)
         {
-            if (mNotificationResource == NULL)
+            if (m_NotificationResource == NULL)
             {
-                mNotificationResource = RCSResourceObject::Builder(m_uri, m_type,
-                                        m_interface).setDiscoverable(true).setObservable(true).build();
+                OC_LOG(INFO, TAG, "Resource Created......");
+                m_NotificationResource = RCSResourceObject::Builder(m_uri, m_type,
+                                         m_interface).setDiscoverable(true).setObservable(true).build();
 
-                if (mNotificationResource == NULL)
+                if (m_NotificationResource == NULL)
                 {
                     OC_LOG(WARNING, TAG, "Resource not created.....");
                     return NULL;
@@ -87,26 +89,49 @@ namespace OIC
                 OC_LOG(WARNING, TAG, "Resource already created.....");
             }
 
-            mNotificationResource->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy:: UPDATED);
+            /**
+                 * @superJson.
+                 *  a Json object to set text, image and video payload according to their
+                 *   priority i.e. either low, moderate or critical as json key-value pair
+                 */
+
+            superJson = cJSON_CreateObject();
+            cJSON_AddStringToObject(superJson, t_Critical, "");
+            cJSON_AddStringToObject(superJson, t_Moderate, "");
+            cJSON_AddStringToObject(superJson, t_Low, "");
+            cJSON_AddStringToObject(superJson, i_Critical, "");
+            cJSON_AddStringToObject(superJson, i_Moderate, "");
+            cJSON_AddStringToObject(superJson, i_Low, "");
+            cJSON_AddStringToObject(superJson, v_Critical, "");
+            cJSON_AddStringToObject(superJson, v_Moderate, "");
+            cJSON_AddStringToObject(superJson, v_Low, "");
+
+            m_NotificationResource->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy:: UPDATED);
 
             Key = DeviceName;
             Value = notifyDeviceName;
-            mNotificationResource->setAttribute( Key, Value);
+            m_NotificationResource->setAttribute( Key, Value);
 
             IdValue = 0;
-            hostAddressValue = " ";
+            notifyAckIdValue = 0;
 
             cJSON *ackJson = cJSON_CreateObject();
             char *jsonResponse;
 
+            /**
+                 * @ackJson.
+                 *  a Json object to set notification Id and acknowledgement Id
+                 *  as json key-value pair
+                 */
+
             cJSON_AddNumberToObject(ackJson, notification_id, IdValue);
-            cJSON_AddStringToObject(ackJson, hostAddress, &hostAddressValue[0]);
+            cJSON_AddNumberToObject(ackJson, notifyAck, notifyAckIdValue);
 
             jsonResponse = cJSON_Print(ackJson);
             std::string ack(jsonResponse);
-            mNotificationResource->setAttribute(notification_ack, ack);
+            m_NotificationResource->setAttribute(notification_ack, ack);
 
-            mNotificationResource->addAttributeUpdatedListener(notification_ack,
+            m_NotificationResource->addAttributeUpdatedListener(notification_ack,
                     std::bind(IdAttributeUpdatedListener,
                               std::placeholders::_1, std::placeholders::_2, std::move(cb)));
 
@@ -117,65 +142,118 @@ namespace OIC
         {
         }
 
-        void NotificationProducer::sendNotification(NotificationObjectType &type,
-                NotificationObject *notificationObjectPtr)
+        void NotificationProducer::sendNotification(NotificationObject *notificationObjectPtr)
         {
+            OC_LOG(INFO, TAG, "sendNotif API enter......");
             cJSON *json = cJSON_CreateObject();
             char *jsonResponse;
+            int nMessageType;
 
             if (notificationObjectPtr == NULL)
             {
                 return;
             }
 
-            cJSON_AddStringToObject(json, TimeStamp, &notificationObjectPtr->mNotificationTime[0]);
-            cJSON_AddStringToObject(json, Sender, &notificationObjectPtr->mNotificationSender[0]);
-            cJSON_AddNumberToObject(json, Ttl, notificationObjectPtr->mNotificationTtl);
-            cJSON_AddNumberToObject(json, Id, notificationObjectPtr->mNotificationId);
+            /**
+                 * @json.
+                 *  a Json object to set different attributes of a notification
+                 *  as json key-value pair
+                 */
 
-            if ( type == NotificationObjectType::Text)
+            cJSON_AddStringToObject(json, TimeStamp, &notificationObjectPtr->m_NotificationTime[0]);
+            cJSON_AddStringToObject(json, Sender, &notificationObjectPtr->m_NotificationSender[0]);
+            cJSON_AddNumberToObject(json, Ttl, notificationObjectPtr->m_NotificationTtl);
+            cJSON_AddNumberToObject(json, Id, notificationObjectPtr->m_NotificationId);
+
+            if (notificationObjectPtr->m_NotificationObjectType == NotificationObjectType::Text)
             {
+                OC_LOG(INFO, TAG, "sendNotif text API enter......");
                 TextNotification *textNotificationPtr = (TextNotification *) notificationObjectPtr;
 
                 if (textNotificationPtr != NULL)
                 {
-                    cJSON_AddStringToObject(json, Message, &textNotificationPtr->mNotificationMessage[0]);
-                    cJSON_AddStringToObject(json, ObjectType, "text");
+                    cJSON_AddStringToObject(json, Message, &textNotificationPtr->m_NotificationMessage[0]);
 
                     jsonResponse = cJSON_Print(json);
                     std::string payload(jsonResponse);
-                    mNotificationResource->setAttribute(notification_payload, payload);
+
+                    if (notificationObjectPtr->m_NotificationMessageType == NotificationMessageType::Low)
+                    {
+                        cJSON_ReplaceItemInObject(superJson, t_Low, cJSON_CreateString(&payload[0]));
+                    }
+                    else if (notificationObjectPtr->m_NotificationMessageType == NotificationMessageType::Moderate)
+                    {
+                        cJSON_ReplaceItemInObject(superJson, t_Moderate, cJSON_CreateString(&payload[0]));
+                    }
+                    else if (notificationObjectPtr->m_NotificationMessageType == NotificationMessageType::Critical)
+                    {
+                        cJSON_ReplaceItemInObject(superJson, t_Critical, cJSON_CreateString(&payload[0]));
+                    }
+
+                    jsonResponse = cJSON_Print(superJson);
+                    std::string final_payload(jsonResponse);
+                    m_NotificationResource->setAttribute(notification_payload, final_payload);
                 }
             }
 
-            if ( type == NotificationObjectType::Image)
+            if (notificationObjectPtr->m_NotificationObjectType == NotificationObjectType::Image)
             {
                 ImageNotification *imageNotificationPtr = (ImageNotification *) notificationObjectPtr;
 
                 if (imageNotificationPtr != NULL)
                 {
-                    cJSON_AddStringToObject(json, IconUrl, &imageNotificationPtr->mNotificationIconUrl[0]);
-                    cJSON_AddStringToObject(json, Message, &imageNotificationPtr->mNotificationMessage[0]);
-                    cJSON_AddStringToObject(json, ObjectType, "image");
+                    cJSON_AddStringToObject(json, IconUrl, &imageNotificationPtr->m_NotificationIconUrl[0]);
+                    cJSON_AddStringToObject(json, Message, &imageNotificationPtr->m_NotificationMessage[0]);
 
                     jsonResponse = cJSON_Print(json);
                     std::string payload(jsonResponse);
-                    mNotificationResource->setAttribute(notification_payload, payload);
+
+                    if (notificationObjectPtr->m_NotificationMessageType == NotificationMessageType::Low)
+                    {
+                        cJSON_ReplaceItemInObject(superJson, i_Low, cJSON_CreateString(&payload[0]));
+                    }
+                    else if (notificationObjectPtr->m_NotificationMessageType == NotificationMessageType::Moderate)
+                    {
+                        cJSON_ReplaceItemInObject(superJson, i_Moderate, cJSON_CreateString(&payload[0]));
+                    }
+                    else if (notificationObjectPtr->m_NotificationMessageType == NotificationMessageType::Critical)
+                    {
+                        cJSON_ReplaceItemInObject(superJson, i_Critical, cJSON_CreateString(&payload[0]));
+                    }
+
+                    jsonResponse = cJSON_Print(superJson);
+                    std::string final_payload(jsonResponse);
+                    m_NotificationResource->setAttribute(notification_payload, final_payload);
                 }
             }
 
-            if ( type == NotificationObjectType::Video)
+            if (notificationObjectPtr->m_NotificationObjectType == NotificationObjectType::Video)
             {
                 VideoNotification *videoNotificationPtr = (VideoNotification *) notificationObjectPtr;
 
                 if (videoNotificationPtr != NULL)
                 {
-                    cJSON_AddStringToObject(json, VideoUrl, &videoNotificationPtr->mNotificationVideoUrl[0]);
-                    cJSON_AddStringToObject(json, ObjectType, "video");
+                    cJSON_AddStringToObject(json, VideoUrl, &videoNotificationPtr->m_NotificationVideoUrl[0]);
 
                     jsonResponse = cJSON_Print(json);
                     std::string payload(jsonResponse);
-                    mNotificationResource->setAttribute(notification_payload, payload);
+
+                    if (notificationObjectPtr->m_NotificationMessageType == NotificationMessageType::Low)
+                    {
+                        cJSON_ReplaceItemInObject(superJson, v_Low, cJSON_CreateString(&payload[0]));
+                    }
+                    else if (notificationObjectPtr->m_NotificationMessageType == NotificationMessageType::Moderate)
+                    {
+                        cJSON_ReplaceItemInObject(superJson, v_Moderate, cJSON_CreateString(&payload[0]));
+                    }
+                    else if (notificationObjectPtr->m_NotificationMessageType == NotificationMessageType::Critical)
+                    {
+                        cJSON_ReplaceItemInObject(superJson, v_Critical, cJSON_CreateString(&payload[0]));
+                    }
+
+                    jsonResponse = cJSON_Print(superJson);
+                    std::string final_payload(jsonResponse);
+                    m_NotificationResource->setAttribute(notification_payload, final_payload);
                 }
             }
 
