@@ -250,7 +250,17 @@ public class MainActivity extends Activity {
                                 mEnrollerPassword);
                         mDevice = mDeviceFactory
                                 .newEnrolleeDevice(mWiFiProvConfig);
-                        mEasySetupService.startSetup(mDevice);
+                            Thread thread = new Thread() {
+                            @Override
+                            public void run() {
+                                try {
+                                       mEasySetupService.startSetup(mDevice);
+                                }catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        };
+                        thread.start();
                     } else {
                         mSoftAPSsid = mSoftAPSsidText.getText().toString();
                         mSoftAPPassword = mSoftAPPassText.getText().toString();
@@ -303,7 +313,22 @@ public class MainActivity extends Activity {
                 mResultTextView.setText(R.string.stopped);
                 mProgressbar.setIndeterminate(false);
                 mProgressbar.setVisibility(View.INVISIBLE);
-                mEasySetupService.stopSetup(mDevice);
+                try {
+                    Thread thread = new Thread() {
+                        @Override
+                        public void run() {
+                            try {
+                                mEasySetupService.stopSetup(mDevice);
+                            }catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    };
+                    thread.start();
+
+                }catch(Exception e){
+                    Log.i("Stop setup", "Exception");
+                }
             }
         });
     }
