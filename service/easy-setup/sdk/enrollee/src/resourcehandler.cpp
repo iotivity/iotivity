@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "resourceHandler.h"
+#include "resourcehandler.h"
 #include "ocpayload.h"
 
 

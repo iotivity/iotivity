@@ -28,7 +28,7 @@
 #include "softap.h"
 #include "onboarding.h"
 #include "logger.h"
-#include "resourceHandler.h"
+#include "resourcehandler.h"
 
 /**
  * @var ES_ENROLLEE_TAG

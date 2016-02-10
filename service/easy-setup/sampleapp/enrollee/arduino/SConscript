@@ -42,7 +42,7 @@ enrollee_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
 enrollee_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 enrollee_env.PrependUnique(LIBS = ['octbstack','ocsrm','connectivity_abstraction','coap', 'ESSDKLibrary'])
-enrollee = enrollee_env.Program('enrollee', 'enrollee_wifi.cpp')
+enrollee = enrollee_env.Program('enrollee', 'enrolleewifi.cpp')
 env.CreateBin('enrollee')
 
 i_enrollee = enrollee_env.Install(env.get('BUILD_DIR'), enrollee)

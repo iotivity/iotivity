@@ -25,7 +25,7 @@
 extern "C" {
 #endif // __cplusplus:$
 
-#include "networkHandler.h"
+#include "networkhandler.h"
 
 /**
  * It will on-board the Enrollee device. This is a template method that has

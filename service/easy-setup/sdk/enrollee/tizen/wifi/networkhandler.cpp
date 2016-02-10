@@ -23,7 +23,7 @@
 
 #include "logger.h"
 #include "easysetup.h"
-#include "networkHandler.h"
+#include "networkhandler.h"
 
 #define LOG_TAG "TIZEN ES"
 

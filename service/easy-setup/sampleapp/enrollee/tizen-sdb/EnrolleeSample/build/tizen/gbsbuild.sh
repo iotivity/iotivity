@@ -1,6 +1,8 @@
 #!/bin/sh
 
-spec=`ls tools/tizen/*.spec`
+cur_dir="./service/easy-setup"
+
+spec=`ls ./service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/packaging/*.spec`
 version=`rpm --query --queryformat '%{version}\n' --specfile $spec`
 
 name=`echo $name|cut -d" " -f 1`
@@ -15,11 +17,11 @@ sourcedir=`pwd`
 
 echo `pwd`
 
-# Clean tmp directory.
 rm -rf ./tmp
 
 # Create directory structure for GBS Build
 mkdir ./tmp
+mkdir ./tmp/con/
 mkdir ./tmp/extlibs/
 mkdir ./tmp/packaging
 cp -R ./build_common $sourcedir/tmp
@@ -44,14 +46,15 @@ cp ./SConstruct ./tmp
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm ./tmp
 cp ./tools/tizen/.gbs.conf ./tmp
-
+cp ./tools/tizen/*.rpm $sourcedir/tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
+cp ./tools/tizen/.gbs.conf ./tmp/service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
 cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 
 cd $sourcedir/tmp
 
 echo `pwd`
-rm -rf ./extlibs/tinycbor/tinycbor/.git*
 
+whoami
 # Initialize Git repository
 if [ ! -d .git ]; then
    git init ./
@@ -62,15 +65,38 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l -B ~/GBS-ROOT --include-all --repository ./"
+gbscommand="gbs build -A armv7l --include-all  --repository ./ --define 'TARGET_TRANSPORT IP' --define 'SECURED 0' --define 'RELEASE 0' --define 'LOGGING true'"
 echo $gbscommand
 if eval $gbscommand; then
-   echo "Build is successful"
+   echo "Core build is successful"
 else
-   echo "Build failed!"
+   echo "Core build failed."
+   cd $sourcedir
+   rm -rf $sourcedir/tmp
    exit 1
 fi
 
+cd service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
+echo `pwd`
+# Initialize Git repository
+if [ ! -d .git ]; then
+  git init ./
+  git config user.email "you@example.com"
+  git config user.name "Your Name"
+  git add ./
+  git commit -m "Initial commit"
+fi
+echo "Calling sample gbs build command"
+gbscommand="gbs build -A armv7l -B ~/GBS-ROOT --include-all --repository ./ --define 'TARGET_TRANSPORT IP' --define 'SECURED 0' --define 'RELEASE 0' --define 'LOGGING True' --define 'ROUTING EP' --define 'TARGET_ENROLLEE tizen
+'"
+echo $gbscommand
+if eval $gbscommand; then
+  echo "Sample build is successful"
+else
+  echo "Sample build is failed."
+  exit 1
+fi
+rm -rf tmp
 cd $sourcedir
 rm -rf $sourcedir/tmp
 

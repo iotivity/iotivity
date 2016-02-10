@@ -27,9 +27,11 @@ Build Procedure
 2) Go to "iotivity/" folder.
 3) Execute following command(s) to start build based on transport selection required :
 
-sh gbsbuild.sh
-Note :- Upon successful execution of above command(s) RI library and sample applications will be
-        generated at path "~/GBS-ROOT/local/repos/<target>/armv7l/RPMS".
+scons -f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP ROUTING=EP RELEASE=0 LOGGING=true
+
+(If needed, modify the parameters accordingly)
+Note :- Upon successful execution of above command(s) RI library and sample console application(for tizen enrollee) 
+        will be generated at path "~/GBS-ROOT/local/repos/<target>/armv7l/RPMS".
 
 Procedure to Execute Sample App:
 ================================

@@ -181,7 +181,7 @@ void StartEasySetup()
 
     g_isInitialized = true;
 
-    OC_LOG_V(ERROR, TAG, "OnBoarding succeeded. Successfully connected to ssid : %s",ssid);
+    OC_LOG_V(ERROR, TAG, "OnBoarding succeded. Successfully connected to ssid : %s",ssid);
 }
 
 void StartProvisioning()

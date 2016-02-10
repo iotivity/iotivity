@@ -15,7 +15,7 @@
 #include "softapnative.h"
 #include "easysetup.h"
 #include "softap.h"
-#include "networkHandler.h"
+#include "networkhandler.h"
 
 void ESCreateSoftapCallback(int result, const char *ip, const char* mac_addr,
                                                             const char* device_name );

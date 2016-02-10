@@ -47,5 +47,5 @@ if secured == '1':
 	env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
 	env.Append(LIBS=['-ltinydtls'])
 
-env.Program('enrollee_wifi', [sample_dir + 'enrollee_wifi.cpp'])
+env.Program('enrollee_wifi', [sample_dir + 'enrolleewifi.cpp'])
 

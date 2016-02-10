@@ -22,7 +22,7 @@
 #define EASYSETUP_ENROLLEE_SOFTAP_H__
 
 #include "escommon.h"
-#include "networkHandler.h"
+#include "networkhandler.h"
 
 //#ifdef __cplusplus
 //extern "C" {

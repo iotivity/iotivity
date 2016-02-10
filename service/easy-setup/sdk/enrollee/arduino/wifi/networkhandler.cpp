@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "networkHandler.h"
+#include "networkhandler.h"
 
 // Arduino WiFi Shield includes
 #include <SPI.h>
