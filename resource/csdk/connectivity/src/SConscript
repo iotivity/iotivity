@@ -139,6 +139,10 @@ if ca_os in ['linux', 'tizen', 'android']:
 		env.SConscript(os.path.join(ca_path, 'tcp_adapter/SConscript'))
 		env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
 
+if ca_os in ['linux', 'tizen', 'android', 'arduino', 'ios']:
+	if (('BLE' in ca_transport) or ('BT' in ca_transport) or ('ALL' in ca_transport)):
+		env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
+
 print "Include path is %s" % env.get('CPPPATH')
 print "Files path is %s" % env.get('CA_SRC')
 if ca_os in ['android', 'tizen']:
@@ -152,4 +156,3 @@ if ca_os in ['android', 'tizen']:
 else:
 	calib = env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
 env.InstallTarget(calib, 'libconnectivity_abstraction')
-

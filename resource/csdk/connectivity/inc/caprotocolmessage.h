@@ -253,6 +253,15 @@ CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size);
  */
 CAPayloadFormat_t CAConvertFormat(uint8_t format);
 
+#ifdef WITH_TCP
+/**
+ * check whether CoAP over TCP is supported or not.
+ * @param[in]   adapter             transport adapter type.
+ * @return true or false.
+ */
+bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter);
+#endif
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -451,8 +451,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
         {
 #ifdef WITH_BWT
             if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
-#ifdef TCP_ADAPTER
-                    && CA_ADAPTER_TCP != data->remoteEndpoint->adapter
+#ifdef WITH_TCP
+                    && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
 #endif
                     )
             {
@@ -485,8 +485,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 return res;
             }
 
-#ifdef TCP_ADAPTER
-            if (CA_ADAPTER_TCP == data->remoteEndpoint->adapter)
+#ifdef WITH_TCP
+            if (CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter))
             {
                 OIC_LOG(INFO, TAG, "retransmission will be not worked");
             }
@@ -533,8 +533,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             {
 #ifdef WITH_BWT
                 if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
-#ifdef TCP_ADAPTER
-                        && CA_ADAPTER_TCP != data->remoteEndpoint->adapter
+#ifdef WITH_TCP
+                        && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
 #endif
                         )
                 {
@@ -572,8 +572,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             {
 #ifdef WITH_BWT
                 if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
-#ifdef TCP_ADAPTER
-                        && CA_ADAPTER_TCP != data->remoteEndpoint->adapter
+#ifdef WITH_TCP
+                        && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
 #endif
                         )
                 {
@@ -743,8 +743,8 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
             return;
         }
 
-#ifdef TCP_ADAPTER
-        if (CA_ADAPTER_TCP == sep->endpoint.adapter)
+#ifdef WITH_TCP
+        if (CAIsSupportedCoAPOverTCP(sep->endpoint.adapter))
         {
             OIC_LOG(INFO, TAG, "retransmission is not supported");
         }
@@ -783,8 +783,8 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
 #else
 #ifdef WITH_BWT
     if (CA_ADAPTER_GATT_BTLE != sep->endpoint.adapter
-#ifdef TCP_ADAPTER
-            && CA_ADAPTER_TCP != sep->endpoint.adapter
+#ifdef WITH_TCP
+            && !CAIsSupportedCoAPOverTCP(sep->endpoint.adapter)
 #endif
             )
     {
@@ -968,8 +968,8 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
 #else
 #ifdef WITH_BWT
     if (CA_ADAPTER_GATT_BTLE != endpoint->adapter
-#ifdef TCP_ADAPTER
-            && CA_ADAPTER_TCP != endpoint->adapter
+#ifdef WITH_TCP
+            && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
 #endif
             )
     {
@@ -1216,8 +1216,8 @@ void CALogPDUInfo(coap_pdu_t *pdu, const CAEndpoint_t *endpoint)
 
     OIC_LOG_V(DEBUG, TAG, "PDU Maker - payload : %s", pdu->data);
 
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         OIC_LOG(DEBUG, TAG, "pdu header data :");
         OIC_LOG_BUFFER(DEBUG, TAG,  (const uint8_t *) pdu->hdr, pdu->length);

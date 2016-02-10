@@ -177,8 +177,8 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
 
     coap_transport_type transport;
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         transport = coap_get_tcp_header_type_from_initbyte(((unsigned char *)data)[0] >> 4);
     }
@@ -208,8 +208,8 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
         return NULL;
     }
 
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         OIC_LOG(INFO, TAG, "there is no version info in coap header");
     }
@@ -249,9 +249,9 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
     VERIFY_NON_NULL_RET(transport, TAG, "transport", NULL);
 
     unsigned int length = COAP_MAX_PDU_SIZE;
-#ifdef TCP_ADAPTER
+#ifdef WITH_TCP
     unsigned int msgLength = 0;
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         if (options)
         {
@@ -305,8 +305,8 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
     OIC_LOG_V(DEBUG, TAG, "transport type: %d, payload size: %zu",
               *transport, info->payloadSize);
 
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         coap_add_length(pdu, *transport, msgLength);
     }
@@ -350,8 +350,8 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
 
 #ifdef WITH_BWT
     if (CA_ADAPTER_GATT_BTLE != endpoint->adapter
-#ifdef TCP_ADAPTER
-            && CA_ADAPTER_TCP != endpoint->adapter
+#ifdef WITH_TCP
+            && !CAIsSupportedCoAPOverTCP(endpoint->adapter)
 #endif
             )
     {
@@ -689,8 +689,8 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     VERIFY_NON_NULL(outInfo, TAG, "outInfo");
 
     coap_transport_type transport;
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         transport = coap_get_tcp_header_type_from_initbyte(((unsigned char *)pdu->hdr)[0] >> 4);
     }
@@ -716,14 +716,16 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
 
     outInfo->numOptions = count;
 
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         // set type
         outInfo->type = CA_MSG_NONCONFIRM;
         outInfo->payloadFormat = CA_FORMAT_UNDEFINED;
     }
     else
+#else
+    (void) endpoint;
 #endif
     {
         // set type
@@ -951,14 +953,12 @@ CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo,
     VERIFY_NON_NULL(endpoint, TAG, "endpoint");
 
     coap_transport_type transport;
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         transport = coap_get_tcp_header_type_from_initbyte(((unsigned char *)pdu_hdr)[0] >> 4);
     }
     else
-#else
-    (void) endpoint;
 #endif
     {
         transport = coap_udp;
@@ -1138,3 +1138,15 @@ CAPayloadFormat_t CAConvertFormat(uint8_t format)
             return CA_FORMAT_UNSUPPORTED;
     }
 }
+
+#ifdef WITH_TCP
+bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter)
+{
+    if (CA_ADAPTER_GATT_BTLE == adapter || CA_ADAPTER_RFCOMM_BTEDR == adapter
+            || CA_ADAPTER_TCP == adapter)
+    {
+        return true;
+    }
+    return false;
+}
+#endif

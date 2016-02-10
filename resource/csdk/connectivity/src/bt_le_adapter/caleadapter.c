@@ -33,6 +33,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "caremotehandler.h"
+#include "pdu.h"
 
 /**
  * Logging tag for module name.
@@ -550,6 +551,21 @@ static void CALEClearSenderInfo()
     CALEClearSenderInfoImpl(&g_bleClientSenderInfo);
 }
 
+static size_t CAGetMessageLengthFromData(const unsigned char *recvBuffer)
+{
+    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+            ((unsigned char *)recvBuffer)[0] >> 4);
+    size_t optPaylaodLen = coap_get_length_from_header((unsigned char *)recvBuffer,
+                                                        transport);
+    size_t headerLen = coap_get_tcp_header_length((unsigned char *)recvBuffer);
+
+    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "option/paylaod length [%d]", optPaylaodLen);
+    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "header length [%d]", headerLen);
+    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "total data length [%d]", headerLen + optPaylaodLen);
+
+    return headerLen + optPaylaodLen;
+}
+
 static CAResult_t CAInitLEClientSenderQueue()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CAInitLEClientSenderQueue");
@@ -713,8 +729,9 @@ static void CALEDataReceiverHandler(void *threadData)
             newSender->remoteEndpoint = NULL;
 
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Parsing the header");
-            newSender->totalDataLen = CAParseHeader(bleData->data,
-                                                    bleData->dataLen);
+
+            newSender->totalDataLen = CAGetMessageLengthFromData(bleData->data);
+
             if(!(newSender->totalDataLen))
             {
                 OIC_LOG(ERROR, CALEADAPTER_TAG, "Total Data Length is parsed as 0!!!");
@@ -752,10 +769,20 @@ static void CALEDataReceiverHandler(void *threadData)
                 ca_mutex_unlock(g_bleReceiveDataMutex);
                 return;
             }
-            memcpy(newSender->defragData, bleData->data + CA_HEADER_LENGTH,
-                   bleData->dataLen - CA_HEADER_LENGTH);
-            newSender->recvDataLen += bleData->dataLen - CA_HEADER_LENGTH;
-            u_arraylist_add(bleData->senderInfo, (void *)newSender);
+
+            if (newSender->recvDataLen + bleData->dataLen > newSender->totalDataLen)
+            {
+                OIC_LOG(ERROR, CALEADAPTER_TAG, "buffer is smaller than received data");
+                OICFree(newSender->defragData);
+                CAFreeEndpoint(newSender->remoteEndpoint);
+                OICFree(newSender);
+                ca_mutex_unlock(g_bleReceiveDataMutex);
+                return;
+            }
+            memcpy(newSender->defragData, bleData->data, bleData->dataLen);
+            newSender->recvDataLen += bleData->dataLen;
+
+            u_arraylist_add(bleData->senderInfo,(void *)newSender);
 
             //Getting newSender index position in bleSenderInfo array list
             if(CA_STATUS_OK !=
@@ -840,10 +867,7 @@ static void CALEServerSendDataThread(void *threadData)
         return;
     }
 
-    uint8_t * const header = OICCalloc(CA_HEADER_LENGTH, 1);
-    VERIFY_NON_NULL_VOID(header, CALEADAPTER_TAG, "Malloc failed");
-
-    const uint32_t totalLength = bleData->dataLen + CA_HEADER_LENGTH;
+    const uint32_t totalLength = bleData->dataLen;
 
     OIC_LOG_V(DEBUG,
               CALEADAPTER_TAG,
@@ -855,39 +879,24 @@ static void CALEServerSendDataThread(void *threadData)
     if (NULL == dataSegment)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Malloc failed");
-        OICFree(header);
         return;
     }
-
-    CAResult_t result = CAGenerateHeader(header,
-                                         CA_HEADER_LENGTH,
-                                         bleData->dataLen);
-    if (CA_STATUS_OK != result )
-    {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "Generate header failed");
-        OICFree(header);
-        OICFree(dataSegment);
-        return;
-    }
-
-    memcpy(dataSegment, header, CA_HEADER_LENGTH);
-    OICFree(header);
 
     uint32_t length = 0;
     if (CA_SUPPORTED_BLE_MTU_SIZE > totalLength)
     {
         length = totalLength;
-        memcpy(dataSegment + CA_HEADER_LENGTH, bleData->data, bleData->dataLen);
+        memcpy(dataSegment, bleData->data, bleData->dataLen);
     }
     else
     {
         length =  CA_SUPPORTED_BLE_MTU_SIZE;
-        memcpy(dataSegment + CA_HEADER_LENGTH, bleData->data,
-               CA_SUPPORTED_BLE_MTU_SIZE - CA_HEADER_LENGTH);
+        memcpy(dataSegment, bleData->data, CA_SUPPORTED_BLE_MTU_SIZE);
     }
 
     uint32_t iter = totalLength / CA_SUPPORTED_BLE_MTU_SIZE;
     uint32_t index = 0;
+    CAResult_t result = CA_STATUS_FAILED;
 
     // Send the first segment with the header.
     if (NULL != bleData->remoteEndpoint) // Sending Unicast Data
@@ -927,8 +936,9 @@ static void CALEServerSendDataThread(void *threadData)
             result =
                 CAUpdateCharacteristicsToGattClient(
                     bleData->remoteEndpoint->addr,
-                    bleData->data + ((index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH),
+                    bleData->data + ((index * CA_SUPPORTED_BLE_MTU_SIZE)),
                     CA_SUPPORTED_BLE_MTU_SIZE);
+
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG_V(ERROR, CALEADAPTER_TAG,
@@ -949,10 +959,12 @@ static void CALEServerSendDataThread(void *threadData)
             // send the last segment of the data (Ex: 22 bytes of 622
             // bytes of data when MTU is 200)
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
+
             result = CAUpdateCharacteristicsToGattClient(
                          bleData->remoteEndpoint->addr,
-                         bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
+                         bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE),
                          remainingLen);
+
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG_V(ERROR,
@@ -986,9 +998,11 @@ static void CALEServerSendDataThread(void *threadData)
         {
             // Send the remaining header.
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Sending the chunk number [%d]", index);
+
             result = CAUpdateCharacteristicsToAllGattClients(
-                         bleData->data + ((index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH),
+                         bleData->data + ((index * CA_SUPPORTED_BLE_MTU_SIZE)),
                          CA_SUPPORTED_BLE_MTU_SIZE);
+
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]",
@@ -1006,9 +1020,11 @@ static void CALEServerSendDataThread(void *threadData)
         {
             // send the last segment of the data
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
+
             result = CAUpdateCharacteristicsToAllGattClients(
-                         bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
+                         bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE),
                          remainingLen);
+
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]",
@@ -1036,47 +1052,32 @@ static void CALEClientSendDataThread(void *threadData)
         return;
     }
 
-    uint8_t * const header = OICCalloc(CA_HEADER_LENGTH, 1);
-    VERIFY_NON_NULL_VOID(header, CALEADAPTER_TAG, "Malloc failed");
+    const uint32_t totalLength = bleData->dataLen;
 
-    const uint32_t totalLength = bleData->dataLen + CA_HEADER_LENGTH;
     uint8_t *dataSegment = OICCalloc(totalLength, 1);
     if (NULL == dataSegment)
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "Malloc failed");
-        OICFree(header);
         return;
     }
-
-    CAResult_t result = CAGenerateHeader(header,
-                                         CA_HEADER_LENGTH,
-                                         bleData->dataLen);
-    if (CA_STATUS_OK != result )
-    {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "Generate header failed");
-        OICFree(header);
-        OICFree(dataSegment);
-        return ;
-    }
-    memcpy(dataSegment, header, CA_HEADER_LENGTH);
-    OICFree(header);
 
     uint32_t length = 0;
     if (CA_SUPPORTED_BLE_MTU_SIZE > totalLength)
     {
         length = totalLength;
-        memcpy(dataSegment + CA_HEADER_LENGTH,
+        memcpy(dataSegment,
                bleData->data,
                bleData->dataLen);
     }
     else
     {
         length = CA_SUPPORTED_BLE_MTU_SIZE;
-        memcpy(dataSegment + CA_HEADER_LENGTH,
+        memcpy(dataSegment,
                bleData->data,
-               CA_SUPPORTED_BLE_MTU_SIZE - CA_HEADER_LENGTH);
+               CA_SUPPORTED_BLE_MTU_SIZE);
     }
 
+    CAResult_t result = CA_STATUS_FAILED;
     const uint32_t iter = totalLength / CA_SUPPORTED_BLE_MTU_SIZE;
     uint32_t index = 0;
     if (NULL != bleData->remoteEndpoint) //Sending Unicast Data
@@ -1115,9 +1116,10 @@ static void CALEClientSendDataThread(void *threadData)
             // Send the remaining header.
             result = CAUpdateCharacteristicsToGattServer(
                      bleData->remoteEndpoint->addr,
-                     bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
+                     bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE),
                      CA_SUPPORTED_BLE_MTU_SIZE,
                      LE_UNICAST, 0);
+
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG_V(ERROR,
@@ -1138,9 +1140,10 @@ static void CALEClientSendDataThread(void *threadData)
             // send the last segment of the data (Ex: 22 bytes of 622
             // bytes of data when MTU is 200)
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
+
             result = CAUpdateCharacteristicsToGattServer(
                      bleData->remoteEndpoint->addr,
-                     bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
+                     bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE),
                      remainingLen,
                      LE_UNICAST, 0);
 
@@ -1174,8 +1177,9 @@ static void CALEClientSendDataThread(void *threadData)
         for (index = 1; index < iter; index++)
         {
             result = CAUpdateCharacteristicsToAllGattServers(
-                         bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
+                         bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE),
                          CA_SUPPORTED_BLE_MTU_SIZE);
+
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG_V(ERROR, CALEADAPTER_TAG, "Update characteristics failed, result [%d]",
@@ -1196,8 +1200,9 @@ static void CALEClientSendDataThread(void *threadData)
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
             result =
                 CAUpdateCharacteristicsToAllGattServers(
-                    bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE) - CA_HEADER_LENGTH,
+                    bleData->data + (index * CA_SUPPORTED_BLE_MTU_SIZE),
                     remainingLen);
+
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG_V(ERROR, CALEADAPTER_TAG,
