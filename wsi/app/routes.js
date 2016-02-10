@@ -76,7 +76,7 @@ module.exports = function(app, passport) {
         var authcred = req.body.auth[0];
         console.log("WSI Cap Auth " + req.body.sid);
         app.settings.strategy[req.body.handler].auth(authcred, passport, req.body.sid);
-        res.send(200);
+        (res.sendStatus || res.send).bind(res)(200);
     });
     
     app.post('/wsi/cap/:id', function(req, res) {

@@ -137,7 +137,7 @@ module.exports = {
             client.post(cap.endpoint, { status: cap.params.text }, function(err, data, response) {
               if(err) {
                 console.log(JSON.stringify(err));
-                res.sendStatus(500);
+                (res.sendStatus || res.send).bind(res)(500);
                 return;
               }
               console.log(JSON.stringify(data));  // Tweet body. 

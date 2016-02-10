@@ -16,10 +16,10 @@ module.exports = {
                 request.get(uri, function (error, response, body) {
                     if (!error && response.statusCode == 200) {
                         console.log("Success = " + error + "Response = " + response + "Body = " + body);
-                        res.send(response.statusCode);
+                        (res.sendStatus || res.send).bind(res)(response.statusCode);
                     }else{
                         console.log("Error = " + error + "Response = " + response + "Body = " + body);
-                        res.send(response.statusCode);
+                        (res.sendStatus || res.send).bind(res)(response.statusCode);
                     }
                 });
             }else{ //local URL
@@ -37,10 +37,10 @@ module.exports = {
             },function (error, response, body) {
                 if (!error && response.statusCode == 200) {
                     console.log("Success = " + error + "Response = " + response + "Body = " + body);
-                    res.send(response.statusCode);
+                    (res.sendStatus || res.send).bind(res)(response.statusCode);
                 }else{
                     console.log("Error = " + error + "Response = " + response + "Body = " + body);
-                    res.send(response.statusCode);
+                    (res.sendStatus || res.send).bind(res)(response.statusCode);
                 }
             });
         }
