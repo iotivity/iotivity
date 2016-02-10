@@ -102,9 +102,9 @@
             
             var res = $http.post(uri, reqbody);
             res.success(function(data, status, headers, config) {
-                console.log("Success Response = " + data );
-                
-                var addresses = JSON.parse(data);
+                console.log("Success Response = " + JSON.stringify(data));
+
+                var addresses = JSON.parse(JSON.stringify(data));
                 
                 for(var i = 0; i<addresses.length; i++)
                 {
