@@ -18,29 +18,31 @@
  *
  ******************************************************************/
 
-#ifndef RESOURCE_UPDATE_AUTOMATION_MNGR_H_
-#define RESOURCE_UPDATE_AUTOMATION_MNGR_H_
+#ifndef SIMULATOR_RESOURCE_UPDATE_AUTOMATION_MNGR_H_
+#define SIMULATOR_RESOURCE_UPDATE_AUTOMATION_MNGR_H_
 
-#include "simulator_single_resource.h"
 #include "resource_update_automation.h"
+#include <unordered_map>
 
+class SimulatorSingleResourceImpl;
 class UpdateAutomationMngr
 {
     public:
-        UpdateAutomationMngr();
+        UpdateAutomationMngr() : m_id(0) {}
 
-        int startResourceAutomation(SimulatorSingleResource *resource,
-                                    AutomationType type, int interval, updateCompleteCallback callback);
+        int startResourceAutomation(std::shared_ptr<SimulatorSingleResourceImpl> resource,
+                                    AutoUpdateType type, int interval,
+                                    const SimulatorSingleResource::AutoUpdateCompleteCallback &callback);
 
-        int startAttributeAutomation(SimulatorSingleResource *resource,
-                                     const std::string &attrName, AutomationType type, int interval,
-                                     updateCompleteCallback callback);
+        int startAttributeAutomation(std::shared_ptr<SimulatorSingleResourceImpl> resource,
+                                     const std::string &attrName, AutoUpdateType type, int interval,
+                                     const SimulatorSingleResource::AutoUpdateCompleteCallback &callback);
 
         std::vector<int> getResourceAutomationIds();
 
         std::vector<int> getAttributeAutomationIds();
 
-        void stop(int id);
+        void stop(int updationID);
 
         void stopAll();
 
@@ -49,8 +51,8 @@ class UpdateAutomationMngr
 
         int m_id;
         std::mutex m_lock;
-        std::map<int, ResourceUpdateAutomationSP> m_resourceUpdationList;
-        std::map<int, AttributeUpdateAutomationSP> m_attrUpdationList;
+        std::unordered_map<int, ResourceUpdateAutomationSP> m_resourceUpdationList;
+        std::unordered_map<int, AttributeUpdateAutomationSP> m_attrUpdationList;
 };
 
 #endif

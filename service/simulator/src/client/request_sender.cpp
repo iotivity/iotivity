@@ -25,127 +25,111 @@
 
 #define TAG "GET_REQUEST_SNDR"
 
-RequestSender::RequestSender(RequestType type, std::shared_ptr<OC::OCResource> &ocResource)
-    :   m_type(type), m_ocResource(ocResource) {}
+GETRequestSender::GETRequestSender(const std::shared_ptr<OC::OCResource> &ocResource)
+    :   m_ocResource(ocResource) {}
 
-void RequestSender::sendRequest(const std::map<std::string, std::string> &queryParam,
-                                ResponseCallback responseCb, bool verifyResponse)
+SimulatorResult GETRequestSender::send(const ResponseCallback &callback)
 {
-    sendRequest(std::string(), queryParam, nullptr, responseCb, verifyResponse);
+    std::map<std::string, std::string> queryParams;
+    return send(queryParams, callback);
 }
 
-void RequestSender::sendRequest(const std::string &interfaceType,
-                                const std::map<std::string, std::string> &queryParam,
-                                ResponseCallback responseCb, bool verifyResponse)
+SimulatorResult GETRequestSender::send(const std::map<std::string, std::string> &queryParams,
+                                       const ResponseCallback &callback)
 {
-    sendRequest(interfaceType, queryParam, nullptr, responseCb, verifyResponse);
-}
+    // Create request info
+    RequestInfo requestInfo;
+    requestInfo.type = RequestType::RQ_TYPE_GET;
+    requestInfo.queryParams = queryParams;
 
-void RequestSender::sendRequest(const std::map<std::string, std::string> &queryParam,
-                                SimulatorResourceModelSP resourceModel,
-                                ResponseCallback responseCb, bool verifyResponse)
-{
-    sendRequest(std::string(), queryParam, resourceModel, responseCb, verifyResponse);
-}
-
-void RequestSender::sendRequest(const std::string &interfaceType,
-                                const std::map<std::string, std::string> &queryParam,
-                                SimulatorResourceModelSP resourceModel,
-                                ResponseCallback responseCb, bool verifyResponse)
-{
-    // Add query paramter "if" if interfaceType is not empty
-    OC::QueryParamsMap queryParamCpy(queryParam);
-    if (!interfaceType.empty())
-        queryParamCpy["if"] = interfaceType;
-
-    // Add the request into request list
-    RequestDetailSP requestDetail(new RequestDetail);
-    requestDetail->type = m_type;
-    requestDetail->queryParam = queryParamCpy;
-    requestDetail->body = resourceModel;
-    requestDetail->verifyResponse = verifyResponse;
-    requestDetail->responseCb = responseCb;
-
-    int requestId = m_requestList.add(requestDetail);
-
-    OCStackResult ocResult = send(queryParamCpy, resourceModel, std::bind(
-                                      &RequestSender::onResponseReceived, this,
-                                      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, requestId));
-    if (OC_STACK_OK != ocResult)
-    {
-        OC_LOG_V(ERROR, TAG, "Sending request failed [errorcode: %d]", ocResult);
-        m_requestList.remove(requestId);
-        throw SimulatorException(static_cast<SimulatorResult>(ocResult), "Failed to send request!");
-    }
-}
-
-void RequestSender::setRequestModel(const RequestModelSP &requestModel)
-{
-    m_requestModel = requestModel;
-}
-
-void RequestSender::onResponseReceived(const OC::HeaderOptions &headerOptions,
-                                       const OC::OCRepresentation &rep, const int errorCode, int requestId)
-{
-    SIM_LOG(ILogger::INFO, "Response received..." << "\n" << getPayloadString(rep));
-
-    // Ignore the response recieved for invalid requests
-    RequestDetailSP request = m_requestList.remove(requestId);
-    if (!request)
-        return;
-
-    // Validate the response as per the schema given by RAML
-    ValidationStatus validationStatus {false, SIMULATOR_ERROR};
-    if (request->verifyResponse && m_requestModel
-        && !errorCode) // TODO: Validate responses other than "200"
-    {
-        validationStatus.errorCode = m_requestModel->validateResponse(200, rep);
-        validationStatus.isVerified = true;
-    }
-
-    SimulatorResourceModelSP resourceModel = std::make_shared<SimulatorResourceModel>(
-                SimulatorResourceModel::build(rep));
-    request->responseCb(static_cast<SimulatorResult>(errorCode), resourceModel);
-}
-
-GETRequestSender::GETRequestSender(std::shared_ptr<OC::OCResource> &ocResource)
-    :   RequestSender(RequestType::RQ_TYPE_GET, ocResource) {}
-
-OCStackResult GETRequestSender::send(OC::QueryParamsMap &queryParams,
-                                     SimulatorResourceModelSP &resourceModel, OC::GetCallback callback)
-{
     SIM_LOG(ILogger::INFO, "Sending GET request..." << "\n**Payload Details**\n" << getRequestString(
                 queryParams));
 
-    return m_ocResource->get(queryParams, callback);
+    OCStackResult ocResult =  m_ocResource->get(queryParams,
+                              std::bind(&GETRequestSender::onResponseReceived, this, std::placeholders::_1,
+                                        std::placeholders::_2, std::placeholders::_3, requestInfo, callback));
+    return static_cast<SimulatorResult>(ocResult);
 }
 
-PUTRequestSender::PUTRequestSender(std::shared_ptr<OC::OCResource> &ocResource)
-    :   RequestSender(RequestType::RQ_TYPE_PUT, ocResource) {}
-
-OCStackResult PUTRequestSender::send(OC::QueryParamsMap &queryParams,
-                                     SimulatorResourceModelSP &resourceModel, OC::GetCallback callback)
+void GETRequestSender::onResponseReceived(const OC::HeaderOptions &headerOptions,
+        const OC::OCRepresentation &rep, const int errorCode, RequestInfo &requestInfo,
+        ResponseCallback callback)
 {
-    OC::OCRepresentation ocRep;
-    if (resourceModel)
-        ocRep = resourceModel->getOCRepresentation();
+    SIM_LOG(ILogger::INFO, "Response received for GET..." << "\n" << getPayloadString(rep));
+    SimulatorResourceModel resourceModel = SimulatorResourceModel::build(rep);
+    callback(static_cast<SimulatorResult>(errorCode), resourceModel, requestInfo);
+}
+
+PUTRequestSender::PUTRequestSender(const std::shared_ptr<OC::OCResource> &ocResource)
+    :   m_ocResource(ocResource) {}
+
+SimulatorResult PUTRequestSender::send(const SimulatorResourceModel &representation,
+                                       const ResponseCallback &callback)
+{
+    std::map<std::string, std::string> queryParams;
+    return send(queryParams, representation, callback);
+}
+
+SimulatorResult PUTRequestSender::send(const std::map<std::string, std::string> &queryParams,
+                                       const SimulatorResourceModel &representation, const ResponseCallback &callback)
+{
+    // Create request info
+    RequestInfo requestInfo;
+    requestInfo.type = RequestType::RQ_TYPE_PUT;
+    requestInfo.queryParams = queryParams;
+    requestInfo.payLoad = representation;
 
     SIM_LOG(ILogger::INFO, "Sending PUT request..." << "\n**Payload Details**\n" << getRequestString(
-                queryParams, ocRep));
-    return m_ocResource->put(ocRep, queryParams, callback);
+                queryParams));
+
+    OCStackResult ocResult =  m_ocResource->put(representation.asOCRepresentation(), queryParams,
+                              std::bind(&PUTRequestSender::onResponseReceived, this, std::placeholders::_1,
+                                        std::placeholders::_2, std::placeholders::_3, requestInfo, callback));
+    return static_cast<SimulatorResult>(ocResult);
 }
 
-POSTRequestSender::POSTRequestSender(std::shared_ptr<OC::OCResource> &ocResource)
-    :   RequestSender(RequestType::RQ_TYPE_POST, ocResource) {}
-
-OCStackResult POSTRequestSender::send(OC::QueryParamsMap &queryParams,
-                                      SimulatorResourceModelSP &resourceModel, OC::GetCallback callback)
+void PUTRequestSender::onResponseReceived(const OC::HeaderOptions &headerOptions,
+        const OC::OCRepresentation &rep, const int errorCode, RequestInfo &requestInfo,
+        ResponseCallback callback)
 {
-    OC::OCRepresentation ocRep;
-    if (resourceModel)
-        ocRep = resourceModel->getOCRepresentation();
+    SIM_LOG(ILogger::INFO, "Response received for PUT..." << "\n" << getPayloadString(rep));
+    SimulatorResourceModel resourceModel = SimulatorResourceModel::build(rep);
+    callback(static_cast<SimulatorResult>(errorCode), resourceModel, requestInfo);
+}
+
+POSTRequestSender::POSTRequestSender(const std::shared_ptr<OC::OCResource> &ocResource)
+    :   m_ocResource(ocResource) {}
+
+SimulatorResult POSTRequestSender::send(const SimulatorResourceModel &representation,
+                                        const ResponseCallback &callback)
+{
+    std::map<std::string, std::string> queryParams;
+    return send(queryParams, representation, callback);
+}
+
+SimulatorResult POSTRequestSender::send(const std::map<std::string, std::string> &queryParams,
+                                        const SimulatorResourceModel &representation, const ResponseCallback &callback)
+{
+    // Create request info
+    RequestInfo requestInfo;
+    requestInfo.type = RequestType::RQ_TYPE_POST;
+    requestInfo.queryParams = queryParams;
+    requestInfo.payLoad = representation;
 
     SIM_LOG(ILogger::INFO, "Sending POST request..." << "\n**Payload Details**\n" << getRequestString(
-                queryParams, ocRep));
-    return m_ocResource->post(ocRep, queryParams, callback);
+                queryParams));
+
+    OCStackResult ocResult =  m_ocResource->post(representation.asOCRepresentation(), queryParams,
+                              std::bind(&POSTRequestSender::onResponseReceived, this, std::placeholders::_1,
+                                        std::placeholders::_2, std::placeholders::_3, requestInfo, callback));
+    return static_cast<SimulatorResult>(ocResult);
+}
+
+void POSTRequestSender::onResponseReceived(const OC::HeaderOptions &headerOptions,
+        const OC::OCRepresentation &rep, const int errorCode, RequestInfo &requestInfo,
+        ResponseCallback callback)
+{
+    SIM_LOG(ILogger::INFO, "Response received for POST..." << "\n" << getPayloadString(rep));
+    SimulatorResourceModel resourceModel = SimulatorResourceModel::build(rep);
+    callback(static_cast<SimulatorResult>(errorCode), resourceModel, requestInfo);
 }

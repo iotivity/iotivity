@@ -18,24 +18,35 @@
  *
  ******************************************************************/
 
-#include "auto_request_gen.h"
+#include "simulator_resource.h"
 
-AutoRequestGeneration::AutoRequestGeneration(RequestType type, int id,
-        RequestSenderSP &requestSender, ProgressStateCallback callback)
-    :   m_type(type),
-        m_id(id),
-        m_requestSender(requestSender),
-        m_callback(callback),
-        m_requestsSent(false),
-        m_requestCnt(0),
-        m_responseCnt(0) {}
-
-void AutoRequestGeneration::start()
+bool SimulatorResource::isCollection() const
 {
-    startSending();
+    return false;
 }
 
-void AutoRequestGeneration::stop()
+SimulatorResource::Type SimulatorResource::getType() const
 {
-    stopSending();
+    return m_type;
 }
+
+std::string SimulatorResource::getName() const
+{
+    return m_name;
+}
+
+std::string SimulatorResource::getURI() const
+{
+    return m_uri;
+}
+
+std::string SimulatorResource::getResourceType() const
+{
+    return m_resourceType;
+}
+
+std::vector<std::string> SimulatorResource::getInterface() const
+{
+    return m_interfaces;
+}
+

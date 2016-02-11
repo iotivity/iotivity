@@ -52,13 +52,14 @@ std::shared_ptr<SimulatorResource> SimulatorManager::createResource(
     try
     {
         resource = SimulatorResourceFactory::getInstance()->createResource(configPath);
+        if (!resource)
+            throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
     }
-    catch(RAML::RamlException &e)
+    catch (RAML::RamlException &e)
     {
-        resource = nullptr;
-    }
-    if (!resource)
         throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
+    }
+
     return resource;
 }
 
@@ -72,13 +73,14 @@ std::vector<std::shared_ptr<SimulatorResource>> SimulatorManager::createResource
     try
     {
         resources = SimulatorResourceFactory::getInstance()->createResource(configPath, count);
+        if (!resources.size())
+            throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
     }
-    catch(RAML::RamlException &e)
+    catch (RAML::RamlException &e)
     {
         throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
     }
-    if (!resources.size())
-        throw SimulatorException(SIMULATOR_ERROR, "Failed to create resource!");
+
     return resources;
 }
 
@@ -86,6 +88,7 @@ std::shared_ptr<SimulatorSingleResource> SimulatorManager::createSingleResource(
     const std::string &name, const std::string &uri, const std::string &resourceType)
 {
     VALIDATE_INPUT(name.empty(), "Empty resource name!")
+    VALIDATE_INPUT(uri.empty(), "Empty URI!")
     VALIDATE_INPUT(resourceType.empty(), "Empty resource type!")
 
     return SimulatorResourceFactory::getInstance()->createSingleResource(name, uri, resourceType);
@@ -95,6 +98,7 @@ std::shared_ptr<SimulatorCollectionResource> SimulatorManager::createCollectionR
     const std::string &name, const std::string &uri, const std::string &resourceType)
 {
     VALIDATE_INPUT(name.empty(), "Empty resource name!")
+    VALIDATE_INPUT(uri.empty(), "Empty URI!")
     VALIDATE_INPUT(resourceType.empty(), "Empty resource type!")
 
     return SimulatorResourceFactory::getInstance()->createCollectionResource(name, uri, resourceType);
@@ -110,8 +114,7 @@ void SimulatorManager::findResource(ResourceFindCallback callback)
         if (!ocResource)
             return;
 
-        SimulatorRemoteResourceSP simulatorResource(new SimulatorRemoteResourceImpl(ocResource));
-        callback(simulatorResource);
+        callback(std::make_shared<SimulatorRemoteResourceImpl>(ocResource));
     }, std::placeholders::_1, callback);
 
     typedef OCStackResult (*FindResource)(const std::string &, const std::string &,
@@ -133,8 +136,7 @@ void SimulatorManager::findResource(const std::string &resourceType,
         if (!ocResource)
             return;
 
-        SimulatorRemoteResourceSP simulatorResource(new SimulatorRemoteResourceImpl(ocResource));
-        callback(simulatorResource);
+        callback(std::make_shared<SimulatorRemoteResourceImpl>(ocResource));
     }, std::placeholders::_1, callback);
 
     std::ostringstream query;

@@ -19,43 +19,88 @@
  ******************************************************************/
 
 #include "request_model_builder.h"
+#include "resource_model_schema_builder.h"
 #include "logger.h"
+#include "Raml.h"
 
 #define TAG "REQ_MODEL_BUILDER"
 
-RequestModelBuilder::RequestModelBuilder(std::shared_ptr<RAML::Raml> &raml)
-    : m_raml (raml) {}
-
-std::map<RequestType, RequestModelSP> RequestModelBuilder::build(const std::string &uri)
+static std::string getRequestType(RAML::ActionType actionType)
 {
-    std::map<RequestType, RequestModelSP> modelList;
-    if (!m_raml)
+    switch (actionType)
     {
-        return modelList;
+        case RAML::ActionType::GET:
+            return "GET";
+        case RAML::ActionType::PUT:
+            return "PUT";
+        case RAML::ActionType::POST:
+            return "POST";
+        case RAML::ActionType::DELETE:
+            return "DELETE";
     }
 
-    for (auto   &resource : m_raml->getResources())
+    return ""; // This code should never reach
+}
+
+std::unordered_map<std::string, RequestModelSP> RequestModelBuilder::build(
+    const std::shared_ptr<RAML::Raml> &raml, const std::string &uri)
+{
+    std::unordered_map<std::string, RequestModelSP> requestModels;
+
+    if (!raml)
+    {
+        OC_LOG(ERROR, TAG, "Raml pointer is null!");
+        return requestModels;
+    }
+
+    for (auto &resource : raml->getResources())
     {
         // Pick the resource based on the resource uri.
         if (std::string::npos == uri.find((resource.second)->getResourceUri()))
             continue;
 
         // Construct Request and Response Model from RAML::Action
-        for (auto   &action :  (resource.second)->getActions())
+        for (auto &action :  (resource.second)->getActions())
         {
             RequestModelSP requestModel = createRequestModel(action.second);
             if (requestModel)
-                modelList[requestModel->type()] = requestModel;
+            {
+                requestModels[requestModel->getType()] = requestModel;
+            }
+        }
+
+        break;
+    }
+
+    return requestModels;
+}
+
+std::unordered_map<std::string, RequestModelSP> RequestModelBuilder::build(
+    const std::shared_ptr<RAML::RamlResource> &resource)
+{
+    std::unordered_map<std::string, RequestModelSP> requestModels;
+
+    if (!resource)
+    {
+        OC_LOG(ERROR, TAG, "Resource pointer is null!");
+        return requestModels;
+    }
+
+    // Construct Request and Response Model from RAML::Action
+    for (auto &action :  resource->getActions())
+    {
+        RequestModelSP requestModel = createRequestModel(action.second);
+        if (requestModel)
+        {
+            requestModels[requestModel->getType()] = requestModel;
         }
     }
 
-    return modelList;
+    return requestModels;
 }
 
 RequestModelSP RequestModelBuilder::createRequestModel(const RAML::ActionPtr &action)
 {
-    OC_LOG(DEBUG, TAG, "Creating request model");
-
     // Validate the action type. Only GET, PUT, POST and DELETE are supported.
     RAML::ActionType actionType = action->getType();
     if (actionType != RAML::ActionType::GET
@@ -63,11 +108,10 @@ RequestModelSP RequestModelBuilder::createRequestModel(const RAML::ActionPtr &ac
         && actionType != RAML::ActionType::POST
         && actionType != RAML::ActionType::DELETE)
     {
-        OC_LOG(ERROR, TAG, "Failed to create request model as it is of unknown type!");
+        OC_LOG(ERROR, TAG, "Request model is of unknown type!");
         return nullptr;
     }
 
-    // Construct RequestModel
     RequestModelSP requestModel(new RequestModel(getRequestType(actionType)));
 
     // Get the allowed query parameters of the request
@@ -79,11 +123,11 @@ RequestModelSP RequestModelBuilder::createRequestModel(const RAML::ActionPtr &ac
         }
     }
 
+    // Set the request body schema
     RAML::RequestResponseBodyPtr requestBody = action->getRequestBody("application/json");
-    SimulatorResourceModelSP repSchema = createRepSchema(requestBody);
-    requestModel->setRepSchema(repSchema);
+    requestModel->setRequestBodyModel(createRepSchema(requestBody));
 
-    // Corresponsing responses
+    // Corresponsing responses for this request
     for (auto   &responseEntry :  action->getResponses())
     {
         std::string codeStr = responseEntry.first;
@@ -91,7 +135,7 @@ RequestModelSP RequestModelBuilder::createRequestModel(const RAML::ActionPtr &ac
         ResponseModelSP responseModel = createResponseModel(code, responseEntry.second);
         if (nullptr != responseModel)
         {
-            requestModel->addResponseModel(code, responseModel);
+            requestModel->setResponseModel(code, responseModel);
         }
     }
 
@@ -103,207 +147,19 @@ ResponseModelSP RequestModelBuilder::createResponseModel(int code,
 {
     ResponseModelSP responseModel(new ResponseModel(code));
     RAML::RequestResponseBodyPtr responseBody = response->getResponseBody("application/json");
-    SimulatorResourceModelSP repSchema = createRepSchema(responseBody);
-    responseModel->setRepSchema(repSchema);
+    responseModel->setResponseBodyModel(createRepSchema(responseBody));
     return responseModel;
 }
-template <typename T>
-void RequestModelBuilder::buildValueProperty(SimulatorResourceModel::Attribute &attribute,
-        const std::vector<RAML::ValuePropertyPtr> &valueProperties, T)
+
+std::shared_ptr<SimulatorResourceModelSchema> RequestModelBuilder::createRepSchema(
+    const RAML::RequestResponseBodyPtr &responseBody)
 {
-    for (auto &vp : valueProperties)
+    if (!responseBody)
     {
-        switch (vp->type())
-        {
-            case RAML::ValueProperty::Type::RANGE :
-                {
-                    double min = vp->min();
-                    double max = vp->max();
-                    int multipleof = vp->multipleOf();
-                    if (min != INT_MIN && max != INT_MAX)
-                    {
-                        SimulatorResourceModel::AttributeProperty attrProp(min, max);
-                        attribute.setProperty(attrProp);
-                    }
-                    break;
-                }
-            case RAML::ValueProperty::Type::VALUE_SET :
-                {
-                    std::vector<T> allowedValues;
-                    for (auto allow : vp->valueSet())
-                        allowedValues.push_back(boost::get<T>(allow));
-                    SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
-                    attribute.setProperty(attrProp);
-                    break;
-                }
-            default:
-                break;
-        }
-    }
-
-}
-SimulatorResourceModel::Attribute RequestModelBuilder::buildAttribute(
-    std::shared_ptr<RAML::Properties> propertyElement)
-{
-    std::string propName = propertyElement->getName();
-
-    // Build representation attribute
-    SimulatorResourceModel::Attribute attribute(propName);
-    switch (propertyElement->getType().type())
-    {
-        case RAML::VariantType::INTEGER:
-            {
-                int attributeValue = 0;
-                if (propertyElement->isDefaultValue())
-                    attributeValue = boost::get<int>(propertyElement->getValue());
-                attribute.setValue(attributeValue);
-                int type = 0;
-                buildValueProperty(attribute, (propertyElement->getValueProperties()), type);
-            }
-            break;
-
-        case RAML::VariantType::DOUBLE:
-            {
-                double attributeValue = 0;
-                if (propertyElement->isDefaultValue())
-                    attributeValue = boost::get<double>(propertyElement->getValue());
-                attribute.setValue(attributeValue);
-                double type = 0;
-                buildValueProperty(attribute, (propertyElement->getValueProperties()), type);
-            }
-            break;
-
-        case RAML::VariantType::BOOLEAN:
-            {
-                bool attributeValue = false;
-                if (propertyElement->isDefaultValue())
-                    attributeValue = boost::get<bool>(propertyElement->getValue());
-                attribute.setValue(attributeValue);
-                bool type = false;
-                buildValueProperty(attribute, (propertyElement->getValueProperties()), type);
-            }
-            break;
-
-        case RAML::VariantType::STRING:
-            {
-                std::string attributeValue = "";
-                if (propertyElement->isDefaultValue())
-                    attributeValue = boost::get<std::string>(propertyElement->getValue());
-                attribute.setValue(attributeValue);
-                std::string type = "";
-                buildValueProperty(attribute, (propertyElement->getValueProperties()), type);
-            }
-            break;
-        case RAML::VariantType::PROPERTY:
-            {
-                RAML::Properties arrayProperty = boost::get<RAML::Properties>(propertyElement->getValue());
-                SimulatorResourceModel::Attribute arrayAttribute = buildAttribute(
-                            std::make_shared<RAML::Properties>(arrayProperty));
-
-                switch (arrayAttribute.getType().type())
-                {
-                    case SimulatorResourceModel::ValueType::INTEGER :
-                        {
-                            std::vector<int> arrValue;
-                            arrValue.push_back(boost::get<int>(arrayAttribute.getValue()));
-                            attribute.setValue(arrValue);
-                            int type;
-                            buildValueProperty(attribute, (arrayProperty.getValueProperties()), type);
-                            break;
-                        }
-                    case SimulatorResourceModel::ValueType::DOUBLE :
-                        {
-                            std::vector<double> arrValue;
-                            arrValue.push_back(boost::get<double>(arrayAttribute.getValue()));
-                            attribute.setValue(arrValue);
-                            double type;
-                            buildValueProperty(attribute, (arrayProperty.getValueProperties()), type);
-                            break;
-                        }
-                    case SimulatorResourceModel::ValueType::BOOLEAN :
-                        {
-                            std::vector<bool> arrValue;
-                            arrValue.push_back(boost::get<bool>(arrayAttribute.getValue()));
-                            attribute.setValue(arrValue);
-                            bool type;
-                            buildValueProperty(attribute, (arrayProperty.getValueProperties()), type);
-                            break;
-                        }
-                    case SimulatorResourceModel::ValueType::STRING :
-                        {
-                            std::vector<std::string> arrValue;
-                            arrValue.push_back(boost::get<std::string>(arrayAttribute.getValue()));
-                            attribute.setValue(arrValue);
-                            std::string type;
-                            buildValueProperty(attribute, (arrayProperty.getValueProperties()), type);
-                            break;
-                        }
-                }
-            }
-            break;
-        case RAML::VariantType::ARRAY:
-            {
-
-                std::vector<SimulatorResourceModel> arrayResModel;
-                SimulatorResourceModel arrayItem;
-                std::vector<RAML::Properties> arrayProperty = boost::get<std::vector<RAML::Properties> >
-                        (propertyElement->getValue());
-                for (auto val : arrayProperty)
-                {
-                    arrayItem.add(buildAttribute(std::make_shared<RAML::Properties>(val)));
-                }
-                arrayResModel.push_back(arrayItem);
-                attribute.setValue(arrayResModel);
-            }
-            break;
-    }
-    return attribute;
-}
-
-SimulatorResourceModelSP RequestModelBuilder::createRepSchema(const RAML::RequestResponseBodyPtr
-        &rep)
-{
-    if (!rep)
-    {
+        OC_LOG(ERROR, TAG, "Response body is null!");
         return nullptr;
     }
 
-    RAML::SchemaPtr schema = rep->getSchema();
-    if (!schema)
-    {
-        return nullptr;
-    }
-
-    RAML::JsonSchemaPtr properties = schema->getProperties();
-    if (!properties || 0 == properties->getProperties().size())
-        return nullptr;
-
-    SimulatorResourceModelSP repSchema = std::make_shared<SimulatorResourceModel>();
-    for (auto &propertyEntry : properties->getProperties())
-    {
-        std::string propName = propertyEntry.second->getName();
-        if ("rt" == propName || "resourceType" == propName || "if" == propName
-            || "p" == propName || "n" == propName || "id" == propName)
-            continue;
-
-        repSchema->add(buildAttribute(propertyEntry.second));
-    }
-
-    return repSchema;
-}
-
-RequestType RequestModelBuilder::getRequestType(RAML::ActionType actionType)
-{
-    switch (actionType)
-    {
-        case RAML::ActionType::PUT:
-            return RequestType::RQ_TYPE_PUT;
-        case RAML::ActionType::POST:
-            return RequestType::RQ_TYPE_POST;
-        case RAML::ActionType::DELETE:
-            return RequestType::RQ_TYPE_DELETE;
-    }
-
-    return RequestType::RQ_TYPE_GET;
+    return ResourceModelSchemaBuilder(responseBody).build();
 }
 

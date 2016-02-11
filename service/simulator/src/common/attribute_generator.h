@@ -18,33 +18,34 @@
  *
  ******************************************************************/
 
-#ifndef ATTRIBUTE_GENERATOR_H_
-#define ATTRIBUTE_GENERATOR_H_
+#ifndef SIMULATOR_ATTRIBUTE_GENERATOR_H_
+#define SIMULATOR_ATTRIBUTE_GENERATOR_H_
 
-#include <map>
 #include <vector>
 #include "simulator_resource_model.h"
+#include "attribute_value_generator.h"
 
 class AttributeGenerator
 {
     public:
-        AttributeGenerator(const SimulatorResourceModel::Attribute &attribute);
+        AttributeGenerator(const SimulatorResourceAttribute &attribute);
+        AttributeGenerator(const std::string &name,
+                           const std::shared_ptr<AttributeProperty> &property);
+
         bool hasNext();
-        bool next(SimulatorResourceModel::Attribute &attribute);
-        SimulatorResourceModel::Attribute current();
+        bool next(SimulatorResourceAttribute &attribute);
+        SimulatorResourceAttribute current();
         void reset();
 
     private:
-        SimulatorResourceModel::Attribute m_attribute;
-        double m_curValue;
-        size_t m_valueSetIndex;
-        std::vector<SimulatorResourceModel::ValueVariant> m_supportedValues;
+        std::string m_name;
+        std::unique_ptr<AttributeValueGen> m_valueGen;
 };
 
 class AttributeCombinationGen
 {
     public:
-        AttributeCombinationGen(const std::vector<SimulatorResourceModel::Attribute> &attributes);
+        AttributeCombinationGen(const std::vector<SimulatorResourceAttribute> &attributes);
         bool next(SimulatorResourceModel &resModel);
 
     private:

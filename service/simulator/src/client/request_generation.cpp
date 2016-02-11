@@ -18,31 +18,23 @@
  *
  ******************************************************************/
 
-#ifndef SIMULATOR_SERVER_TYPES_H_
-#define SIMULATOR_SERVER_TYPES_H_
+#include "request_generation.h"
 
-#include <iostream>
-#include <functional>
+RequestGeneration::RequestGeneration(RequestType type, int id,
+                                     ProgressStateCallback callback)
+    :   m_type(type),
+        m_id(id),
+        m_callback(callback),
+        m_requestsSent(false),
+        m_requestCnt(0),
+        m_responseCnt(0) {}
 
-enum class ObservationStatus
+void RequestGeneration::start()
 {
-    REGISTER,
-    UNREGISTER
-};
+    startSending();
+}
 
-typedef struct
+void RequestGeneration::stop()
 {
-    uint8_t id;
-    std::string address;
-    uint16_t port;
-} ObserverInfo;
-
-enum class AutomationType
-{
-    NORMAL,
-    RECURRENT
-};
-
-typedef std::function<void (const std::string &, const int)> updateCompleteCallback;
-
-#endif
+    stopSending();
+}

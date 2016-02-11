@@ -18,23 +18,20 @@
  *
  ******************************************************************/
 
-#ifndef POST_REQUEST_GEN_H_
-#define POST_REQUEST_GEN_H_
+#ifndef SIMULATOR_POST_REQUEST_GEN_H_
+#define SIMULATOR_POST_REQUEST_GEN_H_
 
-#include "auto_request_gen.h"
+#include "request_generation.h"
 #include "query_param_generator.h"
 #include "attribute_generator.h"
+#include "request_sender.h"
 
-class POSTRequestGenerator : public AutoRequestGeneration
+class RequestModel;
+class POSTRequestGenerator : public RequestGeneration
 {
     public:
-        POSTRequestGenerator(int id, RequestSenderSP &requestSender,
-                             SimulatorResourceModelSP &representation,
-                             ProgressStateCallback callback);
-
-        POSTRequestGenerator(int id, RequestSenderSP &requestSender,
-                             const std::map<std::string, std::vector<std::string>> &queryParams,
-                             SimulatorResourceModelSP &representation,
+        POSTRequestGenerator(int id, const std::shared_ptr<OC::OCResource> &ocResource,
+                             const std::shared_ptr<RequestModel> &requestSchema,
                              ProgressStateCallback callback);
 
         void startSending();
@@ -42,15 +39,14 @@ class POSTRequestGenerator : public AutoRequestGeneration
 
     private:
         void SendAllRequests();
-        void onResponseReceived(SimulatorResult result, SimulatorResourceModelSP repModel);
+        void onResponseReceived(SimulatorResult result,
+                                const SimulatorResourceModel &repModel, const RequestInfo &reqInfo);
         void completed();
 
-        QPGenerator m_queryParamGen;
-        SimulatorResourceModelSP m_rep;
-        std::mutex m_statusLock;
-        bool m_status;
         bool m_stopRequested;
-        std::shared_ptr<std::thread> m_thread;
+        std::unique_ptr<std::thread> m_thread;
+        std::shared_ptr<RequestModel> m_requestSchema;
+        POSTRequestSender m_requestSender;
 };
 
 typedef std::shared_ptr<POSTRequestGenerator> POSTRequestGeneratorSP;

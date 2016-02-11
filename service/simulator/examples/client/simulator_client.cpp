@@ -34,21 +34,6 @@ std::string getOperationStateString(OperationState state)
     return "OP_UNKNOWN";
 }
 
-std::string getPropertyTypeString(SimulatorResourceModel::AttributeProperty::Type type)
-{
-    switch(type)
-    {
-        case SimulatorResourceModel::AttributeProperty::Type::RANGE:
-            return "RANGE";
-        case SimulatorResourceModel::AttributeProperty::Type::VALUE_SET:
-            return "VALUE_SET";
-        default:
-            break;
-    }
-
-    return "UNKNOWN";
-}
-
 class AppLogger : public ILogger
 {
     public:
@@ -205,7 +190,7 @@ class ClientController
             for (auto & type : resource->getResourceTypes())
                 std::cout << type << " ";
             std::cout << "\nInterface Types: ";
-            for (auto & type : resource->getResourceInterfaces())
+            for (auto & type : resource->getInterface())
                 std::cout << type << " ";
             std::cout << std::boolalpha << "\nisObservable : " << resource->isObservable()
                     << std::noboolalpha << std::endl;
@@ -219,13 +204,14 @@ class ClientController
 
             // callback implementaion
             SimulatorRemoteResource::ObserveNotificationCallback callback =
-                [](std::string uid, SimulatorResult errorCode, SimulatorResourceModelSP rep, int seq)
+                [](const std::string &uid, SimulatorResult result,
+                    const SimulatorResourceModel &rep, int seq)
             {
-                std::cout << "\nObserve notification received ###[errorcode:  " << errorCode <<
+                std::cout << "\nObserve notification received ###[errorcode:  " << result <<
                     " seq:  " << seq << "UID: " << uid << "]" << std::endl;
 
                 std::cout << "Representation is: " << std::endl;
-                std::cout << rep->toString() << std::endl;
+                std::cout << rep.asString() << std::endl;
             };
 
             try
@@ -269,13 +255,13 @@ class ClientController
 
             // callback implementaion
             SimulatorRemoteResource::ResponseCallback callback =
-                [](std::string uId, SimulatorResult errorCode, SimulatorResourceModelSP rep)
+                [](const std::string &uid, SimulatorResult result, const SimulatorResourceModel &rep)
             {
-                std::cout << "\nGET Response received ### [errorcode:  " << errorCode << "]"
+                std::cout << "\nGET Response received ### [errorcode:  " << result << "]"
                         << std::endl;
-                std::cout << "UID is: " << uId << std::endl;
+                std::cout << "UID is: " << uid << std::endl;
                 std::cout << "Representation is: " << std::endl;
-                std::cout << rep->toString() << std::endl;
+                std::cout << rep.asString() << std::endl;
             };
 
             try
@@ -307,23 +293,22 @@ class ClientController
 
             // callback implementaion
             SimulatorRemoteResource::ResponseCallback callback =
-                [](std::string uId, SimulatorResult errorCode, SimulatorResourceModelSP rep)
+                [](const std::string &uid, SimulatorResult result, const SimulatorResourceModel &rep)
             {
-                std::cout << "\nPUT Response received ![errorcode:  " << errorCode << "]"
+                std::cout << "\nPUT Response received ![errorcode:  " << result << "]"
                         << std::endl;
-                std::cout << "UID is: " << uId << std::endl;
+                std::cout << "UID is: " << uid << std::endl;
                 std::cout << "Representation is: " << std::endl;
-                std::cout << rep->toString() << std::endl;
+                std::cout << rep.asString() << std::endl;
             };
 
             try
             {
-                SimulatorResourceModelSP rep = std::make_shared<SimulatorResourceModel>();
-                bool value = false;
-                rep->add("power", value);
-                rep->add("intensity", 15);
+                SimulatorResourceModel rep;
+                rep.add("power", false);
+                rep.add("intensity", 15);
 
-                resource->put(std::map <std::string, std::string>(), rep, callback);
+                resource->put(rep, callback);
                 std::cout << "PUT is successful!" << std::endl;
             }
             catch (InvalidArgsException &e)
@@ -350,23 +335,22 @@ class ClientController
 
             // callback implementaion
             SimulatorRemoteResource::ResponseCallback callback =
-                [](std::string uId, SimulatorResult errorCode, SimulatorResourceModelSP rep)
+                [](const std::string &uid, SimulatorResult result, const SimulatorResourceModel &rep)
             {
-                std::cout << "\nPOST Response received ![errorcode:  " << errorCode << "]"
+                std::cout << "\nPOST Response received ![errorcode:  " << result << "]"
                         << std::endl;
-                std::cout << "UID is: " << uId << std::endl;
+                std::cout << "UID is: " << uid << std::endl;
                 std::cout << "Representation is: " << std::endl;
-                std::cout << rep->toString() << std::endl;
+                std::cout << rep.asString() << std::endl;
             };
 
             try
             {
-                SimulatorResourceModelSP rep = std::make_shared<SimulatorResourceModel>();
-                bool value = true;
-                rep->add("power", value);
-                rep->add("intensity", 17);
+                SimulatorResourceModel rep;
+                rep.add("power", true);
+                rep.add("intensity", 17);
 
-                resource->post(std::map <std::string, std::string>(), rep, callback);
+                resource->post(rep, callback);
                 std::cout << "POST is successful!" << std::endl;
             }
             catch (InvalidArgsException &e)
@@ -391,8 +375,8 @@ class ClientController
             SimulatorRemoteResourceSP resource = selectResource();
             if (!resource) return;
 
-            SimulatorRemoteResource::StateCallback callback = [] (std::string uid, int sessionId,
-                    OperationState state)
+            SimulatorRemoteResource::AutoRequestGenerationCallback callback =
+                [] (const std::string &uid, int sessionId, OperationState state)
             {
                 std::cout << "\nResource verification status received ![id:  " << sessionId <<
                         "  State: " << getOperationStateString(state) << " UID: " << uid << "]" <<
@@ -401,7 +385,7 @@ class ClientController
 
             try
             {
-                int id = resource->startVerification(RequestType::RQ_TYPE_GET, callback);
+                int id = resource->startAutoRequesting(RequestType::RQ_TYPE_GET, callback);
                 std::cout << "startVerification for GET is successful!id: " << id << std::endl;
             }
             catch (InvalidArgsException &e)
@@ -426,8 +410,8 @@ class ClientController
             SimulatorRemoteResourceSP resource = selectResource();
             if (!resource) return;
 
-            SimulatorRemoteResource::StateCallback callback = [] (std::string uid, int sessionId,
-                    OperationState state)
+            SimulatorRemoteResource::AutoRequestGenerationCallback callback =
+                [] (const std::string &uid, int sessionId, OperationState state)
             {
                 std::cout << "\nResource verification status received ![id:  " << sessionId <<
                         "  State: " << getOperationStateString(state) << " UID: " << uid << "]" <<
@@ -436,7 +420,7 @@ class ClientController
 
             try
             {
-                int id = resource->startVerification(RequestType::RQ_TYPE_PUT, callback);
+                int id = resource->startAutoRequesting(RequestType::RQ_TYPE_PUT, callback);
                 std::cout << "startVerification for PUT is successful!id: " << id << std::endl;
             }
             catch (InvalidArgsException &e)
@@ -461,8 +445,8 @@ class ClientController
             SimulatorRemoteResourceSP resource = selectResource();
             if (!resource) return;
 
-            SimulatorRemoteResource::StateCallback callback = [] (std::string uid, int sessionId,
-                    OperationState state)
+            SimulatorRemoteResource::AutoRequestGenerationCallback callback =
+                [] (const std::string &uid, int sessionId, OperationState state)
             {
                 std::cout << "\nResource verification status received ![id:  " << sessionId <<
                         "  State: " << getOperationStateString(state) << " UID: " << uid << "]"
@@ -471,7 +455,7 @@ class ClientController
 
             try
             {
-                int id = resource->startVerification(RequestType::RQ_TYPE_POST, callback);
+                int id = resource->startAutoRequesting(RequestType::RQ_TYPE_POST, callback);
                 std::cout << "startVerification for POST is successful!id: " << id << std::endl;
             }
             catch (InvalidArgsException &e)
@@ -503,33 +487,7 @@ class ClientController
                 std::cout << "Enter the config path: ";
                 std::cin >> configPath;
 
-                SimulatorResourceModelSP representation = resource->configure(configPath);
-                if (representation)
-                {
-                    std::cout << "configuration is successful!" << std::endl;
-                    std::map<std::string, SimulatorResourceModel::Attribute> attributes =
-                    representation->getAttributes();
-                    std::cout << "##### Attributes [" << attributes.size() << "]" << std::endl;
-                    for (auto & attribute : attributes)
-                    {
-                        std::cout << (attribute.second).getName() << " :  {" << std::endl;
-                        std::cout << "value: " << (attribute.second).toString() << std::endl;
-                        SimulatorResourceModel::AttributeProperty prop = (attribute.second).getProperty();
-                        std::cout << "Supported values given by : " << getPropertyTypeString(prop.type()) << std::endl;
-                        if (SimulatorResourceModel::AttributeProperty::Type::RANGE == prop.type())
-                        {
-                            std::cout << "Min: " << prop.min() << std::endl;
-                            std::cout << "Max: " << prop.max() << std::endl;
-                        }
-                        else if (SimulatorResourceModel::AttributeProperty::Type::VALUE_SET == prop.type())
-                        {
-                            std::cout << "Value set: " << prop.valueSetToString() << std::endl;
-                        }
-
-                        std::cout << "}" << std::endl << std::endl;
-                    }
-                    std::cout << "#############################" << std::endl;
-                }
+                resource->configure(configPath);
             }
             catch (InvalidArgsException &e)
             {

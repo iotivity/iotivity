@@ -88,18 +88,8 @@ class SimulatorResourceFactory
             const std::string &name, const std::string &uri, const std::string &resourceType);
 
     private:
-        template <typename T>
-        void buildValueProperty(SimulatorResourceModel::Attribute &attribute,
-                                const std::vector<RAML::ValuePropertyPtr> &valueProperties, T);
-        SimulatorResourceModel::Attribute buildAttribute(
-            std::shared_ptr<RAML::Properties> propertyElement);
-        SimulatorResourceModel buildModelFromResponseBody(
-            RAML::RequestResponseBodyPtr responseBody, std::string &resourceType,
-            std::vector<std::string> &interfaceType);
-        RAML::RequestResponseBodyPtr getRAMLResponseBody(
-            std::shared_ptr<RAML::RamlResource> ramlResource, RAML::ActionType type, std::string responseCode);
         std::shared_ptr<SimulatorResource> buildResource(
-            std::shared_ptr<RAML::RamlResource> ramlResource);
+            const std::shared_ptr<RAML::RamlResource> &ramlResource);
 
         SimulatorResourceFactory() = default;
         SimulatorResourceFactory(const SimulatorResourceFactory &) = delete;
@@ -126,7 +116,7 @@ class ResourceURIFactory
          *
          * @return Unique uri.
          */
-        std::string constructURI(const std::string &uri);
+        std::string makeUniqueURI(const std::string &uri);
 
     private:
         ResourceURIFactory();
