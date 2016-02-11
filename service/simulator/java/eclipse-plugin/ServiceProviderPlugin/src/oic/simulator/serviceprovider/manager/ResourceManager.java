@@ -19,6 +19,7 @@ package oic.simulator.serviceprovider.manager;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Display;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -1638,13 +1639,16 @@ public class ResourceManager {
 
     public List<String> getAllValues(DoubleProperty dblProperty,
             AttributeProperty.Type type) {
+        NumberFormat formatter = NumberFormat.getInstance();
         List<String> values = new ArrayList<String>();
 
         if (dblProperty.hasRange()) {
             double min = (double) dblProperty.min();
             double max = (double) dblProperty.max();
-            for (double iVal = min; iVal <= max; iVal = iVal + 1) {
-                values.add(String.valueOf(iVal));
+            for (double val = min; val <= max; val += 0.1) {
+                formatter.setMaximumFractionDigits(1);
+                formatter.setMinimumFractionDigits(1);
+                values.add(formatter.format(val));
             }
         } else if (dblProperty.hasValues()) {
             for (Double val : dblProperty.getValues()) {
