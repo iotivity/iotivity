@@ -29,16 +29,17 @@
 #define SIMULATOR_EXCEPTIONS_JNI_H_
 
 #include <jni.h>
+
 #include "simulator_error_codes.h"
 
-void throwSimulatorException(JNIEnv *env, SimulatorResult code, const char *message);
+void ThrowSimulatorException(JNIEnv *env, SimulatorResult code, const char *message);
 
-void throwInvalidArgsException(JNIEnv *env, SimulatorResult code, const char *message);
+void ThrowInvalidArgsException(JNIEnv *env, SimulatorResult code, const char *message);
 
-void throwNoSupportException(JNIEnv *env, const char *message);
+void ThrowNoSupportException(JNIEnv *env, const char *message);
 
-void throwOperationInProgressException(JNIEnv *env, const char *message);
+void ThrowOperationInProgressException(JNIEnv *env, const char *message);
 
-void throwBadObjectException(JNIEnv *env, const char *message);
+void ThrowBadObjectException(JNIEnv *env, const char *message);
 
 #endif

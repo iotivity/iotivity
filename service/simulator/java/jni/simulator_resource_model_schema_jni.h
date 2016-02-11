@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -18,28 +18,17 @@
  *
  ******************************************************************/
 
-#include "jni_string.h"
+#ifndef SIMULATOR_RESOURCE_MODEL_SCHEMA_JNI_H_
+#define SIMULATOR_RESOURCE_MODEL_SCHEMA_JNI_H_
 
-JniString::JniString(JNIEnv *env, jstring &string)
-    :   m_env(nullptr), m_string(nullptr), m_cStr("")
-{
-    m_env = env;
-    m_string = string;
-    if (m_string)
-    {
-        m_cStr = env->GetStringUTFChars(m_string, nullptr);
-    }
-}
+#include <jni.h>
 
-JniString::~JniString()
-{
-    if (m_string && m_cStr)
-    {
-        m_env->ReleaseStringUTFChars(m_string, m_cStr);
-    }
-}
+#include "simulator_resource_model_schema.h"
 
-std::string JniString::get()
-{
-    return std::string(m_cStr);
-}
+jobject AttributePropertyToJava(JNIEnv *env,
+        const std::shared_ptr<AttributeProperty> &property);
+
+std::shared_ptr<AttributeProperty> AttributePropertyToCpp(JNIEnv *env,
+        jobject &jProperty);
+
+#endif

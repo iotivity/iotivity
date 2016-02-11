@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -18,28 +18,21 @@
  *
  ******************************************************************/
 
-#include "jni_string.h"
+#ifndef JNI_MAP_H_
+#define JNI_MAP_H_
 
-JniString::JniString(JNIEnv *env, jstring &string)
-    :   m_env(nullptr), m_string(nullptr), m_cStr("")
-{
-    m_env = env;
-    m_string = string;
-    if (m_string)
-    {
-        m_cStr = env->GetStringUTFChars(m_string, nullptr);
-    }
-}
+#include <jni.h>
 
-JniString::~JniString()
+class JniMap
 {
-    if (m_string && m_cStr)
-    {
-        m_env->ReleaseStringUTFChars(m_string, m_cStr);
-    }
-}
+    public:
+        JniMap(JNIEnv *env);
+        void put(jobject jKey, jobject jValue);
+        jobject get();
 
-std::string JniString::get()
-{
-    return std::string(m_cStr);
-}
+    private:
+        JNIEnv *m_env;
+        jobject m_hashMap;
+};
+
+#endif

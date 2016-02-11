@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -18,28 +18,26 @@
  *
  ******************************************************************/
 
-#include "jni_string.h"
+#include "jni_map.h"
+#include "simulator_utils_jni.h"
 
-JniString::JniString(JNIEnv *env, jstring &string)
-    :   m_env(nullptr), m_string(nullptr), m_cStr("")
+JniMap::JniMap(JNIEnv *env)
 {
     m_env = env;
-    m_string = string;
-    if (m_string)
-    {
-        m_cStr = env->GetStringUTFChars(m_string, nullptr);
-    }
+
+    static jmethodID mapCtor = env->GetMethodID(
+                                       gSimulatorClassRefs.hashMapCls, "<init>", "()V");
+    m_hashMap = env->NewObject(gSimulatorClassRefs.hashMapCls, mapCtor);
 }
 
-JniString::~JniString()
+void JniMap::put(jobject jKey, jobject jValue)
 {
-    if (m_string && m_cStr)
-    {
-        m_env->ReleaseStringUTFChars(m_string, m_cStr);
-    }
+    static jmethodID putMethod = m_env->GetMethodID(gSimulatorClassRefs.hashMapCls,
+                                        "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    m_env->CallObjectMethod(m_hashMap, putMethod, jKey, jValue);
 }
 
-std::string JniString::get()
+jobject JniMap::get()
 {
-    return std::string(m_cStr);
+    return m_hashMap;
 }
