@@ -137,8 +137,8 @@ cp resource/include/*.h %{buildroot}%{_includedir}
 cp resource/c_common/*.h %{buildroot}%{_includedir}
 
 cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
-cp service/easy-setup/sdk/common/*.h %{buildroot}%{_includedir}
-cp service/easy-setup/sdk/enrollee/api/*.h %{buildroot}%{_includedir}
+cp service/easy-setup/inc/*.h %{buildroot}%{_includedir}
+cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
 
 cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 
@@ -168,7 +168,6 @@ cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 %{_libdir}/librcs_common.so
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
-%{_libdir}/libESSDKLibrary.so
 
 %files test
 %manifest %{name}-test.manifest

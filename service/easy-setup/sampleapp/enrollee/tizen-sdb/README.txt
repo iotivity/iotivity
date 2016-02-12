@@ -30,7 +30,7 @@ Build Procedure
 scons -f service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP ROUTING=EP RELEASE=0 LOGGING=true
 
 (If needed, modify the parameters accordingly)
-Note :- Upon successful execution of above command(s) RI library and sample console application(for tizen enrollee) 
+Note :- Upon successful execution of above command(s) RI library and sample console application(for tizen enrollee)
         will be generated at path "~/GBS-ROOT/local/repos/<target>/armv7l/RPMS".
 
 Procedure to Execute Sample App:
@@ -53,4 +53,4 @@ Procedure to Execute Sample App:
     7) RPM will be installed in "/usr/apps/"
        Execute the sample app by below commands
         i) cd /usr/apps/com.oic.es.sample/bin
-            a) ./enrollee_wifi 
+            a) ./enrollee_wifi

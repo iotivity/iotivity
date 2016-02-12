@@ -188,9 +188,16 @@ void StartProvisioning()
 {
     OC_LOG(DEBUG, TAG, "StartProvisioning is invoked...");
 
-    if(InitProvisioning()== ES_ERROR)
+    // Initialize the OC Stack in Server mode
+    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "Init Provisioning Failed");
+        OC_LOG(ERROR, TAG, "OCStack init error!!");
+        return;
+    }
+
+    if (InitProvisioning() == ES_ERROR)
+    {
+        OC_LOG(ERROR, TAG, "Init Provisioning Failed!!");
         return;
     }
 }
@@ -201,11 +208,20 @@ void StopEasySetup()
 
     g_isInitialized = false;
 
-    if(TerminateEasySetup()== ES_ERROR)
+    if (TerminateEasySetup() == ES_ERROR)
     {
-        OC_LOG(ERROR, TAG, "TerminateEasySetup Failed");
+        OC_LOG(ERROR, TAG, "TerminateEasySetup Failed!!");
         return;
     }
+
+    //stop OC Stack
+    if (OCStop() != OC_STACK_OK)
+    {
+        OC_LOG(ERROR, TAG, "OCStack stop failed!!");
+        return;
+    }
+
+    OC_LOG(DEBUG, TAG, "Stopping EasySetup done");
 }
 
 

@@ -1,6 +1,5 @@
-#******************************************************************
-#
-# Copyright 2015 Samsung Electronics All Rights Reserved.
+#######################################################################
+# Copyright 2016 Samsung Electronics All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
@@ -19,10 +18,13 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 ######################################################################
-# Build script for Arduino Enrollee Sample App
+# Build script for Linux Enrollee Sample App
 ######################################################################
 
 Import('env')
+
+print Dir('#').abspath
+print Dir('.').abspath
 
 enrollee_env = env.Clone()
 transport = enrollee_env.get('TARGET_TRANSPORT')
@@ -30,32 +32,37 @@ transport = enrollee_env.get('TARGET_TRANSPORT')
 ######################################################################
 # Build flags
 ######################################################################
+enrollee_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+enrollee_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
+
+if env.get('RELEASE'):
+    enrollee_env.AppendUnique(CCFLAGS = ['-Os'])
+    enrollee_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+else:
+    enrollee_env.AppendUnique(CCFLAGS = ['-g'])
+
+if env.get('LOGGING'):
+    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
 enrollee_env.PrependUnique(CPPPATH = [
+		env.get('SRC_DIR') + '/resource/include',
         env.get('SRC_DIR') + '/resource/oc_logger/include',
         env.get('SRC_DIR') + '/resource/csdk/logger/include',
         env.get('SRC_DIR') + '/resource/csdk/stack/include',
-		env.get('SRC_DIR') + '/extlibs/cjson',
-		env.get('SRC_DIR') + '/service/easy-setup/inc',
-		env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/wifi',
-		env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
-		env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
+        env.get('SRC_DIR') + '/extlibs/cjson',
+        env.get('SRC_DIR') + '/service/easy-setup/inc',
+        env.get('SRC_DIR') + '/service/easy-setup/enrollee/linux/wifi',
+        env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
+        env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
 
-enrollee_env.AppendUnique(CPPDEFINES = ['TB_LOG', 'ESWIFI'])
+enrollee_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'ocsrm', 'pthread', 'connectivity_abstraction','coap', 'ESEnrolleeSDK'])
 
-enrollee_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-
-enrollee_env.PrependUnique(LIBS = ['octbstack','ocsrm','connectivity_abstraction','coap', 'ESEnrolleeSDK'])
-enrollee = enrollee_env.Program('enrollee', 'enrolleewifi.cpp')
-env.CreateBin('enrollee')
+if env.get('SECURED') == '1':
+	enrollee = enrollee_env.Program('enrollee', 'enrolleewifisecured.cpp')
+else :
+	enrollee = enrollee_env.Program('enrollee', 'enrolleewifi.cpp')
 
 i_enrollee = enrollee_env.Install(env.get('BUILD_DIR'), enrollee)
 
 Alias('enrollee', i_enrollee)
 env.AppendTarget('enrollee')
-
-if(enrollee_env['UPLOAD'] == True):
-	from sys import platform as _platform
-	if _platform == "linux" or _platform == "linux2":
-		enrollee_env.Upload(env.get('BUILD_DIR') + '/service/easy-setup/sampleapp/enrollee/arduino/enrollee.hex')
-	else:
-		print 'Please use appropriate install method for your developing machine. Linux is the only supported platform right now.'

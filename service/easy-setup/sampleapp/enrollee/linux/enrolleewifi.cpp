@@ -106,39 +106,22 @@ void StartProvisioning()
 {
     cout<<"Starting Enrollee Provisioning"<<endl;
 
-    // Initialize the OC Stack in Server mode
-    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
+    if(InitProvisioning()== ES_ERROR)
     {
-        cout<<"OCStack init error!!"<<endl;
+        cout<<"Init Provisioning Failed"<<endl;
         return;
     }
-
-    if (InitProvisioning() == ES_ERROR)
-    {
-        cout<<"Init Provisioning Failed!!"<<endl;
-        return;
-    }
-
-    cout<<"InitProvisioning Success"<<endl;
+    cout<<"InitProvisioning:Success"<<endl;
 }
 
 void StopEasySetup()
 {
     cout<<"StopEasySetup IN"<<endl;
-
-    if (TerminateEasySetup() == ES_ERROR)
+    if(TerminateEasySetup()== ES_ERROR)
     {
-        cout<<"TerminateEasySetup Failed!!"<<endl;
+        cout<<"return value is: ES_ERROR"<<endl;
         return;
     }
-
-    //stop OC Stack
-    if (OCStop() != OC_STACK_OK)
-    {
-        cout<<"OCStack stop failed!!"<<endl;
-        return;
-    }
-
     cout<<"StopEasySetup OUT"<<endl;
 }
 
@@ -146,9 +129,16 @@ int main()
 {
     cout<<"#########################"<<endl;
     cout<<"EasySetup Enrollee SAMPLE"<<endl;
+    cout<<"This is modified sample:1"<<endl;
     cout<<"#########################"<<endl;
     PrintMenu();
     char option;
+
+    // Initialize the OC Stack in Server mode
+    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
+    {
+        return -1;
+    }
 
     while(true)
     {
@@ -184,7 +174,7 @@ int main()
                 cout<<"wrong option"<<endl;
                 break;
         }
-        if (option == 'Q' || option == 'q') break;
+        if(option=='Q') break;
     }
     return 0;
 }

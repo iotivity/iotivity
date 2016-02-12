@@ -1,6 +1,6 @@
 #******************************************************************
 #
-# Copyright 2015 Samsung Electronics All Rights Reserved.
+# Copyright 2016 Samsung Electronics All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
@@ -21,172 +21,31 @@
 ######################################################################
 # easy-setup project build script
 ######################################################################
-import os.path
 Import('env')
 
-easysetup_path = os.curdir
+es_target = env.get ('TARGET_OS')
+es_role = env.get('ES_ROLE')
+es_target_enrollee = env.get('ES_TARGET_ENROLLEE')
 
-######################################################################
-#building Resource client, resourceBroker and resourceCache
-######################################################################
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
-else:
-    env.AppendUnique(CCFLAGS = ['-g'])
-
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
-# Easysetup provides reference implemenation of Arduino Enrollee.
-# Mediator applications developed on different platforms will be default defining the
-# flag 'REMOTE_ARDUINO_ENROLEE'. If the target Enrollee is not Arduino, the below commented
-# modifications must be enabled instead (and the existing define must be commented).
-#
-##### The following lines must be uncommented, if target Enrollee is not Arduino
-target_enrollee = env.get('TARGET_ENROLLEE')
-if target_enrollee == 'arduino':
-	print "REMOTE_ARDUINO_ENROLEE flag is defined."
-	print "The Mediator application will be working only with Arduino Enrollee."
-	env.AppendUnique(CPPDEFINES = ['REMOTE_ARDUINO_ENROLEE'])
-
-# Add third party libraries
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
-
-easy_setup_env = lib_env.Clone()
-target_os = env.get('TARGET_OS')
-
-######################################################################
-# Build flags
-######################################################################
-easy_setup_env.AppendUnique(CPPPATH = ['sdk/inc', 'sdk/src', 'sdk/common'])
-
-if target_os not in ['windows', 'winrt']:
-    easy_setup_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
-
-if target_os == 'linux':
-   easy_setup_env.AppendUnique(LIBS = ['pthread', 'dl'])
-
-if target_os in ['android']:
-	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-	easy_setup_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
-	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'gnustl_shared'])
-	if not env.get('RELEASE'):
-		easy_setup_env.AppendUnique(LIBS = ['log'])
-
-if target_os == 'linux':
-	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-	easy_setup_env.AppendUnique(CXXFLAGS = ['-pthread'])
-	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
-	if env.get('SECURED') == '1':
-		easy_setup_env.PrependUnique(LIBS = ['ocprovision', 'ocpmapi'])
-
-if target_os == 'tizen':
-	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-	easy_setup_env.AppendUnique(CXXFLAGS = ['-pthread'])
-	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
-
-if target_os == 'arduino':
-	easy_setup_env.AppendUnique(CPPPATH = [
-	               env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',
-			       env.get('SRC_DIR') + '/resource/oc_logger/include',
-			       env.get('SRC_DIR') + '/resource/csdk/logger/include',
-			       env.get('SRC_DIR') + '/resource/csdk/stack/include',
-			       env.get('SRC_DIR') + '/extlibs/cjson',
-			       'sdk/enrollee/arduino/wifi',
-			       'sdk/enrollee/api',
-			       'sdk/enrollee/src',
-			       'sdk/enrollee/inc'])
-	easy_setup_env.AppendUnique(CPPDEFINES = ['ESWIFI'])
-
-if target_os in ['android','linux']:
-	easy_setup_env.PrependUnique(CPPPATH = [
-		env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',
-		env.get('SRC_DIR') + '/resource/include',
-		env.get('SRC_DIR') + '/resource/csdk/logger/include',
-        env.get('SRC_DIR') + '/resource/csdk/stack/include',
-        env.get('SRC_DIR') + '/resource/csdk/logger/include',
-		env.get('SRC_DIR') + '/resource/csdk/security/include',
-		env.get('SRC_DIR') + '/extlibs/cjson',
-		env.get('SRC_DIR') + '/extlibs/sqlite3',
-		'/sdk/common',
-		'sdk/mediator/include',
-		'sdk/mediator/src'])
-	if env.get('SECURED') == '1':
-		easy_setup_env.AppendUnique(CPPPATH = [
-			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
-	                env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
-			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm'])
-
-if target_os == 'tizen':
-	easy_setup_env.AppendUnique(CPPPATH = [
-			       env.get('SRC_DIR')+'/resource/oc_logger/include',
-			       env.get('SRC_DIR')+'/resource/csdk/logger/include',
-			       env.get('SRC_DIR')+'/resource/csdk/stack/include',
-			       env.get('SRC_DIR')+'/extlibs/cjson',
-				   'sdk/enrollee/tizen/wifi',
-				   'sdk/enrollee/api',
-				   'sdk/enrollee/src',
-			       'sdk/enrollee/inc'])
-	easy_setup_env.AppendUnique(CPPDEFINES = ['ESWIFI'])
-
-######################################################################
-# Source files and Targets
-######################################################################
-
-if target_os == 'arduino':
-	es_sdk_static = easy_setup_env.StaticLibrary('ESSDKLibrary',
-					['sdk/enrollee/src/easysetup.cpp',
-					'sdk/enrollee/src/onboarding.cpp',
-					'sdk/enrollee/src/resourcehandler.cpp',
-					'sdk/enrollee/arduino/wifi/networkhandler.cpp'])
-	easy_setup_env.InstallTarget(es_sdk_static, 'libESSDK')
-
-if target_os == 'android':
-	es_sdk_shared = easy_setup_env.StaticLibrary('libESSDK',
-					['sdk/mediator/src/prov_adapter.cpp',
-					'sdk/mediator/src/wifi_provisioning.cpp',
-                    'sdk/mediator/src/provisioning.cpp'])
-	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
-
-if target_os == 'tizen':
-        es_sdk_shared = easy_setup_env.SharedLibrary('ESSDKLibrary',
-                                        ['sdk/enrollee/src/easysetup.cpp',
-                                        'sdk/enrollee/src/onboarding.cpp',
-                                        'sdk/enrollee/src/softap.cpp',
-                                        'sdk/enrollee/src/resourcehandler.cpp',
-                                        'sdk/enrollee/tizen/wifi/networkhandler.cpp',
-                                        'sdk/enrollee/tizen/wifi/softapnative.cpp'])
-        easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
-
-print"easysetup_path %s" % easysetup_path
-
-es_src = None
-
-if target_os in ['android','linux']:
-	if env.get('SECURED') == '1':
-		env.AppendUnique(es_src = [os.path.join(easysetup_path, 'sdk/mediator/src/EnrolleeSecurity.cpp')])
-
-	es_common_src =	['sdk/mediator/src/RemoteEnrollee.cpp',
-		'sdk/mediator/src/RemoteEnrolleeResource.cpp',
-		'sdk/mediator/src/EasySetup.cpp',
-		'sdk/mediator/src/prov_adapter.cpp',
-		'sdk/mediator/src/ESException.cpp',
-		'sdk/mediator/src/wifi_provisioning.cpp',
-		'sdk/mediator/src/provisioning.cpp']
-
-	env.AppendUnique(es_src = es_common_src)
-
-	es_sdk_shared = easy_setup_env.SharedLibrary('ESSDKLibrary', env.get('es_src'))
-	easy_setup_env.InstallTarget(es_sdk_shared, 'libESSDK')
-
-print "Files path is %s" % env.get('es_src')
+print "************************************************************************************"
+print " Easysetup device role --> %s " % es_role
+print "Target Platform --> %s " % es_target
+print "Target Enrollee platform --> %s " % es_target
+print "************************************************************************************"
 
 #Go to build sample apps
-SConscript('sampleapp/SConscript')
+if ('mediator' in es_role) :
+	print "Building Easysetup mediator SDKs [CSDK & RichSDK]"
 
+	if es_target in ['linux','android']:
+		SConscript('mediator/SConscript')
+	else :
+		print "****************************Mediator supports Linux and Android platform****************************"
 
+if ('enrollee' in es_role) :
+	print "Building Easysetup enrollee SDK"
+
+	if es_target in ['linux', 'arduino']:   #TODO add tizen platform [also add dependencies in iotivity.spec file]
+		SConscript('enrollee/SConscript')
+	else :
+		print "****************************Enrollee supports linux, tizen and arduino platform****************************"
