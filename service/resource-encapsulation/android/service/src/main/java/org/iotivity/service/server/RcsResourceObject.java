@@ -224,6 +224,8 @@ public final class RcsResourceObject extends RcsObject {
          *
          * @throws RcsIllegalStateException
          *             if not in locked state
+         * @throws RcsPlatformException
+         *             if auto notify failed
          */
         public void apply() throws RcsIllegalStateException {
             if (mCurrentAttributes == null) {

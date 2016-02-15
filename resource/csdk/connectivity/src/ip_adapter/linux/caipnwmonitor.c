@@ -34,7 +34,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
-#define TAG "IP_MONITOR"
+#define TAG "OIC_CA_IP_MONITOR"
 
 CAResult_t CAIPStartNetworkMonitor()
 {

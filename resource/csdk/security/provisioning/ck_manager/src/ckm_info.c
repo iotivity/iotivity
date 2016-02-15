@@ -146,7 +146,7 @@ PKIError CloseCKMInfo(void)
     FUNCTION_CLEAR();
 }
 
-PKIError SetCKMInfo (const long *nextSN, const long *CRLSerialNumber,
+PKIError SetCKMInfo (const long nextSN, const long CRLSerialNumber,
                      const ByteArray *CAPrivateKey, const ByteArray *CAPublicKey,
                      const ByteArray *CAName)
 {
@@ -351,12 +351,11 @@ PKIError SaveCRT(void)
 }
 
 /*Serial Number*/
-PKIError SetNextSerialNumber (const long *nextSN)
+PKIError SetNextSerialNumber (const long nextSN)
 {
     FUNCTION_INIT();
-    CHECK_NULL(nextSN, ISSUER_CA_STORAGE_NULL_PASSED);
-    CHECK_LESS_EQUAL(0, *nextSN, ISSUER_CA_STORAGE_WRONG_SERIAL_NUMBER);
-    g_ckmInfo.nextSerialNumber = *nextSN;
+    CHECK_LESS_EQUAL(0, nextSN, ISSUER_CA_STORAGE_WRONG_SERIAL_NUMBER);
+    g_ckmInfo.nextSerialNumber = nextSN;
 
     FUNCTION_CLEAR();
 }
@@ -457,12 +456,11 @@ PKIError SaveCRL(void)
 }
 
 /*CRL Serial Number*/
-PKIError SetCRLSerialNumber (const long *CRLSerialNumber)
+PKIError SetCRLSerialNumber (const long CRLSerialNumber)
 {
     FUNCTION_INIT();
-    CHECK_NULL(CRLSerialNumber, ISSUER_CA_STORAGE_NULL_PASSED);
-    CHECK_LESS_EQUAL(0, *CRLSerialNumber, ISSUER_CA_STORAGE_WRONG_CRL_SERIAL_NUMBER);
-    g_ckmInfo.CRLSerialNumber = *CRLSerialNumber;
+    CHECK_LESS_EQUAL(0, CRLSerialNumber, ISSUER_CA_STORAGE_WRONG_CRL_SERIAL_NUMBER);
+    g_ckmInfo.CRLSerialNumber = CRLSerialNumber;
 
     FUNCTION_CLEAR();
 }
@@ -498,10 +496,11 @@ PKIError SetCertificateRevocationList (const ByteArray *certificateRevocationLis
 
 PKIError GetCertificateRevocationList (ByteArray *certificateRevocationList)
 {
-    FUNCTION_INIT();
+    FUNCTION_INIT(
+        OicSecCrl_t *tmpCRL = NULL;
+    );
     CHECK_COND(g_crlInfo.CrlData.data, ISSUER_CA_STORAGE_CRL_UNDEFINED);
     CHECK_NULL_BYTE_ARRAY_PTR(certificateRevocationList, ISSUER_CA_STORAGE_NULL_PASSED);
-    OicSecCrl_t *tmpCRL;
     tmpCRL = (OicSecCrl_t *)GetCRLResource();
     g_crlInfo.CrlId = tmpCRL->CrlId;
     g_crlInfo.CrlData = tmpCRL->CrlData;
@@ -513,16 +512,15 @@ PKIError GetCertificateRevocationList (ByteArray *certificateRevocationList)
     certificateRevocationList->len = g_crlInfo.CrlData.len;
 
     FUNCTION_CLEAR(
-            OICFree(tmpCRL);
+        OICFree(tmpCRL);
     );
 }
 
-PKIError SetNumberOfRevoked (const long *numberOfRevoked)
+PKIError SetNumberOfRevoked (const long numberOfRevoked)
 {
     FUNCTION_INIT();
-    CHECK_NULL(numberOfRevoked, ISSUER_CA_STORAGE_NULL_PASSED);
-    CHECK_LESS_EQUAL(0, *numberOfRevoked, ISSUER_CA_STORAGE_WRONG_CRL_SERIAL_NUMBER);
-    g_ckmInfo.numberOfRevoked = *numberOfRevoked;
+    CHECK_LESS_EQUAL(0, numberOfRevoked, ISSUER_CA_STORAGE_WRONG_CRL_SERIAL_NUMBER);
+    g_ckmInfo.numberOfRevoked = numberOfRevoked;
 
     FUNCTION_CLEAR();
 }

@@ -70,7 +70,7 @@ void timeCheck(int timeSec)
     pthread_mutex_unlock(&mutex_lock);
 }
 
-void onReboot(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onReboot(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -85,8 +85,7 @@ void onReboot(const HeaderOptions& headerOptions, const OCRepresentation& rep, c
     std::cout << "\t\tReboot:" << rep.getValue< std::string >("value") << std::endl;
 }
 
-void onFactoryReset(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-        const int eCode)
+void onFactoryReset(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -101,7 +100,7 @@ void onFactoryReset(const HeaderOptions& headerOptions, const OCRepresentation& 
     std::cout << "\t\tFactoryReset:" << rep.getValue< std::string >("value") << std::endl;
 }
 
-void onUpdate(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onUpdate(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -126,7 +125,7 @@ void onUpdate(const HeaderOptions& headerOptions, const OCRepresentation& rep, c
         std::cout << "\t\tRegion:" << rep.getValue< std::string >("r") << std::endl;
 }
 
-void onGet(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onGet(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -221,7 +220,7 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
                 {
                     resourceTable[resource->host() + resource->uri()] = resource;
 
-                    OCResourceHandle foundResourceHandle;
+                    OCResourceHandle foundResourceHandle = NULL;
                     OCStackResult result = OCPlatform::registerResource(foundResourceHandle,
                             resource);
                     std::cout << "\tResource ( " << resource->host() << " ) is registed!\t"
@@ -277,7 +276,7 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
     pthread_mutex_unlock(&mutex_lock);
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     std::string str_steps;
 
@@ -333,6 +332,11 @@ int main(int argc, char* argv[])
             catch(std::invalid_argument&)
             {
                 std::cout << "Please put a digit, not string" << std::endl;
+                continue;
+            }
+            catch(std::out_of_range&)
+            {
+                std::cout << "Please put a number within the supported range" << std::endl;
                 continue;
             }
 

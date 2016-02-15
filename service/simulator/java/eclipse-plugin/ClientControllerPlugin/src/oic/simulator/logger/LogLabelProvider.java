@@ -50,7 +50,14 @@ public class LogLabelProvider extends LabelProvider implements
         } else if (columnIndex == 1) {
             return dateFormat.format(entry.getDate());
         } else {
-            return entry.getMessage();
+            String msg = entry.getMessage();
+            if (null != msg) {
+                int pos = msg.indexOf('\n');
+                if (pos != -1) {
+                    msg = msg.substring(0, pos);
+                }
+            }
+            return msg;
         }
     }
 

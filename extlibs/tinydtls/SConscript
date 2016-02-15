@@ -61,14 +61,14 @@ tinydtls_src = [
 env.AppendUnique(TINYDTLS_SRC = tinydtls_src)
 
 if not env.get('RELEASE'):
-	if(target_os) not in ['android', 'arduino']:
+	if(target_os) not in ['arduino']:
 		env.AppendUnique(TINYDTLS_SRC = ['debug.c'])
 	else:
 		env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
 	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 
-env.AppendUnique(CPPDEFINES = ['DTLSV12',  'WITH_SHA256', 'DTLS_CHECK_CONTENTTYPE'])
+env.AppendUnique(CPPDEFINES = ['DTLSV12',  'WITH_SHA256', 'DTLS_CHECK_CONTENTTYPE', 'SHA2_USE_INTTYPES_H'])
 
 
 libtinydtls = env.StaticLibrary('libtinydtls', env.get('TINYDTLS_SRC'), OBJPREFIX='libtinydtls_')
@@ -98,5 +98,4 @@ if not env.get('RELEASE'):
 	samples_env.AppendTarget('samples')
 
 env.InstallTarget(libtinydtls, 'libtinydtls');
-env.UserInstallTargetLib(libtinydtls, 'libtinydtls');
 

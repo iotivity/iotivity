@@ -25,8 +25,12 @@ export RELEASE=$4
 echo $5
 export LOGGING=$5
 
+echo $6
+export WITH_TCP=$6
+
 echo $TARGET_TRANSPORT
 echo $BUILD_SAMPLE
+echo $WITH_TCP
 
 rm -rf $name-$version
 
@@ -52,8 +56,10 @@ mkdir -p $sourcedir/tmp/con/sample/external/inc
 cp -R $cur_dir/external/inc/* $sourcedir/tmp/con/sample/external/inc/
 mkdir -p $sourcedir/tmp/con/extlibs/
 cp -R ./extlibs/tinydtls/ $sourcedir/tmp/con/extlibs/
+cp -R ./extlibs/timer/ $sourcedir/tmp/con/extlibs/
 mkdir -p $sourcedir/tmp/con/c_common
 cp -R ./resource/c_common/* $sourcedir/tmp/con/c_common/
+cp -R ./resource/csdk/logger/include/* $sourcedir/tmp/con/common/inc/
 
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm $sourcedir/tmp
@@ -90,7 +96,7 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l --include-all  --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5'"
+gbscommand="gbs build -A armv7l --include-all  --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'WITH_TCP $6'"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Core build is successful"

@@ -25,8 +25,8 @@
  * OCPlatform.
  */
 
-#ifndef __OCPLATFORM_H
-#define __OCPLATFORM_H
+#ifndef OC_PLATFORM_H_
+#define OC_PLATFORM_H_
 #include <OCApi.h>
 #include <OCPlatform_impl.h>
 namespace OC
@@ -50,40 +50,57 @@ namespace OC
         typedef OCDoHandle OCPresenceHandle;
 
         /**
-        * API for notifying base that resource's attributes have changed.
-        *
-        * @param OCResourceHandle resource handle of the resource
-        * @param QualityOfService the quality of communication
-        *
-        * @return Returns ::OC_STACK_OK if success.
-        * @note This API is for server side only.
-        * @note OCResourceHandle is defined in ocstack.h
-        * @note OCStackResult is defined in ocstack.h.
-        * @see notifyAllObservers(OCResourceHandle)
-        * @see notifyAllObservers(OCResourceHandle, QualityOfService)
-        */
+         * API for notifying base that resource's attributes have changed.
+         *
+         * @param resourceHandle resource handle of the resource
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         * @note This API is for server side only.
+         * @note OCResourceHandle is defined in ocstack.h
+         * @note OCStackResult is defined in ocstack.h.
+         * @see notifyAllObservers(OCResourceHandle, QualityOfService)
+         */
         OCStackResult notifyAllObservers(OCResourceHandle resourceHandle);
+
+        /**
+         * @overload
+         *
+         * @param resourceHandle resource handle of the resource
+         * @param QoS the quality of communication
+         * @see notifyAllObservers(OCResourceHandle)
+         */
         OCStackResult notifyAllObservers(OCResourceHandle resourceHandle, QualityOfService QoS);
 
         /**
-        * API for notifying only specific clients that resource's attributes have changed.
-        *
-        * @param OCResourceHandle resource handle of the resource
-        * @param observationIds std vector of observationIds. These set of ids are ones which
-        * which will be notified upon resource change.
-        * @param responsePtr OCResourceResponse pointer used by app to fill the response for this
-        * resource change.
-        * @param QualityOfService the quality of communication
-        *
-        * @return Returns ::OC_STACK_OK if success.
-        * @note This API is for server side only.
-        * @note OCResourceHandle is defined in ocstack.h.
-        * @note OCStackResult is defined in ocstack.h.
-        */
+         * API for notifying only specific clients that resource's attributes have changed.
+         *
+         * @param resourceHandle resource handle of the resource
+         * @param observationIds std vector of observationIds. These set of ids are ones which
+         * which will be notified upon resource change.
+         * @param responsePtr OCResourceResponse pointer used by app to fill the response for this
+         * resource change.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         * @note This API is for server side only.
+         * @note OCResourceHandle is defined in ocstack.h.
+         * @note OCStackResult is defined in ocstack.h.
+         * @see notifyListOfObservers(OCResourceHandle, ObservationIds&, const std::shared_ptr<OCResourceResponse>, QualityOfService)
+         */
         OCStackResult notifyListOfObservers(
                     OCResourceHandle resourceHandle,
                     ObservationIds& observationIds,
                     const std::shared_ptr<OCResourceResponse> responsePtr);
+        /**
+         * @overload
+         *
+         * @param resourceHandle resource handle of the resource
+         * @param observationIds std vector of observationIds. These set of ids are ones which
+         * which will be notified upon resource change.
+         * @param responsePtr OCResourceResponse pointer used by app to fill the response for this
+         * resource change.
+         * @param QoS the quality of communication
+         * @see notifyListOfObservers(OCResourceHandle, ObservationIds&, const std::shared_ptr<OCResourceResponse>)
+         */
         OCStackResult notifyListOfObservers(
                     OCResourceHandle resourceHandle,
                     ObservationIds& observationIds,
@@ -91,78 +108,126 @@ namespace OC
                     QualityOfService QoS);
 
         /**
-        * API for Service and Resource Discovery.
-        * @note This API applies to client side only.
-        *
-        * @param host Host IP Address of a service to direct resource discovery query. If null or
-        *        empty, performs multicast resource discovery query
-        * @param resourceURI name of the resource. If null or empty, performs search for all
-        *       resource names
-        * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-        *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
-        * @param resourceHandler Handles callbacks, success states and failure states.
-        *
-        *        Four modes of discovery defined as follows:
-        *        (NULL/Empty, NULL/Empty) - Performs ALL service discovery AND ALL resource
-        *           discovery.
-        *        (NULL/Empty, Not Empty) - Performs query for a filtered/scoped/particular
-        *                                   resource(s) from ALL services.
-        *        (Not Empty, NULL/Empty) - Performs ALL resource discovery on a particular service.
-        *        (Not Empty, Not Empty) - Performs query for a filtered/scoped/particular
-        *                                   resource(s)
-        *                                  from a particular service.
-        * @param QualityOfService the quality of communication
-        *
-        * @return Returns ::OC_STACK_OK if success.
-        * @note First parameter 'host' currently represents an IP address. This will change in
-        * future and will refer to endpoint interface so that we can refer to other transports such
-        * as BTH etc.
-        * @note OCStackResult is defined in ocstack.h.
-        */
+         * API for Service and Resource Discovery.
+         * @note This API applies to client side only.
+         *
+         * @param host Host IP Address of a service to direct resource discovery query. If null or
+         *        empty, performs multicast resource discovery query
+         * @param resourceURI name of the resource. If null or empty, performs search for all
+         *       resource names
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         * @param resourceHandler Handles callbacks, success states and failure states.
+         *
+         *        Four modes of discovery defined as follows:
+         *        (NULL/Empty, NULL/Empty) - Performs ALL service discovery AND ALL resource
+         *           discovery.
+         *        (NULL/Empty, Not Empty) - Performs query for a filtered/scoped/particular
+         *                                   resource(s) from ALL services.
+         *        (Not Empty, NULL/Empty) - Performs ALL resource discovery on a particular service.
+         *        (Not Empty, Not Empty) - Performs query for a filtered/scoped/particular
+         *                                   resource(s)
+         *                                  from a particular service.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         * @note First parameter 'host' currently represents an IP address. This will change in
+         * future and will refer to endpoint interface so that we can refer to other transports such
+         * as BTH etc.
+         * @note OCStackResult is defined in ocstack.h.
+         * @see findResource(const std::string&, const std::string&, OCConnectivityType, FindCallback, QualityOfService)
+         */
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     OCConnectivityType connectivityType, FindCallback resourceHandler);
+        /**
+         * @overload
+         *
+         * @param host Host IP Address of a service to direct resource discovery query. If null or
+         *        empty, performs multicast resource discovery query
+         * @param resourceURI name of the resource. If null or empty, performs search for all
+         *       resource names
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         * @param resourceHandler Handles callbacks, success states and failure states.
+         *
+         *        Four modes of discovery defined as follows:
+         *        (NULL/Empty, NULL/Empty) - Performs ALL service discovery AND ALL resource
+         *           discovery.
+         *        (NULL/Empty, Not Empty) - Performs query for a filtered/scoped/particular
+         *                                   resource(s) from ALL services.
+         *        (Not Empty, NULL/Empty) - Performs ALL resource discovery on a particular service.
+         *        (Not Empty, Not Empty) - Performs query for a filtered/scoped/particular
+         *                                   resource(s)
+         *                                  from a particular service.
+         * @param QoS QualityOfService the quality of communication
+         * @see findResource(const std::string&, const std::string&, OCConnectivityType, FindCallback)
+         */
         OCStackResult findResource(const std::string& host, const std::string& resourceURI,
                     OCConnectivityType connectivityType, FindCallback resourceHandler,
                     QualityOfService QoS);
 
         /**
-        * API for Device Discovery
-        *
-        *
-        * @param host Host IP Address. If null or empty, Multicast is performed.
-        * @param deviceURI Uri containing address to the virtual device in C Stack
+         * API for Device Discovery
+         *
+         *
+         * @param host Host IP Address. If null or empty, Multicast is performed.
+         * @param deviceURI Uri containing address to the virtual device in C Stack
                                 ("/oic/d")
-        * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-        *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
-        * @param deviceInfoHandler device discovery callback
-        * @param QoS the quality of communication
-        *
-        * @return Returns ::OC_STACK_OK if success.
-        * @note OCStackResult is defined in ocstack.h.
-        */
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         * @param deviceInfoHandler device discovery callback
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
+         * @see getDeviceInfo(const std::string&, const std::string&, OCConnectivityType, FindDeviceCallback, QualityOfService)
+         */
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler);
+        /**
+         * @overload
+         *
+         * @param host Host IP Address. If null or empty, Multicast is performed.
+         * @param deviceURI Uri containing address to the virtual device in C Stack
+                                ("/oic/d")
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         * @param deviceInfoHandler device discovery callback
+         * @param QoS the quality of communication
+         * @see getDeviceInfo(const std::string&, const std::string&, OCConnectivityType, FindDeviceCallback)
+         */
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler,
                     QualityOfService QoS);
 
         /**
-        * API for Platform Discovery
-        *
-        *
-        * @param host Host IP Address. If null or empty, Multicast is performed.
-        * @param platformURI Uri containing address to the virtual platform in C Stack
+         * API for Platform Discovery
+         *
+         *
+         * @param host Host IP Address. If null or empty, Multicast is performed.
+         * @param platformURI Uri containing address to the virtual platform in C Stack
                                 ("/oic/p")
-        * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-        *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
-        * @param platformInfoHandler platform discovery callback
-        * @param QoS the quality of communication
-        *
-        * @return Returns ::OC_STACK_OK if success.
-        * @note OCStackResult is defined in ocstack.h.
-        */
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         * @param platformInfoHandler platform discovery callback
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         *
+         * @note OCStackResult is defined in ocstack.h.
+         * @see getPlatformInfo(const std::string&, const std::string&, OCConnectivityType, FindPlatformCallback, QualityOfService)
+         */
         OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
                     OCConnectivityType connectivityType, FindPlatformCallback platformInfoHandler);
+        /**
+         * @overload
+         *
+         * @param host Host IP Address. If null or empty, Multicast is performed.
+         * @param platformURI Uri containing address to the virtual platform in C Stack
+                                ("/oic/p")
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         * @param platformInfoHandler platform discovery callback
+         * @param QoS the quality of communication
+         * @see getPlatformInfo(const std::string&, const std::string&, OCConnectivityType, FindPlatformCallback)
+         */
         OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
                     OCConnectivityType connectivityType, FindPlatformCallback platformInfoHandler,
                     QualityOfService QoS);
@@ -202,15 +267,15 @@ namespace OC
                         uint8_t resourceProperty);
 
         /**
-        * This API registers a resource with the server
-        * @note This API applies to server & client side.
-
-        * @param resourceHandle Upon successful registration, resourceHandle will be filled
-        * @param OCResource The instance of OCResource that all data filled.
-        *
-        * @return Returns ::OC_STACK_OK if success.
-        * @note OCStackResult is defined in ocstack.h.
-        */
+         * This API registers a resource with the server
+         * @note This API applies to server & client side.
+         *
+         * @param resourceHandle Upon successful registration, resourceHandle will be filled
+         * @param resource The instance of OCResource that all data filled.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         * @note OCStackResult is defined in ocstack.h.
+         */
         OCStackResult registerResource(OCResourceHandle& resourceHandle,
                         const std::shared_ptr< OCResource > resource);
 
@@ -411,25 +476,40 @@ namespace OC
         OCStackResult stopPresence();
 
         /**
-        * subscribes to a server's presence change events.  By making this subscription,
-        * every time a server adds/removes/alters a resource, starts or is intentionally
-        * stopped (potentially more to be added later).
-        *
-        * @param presenceHandle a handle object that can be used to identify this subscription
-        *               request.  It can be used to unsubscribe from these events in the future.
-        *               It will be set upon successful return of this method.
-        * @param host The IP address/addressable name of the server to subscribe to.
-        *               This should be in the format coap://address:port
-        * @param connectivityType ::OCConnectivityType type of connectivity indicating the
-        *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
-        * @param resourceType a resource type specified as a filter for subscription callbacks.
-        * @param presenceHandler callback function that will receive notifications/subscription
-        *               events
-        *
-        * @return Returns ::OC_STACK_OK if success.
-        */
+         * subscribes to a server's presence change events.  By making this subscription,
+         * every time a server adds/removes/alters a resource, starts or is intentionally
+         * stopped (potentially more to be added later).
+         *
+         * @param presenceHandle a handle object that can be used to identify this subscription
+         *               request.  It can be used to unsubscribe from these events in the future.
+         *               It will be set upon successful return of this method.
+         * @param host The IP address/addressable name of the server to subscribe to.
+         *               This should be in the format coap://address:port
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         * @param presenceHandler callback function that will receive notifications/subscription
+         *               events
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         * @copydoc subscribePresence(OCPresenceHandle&, const std::string&, resourceType, OCConnectivityType, SubscribeCallback)
+         */
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         OCConnectivityType connectivityType, SubscribeCallback presenceHandler);
+        /**
+         * @overload
+         *
+         * @param presenceHandle a handle object that can be used to identify this subscription
+         *               request.  It can be used to unsubscribe from these events in the future.
+         *               It will be set upon successful return of this method.
+         * @param host The IP address/addressable name of the server to subscribe to.
+         *               This should be in the format coap://address:port
+         * @param resourceType a resource type specified as a filter for subscription callbacks.
+         * @param connectivityType ::OCConnectivityType type of connectivity indicating the
+         *                           interface. Example: OC_WIFI, OC_ETHERNET, OC_ALL
+         * @param presenceHandler callback function that will receive notifications/subscription
+         *               events
+         * @see subscribePresence(OCPresenceHandle&, const std::string&, OCConnectivityType, SubscribeCallback)
+         */
         OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
                         const std::string& resourceType, OCConnectivityType connectivityType,
                         SubscribeCallback presenceHandler);
@@ -492,7 +572,7 @@ namespace OC
     }
 }
 
-#endif //__OCPLATFORM_H
+#endif // OC_PLATFORM_H_
 
 
 

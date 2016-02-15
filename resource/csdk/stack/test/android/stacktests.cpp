@@ -50,17 +50,17 @@ static OCUri SERVICE_URI = "coap://127.0.0.1:5683/";
 
 void EXPECT_EQ(int a, int b)  {
   if (a == b) {
-    OC_LOG(INFO, TAG, "PASS");
+    OIC_LOG(INFO, TAG, "PASS");
   } else {
-    OC_LOG(ERROR, TAG, "**FAIL**");
+    OIC_LOG(ERROR, TAG, "**FAIL**");
   }
 }
 
 void EXPECT_STREQ(const char *a, const char *b)  {
   if (strcmp(a, b) == 0) {
-    OC_LOG(INFO, TAG, "PASS");
+    OIC_LOG(INFO, TAG, "PASS");
   } else {
-    OC_LOG(ERROR, TAG, "**FAIL**");
+    OIC_LOG(ERROR, TAG, "**FAIL**");
   }
 }
 //-----------------------------------------------------------------------------
@@ -68,11 +68,11 @@ void EXPECT_STREQ(const char *a, const char *b)  {
 //-----------------------------------------------------------------------------
 
 extern "C" void asyncDoResourcesCallback(OCStackResult result, OCRepresentationHandle representation) {
-    OC_LOG(INFO, TAG, "Entering asyncDoResourcesCallback");
+    OIC_LOG(INFO, TAG, "Entering asyncDoResourcesCallback");
 
     EXPECT_EQ(OC_STACK_OK, result);
     OCResource *resource = (OCResource *)representation;
-    OC_LOG_V(INFO, TAG, "URI = %s", resource->uri);
+    OIC_LOG_V(INFO, TAG, "URI = %s", resource->uri);
     EXPECT_STREQ(SERVICE_URI, resource->uri);
 }
 

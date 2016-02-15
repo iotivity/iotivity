@@ -18,8 +18,8 @@
  *
  * *****************************************************************/
 
-#ifndef _OCPROVISIONINGMANAGER_CXX_H
-#define _OCPROVISIONINGMANAGER_CXX_H
+#ifndef OC_PROVISIONINGMANAGER_CXX_H_
+#define OC_PROVISIONINGMANAGER_CXX_H_
 
 #include <thread>
 
@@ -125,7 +125,7 @@ namespace OC
              *
              * @param[in] oxm Ownership transfer method
              * @param[in] callbackData Methods for ownership transfer
-             * @param[in] InputPinCallback Method to input pin for verification
+             * @param[in] inputPin callback method to input pin for verification
              * @return OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm,
@@ -140,14 +140,20 @@ namespace OC
              *  - ON/OFF: Device is switched on or off.
              *
              * @param[in] timeout waitime for the API.
-             * @param[out] pOwnedDevList  list of owned devices.
-             * @param[out] pUnownedDevList  list of unowned devices.
+             * @param[out] ownedDevList  list of owned devices.
+             * @param[out] unownedDevList  list of unowned devices.
              * @return OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult getDevInfoFromNetwork(unsigned short timeout,
                     DeviceList_t &ownedDevList,
                     DeviceList_t &unownedDevList);
-
+            /**
+             * Server API to register callback to display stack generated PIN.
+             *
+             * @param[in] displayPin GeneratePinCallback Method to display generated PIN.
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult setDisplayPinCB(GeneratePinCallback displayPin);
     };
 
     /**
@@ -242,7 +248,6 @@ namespace OC
              * This method is used to get linked devices' IDs.
              *
              * @param[out] uuidList information about the list of linked devices' uuids.
-             * @param[out] numOfDevices total number of linked devices.
              * @return  OC_STACK_OK in case of success and other value otherwise.
              */
             OCStackResult getLinkedDevices(UuidList_t &uuidList);
@@ -280,4 +285,4 @@ namespace OC
     };
 
 }
-#endif //_OCPROVISIONINGMANAGER_CXX_H
+#endif // OC_PROVISIONINGMANAGER_CXX_H_

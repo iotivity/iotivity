@@ -59,11 +59,11 @@ namespace OIC
 
         void ResourceContainerImpl::startContainer(const std::string &configFile)
         {
-            OC_LOG(INFO, CONTAINER_TAG, "Starting resource container.");
+            OIC_LOG(INFO, CONTAINER_TAG, "Starting resource container.");
 #if (JAVA_SUPPORT)
-            OC_LOG(INFO, CONTAINER_TAG, "Resource container has Java support.");
+            OIC_LOG(INFO, CONTAINER_TAG, "Resource container has Java support.");
 #else
-            OC_LOG(INFO, CONTAINER_TAG, "Resource container without Java support.");
+            OIC_LOG(INFO, CONTAINER_TAG, "Resource container without Java support.");
 #endif
 
 
@@ -92,7 +92,7 @@ namespace OIC
                                 bundles[i][BUNDLE_LIBRARY_PATH]);
                         }
 
-                        OC_LOG_V(INFO, CONTAINER_TAG, "Init Bundle:(%s)",
+                        OIC_LOG_V(INFO, CONTAINER_TAG, "Init Bundle:(%s)",
                                  std::string(bundles[i][BUNDLE_ID] + ";" +
                                              bundles[i][BUNDLE_PATH]).c_str());
 
@@ -102,12 +102,12 @@ namespace OIC
                 }
                 else
                 {
-                    OC_LOG_V(ERROR, CONTAINER_TAG, "Container started with invalid configfile path.");
+                    OIC_LOG_V(ERROR, CONTAINER_TAG, "Container started with invalid configfile path.");
                 }
             }
             else
             {
-                OC_LOG_V(INFO, CONTAINER_TAG, "No configuration file for the container provided.");
+                OIC_LOG_V(INFO, CONTAINER_TAG, "No configuration file for the container provided.");
             }
 
             map<std::string, boost::thread >::iterator activatorIterator;
@@ -124,7 +124,7 @@ namespace OIC
 
         void ResourceContainerImpl::stopContainer()
         {
-            OC_LOG(INFO, CONTAINER_TAG, "Stopping resource container.");
+            OIC_LOG(INFO, CONTAINER_TAG, "Stopping resource container.");
 
             for (std::map< std::string, BundleInfoInternal * >::iterator it = m_bundles.begin();
                  it != m_bundles.end(); ++it)
@@ -173,7 +173,7 @@ namespace OIC
 
         void ResourceContainerImpl::activateBundle(const std::string &id)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, "Activating bundle: (%s)",
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Activating bundle: (%s)",
                      std::string(m_bundles[id]->getID()).c_str());
             activationLock.lock();
             auto f = std::bind(&ResourceContainerImpl::activateBundleThread, this,
@@ -181,7 +181,7 @@ namespace OIC
             boost::thread activator(f);
             activator.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
             activationLock.unlock();
-            OC_LOG_V(INFO, CONTAINER_TAG, "Bundle activated: (%s)",
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Bundle activated: (%s)",
                      std::string(m_bundles[id]->getID()).c_str());
         }
 
@@ -202,7 +202,7 @@ namespace OIC
         // loads the bundle
         void ResourceContainerImpl::registerBundle(RCSBundleInfo *bundleInfo)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, "Registering bundle: (%s)",
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Registering bundle: (%s)",
                      std::string(bundleInfo->getPath()).c_str());
 
             if (has_suffix(bundleInfo->getPath(), ".jar"))
@@ -241,7 +241,7 @@ namespace OIC
         {
             void *bundleHandle = m_bundles[id]->getBundleHandle();
 
-            OC_LOG_V(INFO, CONTAINER_TAG, "Unregister bundle: (%s)",
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Unregister bundle: (%s)",
                      std::string(m_bundles[id]->getID()).c_str());
 
             const char *error;
@@ -249,7 +249,7 @@ namespace OIC
 
             if ((error = dlerror()) != NULL)
             {
-                OC_LOG_V(ERROR, CONTAINER_TAG, "Error (%s)", error);
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "Error (%s)", error);
             }
             else
             {
@@ -258,19 +258,25 @@ namespace OIC
             }
         }
 
-        void ResourceContainerImpl::registerResource(BundleResource::Ptr resource)
+        int ResourceContainerImpl::registerResource(BundleResource::Ptr resource)
         {
             string strUri = resource->m_uri;
             string strResourceType = resource->m_resourceType;
+            string strInterface = resource->m_interface;
             RCSResourceObject::Ptr server = nullptr;
+            int ret = EINVAL;
 
-            OC_LOG_V(INFO, CONTAINER_TAG, "Registration of resource (%s)" ,
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Registration of resource (%s)" ,
                      std::string(strUri + ", " + strResourceType).c_str());
 
             registrationLock.lock();
             if (m_mapResources.find(strUri) == m_mapResources.end())
             {
-                server = buildResourceObject(strUri, strResourceType);
+                if (strInterface.empty()) {
+                    strInterface = "oic.if.baseline";
+                }
+
+                server = buildResourceObject(strUri, strResourceType, strInterface);
 
                 if (server != nullptr)
                 {
@@ -286,25 +292,29 @@ namespace OIC
                         std::bind(&ResourceContainerImpl::setRequestHandler, this,
                                   std::placeholders::_1, std::placeholders::_2));
 
-                    OC_LOG_V(INFO, CONTAINER_TAG, "Registration finished (%s)",
+                    OIC_LOG_V(INFO, CONTAINER_TAG, "Registration finished (%s)",
                              std::string(strUri + ", " +
                                          strResourceType).c_str());
 
-                    if (m_config->isHasInput(resource->m_bundleId))
+                    if (m_config && m_config->isHasInput(resource->m_bundleId))
                     {
                         discoverInputResource(strUri);
                     }
 
                     // to get notified if bundle resource attributes are updated
                     resource->registerObserver((NotificationReceiver *) this);
+                    ret = 0;
                 }
             }
             else
             {
-                OC_LOG_V(ERROR, CONTAINER_TAG, "resource with (%s)",
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "resource with (%s)",
                          std::string(strUri + " already exists.").c_str());
+                ret = -EEXIST;
             }
             registrationLock.unlock();
+
+            return ret;
         }
 
         void ResourceContainerImpl::unregisterResource(BundleResource::Ptr resource)
@@ -312,11 +322,11 @@ namespace OIC
             string strUri = resource->m_uri;
             string strResourceType = resource->m_resourceType;
 
-            OC_LOG_V(INFO, CONTAINER_TAG, "Unregistration of resource (%s)",
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Unregistration of resource (%s)",
                      std::string(resource->m_uri + ", " +
                                  resource->m_resourceType).c_str());
 
-            if (m_config->isHasInput(resource->m_bundleId))
+            if (m_config && m_config->isHasInput(resource->m_bundleId))
             {
                 undiscoverInputResource(strUri);
             }
@@ -410,7 +420,7 @@ namespace OIC
 
         void ResourceContainerImpl::onNotificationReceived(const std::string &strResourceUri)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG,
+            OIC_LOG_V(INFO, CONTAINER_TAG,
                      "notification from (%s)", std::string(strResourceUri + ".").c_str());
 
             if (m_mapServers.find(strResourceUri) != m_mapServers.end())
@@ -426,10 +436,10 @@ namespace OIC
         }
 
         RCSResourceObject::Ptr ResourceContainerImpl::buildResourceObject(const std::string &strUri,
-                const std::string &strResourceType)
+                const std::string &strResourceType, const std::string &strInterface)
         {
             return RCSResourceObject::Builder(strUri, strResourceType,
-                                              "oic.if.baseline").setObservable(
+                                              strInterface).setObservable(
                        true).setDiscoverable(true).build();
         }
 
@@ -441,12 +451,12 @@ namespace OIC
                     activateBundle(m_bundles[bundleId]);
                 else
                 {
-                    OC_LOG(ERROR, CONTAINER_TAG, "Bundle already started");
+                    OIC_LOG(ERROR, CONTAINER_TAG, "Bundle already started");
                 }
             }
             else
             {
-                OC_LOG_V(ERROR, CONTAINER_TAG, "Bundle with ID \'(%s)",
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "Bundle with ID \'(%s)",
                          std::string(bundleId + "\' is not registered.").c_str());
             }
         }
@@ -459,12 +469,12 @@ namespace OIC
                     deactivateBundle(m_bundles[bundleId]);
                 else
                 {
-                    OC_LOG(ERROR, CONTAINER_TAG, "Bundle not activated");
+                    OIC_LOG(ERROR, CONTAINER_TAG, "Bundle not activated");
                 }
             }
             else
             {
-                OC_LOG_V(ERROR, CONTAINER_TAG, "Bundle with ID \'(%s)",
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "Bundle with ID \'(%s)",
                          std::string(bundleId + "\' is not registered.").c_str());
             }
         }
@@ -476,7 +486,7 @@ namespace OIC
             (void) bundleUri;
 
             if (m_bundles.find(bundleId) != m_bundles.end())
-                OC_LOG(ERROR, CONTAINER_TAG, "BundleId already exist");
+                OIC_LOG(ERROR, CONTAINER_TAG, "BundleId already exist");
 
             else
             {
@@ -492,7 +502,7 @@ namespace OIC
                     ((BundleInfoInternal *)bundleInfo)->setLibraryPath(params[BUNDLE_LIBRARY_PATH]);
                 }
 
-                OC_LOG_V(INFO, CONTAINER_TAG, "Add Bundle: (%s)",
+                OIC_LOG_V(INFO, CONTAINER_TAG, "Add Bundle: (%s)",
                          std::string(bundleInfo->getID() + "; " +
                                      bundleInfo->getPath()).c_str());
 
@@ -513,21 +523,21 @@ namespace OIC
             }
             else
             {
-                OC_LOG_V(ERROR, CONTAINER_TAG, "Bundle with ID \'(%s)",
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "Bundle with ID \'(%s)",
                          std::string(bundleId + "\' is not registered.").c_str());
             }
         }
 
-        std::list< RCSBundleInfo * > ResourceContainerImpl::listBundles()
+        std::list<std::unique_ptr<RCSBundleInfo>> ResourceContainerImpl::listBundles()
         {
-            std::list< RCSBundleInfo * > ret;
+            std::list<std::unique_ptr<RCSBundleInfo> > ret;
             for (std::map< std::string, BundleInfoInternal * >::iterator it = m_bundles.begin();
                  it != m_bundles.end(); ++it)
             {
                 {
-                    BundleInfoInternal *bundleInfo = new BundleInfoInternal();
+                    std::unique_ptr<BundleInfoInternal> bundleInfo(new BundleInfoInternal);
                     (bundleInfo)->setBundleInfo(it->second);
-                    ret.push_back((RCSBundleInfo *) bundleInfo);
+                    ret.push_back(std::move(bundleInfo));
                 }
             }
             return ret;
@@ -555,7 +565,7 @@ namespace OIC
             }
             else
             {
-                OC_LOG_V(ERROR, CONTAINER_TAG, "Bundle with ID \'(%s)",
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "Bundle with ID \'(%s)",
                          std::string(bundleId + "\' is not registered.").c_str());
             }
         }
@@ -572,7 +582,7 @@ namespace OIC
             }
             else
             {
-                OC_LOG_V(ERROR, CONTAINER_TAG, "Bundle with ID \'(%s)",
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "Bundle with ID \'(%s)",
                          std::string(bundleId + "\' is not registered.").c_str());
             }
         }
@@ -624,7 +634,7 @@ namespace OIC
 
                 if ((error = dlerror()) != NULL)
                 {
-                    OC_LOG_V(ERROR, CONTAINER_TAG, "Error : (%s)", error);
+                    OIC_LOG_V(ERROR, CONTAINER_TAG, "Error : (%s)", error);
                 }
                 else
                 {
@@ -642,7 +652,7 @@ namespace OIC
             {
                 if ((error = dlerror()) != NULL)
                 {
-                    OC_LOG_V(ERROR, CONTAINER_TAG, "Error : (%s)", error);
+                    OIC_LOG_V(ERROR, CONTAINER_TAG, "Error : (%s)", error);
                 }
             }
         }
@@ -659,7 +669,7 @@ namespace OIC
             else
             {
                 //Unload module and return error
-                OC_LOG(ERROR, CONTAINER_TAG, "Activation unsuccessful.");
+                OIC_LOG(ERROR, CONTAINER_TAG, "Activation unsuccessful.");
             }
 
             BundleInfoInternal *bundleInfoInternal = (BundleInfoInternal *) m_bundles[bundleId];
@@ -744,7 +754,7 @@ namespace OIC
         {
             deactivator_t *bundleDeactivator = m_bundles[id]->getBundleDeactivator();
 
-            OC_LOG_V(INFO, CONTAINER_TAG, "De-activating bundle: (%s)", std::string(
+            OIC_LOG_V(INFO, CONTAINER_TAG, "De-activating bundle: (%s)", std::string(
                          m_bundles[id]->getID()).c_str());
 
             if (bundleDeactivator != NULL)
@@ -755,7 +765,7 @@ namespace OIC
             else
             {
                 //Unload module and return error
-                OC_LOG(ERROR, CONTAINER_TAG, "De-activation unsuccessful.");
+                OIC_LOG(ERROR, CONTAINER_TAG, "De-activation unsuccessful.");
             }
         }
 
@@ -772,7 +782,7 @@ namespace OIC
             }
             else
             {
-                OC_LOG(ERROR, CONTAINER_TAG, "addResource unsuccessful.");
+                OIC_LOG(ERROR, CONTAINER_TAG, "addResource unsuccessful.");
             }
         }
 
@@ -790,14 +800,14 @@ namespace OIC
                 }
                 else
                 {
-                    OC_LOG(ERROR, CONTAINER_TAG, "removeResource unsuccessful.");
+                    OIC_LOG(ERROR, CONTAINER_TAG, "removeResource unsuccessful.");
                 }
             }
         }
 
         void ResourceContainerImpl::activateBundleThread(const std::string &id)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, "Activating bundle: (%s)",
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Activating bundle: (%s)",
                      std::string(m_bundles[id]->getID()).c_str());
 
             if (m_bundles[id]->getJavaBundle())
@@ -811,7 +821,7 @@ namespace OIC
                 activateSoBundle (id);
             }
 
-            OC_LOG_V(INFO, CONTAINER_TAG, "Bundle activated: (%s)",
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Bundle activated: (%s)",
                      std::string(m_bundles[id]->getID()).c_str());
         }
 
@@ -823,7 +833,7 @@ namespace OIC
 
         void ResourceContainerImpl::registerJavaBundle(RCSBundleInfo *bundleInfo)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, "Registering Java bundle (%s)",
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Registering Java bundle (%s)",
                      std::string(bundleInfo->getID()).c_str());
             JavaVM *jvm;
             JNIEnv *env;
@@ -836,13 +846,13 @@ namespace OIC
             {
                 fclose(file);
 
-                OC_LOG_V(INFO, CONTAINER_TAG, "Resource bundle (%s)",
+                OIC_LOG_V(INFO, CONTAINER_TAG, "Resource bundle (%s)",
                          std::string(bundleInfo->getPath() +
                                      " available.").c_str());
             }
             else
             {
-                OC_LOG_V(ERROR, CONTAINER_TAG, "Resource bundle (%s)",
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "Resource bundle (%s)",
                          std::string(bundleInfo->getPath() + " not available.").c_str());
 
                 return;
@@ -854,7 +864,7 @@ namespace OIC
             strcpy(classpath, "-Djava.class.path=");
             strcat(classpath, bundleInfo->getPath().c_str());
 
-            OC_LOG(INFO, CONTAINER_TAG,
+            OIC_LOG(INFO, CONTAINER_TAG,
                    std::string("Configured classpath: ").append(classpath).c_str());
 
             options[1].optionString = classpath;
@@ -864,7 +874,7 @@ namespace OIC
             strcat(libraryPath, bundleInfo->getLibraryPath().c_str());
             options[2].optionString = libraryPath;
 
-            OC_LOG(INFO, CONTAINER_TAG,
+            OIC_LOG(INFO, CONTAINER_TAG,
                    std::string("Configured library path: ").append(libraryPath).c_str());
 
             vm_args.version = JNI_VERSION_1_4;
@@ -877,26 +887,26 @@ namespace OIC
 
             if (res < 0)
             {
-                OC_LOG(ERROR, CONTAINER_TAG, "cannot create JavaVM.");
+                OIC_LOG(ERROR, CONTAINER_TAG, "cannot create JavaVM.");
                 return;
             }
             else
             {
-                OC_LOG(INFO, CONTAINER_TAG, "JVM successfully created.");
+                OIC_LOG(INFO, CONTAINER_TAG, "JVM successfully created.");
             }
 
             m_bundleVM.insert(std::pair< string, JavaVM * >(bundleInfo->getID(), jvm));
 
             const char *className = bundleInfoInternal->getActivatorName().c_str();
 
-            OC_LOG_V(INFO, CONTAINER_TAG, "Looking up class: (%s)", std::string(
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Looking up class: (%s)", std::string(
                          bundleInfoInternal->getActivatorName() + "|").c_str());
 
             jclass bundleActivatorClass = env->FindClass(className);
 
             if (bundleActivatorClass == NULL)
             {
-                OC_LOG_V(ERROR, CONTAINER_TAG, "Cannot register bundle (%s)",
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "Cannot register bundle (%s)",
                          std::string( bundleInfoInternal->getID()
                                       + " bundle activator(" + bundleInfoInternal->getActivatorName()
                                       + ") not found ").c_str());
@@ -908,7 +918,7 @@ namespace OIC
 
             if (activateMethod == NULL)
             {
-                OC_LOG_V(ERROR, CONTAINER_TAG, "Cannot register bundle (%s)",
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "Cannot register bundle (%s)",
                          std::string( bundleInfoInternal->getID()
                                       + " activate bundle method not found ").c_str());
                 return;
@@ -920,7 +930,7 @@ namespace OIC
 
             if (deactivateMethod == NULL)
             {
-                OC_LOG_V(ERROR, CONTAINER_TAG, "Cannot register bundle (%s)",
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "Cannot register bundle (%s)",
                          std::string( bundleInfoInternal->getID()
                                       + " deactivate bundle method not found ").c_str());
                 return;
@@ -943,12 +953,12 @@ namespace OIC
             m_bundles[bundleInfo->getID()] = ((BundleInfoInternal *)bundleInfo);
 
 
-            OC_LOG(INFO, CONTAINER_TAG, "Bundle registered");
+            OIC_LOG(INFO, CONTAINER_TAG, "Bundle registered");
         }
 
         void ResourceContainerImpl::activateJavaBundle(string bundleId)
         {
-            OC_LOG(INFO, CONTAINER_TAG, "Activating java bundle");
+            OIC_LOG(INFO, CONTAINER_TAG, "Activating java bundle");
 
             JavaVM *vm = getJavaVM(bundleId);
             BundleInfoInternal *bundleInfoInternal = (BundleInfoInternal *) m_bundles[bundleId];
@@ -959,12 +969,12 @@ namespace OIC
             {
                 if (vm->AttachCurrentThread((void **) &env, NULL) != 0)
                 {
-                    OC_LOG(ERROR, CONTAINER_TAG, "Failed to attach ");
+                    OIC_LOG(ERROR, CONTAINER_TAG, "Failed to attach ");
                 }
             }
             else if (envStat == JNI_EVERSION)
             {
-                OC_LOG(ERROR, CONTAINER_TAG, "Env: version not supported ");
+                OIC_LOG(ERROR, CONTAINER_TAG, "Env: version not supported ");
             }
 
             env->CallVoidMethod(bundleInfoInternal->getJavaBundleActivatorObject(),
@@ -975,7 +985,7 @@ namespace OIC
 
         void ResourceContainerImpl::deactivateJavaBundle(string bundleId)
         {
-            OC_LOG(INFO, CONTAINER_TAG, "Deactivating java bundle");
+            OIC_LOG(INFO, CONTAINER_TAG, "Deactivating java bundle");
 
             JavaVM *vm = getJavaVM(bundleId);
             BundleInfoInternal *bundleInfoInternal = (BundleInfoInternal *) m_bundles[bundleId];
@@ -986,12 +996,12 @@ namespace OIC
             {
                 if (vm->AttachCurrentThread((void **) &env, NULL) != 0)
                 {
-                    OC_LOG(ERROR, CONTAINER_TAG, "Failed to attach ");
+                    OIC_LOG(ERROR, CONTAINER_TAG, "Failed to attach ");
                 }
             }
             else if (envStat == JNI_EVERSION)
             {
-                OC_LOG(ERROR, CONTAINER_TAG, "Env: version not supported ");
+                OIC_LOG(ERROR, CONTAINER_TAG, "Env: version not supported ");
             }
 
             env->CallVoidMethod(bundleInfoInternal->getJavaBundleActivatorObject(),
@@ -1002,10 +1012,10 @@ namespace OIC
 
         void ResourceContainerImpl::unregisterBundleJava(string id)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, "Unregister Java bundle: (%s)", std::string(
+            OIC_LOG_V(INFO, CONTAINER_TAG, "Unregister Java bundle: (%s)", std::string(
                          m_bundles[id]->getID()).c_str());
 
-            OC_LOG(INFO, CONTAINER_TAG, "Destroying JVM");
+            OIC_LOG(INFO, CONTAINER_TAG, "Destroying JVM");
 
             m_bundleVM[id]->DestroyJavaVM();
 

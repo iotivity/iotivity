@@ -18,15 +18,17 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <UnitTestHelper.h>
+#include "UnitTestHelper.h"
 
-#include <RCSResponse.h>
-#include <RCSResourceObject.h>
+#include "RCSRequest.h"
+#include "RCSResponse.h"
+#include "RCSSeparateResponse.h"
+#include "RCSResourceObject.h"
 
-#include <RequestHandler.h>
-#include <ResourceAttributesConverter.h>
+#include "RequestHandler.h"
+#include "ResourceAttributesConverter.h"
 
-#include <OCPlatform.h>
+#include "OCPlatform.h"
 
 using namespace std;
 
@@ -184,4 +186,17 @@ TEST_F(RCSResponseTest, SetResponseHasMethodSetBySetter)
             RCSSetResponse::defaultAction().setAcceptanceMethod(method);
 
     EXPECT_EQ(method, response.getAcceptanceMethod());
+}
+
+TEST_F(RCSResponseTest, SeparateResponseHasNoHandler)
+{
+    RCSGetResponse response = RCSGetResponse::separate();
+    EXPECT_EQ(nullptr, response.getHandler());
+}
+
+TEST_F(RCSResponseTest, ThrowIfRequestIsInvalidWhenConstructingSeparateResponse)
+{
+    RCSRequest aRequest;
+
+    EXPECT_THROW(RCSSeparateResponse resp(aRequest), RCSInvalidParameterException);
 }

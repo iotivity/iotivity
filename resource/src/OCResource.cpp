@@ -28,10 +28,7 @@ namespace OC {
 
 static const char COAP[] = "coap://";
 static const char COAPS[] = "coaps://";
-
-#ifdef TCP_ADAPTER
 static const char COAP_TCP[] = "coap+tcp://";
-#endif
 
 using OC::nil_guard;
 using OC::result_guard;
@@ -69,7 +66,11 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri),
-    m_devAddr{ OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0 },
+    m_devAddr{ OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+    , {0}
+#endif
+    },
     m_isObservable(observable), m_isCollection(false),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
@@ -122,13 +123,11 @@ void OCResource::setHost(const std::string& host)
         prefix_len = sizeof(COAPS) - 1;
         m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_SECURE);
     }
-#ifdef TCP_ADAPTER
     else if (host.compare(0, sizeof(COAP_TCP) - 1, COAP_TCP) == 0)
     {
         prefix_len = sizeof(COAP_TCP) - 1;
         m_devAddr.adapter = static_cast<OCTransportAdapter>(m_devAddr.adapter & OC_ADAPTER_TCP);
     }
-#endif
     else
     {
         throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
@@ -424,12 +423,10 @@ std::string OCResource::host() const
     {
         ss << COAPS;
     }
-#ifdef TCP_ADAPTER
     else if (m_devAddr.adapter & OC_ADAPTER_TCP)
     {
         ss << COAP_TCP;
     }
-#endif
     else
     {
         ss << COAP;
@@ -562,4 +559,3 @@ bool OCResourceIdentifier::operator>=(const OCResourceIdentifier &other) const
 }
 
 } // namespace OC
-

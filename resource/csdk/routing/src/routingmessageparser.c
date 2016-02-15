@@ -32,7 +32,7 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "RPM"
+#define TAG "OIC_RM_PARSER"
 
 /**
  * Table key to parser Payload Table.
@@ -66,13 +66,13 @@ static const char UPDATE_SEQ_NUM[] = "updateseqnum";
 
 OCStackResult RMPConstructGatewayPayload(uint32_t gatewayId, OCRepPayload **payload)
 {
-    OC_LOG(DEBUG, TAG, "RMPConstructGatewayPayload IN");
+    OIC_LOG(DEBUG, TAG, "RMPConstructGatewayPayload IN");
     RM_NULL_CHECK_WITH_RET(payload, TAG, "payload");
 
     *payload = OCRepPayloadCreate();
     if(!*payload)
     {
-        OC_LOG(ERROR, TAG, "Failed to allocate Payload");
+        OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
         return OC_STACK_ERROR;
     }
 
@@ -80,7 +80,7 @@ OCStackResult RMPConstructGatewayPayload(uint32_t gatewayId, OCRepPayload **payl
     OCRepPayloadSetPropInt(*payload, GATEWAY, gatewayId);
     OCRepPayloadSetPropInt(*payload, LENGTH_PROP, 0);
 
-    OC_LOG(DEBUG, TAG, "RMPConstructGatewayPayload OUT");
+    OIC_LOG(DEBUG, TAG, "RMPConstructGatewayPayload OUT");
 
     return OC_STACK_OK;
 }
@@ -89,13 +89,13 @@ OCStackResult RMPConstructObserveResPayload(uint32_t gatewayId, uint32_t seqNum,
                                             const u_linklist_t *routingtable, bool isUpdateSeqNeeded,
                                             OCRepPayload **payload)
 {
-    OC_LOG(DEBUG, TAG, "RMPConstructObserveResPayload IN");
+    OIC_LOG(DEBUG, TAG, "RMPConstructObserveResPayload IN");
     RM_NULL_CHECK_WITH_RET(payload, TAG, "payload");
 
     *payload =  (OCRepPayload *)OCRepPayloadCreate();
     if(!*payload)
     {
-        OC_LOG(ERROR, TAG, "Failed to allocate Payload");
+        OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
         return OC_STACK_ERROR;
     }
 
@@ -106,7 +106,7 @@ OCStackResult RMPConstructObserveResPayload(uint32_t gatewayId, uint32_t seqNum,
     if (NULL == routingtable)
     {
         OCRepPayloadSetPropInt(*payload, LENGTH_PROP, 0);
-        OC_LOG(DEBUG, TAG, "Routing Table NULL for ObserveRes Payload");
+        OIC_LOG(DEBUG, TAG, "Routing Table NULL for ObserveRes Payload");
         return OC_STACK_OK;
     }
 
@@ -126,7 +126,7 @@ OCStackResult RMPConstructObserveResPayload(uint32_t gatewayId, uint32_t seqNum,
         OCRepPayload *add = OCRepPayloadCreate();
         if(!add)
         {
-            OC_LOG(ERROR, TAG, "Failed to allocate Payload");
+            OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
             return OC_STACK_ERROR;
         }
 
@@ -144,12 +144,12 @@ OCStackResult RMPConstructObserveResPayload(uint32_t gatewayId, uint32_t seqNum,
         bool res = OCRepPayloadSetPropObjectArray(*payload, TABLE, arrayPayload, dimensions);
         if (!res)
         {
-            OC_LOG(ERROR, TAG, "Failed to Construct Observer response Payload");
+            OIC_LOG(ERROR, TAG, "Failed to Construct Observer response Payload");
             return OC_STACK_ERROR;
         }
     }
 
-    OC_LOG(DEBUG, TAG, "RMPConstructObserveResPayload OUT");
+    OIC_LOG(DEBUG, TAG, "RMPConstructObserveResPayload OUT");
     return OC_STACK_OK;
 }
 
@@ -157,7 +157,7 @@ OCStackResult RMPConstructRemovalPayload(uint32_t gatewayId, uint32_t seqNum,
                                          const u_linklist_t *removedGateways, bool isUpdateSeqNeeded,
                                          OCRepPayload **removedPayload)
 {
-    OC_LOG(DEBUG, TAG, "RMPConstructRemovalPayload IN");
+    OIC_LOG(DEBUG, TAG, "RMPConstructRemovalPayload IN");
     RM_NULL_CHECK_WITH_RET(removedGateways, TAG, "removedGateways");
     RM_NULL_CHECK_WITH_RET(removedPayload, TAG, "removedPayload");
 
@@ -167,7 +167,7 @@ OCStackResult RMPConstructRemovalPayload(uint32_t gatewayId, uint32_t seqNum,
     *removedPayload =  OCRepPayloadCreate();
     if(!*removedPayload)
     {
-        OC_LOG(ERROR, TAG, "Failed to allocate Payload");
+        OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
         return OC_STACK_ERROR;
     }
 
@@ -193,12 +193,12 @@ OCStackResult RMPConstructRemovalPayload(uint32_t gatewayId, uint32_t seqNum,
         OCRepPayload *add = OCRepPayloadCreate();
         if(!add)
         {
-            OC_LOG(ERROR, TAG, "Failed to allocate Payload");
+            OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
             return OC_STACK_ERROR;
         }
 
         add->base.type = PAYLOAD_TYPE_REPRESENTATION;
-        OC_LOG_V(DEBUG, TAG, "Removing the gateway entry: %u", entry->destination->gatewayId);
+        OIC_LOG_V(DEBUG, TAG, "Removing the gateway entry: %u", entry->destination->gatewayId);
         OCRepPayloadSetPropInt(add, GATEWAY, entry->destination->gatewayId);
         OCRepPayloadSetPropInt(add, ROUTE_COST, 0);
         arrayPayload[i] = add;
@@ -210,11 +210,11 @@ OCStackResult RMPConstructRemovalPayload(uint32_t gatewayId, uint32_t seqNum,
     bool res = OCRepPayloadSetPropObjectArray(*removedPayload, TABLE, arrayPayload, dimensions);
     if (!res)
     {
-        OC_LOG(ERROR, TAG, "Failed to Construct Removal Payload");
+        OIC_LOG(ERROR, TAG, "Failed to Construct Removal Payload");
         return OC_STACK_ERROR;
     }
 
-    OC_LOG(DEBUG, TAG, "RMPConstructRemovalPayload OUT");
+    OIC_LOG(DEBUG, TAG, "RMPConstructRemovalPayload OUT");
     return OC_STACK_OK;
 }
 
@@ -227,7 +227,7 @@ OCStackResult RMPParseRequestPayload(const uint8_t* payload, size_t payloadSize,
     OCStackResult res = RMPParseResponsePayload(repPayload, gatewayId, NULL, NULL, NULL);
     if (OC_STACK_OK != res)
     {
-        OC_LOG(DEBUG, TAG, "ParseResponsePayload failed");
+        OIC_LOG(DEBUG, TAG, "ParseResponsePayload failed");
     }
 
     return res;
@@ -237,7 +237,7 @@ OCStackResult RMPParseResponsePayload(const OCRepPayload *payload, uint32_t *gat
                                       uint32_t *seqNum, u_linklist_t **gatewayTable,
                                       bool *isUpdateSeqNeeded)
 {
-    OC_LOG(DEBUG, TAG, "RMPParsePayload IN");
+    OIC_LOG(DEBUG, TAG, "RMPParsePayload IN");
     RM_NULL_CHECK_WITH_RET(payload, TAG, "payload");
     RM_NULL_CHECK_WITH_RET(gatewayId, TAG, "gatewayId");
 
@@ -268,13 +268,13 @@ OCStackResult RMPParseResponsePayload(const OCRepPayload *payload, uint32_t *gat
     int len = length;
     if (0 == len)
     {
-        OC_LOG(DEBUG, TAG, "Parsed Gateway Payload");
+        OIC_LOG(DEBUG, TAG, "Parsed Gateway Payload");
         return OC_STACK_OK;
     }
 
     if (NULL == gatewayTable)
     {
-        OC_LOG(DEBUG, TAG, "gatewayTable is NULL");
+        OIC_LOG(DEBUG, TAG, "gatewayTable is NULL");
         return OC_STACK_OK;
     }
 
@@ -285,14 +285,14 @@ OCStackResult RMPParseResponsePayload(const OCRepPayload *payload, uint32_t *gat
 
     if (NULL == *responsePayload)
     {
-        OC_LOG(DEBUG, TAG, "RMPParsePayload OUT");
+        OIC_LOG(DEBUG, TAG, "RMPParsePayload OUT");
         return OC_STACK_OK;
     }
 
     *gatewayTable = u_linklist_create();
     if (NULL == *gatewayTable)
     {
-        OC_LOG(DEBUG, TAG, "Gateway table create failed");
+        OIC_LOG(DEBUG, TAG, "Gateway table create failed");
         return OC_STACK_ERROR;
     }
 
@@ -302,21 +302,21 @@ OCStackResult RMPParseResponsePayload(const OCRepPayload *payload, uint32_t *gat
 
         if (NULL == entry)
         {
-            OC_LOG(DEBUG, TAG, "RTMGatewayEntry_t Calloc failed");
+            OIC_LOG(DEBUG, TAG, "RTMGatewayEntry_t Calloc failed");
             return OC_STACK_ERROR;
         }
         // Filling new Entry
         entry->destination = (RTMGatewayId_t*)OICCalloc(1, sizeof(RTMGatewayId_t));
         if (NULL == entry->destination)
         {
-            OC_LOG(DEBUG, TAG, "Destination Calloc failed");
+            OIC_LOG(DEBUG, TAG, "Destination Calloc failed");
             OICFree(entry);
             return OC_STACK_ERROR;
         }
         entry->nextHop = (RTMGatewayId_t*)OICCalloc(1, sizeof(RTMGatewayId_t));
         if (NULL == entry->nextHop)
         {
-            OC_LOG(DEBUG, TAG, "nextHop Calloc failed");
+            OIC_LOG(DEBUG, TAG, "nextHop Calloc failed");
             OICFree(entry->destination);
             OICFree(entry);
             return OC_STACK_ERROR;
@@ -333,14 +333,14 @@ OCStackResult RMPParseResponsePayload(const OCRepPayload *payload, uint32_t *gat
         entry->routeCost = routeCost;
         u_linklist_add(*gatewayTable, (void *)entry);
     }
-    OC_LOG(DEBUG, TAG, "RMPParsePayload OUT");
+    OIC_LOG(DEBUG, TAG, "RMPParsePayload OUT");
     return OC_STACK_OK;
 }
 
 void RMPFreePayload(OCRepPayload *payload)
 {
-    OC_LOG(DEBUG, TAG, "RMPFreePayload IN");
+    OIC_LOG(DEBUG, TAG, "RMPFreePayload IN");
     RM_NULL_CHECK_VOID(payload, TAG, "payload");
     OCRepPayloadDestroy(payload);
-    OC_LOG(DEBUG, TAG, "RMPFreePayload OUT");
+    OIC_LOG(DEBUG, TAG, "RMPFreePayload OUT");
 }

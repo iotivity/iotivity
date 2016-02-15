@@ -36,7 +36,7 @@ public class RMInterface {
     public native void RMAdvertiseResource(String advertiseResource);
 
     public native void RMSendNotification(String uri, String payload,
-            int selectedNetwork, int isSecured, int msgType, int responseValue);
+            int selectedNetwork, int isSecured, int msgType);
 
     public native void RMSelectNetwork(int interestedNetwork);
 

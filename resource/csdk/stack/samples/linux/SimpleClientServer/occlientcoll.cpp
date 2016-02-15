@@ -132,26 +132,26 @@ OCPayload* putPayload()
 
 void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlientcoll -t <Test Case> -c <CA connectivity Type>");
-    OC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
-    OC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
-    OC_LOG(INFO, TAG, "Test Case 1 : Discover Resources && Initiate GET Request on an "\
+    OIC_LOG(INFO, TAG, "Usage : occlientcoll -t <Test Case> -c <CA connectivity Type>");
+    OIC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
+    OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
+    OIC_LOG(INFO, TAG, "Test Case 1 : Discover Resources && Initiate GET Request on an "\
             "available resource using default interface.");
-    OC_LOG(INFO, TAG, "Test Case 2 : Discover Resources && Initiate GET Request on an "\
+    OIC_LOG(INFO, TAG, "Test Case 2 : Discover Resources && Initiate GET Request on an "\
                  "available resource using batch interface.");
-    OC_LOG(INFO, TAG, "Test Case 3 : Discover Resources && Initiate GET Request on an "\
+    OIC_LOG(INFO, TAG, "Test Case 3 : Discover Resources && Initiate GET Request on an "\
                  "available resource using link list interface.");
-    OC_LOG(INFO, TAG, "Test Case 4 : Discover Resources && Initiate GET & PUT Request on an "\
+    OIC_LOG(INFO, TAG, "Test Case 4 : Discover Resources && Initiate GET & PUT Request on an "\
                  "available resource using default interface.");
-    OC_LOG(INFO, TAG, "Test Case 5 : Discover Resources && Initiate GET & PUT Request on an "\
+    OIC_LOG(INFO, TAG, "Test Case 5 : Discover Resources && Initiate GET & PUT Request on an "\
                  "available resource using batch interface.");
-    OC_LOG(INFO, TAG, "Test Case 6 : Discover Resources && Initiate GET & PUT Request on an "\
+    OIC_LOG(INFO, TAG, "Test Case 6 : Discover Resources && Initiate GET & PUT Request on an "\
                  "available resource using link list interface.");
-    OC_LOG(INFO, TAG, "Test Case 7 : Discover Resources && Initiate GET Request on an "\
+    OIC_LOG(INFO, TAG, "Test Case 7 : Discover Resources && Initiate GET Request on an "\
                  "unavailable resource using default interface.");
-    OC_LOG(INFO, TAG, "Test Case 8 : Discover Resources && Initiate GET Request on an "\
+    OIC_LOG(INFO, TAG, "Test Case 8 : Discover Resources && Initiate GET Request on an "\
                  "unavailable resource using batch interface.");
-    OC_LOG(INFO, TAG, "Test Case 9 : Discover Resources && Initiate GET Request on an "\
+    OIC_LOG(INFO, TAG, "Test Case 9 : Discover Resources && Initiate GET Request on an "\
                  "unavailable resource using link list interface.");
 }
 
@@ -160,13 +160,13 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle /*handle*/,
 {
     if(clientResponse == NULL)
     {
-        OC_LOG(INFO, TAG, "The clientResponse is NULL");
+        OIC_LOG(INFO, TAG, "The clientResponse is NULL");
         return   OC_STACK_DELETE_TRANSACTION;
     }
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG_V(INFO, TAG, "Callback Context for PUT query recvd successfully");
-        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OIC_LOG_V(INFO, TAG, "Callback Context for PUT query recvd successfully");
+        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
     }
 
     return OC_STACK_KEEP_TRANSACTION;
@@ -175,27 +175,27 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle /*handle*/,
 OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
                                   OCClientResponse * clientResponse)
 {
-    OC_LOG_V(INFO, TAG, "StackResult: %s",
+    OIC_LOG_V(INFO, TAG, "StackResult: %s",
             getResult(clientResponse->result));
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+        OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
         if(clientResponse->sequenceNumber == 0)
         {
-            OC_LOG_V(INFO, TAG, "Callback Context for GET query recvd successfully");
-            OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+            OIC_LOG_V(INFO, TAG, "Callback Context for GET query recvd successfully");
+            OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
         }
         else
         {
-            OC_LOG_V(INFO, TAG, "Callback Context for Get recvd successfully %d",
+            OIC_LOG_V(INFO, TAG, "Callback Context for Get recvd successfully %d",
                     gNumObserveNotifies);
-            OC_LOG_PAYLOAD(INFO, clientResponse->payload);;
+            OIC_LOG_PAYLOAD(INFO, clientResponse->payload);;
             gNumObserveNotifies++;
             if (gNumObserveNotifies == 3)
             {
                 if (OCCancel (gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
                 {
-                    OC_LOG(ERROR, TAG, "Observe cancel error");
+                    OIC_LOG(ERROR, TAG, "Observe cancel error");
                 }
             }
         }
@@ -211,21 +211,21 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle /*handle*/,
 OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
                                         OCClientResponse * clientResponse)
 {
-    OC_LOG(INFO, TAG,
+    OIC_LOG(INFO, TAG,
             "Entering discoveryReqCB (Application Layer CB)");
-    OC_LOG_V(INFO, TAG, "StackResult: %s",
+    OIC_LOG_V(INFO, TAG, "StackResult: %s",
             getResult(clientResponse->result));
 
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG_V(INFO, TAG, "Callback Context recvd successfully");
+        OIC_LOG_V(INFO, TAG, "Callback Context recvd successfully");
     }
 
-    OC_LOG_V(INFO, TAG,
+    OIC_LOG_V(INFO, TAG,
             "Device =============> Discovered @ %s:%d",
             clientResponse->devAddr.addr,
             clientResponse->devAddr.port);
-    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+    OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
     ConnType = clientResponse->connType;
 
@@ -257,7 +257,7 @@ int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
                        &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
     return ret;
 }
@@ -273,9 +273,9 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     cbData.cb = getReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    OC_LOG_V(INFO, TAG, "OBSERVE payload from client =");
+    OIC_LOG_V(INFO, TAG, "OBSERVE payload from client =");
     OCPayload* payload = putPayload();
-    OC_LOG_PAYLOAD(INFO, payload);
+    OIC_LOG_PAYLOAD(INFO, payload);
     OCPayloadDestroy(payload);
 
     ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(),
@@ -283,7 +283,7 @@ int InitObserveRequest(OCClientResponse * clientResponse)
                        OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
     else
     {
@@ -305,9 +305,9 @@ int InitPutRequest(OCClientResponse * clientResponse)
     cbData.cb = putReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    OC_LOG_V(INFO, TAG, "PUT payload from client = ");
+    OIC_LOG_V(INFO, TAG, "PUT payload from client = ");
     OCPayload* payload = putPayload();
-    OC_LOG_PAYLOAD(INFO, payload);
+    OIC_LOG_PAYLOAD(INFO, payload);
     OCPayloadDestroy(payload);
 
     ret = OCDoResource(NULL, OC_REST_PUT, getQuery.str().c_str(),
@@ -315,7 +315,7 @@ int InitPutRequest(OCClientResponse * clientResponse)
                        OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
     return ret;
 }
@@ -340,7 +340,7 @@ int InitGetRequest(OCClientResponse * clientResponse)
                        &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
     return ret;
 }
@@ -362,7 +362,7 @@ int InitDiscovery()
             &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
     return ret;
 }
@@ -396,7 +396,7 @@ int main(int argc, char* argv[])
     /* Initialize OCStack*/
     if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 
@@ -406,30 +406,30 @@ int main(int argc, char* argv[])
     }
     else
     {
-        OC_LOG(INFO, TAG, "Default Connectivity type selected...");
+        OIC_LOG(INFO, TAG, "Default Connectivity type selected...");
         ConnType = CT_ADAPTER_IP;
     }
 
     InitDiscovery();
 
     // Break from loop with Ctrl+C
-    OC_LOG(INFO, TAG, "Entering occlient main loop...");
+    OIC_LOG(INFO, TAG, "Entering occlient main loop...");
     signal(SIGINT, handleSigInt);
     while (!gQuitFlag)
     {
 
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
 
         sleep(2);
-    } OC_LOG(INFO, TAG, "Exiting occlient main loop...");
+    } OIC_LOG(INFO, TAG, "Exiting occlient main loop...");
 
     if (OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack stop error");
+        OIC_LOG(ERROR, TAG, "OCStack stop error");
     }
 
     return 0;

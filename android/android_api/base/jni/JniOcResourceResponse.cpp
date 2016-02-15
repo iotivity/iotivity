@@ -42,7 +42,7 @@ void JniOcResourceResponse::setErrorCode(const int eCode)
 
 std::string JniOcResourceResponse::getNewResourceUri(void)
 {
-    this->m_response->getNewResourceUri();
+    return this->m_response->getNewResourceUri();
 }
 
 void

@@ -36,7 +36,7 @@ unittests_env.PrependUnique(CPPPATH = [
 		'../csdk/connectivity/api',
 		'../csdk/connectivity/external/inc',
 		'../csdk/ocsocket/include',
-		'../csdk/ocrandom/include',
+		'../c_common/ocrandom/include',
 		'../csdk/logger/include',
 		'#extlibs/gtest/gtest-1.7.0/include',
 		'#extlibs/hippomocks-master/HippoMocks',

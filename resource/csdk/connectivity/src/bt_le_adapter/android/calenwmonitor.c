@@ -33,7 +33,7 @@
 
 #include "org_iotivity_ca_CaLeClientInterface.h"
 
-#define TAG PCF("CA_LE_MONITOR")
+#define TAG PCF("OIC_CA_LE_MONITOR")
 
 #define BT_STATE_ON (12)
 #define BT_STATE_OFF (10)
@@ -76,14 +76,18 @@ CAResult_t CAInitializeLEAdapter()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    CALENetworkMonitorJNISetContext();
-    CALENetworkMonitorJniInit();
-
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartLEAdapter()
+{
+    // Nothing to do.
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAStopLEAdapter()
 {
     // Nothing to do.
 
@@ -174,6 +178,9 @@ CAResult_t CAInitializeLENetworkMonitor()
         return CA_STATUS_FAILED;
     }
 
+    CALENetworkMonitorJNISetContext();
+    CALENetworkMonitorJniInit();
+
     OIC_LOG(DEBUG, TAG, "OUT");
 
     return CA_STATUS_OK;
@@ -220,7 +227,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
 
     if (!gCALEDeviceStateChangedCallback)
     {
-        OIC_LOG_V(ERROR, TAG, "gNetworkChangeCb is null", status);
+        OIC_LOG(ERROR, TAG, "gNetworkChangeCb is null");
         return;
     }
 
@@ -230,22 +237,12 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
         CALEClientCreateDeviceList();
         CALEServerCreateCachedDeviceList();
 
-        CAResult_t res = CALEClientStartScan();
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
-        }
-
-        res = CALEStartAdvertise();
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "CALEStartAdvertise has failed");
-        }
-
         gCALEDeviceStateChangedCallback(newStatus);
     }
     else if (BT_STATE_OFF == status) // STATE_OFF:10
     {
+        CALEClientStopMulticastServer();
+
         // remove obj for client
         CAResult_t res = CALEClientRemoveAllGattObjs(env);
         if (CA_STATUS_OK != res)

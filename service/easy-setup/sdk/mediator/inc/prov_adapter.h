@@ -25,7 +25,7 @@
 #include "logger.h"
 #include "ocstack.h"
 #include "octypes.h"
-#include "common.h"
+#include "escommon.h"
 
 #include "provisioning.h"
 

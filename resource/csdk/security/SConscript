@@ -42,7 +42,7 @@ libocsrm_env.PrependUnique(CPPPATH = [
 		'../../../extlibs/cjson/',
 		'../../../extlibs/tinydtls/',
 		'../logger/include',
-		'../ocrandom/include',
+		'../../c_common/ocrandom/include',
 		'../stack/include',
 		'../stack/include/internal',
 		'../../oc_logger/include',
@@ -135,7 +135,6 @@ if env.get('DTLS_WITH_X509') == '1' and env.get('SECURED') == '1':
 libocsrm = libocsrm_env.StaticLibrary('libocsrm', libocsrm_src)
 
 libocsrm_env.InstallTarget(libocsrm, 'libocsrm')
-libocsrm_env.UserInstallTargetLib(libocsrm, 'libocsrm')
 
 if target_os in ['linux', 'android', 'tizen'] and env.get('SECURED') == '1':
 	SConscript('provisioning/SConscript')

@@ -22,5 +22,4 @@ collections
 {
     base_scale: 1.8;
     #include "../edc_resource/re_client_control.edc"
-    #include "../edc_resource/re_container_control.edc"
 }

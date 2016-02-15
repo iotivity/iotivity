@@ -37,19 +37,16 @@ import org.iotivity.base.ResourceProperty;
 
 import java.util.EnumSet;
 
-import base.iotivity.org.examples.message.IMessageLogger;
-
 /**
  * LightResource
  * <p/>
- * Creates a light resource and performs action based on client requests
+ * Creates a light resource and performs actions based on the client requests
  */
-public class LightResource extends Resource implements IMessageLogger {
-    private Context mContext;
-
-    private static String TAG = "LightResource: ";
-
-    private boolean mIsOn = false;
+public class LightResource extends Resource implements OcPlatform.EntityHandler {
+    public static final String LIGHT_STATUS_KEY = "light";
+    public static final String LIGHT_URI = "/light";
+    public static final String RESOURCE_TYPELIGHT = "intel.fridge.light";
+    private boolean mIsLightOn = false;
 
     /**
      * constructor
@@ -58,24 +55,68 @@ public class LightResource extends Resource implements IMessageLogger {
      */
     LightResource(Context context) {
         mContext = context;
-        //eventHandler for register lightResource
-        OcPlatform.EntityHandler eh = new OcPlatform.EntityHandler() {
-            @Override
-            public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest) {
-                // this is where the main logic of LightResource is handled
-                return entityHandler(ocResourceRequest);
-            }
-        };
+        registerLightResource();
+    }
+
+    private void registerLightResource() {
         try {
-            logMessage(TAG + "RegisterLightResource " + StringConstants.LIGHT_URI + " : " +
-                    StringConstants.RESOURCE_TYPELIGHT + " : " + StringConstants.RESOURCE_INTERFACE);
-            mResourceHandle = OcPlatform.registerResource(StringConstants.LIGHT_URI,
-                    StringConstants.RESOURCE_TYPELIGHT, StringConstants.RESOURCE_INTERFACE,
-                    eh, EnumSet.of(ResourceProperty.DISCOVERABLE));
+            logMessage(TAG + "RegisterLightResource " + LIGHT_URI + " : " + RESOURCE_TYPELIGHT);
+            mResourceHandle = OcPlatform.registerResource(LIGHT_URI,
+                    RESOURCE_TYPELIGHT,
+                    OcPlatform.DEFAULT_INTERFACE,
+                    this,
+                    EnumSet.of(ResourceProperty.DISCOVERABLE));
         } catch (OcException e) {
-            logMessage(TAG + "LightResource registerResource error: " + e.getMessage());
+            logMessage(TAG + "Failed to register LightResource");
             Log.e(TAG, e.getMessage());
         }
+        logMessage("-----------------------------------------------------");
+    }
+
+    /**
+     * this is the main method which handles different incoming requests appropriately.
+     *
+     * @param ocResourceRequest OcResourceRequest from the client
+     * @return EntityHandlerResult indicates whether the request was handled successfully or not
+     */
+    @Override
+    public synchronized EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest) {
+        EntityHandlerResult result = EntityHandlerResult.ERROR;
+        if (null != ocResourceRequest) {
+            try {
+                if (ocResourceRequest.getRequestHandlerFlagSet().contains(RequestHandlerFlag.REQUEST)) {
+                    OcResourceResponse response = new OcResourceResponse();
+                    response.setRequestHandle(ocResourceRequest.getRequestHandle());
+                    response.setResourceHandle(ocResourceRequest.getResourceHandle());
+
+                    switch (ocResourceRequest.getRequestType()) {
+                        case GET:
+                            response.setErrorCode(SUCCESS);
+                            updateRepresentationValues();
+                            response.setResourceRepresentation(mRepresentation);
+                            response.setResponseResult(EntityHandlerResult.OK);
+                            OcPlatform.sendResponse(response);
+                            result = EntityHandlerResult.OK;
+                            break;
+                        case PUT:
+                            response.setErrorCode(SUCCESS);
+                            put(ocResourceRequest.getResourceRepresentation());
+                            updateRepresentationValues();
+                            response.setResourceRepresentation(mRepresentation);
+                            response.setResponseResult(EntityHandlerResult.OK);
+                            OcPlatform.sendResponse(response);
+                            result = EntityHandlerResult.OK;
+                            break;
+                    }
+                }
+            } catch (OcException e) {
+                logMessage("Error in handleEntity of LightResource");
+                Log.e(TAG, e.getMessage());
+                return EntityHandlerResult.ERROR;
+            }
+        }
+        logMessage("-----------------------------------------------------");
+        return result;
     }
 
     /**
@@ -85,7 +126,7 @@ public class LightResource extends Resource implements IMessageLogger {
      */
     private void updateRepresentationValues() {
         try {
-            mRepresentation.setValue(StringConstants.ON, mIsOn);
+            mRepresentation.setValue(LIGHT_STATUS_KEY, mIsLightOn);
         } catch (OcException e) {
             Log.e(TAG, e.getMessage());
         }
@@ -98,67 +139,21 @@ public class LightResource extends Resource implements IMessageLogger {
      */
     private void put(OcRepresentation representation) {
         try {
-            mIsOn = representation.getValue(StringConstants.ON);
+            mIsLightOn = representation.getValue(LIGHT_STATUS_KEY);
         } catch (OcException e) {
             Log.e(TAG, e.getMessage());
         }
     }
 
-    /**
-     * this is the main method which handles different incoming requests appropriately.
-     *
-     * @param request OcResourceRequest from the client
-     * @return EntityHandlerResult depending on whether the request was handled successfully or not
-     */
-    private EntityHandlerResult entityHandler(OcResourceRequest request) {
-        EntityHandlerResult result = EntityHandlerResult.ERROR;
-        if (null != request) {
-            try {
-                if (request.getRequestHandlerFlagSet().contains(RequestHandlerFlag.REQUEST)) {
-                    OcResourceResponse response = new OcResourceResponse();
-                    response.setRequestHandle(request.getRequestHandle());
-                    response.setResourceHandle(request.getResourceHandle());
+    //******************************************************************************
+    // End of the OIC specific code
+    //******************************************************************************
+    private Context mContext;
+    private static String TAG = "LightResource: ";
 
-                    switch (request.getRequestType()) {
-                        case GET:
-                            response.setErrorCode(StringConstants.OK);
-                            updateRepresentationValues();
-                            response.setResourceRepresentation(mRepresentation);
-                            response.setResponseResult(EntityHandlerResult.OK);
-                            OcPlatform.sendResponse(response);
-                            result = EntityHandlerResult.OK;
-                            break;
-                        case PUT:
-                            response.setErrorCode(StringConstants.OK);
-                            put(request.getResourceRepresentation());
-                            updateRepresentationValues();
-                            response.setResourceRepresentation(mRepresentation);
-                            response.setResponseResult(EntityHandlerResult.OK);
-                            OcPlatform.sendResponse(response);
-                            result = EntityHandlerResult.OK;
-                            break;
-                    }
-                }
-            } catch (OcException e) {
-                logMessage(TAG + e.getMessage());
-                Log.e(TAG, e.getMessage());
-                return EntityHandlerResult.ERROR;
-            }
-        }
-        return result;
-    }
-
-    @Override
     public void logMessage(String msg) {
-        logMsg(msg);
-        if (StringConstants.ENABLE_PRINTING) {
-            Log.i(TAG, msg);
-        }
-    }
-
-    public void logMsg(final String text) {
-        Intent intent = new Intent(StringConstants.INTENT);
-        intent.putExtra(StringConstants.MESSAGE, text);
+        Intent intent = new Intent(FridgeServer.INTENT);
+        intent.putExtra(FridgeServer.MESSAGE, msg);
         mContext.sendBroadcast(intent);
     }
 }

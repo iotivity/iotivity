@@ -41,7 +41,7 @@ public interface BundleActivator {
      * Registers a single resource instance at the resource container
      * @param resource Instance of a BundleResource
      */
-    public void registerResource(BundleResource resource);
+    public int registerResource(BundleResource resource);
 
     /**
      * Unregisters a single resource instance at the resource container

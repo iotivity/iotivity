@@ -252,9 +252,9 @@ get_psk_info(struct dtls_context_t *ctx UNUSED_PARAM,
     return psk_client_id_length;
   case DTLS_PSK_KEY:
     if (id_len != psk_server_id_length || memcmp(psk_server_id, id, id_len) != 0) {
-      dtls_warn("PSK for unknown id requested, exiting\n");
-      return dtls_alert_fatal_create(DTLS_ALERT_ILLEGAL_PARAMETER);
-    } else if (result_length < psk_key_length) {
+      dtls_debug("PSK for unknown id requested\n");
+    }
+    if (result_length < psk_key_length) {
       dtls_warn("cannot set psk -- buffer too small\n");
       return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
     }

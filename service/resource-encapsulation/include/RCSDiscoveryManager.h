@@ -26,19 +26,19 @@
  *
  */
 
-#ifndef RCSDISCOVERYMANAGER_H
-#define RCSDISCOVERYMANAGER_H
+#ifndef RCS_DISCOVERYMANAGER_H_
+#define RCS_DISCOVERYMANAGER_H_
 
 #include <memory>
 #include <functional>
+#include <vector>
 
 namespace OIC
 {
     namespace Service
     {
-        class RCSRemoteResourceObject;
         class RCSAddress;
-
+        class RCSRemoteResourceObject;
         /**
          * This class contains the resource discovery methods.
          *
@@ -46,143 +46,171 @@ namespace OIC
          */
         class RCSDiscoveryManager
         {
-            public:
+        public:
 
             /**
              * This class represents a discovery task.
              *
-             * @note A discovery task will be automatically canceled when destroyed.
              */
-                class DiscoveryTask
-                {
-                    public:
-                        typedef std::unique_ptr<DiscoveryTask> Ptr;
-
-                        ~DiscoveryTask();
-
-                        DiscoveryTask(const DiscoveryTask&) = delete;
-                        DiscoveryTask(DiscoveryTask&&) = delete;
-                        DiscoveryTask& operator = (const DiscoveryTask&) const = delete;
-                        DiscoveryTask& operator = (DiscoveryTask&&) const = delete;
-
-                        /**
-                         * Cancel the task for discovery request. If cancel is called in duplicate, the request is ignored.
-                         */
-                        void cancel();
-
-                        /**
-                         * Return a boolean value whether the discovery request is canceled or not.
-                         */
-                        bool isCanceled();
-
-                    private:
-                        explicit DiscoveryTask(unsigned int);
-
-                    private:
-                        unsigned int m_id;
-                        friend class RCSDiscoveryManagerImpl;
-                };
-
+            class DiscoveryTask
+            {
             public:
+                typedef std::unique_ptr< DiscoveryTask > Ptr;
+
+                ~DiscoveryTask() = default;
+
+                DiscoveryTask(const DiscoveryTask&) = delete;
+                DiscoveryTask(DiscoveryTask&&) = delete;
+                DiscoveryTask& operator =(const DiscoveryTask&) const = delete;
+                DiscoveryTask& operator =(DiscoveryTask&&) const = delete;
 
                 /**
-                 * Typedef for callback of discoverResource APIs
-                 *
-                 * @see discoverResource
+                 * It is cancelling the task of discovery.
+                 * If it is already canceled, the operation is ignored.
                  */
-                typedef std::function< void(std::shared_ptr< RCSRemoteResourceObject >) >
-                                       ResourceDiscoveredCallback;
+                void cancel();
 
                 /**
-                 * @return RCSDiscoveryManager instance.
-                 *
+                 * Returns whether the discovery request is canceled or not.
                  */
-                static RCSDiscoveryManager* getInstance();
-
-                /**
-                 * Discovering the resource of interest, regardless of uri and resource type.
-                 * Find resource matching request periodically until returned resource is disappeared or destroyed.
-                 *
-                 * @return Returned object must be received.
-                 *
-                 * @param address         A RCSAddress object
-                 * @param cb              A callback to obtain discovered resource
-                 *
-                 * @throws InvalidParameterException If cb is empty.
-                 *
-                 * @note The callback will be invoked in an internal thread.
-                 *
-                 */
-                DiscoveryTask::Ptr discoverResource(const RCSAddress& address,
-                        ResourceDiscoveredCallback cb);
-
-                /**
-                 * Discovering the resource of Interest, regardless of resource type.
-                 * Find resource matching request periodically until returned resource is disappeared or destroyed.
-                 *
-                 * @return Returned object must be received.
-                 *
-                 * @param address          A RCSAddress object
-                 * @param relativeURI      The relative uri of resource to be searched
-                 * @param cb               A callback to obtain discovered resource
-                 *
-                 * @throws InvalidParameterException If cb is empty.
-                 *
-                 * @note The callback will be invoked in an internal thread.
-                 *
-                 * @see RCSAddress
-                 *
-                 */
-                DiscoveryTask::Ptr discoverResource(const RCSAddress& address,
-                        const std::string& relativeURI, ResourceDiscoveredCallback cb);
-
-                /**
-                 * Discovering the resource of Interest by Resource type.
-                 * Find resource matching request periodically until returned resource is disappeared or destroyed.
-                 *
-                 * @return Returned object must be received.
-                 *
-                 * @param address          A RCSAddress object
-                 * @param resourceType     Resource Type
-                 * @param cb               A callback to obtain discovered resource
-                 *
-                 * @throws InvalidParameterException If cb is empty.
-                 *
-                 * @note The callback will be invoked in an internal thread.
-                 *
-                 * @see RCSAddress
-                 *
-                 */
-                DiscoveryTask::Ptr discoverResourceByType(const RCSAddress& address,
-                        const std::string& resourceType, ResourceDiscoveredCallback cb);
-
-                /**
-                 * Discovering the resource of Interest by Resource type with provided relativeURI.
-                 * Find resource matching request periodically until returned resource is disappeared or destroyed.
-                 *
-                 * @return Returned object must be received.
-                 *
-                 * @param address          A RCSAddress object
-                 * @param relativeURI      The relative uri of resource to be searched
-                 * @param resourceType     Resource Type
-                 * @param cb               A callback to obtain discovered resource
-                 *
-                 * @throws InvalidParameterException If cb is empty.
-                 *
-                 * @note The callback will be invoked in an internal thread.
-                 *
-                 * @see RCSAddress
-                 *
-                 */
-                DiscoveryTask::Ptr discoverResourceByType(const RCSAddress& address,
-                        const std::string& relativeURI, const std::string& resourceType,
-                        ResourceDiscoveredCallback cb);
+                bool isCanceled();
 
             private:
-                RCSDiscoveryManager() = default;
-                ~RCSDiscoveryManager()= default;
+                explicit DiscoveryTask(unsigned int);
 
-                friend class DiscoveryTask;
+            private:
+                unsigned int m_id;
+
+                friend class RCSDiscoveryManagerImpl;
+            };
+
+        public:
+
+            /**
+             * Typedef for callback of discoverResource APIs
+             *
+             * @see discoverResource
+             */
+            typedef std::function< void(std::shared_ptr< RCSRemoteResourceObject >) >
+                        ResourceDiscoveredCallback;
+
+            /**
+             * @return RCSDiscoveryManager instance.
+             *
+             */
+            static RCSDiscoveryManager* getInstance();
+
+            /**
+             * Discovers resources of interest, regardless of uri and resource type.
+             * It is Consistently discovering resources until the discovery task is canceled.
+             *
+             * @param address         A RCSAddress object
+             * @param cb              A callback to obtain discovered resource
+             *
+             * @throws InvalidParameterException If cb is empty.
+             *
+             * @note The callback will be invoked in an internal thread.
+             *
+             */
+            DiscoveryTask::Ptr discoverResource(const RCSAddress& address,
+                    ResourceDiscoveredCallback cb);
+
+            /**
+             * Discovers resources of interest, regardless of resource type.
+             * It is Consistently discovering resources until the discovery task is canceled.
+             *
+             * @param address          A RCSAddress object
+             * @param relativeUri      The relative uri of resource to be searched
+             * @param cb               A callback to obtain discovered resource
+             *
+             * @throws InvalidParameterException If cb is empty.
+             *
+             * @note The callback will be invoked in an internal thread.
+             *
+             */
+            DiscoveryTask::Ptr discoverResource(const RCSAddress& address,
+                    const std::string& relativeUri, ResourceDiscoveredCallback cb);
+
+            /**
+             * Discovers resources of interest by resource type.
+             * It is Consistently discovering resources until the discovery task is canceled.
+             *
+             * @param address          A RCSAddress object
+             * @param resourceType     Resource Type
+             * @param cb               A callback to obtain discovered resource
+             *
+             * @throws InvalidParameterException If cb is empty.
+             *
+             * @note The callback will be invoked in an internal thread.
+             *
+             */
+            DiscoveryTask::Ptr discoverResourceByType(const RCSAddress& address,
+                    const std::string& resourceType, ResourceDiscoveredCallback cb);
+
+            /**
+             * Discovers resources of interest by resource type.
+             * It is Consistently discovering resources until the discovery task is canceled.
+             *
+             * @param address          A RCSAddress object
+             * @param resourceTypes    List of Resource Types
+             * @param cb               A callback to obtain discovered resource
+             *
+             * @throws InvalidParameterException If cb is empty.
+             * @throws InvalidParameterException If resourceType's size is than 2,
+             * at least one of resource type is empty.
+             *
+             * @note The callback will be invoked in an internal thread.
+             * @note If resourceTypes is empty, discovers resource by all resource types.
+             *
+             */
+            DiscoveryTask::Ptr discoverResourceByTypes(const RCSAddress& address,
+                    const std::vector< std::string >& resourceTypes,
+                    ResourceDiscoveredCallback cb);
+
+            /**
+             * Discovers resources of interest by resource types with provided relativeUri.
+             * It is Consistently discovering resources until the discovery task is canceled.
+             *
+             * @param address          A RCSAddress object
+             * @param relativeUri      The relative uri of resource to be searched
+             * @param resourceType     Resource Type
+             * @param cb               A callback to obtain discovered resource
+             *
+             * @throws InvalidParameterException If cb is empty.
+             *
+             * @note The callback will be invoked in an internal thread.
+             *
+             */
+            DiscoveryTask::Ptr discoverResourceByType(const RCSAddress& address,
+                    const std::string& relativeUri, const std::string& resourceType,
+                    ResourceDiscoveredCallback cb);
+
+            /**
+             * Discovers resources of interest by resource types with provided relativeUri.
+             * It is Consistently discovering resources until the discovery task is canceled.
+             *
+             * @param address          A RCSAddress object
+             * @param relativeUri      The relative uri of resource to be searched
+             * @param resourceTypes     List of Resource Types
+             * @param cb               A callback to obtain discovered resource
+             *
+             * @throws InvalidParameterException If cb is empty.
+             * @throws InvalidParameterException If resourceType's size is than 2,
+             * at least one of resource type is empty.
+             *
+             * @note The callback will be invoked in an internal thread.
+             * @note If resourceTypes is empty, discovers resource by all resource types.
+             *
+             */
+            DiscoveryTask::Ptr discoverResourceByTypes(const RCSAddress& address,
+                    const std::string& relativeUri,
+                    const std::vector< std::string >& resourceTypes,
+                    ResourceDiscoveredCallback cb);
+
+        private:
+
+            RCSDiscoveryManager() = default;
+            ~RCSDiscoveryManager() = default;
         };
     }
 }

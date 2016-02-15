@@ -488,7 +488,7 @@ public class SimpleClient extends Activity implements
         }
         msg(mLight.toString());
 
-        if (++mObserveCount == 11) {
+        if ((++mObserveCount) == 11) {
             msg("Cancelling Observe...");
             try {
                 mFoundLightResource.cancelObserve();

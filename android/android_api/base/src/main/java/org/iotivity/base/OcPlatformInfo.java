@@ -22,8 +22,10 @@
 
 package org.iotivity.base;
 
-import java.security.InvalidParameterException;
-
+/**
+ * This class describes the platform properties. All non-Null properties will be
+ * included in a platform discovery request.
+ */
 public class OcPlatformInfo {
     private String mPlatformId;
     private String mManufacturerName;
@@ -37,9 +39,11 @@ public class OcPlatformInfo {
     private String mSupportUrl;
     private String mSystemTime;
 
-    // construct OcPlatformInfo with mandatory fields which cannot be null
-    // manufacturerName cannot be > 16 chars
-    // manufacturerUrl cannot be > 32 chars
+    /**
+     * construct OcPlatformInfo with mandatory fields which cannot be null
+     * manufacturerName cannot be > 16 chars
+     * manufacturerUrl cannot be > 32 chars
+     */
     public OcPlatformInfo(String platformId, String manufacturerName,
                           String manufacturerUrl) {
         this.mPlatformId = platformId;

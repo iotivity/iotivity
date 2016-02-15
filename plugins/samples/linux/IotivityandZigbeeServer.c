@@ -92,14 +92,12 @@ int main()
     }
 
     OC_LOG(INFO, TAG, "Stopping Zigbee Plugin...");
-    // PIStopPlugin
-    OC_LOG(INFO, TAG, "Zigbee Plugin Stopped");
     result = PIStopPlugin(plugin);
     if (result != OC_STACK_OK)
     {
         OC_LOG_V(ERROR, TAG, "Zigbee Plugin Stop Failed: %d", result);
     }
-
+    OC_LOG(INFO, TAG, "Zigbee Plugin Stopped");
     // OCStop
 IotivityStop:
     OC_LOG(INFO, TAG, "Stopping IoTivity...");

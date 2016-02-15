@@ -80,15 +80,20 @@ CAResult_t CALEClientCreateJniInterfaceObject();
 
 /**
  * initialize client for BLE.
- * @param[in]   handle                thread pool handle object.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEClientInitialize(ca_thread_pool_t handle);
+CAResult_t CALEClientInitialize();
 
 /**
  * terminate client for BLE.
  */
 void CALEClientTerminate();
+
+/**
+ * destroy interface object and terminate the interface.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientDestroyJniInterface();
 
 /**
  * for destroy sending routine.
@@ -294,13 +299,21 @@ CAResult_t CALEClientDisconnectAll(JNIEnv *env);
 CAResult_t CALEClientDiscoverServices(JNIEnv *env, jobject bluetoothGatt);
 
 /**
+ * call CALESetValueAndWriteCharacteristic when connection is successful.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   gatt                  Gatt profile object.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientWriteCharacteristic(JNIEnv *env, jobject gatt);
+
+/**
  * create GattCharacteristic and call CALEClientWriteCharacteristicImpl
  * for request to write gatt characteristic.
  * @param[in]   env                   JNI interface pointer.
  * @param[in]   gatt                  Gatt profile object.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEClientWriteCharacteristic(JNIEnv *env, jobject gatt);
+CAResult_t CALESetValueAndWriteCharacteristic(JNIEnv *env, jobject gatt);
 
 /**
  * request to write gatt characteristic.

@@ -30,7 +30,7 @@
 #include <map>
 #include <list>
 #include "FormParameter.h"
-#include "Utils.h"
+#include "RamlUtils.h"
 #include "IncludeResolver.h"
 #include "Schema.h"
 

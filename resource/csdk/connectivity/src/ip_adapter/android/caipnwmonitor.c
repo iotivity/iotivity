@@ -36,7 +36,7 @@
 #include "oic_string.h"
 #include "org_iotivity_ca_CaIpInterface.h"
 
-#define TAG "IP_MONITOR"
+#define TAG "OIC_CA_IP_MONITOR"
 
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
                                          uint32_t addr, int flags);
@@ -45,6 +45,12 @@ static CAResult_t CAAddInterfaceItem(u_arraylist_t *iflist, int index,
                             const char *name, int family, uint32_t addr, int flags);
 
 CAResult_t CAIPJniInit();
+
+/**
+ * destroy JNI interface.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+static CAResult_t CAIPDestroyJniInterface();
 
 #define MAX_INTERFACE_INFO_LENGTH 1024 // allows 32 interfaces from SIOCGIFCONF
 
@@ -55,7 +61,7 @@ CAResult_t CAIPStartNetworkMonitor()
 
 CAResult_t CAIPStopNetworkMonitor()
 {
-    return CA_STATUS_OK;
+    return CAIPDestroyJniInterface();
 }
 
 int CAGetPollingInterval(int interval)
@@ -359,6 +365,78 @@ CAResult_t CAIPJniInit()
 
     OIC_LOG(DEBUG, TAG, "CAIPJniInit_OUT");
     return CA_STATUS_OK;
+}
+
+static CAResult_t CAIPDestroyJniInterface()
+{
+    OIC_LOG(DEBUG, TAG, "CAIPDestroyJniInterface");
+
+    JavaVM *jvm = CANativeJNIGetJavaVM();
+    if (!jvm)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get JavaVM pointer");
+        return CA_STATUS_FAILED;
+    }
+
+    bool isAttached = false;
+    JNIEnv* env;
+    jint res = (*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6);
+    if (JNI_OK != res)
+    {
+        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
+        res = (*jvm)->AttachCurrentThread(jvm, &env, NULL);
+
+        if (JNI_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
+            return CA_STATUS_FAILED;
+        }
+        isAttached = true;
+    }
+
+    jclass jni_IpInterface = (*env)->FindClass(env, "org/iotivity/ca/CaIpInterface");
+    if (!jni_IpInterface)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get CaIpInterface class");
+        goto error_exit;
+    }
+
+    jmethodID jni_InterfaceDestroyMethod = (*env)->GetStaticMethodID(env, jni_IpInterface,
+                                                                     "destroyIpInterface",
+                                                                     "()V");
+    if (!jni_InterfaceDestroyMethod)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get CaIpInterface destroy method");
+        goto error_exit;
+    }
+
+    (*env)->CallStaticVoidMethod(env, jni_IpInterface, jni_InterfaceDestroyMethod);
+
+    if ((*env)->ExceptionCheck(env))
+    {
+        OIC_LOG(ERROR, TAG, "destroyIpInterface has failed");
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        goto error_exit;
+    }
+
+    OIC_LOG(DEBUG, TAG, "Destroy instance for CaIpInterface");
+
+    if (isAttached)
+    {
+        (*jvm)->DetachCurrentThread(jvm);
+    }
+
+    return CA_STATUS_OK;
+
+error_exit:
+
+    if (isAttached)
+    {
+        (*jvm)->DetachCurrentThread(jvm);
+    }
+
+    return CA_STATUS_FAILED;
 }
 
 JNIEXPORT void JNICALL

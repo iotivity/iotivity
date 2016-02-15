@@ -96,6 +96,9 @@ void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
     context->matchingAclFound = false;
     context->amsProcessing = false;
     context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
+
+    FreeCARequestInfo(context->amsMgrContext->requestInfo);
+    OICFree(context->amsMgrContext->endpoint);
     memset(context->amsMgrContext, 0, sizeof(AmsMgrContext_t));
 
     // Set state.
@@ -239,11 +242,11 @@ static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
         if(IOTVTICAL_VALID_ACCESS ==  IsRequestWithinValidTime(acl->periods[i],
             acl->recurrences[i]))
         {
-            OC_LOG(INFO, TAG, "Access request is in allowed time period");
+            OIC_LOG(INFO, TAG, "Access request is in allowed time period");
             return true;
         }
     }
-    OC_LOG(ERROR, TAG, "Access request is in invalid time period");
+    OIC_LOG(ERROR, TAG, "Access request is in invalid time period");
     return false;
 
 #else
@@ -289,7 +292,7 @@ static bool IsAccessWithinValidTime(const OicSecAcl_t *acl)
  */
 void ProcessAccessRequest(PEContext_t *context)
 {
-    OC_LOG(DEBUG, TAG, "Entering ProcessAccessRequest()");
+    OIC_LOG(DEBUG, TAG, "Entering ProcessAccessRequest()");
     if(NULL != context)
     {
         const OicSecAcl_t *currentAcl = NULL;
@@ -302,20 +305,20 @@ void ProcessAccessRequest(PEContext_t *context)
         // ACL for this request.
         do
         {
-            OC_LOG_V(DEBUG, TAG, "%s: getting ACL..." ,__func__);
+            OIC_LOG_V(DEBUG, TAG, "%s: getting ACL..." ,__func__);
             currentAcl = GetACLResourceData(&context->subject, &savePtr);
 
             if(NULL != currentAcl)
             {
                 // Found the subject, so how about resource?
-                OC_LOG_V(DEBUG, TAG, "%s:found ACL matching subject" ,__func__);
+                OIC_LOG_V(DEBUG, TAG, "%s:found ACL matching subject" ,__func__);
 
                 // Subject was found, so err changes to Rsrc not found for now.
                 context->retVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
-                OC_LOG_V(DEBUG, TAG, "%s:Searching for resource..." ,__func__);
+                OIC_LOG_V(DEBUG, TAG, "%s:Searching for resource..." ,__func__);
                 if(IsResourceInAcl(context->resource, currentAcl))
                 {
-                    OC_LOG_V(INFO, TAG, "%s:found matching resource in ACL" ,__func__);
+                    OIC_LOG_V(INFO, TAG, "%s:found matching resource in ACL" ,__func__);
                     context->matchingAclFound = true;
 
                     // Found the resource, so it's down to valid period & permission.
@@ -332,23 +335,23 @@ void ProcessAccessRequest(PEContext_t *context)
             }
             else
             {
-                OC_LOG_V(INFO, TAG, "%s:no ACL found matching subject for resource %s",__func__, context->resource);
+                OIC_LOG_V(INFO, TAG, "%s:no ACL found matching subject for resource %s",__func__, context->resource);
             }
         }
         while((NULL != currentAcl) && (false == context->matchingAclFound));
 
         if(IsAccessGranted(context->retVal))
         {
-            OC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(ACCESS_GRANTED)", __func__);
+            OIC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(ACCESS_GRANTED)", __func__);
         }
         else
         {
-            OC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(ACCESS_DENIED)", __func__);
+            OIC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(ACCESS_DENIED)", __func__);
         }
     }
     else
     {
-        OC_LOG_V(ERROR, TAG, "%s:Leaving ProcessAccessRequest(context is NULL)", __func__);
+        OIC_LOG_V(ERROR, TAG, "%s:Leaving ProcessAccessRequest(context is NULL)", __func__);
     }
 }
 
@@ -442,16 +445,9 @@ SRMAccessResponse_t CheckPermission(
     // Capture retVal before resetting state for next request.
     retVal = context->retVal;
 
-    //Change the state of PE to "AWAITING_AMS_RESPONSE", if waiting
-    //for response from AMS service else to "AWAITING_REQUEST"
-    if(ACCESS_WAITING_FOR_AMS == retVal)
+   if(!context->amsProcessing)
     {
-        OC_LOG(INFO, TAG, "Setting PE State to AWAITING_AMS_RESPONSE");
-        context->state = AWAITING_AMS_RESPONSE;
-    }
-    else if(!context->amsProcessing)
-    {
-        OC_LOG(INFO, TAG, "Resetting PE context and PE State to AWAITING_REQUEST");
+        OIC_LOG(INFO, TAG, "Resetting PE context and PE State to AWAITING_REQUEST");
         SetPolicyEngineState(context, AWAITING_REQUEST);
     }
 
@@ -466,14 +462,18 @@ exit:
  */
 OCStackResult InitPolicyEngine(PEContext_t *context)
 {
-    if(NULL== context)
+    if(NULL == context)
     {
         return OC_STACK_ERROR;
     }
 
-    context->amsMgrContext = (AmsMgrContext_t *)OICMalloc(sizeof(AmsMgrContext_t));
-    SetPolicyEngineState(context, AWAITING_REQUEST);
+    context->amsMgrContext = (AmsMgrContext_t *)OICCalloc(1, sizeof(AmsMgrContext_t));
+    if(NULL == context->amsMgrContext)
+    {
+        return OC_STACK_ERROR;
+    }
 
+    SetPolicyEngineState(context, AWAITING_REQUEST);
     return OC_STACK_OK;
 }
 

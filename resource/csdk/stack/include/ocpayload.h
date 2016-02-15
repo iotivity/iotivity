@@ -21,6 +21,8 @@
 #ifndef OCPAYLOAD_H_
 #define OCPAYLOAD_H_
 
+#define __STDC_FORMAT_MACROS
+#define __STDC_LIMIT_MACROS
 #include <stdbool.h>
 #include <inttypes.h>
 #include "octypes.h"
@@ -60,6 +62,43 @@ bool OCRepPayloadGetPropInt(const OCRepPayload* payload, const char* name, int64
 bool OCRepPayloadSetPropDouble(OCRepPayload* payload, const char* name, double value);
 bool OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char* name, double* value);
 
+/**
+ * This function allocates memory for the byte string and sets it in the payload.
+ *
+ * @param payload      Pointer to the payload to which byte string needs to be added.
+ * @param name         Name of the byte string.
+ * @param value        Byte string and it's length.
+ *
+ * @return true on success, false upon failure.
+ */
+bool OCRepPayloadSetPropByteString(OCRepPayload* payload, const char* name, OCByteString value);
+
+/**
+ * This function sets the byte string in the payload.
+ *
+ * @param payload      Pointer to the payload to which byte string needs to be added.
+ * @param name         Name of the byte string.
+ * @param value        Byte string and it's length.
+ *
+ * @return true on success, false upon failure.
+ */
+bool OCRepPayloadSetPropByteStringAsOwner(OCRepPayload* payload, const char* name,
+        OCByteString* value);
+
+/**
+ * This function gets the byte string from the payload.
+ *
+ * @param payload      Pointer to the payload from which byte string needs to be retrieved.
+ * @param name         Name of the byte string.
+ * @param value        Byte string and it's length.
+ *
+ * @note: Caller needs to invoke OCFree on value.bytes after it is finished using the byte string.
+ *
+ * @return true on success, false upon failure.
+ */
+bool OCRepPayloadGetPropByteString(const OCRepPayload* payload, const char* name,
+        OCByteString* value);
+
 bool OCRepPayloadSetPropString(OCRepPayload* payload, const char* name, const char* value);
 bool OCRepPayloadSetPropStringAsOwner(OCRepPayload* payload, const char* name, char* value);
 bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, char** value);
@@ -71,6 +110,48 @@ bool OCRepPayloadSetPropObject(OCRepPayload* payload, const char* name, const OC
 bool OCRepPayloadSetPropObjectAsOwner(OCRepPayload* payload, const char* name,
         OCRepPayload* value);
 bool OCRepPayloadGetPropObject(const OCRepPayload* payload, const char* name, OCRepPayload** value);
+
+/**
+ * This function allocates memory for the byte string array and sets it in the payload.
+ *
+ * @param payload      Pointer to the payload to which byte string array needs to be added.
+ * @param name         Name of the byte string.
+ * @param array        Byte string array.
+ * @param dimensions   Number of byte strings in above array.
+ *
+ * @return true on success, false upon failure.
+ */
+bool OCRepPayloadSetByteStringArrayAsOwner(OCRepPayload* payload, const char* name,
+        OCByteString* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
+
+/**
+ * This function sets the byte string array in the payload.
+ *
+ * @param payload      Pointer to the payload to which byte string array needs to be added.
+ * @param name         Name of the byte string.
+ * @param array        Byte string array.
+ * @param dimensions   Number of byte strings in above array.
+ *
+ * @return true on success, false upon failure.
+ */
+bool OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char* name,
+        const OCByteString* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
+
+/**
+ * This function gets the byte string array from the payload.
+ *
+ * @param payload      Pointer to the payload from which byte string array needs to be retrieved.
+ * @param name         Name of the byte string array.
+ * @param value        Byte string array.
+ * @param dimensions   Number of byte strings in above array.
+ *
+ * @note: Caller needs to invoke OICFree on 'bytes' field of all array elements after it is
+ *        finished using the byte string array.
+ *
+ * @return true on success, false upon failure.
+ */
+bool OCRepPayloadGetByteStringArray(const OCRepPayload* payload, const char* name,
+        OCByteString** array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
 bool OCRepPayloadSetIntArrayAsOwner(OCRepPayload* payload, const char* name,
         int64_t* array, size_t dimensions[MAX_REP_ARRAY_DEPTH]);
@@ -127,13 +208,13 @@ OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, si
 void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload);
 
 // Device Payload
-OCDevicePayload* OCDevicePayloadCreate(const char* uri, const uint8_t* sid, const char* dname,
+OCDevicePayload* OCDevicePayloadCreate(const uint8_t* sid, const char* dname,
         const char* specVer, const char* dmVer);
 void OCDevicePayloadDestroy(OCDevicePayload* payload);
 
 // Platform Payload
-OCPlatformPayload* OCPlatformPayloadCreate(const char* uri, const OCPlatformInfo* platformInfo);
-OCPlatformPayload* OCPlatformPayloadCreateAsOwner(char* uri, OCPlatformInfo* platformInfo);
+OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo);
+OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo);
 
 void OCPlatformPayloadDestroy(OCPlatformPayload* payload);
 

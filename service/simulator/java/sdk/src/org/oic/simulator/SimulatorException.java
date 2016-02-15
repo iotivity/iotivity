@@ -23,19 +23,24 @@ package org.oic.simulator;
 @SuppressWarnings("serial")
 public class SimulatorException extends Exception {
 
-    private SimulatorResult errorCode;
-    private String          errorMessage;
+    private SimulatorResult code;
+    private String          message;
 
-    public SimulatorException(int errorCode, String errMessage) {
-        this.errorCode = SimulatorResult.get(errorCode);
-        this.errorMessage = errMessage;
+    public SimulatorException(int code, String message) {
+        this.code = SimulatorResult.get(code);
+        this.message = message;
+    }
+
+    public SimulatorException(SimulatorResult code, String message) {
+        this.code = code;
+        this.message = new String(message);
     }
 
     public SimulatorResult code() {
-        return errorCode;
+        return code;
     }
 
     public String message() {
-        return errorMessage;
+        return message;
     }
 }

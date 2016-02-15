@@ -66,6 +66,10 @@ public class CaIpInterface {
         mContext.registerReceiver(mReceiver, intentFilter);
     }
 
+    public static void destroyIpInterface() {
+        mContext.unregisterReceiver(mReceiver);
+    }
+
     private static BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {

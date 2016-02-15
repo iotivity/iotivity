@@ -114,11 +114,7 @@ if int(containerJavaSupport):
 ######################################################################
 # Source files and Targets
 ######################################################################
-res_container_src = ['src/BaseActivator.cpp','src/BundleActivator.cpp','src/RCSBundleInfo.cpp',
-    'src/BundleInfoInternal.cpp', 'src/BundleResource.cpp', 'src/Configuration.cpp', 'src/JavaBundleResource.cpp', 'src/ProtocolBridgeResource.cpp',
-    'src/ProtocolBridgeConnector.cpp', 'src/RCSResourceContainer.cpp', 'src/ResourceContainerBundleAPI.cpp', 'src/ResourceContainerImpl.cpp',
-    'src/SoftSensorResource.cpp', 'src/DiscoverResourceUnit.cpp', 'src/RemoteResourceUnit.cpp',
-    ]
+res_container_src = [ Glob('src/*.cpp') ]
 
 res_container_static = resource_container_env.StaticLibrary('rcs_container', res_container_src)
 res_container_shared = resource_container_env.SharedLibrary('rcs_container', res_container_src)
@@ -239,3 +235,9 @@ containersampleclient_src =  ['examples/ContainerSampleClient.cpp']
 containersampleclientapp = containersample_env.Program('ContainerSampleClient',containersampleclient_src)
 Alias("containersampleclient", containersampleclientapp)
 env.AppendTarget('containersampleclient')
+
+######################################################################
+# Build Container Java SDK
+######################################################################
+if target_os == 'android':
+    SConscript('android/SConscript')

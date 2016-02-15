@@ -20,6 +20,7 @@ BuildRequires: boost-thread
 BuildRequires: boost-system
 BuildRequires: boost-filesystem
 BuildRequires: scons
+BuildRequires: pkgconfig(uuid)
 
 
 %description
@@ -34,7 +35,7 @@ SLP oicca application
 echo %{ROOTDIR}
 
 scons TARGET_OS=tizen -c
-scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} LOGGING=%{LOGGING}
+scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} LOGGING=%{LOGGING} WITH_TCP=%{WITH_TCP}
 
 %install
 mkdir -p %{DEST_INC_DIR}

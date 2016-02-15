@@ -30,9 +30,8 @@
 #include <mutex>
 #include <thread>
 
-#include <RCSResourceAttributes.h>
-#include <RCSResponse.h>
-#include <RCSRequest.h>
+#include "RCSResourceAttributes.h"
+#include "RCSResponse.h"
 
 namespace OC
 {
@@ -43,6 +42,9 @@ namespace OIC
 {
     namespace Service
     {
+
+        class RCSRequest;
+        class RCSRepresentation;
 
         /**
          * @brief Thrown when lock has not been acquired.
@@ -75,7 +77,7 @@ namespace OIC
          * in instead of overriding SetRequestHandler.
          * </p>
          */
-        class RCSResourceObject
+        class RCSResourceObject : public std::enable_shared_from_this< RCSResourceObject >
         {
             private:
                 class WeakGuard;
@@ -140,6 +142,12 @@ namespace OIC
                         Builder(const std::string& uri, const std::string& type,
                                 const std::string& interface);
 
+                        Builder& addInterface(const std::string& interface);
+                        Builder& addInterface(std::string&& interface);
+
+                        Builder& addType(const std::string& type);
+                        Builder& addType(std::string&& type);
+
                         /**
                          * Sets whether the resource is discoverable.
                          *
@@ -155,6 +163,14 @@ namespace OIC
                          *
                          */
                         Builder& setObservable(bool observable);
+
+                        /**
+                         * Sets whether the resource should be secure or not.
+                         *
+                         * @param secureFlag whether to be secure or not.
+                         *
+                         */
+                        Builder& setSecureFlag(bool secureFlag);
 
                         /**
                          * Sets attributes for the resource.
@@ -179,8 +195,8 @@ namespace OIC
 
                     private:
                         std::string m_uri;
-                        std::string m_type;
-                        std::string m_interface;
+                        std::vector< std::string > m_types;
+                        std::vector< std::string > m_interfaces;
                         uint8_t m_properties;
                         RCSResourceAttributes m_resourceAttributes;
                 };
@@ -440,15 +456,27 @@ namespace OIC
                  */
                 SetRequestHandlerPolicy getSetRequestHandlerPolicy() const;
 
+                void bindResource(const RCSResourceObject::Ptr&);
+
+                void unbindResource(const RCSResourceObject::Ptr&);
+
+                std::vector< RCSResourceObject::Ptr > getBoundResources() const;
+
+                std::vector< std::string > getInterfaces() const;
+                std::vector< std::string > getTypes() const;
+
+                RCSRepresentation toRepresentation() const;
+
         private:
-            RCSResourceObject(uint8_t, RCSResourceAttributes&&);
+            RCSResourceObject(const std::string&, uint8_t, RCSResourceAttributes&&);
 
-            OCEntityHandlerResult entityHandler(std::shared_ptr< OC::OCResourceRequest >);
+            static OCEntityHandlerResult entityHandler(const std::weak_ptr< RCSResourceObject >&,
+                    const std::shared_ptr< OC::OCResourceRequest >&);
 
-            OCEntityHandlerResult handleRequest(std::shared_ptr< OC::OCResourceRequest >);
-            OCEntityHandlerResult handleRequestGet(std::shared_ptr< OC::OCResourceRequest >);
-            OCEntityHandlerResult handleRequestSet(std::shared_ptr< OC::OCResourceRequest >);
-            OCEntityHandlerResult handleObserve(std::shared_ptr< OC::OCResourceRequest >);
+            OCEntityHandlerResult handleRequest(const std::shared_ptr< OC::OCResourceRequest >&);
+            OCEntityHandlerResult handleRequestGet(const std::shared_ptr< OC::OCResourceRequest >&);
+            OCEntityHandlerResult handleRequestSet(const std::shared_ptr< OC::OCResourceRequest >&);
+            OCEntityHandlerResult handleObserve(const std::shared_ptr< OC::OCResourceRequest >&);
 
             void expectOwnLock() const;
 
@@ -469,12 +497,16 @@ namespace OIC
         private:
             const uint8_t m_properties;
 
+            const std::string m_uri;
+            std::vector< std::string > m_interfaces;
+            std::vector< std::string > m_types;
+
             OCResourceHandle m_resourceHandle;
 
             RCSResourceAttributes m_resourceAttributes;
 
-            GetRequestHandler m_getRequestHandler;
-            SetRequestHandler m_setRequestHandler;
+            std::shared_ptr< GetRequestHandler > m_getRequestHandler;
+            std::shared_ptr< SetRequestHandler > m_setRequestHandler;
 
             AutoNotifyPolicy m_autoNotifyPolicy;
             SetRequestHandlerPolicy m_setRequestHandlerPolicy;
@@ -487,6 +519,10 @@ namespace OIC
 
             std::mutex m_mutexAttributeUpdatedListeners;
 
+            mutable std::mutex m_mutexForBoundResources;
+
+            std::vector< RCSResourceObject::Ptr > m_boundResources;
+
         };
 
         /**
@@ -495,8 +531,10 @@ namespace OIC
          * the RCSResourceObject it is given. When control leaves the scope in which the LockGuard
          * object was created, the LockGuard is destructed and the attributes is unlocked.
          *
-         * Additionally when this is destructed, it tries to notify depending on AutoNotifyPolicy
-         * of the RCSResourceObject.
+         * Additionally when it is destructed and only when destructed not by stack unwinding
+         * caused by an exception, it tries to notify depending on AutoNotifyPolicy.
+         *
+         * @note The destrcutor can throw an exception if auto notify failed.
          */
         class RCSResourceObject::LockGuard
         {
@@ -519,7 +557,13 @@ namespace OIC
             * @overload
             */
             LockGuard(const RCSResourceObject::Ptr, AutoNotifyPolicy);
-            ~LockGuard();
+
+            /**
+             * @throws RCSPlatformException If auto notify operation failed.
+             *
+             * @note The exception will never be thrown while stack unwinding.
+             */
+            ~LockGuard() noexcept(false);
 
             LockGuard(const LockGuard&) = delete;
             LockGuard(LockGuard&&) = delete;

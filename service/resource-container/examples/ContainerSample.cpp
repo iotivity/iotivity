@@ -24,23 +24,13 @@
 
 #include "RCSResourceContainer.h"
 #include "RCSBundleInfo.h"
-#include "oc_logger.hpp"
 #include <iostream>
+#include <string.h>
 
 using namespace std;
 using namespace OIC::Service;
-using OC::oc_log_stream;
 
 #define MAX_PATH 2048
-
-/* Annother way to create a context: */
-auto info_logger = []() -> boost::iostreams::stream<OC::oc_log_stream> &
-{
-    static OC::oc_log_stream ols(oc_make_ostream_logger);
-    static boost::iostreams::stream<OC::oc_log_stream> os(ols);
-
-    return os;
-};
 
 void getCurrentPath(std::string *pPath)
 {
@@ -64,10 +54,7 @@ void getCurrentPath(std::string *pPath)
 
 int main()
 {
-    info_logger()->set_module("ContainerTest");
-    info_logger()->set_level(OC_LOG_INFO);
-
-    info_logger() << "Starting container test." << std::flush;
+    cout << "Starting container test." << endl;
 
     std::string strConfigPath;
     getCurrentPath(&strConfigPath);
@@ -85,8 +72,8 @@ int main()
     std::map<string, string> bundleParams;
     container->addBundle("oic.bundle.hueSample", "", "libHueBundle.so", "huesample", bundleParams);
 
-    std::list<RCSBundleInfo *> bundles = container->listBundles();
-    std::list<RCSBundleInfo *>::iterator bundleIt;
+    std::list<unique_ptr<RCSBundleInfo>> bundles = container->listBundles();
+    std::list<unique_ptr<RCSBundleInfo>>::iterator bundleIt;
 
     cout << "\t>>> bundle list size : " << bundles.size() << endl;
     for (bundleIt = bundles.begin(); bundleIt != bundles.end(); bundleIt++)
@@ -150,10 +137,10 @@ int main()
     bundleParams["libraryPath"] = ".";
     std::string activator = "org.iotivity.bundle.hue.HueBundleActivator";
     container->addBundle("oic.bundle.hueJavaSample2", "/hueJava",
-                 "../../../../../../service/resource-container/" \
-                 "examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar",
-                 activator,
-                 bundleParams);
+                         "../../../../../../service/resource-container/" \
+                         "examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar",
+                         activator,
+                         bundleParams);
 
     bundles = container->listBundles();
     cout << "\t>>> bundle list size : " << bundles.size() << endl;

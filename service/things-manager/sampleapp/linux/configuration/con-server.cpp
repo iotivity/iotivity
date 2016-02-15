@@ -217,7 +217,7 @@ OCEntityHandlerResult entityHandlerForResource(std::shared_ptr< OCResourceReques
 }
 
 // callback handler on GET request
-void onBootstrap(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode)
+void onBootstrap(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
     pthread_mutex_lock(&mutex_lock);
     isWaiting = 0;
@@ -238,7 +238,7 @@ void onBootstrap(const HeaderOptions& headerOptions, const OCRepresentation& rep
     defaultRegion = rep.getValue< std::string >("r");
     defaultCurrency = rep.getValue< std::string >("c");
 
-    std::cout << "\DeviceName : " << defaultDeviceName << std::endl;
+    std::cout << "\tDeviceName : " << defaultDeviceName << std::endl;
     std::cout << "\tLocation : " << defaultLocation << std::endl;
     std::cout << "\tLocationName : " << defaultLocationName << std::endl;
     std::cout << "\tCurrency : " << defaultCurrency << std::endl;

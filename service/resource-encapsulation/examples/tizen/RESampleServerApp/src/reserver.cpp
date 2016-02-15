@@ -30,10 +30,16 @@ using namespace std;
 using namespace OC;
 using namespace OIC::Service;
 
-RCSResourceObject::Ptr server;
-static bool serverCallback = false;
-
 # define checkServer NULL!=server?true:false
+
+RCSResourceObject::Ptr server;
+static bool serverStarted = false;
+static bool serverCallback = false;
+int isPresenceOn = PRESENCE_ON;
+
+std::string g_resourceUri;
+std::string g_resourceType;
+std::string g_attributeKey;
 
 static Evas_Object *log_entry = NULL;
 static Evas_Object *list = NULL;
@@ -70,17 +76,18 @@ void printAttribute(const RCSResourceAttributes &attrs)
 
 static void onDestroy()
 {
-    server = NULL;
     string logMessage = "SERVER DESTROYED";
 
-    if(isPresenceOn == PRESENCE_ON)
+    if(true == serverStarted)
     {
-        OCPlatform::stopPresence();
-    }
+        server = nullptr;
+        if(isPresenceOn == PRESENCE_ON)
+        {
+            OCPlatform::stopPresence();
+        }
 
-    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
-    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
-                                          &logMessage);
+        serverStarted = false;
+    }
 }
 
 //hander for get request (if developer choose second option for resource Creation)
@@ -129,16 +136,16 @@ static void list_selected_cb(void *data, Evas_Object *obj, void *event_info)
     elm_list_item_selected_set(it, EINA_FALSE);
 }
 
-static void increaseTemp(void *data, Evas_Object *obj, void *event_info)
+static void increaseAttribute(void *data, Evas_Object *obj, void *event_info)
 {
     string logMessage = "";
 
     if (checkServer)
     {
         RCSResourceObject::LockGuard lock(server);
-        server->getAttributes()[attributeKey] = server->getAttribute<int>(attributeKey) + 10;
-        string tempString  = std::to_string(server->getAttribute<int>(attributeKey));
-        logMessage = "TEMPERATURE CHANGED : " + tempString + "<br>";
+        server->getAttributes()[g_attributeKey] = server->getAttribute<int>(g_attributeKey) + 1;
+        string tempString  = std::to_string(server->getAttribute<int>(g_attributeKey));
+        logMessage = g_attributeKey + " CHANGED : " + tempString + "<br>";
 
     }
     else
@@ -152,16 +159,16 @@ static void increaseTemp(void *data, Evas_Object *obj, void *event_info)
                                           &logMessage);
 }
 
-static void decreaseTemp(void *data, Evas_Object *obj, void *event_info)
+static void decreaseAttribute(void *data, Evas_Object *obj, void *event_info)
 {
     string logMessage = "";
 
     if (checkServer)
     {
         RCSResourceObject::LockGuard lock(server);
-        server->getAttributes()[attributeKey] = server->getAttribute<int>(attributeKey) - 10;
-        string tempString  = std::to_string(server->getAttribute<int>(attributeKey));
-        logMessage = "TEMPERATURE CHANGED : " + tempString + "<br>";
+        server->getAttributes()[g_attributeKey] = server->getAttribute<int>(g_attributeKey) - 1;
+        string tempString  = std::to_string(server->getAttribute<int>(g_attributeKey));
+        logMessage = g_attributeKey + " CHANGED : " + tempString + "<br>";
     }
     else
     {
@@ -180,8 +187,8 @@ static void initServer()
 
     try
     {
-        server = RCSResourceObject::Builder(resourceUri, resourceType,
-                                            resourceInterface).setDiscoverable(true).setObservable(true).build();
+        server = RCSResourceObject::Builder(g_resourceUri, g_resourceType,
+                                            RESOURCE_INTERFACE).setDiscoverable(true).setObservable(true).build();
     }
     catch (const RCSPlatformException &e)
     {
@@ -190,14 +197,14 @@ static void initServer()
 
     server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
     server->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::NEVER);
-    server->setAttribute(attributeKey, DEFALUT_VALUE);
+    server->setAttribute(g_attributeKey, DEFALUT_VALUE);
 
     string logMessage = "SERVER CREATED<br>";
     dlog_print(DLOG_INFO, LOG_TAG, "#### %s", logMessage.c_str());
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                           &logMessage);
 
-    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))showGroupAPIs, NULL);
+    ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))showAPIs, NULL);
 }
 
 static void
@@ -213,30 +220,30 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
 {
     datetime_popup_fields *popup_fields = (datetime_popup_fields *)data;
     Evas_Object *entry = popup_fields->entry;
-    const char *temperatureString = elm_entry_entry_get(entry);
+    const char *attributeString = elm_entry_entry_get(entry);
     // Remove white spaces(if any) at the beginning
     string logMessage = "";
     int beginning = 0;
-    while (temperatureString[beginning] == ' ')
+    while (attributeString[beginning] == ' ')
     {
         (beginning)++;
     }
 
-    int len = strlen(temperatureString);
-    if (NULL == temperatureString || 1 > len)
+    int len = strlen(attributeString);
+    if (NULL == attributeString || 1 > len)
     {
-        dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL Temperature Value");
-        logMessage = "Temperature Cannot be NULL<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL Value");
+        logMessage = g_attributeKey + "Cannot be NULL<br>";
     }
     else
     {
         if (checkServer)
         {
             RCSResourceObject::LockGuard lock(server);
-            int temperate = atoi(temperatureString);
-            server->getAttributes()[attributeKey] = temperate;
-            logMessage = "TEMPERATURE CHANGED : " + to_string(server->getAttribute<int>
-                         (attributeKey)) + "<br>";
+            int attributeInt = atoi(attributeString);
+            server->getAttributes()[g_attributeKey] = attributeInt;
+            logMessage = g_attributeKey + " CHANGED : " + to_string(server->getAttribute<int>
+                         (g_attributeKey)) + "<br>";
         }
         else
         {
@@ -253,7 +260,7 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
 }
 
 static void
-list_get_temperaure_cb(void *data, Evas_Object *obj, void *event_info)
+list_get_attribute_cb(void *data, Evas_Object *obj, void *event_info)
 {
     Evas_Object *popup, *btn;
     Evas_Object *nf = naviframe;
@@ -265,7 +272,14 @@ list_get_temperaure_cb(void *data, Evas_Object *obj, void *event_info)
     elm_popup_align_set(popup, ELM_NOTIFY_ALIGN_FILL, 1.0);
     eext_object_event_callback_add(popup, EEXT_CALLBACK_BACK, eext_popup_back_cb, NULL);
     evas_object_size_hint_weight_set(popup, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    elm_object_part_text_set(popup, "title,text", "Enter the temperature");
+    if (LIGHT_RT == g_resourceType)
+    {
+        elm_object_part_text_set(popup, "title,text", "Enter the brightness");
+    }
+    else
+    {
+        elm_object_part_text_set(popup, "title,text", "Enter the temperature");
+    }
 
     layout = elm_layout_add(popup);
     elm_layout_file_set(layout, ELM_DEMO_EDJ, "popup_datetime_text");
@@ -278,7 +292,15 @@ list_get_temperaure_cb(void *data, Evas_Object *obj, void *event_info)
     evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
     evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
     eext_entry_selection_back_event_allow_set(entry, EINA_TRUE);
-    elm_object_part_text_set(entry, "elm.guide", "in degree celsius");
+    if (LIGHT_RT == g_resourceType)
+    {
+        elm_object_part_text_set(entry, "elm.guide", "RANGE (0 - 50)");
+    }
+    else
+    {
+        elm_object_part_text_set(entry, "elm.guide", "in degree celsius");
+    }
+
     elm_entry_input_panel_layout_set(entry, ELM_INPUT_PANEL_LAYOUT_NUMBER);
     elm_object_part_content_set(layout, "elm.swallow.content", entry);
 
@@ -311,21 +333,36 @@ list_get_temperaure_cb(void *data, Evas_Object *obj, void *event_info)
     evas_object_show(popup);
 }
 
-void *showGroupAPIs(void *data)
+void *showAPIs(void *data)
 {
     // Add items to the list only if the list is empty
     const Eina_List *eina_list = elm_list_items_get(list);
     int count = eina_list_count(eina_list);
     if (!count)
     {
-        elm_list_item_append(list, "1. Increase Temperature", NULL, NULL,
-                             increaseTemp, NULL);
+        if (LIGHT_RT == g_resourceType)
+        {
+            elm_list_item_append(list, "1. Increase Brightness", NULL, NULL,
+                                 increaseAttribute, NULL);
 
-        elm_list_item_append(list, "2. Decrease Temperature", NULL, NULL,
-                             decreaseTemp, NULL);
+            elm_list_item_append(list, "2. Decrease Brightness", NULL, NULL,
+                                 decreaseAttribute, NULL);
 
-        elm_list_item_append(list, "3. Set Temperature", NULL, NULL,
-                             list_get_temperaure_cb, NULL);
+            elm_list_item_append(list, "3. Set Brightness", NULL, NULL,
+                                 list_get_attribute_cb, NULL);
+        }
+        else
+        {
+            elm_list_item_append(list, "1. Increase Temperature", NULL, NULL,
+                                 increaseAttribute, NULL);
+
+            elm_list_item_append(list, "2. Decrease Temperature", NULL, NULL,
+                                 decreaseAttribute, NULL);
+
+            elm_list_item_append(list, "3. Set Temperature", NULL, NULL,
+                                 list_get_attribute_cb, NULL);
+        }
+
 
         elm_list_go(list);
     }
@@ -408,6 +445,7 @@ void serverCreateUI(void *data, Evas_Object *obj, void *event_info)
 void start_server(void *data, Evas_Object *obj, void *event_info)
 {
     server = NULL;
+    serverStarted = true;
     string logMessage = "SERVER WITHOUT CALLBACK<br>";
 
     serverCallback = false;
@@ -421,6 +459,7 @@ void start_server(void *data, Evas_Object *obj, void *event_info)
 void start_server_cb(void *data, Evas_Object *obj, void *event_info)
 {
     server = NULL;
+    serverStarted = true;
     string logMessage = "SERVER WITH CALLBACK<br>";
 
     serverCallback = true;
@@ -441,4 +480,22 @@ void start_server_cb(void *data, Evas_Object *obj, void *event_info)
     ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
                                           &logMessage);
 
+}
+
+void temperatureResource(void *data, Evas_Object *obj, void *event_info)
+{
+    g_resourceUri = TEMPERATURE_URI;
+    g_resourceType = TEMPERATURE_RT;
+    g_attributeKey = TEMPERATURE_AK;
+
+    serverCreateUI(data, NULL, NULL);
+}
+
+void lightResource(void *data, Evas_Object *obj, void *event_info)
+{
+    g_resourceUri = LIGHT_URI;
+    g_resourceType = LIGHT_RT;
+    g_attributeKey = LIGHT_AK;
+
+    serverCreateUI(data, NULL, NULL);
 }

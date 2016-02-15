@@ -24,6 +24,7 @@
 #include "RCSDiscoveryManager.h"
 #include "RCSResourceObject.h"
 #include "RCSAddress.h"
+#include "RCSRequest.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -161,6 +162,44 @@ TEST_F(RemoteResourceObjectTest, SetRemoteAttributesSetsAttributesOfServer)
     Wait();
 
     ASSERT_EQ(newValue, server->getAttributeValue(ATTR_KEY));
+}
+
+TEST_F(RemoteResourceObjectTest, QueryParamsForGetWillBePassedToBase)
+{
+    class CustomHandler
+    {
+    public:
+        virtual RCSGetResponse handle(const RCSRequest&, RCSResourceAttributes&) = 0;
+        virtual ~CustomHandler() {}
+    };
+
+    constexpr char PARAM_KEY[] { "aKey" };
+    constexpr char VALUE[] { "value" };
+
+    object->get(RCSQueryParams().setResourceInterface(RESOURCEINTERFACE).setResuorceType(RESOURCETYPE).
+            put(PARAM_KEY, VALUE),
+            [](const HeaderOpts&, const RCSRepresentation&, int){});
+
+    auto mockHandler = mocks.Mock< CustomHandler >();
+
+    mocks.ExpectCall(mockHandler, CustomHandler::handle).
+            Match([](const RCSRequest& request, RCSResourceAttributes&)
+            {
+                return request.getInterface() == RESOURCEINTERFACE &&
+                        request.getQueryParams().at(PARAM_KEY) == VALUE;
+            }
+    ).
+            Do([this](const RCSRequest&, RCSResourceAttributes&)
+            {
+                Proceed();
+                return RCSGetResponse::defaultAction();
+            }
+    );
+
+    server->setGetRequestHandler(std::bind(&CustomHandler::handle, mockHandler,
+            std::placeholders::_1, std::placeholders::_2));
+
+    Wait();
 }
 
 TEST_F(RemoteResourceObjectTest, MonitoringIsNotStartedByDefault)

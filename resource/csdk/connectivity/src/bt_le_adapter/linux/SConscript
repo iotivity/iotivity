@@ -25,63 +25,15 @@ import os.path
 # Top-level build (variant) directory.
 root_build_dir = env['BUILD_DIR']
 
+# Source node that allows us to easily obtain paths and directories
+# related to this source directory.
+src_node = File(SConscript).Dir(os.curdir).srcnode()
+
+# Absolute path of the source directory.
+this_src_dir = src_node.abspath
+
 # Build (variant) directory corresponding to this source directory.
-this_build_dir = os.path.join(root_build_dir,
-                              os.path.dirname(File(SConscript).srcnode().path))
-
-# The Linux BLE adapter implementation uses GDBus to make D-Bus based
-# method calls to BlueZ.  Pull in the necessary dependencies.
-env.ParseConfig("pkg-config gio-unix-2.0 --cflags --libs")
-
-# Set up commands to generate GDBus code from the D-Bus introspection
-# XML.
-freedesktop_prefix = 'org.freedesktop.DBus.'
-bluez_prefix = 'org.bluez.'
-
-dbus_introspection_xml = {
-    'object_manager' : freedesktop_prefix,
-    'bluez'          : bluez_prefix,
-}
-
-# The source files to be compiled as part of the connectivity
-# abstraction library.
-glue_files = []
-
-for file, prefix in dbus_introspection_xml.items():
-    source_xml  = file + '.xml'
-    glue        = file + '-glue'
-    glue_source = glue + '.c'
-    glue_header = glue + '.h'
-    targets     = [ glue_source, glue_header ]
-
-    # Include the glue header in the list as well to make sure it is
-    # generated before other source files that depend on it are
-    # compiled.
-    glue_files += targets
-
-    # Generate GDBus skeletons in the variant (build) directory.
-    env.Command(targets,
-                source_xml,
-                'cd %s '
-                '&& gdbus-codegen --generate-c-code %s --interface-prefix %s %s '
-                '&& cd -'
-                % (this_build_dir,
-                   glue,
-                   prefix,
-                   os.path.join(env['SRC_DIR'], '$SOURCE')))
-
-    # Mark generated file for cleaning when running "scons -c".
-    #
-    # @todo Verify that the generated *-glue.[ch] files are removed on
-    #       running "scons -c" once that is working in the master
-    #       branch again.
-    for target in targets:
-        generated_target = os.path.join(this_build_dir, target)
-        env.Clean(target, generated_target)
-
-# The generated "glue" headers are found in the build directory
-# corresponding to this source directory.
-env.AppendUnique(CPPPATH = this_build_dir)
+this_build_dir = os.path.join(root_build_dir, src_node.path)
 
 # The Linux BLE transport exports its GATT and LE advertisement
 # related D-Bus interfaces to the D-Bus system bus so that they may be
@@ -119,6 +71,22 @@ env.AppendUnique(
         ('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_32')
     ])
 
+# The Linux BLE adapter implementation uses GDBus to make D-Bus based
+# method calls to BlueZ.  Pull in the necessary dependencies.
+env.ParseConfig("pkg-config gio-unix-2.0 --cflags --libs")
+
+# Set up commands to generate GDBus code from the D-Bus introspection
+# XML.
+freedesktop_prefix = 'org.freedesktop.DBus.'
+bluez_prefix = 'org.bluez.'
+
+dbus_introspection_xml = {
+    'object_manager' : freedesktop_prefix,
+    'bluez'          : bluez_prefix,
+}
+
+# The source files to be compiled as part of the connectivity
+# abstraction library.
 src_files = [ 'characteristic.c',
               'descriptor.c',
               'service.c',
@@ -131,7 +99,49 @@ src_files = [ 'characteristic.c',
               'recv.c',
               'caleinterface.c'
           ]
-src_files = glue_files + src_files
+
+glue_files = []
+
+for file, prefix in dbus_introspection_xml.items():
+    source_xml  = file + '.xml'
+    glue        = file + '-glue'
+    glue_source = glue + '.c'
+    glue_header = glue + '.h'
+
+    glue_files.append(glue_source)
+
+    # Generate GDBus skeletons in the variant (build) directory.
+    #
+    # A link to the generated GDBus glue header is also created in the
+    # source directory to avoid having to explicitly add the variant
+    # directory to the preprocessor include path.
+    targets     = [ glue_source, glue_header ]
+    glue_header_gen  = os.path.join(this_build_dir, glue_header)
+    glue_header_copy = os.path.join(this_src_dir, glue_header)
+
+    gen = env.Command(targets,
+                      source_xml,
+                      'cd %s '
+                      '&& gdbus-codegen --generate-c-code %s '
+                      '   --interface-prefix %s ${SOURCE.abspath} '
+                      '&& ln -sf %s %s '
+                      '&& cd -'
+                      % (this_build_dir,
+                         glue, prefix,
+                         glue_header_gen, glue_header_copy))
+
+    # Mark generated file for cleaning when running "scons -c".
+    for target in targets:
+        generated_target = os.path.join(this_build_dir, target)
+        env.Clean(target, generated_target)
+
+    env.Clean(glue_source, glue_header_copy)
+
+    # Force a dependency on copied glue header to make sure it exists
+    # before compilation of the non-generated source files begins.
+    env.Depends(src_files, gen)
+
+src_files += glue_files
 
 Return('src_files')
 

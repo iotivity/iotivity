@@ -39,9 +39,9 @@
 #include "pdu.h"
 
 // Module Name
-#define VERIFY_NON_NULL(arg) { if (!arg) {OC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
+#define VERIFY_NON_NULL(arg) { if (!arg) {OIC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
 
-#define TAG  "ocserverrequest"
+#define TAG  "OIC_RI_SERVERREQUEST"
 
 static struct OCServerRequest * serverRequestList = NULL;
 static struct OCServerResponse * serverResponseList = NULL;
@@ -76,7 +76,7 @@ static OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestH
     serverResponse->requestHandle = requestHandle;
 
     *response = serverResponse;
-    OC_LOG(INFO, TAG, "Server Response Added!!");
+    OIC_LOG(INFO, TAG, "Server Response Added!!");
     LL_APPEND (serverResponseList, serverResponse);
     return OC_STACK_OK;
 
@@ -103,7 +103,7 @@ static void DeleteServerRequest(OCServerRequest * serverRequest)
         OICFree(serverRequest->requestToken);
         OICFree(serverRequest);
         serverRequest = NULL;
-        OC_LOG(INFO, TAG, "Server Request Removed!!");
+        OIC_LOG(INFO, TAG, "Server Request Removed!!");
     }
 }
 
@@ -117,9 +117,9 @@ static void DeleteServerResponse(OCServerResponse * serverResponse)
     if(serverResponse)
     {
         LL_DELETE(serverResponseList, serverResponse);
-        OICFree(serverResponse->payload);
+        OCPayloadDestroy(serverResponse->payload);
         OICFree(serverResponse);
-        OC_LOG(INFO, TAG, "Server Response Removed!!");
+        OIC_LOG(INFO, TAG, "Server Response Removed!!");
     }
 }
 
@@ -161,7 +161,7 @@ static OCStackResult OCSendResponse(const CAEndpoint_t *object, CAResponseInfo_t
                        &(responseInfo->info.numOptions));
     if(OC_STACK_OK != rmResult)
     {
-        OC_LOG(ERROR, TAG, "Add option failed");
+        OIC_LOG(ERROR, TAG, "Add option failed");
         return rmResult;
     }
 #endif
@@ -171,7 +171,7 @@ static OCStackResult OCSendResponse(const CAEndpoint_t *object, CAResponseInfo_t
     CAResult_t result = CASendResponse(object, responseInfo);
     if(CA_STATUS_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "CASendResponse failed with CA error %u", result);
+        OIC_LOG_V(ERROR, TAG, "CASendResponse failed with CA error %u", result);
         return CAResultToOCResult(result);
     }
     return OC_STACK_OK;
@@ -194,24 +194,24 @@ OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tok
 {
     if(!token)
     {
-        OC_LOG(ERROR, TAG, "Invalid Parameter Token");
+        OIC_LOG(ERROR, TAG, "Invalid Parameter Token");
         return NULL;
     }
 
     OCServerRequest * out = NULL;
-    OC_LOG(INFO, TAG,"Get server request with token");
-    OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
+    OIC_LOG(INFO, TAG,"Get server request with token");
+    OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
 
-    OC_LOG(INFO, TAG,"Found token");
+    OIC_LOG(INFO, TAG,"Found token");
     LL_FOREACH (serverRequestList, out)
     {
-        OC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->requestToken, tokenLength);
+        OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->requestToken, tokenLength);
         if(memcmp(out->requestToken, token, tokenLength) == 0)
         {
             return out;
         }
     }
-    OC_LOG(ERROR, TAG, "Server Request not found!!");
+    OIC_LOG(ERROR, TAG, "Server Request not found!!");
     return NULL;
 }
 
@@ -232,7 +232,7 @@ OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle)
             return out;
         }
     }
-    OC_LOG(ERROR, TAG, "Server Request not found!!");
+    OIC_LOG(ERROR, TAG, "Server Request not found!!");
     return NULL;
 }
 
@@ -254,7 +254,7 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
             return out;
         }
     }
-    OC_LOG(ERROR, TAG, "Server Response not found!!");
+    OIC_LOG(ERROR, TAG, "Server Response not found!!");
     return NULL;
 }
 
@@ -274,7 +274,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
 
     OCServerRequest * serverRequest = NULL;
 
-    OC_LOG_V(INFO, TAG, "addserverrequest entry!! [%s:%u]", devAddr->addr, devAddr->port);
+    OIC_LOG_V(INFO, TAG, "addserverrequest entry!! [%s:%u]", devAddr->addr, devAddr->port);
 
     serverRequest = (OCServerRequest *) OICCalloc(1, sizeof(OCServerRequest) +
         (reqTotalSize ? reqTotalSize : 1) - 1);
@@ -336,7 +336,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     serverRequest->devAddr = *devAddr;
 
     *request = serverRequest;
-    OC_LOG(INFO, TAG, "Server Request Added!!");
+    OIC_LOG(INFO, TAG, "Server Request Added!!");
     LL_APPEND (serverRequestList, serverRequest);
     return OC_STACK_OK;
 
@@ -442,7 +442,7 @@ CAResponseResult_t ConvertEHResultToCAResult (OCEntityHandlerResult result, OCMe
                    // This should not happen but,
                    // give it a value just in case but output an error
                    caResult = CA_CONTENT;
-                   OC_LOG_V(ERROR, TAG, "Unexpected OC_EH_OK return code for method [d].", method);
+                   OIC_LOG_V(ERROR, TAG, "Unexpected OC_EH_OK return code for method [%d].", method);
            }
             break;
         case OC_EH_ERROR:
@@ -522,7 +522,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
     else
     {
-        OC_LOG(ERROR, TAG, "default responseInfo type is NON");
+        OIC_LOG(ERROR, TAG, "default responseInfo type is NON");
         responseInfo.info.type = CA_MSG_NONCONFIRM;
     }
 
@@ -550,7 +550,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
         if(!responseInfo.info.options)
         {
-            OC_LOG(FATAL, TAG, "Memory alloc for options failed");
+            OIC_LOG(FATAL, TAG, "Memory alloc for options failed");
             return OC_STACK_NO_MEMORY;
         }
 
@@ -614,7 +614,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                                 &responseInfo.info.payloadSize))
                         != OC_STACK_OK)
                 {
-                    OC_LOG(ERROR, TAG, "Error converting payload");
+                    OIC_LOG(ERROR, TAG, "Error converting payload");
                     OICFree(responseInfo.info.options);
                     return result;
                 }
@@ -634,10 +634,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 #ifdef RA_ADAPTER
                             , CA_ADAPTER_REMOTE_ACCESS
 #endif
-
-#ifdef TCP_ADAPTER
                             , CA_ADAPTER_TCP
-#endif
                         };
 
     size_t size = sizeof(CAConnTypes)/ sizeof(CATransportAdapter_t);
@@ -655,10 +652,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 #ifdef RA_ADAP
                 | CA_ADAPTER_REMOTE_ACCESS
 #endif
-
-#ifdef TCP_ADAPTER
                 | CA_ADAPTER_TCP
-#endif
             );
     }
 
@@ -681,11 +675,11 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
     }
 #else
 
-    OC_LOG(INFO, TAG, "Calling OCSendResponse with:");
-    OC_LOG_V(INFO, TAG, "\tEndpoint address: %s", responseEndpoint.addr);
-    OC_LOG_V(INFO, TAG, "\tEndpoint adapter: %s", responseEndpoint.adapter);
-    OC_LOG_V(INFO, TAG, "\tResponse result : %s", responseInfo.result);
-    OC_LOG_V(INFO, TAG, "\tResponse for uri: %s", responseInfo.info.resourceUri);
+    OIC_LOG(INFO, TAG, "Calling OCSendResponse with:");
+    OIC_LOG_V(INFO, TAG, "\tEndpoint address: %s", responseEndpoint.addr);
+    OIC_LOG_V(INFO, TAG, "\tEndpoint adapter: %s", responseEndpoint.adapter);
+    OIC_LOG_V(INFO, TAG, "\tResponse result : %s", responseInfo.result);
+    OIC_LOG_V(INFO, TAG, "\tResponse for uri: %s", responseInfo.info.resourceUri);
 
     result = OCSendResponse(&responseEndpoint, &responseInfo);
 #endif
@@ -713,11 +707,11 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 {
     if(!ehResponse || !ehResponse->payload)
     {
-        OC_LOG(ERROR, TAG, "HandleAggregateResponse invalid parameters");
+        OIC_LOG(ERROR, TAG, "HandleAggregateResponse invalid parameters");
         return OC_STACK_INVALID_PARAM;
     }
 
-    OC_LOG(INFO, TAG, "Inside HandleAggregateResponse");
+    OIC_LOG(INFO, TAG, "Inside HandleAggregateResponse");
 
     OCServerRequest *serverRequest = GetServerRequestUsingHandle((OCServerRequest *)
                                                                  ehResponse->requestHandle);
@@ -729,11 +723,11 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
     {
         if(!serverResponse)
         {
-            OC_LOG(INFO, TAG, "This is the first response fragment");
+            OIC_LOG(INFO, TAG, "This is the first response fragment");
             stackRet = AddServerResponse(&serverResponse, ehResponse->requestHandle);
             if (OC_STACK_OK != stackRet)
             {
-                OC_LOG(ERROR, TAG, "Error adding server response");
+                OIC_LOG(ERROR, TAG, "Error adding server response");
                 return stackRet;
             }
             VERIFY_NON_NULL(serverResponse);
@@ -742,18 +736,20 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
         if(ehResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
         {
             stackRet = OC_STACK_ERROR;
-            OC_LOG(ERROR, TAG, "Error adding payload, as it was the incorrect type");
+            OIC_LOG(ERROR, TAG, "Error adding payload, as it was the incorrect type");
             goto exit;
         }
 
+        OCRepPayload *newPayload = OCRepPayloadClone((OCRepPayload *)ehResponse->payload);
+
         if(!serverResponse->payload)
         {
-            serverResponse->payload = ehResponse->payload;
+            serverResponse->payload = (OCPayload *)newPayload;
         }
         else
         {
             OCRepPayloadAppend((OCRepPayload*)serverResponse->payload,
-                    (OCRepPayload*)ehResponse->payload);
+                    (OCRepPayload*)newPayload);
         }
 
 
@@ -761,7 +757,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 
         if(serverRequest->numResponses == 0)
         {
-            OC_LOG(INFO, TAG, "This is the last response fragment");
+            OIC_LOG(INFO, TAG, "This is the last response fragment");
             ehResponse->payload = serverResponse->payload;
             stackRet = HandleSingleResponse(ehResponse);
             //Delete the request and response
@@ -770,7 +766,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
         }
         else
         {
-            OC_LOG(INFO, TAG, "More response fragments to come");
+            OIC_LOG(INFO, TAG, "More response fragments to come");
             stackRet = OC_STACK_OK;
         }
     }

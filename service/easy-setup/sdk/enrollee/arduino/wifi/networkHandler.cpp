@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2014 Samsung Electronics All Rights Reserved.
+// Copyright 2015 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -20,8 +20,45 @@
 
 #include "networkHandler.h"
 
-#define TAG "ES_NH"
+// Arduino WiFi Shield includes
+#include <SPI.h>
+#include <WiFi.h>
+#include <WiFiUdp.h>
 
+#include <string.h>
+
+#include "logger.h"
+
+/**
+ * @var ES_NH_TAG
+ * @brief Logging tag for module name.
+ */
+#define ES_NH_TAG "ES_NH"
+
+//-----------------------------------------------------------------------------
+// Defines
+//-----------------------------------------------------------------------------
+/**
+ *  ES_MAX_NETWORK_RETRY sets the default number of retry count for network connection.
+ */
+#define ES_MAX_NETWORK_RETRY (5)
+
+//-----------------------------------------------------------------------------
+// Private variables
+//-----------------------------------------------------------------------------
+static IPAddress enrolleeIP;
+
+/**
+ * @var g_retryCounter
+ * @brief Retry counter for cancelling network retry. Currently network retry is limited to 5 attempts
+ */
+static uint16_t g_retryCounter = 0;
+
+
+
+//-----------------------------------------------------------------------------
+// Private internal function prototypes
+//-----------------------------------------------------------------------------
 int findNetwork(const char *ssid);
 int ConnectToNetwork(const char *ssid, const char *pass);
 void printEncryptionType(int thisType);
@@ -29,10 +66,7 @@ void printEncryptionType(int thisType);
 // Arduino WiFi Shield
 // Note : Arduino WiFi Shield currently does NOT support multicast and therefore
 // this server will NOT be listening on 224.0.1.187 multicast address.
-
 static const char ARDUINO_WIFI_SHIELD_UDP_FW_VER[] = "1.1.0";
-
-IPAddress myIP;
 
 ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback cb)
 {
@@ -43,34 +77,47 @@ ESResult ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCa
     // check for the presence of the shield:
     if (WiFi.status() == WL_NO_SHIELD)
     {
-        OC_LOG(ERROR, TAG, "WiFi shield not present");
+        OIC_LOG(ERROR, ES_NH_TAG, "WiFi shield not present");
         return ES_ERROR;
     }
 
     // Verify that WiFi Shield is running the firmware with all UDP fixes
     fwVersion = WiFi.firmwareVersion();
-    OC_LOG_V(INFO, TAG, "WiFi Shield Firmware version %s", fwVersion);
+    OIC_LOG_V(INFO, ES_NH_TAG, "WiFi Shield Firmware version %s", fwVersion);
     if (strncmp(fwVersion, ARDUINO_WIFI_SHIELD_UDP_FW_VER, sizeof(ARDUINO_WIFI_SHIELD_UDP_FW_VER))
             != 0)
     {
-        OC_LOG(DEBUG, TAG, "!!!!! Upgrade WiFi Shield Firmware version !!!!!!");
-        //return ES_ERROR;
+        OIC_LOG(DEBUG, ES_NH_TAG, "!!!!! Upgrade WiFi Shield Firmware version !!!!!!");
+        return ES_ERROR;
     }
 
-    OC_LOG_V(INFO, TAG, "Finding SSID: %s", ssid);
+    //Retry counter is reset everytime the ConnectToWiFiNetwork is invoked
+    g_retryCounter = 0;
 
-    while (findNetwork(ssid) == 0) // found
+    OIC_LOG_V(INFO, ES_NH_TAG, "Finding SSID: %s", ssid);
+
+    while ((findNetwork(ssid) == 0) && g_retryCounter < ES_MAX_NETWORK_RETRY) // found
     {
         delay(1000);
+        g_retryCounter++;
+    }
+
+    if(g_retryCounter == ES_MAX_NETWORK_RETRY){
+        OIC_LOG_V(ERROR, ES_NH_TAG, "Connection to network failed after %d attempts",
+                  g_retryCounter);
+        return ES_ERROR;
     }
 
     if (cb != NULL)
     {
-        cb(ES_NETWORKFOUND);
+        cb(ES_OK);
     }
 
     if (WiFi.status() == WL_CONNECTED)
         WiFi.disconnect();
+
+    //Retry counter is reset everytime the ConnectToWiFiNetwork is invoked
+    g_retryCounter = 0;
 
     res = ConnectToNetwork(ssid, pass);
 
@@ -124,41 +171,56 @@ int ConnectToNetwork(const char *ssid, const char *pass)
     int status = WL_IDLE_STATUS;
 
     // attempt to connect to Wifi network:
-    while (status != WL_CONNECTED)
+    while (status != WL_CONNECTED && g_retryCounter < ES_MAX_NETWORK_RETRY)
     {
-        OC_LOG_V(INFO, TAG, "Attempting to connect to SSID: %s", ssid);
+        OIC_LOG_V(INFO, ES_NH_TAG, "Attempting to connect to SSID: %s", ssid);
 
         status = WiFi.begin((char *) ssid, (char *) pass);
 
         // wait 10 seconds for connection:
         delay(10000);
-    }
-    OC_LOG(DEBUG, TAG, "Connected to wifi");
 
-    myIP = WiFi.localIP();
-    OC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", myIP[0], myIP[1], myIP[2], myIP[3]);
+        g_retryCounter++;
+    }
+
+    if(g_retryCounter == ES_MAX_NETWORK_RETRY){
+        OIC_LOG_V(ERROR, ES_NH_TAG, "Connection to network failed after %d attempts",
+                  g_retryCounter);
+        return ES_ERROR;
+    }
+
+    OIC_LOG(DEBUG, ES_NH_TAG, "Connected to wifi");
+
+    enrolleeIP = WiFi.localIP();
+    OIC_LOG_V(INFO, ES_NH_TAG, "IP Address:  %d.%d.%d.%d", enrolleeIP[0], enrolleeIP[1],
+                                                           enrolleeIP[2], enrolleeIP[3]);
 
     char buf[50];
-    sprintf(buf, "IP Address:  %d.%d.%d.%d", myIP[0], myIP[1], myIP[2], myIP[3]);
+    sprintf(buf, "IP Address:  %d.%d.%d.%d", enrolleeIP[0], enrolleeIP[1],
+                                             enrolleeIP[2], enrolleeIP[3]);
     Serial.println(buf);
 
     return 0;
 }
 
-int getCurrentNetworkInfo(NetworkType targetType, NetworkInfo *info)
+ESResult getCurrentNetworkInfo(OCConnectivityType targetType, NetworkInfo *info)
 {
-    if (targetType == ES_WIFI && WiFi.status() == WL_CONNECTED)
+    if (targetType == CT_ADAPTER_IP && WiFi.status() == WL_CONNECTED)
     {
-        info->type = ES_WIFI;
+        info->type = CT_ADAPTER_IP;
         info->ipaddr = WiFi.localIP();
         if(strlen(WiFi.SSID())<=MAXSSIDLEN)
-           strcpy(info->ssid, WiFi.SSID());
-        else return -1;
-
-        return 0;
+        {
+            strcpy(info->ssid, WiFi.SSID());
+            return ES_OK;
+        }
+        else
+        {
+            return ES_ERROR;
+        }
     }
 
-    return -1;
+    return ES_ERROR;
 }
 
 void printEncryptionType(int thisType)

@@ -50,15 +50,14 @@ OCStackResult OCRDStop();
  *
  * @param interfaceType a interface type that is being queried.
  * @param resourceType a resource type that is being queried.
- * @param uri A URI of the resource found;
- * @param rt A resource type of the message queried.
- * @param itf A resource type of the interface.
+ * @param payload A payload of the matching resource type or interface type or NULL.
+ * @param addr A device address.
  *
  * @return ::OC_STACK_OK upon success, ::OC_STACK_ERROR is returned except
  * the case that OC_STACK_SUCCESS is returned.
  */
 OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *resourceType,
-        OCResourceCollectionPayload **payload);
+        OCResourceCollectionPayload **payload, OCDevAddr *addr);
 
 #ifdef __cplusplus
 }

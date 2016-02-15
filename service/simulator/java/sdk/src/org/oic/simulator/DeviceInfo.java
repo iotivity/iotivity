@@ -17,7 +17,7 @@
 package org.oic.simulator;
 
 /**
- * This class contains remote device information and provides APIs to access it.
+ * This class contains remote device information.
  */
 public class DeviceInfo {
     private String mName;

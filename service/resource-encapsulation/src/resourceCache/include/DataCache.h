@@ -85,7 +85,7 @@ namespace OIC
 
             public:
                 void onObserve(const HeaderOptions &_hos,
-                               const ResponseStatement &_rep, int _result, int _seq);
+                               const ResponseStatement &_rep, int _result, unsigned int _seq);
                 void onGet(const HeaderOptions &_hos, const ResponseStatement &_rep, int _result);
             private:
                 void onTimeOut(const unsigned int timerID);

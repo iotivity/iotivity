@@ -35,13 +35,16 @@ extern "C"
 #endif
 
 /**
- * TCP Server Information for IPv4 TCP transport
+ * TCP Session Information for IPv4 TCP transport
  */
 typedef struct
 {
-    char addr[MAX_ADDR_STR_SIZE_CA];    /**< TCP Server address */
-    CASocket_t u4tcp;                   /**< TCP Server port */
-} CATCPServerInfo_t;
+    CASecureEndpoint_t sep;             /**< secure endpoint information */
+    int fd;                             /**< file descriptor info */
+    void *recvData;                     /**< received data from remote device*/
+    size_t recvDataLen;                 /**< received data length */
+    size_t totalDataLen;                /**< total data length */
+} CATCPSessionInfo_t;
 
 /**
  * API to initialize TCP Interface.

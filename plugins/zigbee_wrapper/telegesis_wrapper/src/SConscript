@@ -53,7 +53,9 @@ if target_os in ['darwin','ios']:
 tw_src = [
          os.path.join(src_dir, 'resource', 'c_common', 'oic_string', 'src', 'oic_string.c'),
          os.path.join(src_dir, 'resource', 'csdk', 'logger', 'src', 'logger.c'),
-        'telegesis_wrapper.c',
+         'twsocketlist.c',
+         'telegesis_socket.c',
+         'telegesis_wrapper.c'
          ]
 
 env.AppendUnique(TW_SRC = tw_src)

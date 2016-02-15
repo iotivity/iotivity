@@ -38,29 +38,6 @@ extern "C"
 {
 #endif
 
-/**
- * Callback function type for request delivery.
- * @param[out]   object       Endpoint object from which the request is received.
- *                            It contains endpoint address based on the connectivity type.
- * @param[out]   requestInfo  Info for resource model to understand about the request.
- */
-typedef void (*CARequestCallback)(const CAEndpoint_t *object,
-                                  const CARequestInfo_t *requestInfo);
-
-/**
- * Callback function type for response delivery.
- * @param[out]   object           Endpoint object from which the response is received.
- * @param[out]   responseInfo     Identifier which needs to be mapped with response.
- */
-typedef void (*CAResponseCallback)(const CAEndpoint_t *object,
-                                   const CAResponseInfo_t *responseInfo);
-/**
- * Callback function type for error.
- * @param[out]   object           remote device information.
- * @param[out]   errorInfo        CA Error information.
- */
-typedef void (*CAErrorCallback)(const CAEndpoint_t *object,
-                                const CAErrorInfo_t *errorInfo);
 #ifdef RA_ADAPTER
 
 /**
@@ -194,16 +171,6 @@ CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requ
  * @return  ::CA_STATUS_OK or  ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo);
-
-/**
- * Send notification to the remote object.
- * @param[in]   object           Endpoint where the payload need to be sent.
- *                               This endpoint is delivered with Request or response callback.
- * @param[in]   responseInfo     Information for the response.
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
- */
-CAResult_t CASendNotification(const CAEndpoint_t *object,
-                      const  CAResponseInfo_t *responseInfo);
 
 /**
  * Select network to use.

@@ -347,6 +347,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
     {
         port = static_cast<uint16_t>(jPort);
     }
+
     PlatformConfig cfg{
         JniUtils::getServiceType(env, jServiceType),
         JniUtils::getModeType(env, jModeType),
@@ -355,7 +356,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
         JniUtils::getQOS(env, static_cast<int>(jQOS)),
         JniOcSecurity::getOCPersistentStorage()
     };
-
     OCPlatform::Configure(cfg);
 }
 
@@ -392,7 +392,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers0
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -433,7 +433,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers1
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -506,7 +506,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyListOfObservers2(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -581,7 +581,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyListOfObservers3(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -639,7 +639,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -698,7 +698,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -755,7 +755,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -814,7 +814,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo1(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -871,7 +871,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -930,7 +930,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo1(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -966,7 +966,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
         return nullptr;
     }
     JniOcResourceHandle* jniHandle = new JniOcResourceHandle(resourceHandle);
@@ -1045,7 +1045,7 @@ jobject jListener, jint jResourceProperty)
     {
         LOGE("%s", e.reason().c_str());
         delete entityHandler;
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
         return nullptr;
     }
 
@@ -1106,7 +1106,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1237,7 +1237,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerPlatformInfo0(
         catch (OCException& e)
         {
             LOGE("Error is due to %s", e.reason().c_str());
-            ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+            ThrowOcException(e.code(), e.reason().c_str());
         }
 }
 
@@ -1274,7 +1274,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unregisterResource0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1323,7 +1323,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResource0
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1395,7 +1395,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResources0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1450,7 +1450,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResource0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1521,7 +1521,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResources0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1567,7 +1567,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1613,7 +1613,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindInterfaceToResource
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1639,7 +1639,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_startPresence0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1665,7 +1665,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_stopPresence0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1720,7 +1720,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
         return nullptr;
     }
 
@@ -1794,7 +1794,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence1(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
         return nullptr;
     }
 
@@ -1853,7 +1853,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unsubscribePresence0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1965,6 +1965,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }

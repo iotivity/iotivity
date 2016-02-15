@@ -56,7 +56,7 @@ static void FreeCred(OicSecCred_t *cred)
 {
     if(NULL == cred)
     {
-        OC_LOG (ERROR, TAG, "Invalid Parameter");
+        OIC_LOG (ERROR, TAG, "Invalid Parameter");
         return;
     }
     //Note: Need further clarification on roleID data type
@@ -570,6 +570,14 @@ exit:
     return 0;
 }
 
+/**
+ * Get the default value
+ * @retval  NULL for now. Update it when we finalize the default info.
+ */
+static OicSecCred_t* GetCredDefault()
+{
+    return NULL;
+}
 
 /**
  * This function adds the new cred to the credential list.
@@ -631,6 +639,25 @@ OCStackResult RemoveCredential(const OicUuid_t *subject)
 
 }
 
+/**
+ * Remove all credential data on credential resource and persistent storage
+ *
+ * @retval
+ *     OC_STACK_OK              - no errors
+ *     OC_STACK_ERROR           - stack process error
+ */
+OCStackResult RemoveAllCredentials(void)
+{
+    DeleteCredList(gCred);
+    gCred = GetCredDefault();
+
+    if(!UpdatePersistentStorage(gCred))
+    {
+        return OC_STACK_ERROR;
+    }
+    return OC_STACK_OK;
+}
+
 static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ret = OC_EH_ERROR;
@@ -651,7 +678,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
 
 static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *ehRequest)
 {
-    OC_LOG(DEBUG, TAG, "Processing CredDeleteRequest");
+    OIC_LOG(DEBUG, TAG, "Processing CredDeleteRequest");
 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
@@ -708,7 +735,7 @@ OCEntityHandlerResult CredEntityHandler (OCEntityHandlerFlag flag,
     }
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
         //TODO :  Handle PUT/DEL methods
         switch(ehRequest->method)
         {
@@ -751,19 +778,10 @@ OCStackResult CreateCredResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (FATAL, TAG, "Unable to instantiate Cred resource");
+        OIC_LOG (FATAL, TAG, "Unable to instantiate Cred resource");
         DeInitCredResource();
     }
     return ret;
-}
-
-/**
- * Get the default value
- * @retval  NULL for now. Update it when we finalize the default info.
- */
-static OicSecCred_t* GetCredDefault()
-{
-    return NULL;
 }
 
 /**
@@ -880,13 +898,13 @@ int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
                 // Retrieve Device ID from doxm resource
                 if ( OC_STACK_OK != GetDoxmDeviceID(&deviceID) )
                 {
-                    OC_LOG (ERROR, TAG, "Unable to retrieve doxm Device ID");
+                    OIC_LOG (ERROR, TAG, "Unable to retrieve doxm Device ID");
                     return ret;
                 }
 
                 if (result_length < sizeof(deviceID.id))
                 {
-                    OC_LOG (ERROR, TAG, "Wrong value for result_length");
+                    OIC_LOG (ERROR, TAG, "Wrong value for result_length");
                     return ret;
                 }
                 memcpy(result, deviceID.id, sizeof(deviceID.id));
@@ -915,7 +933,7 @@ int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
                         {
                             if(IOTVTICAL_VALID_ACCESS != IsRequestWithinValidTime(cred->period, NULL))
                             {
-                                OC_LOG (INFO, TAG, "Credentials are expired.");
+                                OIC_LOG (INFO, TAG, "Credentials are expired.");
                                 ret = -1;
                                 return ret;
                             }
@@ -928,7 +946,7 @@ int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
                                 result_length, &outLen);
                         if (B64_OK != b64Ret)
                         {
-                            OC_LOG (ERROR, TAG, "Base64 decoding failed.");
+                            OIC_LOG (ERROR, TAG, "Base64 decoding failed.");
                             ret = -1;
                             return ret;
                         }
@@ -940,7 +958,7 @@ int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
 
         default:
             {
-                OC_LOG (ERROR, TAG, "Wrong value passed for CADtlsPskCredType_t.");
+                OIC_LOG (ERROR, TAG, "Wrong value passed for CADtlsPskCredType_t.");
                 ret = -1;
             }
             break;
@@ -989,7 +1007,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
                                             base64Buff, ownersLen, owners);
     if(NULL == cred)
     {
-        OC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to generate credential");
+        OIC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to generate credential");
         return OC_STACK_ERROR;
     }
 
@@ -998,7 +1016,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
     ret = AddCredential(cred);
     if( OC_STACK_OK != ret)
     {
-        OC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to add credential");
+        OIC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to add credential");
     }
 
 exit:

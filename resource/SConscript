@@ -30,6 +30,10 @@ Import('env')
 target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 
+if target_os not in ['tizen']:
+	# Build liblogger
+	SConscript('csdk/logger/SConscript')
+
 if target_os not in ['arduino', 'darwin', 'ios', 'android']:
 	env.AppendUnique(LIBS=['rt'])
 

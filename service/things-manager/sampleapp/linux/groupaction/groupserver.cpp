@@ -36,10 +36,10 @@ namespace PH = std::placeholders;
 
 bool isReady = false;
 
-OCResourceHandle resourceHandle;
+OCResourceHandle resourceHandle = NULL;
 std::vector<OCResourceHandle> resourceHandleVector;
 
-shared_ptr<OCResource> g_resource;
+shared_ptr<OCResource> g_resource = NULL;
 vector<string> lights;
 
 GroupManager *groupMgr = new GroupManager();
@@ -64,36 +64,42 @@ shared_ptr<OCResource> g_light;
 void foundResources(
         std::vector<std::shared_ptr<OC::OCResource> > listOfResource)
 {
-
-    for (auto rsrc = listOfResource.begin(); rsrc != listOfResource.end();
-            ++rsrc)
+    try
     {
-        std::string resourceURI = (*rsrc)->uri();
-        std::string hostAddress = (*rsrc)->host();
-
-        if (resourceURI == "/a/light")
+        for (auto rsrc = listOfResource.begin(); rsrc != listOfResource.end();
+                ++rsrc)
         {
-            cout << "\tResource URI : " << resourceURI << endl;
-            cout << "\tResource Host : " << hostAddress << endl;
+            std::string resourceURI = (*rsrc)->uri();
+            std::string hostAddress = (*rsrc)->host();
 
-            OCResourceHandle foundResourceHandle;
-            OCStackResult result = OCPlatform::registerResource(
-                    foundResourceHandle, (*rsrc));
-            cout << "\tresource registed!" << endl;
-            if (result == OC_STACK_OK)
+            if (resourceURI == "/a/light")
             {
-                OCPlatform::bindResource(resourceHandle, foundResourceHandle);
-                resourceHandleVector.push_back(foundResourceHandle);
-            }
-            else
-            {
-                cout << "\tresource Error!" << endl;
-            }
+                cout << "\tResource URI : " << resourceURI << endl;
+                cout << "\tResource Host : " << hostAddress << endl;
 
-            lights.push_back((hostAddress + resourceURI));
+                OCResourceHandle foundResourceHandle = NULL;
+                OCStackResult result = OCPlatform::registerResource(
+                        foundResourceHandle, (*rsrc));
+                cout << "\tresource registed!" << endl;
+                if (result == OC_STACK_OK)
+                {
+                    OCPlatform::bindResource(resourceHandle, foundResourceHandle);
+                    resourceHandleVector.push_back(foundResourceHandle);
+                }
+                else
+                {
+                    cout << "\tresource Error!" << endl;
+                }
 
-            g_light = (*rsrc);
+                lights.push_back((hostAddress + resourceURI));
+
+                g_light = (*rsrc);
+            }
         }
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Exception in foundResource:"<< e.what() << std::endl;
     }
 
     isReady = true;
@@ -134,7 +140,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     }
 }
 
-void onGet(const HeaderOptions& opt, const OCRepresentation &rep,
+void onGet(const HeaderOptions& /*opt*/, const OCRepresentation &/*rep*/,
         const int eCode)
 {
     cout << "\nonGet" << endl;
@@ -144,7 +150,7 @@ void onGet(const HeaderOptions& opt, const OCRepresentation &rep,
         cout << "\tInvalid parameter." << endl;
 }
 
-void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+void onPut(const HeaderOptions& /*opt*/, const OCRepresentation &/*rep*/,
         const int eCode)
 {
     cout << "\nonPut" << endl;
@@ -154,8 +160,8 @@ void onPut(const HeaderOptions& headerOptions, const OCRepresentation& rep,
         cout << "\tInvalid parameter." << endl;
 }
 
-void onPost(const HeaderOptions& headerOptions, const OCRepresentation& rep,
-        const int eCode)
+void onPost(const HeaderOptions& /*opt*/, const OCRepresentation &rep,
+        const int /*eCode*/)
 {
     printf("\nonPost\n");
 
@@ -259,7 +265,7 @@ void CancelRecursive_allBulbOn()
     groupMgr->cancelActionSet(g_resource, "AllBulbOnRecursiveCall", &onPost);
 }
 
-void onObserve(const HeaderOptions headerOptions, const OCRepresentation& rep,
+void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& rep,
         const int& eCode, const int& sequenceNumber)
 {
     if (eCode == OC_STACK_OK)

@@ -57,7 +57,8 @@ static const uint8_t PAYLOAD_MARKER = 1;
  * @param[in]   endpoint             endpoint information.
  * @return  generated pdu.
  */
-coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_t *endpoint);
+coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_t *endpoint,
+                          coap_list_t **optlist, coap_transport_type *transport);
 
 /**
  * extracts request information from received pdu.
@@ -98,7 +99,8 @@ CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endp
  * @return  generated pdu.
  */
 coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
-                              const CAEndpoint_t *endpoint, coap_list_t *options);
+                              const CAEndpoint_t *endpoint, coap_list_t *options,
+                              coap_transport_type *transport);
 
 /**
  * parse the URI and creates the options.

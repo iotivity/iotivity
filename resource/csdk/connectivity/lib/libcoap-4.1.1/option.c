@@ -35,11 +35,11 @@ options_start(coap_pdu_t *pdu, coap_transport_type transport)
         }
 #ifdef WITH_TCP
         else if(coap_tcp == transport && (pdu->hdr->coap_hdr_tcp_t.token +
-                pdu->hdr->coap_hdr_tcp_t.token_length
+                ((pdu->hdr->coap_hdr_tcp_t.header_data[0]) & 0x0f)
                 < (unsigned char *) pdu->hdr + pdu->length))
         {
             coap_opt_t *opt = pdu->hdr->coap_hdr_tcp_t.token +
-                    pdu->hdr->coap_hdr_tcp_t.token_length;
+                    ((pdu->hdr->coap_hdr_tcp_t.header_data[0]) & 0x0f);
             return (*opt == COAP_PAYLOAD_START) ? NULL : opt;
         }
 #endif
@@ -151,15 +151,15 @@ coap_option_iterator_init(coap_pdu_t *pdu, coap_opt_iterator_t *oi,
     {
 #ifdef WITH_TCP
         case coap_tcp:
-            token_length = pdu->hdr->coap_hdr_tcp_t.token_length;
+            token_length = (pdu->hdr->coap_hdr_tcp_t.header_data[0]) & 0x0f;
             headerSize = COAP_TCP_HEADER_NO_FIELD;
             break;
         case coap_tcp_8bit:
-            token_length = pdu->hdr->coap_hdr_tcp_t.token_length;
+            token_length = (pdu->hdr->coap_hdr_tcp_8bit_t.header_data[0]) & 0x0f;
             headerSize = COAP_TCP_HEADER_8_BIT;
             break;
         case coap_tcp_16bit:
-            token_length = pdu->hdr->coap_hdr_tcp_t.token_length;
+            token_length = (pdu->hdr->coap_hdr_tcp_16bit_t.header_data[0]) & 0x0f;
             headerSize = COAP_TCP_HEADER_16_BIT;
             break;
         case coap_tcp_32bit:

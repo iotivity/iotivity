@@ -69,32 +69,41 @@ void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler)
 static void SRMSendUnAuthorizedAccessresponse(PEContext_t *context)
 {
     CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
+
+    if(NULL == context ||
+       NULL == context->amsMgrContext->requestInfo)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s : NULL Parameter(s)",__func__);
+        return;
+    }
+
     memcpy(&responseInfo.info, &(context->amsMgrContext->requestInfo->info),
             sizeof(responseInfo.info));
     responseInfo.info.payload = NULL;
     responseInfo.result = CA_UNAUTHORIZED_REQ;
-    if (CA_STATUS_OK != CASendResponse(context->amsMgrContext->endpoint, &responseInfo))
+
+    if (CA_STATUS_OK == CASendResponse(context->amsMgrContext->endpoint, &responseInfo))
     {
-        OC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
+        OIC_LOG(DEBUG, TAG, "Succeed in sending response to a unauthorized request!");
     }
     else
     {
-        OC_LOG(INFO, TAG, "Succeed in sending response to a unauthorized request!");
+        OIC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
     }
 }
 
 
 void SRMSendResponse(SRMAccessResponse_t responseVal)
 {
-    OC_LOG(DEBUG, TAG, "Sending response to remote device");
+    OIC_LOG(DEBUG, TAG, "Sending response to remote device");
 
     if (IsAccessGranted(responseVal) && gRequestHandler)
     {
-        OC_LOG_V(INFO, TAG, "%s : Access granted. Passing Request to RI layer", __func__);
+        OIC_LOG_V(INFO, TAG, "%s : Access granted. Passing Request to RI layer", __func__);
         if (!g_policyEngineContext.amsMgrContext->endpoint ||
-                !g_policyEngineContext.amsMgrContext->requestInfo)
+            !g_policyEngineContext.amsMgrContext->requestInfo)
         {
-            OC_LOG_V(ERROR, TAG, "%s : Invalid arguments", __func__);
+            OIC_LOG_V(ERROR, TAG, "%s : Invalid arguments", __func__);
             SRMSendUnAuthorizedAccessresponse(&g_policyEngineContext);
             goto exit;
         }
@@ -103,12 +112,12 @@ void SRMSendResponse(SRMAccessResponse_t responseVal)
     }
     else
     {
-        OC_LOG_V(INFO, TAG, "%s : ACCESS_DENIED.", __func__);
+        OIC_LOG_V(INFO, TAG, "%s : ACCESS_DENIED.", __func__);
         SRMSendUnAuthorizedAccessresponse(&g_policyEngineContext);
     }
 
 exit:
-    //Resting PE state to AWAITING_REQUEST
+    //Resetting PE state to AWAITING_REQUEST
     SetPolicyEngineState(&g_policyEngineContext, AWAITING_REQUEST);
 }
 
@@ -121,11 +130,11 @@ exit:
  */
 void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requestInfo)
 {
-    OC_LOG(DEBUG, TAG, "Received request from remote device");
+    OIC_LOG(DEBUG, TAG, "Received request from remote device");
 
     if (!endPoint || !requestInfo)
     {
-        OC_LOG(ERROR, TAG, "Invalid arguments");
+        OIC_LOG(ERROR, TAG, "Invalid arguments");
         return;
     }
 
@@ -147,7 +156,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     }
     if (MAX_URI_LENGTH < position  || 0 > position)
     {
-        OC_LOG(ERROR, TAG, "Incorrect URI length");
+        OIC_LOG(ERROR, TAG, "Incorrect URI length");
         return;
     }
     SRMAccessResponse_t response = ACCESS_DENIED;
@@ -157,14 +166,14 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     //New request are only processed if the policy engine state is AWAITING_REQUEST.
     if(AWAITING_REQUEST == g_policyEngineContext.state)
     {
-        OC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method, %d",
+        OIC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method, %d",
                 requestInfo->info.resourceUri, requestInfo->method);
         response = CheckPermission(&g_policyEngineContext, &subjectId, newUri,
                 GetPermissionFromCAMethod_t(requestInfo->method));
     }
     else
     {
-        OC_LOG_V(INFO, TAG, "PE state %d. Ignoring request with uri, %s for method, %d",
+        OIC_LOG_V(INFO, TAG, "PE state %d. Ignoring request with uri, %s for method, %d",
                 g_policyEngineContext.state, requestInfo->info.resourceUri, requestInfo->method);
     }
 
@@ -182,7 +191,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 
     if(ACCESS_WAITING_FOR_AMS == response)
     {
-        OC_LOG(INFO, TAG, "Sending slow response");
+        OIC_LOG(INFO, TAG, "Sending slow response");
 
         UpdateAmsMgrContext(&g_policyEngineContext, endPoint, requestInfo);
         responseInfo.result = CA_EMPTY;
@@ -195,20 +204,20 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
          * CA_UNAUTHORIZED_REQ or CA_FORBIDDEN_REQ depending
          * upon SRMAccessResponseReasonCode_t
          */
-        OC_LOG(INFO, TAG, "Sending for regular response");
+        OIC_LOG(INFO, TAG, "Sending for regular response");
         responseInfo.result = CA_UNAUTHORIZED_REQ;
     }
 
     if (CA_STATUS_OK != CASendResponse(endPoint, &responseInfo))
     {
-        OC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
+        OIC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
     }
     return;
 exit:
     responseInfo.result = CA_INTERNAL_SERVER_ERROR;
     if (CA_STATUS_OK != CASendResponse(endPoint, &responseInfo))
     {
-        OC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
+        OIC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
     }
 }
 
@@ -220,7 +229,7 @@ exit:
  */
 void SRMResponseHandler(const CAEndpoint_t *endPoint, const CAResponseInfo_t *responseInfo)
 {
-    OC_LOG(DEBUG, TAG, "Received response from remote device");
+    OIC_LOG(DEBUG, TAG, "Received response from remote device");
 
     // isProvResponse flag is to check whether response is catered by provisioning APIs or not.
     // When token sent by CA response matches with token generated by provisioning request,
@@ -248,7 +257,7 @@ void SRMResponseHandler(const CAEndpoint_t *endPoint, const CAResponseInfo_t *re
  */
 void SRMErrorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errorInfo)
 {
-    OC_LOG_V(INFO, TAG, "Received error from remote device with result, %d for request uri, %s",
+    OIC_LOG_V(INFO, TAG, "Received error from remote device with result, %d for request uri, %s",
             errorInfo->result, errorInfo->info.resourceUri);
     if (gErrorHandler)
     {
@@ -270,10 +279,10 @@ OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
                                  CAResponseCallback respHandler,
                                  CAErrorCallback errHandler)
 {
-    OC_LOG(DEBUG, TAG, "SRMRegisterHandler !!");
+    OIC_LOG(DEBUG, TAG, "SRMRegisterHandler !!");
     if( !reqHandler || !respHandler || !errHandler)
     {
-        OC_LOG(ERROR, TAG, "Callback handlers are invalid");
+        OIC_LOG(ERROR, TAG, "Callback handlers are invalid");
         return OC_STACK_INVALID_PARAM;
     }
     gRequestHandler = reqHandler;
@@ -298,10 +307,10 @@ OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
  */
 OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
 {
-    OC_LOG(DEBUG, TAG, "SRMRegisterPersistentStorageHandler !!");
+    OIC_LOG(DEBUG, TAG, "SRMRegisterPersistentStorageHandler !!");
     if(!persistentStorageHandler)
     {
-        OC_LOG(ERROR, TAG, "The persistent storage handler is invalid");
+        OIC_LOG(ERROR, TAG, "The persistent storage handler is invalid");
         return OC_STACK_INVALID_PARAM;
     }
     gPersistentStorageHandler = persistentStorageHandler;

@@ -50,10 +50,6 @@ public class ImageManager {
         r.put(Constants.UNCHECKED, ImageDescriptor.createFromURL(bundle
                 .getEntry("icons/unchecked.gif")));
 
-        // Resource icons based on the resource type
-        r.put(Constants.OIC_R_LIGHT, ImageDescriptor.createFromURL(bundle
-                .getEntry("/icons/light_16x16.png")));
-
         // Log View related icons
         r.put(Constants.DEBUG_LOG, ImageDescriptor.createFromURL(bundle
                 .getEntry("/icons/debug_log.gif")));

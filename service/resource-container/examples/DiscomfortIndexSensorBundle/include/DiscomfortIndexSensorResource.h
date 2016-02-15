@@ -32,6 +32,8 @@ class DiscomfortIndexSensorResource : public SoftSensorResource
     public:
         DiscomfortIndexSensorResource();
         ~DiscomfortIndexSensorResource();
+        DiscomfortIndexSensorResource(const DiscomfortIndexSensorResource &other)=delete;
+        DiscomfortIndexSensorResource& operator=( const DiscomfortIndexSensorResource& rhs )=delete;
 
         virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs);
 

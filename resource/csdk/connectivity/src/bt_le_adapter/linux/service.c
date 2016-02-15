@@ -23,7 +23,10 @@
 
 #include "cagattservice.h"
 #include "logger.h"
+#include "oic_malloc.h"
 
+#include <inttypes.h>
+#include <stdio.h>
 #include <assert.h>
 
 
@@ -158,9 +161,71 @@ static gboolean CAGattServiceHandleGetManagedObjects(
     return TRUE;
 }
 
+char * CAGattServiceMakePeerAddress(CAGattService * s)
+{
+    assert(s != NULL);
+
+    /*
+      Since there is no direct way to obtain the client address
+      associated with the GATT characterstics on the server side,
+      embed a stringified pointer to this GATT service of the form
+      "&ABCDEF01" as the address instead so that we can use it to
+      refer to the client.  This works since:
+          1) only one LE central is ever connected to an LE peripheral
+          2) the CA layer doesn't directly interpret the client
+             address
+     */
+
+    /*
+      Length of stringified pointer in hexadecimal format, plus one
+      for the leading ampersand, and one more for the null
+      terminator.
+    */
+    static size_t const PSEUDO_ADDR_LEN = sizeof(uintptr_t) * 2 + 2;
+
+    assert(MAX_ADDR_STR_SIZE_CA > PSEUDO_ADDR_LEN);
+
+    char * const addr = OICMalloc(PSEUDO_ADDR_LEN);
+
+    if (addr == NULL)
+    {
+        return addr;
+    }
+
+    int const count = snprintf(addr,
+                               PSEUDO_ADDR_LEN,
+                               "&%" PRIxPTR,
+                               (uintptr_t) s);
+
+    if (count < 0 || count >= (int) PSEUDO_ADDR_LEN)
+    {
+        OIC_LOG(ERROR,
+                TAG,
+                "Error creating peer address on server side.");
+
+        OICFree(addr);
+
+        return NULL;
+    }
+
+    return addr;
+}
+
+CAGattService * CAGattServiceDecodeAddress(char const * address)
+{
+    /*
+      The peer address is actually the value of the pointer to the
+      CAGattService object containing the response characteristic.
+     */
+    uintptr_t s = (uintptr_t) NULL;
+    (void) sscanf(address, "&%" SCNxPTR, &s);
+
+    return (CAGattService *) s;
+}
+
 bool CAGattServiceInitialize(CAGattService * s,
-                             CALEContext * context,
-                             char const * hci_name)
+                             char const * hci_name,
+                             CALEContext * context)
 {
     assert(s != NULL);
     assert(context != NULL);
@@ -192,7 +257,7 @@ bool CAGattServiceInitialize(CAGattService * s,
       The characteristic object paths are not fixed at compile-time.
       Retrieve the object paths that were set at run-time.
     */
-    char const * characteristic_paths[] = {
+    char const * const characteristic_paths[] = {
         s->request_characteristic.object_path,
         s->response_characteristic.object_path,
         NULL

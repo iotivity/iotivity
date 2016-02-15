@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __OC_OSTREAM_LOGGER_H_2014_09_5
- #define __OC_OSTREAM_LOGGER_H_2014_09_5
+#ifndef OC_OSTREAM_LOGGER_H_
+#define OC_OSTREAM_LOGGER_H_
 
 #include "oc_logger_types.h"
 

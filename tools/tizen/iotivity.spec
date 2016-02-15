@@ -1,5 +1,5 @@
 Name: iotivity
-Version: 0.9.2
+Version: 1.0.0
 Release: 0
 Summary: IoTivity Base Stack & IoTivity Services
 Group: System Environment/Libraries
@@ -8,7 +8,7 @@ URL: https://www.iotivity.org/
 Source0: %{name}-%{version}.tar.bz2
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
-BuildRequires:	gettext, expat-devel
+BuildRequires:	gettext
 BuildRequires:	python, libcurl-devel
 BuildRequires:	scons
 BuildRequires:	openssl-devel
@@ -20,7 +20,11 @@ BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth)
+%if 0%{?tizen_version_major} < 3
 BuildRequires:  pkgconfig(capi-appfw-app-common)
+%else
+BuildRequires:  pkgconfig(capi-appfw-application)
+%endif
 BuildRequires:  pkgconfig(glib-2.0)
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
@@ -122,12 +126,36 @@ cp out/tizen/*/%{build_mode}/resource/examples/simpleclientserver %{buildroot}%{
 cp out/tizen/*/%{build_mode}/resource/examples/simpleserver %{buildroot}%{_bindir}
 cp out/tizen/*/%{build_mode}/resource/examples/simpleserverHQ %{buildroot}%{_bindir}
 cp out/tizen/*/%{build_mode}/resource/examples/threadingsample %{buildroot}%{_bindir}
+if echo %{secure_mode}|grep -qi '1'; then
+	cp out/tizen/*/%{build_mode}/libocpmapi.a %{buildroot}%{_libdir}
+	cp resource/c_common/*.h %{buildroot}%{_includedir}
+	cp resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}
+	cp extlibs/tinycbor/tinycbor/src/*.h %{buildroot}%{_includedir}
+	cp ./extlibs/cjson/*.h %{buildroot}%{_includedir}
+	cp ./resource/c_common/oic_string/include/*.h %{buildroot}%{_includedir}
+	cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
+	cp ./resource/csdk/security/include/*.h %{buildroot}%{_includedir}
+	cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
+	cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
+	cp ./resource/csdk/connectivity/lib/libcoap-4.1.1/*.h %{buildroot}%{_includedir}
 
+	cp out/tizen/*/%{build_mode}/resource/csdk/stack/samples/linux/secure/occlientbasicops %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/csdk/stack/samples/linux/secure/ocserverbasicops %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/csdk/stack/samples/linux/secure/ocamsservice %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/examples/*.json %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/csdk/stack/samples/linux/secure/*.json %{buildroot}%{_bindir}
+
+	cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/provisioningclient %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_justworks %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_randompin %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/*.json %{buildroot}%{_bindir}
+fi
+cp out/tizen/*/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
 cp out/tizen/*/%{build_mode}/lib*.so %{buildroot}%{_libdir}
 
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
-cp resource/csdk/ocrandom/include/*.h %{buildroot}%{_includedir}
+cp resource/c_common/ocrandom/include/*.h %{buildroot}%{_includedir}
 cp -r resource/oc_logger/include/* %{buildroot}%{_includedir}
 cp resource/include/*.h %{buildroot}%{_includedir}
 
@@ -145,20 +173,21 @@ cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 %{_libdir}/liboc_logger_core.so
 %{_libdir}/liboctbstack.so
 %{_libdir}/libconnectivity_abstraction.so
+%{_libdir}/lib*.a
 
 %files service
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
-#%{_libdir}/libBMISensorBundle.so
-#%{_libdir}/libDISensorBundle.so
+%{_libdir}/libBMISensorBundle.so
+%{_libdir}/libDISensorBundle.so
 %{_libdir}/libresource_hosting.so
 %{_libdir}/libTGMSDKLibrary.so
-%{_libdir}/libnmservice.so
-#%{_libdir}/libHueBundle.so
+%{_libdir}/libHueBundle.so
 %{_libdir}/librcs_client.so
 %{_libdir}/librcs_common.so
-#%{_libdir}/librcs_container.so
+%{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
+%{_libdir}/libnmservice.so
 
 %files test
 %manifest %{name}-test.manifest

@@ -47,12 +47,12 @@ static OCEntityHandlerResult handleGetRequest(const OCEntityHandlerRequest *ehRe
 {
     if (!ehRequest)
     {
-        OC_LOG(DEBUG, TAG, "Invalid request pointer.");
+        OIC_LOG(DEBUG, TAG, "Invalid request pointer.");
         return OC_EH_ERROR;
     }
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
-    OC_LOG_V(DEBUG, TAG, "Received OC_REST_GET from client with query: %s.", ehRequest->query);
+    OIC_LOG_V(DEBUG, TAG, "Received OC_REST_GET from client with query: %s.", ehRequest->query);
 
     OCRDPayload *rdPayload = OCRDPayloadCreate();
     if (!rdPayload)
@@ -71,7 +71,7 @@ static OCEntityHandlerResult handleGetRequest(const OCEntityHandlerRequest *ehRe
 
     if (sendResponse(ehRequest, rdPayload) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "Sending response failed.");
+        OIC_LOG(ERROR, TAG, "Sending response failed.");
         ehResult = OC_EH_ERROR;
     }
 
@@ -88,22 +88,22 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
 
     if (!ehRequest)
     {
-        OC_LOG(DEBUG, TAG, "Invalid request pointer");
+        OIC_LOG(DEBUG, TAG, "Invalid request pointer");
         return OC_EH_ERROR;
     }
 
-    OC_LOG_V(DEBUG, TAG, "Received OC_REST_PUT from client with query: %s.", ehRequest->query);
+    OIC_LOG_V(DEBUG, TAG, "Received OC_REST_PUT from client with query: %s.", ehRequest->query);
 
     OCRDPayload *payload = (OCRDPayload *)ehRequest->payload;
     if (payload && payload->rdPublish)
     {
-        OCRDStorePublishedResources(payload->rdPublish);
+        OCRDStorePublishedResources(payload->rdPublish, &ehRequest->devAddr);
     }
 
     OCRDPayload *rdPayload = OCRDPayloadCreate();
     if (!rdPayload)
     {
-        OC_LOG(ERROR, TAG, "Failed allocating memory.");
+        OIC_LOG(ERROR, TAG, "Failed allocating memory.");
         return OC_STACK_NO_MEMORY;
     }
 
@@ -111,7 +111,7 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
 
     if (sendResponse(ehRequest, rdPayload) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "Sending response failed.");
+        OIC_LOG(ERROR, TAG, "Sending response failed.");
         ehResult = OC_EH_ERROR;
     }
 
@@ -134,7 +134,7 @@ static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG(DEBUG, TAG, "Flag includes OC_REQUEST_FLAG.");
+        OIC_LOG(DEBUG, TAG, "Flag includes OC_REQUEST_FLAG.");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -175,11 +175,11 @@ OCStackResult OCRDStart()
 
     if (result == OC_STACK_OK)
     {
-        OC_LOG(DEBUG, TAG, "Resource Directory Started.");
+        OIC_LOG(DEBUG, TAG, "Resource Directory Started.");
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Failed starting Resource Directory.");
+        OIC_LOG(ERROR, TAG, "Failed starting Resource Directory.");
     }
 
     return result;
@@ -194,11 +194,11 @@ OCStackResult OCRDStop()
 
     if (result == OC_STACK_OK)
     {
-        OC_LOG(DEBUG, TAG, "Resource Directory Stopped.");
+        OIC_LOG(DEBUG, TAG, "Resource Directory Stopped.");
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Failed stopping Resource Directory.");
+        OIC_LOG(ERROR, TAG, "Failed stopping Resource Directory.");
     }
     return result;
 }

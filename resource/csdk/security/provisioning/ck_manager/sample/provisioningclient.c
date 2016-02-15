@@ -51,6 +51,7 @@
 static OicSecAcl_t        *gAcl = NULL;
 static OicSecCrl_t        *gCrl = NULL;
 static char PROV_TOOL_DB_FILE[] = "oic_svr_db_pt.json";
+static const char* PRVN_DB_FILE_NAME = "oic_prvn_mng.db";
 static int gOwnershipState = 0;
 
 typedef enum
@@ -221,7 +222,7 @@ static int InputACL(OicSecAcl_t *acl)
     acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
     if (NULL == acl->resources)
     {
-        OC_LOG(ERROR, TAG, "Error while memory allocation");
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
         return -1;
     }
     for (size_t i = 0; i < acl->resourcesLen; i++)
@@ -243,7 +244,7 @@ static int InputACL(OicSecAcl_t *acl)
 
         if (NULL == acl->resources[i])
         {
-            OC_LOG(ERROR, TAG, "Error while memory allocation");
+            OIC_LOG(ERROR, TAG, "Error while memory allocation");
             return -1;
         }
     }
@@ -276,7 +277,7 @@ static int InputACL(OicSecAcl_t *acl)
     acl->owners = (OicUuid_t *)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
     if (NULL == acl->owners)
     {
-        OC_LOG(ERROR, TAG, "Error while memory allocation");
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
         return -1;
     }
     for (size_t i = 0; i < acl->ownersLen; i++)
@@ -492,7 +493,12 @@ int main()
 
     if (OC_STACK_OK != OCInit(NULL, 0, OC_CLIENT_SERVER))
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
+        goto error;
+    }
+    if(OC_STACK_OK != OCInitPM(PRVN_DB_FILE_NAME))
+    {
+        OIC_LOG(ERROR, TAG, "OC_PM init error");
         goto error;
     }
 
@@ -500,7 +506,7 @@ int main()
     res = OCDiscoverUnownedDevices(PREDEFINED_TIMEOUT, &pDeviceList);
     if(OC_STACK_OK != res)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to PMDeviceDiscovery : %d", res);
+        OIC_LOG_V(ERROR, TAG, "Failed to PMDeviceDiscovery : %d", res);
         goto error;
     }
 
@@ -532,11 +538,11 @@ int main()
     res = OCDoOwnershipTransfer((void*)myContext, pDeviceList, OwnershipTransferCB);
     if(OC_STACK_OK == res)
     {
-        OC_LOG(INFO, TAG, "Request for ownership transfer is sent successfully.");
+        OIC_LOG(INFO, TAG, "Request for ownership transfer is sent successfully.");
     }
     else
     {
-        OC_LOG_V(ERROR, TAG, "Failed to OCDoOwnershipTransfer : %d", res);
+        OIC_LOG_V(ERROR, TAG, "Failed to OCDoOwnershipTransfer : %d", res);
     }
 
     gOwnershipState = 0;
@@ -544,7 +550,7 @@ int main()
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             goto error;
         }
         sleep(1);
@@ -575,7 +581,7 @@ int main()
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Error while Owned Device Discovery");
+        OIC_LOG(ERROR, TAG, "Error while Owned Device Discovery");
     }
 
     int Device1 = 0;
@@ -591,13 +597,13 @@ int main()
     gAcl = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
     if (NULL == gAcl)
     {
-        OC_LOG(ERROR, TAG, "Error while memory allocation");
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
         goto error;
     }
 
     if (PKI_SUCCESS != InitCA())
     {
-        OC_LOG(ERROR, TAG, "CA init error");
+        OIC_LOG(ERROR, TAG, "CA init error");
         goto error;
     }
 
@@ -606,13 +612,13 @@ int main()
 
     res = OCProvisionCredentials(ctx, SIGNED_ASYMMETRIC_KEY, 0, pOwnedDevices[Device1],
                                                                 NULL, ProvisionCertCB);
-    if (OC_STACK_OK != res) OC_LOG_V(ERROR, TAG, "Failed to provision Device 1 : %d", res);
+    if (OC_STACK_OK != res) OIC_LOG_V(ERROR, TAG, "Failed to provision Device 1 : %d", res);
     gOwnershipState = 0;
     while ( gOwnershipState == 0 )
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             goto error;
         }
         sleep(1);
@@ -622,7 +628,7 @@ int main()
                                                                 NULL, ProvisionCertCB);
     if (OC_STACK_OK != res)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to provision Device 2 : %d", res);
+        OIC_LOG_V(ERROR, TAG, "Failed to provision Device 2 : %d", res);
     }
 
     gOwnershipState = 0;
@@ -630,7 +636,7 @@ int main()
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             goto error;
         }
         sleep(1);
@@ -643,13 +649,13 @@ int main()
     }
     else
     {
-        OC_LOG(ERROR, TAG, "InputACL error");
+        OIC_LOG(ERROR, TAG, "InputACL error");
         goto error;
     }
     res = OCProvisionACL(ctx, pOwnedDevices[Device2], gAcl, &ProvisionAclCB);
     if (OC_STACK_OK != res)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to ACL provision Device 2 : %d", res);
+        OIC_LOG_V(ERROR, TAG, "Failed to ACL provision Device 2 : %d", res);
     }
 
     gOwnershipState = 0;
@@ -657,7 +663,7 @@ int main()
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             goto error;
         }
         sleep(1);
@@ -665,22 +671,21 @@ int main()
     gCrl = (OicSecCrl_t *)OICMalloc(sizeof(OicSecCrl_t));
     if (PKI_SUCCESS != InputCRL(gCrl))
     {
-        OC_LOG(ERROR, TAG, "CA init error");
+        OIC_LOG(ERROR, TAG, "CA init error");
         goto error;
     }
 
     PRINT_BYTE_ARRAY("gCrl = \n", gCrl->CrlData);
 
-
     res = OCProvisionCRL(ctx, pOwnedDevices[Device2], gCrl, &ProvisionCrlCB);
-    if (OC_STACK_OK != res) OC_LOG_V(ERROR, TAG, "Failed to CRL provision Device 2 : %d", res);
+    if (OC_STACK_OK != res) OIC_LOG_V(ERROR, TAG, "Failed to CRL provision Device 2 : %d", res);
 
     gOwnershipState = 0;
     while (gOwnershipState == 0)
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             goto error;
         }
         sleep(1);
@@ -688,14 +693,14 @@ int main()
 
     if (OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack process error");
+        OIC_LOG(ERROR, TAG, "OCStack process error");
         goto error;
     }
 
 error:
     deleteACL(gAcl);
-    OCDeleteDiscoveredDevices(&pDeviceList);
-    OCDeleteDiscoveredDevices(&pOwnedList);
+    OCDeleteDiscoveredDevices(pDeviceList);
+    OCDeleteDiscoveredDevices(pOwnedList);
 
     return 0;
 }

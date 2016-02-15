@@ -23,7 +23,7 @@ using namespace std;
 
 namespace OIC
 {
-Time::Time()
+Time::Time() : mTime()
 {
     setTime(0, 0, 0, 0, 0, 0, 0);
 }
@@ -40,12 +40,9 @@ void Time::setTime(unsigned int yy, unsigned int mm, unsigned int dd,
         unsigned int h, unsigned int m, unsigned int s,
         int dayoftheweek = 0)
 {
-    yy -= 1900;
-    mm -= 1;
-
     mDelay = 0;
-    mTime.tm_year = yy;
-    mTime.tm_mon = mm;
+    mTime.tm_year = (int)yy - 1900;
+    mTime.tm_mon = (int)mm - 1;
     mTime.tm_mday = dd;
 
     mTime.tm_hour = h;

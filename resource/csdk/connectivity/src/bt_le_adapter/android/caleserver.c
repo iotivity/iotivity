@@ -35,7 +35,9 @@
 #include "uarraylist.h"
 #include "org_iotivity_ca_CaLeServerInterface.h"
 
-#define TAG PCF("CA_LE_SERVER")
+#define TAG PCF("OIC_CA_LE_SERVER")
+
+#define WAIT_TIME_WRITE_CHARACTERISTIC 10000000
 
 static JavaVM *g_jvm = NULL;
 static jobject g_context = NULL;
@@ -47,15 +49,21 @@ static CAPacketReceiveCallback g_packetReceiveCallback = NULL;
 static CABLEErrorHandleCallback g_serverErrorCallback;
 
 static u_arraylist_t *g_connectedDeviceList = NULL;
-static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 static bool g_isStartServer = false;
 static bool g_isInitializedServer = false;
+
+static jbyteArray g_sendBuffer = NULL;
 
 static CABLEDataReceivedCallback g_CABLEServerDataReceivedCallback = NULL;
 static ca_mutex g_bleReqRespCbMutex = NULL;
 static ca_mutex g_bleClientBDAddressMutex = NULL;
 static ca_mutex g_connectedDeviceListMutex = NULL;
+
+static ca_mutex g_threadSendMutex = NULL;
+static ca_mutex g_threadSendNotifyMutex = NULL;
+static ca_cond g_threadSendNotifyCond = NULL;
+static bool g_isSignalSetFlag = false;
 
 void CALEServerJNISetContext()
 {
@@ -255,7 +263,7 @@ jobject CALEServerSetResponseData(JNIEnv *env, jbyteArray responseData)
 
 CAResult_t CALEServerSendResponseData(JNIEnv *env, jobject device, jobject responseData)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CALEServerSendResponseData");
+    OIC_LOG(DEBUG, TAG, "CALEServerSendResponseData");
     VERIFY_NON_NULL(responseData, TAG, "responseData is null");
     VERIFY_NON_NULL(device, TAG, "device is null");
     VERIFY_NON_NULL(env, TAG, "env is null");
@@ -293,7 +301,23 @@ CAResult_t CALEServerSendResponseData(JNIEnv *env, jobject device, jobject respo
         return CA_SEND_FAILED;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT - CALEServerSendResponseData");
+    OIC_LOG_V(DEBUG, TAG, "callback flag is %d", g_isSignalSetFlag);
+    ca_mutex_lock(g_threadSendNotifyMutex);
+    if (!g_isSignalSetFlag)
+    {
+        OIC_LOG(DEBUG, TAG, "wait for callback to notify notifyCharacteristic is success");
+        if (0 != ca_cond_wait_for(g_threadSendNotifyCond, g_threadSendNotifyMutex,
+                                  WAIT_TIME_WRITE_CHARACTERISTIC))
+        {
+            OIC_LOG(ERROR, TAG, "there is no response. notifyCharacteristic has failed");
+            ca_mutex_unlock(g_threadSendNotifyMutex);
+            return CA_STATUS_FAILED;
+        }
+    }
+    // reset flag set by writeCharacteristic Callback
+    g_isSignalSetFlag = false;
+    ca_mutex_unlock(g_threadSendNotifyMutex);
+    OIC_LOG(INFO, TAG, "notifyCharacteristic success");
     return CA_STATUS_OK;
 }
 
@@ -1388,7 +1412,7 @@ CAResult_t CALEServerSend(JNIEnv *env, jobject bluetoothDevice, jbyteArray respo
     return result;
 }
 
-CAResult_t CALEServerInitialize(ca_thread_pool_t handle)
+CAResult_t CALEServerInitialize()
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEServerInitialize");
 
@@ -1428,7 +1452,7 @@ CAResult_t CALEServerInitialize(ca_thread_pool_t handle)
         return ret;
     }
 
-    g_threadPoolHandle = handle;
+    g_threadSendNotifyCond = ca_cond_new();
 
     ret = CALEServerInitMutexVaraibles();
     if (CA_STATUS_OK != ret)
@@ -1493,49 +1517,18 @@ void CALEServerTerminate()
         isAttached = true;
     }
 
-    CAResult_t ret = CALEServerGattClose(env, g_bluetoothGattServer);
-    if (CA_STATUS_OK != ret)
+    if (g_sendBuffer)
     {
-        OIC_LOG(ERROR, TAG, "CALEServerGattClose has failed");
+        (*env)->DeleteGlobalRef(env, g_sendBuffer);
+        g_sendBuffer = NULL;
     }
 
-    ret = CALEServerStopMulticastServer(0);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerStopMulticastServer has failed");
-    }
-
-    ret = CALEServerDisconnectAllDevices(env);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerDisconnectAllDevices has failed");
-    }
-
-    ret = CALEServerRemoveAllDevices(env);
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerRemoveAllDevices has failed");
-    }
-
-    if (g_leAdvertiseCallback)
-    {
-        (*env)->DeleteGlobalRef(env, g_leAdvertiseCallback);
-    }
-
-    if (g_bluetoothGattServer)
-    {
-        (*env)->DeleteGlobalRef(env, g_bluetoothGattServer);
-    }
-
-    if (g_bluetoothGattServerCallback)
-    {
-        (*env)->DeleteGlobalRef(env, g_bluetoothGattServerCallback);
-    }
+    ca_cond_free(g_threadSendNotifyCond);
+    g_threadSendNotifyCond = NULL;
 
     CALEServerTerminateMutexVaraibles();
     CALEServerTerminateConditionVaraibles();
 
-    g_isStartServer = false;
     g_isInitializedServer = false;
 
     if (isAttached)
@@ -1763,6 +1756,8 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
         return CA_STATUS_FAILED;
     }
 
+    ca_mutex_lock(g_threadSendMutex);
+
     jobject jni_obj_bluetoothDevice = NULL;
     uint32_t length = u_arraylist_length(g_connectedDeviceList);
     for (uint32_t index = 0; index < length; index++)
@@ -1772,20 +1767,20 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
         if (!jarrayObj)
         {
             OIC_LOG(ERROR, TAG, "jarrayObj is null");
-            return CA_STATUS_FAILED;
+            goto error_exit;
         }
 
         jstring jni_setAddress = CALEGetAddressFromBTDevice(env, jarrayObj);
         if (!jni_setAddress)
         {
             OIC_LOG(ERROR, TAG, "jni_setAddress is null");
-            return CA_STATUS_FAILED;
+            goto error_exit;
         }
         const char* setAddress = (*env)->GetStringUTFChars(env, jni_setAddress, NULL);
         if (!setAddress)
         {
             OIC_LOG(ERROR, TAG, "setAddress is null");
-            return CA_STATUS_FAILED;
+            goto error_exit;
         }
 
         OIC_LOG_V(DEBUG, TAG, "setAddress : %s", setAddress);
@@ -1803,23 +1798,42 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
 
     if (jni_obj_bluetoothDevice)
     {
-        jbyteArray jni_bytearr_data = (*env)->NewByteArray(env, dataLen);
-        (*env)->SetByteArrayRegion(env, jni_bytearr_data, 0, dataLen, (jbyte*) data);
+        jbyteArray jni_arr = (*env)->NewByteArray(env, dataLen);
+        (*env)->SetByteArrayRegion(env, jni_arr, 0, dataLen, (jbyte*) data);
+        g_sendBuffer = (jbyteArray)(*env)->NewGlobalRef(env, jni_arr);
 
-        CAResult_t res = CALEServerSend(env, jni_obj_bluetoothDevice, jni_bytearr_data);
+        CAResult_t res = CALEServerSend(env, jni_obj_bluetoothDevice, g_sendBuffer);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "send has failed");
-            return CA_SEND_FAILED;
+            goto error_exit;
         }
     }
     else
     {
         OIC_LOG(ERROR, TAG, "There are no device to send in the list");
-        return CA_STATUS_FAILED;
+        goto error_exit;
     }
 
+    if (g_sendBuffer)
+    {
+        (*env)->DeleteGlobalRef(env, g_sendBuffer);
+        g_sendBuffer = NULL;
+    }
+
+    ca_mutex_unlock(g_threadSendMutex);
+    OIC_LOG(INFO, TAG, "unicast - send request is successful");
     return CA_STATUS_OK;
+
+error_exit:
+    if (g_sendBuffer)
+    {
+        (*env)->DeleteGlobalRef(env, g_sendBuffer);
+        g_sendBuffer = NULL;
+    }
+
+    ca_mutex_unlock(g_threadSendMutex);
+    return CA_SEND_FAILED;
 }
 
 CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data, uint32_t dataLen)
@@ -1834,6 +1848,18 @@ CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data, 
         return CA_STATUS_FAILED;
     }
 
+    ca_mutex_lock(g_threadSendMutex);
+
+    OIC_LOG(DEBUG, TAG, "set data into g_sendBuffer for notify");
+    if (g_sendBuffer)
+    {
+        (*env)->DeleteGlobalRef(env, g_sendBuffer);
+        g_sendBuffer = NULL;
+    }
+    jbyteArray jni_arr = (*env)->NewByteArray(env, dataLen);
+    (*env)->SetByteArrayRegion(env, jni_arr, 0, dataLen, (jbyte*) data);
+    g_sendBuffer = (jbyteArray)(*env)->NewGlobalRef(env, jni_arr);
+
     uint32_t length = u_arraylist_length(g_connectedDeviceList);
     for (uint32_t index = 0; index < length; index++)
     {
@@ -1841,20 +1867,46 @@ CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data, 
         if (!jarrayObj)
         {
             OIC_LOG(ERROR, TAG, "jarrayObj is null");
-            return CA_STATUS_FAILED;
+            continue;
         }
 
         // send data for all device
         jbyteArray jni_bytearr_data = (*env)->NewByteArray(env, dataLen);
         (*env)->SetByteArrayRegion(env, jni_bytearr_data, 0, dataLen, (jbyte*) data);
+
+        jstring jni_address = CALEGetAddressFromBTDevice(env, jarrayObj);
+        if (!jni_address)
+        {
+            OIC_LOG(ERROR, TAG, "CALEGetAddressFromBTDevice has failed");
+            continue;
+        }
+
+        const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
+        if (!address)
+        {
+            OIC_LOG(ERROR, TAG, "address is not available");
+            continue;
+        }
+
         CAResult_t res = CALEServerSend(env, jarrayObj, jni_bytearr_data);
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "send has failed");
-            return CA_SEND_FAILED;
+            OIC_LOG_V(ERROR, TAG, "send has failed for the device[%s]", address);
+            (*env)->ReleaseStringUTFChars(env, jni_address, address);
+            continue;
         }
+
+        OIC_LOG_V(INFO, TAG, "unicast - send request is successful for a device[%s]", address);
+        (*env)->ReleaseStringUTFChars(env, jni_address, address);
     }
 
+    if (g_sendBuffer)
+    {
+        (*env)->DeleteGlobalRef(env, g_sendBuffer);
+        g_sendBuffer = NULL;
+    }
+
+    ca_mutex_unlock(g_threadSendMutex);
     return CA_STATUS_OK;
 }
 
@@ -2276,8 +2328,36 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(device, TAG, "device");
 
-    OIC_LOG_V(DEBUG, TAG, "Gatt Server Notification Sent Callback(%d)",
+    OIC_LOG_V(DEBUG, TAG, "Gatt Server Notification Sent Callback (status : %d)",
               status);
+
+    if (GATT_SUCCESS != status) // error case
+    {
+        OIC_LOG(ERROR, TAG, "it will be sent again.");
+
+        CAResult_t res = CALEServerSend(env, device, g_sendBuffer);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "send has failed");
+            ca_mutex_lock(g_threadSendNotifyMutex);
+            g_isSignalSetFlag = true;
+            ca_cond_signal(g_threadSendNotifyCond);
+            ca_mutex_unlock(g_threadSendNotifyMutex);
+            return CA_SEND_FAILED;
+        }
+    }
+    else
+    {
+        OIC_LOG(DEBUG, TAG, "notify success");
+
+        // next data can be sent
+        ca_mutex_lock(g_threadSendNotifyMutex);
+        OIC_LOG(DEBUG, TAG, "g_isSignalSetFlag is set true and signal");
+        g_isSignalSetFlag = true;
+        ca_cond_signal(g_threadSendNotifyCond);
+        ca_mutex_unlock(g_threadSendNotifyMutex);
+    }
+
 }
 
 JNIEXPORT void JNICALL
@@ -2309,22 +2389,6 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartFailureCallback(JNIEn
 
 CAResult_t CAStartLEGattServer()
 {
-    CAResult_t ret = CALEServerInitMutexVaraibles();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerInitMutexVaraibles has failed!");
-        CALEServerTerminateMutexVaraibles();
-        return CA_SERVER_NOT_STARTED;
-    }
-
-    ret = CALEServerInitConditionVaraibles();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEServerInitConditionVaraibles has failed!");
-        CALEServerTerminateConditionVaraibles();
-        return CA_SERVER_NOT_STARTED;
-    }
-
     // start gatt service
     CALEServerStartMulticastServer();
 
@@ -2333,13 +2397,96 @@ CAResult_t CAStartLEGattServer()
 
 CAResult_t CAStopLEGattServer()
 {
-    OIC_LOG(DEBUG, TAG, "this method is not supported");
+    OIC_LOG(DEBUG, TAG, "CAStopLEGattServer");
+
+    if (!g_jvm)
+    {
+        OIC_LOG(ERROR, TAG, "g_jvm is null");
+        return CA_STATUS_FAILED;
+    }
+
+    bool isAttached = false;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
+    if (JNI_OK != res)
+    {
+        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if (JNI_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
+            return CA_STATUS_FAILED;
+        }
+        isAttached = true;
+    }
+
+    CAResult_t ret = CALEServerGattClose(env, g_bluetoothGattServer);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerGattClose has failed");
+        return CA_STATUS_FAILED;
+    }
+
+    ret = CALEServerStopMulticastServer();
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerStopMulticastServer has failed");
+        return CA_STATUS_FAILED;
+    }
+
+    ret = CALEServerDisconnectAllDevices(env);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerDisconnectAllDevices has failed");
+        return CA_STATUS_FAILED;
+    }
+
+    ret = CALEServerRemoveAllDevices(env);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerRemoveAllDevices has failed");
+        return CA_STATUS_FAILED;
+    }
+
+    if (g_leAdvertiseCallback)
+    {
+        (*env)->DeleteGlobalRef(env, g_leAdvertiseCallback);
+    }
+
+    if (g_bluetoothGattServer)
+    {
+        (*env)->DeleteGlobalRef(env, g_bluetoothGattServer);
+    }
+
+    if (g_bluetoothGattServerCallback)
+    {
+        (*env)->DeleteGlobalRef(env, g_bluetoothGattServerCallback);
+    }
+
+    ca_mutex_lock(g_threadSendNotifyMutex);
+    ca_cond_signal(g_threadSendNotifyCond);
+    ca_mutex_unlock(g_threadSendNotifyMutex);
+
+    g_isStartServer = false;
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
     return CA_STATUS_OK;
+}
+
+CAResult_t CAInitializeLEGattServer()
+{
+    OIC_LOG(DEBUG, TAG, "Initialize Gatt Server");
+    return CALEServerInitialize();
 }
 
 void CATerminateLEGattServer()
 {
-    OIC_LOG(DEBUG, TAG, "Terminat Gatt Server");
+    OIC_LOG(DEBUG, TAG, "Terminate Gatt Server");
     CALEServerTerminate();
 }
 
@@ -2383,7 +2530,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const uint8_t *charValue,
 
 void CASetLEServerThreadPoolHandle(ca_thread_pool_t handle)
 {
-    CALEServerInitialize(handle);
+    OIC_LOG(INFO, TAG, "CASetLEServerThreadPoolHandle is not support");
 }
 
 CAResult_t CALEServerInitMutexVaraibles()
@@ -2418,12 +2565,26 @@ CAResult_t CALEServerInitMutexVaraibles()
         }
     }
 
-    return CA_STATUS_OK;
-}
+    if (NULL == g_threadSendMutex)
+    {
+        g_threadSendMutex = ca_mutex_new();
+        if (NULL == g_threadSendMutex)
+        {
+            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            return CA_STATUS_FAILED;
+        }
+    }
 
-CAResult_t CALEServerInitConditionVaraibles()
-{
-    OIC_LOG(DEBUG, TAG, "this method is not supported");
+    if (NULL == g_threadSendNotifyMutex)
+    {
+        g_threadSendNotifyMutex = ca_mutex_new();
+        if (NULL == g_threadSendNotifyMutex)
+        {
+            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
     return CA_STATUS_OK;
 }
 
@@ -2437,6 +2598,12 @@ void CALEServerTerminateMutexVaraibles()
 
     ca_mutex_free(g_connectedDeviceListMutex);
     g_connectedDeviceListMutex = NULL;
+
+    ca_mutex_free(g_threadSendMutex);
+    g_threadSendMutex = NULL;
+
+    ca_mutex_free(g_threadSendNotifyMutex);
+    g_threadSendNotifyMutex = NULL;
 }
 
 void CALEServerTerminateConditionVaraibles()

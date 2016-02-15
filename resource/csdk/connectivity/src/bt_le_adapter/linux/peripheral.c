@@ -20,8 +20,6 @@
 #include "utils.h"
 #include "bluez.h"
 #include "service.h"
-#include "characteristic.h"
-#include "descriptor.h"
 
 #include "oic_malloc.h"
 #include "logger.h"
@@ -43,7 +41,9 @@ static bool CAPeripheralCheckStarted()
 {
     ca_mutex_lock(g_context.lock);
 
-    bool const started = (g_context.base != NULL);
+    bool const started =
+        (g_context.event_loop != NULL
+         && g_main_loop_is_running(g_context.event_loop));
 
     ca_mutex_unlock(g_context.lock);
 
@@ -127,7 +127,7 @@ static GList * CAPeripheralInitializeGattServices(CALEContext * context)
         char const * const hci_name = strrchr(path, '/');
 
         if (hci_name == NULL
-            || !CAGattServiceInitialize(service, context, hci_name + 1))
+            || !CAGattServiceInitialize(service, hci_name + 1, context))
         {
             g_list_free_full(gatt_services,
                              CAPeripheralDestroyGattServices);
@@ -138,9 +138,10 @@ static GList * CAPeripheralInitializeGattServices(CALEContext * context)
         service->gatt_manager = manager;
 
         /*
-          The GattManager1 proxies are now owned by the CAGattService
-          objects.
+          The GattManager1 proxy is now owned by the CAGattService
+          object.
         */
+
         GList * const tmp = l;
         l = l->next;
         gatt_managers = g_list_delete_link(gatt_managers, tmp);
@@ -159,7 +160,7 @@ static bool CAPeripheralRegisterGattServices(
 {
     assert(context != NULL);
 
-    bool success = false;
+    bool success = true;
 
     ca_mutex_lock(context->lock);
 
@@ -209,8 +210,6 @@ static bool CAPeripheralRegisterGattServices(
     }
 
     ca_mutex_unlock(context->lock);
-
-    success = true;
 
     return success;
 }
@@ -330,8 +329,13 @@ static void CAPeripheralSetDiscoverable(gpointer data,
     /*
       Make sure the adapter is powered on before making it
       discoverable.
+
+      @todo We used to power off the adapter once we're done with it,
+            but that isn't always desirable.  We should only power it
+            off if it was off prior to us powering it on.
     */
-    if (!CASetBlueZObjectProperty(adapter,
+    if (discoverable
+        && !CASetBlueZObjectProperty(adapter,
                                   BLUEZ_ADAPTER_INTERFACE,
                                   "Powered",
                                   g_variant_new_boolean(discoverable)))
@@ -436,6 +440,20 @@ static void CAPeripheralOnNameLost(GDBusConnection * connection,
               "Lost name \"%s\" on D-Bus!", name);
 }
 
+/**
+ * Inform thread waiting for the event loop to start that the loop has
+ * started.  This is done in the context of the event loop itself so
+ * that we can be certain that the event loop is indeed running.
+ */
+static gboolean CAPeripheralEventLoopStarted(gpointer user_data)
+{
+    ca_cond const condition = user_data;
+
+    ca_cond_signal(condition);  // For service registration
+
+    return G_SOURCE_REMOVE;
+}
+
 static void CAPeripheralStartEventLoop(void * data)
 {
     CALEContext * const context = data;
@@ -497,6 +515,15 @@ static void CAPeripheralStartEventLoop(void * data)
                 "manager interface.");
     }
 
+    ca_mutex_lock(g_context.lock);
+
+    assert(g_context.event_loop == NULL);
+    g_context.event_loop = event_loop;
+
+    g_context.base = context;
+
+    g_context.owner_id = owner_id;
+
     /**
      * Initialize all GATT services.
      *
@@ -509,29 +536,37 @@ static void CAPeripheralStartEventLoop(void * data)
      *       a thread seperate from the one that initiates GATT
      *       service registration.
      */
-    GList * const gatt_services =
-        CAPeripheralInitializeGattServices(context);
-
-    ca_mutex_lock(g_context.lock);
-
-    assert(g_context.event_loop == NULL);
-    g_context.event_loop = event_loop;
-
-    g_context.base = context;
-
-    g_context.owner_id = owner_id;
+    g_context.gatt_services = CAPeripheralInitializeGattServices(context);
 
     CALEAdvertisementInitialize(&g_context.advertisement,
                                 context->connection,
                                 advertising_managers);
 
-    g_context.gatt_services = gatt_services;
-
     ca_mutex_unlock(g_context.lock);
 
-    ca_cond_signal(g_context.condition);
+    /*
+      Add an idle handler that notifies a thread waiting for the
+      GLib event loop to run that the event loop is actually
+      running.  We do this in the context of the event loop itself
+      to avoid race conditions.
+    */
+    GSource * const source = g_idle_source_new();
+    g_source_set_priority(source, G_PRIORITY_HIGH_IDLE);
+    g_source_set_callback(source,
+                          CAPeripheralEventLoopStarted,
+                          g_context.condition,  // data
+                          NULL);                // notify
+    (void) g_source_attach(source, loop_context);
+    g_source_unref(source);
 
-    g_main_loop_run(event_loop);
+    g_main_loop_run(event_loop);  // Blocks until loop is quit.
+
+    /*
+      Clean up in the same thread to avoid having to explicitly bump
+      the ref count to retain ownership.
+    */
+    g_main_context_unref(loop_context);
+    g_main_loop_unref(event_loop);
 }
 
 static void CAPeripheralStopEventLoop(CAPeripheralContext * context)
@@ -553,10 +588,7 @@ static void CAPeripheralStopEventLoop(CAPeripheralContext * context)
         if (loop_context != NULL)
         {
             g_main_context_wakeup(loop_context);
-            g_main_context_unref(loop_context);
         }
-
-        g_main_loop_unref(event_loop);
     }
 }
 
@@ -610,8 +642,9 @@ CAResult_t CAPeripheralStart(CALEContext * context)
     }
 
     /*
-      Wait until initialization completes before proceeding to
-      service and advertisement registration.
+      Wait until initialization completes and the event loop is up and
+      running before proceeding to service and advertisement
+      registration.
     */
 
     // Number of times to wait for initialization to complete.
@@ -628,7 +661,7 @@ CAResult_t CAPeripheralStart(CALEContext * context)
     {
         if (ca_cond_wait_for(g_context.condition,
                              g_context.lock,
-                             timeout) == 0)
+                             timeout) == CA_WAIT_SUCCESS)
         {
             result = CA_STATUS_OK;
         }
@@ -636,7 +669,7 @@ CAResult_t CAPeripheralStart(CALEContext * context)
 
     ca_mutex_unlock(g_context.lock);
 
-    if (result == CA_STATUS_FAILED)
+    if (result != CA_STATUS_OK)
     {
         return result;
     }
@@ -671,7 +704,6 @@ CAResult_t CAPeripheralStop()
     // Only stop if we were previously started.
     if (!CAPeripheralCheckStarted())
     {
-        result = CA_STATUS_OK;
         return result;
     }
 
@@ -705,4 +737,13 @@ CAResult_t CAPeripheralStop()
     g_bus_unown_name(owner_id);
 
     return result;
+}
+
+void CAPeripheralForEachService(GFunc func, void * user_data)
+{
+    ca_mutex_lock(g_context.lock);
+
+    g_list_foreach(g_context.gatt_services, func, user_data);
+
+    ca_mutex_unlock(g_context.lock);
 }

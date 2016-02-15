@@ -176,11 +176,6 @@ namespace RAML
     {
         PropertiesPtr property = std::make_shared<Properties>(attName);
 
-        cJSON *propertyUpdateFrequency = cJSON_GetObjectItem(childProperties, "update_frequency");
-        if (propertyUpdateFrequency)
-        {
-            property->setUpdateFrequencyTime(propertyUpdateFrequency->valueint);
-        }
         cJSON *propertyDescription = cJSON_GetObjectItem(childProperties, "description");
         if (propertyDescription)
         {
@@ -295,7 +290,7 @@ namespace RAML
         }
         else if (attType == "integer")
         {
-            readNumber(childProperties, property);
+            readInteger(childProperties, property);
         }
         else if (attType == "array")
         {
@@ -303,7 +298,7 @@ namespace RAML
         }
         else if (attType == "number")
         {
-            readNumber(childProperties, property);
+            readDouble(childProperties, property);
         }
     }
 
@@ -418,7 +413,7 @@ namespace RAML
         }
     }
 
-    void JsonSchema::readNumber(cJSON *childProperties,  PropertiesPtr property)
+    void JsonSchema::readInteger(cJSON *childProperties,  PropertiesPtr property)
     {
         cJSON *Max = cJSON_GetObjectItem(childProperties, "maximum");
         if (Max)
@@ -455,6 +450,45 @@ namespace RAML
         }
 
     }
+
+    void JsonSchema::readDouble(cJSON *childProperties,  PropertiesPtr property)
+    {
+        cJSON *Max = cJSON_GetObjectItem(childProperties, "maximum");
+        if (Max)
+        {
+            cJSON *exclusiveMax = cJSON_GetObjectItem(childProperties, "exclusiveMaximum");
+            if (exclusiveMax)
+            {
+                if (exclusiveMax->type == cJSON_True)
+                    property->setMax( --(Max->valuedouble));
+                else
+                    property->setMax(Max->valuedouble);
+            }
+            else
+                property->setMax(Max->valuedouble);
+        }
+        cJSON *Min = cJSON_GetObjectItem(childProperties, "minimum");
+        if (Min)
+        {
+            cJSON *exclusiveMin = cJSON_GetObjectItem(childProperties, "exclusiveMinimum");
+            if (exclusiveMin)
+            {
+                if (exclusiveMin->type == cJSON_True)
+                    property->setMin( ++(Min->valuedouble));
+                else
+                    property->setMin(Min->valuedouble);
+            }
+            else
+                property->setMin(Min->valuedouble);
+        }
+        cJSON *multipleOf = cJSON_GetObjectItem(childProperties, "multipleOf");
+        if (multipleOf)
+        {
+            property->setMultipleOf(multipleOf->valueint);
+        }
+
+    }
+
     DefinitionsPtr JsonSchema::readRef(std::string m_ref)
     {
         std::string delimiter1 = "#";

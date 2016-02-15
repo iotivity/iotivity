@@ -37,7 +37,7 @@
  */
 void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter)
 {
-    OC_LOG (INFO, TAG, "Initializing coap iterator");
+    OIC_LOG (INFO, TAG, "Initializing coap iterator");
     if((NULL == query) || (NULL == parseIter))
         return;
 
@@ -61,7 +61,7 @@ void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter)
  */
 OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter)
 {
-    OC_LOG (INFO, TAG, "Getting Next Query");
+    OIC_LOG (INFO, TAG, "Getting Next Query");
     if(NULL == parseIter)
         return NULL;
 

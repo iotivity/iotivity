@@ -98,22 +98,32 @@ IotvtICalResult_t ParsePeriod(const char *periodStr, IotvtICalPeriod_t *period)
         if(NULL != strptime(endDTPos, fmt, &period->endDateTime))
         {
             //Checking if endDateTime is after startDateTime
-            if(difftime(mktime(&period->endDateTime),
-                        mktime(&period->startDateTime)) > 0)
+            if ((period->startDateTime.tm_year > period->endDateTime.tm_year)
+                || ((period->startDateTime.tm_year == period->endDateTime.tm_year)
+                    && (period->startDateTime.tm_mon > period->endDateTime.tm_mon))
+                || ((period->startDateTime.tm_year == period->endDateTime.tm_year)
+                    && (period->startDateTime.tm_mon == period->endDateTime.tm_mon)
+                    && (period->startDateTime.tm_mday > period->endDateTime.tm_mday))
+                || (( fmt == dtFormat) && (period->startDateTime.tm_year == period->endDateTime.tm_year)
+                    && (period->startDateTime.tm_mon == period->endDateTime.tm_mon)
+                    && (period->startDateTime.tm_mday == period->endDateTime.tm_mday)
+                    && (period->startDateTime.tm_hour > period->endDateTime.tm_hour))
+                || (( fmt == dtFormat) && (period->startDateTime.tm_year == period->endDateTime.tm_year)
+                    && (period->startDateTime.tm_mon == period->endDateTime.tm_mon)
+                    && (period->startDateTime.tm_mday == period->endDateTime.tm_mday)
+                    && (period->startDateTime.tm_hour == period->endDateTime.tm_hour)
+                    && (period->startDateTime.tm_min > period->endDateTime.tm_min))
+                || (( fmt == dtFormat) && (period->startDateTime.tm_year == period->endDateTime.tm_year)
+                    && (period->startDateTime.tm_mon == period->endDateTime.tm_mon)
+                    && (period->startDateTime.tm_mday == period->endDateTime.tm_mday)
+                    && (period->startDateTime.tm_hour == period->endDateTime.tm_hour)
+                    && (period->startDateTime.tm_min == period->endDateTime.tm_min)
+                    && (period->startDateTime.tm_sec > period->endDateTime.tm_sec)))
             {
-                //mktime increases value of tm_hour by 1 if tm_isdst is set.
-                //The tm_hour value in period's startDateTime and endDatetime
-                //should remain same irrespective of daylight saving time.
-                if(period->startDateTime.tm_isdst)
-                {
-                    period->startDateTime.tm_hour =
-                   (period->startDateTime.tm_hour + TOTAL_HOURS - TM_DST_OFFSET) % TOTAL_HOURS;
-                }
-                if(period->endDateTime.tm_isdst)
-                {
-                    period->endDateTime.tm_hour =
-                   (period->endDateTime.tm_hour + TOTAL_HOURS - TM_DST_OFFSET) % TOTAL_HOURS;
-                }
+                return IOTVTICAL_INVALID_PERIOD;
+            }
+            else
+            {
                 return IOTVTICAL_SUCCESS;
             }
         }
@@ -320,6 +330,59 @@ static int DiffSecs(IotvtICalDateTime_t *time1, IotvtICalDateTime_t *time2)
            (3600 * time1->tm_hour + 60 * time1->tm_min + time1->tm_sec);
 }
 
+/**
+ * Validates if the @param currentTime is with in allowable period
+ *
+ * @param   period         -- allowable period
+ * @param   currentTime    -- the time that need to be validated against allowable time
+ *
+ * @return  IOTVTICAL_VALID_ACCESS      -- if the request is within valid time period
+ *          IOTVTICAL_INVALID_ACCESS    -- if the request is not within valid time period
+ *          IOTVTICAL_INVALID_PARAMETER -- if parameter are invalid
+ */
+static IotvtICalResult_t ValidatePeriod(IotvtICalPeriod_t *period, IotvtICalDateTime_t *currentTime)
+{
+    if(NULL == period || NULL == currentTime)
+    {
+        return IOTVTICAL_INVALID_PARAMETER;
+    }
+
+    bool validStartTime = true;
+    bool validEndTime = true;
+    bool validDay = false;
+    bool todayIsStartDay = (0 == DiffDays(&period->startDateTime, currentTime)) ? true : false;
+    bool todayIsEndDay = (0 == DiffDays(currentTime, &period->endDateTime)) ? true : false;
+
+    //If today is the start day of the allowable period then check
+    //currentTime > allowable period startTime
+    if(todayIsStartDay)
+    {
+        validStartTime = (0 <= DiffSecs(&period->startDateTime, currentTime)) ? true : false;
+    }
+
+    //If today is the end day of allowable period then check
+    //currentTime < allowable period endTime
+    if(todayIsEndDay)
+    {
+        validEndTime = (0 <= DiffSecs(currentTime, &period->endDateTime)) ? true :false;
+    }
+
+    //Check if today is valid day between startDate and EndDate inclusive
+    if((0 <= DiffDays(&period->startDateTime, currentTime)) &&
+       (0 <= DiffDays(currentTime, &period->endDateTime)))
+    {
+        validDay = true;
+    }
+
+    if(validDay && validStartTime && validEndTime)
+    {
+        return IOTVTICAL_VALID_ACCESS;
+    }
+    else
+    {
+        return IOTVTICAL_INVALID_ACCESS;
+    }
+}
 
 /**
  * This API is used by policy engine to checks if the
@@ -358,14 +421,10 @@ IotvtICalResult_t IsRequestWithinValidTime(char *periodStr, char *recurStr)
         return ret;
     }
 
-    //If recur is NULL then the access time is between period's startDate and endDate
+    //If recur is NULL then the access time is between period's startDateTime and endDateTime
     if(NULL == recurStr)
     {
-        if((0 <= DiffDays(&period.startDateTime, currentTime)) &&
-           (0 <= DiffDays(currentTime, &period.endDateTime)))
-        {
-            ret = IOTVTICAL_VALID_ACCESS;
-        }
+        ret = ValidatePeriod(&period, currentTime);
     }
 
     //If recur is not NULL then the access time is between period's startTime and

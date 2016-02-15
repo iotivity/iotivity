@@ -31,23 +31,19 @@
 
 #include <memory>
 #include <functional>
-#include <list>
 #include <mutex>
 #include <unordered_map>
+#include <unordered_set>
 
+#include "RCSAddress.h"
 #include "RCSDiscoveryManager.h"
 #include "ExpiryTimer.h"
 #include "PrimitiveResource.h"
-#include "RCSRemoteResourceObject.h"
 
 namespace OIC
 {
     namespace Service
     {
-        class RCSDiscoveryManager;
-        class PrimitiveResource;
-        class RCSAddress;
-
         /**
          * The class contains discovery request information
          *
@@ -56,38 +52,29 @@ namespace OIC
         class DiscoveryRequestInfo
         {
             public:
-                DiscoveryRequestInfo(const std::string &, const std::string &,
-                        const std::string &, DiscoverCallback);
+                DiscoveryRequestInfo(const RCSAddress&, const std::string&,
+                        const std::vector< std::string >&, DiscoverCallback);
+
+            public:
+                void discover() const;
+                bool isKnownResource(const std::shared_ptr< PrimitiveResource >&) const;
+                void addKnownResource(const std::shared_ptr< PrimitiveResource >&);
+                bool isMatchedAddress(const std::string&) const;
 
             private:
-                std::string m_address;
+                RCSAddress m_address;
                 std::string m_relativeUri;
-                std::string m_resourceType;
-                std::list<std::string> m_receivedIds;
-                DiscoverCallback m_discoverCB;
-            public:
-                void discoverRequest() const;
-                bool isKnownResource(const std::shared_ptr<PrimitiveResource>&);
-                bool isMatchingAddress(const std::string&) const;
+                std::vector< std::string > m_resourceTypes;
+                std::unordered_set< std::string > m_knownResourceIds;
+                DiscoverCallback m_discoverCb;
         };
-
 
         /**
          * The class contains the resource discovery and management requests methods.
          */
         class RCSDiscoveryManagerImpl
         {
-            static unsigned int s_uniqueId;
-
             public:
-
-                /*
-                 * Typedef for callback of requesting presence API
-                 *
-                 * @see requestMulticastPresence
-                 */
-                typedef std::function<void(OCStackResult, const unsigned int,
-                        const std::string&)> PresenceCallback;
 
                 /*
                  * Typedef for discovery request ID
@@ -95,16 +82,14 @@ namespace OIC
                  * @note This is generated for each discovery request
                  */
                 typedef unsigned int ID;
+                constexpr static char const* ALL_RESOURCE_TYPE = "";
 
             public:
 
-                /*
-                 * @return Returns RCSDiscoveryManagerImpl instance.
-                 */
                 static RCSDiscoveryManagerImpl* getInstance();
 
                 /**
-                 * Starting discovery of resource
+                 * Start discovery of resource
                  *
                  * @return DiscoverTask pointer
                  *
@@ -115,30 +100,28 @@ namespace OIC
                  *
                  * @throws InvalidParameterException If cb is empty
                  *
-                 * @note If relativeURI is empty, will be discovered after be changed into "OC_RSRVD_WELL_KNOWN_URI"
+                 * @note If relativeURI is empty, will be discovered after be changed into
+                 * "OC_RSRVD_WELL_KNOWN_URI"
                  * @note If resourceType is empty, will be discovered all resources in network
                  *
                  * @see RCSAddress
                  * @see RCSDiscoveryManager
                  */
-                std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> startDiscovery(const RCSAddress& address,
-                        const std::string& relativeURI,const std::string& resourceType,
+                RCSDiscoveryManager::DiscoveryTask::Ptr startDiscovery(const RCSAddress& address,
+                        const std::string& relativeURI,
+                        const std::vector< std::string >& resourceTypes,
                         RCSDiscoveryManager::ResourceDiscoveredCallback cb);
 
                 void cancel(ID);
-                bool isCanceled(ID);
 
             private:
                 RCSDiscoveryManagerImpl();
                 ~RCSDiscoveryManagerImpl() = default;
 
-                /**
-                 * Requesting presence by multicast
-                 */
-                void requestMulticastPresence();
+                void subscribePresenceWithMuticast();
 
                 /**
-                 * Checking duplicated callback and invoking callback when resource is discovered
+                 * Check duplicated callback and invoke callback when resource is discovered
                  *
                  * @param resource     A pointer of discovered resource
                  * @param discoverID   The ID of discovery request
@@ -146,36 +129,36 @@ namespace OIC
                  *
                  * @see PrimitiveResource
                  */
-                void onResourceFound(std::shared_ptr<PrimitiveResource> resource, ID discoveryId,
+                void onResourceFound(std::shared_ptr< PrimitiveResource > resource, ID discoveryId,
                         const RCSDiscoveryManager::ResourceDiscoveredCallback& cb);
 
                 /**
-                 * Discovering resource on all requests and posting timer when timer is expired
+                 * Discover resource on all requests and posting timer when timer is expired
                  */
                 void onPolling();
 
                 /**
-                 * Discovering resource on all requests when supporting presence function resource enter into network
-                 *
-                 * @param ret          Not used in this class
-                 * @param seq          Not used in this class
-                 * @param address      A address of supporting presence function resource
+                 * Discover resource on all requests when supporting presence function resource
+                 * enter into network
                  */
-                void onPresence(OCStackResult ret, const unsigned int seq, const std::string& address);
+                void onPresence(OCStackResult, const unsigned int seq, const std::string& address);
 
                 /**
-                 * Creating unique id
+                 * Create unique id
                  *
                  * @return Returns the id
                  */
-                ID createId();
+                ID createId() const;
 
             public:
-                ExpiryTimer m_timer;
+                constexpr static ID INVALID_ID = 0;
 
             private:
-                std::unordered_map<ID,DiscoveryRequestInfo> m_discoveryMap;
-                std::mutex m_mutex;
+                ExpiryTimer m_timer;
+
+                std::unordered_map< ID, DiscoveryRequestInfo > m_discoveryMap;
+
+                mutable std::mutex m_mutex;
         };
     }
 }

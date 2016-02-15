@@ -37,14 +37,17 @@
 #include "uarraylist.h"
 #include "org_iotivity_ca_CaLeClientInterface.h"
 
-#define TAG PCF("CA_LE_CLIENT")
+#define TAG PCF("OIC_CA_LE_CLIENT")
 
 #define MICROSECS_PER_SEC 1000000
+#define WAIT_TIME_WRITE_CHARACTERISTIC 10 * MICROSECS_PER_SEC
 
 static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAdapter;";
 static const char CLASSPATH_BT_ADAPTER[] = "android/bluetooth/BluetoothAdapter";
 static const char CLASSPATH_BT_UUID[] = "java/util/UUID";
 static const char CLASSPATH_BT_GATT[] = "android/bluetooth/BluetoothGatt";
+
+static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 JavaVM *g_jvm;
 static u_arraylist_t *g_deviceList = NULL; // device list to have same UUID
@@ -53,7 +56,6 @@ static u_arraylist_t *g_deviceStateList = NULL;
 
 static CAPacketReceiveCallback g_packetReceiveCallback = NULL;
 static CABLEErrorHandleCallback g_clientErrorCallback;
-static ca_thread_pool_t g_threadPoolHandle = NULL;
 static jobject g_leScanCallback = NULL;
 static jobject g_leGattCallback = NULL;
 static jobject g_context = NULL;
@@ -74,6 +76,9 @@ static ca_cond g_threadCond = NULL;
 static ca_cond g_deviceDescCond = NULL;
 
 static ca_mutex g_threadSendMutex = NULL;
+static ca_mutex g_threadWriteCharacteristicMutex = NULL;
+static ca_cond g_threadWriteCharacteristicCond = NULL;
+static bool g_isSignalSetFlag = false;
 
 static ca_mutex g_bleReqRespClientCbMutex = NULL;
 static ca_mutex g_bleServerBDAddressMutex = NULL;
@@ -166,7 +171,7 @@ error_exit:
     return CA_STATUS_FAILED;
 }
 
-CAResult_t CALEClientInitialize(ca_thread_pool_t handle)
+CAResult_t CALEClientInitialize()
 {
     OIC_LOG(DEBUG, TAG, "CALEClientInitialize");
 
@@ -207,8 +212,6 @@ CAResult_t CALEClientInitialize(ca_thread_pool_t handle)
         return ret;
     }
 
-    g_threadPoolHandle = handle;
-
     ret = CALEClientInitGattMutexVaraibles();
     if (CA_STATUS_OK != ret)
     {
@@ -227,6 +230,7 @@ CAResult_t CALEClientInitialize(ca_thread_pool_t handle)
 
     // init mutex for send logic
     g_threadCond = ca_cond_new();
+    g_threadWriteCharacteristicCond = ca_cond_new();
 
     CALEClientCreateDeviceList();
     CALEClientJNISetContext();
@@ -335,17 +339,92 @@ void CALEClientTerminate()
     CALEClientSetSendFinishFlag(false);
 
     CALEClientTerminateGattMutexVariables();
+    CALEClientDestroyJniInterface();
 
     ca_cond_free(g_deviceDescCond);
     ca_cond_free(g_threadCond);
+    ca_cond_free(g_threadWriteCharacteristicCond);
 
     g_deviceDescCond = NULL;
     g_threadCond = NULL;
+    g_threadWriteCharacteristicCond = NULL;
+    g_isSignalSetFlag = false;
 
     if (isAttached)
     {
         (*g_jvm)->DetachCurrentThread(g_jvm);
     }
+}
+
+CAResult_t CALEClientDestroyJniInterface()
+{
+    OIC_LOG(DEBUG, TAG, "CALEClientDestroyJniInterface");
+
+    if (!g_jvm)
+    {
+        OIC_LOG(ERROR, TAG, "g_jvm is null");
+        return CA_STATUS_FAILED;
+    }
+
+    bool isAttached = false;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
+    if (JNI_OK != res)
+    {
+        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if (JNI_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
+            return CA_STATUS_FAILED;
+        }
+        isAttached = true;
+    }
+
+    jclass jni_LeInterface = (*env)->FindClass(env, "org/iotivity/ca/CaLeClientInterface");
+    if (!jni_LeInterface)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get CaLeClientInterface class");
+        goto error_exit;
+    }
+
+    jmethodID jni_InterfaceDestroyMethod = (*env)->GetStaticMethodID(env, jni_LeInterface,
+                                                                     "destroyLeInterface",
+                                                                     "()V");
+    if (!jni_InterfaceDestroyMethod)
+    {
+        OIC_LOG(ERROR, TAG, "Could not get CaLeClientInterface destroy method");
+        goto error_exit;
+    }
+
+    (*env)->CallStaticVoidMethod(env, jni_LeInterface, jni_InterfaceDestroyMethod);
+
+    if ((*env)->ExceptionCheck(env))
+    {
+        OIC_LOG(ERROR, TAG, "destroyLeInterface has failed");
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        goto error_exit;
+    }
+
+    OIC_LOG(DEBUG, TAG, "Destroy instance for CaLeClientInterface");
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
+    return CA_STATUS_OK;
+
+error_exit:
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
+    return CA_STATUS_FAILED;
 }
 
 void CALEClientSendFinish(JNIEnv *env, jobject gatt)
@@ -573,6 +652,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
                 if (g_sendBuffer)
                 {
                     (*env)->DeleteGlobalRef(env, g_sendBuffer);
+                    g_sendBuffer = NULL;
                 }
                 jbyteArray jni_arr = (*env)->NewByteArray(env, dataLen);
                 (*env)->SetByteArrayRegion(env, jni_arr, 0, dataLen, (jbyte*) data);
@@ -660,6 +740,7 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
     if (g_sendBuffer)
     {
         (*env)->DeleteGlobalRef(env, g_sendBuffer);
+        g_sendBuffer = NULL;
     }
 
     if (0 == u_arraylist_length(g_deviceList))
@@ -846,10 +927,10 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
                 return CA_STATUS_FAILED;
             }
 
-            CAResult_t ret = CALEClientWriteCharacteristic(env, gatt);
+            CAResult_t ret = CALESetValueAndWriteCharacteristic(env, gatt);
             if (CA_STATUS_OK != ret)
             {
-                OIC_LOG(ERROR, TAG, "CALEClientWriteCharacteristic has failed");
+                OIC_LOG(ERROR, TAG, "CALESetValueAndWriteCharacteristic has failed");
                 (*env)->ReleaseStringUTFChars(env, jni_address, address);
                 return ret;
             }
@@ -1480,10 +1561,43 @@ CAResult_t CALEClientDiscoverServices(JNIEnv *env, jobject bluetoothGatt)
     return CA_STATUS_OK;
 }
 
-CAResult_t CALEClientWriteCharacteristic(JNIEnv *env, jobject gatt)
+static void CALEWriteCharacteristicThread(void* object)
 {
-    VERIFY_NON_NULL(env, TAG, "env is null");
+    VERIFY_NON_NULL(object, TAG, "object is null");
+
+    bool isAttached = false;
+    JNIEnv* env;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
+    if (JNI_OK != res)
+    {
+        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if (JNI_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
+            return;
+        }
+        isAttached = true;
+    }
+
+    jobject gatt = (jobject)object;
+    CAResult_t ret = CALESetValueAndWriteCharacteristic(env, gatt);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALESetValueAndWriteCharacteristic has failed");
+    }
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+}
+
+CAResult_t CALESetValueAndWriteCharacteristic(JNIEnv* env, jobject gatt)
+{
     VERIFY_NON_NULL(gatt, TAG, "gatt is null");
+    VERIFY_NON_NULL(env, TAG, "env is null");
 
     // send data
     jobject jni_obj_character = CALEClientCreateGattCharacteristic(env, gatt, g_sendBuffer);
@@ -1497,14 +1611,53 @@ CAResult_t CALEClientWriteCharacteristic(JNIEnv *env, jobject gatt)
     if (CA_STATUS_OK != ret)
     {
         CALEClientSendFinish(env, gatt);
-        return ret;
+        return CA_STATUS_FAILED;
     }
 
+    // wait for callback for write Characteristic with success to sent data
+    OIC_LOG_V(DEBUG, TAG, "callback flag is %d", g_isSignalSetFlag);
+    ca_mutex_lock(g_threadWriteCharacteristicMutex);
+    if (!g_isSignalSetFlag)
+    {
+        OIC_LOG(DEBUG, TAG, "wait for callback to notify writeCharacteristic is success");
+        if (CA_WAIT_SUCCESS != ca_cond_wait_for(g_threadWriteCharacteristicCond,
+                                  g_threadWriteCharacteristicMutex,
+                                  WAIT_TIME_WRITE_CHARACTERISTIC))
+        {
+            OIC_LOG(ERROR, TAG, "there is no response. write has failed");
+            g_isSignalSetFlag = false;
+            ca_mutex_unlock(g_threadWriteCharacteristicMutex);
+            return CA_STATUS_FAILED;
+        }
+    }
+    // reset flag set by writeCharacteristic Callback
+    g_isSignalSetFlag = false;
+    ca_mutex_unlock(g_threadWriteCharacteristicMutex);
+
+    OIC_LOG(INFO, TAG, "writeCharacteristic success!!");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CALEClientWriteCharacteristic(JNIEnv *env, jobject gatt)
+{
+    OIC_LOG(DEBUG, TAG, "IN - CALEClientWriteCharacteristic");
+    VERIFY_NON_NULL(env, TAG, "env is null");
+    VERIFY_NON_NULL(gatt, TAG, "gatt is null");
+
+    jobject gattParam = (*env)->NewGlobalRef(env, gatt);
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle,
+                                                CALEWriteCharacteristicThread, (void*)gattParam))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to create read thread!");
+        return CA_STATUS_FAILED;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT - CALEClientWriteCharacteristic");
     return CA_STATUS_OK;
 }
 
 CAResult_t CALEClientWriteCharacteristicImpl(JNIEnv *env, jobject bluetoothGatt,
-                                           jobject gattCharacteristic)
+                                             jobject gattCharacteristic)
 {
     OIC_LOG(DEBUG, TAG, "WRITE GATT CHARACTERISTIC");
     VERIFY_NON_NULL(env, TAG, "env is null");
@@ -1544,7 +1697,7 @@ CAResult_t CALEClientWriteCharacteristicImpl(JNIEnv *env, jobject bluetoothGatt,
                                                        gattCharacteristic);
     if (ret)
     {
-        OIC_LOG(DEBUG, TAG, "writeCharacteristic success");
+        OIC_LOG(DEBUG, TAG, "writeCharacteristic is called successfully");
     }
     else
     {
@@ -2109,7 +2262,7 @@ CAResult_t CALEClientAddScanDeviceToList(JNIEnv *env, jobject device)
         jobject gdevice = (*env)->NewGlobalRef(env, device);
         u_arraylist_add(g_deviceList, gdevice);
         ca_cond_signal(g_deviceDescCond);
-        OIC_LOG_V(DEBUG, TAG, "Added this Device[%d] in the List", remoteAddress);
+        OIC_LOG_V(DEBUG, TAG, "Added this Device[%s] in the List", remoteAddress);
     }
     (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
 
@@ -2155,7 +2308,6 @@ bool CALEClientIsDeviceInScanDeviceList(JNIEnv *env, const char* remoteAddress)
 
         if (!strcmp(remoteAddress, setAddress))
         {
-            OIC_LOG(DEBUG, TAG, "the device is already set");
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             return true;
         }
@@ -2952,6 +3104,7 @@ void CALEClientUpdateSendCnt(JNIEnv *env)
         }
         // notity the thread
         ca_cond_signal(g_threadCond);
+
         CALEClientSetSendFinishFlag(true);
         OIC_LOG(DEBUG, TAG, "set signal for send data");
     }
@@ -3051,6 +3204,16 @@ CAResult_t CALEClientInitGattMutexVaraibles()
         }
     }
 
+    if (NULL == g_threadWriteCharacteristicMutex)
+    {
+        g_threadWriteCharacteristicMutex = ca_mutex_new();
+        if (NULL == g_threadWriteCharacteristicMutex)
+        {
+            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
     return CA_STATUS_OK;
 }
 
@@ -3076,6 +3239,9 @@ void CALEClientTerminateGattMutexVariables()
 
     ca_mutex_free(g_scanMutex);
     g_scanMutex = NULL;
+
+    ca_mutex_free(g_threadWriteCharacteristicMutex);
+    g_threadWriteCharacteristicMutex = NULL;
 }
 
 void CALEClientSetSendFinishFlag(bool flag)
@@ -3144,13 +3310,26 @@ void CAStopLEGattClient()
         OIC_LOG(ERROR, TAG, "CALEClientStopScan has failed");
     }
 
+    ca_mutex_lock(g_threadMutex);
     ca_cond_signal(g_threadCond);
+    ca_mutex_unlock(g_threadMutex);
+
+    ca_mutex_lock(g_threadWriteCharacteristicMutex);
+    ca_cond_signal(g_threadWriteCharacteristicCond);
+    ca_mutex_unlock(g_threadWriteCharacteristicMutex);
 
     if (isAttached)
     {
         (*g_jvm)->DetachCurrentThread(g_jvm);
     }
 
+}
+
+CAResult_t CAInitializeLEGattClient()
+{
+    OIC_LOG(DEBUG, TAG, "Initialize GATT Client");
+    CALEClientInitialize();
+    return CA_STATUS_OK;
 }
 
 void CATerminateLEGattClient()
@@ -3193,7 +3372,7 @@ void CASetLEReqRespClientCallback(CABLEDataReceivedCallback callback)
 
 void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle)
 {
-    CALEClientInitialize(handle);
+    g_threadPoolHandle = handle;
 }
 
 CAResult_t CAGetLEAddress(char **local_address)
@@ -3338,6 +3517,12 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
         {
             OIC_LOG(ERROR, TAG, "CALEClientGattClose has failed");
         }
+
+        if (g_sendBuffer)
+        {
+            (*env)->DeleteGlobalRef(env, g_sendBuffer);
+            g_sendBuffer = NULL;
+        }
     }
     return;
 
@@ -3412,11 +3597,14 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
         if (CA_STATUS_OK != res)
         {
             OIC_LOG_V(INFO, TAG, "Descriptor is not found : %d", res);
-            CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
-            if (CA_STATUS_OK != res)
+            if (g_sendBuffer)
             {
-                OIC_LOG(ERROR, TAG, "CALEClientWriteCharacteristic has failed");
-                goto error_exit;
+                CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
+                if (CA_STATUS_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "CALEClientWriteCharacteristic has failed");
+                    goto error_exit;
+                }
             }
         }
 
@@ -3483,20 +3671,34 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
     if (GATT_SUCCESS != status) // error case
     {
         OIC_LOG(ERROR, TAG, "send failure");
-        CAResult_t res = CALEClientUpdateDeviceState(address, STATE_CONNECTED, STATE_CHARACTER_SET,
-                                                     STATE_SEND_FAILED);
+
+        // retry to write
+        CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
-        }
+            OIC_LOG(ERROR, TAG, "WriteCharacteristic has failed");
+            ca_mutex_lock(g_threadWriteCharacteristicMutex);
+            g_isSignalSetFlag = true;
+            ca_cond_signal(g_threadWriteCharacteristicCond);
+            ca_mutex_unlock(g_threadWriteCharacteristicMutex);
 
-        if (g_clientErrorCallback)
-        {
-            jint length = (*env)->GetArrayLength(env, data);
-            g_clientErrorCallback(address, data, length, CA_SEND_FAILED);
-        }
+            CAResult_t res = CALEClientUpdateDeviceState(address, STATE_CONNECTED,
+                                                         STATE_CHARACTER_SET,
+                                                         STATE_SEND_FAILED);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+            }
 
-        CALEClientSendFinish(env, gatt);
+            if (g_clientErrorCallback)
+            {
+                jint length = (*env)->GetArrayLength(env, data);
+                g_clientErrorCallback(address, data, length, CA_SEND_FAILED);
+            }
+
+            CALEClientSendFinish(env, gatt);
+            goto error_exit;
+        }
     }
     else
     {
@@ -3507,6 +3709,13 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
         {
             OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
         }
+
+        ca_mutex_lock(g_threadWriteCharacteristicMutex);
+        OIC_LOG(DEBUG, TAG, "g_isSignalSetFlag is set true and signal");
+        g_isSignalSetFlag = true;
+        ca_cond_signal(g_threadWriteCharacteristicCond);
+        ca_mutex_unlock(g_threadWriteCharacteristicMutex);
+
         CALEClientUpdateSendCnt(env);
     }
 

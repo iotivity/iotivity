@@ -221,16 +221,25 @@ CAResult_t CAStartLEGattServer()
 CAResult_t CAStopLEGattServer()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    // There is no server running to stop.
+    CATerminateLEGattServer();
     OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAInitializeLEGattServer()
+{
+    OIC_LOG(DEBUG, TAG, "Initialize GATT Server");
     return CA_STATUS_OK;
 }
 
 void CATerminateLEGattServer()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    ble_radio_reset();
-    g_serverRunning = false;
+    if (true == g_serverRunning)
+    {
+        ble_radio_reset();
+        g_serverRunning = false;
+    }
     OIC_LOG(DEBUG, TAG, "OUT");
     return;
 }

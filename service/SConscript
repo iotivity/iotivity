@@ -26,7 +26,7 @@ Import('env')
 
 target_os = env.get('TARGET_OS')
 
-if target_os not in ['arduino','darwin']:
+if target_os not in ['arduino','darwin', 'ios']:
     # Build things manager project
     SConscript('things-manager/SConscript')
 
@@ -40,7 +40,7 @@ if target_os not in ['arduino','darwin']:
     SConscript('notification-service/SConscript')
 
     # Build resource-container project
-    if target_os not in ['android', 'tizen']:
+    if target_os not in ['android']:
         SConscript('resource-container/SConscript')
 
     # Build simulator module

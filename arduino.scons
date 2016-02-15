@@ -35,6 +35,7 @@ Help(vars.GenerateHelpText(env))
 env.ImportLib('SPI')
 if 'ETH' in env.get('SHIELD'):
 	env.ImportLib('Ethernet')
+	env.AppendUnique(CPPDEFINES = ['ARDUINOETH'])
 if 'WIFI' in env.get('SHIELD'):
 	env.ImportLib('WiFi')
 	env.AppendUnique(CPPDEFINES = ['ARDUINOWIFI'])

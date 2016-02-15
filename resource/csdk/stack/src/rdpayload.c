@@ -26,7 +26,7 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 
-#define TAG "OCRDPayload"
+#define TAG "OIC_RI_RDPAYLOAD"
 
 #define CBOR_ROOT_ARRAY_LENGTH 1
 
@@ -41,7 +41,7 @@ int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, siz
 {
     if (!outPayload || !size)
     {
-        OC_LOG(ERROR, TAG, "Invalid parameters.");
+        OIC_LOG(ERROR, TAG, "Invalid parameters.");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -49,57 +49,49 @@ int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, siz
     int flags = 0;
     cbor_encoder_init(&encoder, outPayload, *size, flags);
 
-    CborEncoder rootArray;
     CborError cborEncoderResult;
-    cborEncoderResult = cbor_encoder_create_array(&encoder, &rootArray, CBOR_ROOT_ARRAY_LENGTH);
-    if (CborNoError != cborEncoderResult)
-    {
-        OC_LOG(ERROR, TAG, "Failed creating cbor array.");
-        goto cbor_error;
-    }
-
     if (rdPayload->rdDiscovery)
     {
         CborEncoder map;
-        cborEncoderResult = cbor_encoder_create_map(&rootArray, &map, CborIndefiniteLength);
+        cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
         if (CborNoError != cborEncoderResult)
         {
-            OC_LOG(ERROR, TAG, "Failed creating discovery map.");
+            OIC_LOG(ERROR, TAG, "Failed creating discovery map.");
             goto cbor_error;
         }
         if (CborNoError != ConditionalAddTextStringToMap(&map, OC_RSRVD_DEVICE_NAME,
                 sizeof(OC_RSRVD_DEVICE_NAME) - 1, (char *)rdPayload->rdDiscovery->n.deviceName))
         {
-            OC_LOG(ERROR, TAG, "Failed setting OC_RSRVD_DEVICE_NAME.");
+            OIC_LOG(ERROR, TAG, "Failed setting OC_RSRVD_DEVICE_NAME.");
             goto cbor_error;
         }
         if (CborNoError != ConditionalAddTextStringToMap(&map, OC_RSRVD_DEVICE_ID,
                 sizeof(OC_RSRVD_DEVICE_ID) - 1, (char *)rdPayload->rdDiscovery->di.id))
         {
-            OC_LOG(ERROR, TAG, "Failed setting OC_RSRVD_DEVICE_ID.");
+            OIC_LOG(ERROR, TAG, "Failed setting OC_RSRVD_DEVICE_ID.");
             goto cbor_error;
         }
         uint64_t sel = (uint8_t) rdPayload->rdDiscovery->sel;
         if (CborNoError != ConditionalAddIntToMap(&map, OC_RSRVD_RD_DISCOVERY_SEL,
             sizeof(OC_RSRVD_RD_DISCOVERY_SEL) - 1, &sel))
         {
-            OC_LOG(ERROR, TAG, "Failed setting OC_RSRVD_RD_DISCOVERY_SEL.");
+            OIC_LOG(ERROR, TAG, "Failed setting OC_RSRVD_RD_DISCOVERY_SEL.");
             goto cbor_error;
         }
-        cborEncoderResult = cbor_encoder_close_container(&rootArray, &map);
+        cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
         if (CborNoError != cborEncoderResult)
         {
-            OC_LOG(ERROR, TAG, "Failed closing discovery map.");
+            OIC_LOG(ERROR, TAG, "Failed closing discovery map.");
             goto cbor_error;
         }
     }
     else if (rdPayload->rdPublish)
     {
         CborEncoder colArray;
-        cborEncoderResult = cbor_encoder_create_array(&rootArray, &colArray, CborIndefiniteLength);
+        cborEncoderResult = cbor_encoder_create_array(&encoder, &colArray, CborIndefiniteLength);
         if (CborNoError != cborEncoderResult)
         {
-            OC_LOG(ERROR, TAG, "Failed creating collection array.");
+            OIC_LOG(ERROR, TAG, "Failed creating collection array.");
             goto cbor_error;
         }
 
@@ -108,33 +100,42 @@ int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, siz
         {
             if (OC_STACK_OK != OCTagsPayloadToCbor(rdPublish->tags, &colArray))
             {
-                OC_LOG(ERROR, TAG, "Failed creating tags payload.");
+                OIC_LOG(ERROR, TAG, "Failed creating tags payload.");
                 goto cbor_error;
             }
             if (OC_STACK_OK != OCLinksPayloadToCbor(rdPublish->setLinks, &colArray))
             {
-                OC_LOG(ERROR, TAG, "Failed creating links payload.");
+                OIC_LOG(ERROR, TAG, "Failed creating links payload.");
                 goto cbor_error;
             }
             rdPublish = rdPublish->next;
         }
-        cborEncoderResult = cbor_encoder_close_container(&rootArray, &colArray);
+        cborEncoderResult = cbor_encoder_close_container(&encoder, &colArray);
         if (CborNoError != cborEncoderResult)
         {
-            OC_LOG(ERROR, TAG, "Failed closing collection array.");
+            OIC_LOG(ERROR, TAG, "Failed closing collection array.");
             goto cbor_error;
         }
     }
-    cborEncoderResult = cbor_encoder_close_container(&encoder, &rootArray);
-    if (CborNoError != cborEncoderResult)
+    else
     {
-        OC_LOG(ERROR, TAG, "Failed closing root array container. ");
-        goto cbor_error;
+        CborEncoder map;
+        cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
+        if (CborNoError != cborEncoderResult)
+        {
+            OIC_LOG(ERROR, TAG, "Failed creating discovery map.");
+            goto cbor_error;
+        }
+        cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
+        if (CborNoError != cborEncoderResult)
+        {
+            OIC_LOG(ERROR, TAG, "Failed creating discovery map.");
+            goto cbor_error;
+        }
     }
-
     *size = encoder.ptr - outPayload;
-    return OC_STACK_OK;
 
+    return OC_STACK_OK;
 cbor_error:
     OICFree(outPayload);
     return OC_STACK_ERROR;
@@ -146,72 +147,72 @@ OCStackResult OCTagsPayloadToCbor(OCTagsPayload *tags, CborEncoder *setMap)
     CborError cborEncoderResult = cbor_encoder_create_map(setMap, &tagsMap, CborIndefiniteLength);
     if (CborNoError != cborEncoderResult)
     {
-        OC_LOG(ERROR, TAG, "Failed creating TAGS map.");
+        OIC_LOG(ERROR, TAG, "Failed creating TAGS map.");
         return OC_STACK_ERROR;
     }
 
     if (CborNoError != ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_DEVICE_NAME,
             sizeof(OC_RSRVD_DEVICE_NAME) - 1, (char *)tags->n.deviceName))
     {
-        OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_DEVICE_NAME in TAGS map.");
+        OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_DEVICE_NAME in TAGS map.");
         return OC_STACK_ERROR;
     }
     if (CborNoError != ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_DEVICE_ID,
             sizeof(OC_RSRVD_DEVICE_ID) - 1, (char *)tags->di.id))
     {
-        OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_DEVICE_ID in TAGS map.");
+        OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_DEVICE_ID in TAGS map.");
         return OC_STACK_ERROR;
     }
     if (CborNoError != ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_RTS,
             sizeof(OC_RSRVD_RTS) - 1, (char *)tags->rts))
     {
-        OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_RTS in TAGS map.");
+        OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_RTS in TAGS map.");
         return OC_STACK_ERROR;
     }
     if (CborNoError != ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_DREL,
             sizeof(OC_RSRVD_DREL) - 1, (char *)tags->drel))
     {
-        OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_DREL in TAGS map.");
+        OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_DREL in TAGS map.");
         return OC_STACK_ERROR;
     }
     if (CborNoError != ConditionalAddTextStringToMap(&tagsMap, OC_RSRVD_BASE_URI,
             sizeof(OC_RSRVD_BASE_URI) - 1, (char *)tags->baseURI))
     {
-        OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_BASE_URI in TAGS map.");
+        OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_BASE_URI in TAGS map.");
         return OC_STACK_ERROR;
     }
     uint64_t temp = (uint64_t)tags->bitmap;
     if (CborNoError != ConditionalAddIntToMap(&tagsMap, OC_RSRVD_BITMAP,
             sizeof(OC_RSRVD_BITMAP) - 1, &temp))
     {
-        OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_BITMAP in TAGS map.");
+        OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_BITMAP in TAGS map.");
         return OC_STACK_ERROR;
     }
     temp = (uint64_t)tags->port;
     if (CborNoError != ConditionalAddIntToMap(&tagsMap, OC_RSRVD_HOSTING_PORT,
             sizeof(OC_RSRVD_HOSTING_PORT) - 1, &temp))
     {
-        OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_HOSTING_PORT in TAGS map.");
+        OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_HOSTING_PORT in TAGS map.");
         return OC_STACK_ERROR;
     }
     temp = (uint64_t)tags->ins;
     if (CborNoError != ConditionalAddIntToMap(&tagsMap, OC_RSRVD_INS,
             sizeof(OC_RSRVD_INS) - 1, &temp))
     {
-        OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_INS in TAGS map.");
+        OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_INS in TAGS map.");
         return OC_STACK_ERROR;
     }
     temp = (uint64_t)tags->ttl;
     if (CborNoError != ConditionalAddIntToMap(&tagsMap, OC_RSRVD_TTL,
             sizeof(OC_RSRVD_TTL) - 1, &temp))
     {
-        OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_TTL in TAGS map.");
+        OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_TTL in TAGS map.");
         return OC_STACK_ERROR;
     }
     cborEncoderResult = cbor_encoder_close_container(setMap, &tagsMap);
     if (CborNoError != cborEncoderResult)
     {
-        OC_LOG(ERROR, TAG, "Failed closing TAGS map.");
+        OIC_LOG(ERROR, TAG, "Failed closing TAGS map.");
         return OC_STACK_ERROR;
     }
     return OC_STACK_OK;
@@ -225,7 +226,7 @@ OCStackResult OCLinksPayloadToCbor(OCLinksPayload *rtPtr, CborEncoder *setMap)
     cborEncoderResult = cbor_encoder_create_array(setMap, &linksArray, CborIndefiniteLength);
     if (CborNoError != cborEncoderResult)
     {
-        OC_LOG(ERROR, TAG, "Failed creating LINKS array.");
+        OIC_LOG(ERROR, TAG, "Failed creating LINKS array.");
         return OC_STACK_ERROR;
     }
     while (rtPtr)
@@ -235,62 +236,62 @@ OCStackResult OCLinksPayloadToCbor(OCLinksPayload *rtPtr, CborEncoder *setMap)
                 CborIndefiniteLength);
         if (CborNoError != cborEncoderResult)
         {
-            OC_LOG(ERROR, TAG, "Failed creating LINKS map.");
+            OIC_LOG(ERROR, TAG, "Failed creating LINKS map.");
             return OC_STACK_ERROR;
         }
         if (CborNoError != ConditionalAddTextStringToMap(&linksMap, OC_RSRVD_HREF,
                 sizeof(OC_RSRVD_HREF) - 1, rtPtr->href))
         {
-            OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_HREF in LINKS map.");
+            OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_HREF in LINKS map.");
             return OC_STACK_ERROR;
         }
         if (CborNoError != ConditionalAddTextStringToMap(&linksMap, OC_RSRVD_REL,
                 sizeof(OC_RSRVD_REL) - 1,  rtPtr->rel))
         {
-            OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_REL in LINKS map.");
+            OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_REL in LINKS map.");
             return OC_STACK_ERROR;
         }
         if (CborNoError != ConditionalAddTextStringToMap(&linksMap, OC_RSRVD_TITLE,
                 sizeof(OC_RSRVD_TITLE) - 1, rtPtr->title))
         {
-            OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_TITLE in LINKS map.");
+            OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_TITLE in LINKS map.");
             return OC_STACK_ERROR;
         }
         if (CborNoError != ConditionalAddTextStringToMap(&linksMap, OC_RSRVD_URI,
                 sizeof(OC_RSRVD_URI) - 1, rtPtr->uri))
         {
-            OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_URI in LINKS map.");
+            OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_URI in LINKS map.");
             return OC_STACK_ERROR;
         }
         if (CborNoError != AddStringLLToMap(&linksMap, OC_RSRVD_RESOURCE_TYPE,
                 sizeof(OC_RSRVD_RESOURCE_TYPE) - 1, rtPtr->rt))
         {
-            OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_RESOURCE_TYPE in LINKS map.");
+            OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_RESOURCE_TYPE in LINKS map.");
             return OC_STACK_ERROR;
         }
         if (CborNoError != AddStringLLToMap(&linksMap, OC_RSRVD_INTERFACE,
                 sizeof(OC_RSRVD_INTERFACE) - 1, rtPtr->itf))
         {
-            OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_INTERFACE in LINKS map.");
+            OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_INTERFACE in LINKS map.");
             return OC_STACK_ERROR;
         }
         if (CborNoError != AddStringLLToMap(&linksMap, OC_RSRVD_MEDIA_TYPE,
                 sizeof(OC_RSRVD_MEDIA_TYPE) - 1, rtPtr->mt))
         {
-            OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_MEDIA_TYPE in LINKS map.");
+            OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_MEDIA_TYPE in LINKS map.");
             return OC_STACK_ERROR;
         }
         uint64_t temp = (uint64_t)rtPtr->ins;
         if (CborNoError != ConditionalAddIntToMap(&linksMap, OC_RSRVD_INS,
             sizeof(OC_RSRVD_INS) - 1, &temp))
         {
-            OC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_INS in LINKS map.");
+            OIC_LOG(ERROR, TAG, "Failed adding OC_RSRVD_INS in LINKS map.");
             return OC_STACK_ERROR;
         }
         cborEncoderResult = cbor_encoder_close_container(&linksArray, &linksMap);
         if (CborNoError != cborEncoderResult)
         {
-            OC_LOG(ERROR, TAG, "Failed closing LINKS map.");
+            OIC_LOG(ERROR, TAG, "Failed closing LINKS map.");
             return OC_STACK_ERROR;
         }
         rtPtr = rtPtr->next;
@@ -298,7 +299,7 @@ OCStackResult OCLinksPayloadToCbor(OCLinksPayload *rtPtr, CborEncoder *setMap)
     cborEncoderResult = cbor_encoder_close_container(setMap, &linksArray);
     if (CborNoError != cborEncoderResult)
     {
-        OC_LOG(ERROR, TAG, "Failed closing LINKS array.");
+        OIC_LOG(ERROR, TAG, "Failed closing LINKS array.");
         return OC_STACK_ERROR;;
     }
     return OC_STACK_OK;
@@ -345,7 +346,7 @@ OCStackResult OCRDCborToPayload(const CborValue *cborPayload, OCPayload **outPay
             // Move from tags payload to links array.
             if (CborNoError != cbor_value_advance(rdCBORPayload))
             {
-                OC_LOG(DEBUG, TAG, "Failed advancing from tags payload to links.");
+                OIC_LOG(DEBUG, TAG, "Failed advancing from tags payload to links.");
                 OCFreeLinksResource(linksPayload);
                 OCFreeTagsResource(tagsPayload);
                 goto cbor_error;
@@ -387,11 +388,11 @@ OCStackResult OCRDCborToPayload(const CborValue *cborPayload, OCPayload **outPay
             goto cbor_error;
         }
     }
-    OC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
+    OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
     *outPayload = (OCPayload *)rdPayload;
     return OC_STACK_OK;
 no_memory:
-    OC_LOG(ERROR, TAG, "Failed allocating memory.");
+    OIC_LOG(ERROR, TAG, "Failed allocating memory.");
     OCRDPayloadDestroy(rdPayload);
     return OC_STACK_NO_MEMORY;
 
@@ -410,7 +411,7 @@ static CborError FindStringInMap(CborValue *map, char *tags, char **value)
         cborFindResult = cbor_value_dup_text_string(&curVal, value, &len, NULL);
         if (CborNoError != cborFindResult)
         {
-            OC_LOG_V(ERROR, TAG, "Failed finding value for tag %s .", tags);
+            OIC_LOG_V(ERROR, TAG, "Failed finding value for tag %s .", tags);
             return cborFindResult;
         }
     }
@@ -426,7 +427,7 @@ static CborError FindIntInMap(CborValue *map, char *tags, uint64_t *value)
         cborFindResult = cbor_value_get_uint64(&curVal, value);
         if (CborNoError != cborFindResult)
         {
-            OC_LOG_V(ERROR, TAG, "Failed finding value for tag %s .", tags);
+            OIC_LOG_V(ERROR, TAG, "Failed finding value for tag %s .", tags);
             return cborFindResult;
         }
     }
@@ -572,7 +573,7 @@ OCStackResult OCLinksCborToPayload(CborValue *linksArray, OCLinksPayload **links
     CborError cborFindResult = cbor_value_enter_container(linksArray, &linksMap);
     if (CborNoError != cborFindResult)
     {
-        OC_LOG(ERROR, TAG, "Failed enter links map");
+        OIC_LOG(ERROR, TAG, "Failed enter links map");
         return OC_STACK_ERROR;
     }
 
@@ -581,7 +582,7 @@ OCStackResult OCLinksCborToPayload(CborValue *linksArray, OCLinksPayload **links
         OCLinksPayload *setLinks = (OCLinksPayload *)OICCalloc(1, sizeof(OCLinksPayload));
         if (!setLinks)
         {
-            OC_LOG(ERROR, TAG, "Failed allocating memory.");
+            OIC_LOG(ERROR, TAG, "Failed allocating memory.");
             OCFreeLinksResource(*linksPayload);
             return OC_STACK_NO_MEMORY;
         }
@@ -661,7 +662,7 @@ OCStackResult OCLinksCborToPayload(CborValue *linksArray, OCLinksPayload **links
         cborFindResult = cbor_value_advance(&linksMap);
         if (CborNoError != cborFindResult)
         {
-            OC_LOG(ERROR, TAG, "Failed advancing links map");
+            OIC_LOG(ERROR, TAG, "Failed advancing links map");
             OCFreeLinksResource(*linksPayload);
             OCFreeLinksResource(setLinks);
             return OC_STACK_ERROR;
@@ -857,7 +858,7 @@ OCTagsPayload* OCCopyTagsResources(const char *deviceName, const unsigned char *
     return tags;
 
 memory_allocation_failed:
-    OC_LOG(ERROR, TAG, "Memory allocation failed.");
+    OIC_LOG(ERROR, TAG, "Memory allocation failed.");
     OCFreeTagsResource(tags);
     return NULL;
 }
@@ -868,7 +869,7 @@ OCLinksPayload* OCCopyLinksResources(const char *href, OCStringLL *rt, OCStringL
     OCLinksPayload *links = (OCLinksPayload *)OICCalloc(1, sizeof(OCLinksPayload));
     if (!links)
     {
-        OC_LOG(ERROR, TAG, "Failed allocating memory.");
+        OIC_LOG(ERROR, TAG, "Failed allocating memory.");
         return NULL;
     }
     if (href)
@@ -933,29 +934,9 @@ OCLinksPayload* OCCopyLinksResources(const char *href, OCStringLL *rt, OCStringL
     return links;
 
 memory_allocation_failed:
-    OC_LOG(ERROR, TAG, "Memory allocation failed.");
+    OIC_LOG(ERROR, TAG, "Memory allocation failed.");
     OCFreeLinksResource(links);
     return NULL;
-}
-
-void OCLinksAddResource(OCDiscoveryPayload *payload, const char *href, OCStringLL *rt,
-    OCStringLL *itf, const char *rel, bool obs, const char *title, const char *uri,
-    uint8_t ins, OCStringLL *mt)
-{
-    if(!payload->collectionResources->setLinks)
-    {
-        payload->collectionResources->setLinks =
-            OCCopyLinksResources(href, rt, itf, rel, obs, title, uri, ins, mt);
-    }
-    else
-    {
-        OCLinksPayload *p = payload->collectionResources->setLinks;
-        while (p->next)
-        {
-            p = p->next;
-        }
-        p->next = OCCopyLinksResources(href, rt, itf, rel, obs, title, uri, ins, mt);
-    }
 }
 
 OCResourceCollectionPayload* OCCopyCollectionResource(OCTagsPayload *tags, OCLinksPayload *links)
@@ -967,36 +948,13 @@ OCResourceCollectionPayload* OCCopyCollectionResource(OCTagsPayload *tags, OCLin
     OCResourceCollectionPayload *pl = (OCResourceCollectionPayload *)OICCalloc(1, sizeof(OCResourceCollectionPayload));
     if(!pl)
     {
-        OC_LOG(ERROR, TAG, "Failed allocating memory for the OCResourceCollectionPayload.");
+        OIC_LOG(ERROR, TAG, "Failed allocating memory for the OCResourceCollectionPayload.");
         return NULL;
     }
     pl->tags = tags;
     pl->setLinks = links;
 
     return pl;
-}
-
-OCStackResult OCDiscoveryCollectionPayloadAddResource(OCDiscoveryPayload *payload, OCTagsPayload *tags, OCLinksPayload *links)
-{
-    OCResourceCollectionPayload* res = OCCopyCollectionResource(tags, links);
-    if (res == NULL)
-    {
-        return OC_STACK_NO_MEMORY;
-    }
-    if(!payload->collectionResources)
-    {
-        payload->collectionResources = res;
-    }
-    else
-    {
-        OCResourceCollectionPayload *p = payload->collectionResources;
-        while(p->next)
-        {
-            p = p->next;
-        }
-        p->next = res;
-    }
-    return OC_STACK_OK;
 }
 
 void OCFreeLinksResource(OCLinksPayload *payload)
@@ -1047,44 +1005,36 @@ void OCFreeCollectionResource(OCResourceCollectionPayload *payload)
     OICFree(payload);
 }
 
-void OCDiscoveryCollectionPayloadDestroy(OCDiscoveryPayload* payload)
-{
-    if(!payload)
-    {
-        return;
-    }
-
-    OCFreeCollectionResource(payload->collectionResources);
-    OICFree(payload);
-}
-
-
 void OCTagsLog(const LogLevel level, const OCTagsPayload *tags)
 {
     if (tags)
     {
         if (tags->n.deviceName)
         {
-            OC_LOG_V(level, TAG, " Device Name : %s ",tags->n.deviceName);
+            OIC_LOG_V(level, TAG, " Device Name : %s ",tags->n.deviceName);
         }
         if (tags->baseURI)
         {
-            OC_LOG_V(level, TAG, " Base URI : %s ",tags->baseURI);
+            OIC_LOG_V(level, TAG, " Base URI : %s ",tags->baseURI);
         }
-        OC_LOG_V(level, TAG, " Device ID : %s ",tags->di.id);
-        OC_LOG_V(level, TAG, " Bitmap : %d ",tags->bitmap);
-        OC_LOG_V(level, TAG, " Port : %d ",tags->port);
-        OC_LOG_V(level, TAG, " Ins : %d ",tags->ins);
-        OC_LOG_V(level, TAG, " Ttl : %d ",tags->ttl);
+        OIC_LOG_V(level, TAG, " Device ID : %s ",tags->di.id);
+        OIC_LOG_V(level, TAG, " Bitmap : %d ",tags->bitmap);
+        OIC_LOG_V(level, TAG, " Port : %d ",tags->port);
+        OIC_LOG_V(level, TAG, " Ins : %d ",tags->ins);
+        OIC_LOG_V(level, TAG, " Ttl : %d ",tags->ttl);
 
         if (tags->rts)
         {
-            OC_LOG_V(level, TAG, " RTS : %s ",tags->rts);
+            OIC_LOG_V(level, TAG, " RTS : %s ",tags->rts);
         }
         if (tags->drel)
         {
-            OC_LOG_V(level, TAG, " DREL : %s ",tags->drel);
+            OIC_LOG_V(level, TAG, " DREL : %s ",tags->drel);
         }
+    }
+    else
+    {
+        (void) level;
     }
 }
 
@@ -1094,52 +1044,56 @@ void OCLinksLog(const LogLevel level, const OCLinksPayload *links)
     {
         if (links->href)
         {
-            OC_LOG_V(level, TAG, " href: %s ",links->href);
+            OIC_LOG_V(level, TAG, " href: %s ",links->href);
         }
-        OC_LOG(level, TAG, " RT: ");
+        OIC_LOG(level, TAG, " RT: ");
         OCStringLL *rt = links->rt;
         while (rt)
         {
             if (rt->value)
             {
-                OC_LOG_V(level, TAG, "   %s", rt->value);
+                OIC_LOG_V(level, TAG, "   %s", rt->value);
             }
             rt = rt->next;
         }
-        OC_LOG(level, TAG, " IF: ");
+        OIC_LOG(level, TAG, " IF: ");
         OCStringLL *itf = links->itf;
         while (itf)
         {
             if (itf->value)
             {
-                OC_LOG_V(level, TAG, "   %s", itf->value);
+                OIC_LOG_V(level, TAG, "   %s", itf->value);
             }
             itf = itf->next;
         }
-        OC_LOG(level, TAG, " MT: ");
+        OIC_LOG(level, TAG, " MT: ");
         OCStringLL *mt = links->mt;
         while (mt)
         {
             if (mt->value)
             {
-                OC_LOG_V(level, TAG, "   %s", mt->value);
+                OIC_LOG_V(level, TAG, "   %s", mt->value);
             }
             mt = mt->next;
         }
-        OC_LOG_V(level, TAG, " INS: %d", links->ins);
-        OC_LOG_V(level, TAG, " OBS: %d", links->obs);
+        OIC_LOG_V(level, TAG, " INS: %d", links->ins);
+        OIC_LOG_V(level, TAG, " OBS: %d", links->obs);
         if (links->rel)
         {
-            OC_LOG_V(level, TAG, " REL: %s", links->rel);
+            OIC_LOG_V(level, TAG, " REL: %s", links->rel);
         }
         if (links->title)
         {
-            OC_LOG_V(level, TAG, " TITLE: %s", links->title);
+            OIC_LOG_V(level, TAG, " TITLE: %s", links->title);
         }
         if (links->uri)
         {
-            OC_LOG_V(level, TAG, " URI: %s", links->uri);
+            OIC_LOG_V(level, TAG, " URI: %s", links->uri);
         }
         links = links->next;
+    }
+    if (!links)
+    {
+        (void) level;
     }
 }

@@ -23,6 +23,9 @@
 #include <string.h>
 #include <stdint.h>
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include "catcpadapter.h"
 #include "catcpinterface.h"
 #include "caqueueingthread.h"
@@ -37,7 +40,7 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "TCP_ADAP"
+#define TAG "OIC_CA_TCP_ADAP"
 
 /**
  * Holds internal thread TCP data information.
@@ -50,9 +53,9 @@ typedef struct
     bool isMulticast;
 } CATCPData;
 
-#define CA_TCP_TIMEOUT 1000
-
 #define CA_TCP_LISTEN_BACKLOG  3
+
+#define CA_TCP_SELECT_TIMEOUT 10
 
 /**
  * Queue handle for Send Data.
@@ -74,8 +77,8 @@ static CANetworkChangeCallback g_networkChangeCallback = NULL;
  */
 static CAErrorHandleCallback g_errorCallback = NULL;
 
-static void CATCPPacketReceivedCB(const CAEndpoint_t *endpoint,
-                                  const void *data, size_t dataLength);
+static void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep,
+                                  const void *data, uint32_t dataLength);
 
 static CAResult_t CATCPInitializeQueueHandles();
 
@@ -88,12 +91,10 @@ static CATCPData *CACreateTCPData(const CAEndpoint_t *remoteEndpoint,
                                   bool isMulticast);
 void CAFreeTCPData(CATCPData *ipData);
 
-static void CADataDestroyer(void *data, size_t size);
+static void CADataDestroyer(void *data, uint32_t size);
 
 CAResult_t CATCPInitializeQueueHandles()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     // Check if the message queue is already initialized
     if (g_sendQueueHandle)
     {
@@ -119,65 +120,51 @@ CAResult_t CATCPInitializeQueueHandles()
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CATCPDeinitializeQueueHandles()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     CAQueueingThreadDestroy(g_sendQueueHandle);
     OICFree(g_sendQueueHandle);
     g_sendQueueHandle = NULL;
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CATCPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status)
 {
     (void)ipAddress;
     (void)status;
-    OIC_LOG(DEBUG, TAG, "IN");
 }
 
-void CATCPPacketReceivedCB(const CAEndpoint_t *endpoint, const void *data,
-                           size_t dataLength)
+void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
+                           uint32_t dataLength)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    VERIFY_NON_NULL_VOID(endpoint, TAG, "ipAddress is NULL");
+    VERIFY_NON_NULL_VOID(sep, TAG, "sep is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
 
-    OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", endpoint->addr, endpoint->port);
+    OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", sep->endpoint.addr, sep->endpoint.port);
 
     if (g_networkPacketCallback)
     {
-        g_networkPacketCallback(endpoint, data, dataLength);
+        g_networkPacketCallback(sep, data, dataLength);
     }
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
-                       size_t dataLength, CAResult_t result)
+                       uint32_t dataLength, CAResult_t result)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
-
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
 
     if (g_errorCallback)
     {
         g_errorCallback(endpoint, data, dataLength, result);
     }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 static void CAInitializeTCPGlobals()
 {
-    caglobals.tcp.selectTimeout = CA_TCP_TIMEOUT;
+    caglobals.tcp.selectTimeout = CA_TCP_SELECT_TIMEOUT;
     caglobals.tcp.listenBacklog = CA_TCP_LISTEN_BACKLOG;
     caglobals.tcp.svrlist = NULL;
 
@@ -234,8 +221,6 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartTCP()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     if (CA_STATUS_OK != CATCPInitializeQueueHandles())
     {
         OIC_LOG(ERROR, TAG, "Failed to Initialize Queue Handle");
@@ -257,40 +242,28 @@ CAResult_t CAStartTCP()
         return ret;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartTCPListeningServer()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStopTCPListeningServer()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartTCPDiscoveryServer()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 static size_t CAQueueTCPData(bool isMulticast, const CAEndpoint_t *endpoint,
                              const void *data, size_t dataLength)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    VERIFY_NON_NULL_RET(endpoint, TAG, "remoteEndpoint", -1);
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", -1);
     VERIFY_NON_NULL_RET(data, TAG, "data", -1);
 
     if (0 == dataLength)
@@ -302,80 +275,67 @@ static size_t CAQueueTCPData(bool isMulticast, const CAEndpoint_t *endpoint,
     VERIFY_NON_NULL_RET(g_sendQueueHandle, TAG, "sendQueueHandle", -1);
 
     // Create TCPData to add to queue
-    CATCPData *TCPData = CACreateTCPData(endpoint, data, dataLength, isMulticast);
-    if (!TCPData)
+    CATCPData *tcpData = CACreateTCPData(endpoint, data, dataLength, isMulticast);
+    if (!tcpData)
     {
         OIC_LOG(ERROR, TAG, "Failed to create ipData!");
         return -1;
     }
     // Add message to send queue
-    CAQueueingThreadAddData(g_sendQueueHandle, TCPData, sizeof(CATCPData));
+    CAQueueingThreadAddData(g_sendQueueHandle, tcpData, sizeof(CATCPData));
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return dataLength;
 }
 
 int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
                              const void *data, uint32_t dataLength)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     return CAQueueTCPData(false, endpoint, data, dataLength);
 }
 
 int32_t CASendTCPMulticastData(const CAEndpoint_t *endpoint,
                                const void *data, uint32_t dataLength)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
     return CAQueueTCPData(true, endpoint, data, dataLength);
 }
 
 CAResult_t CAReadTCPData()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStopTCP()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     if (g_sendQueueHandle && g_sendQueueHandle->threadMutex)
     {
         CAQueueingThreadStop(g_sendQueueHandle);
     }
 
-    CATCPDeinitializeQueueHandles();
-
     CATCPStopServer();
 
-    OIC_LOG(DEBUG, TAG, "OUT");
+    //Re-initializing the Globals to start them again
+    CAInitializeTCPGlobals();
+
     return CA_STATUS_OK;
 }
 
 void CATerminateTCP()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     CATCPSetPacketReceiveCallback(NULL);
 
     CATCPDeinitializeQueueHandles();
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void CATCPSendDataThread(void *threadData)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    CATCPData *TCPData = (CATCPData *) threadData;
-    if (!TCPData)
+    CATCPData *tcpData = (CATCPData *) threadData;
+    if (!tcpData)
     {
         OIC_LOG(DEBUG, TAG, "Invalid TCP data!");
         return;
     }
 
-    if (TCPData->isMulticast)
+    if (tcpData->isMulticast)
     {
         //Processing for sending multicast
         OIC_LOG(DEBUG, TAG, "Send Multicast Data is called, not supported");
@@ -384,55 +344,54 @@ void CATCPSendDataThread(void *threadData)
     else
     {
         //Processing for sending unicast
-        CATCPSendData(TCPData->remoteEndpoint, TCPData->data, TCPData->dataLen, false);
+        CATCPSendData(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen, false);
     }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 CATCPData *CACreateTCPData(const CAEndpoint_t *remoteEndpoint, const void *data,
                            size_t dataLength, bool isMulticast)
 {
-    VERIFY_NON_NULL_RET(data, TAG, "TCPData is NULL", NULL);
+    VERIFY_NON_NULL_RET(remoteEndpoint, TAG, "remoteEndpoint is NULL", NULL);
+    VERIFY_NON_NULL_RET(data, TAG, "data is NULL", NULL);
 
-    CATCPData *TCPData = (CATCPData *) OICMalloc(sizeof(CATCPData));
-    if (!TCPData)
+    CATCPData *tcpData = (CATCPData *) OICCalloc(1, sizeof(*tcpData));
+    if (!tcpData)
     {
         OIC_LOG(ERROR, TAG, "Memory allocation failed!");
         return NULL;
     }
 
-    TCPData->remoteEndpoint = CACloneEndpoint(remoteEndpoint);
-    TCPData->data = (void *) OICMalloc(dataLength);
-    if (!TCPData->data)
+    tcpData->remoteEndpoint = CACloneEndpoint(remoteEndpoint);
+    tcpData->data = (void *) OICMalloc(dataLength);
+    if (!tcpData->data)
     {
         OIC_LOG(ERROR, TAG, "Memory allocation failed!");
-        CAFreeTCPData(TCPData);
+        CAFreeTCPData(tcpData);
         return NULL;
     }
 
-    memcpy(TCPData->data, data, dataLength);
-    TCPData->dataLen = dataLength;
+    memcpy(tcpData->data, data, dataLength);
+    tcpData->dataLen = dataLength;
 
-    TCPData->isMulticast = isMulticast;
+    tcpData->isMulticast = isMulticast;
 
-    return TCPData;
+    return tcpData;
 }
 
-void CAFreeTCPData(CATCPData *TCPData)
+void CAFreeTCPData(CATCPData *tcpData)
 {
-    VERIFY_NON_NULL_VOID(TCPData, TAG, "TCPData is NULL");
+    VERIFY_NON_NULL_VOID(tcpData, TAG, "tcpData is NULL");
 
-    CAFreeEndpoint(TCPData->remoteEndpoint);
-    OICFree(TCPData->data);
-    OICFree(TCPData);
+    CAFreeEndpoint(tcpData->remoteEndpoint);
+    OICFree(tcpData->data);
+    OICFree(tcpData);
 }
 
-void CADataDestroyer(void *data, size_t size)
+void CADataDestroyer(void *data, uint32_t size)
 {
     if (size < sizeof(CATCPData))
     {
-        OIC_LOG_V(ERROR, TAG, "Destroy data too small %p %d", data, size);
+        OIC_LOG_V(ERROR, TAG, "Destroy data too small %p %" PRIu32, data, size);
     }
     CATCPData *TCPData = (CATCPData *) data;
 

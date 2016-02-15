@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __INTEL_OCEXCEPTION_H_2014_07_10
- #define __INTEL_OCEXCEPTION_H_2014_07_10
+#ifndef OC_EXCEPTION_H_
+#define OC_EXCEPTION_H_
 
 #include <stdexcept>
 #include <string>
