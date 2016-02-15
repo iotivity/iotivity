@@ -44,8 +44,8 @@ if ('mediator' in es_role) :
 
 if ('enrollee' in es_role) :
 	print "Building Easysetup enrollee SDK"
-
-	if es_target in ['linux', 'arduino']:   #TODO add tizen platform [also add dependencies in iotivity.spec file]
+	
+	if es_target in ['linux', 'arduino', 'tizen']:
 		SConscript('enrollee/SConscript')
 	else :
 		print "****************************Enrollee supports linux, tizen and arduino platform****************************"

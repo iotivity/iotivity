@@ -40,7 +40,7 @@ if routing == 'GW':
 	env.AppendUnique(CPPDEFINES = ['ROUTING_GATEWAY'])
 elif routing == 'EP':
 	env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
-env.Append(LIBS=['octbstack','connectivity_abstraction','coap', 'ESEnrolleeSDK','pthread'])
+env.Append(LIBS=['octbstack','connectivity_abstraction','coap', 'libESEnrolleeSDK','pthread'])
 
 if secured == '1':
 	env.PrependUnique(CPPPATH = [root_dir + '/external/inc/'])

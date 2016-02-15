@@ -21,8 +21,9 @@
 /**
  * @file
  *
- * This file will have methods for on-boarding the Enrollee device.
- * This will contain template methods that has will have core business logic & negotiation algorithm on various on-boarding methods.
+ * This file has methods for on-boarding the Enrollee device.
+ * This will contain template methods that will have core business logic & negotiation algorithm 
+ * on various on-boarding methods.
  */
 
 #include "easysetup.h"

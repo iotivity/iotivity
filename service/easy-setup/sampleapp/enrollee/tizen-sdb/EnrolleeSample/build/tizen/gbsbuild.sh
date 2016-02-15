@@ -87,8 +87,7 @@ if [ ! -d .git ]; then
   git commit -m "Initial commit"
 fi
 echo "Calling sample gbs build command"
-gbscommand="gbs build -A armv7l -B ~/GBS-ROOT --include-all --repository ./ --define 'TARGET_TRANSPORT IP' --define 'SECURED 0' --define 'RELEASE 0' --define 'LOGGING True' --define 'ROUTING EP' --define 'TARGET_ENROLLEE tizen
-'"
+gbscommand="gbs build -A armv7l -B ~/GBS-ROOT --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'ROUTING $4' --define 'RELEASE $5' --define 'LOGGING $6' --define 'ES_ROLE $7' --define 'ES_TARGET_ENROLLEE $8' --define 'ES_SOFTAP_MODE $9'"
 echo $gbscommand
 if eval $gbscommand; then
   echo "Sample build is successful"

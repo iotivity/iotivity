@@ -27,6 +27,9 @@ Requires(post): /sbin/ldconfig
 
 %define release_mode false
 %define secure_mode 0
+%define es_target_enrollee tizen
+%define es_role enrollee
+%define softap_mode ENROLLEE_SOFTAP 
 
 %description
 IoTivity Base (RICH & LITE) Stack & IoTivity Services
@@ -88,7 +91,7 @@ cp %{SOURCE1001} ./%{name}-test.manifest
 %endif
 
 
-scons -j 4 TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=IP RELEASE=%{release_mode} SECURED=%{secure_mode}
+scons -j 4 TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=IP RELEASE=%{release_mode} SECURED=%{secure_mode} ES_TARGET_ENROLLEE=%{es_target_enrollee} ES_ROLE=%{es_role} ES_SOFTAP_MODE=%{softap_mode}
 
 %install
 rm -rf %{buildroot}
@@ -168,6 +171,7 @@ cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 %{_libdir}/librcs_common.so
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
+%{_libdir}/libESEnrolleeSDK.so
 
 %files test
 %manifest %{name}-test.manifest
