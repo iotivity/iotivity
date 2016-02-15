@@ -25,6 +25,7 @@
 
 #include "UnitTestHelper.h"
 
+#include "RCSResourceObject.h"
 #include "RCSDiscoveryManager.h"
 #include "RCSRemoteResourceObject.h"
 #include "RCSResourceAttributes.h"
