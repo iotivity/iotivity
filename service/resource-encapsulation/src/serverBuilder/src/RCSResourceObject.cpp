@@ -59,7 +59,11 @@ namespace
     inline bool requestContainsInterface(const std::shared_ptr< OC::OCResourceRequest >& request,
             const std::string& interface)
     {
-        return request->getQueryParameters().find(interface) != request->getQueryParameters().end();
+        auto it = request->getQueryParameters().find(OC::Key::INTERFACESKEY);
+
+        if (it == request->getQueryParameters().end()) return false;
+
+        return it->second == interface;
     }
 
     OCEntityHandlerResult sendResponse(const std::shared_ptr< OC::OCResourceRequest >& ocRequest,
@@ -140,7 +144,7 @@ namespace
             const std::shared_ptr< OC::OCResourceRequest >& request,
             const RCSResourceObject* resourceObject)
     {
-        auto rcsRep = resourceObject->toRepresentation();
+        RCSRepresentation rcsRep;
 
         for (const auto& bound : resourceObject->getBoundResources())
         {
