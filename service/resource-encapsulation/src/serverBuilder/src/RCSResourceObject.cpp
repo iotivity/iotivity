@@ -100,13 +100,13 @@ namespace
 
     template< typename HANDLER, typename RESPONSE =
             typename std::decay<HANDLER>::type::result_type >
-    RESPONSE invokeHandler(RCSResourceAttributes& attrs,
+    RESPONSE invokeHandler(const RCSResourceObject::Ptr& resObj, RCSResourceAttributes& attrs,
             const std::shared_ptr< OC::OCResourceRequest >& ocRequest,
             std::shared_ptr< HANDLER > handler)
     {
         if (handler)
         {
-            return (*handler)(RCSRequest{ ocRequest }, attrs);
+            return (*handler)(RCSRequest{ resObj, ocRequest }, attrs);
         }
 
         return RESPONSE::defaultAction();
@@ -240,7 +240,7 @@ namespace OIC
                 new RCSResourceObject{ m_uri, m_properties, std::move(m_resourceAttributes) } };
 
             OC::EntityHandler entityHandler{ std::bind(&RCSResourceObject::entityHandler,
-                    server.get(), std::placeholders::_1) };
+                    std::weak_ptr< RCSResourceObject >{ server }, std::placeholders::_1) };
 
             typedef OCStackResult (*RegisterResource)(OCResourceHandle&, std::string&,
                     const std::string&, const std::string&, OC::EntityHandler, uint8_t);
@@ -535,6 +535,7 @@ namespace OIC
 
         RCSRepresentation RCSResourceObject::toRepresentation() const
         {
+            WeakGuard lock{*this};
             return RCSRepresentation{ m_uri, m_interfaces, m_types, m_resourceAttributes };
          }
 
@@ -554,8 +555,13 @@ namespace OIC
         }
 
         OCEntityHandlerResult RCSResourceObject::entityHandler(
+                const std::weak_ptr< RCSResourceObject >& weakRes,
                 const std::shared_ptr< OC::OCResourceRequest >& request)
         {
+            auto resource = weakRes.lock();
+
+            if (!resource) return OC_EH_ERROR;
+
             OIC_LOG(WARNING, LOG_TAG, "entityHandler");
             if (!request)
             {
@@ -566,12 +572,12 @@ namespace OIC
             {
                 if (request->getRequestHandlerFlag() & OC::RequestHandlerFlag::RequestFlag)
                 {
-                    return handleRequest(request);
+                    return resource->handleRequest(request);
                 }
 
                 if (request->getRequestHandlerFlag() & OC::RequestHandlerFlag::ObserverFlag)
                 {
-                    return handleObserve(request);
+                    return resource->handleObserve(request);
                 }
             }
             catch (const std::exception& e)
@@ -618,7 +624,11 @@ namespace OIC
 
             auto attrs = getAttributesFromOCRequest(request);
 
-            return sendResponse(*this, request, invokeHandler(attrs, request, m_getRequestHandler));
+            auto response = invokeHandler(shared_from_this(), attrs, request, m_getRequestHandler);
+
+            if (response.isSeparate()) return OC_EH_SLOW;
+
+            return sendResponse(*this, request, response);
         }
 
         bool RCSResourceObject::applyAcceptanceMethod(const RCSSetResponse& response,
@@ -660,7 +670,9 @@ namespace OIC
             assert(request != nullptr);
 
             auto attrs = getAttributesFromOCRequest(request);
-            auto response = invokeHandler(attrs, request, m_setRequestHandler);
+            auto response = invokeHandler(shared_from_this(), attrs, request, m_setRequestHandler);
+
+            if (response.isSeparate()) return OC_EH_SLOW;
 
             auto attrsChanged = applyAcceptanceMethod(response, attrs);
 

@@ -21,19 +21,12 @@
 
 #include "RCSDiscoveryManagerImpl.h"
 
-namespace
-{
-    constexpr char ALL_RESOURCE_TYPES[] = "";
-}
-
 namespace OIC
 {
     namespace Service
     {
         RCSDiscoveryManager::DiscoveryTask::DiscoveryTask(unsigned int id) :
-                m_id{ id }
-        {
-        }
+                m_id { id } {}
 
         bool RCSDiscoveryManager::DiscoveryTask::isCanceled()
         {
@@ -42,7 +35,8 @@ namespace OIC
 
         void RCSDiscoveryManager::DiscoveryTask::cancel()
         {
-            if (isCanceled()) return;
+            if (isCanceled())
+                return;
 
             RCSDiscoveryManagerImpl::getInstance()->cancel(m_id);
             m_id = RCSDiscoveryManagerImpl::INVALID_ID;
@@ -57,15 +51,16 @@ namespace OIC
         RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManager::discoverResource(
                 const RCSAddress& address, ResourceDiscoveredCallback cb)
         {
-            return discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI, ALL_RESOURCE_TYPES,
-                    std::move(cb));
+            return discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI,
+                    RCSDiscoveryManagerImpl::ALL_RESOURCE_TYPE, std::move(cb));
         }
 
         RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManager::discoverResource(
                 const RCSAddress& address, const std::string& relativeUri,
                 ResourceDiscoveredCallback cb)
         {
-            return discoverResourceByType(address, relativeUri, ALL_RESOURCE_TYPES, std::move(cb));
+            return discoverResourceByType(address, relativeUri,
+                    RCSDiscoveryManagerImpl::ALL_RESOURCE_TYPE, std::move(cb));
         }
 
         RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManager::discoverResourceByType(

@@ -82,6 +82,7 @@ namespace OIC
                  * @note This is generated for each discovery request
                  */
                 typedef unsigned int ID;
+                constexpr static char const* ALL_RESOURCE_TYPE = "";
 
             public:
 

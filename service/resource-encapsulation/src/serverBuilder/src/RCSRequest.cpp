@@ -27,7 +27,9 @@ namespace OIC
     namespace Service
     {
 
-        RCSRequest::RCSRequest(const std::shared_ptr< OC::OCResourceRequest >& ocRequest) :
+        RCSRequest::RCSRequest(const std::shared_ptr< RCSResourceObject >& resourceObject,
+                const std::shared_ptr< OC::OCResourceRequest >& ocRequest) :
+                m_resourceObject{ resourceObject },
                 m_ocRequest{ ocRequest }
         {
         }
@@ -38,12 +40,18 @@ namespace OIC
             m_ocRequest->setResourceUri(resourceUri);
         }
 
+
+        std::weak_ptr< RCSResourceObject > RCSRequest::getResourceObject() const noexcept
+        {
+            return m_resourceObject;
+        }
+
         std::string RCSRequest::getResourceUri() const
         {
             return m_ocRequest->getResourceUri();
         }
 
-        const std::shared_ptr< OC::OCResourceRequest >& RCSRequest::getOCRequest() const
+        const std::shared_ptr< OC::OCResourceRequest >& RCSRequest::getOCRequest() const noexcept
         {
             return m_ocRequest;
         }
@@ -63,5 +71,6 @@ namespace OIC
 
             return it->second;
         }
+
     }
 }
