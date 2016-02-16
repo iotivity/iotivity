@@ -30,21 +30,21 @@ extern "C" {
 /**
  * Initialize DOXM resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitDoxmResource();
 
 /**
  * Perform cleanup for DOXM resources.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult DeInitDoxmResource();
 
 /**
  * This method is used by SRM to retrieve DOXM resource data..
  *
- * @retval  reference to @ref OicSecDoxm_t, binary format of Doxm resource data
+ * @return reference to @ref OicSecDoxm_t, binary format of Doxm resource data.
  */
 const OicSecDoxm_t* GetDoxmResourceData();
 
@@ -53,44 +53,43 @@ const OicSecDoxm_t* GetDoxmResourceData();
  * The JSON DOXM can be from persistent database or
  * or received as PUT/POST request.
  *
- * @param[in] jsonStr  doxm data in json string.
- * @return pointer to OicSecDoxm_t.
+ * @param jsonStr is a doxm data in json string.
  *
- * @note Caller needs to invoke OCFree after done
- *       using the return pointer
+ * @note Caller needs to invoke OCFree after done using the return pointer.
+ *
+ * @return pointer to @ref OicSecDoxm_t.
  */
 OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
 
 /**
  * This method converts DOXM data into JSON format.
  * Caller needs to invoke 'free' when finished done using
- * return string
+ * return string.
  *
  * @param[in] doxm  Pointer to OicSecDoxm_t.
- * @return pointer to json string.
+ * @note Caller needs to invoke OCFree after done using the return pointer.
  *
- * @note Caller needs to invoke OCFree after done
- *       using the return pointer
+ * @return pointer to the json string.
  */
 char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
 
 /**
  * This method returns the SRM device ID for this device.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID);
 
 /**
- * @brief Gets the OicUuid_t value for the owner of this device.
+ * Gets the OicUuid_t value for the owner of this device.
  *
- * @return OC_STACK_OK if devOwner is a valid UUID, otherwise OC_STACK_ERROR.
+ * @return ::OC_STACK_OK if devOwner is a valid UUID, otherwise ::OC_STACK_ERROR.
  */
 OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner);
 
 /** This function deallocates the memory for OicSecDoxm_t .
  *
- * @param[in] doxm  Pointer to OicSecDoxm_t.
+ * @param doxm is the pointer to @ref OicSecDoxm_t.
  */
 void DeleteDoxmBinData(OicSecDoxm_t* doxm);
 
@@ -100,5 +99,3 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm);
 #endif
 
 #endif //IOTVT_SRM_DOXMR_H
-
-

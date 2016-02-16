@@ -36,14 +36,12 @@ extern "C" {
 /**
  * Initialize Amacl resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitAmaclResource();
 
 /**
  * Perform cleanup for Amacl resources.
- *
- * @retval  none
  */
 void DeInitAmaclResource();
 
@@ -52,23 +50,21 @@ void DeInitAmaclResource();
  * If the Amacl is found for the given resource then populate the parameter
  * amsId with Amacl resource amss id.
  *
- * @param resource  resource for which AMS service is required.
- * @param amsId     ID of the ams service for the given resource
+ * @param resource for which AMS service is required.
+ * @param amsId of the ams service for the given resource.
  *
- * @retval
- *  OC_STACK_OK     If Amacl found for the resource
- *  OC_STACK_ERROR  If no Amacl found for the resource
- *
+ * @return ::OC_STACK_OK, if Amacl is found for the resource, else ::OC_STACK_ERROR,
+ *  if no Amacl found for the resource.
  */
 OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsId);
 
 /**
  * This function converts Amacl data into JSON format.
- * Caller needs to invoke 'free' when done using
- * returned string.
+ * Caller needs to invoke 'free' when done using returned string.
+ *
  * @param Amacl  instance of OicSecAmacl_t structure.
  *
- * @retval  pointer to Amacl in json format.
+ * @return pointer to Amacl in json format.
  */
 char* BinToAmaclJSON(const OicSecAmacl_t * amacl);
 
@@ -77,5 +73,3 @@ char* BinToAmaclJSON(const OicSecAmacl_t * amacl);
 #endif
 
 #endif //IOTVT_SRM_AMACLR_H
-
-

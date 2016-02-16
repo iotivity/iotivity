@@ -28,14 +28,12 @@ extern "C" {
 /**
  * Initialize SVC resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitSVCResource();
 
 /**
  * Perform cleanup for SVC resources.
- *
- * @retval  none
  */
 void DeInitSVCResource();
 
@@ -43,9 +41,10 @@ void DeInitSVCResource();
  * This function converts SVC data into JSON format.
  * Caller needs to invoke 'free' when done using
  * returned string.
- * @param svc  instance of OicSecSvc_t structure.
  *
- * @retval  pointer to SVC in json format.
+ * @param svc instance of @ref OicSecSvc_t structure.
+ *
+ * @return pointer to SVC in json format.
  */
 char* BinToSvcJSON(const OicSecSvc_t * svc);
 
@@ -54,5 +53,3 @@ char* BinToSvcJSON(const OicSecSvc_t * svc);
 #endif
 
 #endif //IOTVT_SRM_SVCR_H
-
-

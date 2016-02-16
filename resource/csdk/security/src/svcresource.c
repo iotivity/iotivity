@@ -55,12 +55,6 @@ void DeleteSVCList(OicSecSvc_t* svc)
     }
 }
 
-/*
- * This internal method converts SVC data into JSON format.
- *
- * Note: Caller needs to invoke 'free' when finished done using
- * return string.
- */
 char * BinToSvcJSON(const OicSecSvc_t * svc)
 {
     cJSON *jsonRoot = NULL;
@@ -124,9 +118,6 @@ exit:
     return jsonStr;
 }
 
-/*
- * This internal method converts JSON SVC into binary SVC.
- */
 OicSecSvc_t * JSONToSvcBin(const char * jsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -227,7 +218,7 @@ exit:
     return headSvc;
 }
 
-static OCEntityHandlerResult HandleSVCGetRequest (const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandleSVCGetRequest(const OCEntityHandlerRequest * ehRequest)
 {
     // Convert SVC data into JSON for transmission
     char* jsonStr = BinToSvcJSON(gSvc);
@@ -243,7 +234,7 @@ static OCEntityHandlerResult HandleSVCGetRequest (const OCEntityHandlerRequest *
     return ehRet;
 }
 
-static OCEntityHandlerResult HandleSVCPostRequest (const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandleSVCPostRequest(const OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
@@ -274,17 +265,17 @@ static OCEntityHandlerResult HandleSVCPostRequest (const OCEntityHandlerRequest 
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
-    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
+    OC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
-/*
+/**
  * This internal method is the entity handler for SVC resources and
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
-OCEntityHandlerResult SVCEntityHandler (OCEntityHandlerFlag flag,
-                                        OCEntityHandlerRequest * ehRequest,
-                                        void* callbackParameter)
+static OCEntityHandlerResult SVCEntityHandler(OCEntityHandlerFlag flag,
+                                              OCEntityHandlerRequest * ehRequest,
+                                              void* callbackParameter)
 {
     (void) callbackParameter;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
@@ -315,20 +306,18 @@ OCEntityHandlerResult SVCEntityHandler (OCEntityHandlerFlag flag,
     return ehRet;
 }
 
-/*
+/**
  * This internal method is used to create '/oic/sec/svc' resource.
  */
-OCStackResult CreateSVCResource()
+static OCStackResult CreateSVCResource()
 {
-    OCStackResult ret;
-
-    ret = OCCreateResource(&gSvcHandle,
-                           OIC_RSRC_TYPE_SEC_SVC,
-                           OIC_MI_DEF,
-                           OIC_RSRC_SVC_URI,
-                           SVCEntityHandler,
-                           NULL,
-                           OC_OBSERVABLE);
+    OCStackResult ret = OCCreateResource(&gSvcHandle,
+                                         OIC_RSRC_TYPE_SEC_SVC,
+                                         OIC_MI_DEF,
+                                         OIC_RSRC_SVC_URI,
+                                         SVCEntityHandler,
+                                         NULL,
+                                         OC_OBSERVABLE);
 
     if (OC_STACK_OK != ret)
     {
@@ -338,12 +327,11 @@ OCStackResult CreateSVCResource()
     return ret;
 }
 
-
 OCStackResult InitSVCResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    OC_LOG_V (DEBUG, TAG, "Begin %s ", __func__ );
+    OC_LOG_V(DEBUG, TAG, "Begin %s ", __func__ );
 
     // Read SVC resource from PS
     char* jsonSVRDatabase = GetSVRDatabase();
@@ -363,15 +351,10 @@ OCStackResult InitSVCResource()
         DeInitSVCResource();
     }
 
-    OC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ret);
+    OC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__ , ret);
     return ret;
 }
 
-/**
- * Perform cleanup for SVC resources.
- *
- * @retval  none
- */
 void DeInitSVCResource()
 {
     OCDeleteResource(gSvcHandle);
@@ -380,4 +363,3 @@ void DeInitSVCResource()
     DeleteSVCList(gSvc);
     gSvc = NULL;
 }
-

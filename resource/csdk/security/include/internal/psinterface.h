@@ -30,7 +30,7 @@ struct cJSON;
  * @note Caller of this method MUST use OCFree() method to release memory
  *       referenced by return value.
  *
- * @return char * reference to memory buffer containing SVR database.
+ * @return reference to memory buffer containing SVR database.
  */
 char * GetSVRDatabase();
 

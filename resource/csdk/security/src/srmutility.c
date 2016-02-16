@@ -28,53 +28,41 @@
 
 #define TAG  "SRM-UTILITY"
 
-/**
- * This method initializes the OicParseQueryIter_t struct
- *
- *@param query     - REST query, to be parsed
- *@param parseIter - OicParseQueryIter_t struct, to be initialized
- *
- */
-void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter)
+void ParseQueryIterInit(const unsigned char * query, OicParseQueryIter_t * parseIter)
 {
-    OC_LOG (INFO, TAG, "Initializing coap iterator");
-    if((NULL == query) || (NULL == parseIter))
+    OC_LOG(INFO, TAG, "Initializing coap iterator");
+    if ((NULL == query) || (NULL == parseIter))
+    {
         return;
+    }
 
     parseIter->attrPos = NULL;
     parseIter->attrLen = 0;
     parseIter->valPos = NULL;
     parseIter->valLen = 0;
-    coap_parse_iterator_init(query, strlen((char *)query),
-          (unsigned char *)OIC_SEC_REST_QUERY_SEPARATOR, (unsigned char *) "", 0, &parseIter->pi);
+    coap_parse_iterator_init((unsigned char *)query, strlen((char *)query),
+                             (unsigned char *)OIC_SEC_REST_QUERY_SEPARATOR,
+                             (unsigned char *) "", 0, &parseIter->pi);
 }
 
-/**
- * This method fills the OicParseQueryIter_t struct with next REST query's
- * attribute's and value's information
- *
- *@param parseIter - OicParseQueryIter_t struct, has next query's attribute's & value's info
- *
- * @retval
- *     OicParseQueryIter_t *  - has parsed query info
- *     NULL                   - has no query to parse
- */
 OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter)
 {
-    OC_LOG (INFO, TAG, "Getting Next Query");
-    if(NULL == parseIter)
+    OC_LOG(INFO, TAG, "Getting Next Query");
+    if (NULL == parseIter)
+    {
         return NULL;
+    }
 
     unsigned char * qrySeg = NULL;
     char * delimPos;
 
-    //Get the next query. Querys are separated by OIC_SEC_REST_QUERY_SEPARATOR
+    // Get the next query. Querys are separated by OIC_SEC_REST_QUERY_SEPARATOR.
     qrySeg = coap_parse_next(&parseIter->pi);
 
-    if(qrySeg)
+    if (qrySeg)
     {
         delimPos = strchr((char *)qrySeg, OIC_SEC_REST_QUERY_DELIMETER);
-        if(delimPos)
+        if (delimPos)
         {
             parseIter->attrPos = parseIter->pi.pos;
             parseIter->attrLen = (unsigned char *)delimPos - parseIter->pi.pos;
@@ -86,15 +74,14 @@ OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter)
     return NULL;
 }
 
-
 // TODO This functionality is replicated in all SVR's and therefore we need
 // to encapsulate it in a common method. However, this may not be the right
 // file for this method.
-OCStackResult AddUuidArray(cJSON* jsonRoot, const char* arrayItem,
-                           size_t *numUuids, OicUuid_t** uuids )
+OCStackResult AddUuidArray(const cJSON* jsonRoot, const char* arrayItem,
+                           size_t *numUuids, OicUuid_t** uuids)
 {
     size_t idxx = 0;
-    cJSON* jsonObj = cJSON_GetObjectItem(jsonRoot, arrayItem);
+    cJSON* jsonObj = cJSON_GetObjectItem((cJSON *)jsonRoot, arrayItem);
     VERIFY_NON_NULL(TAG, jsonObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 

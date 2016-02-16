@@ -28,44 +28,43 @@ extern "C" {
 /**
  * Initialize Pstat resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitPstatResource();
 
 /**
  * Perform cleanup for Pstat resources.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult DeInitPstatResource();
 
 /**
  * This method converts JSON PSTAT into binary PSTAT.
  *
- * @param[in] jsonStr  pstat data in json string.
- * @return pointer to OicSecPstat_t.
+ * @param jsonStr is the pstat data in json string.
+ *
+ * @return pointer to @ref OicSecPstat_t.
  */
 OicSecPstat_t * JSONToPstatBin(const char * jsonStr);
 
 /**
  * This method converts pstat data into JSON format.
  *
- * @param[in] pstat  pstat data in binary format.
+ * @param pstat is @OicSecPstat_t pstat data in binary format.
+ *
  * @return pointer to pstat json string.
  */
 char * BinToPstatJSON(const OicSecPstat_t * pstat);
 
 /** This function deallocates the memory for OicSecPstat_t.
  *
- * @param[in] pstat  Pointer to OicSecPstat_t.
+ * @param pstat is the pointer to OicSecPstat_t.
  */
 void DeletePstatBinData(OicSecPstat_t* pstat);
-
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif //IOTVT_SRM_PSTATR_H
-
-

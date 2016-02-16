@@ -18,7 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
 #include <stdlib.h>
 #include <string.h>
 #include "ocstack.h"
@@ -33,8 +32,6 @@
 #include "srmresourcestrings.h"
 #include "amaclresource.h"
 #include "srmutility.h"
-#include <stdlib.h>
-#include <string.h>
 
 #define TAG  "SRM-AMACL"
 
@@ -71,11 +68,6 @@ void DeleteAmaclList(OicSecAmacl_t* amacl)
     }
 }
 
-/*
- * This internal method converts AMACL data into JSON format.
- *
- * Note: Caller needs to invoke 'free' when finished using the return string.
- */
 char * BinToAmaclJSON(const OicSecAmacl_t * amacl)
 {
     cJSON *jsonRoot = NULL;
@@ -90,7 +82,7 @@ char * BinToAmaclJSON(const OicSecAmacl_t * amacl)
         cJSON_AddItemToObject (jsonRoot, OIC_JSON_AMACL_NAME, jsonAmaclArray = cJSON_CreateArray());
         VERIFY_NON_NULL(TAG, jsonAmaclArray, ERROR);
 
-        while(amacl)
+        while (amacl)
         {
             char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
             uint32_t outLen = 0;
@@ -156,12 +148,6 @@ exit:
     return jsonStr;
 }
 
-
-
-
-/*
- * This internal method converts JSON AMACL into binary AMACL.
- */
 OicSecAmacl_t * JSONToAmaclBin(const char * jsonStr)
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -250,7 +236,7 @@ exit:
 static OCEntityHandlerResult HandleAmaclGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
     // Convert Amacl data into JSON for transmission
-    char* jsonStr = BinToAmaclJSON(gAmacl);
+    char *jsonStr = BinToAmaclJSON(gAmacl);
 
     OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
 
@@ -298,13 +284,13 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
     return ehRet;
 }
 
-/*
+/**
  * This internal method is the entity handler for Amacl resources and
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
-OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
-                                          OCEntityHandlerRequest * ehRequest,
-                                          void* callbackParameter)
+static OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
+                                                 OCEntityHandlerRequest * ehRequest,
+                                                 void* callbackParameter)
 {
     (void) callbackParameter;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
@@ -336,10 +322,10 @@ OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
     return ehRet;
 }
 
-/*
+/**
  * This internal method is used to create '/oic/sec/amacl' resource.
  */
-OCStackResult CreateAmaclResource()
+static OCStackResult CreateAmaclResource()
 {
     OCStackResult ret;
 
@@ -359,11 +345,6 @@ OCStackResult CreateAmaclResource()
     return ret;
 }
 
-/**
- * Initialize Amacl resource by loading data from persistent storage.
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult InitAmaclResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -388,11 +369,6 @@ OCStackResult InitAmaclResource()
     return ret;
 }
 
-/**
- * Perform cleanup for Amacl resources.
- *
- * @retval  none
- */
 void DeInitAmaclResource()
 {
     OCDeleteResource(gAmaclHandle);
@@ -401,7 +377,6 @@ void DeInitAmaclResource()
     DeleteAmaclList(gAmacl);
     gAmacl = NULL;
 }
-
 
 OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsDeviceId)
 {

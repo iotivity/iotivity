@@ -64,4 +64,3 @@ OCStackResult SendSRMCBORResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, uint8_t *cborPayload);
 
 #endif //IOTVT_SRM_RM_H
-

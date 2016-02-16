@@ -37,7 +37,6 @@ extern "C"
 extern "C" {
 #endif // __cplusplus
 
-
 typedef struct OicParseQueryIter OicParseQueryIter_t;
 
 /**
@@ -49,18 +48,17 @@ typedef struct OicParseQueryIter OicParseQueryIter_t;
  */
 struct OicParseQueryIter
 {
-    unsigned char * attrPos;    /**<stating location of attribute */
-    size_t attrLen;             /**<length of the attribute */
-    unsigned char * valPos;     /**<starting location of value*/
-    size_t valLen;              /**<length of the value*/
-    coap_parse_iterator_t pi;   /**<coap struct for tokenizing the query*/
+    unsigned char * attrPos;    /**< stating location of attribute. */
+    size_t attrLen;             /**< length of the attribute. */
+    unsigned char * valPos;     /**< starting location of value. */
+    size_t valLen;              /**< length of the value. */
+    coap_parse_iterator_t pi;   /**< coap struct for tokenizing the query.*/
 };
 
 /**
  * Macro to verify success of operation.
  * eg: VERIFY_SUCCESS(TAG, OC_STACK_OK == foo(), ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
- *
  */
 #define VERIFY_SUCCESS(tag, op, logLevel) do{ if (!(op)) \
             {OC_LOG((logLevel), tag, #op " failed!!"); goto exit; } }while(0)
@@ -75,46 +73,45 @@ struct OicParseQueryIter
             {OC_LOG((logLevel), tag, #op " failed!!"); goto exit; } }while(0)
 
 /**
- * VERIFY_NON_NULL
  * Macro to verify argument is not equal to NULL.
  * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
- *
  */
 #define VERIFY_NON_NULL(tag, arg, logLevel) do{ if (NULL == (arg)) \
             { OC_LOG((logLevel), tag, #arg " is NULL"); goto exit; } }while(0)
 
 /**
- * This method initializes the OicParseQueryIter_t struct
+ * This method initializes the @ref OicParseQueryIter_t struct.
  *
- * @param query     - REST query, to be parsed
- * @param parseIter - OicParseQueryIter_t struct, to be initialized
- *
+ * @param query is the REST query, to be parsed.
+ * @param parseIter is the @ref OicParseQueryIter_t struct, to be initialized based on the query.
  */
-void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter);
+void ParseQueryIterInit(const unsigned char * query, OicParseQueryIter_t * parseIter);
 
 /**
- * This method fills the OicParseQueryIter_t struct with next REST query's
- * attribute's and value's information
+ * This method fills the @ref OicParseQueryIter_t struct with next REST query's
+ * attribute's and value's information.
  *
- * @param parseIter - OicParseQueryIter_t struct, has next query's attribute's & value's info
+ * @param parseIter is the @ref OicParseQueryIter_t struct, has next query's attribute's
+ *  & value's info.
  *
- * @return reference to @ref OicParseQueryIter_t with parsed query info or NULL has no query to parse.
+ * @return reference to the @ref OicParseQueryIter_t if it has parsed query info, else
+ * NULL if it has no query to parse.
  */
 OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter);
 
 /**
- * This method acts as a helper funtion for JSON unmarshalling by various SVR's.
+ * This method acts as a helper function for JSON unmarshalling by various SVR's.
  *
- * @param jsonRoot  - root JSON node containing the OicUuid array
- * @param arrayItem - name of the JSON OicUuid array item
- * @param numUuids  - pointer to the number of OicUuid's available in JSON array
- * @param uuids     - pointer to the array of OicUuid's
+ * @param jsonRoot point to the root JSON node containing the OicUuid array.
+ * @param arrayItem is the name of the JSON OicUuid array item.
+ * @param numUuids is the pointer to the number of OicUuid's available in JSON array.
+ * @param uuids is the pointer to the array of OicUuid's.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult AddUuidArray(cJSON* jsonRoot, const char* arrayItem,
-                           size_t *numUuids, OicUuid_t** uuids );
+OCStackResult AddUuidArray(const cJSON* jsonRoot, const char* arrayItem,
+                           size_t *numUuids, OicUuid_t** uuids);
 
 #ifdef __cplusplus
 }

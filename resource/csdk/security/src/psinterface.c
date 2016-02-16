@@ -44,7 +44,7 @@ const size_t DB_FILE_SIZE_BLOCK = 1023;
 /**
  * Gets the Secure Virtual Database size.
  *
- * @param ps  pointer of OCPersistentStorage for the SVR name ("acl", "cred", "pstat" etc).
+ * @param ps pointer of OCPersistentStorage for the SVR name ("acl", "cred", "pstat" etc).
  *
  * @return total size of the SVR database.
  */

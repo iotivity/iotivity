@@ -175,7 +175,7 @@ OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
             cJSON *jsonSm = cJSON_GetArrayItem(jsonObj, idxx);
             VERIFY_NON_NULL(TAG, jsonSm, ERROR);
             pstat->sm[idxx] = (OicSecDpom_t)jsonSm->valueint;
-        }while ( ++idxx < pstat->smLen);
+        } while ( ++idxx < pstat->smLen);
     }
     ret = OC_STACK_OK;
 
@@ -236,7 +236,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
         if (tmJson && gPstat)
         {
             gPstat->tm = (OicSecDpm_t)tmJson->valueint;
-            if(0 == tmJson->valueint && gPstat->commitHash == commitHash)
+            if (0 == tmJson->valueint && gPstat->commitHash == commitHash)
             {
                 gPstat->isOp = true;
                 gPstat->cm = NORMAL;
@@ -254,9 +254,9 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
              * Check if the operation mode is in the supported provisioning services
              * operation mode list.
              */
-            for(size_t i=0; i< gPstat->smLen; i++)
+            for (size_t i=0; i< gPstat->smLen; i++)
             {
-                if(gPstat->sm[i] == (unsigned int)omJson->valueint)
+                if (gPstat->sm[i] == (unsigned int)omJson->valueint)
                 {
                     gPstat->om = (OicSecDpom_t)omJson->valueint;
                     break;
@@ -277,7 +277,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
     }
  exit:
     //Send payload to request originator
-    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
     {
         OC_LOG (ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
     }
@@ -288,9 +288,9 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
 /**
  * This internal method is the entity handler for pstat resources.
  */
-OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * ehRequest,
-        void *callbackParam)
+ OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
+                                          OCEntityHandlerRequest * ehRequest,
+                                          void *callbackParam)
 {
     (void)callbackParam;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
@@ -318,18 +318,15 @@ OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
 /**
  * This internal method is used to create '/oic/sec/pstat' resource.
  */
-OCStackResult CreatePstatResource()
+ OCStackResult CreatePstatResource()
 {
-    OCStackResult ret;
-
-    ret = OCCreateResource(&gPstatHandle,
-                           OIC_RSRC_TYPE_SEC_PSTAT,
-                           OIC_MI_DEF,
-                           OIC_RSRC_PSTAT_URI,
-                           PstatEntityHandler,
-                           NULL,
-                           OC_RES_PROP_NONE);
-
+    OCStackResult ret = OCCreateResource(&gPstatHandle,
+                                         OIC_RSRC_TYPE_SEC_PSTAT,
+                                         OIC_MI_DEF,
+                                         OIC_RSRC_PSTAT_URI,
+                                         PstatEntityHandler,
+                                         NULL,
+                                         OC_RES_PROP_NONE);
     if (ret != OC_STACK_OK)
     {
         OC_LOG (FATAL, TAG, "Unable to instantiate pstat resource");
@@ -339,27 +336,15 @@ OCStackResult CreatePstatResource()
 }
 
 /**
- * Post ACL hander update the commitHash during ACL provisioning.
- */
-void SetCommitHash(uint16_t commitHash)
-{
-    gPstat->commitHash = commitHash;
-}
-
-/**
- * Get the default value
- * @retval  the gDefaultPstat pointer
+ * Get the default pstat value.
+ *
+ * @return the gDefaultPstat pointer.
  */
 static OicSecPstat_t* GetPstatDefault()
 {
     return &gDefaultPstat;
 }
 
-/**
- * Initialize pstat resource by loading data from persistent storage.
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult InitPstatResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -376,7 +361,7 @@ OCStackResult InitPstatResource()
      * is not available for some reason, a default pstat is created
      * which allows user to initiate pstat provisioning again.
      */
-    if(!jsonSVRDatabase || !gPstat)
+    if (!jsonSVRDatabase || !gPstat)
     {
         gPstat = GetPstatDefault();
     }
@@ -387,14 +372,9 @@ OCStackResult InitPstatResource()
     return ret;
 }
 
-/**
- * Perform cleanup for pstat resources.
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult DeInitPstatResource()
 {
-    if(gPstat != &gDefaultPstat)
+    if (gPstat != &gDefaultPstat)
     {
         DeletePstatBinData(gPstat);
         gPstat = NULL;
