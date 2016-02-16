@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include <string.h>
 #include "resourcemanager.h"
 #include "securevirtualresourcetypes.h"
 #include "aclresource.h"
@@ -30,7 +31,6 @@
 #include "oic_string.h"
 #include "logger.h"
 #include "utlist.h"
-#include <string.h>
 
 //#ifdef DIRECT_PAIRING
 #include "pconfresource.h"

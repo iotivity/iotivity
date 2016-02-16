@@ -18,7 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
 #include <stdlib.h>
 #include <string.h>
 #include "oic_malloc.h"
@@ -426,13 +425,13 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
     return ehRet;
 }
 
-/*
+/**
  * This internal method is the entity handler for Amacl resources and
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
-OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
-                                          OCEntityHandlerRequest * ehRequest,
-                                          void* callbackParameter)
+static OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
+                                                 OCEntityHandlerRequest * ehRequest,
+                                                 void* callbackParameter)
 {
     (void) callbackParameter;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
@@ -464,10 +463,10 @@ OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
     return ehRet;
 }
 
-/*
+/**
  * This internal method is used to create '/oic/sec/amacl' resource.
  */
-OCStackResult CreateAmaclResource()
+static OCStackResult CreateAmaclResource()
 {
     OCStackResult ret = OCCreateResource(&gAmaclHandle,
                                          OIC_RSRC_TYPE_SEC_AMACL,
@@ -485,11 +484,6 @@ OCStackResult CreateAmaclResource()
     return ret;
 }
 
-/**
- * Initialize Amacl resource by loading data from persistent storage.
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult InitAmaclResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -520,11 +514,6 @@ OCStackResult InitAmaclResource()
     return ret;
 }
 
-/**
- * Perform cleanup for Amacl resources.
- *
- * @retval  none
- */
 void DeInitAmaclResource()
 {
     OCDeleteResource(gAmaclHandle);
@@ -533,7 +522,6 @@ void DeInitAmaclResource()
     DeleteAmaclList(gAmacl);
     gAmacl = NULL;
 }
-
 
 OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsDeviceId)
 {

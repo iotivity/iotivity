@@ -426,7 +426,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
     }
 
     //Send payload to request originator
-    if(OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL))
+    if (OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL))
     {
         OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
     }
@@ -437,9 +437,9 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
 /**
  * This internal method is the entity handler for pstat resources.
  */
-OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest * ehRequest,
-        void *callbackParam)
+ OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
+                                          OCEntityHandlerRequest * ehRequest,
+                                          void *callbackParam)
 {
     (void)callbackParam;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
@@ -467,7 +467,7 @@ OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
 /**
  * This internal method is used to create '/oic/sec/pstat' resource.
  */
-OCStackResult CreatePstatResource()
+ OCStackResult CreatePstatResource()
 {
     OCStackResult ret = OCCreateResource(&gPstatHandle,
                                          OIC_RSRC_TYPE_SEC_PSTAT,
@@ -536,14 +536,9 @@ exit:
     return ret;
 }
 
-/**
- * Perform cleanup for pstat resources.
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult DeInitPstatResource()
 {
-    if(gPstat != &gDefaultPstat)
+    if (gPstat != &gDefaultPstat)
     {
         DeletePstatBinData(gPstat);
         gPstat = NULL;

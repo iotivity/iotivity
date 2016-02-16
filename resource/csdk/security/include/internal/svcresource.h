@@ -28,14 +28,12 @@ extern "C" {
 /**
  * Initialize SVC resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitSVCResource();
 
 /**
  * Perform cleanup for SVC resources.
- *
- * @retval  none
  */
 void DeInitSVCResource();
 

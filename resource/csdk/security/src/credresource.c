@@ -469,21 +469,6 @@ exit:
     return ret;
 }
 
-/**
- * This function generates the bin credential data.
- *
- * @param subject pointer to subject of this credential.
- * @param credType credential type.
- * @param publicData public data such as public key.
- * @param privateData private data such as private key.
- *        The privateData is expected in base64 encoded format.
- * @param ownersLen length of owners array
- * @param owners array of owners.
- *
- * @retval
- *      pointer to instance of OicSecCred_t  - success
- *      NULL                                 - error
- */
 OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t credType,
                                   const uint8_t * publicData, const uint8_t* privateData,
                                   size_t ownersLen, const OicUuid_t * owners)
@@ -506,7 +491,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     cred->credType = credType;
 
 #ifdef __WITH_X509__
-    if(publicData)
+    if (publicData)
     {
         cred->publicData.data = (uint8_t *)OICCalloc(1, PUBLIC_KEY_SIZE);
         VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
@@ -514,7 +499,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     }
 #endif // __WITH_X509__
 
-    if(privateData)
+    if (privateData)
     {
 #ifdef __WITH_X509__
         cred->privateData.data = (uint8_t *)OICCalloc(1, PRIVATE_KEY_SIZE);
@@ -528,7 +513,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
 
     cred->owners = (OicUuid_t *)OICCalloc(cred->ownersLen, sizeof(*cred->owners));
     VERIFY_NON_NULL(TAG, cred->owners, ERROR);
-    for(size_t i = 0; i < cred->ownersLen; i++)
+    for (size_t i = 0; i < cred->ownersLen; i++)
     {
         memcpy(cred->owners[i].id, owners[i].id, sizeof(cred->owners[i].id));
     }
@@ -570,15 +555,14 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
 }
 
 /**
- * Compare function used LL_SORT for sorting credentials
+ * Compare function used LL_SORT for sorting credentials.
  *
- * @param first   pointer to OicSecCred_t struct
- * @param second  pointer to OicSecCred_t struct
+ * @param first pointer to OicSecCred_t struct.
+ * @param second  pointer to OicSecCred_t struct.
  *
- *@retval
- *  -1    if credId of first is less than credId of second
- *   0    if credId of first is equal to credId of second
- *   1    if credId of first is greater than credId of second
+ *@return -1, if credId of first is less than credId of second.
+ * 0, if credId of first is equal to credId of second.
+ * 1, if credId of first is greater than credId of second.
  */
 static int CmpCredId(const OicSecCred_t * first, const OicSecCred_t *second)
 {
@@ -600,23 +584,19 @@ static int CmpCredId(const OicSecCred_t * first, const OicSecCred_t *second)
  * available due deletion of OicSecCred_t object or one more than
  * credId of last credential in the list.
  *
- * @retval
- *      next available credId  - success
- *      0                      - error
+ * @return next available credId if successful, else 0 for error.
  */
-
 static uint16_t GetCredId()
 {
     //Sorts credential list in incremental order of credId
     LL_SORT(gCred, CmpCredId);
-
 
     OicSecCred_t *currentCred = NULL, *credTmp = NULL;
     uint16_t nextCredId = 1;
 
     LL_FOREACH_SAFE(gCred, currentCred, credTmp)
     {
-        if(currentCred->credId == nextCredId)
+        if (currentCred->credId == nextCredId)
         {
             nextCredId += 1;
         }
@@ -634,23 +614,16 @@ exit:
 }
 
 /**
- * Get the default value
- * @retval  NULL for now. Update it when we finalize the default info.
+ * Get the default value.
+ *
+ * @return  NULL for now.
  */
 static OicSecCred_t* GetCredDefault()
 {
+    // TODO:Update it when we finalize the default info.
     return NULL;
 }
 
-/**
- * This function adds the new cred to the credential list.
- *
- * @param cred pointer to new credential.
- *
- * @retval
- *      OC_STACK_OK     - cred not NULL and persistent storage gets updated
- *      OC_STACK_ERROR  - cred is NULL or fails to update persistent storage
- */
 OCStackResult AddCredential(OicSecCred_t * newCred)
 {
     OCStackResult ret = OC_STACK_ERROR;
@@ -662,6 +635,7 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
 
     //Append the new Cred to existing list
     LL_APPEND(gCred, newCred);
+
     if (UpdatePersistentStorage(gCred))
     {
         ret = OC_STACK_OK;
@@ -680,7 +654,7 @@ OCStackResult RemoveCredential(const OicUuid_t *subject)
 
     LL_FOREACH_SAFE(gCred, cred, tempCred)
     {
-        if(memcmp(cred->subject.id, subject->id, sizeof(subject->id)) == 0)
+        if (memcmp(cred->subject.id, subject->id, sizeof(subject->id)) == 0)
         {
             LL_DELETE(gCred, cred);
             FreeCred(cred);
@@ -688,9 +662,9 @@ OCStackResult RemoveCredential(const OicUuid_t *subject)
         }
     }
 
-    if(deleteFlag)
+    if (deleteFlag)
     {
-        if(UpdatePersistentStorage(gCred))
+        if (UpdatePersistentStorage(gCred))
         {
             ret = OC_STACK_RESOURCE_DELETED;
         }
@@ -711,7 +685,7 @@ OCStackResult RemoveAllCredentials(void)
     DeleteCredList(gCred);
     gCred = GetCredDefault();
 
-    if(!UpdatePersistentStorage(gCred))
+    if (!UpdatePersistentStorage(gCred))
     {
         return OC_STACK_ERROR;
     }
@@ -726,7 +700,7 @@ OCStackResult RemoveAllCredentials(void)
  * @param ownerAdd address of OBT(PT)
  * @param doxm current device's doxm resource
  *
- * @retval
+ * @return
  *     true successfully done and valid ower psk information
  *     false Invalid owner psk information or failed to owner psk generation
  */
@@ -752,6 +726,7 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
     receviedCred->privateData.data = (uint8_t *)OICCalloc(1, OWNER_PSK_LENGTH_128);
     VERIFY_NON_NULL(TAG, receviedCred->privateData.data, ERROR);
     memcpy(receviedCred->privateData.data, ownerPSK, OWNER_PSK_LENGTH_128);
+
     OIC_LOG(INFO, TAG, "PrivateData of OwnerPSK was calculated successfully");
 
     //Verify OwnerPSK information
@@ -899,7 +874,7 @@ static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehR
 #endif//__WITH_DTLS__
     }
 
-    if(OC_EH_RESOURCE_CREATED != ret)
+    if (OC_EH_RESOURCE_CREATED != ret)
     {
         if(OC_STACK_OK != RemoveCredential(&cred->subject))
         {
@@ -937,7 +912,7 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
-    if(NULL == ehRequest->query)
+    if (NULL == ehRequest->query)
    {
        return ehRet;
    }
@@ -947,16 +922,16 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
 
    //Parsing REST query to get the subject
    ParseQueryIterInit((unsigned char *)ehRequest->query, &parseIter);
-   while(GetNextQuery(&parseIter))
+   while (GetNextQuery(&parseIter))
    {
-       if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECT_NAME,
+       if (strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECT_NAME,
                parseIter.attrLen) == 0)
        {
            memcpy(subject.id, parseIter.valPos, parseIter.valLen);
        }
    }
 
-   if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&subject))
+   if (OC_STACK_RESOURCE_DELETED == RemoveCredential(&subject))
    {
        ehRet = OC_EH_RESOURCE_DELETED;
    }
@@ -971,7 +946,7 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
     (void)callbackParameter;
     OCEntityHandlerResult ret = OC_EH_ERROR;
 
-    if(!ehRequest)
+    if (!ehRequest)
     {
         return OC_EH_ERROR;
     }
@@ -979,7 +954,7 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
     {
         OIC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
         //TODO :  Handle PUT/DEL methods
-        switch(ehRequest->method)
+        switch (ehRequest->method)
         {
             case OC_REST_GET:
                 ret = OC_EH_FORBIDDEN;
@@ -1008,15 +983,13 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
 
 OCStackResult CreateCredResource()
 {
-    OCStackResult ret;
-
-    ret = OCCreateResource(&gCredHandle,
-                           OIC_RSRC_TYPE_SEC_CRED,
-                           OIC_MI_DEF,
-                           OIC_RSRC_CRED_URI,
-                           CredEntityHandler,
-                           NULL,
-                           OC_RES_PROP_NONE);
+    OCStackResult ret = OCCreateResource(&gCredHandle,
+                                         OIC_RSRC_TYPE_SEC_CRED,
+                                         OIC_MI_DEF,
+                                         OIC_RSRC_CRED_URI,
+                                         CredEntityHandler,
+                                         NULL,
+                                         OC_RES_PROP_NONE);
 
     if (OC_STACK_OK != ret)
     {
@@ -1231,7 +1204,6 @@ exit:
 #define CERTIFICATE ("x5c")
 #define PRIVATE_KEY ("d")
 
-
 static void WriteCertPrefix(uint8_t *prefix, uint32_t certLen)
 {
     for (size_t i = 0; i < CERT_LEN_PREFIX; ++i)
@@ -1243,7 +1215,7 @@ static void WriteCertPrefix(uint8_t *prefix, uint32_t certLen)
 static uint32_t ParseCertPrefix(uint8_t *prefix)
 {
     uint32_t res = 0;
-    if(NULL != prefix)
+    if (NULL != prefix)
     {
         for (int i = 0; i < CERT_LEN_PREFIX; ++i)
         {
@@ -1271,7 +1243,7 @@ static OCStackResult GetCAPublicKeyData(CADtlsX509Creds_t *credInfo)
 {
     OCStackResult ret = OC_STACK_ERROR;
     uint8_t *ccPtr = credInfo->certificateChain;
-    for(uint8_t i = 0; i < credInfo->chainLen - 1; ++i)
+    for (uint8_t i = 0; i < credInfo->chainLen - 1; ++i)
     {
         ccPtr += CERT_LEN_PREFIX + ParseCertPrefix(ccPtr);
     }

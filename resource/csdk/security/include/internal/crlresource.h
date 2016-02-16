@@ -29,43 +29,46 @@ extern "C" {
 #endif
 
 /**
- * This function stores CRL in SRM
- * @param crl - CRL
+ * This function stores CRL in SRM.
  *
- * @returns OC_STACK_OK for Success, otherwise some error value
+ * @param crl to be stored in SRM.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult UpdateCRLResource(const OicSecCrl_t *crl);
 
 /**
- * This function get encoded with base64 CRL from SRM
+ * This function get encoded with base64 CRL from SRM.
  *
- * @returns encoded CRL with base64 format. NULL if error occured (e.g. CRL did not set)
- * @note Caller responsible for resulting string memory (use OICFree to remove it)
+ * @note Caller responsible for resulting string memory (use OICFree to remove it).
+ *
+ * @return encoded CRL with base64 format. NULL if error occured (e.g. CRL did not set).
  */
 char* GetBase64CRL();
 /**
- * This function get encoded with DER CRL from SRM
+ * This function get encoded with DER CRL from SRM.
  *
- * @returns encoded CRL with DER format. array len is 0 if error occured (e.g. CRL did not set)
+ * @return encoded CRL with DER format. array len is 0 if error occured (e.g. CRL did not set).
  */
 void  GetDerCrl(ByteArray crlArray);
 
 /**
- * This function get CRL from SRM
+ * This function get CRL from SRM.
  *
- * @param crl [out] - pointer to buffer that contains crl. Shoul be not NULL. Buffer
+ * @param crl is a pointer to buffer that contains crl. Shoul be not NULL. Buffer
  * will be allocated by the function and content of *crl will be ignored.
- * @param outlen [out] - pointer to length of the CRL buffer. Shoul be not NULL.
+ * @param outlen is a pointer to length of the CRL buffer. Should be not NULL.
  *
- * @returns OC_STACK_OK if success and errorcode otherwise.
- * @note Caller responsible for crl buffer memory (use OICFree to free it)
+ * @note Caller responsible for crl buffer memory (use OICFree to free it).
+ *
+ * @return ::OC_STACK_OK if success, otherwise some error value.
  */
 OicSecCrl_t * JSONToCrlBin(const char * jsonStr);
 
 /**
- * Initialize CLR resource by loading data from persistent storage.
+ * Initialize CRL resource by loading data from persistent storage.
  *
- * @returns OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitCRLResource();
 
@@ -74,15 +77,15 @@ OCStackResult InitCRLResource();
  */
 void DeInitCRLResource();
 
+/**
+ * Get an instance of CRL resource.
+ *
+ * @return reference to the @ref OicSecCrl_t, holding reference to CRL resource.
+ */
 OicSecCrl_t *GetCRLResource();
 
-OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
-                                        OCEntityHandlerRequest * ehRequest,
-                                        void* callbackParameter);
 #ifdef __cplusplus
 }
 #endif
 
 #endif //IOTVT_SRM_CRLR_H
-
-

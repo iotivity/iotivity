@@ -17,6 +17,16 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include <stdlib.h>
+#include <string.h>
+
+#if HAVE_STRINGS_H
+#include <strings.h>
+#endif
+
+#ifdef __WITH_DTLS__
+#include "global.h"
+#endif
 
 #include "ocstack.h"
 #include "logger.h"
@@ -37,17 +47,6 @@
 #include "ocserverrequest.h"
 #include "srmutility.h"
 #include "pinoxmcommon.h"
-
-#ifdef __WITH_DTLS__
-#include "global.h"
-#endif
-
-#include <stdlib.h>
-#include <string.h>
-
-#if HAVE_STRINGS_H
-#include <strings.h>
-#endif
 
 #define TAG  "SRM-DOXM"
 
@@ -109,7 +108,7 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
     cJSON_AddItemToObject(jsonRoot, OIC_JSON_DOXM_NAME, jsonDoxm );
 
     //OxmType -- Not Mandatory
-    if(doxm->oxmTypeLen > 0)
+    if (doxm->oxmTypeLen > 0)
     {
         cJSON *jsonOxmTyArray = cJSON_CreateArray();
         VERIFY_NON_NULL(TAG, jsonOxmTyArray, ERROR);
@@ -121,7 +120,7 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
     }
 
     //Oxm -- Not Mandatory
-    if(doxm->oxmLen > 0)
+    if (doxm->oxmLen > 0)
     {
         cJSON *jsonOxmArray = cJSON_CreateArray();
         VERIFY_NON_NULL(TAG, jsonOxmArray, ERROR);
@@ -176,7 +175,6 @@ exit:
 
 OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
 {
-
     if (NULL == jsonStr)
     {
         return NULL;
@@ -243,7 +241,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
 
     //OxmSel -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_SEL_NAME);
-    if(jsonObj)
+    if (jsonObj)
     {
         VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
         doxm->oxmSel = (OicSecOxm_t)jsonObj->valueint;
@@ -256,7 +254,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
 
     //sct -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_SUPPORTED_CRED_TYPE_NAME);
-    if(jsonObj)
+    if (jsonObj)
     {
         VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
         doxm->sct = (OicSecCredType_t)jsonObj->valueint;
@@ -269,7 +267,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
 
     //Owned -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OWNED_NAME);
-    if(jsonObj)
+    if (jsonObj)
     {
         VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type), ERROR);
         doxm->owned = jsonObj->valueint;
@@ -282,10 +280,10 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
 
     //DeviceId -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_NAME);
-    if(jsonObj)
+    if (jsonObj)
     {
         VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-        if(cJSON_String == jsonObj->type)
+        if (cJSON_String == jsonObj->type)
         {
             //Check for empty string, in case DeviceId field has not been set yet
             if (jsonObj->valuestring[0])
@@ -326,11 +324,11 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
 
     //Owner -- will be empty when device status is unowned.
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OWNER_NAME);
-    if(true == doxm->owned)
+    if (true == doxm->owned)
     {
         VERIFY_NON_NULL(TAG, jsonObj, ERROR);
     }
-    if(jsonObj)
+    if (jsonObj)
     {
         VERIFY_SUCCESS(TAG, (cJSON_String == jsonObj->type), ERROR);
         outLen = 0;
@@ -407,24 +405,24 @@ static bool ValidateQuery(const char * query)
 
     ParseQueryIterInit((unsigned char*)query, &parseIter);
 
-    while(GetNextQuery(&parseIter))
+    while (GetNextQuery(&parseIter))
     {
-        if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_OWNED_NAME, parseIter.attrLen) == 0)
+        if (strncasecmp((char *)parseIter.attrPos, OIC_JSON_OWNED_NAME, parseIter.attrLen) == 0)
         {
             bOwnedQry = true;
-            if((strncasecmp((char *)parseIter.valPos, OIC_SEC_TRUE, parseIter.valLen) == 0) &&
+            if ((strncasecmp((char *)parseIter.valPos, OIC_SEC_TRUE, parseIter.valLen) == 0) &&
                     (gDoxm->owned))
             {
                 bOwnedMatch = true;
             }
-            else if((strncasecmp((char *)parseIter.valPos, OIC_SEC_FALSE, parseIter.valLen) == 0)
+            else if ((strncasecmp((char *)parseIter.valPos, OIC_SEC_FALSE, parseIter.valLen) == 0)
                     && (!gDoxm->owned))
             {
                 bOwnedMatch = true;
             }
         }
 
-        if(strncasecmp((char *)parseIter.attrPos, OIC_JSON_DEVICE_ID_NAME, parseIter.attrLen) == 0)
+        if (strncasecmp((char *)parseIter.attrPos, OIC_JSON_DEVICE_ID_NAME, parseIter.attrLen) == 0)
         {
             bDeviceIDQry = true;
             OicUuid_t subject = {.id={0}};
@@ -437,7 +435,7 @@ static bool ValidateQuery(const char * query)
 
             VERIFY_SUCCESS(TAG, (B64_OK == b64Ret && outLen <= sizeof(subject.id)), ERROR);
                        memcpy(subject.id, base64Buff, outLen);
-            if(0 == memcmp(&gDoxm->deviceID.id, &subject.id, sizeof(gDoxm->deviceID.id)))
+            if (0 == memcmp(&gDoxm->deviceID.id, &subject.id, sizeof(gDoxm->deviceID.id)))
             {
                 bDeviceIDMatch = true;
             }
@@ -453,13 +451,13 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     char* jsonStr = NULL;
     OCEntityHandlerResult ehRet = OC_EH_OK;
 
-    OIC_LOG (DEBUG, TAG, "Doxm EntityHandle processing GET request");
+    OIC_LOG(DEBUG, TAG, "Doxm EntityHandle processing GET request");
 
     //Checking if Get request is a query.
-    if(ehRequest->query)
+    if (ehRequest->query)
     {
-        OIC_LOG (DEBUG, TAG, "HandleDoxmGetRequest processing query");
-        if(!ValidateQuery(ehRequest->query))
+        OIC_LOG(DEBUG, TAG, "HandleDoxmGetRequest processing query");
+        if (!ValidateQuery(ehRequest->query))
         {
             ehRet = OC_EH_ERROR;
         }
@@ -475,9 +473,9 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     jsonStr = (ehRet == OC_EH_OK) ? BinToDoxmJSON(gDoxm) : NULL;
 
     // Send response payload to request originator
-    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, jsonStr))
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, jsonStr))
     {
-        OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandleDoxmGetRequest");
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleDoxmGetRequest");
     }
 
     OICFree(jsonStr);
@@ -559,7 +557,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                 }
             }
         }
-        else if(OIC_RANDOM_DEVICE_PIN == newDoxm->oxmSel)
+        else if (OIC_RANDOM_DEVICE_PIN == newDoxm->oxmSel)
         {
             if ((false == gDoxm->owned) && (false == newDoxm->owned))
             {
@@ -572,7 +570,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                 {
                     gDoxm->oxmSel = newDoxm->oxmSel;
                     //Update new state in persistent storage
-                    if((UpdatePersistentStorage(gDoxm) == true))
+                    if ((UpdatePersistentStorage(gDoxm) == true))
                     {
                         ehRet = OC_EH_OK;
                     }
@@ -681,19 +679,19 @@ exit:
     }
 
     //Send payload to request originator
-    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
     {
-        OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
     }
     DeleteDoxmBinData(newDoxm);
 
     return ehRet;
 }
 
-/*
+/**
  * This internal method is the entity handler for DOXM resources.
  */
-OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
+OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParam)
 {
@@ -704,7 +702,6 @@ OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
     {
         return ehRet;
     }
-
 
     if (flag & OC_REQUEST_FLAG)
     {
@@ -729,20 +726,19 @@ OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
     return ehRet;
 }
 
-/*
+/**
  * This internal method is used to create '/oic/sec/doxm' resource.
  */
 OCStackResult CreateDoxmResource()
 {
-    OCStackResult ret;
-
-    ret = OCCreateResource(&gDoxmHandle,
-                           OIC_RSRC_TYPE_SEC_DOXM,
-                           OIC_MI_DEF,
-                           OIC_RSRC_DOXM_URI,
-                           DoxmEntityHandler,
-                           NULL,
-                           OC_OBSERVABLE | OC_SECURE | OC_EXPLICIT_DISCOVERABLE);
+    OCStackResult ret = OCCreateResource(&gDoxmHandle,
+                                         OIC_RSRC_TYPE_SEC_DOXM,
+                                         OIC_MI_DEF,
+                                         OIC_RSRC_DOXM_URI,
+                                         DoxmEntityHandler,
+                                         NULL,
+                                         OC_OBSERVABLE | OC_SECURE |
+                                         OC_EXPLICIT_DISCOVERABLE);
 
     if (OC_STACK_OK != ret)
     {
@@ -756,7 +752,6 @@ OCStackResult CreateDoxmResource()
  * Checks if DeviceID is generated during provisioning for the new device.
  * If DeviceID is NULL then generates the new DeviceID.
  * Once DeviceID is assigned to the device it does not change for the lifetime of the device.
- *
  */
 static OCStackResult CheckDeviceID()
 {
@@ -795,36 +790,27 @@ static OCStackResult CheckDeviceID()
 
 /**
  * Get the default value.
- * @retval  the gDefaultDoxm pointer;
+ *
+ * @return the default value of doxm, @ref OicSecDoxm_t.
  */
 static OicSecDoxm_t* GetDoxmDefault()
 {
-    OIC_LOG (DEBUG, TAG, "GetDoxmToDefault");
+    OIC_LOG(DEBUG, TAG, "GetDoxmToDefault");
     return &gDefaultDoxm;
 }
 
-/**
- * This method is used by SRM to retrieve DOXM resource data.
- *
- * @retval  reference to @ref OicSecDoxm_t, binary format of Doxm resource data
- */
 const OicSecDoxm_t* GetDoxmResourceData()
 {
     return gDoxm;
 }
 
-/**
- * Initialize DOXM resource by loading data from persistent storage.
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult InitDoxmResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
     //Read DOXM resource from PS
     char* jsonSVRDatabase = GetSVRDatabase();
-    if(jsonSVRDatabase)
+    if (jsonSVRDatabase)
     {
         //Convert JSON DOXM into binary format
         gDoxm = JSONToDoxmBin(jsonSVRDatabase);
@@ -834,7 +820,7 @@ OCStackResult InitDoxmResource()
      * is not available for some reason, a default doxm is created
      * which allows user to initiate doxm provisioning again.
      */
-    if(!jsonSVRDatabase || !gDoxm)
+    if (!jsonSVRDatabase || !gDoxm)
     {
         gDoxm = GetDoxmDefault();
     }
@@ -860,24 +846,16 @@ OCStackResult InitDoxmResource()
     return ret;
 }
 
-/**
- * Perform cleanup for DOXM resources.
- *
- * @return
- * OC_STACK_OK    - no error
- * OC_STACK_ERROR - stack process error
- *
- */
 OCStackResult DeInitDoxmResource()
 {
     OCStackResult ret = OCDeleteResource(gDoxmHandle);
-    if(gDoxm  != &gDefaultDoxm)
+    if (gDoxm  != &gDefaultDoxm)
     {
         DeleteDoxmBinData(gDoxm);
     }
     gDoxm = NULL;
 
-    if(OC_STACK_OK == ret)
+    if (OC_STACK_OK == ret)
     {
         return OC_STACK_OK;
     }
@@ -887,15 +865,9 @@ OCStackResult DeInitDoxmResource()
     }
 }
 
-
-/**
- * This method returns the SRM device ID for this device.
- *
- * @retval  OC_STACK_OK for Success, otherwise some error value
- */
 OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID)
 {
-    if(deviceID && gDoxm)
+    if (deviceID && gDoxm)
     {
        *deviceID = gDoxm->deviceID;
         return OC_STACK_OK;
@@ -903,11 +875,6 @@ OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID)
     return OC_STACK_ERROR;
 }
 
-/**
- * @brief Gets the OicUuid_t value for the owner of this device.
- *
- * @return OC_STACK_OK if devOwner is a valid UUID, otherwise OC_STACK_ERROR.
- */
 OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner)
 {
     OCStackResult retVal = OC_STACK_ERROR;

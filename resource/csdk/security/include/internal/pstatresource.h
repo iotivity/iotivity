@@ -28,14 +28,14 @@ extern "C" {
 /**
  * Initialize Pstat resource by loading data from persistent storage.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitPstatResource();
 
 /**
  * Perform cleanup for Pstat resources.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult DeInitPstatResource();
 
