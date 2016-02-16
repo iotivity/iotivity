@@ -212,6 +212,11 @@ namespace OIC
                 ((BundleInfoInternal *) bundleInfo)->setJavaBundle(true);
                 ((BundleInfoInternal *) bundleInfo)->setSoBundle(false);
                 registerJavaBundle(bundleInfo);
+#else
+                // android .jar library
+                ((BundleInfoInternal *) bundleInfo)->setSoBundle(false);
+                ((BundleInfoInternal *) bundleInfo)->setJavaBundle(false);
+                registerExtBundle(bundleInfo);
 #endif
             }
             else if(has_suffix(bundleInfo->getPath(), ".so"))

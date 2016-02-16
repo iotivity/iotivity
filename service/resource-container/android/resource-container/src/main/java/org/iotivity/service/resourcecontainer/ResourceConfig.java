@@ -31,7 +31,6 @@ public class ResourceConfig {
      * Empty constructor for resoure config.
      */
     public ResourceConfig() {
-
     }
 
     /**

@@ -22,6 +22,10 @@ package org.iotivity.service.resourcecontainer;
 import android.content.Context;
 import java.util.List;
 
+/**
+ * Every resource bundle has to provide a bundle activator that can be called
+ * by the resource container on bundle startup.
+ */
 public abstract class BundleActivator {
     protected RcsResourceContainerBundleAPI bundleAPI;
     protected Context appContext;

@@ -27,7 +27,10 @@ import java.util.Vector;
 import android.content.Context;
 import android.util.Log;
 
-
+/**
+ * Every resource bundle has to provide a bundle activator that can be called
+ * by the resource container on bundle startup.
+ */
 public abstract class BundleSoftSensorResource extends BundleResource {
     protected HashMap<String, RcsValue> m_mapInputData;
     

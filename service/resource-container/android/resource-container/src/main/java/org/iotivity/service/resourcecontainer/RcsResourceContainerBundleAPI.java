@@ -31,7 +31,8 @@ import java.util.Vector;
 
 /**
  * This class provides APIs for managing the container and bundles in the
- * container.
+ * container. The container provides such an interface to the bundle developer
+ * to access the configuration and to register/unregister resources.
  */
 public interface RcsResourceContainerBundleAPI{
 

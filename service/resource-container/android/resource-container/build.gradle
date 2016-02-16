@@ -20,6 +20,10 @@
 
 apply plugin: 'com.android.library'
 
+task jar(type: Jar) {
+    from fileTree(dir: 'build/intermediates/classes/release')
+}
+
 android {
     compileSdkVersion 21
     buildToolsVersion "20.0.0"

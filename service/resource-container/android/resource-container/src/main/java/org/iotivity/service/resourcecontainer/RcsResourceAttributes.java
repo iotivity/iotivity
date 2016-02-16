@@ -27,8 +27,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-//import org.iotivity.service.resourcecontainer.server.RcsLockedAttributes;
-
 /**
  *
  * This class represents the attributes for a resource.
@@ -43,7 +41,6 @@ public final class RcsResourceAttributes
     public RcsResourceAttributes() {
     }
 
-    
     public RcsResourceAttributes(RcsResourceAttributes attrs){
         for (final String key : attrs.keySet()) {
             mCache.put(key, attrs.get(key));
@@ -202,5 +199,4 @@ public final class RcsResourceAttributes
             mCache.put(key, attrs.get(key));
         }
     }
-
 }

@@ -85,7 +85,8 @@ namespace
         JavaLocalString version{env, newStringObject(env, bundleInfo->getVersion()) };
 
         return env->NewObject(g_cls_RCSBundleInfo, g_ctor_RCSBundleInfo,
-                id.get(), path.get(), activatorName.get(), libraryPath.get(), version.get());
+                id.get(), path.get(), activatorName.get(), libraryPath.get(), version.get(),
+                bundleInfo->isActivated());
     }
 }
 
