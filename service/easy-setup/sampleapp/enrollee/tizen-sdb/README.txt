@@ -30,7 +30,7 @@ Build Procedure
 		attribute		value
 		es_target_enrollee 	tizen
 		es_role 		enrollee
-		softap_mode 		ENROLLEE_SOFTAP 
+		softap_mode 		ENROLLEE_SOFTAP
 
 3) Go to "iotivity/" folder.
 4) Execute following command(s) to start build based on transport selection required :

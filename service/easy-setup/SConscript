@@ -44,7 +44,7 @@ if ('mediator' in es_role) :
 
 if ('enrollee' in es_role) :
 	print "Building Easysetup enrollee SDK"
-	
+
 	if es_target in ['linux', 'arduino', 'tizen']:
 		SConscript('enrollee/SConscript')
 	else :

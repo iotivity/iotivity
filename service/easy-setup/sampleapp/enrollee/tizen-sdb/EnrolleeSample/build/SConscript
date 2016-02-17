@@ -28,11 +28,11 @@ os_arch_map = {
 es_role_map = {
 		'enrollee', 'mediator'
 		}
-		
+
 es_target_enrollee_map = {
 		'arduino', 'tizen', 'linux'
 		}
-		
+
 es_softap_mode_map = {
 		'ENROLLEE_SOFTAP', 'MEDIATOR_SOFTAP'
 		}

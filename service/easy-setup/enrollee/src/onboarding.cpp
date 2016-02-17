@@ -22,7 +22,7 @@
  * @file
  *
  * This file has methods for on-boarding the Enrollee device.
- * This will contain template methods that will have core business logic & negotiation algorithm 
+ * This will contain template methods that will have core business logic & negotiation algorithm
  * on various on-boarding methods.
  */
 
@@ -66,14 +66,12 @@ bool ESOnboard(const char * ssid, const char* passwd, NetworkEventCallback cb)
 
     if (ESSoftapOnboarding())
     {
-#ifndef ARDUINO //SoftAp at Arduino is not supported
         if (ESSoftapAtEnrollee())
         {
             OC_LOG(DEBUG, ES_ENROLLEE_TAG, "Create softap at enrollee");
             ESCreateSoftap(ssid, passwd, cb);
         }
         else
-#endif
         {
             OC_LOG(DEBUG, ES_ENROLLEE_TAG, "Connecting to SoftAp");
             ConnectToWiFiNetwork(ssid, passwd, cb);

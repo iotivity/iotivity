@@ -40,6 +40,9 @@ if 'IP' in enrollee_env.get('TARGET_TRANSPORT'):
 	print "Enrollees are implemented for IP transport only"
 	enrollee_env.AppendUnique(CPPDEFINES = ['ESWIFI'])
 
+if enrollee_env.get('ES_SOFTAP_MODE') == 'ENROLLEE_SOFTAP':
+	enrollee_env.AppendUnique(CPPDEFINES = ['ENROLLEE_SOFTAP'])
+
 ######################################################################
 # Build flags
 ######################################################################
