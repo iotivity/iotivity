@@ -35,6 +35,8 @@ extern "C"
 {
 #endif
 
+static const uint16_t GATT_ERROR = 133;
+
 static const uint16_t STATE_CHARACTER_SET = 2;
 static const uint16_t STATE_CHARACTER_UNSET = 1;
 static const uint16_t STATE_CHARACTER_NO_CHANGE = 0;
@@ -276,11 +278,9 @@ CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback);
  * @param[in]   autoconnect           whether to directly connect to the remote device(false) or
  *                                     to automatically connect as soon as the remote device
  *                                     becomes available.
- * @param[in]   callback              callback for connection state change.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ * @return  gatt object
  */
-CAResult_t CALEClientConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect,
-                             jobject callback);
+jobject CALEClientConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect);
 
 /**
  * disconnect to gatt server by a target device.
@@ -296,6 +296,14 @@ CAResult_t CALEClientDisconnect(JNIEnv *env, jobject bluetoothGatt);
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEClientDisconnectAll(JNIEnv *env);
+
+/**
+ * disconnect to gatt server by selected address.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   remoteAddress         remote address.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientDisconnectforAddress(JNIEnv *env, jstring remoteAddress);
 
 /**
  * start discovery server.
@@ -471,6 +479,14 @@ CAResult_t CALEClientRemoveGattObj(JNIEnv *env, jobject gatt);
 CAResult_t CALEClientRemoveGattObjForAddr(JNIEnv *env, jstring addr);
 
 /**
+ * get ble address from Bluetooth device.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   bluetoothDevice       Bluetooth device.
+ * @return  ble address.
+ */
+jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
+
+/**
  * update new state information.
  * @param[in]   address               remote address.
  * @param[in]   connectedState        connection state.
@@ -556,6 +572,23 @@ void CALEClientTerminateGattMutexVariables();
  * @param[in]   flag        finish flag.
  */
 void CALEClientSetSendFinishFlag(bool flag);
+
+/**
+ * close the connection of the profile proxy to the Service.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   gatt                  gatt profile object.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientCloseProfileProxy(JNIEnv *env, jobject gatt);
+
+/**
+ * connect to GATT Server hosted by this device.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   bluetoothDevice       bluetooth device object.
+ * @param[in]   autoconnect           connect as soon as the device becomes avaiable(true).
+ * @return  gatt profile object
+ */
+jobject CALEClientGattConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect);
 
 #ifdef __cplusplus
 } /* extern "C" */

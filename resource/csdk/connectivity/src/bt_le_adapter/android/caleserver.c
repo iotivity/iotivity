@@ -2158,38 +2158,13 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(device, TAG, "device");
 
-    jclass jni_cid_bluetoothProfile = (*env)->FindClass(env, "android/bluetooth/BluetoothProfile");
-    if (!jni_cid_bluetoothProfile)
-    {
-        OIC_LOG(ERROR, TAG, "jni_cid_bluetoothProfile is null");
-        return;
-    }
-
-    jfieldID jni_fid_state_connected = (*env)->GetStaticFieldID(env, jni_cid_bluetoothProfile,
-                                                                "STATE_CONNECTED", "I");
-    if(!jni_fid_state_connected)
-    {
-        OIC_LOG(ERROR, TAG, "jni_fid_state_connected is null");
-        return;
-    }
-
-    jfieldID jni_fid_state_disconnected = (*env)->GetStaticFieldID(env, jni_cid_bluetoothProfile,
-                                                                   "STATE_DISCONNECTED", "I");
-    if(!jni_fid_state_disconnected)
-    {
-        OIC_LOG(ERROR, TAG, "jni_fid_state_disconnected is null");
-        return;
-    }
-
     // STATE_CONNECTED
-    jint jni_int_state_connected = (*env)->GetStaticIntField(env, jni_cid_bluetoothProfile,
-                                                             jni_fid_state_connected);
+    jint state_connected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_CONNECTED");
 
     // STATE_DISCONNECTED
-    jint jni_int_state_disconnected = (*env)->GetStaticIntField(env, jni_cid_bluetoothProfile,
-                                                                jni_fid_state_disconnected);
+    jint state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_DISCONNECTED");
 
-    if (newState == jni_int_state_connected)
+    if (newState == state_connected)
     {
 
         OIC_LOG(DEBUG, TAG, "LE CONNECTED");
@@ -2215,7 +2190,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
         }
         (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
     }
-    else if (newState == jni_int_state_disconnected)
+    else if (newState == state_disconnected)
     {
         OIC_LOG(DEBUG, TAG, "LE DISCONNECTED");
 
@@ -2331,7 +2306,8 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(
     OIC_LOG_V(DEBUG, TAG, "Gatt Server Notification Sent Callback (status : %d)",
               status);
 
-    if (GATT_SUCCESS != status) // error case
+    jint gatt_success = CALEGetConstantsValue(env, CLASSPATH_BT_GATT, "GATT_SUCCESS");
+    if (gatt_success != status) // error case
     {
         OIC_LOG(ERROR, TAG, "it will be sent again.");
 
