@@ -25,7 +25,8 @@ env.PrependUnique(CPPPATH = [ os.path.join(root_dir, 'api') ])
 env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
                              os.path.join(root_dir, 'lib/libcoap-4.1.1'),
                              os.path.join(src_dir, '/resource/csdk/logger/include/'),
-                             os.path.join(root_dir, 'common/inc') ])
+                             os.path.join(root_dir, 'common/inc'),
+                             os.path.join(root_dir, 'util/inc') ])
 
 if ca_os not in ['arduino', 'windows', 'winrt']:
 	env.AppendUnique(CPPDEFINES = ['WITH_POSIX'])
@@ -38,6 +39,9 @@ if ca_os in ['darwin','ios']:
 
 # Getting common source files
 env.SConscript('./../common/SConscript')
+
+# Getting util source files
+env.SConscript(root_dir + '/util/SConscript')
 
 # The tinydtls library is found in '#extlibs/tinydtls', where the '#'
 # is interpreted by SCons as the top-level iotivity directory where

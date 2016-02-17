@@ -66,6 +66,7 @@ static CARetransmission_t g_retransmissionContext;
 static CARequestCallback g_requestHandler = NULL;
 static CAResponseCallback g_responseHandler = NULL;
 static CAErrorCallback g_errorHandler = NULL;
+static CANetworkMonitorCallback g_nwMonitorHandler = NULL;
 
 static void CAErrorHandler(const CAEndpoint_t *endpoint,
                            const void *data, uint32_t dataLen,
@@ -813,9 +814,11 @@ static void CANetworkChangedCallback(const CAEndpoint_t *info, CANetworkStatus_t
 {
     (void)info;
     (void)status;
-    OIC_LOG(DEBUG, TAG, "IN");
 
-    OIC_LOG(DEBUG, TAG, "OUT");
+    if (g_nwMonitorHandler)
+    {
+        g_nwMonitorHandler(info, status);
+    }
 }
 
 void CAHandleRequestResponseCallbacks()
@@ -1015,6 +1018,11 @@ void CASetInterfaceCallbacks(CARequestCallback ReqHandler, CAResponseCallback Re
     g_requestHandler = ReqHandler;
     g_responseHandler = RespHandler;
     g_errorHandler = errorHandler;
+}
+
+void CASetNetworkMonitorCallback(CANetworkMonitorCallback nwMonitorHandler)
+{
+    g_nwMonitorHandler = nwMonitorHandler;
 }
 
 CAResult_t CAInitializeMessageHandler()

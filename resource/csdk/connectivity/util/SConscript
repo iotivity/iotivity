@@ -1,0 +1,36 @@
+#######################################################
+#	Build Common Util
+#######################################################
+
+Import('env')
+import os.path
+
+print "Reading util folder script"
+
+ca_os = env.get('TARGET_OS')
+ca_transport = env.get('TARGET_TRANSPORT')
+src_dir = env.get('SRC_DIR')
+root_dir = './../'
+src_dir = './../util/src/'
+
+env.PrependUnique(CPPPATH = [ os.path.join(root_dir, 'api') ])
+env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
+                             os.path.join(root_dir, 'lib/libcoap-4.1.1'),
+                             os.path.join(src_dir, '/resource/csdk/logger/include/'),
+                             os.path.join(root_dir, 'common/inc'),
+                             os.path.join(root_dir, 'util/inc') ])
+
+######################################################################
+# Source files to build common for platforms
+######################################################################
+
+env.AppendUnique(CA_SRC = [os.path.join(src_dir,'cautilinterface.c')])
+
+if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
+    if ca_os in ['linux', 'tizen', 'arduino']:
+    		env.AppendUnique(CA_SRC = [
+    		os.path.join(src_dir,'camanager/' + ca_os + '/caleconnectionmanager.c')])
+
+    if ca_os == 'android':
+    		env.AppendUnique(CA_SRC = [
+    		os.path.join(src_dir,'camanager/android/caleconnectionmanager.c')])
