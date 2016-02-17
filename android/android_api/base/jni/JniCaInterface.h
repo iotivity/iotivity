@@ -30,6 +30,49 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+    void CAManagerConnectionStateChangedCB(CATransportAdapter_t adapter,
+                                           const char *remote_address, bool connected);
+
+    void CAManagerAdapterStateChangedCB(CATransportAdapter_t adapter, bool enabled);
+
+    /*
+     * Class:     Java_org_iotivity_ca_CaInterface_caManagerInitialize
+     * Method:    caManagerInitialize
+     * Signature: (Landroid/content/Context;)V
+     */
+    JNIEXPORT void JNICALL
+    Java_org_iotivity_ca_CaInterface_caManagerInitialize(JNIEnv *env, jclass clazz,
+                                                         jobject context, jobject listener);
+
+    /*
+     * Class:     Java_org_iotivity_ca_CaInterface_caManagerTerminate
+     * Method:    caManagerTerminate
+     * Signature: ()V
+     */
+    JNIEXPORT void JNICALL
+    Java_org_iotivity_ca_CaInterface_caManagerTerminate(JNIEnv *env, jclass clazz);
+
+    /*
+     * Class:     Java_org_iotivity_ca_CaInterface_caManagerSetAutoConnectionDeviceInfo
+     * Method:    caManagerSetAutoConnectionDeviceInfo
+     * Signature: (Ljava/lang/String;)V
+     */
+    JNIEXPORT void JNICALL
+    Java_org_iotivity_ca_CaInterface_caManagerSetAutoConnectionDeviceInfo(JNIEnv *env,
+                                                                          jclass clazz,
+                                                                          jstring jaddress);
+
+    /*
+     * Class:     Java_org_iotivity_ca_CaInterface_caManagerUnsetAutoConnectionDeviceInfo
+     * Method:    caManagerUnsetAutoConnectionDeviceInfo
+     * Signature: (Ljava/lang/String;)V
+     */
+    JNIEXPORT void JNICALL
+    Java_org_iotivity_ca_CaInterface_caManagerUnsetAutoConnectionDeviceInfo(JNIEnv *env,
+                                                                            jclass clazz,
+                                                                            jstring jaddress);
+
     /*
      * Class:     org_iotivity_ca_CaInterface_Initialize
      * Method:    Initialize

@@ -58,6 +58,28 @@ void CAStartServerLEAdvertising();
  */
 void CAStopServerLEAdvertising();
 
+#ifdef __ANDROID__
+#ifdef LE_ADAPTER
+/**
+ * initialize client connection manager
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jvm                   invocation inferface for JAVA virtual machine.
+ * @param[in]   context               application context.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CAManagerLEClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context);
+
+/**
+ * terminate client connection manager
+ * @param[in]   env                   JNI interface pointer.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CAManagerLEClientTerminate(JNIEnv *env);
+#endif
+#endif
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

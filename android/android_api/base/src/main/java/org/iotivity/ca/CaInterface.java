@@ -24,12 +24,85 @@ package org.iotivity.ca;
 
 import android.content.Context;
 import android.app.Activity;
+import org.iotivity.base.OcException;
+import org.iotivity.base.OcConnectivityType;
 
 public class CaInterface {
     static {
         System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("ca-interface");
     }
+    private static volatile boolean isConnectionManagerInitialized = false;
 
     public static native void initialize(Activity activity, Context context);
+
+    /**
+     *  Method start connection manager service.
+     *  this method has to be called before other API call.
+     *  @param context                                application context
+     *  @param onConnectionManagerStateListener       connection state callback listener
+     */
+    public synchronized static void startManagerService(Context context,
+            OnConnectionManagerStateListener onConnectionManagerStateListener) {
+        if (!isConnectionManagerInitialized) {
+            CaInterface.caManagerInitialize(context, onConnectionManagerStateListener);
+            isConnectionManagerInitialized = true;
+        }
+    }
+
+    /**
+     *  Method stop connection manager service.
+     *  this method must be called, when Application is destroied.
+     */
+    public synchronized static void stopManagerService() {
+        if (isConnectionManagerInitialized) {
+            CaInterface.caManagerTerminate();
+            isConnectionManagerInitialized = false;
+        }
+    }
+
+    /**
+     *  Method set device information for Auto-Connection.
+     *  this method has to be called before FindResource is called.
+     *  @param address                      LE address of scanned bluetooth device.
+     */
+    public synchronized static void setAutoConnectionDevice(String address)
+            throws OcException {
+        CaInterface.initCheckForConnectionManager();
+        CaInterface.caManagerSetAutoConnectionDeviceInfo(address);
+    }
+
+    /**
+     *  Method unset device information for Auto-Connection.
+     *  @param address                      LE address of scanned bluetooth device.
+     */
+    public synchronized static void unsetAutoConnectionDevice(String address)
+            throws OcException {
+        CaInterface.initCheckForConnectionManager();
+        CaInterface.caManagerUnsetAutoConnectionDeviceInfo(address);
+    }
+
+    /**
+     *  Interface for connection manager state listener.
+     *  Event listeners are notified asynchronously.
+     */
+    public interface OnConnectionManagerStateListener {
+        public void onAdapterStateChanged(OcConnectivityType type, boolean enabled);
+        public void onConnectionStateChanged(OcConnectivityType type, String address,
+                boolean connected);
+    }
+
+    private static void initCheckForConnectionManager() {
+        if (!isConnectionManagerInitialized) {
+            throw new IllegalStateException("ConnectionManager must be started by making "
+                    + "a call to CaInterface.startManagerService before any other API "
+                    + "calls are permitted");
+        }
+    }
+
+    private static native void caManagerInitialize(Context context,
+            OnConnectionManagerStateListener onConnectionManagerStateListener);
+    private static native void caManagerTerminate();
+    private static native void caManagerSetAutoConnectionDeviceInfo(String address);
+    private static native void caManagerUnsetAutoConnectionDeviceInfo(String address);
 }

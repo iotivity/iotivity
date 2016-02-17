@@ -22,7 +22,9 @@
 #define CA_UTILS_INTERFACE_H_
 
 #include "cacommon.h"
-
+#ifdef __ANDROID__
+#include "jni.h"
+#endif
 #ifdef __cplusplus
 extern "C"
 {
@@ -55,6 +57,26 @@ CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateC
 CAResult_t CASetAutoConnectionDeviceInfo(const char* address);
 
 CAResult_t CAUnsetAutoConnectionDeviceInfo(const char* address);
+
+#ifdef __ANDROID__
+/**
+ * initialize util client for android
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jvm                   invocation inferface for JAVA virtual machine.
+ * @param[in]   context               application context.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context);
+
+/**
+ * terminate util client for android
+ * @param[in]   env                   JNI interface pointer.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CAUtilClientTerminate(JNIEnv *env);
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -61,3 +61,41 @@ CAResult_t CAUnsetAutoConnectionDeviceInfo(const char *address)
     return CA_NOT_SUPPORTED;
 #endif
 }
+
+#ifdef __ANDROID__
+/**
+ * initialize client connection manager
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jvm                   invocation inferface for JAVA virtual machine.
+ * @param[in]   context               application context.
+ */
+CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilClientInitialize");
+#ifdef LE_ADAPTER
+
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+
+    return CA_STATUS_OK;
+}
+
+/**
+ * terminate client connection manager
+ * @param[in]   env                   JNI interface pointer.
+ */
+CAResult_t CAUtilClientTerminate(JNIEnv *env)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilClientTerminate");
+#ifdef LE_ADAPTER
+
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+
+    return CA_STATUS_OK;
+}
+#endif
