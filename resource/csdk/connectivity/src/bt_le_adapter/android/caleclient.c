@@ -577,6 +577,46 @@ void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback)
     g_clientErrorCallback = callback;
 }
 
+CAResult_t CALEClientIsThereScannedDevices()
+{
+    if (!g_deviceList)
+    {
+        return CA_STATUS_FAILED;
+    }
+
+    if (0 == u_arraylist_length(g_deviceList))
+    {
+        // Wait for LE peripherals to be discovered.
+
+        // Number of times to wait for discovery to complete.
+        static size_t const RETRIES = 5;
+
+        static uint64_t const TIMEOUT =
+            2 * MICROSECS_PER_SEC;  // Microseconds
+
+        bool devicesDiscovered = false;
+        for (size_t i = 0;
+             0 == u_arraylist_length(g_deviceList) && i < RETRIES;
+             ++i)
+        {
+            if (ca_cond_wait_for(g_deviceDescCond,
+                                 g_threadSendMutex,
+                                 TIMEOUT) == 0)
+            {
+                devicesDiscovered = true;
+                break;
+            }
+        }
+
+        if (!devicesDiscovered)
+        {
+            return CA_STATUS_FAILED;
+        }
+    }
+
+    return CA_STATUS_OK;
+}
+
 CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* data,
                                       const uint32_t dataLen)
 {
@@ -608,7 +648,15 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
 
     ca_mutex_lock(g_threadSendMutex);
 
-    CAResult_t ret = CA_STATUS_OK;
+    CALEClientSetSendFinishFlag(false);
+
+    CAResult_t ret = CALEClientIsThereScannedDevices();
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(INFO, TAG, "there is no scanned device");
+        goto error_exit;
+    }
+
     if (g_context && g_deviceList)
     {
         uint32_t length = u_arraylist_length(g_deviceList);
@@ -658,6 +706,9 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
                 (*env)->SetByteArrayRegion(env, jni_arr, 0, dataLen, (jbyte*) data);
                 g_sendBuffer = (jbyteArray)(*env)->NewGlobalRef(env, jni_arr);
 
+                // Target device to send message is just one.
+                g_targetCnt = 1;
+
                 ret = CALEClientSendData(env, jarrayObj);
                 if (CA_STATUS_OK != ret)
                 {
@@ -670,6 +721,18 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
             }
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
         }
+    }
+
+    OIC_LOG(DEBUG, TAG, "connection routine is finished for unicast");
+
+    // wait for finish to send data through "CALeGattServicesDiscoveredCallback"
+    // if there is no connection state.
+    if (!g_isFinishedSendData)
+    {
+        ca_mutex_lock(g_threadMutex);
+        ca_cond_wait(g_threadCond, g_threadMutex);
+        OIC_LOG(DEBUG, TAG, "the data was sent");
+        ca_mutex_unlock(g_threadMutex);
     }
 
     if (isAttached)
@@ -743,37 +806,15 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
         g_sendBuffer = NULL;
     }
 
-    if (0 == u_arraylist_length(g_deviceList))
+    CAResult_t res = CALEClientIsThereScannedDevices();
+    if (CA_STATUS_OK != res)
     {
-        // Wait for LE peripherals to be discovered.
-
-        // Number of times to wait for discovery to complete.
-        static size_t const RETRIES = 5;
-
-        static uint64_t const TIMEOUT =
-            2 * MICROSECS_PER_SEC;  // Microseconds
-
-        bool devicesDiscovered = false;
-        for (size_t i = 0;
-             0 == u_arraylist_length(g_deviceList) && i < RETRIES;
-             ++i)
-        {
-            if (ca_cond_wait_for(g_deviceDescCond,
-                                 g_threadSendMutex,
-                                 TIMEOUT) == 0)
-            {
-                devicesDiscovered = true;
-            }
-        }
-
-        if (!devicesDiscovered)
-        {
-            goto error_exit;
-        }
+        OIC_LOG(INFO, TAG, "there is no scanned device");
+        goto error_exit;
     }
 
     // connect to gatt server
-    CAResult_t res = CALEClientStopScan();
+    res = CALEClientStopScan();
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "CALEClientStopScan has failed");
@@ -819,7 +860,7 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
         (*env)->ReleaseStringUTFChars(env, jni_address, address);
     }
 
-    OIC_LOG(DEBUG, TAG, "connection routine is finished");
+    OIC_LOG(DEBUG, TAG, "connection routine is finished for multicast");
 
     // wait for finish to send data through "CALeGattServicesDiscoveredCallback"
     if (!g_isFinishedSendData)

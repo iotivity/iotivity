@@ -23,14 +23,15 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<glib.h>
 #include<arpa/inet.h>
 #include<sys/types.h>
 #include<sys/socket.h>
 #include<netinet/in.h>
 
 #include <bluetooth.h>
+#include <bluetooth_internal.h>
 #include <bluetooth_type.h>
-#include <bluetooth_product.h>
 
 
 #include "camutex.h"
@@ -38,27 +39,26 @@
 #include "caadapterutils.h"
 
 /**
- * @def TZ_LE_NWK_MONITOR_TAG
- * @brief Logging tag for module name
+ * Logging tag for module name
  */
-#define TZ_LE_NWK_MONITOR_TAG "TZ_BLE_ADAPTER_CONTROLLER"
+#define TAG "OIC_CA_LE_MONITOR"
+
+static GMainLoop *g_mainloop = NULL;
+static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 /**
- * @var g_bleDeviceStateChangedCallback
- * @brief Maintains the callback to be notified on device state changed.
+ * Maintains the callback to be notified on device state changed.
  */
 static CALEDeviceStateChangedCallback g_bleDeviceStateChangedCallback = NULL;
 
 /**
- * @var g_bleDeviceStateChangedCbMutex
- * @brief Mutex to synchronize access to the deviceStateChanged Callback when the state
+ * Mutex to synchronize access to the deviceStateChanged Callback when the state
  *           of the LE adapter gets change.
  */
 static ca_mutex g_bleDeviceStateChangedCbMutex = NULL;
 
 /**
-* @fn  CALEAdapterStateChangedCb
-* @brief  This is the callback which will be called when the adapter state gets changed.
+* This is the callback which will be called when the adapter state gets changed.
 *
 * @param result         [IN] Result of the query done to the platform.
 * @param adapter_state  [IN] State of the LE adapter.
@@ -69,66 +69,116 @@ static ca_mutex g_bleDeviceStateChangedCbMutex = NULL;
 void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
                         void *user_data);
 
+void *GMainLoopThread (void *param)
+{
+    g_main_loop_run(g_mainloop);
+    return NULL;
+}
+
 CAResult_t CAInitializeLENetworkMonitor()
 {
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
     if (NULL == g_bleDeviceStateChangedCbMutex)
     {
         g_bleDeviceStateChangedCbMutex = ca_mutex_new();
         if (NULL == g_bleDeviceStateChangedCbMutex)
         {
-            OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "ca_mutex_new failed");
+            OIC_LOG(ERROR, TAG, "ca_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 
     return CA_STATUS_OK;
 }
 
 void CATerminateLENetworkMonitor()
 {
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
     ca_mutex_free(g_bleDeviceStateChangedCbMutex);
     g_bleDeviceStateChangedCbMutex = NULL;
 
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-CAResult_t CAInitializeLEAdapter()
+CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool)
 {
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
+    g_threadPoolHandle = threadPool;
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAStartLEAdapter()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    g_mainloop = g_main_loop_new(NULL, 0);
+    if(!g_mainloop)
+    {
+        OIC_LOG(ERROR, TAG, "g_main_loop_new failed\n");
+        return CA_STATUS_FAILED;
+    }
+
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, GMainLoopThread, (void *) NULL))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to create thread!");
+        return CA_STATUS_FAILED;
+    }
 
     int ret = bt_initialize();
     if (0 != ret)
     {
-        OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "bt_initialize failed");
+        OIC_LOG(ERROR, TAG, "bt_initialize failed");
         return CA_STATUS_FAILED;
     }
 
     ret = bt_adapter_set_visibility(BT_ADAPTER_VISIBILITY_MODE_GENERAL_DISCOVERABLE, 0);
     if (0 != ret)
     {
-        OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "bt_adapter_set_visibility failed");
+        OIC_LOG(ERROR, TAG, "bt_adapter_set_visibility failed");
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
+    ret = bt_adapter_set_state_changed_cb(CALEAdapterStateChangedCb, NULL);
+    if (BT_ERROR_NONE != ret)
+    {
+        OIC_LOG(DEBUG, TAG, "bt_adapter_set_state_changed_cb failed");
+        return CA_STATUS_FAILED;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-CAResult_t CAStartLEAdapter()
+CAResult_t CAStopLEAdapter()
 {
-    // Nothing to do.
 
+    int ret = bt_adapter_unset_state_changed_cb();
+    if (BT_ERROR_NONE != ret)
+    {
+        OIC_LOG(DEBUG, TAG, "bt_adapter_unset_state_changed_cb failed");
+        return CA_STATUS_FAILED;
+    }
+
+    ret = bt_deinitialize();
+    if (0 != ret)
+    {
+        OIC_LOG(ERROR, TAG, "bt_deinitialize failed");
+        return CA_STATUS_FAILED;
+    }
+
+    if (g_mainloop)
+    {
+        g_main_loop_quit(g_mainloop);
+    }
     return CA_STATUS_OK;
 }
 
 CAResult_t CAGetLEAdapterState()
 {
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
     bt_adapter_state_e adapterState = BT_ADAPTER_DISABLED;
 
@@ -136,108 +186,91 @@ CAResult_t CAGetLEAdapterState()
     int ret = bt_adapter_get_state(&adapterState);
     if (BT_ERROR_NONE != ret)
     {
-        OIC_LOG_V(ERROR, TZ_LE_NWK_MONITOR_TAG, "Bluetooth get state failed!, error num [%x]",
+        OIC_LOG_V(ERROR, TAG, "Bluetooth get state failed!, error num [%x]",
                   ret);
         return CA_STATUS_FAILED;
     }
 
     if (BT_ADAPTER_ENABLED != adapterState)
     {
-        OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "BT Adapter is not enabled");
+        OIC_LOG(DEBUG, TAG, "BT Adapter is not enabled");
         return CA_ADAPTER_NOT_ENABLED;
     }
 
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAGetLEAddress(char **local_address)
 {
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
-    VERIFY_NON_NULL(local_address, TZ_LE_NWK_MONITOR_TAG, "local_address is null")
+    VERIFY_NON_NULL(local_address, TAG, "local_address is null")
 
     char *address = NULL;
 
     int ret = bt_adapter_get_address(&address);
     if (BT_ERROR_NONE != ret || !address)
     {
-        OIC_LOG_V(ERROR, TZ_LE_NWK_MONITOR_TAG, "bt_adapter_get_address failed!, error num [%x]",
+        OIC_LOG_V(ERROR, TAG, "bt_adapter_get_address failed!, error num [%x]",
                   ret);
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG_V(DEBUG, TZ_LE_NWK_MONITOR_TAG, "bd address[%s]", address);
+    OIC_LOG_V(DEBUG, TAG, "bd address[%s]", address);
 
     *local_address = address;
 
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 
     return CA_STATUS_OK;
 }
 
 CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
 {
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
-
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "Setting CALEDeviceStateChangedCallback");
-
+    OIC_LOG(DEBUG, TAG, "IN");
     ca_mutex_lock(g_bleDeviceStateChangedCbMutex);
     g_bleDeviceStateChangedCallback = callback;
     ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
 
-    int ret = bt_adapter_set_state_changed_cb(CALEAdapterStateChangedCb, NULL);
-    if (BT_ERROR_NONE != ret)
-    {
-        OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "bt_adapter_set_state_changed_cb failed");
-        return CA_STATUS_FAILED;
-    }
-
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
+CAResult_t CAUnSetLEAdapterStateChangedCb()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    ca_mutex_lock(g_bleDeviceStateChangedCbMutex);
+    g_bleDeviceStateChangedCallback = NULL;
+    ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
                                           void *user_data)
 {
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
     ca_mutex_lock(g_bleDeviceStateChangedCbMutex);
 
     if (NULL == g_bleDeviceStateChangedCallback)
     {
-        OIC_LOG(ERROR, TZ_LE_NWK_MONITOR_TAG, "g_bleDeviceStateChangedCallback is NULL!");
+        OIC_LOG(ERROR, TAG, "g_bleDeviceStateChangedCallback is NULL!");
         ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
         return;
     }
 
     if (BT_ADAPTER_DISABLED == adapter_state)
     {
-        OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "Adapter is disabled");
+        OIC_LOG(DEBUG, TAG, "Adapter is disabled");
         g_bleDeviceStateChangedCallback(CA_ADAPTER_DISABLED);
         ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
         return;
     }
 
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "Adapter is Enabled");
+    OIC_LOG(DEBUG, TAG, "Adapter is Enabled");
     g_bleDeviceStateChangedCallback(CA_ADAPTER_ENABLED);
     ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
 
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
-}
-
-
-CAResult_t CAUnSetLEAdapterStateChangedCb()
-{
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "IN");
-
-    int ret = bt_adapter_unset_state_changed_cb();
-    if (BT_ERROR_NONE != ret)
-    {
-        OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "bt_adapter_unset_state_changed_cb failed");
-        return CA_STATUS_FAILED;
-    }
-
-    OIC_LOG(DEBUG, TZ_LE_NWK_MONITOR_TAG, "OUT");
-    return CA_STATUS_OK;
+    OIC_LOG(DEBUG, TAG, "OUT");
 }

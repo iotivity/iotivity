@@ -151,6 +151,13 @@ void CALEClientStopMulticastServer();
 void CALEClientSetCallback(CAPacketReceiveCallback callback);
 
 /**
+ * waiting to get scanned device from BT Platform.
+ * if there is no scanned device in the list.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientIsThereScannedDevices();
+
+/**
  * send data for unicast (implement).
  * @param[in]   address               remote address.
  * @param[in]   data                  data for transmission.
