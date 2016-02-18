@@ -50,8 +50,6 @@ cp -R $cur_dir/src/bt_edr_adapter/SConscript $sourcedir/tmp/con/src/bt_edr_adapt
 cp -R $cur_dir/common/SConscript $sourcedir/tmp/con/common/
 cp -R $cur_dir/lib/libcoap-4.1.1/SConscript $sourcedir/tmp/con/lib/libcoap-4.1.1/
 cp -R $cur_dir/samples/tizen/ $sourcedir/tmp/con/sample/
-mkdir -p $sourcedir/tmp/con/sample/lib/tizen/ble/libs
-cp -R $cur_dir/lib/tizen/ble/libs/* $sourcedir/tmp/con/sample/lib/tizen/ble/libs/
 mkdir -p $sourcedir/tmp/con/sample/external/inc
 cp -R $cur_dir/external/inc/* $sourcedir/tmp/con/sample/external/inc/
 mkdir -p $sourcedir/tmp/con/extlibs/
