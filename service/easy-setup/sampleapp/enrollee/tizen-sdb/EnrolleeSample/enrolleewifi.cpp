@@ -43,10 +43,24 @@ static char ssid[] = "EasySetup123";
  */
 static char passwd[] = "EasySetup123";
 
+/**
+ * Secure Virtual Resource database for Iotivity Server
+ * It contains Server's Identity and the PSK credentials
+ * of other devices which the server trusts
+ */
+static char CRED_FILE[] = "oic_svr_db_server.json";
+
+/**
+ * @var gIsSecured
+ * @brief Variable to check if secure mode is enabled or not.
+ */
+static bool gIsSecured = false;
+
 void PrintMenu()
 {
     cout<<"============"<<endl;
-    cout<<"S: start easy setup"<<endl;
+    cout<<"I: Init easy setup"<<endl;
+    cout<<"S: Enabled Security"<<endl;
     cout<<"P: start provisioning resources"<<endl;
     cout<<"T: terminate"<<endl;
     cout<<"Q: quit"<<endl;
@@ -84,12 +98,28 @@ void EventCallbackInApp(ESResult esResult, EnrolleeState enrolleeState)
     PrintMenu();
 }
 
+FILE* server_fopen(const char *path, const char *mode)
+{
+    (void) path;
+    return fopen(CRED_FILE, mode);
+}
+
+void EnableSecurity()
+{
+    cout << "Inside EnableSecurity API.." << endl;
+
+    gIsSecured = true;
+
+    // Initialize Persistent Storage for SVR database
+    OCPersistentStorage ps = { server_fopen, fread, fwrite, fclose, unlink };
+    OCRegisterPersistentStorageHandler(&ps);
+}
 
 void StartEasySetup()
 {
     cout<<"StartEasySetup and onboarding started.."<<endl;
 
-    if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, EventCallbackInApp) == ES_ERROR)
+    if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, gIsSecured, EventCallbackInApp) == ES_ERROR)
     {
         cout<<"StartEasySetup and onboarding Fail!!"<<endl;
         return;
@@ -102,7 +132,7 @@ void StartEasySetup()
     }
 }
 
-void StartProvisioning()
+void StartOICStackAndStartResources()
 {
     cout<<"Starting Enrollee Provisioning"<<endl;
 
@@ -165,14 +195,19 @@ int main()
                 cout<<"quit";
                 break;
 
-            case 'S': // start easy setup
-            case 's':
+            case 'I': // Init EasySetup
+            case 'i':
                 StartEasySetup();
+                break;
+
+            case 'S': // Enable Security
+            case 's':
+                EnableSecurity();
                 break;
 
             case 'P': // start provisioning
             case 'p':
-                StartProvisioning();
+                StartOICStackAndStartResources();
                 break;
 
             case 'T': // stop easy setup

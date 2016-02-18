@@ -53,6 +53,11 @@ using namespace std;
 #define OC_RSRVD_ES_TR                     "tr"
 #define OC_RSRVD_ES_TNT                    "tnt"
 #define OC_RSRVD_ES_ANT                    "ant"
+
+/**
+ * Easysetup defined resoruce types and uris.
+ */
+#define OC_RSRVD_ES_PROV_RES_TYPE           "oic.r.prov"
 #define OC_RSRVD_ES_URI_PROV               "/oic/prov"
 #define OC_RSRVD_ES_URI_NET                "/oic/net"
 

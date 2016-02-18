@@ -57,10 +57,7 @@ enrollee_env.PrependUnique(CPPPATH = [
 
 enrollee_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'ocsrm', 'pthread', 'connectivity_abstraction','coap', 'ESEnrolleeSDK'])
 
-if env.get('SECURED') == '1':
-	enrollee = enrollee_env.Program('enrollee', 'enrolleewifisecured.cpp')
-else :
-	enrollee = enrollee_env.Program('enrollee', 'enrolleewifi.cpp')
+enrollee = enrollee_env.Program('enrollee', 'enrolleewifi.cpp')
 
 i_enrollee = enrollee_env.Install(env.get('BUILD_DIR'), enrollee)
 

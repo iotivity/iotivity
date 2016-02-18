@@ -41,16 +41,16 @@
 //-----------------------------------------------------------------------------
 
 /**
- * @var targetSsid
+ * @var gTargetSsid
  * @brief Target SSID of the Soft Access point to which the device has to connect
  */
-static char *targetSsid;
+static char gTargetSsid[MAXSSIDLEN];
 
 /**
- * @var targetPass
+ * @var gTargetPass
  * @brief Password of the target access point to which the device has to connect
  */
-static char *targetPass;
+static char gTargetPass[MAXNETCREDLEN];
 
 /**
  * @var gEnrolleeStatusCb
@@ -58,13 +58,19 @@ static char *targetPass;
  */
 static EventCallback gEnrolleeStatusCb = NULL;
 
+/**
+ * @var gIsSecured
+ * @brief Variable to check if secure mode is enabled or not.
+ */
+static bool gIsSecured = false;
+
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
 //-----------------------------------------------------------------------------
 void OnboardingCallback(ESResult esResult);
 void ProvisioningCallback(ESResult esResult);
 void OnboardingCallbackTargetNet(ESResult esResult);
-bool validateParam(OCConnectivityType networkType, const char *ssid, const char *passwd,
+static bool ValidateParam(OCConnectivityType networkType, const char *ssid, const char *passwd,
               EventCallback cb);
 
 
@@ -86,18 +92,15 @@ void OnboardingCallback(ESResult esResult)
 void ProvisioningCallback(ESResult esResult)
 {
     OC_LOG_V(DEBUG, ES_ENROLLEE_TAG, "ProvisioningCallback with  result = %d", esResult);
-    ESResult res = ES_OK;
+
     if (esResult == ES_RECVTRIGGEROFPROVRES)
     {
-        targetSsid = (char *) malloc(MAXSSIDLEN);
-        targetPass = (char *) malloc(MAXNETCREDLEN);
-
-        GetTargetNetworkInfoFromProvResource(targetSsid, targetPass);
+        GetTargetNetworkInfoFromProvResource(gTargetSsid, gTargetPass);
         gEnrolleeStatusCb(ES_OK, ES_PROVISIONED_STATE);
         OC_LOG(DEBUG, ES_ENROLLEE_TAG, "Connecting with target network");
 
         // Connecting/onboarding to target network
-        ConnectToWiFiNetwork(targetSsid, targetPass, OnboardingCallbackTargetNet);
+        ConnectToWiFiNetwork(gTargetSsid, gTargetPass, OnboardingCallbackTargetNet);
     }
     else
     {
@@ -125,22 +128,12 @@ void OnboardingCallbackTargetNet(ESResult esResult)
     }
 }
 
-static FILE* server_fopen(const char* /*path*/, const char *mode)
-{
-    OC_LOG_V(INFO,ES_ENROLLEE_TAG,"oic_svr_db_server open %s",mode);
-    FILE *file= fopen("/opt/usr/media/Images/oic_svr_db_server.json", mode);
-    if(file==NULL)
-    {
-        OC_LOG(ERROR,ES_ENROLLEE_TAG,"oic_svr_db_server failed");
-    }
-    return file;
-}
-
-ESResult InitEasySetup(OCConnectivityType networkType, const char *ssid,
-                            const char *passwd, EventCallback cb)
+ESResult InitEasySetup(OCConnectivityType networkType, const char *ssid, const char *passwd,
+        bool isSecured,
+        EventCallback cb)
 {
     OC_LOG(INFO, ES_ENROLLEE_TAG, "InitEasySetup IN");
-    if(!validateParam(networkType,ssid,passwd,cb))
+    if(!ValidateParam(networkType,ssid,passwd,cb))
     {
         OC_LOG(ERROR, ES_ENROLLEE_TAG,
                             "InitEasySetup::Stopping Easy setup due to invalid parameters");
@@ -149,6 +142,8 @@ ESResult InitEasySetup(OCConnectivityType networkType, const char *ssid,
 
     //Init callback
     gEnrolleeStatusCb = cb;
+
+    gIsSecured = isSecured;
 
     // TODO : This onboarding state has to be set by lower layer, as they better
     // knows when actually on-boarding started.
@@ -196,7 +191,7 @@ ESResult InitProvisioning()
 {
     OC_LOG(INFO, ES_ENROLLEE_TAG, "InitProvisioning <<IN>>");
 
-    if (CreateProvisioningResource() != OC_STACK_OK)
+    if (CreateProvisioningResource(gIsSecured) != OC_STACK_OK)
     {
         OC_LOG(ERROR, ES_ENROLLEE_TAG, "CreateProvisioningResource error");
         return ES_ERROR;
@@ -216,12 +211,12 @@ ESResult InitProvisioning()
     return ES_RESOURCECREATED;
 }
 
-bool validateParam(OCConnectivityType networkType, const char *ssid, const char *passwd,
+static bool ValidateParam(OCConnectivityType networkType, const char *ssid, const char *passwd,
               EventCallback cb)
 {
     if (!ssid || !passwd || !cb)
     {
-        OC_LOG(ERROR, ES_ENROLLEE_TAG, "validateParam - Invalid parameters");
+        OC_LOG(ERROR, ES_ENROLLEE_TAG, "ValidateParam - Invalid parameters");
         return false;
     }
     return true;

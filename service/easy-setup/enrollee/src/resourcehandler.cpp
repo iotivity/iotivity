@@ -27,7 +27,6 @@
  * @brief Logging tag for module name.
  */
 #define ES_RH_TAG "ES_RH"
-
 //-----------------------------------------------------------------------------
 // Private variables
 //-----------------------------------------------------------------------------
@@ -84,16 +83,34 @@ void GetTargetNetworkInfoFromProvResource(char *name, char *pass)
     }
 }
 
-OCStackResult CreateProvisioningResource()
+OCStackResult CreateProvisioningResource(bool isSecured)
 {
-    gProvResource.ps = 1; // need to do provisioning
+    gProvResource.ps = ES_PS_NEED_PROVISIONING;
+
     gProvResource.tnt = CT_ADAPTER_IP;
     sprintf(gProvResource.tnn, "Unknown");
     sprintf(gProvResource.cd, "Unknown");
 
-    OCStackResult res = OCCreateResource(&gProvResource.handle, "oic.r.prov", OC_RSRVD_INTERFACE_DEFAULT,
-                                                OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb, NULL,
-                                                OC_DISCOVERABLE | OC_OBSERVABLE);
+    OCStackResult res = OC_STACK_ERROR;
+    if (isSecured)
+    {
+        res = OCCreateResource(&gProvResource.handle, OC_RSRVD_ES_PROV_RES_TYPE,
+                OC_RSRVD_INTERFACE_DEFAULT,
+                OC_RSRVD_ES_URI_PROV,
+                OCEntityHandlerCb,
+                NULL,
+                OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
+    }
+    else
+    {
+        res = OCCreateResource(&gProvResource.handle, OC_RSRVD_ES_PROV_RES_TYPE,
+                OC_RSRVD_INTERFACE_DEFAULT,
+                OC_RSRVD_ES_URI_PROV,
+                OCEntityHandlerCb,
+                NULL,
+                OC_DISCOVERABLE | OC_OBSERVABLE);
+    }
+
     OC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
     return res;
 }

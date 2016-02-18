@@ -36,7 +36,7 @@ typedef void (*ResourceEventCallback)(ESResult);
 typedef struct PROVRESOURCE
 {
     OCResourceHandle handle;
-    int ps; // provisiong status, 1 : need to provisioning, 2 : Connected to Internet
+    int ps; // provisiong status, 1 : need to provisioning, 2 : Connected to Enroller
     int tnt; // target network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee, ...
     char tnn[MAXSSIDLEN]; // target network name, i.e. SSID for WLAN, MAC address for BT
     char cd[MAXNETCREDLEN]; // credential information
@@ -52,7 +52,7 @@ typedef struct NETRESOURCE
     char cnn[MAXSSIDLEN]; // current network name
 } NetResource;
 
-OCStackResult CreateProvisioningResource();
+OCStackResult CreateProvisioningResource(bool isSecured);
 OCStackResult DeleteProvisioningResource();
 OCStackResult DeleteNetworkResource();
 

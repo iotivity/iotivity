@@ -44,19 +44,20 @@ typedef void (*EventCallback)(ESResult esResult, EnrolleeState enrolleeState);
  * This function Initializes the EasySetup. This API must be called prior to invoking any other API
  *
  * @param networkType       NetworkType on which OnBoarding has to be performed.
- * @param ssid                   SSID of the target SoftAP network to which the Enrollee is connecting.
- * @param passwd              Password of the target SoftAP network to which the Enrollee is connecting
- * @param eventCallback     EventCallback for for updating the Enrollee OnBoarding and Provisioning status
- *                                    result to the application
+ * @param ssid              SSID of the target SoftAP network to which the Enrollee is connecting.
+ * @param passwd            Password of the target SoftAP network to which the Enrollee is connecting
+ * @param isSecured         True if the Enrollee is operating in secured mode.
+ * @param eventCallback     EventCallback for for updating the Enrollee OnBoarding status result to
+ *                          the application
  * @return ::ES_OK on success, some other value upon failure.
  */
-ESResult InitEasySetup(OCConnectivityType networkType, const char *ssid,
-                          const char *passwd,
-                          EventCallback eventCallback);
+ESResult InitEasySetup(OCConnectivityType networkType, const char *ssid, const char *passwd,
+        bool isSecured,
+        EventCallback eventCallback);
 
 /**
- * This function performs initialization of Provisioning and Network resources needed for EasySetup process.
- *
+ * This function performs initialization of Provisioning and Network resources needed for EasySetup
+ * process.
  * @return ::ES_OK on success, some other value upon failure.
  */
 ESResult InitProvisioning();

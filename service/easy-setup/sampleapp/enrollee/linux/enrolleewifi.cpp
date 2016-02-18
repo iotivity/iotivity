@@ -21,6 +21,7 @@
 
 #include "easysetup.h"
 
+#include <unistd.h>
 #include <string.h>
 #include <iostream>
 #include <pthread.h>
@@ -43,10 +44,27 @@ static char ssid[] = "EasySetup123";
  */
 static char passwd[] = "EasySetup123";
 
+/**
+ * Secure Virtual Resource database for Iotivity Server
+ * It contains Server's Identity and the PSK credentials
+ * of other devices which the server trusts
+ */
+static char CRED_FILE[] = "oic_svr_db_server.json";
+
+OCPersistentStorage ps ;
+
+
+/**
+ * @var gIsSecured
+ * @brief Variable to check if secure mode is enabled or not.
+ */
+static bool gIsSecured = false;
+
 void PrintMenu()
 {
     cout<<"============"<<endl;
-    cout<<"S: start easy setup"<<endl;
+    cout<<"S: Enabled Security"<<endl;
+    cout<<"I: Init easy setup"<<endl;
     cout<<"P: start provisioning resources"<<endl;
     cout<<"T: terminate"<<endl;
     cout<<"Q: quit"<<endl;
@@ -84,14 +102,48 @@ void EventCallbackInApp(ESResult esResult, EnrolleeState enrolleeState)
     PrintMenu();
 }
 
+FILE* server_fopen(const char *path, const char *mode)
+{
+    (void) path;
+    return fopen(CRED_FILE, mode);
+}
+
+void EnableSecurity()
+{
+    cout << "Inside EnableSecurity API.." << endl;
+
+    gIsSecured = true;
+
+    // Initialize Persistent Storage for SVR database
+    ps = { server_fopen, fread, fwrite, fclose, unlink };
+    OCRegisterPersistentStorageHandler(&ps);
+}
 
 void StartEasySetup()
 {
     cout<<"StartEasySetup and onboarding started.."<<endl;
 
-    if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, EventCallbackInApp) == ES_ERROR)
+    if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, gIsSecured, EventCallbackInApp) == ES_ERROR)
     {
         cout<<"StartEasySetup and onboarding Fail!!"<<endl;
+        return;
+    }
+}
+
+void StartOICStackAndStartResources()
+{
+    cout<<"Starting Enrollee Provisioning"<<endl;
+
+    // Initialize the OC Stack in Server mode
+    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
+    {
+        cout<<"OCStack init error!!"<<endl;
+        return;
+    }
+
+    if (InitProvisioning() == ES_ERROR)
+    {
+        cout<<"Init Provisioning Failed!!"<<endl;
         return;
     }
 
@@ -100,28 +152,27 @@ void StartEasySetup()
     {
         cout<<"Thread creation failed"<<endl;
     }
-}
 
-void StartProvisioning()
-{
-    cout<<"Starting Enrollee Provisioning"<<endl;
-
-    if(InitProvisioning()== ES_ERROR)
-    {
-        cout<<"Init Provisioning Failed"<<endl;
-        return;
-    }
-    cout<<"InitProvisioning:Success"<<endl;
+    cout<<"InitProvisioning Success"<<endl;
 }
 
 void StopEasySetup()
 {
     cout<<"StopEasySetup IN"<<endl;
-    if(TerminateEasySetup()== ES_ERROR)
+
+    if (TerminateEasySetup() == ES_ERROR)
     {
-        cout<<"return value is: ES_ERROR"<<endl;
+        cout<<"TerminateEasySetup Failed!!"<<endl;
         return;
     }
+
+    //stop OC Stack
+    if (OCStop() != OC_STACK_OK)
+    {
+        cout<<"OCStack stop failed!!"<<endl;
+        return;
+    }
+
     cout<<"StopEasySetup OUT"<<endl;
 }
 
@@ -129,16 +180,9 @@ int main()
 {
     cout<<"#########################"<<endl;
     cout<<"EasySetup Enrollee SAMPLE"<<endl;
-    cout<<"This is modified sample:1"<<endl;
     cout<<"#########################"<<endl;
     PrintMenu();
     char option;
-
-    // Initialize the OC Stack in Server mode
-    if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
-    {
-        return -1;
-    }
 
     while(true)
     {
@@ -155,14 +199,19 @@ int main()
                 cout<<"quit";
                 break;
 
-            case 'S': // start easy setup
+            case 'S': // Enable Security
             case 's':
+                EnableSecurity();
+                break;
+
+            case 'I': // Init EasySetup
+            case 'i':
                 StartEasySetup();
                 break;
 
             case 'P': // start provisioning
             case 'p':
-                StartProvisioning();
+                StartOICStackAndStartResources();
                 break;
 
             case 'T': // stop easy setup
@@ -174,7 +223,7 @@ int main()
                 cout<<"wrong option"<<endl;
                 break;
         }
-        if(option=='Q') break;
+        if (option == 'Q' || option == 'q') break;
     }
     return 0;
 }
