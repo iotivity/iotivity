@@ -250,6 +250,8 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
                         goto exit;
                     }
                     OICFree(name);
+                    cborFindResult = cbor_value_advance(&cborValue);
+                    VERIFY_SUCCESS(TAG, cborFindResult == CborNoError, ERROR);
                 }
             }
             // return everything in case rsrcName is NULL
@@ -262,7 +264,7 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
     }
     else
     {
-        OIC_LOG (ERROR, TAG, "Unable to open SVR database to read!! ");
+        OIC_LOG(ERROR, TAG, "Unable to open SVR database to read!! ");
     }
 
 exit:
