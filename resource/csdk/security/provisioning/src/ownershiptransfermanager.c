@@ -545,12 +545,14 @@ static OCStackApplicationResult ListMethodsHandler(void *ctx, OCDoHandle UNUSED,
             SetResult(otmCtx, OC_STACK_ERROR);
             return OC_STACK_DELETE_TRANSACTION;
         }
-
-        OicSecPstat_t* pstat = JSONToPstatBin(
-                ((OCSecurityPayload*)clientResponse->payload)->securityData);
-        if(NULL == pstat)
+        uint8_t size = 0;
+        OicSecPstat_t* pstat = NULL;
+        OCStackResult result = CBORPayloadToPstat(
+                ((OCSecurityPayload*)clientResponse->payload)->securityData1,
+                size, &pstat);
+        if(NULL == pstat && result != OC_STACK_OK)
         {
-            OIC_LOG(ERROR, TAG, "Error while converting json to pstat bin");
+            OIC_LOG(ERROR, TAG, "Error while converting cbor to pstat.");
             SetResult(otmCtx, OC_STACK_ERROR);
             return OC_STACK_DELETE_TRANSACTION;
         }
@@ -1201,11 +1203,13 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToPstatJSON(deviceInfo->pstat);
-    if (NULL == secPayload->securityData)
+    size_t size = 0;
+    OCStackResult res = PstatToCBORPayload(deviceInfo->pstat, &secPayload->securityData1,
+                                           &size);
+   if (OC_STACK_OK != res)
     {
-        OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Error while converting pstat bin to json");
+        OCPayloadDestroy((OCPayload *)secPayload);
+        OIC_LOG(ERROR, TAG, "Error while converting pstat to cbor.");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -1213,8 +1217,8 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx)
     cbData.cb = &OperationModeUpdateHandler;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
-    OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
-                                     deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+    res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
+                       deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1369,7 +1373,6 @@ error:
     OICFree(otmCtx->ctxResultArray);
     OICFree(otmCtx);
     return res;
-
 }
 
 OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
@@ -1398,14 +1401,15 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToPstatJSON(otmCtx->selectedDeviceInfo->pstat);
-    if (NULL == secPayload->securityData)
+    size_t size = 0;
+    if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
+            &secPayload->securityData1, &size))
     {
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload *)secPayload);
         SetResult(otmCtx, OC_STACK_INVALID_JSON);
         return OC_STACK_INVALID_JSON;
     }
-    OIC_LOG_V(INFO, TAG, "Created payload for commit hash: %s",secPayload->securityData);
+    OIC_LOG_V(INFO, TAG, "Created payload for commit hash: %s",secPayload->securityData1);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,

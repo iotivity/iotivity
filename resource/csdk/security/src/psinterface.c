@@ -226,10 +226,10 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
             VERIFY_NON_NULL(TAG, fsData, ERROR);
             if (rsrcName != NULL)
             {
-                CborParser parser = { .end = NULL, .flags = 0 };
-                CborValue cbor =  { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                CborParser parser = { .end = NULL };
+                CborValue cbor =  { .parser = NULL };
                 cbor_parser_init(fsData, fileSize, 0, &parser, &cbor);
-                CborValue cborValue =  { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                CborValue cborValue =  { .parser = NULL };
                 CborError cborFindResult = cbor_value_enter_container(&cbor, &cborValue);
 
                 while (cbor_value_is_valid(&cborValue))
@@ -299,19 +299,19 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
         outPayload = (uint8_t *)OICCalloc(1, size);
         VERIFY_NON_NULL(TAG, outPayload, ERROR);
 
-        CborEncoder encoder = { { .ptr = NULL }, .end = NULL, .added = 0, .flags = 0};
+        CborEncoder encoder = { { .ptr = NULL }, .end = 0 };
         cbor_encoder_init(&encoder, outPayload, size, 0);
         {
-            CborEncoder map = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0};
+            CborEncoder map = { {.ptr = NULL }, .end = 0 };
             CborError cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Creating PS Interface Map.");
             {
                 bool found = false;
-                CborValue cbor = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
-                CborParser parser = { .end = NULL, .flags = 0 };
+                CborValue cbor = { .parser = NULL };
+                CborParser parser = { .end = NULL };
                 cbor_parser_init(dbData, size, 0, &parser, &cbor);
 
-                CborValue cborValue = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                CborValue cborValue = { .parser = NULL };
                 CborError cborFindResult = CborNoError;
 
                 if (cbor_value_is_container(&cbor))
