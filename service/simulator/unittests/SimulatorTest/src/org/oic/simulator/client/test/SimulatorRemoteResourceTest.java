@@ -44,14 +44,6 @@ public class SimulatorRemoteResourceTest extends TestCase {
     private static SimulatorSingleResource singleResource  = null;
     private static SimulatorRemoteResource remoteResource  = null;
 
-    static {
-        System.loadLibrary("SimulatorManager");
-        System.loadLibrary("RamlParser");
-        System.loadLibrary("oc");
-        System.loadLibrary("oc_logger");
-        System.loadLibrary("octbstack");
-    }
-
     protected void setUp() throws Exception {
         super.setUp();
 
@@ -428,7 +420,6 @@ public class SimulatorRemoteResourceTest extends TestCase {
                 lockObject, response);
 
         try {
-            SimulatorResourceModel resModel = singleResource.getResourceModel();
             Map<String, String> queryParams = new HashMap<>();
             remoteResource.put(queryParams, null, listener);
 
@@ -632,7 +623,6 @@ public class SimulatorRemoteResourceTest extends TestCase {
                 lockObject, response);
 
         try {
-            SimulatorResourceModel resModel = singleResource.getResourceModel();
             Map<String, String> queryParams = new HashMap<>();
             remoteResource.post(queryParams, null, listener);
 
@@ -717,7 +707,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
 
         try {
             Map<String, String> queryParams = new HashMap<>();
-            remoteResource.startObserve(queryParams, listener);
+            remoteResource.observe(queryParams, listener);
             singleResource.addAttribute(new SimulatorResourceAttribute(
                     "boolean", new AttributeValue(true), null));
             singleResource.removeAttribute("boolean");
@@ -749,7 +739,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
                 lockObject, response);
 
         try {
-            remoteResource.startObserve(null, listener);
+            remoteResource.observe(listener);
             singleResource.addAttribute(new SimulatorResourceAttribute(
                     "boolean", new AttributeValue(true), null));
             singleResource.removeAttribute("boolean");
@@ -778,7 +768,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
 
         try {
             Map<String, String> queryParams = new HashMap<>();
-            remoteResource.startObserve(queryParams, null);
+            remoteResource.observe(queryParams, null);
 
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
@@ -798,7 +788,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
 
         try {
             Map<String, String> queryParams = new HashMap<>();
-            remoteResource.startObserve(queryParams, listener);
+            remoteResource.observe(queryParams, listener);
 
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
@@ -879,7 +869,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
         try {
             remoteResource.setConfigInfo(SINGLE_RES_RAML);
             remoteResource.startVerification(
-                    SimulatorRemoteResource.VerificationType.GET, listener);
+                    SimulatorRemoteResource.RequestType.GET, listener);
 
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
@@ -908,7 +898,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
         try {
             remoteResource.setConfigInfo(SINGLE_RES_RAML);
             remoteResource.startVerification(
-                    SimulatorRemoteResource.VerificationType.PUT, listener);
+                    SimulatorRemoteResource.RequestType.PUT, listener);
 
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
@@ -937,7 +927,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
         try {
             remoteResource.setConfigInfo(SINGLE_RES_RAML);
             remoteResource.startVerification(
-                    SimulatorRemoteResource.VerificationType.POST, listener);
+                    SimulatorRemoteResource.RequestType.POST, listener);
 
             try {
                 lockObject.await(10, TimeUnit.SECONDS);
@@ -962,7 +952,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
         try {
             remoteResource.setConfigInfo(SINGLE_RES_RAML);
             remoteResource.startVerification(
-                    SimulatorRemoteResource.VerificationType.GET, null);
+                    SimulatorRemoteResource.RequestType.GET, null);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -982,7 +972,7 @@ public class SimulatorRemoteResourceTest extends TestCase {
         try {
             remoteResource.setConfigInfo(SINGLE_RES_RAML);
             int id = remoteResource.startVerification(
-                    SimulatorRemoteResource.VerificationType.POST, listener);
+                    SimulatorRemoteResource.RequestType.POST, listener);
             remoteResource.stopVerification(id);
             syncResult = true;
         } catch (InvalidArgsException e) {

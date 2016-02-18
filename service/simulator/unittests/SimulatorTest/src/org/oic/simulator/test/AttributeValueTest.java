@@ -118,10 +118,10 @@ public class AttributeValueTest extends TestCase {
     public void testAttributeValueSimulatorResourceModel() {
         SimulatorResourceModel model = new SimulatorResourceModel();
         try {
-            model.addAttribute(INT_KEY, new AttributeValue(1));
-            model.addAttribute(DOUBLE_KEY, new AttributeValue(1.00));
-            model.addAttribute(BOOL_KEY, new AttributeValue(true));
-            model.addAttribute(STRING_KEY, new AttributeValue("string"));
+            model.set(INT_KEY, new AttributeValue(1));
+            model.set(DOUBLE_KEY, new AttributeValue(1.00));
+            model.set(BOOL_KEY, new AttributeValue(true));
+            model.set(STRING_KEY, new AttributeValue("string"));
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         }
@@ -228,10 +228,10 @@ public class AttributeValueTest extends TestCase {
     public void testAttributeValueSimulatorResourceModelArray() {
         SimulatorResourceModel childModel = new SimulatorResourceModel();
         try {
-            childModel.addAttribute(INT_KEY, new AttributeValue(1));
-            childModel.addAttribute(DOUBLE_KEY, new AttributeValue(1.00));
-            childModel.addAttribute(BOOL_KEY, new AttributeValue(true));
-            childModel.addAttribute(STRING_KEY, new AttributeValue("string"));
+            childModel.set(INT_KEY, new AttributeValue(1));
+            childModel.set(DOUBLE_KEY, new AttributeValue(1.00));
+            childModel.set(BOOL_KEY, new AttributeValue(true));
+            childModel.set(STRING_KEY, new AttributeValue("string"));
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         }
@@ -341,10 +341,10 @@ public class AttributeValueTest extends TestCase {
     public void testAttributeValueSimulatorResourceModelArrayArray() {
         SimulatorResourceModel childModel = new SimulatorResourceModel();
         try {
-            childModel.addAttribute(INT_KEY, new AttributeValue(1));
-            childModel.addAttribute(DOUBLE_KEY, new AttributeValue(1.00));
-            childModel.addAttribute(BOOL_KEY, new AttributeValue(true));
-            childModel.addAttribute(STRING_KEY, new AttributeValue("string"));
+            childModel.set(INT_KEY, new AttributeValue(1));
+            childModel.set(DOUBLE_KEY, new AttributeValue(1.00));
+            childModel.set(BOOL_KEY, new AttributeValue(true));
+            childModel.set(STRING_KEY, new AttributeValue("string"));
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         }
@@ -455,10 +455,10 @@ public class AttributeValueTest extends TestCase {
     public void testAttributeValueSimulatorResourceModelArrayArrayArray() {
         SimulatorResourceModel childModel = new SimulatorResourceModel();
         try {
-            childModel.addAttribute(INT_KEY, new AttributeValue(1));
-            childModel.addAttribute(DOUBLE_KEY, new AttributeValue(1.00));
-            childModel.addAttribute(BOOL_KEY, new AttributeValue(true));
-            childModel.addAttribute(STRING_KEY, new AttributeValue("string"));
+            childModel.set(INT_KEY, new AttributeValue(1));
+            childModel.set(DOUBLE_KEY, new AttributeValue(1.00));
+            childModel.set(BOOL_KEY, new AttributeValue(true));
+            childModel.set(STRING_KEY, new AttributeValue("string"));
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         }

@@ -28,10 +28,6 @@ import org.oic.simulator.SimulatorException;
  */
 public final class SimulatorCollectionResource extends SimulatorResource {
 
-    private SimulatorCollectionResource(long nativeHandle) {
-        mNativeHandle = nativeHandle;
-    }
-
     /**
      * API to add child resource to collection.
      *
@@ -44,8 +40,10 @@ public final class SimulatorCollectionResource extends SimulatorResource {
      *             This exception will be thrown on occurrence of error in
      *             native.
      */
-    public native void addChildResource(SimulatorResource resource)
-            throws InvalidArgsException, SimulatorException;
+    public void addChildResource(SimulatorResource resource)
+            throws InvalidArgsException, SimulatorException {
+        nativeAddChildResource(resource);
+    }
 
     /**
      * API to remove child resource from collection.
@@ -59,8 +57,10 @@ public final class SimulatorCollectionResource extends SimulatorResource {
      *             This exception will be thrown on occurrence of error in
      *             native.
      */
-    public native void removeChildResource(SimulatorResource resource)
-            throws InvalidArgsException, SimulatorException;
+    public void removeChildResource(SimulatorResource resource)
+            throws InvalidArgsException, SimulatorException {
+        nativeRemoveChildResource(resource);
+    }
 
     /**
      * API to remove child resource from collection.
@@ -74,8 +74,10 @@ public final class SimulatorCollectionResource extends SimulatorResource {
      *             This exception will be thrown on occurrence of error in
      *             native.
      */
-    public native void removeChildResourceByUri(String uri)
-            throws InvalidArgsException, SimulatorException;
+    public void removeChildResourceByUri(String uri)
+            throws InvalidArgsException, SimulatorException {
+        nativeRemoveChildResourceByUri(uri);
+    }
 
     /**
      * API to get list of child resources.
@@ -86,6 +88,20 @@ public final class SimulatorCollectionResource extends SimulatorResource {
      *             This exception will be thrown on occurrence of error in
      *             native.
      */
-    public native Vector<SimulatorResource> getChildResource()
-            throws SimulatorException;
+    public Vector<SimulatorResource> getChildResources()
+            throws SimulatorException {
+        return nativeGetChildResources();
+    }
+
+    private SimulatorCollectionResource(long nativeHandle) {
+        mNativeHandle = nativeHandle;
+    }
+
+    private native void nativeAddChildResource(SimulatorResource resource);
+
+    private native void nativeRemoveChildResource(SimulatorResource resource);
+
+    private native void nativeRemoveChildResourceByUri(String uri);
+
+    private native Vector<SimulatorResource> nativeGetChildResources();
 }

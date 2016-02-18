@@ -41,16 +41,10 @@ public final class SimulatorRemoteResource {
     private Vector<String> mResInterfaces;
     private boolean        mIsObservable;
 
-    private native void dispose();
-
-    private SimulatorRemoteResource(long nativeHandle) {
-        mNativeHandle = nativeHandle;
-    }
-
     @Override
     protected void finalize() throws Throwable {
         try {
-            dispose();
+            nativeDispose();
         } catch (Throwable t) {
             throw t;
         } finally {
@@ -62,8 +56,8 @@ public final class SimulatorRemoteResource {
      * Enum to represent the verification types which can be used by the client
      * to verify the resource model of the remote resource.
      */
-    public enum VerificationType {
-        GET, PUT, POST, DELETE;
+    public enum RequestType {
+        UKNOWN, GET, PUT, POST, DELETE;
     }
 
     /**
@@ -314,7 +308,7 @@ public final class SimulatorRemoteResource {
      */
     public void observe(ObserveNotificationListener onObserveListener)
             throws InvalidArgsException, SimulatorException {
-        startObserve(null, onObserveListener);
+        nativeStartObserve(null, onObserveListener);
     }
 
     /**
@@ -342,7 +336,7 @@ public final class SimulatorRemoteResource {
             throw new InvalidArgsException(
                     SimulatorResult.SIMULATOR_INVALID_PARAM,
                     "Invalid Query Parameters!");
-        startObserve(queryParams, onObserveListener);
+        nativeStartObserve(queryParams, onObserveListener);
     }
 
     /**
@@ -354,8 +348,9 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void stopObserve() throws InvalidArgsException,
-            SimulatorException;
+    public void stopObserve() throws InvalidArgsException, SimulatorException {
+        nativeStopObserve();
+    }
 
     /**
      * API to provide remote resource configure information, which is required
@@ -372,8 +367,10 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public native SimulatorResourceModel setConfigInfo(String path)
-            throws InvalidArgsException, SimulatorException;
+    public Map<RequestType, SimulatorRequestModel> setConfigInfo(String path)
+            throws InvalidArgsException, SimulatorException {
+        return nativeSetConfigInfo(path);
+    }
 
     /**
      * API to send multiple requests for the resource, based on the configure
@@ -400,11 +397,11 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public int startVerification(VerificationType type,
+    public int startVerification(RequestType type,
             VerificationListener onVerifyListener) throws InvalidArgsException,
             NoSupportException, OperationInProgressException,
             SimulatorException {
-        return startVerification(type.ordinal(), onVerifyListener);
+        return nativeStartAutoRequesting(type, onVerifyListener);
     }
 
     /**
@@ -419,8 +416,10 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public native void stopVerification(int id) throws InvalidArgsException,
-            SimulatorException;
+    public void stopVerification(int id) throws InvalidArgsException,
+            SimulatorException {
+        nativeStopAutoRequesting(id);
+    }
 
     /**
      * Listener for receiving asynchronous response for GET request.
@@ -532,6 +531,10 @@ public final class SimulatorRemoteResource {
         public void onVerificationCompleted(String uid, int id);
     }
 
+    private SimulatorRemoteResource(long nativeHandle) {
+        mNativeHandle = nativeHandle;
+    }
+
     private native void nativeGet(String resourceInterface,
             Map<String, String> queryParamsMap,
             GetResponseListener onGetListener);
@@ -546,9 +549,18 @@ public final class SimulatorRemoteResource {
             SimulatorResourceModel representation,
             PostResponseListener onPostListener);
 
-    private native void startObserve(Map<String, String> queryParams,
+    private native void nativeStartObserve(Map<String, String> queryParams,
             ObserveNotificationListener onObserveListener);
 
-    private native int startVerification(int type,
+    private native void nativeStopObserve();
+
+    private native Map<RequestType, SimulatorRequestModel> nativeSetConfigInfo(
+            String path);
+
+    private native int nativeStartAutoRequesting(RequestType type,
             VerificationListener onVerifyListener);
+
+    private native void nativeStopAutoRequesting(int id);
+
+    private native void nativeDispose();
 }

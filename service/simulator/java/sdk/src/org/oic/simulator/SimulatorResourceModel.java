@@ -143,10 +143,6 @@ public class SimulatorResourceModel {
         return mValues.size();
     }
 
-    /**
-     * These methods used by native layer.
-     */
-    @SuppressWarnings("unused")
     private SimulatorResourceModel(Map<String, AttributeValue> values) {
         mValues = values;
     }

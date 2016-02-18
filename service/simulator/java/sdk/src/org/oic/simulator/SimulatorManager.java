@@ -27,7 +27,12 @@ import org.oic.simulator.server.SimulatorResource;
  */
 public class SimulatorManager {
 
-    private SimulatorManager() {
+    static {
+        System.loadLibrary("oc_logger");
+        System.loadLibrary("octbstack");
+        System.loadLibrary("oc");
+        System.loadLibrary("RamlParser");
+        System.loadLibrary("SimulatorManager");
     }
 
     /**
@@ -44,8 +49,10 @@ public class SimulatorManager {
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public static native SimulatorResource createResource(String configPath)
-            throws InvalidArgsException, SimulatorException;
+    public static SimulatorResource createResource(String configPath)
+            throws InvalidArgsException, SimulatorException {
+        return nativeCreateResource(configPath);
+    }
 
     /**
      * API for creating a set of resources from a RAML configuration file.
@@ -65,7 +72,7 @@ public class SimulatorManager {
      */
     public static Vector<SimulatorResource> createResource(String configPath,
             int count) throws InvalidArgsException, SimulatorException {
-        return createResources(configPath, count);
+        return nativeCreateResources(configPath, count);
     };
 
     /**
@@ -93,9 +100,9 @@ public class SimulatorManager {
             throws InvalidArgsException, SimulatorException {
         SimulatorResource resource = null;
         if (type == SimulatorResource.Type.SINGLE)
-            resource = createSingleResource(name, uri, resourceType);
+            resource = nativeCreateSingleResource(name, uri, resourceType);
         else
-            resource = createCollectionResource(name, uri, resourceType);
+            resource = nativeCreateCollectionResource(name, uri, resourceType);
         return resource;
     }
 
@@ -113,7 +120,7 @@ public class SimulatorManager {
      */
     public static void findResource(FindResourceListener listener)
             throws InvalidArgsException, SimulatorException {
-        searchResource(null, listener);
+        nativeSearchResource(null, listener);
     }
 
     /**
@@ -139,7 +146,7 @@ public class SimulatorManager {
                     "Invalid resource type!");
         }
 
-        searchResource(resourceType, listener);
+        nativeSearchResource(resourceType, listener);
     }
 
     /**
@@ -153,8 +160,10 @@ public class SimulatorManager {
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public static native void setDeviceInfo(String deviceInfo)
-            throws InvalidArgsException, SimulatorException;
+    public static void setDeviceInfo(String deviceInfo)
+            throws InvalidArgsException, SimulatorException {
+        nativeSetDeviceInfo(deviceInfo);
+    }
 
     /**
      * API to search for devices on the given host in the network.
@@ -169,9 +178,10 @@ public class SimulatorManager {
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public static native void findDevices(String hostUri,
-            DeviceListener listener) throws InvalidArgsException,
-            SimulatorException;
+    public static void findDevices(String hostUri, DeviceListener listener)
+            throws InvalidArgsException, SimulatorException {
+        nativeFindDevices(hostUri, listener);
+    }
 
     /**
      * API to set the platform information.
@@ -184,8 +194,10 @@ public class SimulatorManager {
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public static native void setPlatformInfo(PlatformInfo platformInfo)
-            throws InvalidArgsException, SimulatorException;
+    public static void setPlatformInfo(PlatformInfo platformInfo)
+            throws InvalidArgsException, SimulatorException {
+        nativeSetPlatformInfo(platformInfo);
+    }
 
     /**
      * API to find the platform information of the given host in the network.
@@ -200,9 +212,11 @@ public class SimulatorManager {
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public static native void getPlatformInformation(String hostUri,
+    public static void getPlatformInformation(String hostUri,
             PlatformListener listener) throws InvalidArgsException,
-            SimulatorException;
+            SimulatorException {
+        nativeGetPlatformInformation(hostUri, listener);
+    }
 
     /**
      * API to set the listener for receiving log messages.
@@ -210,17 +224,37 @@ public class SimulatorManager {
      * @param logger
      *            {@link ILogger} to receive the log messages.
      */
-    public static native void setLogger(ILogger logger);
+    public static void setLogger(ILogger logger) {
+        nativeSetLogger(logger);
+    }
 
-    private static native Vector<SimulatorResource> createResources(
+    private SimulatorManager() {
+    }
+
+    private static native SimulatorResource nativeCreateResource(
+            String configPath);
+
+    private static native Vector<SimulatorResource> nativeCreateResources(
             String configPath, int count);
 
-    private static native SimulatorResource createSingleResource(String name,
-            String uri, String resourceType);
-
-    private static native SimulatorResource createCollectionResource(
+    private static native SimulatorResource nativeCreateSingleResource(
             String name, String uri, String resourceType);
 
-    private static native void searchResource(String resourceType,
+    private static native SimulatorResource nativeCreateCollectionResource(
+            String name, String uri, String resourceType);
+
+    private static native void nativeSearchResource(String resourceType,
             FindResourceListener listener);
+
+    private static native void nativeSetDeviceInfo(String deviceInfo);
+
+    private static native void nativeFindDevices(String hostUri,
+            DeviceListener listener);
+
+    private static native void nativeSetPlatformInfo(PlatformInfo platformInfo);
+
+    private static native void nativeGetPlatformInformation(String hostUri,
+            PlatformListener listener);
+
+    private static native void nativeSetLogger(ILogger logger);
 }

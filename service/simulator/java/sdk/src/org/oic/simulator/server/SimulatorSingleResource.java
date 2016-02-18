@@ -31,10 +31,6 @@ import org.oic.simulator.SimulatorResourceAttribute;
  */
 public final class SimulatorSingleResource extends SimulatorResource {
 
-    private SimulatorSingleResource(long nativeHandle) {
-        mNativeHandle = nativeHandle;
-    }
-
     /**
      * API to get attribute of resource.
      *
@@ -51,8 +47,10 @@ public final class SimulatorSingleResource extends SimulatorResource {
      *             This exception will be thrown either if the resource model is
      *             not found or for some general errors.
      */
-    public native SimulatorResourceAttribute getAttribute(String attrName)
-            throws InvalidArgsException, SimulatorException;
+    public SimulatorResourceAttribute getAttribute(String attrName)
+            throws InvalidArgsException, SimulatorException {
+        return nativeGetAttribute(attrName);
+    }
 
     /**
      * API to get all the attributes of the resource.
@@ -67,8 +65,10 @@ public final class SimulatorSingleResource extends SimulatorResource {
      *             This exception will be thrown either if the resource model is
      *             not found or for some general errors.
      */
-    public native Map<String, SimulatorResourceAttribute> getAttributes()
-            throws InvalidArgsException, SimulatorException;
+    public Map<String, SimulatorResourceAttribute> getAttributes()
+            throws InvalidArgsException, SimulatorException {
+        return nativeGetAttributes();
+    }
 
     /**
      * API to add an attribute to resource's representation model. Observers
@@ -82,8 +82,10 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native boolean addAttribute(SimulatorResourceAttribute attribute)
-            throws InvalidArgsException, SimulatorException;
+    public boolean addAttribute(SimulatorResourceAttribute attribute)
+            throws InvalidArgsException, SimulatorException {
+        return nativeAddAttribute(attribute);
+    }
 
     /**
      * API to remove an attribute from the simulated resource. Observers will be
@@ -97,8 +99,10 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native boolean removeAttribute(String attrName)
-            throws InvalidArgsException, SimulatorException;
+    public boolean removeAttribute(String attrName)
+            throws InvalidArgsException, SimulatorException {
+        return nativeRemoveAttribute(attrName);
+    }
 
     /**
      * API to update the value of an attribute. Observers will be notified on
@@ -114,8 +118,10 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native boolean updateAttribute(String attrName, AttributeValue value)
-            throws InvalidArgsException, SimulatorException;
+    public boolean updateAttribute(String attrName, AttributeValue value)
+            throws InvalidArgsException, SimulatorException {
+        return nativeUpdateAttribute(attrName, value);
+    }
 
     /**
      * API to start the resource level automation. This automation involves
@@ -137,9 +143,11 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native int startResourceUpdation(AutoUpdateType type, int interval,
+    public int startResourceUpdation(AutoUpdateType type, int interval,
             AutoUpdateListener listener) throws InvalidArgsException,
-            SimulatorException;
+            SimulatorException {
+        return nativeStartResourceUpdation(type, interval, listener);
+    }
 
     /**
      * API to start the attribute level automation. This automation involves
@@ -163,9 +171,11 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native int startAttributeUpdation(String attrName,
-            AutoUpdateType type, int interval, AutoUpdateListener listener)
-            throws InvalidArgsException, SimulatorException;
+    public int startAttributeUpdation(String attrName, AutoUpdateType type,
+            int interval, AutoUpdateListener listener)
+            throws InvalidArgsException, SimulatorException {
+        return nativeStartAttributeUpdation(attrName, type, interval, listener);
+    }
 
     /**
      * API to stop the automation based on automation id.
@@ -176,5 +186,31 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for general errors.
      */
-    public native void stopUpdation(int id) throws SimulatorException;
+    public void stopUpdation(int id) throws SimulatorException {
+        nativeStopUpdation(id);
+    }
+
+    private SimulatorSingleResource(long nativeHandle) {
+        mNativeHandle = nativeHandle;
+    }
+
+    private native SimulatorResourceAttribute nativeGetAttribute(String attrName);
+
+    private native Map<String, SimulatorResourceAttribute> nativeGetAttributes();
+
+    private native boolean nativeAddAttribute(
+            SimulatorResourceAttribute attribute);
+
+    private native boolean nativeRemoveAttribute(String attrName);
+
+    private native boolean nativeUpdateAttribute(String attrName,
+            AttributeValue value);
+
+    private native int nativeStartResourceUpdation(AutoUpdateType type,
+            int interval, AutoUpdateListener listener);
+
+    private native int nativeStartAttributeUpdation(String attrName,
+            AutoUpdateType type, int interval, AutoUpdateListener listener);
+
+    private native void nativeStopUpdation(int id);
 }
