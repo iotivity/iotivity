@@ -21,7 +21,7 @@
 #ifndef IOTVT_SRM_PSI_H
 #define IOTVT_SRM_PSI_H
 
-struct cJSON;
+#include "cJSON.h"
 
 /**
  * Reads the Secure Virtual Database from PS into dynamically allocated

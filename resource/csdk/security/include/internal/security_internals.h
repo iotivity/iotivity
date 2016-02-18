@@ -26,6 +26,25 @@ OCEntityHandlerResult ACLEntityHandler(OCEntityHandlerFlag flag,
 
 OCStackResult SetDefaultACL(OicSecAcl_t *acl);
 
+/**
+ * Converts CBOR payload to SVC.
+ *
+ * @param cborPayload is the svc payload cbor value that neds to be converted.
+ * @param cborSize of the cborPayload. In case size is not known, it is 0.
+ * @param svc is the value that is initialized. It is NULL in case of error.
+ *
+ * @return ::OC_STACK_OK in case successful. ::OC_STACK_INVALID_PARAM if one of
+ * the passed parameter is NULL. ::OC_STACK_ERROR in case of error.
+ */
+OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size, OicSecSvc_t **svc);
+
+/**
+ * Deletes the passed initialized reference to @ref OicSecSvc_t.
+ *
+ * @param svc is the reference to be deleted.
+ */
+void DeleteSVCList(OicSecSvc_t* svc);
+
 #ifdef __cplusplus
 }
 #endif

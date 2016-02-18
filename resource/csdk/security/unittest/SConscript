@@ -115,4 +115,3 @@ if env.get('TEST') == '1':
 		srmtest_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
 		ut = srmtest_env.Command ('ut', None, out_dir + '/resource/csdk/security/unittest/unittest')
 		AlwaysBuild ('ut')
-
