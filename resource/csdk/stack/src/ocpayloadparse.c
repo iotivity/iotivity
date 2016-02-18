@@ -110,27 +110,43 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* r
         return OC_STACK_INVALID_PARAM;
     }
 
-    bool err = false;
-    char * securityData = NULL;
-    CborValue map;
-    size_t len;
-
-    err = err || cbor_value_enter_container(rootValue, &map);
-    err = err || cbor_value_dup_text_string(&map, &securityData, &len, NULL);
-    err = err || cbor_value_leave_container(rootValue, &map);
-
-    if(err)
     {
-        OC_LOG(ERROR, TAG, "Cbor in error condition");
+        bool err = false;
+        char *securityData = NULL;
+        uint8_t *securityData1 = NULL;
+        CborValue map  = { .parser = NULL };
+        size_t len = 0;
+
+        err = err || cbor_value_enter_container(rootValue, &map);
+        if (cbor_value_is_byte_string(&map))
+        {
+            err = err || cbor_value_dup_byte_string(&map, &securityData1, &len, NULL);
+        }
+        else
+        {
+            err = err || cbor_value_dup_text_string(&map, &securityData, &len, NULL);
+        }
+        err = err || cbor_value_leave_container(rootValue, &map);
+
+        if(err)
+        {
+            OC_LOG(ERROR, TAG, "Cbor in error condition");
+            OICFree(securityData);
+            OICFree(securityData1);
+            return OC_STACK_MALFORMED_RESPONSE;
+        }
+        if (securityData)
+        {
+            *outPayload = (OCPayload *)OCSecurityPayloadCreate(securityData);
+        }
+        else
+        {
+            *outPayload = (OCPayload *)OCSecurityPayloadCBORCreate(securityData1);
+        }
         OICFree(securityData);
-        return OC_STACK_MALFORMED_RESPONSE;
+        OICFree(securityData1);
     }
-
-    *outPayload = (OCPayload*)OCSecurityPayloadCreate(securityData);
-    OICFree(securityData);
-
     return OC_STACK_OK;
-
 }
 
 static char* InPlaceStringTrim(char* str)

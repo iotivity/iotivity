@@ -45,6 +45,18 @@ OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size, OicSecSv
  */
 void DeleteSVCList(OicSecSvc_t* svc);
 
+/**
+ * Create PSTAT resource after default PSTAT initialization is done.
+ */
+OCStackResult CreatePstatResource();
+
+/**
+ * This internal method is the entity handler for PSTAT resources and
+ * will handle REST request (GET/PUT/POST/DEL) for them.
+ */
+OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
+                                         OCEntityHandlerRequest * ehRequest);
+
 #ifdef __cplusplus
 }
 #endif
