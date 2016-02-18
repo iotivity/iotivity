@@ -2,7 +2,7 @@ var request = require('request');
 
 var intervalId,
     handleReceptacle = {},
-    iotivity = require("../../iotivity-node/lowlevel");
+    iotivity = require("../../node_modules/iotivity-node/lowlevel");
 
 iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT);
 

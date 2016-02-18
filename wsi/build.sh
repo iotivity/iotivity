@@ -7,7 +7,7 @@ mv ./node_modules/iotivity-node/  ./
 echo 'Install wsi dependencies'
 npm install
 
-echo 'Setting running environment'
-export LD_LIBRARY_PATH=$PWD/iotivity-node/deps/iotivity/lib/
+echo 'Move iotivity-node back to node_modules directory'
+mv iotivity-node ./node_modules/
 
 echo 'Build complete!'
