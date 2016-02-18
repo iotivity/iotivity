@@ -2319,7 +2319,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(
             g_isSignalSetFlag = true;
             ca_cond_signal(g_threadSendNotifyCond);
             ca_mutex_unlock(g_threadSendNotifyMutex);
-            return CA_SEND_FAILED;
+            return;
         }
     }
     else
