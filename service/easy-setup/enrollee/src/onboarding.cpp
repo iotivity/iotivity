@@ -68,12 +68,12 @@ bool ESOnboard(const char * ssid, const char* passwd, NetworkEventCallback cb)
     {
         if (ESSoftapAtEnrollee())
         {
-            OC_LOG(DEBUG, ES_ENROLLEE_TAG, "Create softap at enrollee");
+            OC_LOG(DEBUG, ES_ENROLLEE_TAG, "Create SoftAp at enrollee");
             ESCreateSoftap(ssid, passwd, cb);
         }
         else
         {
-            OC_LOG(DEBUG, ES_ENROLLEE_TAG, "Connecting to SoftAp");
+            OC_LOG(DEBUG, ES_ENROLLEE_TAG, "Connecting to Mediator SoftAp");
             ConnectToWiFiNetwork(ssid, passwd, cb);
         }
         return true;

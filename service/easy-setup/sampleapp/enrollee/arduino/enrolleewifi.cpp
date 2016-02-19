@@ -173,7 +173,8 @@ void StartEasySetup()
 {
     OC_LOG(DEBUG, TAG, "OCServer is starting...");
 
-    if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, EventCallbackInApp) == ES_ERROR)
+    //InitEasySetup with sercurity mode disabled for arduino
+    if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, false, EventCallbackInApp) == ES_ERROR)
     {
         OC_LOG(ERROR, TAG, "OnBoarding Failed");
         return;
