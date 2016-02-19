@@ -57,6 +57,17 @@ OCStackResult CreatePstatResource();
 OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
                                          OCEntityHandlerRequest * ehRequest);
 
+/**
+ * Converts CBOR payload to AMACL.
+ *
+ * @param cborPayload is the amacl payload cbor value that neds to be converted.
+ * @param cborSize of the cborPayload. In case size is not known, it is 0.
+ * It should be NON-NULL.
+ * @param amacl is the value that is initialized. It is NULL in case of error.
+ */
+OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t cborSize,
+                                 OicSecAmacl_t **amacl);
+
 #ifdef __cplusplus
 }
 #endif
