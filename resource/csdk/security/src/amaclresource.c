@@ -21,24 +21,29 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "ocstack.h"
-#include "logger.h"
 #include "oic_malloc.h"
-#include "oic_string.h"
-#include "cJSON.h"
-#include "base64.h"
-#include "resourcemanager.h"
+#include "ocpayload.h"
+#include "payload_logging.h"
 #include "psinterface.h"
+#include "resourcemanager.h"
 #include "utlist.h"
 #include "srmresourcestrings.h"
-#include "amaclresource.h"
 #include "srmutility.h"
-#include <stdlib.h>
-#include <string.h>
+#include "amaclresource.h"
 
 #define TAG  "SRM-AMACL"
 
-OicSecAmacl_t *gAmacl = NULL;
+/** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
+ * The value of payload size is increased until reaching belox max cbor size. */
+static const uint8_t CBOR_SIZE = 255;
+
+/* Max cbor size payload. */
+static const uint16_t CBOR_MAX_SIZE = 4400;
+
+/** AMACL Map size - Number of mandatory items. */
+static const uint8_t AMACL_MAP_SIZE = 3;
+
+static OicSecAmacl_t *gAmacl = NULL;
 static OCResourceHandle gAmaclHandle = NULL;
 
 void DeleteAmaclList(OicSecAmacl_t* amacl)
@@ -69,193 +74,318 @@ void DeleteAmaclList(OicSecAmacl_t* amacl)
     }
 }
 
-/*
- * This internal method converts AMACL data into JSON format.
- *
- * Note: Caller needs to invoke 'free' when finished using the return string.
- */
-char * BinToAmaclJSON(const OicSecAmacl_t * amacl)
+static size_t OicSecAmaclCount(const OicSecAmacl_t *secAmacl)
 {
-    cJSON *jsonRoot = NULL;
-    char *jsonStr = NULL;
-
-    if (amacl)
+    size_t size = 0;
+    for (const OicSecAmacl_t *amacl = secAmacl; amacl; amacl = amacl->next)
     {
-        jsonRoot = cJSON_CreateObject();
-        VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-        cJSON *jsonAmaclArray = NULL;
-        cJSON_AddItemToObject (jsonRoot, OIC_JSON_AMACL_NAME, jsonAmaclArray = cJSON_CreateArray());
-        VERIFY_NON_NULL(TAG, jsonAmaclArray, ERROR);
-
-        while(amacl)
-        {
-            char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
-            uint32_t outLen = 0;
-            B64Result b64Ret = B64_OK;
-
-            cJSON *jsonAmacl = cJSON_CreateObject();
-
-            // Resources -- Mandatory
-            cJSON *jsonRsrcArray = NULL;
-            cJSON_AddItemToObject(jsonAmacl, OIC_JSON_RESOURCES_NAME, jsonRsrcArray =
-                    cJSON_CreateArray());
-            VERIFY_NON_NULL(TAG, jsonRsrcArray, ERROR);
-            for (unsigned int i = 0; i < amacl->resourcesLen; i++)
-            {
-                cJSON_AddItemToArray(jsonRsrcArray, cJSON_CreateString(amacl->resources[i]));
-            }
-
-            // Amss -- Mandatory
-            cJSON *jsonAmsArray = NULL;
-            cJSON_AddItemToObject(jsonAmacl, OIC_JSON_AMSS_NAME, jsonAmsArray =
-                    cJSON_CreateArray());
-            VERIFY_NON_NULL(TAG, jsonAmsArray, ERROR);
-            for (unsigned int i = 0; i < amacl->amssLen; i++)
-            {
-                outLen = 0;
-
-                b64Ret = b64Encode(amacl->amss[i].id, sizeof(((OicUuid_t*) 0)->id), base64Buff,
-                        sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-
-                cJSON_AddItemToArray(jsonAmsArray, cJSON_CreateString(base64Buff));
-            }
-
-            // Owners -- Mandatory
-            cJSON *jsonOwnrArray = NULL;
-            cJSON_AddItemToObject(jsonAmacl, OIC_JSON_OWNERS_NAME, jsonOwnrArray =
-                    cJSON_CreateArray());
-            VERIFY_NON_NULL(TAG, jsonOwnrArray, ERROR);
-            for (unsigned int i = 0; i < amacl->ownersLen; i++)
-            {
-                outLen = 0;
-
-                b64Ret = b64Encode(amacl->owners[i].id, sizeof(((OicUuid_t*) 0)->id), base64Buff,
-                        sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-
-                cJSON_AddItemToArray(jsonOwnrArray, cJSON_CreateString(base64Buff));
-            }
-
-            // Attach current amacl node to Amacl Array
-            cJSON_AddItemToArray(jsonAmaclArray, jsonAmacl);
-            amacl = amacl->next;
-        }
-
-        jsonStr = cJSON_PrintUnformatted(jsonRoot);
+        size++;
     }
-
-exit:
-    if (jsonRoot)
-    {
-        cJSON_Delete(jsonRoot);
-    }
-    return jsonStr;
+    return size;
 }
 
-
-
-
-/*
- * This internal method converts JSON AMACL into binary AMACL.
- */
-OicSecAmacl_t * JSONToAmaclBin(const char * jsonStr)
+OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayload,
+                                 size_t *cborSize)
 {
-    OCStackResult ret = OC_STACK_ERROR;
-    OicSecAmacl_t * headAmacl = NULL;
-    OicSecAmacl_t * prevAmacl = NULL;
-    cJSON *jsonRoot = NULL;
-    cJSON *jsonAmaclArray = NULL;
-
-    VERIFY_NON_NULL(TAG, jsonStr, ERROR);
-
-    jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-    jsonAmaclArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_AMACL_NAME);
-    VERIFY_NON_NULL(TAG, jsonAmaclArray, INFO);
-
-    if (cJSON_Array == jsonAmaclArray->type)
+    if (NULL == amaclS || NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
     {
-        int numAmacl = cJSON_GetArraySize(jsonAmaclArray);
-        int idx = 0;
-
-        VERIFY_SUCCESS(TAG, numAmacl > 0, INFO);
-        do
-        {
-            cJSON *jsonAmacl = cJSON_GetArrayItem(jsonAmaclArray, idx);
-            VERIFY_NON_NULL(TAG, jsonAmacl, ERROR);
-
-            OicSecAmacl_t *amacl = (OicSecAmacl_t*)OICCalloc(1, sizeof(OicSecAmacl_t));
-            VERIFY_NON_NULL(TAG, amacl, ERROR);
-
-            headAmacl = (headAmacl) ? headAmacl : amacl;
-            if (prevAmacl)
-            {
-                prevAmacl->next = amacl;
-            }
-
-            size_t jsonObjLen = 0;
-            cJSON *jsonObj = NULL;
-
-            // Resources -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonAmacl, OIC_JSON_RESOURCES_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-
-            amacl->resourcesLen = (size_t)cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(TAG, amacl->resourcesLen > 0, ERROR);
-            amacl->resources = (char**)OICCalloc(amacl->resourcesLen, sizeof(char*));
-            VERIFY_NON_NULL(TAG, (amacl->resources), ERROR);
-
-            size_t idxx = 0;
-            do
-            {
-                cJSON *jsonRsrc = cJSON_GetArrayItem(jsonObj, idxx);
-                VERIFY_NON_NULL(TAG, jsonRsrc, ERROR);
-
-                jsonObjLen = strlen(jsonRsrc->valuestring) + 1;
-                amacl->resources[idxx] = (char*)OICMalloc(jsonObjLen);
-                VERIFY_NON_NULL(TAG, (amacl->resources[idxx]), ERROR);
-                OICStrcpy(amacl->resources[idxx], jsonObjLen, jsonRsrc->valuestring);
-            } while ( ++idxx < amacl->resourcesLen);
-
-            // Amss -- Mandatory
-            VERIFY_SUCCESS( TAG, OC_STACK_OK == AddUuidArray(jsonAmacl, OIC_JSON_AMSS_NAME,
-                               &(amacl->amssLen), &(amacl->amss)), ERROR);
-
-            // Owners -- Mandatory
-            VERIFY_SUCCESS( TAG, OC_STACK_OK == AddUuidArray(jsonAmacl, OIC_JSON_OWNERS_NAME,
-                               &(amacl->ownersLen), &(amacl->owners)), ERROR);
-
-            prevAmacl = amacl;
-        } while( ++idx < numAmacl);
+        return OC_STACK_INVALID_PARAM;
     }
 
-    ret = OC_STACK_OK;
+    OCStackResult ret = OC_STACK_ERROR;
+    size_t cborLen = *cborSize;
+    if (0 == cborLen)
+    {
+        cborLen = CBOR_SIZE;
+    }
+
+    *cborSize = 0;
+    *cborPayload = NULL;
+
+    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
+    CborEncoder amaclArray = { {.ptr = NULL }, .end = 0 };
+    CborError cborEncoderResult = CborNoError;
+
+    const OicSecAmacl_t *amacl = amaclS;
+    uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
+    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    cbor_encoder_init(&encoder, outPayload, cborLen, 0);
+
+    // Create AMACL Array
+    cborEncoderResult = cbor_encoder_create_array(&encoder, &amaclArray, OicSecAmaclCount(amacl));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMACL Array.");
+
+    while (amacl)
+    {
+        CborEncoder amaclMap = { {.ptr = NULL }, .end = 0 };
+        cborEncoderResult = cbor_encoder_create_map(&amaclArray, &amaclMap, AMACL_MAP_SIZE);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMACL MAP.");
+
+        // Resources -- Mandatory
+        {
+            CborEncoder resources = { {.ptr = NULL }, .end = 0};
+            cborEncoderResult = cbor_encode_text_string(&amaclMap, OIC_JSON_RESOURCES_NAME,
+                strlen(OIC_JSON_RESOURCES_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Name Tag.");
+            cborEncoderResult = cbor_encoder_create_array(&amaclMap, &resources, amacl->resourcesLen);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Name Array.");
+            for (size_t i = 0; i < amacl->resourcesLen; i++)
+            {
+                cborEncoderResult = cbor_encode_text_string(&resources, amacl->resources[i],
+                    strlen(amacl->resources[i]));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Name Value in Array.");
+
+            }
+            cborEncoderResult = cbor_encoder_close_container(&amaclMap, &resources);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Resource Name ");
+        }
+        // Amss -- Mandatory
+        {
+            CborEncoder amss = { {.ptr = NULL }, .end = 0 };
+            cborEncoderResult = cbor_encode_text_string(&amaclMap, OIC_JSON_AMSS_NAME,
+                strlen(OIC_JSON_AMSS_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMSS Name Tag.");
+            cborEncoderResult = cbor_encoder_create_array(&amaclMap, &amss, amacl->amssLen);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMSS Name Array.");
+            for (size_t i = 0; i < amacl->amssLen; i++)
+            {
+                cborEncoderResult = cbor_encode_byte_string(&amss, amacl->amss[i].id,
+                    sizeof(amacl->amss[i].id));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding AMSS Name Value.");
+            }
+            cborEncoderResult = cbor_encoder_close_container(&amaclMap, &amss);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing AMSS Array.");
+        }
+        // Owners -- Mandatory
+        {
+            cborEncoderResult = cbor_encode_text_string(&amaclMap, OIC_JSON_OWNERS_NAME,
+                strlen(OIC_JSON_OWNERS_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Owners Array Tag.");
+            CborEncoder owners = { {.ptr = NULL }, .end = 0};
+            cborEncoderResult = cbor_encoder_create_array(&amaclMap, &owners, amacl->ownersLen);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Owners Array.");
+            for (size_t i = 0; i < amacl->ownersLen; i++)
+            {
+                cborEncoderResult = cbor_encode_byte_string(&owners, (uint8_t *)amacl->owners[i].id,
+                    sizeof(amacl->owners[i].id));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Owners Array Value.");
+            }
+            cborEncoderResult = cbor_encoder_close_container(&amaclMap, &owners);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Owners Array.");
+        }
+        cborEncoderResult = cbor_encoder_close_container(&amaclArray, &amaclMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing AMACL Map.");
+
+        amacl = amacl->next;
+    }
+    cborEncoderResult = cbor_encoder_close_container(&encoder, &amaclArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Amacl Array.");
+
+    if (CborNoError == cborEncoderResult)
+    {
+        *cborPayload = outPayload;
+        *cborSize = encoder.ptr - outPayload;
+        ret = OC_STACK_OK;
+    }
 
 exit:
-    cJSON_Delete(jsonRoot);
-    if (OC_STACK_OK != ret)
+    if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
+    {
+       // reallocate and try again!
+       OICFree(outPayload);
+       outPayload = NULL;
+       // Since the allocated initial memory failed, double the memory.
+       cborLen += encoder.ptr - encoder.end;
+       cborEncoderResult = CborNoError;
+       ret = AmaclToCBORPayload(amaclS, cborPayload, &cborLen);
+       if (OC_STACK_OK == ret)
+       {
+           *cborSize = cborLen;
+           ret = OC_STACK_OK;
+       }
+    }
+
+    if (CborNoError != cborEncoderResult)
+    {
+       OICFree(outPayload);
+       outPayload = NULL;
+       *cborSize = 0;
+       *cborPayload = NULL;
+       ret = OC_STACK_ERROR;
+    }
+
+    return ret;
+}
+
+OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
+                                 OicSecAmacl_t **secAmacl)
+{
+    if (NULL == cborPayload || NULL == secAmacl || NULL != *secAmacl)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    *secAmacl = NULL;
+
+    OCStackResult ret = OC_STACK_ERROR;
+
+    CborValue amaclCbor = { .parser = NULL };
+    CborParser parser = { .end = NULL };
+    CborError cborFindResult = CborNoError;
+    int cborLen = size;
+    if (0 == size)
+    {
+        cborLen = CBOR_SIZE;
+    }
+    cbor_parser_init(cborPayload, cborLen, 0, &parser, &amaclCbor);
+
+    OicSecAmacl_t *headAmacl = NULL;
+
+    CborValue amaclArray = { .parser = NULL };
+    cborFindResult = cbor_value_enter_container(&amaclCbor, &amaclArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+    while (cbor_value_is_valid(&amaclArray))
+    {
+        CborValue amaclMap = { .parser = NULL };
+        cborFindResult = cbor_value_enter_container(&amaclArray, &amaclMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+        OicSecAmacl_t *amacl = (OicSecAmacl_t *) OICCalloc(1, sizeof(*amacl));
+        VERIFY_NON_NULL(TAG, amacl, ERROR);
+
+        while (cbor_value_is_valid(&amaclMap))
+        {
+            char *name = NULL;
+            size_t len = 0;
+            cborFindResult = cbor_value_dup_text_string(&amaclMap, &name, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            cborFindResult = cbor_value_advance(&amaclMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+            CborType type = cbor_value_get_type(&amaclMap);
+
+            // Resources -- Mandatory
+            if (0 == strcmp(OIC_JSON_RESOURCES_NAME, name))
+            {
+                CborValue resources = { .parser = NULL  };
+                cborFindResult = cbor_value_get_array_length(&amaclMap, &amacl->resourcesLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+                cborFindResult = cbor_value_enter_container(&amaclMap, &resources);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+                amacl->resources = (char **) OICMalloc(amacl->resourcesLen * sizeof(*amacl->resources));
+                VERIFY_NON_NULL(TAG, amacl->resources, ERROR);
+                int i = 0;
+                while (cbor_value_is_text_string(&resources))
+                {
+                    cborFindResult = cbor_value_dup_text_string(&resources, &amacl->resources[i++],
+                        &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                    cborFindResult = cbor_value_advance(&resources);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                }
+            }
+
+            // Amss -- Mandatory
+            if (0 == strcmp(OIC_JSON_AMSS_NAME, name))
+            {
+                CborValue amss = { .parser = NULL };
+                cborFindResult = cbor_value_get_array_length(&amaclMap, &amacl->amssLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                cborFindResult = cbor_value_enter_container(&amaclMap, &amss);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                int i = 0;
+                amacl->amss = (OicUuid_t *)OICCalloc(amacl->amssLen, sizeof(*amacl->amss));
+                VERIFY_NON_NULL(TAG, amacl->amss, ERROR);
+                while (cbor_value_is_valid(&amss))
+                {
+                    uint8_t *amssId = NULL;
+                    cborFindResult = cbor_value_dup_byte_string(&amss, &amssId, &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                    cborFindResult = cbor_value_advance(&amss);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                    memcpy(amacl->amss[i].id, amssId, len);
+                    OICFree(amssId);
+                }
+            }
+
+            // Owners -- Mandatory
+            if (0 == strcmp(OIC_JSON_OWNERS_NAME, name))
+            {
+                CborValue owners = { .parser = NULL };
+                cborFindResult = cbor_value_get_array_length(&amaclMap, &amacl->ownersLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                cborFindResult = cbor_value_enter_container(&amaclMap, &owners);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                int i = 0;
+                amacl->owners = (OicUuid_t *)OICCalloc(amacl->ownersLen, sizeof(*amacl->owners));
+                VERIFY_NON_NULL(TAG, amacl->owners, ERROR);
+                while (cbor_value_is_valid(&owners))
+                {
+                    uint8_t *owner = NULL;
+                    cborFindResult = cbor_value_dup_byte_string(&owners, &owner, &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                    cborFindResult = cbor_value_advance(&owners);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                    memcpy(amacl->owners[i].id, owner, len);
+                    OICFree(owner);
+                }
+            }
+            if (CborMapType != type && cbor_value_is_valid(&amaclMap))
+            {
+                cborFindResult = cbor_value_advance(&amaclMap);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            }
+            OICFree(name);
+        }
+
+        amacl->next = NULL;
+        if (NULL == headAmacl)
+        {
+            headAmacl = amacl;
+        }
+        else
+        {
+            OicSecAmacl_t *temp = headAmacl;
+            while (temp->next)
+            {
+                temp = temp->next;
+            }
+            temp->next = amacl;
+        }
+        if (cbor_value_is_valid(&amaclArray))
+        {
+            cborFindResult = cbor_value_advance(&amaclArray);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+        }
+    }
+    *secAmacl = headAmacl;
+    ret = OC_STACK_OK;
+exit:
+    if (CborNoError != cborFindResult)
     {
         DeleteAmaclList(headAmacl);
         headAmacl = NULL;
+        ret = OC_STACK_ERROR;
     }
-    return headAmacl;
+    return ret;
 }
 
 static OCEntityHandlerResult HandleAmaclGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
     // Convert Amacl data into JSON for transmission
-    char* jsonStr = BinToAmaclJSON(gAmacl);
+    size_t size = 0;
+    uint8_t *cborPayload = NULL;
+    OCStackResult res = AmaclToCBORPayload(gAmacl, &cborPayload, &size);
 
-    OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
+    OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
 
     // Send response payload to request originator
-    SendSRMResponse(ehRequest, ehRet, jsonStr);
+    SendSRMCBORResponse(ehRequest, ehRet, cborPayload);
 
-    OICFree(jsonStr);
+    OICFree(cborPayload);
 
     OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
@@ -265,34 +395,34 @@ static OCEntityHandlerResult HandleAmaclPostRequest (const OCEntityHandlerReques
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
-    // Convert JSON Amacl data into binary. This will also validate the Amacl data received.
-    OicSecAmacl_t* newAmacl = JSONToAmaclBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
-
-    if (newAmacl)
+    // Convert CBOR Amacl data into binary. This will also validate the Amacl data received.
+    uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData1;;
+    if (payload)
     {
-        // Append the new Amacl to existing Amacl
-        LL_APPEND(gAmacl, newAmacl);
-
-        // Convert Amacl data into JSON for update to persistent storage
-        char *jsonStr = BinToAmaclJSON(gAmacl);
-        if (jsonStr)
+        OicSecAmacl_t *newAmacl = NULL;
+        OCStackResult res = CBORPayloadToAmacl(payload, CBOR_SIZE, &newAmacl);
+        if (newAmacl && OC_STACK_OK == res)
         {
-            cJSON *jsonAmacl = cJSON_Parse(jsonStr);
-            OICFree(jsonStr);
-
-            if ((jsonAmacl) &&
-                (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_AMACL_NAME, jsonAmacl)))
+            // Append the new Amacl to existing Amacl
+            LL_APPEND(gAmacl, newAmacl);
+            size_t size = 0;
+            // Convert Amacl data into JSON for update to persistent storage.
+            uint8_t *cborPayload = NULL;
+            res = AmaclToCBORPayload(gAmacl, &cborPayload, &size);
+            if (cborPayload && (OC_STACK_OK == res) &&
+                (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_AMACL_NAME, cborPayload, size)))
             {
                 ehRet = OC_EH_RESOURCE_CREATED;
             }
-            cJSON_Delete(jsonAmacl);
+            OICFree(cborPayload);
         }
+        OICFree(payload);
     }
 
     // Send payload to request originator
-    SendSRMResponse(ehRequest, ehRet, NULL);
+    SendSRMCBORResponse(ehRequest, ehRet, NULL);
 
-    OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
+    OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -339,15 +469,13 @@ OCEntityHandlerResult AmaclEntityHandler (OCEntityHandlerFlag flag,
  */
 OCStackResult CreateAmaclResource()
 {
-    OCStackResult ret;
-
-    ret = OCCreateResource(&gAmaclHandle,
-                           OIC_RSRC_TYPE_SEC_AMACL,
-                           OIC_MI_DEF,
-                           OIC_RSRC_AMACL_URI,
-                           AmaclEntityHandler,
-                           NULL,
-                           OC_OBSERVABLE);
+    OCStackResult ret = OCCreateResource(&gAmaclHandle,
+                                         OIC_RSRC_TYPE_SEC_AMACL,
+                                         OIC_MI_DEF,
+                                         OIC_RSRC_AMACL_URI,
+                                         AmaclEntityHandler,
+                                         NULL,
+                                         OC_OBSERVABLE);
 
     if (OC_STACK_OK != ret)
     {
@@ -366,14 +494,20 @@ OCStackResult InitAmaclResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    // Read Amacl resource from PS
-    char* jsonSVRDatabase = GetSVRDatabase();
+    uint8_t *data = NULL;
+    size_t size = 0;
+    ret = GetSecureVirtualDatabaseFromPS(OIC_JSON_AMACL_NAME, &data, &size);
 
-    if (jsonSVRDatabase)
+    // If database read failed
+    if (OC_STACK_OK != ret)
     {
-        // Convert JSON Amacl into binary format
-        gAmacl = JSONToAmaclBin(jsonSVRDatabase);
-        OICFree(jsonSVRDatabase);
+        OIC_LOG(DEBUG, TAG, "ReadSVDataFromPS failed");
+    }
+    if (data)
+    {
+        // Read AMACL resource from PS
+        ret = CBORPayloadToAmacl(data, size, &gAmacl);
+        OICFree(data);
     }
 
     // Instantiate 'oic/sec/amacl' resource
@@ -412,7 +546,7 @@ OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsDeviceId)
     {
         for(size_t i = 0; i < amacl->resourcesLen; i++)
         {
-            if (strncmp((amacl->resources[i]), resource, strlen(amacl->resources[i])) == 0)
+            if (0 == strncmp((amacl->resources[i]), resource, strlen(amacl->resources[i])))
             {
                 //Returning the ID of the first AMS service for the resource
                 memcpy(amsDeviceId, &amacl->amss[0], sizeof(*amsDeviceId));
