@@ -85,7 +85,7 @@ void UnRegisterCallback() {
     }
 }
 
-OCStackResult StartProvisioning(const EnrolleeNWProvInfo *netInfo) {
+OCStackResult StartProvisioning(const ProvConfig *provConfig, WiFiOnboadingConnection *onboardConn) {
 
     char findQuery[64] = {0};
 
@@ -93,12 +93,12 @@ OCStackResult StartProvisioning(const EnrolleeNWProvInfo *netInfo) {
     //Arduino Enrollee needs mediator application provide IP and port55555 which is specific
     // to Arduino WiFi enrollee
     snprintf(findQuery, sizeof(findQuery) - 1, UNICAST_PROVISIONING_QUERY,
-             netInfo->netAddressInfo.WIFI.ipAddress, IP_PORT);
+             onboardConn->ipAddress, IP_PORT);
 #else
     OICStrcpy(findQuery, sizeof(findQuery)-1, UNICAST_PROVISIONING_QUERY);
 #endif
 
-    return StartProvisioningProcess(netInfo, cbData, findQuery);
+    return StartProvisioningProcess(provConfig, onboardConn, cbData, findQuery);
 }
 
 OCStackResult StopProvisioning(OCConnectivityType /*connectivityType*/) {

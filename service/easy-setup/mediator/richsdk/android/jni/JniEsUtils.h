@@ -30,11 +30,12 @@
 #include <jni.h>
 #include <string>
 
-#include "escommon.h"
-#include "Utility.h"
+#include "esrichcommon.h"
 #include "octypes.h"
 
 #include "JniJvm.h"
+
+using namespace OIC::Service;
 
 /**
  * @brief Throw the Exception to the java layer

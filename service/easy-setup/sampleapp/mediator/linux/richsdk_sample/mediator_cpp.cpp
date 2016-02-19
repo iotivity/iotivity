@@ -35,7 +35,8 @@ using namespace OC;
 using namespace OIC::Service;
 
 static EasySetup *easySetupIntance = nullptr;
-static EnrolleeNWProvInfo netInfo;
+static ProvConfig netInfo;
+static WiFiOnboadingConnection onboardingConn;
 static RemoteEnrollee::shared_ptr remoteEnrollee = nullptr;
 
 static std::string ipaddress, ssid, pwd;
@@ -70,8 +71,7 @@ int processUserInput(int min, int max)
 
 void easySetupStatusCallback (std::shared_ptr< EasySetupStatus > easySetupStatus)
 {
-    OC_LOG_V(DEBUG, ES_SAMPLE_APP_TAG, "easySetupStatusCallback status is, IP = %s, Status = %d",
-            easySetupStatus->getEasySetupNWProvInfo().netAddressInfo.WIFI.ipAddress,
+    OC_LOG_V(DEBUG, ES_SAMPLE_APP_TAG, "easySetupStatusCallback status is Status = %d",
             easySetupStatus->getEasySetupState());
 
 }
@@ -93,7 +93,7 @@ void initEasySetup()
 
     easySetupIntance = EasySetup::getInstance();
 
-    ipaddress = "10.113.64.106";
+    ipaddress = "192.168.1.104";
     //std::cout << "Enter the target enrollee ipv4 address ";
 
 
@@ -106,15 +106,19 @@ void initEasySetup()
     //std::cin >> pwd;
 
     netInfo.connType = CT_ADAPTER_IP;
-    netInfo.isSecured = false;
-    netInfo.needSecuredEasysetup = false;
-    OICStrcpy(netInfo.netAddressInfo.WIFI.ipAddress, IPV4_ADDR_SIZE - 1, ipaddress.c_str());
-    OICStrcpy(netInfo.netAddressInfo.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, ssid.c_str());
-    OICStrcpy(netInfo.netAddressInfo.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, pwd.c_str());
+    //netInfo.isSecured = false;
+    //netInfo.needSecuredEasysetup = false;
+
+    OICStrcpy(netInfo.provData.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, ssid.c_str());
+    OICStrcpy(netInfo.provData.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, pwd.c_str());
+
+    onboardingConn.isSecured = false;
+    OICStrcpy(onboardingConn.ipAddress, IPV4_ADDR_SIZE - 1, ipaddress.c_str());
+
 
     try
     {
-        remoteEnrollee = easySetupIntance->createEnrolleeDevice(netInfo);
+        remoteEnrollee = easySetupIntance->createEnrolleeDevice(netInfo,onboardingConn);
     }
     catch (OCException &e)
     {

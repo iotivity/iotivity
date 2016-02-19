@@ -32,11 +32,11 @@ namespace OIC
 
     namespace Service
     {
-        RemoteEnrollee::RemoteEnrollee(const EnrolleeNWProvInfo& enrolleeNWProvInfo) :
-                m_enrolleeNWProvInfo(enrolleeNWProvInfo)
+        RemoteEnrollee::RemoteEnrollee(const ProvConfig& provConfig, const WiFiOnboadingConnection& connection) :
+                m_ProvConfig(provConfig), m_wifiOnboardingconn(connection)
         {
             m_currentESState = CurrentESState::ES_UNKNOWN;
-            m_needSecuredEasysetup = enrolleeNWProvInfo.needSecuredEasysetup;
+            m_isSecured = connection.isSecured; //enrolleeNWProvInfo.needSecuredEasysetup;
 
             OC_LOG ( DEBUG, ES_REMOTE_ENROLLEE_TAG, "Inside RemoteEnrollee constr");
         }
@@ -72,7 +72,7 @@ namespace OIC
             {
                 m_easySetupStatusCb = callback;
 
-                m_remoteResource = std::make_shared< RemoteEnrolleeResource >(m_enrolleeNWProvInfo);
+                m_remoteResource = std::make_shared< RemoteEnrolleeResource >(m_ProvConfig, m_wifiOnboardingconn);
             }
         }
 
@@ -103,7 +103,7 @@ namespace OIC
                 OC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "Ownership and ACL are successful");
                 std::shared_ptr< EasySetupStatus > easySetupStatus = nullptr;
                 easySetupStatus = std::make_shared< EasySetupStatus >(DEVICE_NOT_PROVISIONED,
-                                            m_enrolleeNWProvInfo);
+                                            m_ProvConfig);
                 if (m_easySetupStatusCb)
                 {
                     if (easySetupStatus)
@@ -127,7 +127,7 @@ namespace OIC
 
             std::shared_ptr< EasySetupStatus > easySetupStatus = nullptr;
 
-            if (m_enrolleeNWProvInfo.isSecured)
+            if (m_isSecured)
             {
                 if (m_currentESState > CurrentESState::ES_OWNED)
                 {
@@ -150,18 +150,18 @@ namespace OIC
                 if (provStatus->getESState() >= ESState::ES_PROVISIONED_ALREADY)
                 {
                     easySetupStatus = std::make_shared< EasySetupStatus >(DEVICE_PROVISIONED,
-                            m_enrolleeNWProvInfo);
+                            m_ProvConfig);
                 }
                 else
                 {
                     easySetupStatus = std::make_shared< EasySetupStatus >(DEVICE_NOT_PROVISIONED,
-                            m_enrolleeNWProvInfo);
+                            m_ProvConfig);
                 }
             }
             else
             {
                 easySetupStatus = std::make_shared< EasySetupStatus >(DEVICE_NOT_PROVISIONED,
-                        m_enrolleeNWProvInfo);
+                        m_ProvConfig);
             }
 
             if (m_easySetupStatusCb)
@@ -181,7 +181,7 @@ namespace OIC
             FAILURE:
 
             easySetupStatus = std::make_shared< EasySetupStatus >(DEVICE_NOT_PROVISIONED,
-                                    m_enrolleeNWProvInfo);
+                                    m_ProvConfig);
 
             if (easySetupStatus)
             {
@@ -216,7 +216,7 @@ namespace OIC
             m_currentESState = CurrentESState::ES_ONBOARDED;
 
 #ifdef __WITH_DTLS__
-            if (m_needSecuredEasysetup && m_currentESState < CurrentESState::ES_OWNED)
+            if (m_isSecured && m_currentESState < CurrentESState::ES_OWNED)
             {
                 EnrolleeSecStatusCb securityProvStatusCb = std::bind(
                         &RemoteEnrollee::easySetupSecurityStatusCallback,
@@ -290,9 +290,15 @@ namespace OIC
             }
         }
 
-        EnrolleeNWProvInfo& RemoteEnrollee::getEnrolleeProvisioningInfo ()
+        ProvConfig RemoteEnrollee::getProvConfig ()
         {
-            return m_enrolleeNWProvInfo;
+            return m_ProvConfig;
         }
+
+       WiFiOnboadingConnection RemoteEnrollee::getOnboardConn()
+       {
+         return m_wifiOnboardingconn;
+       }
+
     }
 }

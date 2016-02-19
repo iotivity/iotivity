@@ -47,7 +47,7 @@ namespace OIC
         }
 
         RemoteEnrollee::shared_ptr EasySetup::findDeviceInProvisioningList (
-                            const EnrolleeNWProvInfo& enrolleeNWProvInfo)
+                            const ProvConfig& provConfig, const WiFiOnboadingConnection& onboardingconn)
         {
             OC_LOG(DEBUG,EASYSETUP_TAG,"Entered findDeviceInProvisioningList ()");
 
@@ -58,8 +58,12 @@ namespace OIC
             {
                 OC_LOG_V(DEBUG,EASYSETUP_TAG,"entered the iterator");
 
-                if (0 == memcmp(&it->getEnrolleeProvisioningInfo().netAddressInfo,
-                                &enrolleeNWProvInfo.netAddressInfo, sizeof(EnrolleeNWProvInfo)))
+                ProvConfig activeEnrolleConfig =  it->getProvConfig();
+                WiFiOnboadingConnection activeEnrolleConn = it->getOnboardConn();
+                if ((0 == memcmp(&activeEnrolleConfig.provData,
+                                &provConfig.provData, sizeof(ProvConfig))) &&
+                    (0 == memcmp(&activeEnrolleConn.ipAddress,
+                          &onboardingconn.ipAddress, sizeof(onboardingconn.ipAddress))))
                 {
                     remoteEnrollee = it;
                     return remoteEnrollee;
@@ -72,11 +76,20 @@ namespace OIC
 
         bool EasySetup::addDeviceToProvisioningList(const RemoteEnrollee::shared_ptr remoteEnrollee)
         {
+            ProvConfig remoteEnrolleConfig =  remoteEnrollee->getProvConfig();
+            WiFiOnboadingConnection remoteEnrolleConn = remoteEnrollee->getOnboardConn();
+
             for (auto it : m_activeEnrolleeList)
             {
-                if (0 == memcmp(&it->getEnrolleeProvisioningInfo().netAddressInfo,
-                                &remoteEnrollee->getEnrolleeProvisioningInfo().netAddressInfo,
-                                sizeof(EnrolleeNWProvInfo)))
+                ProvConfig activeEnrolleConfig =  it->getProvConfig();
+                WiFiOnboadingConnection activeEnrolleConn = it->getOnboardConn();
+                if ( (0 == memcmp(&activeEnrolleConfig.provData,
+                                &remoteEnrolleConfig.provData,
+                                sizeof(ProvConfig)))  &&
+                     (0 == memcmp(&activeEnrolleConn.ipAddress,
+                                &remoteEnrolleConn.ipAddress,
+                                sizeof(remoteEnrolleConn.ipAddress)))
+                   )
                 {
                     return false;
                 }
@@ -88,16 +101,16 @@ namespace OIC
         }
 
         std::shared_ptr<RemoteEnrollee> EasySetup::createEnrolleeDevice (
-                                        const EnrolleeNWProvInfo& enrolleeNWProvInfo)
+                                        const ProvConfig& provConfig, const WiFiOnboadingConnection& wifiOnboardingconn)
         {
-            if (findDeviceInProvisioningList(enrolleeNWProvInfo) != nullptr)
+            if (findDeviceInProvisioningList(provConfig,wifiOnboardingconn) != nullptr)
             {
                 throw ESBadRequestException { "Device already created exception" };
             }
 
             RemoteEnrollee::shared_ptr remoteEnrollee;
 
-            remoteEnrollee = std::make_shared< RemoteEnrollee > (enrolleeNWProvInfo);
+            remoteEnrollee = std::make_shared< RemoteEnrollee > (provConfig, wifiOnboardingconn);
 
 
             if (!addDeviceToProvisioningList (remoteEnrollee))

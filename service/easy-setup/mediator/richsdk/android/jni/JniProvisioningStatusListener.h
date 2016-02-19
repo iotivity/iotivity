@@ -28,8 +28,7 @@
 #include <jni.h>
 
 #include "RemoteEnrollee.h"
-#include "escommon.h"
-#include "Utility.h"
+#include "esrichcommon.h"
 
 #include "JniJvm.h"
 

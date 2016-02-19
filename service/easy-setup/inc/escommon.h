@@ -210,30 +210,45 @@ typedef union
      */
     struct
     {
-        char ipAddress[IPV4_ADDR_SIZE]; /**< IP Address of the Enroller**/
         char ssid[NET_WIFI_SSID_SIZE]; /**< ssid of the Enroller**/
         char pwd[NET_WIFI_PWD_SIZE]; /**< pwd of the Enroller**/
     } WIFI;
-} EnrolleeInfo;
-
+} ProvData;
 
 /**
  * @brief Network Information
  */
 typedef struct
 {
-    EnrolleeInfo netAddressInfo;    /**< Enroller Network Info**/
+    ProvData provData;    /**< Enroller Network Info**/
     OCConnectivityType connType;    /**< Connectivity Type**/
-    bool isSecured;                 /**< Secure connection**/
-    // TODO : Ideally isSecured should be renamed to needSecuredEasysetup.
-    // To provide backward compatibility to v1.0 release, a new variable is being added.
-    // If isSecured is not used by other applications, isSecured will be depricated.
-    bool needSecuredEasysetup;      /**< Need of secure ownership transfer during easysetup**/
-} EnrolleeNWProvInfo;
+} ProvConfig;
 
 /**
  * Client applications implement this callback to consume responses received from Servers.
  */
 typedef void (*OCProvisioningStatusCB)(EasySetupInfo *easySetupInfo);
+
+/**
+ * @brief This structure represent configuration information to create wifi onboarding SoftAP or connection.
+*/
+
+
+// Note : Below structure is not currently used but added for future purpose.
+typedef struct {
+    char ssid[NET_WIFI_SSID_SIZE]; /**< ssid of the onboarding Adhoc Wifi network**/
+    char pwd[NET_WIFI_PWD_SIZE]; /**< pwd of the onboarding Adhoc wifi network**/
+    bool isSecured;                 /**< Secure connection**/
+}WiFiOnboardingConfig;
+
+/**
+ * @brief This structure represent onboarding connection instance.
+*/
+typedef struct {
+ /*Actual use of ipAddress is for unicast discovery, but also used to identify the Enrollee device as of now,
+    device identification should be based on DeviceID in next release.*/
+   char ipAddress[IPV4_ADDR_SIZE]; /**< IP Address of the Enrollee **/
+   bool isSecured;                 /**< Secure connection**/
+}WiFiOnboadingConnection;
 
 #endif //ES_COMMON_H_

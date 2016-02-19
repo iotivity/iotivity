@@ -47,7 +47,7 @@ OCStackResult RegisterCallback(
 
 void UnRegisterCallback();
 
-OCStackResult StartProvisioning(const EnrolleeNWProvInfo *netInfo);
+OCStackResult StartProvisioning(const ProvConfig *netInfo, WiFiOnboadingConnection *onboardConn);
 
 OCStackResult StopProvisioning(OCConnectivityType connectivityType);
 

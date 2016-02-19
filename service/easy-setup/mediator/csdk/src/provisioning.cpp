@@ -40,11 +40,11 @@
 
 #define ES_PROV_TAG "EASY_SETUP_PROVISIONING"
 
-bool g_provisioningCondFlag = false;
+bool gProvisioningCondFlag = false;
 
-static EnrolleeNWProvInfo *netProvInfo;
-
-char szFindResourceQueryUri[64] = {0};
+static ProvConfig *gProvConfig;
+static WiFiOnboadingConnection *gOnboardConn;
+static char gSzFindResourceQueryUri[64] = {0};
 
 /**
  * @var cbData
@@ -85,14 +85,14 @@ OCStackResult TerminateProvisioningHandler() {
         OIC_LOG(ERROR, ES_PROV_TAG, "OCStack stop error");
     }
 
-    g_provisioningCondFlag = true;
+    gProvisioningCondFlag = true;
 
     ret = OC_STACK_OK;
     return ret;
 }
 
 void *listeningFunc(void* /*data*/) {
-    while (!g_provisioningCondFlag) {
+    while (!gProvisioningCondFlag) {
         OCStackResult result;
 
         result = OCProcess();
@@ -146,7 +146,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* /*ctx*/, OCDoHandle /*h
         }
 
         if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_TNN, &tnn)) {
-            if (!strcmp(tnn, netProvInfo->netAddressInfo.WIFI.ssid)) {
+            if (!strcmp(tnn, gProvConfig->provData.WIFI.ssid)) {
                 OIC_LOG_V(DEBUG, ES_PROV_TAG, "SSID is proper");
                 input = input->next;
                 continue;
@@ -158,7 +158,7 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* /*ctx*/, OCDoHandle /*h
         }
 
         if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd)) {
-            if (!strcmp(cd, netProvInfo->netAddressInfo.WIFI.pwd)) {
+            if (!strcmp(cd, gProvConfig->provData.WIFI.pwd)) {
                 OIC_LOG_V(DEBUG, ES_PROV_TAG, "Password is proper");
                 input = input->next;
                 continue;
@@ -193,13 +193,13 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* /*ctx*/, OCDoHandle /*h
 
 }
 
-OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo *netInfo,
+OCStackResult StartProvisioningProcess(const ProvConfig *netInfo,WiFiOnboadingConnection *onboardConn,
                                        OCProvisioningStatusCB provisioningStatusCallback,
                                        char *findResQuery) {
 
     if(findResQuery != NULL)
     {
-        OICStrcpy(szFindResourceQueryUri, sizeof(szFindResourceQueryUri) - 1, findResQuery);
+        OICStrcpy(gSzFindResourceQueryUri, sizeof(gSzFindResourceQueryUri) - 1, findResQuery);
     }
     else
     {
@@ -209,7 +209,7 @@ OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo *netInfo,
 
     pthread_t thread_handle;
 
-    if (!ValidateEasySetupParams(netInfo, provisioningStatusCallback)) {
+    if (!ValidateEasySetupParams(netInfo, onboardConn, provisioningStatusCallback)) {
         goto Error;
     }
 
@@ -219,7 +219,7 @@ OCStackResult StartProvisioningProcess(const EnrolleeNWProvInfo *netInfo,
         goto Error;
     }
 
-    if (!ConfigEnrolleeObject(netInfo)) {
+    if (!ConfigEnrolleeObject(netInfo, onboardConn)) {
         goto Error;
     }
 
@@ -250,28 +250,37 @@ void StopProvisioningProcess() {
 bool ClearMemory() {
 
     OIC_LOG(DEBUG, ES_PROV_TAG, "thread_pool_add_task of FindProvisioningResource failed");
-    OICFree(netProvInfo);
+    OICFree(gProvConfig);
+    OICFree(gOnboardConn);
+
     return true;
 
 }
 
-bool ConfigEnrolleeObject(const EnrolleeNWProvInfo *netInfo) {
+bool ConfigEnrolleeObject(const ProvConfig *netInfo, WiFiOnboadingConnection *connection) {
 
     //Copy Network Provisioning  Information
-    netProvInfo = (EnrolleeNWProvInfo *) OICCalloc(1, sizeof(EnrolleeNWProvInfo));
+    gProvConfig = (ProvConfig *) OICCalloc(1, sizeof(ProvConfig));
+    gOnboardConn = (WiFiOnboadingConnection *) OICCalloc(1, sizeof(WiFiOnboadingConnection));
 
-    if (netProvInfo == NULL) {
+    if (gProvConfig == NULL) {
         OIC_LOG(ERROR, ES_PROV_TAG, "Invalid input..");
         return false;
     }
 
-    memcpy(netProvInfo, netInfo, sizeof(EnrolleeNWProvInfo));
+    if (gOnboardConn == NULL) {
+        OIC_LOG(ERROR, ES_PROV_TAG, "Invalid input..");
+        return false;
+    }
+
+    memcpy(gProvConfig, netInfo, sizeof(ProvConfig));
+    memcpy(gOnboardConn, connection, sizeof(WiFiOnboadingConnection));
 
     OIC_LOG_V(DEBUG, ES_PROV_TAG, "Network Provisioning Info. SSID = %s",
-              netProvInfo->netAddressInfo.WIFI.ssid);
+              gProvConfig->provData.WIFI.ssid);
 
     OIC_LOG_V(DEBUG, ES_PROV_TAG, "Network Provisioning Info. PWD = %s",
-              netProvInfo->netAddressInfo.WIFI.pwd);
+              gProvConfig->provData.WIFI.pwd);
 
     return true;
 
@@ -435,7 +444,7 @@ ProvisioningInfo *GetCallbackObjectOnError(ProvStatus status) {
 
     ProvisioningInfo *provInfo = CreateCallBackObject();
     OICStrcpy(provInfo->provDeviceInfo.addr->addr, sizeof(provInfo->provDeviceInfo.addr->addr),
-        netProvInfo->netAddressInfo.WIFI.ipAddress);
+        gOnboardConn->ipAddress);
 
     provInfo->provDeviceInfo.addr->port = IP_PORT;
     provInfo->provStatus = status;
@@ -504,7 +513,7 @@ void* FindProvisioningResource(void* /*data*/) {
 
     OCStackResult ret = OC_STACK_ERROR;
 
-    OIC_LOG_V(DEBUG, ES_PROV_TAG, "szFindResourceQueryUri = %s", szFindResourceQueryUri);
+    OIC_LOG_V(DEBUG, ES_PROV_TAG, "szFindResourceQueryUri = %s", gSzFindResourceQueryUri);
 
     OCCallbackData ocCBData;
 
@@ -513,8 +522,8 @@ void* FindProvisioningResource(void* /*data*/) {
     ocCBData.cd = NULL;
 
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szFindResourceQueryUri, NULL, NULL,
-                       netProvInfo->connType, OC_LOW_QOS,
+    ret = OCDoResource(NULL, OC_REST_DISCOVER, gSzFindResourceQueryUri, NULL, NULL,
+                       gProvConfig->connType, OC_LOW_QOS,
                        &ocCBData, NULL, 0);
 
     if (ret != OC_STACK_OK) {
@@ -536,7 +545,7 @@ OCStackResult InvokeOCDoResource(const char *query, OCMethod method, const OCDev
     cbData.context = (void *) EASY_SETUP_DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, method, query, dest, (OCPayload *) payload, netProvInfo->connType, qos,
+    ret = OCDoResource(NULL, method, query, dest, (OCPayload *) payload, gProvConfig->connType, qos,
                        &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK) {
@@ -558,8 +567,8 @@ OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char *query, const
     OCRepPayload *payload = OCRepPayloadCreate();
 
     OCRepPayloadSetUri(payload, resUri);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_TNN, netProvInfo->netAddressInfo.WIFI.ssid);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CD, netProvInfo->netAddressInfo.WIFI.pwd);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_TNN, gProvConfig->provData.WIFI.ssid);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CD, gProvConfig->provData.WIFI.pwd);
 
     OIC_LOG_V(DEBUG, ES_PROV_TAG, "OCPayload ready for ProvisionEnrollee");
 

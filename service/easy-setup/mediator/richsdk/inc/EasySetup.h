@@ -24,8 +24,7 @@
 #include <memory>
 #include <vector>
 
-#include "escommon.h"
-#include "Utility.h"
+#include "esrichcommon.h"
 #include "RemoteEnrollee.h"
 
 namespace OIC
@@ -60,15 +59,15 @@ namespace OIC
              * @return Pointer to RemoteEnrollee instance.
              */
             std::shared_ptr<RemoteEnrollee> createEnrolleeDevice (
-                                            const EnrolleeNWProvInfo& enrolleeNWProvInfo);
+                         const ProvConfig& enrolleeNWProvInfo, const WiFiOnboadingConnection& wifiOnboardingconn);
         private:
             EasySetup();
             ~EasySetup();
 
             RemoteEnrollee::shared_ptr findDeviceInProvisioningList(
-                                const EnrolleeNWProvInfo& enrolleeNWProvInfo);
+                                const ProvConfig& enrolleeNWProvInfo, const WiFiOnboadingConnection& wifiOnboardingconn);
             bool addDeviceToProvisioningList(const RemoteEnrollee::shared_ptr remoteEnrollee);
-            bool deleteDeviceFromProvisioningList (const EnrolleeNWProvInfo& enrolleeNWProvInfo);
+            bool deleteDeviceFromProvisioningList (const ProvConfig& enrolleeNWProvInfo);
 
             std::vector< RemoteEnrollee::shared_ptr > m_activeEnrolleeList;
             static EasySetup *s_instance;

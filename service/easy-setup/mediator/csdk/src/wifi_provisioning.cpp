@@ -176,10 +176,11 @@ OCStackApplicationResult FindProvisioningResourceResponse(void* /*ctx*/,
 
 }
 
-bool ValidateEasySetupParams(const EnrolleeNWProvInfo *netInfo,
+bool ValidateEasySetupParams(const ProvConfig *netInfo,WiFiOnboadingConnection *onboardConn,
                              OCProvisioningStatusCB provisioningStatusCallback) {
 
-    if (netInfo == NULL || strlen(netInfo->netAddressInfo.WIFI.ipAddress) == 0) {
+
+    if (onboardConn == NULL || strlen(onboardConn->ipAddress) == 0) {
         OIC_LOG(ERROR, ES_WIFI_PROV_TAG, "Request URI is NULL");
         return false;
     }

@@ -39,9 +39,11 @@ namespace OIC
         static const char ES_PROV_RES_URI[] = "/oic/prov";
         static const char ES_PROV_RES_TYPE[] = "oic.r.prov";
 
-        RemoteEnrolleeResource::RemoteEnrolleeResource(EnrolleeNWProvInfo enrolleeNWProvInfo)
+        RemoteEnrolleeResource::RemoteEnrolleeResource(ProvConfig provConfig,
+                                                  WiFiOnboadingConnection onboardingconn)
         {
-            m_enrolleeNWProvInfo = enrolleeNWProvInfo;
+            m_ProvConfig = provConfig;
+            m_wifiOnboardingconn = onboardingconn;
             m_discoveryResponse = false;
         }
 
@@ -79,7 +81,7 @@ namespace OIC
             //Provisioning status check
             if (ps == ES_PS_PROVISIONING_COMPLETED)
             {
-                if (tnn != std::string(m_enrolleeNWProvInfo.netAddressInfo.WIFI.ssid))
+                if (tnn != std::string(m_ProvConfig.provData.WIFI.ssid))
                 {
                     OC_LOG_V (ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
                             "checkProvInformationCb : Network SSID is not the same as the "
@@ -91,7 +93,7 @@ namespace OIC
                     return;
                 }
 
-                if (cd != std::string(m_enrolleeNWProvInfo.netAddressInfo.WIFI.pwd))
+                if (cd != std::string(m_ProvConfig.provData.WIFI.pwd))
                 {
                     OC_LOG_V (ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
                             "checkProvInformationCb : Network PWD is not the same as the "
@@ -158,14 +160,14 @@ namespace OIC
                 OCRepresentation provisioningRepresentation;
 
                 provisioningRepresentation.setValue(OC_RSRVD_ES_TNN,
-                std::string(m_enrolleeNWProvInfo.netAddressInfo.WIFI.ssid));
+                std::string(m_ProvConfig.provData.WIFI.ssid));
                 provisioningRepresentation.setValue(OC_RSRVD_ES_CD,
-                std::string(m_enrolleeNWProvInfo.netAddressInfo.WIFI.pwd));
+                std::string(m_ProvConfig.provData.WIFI.pwd));
 
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : ssid - %s",
-                        m_enrolleeNWProvInfo.netAddressInfo.WIFI.ssid);
+                        m_ProvConfig.provData.WIFI.ssid);
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : pwd - %s",
-                        m_enrolleeNWProvInfo.netAddressInfo.WIFI.pwd);
+                        m_ProvConfig.provData.WIFI.pwd);
 
                 m_ocResource->put(provisioningRepresentation, QueryParamsMap(),
                         std::function<
@@ -258,7 +260,7 @@ namespace OIC
 
                     std::size_t foundIP =
                         hostAddress.find(
-                                std::string(m_enrolleeNWProvInfo.netAddressInfo.WIFI.ipAddress));
+                                std::string(m_wifiOnboardingconn.ipAddress));
 
                     if(resourceURI == ES_PROV_RES_URI && foundIP!=std::string::npos)
                     {
@@ -310,16 +312,16 @@ namespace OIC
                 OC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "Before OCPlatform::constructResourceObject");
 
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "m_host = %s",
-                        m_enrolleeNWProvInfo.netAddressInfo.WIFI.ipAddress);
+                        m_wifiOnboardingconn.ipAddress);
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "ES_PROV_RES_URI = %s", ES_PROV_RES_URI);
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "m_connectivityType = %d",
-                        m_enrolleeNWProvInfo.connType);
+                        m_ProvConfig.connType);
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "resTypes = %s",
                         resTypes.at(0).c_str());
                 OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "interface = %s", interface.at(0).c_str());
 
                 std::string host;
-                if(m_enrolleeNWProvInfo.needSecuredEasysetup)
+                if(m_wifiOnboardingconn.isSecured)
                 {
                     host.append("coaps://");
                 }
@@ -328,13 +330,13 @@ namespace OIC
                     host.append("coap://");
                 }
 
-                if(m_enrolleeNWProvInfo.connType == CT_ADAPTER_IP)
+                if(m_ProvConfig.connType == CT_ADAPTER_IP)
                 {
                     // TODO : RemoteEnrollee is current handling easysetup on IP transport.
                     // WiFiRemoteEnrollee need to extend RemoteEnrollee for providing IP specific
                     // Enrollee easysetup.
 
-                    host.append(m_enrolleeNWProvInfo.netAddressInfo.WIFI.ipAddress);
+                    host.append(m_wifiOnboardingconn.ipAddress);
                     //TODO : If the target Enrollee is not a Arduino Wi-Fi device,
                     // then the port number will be found during resource discovery instead of
                     // using 55555
@@ -345,7 +347,7 @@ namespace OIC
 
                 m_ocResource = OC::OCPlatform::constructResourceObject(host,
                         ES_PROV_RES_URI,
-                        m_enrolleeNWProvInfo.connType,
+                        m_ProvConfig.connType,
                         true,
                         resTypes,
                         interface);
@@ -364,7 +366,7 @@ namespace OIC
             std::string host("");
             std::string query("");
 
-            if (m_enrolleeNWProvInfo.needSecuredEasysetup)
+            if (m_wifiOnboardingconn.isSecured)
             {
                 host.append("coaps://");
             }
@@ -373,13 +375,13 @@ namespace OIC
                 host.append("coap://");
             }
 
-            if (m_enrolleeNWProvInfo.connType == CT_ADAPTER_IP)
+            if (m_ProvConfig.connType == CT_ADAPTER_IP)
             {
                 // TODO : RemoteEnrollee is current handling easysetup on IP transport.
                 // WiFiRemoteEnrollee need to extend RemoteEnrollee for providing IP specific
                 // Enrollee easysetup.
 
-                host.append(m_enrolleeNWProvInfo.netAddressInfo.WIFI.ipAddress);
+                host.append(m_wifiOnboardingconn.ipAddress);
             }
 
             query.append(ES_BASE_RES_URI);
@@ -392,7 +394,7 @@ namespace OIC
                     host.c_str());
             OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "query = %s", query.c_str());
             OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "m_connectivityType = %d",
-                    m_enrolleeNWProvInfo.connType);
+                    m_ProvConfig.connType);
 
             m_discoveryResponse = false;
             std::function< void (std::shared_ptr<OC::OCResource>) > onDeviceDiscoveredCb =

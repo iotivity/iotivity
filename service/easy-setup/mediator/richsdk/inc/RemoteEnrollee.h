@@ -21,8 +21,7 @@
 #ifndef REMOTE_ENROLLEE_H_
 #define REMOTE_ENROLLEE_H_
 
-#include "escommon.h"
-#include "Utility.h"
+#include "esrichcommon.h"
 
 namespace OIC
 {
@@ -46,7 +45,7 @@ namespace OIC
              *
              * @throw ESBadRequestException is thrown if the parameters are invalid
              */
-            RemoteEnrollee(const EnrolleeNWProvInfo& enrolleeNWProvInfo) ;
+            RemoteEnrollee(const ProvConfig& enrolleeNWProvInfo, const WiFiOnboadingConnection& connection) ;
 
             ~RemoteEnrollee() = default;
 
@@ -118,9 +117,17 @@ namespace OIC
             /**
              * Get the Provisioning information provided for the current Enrollee.
              *
-             * @return EnrolleeNWProvInfo Provisioning information provided for the current Enrollee.
+             * @return ProvConfig Provisioning information provided for the current Enrollee.
              */
-            EnrolleeNWProvInfo& getEnrolleeProvisioningInfo ();
+            ProvConfig getProvConfig ();
+
+            /**
+             * Get the Onboarding connection information between Mediator and Enrollee.
+             *
+             * @return WiFiOnboadingConnection information between Mediator and Enrollee.
+             */
+
+            WiFiOnboadingConnection getOnboardConn();
 
         private:
             std::shared_ptr< RemoteEnrolleeResource > m_remoteResource;
@@ -128,10 +135,12 @@ namespace OIC
             EnrolleeSecStatusCb m_enrolleeSecStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
-            EnrolleeNWProvInfo m_enrolleeNWProvInfo;
+            ProvConfig m_ProvConfig;
+            WiFiOnboadingConnection m_wifiOnboardingconn;
+
             std::shared_ptr< EnrolleeSecurity > m_enrolleeSecurity;
             CurrentESState m_currentESState;
-            bool m_needSecuredEasysetup;
+            bool m_isSecured;
 
             void provisioningStatusHandler (std::shared_ptr< ProvisioningStatus > provStatus);
             void easySetupSecurityStatusCallback(

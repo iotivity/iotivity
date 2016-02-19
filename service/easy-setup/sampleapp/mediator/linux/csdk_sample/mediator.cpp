@@ -64,7 +64,11 @@ static void PrintUsage() {
 
 int main(int argc, char **argv) {
     int opt;
-    EnrolleeNWProvInfo netInfo;
+
+    ProvConfig provConfig;
+    //WiFiOnboardingConfig onboardConfig;
+    WiFiOnboadingConnection onboardConn;
+
     PrintUsage();
     InitProvProcess();
 
@@ -74,13 +78,13 @@ int main(int argc, char **argv) {
     while ((opt = getopt(argc, argv, "d:s:p:")) != -1) {
         switch (opt) {
             case 'd':
-                strncpy(netInfo.netAddressInfo.WIFI.ipAddress, optarg, IPV4_ADDR_SIZE - 1);
+                strncpy(onboardConn.ipAddress, optarg, IPV4_ADDR_SIZE - 1);
                 break;
             case 's':
-                strncpy(netInfo.netAddressInfo.WIFI.ssid, optarg, NET_WIFI_SSID_SIZE - 1);
+                strncpy(provConfig.provData.WIFI.ssid, optarg, NET_WIFI_SSID_SIZE - 1);
                 break;
             case 'p':
-                strncpy(netInfo.netAddressInfo.WIFI.pwd, optarg, NET_WIFI_PWD_SIZE - 1);
+                strncpy(provConfig.provData.WIFI.pwd, optarg, NET_WIFI_PWD_SIZE - 1);
                 break;
             default:
                 PrintUsage();
@@ -88,13 +92,13 @@ int main(int argc, char **argv) {
         }
     }
 
-    netInfo.connType = CT_ADAPTER_IP;
+    provConfig.connType = CT_ADAPTER_IP;
     OIC_LOG_V(INFO, ES_MEDIATOR_TAG, "IP Address of the Provisioning device is =%s\n",
-              netInfo.netAddressInfo.WIFI.ipAddress);
-    OIC_LOG_V(INFO, ES_MEDIATOR_TAG, "SSID of the Enroller is =%s\n", netInfo.netAddressInfo.WIFI.ssid);
-    OIC_LOG_V(INFO, ES_MEDIATOR_TAG, "Password of the Enroller is =%s\n", netInfo.netAddressInfo.WIFI.pwd);
+              onboardConn.ipAddress);
+    OIC_LOG_V(INFO, ES_MEDIATOR_TAG, "SSID of the Enroller is =%s\n", provConfig.provData.WIFI.ssid);
+    OIC_LOG_V(INFO, ES_MEDIATOR_TAG, "Password of the Enroller is =%s\n", provConfig.provData.WIFI.pwd);
 
-    StartProvisioning(&netInfo);
+    StartProvisioning(&provConfig, &onboardConn);
 
     signal(SIGINT, handleSigInt);
     while (!quitFlag) {

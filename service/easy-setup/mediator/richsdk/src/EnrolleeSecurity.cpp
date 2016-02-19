@@ -178,7 +178,7 @@ namespace OIC
                 std::shared_ptr< OC::OCSecureResource > ownedDevice =
                         findEnrollee(
                                 std::string(
-                                        m_remoteEnrolleeResource->m_enrolleeNWProvInfo.netAddressInfo.WIFI.ipAddress),
+                                        m_remoteEnrolleeResource->m_wifiOnboardingconn.ipAddress),
                                 pOwnedDevList);
                 if (ownedDevice)
                 {
@@ -208,7 +208,7 @@ namespace OIC
 
                 m_unownedDevice =
                         findEnrollee(
-                                m_remoteEnrolleeResource->m_enrolleeNWProvInfo.netAddressInfo.WIFI.ipAddress,
+                                m_remoteEnrolleeResource->m_wifiOnboardingconn.ipAddress,
                                 pUnownedDevList);
                 if (m_unownedDevice)
                 {

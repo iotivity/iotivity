@@ -28,14 +28,15 @@ extern "C" {
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_easysetup_mediator_EasySetupService_nativeCreateEnrolleeDevice
 (JNIEnv *env, jobject interfaceClass, jstring ip, jstring ssid, jstring password,
- jint connectivityType, jboolean needSecuredEasysetup)
+ jint connectivityType, jboolean isSecured)
 {
 
     LOGI("JniEasySetup::nativeCreateEnrolleeDevice enter");
 
     std::shared_ptr<RemoteEnrollee> nativeRemoteEnrollee;
     jobject jRemoteEnrollee;
-    EnrolleeNWProvInfo netInfo;
+    ProvConfig netInfo;
+    WiFiOnboadingConnection onboardConn;
 
     const char *cIp = (env)->GetStringUTFChars(ip, NULL);
     const char *cSssid = (env)->GetStringUTFChars(ssid, NULL);
@@ -46,17 +47,16 @@ Java_org_iotivity_service_easysetup_mediator_EasySetupService_nativeCreateEnroll
     std::string sPassword(cPassword);
 
     netInfo.connType = getOCConnectivityTypeFromInt(connectivityType);
-    netInfo.isSecured = bool(
-                            needSecuredEasysetup);       // may be need to remove, if removed from c++ layer
-    netInfo.needSecuredEasysetup =  bool(needSecuredEasysetup);
 
-    OICStrcpy(netInfo.netAddressInfo.WIFI.ipAddress, IPV4_ADDR_SIZE - 1, sIp.c_str());
-    OICStrcpy(netInfo.netAddressInfo.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, sSssid.c_str());
-    OICStrcpy(netInfo.netAddressInfo.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, sPassword.c_str());
+    onboardConn.isSecured = bool(isSecured);
+
+    OICStrcpy(onboardConn.ipAddress, IPV4_ADDR_SIZE - 1, sIp.c_str());
+    OICStrcpy(netInfo.provData.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, sSssid.c_str());
+    OICStrcpy(netInfo.provData.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, sPassword.c_str());
 
     try
     {
-        nativeRemoteEnrollee = EasySetup::getInstance()->createEnrolleeDevice(netInfo);
+        nativeRemoteEnrollee = EasySetup::getInstance()->createEnrolleeDevice(netInfo,onboardConn);
         //create the java object
         jRemoteEnrollee = env->NewObject(g_cls_RemoteEnrollee, g_mid_RemoteEnrollee_ctor);
         if (!jRemoteEnrollee)

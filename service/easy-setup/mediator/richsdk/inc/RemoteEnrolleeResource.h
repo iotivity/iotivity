@@ -24,8 +24,7 @@
 #include <mutex>
 #include <memory>
 
-#include "escommon.h"
-#include "Utility.h"
+#include "esrichcommon.h"
 
 #include "OCApi.h"
 
@@ -59,7 +58,7 @@ namespace OIC
              *
              * @throw ESBadRequestException is thrown if the parameters are invalid
              */
-            RemoteEnrolleeResource(EnrolleeNWProvInfo enrolleeNWProvInfo);
+            RemoteEnrolleeResource(ProvConfig enrolleeNWProvInfo, WiFiOnboadingConnection onboardingconn);
 
             ~RemoteEnrolleeResource() = default;
 
@@ -106,7 +105,8 @@ namespace OIC
             std::shared_ptr< OC::OCResource > m_ocResource;
             std::mutex m_mutex;
             ProvStatusCb m_provStatusCb;
-            EnrolleeNWProvInfo m_enrolleeNWProvInfo;
+            ProvConfig m_ProvConfig;
+            WiFiOnboadingConnection m_wifiOnboardingconn;
             bool m_discoveryResponse;
 
             void getProvStatusResponse(const HeaderOptions& headerOptions, const OCRepresentation& rep,
