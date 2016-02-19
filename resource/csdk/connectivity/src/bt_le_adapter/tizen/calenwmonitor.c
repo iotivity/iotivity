@@ -69,7 +69,7 @@ static ca_mutex g_bleDeviceStateChangedCbMutex = NULL;
 void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
                         void *user_data);
 
-void *GMainLoopThread (void *param)
+void *CALEMainLoopThread (void *param)
 {
     g_main_loop_run(g_mainloop);
     return NULL;
@@ -121,7 +121,7 @@ CAResult_t CAStartLEAdapter()
         return CA_STATUS_FAILED;
     }
 
-    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, GMainLoopThread, (void *) NULL))
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, CALEMainLoopThread, (void *) NULL))
     {
         OIC_LOG(ERROR, TAG, "Failed to create thread!");
         return CA_STATUS_FAILED;
