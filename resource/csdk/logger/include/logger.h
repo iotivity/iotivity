@@ -183,24 +183,15 @@ typedef enum {
 #define OIC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, level, tag, fmt, ##args)
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)
 
-#define OC_LOG(level,tag,mes) LOG_(LOG_ID_MAIN, (level), (tag), mes)
-#define OC_LOG_V(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, (level), (tag), fmt, ##args)
-#define OC_LOG_BUFFER(level, tag, buffer, bufferSize)
-
 #else // These macros are defined for Linux, Android, and Arduino
 
-#define OC_LOG_INIT()    OCLogInit()
 #define OIC_LOG_INIT()    OCLogInit()
 
 #ifdef ARDUINO
 
-#define OC_LOG_BUFFER(level, tag, buffer, bufferSize)  OCLogBuffer((level), PCF(tag), (buffer), (bufferSize))
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)  OCLogBuffer((level), PCF(tag), (buffer), (bufferSize))
-#define OC_LOG_CONFIG(ctx)
-#define OC_LOG_SHUTDOWN()
-#define OC_LOG(level, tag, logStr)  OCLog((level), PCF(tag), __LINE__, PCF(logStr))
 // Don't define variable argument log function for Arduino
-#define OC_LOG_V(level, tag, format, ...) OCLogv((level), PCF(tag), __LINE__, PCF(format),__VA_ARGS__)
+#define OIC_LOG_V(level, tag, format, ...) OCLogv((level), PCF(tag), __LINE__, PCF(format),__VA_ARGS__)
 
 #define OIC_LOG_CONFIG(ctx)
 #define OIC_LOG_SHUTDOWN()
@@ -209,14 +200,7 @@ typedef enum {
 
 #else
 
-#define OC_LOG_BUFFER(level, tag, buffer, bufferSize)  OCLogBuffer((level), (tag), (buffer), (bufferSize))
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)  OCLogBuffer((level), (tag), (buffer), (bufferSize))
-#define OC_LOG_CONFIG(ctx)    OCLogConfig((ctx))
-#define OC_LOG_SHUTDOWN()     OCLogShutdown()
-#define OC_LOG(level, tag, logStr)  OCLog((level), (tag), (logStr))
-// Define variable argument log function for Linux and Android
-#define OC_LOG_V(level, tag, ...) OCLogv((level), (tag), __VA_ARGS__)
-
 #define OIC_LOG_CONFIG(ctx)    OCLogConfig((ctx))
 #define OIC_LOG_SHUTDOWN()     OCLogShutdown()
 #define OIC_LOG(level, tag, logStr)  OCLog((level), (tag), (logStr))
@@ -227,13 +211,6 @@ typedef enum {
 #endif //__TIZEN__
 
 #else //TB_LOG
-
-#define OC_LOG_CONFIG(ctx)
-#define OC_LOG_SHUTDOWN()
-#define OC_LOG(level, tag, logStr)
-#define OC_LOG_V(level, tag, ...)
-#define OC_LOG_BUFFER(level, tag, buffer, bufferSize)
-#define OC_LOG_INIT()
 
 #define OIC_LOG_CONFIG(ctx)
 #define OIC_LOG_SHUTDOWN()

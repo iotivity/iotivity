@@ -44,15 +44,15 @@ static const uint64_t USECS_PER_SEC = 1000000;
 // Macros
 //-----------------------------------------------------------------------------
 #define VERIFY_SUCCESS(op, successCode) { if ((op) != (successCode)) \
-            {OC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
+            {OIC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 
-#define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OC_LOG((logLevel), \
+#define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OIC_LOG((logLevel), \
              TAG, #arg " is NULL"); return (retVal); } }
 
-#define VERIFY_NON_NULL_NR(arg, logLevel) { if (!(arg)) { OC_LOG((logLevel), \
+#define VERIFY_NON_NULL_NR(arg, logLevel) { if (!(arg)) { OIC_LOG((logLevel), \
              TAG, #arg " is NULL"); return; } }
 
-#define VERIFY_NON_NULL_V(arg) { if (!arg) {OC_LOG_V(FATAL, TAG, "%s is NULL", #arg);\
+#define VERIFY_NON_NULL_V(arg) { if (!arg) {OIC_LOG_V(FATAL, TAG, "%s is NULL", #arg);\
     goto exit;} }
 
 /**
@@ -188,10 +188,10 @@ static OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint);
 
 OCStackResult InitializeKeepAlive()
 {
-    OC_LOG(DEBUG, TAG, "InitializeKeepAlive IN");
+    OIC_LOG(DEBUG, TAG, "InitializeKeepAlive IN");
     if (g_isKeepAliveInitialized)
     {
-        OC_LOG(DEBUG, TAG, "KeepAlive already initialized");
+        OIC_LOG(DEBUG, TAG, "KeepAlive already initialized");
         return OC_STACK_OK;
     }
 
@@ -199,7 +199,7 @@ OCStackResult InitializeKeepAlive()
     OCStackResult result = CreateKeepAliveResource();
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "CreateKeepAliveResource failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "CreateKeepAliveResource failed[%d]", result);
         return result;
     }
 
@@ -208,7 +208,7 @@ OCStackResult InitializeKeepAlive()
         g_keepAliveConnectionTable = u_arraylist_create();
         if (NULL == g_keepAliveConnectionTable)
         {
-            OC_LOG(ERROR, TAG, "Creating KeepAlive Table failed");
+            OIC_LOG(ERROR, TAG, "Creating KeepAlive Table failed");
             TerminateKeepAlive();
             return OC_STACK_ERROR;
         }
@@ -216,16 +216,16 @@ OCStackResult InitializeKeepAlive()
 
     g_isKeepAliveInitialized = true;
 
-    OC_LOG(DEBUG, TAG, "InitializeKeepAlive OUT");
+    OIC_LOG(DEBUG, TAG, "InitializeKeepAlive OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult TerminateKeepAlive()
 {
-    OC_LOG(DEBUG, TAG, "TerminateKeepAlive IN");
+    OIC_LOG(DEBUG, TAG, "TerminateKeepAlive IN");
     if (!g_isKeepAliveInitialized)
     {
-        OC_LOG(ERROR, TAG, "KeepAlive not initialized");
+        OIC_LOG(ERROR, TAG, "KeepAlive not initialized");
         return OC_STACK_ERROR;
     }
 
@@ -233,7 +233,7 @@ OCStackResult TerminateKeepAlive()
     OCStackResult result = DeleteKeepAliveResource();
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "DeleteKeepAliveResource failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "DeleteKeepAliveResource failed[%d]", result);
         return result;
     }
 
@@ -245,13 +245,13 @@ OCStackResult TerminateKeepAlive()
 
     g_isKeepAliveInitialized = false;
 
-    OC_LOG(DEBUG, TAG, "TerminateKeepAlive OUT");
+    OIC_LOG(DEBUG, TAG, "TerminateKeepAlive OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult CreateKeepAliveResource()
 {
-    OC_LOG(DEBUG, TAG, "InitKeepAliveResource IN");
+    OIC_LOG(DEBUG, TAG, "InitKeepAliveResource IN");
 
     // Create a KeepAlive resource
     OCStackResult result = OCCreateResource(&g_keepAliveHandle,
@@ -264,26 +264,26 @@ OCStackResult CreateKeepAliveResource()
 
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "Create resource for KeepAlive failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "Create resource for KeepAlive failed[%d]", result);
     }
 
-    OC_LOG(DEBUG, TAG, "InitKeepAliveResource OUT");
+    OIC_LOG(DEBUG, TAG, "InitKeepAliveResource OUT");
     return result;
 }
 
 OCStackResult DeleteKeepAliveResource()
 {
-    OC_LOG(DEBUG, TAG, "DeleteKeepAliveResource IN");
+    OIC_LOG(DEBUG, TAG, "DeleteKeepAliveResource IN");
 
     // Create a KeepAlive resource
     OCStackResult result = OCDeleteResource(g_keepAliveHandle);
 
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "Delete resource for KeepAlive failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "Delete resource for KeepAlive failed[%d]", result);
     }
 
-    OC_LOG(DEBUG, TAG, "DeleteKeepAliveResource OUT");
+    OIC_LOG(DEBUG, TAG, "DeleteKeepAliveResource OUT");
     return result;
 }
 
@@ -293,7 +293,7 @@ OCStackResult HandleKeepAliveRequest(const CAEndpoint_t* endPoint,
     VERIFY_NON_NULL(endPoint, FATAL, OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(requestInfo, FATAL, OC_STACK_INVALID_PARAM);
 
-    OC_LOG(DEBUG, TAG, "HandleKeepAliveRequest IN");
+    OIC_LOG(DEBUG, TAG, "HandleKeepAliveRequest IN");
 
     OCStackResult result = OC_STACK_OK;
     if (CA_PUT == requestInfo->method)
@@ -305,7 +305,7 @@ OCStackResult HandleKeepAliveRequest(const CAEndpoint_t* endPoint,
         result = HandleKeepAliveGETRequest(endPoint, requestInfo);
     }
 
-    OC_LOG(DEBUG, TAG, "HandleKeepAliveRequest OUT");
+    OIC_LOG(DEBUG, TAG, "HandleKeepAliveRequest OUT");
     return result;
 }
 
@@ -315,14 +315,14 @@ OCStackResult HandleKeepAliveGETRequest(const CAEndpoint_t* endPoint,
     VERIFY_NON_NULL(endPoint, FATAL, OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(requestInfo, FATAL, OC_STACK_INVALID_PARAM);
 
-    OC_LOG_V(DEBUG, TAG, "Find Ping resource [%s]", requestInfo->info.resourceUri);
+    OIC_LOG_V(DEBUG, TAG, "Find Ping resource [%s]", requestInfo->info.resourceUri);
 
     CAResponseResult_t result = CA_VALID;
     OCResource *resourcePtr = FindResourceByUri(requestInfo->info.resourceUri);
     if (!resourcePtr)
     {
         // Resource URL not specified
-        OC_LOG_V(DEBUG, TAG, "There is no Ping resource [%s]", requestInfo->info.resourceUri);
+        OIC_LOG_V(DEBUG, TAG, "There is no Ping resource [%s]", requestInfo->info.resourceUri);
         result = CA_NOT_FOUND;
     }
 
@@ -345,11 +345,11 @@ OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
     KeepAliveEntry_t *entry = GetEntryFromEndpoint(endPoint, &index);
     if (!entry)
     {
-        OC_LOG(ERROR, TAG, "Received the first keepalive message from client");
+        OIC_LOG(ERROR, TAG, "Received the first keepalive message from client");
         entry = AddKeepAliveEntry(endPoint, OC_SERVER);
         if (!entry)
         {
-            OC_LOG(ERROR, TAG, "Failed to add new keepalive entry");
+            OIC_LOG(ERROR, TAG, "Failed to add new keepalive entry");
             return OC_STACK_ERROR;
         }
     }
@@ -362,7 +362,7 @@ OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
     uint32_t interval = 0;
     OCRepPayloadGetPropInt(repPayload, INTERVAL, &interval);
     entry->interval = interval;
-    OC_LOG_V(DEBUG, TAG, "Received interval is [%d]", entry->interval);
+    OIC_LOG_V(DEBUG, TAG, "Received interval is [%d]", entry->interval);
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
 
     // Send response message.
@@ -379,18 +379,18 @@ OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
 {
     VERIFY_NON_NULL(endPoint, FATAL, OC_STACK_INVALID_PARAM);
 
-    OC_LOG(DEBUG, TAG, "HandleKeepAliveResponse IN");
+    OIC_LOG(DEBUG, TAG, "HandleKeepAliveResponse IN");
 
     // Get entry from KeepAlive table.
     uint32_t index = 0;
     KeepAliveEntry_t *entry = GetEntryFromEndpoint(endPoint, &index);
     if (!entry)
     {
-        OC_LOG(ERROR, TAG, "There is no connection info in KeepAlive table");
+        OIC_LOG(ERROR, TAG, "There is no connection info in KeepAlive table");
 
         if (OC_STACK_NO_RESOURCE == responseCode)
         {
-            OC_LOG(ERROR, TAG, "Server doesn't have a ping resource");
+            OIC_LOG(ERROR, TAG, "Server doesn't have a ping resource");
             return OC_STACK_ERROR;
         }
         else if (OC_STACK_OK == responseCode)
@@ -398,7 +398,7 @@ OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
             entry = AddKeepAliveEntry(endPoint, OC_CLIENT);
             if (!entry)
             {
-                OC_LOG(ERROR, TAG, "Failed to add new KeepAlive entry");
+                OIC_LOG(ERROR, TAG, "Failed to add new KeepAlive entry");
                 return OC_STACK_ERROR;
             }
 
@@ -410,7 +410,7 @@ OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
     // Set sentPingMsg values with false.
     entry->sentPingMsg = false;
 
-    OC_LOG(DEBUG, TAG, "HandleKeepAliveResponse OUT");
+    OIC_LOG(DEBUG, TAG, "HandleKeepAliveResponse OUT");
     return OC_STACK_OK;
 }
 
@@ -418,7 +418,7 @@ void ProcessKeepAlive()
 {
     if (!g_isKeepAliveInitialized)
     {
-        OC_LOG(ERROR, TAG, "KeepAlive not initialized");
+        OIC_LOG(ERROR, TAG, "KeepAlive not initialized");
         return;
     }
 
@@ -444,7 +444,7 @@ void ProcessKeepAlive()
                  */
                 if ((KEEPALIVE_RESPONSE_TIMEOUT_SEC * USECS_PER_SEC) <= currentTime - entry->timeStamp)
                 {
-                    OC_LOG(DEBUG, TAG, "Client does not receive the response within 1 minutes.");
+                    OIC_LOG(DEBUG, TAG, "Client does not receive the response within 1 minutes.");
 
                     // Send message to disconnect session.
                     SendDisconnectMessage(entry);
@@ -464,7 +464,7 @@ void ProcessKeepAlive()
                     OCStackResult result = SendPingMessage(entry);
                     if (OC_STACK_OK != result)
                     {
-                        OC_LOG(ERROR, TAG, "Failed to send ping request");
+                        OIC_LOG(ERROR, TAG, "Failed to send ping request");
                         continue;
                     }
                 }
@@ -480,7 +480,7 @@ void ProcessKeepAlive()
             if ((entry->interval * KEEPALIVE_RESPONSE_TIMEOUT_SEC * USECS_PER_SEC)
                     <= currentTime - entry->timeStamp)
             {
-                OC_LOG(DEBUG, TAG, "Server does not receive a PUT request.");
+                OIC_LOG(DEBUG, TAG, "Server does not receive a PUT request.");
                 SendDisconnectMessage(entry);
             }
         }
@@ -511,7 +511,7 @@ OCStackResult SendPingMessage(KeepAliveEntry_t *entry)
     OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
     {
-        OC_LOG(ERROR, TAG, "Failed to allocate Payload");
+        OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
         return OC_STACK_ERROR;
     }
     payload->base.type = PAYLOAD_TYPE_REPRESENTATION;
@@ -524,7 +524,7 @@ OCStackResult SendPingMessage(KeepAliveEntry_t *entry)
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
     entry->sentPingMsg = true;
 
-    OC_LOG_V(DEBUG, TAG, "Client sent ping message, interval [%d]", entry->interval);
+    OIC_LOG_V(DEBUG, TAG, "Client sent ping message, interval [%d]", entry->interval);
 
     return OC_STACK_OK;
 }
@@ -532,12 +532,12 @@ OCStackResult SendPingMessage(KeepAliveEntry_t *entry)
 OCStackApplicationResult PingRequestCallback(void* ctx, OCDoHandle handle,
                                              OCClientResponse *clientResponse)
 {
-    OC_LOG(DEBUG, TAG, "PingRequestCallback IN");
+    OIC_LOG(DEBUG, TAG, "PingRequestCallback IN");
     (void) ctx;
     (void) handle;
     if (NULL == clientResponse)
     {
-        OC_LOG(ERROR, TAG, "clientResponse is NULL");
+        OIC_LOG(ERROR, TAG, "clientResponse is NULL");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
@@ -546,7 +546,7 @@ OCStackApplicationResult PingRequestCallback(void* ctx, OCDoHandle handle,
 
     HandleKeepAliveResponse(&endpoint, clientResponse->result);
 
-    OC_LOG(DEBUG, TAG, "PingRequestCallback OUT");
+    OIC_LOG(DEBUG, TAG, "PingRequestCallback OUT");
     return OC_STACK_KEEP_TRANSACTION;
 }
 
@@ -554,7 +554,7 @@ KeepAliveEntry_t *GetEntryFromEndpoint(const CAEndpoint_t *endpoint, uint32_t *i
 {
     if (!g_keepAliveConnectionTable)
     {
-        OC_LOG(ERROR, TAG, "KeepAlive Table was not Created.");
+        OIC_LOG(ERROR, TAG, "KeepAlive Table was not Created.");
         return NULL;
     }
 
@@ -571,7 +571,7 @@ KeepAliveEntry_t *GetEntryFromEndpoint(const CAEndpoint_t *endpoint, uint32_t *i
         if (!strncmp(entry->remoteAddr.addr, endpoint->addr, sizeof(entry->remoteAddr.addr))
                 && (entry->remoteAddr.port == endpoint->port))
         {
-            OC_LOG(DEBUG, TAG, "Connection Info found in KeepAlive table");
+            OIC_LOG(DEBUG, TAG, "Connection Info found in KeepAlive table");
             *index = i;
             return entry;
         }
@@ -584,20 +584,20 @@ KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode)
 {
     if (!endpoint)
     {
-        OC_LOG(ERROR, TAG, "endpoint is NULL");
+        OIC_LOG(ERROR, TAG, "endpoint is NULL");
         return NULL;
     }
 
     if (!g_keepAliveConnectionTable)
     {
-        OC_LOG(ERROR, TAG, "KeepAlive Table was not Created.");
+        OIC_LOG(ERROR, TAG, "KeepAlive Table was not Created.");
         return NULL;
     }
 
     KeepAliveEntry_t *entry = (KeepAliveEntry_t *) OICCalloc(1, sizeof(KeepAliveEntry_t));
     if (NULL == entry)
     {
-        OC_LOG(ERROR, TAG, "Failed to Calloc KeepAlive Entry");
+        OIC_LOG(ERROR, TAG, "Failed to Calloc KeepAlive Entry");
         return NULL;
     }
 
@@ -613,7 +613,7 @@ KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode)
     bool result = u_arraylist_add(g_keepAliveConnectionTable, (void *)entry);
     if (!result)
     {
-        OC_LOG(ERROR, TAG, "Adding node to head failed");
+        OIC_LOG(ERROR, TAG, "Adding node to head failed");
         OICFree(entry);
         return NULL;
     }
@@ -629,18 +629,18 @@ OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint)
     KeepAliveEntry_t *entry = GetEntryFromEndpoint(endpoint, &index);
     if (!entry)
     {
-        OC_LOG(ERROR, TAG, "There is no entry in keepalive table.");
+        OIC_LOG(ERROR, TAG, "There is no entry in keepalive table.");
         return OC_STACK_ERROR;
     }
 
     KeepAliveEntry_t *removedEntry = u_arraylist_remove(g_keepAliveConnectionTable, index);
     if (NULL == removedEntry)
     {
-        OC_LOG(ERROR, TAG, "Removed Entry is NULL");
+        OIC_LOG(ERROR, TAG, "Removed Entry is NULL");
         return OC_STACK_ERROR;
     }
 
-    OC_LOG_V(DEBUG, TAG, "Remove Connection Info from KeepAlive table, "
+    OIC_LOG_V(DEBUG, TAG, "Remove Connection Info from KeepAlive table, "
              "remote addr=%s port:%d", removedEntry->remoteAddr.addr,
              removedEntry->remoteAddr.port);
 
@@ -653,7 +653,7 @@ void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint)
 {
     VERIFY_NON_NULL_NR(endpoint, FATAL);
 
-    OC_LOG(DEBUG, TAG, "Received the connected device information from CA");
+    OIC_LOG(DEBUG, TAG, "Received the connected device information from CA");
 
     // Send discover message to find ping resource
     OCCallbackData pingData = { .cb = PingRequestCallback };
@@ -667,12 +667,12 @@ void HandleKeepAliveDisconnCB(const CAEndpoint_t *endpoint)
 {
     VERIFY_NON_NULL_NR(endpoint, FATAL);
 
-    OC_LOG(DEBUG, TAG, "Received the disconnected device information from CA");
+    OIC_LOG(DEBUG, TAG, "Received the disconnected device information from CA");
 
     OCStackResult result = RemoveKeepAliveEntry(endpoint);
     if(result != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "Failed to remove entry");
+        OIC_LOG(ERROR, TAG, "Failed to remove entry");
         return;
     }
 }

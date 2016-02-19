@@ -65,7 +65,7 @@ extern "C"
  */
 #define RM_NULL_CHECK_WITH_RET(arg, log_tag, log_message) \
     if (NULL == arg ){ \
-        OC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
+        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
         return OC_STACK_INVALID_PARAM; \
     } \
 
@@ -74,7 +74,7 @@ extern "C"
  */
 #define RM_NULL_CHECK_VOID(arg, log_tag, log_message) \
     if (NULL == arg ){ \
-        OC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
+        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
         return; \
     } \
 
@@ -82,7 +82,7 @@ extern "C"
  * Macro to verify the return of an API.
  */
 #define RM_VERIFY_SUCCESS(op, successCode) { if (op != successCode) \
-            {OC_LOG_V(ERROR, TAG, "%s failed!!", #op); goto exit;} }
+            {OIC_LOG_V(ERROR, TAG, "%s failed!!", #op); goto exit;} }
 
 /**
  * Message types in RouteOption to differentiate a normal response and Empty response.

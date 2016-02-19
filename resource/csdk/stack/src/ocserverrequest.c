@@ -487,7 +487,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
 
     if(!ehResponse || !ehResponse->requestHandle)
     {
-        OC_LOG(ERROR, TAG, "ehResponse/requestHandle is NULL");
+        OIC_LOG(ERROR, TAG, "ehResponse/requestHandle is NULL");
         return OC_STACK_ERROR;
     }
 

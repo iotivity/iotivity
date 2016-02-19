@@ -86,7 +86,7 @@ static void retreiveRDDetails(OCClientResponse *clientResponse, OCRDBiasFactorCB
     OIC_LOG_V(DEBUG, TAG, "\tAddress of the RD: %s:%d", clientResponse->devAddr.addr,
             clientResponse->devAddr.port);
 
-    OC_LOG_PAYLOAD(DEBUG, clientResponse->payload);
+    OIC_LOG_PAYLOAD(DEBUG, clientResponse->payload);
 
     // TODO: Multiple Resource Directory will have different biasFactor,
     // needs to cache here detail
@@ -338,7 +338,7 @@ OCStackResult OCRDPublish(char *addr, uint16_t port, int numArg, ... )
     OICStrcpy(rdAddr.addr, MAX_ADDR_STR_SIZE, addr);
     rdAddr.port = port;
 
-    OC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
+    OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
 
     return sendRequest(OC_REST_POST, targetUri, &rdAddr, (OCPayload *)rdPayload, cbData);
 

@@ -40,7 +40,6 @@ extern "C"
 #define PL_TAG "PayloadLog"
 
 #ifdef TB_LOG
-    #define OC_LOG_PAYLOAD(level, payload) OCPayloadLog((level),(payload))
     #define OIC_LOG_PAYLOAD(level, payload) OCPayloadLog((level),(payload))
     #define UUID_SIZE (16)
 const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
