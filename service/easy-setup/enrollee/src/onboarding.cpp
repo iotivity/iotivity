@@ -62,7 +62,7 @@ bool ESBleOnboarding()
  */
 bool ESOnboard(const char * ssid, const char* passwd, NetworkEventCallback cb)
 {
-    OC_LOG(DEBUG, ES_ENROLLEE_TAG, "ESOnboard IN");
+    OIC_LOG(DEBUG, ES_ENROLLEE_TAG, "ESOnboard IN");
 
     if (ESSoftapOnboarding())
     {
@@ -80,14 +80,14 @@ bool ESOnboard(const char * ssid, const char* passwd, NetworkEventCallback cb)
     }
     else if (ESBleOnboarding())
     {
-        OC_LOG(ERROR, ES_ENROLLEE_TAG, "ESOnboard::Ble onboarding is not supported");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESOnboard::Ble onboarding is not supported");
         // TODO:
         return false;
     }
     else
     {
         // TODO:
-        OC_LOG(ERROR, ES_ENROLLEE_TAG, "ESOnboard::Invalid onboarding option");
+        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "ESOnboard::Invalid onboarding option");
         return false;
     }
 }

@@ -136,13 +136,13 @@ void EventCallbackInApp(ESResult esResult, EnrolleeState enrolleeState)
     {
         if(g_OnBoardingSucceeded)
         {
-            OC_LOG_V(ERROR, TAG, "Failure in Provisioning. \
+            OIC_LOG_V(ERROR, TAG, "Failure in Provisioning. \
                                         Current Enrollee State: %d",enrolleeState);
             g_OnBoardingSucceeded = false;
         }
         else if(g_ProvisioningSucceeded)
         {
-            OC_LOG_V(ERROR, TAG, "Failure in connect to target network. \
+            OIC_LOG_V(ERROR, TAG, "Failure in connect to target network. \
                                         Current Enrollee State: %d",enrolleeState);
             g_ProvisioningSucceeded = false;
         }
@@ -163,66 +163,66 @@ void PrintArduinoMemoryStats()
     extern char *__brkval;
     //address of tmp gives us the current stack boundry
     int tmp;
-    OC_LOG_V(INFO, TAG, "Stack: %u         Heap: %u", (unsigned int)&tmp, (unsigned int)__brkval);
-    OC_LOG_V(INFO, TAG, "Unallocated Memory between heap and stack: %u",
+    OIC_LOG_V(INFO, TAG, "Stack: %u         Heap: %u", (unsigned int)&tmp, (unsigned int)__brkval);
+    OIC_LOG_V(INFO, TAG, "Unallocated Memory between heap and stack: %u",
             ((unsigned int)&tmp - (unsigned int)__brkval));
 #endif
 }
 
 void StartEasySetup()
 {
-    OC_LOG(DEBUG, TAG, "OCServer is starting...");
+    OIC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     //InitEasySetup with sercurity mode disabled for arduino
     if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, false, EventCallbackInApp) == ES_ERROR)
     {
-        OC_LOG(ERROR, TAG, "OnBoarding Failed");
+        OIC_LOG(ERROR, TAG, "OnBoarding Failed");
         return;
     }
 
     g_isInitialized = true;
 
-    OC_LOG_V(ERROR, TAG, "OnBoarding succeded. Successfully connected to ssid : %s",ssid);
+    OIC_LOG_V(ERROR, TAG, "OnBoarding succeded. Successfully connected to ssid : %s",ssid);
 }
 
 void StartProvisioning()
 {
-    OC_LOG(DEBUG, TAG, "StartProvisioning is invoked...");
+    OIC_LOG(DEBUG, TAG, "StartProvisioning is invoked...");
 
     // Initialize the OC Stack in Server mode
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack init error!!");
+        OIC_LOG(ERROR, TAG, "OCStack init error!!");
         return;
     }
 
     if (InitProvisioning() == ES_ERROR)
     {
-        OC_LOG(ERROR, TAG, "Init Provisioning Failed!!");
+        OIC_LOG(ERROR, TAG, "Init Provisioning Failed!!");
         return;
     }
 }
 
 void StopEasySetup()
 {
-    OC_LOG(DEBUG, TAG, "Stopping EasySetup is invoked...");
+    OIC_LOG(DEBUG, TAG, "Stopping EasySetup is invoked...");
 
     g_isInitialized = false;
 
     if (TerminateEasySetup() == ES_ERROR)
     {
-        OC_LOG(ERROR, TAG, "TerminateEasySetup Failed!!");
+        OIC_LOG(ERROR, TAG, "TerminateEasySetup Failed!!");
         return;
     }
 
     //stop OC Stack
     if (OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack stop failed!!");
+        OIC_LOG(ERROR, TAG, "OCStack stop failed!!");
         return;
     }
 
-    OC_LOG(DEBUG, TAG, "Stopping EasySetup done");
+    OIC_LOG(DEBUG, TAG, "Stopping EasySetup done");
 }
 
 
@@ -231,7 +231,7 @@ void setup()
 {
     // Add your initialization code here
     // Note : This will initialize Serial port on Arduino at 115200 bauds
-    OC_LOG_INIT();
+    OIC_LOG_INIT();
 
     Serial.println("#########################");
     Serial.println("EasySetup Enrollee SAMPLE");
@@ -293,7 +293,7 @@ void loop()
         // Give CPU cycles to OCStack to perform send/recv and other OCStack stuff
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return;
         }
     }

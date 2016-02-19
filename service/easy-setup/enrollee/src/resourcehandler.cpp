@@ -111,7 +111,7 @@ OCStackResult CreateProvisioningResource(bool isSecured)
                 OC_DISCOVERABLE | OC_OBSERVABLE);
     }
 
-    OC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
     return res;
 }
 
@@ -120,7 +120,7 @@ OCStackResult DeleteProvisioningResource()
     OCStackResult res = OCDeleteResource(gProvResource.handle);
     if (res != OC_STACK_OK)
     {
-        OC_LOG_V(INFO, ES_RH_TAG, "Deleting Prov resource error with result: %s", getResult(res));
+        OIC_LOG_V(INFO, ES_RH_TAG, "Deleting Prov resource error with result: %s", getResult(res));
     }
 
     return res;
@@ -151,13 +151,13 @@ OCStackResult CreateNetworkResource()
     }
     sprintf(gNetResource.cnn, "%s", netInfo.ssid);
 
-    OC_LOG_V(INFO, ES_RH_TAG, "SSID: %s", gNetResource.cnn);
-    OC_LOG_V(INFO, ES_RH_TAG, "IP Address: %s", gNetResource.ipaddr);
+    OIC_LOG_V(INFO, ES_RH_TAG, "SSID: %s", gNetResource.cnn);
+    OIC_LOG_V(INFO, ES_RH_TAG, "IP Address: %s", gNetResource.ipaddr);
 
     OCStackResult res = OCCreateResource(&gNetResource.handle, "oic.r.net", OC_RSRVD_INTERFACE_DEFAULT,
             OC_RSRVD_ES_URI_NET, OCEntityHandlerCb,NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
 
-    OC_LOG_V(INFO, ES_RH_TAG, "Created Net resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, ES_RH_TAG, "Created Net resource with result: %s", getResult(res));
 
     return res;
 }
@@ -167,7 +167,7 @@ OCStackResult DeleteNetworkResource()
     OCStackResult res = OCDeleteResource(gNetResource.handle);
     if (res != OC_STACK_OK)
     {
-        OC_LOG_V(INFO, ES_RH_TAG, "Deleting Network resource error with result: %s",
+        OIC_LOG_V(INFO, ES_RH_TAG, "Deleting Network resource error with result: %s",
                                                                             getResult(res));
     }
 
@@ -181,19 +181,19 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if (!ehRequest)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Request is Null");
+        OIC_LOG(ERROR, ES_RH_TAG, "Request is Null");
         return ehResult;
     }
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
+        OIC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
         return ehResult;
     }
 
     OCRepPayload *getResp = constructResponse(ehRequest);
     if (!getResp)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "constructResponse failed");
+        OIC_LOG(ERROR, ES_RH_TAG, "constructResponse failed");
         return OC_EH_ERROR;
     }
 
@@ -206,18 +206,18 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
 OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
                                                OCRepPayload** payload)
 {
-    OC_LOG(INFO, ES_RH_TAG, "ProcessPutRequest enter");
+    OIC_LOG(INFO, ES_RH_TAG, "ProcessPutRequest enter");
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
+        OIC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
         return ehResult;
     }
 
     OCRepPayload* input = (OCRepPayload*) (ehRequest->payload);
     if (!input)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Failed to parse");
+        OIC_LOG(ERROR, ES_RH_TAG, "Failed to parse");
         return ehResult;
     }
 
@@ -228,7 +228,7 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
     // information.
     if (gProvResource.ps == ES_PS_PROVISIONING_COMPLETED)
     {
-        OC_LOG(DEBUG, ES_RH_TAG, "Provisioning already completed. "
+        OIC_LOG(DEBUG, ES_RH_TAG, "Provisioning already completed. "
                 "This a request to override the existing the network provisioning information");
     }
 
@@ -242,25 +242,25 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_TNN, &tnn))
     {
         sprintf(gProvResource.tnn, "%s", tnn);
-        OC_LOG(INFO, ES_RH_TAG, "got ssid");
+        OIC_LOG(INFO, ES_RH_TAG, "got ssid");
     }
 
-	OC_LOG_V(INFO, ES_RH_TAG, "gProvResource.tnn %s", gProvResource.tnn);
+	OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.tnn %s", gProvResource.tnn);
     char* cd;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd))
     {
         sprintf(gProvResource.cd, "%s", cd);
-        OC_LOG(INFO, ES_RH_TAG, "got password");
+        OIC_LOG(INFO, ES_RH_TAG, "got password");
     }
-	OC_LOG_V(INFO, ES_RH_TAG, "gProvResource.cd %s", gProvResource.cd);
+	OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.cd %s", gProvResource.cd);
     gProvResource.ps = 2;
-    OC_LOG_V(INFO, ES_RH_TAG, "gProvResource.ps %d", gProvResource.ps);
+    OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.ps %d", gProvResource.ps);
     g_flag = 1;
 
     OCRepPayload *getResp = constructResponse(ehRequest);
     if (!getResp)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "constructResponse failed");
+        OIC_LOG(ERROR, ES_RH_TAG, "constructResponse failed");
         return OC_EH_ERROR;
     }
 
@@ -271,24 +271,24 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
 }
 
 OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
-                                                OCRepPayload** payload)
+                                                OCRepPayload** /*payload*/)
 {
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     if (!ehRequest)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Request is Null");
+        OIC_LOG(ERROR, ES_RH_TAG, "Request is Null");
         return ehResult;
     }
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
+        OIC_LOG(ERROR, ES_RH_TAG, "Incoming payload not a representation");
         return ehResult;
     }
 
     OCRepPayload* input = (OCRepPayload*) (ehRequest->payload);
     if (!input)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Failed to parse");
+        OIC_LOG(ERROR, ES_RH_TAG, "Failed to parse");
         return ehResult;
     }
     char* tr;
@@ -307,13 +307,13 @@ OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
-        OC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+        OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
         return NULL;
     }
 
     if (ehRequest->resource == gProvResource.handle)
     {
-        OC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
+        OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
         OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_PROV);
         OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PS, gProvResource.ps);
         OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_TNT, gProvResource.tnt);
@@ -338,18 +338,18 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
 {
     (void) callback;
     OCEntityHandlerResult ehRet = OC_EH_OK;
-    OCEntityHandlerResponse response = { 0 };
+    OCEntityHandlerResponse response = { 0, 0, OC_EH_ERROR, 0, 0, { },{ 0 }, false };
     OCRepPayload* payload = NULL;
     if (entityHandlerRequest && (flag & OC_REQUEST_FLAG))
     {
         if (OC_REST_GET == entityHandlerRequest->method)
         {
-            OC_LOG(INFO, ES_RH_TAG, "Received GET request");
+            OIC_LOG(INFO, ES_RH_TAG, "Received GET request");
             ehRet = ProcessGetRequest(entityHandlerRequest, &payload);
         }
         else if (OC_REST_PUT == entityHandlerRequest->method)
         {
-            OC_LOG(INFO, ES_RH_TAG, "Received PUT request");
+            OIC_LOG(INFO, ES_RH_TAG, "Received PUT request");
 
             if (gProvResource.handle != NULL && entityHandlerRequest->resource == gProvResource.handle)
             {
@@ -357,14 +357,14 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             }
             else
             {
-                OC_LOG(ERROR, ES_RH_TAG, "Cannot process put");
+                OIC_LOG(ERROR, ES_RH_TAG, "Cannot process put");
                 ehRet = OC_EH_ERROR;
             }
         }
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             // TODO: As of now, POST request will be not received.
-            OC_LOG(INFO, ES_RH_TAG, "Received OC_REST_POST from client");
+            OIC_LOG(INFO, ES_RH_TAG, "Received OC_REST_POST from client");
             //ehRet = ProcessPostRequest (entityHandlerRequest, payload, sizeof(payload) - 1);
         }
 
@@ -386,7 +386,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             // Send the response
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG(ERROR, ES_RH_TAG, "Error sending response");
+                OIC_LOG(ERROR, ES_RH_TAG, "Error sending response");
                 ehRet = OC_EH_ERROR;
             }
         }

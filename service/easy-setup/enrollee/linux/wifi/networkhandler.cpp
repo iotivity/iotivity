@@ -39,13 +39,13 @@ static void ESActivateWifi()
 
 static void start()
 {
-    OC_LOG(INFO, LOG_TAG, "START");
+    OIC_LOG(INFO, LOG_TAG, "START");
     ESActivateWifi();
 }
 
 void ConnectToWiFiNetwork(const char *ssid, const char *pass, NetworkEventCallback cb)
 {
-    OC_LOG_V(INFO, LOG_TAG, "ConnectToWiFiNetwork %s %s",ssid,pass);
+    OIC_LOG_V(INFO, LOG_TAG, "ConnectToWiFiNetwork %s %s",ssid,pass);
     gPass = pass;
     gSsid = ssid;
     gNetworkEventCb = cb;

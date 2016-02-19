@@ -80,9 +80,9 @@ namespace OIC
         {
             for (unsigned int i = 0; i < list.size(); i++)
             {
-                OC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Device %d ID %s ", i + 1,
+                OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Device %d ID %s ", i + 1,
                         list[i]->getDeviceID().c_str());
-                OC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "From IP :%s", list[i]->getDevAddr().c_str());
+                OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "From IP :%s", list[i]->getDevAddr().c_str());
 
                 if (list[i]->getDevAddr() == host)
                 {
@@ -115,7 +115,7 @@ namespace OIC
         {
             if (hasError)
             {
-                OC_LOG(ERROR, ENROLEE_SECURITY_TAG,"Error!!! in OwnershipTransfer");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,"Error!!! in OwnershipTransfer");
 
                 std::shared_ptr< SecProvisioningResult > securityProvisioningStatus = nullptr;
                 std::string uuid;
@@ -128,14 +128,14 @@ namespace OIC
             }
             else
             {
-                OC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "ownershipTransferCb : Received provisioning results: ");
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "ownershipTransferCb : Received provisioning results: ");
                 for (unsigned int i = 0; i < result->size(); i++)
                 {
-                    OC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d for device",result->at(i).res);
+                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d for device",result->at(i).res);
                     std::string uuid;
                     convertUUIDToString(result->at(0).deviceId, uuid);
 
-                    OC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "UUID : %s",uuid.c_str());
+                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "UUID : %s",uuid.c_str());
                     std::shared_ptr< SecProvisioningResult > securityProvisioningStatus = nullptr;
                     securityProvisioningStatus = std::make_shared< SecProvisioningResult >(uuid,
                             ES_OK);
@@ -165,7 +165,7 @@ namespace OIC
                     pOwnedDevList);
             if (result != OC_STACK_OK)
             {
-                OC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Owned Discovery failed.");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Owned Discovery failed.");
                 ownershipStatus = DEVICE_NOT_OWNED;
                 //Throw exception
                 throw ESPlatformException(result);
@@ -173,7 +173,7 @@ namespace OIC
             }
             else if (pOwnedDevList.size())
             {
-                OC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found owned devices. Count =%d",
+                OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found owned devices. Count =%d",
                         pOwnedDevList.size());
                 std::shared_ptr< OC::OCSecureResource > ownedDevice =
                         findEnrollee(
@@ -188,14 +188,14 @@ namespace OIC
             }
             else
             {
-                OC_LOG(ERROR, ENROLEE_SECURITY_TAG, "No owned devices found.");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "No owned devices found.");
                 ownershipStatus = DEVICE_NOT_OWNED;
             }
 
             result = OCSecure::discoverUnownedDevices(ES_SEC_DISCOVERY_TIMEOUT, pUnownedDevList);
             if (result != OC_STACK_OK)
             {
-                OC_LOG(ERROR, ENROLEE_SECURITY_TAG, "UnOwned Discovery failed.");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "UnOwned Discovery failed.");
                 ownershipStatus = DEVICE_NOT_OWNED;
                 //Throw exception
                 throw ESPlatformException(result);
@@ -203,7 +203,7 @@ namespace OIC
             }
             else if (pUnownedDevList.size())
             {
-                OC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found Unowned devices. Count =%d",
+                OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found Unowned devices. Count =%d",
                         pUnownedDevList.size());
 
                 m_unownedDevice =
@@ -220,7 +220,7 @@ namespace OIC
                             CreateJustWorksOwnerTransferPayload;
                     OCSecure::setOwnerTransferCallbackData(OIC_JUST_WORKS, &justWorksCBData, NULL);
 
-                    OC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Transfering ownership for : %s ",
+                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Transfering ownership for : %s ",
                             m_unownedDevice->getDeviceID().c_str());
 
                     OC::ResultCallBack ownershipTransferCb = std::bind(
@@ -229,7 +229,7 @@ namespace OIC
 
                     if (m_unownedDevice->doOwnershipTransfer(ownershipTransferCb) != OC_STACK_OK)
                     {
-                        OC_LOG(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransferCallback is failed");
+                        OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransferCallback is failed");
                         ownershipStatus = DEVICE_NOT_OWNED;
                         //Throw exception
                         throw ESPlatformException(result);
@@ -239,7 +239,7 @@ namespace OIC
             }
             else
             {
-                OC_LOG(ERROR, ENROLEE_SECURITY_TAG, "No unSecure devices found.");
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "No unSecure devices found.");
                 ownershipStatus = DEVICE_NOT_OWNED;
 
                 return ownershipStatus;

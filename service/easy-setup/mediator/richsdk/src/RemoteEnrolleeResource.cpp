@@ -50,13 +50,13 @@ namespace OIC
         void RemoteEnrolleeResource::checkProvInformationCb(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& rep, const int eCode)
         {
-            OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : %s, eCode = %d",
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : %s, eCode = %d",
                     rep.getUri().c_str(),
                     eCode);
 
             if (eCode != 0)
             {
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "checkProvInformationCb : Provisioning is failed ");
                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
                         ProvisioningStatus >(ESResult::ES_ERROR, ESState::ES_PROVISIONING_ERROR);
@@ -72,10 +72,10 @@ namespace OIC
             rep.getValue(OC_RSRVD_ES_TNN, tnn);
             rep.getValue(OC_RSRVD_ES_CD, cd);
 
-            OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : ps - %d", ps);
-            OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : ps - %d", ps);
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                     "checkProvInformationCb : tnn - %s", tnn.c_str());
-            OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                     "checkProvInformationCb : cd - %s", cd.c_str());
 
             //Provisioning status check
@@ -83,7 +83,7 @@ namespace OIC
             {
                 if (tnn != std::string(m_ProvConfig.provData.WIFI.ssid))
                 {
-                    OC_LOG_V (ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
+                    OIC_LOG_V (ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
                             "checkProvInformationCb : Network SSID is not the same as the "
                             "SSID provisioned");
                     std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
@@ -95,7 +95,7 @@ namespace OIC
 
                 if (cd != std::string(m_ProvConfig.provData.WIFI.pwd))
                 {
-                    OC_LOG_V (ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
+                    OIC_LOG_V (ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
                             "checkProvInformationCb : Network PWD is not the same as the "
                             "PWD provisioned");
                     std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
@@ -105,7 +105,7 @@ namespace OIC
                     return;
                 }
 
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "checkProvInformationCb : Provisioning is success ");
                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
                         ProvisioningStatus >(ESResult::ES_OK, ESState::ES_PROVISIONING_SUCCESS);
@@ -114,7 +114,7 @@ namespace OIC
             }
             else
             {
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "checkProvInformationCb : Provisioning is failed ");
                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
                         ProvisioningStatus >(ESResult::ES_ERROR, ESState::ES_PROVISIONING_ERROR);
@@ -126,13 +126,13 @@ namespace OIC
         void RemoteEnrolleeResource::getProvStatusResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& rep, const int eCode)
         {
-            OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : %s, eCode = %d",
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : %s, eCode = %d",
                     rep.getUri().c_str(),
                     eCode);
 
             if (eCode != 0)
             {
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "getProvStatusResponse : Provisioning is failed ");
                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
                         ProvisioningStatus >(ESResult::ES_ERROR, ESState::ES_PROVISIONING_ERROR);
@@ -148,11 +148,11 @@ namespace OIC
             rep.getValue(OC_RSRVD_ES_TNN, tnn);
             rep.getValue(OC_RSRVD_ES_CD, cd);
 
-            OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : ps - %d",
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : ps - %d",
                     ps);
-            OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : tnn - %s",
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : tnn - %s",
                     tnn.c_str());
-            OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : cd - %s",
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : cd - %s",
                     cd.c_str());
 
             if (ps == ES_PS_NEED_PROVISIONING) //Indicates the need for provisioning
@@ -164,9 +164,9 @@ namespace OIC
                 provisioningRepresentation.setValue(OC_RSRVD_ES_CD,
                 std::string(m_ProvConfig.provData.WIFI.pwd));
 
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : ssid - %s",
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : ssid - %s",
                         m_ProvConfig.provData.WIFI.ssid);
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : pwd - %s",
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : pwd - %s",
                         m_ProvConfig.provData.WIFI.pwd);
 
                 m_ocResource->put(provisioningRepresentation, QueryParamsMap(),
@@ -179,7 +179,7 @@ namespace OIC
             }
             else if (ps == ES_PS_PROVISIONING_COMPLETED) //Indicates that provisioning is completed
             {
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "getProvStatusResponse : Provisioning is successful");
                 std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
                         ProvisioningStatus >(ESResult::ES_OK, ESState::ES_PROVISIONED_ALREADY);
@@ -240,7 +240,7 @@ namespace OIC
 
         void RemoteEnrolleeResource::onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource)
         {
-            OC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onDeviceDiscovered");
+            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onDeviceDiscovered");
 
             std::string resourceURI;
             std::string hostAddress;
@@ -250,12 +250,12 @@ namespace OIC
                 {
                     // Get the resource URI
                     resourceURI = resource->uri();
-                    OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                             "URI of the resource: %s", resourceURI.c_str());
 
                     // Get the resource host address
                     hostAddress = resource->host();
-                    OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                             "Host address of the resource: %s", hostAddress.c_str());
 
                     std::size_t foundIP =
@@ -267,25 +267,25 @@ namespace OIC
                         m_ocResource = resource;
                         m_discoveryResponse = true;
 
-                        OC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                        OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                                 "Found the device with the resource");
 
                         return;
                     }
                     else
                     {
-                        OC_LOG (ERROR, ES_REMOTE_ENROLLEE_RES_TAG, "NOT the intended resource.");
+                        OIC_LOG (ERROR, ES_REMOTE_ENROLLEE_RES_TAG, "NOT the intended resource.");
                     }
                 }
                 else
                 {
-                    OC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "Resource is invalid");
+                    OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "Resource is invalid");
                 }
 
             }
             catch(std::exception& e)
             {
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "Exception in foundResource: %s", e.what());
             }
         }
@@ -309,16 +309,16 @@ namespace OIC
                 std::vector< std::string > resTypes =
                 {   ES_PROV_RES_TYPE};
 
-                OC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "Before OCPlatform::constructResourceObject");
+                OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "Before OCPlatform::constructResourceObject");
 
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "m_host = %s",
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "m_host = %s",
                         m_wifiOnboardingconn.ipAddress);
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "ES_PROV_RES_URI = %s", ES_PROV_RES_URI);
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "m_connectivityType = %d",
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "ES_PROV_RES_URI = %s", ES_PROV_RES_URI);
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "m_connectivityType = %d",
                         m_ProvConfig.connType);
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "resTypes = %s",
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "resTypes = %s",
                         resTypes.at(0).c_str());
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "interface = %s", interface.at(0).c_str());
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "interface = %s", interface.at(0).c_str());
 
                 std::string host;
                 if(m_wifiOnboardingconn.isSecured)
@@ -343,7 +343,7 @@ namespace OIC
                     host.append(":55555");
                 }
 
-                OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "HOST = %s", host.c_str());
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "HOST = %s", host.c_str());
 
                 m_ocResource = OC::OCPlatform::constructResourceObject(host,
                         ES_PROV_RES_URI,
@@ -351,17 +351,17 @@ namespace OIC
                         true,
                         resTypes,
                         interface);
-                OC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                         "created OCResource : %s", m_ocResource->uri().c_str());
 
                 return ES_OK;
             }
             catch (OCException & e)
             {
-                OC_LOG_V(ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG_V(ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
                         "Exception for constructResourceObject : %s", e.reason().c_str());
+                return ES_ERROR;
             }
-
 #else
             std::string host("");
             std::string query("");
@@ -388,12 +388,12 @@ namespace OIC
             query.append("?rt=");
             query.append(ES_PROV_RES_TYPE);
 
-            OC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "Before OCPlatform::constructResourceObject");
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "Before OCPlatform::constructResourceObject");
 
-            OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "host = %s",
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "host = %s",
                     host.c_str());
-            OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "query = %s", query.c_str());
-            OC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "m_connectivityType = %d",
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "query = %s", query.c_str());
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "m_connectivityType = %d",
                     m_ProvConfig.connType);
 
             m_discoveryResponse = false;
@@ -405,7 +405,7 @@ namespace OIC
 
             if (result != OCStackResult::OC_STACK_OK)
             {
-                OC_LOG(ERROR,ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG(ERROR,ES_REMOTE_ENROLLEE_RES_TAG,
                         "Failed to create device using constructResourceObject");
                 return ES_ERROR;
             }
@@ -413,9 +413,9 @@ namespace OIC
 
             ESResult foundResponse = ESDiscoveryTimeout (DISCOVERY_TIMEOUT);
 
-            if (!m_discoveryResponse)
+            if (foundResponse ==ES_ERROR || !m_discoveryResponse)
             {
-                OC_LOG(ERROR,ES_REMOTE_ENROLLEE_RES_TAG,
+                OIC_LOG(ERROR,ES_REMOTE_ENROLLEE_RES_TAG,
                         "Failed to create device using constructResourceObject");
                 return ES_ERROR;
             }

@@ -49,14 +49,14 @@ namespace OIC
         RemoteEnrollee::shared_ptr EasySetup::findDeviceInProvisioningList (
                             const ProvConfig& provConfig, const WiFiOnboadingConnection& onboardingconn)
         {
-            OC_LOG(DEBUG,EASYSETUP_TAG,"Entered findDeviceInProvisioningList ()");
+            OIC_LOG(DEBUG,EASYSETUP_TAG,"Entered findDeviceInProvisioningList ()");
 
             std::vector< std::shared_ptr< RemoteEnrollee > >::iterator it;
 
             std::shared_ptr< RemoteEnrollee > remoteEnrollee = nullptr;
             for(auto it : m_activeEnrolleeList)
             {
-                OC_LOG_V(DEBUG,EASYSETUP_TAG,"entered the iterator");
+                OIC_LOG_V(DEBUG,EASYSETUP_TAG,"entered the iterator");
 
                 ProvConfig activeEnrolleConfig =  it->getProvConfig();
                 WiFiOnboadingConnection activeEnrolleConn = it->getOnboardConn();
@@ -70,7 +70,7 @@ namespace OIC
                 }
             }
 
-            OC_LOG_V(DEBUG,EASYSETUP_TAG,"Return nullptr for  findDeviceInProvisioningList call");
+            OIC_LOG_V(DEBUG,EASYSETUP_TAG,"Return nullptr for  findDeviceInProvisioningList call");
             return remoteEnrollee;
         }
 
@@ -95,7 +95,7 @@ namespace OIC
                 }
             }
 
-            OC_LOG_V(DEBUG,EASYSETUP_TAG,"Adding new device RemoteEnrollee list");
+            OIC_LOG_V(DEBUG,EASYSETUP_TAG,"Adding new device RemoteEnrollee list");
             m_activeEnrolleeList.push_back(remoteEnrollee);
             return true;
         }

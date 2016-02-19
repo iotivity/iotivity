@@ -44,26 +44,26 @@ void EventCallbackInApp(ESResult esResult, EnrolleeState enrolleeState)
 
 {
     string logmessage = "callback!!! in app";
-    OC_LOG(INFO,LOG_TAG,"callback!!! in app");
+    OIC_LOG(INFO,LOG_TAG,"callback!!! in app");
 
     if (esResult == ES_OK)
     {
         if (!g_OnBoardingSucceeded)
         {
-            OC_LOG(INFO,LOG_TAG,"Device is successfully OnBoarded");
+            OIC_LOG(INFO,LOG_TAG,"Device is successfully OnBoarded");
             logmessage += "Device is successfully OnBoarded";
             g_OnBoardingSucceeded = true;
         }
         else if (g_OnBoardingSucceeded & enrolleeState == ES_ON_BOARDED_STATE)
         {
-            OC_LOG(INFO,LOG_TAG,"Device is successfully OnBoared with SoftAP");
+            OIC_LOG(INFO,LOG_TAG,"Device is successfully OnBoared with SoftAP");
             logmessage += "Device is successfully OnBoared with SoftAP";
             g_ProvisioningSucceeded = true;
         }
 
         else if (enrolleeState == ES_PROVISIONED_STATE)
         {
-            OC_LOG(INFO,LOG_TAG,"Device is provisioned");
+            OIC_LOG(INFO,LOG_TAG,"Device is provisioned");
             logmessage += "Device is provisioned";
             g_ProvisioningSucceeded = true;
         }
@@ -73,7 +73,7 @@ void EventCallbackInApp(ESResult esResult, EnrolleeState enrolleeState)
     {
         if (g_OnBoardingSucceeded)
         {
-            OC_LOG_V(ERROR,LOG_TAG,
+            OIC_LOG_V(ERROR,LOG_TAG,
                     "Failure in Provisioning. \
                                         Current Enrollee State: %d",
                     enrolleeState);
@@ -83,7 +83,7 @@ void EventCallbackInApp(ESResult esResult, EnrolleeState enrolleeState)
         }
         else if (g_ProvisioningSucceeded)
         {
-            OC_LOG_V(ERROR,LOG_TAG,
+            OIC_LOG_V(ERROR,LOG_TAG,
                     "Failure in connect to target network. \
                                         Current Enrollee State: %d",
                     enrolleeState);
@@ -138,14 +138,14 @@ static void init_easysetup(void *data, Evas_Object *obj, void *event_info)
     copy_files();
     if (InitEasySetup(CT_ADAPTER_IP, ssid, passwd, EventCallbackInApp) == ES_ERROR)
     {
-        OC_LOG(ERROR,LOG_TAG,"OnBoarding Failed");
+        OIC_LOG(ERROR,LOG_TAG,"OnBoarding Failed");
         logmessage = logmessage + "OnBoarding Failed. Connect to " + ssid + " pasword= " + passwd;
         ecore_main_loop_thread_safe_call_sync((void * (*)(void *))updateGroupLog, &logmessage);
         return;
 
     }
     g_isInitialized = true;
-    OC_LOG_V(ERROR,LOG_TAG, "OnBoarding succeeded. Successfully connected to ssid : %s",
+    OIC_LOG_V(ERROR,LOG_TAG, "OnBoarding succeeded. Successfully connected to ssid : %s",
             ssid);
     logmessage = logmessage + "OnBoarding succeeded. Successfully connected to ssid:" + ssid;
     ecore_main_loop_thread_safe_call_sync((void * (*)(void *))updateGroupLog, &logmessage);
@@ -153,12 +153,12 @@ static void init_easysetup(void *data, Evas_Object *obj, void *event_info)
 
 void StartProvisioning(void *data, Evas_Object *obj, void *event_info)
 {
-    OC_LOG(INFO,LOG_TAG,"StartProvisioning");
+    OIC_LOG(INFO,LOG_TAG,"StartProvisioning");
     string logmessage = "StartProvisioning\n";
 
     if (InitProvisioning() == ES_ERROR)
     {
-        OC_LOG(ERROR,LOG_TAG,"Init Provisioning Failed");
+        OIC_LOG(ERROR,LOG_TAG,"Init Provisioning Failed");
         logmessage += "Init Provisioning Failed\n";
         return;
     }
@@ -167,7 +167,7 @@ void StartProvisioning(void *data, Evas_Object *obj, void *event_info)
 
     if (pthread_create(&thread_handle, NULL, listeningFunc, NULL))
     {
-        OC_LOG(ERROR,LOG_TAG,"Thread creation failed");
+        OIC_LOG(ERROR,LOG_TAG,"Thread creation failed");
 
     }
 
@@ -183,7 +183,7 @@ void *listeningFunc(void*)
 
         if (result != OC_STACK_OK)
         {
-            OC_LOG(ERROR,LOG_TAG,"OCStack stop error");
+            OIC_LOG(ERROR,LOG_TAG,"OCStack stop error");
         }
 
         // To minimize CPU utilization we may wish to do this with sleep
