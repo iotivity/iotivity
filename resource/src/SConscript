@@ -37,12 +37,14 @@ oclib_env.AppendUnique(CPPPATH = [
 		'../c_common/ocrandom/include',
 		'../csdk/logger/include',
 		'../oc_logger/include',
-		'../csdk/connectivity/lib/libcoap-4.1.1'
+		'../csdk/connectivity/lib/libcoap-4.1.1',
+		'../csdk/connectivity/api'
 		])
 
 oclib_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
 oclib_env.AppendUnique(LIBS = ['octbstack', 'oc_logger'])
+oclib_env.AppendUnique(LIBS = ['connectivity_abstraction'])
 
 target_os = env.get('TARGET_OS')
 if target_os == 'linux':
@@ -73,7 +75,8 @@ oclib_src = [
 		'OCRepresentation.cpp',
 		'InProcServerWrapper.cpp',
 		'InProcClientWrapper.cpp',
-		'OCResourceRequest.cpp'
+		'OCResourceRequest.cpp',
+		'CAManager.cpp'
 	]
 
 oclib = oclib_env.SharedLibrary('oc', oclib_src)
@@ -105,6 +108,8 @@ oclib_env.UserInstallTargetHeader(header_dir + 'AttributeValue.h', 'resource', '
 oclib_env.UserInstallTargetHeader(header_dir + 'OCResource.h', 'resource', 'OCResource.h')
 oclib_env.UserInstallTargetHeader(header_dir + 'OCResourceRequest.h', 'resource', 'OCResourceRequest.h')
 oclib_env.UserInstallTargetHeader(header_dir + 'OCResourceResponse.h', 'resource', 'OCResourceResponse.h')
+
+oclib_env.UserInstallTargetHeader(header_dir + 'CAManager.h', 'resource', 'CAManager.h')
 
 # Add Provisioning library
 if target_os in ['linux', 'android'] and env.get('SECURED') == '1':
