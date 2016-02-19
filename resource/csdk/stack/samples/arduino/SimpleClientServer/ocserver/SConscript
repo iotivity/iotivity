@@ -21,9 +21,6 @@
 Import('env')
 
 transport = env.get('TARGET_TRANSPORT')
-if 'BLE' in transport:
-        # Only supported for ethernet and WiFi.
-        Return()
 
 arduino_simplecs_env = env.Clone()
 ######################################################################

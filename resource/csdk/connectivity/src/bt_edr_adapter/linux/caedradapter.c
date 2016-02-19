@@ -25,7 +25,7 @@
 #include "caedradapter.h"
 #include "logger.h"
 
-#define TAG PCF("CA")
+#define TAG PCF("OIC_CA")
 
 static CANetworkPacketReceivedCallback g_edrReceivedCallback = NULL;
 static ca_thread_pool_t g_threadPoolHandle = NULL;
@@ -53,10 +53,11 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
         .GetnetInfo = CAGetEDRInterfaceInformation,
         .readData = CAReadEDRData,
         .stopAdapter = CAStopEDR,
-        .terminate = CATerminateEDR
+        .terminate = CATerminateEDR,
+        .cType = CA_ADAPTER_RFCOMM_BTEDR
     };
 
-    registerCallback(handler, CA_ADAPTER_RFCOMM_BTEDR);
+    registerCallback(handler);
 
     return CA_STATUS_OK;
 }

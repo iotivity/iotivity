@@ -28,6 +28,7 @@
 #include "cacommon.h"
 #include "caadapterinterface.h"
 #include "cathreadpool.h"
+#include "cainterface.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -35,13 +36,16 @@ extern "C"
 #endif
 
 /**
- * TCP Server Information for IPv4 TCP transport
+ * TCP Session Information for IPv4 TCP transport
  */
 typedef struct
 {
-    char addr[MAX_ADDR_STR_SIZE_CA];    /**< TCP Server address */
-    CASocket_t u4tcp;                   /**< TCP Server port */
-} CATCPServerInfo_t;
+    CASecureEndpoint_t sep;             /**< secure endpoint information */
+    int fd;                             /**< file descriptor info */
+    void *recvData;                     /**< received data from remote device*/
+    size_t recvDataLen;                 /**< received data length */
+    size_t totalDataLen;                /**< total data length */
+} CATCPSessionInfo_t;
 
 /**
  * API to initialize TCP Interface.
@@ -146,6 +150,15 @@ CAResult_t CAStopTCP();
  * Configuration information will be deleted from further use.
  */
 void CATerminateTCP();
+
+/**
+ * Set connected callback and disconnected callback to process KeepAlive.
+ * connection informations are delivered these callbacks.
+ * @param[in]   ConnHandler     Connected callback.
+ * @param[in]   DisconnHandler  Disconnected Callback.
+ */
+void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectedCallback ConnHandler,
+                                CAKeepAliveDisconnectedCallback DisconnHandler);
 
 #ifdef __cplusplus
 } /* extern "C" */

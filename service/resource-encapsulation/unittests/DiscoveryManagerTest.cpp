@@ -34,10 +34,13 @@ using namespace OIC::Service;
 using namespace OC::OCPlatform;
 
 constexpr char RESOURCEURI[]{ "/a/TemperatureSensor" };
+constexpr char SECOND_RESOURCEURI[]{ "/a/Light" };
 constexpr char RESOURCETYPE[]{ "resource.type" };
+constexpr char SECOND_RESOURCETYPE[]{ "resource.type.second" };
 constexpr char RESOURCEINTERFACE[]{ "oic.if.baseline" };
 constexpr int DEFAULT_DISCOVERYTASK_DELAYTIME = 3000;
 
+void resourceDiscoveredForTwoTimesCall(RCSRemoteResourceObject::Ptr) {}
 void resourceDiscoveredForCall(RCSRemoteResourceObject::Ptr) {}
 void resourceDiscoveredForNeverCall(RCSRemoteResourceObject::Ptr) {}
 
@@ -77,6 +80,11 @@ public:
         server = RCSResourceObject::Builder(RESOURCEURI, RESOURCETYPE, RESOURCEINTERFACE).build();
     }
 
+    void createSecondResource()
+    {
+        secondServer = RCSResourceObject::Builder(SECOND_RESOURCEURI, SECOND_RESOURCETYPE, RESOURCEINTERFACE).build();
+    }
+
     void proceed()
     {
         cond.notify_all();
@@ -93,6 +101,7 @@ private:
     std::condition_variable cond;
     std::mutex mutex;
     RCSResourceObject::Ptr server;
+    RCSResourceObject::Ptr secondServer;
     RCSRemoteResourceObject::Ptr object;
     DiscoveryTaskPtr discoveryTask;
 };
@@ -141,6 +150,46 @@ TEST_F(DiscoveryManagerTest, resourceIsSupportedPresenceAndAfterDiscovering)
     createResource();
     waitForDiscoveryTask();
     stopPresence();
+}
+
+TEST_F(DiscoveryManagerTest, discoveryRequestByMultipleResourceTypesAndFindResourceOfOneResourceType)
+{
+    std::vector<std::string> resourceTypes{RESOURCETYPE, SECOND_RESOURCETYPE};
+    const std::string uri  = "/oic/res";
+
+    createSecondResource();
+
+    mocks.ExpectCallFunc(resourceDiscoveredForCall).Do(
+        [this](RCSRemoteResourceObject::Ptr){ proceed();});
+
+    RCSDiscoveryManager::getInstance()->discoverResourceByTypes(RCSAddress::multicast(),
+            uri, resourceTypes, resourceDiscoveredForCall);
+
+    waitForDiscoveryTask();
+}
+
+TEST_F(DiscoveryManagerTest, discoveryRequestByMultipleResourceTypesAndFindResourcesOfTwoResourceTypes)
+{
+    std::vector<std::string> resourceTypes{RESOURCETYPE, SECOND_RESOURCETYPE};
+    const std::string uri  = "/oic/res";
+    unsigned int callTimes = 0;
+
+    createResource();
+    createSecondResource();
+
+    mocks.OnCallFunc(resourceDiscoveredForTwoTimesCall).Do(
+        [this, &callTimes](RCSRemoteResourceObject::Ptr){ 
+            callTimes++;
+            if (callTimes == 2) proceed();
+        }
+    );
+
+    RCSDiscoveryManager::getInstance()->discoverResourceByTypes(RCSAddress::multicast(),
+            uri, resourceTypes, resourceDiscoveredForTwoTimesCall);
+
+    waitForDiscoveryTask();
+
+    EXPECT_EQ(resourceTypes.size(), callTimes);
 }
 
 TEST_F(DiscoveryManagerTest, cancelDiscoveryTaskAfterDiscoveryResource)

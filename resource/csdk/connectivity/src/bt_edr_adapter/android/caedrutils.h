@@ -96,7 +96,7 @@ void CAEDRUpdateDeviceState(CAConnectedState_t state, const char *address);
  * Add device object to the list.
  * @param[in]  state            connection state object.
  */
-void CAEDRNativeAddDeviceStateToList(state_t *state);
+void CAEDRNativeAddDeviceStateToList(CAConnectedDeviceInfo_t *state);
 
 /**
  * Check whether the device exist in the list or not.
@@ -189,6 +189,13 @@ jobject CAEDRNativeGetDeviceSocketBaseAddr(JNIEnv *env, const char* remoteAddres
  * @return length of list.
  */
 uint32_t CAEDRGetSocketListLength();
+
+/**
+ * Get device information from list.
+ * @param[in]   remoteAddress   remote address.
+ * @return  Device information object or NULL.
+ */
+CAConnectedDeviceInfo_t *CAEDRGetDeviceInfoFromAddress(const char *remoteAddress);
 
 #ifdef __cplusplus
 } /* extern "C" */

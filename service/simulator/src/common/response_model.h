@@ -30,18 +30,11 @@ class ResponseModel
     public:
         friend class RequestModelBuilder;
 
-        SimulatorResult verifyResponse(const OC::OCRepresentation &rep);
+        SimulatorResult verifyResponse(const OC::OCRepresentation &ocRep);
 
     private:
         ResponseModel(int code);
         void setRepSchema(SimulatorResourceModelSP &repSchema);
-        SimulatorResult validateAttributeInteger(SimulatorResourceModel::Attribute &attrSchema,
-                const OC::OCRepresentation::AttributeItem &ocAttribute);
-        SimulatorResult validateAttributeDouble(SimulatorResourceModel::Attribute &attrSchema,
-                                                const OC::OCRepresentation::AttributeItem &ocAttribute);
-        SimulatorResult validateAttributeString(SimulatorResourceModel::Attribute &attrSchema,
-                                                const OC::OCRepresentation::AttributeItem &ocAttribute);
-
         int m_code;
         SimulatorResourceModelSP m_repSchema;
 };

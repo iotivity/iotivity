@@ -411,7 +411,9 @@ public class OcResource {
      *
      * @throws OcException
      */
-    public native void cancelObserve() throws OcException;
+    public void cancelObserve() throws OcException{
+        this.cancelObserve(OcPlatform.getPlatformQualityOfService());
+    }
 
     /**
      * Method to cancel the observation on the resource

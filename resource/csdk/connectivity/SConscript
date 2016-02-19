@@ -31,6 +31,8 @@ if 'ALL' in transport:
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','LE_ADAPTER'])
 	elif target_os == 'tizen':
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
+	elif target_os == 'android':
+		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER', 'NFC_ADAPTER'])
 	elif target_os in['darwin','ios']:
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','NO_EDR_ADAPTER','NO_LE_ADAPTER'])
 	else:
@@ -60,14 +62,24 @@ else:
 		env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER'])
 
 	if with_tcp == True:
-		if target_os in['linux']:
-			env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER'])
+		if target_os in ['linux', 'tizen', 'android']:
+			env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER', 'WITH_TCP'])
 			print "CA Transport is TCP"
 		else:
 			print "CA Transport TCP is not supported "
 			Exit(1)
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_TCP_ADAPTER'])
+
+	if 'NFC' in transport:
+		if target_os in['android']:
+			env.AppendUnique(CPPDEFINES = ['NFC_ADAPTER'])
+			print "CA Transport is NFC"
+		else:
+			print "CA Transport NFC is not supported "
+			Exit(1)
+	else:
+		env.AppendUnique(CPPDEFINES = ['NO_NFC_ADAPTER'])
 
 env.SConscript('./src/SConscript')
 

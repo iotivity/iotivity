@@ -317,7 +317,7 @@ TEST_F(ResourceContainerBundleAPITest, ResourceServerCreatedWhenRegisterResource
     m_pBundleResource->m_resourceType = "container.test";
 
     mocks.ExpectCallFunc(ResourceContainerImpl::buildResourceObject).With(m_pBundleResource->m_uri,
-            m_pBundleResource->m_resourceType).Return(nullptr);
+            m_pBundleResource->m_resourceType, m_pBundleResource->m_interface).Return(nullptr);
 
     m_pResourceContainer->registerResource(m_pBundleResource);
 }

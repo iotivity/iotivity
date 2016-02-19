@@ -15,6 +15,7 @@ function build_all()
 		build_linux_unsecured_with_rm $1 $2
 		build_linux_unsecured_with_rd $1 $2
 		build_linux_secured_with_rd $1 $2
+		build_simulator $1 $2
 	fi
 
 	build_android $1 $2
@@ -150,6 +151,9 @@ function build_tizen()
 	echo "*********** Build for Tizen octbstack lib and sample *************"
 	scons -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true RELEASE=$1 $2
 
+	echo "*********** Build for Tizen octbstack lib and sample with Security*************"
+	scons -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true SECURED=1 RELEASE=$1 $2
+
 	echo "*********** Build for Tizen octbstack lib and sample with Routing Manager*************"
 	scons -f resource/csdk/stack/samples/tizen/build/SConscript TARGET_OS=tizen TARGET_TRANSPORT=IP LOGGING=true ROUTING=GW RELEASE=$1 $2
 }
@@ -175,6 +179,12 @@ function build_darwin() # Mac OSx and iOS
 	scons TARGET_OS=ios TARGET_ARCH=arm64 SYS_VERSION=7.0 RELEASE=$1 $2
 }
 
+function build_simulator()
+{
+	echo "*********** Build for simulator plugin *************"
+	scons SIMULATOR=1 RELEASE=$1 $2
+}
+
 function unit_tests()
 {
 	echo "*********** Unit test Start *************"
@@ -189,7 +199,7 @@ function  help()
 	echo "Usage:"
         echo "  build:"
         echo "     `basename $0` <target_build>"
-	echo "      Allowed values for <target_build>: all, linux_unsecured, linux_secured, linux_unsecured_with_ra, linux_secured_with_ra, linux_unsecured_with_rd, linux_secured_with_rd, android, arduino, tizen, darwin"
+	echo "      Allowed values for <target_build>: all, linux_unsecured, linux_secured, linux_unsecured_with_ra, linux_secured_with_ra, linux_unsecured_with_rd, linux_secured_with_rd, android, arduino, tizen, simulator darwin"
 	echo "      Note: \"linux\" will build \"linux_unsecured\", \"linux_secured\", \"linux_unsecured_with_ra\", \"linux_secured_with_ra\", \"linux_secured_with_rd\" & \"linux_unsecured_with_rd\"."
 	echo "      Any selection will build both debug and release versions of all available targets in the scope you've"
 	echo "      selected. To choose any specific command, please use the SCons commandline directly. Please refer"
@@ -267,6 +277,10 @@ then
 	then
 		build_tizen true
 		build_tizen false
+	elif [ $1 = 'simulator' ]
+    then
+		build_simulator true
+		build_simulator false
 	elif [ $1 = 'darwin' ]
 	then
 		build_darwin true

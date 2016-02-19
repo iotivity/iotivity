@@ -60,6 +60,12 @@ void CAEDRInitialize(ca_thread_pool_t handle);
 void CAEDRTerminate();
 
 /**
+ * destroy interface object and terminate the interface.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAEDRDestroyJniInterface();
+
+/**
  * Initialize JNI object.
  */
 void CAEDRCoreJniInit();

@@ -183,7 +183,7 @@ exit:
     cJSON_Delete(jsonRoot);
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (ERROR, TAG, "JSONToPstatBin failed");
+        OIC_LOG (ERROR, TAG, "JSONToPstatBin failed");
         DeletePstatBinData(pstat);
         pstat = NULL;
     }
@@ -195,7 +195,7 @@ exit:
  */
 static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    OC_LOG (INFO, TAG, "HandlePstatGetRequest  processing GET request");
+    OIC_LOG (INFO, TAG, "HandlePstatGetRequest  processing GET request");
    // Convert ACL data into JSON for transmission
     char* jsonStr = BinToPstatJSON(gPstat);
 
@@ -218,7 +218,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     cJSON *postJson = NULL;
-    OC_LOG (INFO, TAG, "HandlePstatPutRequest  processing PUT request");
+    OIC_LOG (INFO, TAG, "HandlePstatPutRequest  processing PUT request");
 
     if (ehRequest->resource)
     {
@@ -240,11 +240,11 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
             {
                 gPstat->isOp = true;
                 gPstat->cm = NORMAL;
-                OC_LOG (INFO, TAG, "CommitHash is valid and isOp is TRUE");
+                OIC_LOG (INFO, TAG, "CommitHash is valid and isOp is TRUE");
             }
             else
             {
-                OC_LOG (INFO, TAG, "CommitHash is not valid");
+                OIC_LOG (INFO, TAG, "CommitHash is not valid");
             }
         }
         cJSON *omJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_OM_NAME);
@@ -279,7 +279,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
     //Send payload to request originator
     if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
     {
-        OC_LOG (ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
+        OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
     }
     cJSON_Delete(postJson);
     return ehRet;
@@ -297,7 +297,7 @@ OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
     // This method will handle REST request (GET/POST) for /oic/sec/pstat
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -332,7 +332,7 @@ OCStackResult CreatePstatResource()
 
     if (ret != OC_STACK_OK)
     {
-        OC_LOG (FATAL, TAG, "Unable to instantiate pstat resource");
+        OIC_LOG (FATAL, TAG, "Unable to instantiate pstat resource");
         DeInitPstatResource();
     }
     return ret;

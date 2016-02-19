@@ -36,7 +36,7 @@
 #include "org_iotivity_ca_CaEdrInterface.h"
 
 //#define DEBUG_MODE
-#define TAG PCF("CA_EDR_MONITOR")
+#define TAG PCF("OIC_CA_EDR_MONITOR")
 
 static JavaVM *g_jvm;
 static jobject g_context;
@@ -127,7 +127,7 @@ Java_org_iotivity_ca_CaEdrInterface_caEdrStateChangedCallback(JNIEnv *env, jobje
 
     if (NULL == g_networkChangeCb)
     {
-        OIC_LOG_V(DEBUG, TAG, "gNetworkChangeCb is null", status);
+        OIC_LOG(DEBUG, TAG, "g_networkChangeCb is null");
         return;
     }
 
@@ -158,14 +158,23 @@ Java_org_iotivity_ca_CaEdrInterface_caEdrStateChangedCallback(JNIEnv *env, jobje
     if (state_on == status)
     {
         CANetworkStatus_t newStatus = CA_INTERFACE_UP;
+
+        CAResult_t res = CAEDRStartUnicastServer(false);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CAEDRStartUnicastServer failed");
+            return;
+        }
         CAEDRServerStartAcceptThread();
         g_networkChangeCb(newStatus);
     }
     else if (state_off == status)
     {
         CANetworkStatus_t newStatus = CA_INTERFACE_DOWN;
+        CAEDRServerStop();
+        CAEDRNativeSocketCloseToAll(env);
+        CAEDRNativeRemoveAllDeviceState();
         CAEDRNativeRemoveAllDeviceSocket(env);
-        CAEDRNativeRemoveAllDeviceState(env);
         g_networkChangeCb(newStatus);
     }
 }

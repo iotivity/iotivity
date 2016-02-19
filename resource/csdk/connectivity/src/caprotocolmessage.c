@@ -24,7 +24,6 @@
 // For glibc information on feature test macros,
 // Refer http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
 //
-// This file requires #define use due to random() and srandom()
 // For details on compatibility and glibc support,
 // Refer http://www.gnu.org/software/libc/manual/html_node/BSD-Random.html
 #define _DEFAULT_SOURCE
@@ -41,23 +40,10 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "ocrandom.h"
+#include "cacommonutil.h"
 
-// ARM GCC compiler doesnt define srandom function.
-#if defined(ARDUINO) && !defined(ARDUINO_ARCH_SAM)
-#define HAVE_SRANDOM 1
-#endif
-
-#define TAG "CA_PRTCL_MSG"
-
-/**
- * @def VERIFY_NON_NULL_RET
- * @brief Macro to verify the validity of input argument
- */
-#define VERIFY_NON_NULL_RET(arg, log_tag, log_message,ret) \
-    if (NULL == arg ){ \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
-        return ret; \
-    }
+#define TAG "OIC_CA_PRTCL_MSG"
 
 #define CA_BUFSIZE (128)
 #define CA_PDU_MIN_SIZE (4)
@@ -65,16 +51,11 @@
 
 static const char COAP_URI_HEADER[] = "coap://[::]/";
 
-static unsigned int SEED = 0;
-
 CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                    CARequestInfo_t *outReqInfo)
 {
-    if (NULL == pdu || NULL == outReqInfo)
-    {
-        OIC_LOG(ERROR, TAG, "parameter is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(pdu, TAG, "pdu");
+    VERIFY_NON_NULL(outReqInfo, TAG, "outReqInfo");
 
     uint32_t code = CA_NOT_FOUND;
     CAResult_t ret = CAGetInfoFromPDU(pdu, endpoint, &code, &(outReqInfo->info));
@@ -86,11 +67,8 @@ CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *en
 CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *outResInfo,
                                     const CAEndpoint_t *endpoint)
 {
-    if (NULL == pdu || NULL == outResInfo)
-    {
-        OIC_LOG(ERROR, TAG, "parameter is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(pdu, TAG, "pdu");
+    VERIFY_NON_NULL(outResInfo, TAG, "outResInfo");
 
     uint32_t code = CA_NOT_FOUND;
     CAResult_t ret = CAGetInfoFromPDU(pdu, endpoint, &code, &(outResInfo->info));
@@ -102,11 +80,7 @@ CAResult_t CAGetResponseInfoFromPDU(const coap_pdu_t *pdu, CAResponseInfo_t *out
 CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                  CAErrorInfo_t *errorInfo)
 {
-    if (!pdu)
-    {
-        OIC_LOG(ERROR, TAG, "parameter is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(pdu, TAG, "pdu");
 
     uint32_t code = 0;
     CAResult_t ret = CAGetInfoFromPDU(pdu, endpoint, &code, &errorInfo->info);
@@ -127,6 +101,18 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
     // and ACKNOWLEDGE can use empty message when code is empty.
     if (CA_MSG_RESET == info->type || (CA_EMPTY == code && CA_MSG_ACKNOWLEDGE == info->type))
     {
+        if (CA_EMPTY != code)
+        {
+            OIC_LOG(ERROR, TAG, "reset is not empty message");
+            return NULL;
+        }
+
+        if (info->payloadSize > 0 || info->payload || info->token || info->tokenLength > 0)
+        {
+            OIC_LOG(ERROR, TAG, "Empty message has unnecessary data after messageID");
+            return NULL;
+        }
+
         OIC_LOG(DEBUG, TAG, "code is empty");
         if (!(pdu = CAGeneratePDUImpl((code_t) code, info, endpoint, NULL, transport)))
         {
@@ -136,7 +122,7 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
     }
     else
     {
-        if (CA_MSG_ACKNOWLEDGE != info->type && info->resourceUri)
+        if (info->resourceUri)
         {
             uint32_t length = strlen(info->resourceUri);
             if (CA_MAX_URI_LENGTH < length)
@@ -187,21 +173,16 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
 coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
                        const CAEndpoint_t *endpoint)
 {
-    if (NULL == data)
-    {
-        OIC_LOG(ERROR, TAG, "data is null");
-        return NULL;
-    }
+    VERIFY_NON_NULL_RET(data, TAG, "data", NULL);
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
 
     coap_transport_type transport;
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         transport = coap_get_tcp_header_type_from_initbyte(((unsigned char *)data)[0] >> 4);
     }
     else
-#else
-    (void) endpoint;
 #endif
     {
         transport = coap_udp;
@@ -225,8 +206,8 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
         return NULL;
     }
 
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         OIC_LOG(INFO, TAG, "there is no version info in coap header");
     }
@@ -266,9 +247,9 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
     VERIFY_NON_NULL_RET(transport, TAG, "transport", NULL);
 
     unsigned int length = COAP_MAX_PDU_SIZE;
-#ifdef TCP_ADAPTER
+#ifdef WITH_TCP
     unsigned int msgLength = 0;
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         if (options)
         {
@@ -322,8 +303,8 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
     OIC_LOG_V(DEBUG, TAG, "transport type: %d, payload size: %zu",
               *transport, info->payloadSize);
 
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         coap_add_length(pdu, *transport, msgLength);
     }
@@ -367,8 +348,8 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
 
 #ifdef WITH_BWT
     if (CA_ADAPTER_GATT_BTLE != endpoint->adapter
-#ifdef TCP_ADAPTER
-            && CA_ADAPTER_TCP != endpoint->adapter
+#ifdef WITH_TCP
+            && !CAIsSupportedCoAPOverTCP(endpoint->adapter)
 #endif
             )
     {
@@ -404,19 +385,10 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
 
 CAResult_t CAParseURI(const char *uriInfo, coap_list_t **optlist)
 {
-    if (NULL == uriInfo)
-    {
-        OIC_LOG(ERROR, TAG, "uriInfo is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(uriInfo, TAG, "uriInfo");
+    VERIFY_NON_NULL(optlist, TAG, "optlist");
 
     OIC_LOG_V(DEBUG, TAG, "url : %s", uriInfo);
-
-    if (NULL == optlist)
-    {
-        OIC_LOG(ERROR, TAG, "optlist is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
 
     /* split arg into Uri-* options */
     coap_uri_t uri;
@@ -464,11 +436,7 @@ CAResult_t CAParseURI(const char *uriInfo, coap_list_t **optlist)
 CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target,
                              coap_list_t **optlist)
 {
-    if (!optlist)
-    {
-        OIC_LOG(ERROR, TAG, "optlist is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(optlist, TAG, "optlist");
 
     if ((target != COAP_OPTION_URI_PATH) && (target != COAP_OPTION_URI_QUERY))
     {
@@ -524,7 +492,7 @@ CAResult_t CAParseUriPartial(const unsigned char *str, size_t length, int target
 CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **optlist)
 {
     (void)code;
-    VERIFY_NON_NULL_RET(info, TAG, "info is NULL", CA_STATUS_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(info, TAG, "info", CA_STATUS_INVALID_PARAM);
 
     OIC_LOG_V(DEBUG, TAG, "parse Head Opt: %d", info->numOptions);
 
@@ -568,7 +536,8 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
     {
         coap_list_t* node = NULL;
         uint8_t buf[3] = {0};
-        switch (info->payloadFormat) {
+        switch (info->payloadFormat)
+        {
             case CA_FORMAT_APPLICATION_CBOR:
                 node = CACreateNewOptionNode(
                         COAP_OPTION_CONTENT_FORMAT,
@@ -595,7 +564,8 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
     {
         coap_list_t* node = NULL;
         uint8_t buf[3] = {0};
-        switch (info->acceptFormat) {
+        switch (info->acceptFormat)
+        {
             case CA_FORMAT_APPLICATION_CBOR:
                 node = CACreateNewOptionNode(
                         COAP_OPTION_ACCEPT,
@@ -624,11 +594,7 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
 
 coap_list_t *CACreateNewOptionNode(uint16_t key, uint32_t length, const char *data)
 {
-    if (!data)
-    {
-        OIC_LOG(ERROR, TAG, "invalid pointer parameter");
-        return NULL;
-    }
+    VERIFY_NON_NULL_RET(data, TAG, "data", NULL);
 
     coap_option *option = coap_malloc(sizeof(coap_option) + length + 1);
     if (!option)
@@ -715,21 +681,18 @@ uint32_t CAGetOptionCount(coap_opt_iterator_t opt_iter)
 CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                             uint32_t *outCode, CAInfo_t *outInfo)
 {
-    if (!pdu || !outCode || !outInfo)
-    {
-        OIC_LOG(ERROR, TAG, "NULL pointer param");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(pdu, TAG, "pdu");
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint");
+    VERIFY_NON_NULL(outCode, TAG, "outCode");
+    VERIFY_NON_NULL(outInfo, TAG, "outInfo");
 
     coap_transport_type transport;
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         transport = coap_get_tcp_header_type_from_initbyte(((unsigned char *)pdu->hdr)[0] >> 4);
     }
     else
-#else
-    (void) endpoint;
 #endif
     {
         transport = coap_udp;
@@ -749,14 +712,16 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
 
     outInfo->numOptions = count;
 
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         // set type
         outInfo->type = CA_MSG_NONCONFIRM;
         outInfo->payloadFormat = CA_FORMAT_UNDEFINED;
     }
     else
+#else
+    (void) endpoint;
 #endif
     {
         // set type
@@ -979,27 +944,17 @@ exit:
 CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo,
                              const CAEndpoint_t *endpoint)
 {
-    if (NULL == pdu_hdr)
-    {
-        OIC_LOG(ERROR, TAG, "pdu_hdr is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
-
-    if (NULL == outInfo)
-    {
-        OIC_LOG(ERROR, TAG, "outInfo is null");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(pdu_hdr, TAG, "pdu_hdr");
+    VERIFY_NON_NULL(outInfo, TAG, "outInfo");
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint");
 
     coap_transport_type transport;
-#ifdef TCP_ADAPTER
-    if (CA_ADAPTER_TCP == endpoint->adapter)
+#ifdef WITH_TCP
+    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
     {
         transport = coap_get_tcp_header_type_from_initbyte(((unsigned char *)pdu_hdr)[0] >> 4);
     }
     else
-#else
-    (void) endpoint;
 #endif
     {
         transport = coap_udp;
@@ -1029,36 +984,12 @@ CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo,
 
 CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
 {
-    if (!token)
-    {
-        OIC_LOG(ERROR, TAG, "invalid token pointer");
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(token, TAG, "token");
 
     if ((tokenLength > CA_MAX_TOKEN_LEN) || (0 == tokenLength))
     {
         OIC_LOG(ERROR, TAG, "invalid token length");
         return CA_STATUS_INVALID_PARAM;
-    }
-
-    if (SEED == 0)
-    {
-#ifdef ARDUINO
-        SEED = now();
-#else
-        SEED = time(NULL);
-#endif
-        if (SEED == (unsigned int)((time_t)-1))
-        {
-            OIC_LOG(ERROR, TAG, "seed is not made");
-            SEED = 0;
-            return CA_STATUS_FAILED;
-        }
-#if HAVE_SRANDOM
-        srandom(SEED);
-#else
-        srand(SEED);
-#endif
     }
 
     // memory allocation
@@ -1069,16 +1000,7 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    // set random byte
-    for (uint8_t index = 0; index < tokenLength; index++)
-    {
-        // use valid characters
-#ifdef ARDUINO
-        temp[index] = rand() & 0x00FF;
-#else
-        temp[index] = random() & 0x00FF;
-#endif
-    }
+    OCFillRandomMem((uint8_t *)temp, tokenLength);
 
     // save token
     *token = temp;
@@ -1125,7 +1047,8 @@ uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
     }
 
     coap_option_def_t* def = coap_opt_def(key);
-    if(NULL != def && coap_is_var_bytes(def) && 0 == len) {
+    if (NULL != def && coap_is_var_bytes(def) && 0 == len)
+    {
         // A 0 length option is permitted in CoAP but the
         // rest or the stack is unaware of variable byte encoding
         // should remain that way so a 0 byte of length 1 is inserted.
@@ -1141,11 +1064,7 @@ uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
 
 CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void *pdu, uint32_t size)
 {
-    if (NULL == pdu)
-    {
-        OIC_LOG(ERROR, TAG, "pdu is null");
-        return CA_MSG_NONCONFIRM;
-    }
+    VERIFY_NON_NULL_RET(pdu, TAG, "pdu", CA_MSG_NONCONFIRM);
 
     // pdu minimum size is 4 byte.
     if (size < CA_PDU_MIN_SIZE)
@@ -1161,11 +1080,7 @@ CAMessageType_t CAGetMessageTypeFromPduBinaryData(const void *pdu, uint32_t size
 
 uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size)
 {
-    if (NULL == pdu)
-    {
-        OIC_LOG(ERROR, TAG, "pdu is null");
-        return 0;
-    }
+    VERIFY_NON_NULL_RET(pdu, TAG, "pdu", 0);
 
     // pdu minimum size is 4 byte.
     if (size < CA_PDU_MIN_SIZE)
@@ -1181,11 +1096,7 @@ uint16_t CAGetMessageIdFromPduBinaryData(const void *pdu, uint32_t size)
 
 CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size)
 {
-    if (NULL == pdu)
-    {
-        OIC_LOG(ERROR, TAG, "pdu is null");
-        return CA_NOT_FOUND;
-    }
+    VERIFY_NON_NULL_RET(pdu, TAG, "pdu", CA_NOT_FOUND);
 
     // pdu minimum size is 4 byte.
     if (size < CA_PDU_MIN_SIZE)
@@ -1223,3 +1134,15 @@ CAPayloadFormat_t CAConvertFormat(uint8_t format)
             return CA_FORMAT_UNSUPPORTED;
     }
 }
+
+#ifdef WITH_TCP
+bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter)
+{
+    if (CA_ADAPTER_GATT_BTLE == adapter || CA_ADAPTER_RFCOMM_BTEDR == adapter
+            || CA_ADAPTER_TCP == adapter)
+    {
+        return true;
+    }
+    return false;
+}
+#endif

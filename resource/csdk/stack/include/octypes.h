@@ -137,6 +137,12 @@ extern "C" {
 /** To represent resource type with presence.*/
 #define OC_RSRVD_RESOURCE_TYPE_PRESENCE "oic.wk.ad"
 
+/** To represent resource type with device.*/
+#define OC_RSRVD_RESOURCE_TYPE_DEVICE   "oic.wk.d"
+
+/** To represent resource type with platform.*/
+#define OC_RSRVD_RESOURCE_TYPE_PLATFORM "oic.wk.p"
+
 /** To represent interface.*/
 #define OC_RSRVD_INTERFACE              "if"
 
@@ -154,6 +160,9 @@ extern "C" {
 
 /** To represent default interface.*/
 #define OC_RSRVD_INTERFACE_DEFAULT      "oic.if.baseline"
+
+/** To represent read-only interface.*/
+#define OC_RSRVD_INTERFACE_READ         "oic.if.r"
 
 /** To represent ll interface.*/
 #define OC_RSRVD_INTERFACE_LL           "oic.if.ll"
@@ -245,10 +254,10 @@ extern "C" {
 #define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
 
 /** Device specification version.*/
-#define OC_SPEC_VERSION                "0.9.2"
+#define OC_SPEC_VERSION                "core.1.0.0"
 
 /** Device Data Model version.*/
-#define OC_DATA_MODEL_VERSION          "sec.0.95"
+#define OC_DATA_MODEL_VERSION          "res.1.0.0"
 
 /**
  *  These provide backward compatibility - their use is deprecated.
@@ -331,14 +340,15 @@ typedef enum
 
     /** RFCOMM over Bluetooth EDR.*/
     OC_ADAPTER_RFCOMM_BTEDR = (1 << 2),
-
 #ifdef RA_ADAPTER
     /**Remote Access over XMPP.*/
     OC_ADAPTER_REMOTE_ACCESS = (1 << 3),
 #endif
     /** CoAP over TCP.*/
-    OC_ADAPTER_TCP           = (1 << 4)
+    OC_ADAPTER_TCP           = (1 << 4),
 
+    /** NFC Transport for Messaging.*/
+    OC_ADAPTER_NFC           = (1 << 5)
 } OCTransportAdapter;
 
 /**
@@ -460,7 +470,10 @@ typedef enum
     CT_ADAPTER_REMOTE_ACCESS = (1 << 19),
 #endif
     /** CoAP over TCP.*/
-    CT_ADAPTER_TCP          = (1 << 20),
+    CT_ADAPTER_TCP     = (1 << 20),
+
+    /** NFC Transport.*/
+    CT_ADAPTER_NFC     = (1 << 21),
 
     /** Insecure transport is the default (subject to change).*/
 
@@ -695,6 +708,12 @@ typedef enum
     OC_STACK_PDM_IS_NOT_INITIALIZED,
     OC_STACK_DUPLICATE_UUID,
     OC_STACK_INCONSISTENT_DB,
+
+    /**
+     * Error code from OTM
+     * This error is plused from DTLS interface when handshake failure happens
+     */
+    OC_STACK_AUTHENTICATION_FAILURE,
 
     /** Insert all new error codes here!.*/
     #ifdef WITH_PRESENCE
@@ -1014,7 +1033,6 @@ typedef struct OCRepPayload
 typedef struct OCResourcePayload
 {
     char* uri;
-    uint8_t* sid;
     OCStringLL* types;
     OCStringLL* interfaces;
     uint8_t bitmap;
@@ -1108,10 +1126,15 @@ typedef struct OCResourceCollectionPayload
 typedef struct
 {
     OCPayload base;
+
+    uint8_t* sid;
+
+    /** A special case for handling RD address. */
+    char* baseURI;
+
     /** This structure holds the old /oic/res response. */
     OCResourcePayload *resources;
-    /** This structure holds the collection response for the /oic/res. */
-    OCResourceCollectionPayload *collectionResources;
+
 } OCDiscoveryPayload;
 
 /**
@@ -1142,7 +1165,6 @@ typedef struct
 typedef struct
 {
     OCPayload base;
-    char* uri;
     uint8_t* sid;
     char* deviceName;
     char* specVersion;

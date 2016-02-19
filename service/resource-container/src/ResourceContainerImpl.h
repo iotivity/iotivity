@@ -65,7 +65,7 @@ namespace OIC
                 void unregisterBundleSo(const std::string &id);
 
                 // methods from ResourceContainerBundleAPI
-                void registerResource(BundleResource::Ptr resource);
+                int registerResource(BundleResource::Ptr resource);
                 void unregisterResource(BundleResource::Ptr resource);
 
                 void getBundleConfiguration(const std::string &bundleId, configInfo *configOutput);
@@ -81,7 +81,7 @@ namespace OIC
 
                 static ResourceContainerImpl *getImplInstance();
                 static RCSResourceObject::Ptr buildResourceObject(const std::string &strUri,
-                        const std::string &strResourceType);
+                        const std::string &strResourceType, const std::string &strInterface);
 
                 void startBundle(const std::string &bundleId);
                 void stopBundle(const std::string &bundleId);

@@ -23,6 +23,4 @@ import oic.simulator.clientcontroller.remoteresource.RemoteResource;
  */
 public interface IPostUIListener {
     public void onPostCompleted(RemoteResource resource);
-
-    public void onPostFailed(RemoteResource resource);
 }

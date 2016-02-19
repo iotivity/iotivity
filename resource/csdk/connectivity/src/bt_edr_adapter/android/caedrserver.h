@@ -46,13 +46,15 @@ void CAEDRServerJniInit();
 /**
  * Initialize server for EDR.
  * @param[in]   handle           thread pool handle object.
+ * @return ::CA_STATUS_OK or Appropriate error code.
  */
-void CAEDRServerInitialize(ca_thread_pool_t handle);
+CAResult_t CAEDRServerInitialize(ca_thread_pool_t handle);
 
 /**
  * Start Accept Thread.
+ * @return ::CA_STATUS_OK or Appropriate error code.
  */
-void CAEDRServerStartAcceptThread();
+CAResult_t CAEDRServerStartAcceptThread();
 
 /**
  * Start unicast server.

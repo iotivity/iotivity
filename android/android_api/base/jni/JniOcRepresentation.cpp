@@ -793,6 +793,22 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcRepresentation_getUri
 
 /*
 * Class:     org_iotivity_base_OcRepresentation
+* Method:    getHost
+* Signature: ()Ljava/lang/String;
+*/
+JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcRepresentation_getHost
+(JNIEnv *env, jobject thiz)
+{
+    LOGD("OcRepresentation_getHost");
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    if (!rep) return nullptr;
+
+    std::string uri(rep->getHost());
+    return env->NewStringUTF(uri.c_str());
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
 * Method:    setUri
 * Signature: (Ljava/lang/String;)V
 */

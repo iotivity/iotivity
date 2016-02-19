@@ -26,7 +26,8 @@ import os, sys
 Import('env')
 
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+src_dir = env.get('SRC_DIR')
+SConscript(src_dir + '/service/third_party_libs.scons', 'lib_env')
 simulator_env = lib_env.Clone()
 
 #Raml Parser
@@ -36,7 +37,7 @@ target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-simulator_env.AppendUnique(CPPPATH = ['inc', 'src/client-controller', 'src/service-provider', 'src/common'])
+simulator_env.AppendUnique(CPPPATH = ['inc', 'src/client', 'src/server', 'src/common'])
 simulator_env.AppendUnique(CPPPATH = [
 		'../../resource/include/',
 		'../../resource/csdk/stack/include',
@@ -68,7 +69,7 @@ java_headers.append(os.path.join(java_headers[0], 'solaris'))
 simulator_env.AppendUnique(CPPPATH = java_headers)
 
 simulator_env.AppendUnique(CPPPATH = ['../../extlibs/cjson'])
-simulator_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap','RamlParser','YamlParser'])
+simulator_env.PrependUnique(LIBS = ['oc', 'octbstack', 'RamlParser'])
 simulator_env.AppendUnique(LIBS = ['pthread'])
 
 simulator_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
@@ -82,8 +83,8 @@ simulator_src = [env.Glob('src/*.cpp')
                 ]
 simulatorsdk = simulator_env.SharedLibrary('SimulatorManager', simulator_src)
 
-simulator_env.InstallTarget(simulatorsdk, 'libSimulator')
+simulator_env.InstallTarget(simulatorsdk, 'libSimulatorManager')
 
 #Build sample application
 SConscript('examples/server/SConscript')
-SConscript('examples/client-controller/SConscript')
+SConscript('examples/client/SConscript')

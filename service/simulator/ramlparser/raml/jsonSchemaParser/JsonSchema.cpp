@@ -460,12 +460,12 @@ namespace RAML
             if (exclusiveMax)
             {
                 if (exclusiveMax->type == cJSON_True)
-                    property->setMaxDouble( --(Max->valuedouble));
+                    property->setMax( --(Max->valuedouble));
                 else
-                    property->setMaxDouble(Max->valuedouble);
+                    property->setMax(Max->valuedouble);
             }
             else
-                property->setMaxDouble(Max->valuedouble);
+                property->setMax(Max->valuedouble);
         }
         cJSON *Min = cJSON_GetObjectItem(childProperties, "minimum");
         if (Min)
@@ -474,12 +474,12 @@ namespace RAML
             if (exclusiveMin)
             {
                 if (exclusiveMin->type == cJSON_True)
-                    property->setMinDouble( ++(Min->valuedouble));
+                    property->setMin( ++(Min->valuedouble));
                 else
-                    property->setMinDouble(Min->valuedouble);
+                    property->setMin(Min->valuedouble);
             }
             else
-                property->setMinDouble(Min->valuedouble);
+                property->setMin(Min->valuedouble);
         }
         cJSON *multipleOf = cJSON_GetObjectItem(childProperties, "multipleOf");
         if (multipleOf)

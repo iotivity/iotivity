@@ -16,8 +16,11 @@
 
 package oic.simulator.clientcontroller.view.dialogs;
 
+import java.io.FileInputStream;
+
 import oic.simulator.clientcontroller.utils.Constants;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -100,10 +103,11 @@ public class LoadRAMLDialog extends TitleAreaDialog {
                         .getWorkbench().getDisplay().getActiveShell(), SWT.NONE);
                 fileDialog
                         .setFilterExtensions(Constants.BROWSE_RAML_FILTER_EXTENSIONS);
-                configFilePath = fileDialog.open();
-                if (null == configFilePath) {
-                    System.out.println("Config file path is null");
+                String path = fileDialog.open();
+                if (null == path) {
                     configFilePath = "";
+                } else {
+                    configFilePath = path;
                 }
                 locationTxt.setText(configFilePath);
             }
@@ -112,6 +116,25 @@ public class LoadRAMLDialog extends TitleAreaDialog {
 
     public String getConfigFilePath() {
         return configFilePath;
+    }
+
+    @Override
+    protected void okPressed() {
+        configFilePath = locationTxt.getText();
+        if (null == configFilePath) {
+            return;
+        }
+        try {
+            new FileInputStream(configFilePath);
+        } catch (Exception e) {
+            MessageDialog
+                    .openError(getShell(), "Invalid File",
+                            "File doesn't exist. Either the file path or file name is invalid.");
+            // TODO: Instead of MessageDialog, errors may be shown on wizard
+            // itself.
+            return;
+        }
+        close();
     }
 
     @Override

@@ -23,6 +23,8 @@ package org.iotivity.base.examples;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -83,7 +85,6 @@ public class SimpleClient extends Activity implements
                 0,         // Uses randomly available port
                 QualityOfService.LOW
         );
-
         msg("Configuring platform.");
         OcPlatform.Configure(platformConfig);
 
@@ -488,7 +489,7 @@ public class SimpleClient extends Activity implements
         }
         msg(mLight.toString());
 
-        if (++mObserveCount == 11) {
+        if ((++mObserveCount) == 11) {
             msg("Cancelling Observe...");
             try {
                 mFoundLightResource.cancelObserve();
@@ -611,4 +612,18 @@ public class SimpleClient extends Activity implements
         mLight = new Light();
         mObserveCount = 0;
     }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Log.d(TAG, "onNewIntent with changes sending broadcast IN ");
+
+        Intent i = new Intent();
+        i.setAction(intent.getAction());
+        i.putExtra(NfcAdapter.EXTRA_NDEF_MESSAGES,
+                intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES));
+        sendBroadcast(i);
+        Log.d(TAG, "Initialize Context again resetting");
+    }
+
 }

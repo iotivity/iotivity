@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _OCANDROID_H_
-#define _OCANDROID_H_
+#ifndef OC_ANDROID_H_
+#define OC_ANDROID_H_
 
 #ifdef __ANDROID__
 #include <string>

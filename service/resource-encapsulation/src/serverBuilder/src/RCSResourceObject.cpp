@@ -30,6 +30,7 @@
 #include "ResourceAttributesConverter.h"
 #include "ResourceAttributesUtils.h"
 #include "RCSRequest.h"
+#include "RCSRepresentation.h"
 
 #include "logger.h"
 #include "OCPlatform.h"
@@ -55,11 +56,19 @@ namespace
         return base & ~target;
     }
 
-    template <typename RESPONSE>
-    OCEntityHandlerResult sendResponse(RCSResourceObject& resource,
-            const std::shared_ptr< OC::OCResourceRequest >& ocRequest, RESPONSE&& response)
+    inline bool requestContainsInterface(const std::shared_ptr< OC::OCResourceRequest >& request,
+            const std::string& interface)
     {
-        auto ocResponse = response.getHandler()->buildResponse(resource);
+        auto it = request->getQueryParameters().find(OC::Key::INTERFACESKEY);
+
+        if (it == request->getQueryParameters().end()) return false;
+
+        return it->second == interface;
+    }
+
+    OCEntityHandlerResult sendResponse(const std::shared_ptr< OC::OCResourceRequest >& ocRequest,
+            const std::shared_ptr< OC::OCResourceResponse >& ocResponse)
+    {
         ocResponse->setRequestHandle(ocRequest->getRequestHandle());
         ocResponse->setResourceHandle(ocRequest->getResourceHandle());
 
@@ -72,10 +81,18 @@ namespace
         }
         catch (const OC::OCException& e)
         {
-            OC_LOG_V(WARNING, LOG_TAG, "Error (%s)", e.what());
+            OIC_LOG_V(WARNING, LOG_TAG, "Error (%s)", e.what());
         }
 
         return OC_EH_ERROR;
+    }
+
+
+    template <typename RESPONSE>
+    OCEntityHandlerResult sendResponse(RCSResourceObject& resource,
+            const std::shared_ptr< OC::OCResourceRequest >& ocRequest, RESPONSE&& response)
+    {
+        return sendResponse(ocRequest, response.getHandler()->buildResponse(resource));
     }
 
     RCSResourceAttributes getAttributesFromOCRequest(
@@ -87,13 +104,13 @@ namespace
 
     template< typename HANDLER, typename RESPONSE =
             typename std::decay<HANDLER>::type::result_type >
-    RESPONSE invokeHandler(RCSResourceAttributes& attrs,
+    RESPONSE invokeHandler(const RCSResourceObject::Ptr& resObj, RCSResourceAttributes& attrs,
             const std::shared_ptr< OC::OCResourceRequest >& ocRequest,
             std::shared_ptr< HANDLER > handler)
     {
         if (handler)
         {
-            return (*handler)(RCSRequest{ ocRequest->getResourceUri() }, attrs);
+            return (*handler)(RCSRequest{ resObj, ocRequest }, attrs);
         }
 
         return RESPONSE::defaultAction();
@@ -122,8 +139,29 @@ namespace
         }
         return {};
     }
-} // unnamed namespace
 
+    OCEntityHandlerResult handleBatchInterfaceGetRequest(
+            const std::shared_ptr< OC::OCResourceRequest >& request,
+            const RCSResourceObject* resourceObject)
+    {
+        RCSRepresentation rcsRep;
+
+        for (const auto& bound : resourceObject->getBoundResources())
+        {
+            rcsRep.addChild(bound->toRepresentation());
+        }
+
+        auto response = std::make_shared< OC::OCResourceResponse >();
+
+        response->setResponseResult(OC_EH_OK);
+        response->setErrorCode(200);
+        response->setResourceRepresentation(
+                RCSRepresentation::toOCRepresentation(std::move(rcsRep)));
+
+        return sendResponse(request, response);
+    }
+
+} // unnamed namespace
 
 namespace OIC
 {
@@ -133,11 +171,35 @@ namespace OIC
         RCSResourceObject::Builder::Builder(const std::string& uri, const std::string& type,
                 const std::string& interface) :
                 m_uri{ uri },
-                m_type{ type },
-                m_interface{ interface },
+                m_types{ type },
+                m_interfaces{ interface },
                 m_properties{ OC_DISCOVERABLE | OC_OBSERVABLE },
                 m_resourceAttributes{ }
         {
+        }
+
+        RCSResourceObject::Builder& RCSResourceObject::Builder::addInterface(
+                const std::string& interface)
+        {
+            return addInterface(std::string{ interface });
+        }
+
+        RCSResourceObject::Builder& RCSResourceObject::Builder::addInterface(
+                std::string&& interface)
+        {
+            m_interfaces.push_back(std::move(interface));
+            return *this;
+        }
+
+        RCSResourceObject::Builder& RCSResourceObject::Builder::addType(const std::string& type)
+        {
+            return addType(std::string{ type });
+        }
+
+        RCSResourceObject::Builder& RCSResourceObject::Builder::addType(std::string&& type)
+        {
+            m_types.push_back(std::move(type));
+            return *this;
         }
 
         RCSResourceObject::Builder& RCSResourceObject::Builder::setDiscoverable(
@@ -154,6 +216,12 @@ namespace OIC
             return *this;
         }
 
+        RCSResourceObject::Builder& RCSResourceObject::Builder::setSecureFlag(
+            bool secureFlag)
+        {
+            m_properties = ::makePropertyFlags(m_properties, OC_SECURE, secureFlag);
+            return *this;
+        }
         RCSResourceObject::Builder& RCSResourceObject::Builder::setAttributes(
                 const RCSResourceAttributes& attrs)
         {
@@ -173,31 +241,47 @@ namespace OIC
             OCResourceHandle handle{ nullptr };
 
             RCSResourceObject::Ptr server {
-                new RCSResourceObject{ m_properties, std::move(m_resourceAttributes) } };
+                new RCSResourceObject{ m_uri, m_properties, std::move(m_resourceAttributes) } };
 
             OC::EntityHandler entityHandler{ std::bind(&RCSResourceObject::entityHandler,
-                    server.get(), std::placeholders::_1) };
+                    std::weak_ptr< RCSResourceObject >{ server }, std::placeholders::_1) };
 
             typedef OCStackResult (*RegisterResource)(OCResourceHandle&, std::string&,
                     const std::string&, const std::string&, OC::EntityHandler, uint8_t);
 
             invokeOCFunc(static_cast<RegisterResource>(OC::OCPlatform::registerResource),
-                    handle, m_uri, m_type, m_interface, entityHandler, m_properties);
+                    handle, m_uri, m_types[0], m_interfaces[0], entityHandler, m_properties);
+
+            std::for_each(m_interfaces.begin() + 1, m_interfaces.end(),
+                    [&handle](const std::string& interfaceName){
+                invokeOCFunc(OC::OCPlatform::bindInterfaceToResource, handle, interfaceName);
+            });
+
+            std::for_each(m_types.begin() + 1, m_types.end(),
+                    [&handle](const std::string& typeName){
+                invokeOCFunc(OC::OCPlatform::bindTypeToResource, handle, typeName);
+            });
 
             server->m_resourceHandle = handle;
+            server->m_interfaces = m_interfaces;
+            server->m_types = m_types;
 
             return server;
         }
 
 
-        RCSResourceObject::RCSResourceObject(uint8_t properties, RCSResourceAttributes&& attrs) :
-                m_properties { properties },
+        RCSResourceObject::RCSResourceObject(const std::string& uri,
+                uint8_t properties, RCSResourceAttributes&& attrs) :
+                m_properties{ properties },
+                m_uri{ uri },
+                m_interfaces{ },
+                m_types{ },
                 m_resourceHandle{ },
                 m_resourceAttributes{ std::move(attrs) },
                 m_getRequestHandler{ },
                 m_setRequestHandler{ },
-                m_autoNotifyPolicy { AutoNotifyPolicy::UPDATED },
-                m_setRequestHandlerPolicy { SetRequestHandlerPolicy::NEVER },
+                m_autoNotifyPolicy{ AutoNotifyPolicy::UPDATED },
+                m_setRequestHandlerPolicy{ SetRequestHandlerPolicy::NEVER },
                 m_attributeUpdatedListeners{ },
                 m_lockOwner{ },
                 m_mutex{ },
@@ -216,7 +300,7 @@ namespace OIC
                 }
                 catch (...)
                 {
-                    OC_LOG(WARNING, LOG_TAG, "Failed to unregister resource.");
+                    OIC_LOG(WARNING, LOG_TAG, "Failed to unregister resource.");
                 }
             }
         }
@@ -408,6 +492,57 @@ namespace OIC
             return m_setRequestHandlerPolicy;
         }
 
+        void RCSResourceObject::bindResource(const RCSResourceObject::Ptr& resource)
+        {
+            if (!resource || resource.get() == this)
+            {
+                throw RCSInvalidParameterException("The resource is invalid!");
+            }
+
+            invokeOCFunc(OC::OCPlatform::bindResource,
+                    m_resourceHandle, resource->m_resourceHandle);
+
+            std::lock_guard< std:: mutex > lock{ m_mutexForBoundResources };
+            m_boundResources.push_back(resource);
+        }
+
+        void RCSResourceObject::unbindResource(const RCSResourceObject::Ptr& resource)
+        {
+            if (!resource || resource.get() == this)
+            {
+                throw RCSInvalidParameterException("The resource is invalid!");
+            }
+
+            invokeOCFunc(OC::OCPlatform::unbindResource,
+                    m_resourceHandle, resource->m_resourceHandle);
+
+            std::lock_guard< std:: mutex > lock{ m_mutexForBoundResources };
+            m_boundResources.erase(std::find(m_boundResources.begin(), m_boundResources.end(),
+                    resource));
+        }
+
+        std::vector< RCSResourceObject::Ptr > RCSResourceObject::getBoundResources() const
+        {
+            std::lock_guard< std:: mutex > lock{ m_mutexForBoundResources };
+            return m_boundResources;
+        }
+
+        std::vector< std::string > RCSResourceObject::getInterfaces() const
+        {
+            return m_interfaces;
+        }
+
+        std::vector< std::string > RCSResourceObject::getTypes() const
+        {
+            return m_types;
+        }
+
+        RCSRepresentation RCSResourceObject::toRepresentation() const
+        {
+            WeakGuard lock{*this};
+            return RCSRepresentation{ m_uri, m_interfaces, m_types, m_resourceAttributes };
+         }
+
         void RCSResourceObject::autoNotify(bool isAttributesChanged) const
         {
             autoNotify(isAttributesChanged, m_autoNotifyPolicy);
@@ -424,9 +559,14 @@ namespace OIC
         }
 
         OCEntityHandlerResult RCSResourceObject::entityHandler(
+                const std::weak_ptr< RCSResourceObject >& weakRes,
                 const std::shared_ptr< OC::OCResourceRequest >& request)
         {
-            OC_LOG(WARNING, LOG_TAG, "entityHandler");
+            auto resource = weakRes.lock();
+
+            if (!resource) return OC_EH_ERROR;
+
+            OIC_LOG(WARNING, LOG_TAG, "entityHandler");
             if (!request)
             {
                 return OC_EH_ERROR;
@@ -436,22 +576,22 @@ namespace OIC
             {
                 if (request->getRequestHandlerFlag() & OC::RequestHandlerFlag::RequestFlag)
                 {
-                    return handleRequest(request);
+                    return resource->handleRequest(request);
                 }
 
                 if (request->getRequestHandlerFlag() & OC::RequestHandlerFlag::ObserverFlag)
                 {
-                    return handleObserve(request);
+                    return resource->handleObserve(request);
                 }
             }
             catch (const std::exception& e)
             {
-                OC_LOG_V(WARNING, LOG_TAG, "Failed to handle request : %s", e.what());
+                OIC_LOG_V(WARNING, LOG_TAG, "Failed to handle request : %s", e.what());
                 throw;
             }
             catch (...)
             {
-                OC_LOG(WARNING, LOG_TAG, "Failed to handle request.");
+                OIC_LOG(WARNING, LOG_TAG, "Failed to handle request.");
                 throw;
             }
 
@@ -468,7 +608,7 @@ namespace OIC
                 return handleRequestGet(request);
             }
 
-            if (request->getRequestType() == "PUT")
+            if (request->getRequestType() == "POST")
             {
                 return handleRequestSet(request);
             }
@@ -481,9 +621,18 @@ namespace OIC
         {
             assert(request != nullptr);
 
+            if (requestContainsInterface(request, OC::BATCH_INTERFACE))
+            {
+                return handleBatchInterfaceGetRequest(request, this);
+            }
+
             auto attrs = getAttributesFromOCRequest(request);
 
-            return sendResponse(*this, request, invokeHandler(attrs, request, m_getRequestHandler));
+            auto response = invokeHandler(shared_from_this(), attrs, request, m_getRequestHandler);
+
+            if (response.isSeparate()) return OC_EH_SLOW;
+
+            return sendResponse(*this, request, response);
         }
 
         bool RCSResourceObject::applyAcceptanceMethod(const RCSSetResponse& response,
@@ -496,7 +645,7 @@ namespace OIC
             auto replaced = requestHandler->applyAcceptanceMethod(response.getAcceptanceMethod(),
                     *this, requstAttrs);
 
-            OC_LOG_V(WARNING, LOG_TAG, "replaced num %zu", replaced.size());
+            OIC_LOG_V(WARNING, LOG_TAG, "replaced num %zu", replaced.size());
             for (const auto& attrKeyValPair : replaced)
             {
                 std::shared_ptr< AttributeUpdatedListener > foundListener;
@@ -525,7 +674,9 @@ namespace OIC
             assert(request != nullptr);
 
             auto attrs = getAttributesFromOCRequest(request);
-            auto response = invokeHandler(attrs, request, m_setRequestHandler);
+            auto response = invokeHandler(shared_from_this(), attrs, request, m_setRequestHandler);
+
+            if (response.isSeparate()) return OC_EH_SLOW;
 
             auto attrsChanged = applyAcceptanceMethod(response, attrs);
 
@@ -534,7 +685,7 @@ namespace OIC
                 autoNotify(attrsChanged, m_autoNotifyPolicy);
                 return sendResponse(*this, request, response);
             } catch (const RCSPlatformException& e) {
-                OC_LOG_V(ERROR, LOG_TAG, "Error : %s ", e.what());
+                OIC_LOG_V(ERROR, LOG_TAG, "Error : %s ", e.what());
                 return OC_EH_ERROR;
             }
         }

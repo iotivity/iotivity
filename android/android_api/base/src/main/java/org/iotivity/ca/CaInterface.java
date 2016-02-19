@@ -23,6 +23,7 @@
 package org.iotivity.ca;
 
 import android.content.Context;
+import android.app.Activity;
 
 public class CaInterface {
     static {
@@ -30,5 +31,5 @@ public class CaInterface {
         System.loadLibrary("ca-interface");
     }
 
-    public static native void initialize(Context context);
+    public static native void initialize(Activity activity, Context context);
 }

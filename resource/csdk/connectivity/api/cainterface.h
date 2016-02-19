@@ -38,29 +38,6 @@ extern "C"
 {
 #endif
 
-/**
- * Callback function type for request delivery.
- * @param[out]   object       Endpoint object from which the request is received.
- *                            It contains endpoint address based on the connectivity type.
- * @param[out]   requestInfo  Info for resource model to understand about the request.
- */
-typedef void (*CARequestCallback)(const CAEndpoint_t *object,
-                                  const CARequestInfo_t *requestInfo);
-
-/**
- * Callback function type for response delivery.
- * @param[out]   object           Endpoint object from which the response is received.
- * @param[out]   responseInfo     Identifier which needs to be mapped with response.
- */
-typedef void (*CAResponseCallback)(const CAEndpoint_t *object,
-                                   const CAResponseInfo_t *responseInfo);
-/**
- * Callback function type for error.
- * @param[out]   object           remote device information.
- * @param[out]   errorInfo        CA Error information.
- */
-typedef void (*CAErrorCallback)(const CAEndpoint_t *object,
-                                const CAErrorInfo_t *errorInfo);
 #ifdef RA_ADAPTER
 
 /**
@@ -87,6 +64,28 @@ typedef struct
 
 #endif //RA_ADAPTER
 
+#ifdef TCP_ADAPTER
+/**
+ * Callback function to pass the connection information from CA to RI.
+ * @param[out]   object           remote device information.
+ */
+typedef void (*CAKeepAliveConnectedCallback)(const CAEndpoint_t *object);
+
+/**
+ * Callback function to pass the disconnection information from CA to RI.
+ * @param[out]   object           remote device information.
+ */
+typedef void (*CAKeepAliveDisconnectedCallback)(const CAEndpoint_t *object);
+
+/**
+ * Register connected callback and disconnected callback to process KeepAlive.
+ * connection informations are delivered these callbacks.
+ * @param[in]   ConnHandler     Connected callback.
+ * @param[in]   DisconnHandler  Disconnected Callback.
+ */
+void CARegisterKeepAliveHandler(CAKeepAliveConnectedCallback ConnHandler,
+                                CAKeepAliveDisconnectedCallback DisconnHandler);
+#endif
 /**
  * Initialize the connectivity abstraction module.
  * It will initialize adapters, thread pool and other modules based on the platform

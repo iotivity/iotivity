@@ -64,7 +64,7 @@ namespace OIC
         {
             for (RCSResourceAttributes::iterator it = attrs.begin(); it != attrs.end(); ++it)
             {
-                OC_LOG_V(INFO, CONTAINER_TAG, "set attribute \(%s)'",
+                OIC_LOG_V(INFO, CONTAINER_TAG, "set attribute \(%s)'",
                          std::string(it->key() + "\', with " + it->value().toString()).c_str());
 
                 m_resourceAttributes[it->key()] = it->value();
@@ -74,13 +74,12 @@ namespace OIC
         void BundleResource::setAttribute(const std::string &key,
                                           RCSResourceAttributes::Value &&value, bool notify)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, "set attribute \(%s)'", std::string(key + "\', with " +
+            OIC_LOG_V(INFO, CONTAINER_TAG, "set attribute \(%s)'", std::string(key + "\', with " +
                      value.toString()).c_str());
 
             m_resourceAttributes[key] = value;
 
-            if (notify && m_pNotiReceiver)
-                m_pNotiReceiver->onNotificationReceived(m_uri);
+            sendNotification();
         }
 
         void BundleResource::setAttribute(const std::string &key, RCSResourceAttributes::Value &&value)
@@ -90,9 +89,15 @@ namespace OIC
 
         RCSResourceAttributes::Value BundleResource::getAttribute(const std::string &key)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, "get attribute \'(%s)" , std::string(key + "\'").c_str());
+            OIC_LOG_V(INFO, CONTAINER_TAG, "get attribute \'(%s)" , std::string(key + "\'").c_str());
 
             return m_resourceAttributes.at(key);
+        }
+
+        void BundleResource::sendNotification()
+        {
+            if (m_pNotiReceiver)
+                m_pNotiReceiver->onNotificationReceived(m_uri);
         }
     }
 }

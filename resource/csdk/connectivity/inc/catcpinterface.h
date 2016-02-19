@@ -46,9 +46,9 @@ extern "C"
  * @param[in]  dataLength    Length of data in bytes.
  * @pre  Callback must be registered using CAIPSetPacketReceiveCallback().
  */
-typedef void (*CATCPPacketReceivedCallback)(const CAEndpoint_t *endpoint,
-                                           const void *data,
-                                           uint32_t dataLength);
+typedef void (*CATCPPacketReceivedCallback)(const CASecureEndpoint_t *endpoint,
+                                            const void *data,
+                                            uint32_t dataLength);
 
 /**
   * Callback to notify error in the TCP adapter.
@@ -60,7 +60,17 @@ typedef void (*CATCPPacketReceivedCallback)(const CAEndpoint_t *endpoint,
   * @pre  Callback must be registered using CAIPSetPacketReceiveCallback().
  */
 typedef void (*CATCPErrorHandleCallback)(const CAEndpoint_t *endpoint, const void *data,
-                                        uint32_t dataLength, CAResult_t result);
+                                         uint32_t dataLength, CAResult_t result);
+
+/**
+  * Callback to notify connection information in the TCP adapter.
+  *
+  * @param[in]  addr    connected device address.
+  * @param[in]  port    connected port info.
+  * @param[in]  isConnected    Whether keepalive message needs to be sent.
+  * @see  Callback must be registered using CATCPSetKeepAliveCallback().
+ */
+typedef void (*CATCPKeepAliveHandleCallback)(const char *addr, uint16_t port, bool isConnected);
 
 /**
  * set error callback to notify error in TCP adapter.
@@ -69,6 +79,14 @@ typedef void (*CATCPErrorHandleCallback)(const CAEndpoint_t *endpoint, const voi
  * in the TCP adapter.
  */
 void CATCPSetErrorHandler(CATCPErrorHandleCallback errorHandleCallback);
+
+/**
+ * set keepalive callback to notify connection information in TCP adapter.
+ *
+ * @param[in]  keepaliveHandler Callback function to notify the connection information.
+ * in the TCP adapter.
+ */
+void CATCPSetKeepAliveCallback(CATCPKeepAliveHandleCallback keepaliveHandler);
 
 /**
  * Start TCP server.
@@ -113,27 +131,52 @@ u_arraylist_t *CATCPGetInterfaceInformation(int desiredIndex);
 
 /**
  * Connect to TCP Server.
- * @param[in]   TCPServerInfo   TCP Server information.
- * @return  TCP Server Information structure.
+ *
+ * @param[in]   endpoint    remote endpoint information.
+ * @return  TCP Session Information structure.
  */
-CATCPServerInfo_t *CAConnectToTCPServer(const CAEndpoint_t *TCPServerInfo);
+CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint);
 
 /**
  * Disconnect from TCP Server.
- * @param[in]   TCPServerInfo   TCP Server information.
+ *
+ * @param[in]   svritem     TCP session information.
+ * @param[in]   index       current session index in list.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CADisconnectFromTCPServer(const CAEndpoint_t *TCPServerInfo);
+CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index);
 
 /**
- * Get TCP Connection Information from list.
- * @param[in]   addr    TCP Server address.
- * @param[in]   port    TCP Server port.
+ * Disconnect all connection from TCP Server.
+ */
+void CATCPDisconnectAll();
+
+/**
+ * Get TCP connection information from list.
+ *
+ * @param[in]   endpoint    remote endpoint information.
  * @param[out]  index   index of array list.
+ * @return  TCP Session Information structure.
+ */
+CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint,
+                                                    size_t *index);
+
+/**
+ * Get total length from CoAP over TCP header.
+ *
+ * @param[in]   recvBuffer    received header data.
+ * @return  total data length
+ */
+size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer);
+
+/**
+ * Get session information from file descriptor index.
+ *
+ * @param[in]   fd      file descriptor.
+ * @param[out]  index   index of array list
  * @return  TCP Server Information structure.
  */
-CATCPServerInfo_t *CAGetTCPServerInfoFromList(const char *addr, const uint16_t port,
-                                            uint32_t *index);
+CATCPSessionInfo_t *CAGetSessionInfoFromFD(int fd, size_t *index);
 
 #ifdef __cplusplus
 }

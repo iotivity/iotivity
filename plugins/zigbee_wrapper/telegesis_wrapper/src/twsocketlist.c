@@ -58,7 +58,7 @@ TWResultCode TWCloseTWSock(TWSock * sock);
 
 static TWSock * g_twSockList = NULL;
 
-TWResultCode TWAddTWSock(TWSock * sock, PIPlugin * plugin, const char * fileLoc)
+TWResultCode TWAddTWSock(TWSock * sock, PIPlugin_Zigbee * plugin, const char * fileLoc)
 {
     if(!sock || !plugin || !fileLoc)
     {
@@ -110,7 +110,7 @@ TWResultCode TWAddTWSock(TWSock * sock, PIPlugin * plugin, const char * fileLoc)
     return TW_RESULT_OK;
 }
 
-TWSock * TWGetSock(PIPlugin * plugin)
+TWSock * TWGetSock(PIPlugin_Zigbee * plugin)
 {
     if(!plugin)
     {

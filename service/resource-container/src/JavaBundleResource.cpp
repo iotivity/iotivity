@@ -86,13 +86,13 @@ RCSResourceAttributes::Value JavaBundleResource::handleGetAttributeRequest(
     {
         if (vm->AttachCurrentThread((void **) &env, NULL) != 0)
         {
-            OC_LOG_V(ERROR, CONTAINER_TAG,
+            OIC_LOG_V(ERROR, CONTAINER_TAG,
                     "[JavaBundleResource::handleGetAttributeRequest] Failed to attach ");
         }
     }
     else if (envStat == JNI_EVERSION)
     {
-        OC_LOG_V(ERROR, CONTAINER_TAG,
+        OIC_LOG_V(ERROR, CONTAINER_TAG,
                 "[JavaBundleResource::handleGetAttributeRequest] Env: version not supported");
     }
 
@@ -121,13 +121,13 @@ void JavaBundleResource::handleSetAttributeRequest(const std::string &attributeN
     {
         if (vm->AttachCurrentThread((void **) &env, NULL) != 0)
         {
-            OC_LOG_V(ERROR, CONTAINER_TAG,
+            OIC_LOG_V(ERROR, CONTAINER_TAG,
                     "[JavaBundleResource::handleSetAttributeRequest] Failed to attach ");
         }
     }
     else if (envStat == JNI_EVERSION)
     {
-        OC_LOG_V(ERROR, CONTAINER_TAG,
+        OIC_LOG_V(ERROR, CONTAINER_TAG,
                 "[JavaBundleResource::handleSetAttributeRequest] Env: version not supported ");
     }
 
