@@ -40,6 +40,7 @@ cp ./extra_options.scons $sourcedir/tmp
 cp ./tools/tizen/*.spec ./tmp/packaging
 cp ./tools/tizen/*.manifest ./tmp/packaging
 cp ./SConstruct ./tmp
+cp ./LICENSE.md ./tmp
 
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm ./tmp

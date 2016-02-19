@@ -16,6 +16,7 @@ BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(capi-network-wifi)
 BuildRequires: pkgconfig(capi-network-bluetooth)
 BuildRequires: pkgconfig(uuid)
+BuildRequires: pkgconfig(sqlite3)
 BuildRequires: boost-devel
 BuildRequires: boost-thread
 BuildRequires: boost-system

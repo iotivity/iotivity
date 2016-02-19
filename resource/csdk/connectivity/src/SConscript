@@ -165,3 +165,4 @@ if ca_os in ['android', 'tizen']:
 else:
 	calib = env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
 env.InstallTarget(calib, 'libconnectivity_abstraction')
+env.UserInstallTargetLib(calib, 'libconnectivity_abstraction')
