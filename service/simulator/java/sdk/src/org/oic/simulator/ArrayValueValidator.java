@@ -155,7 +155,7 @@ class ArrayValueValidator implements
 
         // Validating elements of array
         AttributeProperty elementProperty = mProperty.getElementProperty();
-        if (!elementProperty.isInteger()) {
+        if (!elementProperty.isString()) {
             return false;
         }
 

@@ -42,7 +42,8 @@ public class StringProperty extends AttributeProperty {
     private StringProperty(String value, String[] values) {
         super(Type.STRING);
         mDefaultValue = value;
-        mValues = values;
+        mValues = Arrays.copyOf(values, values.length);
+        Arrays.sort(mValues);
     }
 
     @Override
@@ -88,8 +89,7 @@ public class StringProperty extends AttributeProperty {
         int length = value.length();
         if (mHasRange && (length < mMin || length > mMax)) {
             return false;
-        } else if (mValues.length > 0
-                && -1 == Arrays.binarySearch(mValues, value)) {
+        } else if (hasValues() && 0 > Arrays.binarySearch(mValues, value)) {
             return false;
         }
 

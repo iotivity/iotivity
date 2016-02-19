@@ -87,8 +87,7 @@ public class IntegerProperty extends AttributeProperty {
     public boolean validate(int value) {
         if (mHasRange && (value < mMin || value > mMax)) {
             return false;
-        } else if (mValues.length > 0
-                && -1 == Arrays.binarySearch(mValues, value)) {
+        } else if (hasValues() && 0 > Arrays.binarySearch(mValues, value)) {
             return false;
         }
 
