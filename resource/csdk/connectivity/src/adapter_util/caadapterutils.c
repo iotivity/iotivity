@@ -36,7 +36,7 @@
 #include <jni.h>
 #endif
 
-#define CA_ADAPTER_UTILS_TAG "CA_ADAPTER_UTILS"
+#define CA_ADAPTER_UTILS_TAG "OIC_CA_ADAP_UTILS"
 
 #ifdef __ANDROID__
 /**
@@ -50,6 +50,7 @@ static JavaVM *g_jvm = NULL;
  * @brief pointer to store context for android callback interface
  */
 static jobject g_Context = NULL;
+static jobject g_Activity = NULL;
 #endif
 
 #ifdef WITH_ARDUINO
@@ -122,14 +123,15 @@ CAResult_t CAParseIPv4AddressInternal(const char *ipAddrStr, uint8_t *ipAddr,
  * These two conversion functions return void because errors can't happen
  * (because of NI_NUMERIC), and there's nothing to do if they do happen.
  */
-void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, char *host, uint16_t *port)
+void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, socklen_t sockAddrLen,
+                         char *host, uint16_t *port)
 {
     VERIFY_NON_NULL_VOID(sockAddr, CA_ADAPTER_UTILS_TAG, "sockAddr is null");
     VERIFY_NON_NULL_VOID(host, CA_ADAPTER_UTILS_TAG, "host is null");
     VERIFY_NON_NULL_VOID(port, CA_ADAPTER_UTILS_TAG, "port is null");
 
     int r = getnameinfo((struct sockaddr *)sockAddr,
-                        sizeof (struct sockaddr_storage),
+                        sockAddrLen,
                         host, MAX_ADDR_STR_SIZE_CA,
                         NULL, 0,
                         NI_NUMERICHOST|NI_NUMERICSERV);
@@ -138,12 +140,12 @@ void CAConvertAddrToName(const struct sockaddr_storage *sockAddr, char *host, ui
         if (EAI_SYSTEM == r)
         {
             OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
-                            "getaddrinfo failed: errno %s", strerror(errno));
+                            "getnameinfo failed: errno %s", strerror(errno));
         }
         else
         {
             OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG,
-                            "getaddrinfo failed: %s", gai_strerror(r));
+                            "getnameinfo failed: %s", gai_strerror(r));
         }
         return;
     }
@@ -198,11 +200,18 @@ void CANativeJNISetContext(JNIEnv *env, jobject context)
 
     if (!context)
     {
-        OIC_LOG(DEBUG, CA_ADAPTER_UTILS_TAG, "context is null");
-
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "context is null");
+        return;
     }
 
-    g_Context = (*env)->NewGlobalRef(env, context);
+    if (!g_Context)
+    {
+        g_Context = (*env)->NewGlobalRef(env, context);
+    }
+    else
+    {
+        OIC_LOG(INFO, CA_ADAPTER_UTILS_TAG, "context is already set");
+    }
 }
 
 void CANativeJNISetJavaVM(JavaVM *jvm)
@@ -219,5 +228,45 @@ jobject CANativeJNIGetContext()
 JavaVM *CANativeJNIGetJavaVM()
 {
     return g_jvm;
+}
+
+void CANativeSetActivity(JNIEnv *env, jobject activity)
+{
+    OIC_LOG_V(DEBUG, CA_ADAPTER_UTILS_TAG, "CANativeSetActivity");
+
+    if (!activity)
+    {
+        OIC_LOG(ERROR, CA_ADAPTER_UTILS_TAG, "activity is null");
+        return;
+    }
+
+    if (!g_Activity)
+    {
+        g_Activity = (*env)->NewGlobalRef(env, activity);
+    }
+    else
+    {
+        OIC_LOG(INFO, CA_ADAPTER_UTILS_TAG, "activity is already set");
+    }
+}
+
+jobject *CANativeGetActivity()
+{
+    return g_Activity;
+}
+
+void CADeleteGlobalReferences(JNIEnv *env)
+{
+    if (g_Context)
+    {
+        (*env)->DeleteGlobalRef(env, g_Context);
+        g_Context = NULL;
+    }
+
+    if (g_Activity)
+    {
+        (*env)->DeleteGlobalRef(env, g_Activity);
+        g_Activity = NULL;
+    }
 }
 #endif

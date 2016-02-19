@@ -36,7 +36,7 @@ extern "C" {
      * Signature: (Landroid/content/Context;)V
      */
     JNIEXPORT void JNICALL Java_org_iotivity_ca_CaInterface_initialize
-        (JNIEnv *, jclass, jobject);
+        (JNIEnv *, jclass, jobject, jobject);
 
 #ifdef __cplusplus
 }

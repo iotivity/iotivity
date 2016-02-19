@@ -22,7 +22,7 @@ if sim_env.get('SECURED') == '1':
 ######################################################################
 # Source files and Targets
 ######################################################################
-simulatorserver = sim_env.Program('simulator-server', 'service_provider.cpp')
+server = sim_env.Program('simulator-server', 'simulator_server.cpp')
 
-Alias("simulatorserver", simulatorserver)
-env.AppendTarget('simulatorserver')
+Alias("server", server)
+env.AppendTarget('server')

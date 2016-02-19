@@ -30,7 +30,7 @@ root_dir = './../../../../'
 provisioning_env.AppendUnique(CPPPATH = [
 		'../../stack/include',
 		'../../stack/include/internal',
-		'../../ocrandom/include',
+		'../../../c_common/ocrandom/include',
 		'../../logger/include',
 		'../../../oc_logger/include',
 		'../../ocmalloc/include',
@@ -101,7 +101,6 @@ provisioning_src = [
 provisioningserver = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
 
 provisioning_env.InstallTarget(provisioningserver, 'libocpmapi')
-provisioning_env.UserInstallTargetLib(provisioningserver, 'libocpmapi')
 
 if env.get('DTLS_WITH_X509') == '1':
 	SConscript('ck_manager/SConscript')

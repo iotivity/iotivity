@@ -86,6 +86,6 @@ if env.get('TEST') == '1':
 		sptest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		sptest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
 		sptest_env.AppendENVPath('LD_LIBRARY_PATH', ['./extlibs/gtest/gtest-1.7.0/lib/.libs'])
-		ut = sptest_env.Command ('ut', None, out_dir + '/resource/csdk/security/unittest/unittest')
+		ut = sptest_env.Command ('ut', None, out_dir + '/resource/csdk/security/provisioning/unittest/unittest')
 		AlwaysBuild ('ut')
 

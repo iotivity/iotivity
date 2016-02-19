@@ -45,17 +45,17 @@ namespace RAML
         {
             return;
         }
-        for (auto const & it : resource)
+        for (auto const &it : resource)
         {
             std::string type = getRamlPtr()->getMediaType();
 
-            for (auto const & action :  it.second->getActions())
+            for (auto const &action :  it.second->getActions())
             {
                 if (action.second->getRequestBody().empty())
                 {
                     action.second->setRequestBody(type);
                 }
-                for (auto const & response : action.second->getResponses())
+                for (auto const &response : action.second->getResponses())
                 {
                     if (response.second->getResponseBody().empty())
                     {
@@ -72,11 +72,11 @@ namespace RAML
         {
             return;
         }
-        for (auto const & it : resource)
+        for (auto const &it : resource)
         {
-            for (auto const & action :  it.second->getActions())
+            for (auto const &action :  it.second->getActions())
             {
-                for (auto const & body :  action.second->getRequestBody())
+                for (auto const &body :  action.second->getRequestBody())
                 {
                     SchemaPtr schema = body.second->getSchema();
 
@@ -94,9 +94,9 @@ namespace RAML
                         }
                     }
                 }
-                for (auto const & response : action.second->getResponses())
+                for (auto const &response : action.second->getResponses())
                 {
-                    for (auto const & body :  response.second->getResponseBody())
+                    for (auto const &body :  response.second->getResponseBody())
                     {
                         SchemaPtr schema = body.second->getSchema();
                         if (schema != NULL)
@@ -127,7 +127,7 @@ namespace RAML
         {
             return;
         }
-        for (auto const & it : resource)
+        for (auto const &it : resource)
         {
             auto const &resourceTypes = getRamlPtr()->getResourceTypes();
             std::string typeValue = it.second->getResourceType();
@@ -158,12 +158,12 @@ namespace RAML
         {
             return;
         }
-        for (auto const & it : resource)
+        for (auto const &it : resource)
         {
             auto const &trait = getRamlPtr()->getTraits();
-            for (auto const & act : it.second->getActions())
+            for (auto const &act : it.second->getActions())
             {
-                for (const std::string & traitValue :  act.second->getTraits())
+                for (const std::string &traitValue :  act.second->getTraits())
                 {
                     auto iter = trait.begin();
                     for (; iter != trait.end(); iter++)
@@ -191,7 +191,7 @@ namespace RAML
                     }
                 }
             }
-            for (const std::string & traitValue :  it.second->getTraits())
+            for (const std::string &traitValue :  it.second->getTraits())
             {
                 auto iter = trait.begin();
                 for (; iter != trait.end(); iter++)

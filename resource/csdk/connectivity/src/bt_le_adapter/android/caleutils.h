@@ -42,6 +42,17 @@ static const char OIC_GATT_CHARACTERISTIC_REQUEST_UUID[] = CA_GATT_REQUEST_CHRC_
 static const char OIC_GATT_CHARACTERISTIC_RESPONSE_UUID[] = CA_GATT_RESPONSE_CHRC_UUID;
 static const char OIC_GATT_CHARACTERISTIC_CONFIG_UUID[] = "00002902-0000-1000-8000-00805f9b34fb";
 
+static const char CLASSPATH_BT_PROFILE[] = "android/bluetooth/BluetoothProfile";
+static const char CLASSPATH_BT_GATT[] = "android/bluetooth/BluetoothGatt";
+static const char CLASSPATH_BT_ADAPTER[] = "android/bluetooth/BluetoothAdapter";
+static const char CLASSPATH_BT_DEVICE[] = "android/bluetooth/BluetoothDevice";
+static const char CLASSPATH_BT_UUID[] = "java/util/UUID";
+
+
+static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAdapter;";
+static const char METHODID_BT_DEVICE[] = "()Landroid/bluetooth/BluetoothDevice;";
+static const char METHODID_BT_REMOTE_DEVICE[] = "(Ljava/lang/String;)Landroid/bluetooth/BluetoothDevice;";
+
 static const jint GATT_SUCCESS = 0;
 
 static const jint BOND_BONDED = 12;
@@ -123,6 +134,14 @@ jboolean CALEIsEnableBTAdapter(JNIEnv *env);
  */
 jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
 
+/**
+ * get value from selected constants.
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   classType        class type
+ * @param[in]   name             constants name to get.
+ * @return  remote address.
+ */
+jint CALEGetConstantsValue(JNIEnv *env, const char* classType, const char* name);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

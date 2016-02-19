@@ -3,6 +3,8 @@ package org.iotivity.ca.service;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -28,7 +30,7 @@ public class MainActivity extends Activity {
     private final static String TAG = "Sample_Service : MainActivity";
 
     private final CharSequence[] mNetworkCheckBoxItems = { Network.IP.name(),
-            Network.LE.name(), Network.EDR.name()};
+            Network.LE.name(), Network.EDR.name(), Network.TCP.name(), Network.NFC.name()};
 
     private final CharSequence[] mDTLSCheckBoxItems = { DTLS.UNSECURED.name(),
             DTLS.SECURED.name() };
@@ -49,7 +51,7 @@ public class MainActivity extends Activity {
     };
 
     private enum Network {
-        IP, LE, EDR
+        IP, LE, EDR, TCP, NFC
     };
 
     private enum DTLS {
@@ -69,9 +71,9 @@ public class MainActivity extends Activity {
             false, false, false, false
     };
 
-    private int mSelectedItems[] = { 0, 0, 0 };
+    private int mSelectedItems[] = { 0, 0, 0, 0, 0, 0};
 
-    private int mUnSelectedItems[] = { 0, 0, 0 };
+    private int mUnSelectedItems[] = { 0, 0, 0, 0, 0, 0};
 
     private Mode mCurrentMode = Mode.UNKNOWN;
 
@@ -132,11 +134,13 @@ public class MainActivity extends Activity {
     /**
      * Defined ConnectivityType in cacommon.c
      *
-     * CA_IP = (1 << 0) CA_LE = (1 << 2) CA_EDR = (1 << 3)
+     * CA_IP = (1 << 0) CA_LE = (1 << 1) CA_EDR = (1 << 2) CA_TCP = (1 << 4) CA_NFC= (1 << 5)
      */
     private int CA_IP = (1 << 0);
     private int CA_LE = (1 << 1);
     private int CA_EDR = (1 << 2);
+    private int CA_TCP = (1 << 4);
+    private int CA_NFC = (1 << 5);
     private int isSecured = 0;
     private int msgType = 1;
     private int responseValue = 0;
@@ -218,8 +222,7 @@ public class MainActivity extends Activity {
         showSelectModeView();
 
         // Initialize Connectivity Abstraction
-        RM.RMInitialize(getApplicationContext());
-
+        RM.RMInitialize(getApplicationContext(), this);
         // set handler
         RM.RMRegisterHandler();
     }
@@ -250,42 +253,46 @@ public class MainActivity extends Activity {
 
     private void showModeView() {
 
+        mReceiveLayout.setVisibility(View.VISIBLE);
+        mSendRequestToAllLayout.setVisibility(View.VISIBLE);
+        mSendRequestToAllSettingLayout.setVisibility(View.VISIBLE);
+        mRequestToAllTitleLayout.setVisibility(View.VISIBLE);
+        mHandleTitleLayout.setVisibility(View.VISIBLE);
+
         if (mCurrentMode == Mode.SERVER) {
 
             mSendNotificationLayout.setVisibility(View.VISIBLE);
             mSendRequestLayout.setVisibility(View.INVISIBLE);
-            mSendRequestToAllLayout.setVisibility(View.VISIBLE);
             mSendRequestSettingLayout.setVisibility(View.INVISIBLE);
-            mSendRequestToAllSettingLayout.setVisibility(View.VISIBLE);
-            mReceiveLayout.setVisibility(View.VISIBLE);
 
             mRequestTitleLayout.setVisibility(View.INVISIBLE);
-            mRequestToAllTitleLayout.setVisibility(View.VISIBLE);
-            mHandleTitleLayout.setVisibility(View.VISIBLE);
 
             mResponseNotificationTitleLayout.setVisibility(View.VISIBLE);
             mSendResponseNotiSettingLayout.setVisibility(View.VISIBLE);
-
-            mNetwork_tv.setText("");
 
         } else if (mCurrentMode == Mode.CLIENT) {
 
             mSendNotificationLayout.setVisibility(View.INVISIBLE);
             mSendRequestLayout.setVisibility(View.VISIBLE);
-            mSendRequestToAllLayout.setVisibility(View.VISIBLE);
             mSendRequestSettingLayout.setVisibility(View.VISIBLE);
-            mSendRequestToAllSettingLayout.setVisibility(View.VISIBLE);
-            mReceiveLayout.setVisibility(View.VISIBLE);
 
             mRequestTitleLayout.setVisibility(View.VISIBLE);
-            mRequestToAllTitleLayout.setVisibility(View.VISIBLE);
-            mHandleTitleLayout.setVisibility(View.VISIBLE);
 
             mResponseNotificationTitleLayout.setVisibility(View.INVISIBLE);
             mSendResponseNotiSettingLayout.setVisibility(View.INVISIBLE);
-
-            mNetwork_tv.setText("");
         }
+        mNetwork_tv.setText("");
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Intent i = new Intent();
+        i.setAction(intent.getAction());
+        i.putExtra(NfcAdapter.EXTRA_NDEF_MESSAGES,
+                   intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES));
+        sendBroadcast(i);
+        Log.d(TAG, "Broadcast intent complete");
     }
 
     @Override
@@ -485,8 +492,13 @@ public class MainActivity extends Activity {
                             public void onClick(DialogInterface dialog,
                                     int which, boolean isChecked) {
 
+                                // in case of TCP increase value,
+                                // because CASample not support RA.
+                                // which: 0(IP), 1(BT), 2(BLE), 3(TCP)
+                                if (which == 3) {
+                                    which = 4;
+                                }
                                 if (isChecked) {
-
                                     mSelectedItems[which] = 1;
                                     mUnSelectedItems[which] = 0;
 
@@ -695,6 +707,12 @@ public class MainActivity extends Activity {
                         } else if (selectedNetworkType == Network.EDR.ordinal()) {
                             selectedNetwork = CA_EDR;
                             DLog.v(TAG, "Selected Network is EDR");
+                        } else if (selectedNetworkType == Network.TCP.ordinal()) {
+                            selectedNetwork = CA_TCP;
+                            DLog.v(TAG, "Selected Network is TCP");
+                        } else if (selectedNetworkType == Network.NFC.ordinal()) {
+                            selectedNetwork = CA_NFC;
+                            DLog.v(TAG, "Selected Network is NFC");
                         } else {
                             DLog.v(TAG, "Selected Network is NULL");
                             selectedNetwork = -1;
@@ -702,7 +720,8 @@ public class MainActivity extends Activity {
 
                         if (isBigData)
                         {
-                            new FileChooser(MainActivity.this).setFileListener(new FileSelectedListener() {
+                            new FileChooser(MainActivity.this).setFileListener(
+                                    new FileSelectedListener() {
                                 public void fileSelected(final File file) {
                                     if (selectedNetwork != -1) {
 
@@ -713,7 +732,8 @@ public class MainActivity extends Activity {
                                                          selectedNetwork, isSecured, msgType, true);
                                     } else {
                                         Toast.makeText(getApplicationContext(),
-                                                       "Request Setting Fisrt!!", Toast.LENGTH_LONG).show();
+                                                       "Request Setting Fisrt!!",
+                                                        Toast.LENGTH_LONG).show();
                                     }
                                 }
                             } ).showDialog();

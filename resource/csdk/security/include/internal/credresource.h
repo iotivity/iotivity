@@ -110,6 +110,15 @@ OCStackResult AddCredential(OicSecCred_t * cred);
  */
 OCStackResult RemoveCredential(const OicUuid_t* credId);
 
+/**
+ * Remove all credential data on credential resource and persistent storage
+ *
+ * @retval
+ *     OC_STACK_OK              - no errors
+ *     OC_STACK_ERROR           - stack process error
+ */
+OCStackResult RemoveAllCredentials(void);
+
 #if defined(__WITH_DTLS__)
 /**
  * This internal callback is used by lower stack (i.e. CA layer) to

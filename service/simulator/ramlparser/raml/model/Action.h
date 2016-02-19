@@ -36,7 +36,7 @@
 #include "RequestResponseBody.h"
 #include "UriParameter.h"
 #include "Response.h"
-#include "Utils.h"
+#include "RamlUtils.h"
 #include "IncludeResolver.h"
 
 namespace RAML

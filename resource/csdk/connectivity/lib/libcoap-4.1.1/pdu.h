@@ -194,7 +194,7 @@ typedef enum
 #ifdef WORDS_BIGENDIAN
 typedef union
 {
-    typedef struct
+    struct
     {
         unsigned int version:2; /* protocol version */
         unsigned int type:2; /* type flag */
@@ -394,6 +394,15 @@ int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu,
                    coap_transport_type transport);
 
 #ifdef WITH_TCP
+/**
+ * Get total message length from header.
+ *
+ * @param data   The raw data to parse as CoAP PDU.
+ * @param size   payload size of pdu.
+ * @return Total message length.
+ */
+size_t coap_get_total_message_length(const unsigned char *data, size_t size);
+
 /**
  * Get transport type of coap header for coap over tcp through payload size.
  *

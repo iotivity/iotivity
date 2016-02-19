@@ -28,12 +28,12 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "RM_UTIL"
+#define TAG "OIC_RM_UTIL"
 
 /**
  * Tag for printing the logs of forwarding the packet.
  */
-#define RM_TAG "RAP"
+#define RM_TAG "OIC_RM_RAP"
 
 /**
  * Minimum routing option data length is
@@ -45,7 +45,7 @@
 OCStackResult RMAddInfo(const char *destination, CAHeaderOption_t **options,
                         uint8_t *numOptions)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(options, TAG, "options");
     RM_NULL_CHECK_WITH_RET(numOptions, TAG, "numOptions");
 
@@ -56,17 +56,17 @@ OCStackResult RMAddInfo(const char *destination, CAHeaderOption_t **options,
 
     if (-1 < index)
     {
-        OC_LOG(INFO, TAG, "Route option is present");
+        OIC_LOG(INFO, TAG, "Route option is present");
         optionPtr = *options;
     }
     else
     {
-        OC_LOG(INFO, TAG, "Route option is not present");
+        OIC_LOG(INFO, TAG, "Route option is not present");
         index = *numOptions;
         optionPtr = OICCalloc((*numOptions + 1), sizeof(CAHeaderOption_t));
         if (!optionPtr)
         {
-            OC_LOG(ERROR, TAG, "OICCalloc failed");
+            OIC_LOG(ERROR, TAG, "OICCalloc failed");
             return OC_STACK_NO_MEMORY;
         }
 
@@ -77,11 +77,11 @@ OCStackResult RMAddInfo(const char *destination, CAHeaderOption_t **options,
     RMRouteOption_t routeOption = {.destGw = 0};
     if (*numOptions != index)
     {
-        OC_LOG(INFO, TAG, "Route option is already present");
+        OIC_LOG(INFO, TAG, "Route option is already present");
         res = RMParseRouteOption(&optionPtr[index], &routeOption);
         if (OC_STACK_OK != res)
         {
-            OC_LOG(ERROR, TAG, "RMParseRouteOption failed");
+            OIC_LOG(ERROR, TAG, "RMParseRouteOption failed");
             return OC_STACK_ERROR;
         }
     }
@@ -110,7 +110,7 @@ OCStackResult RMAddInfo(const char *destination, CAHeaderOption_t **options,
     res = RMCreateRouteOption(&routeOption, optionPtr + index);
     if (OC_STACK_OK != res)
     {
-        OC_LOG(ERROR, TAG, "Creation of routing option failed");
+        OIC_LOG(ERROR, TAG, "Creation of routing option failed");
         OICFree(optionPtr);
         return res;
     }
@@ -122,14 +122,14 @@ OCStackResult RMAddInfo(const char *destination, CAHeaderOption_t **options,
         *options = optionPtr;
     }
 
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RMUpdateInfo(CAHeaderOption_t **options, uint8_t *numOptions,
                            CAEndpoint_t *endpoint)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(options, TAG, "options");
     RM_NULL_CHECK_WITH_RET(*options, TAG, "invalid option");
     RM_NULL_CHECK_WITH_RET(numOptions, TAG, "numOptions");
@@ -137,7 +137,7 @@ OCStackResult RMUpdateInfo(CAHeaderOption_t **options, uint8_t *numOptions,
 
     if (0 >= *numOptions)
     {
-        OC_LOG(ERROR, TAG, "Invalid arguement: numOptions");
+        OIC_LOG(ERROR, TAG, "Invalid arguement: numOptions");
         return OC_STACK_ERROR;
     }
 
@@ -146,7 +146,7 @@ OCStackResult RMUpdateInfo(CAHeaderOption_t **options, uint8_t *numOptions,
 
     if (-1 >= routeIndex)
     {
-        OC_LOG(DEBUG, TAG, "Nothing to remove.");
+        OIC_LOG(DEBUG, TAG, "Nothing to remove.");
         return OC_STACK_OK;
     }
 
@@ -164,7 +164,7 @@ OCStackResult RMUpdateInfo(CAHeaderOption_t **options, uint8_t *numOptions,
         {
             memcpy(endpoint->routeData, (*options + routeIndex)->optionData + count,
                    GATEWAY_ID_LENGTH);
-            OC_LOG_V(DEBUG, TAG, "adding srcgid: %u in endpoint [%d]",
+            OIC_LOG_V(DEBUG, TAG, "adding srcgid: %u in endpoint [%d]",
                      *((uint32_t *)endpoint->routeData), sLen);
 
             count += GATEWAY_ID_LENGTH;
@@ -173,7 +173,7 @@ OCStackResult RMUpdateInfo(CAHeaderOption_t **options, uint8_t *numOptions,
             {
                 memcpy(endpoint->routeData + GATEWAY_ID_LENGTH,
                        (*options + routeIndex)->optionData + count, ENDPOINT_ID_LENGTH);
-                OC_LOG_V(DEBUG, TAG, "adding srceid: %u in endpoint",
+                OIC_LOG_V(DEBUG, TAG, "adding srceid: %u in endpoint",
                          *((uint16_t *)(endpoint->routeData + GATEWAY_ID_LENGTH)));
             }
         }
@@ -192,31 +192,31 @@ OCStackResult RMUpdateInfo(CAHeaderOption_t **options, uint8_t *numOptions,
         OICFree(*options);
         *options = NULL;
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 void RMGetRouteOptionIndex(const CAHeaderOption_t *options, uint8_t numOptions, int8_t *index)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_VOID(options, TAG, "options");
     RM_NULL_CHECK_VOID(index, TAG, "index");
     for (uint32_t i = 0; i < numOptions; i++)
     {
-        OC_LOG_V(DEBUG, TAG, "Request- optionID: %d", options[i].optionID);
+        OIC_LOG_V(DEBUG, TAG, "Request- optionID: %u", options[i].optionID);
         if (RM_OPTION_MESSAGE_SWITCHING == options[i].optionID)
         {
-            OC_LOG_V(INFO, TAG, "Found Option at %d", i);
+            OIC_LOG_V(INFO, TAG, "Found Option at %d", i);
             *index = i;
             break;
         }
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 OCStackResult RMCreateRouteOption(const RMRouteOption_t *optValue, CAHeaderOption_t *options)
 {
-    OC_LOG(DEBUG, RM_TAG, "IN");
+    OIC_LOG(DEBUG, RM_TAG, "IN");
     RM_NULL_CHECK_WITH_RET(optValue, RM_TAG, "optValue");
     RM_NULL_CHECK_WITH_RET(options, RM_TAG, "options");
 
@@ -225,12 +225,12 @@ OCStackResult RMCreateRouteOption(const RMRouteOption_t *optValue, CAHeaderOptio
     uint8_t sLen = (optValue->srcGw ? GATEWAY_ID_LENGTH:0) +
                         (optValue->srcEp ? ENDPOINT_ID_LENGTH:0);
 
-    OC_LOG_V(DEBUG, RM_TAG, "createoption dlen %u slen [%u]", dLen, sLen);
+    OIC_LOG_V(DEBUG, RM_TAG, "createoption dlen %u slen [%u]", dLen, sLen);
     unsigned int totalLength = MIN_ROUTE_OPTION_LEN + dLen + sLen;
     void *tempData = OICCalloc(totalLength, sizeof(char));
     if (NULL == tempData)
     {
-        OC_LOG(ERROR, RM_TAG, "Calloc failed");
+        OIC_LOG(ERROR, RM_TAG, "Calloc failed");
         return OC_STACK_NO_MEMORY;
     }
     memcpy(tempData, &dLen, sizeof(dLen));
@@ -273,21 +273,21 @@ OCStackResult RMCreateRouteOption(const RMRouteOption_t *optValue, CAHeaderOptio
     options->optionID = RM_OPTION_MESSAGE_SWITCHING;
     options->optionLength = totalLength;
 
-    OC_LOG_V(INFO, RM_TAG, "Option Length is %d", options->optionLength);
+    OIC_LOG_V(INFO, RM_TAG, "Option Length is %d", options->optionLength);
 
     OICFree(tempData);
-    OC_LOG(DEBUG, RM_TAG, "OUT");
+    OIC_LOG(DEBUG, RM_TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RMParseRouteOption(const CAHeaderOption_t *options, RMRouteOption_t *optValue)
 {
-    OC_LOG(DEBUG, RM_TAG, "IN");
+    OIC_LOG(DEBUG, RM_TAG, "IN");
     RM_NULL_CHECK_WITH_RET(options, RM_TAG, "options");
     RM_NULL_CHECK_WITH_RET(optValue, RM_TAG, "optValue");
     if (0 == options->optionLength)
     {
-        OC_LOG(ERROR, RM_TAG, "Option data is not present");
+        OIC_LOG(ERROR, RM_TAG, "Option data is not present");
         return OC_STACK_ERROR;
     }
 
@@ -322,9 +322,9 @@ OCStackResult RMParseRouteOption(const CAHeaderOption_t *options, RMRouteOption_
     }
     memcpy(&optValue->mSeqNum, options->optionData + count, sizeof(optValue->mSeqNum));
 
-    OC_LOG_V(INFO, RM_TAG, "Option hopcount is %d", optValue->mSeqNum);
-    OC_LOG_V(INFO, RM_TAG, "Option Sender Addr is [%u][%u]", optValue->srcGw, optValue->srcEp);
-    OC_LOG_V(INFO, RM_TAG, "Option Dest Addr is [%u][%u]", optValue->destGw, optValue->destEp);
-    OC_LOG(DEBUG, RM_TAG, "OUT");
+    OIC_LOG_V(INFO, RM_TAG, "Option hopcount is %d", optValue->mSeqNum);
+    OIC_LOG_V(INFO, RM_TAG, "Option Sender Addr is [%u][%u]", optValue->srcGw, optValue->srcEp);
+    OIC_LOG_V(INFO, RM_TAG, "Option Dest Addr is [%u][%u]", optValue->destGw, optValue->destEp);
+    OIC_LOG(DEBUG, RM_TAG, "OUT");
     return OC_STACK_OK;
 }

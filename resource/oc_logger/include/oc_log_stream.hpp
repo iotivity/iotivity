@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __OC_LOG_STREAM_HPP_20140910
- #define __OC_LOG_STREAM_HPP_20140910
+#ifndef OC_LOG_STREAM_HPP_
+#define OC_LOG_STREAM_HPP_
 
 #include <iosfwd>
 #include <memory>

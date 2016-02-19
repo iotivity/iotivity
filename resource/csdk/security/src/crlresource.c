@@ -272,15 +272,15 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
 
     if (jsonCRL)
     {
-        OC_LOG(INFO, TAG, "UpdateSVRDB...");
-        OC_LOG_V(INFO, TAG, "crl: \"%s\"", jsonCRL);
+        OIC_LOG(INFO, TAG, "UpdateSVRDB...");
+        OIC_LOG_V(INFO, TAG, "crl: \"%s\"", jsonCRL);
 
         cJSON *jsonObj = cJSON_Parse(jsonCRL);
         OicSecCrl_t *crl = NULL;
         crl = JSONToCrlBin(jsonCRL);
         if (!crl)
         {
-            OC_LOG(ERROR, TAG, "Error JSONToCrlBin");
+            OIC_LOG(ERROR, TAG, "Error JSONToCrlBin");
         }
 
         gCrl->CrlId = crl->CrlId;
@@ -299,7 +299,7 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
 
         if (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRL_NAME, jsonObj))
         {
-            OC_LOG(INFO, TAG, "UpdateSVRDB == OK");
+            OIC_LOG(INFO, TAG, "UpdateSVRDB == OK");
             ehRet = OC_EH_RESOURCE_CREATED;
         }
 
@@ -311,7 +311,7 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
-    OC_LOG_V(INFO, TAG, "%s RetVal %d", __func__, ehRet);
+    OIC_LOG_V(INFO, TAG, "%s RetVal %d", __func__, ehRet);
     return ehRet;
 }
 
@@ -332,16 +332,16 @@ OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
         return ehRet;
     }
 
-    OC_LOG(INFO, TAG, "Handle CRL resource");
+    OIC_LOG(INFO, TAG, "Handle CRL resource");
 
     if (flag & OC_REQUEST_FLAG)
     {
         // TODO :  Handle PUT and DEL methods
-        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
-                OC_LOG (INFO, TAG, "Not implemented request method.");
+                OIC_LOG (INFO, TAG, "Not implemented request method.");
                 //ehRet = HandleCRLGetRequest(ehRequest);
                 break;
 
@@ -374,7 +374,7 @@ OCStackResult CreateCRLResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG(FATAL, TAG, "Unable to instantiate CRL resource");
+        OIC_LOG(FATAL, TAG, "Unable to instantiate CRL resource");
         DeInitCRLResource();
     }
     return ret;

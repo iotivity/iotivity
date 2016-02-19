@@ -98,22 +98,32 @@ IotvtICalResult_t ParsePeriod(const char *periodStr, IotvtICalPeriod_t *period)
         if(NULL != strptime(endDTPos, fmt, &period->endDateTime))
         {
             //Checking if endDateTime is after startDateTime
-            if(difftime(mktime(&period->endDateTime),
-                        mktime(&period->startDateTime)) > 0)
+            if ((period->startDateTime.tm_year > period->endDateTime.tm_year)
+                || ((period->startDateTime.tm_year == period->endDateTime.tm_year)
+                    && (period->startDateTime.tm_mon > period->endDateTime.tm_mon))
+                || ((period->startDateTime.tm_year == period->endDateTime.tm_year)
+                    && (period->startDateTime.tm_mon == period->endDateTime.tm_mon)
+                    && (period->startDateTime.tm_mday > period->endDateTime.tm_mday))
+                || (( fmt == dtFormat) && (period->startDateTime.tm_year == period->endDateTime.tm_year)
+                    && (period->startDateTime.tm_mon == period->endDateTime.tm_mon)
+                    && (period->startDateTime.tm_mday == period->endDateTime.tm_mday)
+                    && (period->startDateTime.tm_hour > period->endDateTime.tm_hour))
+                || (( fmt == dtFormat) && (period->startDateTime.tm_year == period->endDateTime.tm_year)
+                    && (period->startDateTime.tm_mon == period->endDateTime.tm_mon)
+                    && (period->startDateTime.tm_mday == period->endDateTime.tm_mday)
+                    && (period->startDateTime.tm_hour == period->endDateTime.tm_hour)
+                    && (period->startDateTime.tm_min > period->endDateTime.tm_min))
+                || (( fmt == dtFormat) && (period->startDateTime.tm_year == period->endDateTime.tm_year)
+                    && (period->startDateTime.tm_mon == period->endDateTime.tm_mon)
+                    && (period->startDateTime.tm_mday == period->endDateTime.tm_mday)
+                    && (period->startDateTime.tm_hour == period->endDateTime.tm_hour)
+                    && (period->startDateTime.tm_min == period->endDateTime.tm_min)
+                    && (period->startDateTime.tm_sec > period->endDateTime.tm_sec)))
             {
-                //mktime increases value of tm_hour by 1 if tm_isdst is set.
-                //The tm_hour value in period's startDateTime and endDatetime
-                //should remain same irrespective of daylight saving time.
-                if(period->startDateTime.tm_isdst)
-                {
-                    period->startDateTime.tm_hour =
-                   (period->startDateTime.tm_hour + TOTAL_HOURS - TM_DST_OFFSET) % TOTAL_HOURS;
-                }
-                if(period->endDateTime.tm_isdst)
-                {
-                    period->endDateTime.tm_hour =
-                   (period->endDateTime.tm_hour + TOTAL_HOURS - TM_DST_OFFSET) % TOTAL_HOURS;
-                }
+                return IOTVTICAL_INVALID_PERIOD;
+            }
+            else
+            {
                 return IOTVTICAL_SUCCESS;
             }
         }

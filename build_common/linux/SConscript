@@ -22,7 +22,7 @@ env.AppendUnique(CCFLAGS = ['-Wall', '-Wextra', '-fPIC'])
 env.AppendUnique(LIBS = ['uuid'])
 env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
 
-# Set arch flags
+# Set arch flags that match best TARGET_ARCH variable
 target_arch = env.get('TARGET_ARCH')
 if target_arch in ['x86']:
 	env.AppendUnique(CCFLAGS = ['-m32'])
@@ -30,6 +30,8 @@ if target_arch in ['x86']:
 elif target_arch in ['x86_64']:
 	env.AppendUnique(CCFLAGS = ['-m64'])
 	env.AppendUnique(LINKFLAGS = ['-m64'])
+elif target_arch in ['arm'] or target_arch.find('v5') > 0:
+	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])
 elif target_arch.find('v7a-hard') > 0:
 	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
 	env.AppendUnique(CPPFLAGS = ['-mfloat-abi=hard'])
@@ -39,5 +41,3 @@ elif target_arch.find('v7a') > 0:
 	env.AppendUnique(CPPFLAGS = ['-march=armv7-a'])
 elif target_arch.find('arm64') >= 0:
 	env.AppendUnique(CPPFLAGS = ['-march=armv8-a'])
-else:
-	env.AppendUnique(CPPFLAGS = ['-march=armv5te'])

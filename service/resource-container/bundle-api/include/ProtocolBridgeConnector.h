@@ -43,12 +43,12 @@ namespace OIC
                 /**
                 * Constructor for ProtocolBridgeConnector
                 */
-                ProtocolBridgeConnector();
+                ProtocolBridgeConnector() { };
 
                 /**
                 * Virtual destructor for ProtocolBridgeConnector
                 */
-                virtual ~ProtocolBridgeConnector();
+                virtual ~ProtocolBridgeConnector() { };
 
                 /**
                 * Execute the logic needed for connection with different protocol from IoTivity

@@ -220,7 +220,7 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
                 {
                     resourceTable[resource->host() + resource->uri()] = resource;
 
-                    OCResourceHandle foundResourceHandle;
+                    OCResourceHandle foundResourceHandle = NULL;
                     OCStackResult result = OCPlatform::registerResource(foundResourceHandle,
                             resource);
                     std::cout << "\tResource ( " << resource->host() << " ) is registed!\t"
@@ -332,6 +332,11 @@ int main()
             catch(std::invalid_argument&)
             {
                 std::cout << "Please put a digit, not string" << std::endl;
+                continue;
+            }
+            catch(std::out_of_range&)
+            {
+                std::cout << "Please put a number within the supported range" << std::endl;
                 continue;
             }
 

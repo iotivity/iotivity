@@ -31,7 +31,7 @@
 #include <SPI.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
-#else
+#elif defined ARDUINOETH
 // Arduino Ethernet Shield
 #include <EthernetServer.h>
 #include <Ethernet.h>
@@ -79,35 +79,35 @@ int ConnectToNetwork()
     // check for the presence of the shield:
     if (WiFi.status() == WL_NO_SHIELD)
     {
-        OC_LOG(ERROR, TAG, ("WiFi shield not present"));
+        OIC_LOG(ERROR, TAG, ("WiFi shield not present"));
         return -1;
     }
 
     // Verify that WiFi Shield is running the firmware with all UDP fixes
     fwVersion = WiFi.firmwareVersion();
-    OC_LOG_V(INFO, TAG, "WiFi Shield Firmware version %s", fwVersion);
+    OIC_LOG_V(INFO, TAG, "WiFi Shield Firmware version %s", fwVersion);
     if ( strncmp(fwVersion, ARDUINO_WIFI_SHIELD_UDP_FW_VER, sizeof(ARDUINO_WIFI_SHIELD_UDP_FW_VER)) !=0 )
     {
-        OC_LOG(DEBUG, TAG, ("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
+        OIC_LOG(DEBUG, TAG, ("!!!!! Upgrade WiFi Shield Firmware version !!!!!!"));
         return -1;
     }
 
     // attempt to connect to Wifi network:
     while (status != WL_CONNECTED)
     {
-        OC_LOG_V(INFO, TAG, "Attempting to connect to SSID: %s", ssid);
+        OIC_LOG_V(INFO, TAG, "Attempting to connect to SSID: %s", ssid);
         status = WiFi.begin(ssid,pass);
 
         // wait 10 seconds for connection:
         delay(10000);
     }
-    OC_LOG(DEBUG, TAG, ("Connected to wifi"));
+    OIC_LOG(DEBUG, TAG, ("Connected to wifi"));
 
     IPAddress ip = WiFi.localIP();
-    OC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+    OIC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
     return 0;
 }
-#else
+#elif defined ARDUINOETH
 // Arduino Ethernet Shield
 int ConnectToNetwork()
 {
@@ -116,12 +116,12 @@ int ConnectToNetwork()
     uint8_t error = Ethernet.begin(ETHERNET_MAC);
     if (error  == 0)
     {
-        OC_LOG_V(ERROR, TAG, "error is: %d", error);
+        OIC_LOG_V(ERROR, TAG, "error is: %d", error);
         return -1;
     }
 
     IPAddress ip = Ethernet.localIP();
-    OC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+    OIC_LOG_V(INFO, TAG, "IP Address:  %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
     return 0;
 }
 #endif //ARDUINOWIFI
@@ -139,8 +139,8 @@ void PrintArduinoMemoryStats()
     extern char *__brkval;
     //address of tmp gives us the current stack boundry
     int tmp;
-    OC_LOG_V(INFO, TAG, "Stack: %u         Heap: %u", (unsigned int)&tmp, (unsigned int)__brkval);
-    OC_LOG_V(INFO, TAG, "Unallocated Memory between heap and stack: %u",
+    OIC_LOG_V(INFO, TAG, "Stack: %u         Heap: %u", (unsigned int)&tmp, (unsigned int)__brkval);
+    OIC_LOG_V(INFO, TAG, "Unallocated Memory between heap and stack: %u",
             ((unsigned int)&tmp - (unsigned int)__brkval));
     #endif
 }
@@ -155,13 +155,13 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
     OCRepPayload* payload = OCRepPayloadCreate();
     if(!payload)
     {
-        OC_LOG(ERROR, TAG, ("Failed to allocate Payload"));
+        OIC_LOG(ERROR, TAG, ("Failed to allocate Payload"));
         return OC_EH_ERROR;
     }
 
     if(entityHandlerRequest && (flag & OC_REQUEST_FLAG))
     {
-        OC_LOG (INFO, TAG, ("Flag includes OC_REQUEST_FLAG"));
+        OIC_LOG (INFO, TAG, ("Flag includes OC_REQUEST_FLAG"));
 
         if(OC_REST_GET == entityHandlerRequest->method)
         {
@@ -194,7 +194,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
             // Send the response
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG(ERROR, TAG, "Error sending response");
+                OIC_LOG(ERROR, TAG, "Error sending response");
                 ehRet = OC_EH_ERROR;
             }
         }
@@ -203,12 +203,12 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
     {
         if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OC_LOG (INFO, TAG, ("Received OC_OBSERVE_REGISTER from client"));
+            OIC_LOG (INFO, TAG, ("Received OC_OBSERVE_REGISTER from client"));
             gLightUnderObservation = 1;
         }
         else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
         {
-            OC_LOG (INFO, TAG, ("Received OC_OBSERVE_DEREGISTER from client"));
+            OIC_LOG (INFO, TAG, ("Received OC_OBSERVE_DEREGISTER from client"));
             gLightUnderObservation = 0;
         }
     }
@@ -229,7 +229,7 @@ void *ChangeLightRepresentation (void *param)
         Light.power += 5;
         if (gLightUnderObservation)
         {
-            OC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", Light.power);
+            OIC_LOG_V(INFO, TAG, " =====> Notifying stack of new power level %d\n", Light.power);
             result = OCNotifyAllObservers (Light.handle, OC_NA_QOS);
             if (OC_STACK_NO_OBSERVERS == result)
             {
@@ -245,20 +245,22 @@ void setup()
 {
     // Add your initialization code here
     // Note : This will initialize Serial port on Arduino at 115200 bauds
-    OC_LOG_INIT();
-    OC_LOG(DEBUG, TAG, ("OCServer is starting..."));
+    OIC_LOG_INIT();
+    OIC_LOG(DEBUG, TAG, ("OCServer is starting..."));
 
     // Connect to Ethernet or WiFi network
+#if defined(ARDUINOWIFI) || defined(ARDUINOETH)
     if (ConnectToNetwork() != 0)
     {
-        OC_LOG(ERROR, TAG, ("Unable to connect to network"));
+        OIC_LOG(ERROR, TAG, ("Unable to connect to network"));
         return;
     }
+#endif
 
     // Initialize the OC Stack in Server mode
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, ("OCStack init error"));
+        OIC_LOG(ERROR, TAG, ("OCStack init error"));
         return;
     }
 
@@ -279,7 +281,7 @@ void loop()
     // Give CPU cycles to OCStack to perform send/recv and other OCStack stuff
     if (OCProcess() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, ("OCStack process error"));
+        OIC_LOG(ERROR, TAG, ("OCStack process error"));
         return;
     }
     ChangeLightRepresentation(NULL);
@@ -295,7 +297,7 @@ void createLightResource()
             OCEntityHandlerCb,
             NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
-    OC_LOG_V(INFO, TAG, "Created Light resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, TAG, "Created Light resource with result: %s", getResult(res));
 }
 
 const char *getResult(OCStackResult result) {

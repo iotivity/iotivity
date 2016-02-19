@@ -165,7 +165,7 @@ TEST(BinToDoxmJSONTest, BinToDoxmJSONValidDoxm)
     OicSecDoxm_t * doxm =  getBinDoxm();
 
     char * json = BinToDoxmJSON(doxm);
-    OC_LOG_V(INFO, TAG, "BinToDoxmJSON:%s", json);
+    OIC_LOG_V(INFO, TAG, "BinToDoxmJSON:%s", json);
     EXPECT_TRUE(json != NULL);
 
     DeleteDoxmBinData(doxm);

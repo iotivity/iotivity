@@ -19,7 +19,7 @@ package oic.simulator.serviceprovider.view.dialogs;
 import java.util.Iterator;
 import java.util.List;
 
-import oic.simulator.serviceprovider.resource.AutomationSettingHelper;
+import oic.simulator.serviceprovider.model.AutomationSettingHelper;
 import oic.simulator.serviceprovider.utils.Constants;
 
 import org.eclipse.jface.dialogs.TitleAreaDialog;

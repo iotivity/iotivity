@@ -42,13 +42,13 @@ public class CaLeClientInterface {
 
     private static String SERVICE_UUID = "ADE3D529-C784-4F63-A987-EB69F70EE816";
     private static String TAG          = "Sample_Service : CaLeClientInterface";
+    private static Context mContext;
 
     private CaLeClientInterface(Context context) {
-
         caLeRegisterLeScanCallback(mLeScanCallback);
         caLeRegisterGattCallback(mGattCallback);
-
-        registerIntentFilter(context);
+        mContext = context;
+        registerIntentFilter();
     }
 
     public static void getLeScanCallback() {
@@ -59,12 +59,16 @@ public class CaLeClientInterface {
         caLeRegisterGattCallback(mGattCallback);
     }
 
-    private static IntentFilter registerIntentFilter(Context context) {
+    private static IntentFilter registerIntentFilter() {
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        context.registerReceiver(mReceiver, filter);
+        mContext.registerReceiver(mReceiver, filter);
         return filter;
+    }
+
+    public static void destroyLeInterface() {
+        mContext.unregisterReceiver(mReceiver);
     }
 
     private native static void caLeRegisterLeScanCallback(BluetoothAdapter.LeScanCallback callback);

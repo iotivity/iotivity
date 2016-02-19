@@ -28,7 +28,7 @@ import oic.simulator.logger.LogContentProvider;
 import oic.simulator.logger.LogEntry;
 import oic.simulator.logger.LogLabelProvider;
 import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.ILogUIListener;
+import oic.simulator.serviceprovider.listener.ILogListener;
 import oic.simulator.serviceprovider.manager.LogManager;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.view.dialogs.FilterDialog;
@@ -82,7 +82,7 @@ public class LogView extends ViewPart {
     public static final String        VIEW_ID              = "oic.simulator.serviceprovider.view.log";
 
     private LogManager                logManager;
-    private ILogUIListener            logListener;
+    private ILogListener              logListener;
 
     private LogContentProvider        treeContentProvider;
 
@@ -136,7 +136,7 @@ public class LogView extends ViewPart {
 
     public LogView() {
 
-        logListener = new ILogUIListener() {
+        logListener = new ILogListener() {
 
             @Override
             public void logChanged(final List<LogEntry> entry) {

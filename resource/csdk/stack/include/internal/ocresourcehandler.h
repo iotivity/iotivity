@@ -174,13 +174,6 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
                     OCRepPayload** payload);
 
 /**
- * Prepares a Payload for response.
- */
-OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
-                                           OCDiscoveryPayload* payload,
-                                           OCDevAddr *endpoint);
-
-/**
  * A helper function that Maps an @ref OCEntityHandlerResult type to an
  * @ref OCStackResult type.
  */

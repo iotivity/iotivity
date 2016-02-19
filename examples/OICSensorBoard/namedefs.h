@@ -22,9 +22,9 @@
 #define NAMEDEFS_H_
 
 #define EDISON_RESOURCE_INTERFACE "core.edison.resources"
-#define TEMPERATURE_RESOURCE_TYPE "Room.Temperature"
-#define LIGHT_RESOURCE_TYPE "Ambient.Light"
-#define LED_RESOURCE_TYPE "Platform.Led"
+#define TEMPERATURE_RESOURCE_TYPE "room.temperature"
+#define LIGHT_RESOURCE_TYPE "ambient.light"
+#define LED_RESOURCE_TYPE "platform.led"
 #define TEMPERATURE_RESOURCE_ENDPOINT "/temperature"
 #define LIGHT_RESOURCE_ENDPOINT "/ambientlight"
 #define LED_RESOURCE_ENDPOINT "/led"

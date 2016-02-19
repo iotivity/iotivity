@@ -70,7 +70,8 @@ namespace OC
                 OC_STACK_ERROR,
                 OC_STACK_PDM_IS_NOT_INITIALIZED,
                 OC_STACK_DUPLICATE_UUID,
-                OC_STACK_INCONSISTENT_DB
+                OC_STACK_INCONSISTENT_DB,
+                OC_STACK_AUTHENTICATION_FAILURE
             };
 
             std::string resultMessages[]=
@@ -112,7 +113,8 @@ namespace OC
                 OC::Exception::GENERAL_FAULT,
                 OC::Exception::PDM_DB_NOT_INITIALIZED,
                 OC::Exception::DUPLICATE_UUID,
-                OC::Exception::INCONSISTENT_DB
+                OC::Exception::INCONSISTENT_DB,
+                OC::Exception::AUTHENTICATION_FAILURE
             };
             TEST(OCExceptionTest, ReasonCodeMatches)
             {

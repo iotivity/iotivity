@@ -30,12 +30,14 @@
 
 #include "simulator_client_types.h"
 #include "simulator_resource_model.h"
+#include "simulator_uncopyable.h"
+#include "simulator_exceptions.h"
 
 /**
  * @class   SimulatorRemoteResource
  * @brief   This class provides a set of functions for the client to hande the resources currently running on the servers.
  */
-class SimulatorRemoteResource
+class SimulatorRemoteResource : public UnCopyable
 {
     public:
 
@@ -150,7 +152,7 @@ class SimulatorRemoteResource
 
         virtual void stopVerification(int id) = 0;
 
-        virtual void configure(const std::string &path) = 0;
+        virtual SimulatorResourceModelSP configure(const std::string &path) = 0;
 };
 
 typedef std::shared_ptr<SimulatorRemoteResource> SimulatorRemoteResourceSP;

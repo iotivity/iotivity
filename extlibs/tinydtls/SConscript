@@ -98,5 +98,4 @@ if not env.get('RELEASE'):
 	samples_env.AppendTarget('samples')
 
 env.InstallTarget(libtinydtls, 'libtinydtls');
-env.UserInstallTargetLib(libtinydtls, 'libtinydtls');
 

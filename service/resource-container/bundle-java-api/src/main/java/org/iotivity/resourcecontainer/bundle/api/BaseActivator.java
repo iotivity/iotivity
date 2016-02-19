@@ -73,10 +73,14 @@ public class BaseActivator implements BundleActivator {
 	 * @param resource
 	 *            bundle resource instance that should be made available as OIC
 	 *            resource
-	 */
-	public void registerResource(BundleResource resource) {
+         * @return int
+         *       0        in case of an success
+         *       -EEXIST  when the resource already exists and was not registered
+         *       -EINVAL  when it was not possible to create such a resource
+         */
+	public int registerResource(BundleResource resource) {
 		bundleResources.add(resource);
-		registerJavaResource(resource, resource.getAttributeKeys(), bundleId,
+		return registerJavaResource(resource, resource.getAttributeKeys(), bundleId,
 				resource.getURI(), resource.getResourceType(),
 				resource.getName());
 	}
@@ -117,8 +121,13 @@ public class BaseActivator implements BundleActivator {
 	 *            unique bundle identifier
 	 * @param uri
 	 *            Uri that should be used to register the resource
-	 */
-	private native void registerJavaResource(BundleResource resource,
+         *
+         * @return int
+         *       0        in case of an success
+         *       -EEXIST  when the resource already exists and was not registered
+         *       -EINVAL  when it was not possible to create such a resource
+         */
+	private native int registerJavaResource(BundleResource resource,
 			String[] attributes, String bundleId, String uri,
 			String resourceType, String name);
 

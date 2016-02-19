@@ -20,7 +20,11 @@ BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth)
+%if 0%{?tizen_version_major} < 3
 BuildRequires:  pkgconfig(capi-appfw-app-common)
+%else
+BuildRequires:  pkgconfig(capi-appfw-application)
+%endif
 BuildRequires:  pkgconfig(glib-2.0)
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
@@ -127,13 +131,34 @@ cp out/tizen/*/%{build_mode}/resource/examples/simpleserverHQ %{buildroot}%{_bin
 cp out/tizen/*/%{build_mode}/resource/examples/threadingsample %{buildroot}%{_bindir}
 if echo %{secure_mode}|grep -qi '1'; then
 	cp out/tizen/*/%{build_mode}/libocpmapi.a %{buildroot}%{_libdir}
+	cp resource/c_common/*.h %{buildroot}%{_includedir}
+	cp resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}
+	cp extlibs/tinycbor/tinycbor/src/*.h %{buildroot}%{_includedir}
+	cp ./extlibs/cjson/*.h %{buildroot}%{_includedir}
+	cp ./resource/c_common/oic_string/include/*.h %{buildroot}%{_includedir}
+	cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
+	cp ./resource/csdk/security/include/*.h %{buildroot}%{_includedir}
+	cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
+	cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
+	cp ./resource/csdk/connectivity/lib/libcoap-4.1.1/*.h %{buildroot}%{_includedir}
+
+	cp out/tizen/*/%{build_mode}/resource/csdk/stack/samples/linux/secure/occlientbasicops %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/csdk/stack/samples/linux/secure/ocserverbasicops %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/csdk/stack/samples/linux/secure/ocamsservice %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/examples/*.json %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/csdk/stack/samples/linux/secure/*.json %{buildroot}%{_bindir}
+
+	cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/provisioningclient %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_justworks %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_randompin %{buildroot}%{_bindir}
+	cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/*.json %{buildroot}%{_bindir}
 fi
 cp out/tizen/*/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
 cp out/tizen/*/%{build_mode}/lib*.so %{buildroot}%{_libdir}
 
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
-cp resource/csdk/ocrandom/include/*.h %{buildroot}%{_includedir}
+cp resource/c_common/ocrandom/include/*.h %{buildroot}%{_includedir}
 cp -r resource/oc_logger/include/* %{buildroot}%{_includedir}
 cp resource/include/*.h %{buildroot}%{_includedir}
 
