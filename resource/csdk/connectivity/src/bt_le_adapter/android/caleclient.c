@@ -596,13 +596,14 @@ CAResult_t CALEClientIsThereScannedDevices()
         {
             if (ca_cond_wait_for(g_deviceDescCond,
                                  g_threadSendMutex,
-                                 TIMEOUT) == 0)
+                                 TIMEOUT) == CA_WAIT_SUCCESS)
             {
                 devicesDiscovered = true;
                 break;
             }
         }
 
+        // time out for scanning devices
         if (!devicesDiscovered)
         {
             return CA_STATUS_FAILED;
@@ -722,13 +723,14 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
 
     // wait for finish to send data through "CALeGattServicesDiscoveredCallback"
     // if there is no connection state.
+    ca_mutex_lock(g_threadMutex);
     if (!g_isFinishedSendData)
     {
-        ca_mutex_lock(g_threadMutex);
+        OIC_LOG(DEBUG, TAG, "waiting send finish signal");
         ca_cond_wait(g_threadCond, g_threadMutex);
         OIC_LOG(DEBUG, TAG, "the data was sent");
-        ca_mutex_unlock(g_threadMutex);
     }
+    ca_mutex_unlock(g_threadMutex);
 
     if (isAttached)
     {
@@ -858,13 +860,14 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
     OIC_LOG(DEBUG, TAG, "connection routine is finished for multicast");
 
     // wait for finish to send data through "CALeGattServicesDiscoveredCallback"
+    ca_mutex_lock(g_threadMutex);
     if (!g_isFinishedSendData)
     {
-        ca_mutex_lock(g_threadMutex);
+        OIC_LOG(DEBUG, TAG, "waiting send finish signal");
         ca_cond_wait(g_threadCond, g_threadMutex);
-        OIC_LOG(DEBUG, TAG, "the data was sent for All devices");
-        ca_mutex_unlock(g_threadMutex);
+        OIC_LOG(DEBUG, TAG, "the data was sent");
     }
+    ca_mutex_unlock(g_threadMutex);
 
     // start LE Scan again
     res = CALEClientStartScan();
@@ -3093,7 +3096,7 @@ jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
         {
             OIC_LOG(ERROR, TAG, "jarrayObj is null");
             (*env)->ReleaseStringUTFChars(env, jni_btTargetAddress, targetAddress);
-            return CA_STATUS_FAILED;
+            return NULL;
         }
 
         OIC_LOG(DEBUG, TAG, "CALL API - bluetoothGatt.getDevice()");
@@ -3484,6 +3487,8 @@ void CALEClientCreateDeviceList()
  */
 void CALEClientUpdateSendCnt(JNIEnv *env)
 {
+    OIC_LOG(DEBUG, TAG, "CALEClientUpdateSendCnt");
+
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     // mutex lock
     ca_mutex_lock(g_threadMutex);
@@ -4219,11 +4224,20 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattDescriptorWriteCallback(JNIEnv 
     VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
 
-    CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
-    if (CA_STATUS_OK != res)
+    jint gatt_success = CALEGetConstantsValue(env, CLASSPATH_BT_GATT, "GATT_SUCCESS");
+    if (gatt_success != status) // error
     {
-        OIC_LOG(ERROR, TAG, "CALEClientWriteCharacteristic has failed");
         goto error_exit;
+    }
+
+    if (g_sendBuffer)
+    {
+        CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "CALEClientWriteCharacteristic has failed");
+            goto error_exit;
+        }
     }
     return;
 
