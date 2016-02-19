@@ -68,7 +68,7 @@ public class MainActivity extends Activity {
     }
 
     private boolean mCheckedItems[] = {
-            false, false, false, false
+            false, false, false, false, false
     };
 
     private int mSelectedItems[] = { 0, 0, 0, 0, 0, 0};
