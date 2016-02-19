@@ -272,6 +272,18 @@ void CALEClientSetScanFlag(bool flag);
 CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback);
 
 /**
+ * set auto connect flag for connectGatt API.
+ * @param[in]   flag        auto connect flag.
+ */
+void CALEClientSetAutoConnectFlag(jboolean flag);
+
+/**
+ * get auto connect flag.
+ * @return  current auto connect flag;
+ */
+jboolean CALEClientGetAutoConnectFlag();
+
+/**
  * connect to gatt server hosted.
  * @param[in]   env                   JNI interface pointer.
  * @param[in]   bluetoothDevice       bluetooth Device object.

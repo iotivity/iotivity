@@ -86,6 +86,8 @@ static ca_mutex g_scanMutex = NULL;
 
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
 
+static jboolean g_autoConnectFlag = JNI_FALSE;
+
 //getting jvm
 void CALEClientJniInit()
 {
@@ -344,6 +346,7 @@ void CALEClientTerminate()
     g_threadCond = NULL;
     g_threadWriteCharacteristicCond = NULL;
     g_isSignalSetFlag = false;
+    CALEClientSetAutoConnectFlag(JNI_FALSE);
 
     if (isAttached)
     {
@@ -972,7 +975,7 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
         }
 
         // connection request
-        jobject newGatt = CALEClientConnect(env, device, JNI_TRUE);
+        jobject newGatt = CALEClientConnect(env, device, CALEClientGetAutoConnectFlag());
         if (NULL == newGatt)
         {
             OIC_LOG(ERROR, TAG, "CALEClientConnect has failed");
@@ -1016,6 +1019,31 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
         }
         else
         {
+            OIC_LOG(INFO, TAG, "STATE_DISCONNECTED - start to connect LE");
+
+            // cancel previous connection request before connection
+            // if there is gatt object in g_gattObjectList.
+            if (jni_address)
+            {
+                address = (char*)(*env)->GetStringUTFChars(env, jni_address, NULL);
+                if (!address)
+                {
+                    OIC_LOG(ERROR, TAG, "address is not available");
+                    return CA_STATUS_FAILED;
+                }
+
+                jobject gatt = CALEClientGetGattObjInList(env, address);
+                if (gatt)
+                {
+                    CAResult_t res = CALEClientDisconnect(env, gatt);
+                    if (CA_STATUS_OK != res)
+                    {
+                        OIC_LOG(INFO, TAG, "there is no gatt object");
+                    }
+                }
+                (*env)->ReleaseStringUTFChars(env, jni_address, address);
+            }
+
             OIC_LOG(DEBUG, TAG, "start to connect LE");
             jobject gatt = CALEClientConnect(env, device, JNI_TRUE);
             if (NULL == gatt)
@@ -1467,6 +1495,18 @@ CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
     }
 
     return CA_STATUS_OK;
+}
+
+void CALEClientSetAutoConnectFlag(jboolean flag)
+{
+    OIC_LOG_V(INFO, TAG, "auto connect flag is set %d", flag);
+    g_autoConnectFlag = flag;
+}
+
+jboolean CALEClientGetAutoConnectFlag()
+{
+    OIC_LOG_V(INFO, TAG, "auto connect flag is %d", g_autoConnectFlag);
+    return g_autoConnectFlag;
 }
 
 jobject CALEClientConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect)
@@ -3917,12 +3957,16 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
         const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
         if (address)
         {
-            res = CALEClientRemoveDeviceState(address);
+            CAResult_t res = CALEClientUpdateDeviceState(address, STATE_DISCONNECTED,
+                                                                  STATE_CHARACTER_UNSET,
+                                                                  STATE_SEND_NONE);
             if (CA_STATUS_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "CALEClientRemoveDeviceState has failed");
+                OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+                (*env)->ReleaseStringUTFChars(env, jni_address, address);
                 goto error_exit;
             }
+            OIC_LOG_V(INFO, TAG, "ConnectionStateCB - remote address : %s", address);
 
             (*env)->ReleaseStringUTFChars(env, jni_address, address);
         }
