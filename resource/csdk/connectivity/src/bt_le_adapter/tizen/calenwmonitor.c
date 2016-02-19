@@ -69,10 +69,9 @@ static ca_mutex g_bleDeviceStateChangedCbMutex = NULL;
 void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
                         void *user_data);
 
-void *CALEMainLoopThread (void *param)
+void CALEMainLoopThread(void *param)
 {
     g_main_loop_run(g_mainloop);
-    return NULL;
 }
 
 CAResult_t CAInitializeLENetworkMonitor()

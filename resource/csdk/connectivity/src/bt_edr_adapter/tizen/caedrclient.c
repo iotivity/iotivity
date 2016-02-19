@@ -27,6 +27,7 @@
 
 #include <string.h>
 #include <bluetooth.h>
+#include <bluetooth_internal.h>
 
 #include "caedrinterface.h"
 #include "camutex.h"
