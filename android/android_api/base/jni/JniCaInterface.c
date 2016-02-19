@@ -222,6 +222,8 @@ Java_org_iotivity_ca_CaInterface_caManagerInitialize(JNIEnv *env, jclass clazz,
 
     g_listenerObject = (*env)->NewGlobalRef(env, listener);
 
+    CAUtilClientInitialize(env, g_jvm, context);
+
     CARegisterNetworkMonitorHandler(CAManagerAdapterStateChangedCB,
                                     CAManagerConnectionStateChangedCB);
 }

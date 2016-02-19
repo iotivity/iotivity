@@ -326,7 +326,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caLeBondStateChangedCallback(JNIEnv *env, jobject obj,
-                                                                       jstring jaddr, jboolean jconnected)
+                                                                      jstring jaddr)
 {
     OIC_LOG(DEBUG, TAG, "CaLeClientInterface - Bond State Changed");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
@@ -368,6 +368,4 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeBondStateChangedCallback(JNIEnv *en
         OIC_LOG(ERROR, TAG, "address is null");
         return;
     }
-
-    g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, address, (bool)jconnected);
 }

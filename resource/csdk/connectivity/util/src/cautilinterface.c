@@ -35,6 +35,8 @@ CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateC
     CASetLENetworkMonitorCallbacks(adapterStateCB, connStateCB);
     return CA_STATUS_OK;
 #else
+    (void)adapterStateCB;
+    (void)connStateCB;
     return CA_NOT_SUPPORTED;
 #endif
 
@@ -47,6 +49,7 @@ CAResult_t CASetAutoConnectionDeviceInfo(const char *address)
 #ifdef LE_ADAPTER
     return CASetLEClientAutoConnectionDeviceInfo(address);
 #else
+    (void)address;
     return CA_NOT_SUPPORTED;
 #endif
 }
@@ -58,6 +61,7 @@ CAResult_t CAUnsetAutoConnectionDeviceInfo(const char *address)
 #ifdef LE_ADAPTER
     return CAUnsetLEClientAutoConnectionDeviceInfo(address);
 #else
+    (void)address;
     return CA_NOT_SUPPORTED;
 #endif
 }
@@ -73,13 +77,14 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilClientInitialize");
 #ifdef LE_ADAPTER
-
+    return CAManagerLEClientInitialize(env, jvm, context);
 #else
     OIC_LOG(DEBUG, TAG, "it is not supported");
+    (void)env;
+    (void)jvm;
+    (void)context;
     return CA_NOT_SUPPORTED;
 #endif
-
-    return CA_STATUS_OK;
 }
 
 /**
@@ -90,12 +95,11 @@ CAResult_t CAUtilClientTerminate(JNIEnv *env)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilClientTerminate");
 #ifdef LE_ADAPTER
-
+    return CAManagerLEClientTerminate(env);
 #else
     OIC_LOG(DEBUG, TAG, "it is not supported");
+    (void)env;
     return CA_NOT_SUPPORTED;
 #endif
-
-    return CA_STATUS_OK;
 }
 #endif

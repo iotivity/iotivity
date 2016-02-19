@@ -20,6 +20,9 @@ env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
                              os.path.join(root_dir, 'common/inc'),
                              os.path.join(root_dir, 'util/inc') ])
 
+if ca_os == 'android':
+	env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'util/src/android') ])
+
 ######################################################################
 # Source files to build common for platforms
 ######################################################################
@@ -33,4 +36,7 @@ if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
 
     if ca_os == 'android':
     		env.AppendUnique(CA_SRC = [
-    		os.path.join(src_dir,'camanager/android/caleconnectionmanager.c')])
+    		os.path.join(src_dir,'camanager/android/caleconnectionmanager.c'),
+    		os.path.join(src_dir,'camanager/android/caleautoconnector.c'),
+    		os.path.join(src_dir,'camanager/android/camanagerleutil.c'),
+    		os.path.join(src_dir,'camanager/android/camanagerdevice.c')])
