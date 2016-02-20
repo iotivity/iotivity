@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.oic.simulator.client.SimulatorRemoteResource.RequestType;
+
 import oic.simulator.clientcontroller.listener.IConfigurationUpload;
 import oic.simulator.clientcontroller.listener.IDevicePlatformInfoUIListener;
 import oic.simulator.clientcontroller.listener.IFindResourceUIListener;
@@ -268,7 +270,7 @@ public class UiListenerHandler {
     }
 
     public void verificationStartedNotification(RemoteResource resource,
-            int autoType) {
+            RequestType reqType) {
         synchronized (verificationUIListeners) {
             if (verificationUIListeners.size() > 0) {
                 IVerificationUIListener listener;
@@ -277,7 +279,7 @@ public class UiListenerHandler {
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
                     if (null != listener) {
-                        listener.onVerificationStarted(resource, autoType);
+                        listener.onVerificationStarted(resource, reqType);
                     }
                 }
             }
@@ -285,7 +287,7 @@ public class UiListenerHandler {
     }
 
     public void verificationAbortedNotification(RemoteResource resource,
-            int autoType) {
+            RequestType reqType) {
         synchronized (verificationUIListeners) {
             if (verificationUIListeners.size() > 0) {
                 IVerificationUIListener listener;
@@ -294,7 +296,7 @@ public class UiListenerHandler {
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
                     if (null != listener) {
-                        listener.onVerificationAborted(resource, autoType);
+                        listener.onVerificationAborted(resource, reqType);
                     }
                 }
             }
@@ -302,7 +304,7 @@ public class UiListenerHandler {
     }
 
     public void verificationCompletedNotification(RemoteResource resource,
-            int autoType) {
+            RequestType reqType) {
         synchronized (verificationUIListeners) {
             if (verificationUIListeners.size() > 0) {
                 IVerificationUIListener listener;
@@ -311,7 +313,7 @@ public class UiListenerHandler {
                 while (listenerItr.hasNext()) {
                     listener = listenerItr.next();
                     if (null != listener) {
-                        listener.onVerificationCompleted(resource, autoType);
+                        listener.onVerificationCompleted(resource, reqType);
                     }
                 }
             }

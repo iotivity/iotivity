@@ -253,11 +253,7 @@ public class MetaPropertiesView extends ViewPart {
                             } catch (SimulatorException ex) {
                                 result = false;
                             }
-                            if (result) {
-                                MessageDialog.openInformation(
-                                        parent.getShell(), "Operation status",
-                                        "Resource properties updated.");
-                            } else {
+                            if (!result) {
                                 MessageDialog.openInformation(
                                         parent.getShell(), "Operation status",
                                         "Failed to update the resource properties.");

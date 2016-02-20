@@ -46,7 +46,7 @@ import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.client.SimulatorRemoteResource;
-import org.oic.simulator.client.SimulatorRemoteResource.VerificationType;
+import org.oic.simulator.client.SimulatorRemoteResource.RequestType;
 
 import oic.simulator.clientcontroller.Activator;
 import oic.simulator.clientcontroller.listener.IConfigurationUpload;
@@ -228,13 +228,13 @@ public class AttributeView extends ViewPart {
 
             @Override
             public void onVerificationStarted(final RemoteResource resource,
-                    final int autoType) {
+                    final RequestType reqType) {
                 // Do Nothing. For Future Use.
             }
 
             @Override
             public void onVerificationCompleted(final RemoteResource resource,
-                    final int autoType) {
+                    final RequestType reqType) {
 
                 if (null == resource) {
                     return;
@@ -255,8 +255,7 @@ public class AttributeView extends ViewPart {
                                 .log(Level.INFO.ordinal(),
                                         new Date(),
                                         "["
-                                                + VerificationType.values()[autoType]
-                                                        .toString()
+                                                + reqType.toString()
                                                 + "] Verification Completed for \""
                                                 + remoteResource.getURI()
                                                 + "\".");
@@ -266,7 +265,7 @@ public class AttributeView extends ViewPart {
 
             @Override
             public void onVerificationAborted(final RemoteResource resource,
-                    final int autoType) {
+                    final RequestType reqType) {
 
                 if (null == resource) {
                     return;
@@ -287,8 +286,7 @@ public class AttributeView extends ViewPart {
                                 .log(Level.INFO.ordinal(),
                                         new Date(),
                                         "["
-                                                + VerificationType.values()[autoType]
-                                                        .toString()
+                                                + reqType
                                                 + "] Verification Aborted for \""
                                                 + remoteResource.getURI()
                                                 + "\".");
@@ -708,13 +706,13 @@ public class AttributeView extends ViewPart {
                                                 + "\nDo you want to proceed?");
                                 if (answer) {
                                     if (startGet || stopGet)
-                                        automate(VerificationType.GET,
+                                        automate(RequestType.GET,
                                                 autoStatus.get(Constants.GET));
                                     if (startPut || stopPut)
-                                        automate(VerificationType.PUT,
+                                        automate(RequestType.PUT,
                                                 autoStatus.get(Constants.PUT));
                                     if (startPost || stopPost)
-                                        automate(VerificationType.POST,
+                                        automate(RequestType.POST,
                                                 autoStatus.get(Constants.POST));
                                 }
                             }
@@ -725,7 +723,7 @@ public class AttributeView extends ViewPart {
         });
     }
 
-    private void automate(VerificationType type, boolean start) {
+    private void automate(RequestType type, boolean start) {
         if (start) {
             resourceManager.startAutomationRequest(type, resourceInSelection);
         } else {
@@ -853,9 +851,15 @@ public class AttributeView extends ViewPart {
                         SimulatorResourceAttribute attribute = attrElement
                                 .getSimulatorResourceAttribute();
 
-                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL)
-                            return Utility.getAttributeValueAsString(attribute
-                                    .value());
+                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL) {
+                            String value = Utility
+                                    .getAttributeValueAsString(attribute
+                                            .value());
+                            if (null == value) {
+                                value = "";
+                            }
+                            return value;
+                        }
                         return null;
                     }
                 }

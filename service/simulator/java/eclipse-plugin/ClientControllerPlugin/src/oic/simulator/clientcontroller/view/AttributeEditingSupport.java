@@ -22,17 +22,23 @@ import org.eclipse.jface.viewers.CheckboxCellEditor;
 import org.eclipse.jface.viewers.ComboBoxCellEditor;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
 import java.util.List;
 
+import org.oic.simulator.ArrayProperty;
+import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
@@ -46,6 +52,7 @@ import oic.simulator.clientcontroller.remoteresource.RemoteResource;
 import oic.simulator.clientcontroller.utils.AttributeValueBuilder;
 import oic.simulator.clientcontroller.utils.Utility;
 import oic.simulator.clientcontroller.view.dialogs.PostRequestDialog;
+import oic.simulator.clientcontroller.view.dialogs.UpdatePrimitiveArrayAttributeDialog;
 
 /**
  * This class provides editing support to the resources attributes table in the
@@ -116,32 +123,60 @@ public class AttributeEditingSupport {
                 return null;
             }
 
-            String values[] = null;
-            List<String> valueSet = resourceManager
-                    .getAllValuesOfAttribute(attribute);
-            values = convertListToStringArray(valueSet);
+            CellEditor editor;
+            if (type.mType == ValueType.ARRAY && res.isConfigUploaded()
+                    && isArrayAttributeValid(attribute)) {
+                editor = new TextCellEditor(viewer.getTree());
+                editor.setStyle(SWT.READ_ONLY);
+                final Text txt = (Text) editor.getControl();
+                txt.addModifyListener(new ModifyListener() {
+                    @Override
+                    public void modifyText(ModifyEvent e) {
+                        UpdatePrimitiveArrayAttributeDialog dialog = new UpdatePrimitiveArrayAttributeDialog(
+                                Display.getDefault().getActiveShell(),
+                                attribute);
+                        if (dialog.open() == Window.OK) {
+                            updateAttributeValue(attribute,
+                                    dialog.getNewValueObj());
+                        }
 
-            ComboBoxCellEditor comboEditor;
-            comboEditor = new ComboBoxCellEditor(viewer.getTree(), values);
-            comboBox = (CCombo) comboEditor.getControl();
-            comboBox.addModifyListener(new ModifyListener() {
-
-                @Override
-                public void modifyText(ModifyEvent event) {
-                    String newValue = comboBox.getText();
-
-                    if (null != newValue && !newValue.isEmpty()) {
-                        attributeElement.setPostState(true);
-                    } else {
-                        attributeElement.setPostState(false);
+                        // Update the viewer in a separate UI thread.
+                        Display.getDefault().asyncExec(new Runnable() {
+                            @Override
+                            public void run() {
+                                attributeElement.setPostState(true);
+                                viewer.refresh(element, true);
+                            }
+                        });
                     }
+                });
+            } else {
+                String values[] = null;
+                List<String> valueSet = resourceManager
+                        .getAllValuesOfAttribute(attribute);
+                values = convertListToStringArray(valueSet);
 
-                    if (dialog instanceof PostRequestDialog) {
-                        viewer.update(attributeElement, null);
+                editor = new ComboBoxCellEditor(viewer.getTree(), values);
+                comboBox = (CCombo) editor.getControl();
+                comboBox.addModifyListener(new ModifyListener() {
+
+                    @Override
+                    public void modifyText(ModifyEvent event) {
+                        String newValue = comboBox.getText();
+
+                        if (null != newValue && !newValue.isEmpty()) {
+                            attributeElement.setPostState(true);
+                        } else {
+                            attributeElement.setPostState(false);
+                        }
+
+                        if (dialog instanceof PostRequestDialog) {
+                            viewer.update(attributeElement, null);
+                        }
                     }
-                }
-            });
-            return comboEditor;
+                });
+            }
+            return editor;
         }
 
         @Override
@@ -158,7 +193,33 @@ public class AttributeEditingSupport {
                 return 0;
             }
 
+            final AttributeValue val = att.value();
+            if (null == val) {
+                return null;
+            }
+
+            final TypeInfo type = val.typeInfo();
+            if (type.mBaseType == ValueType.RESOURCEMODEL) {
+                return null;
+            }
+
             String valueString = Utility.getAttributeValueAsString(att.value());
+            if (null == valueString) {
+                valueString = "";
+            }
+
+            if (type.mType == ValueType.ARRAY) {
+                ResourceManager resourceManager = Activator.getDefault()
+                        .getResourceManager();
+
+                RemoteResource res = resourceManager
+                        .getCurrentResourceInSelection();
+                if (null != res && res.isConfigUploaded()
+                        && isArrayAttributeValid(att)) {
+                    return valueString;
+                }
+            }
+
             List<String> valueSet = Activator.getDefault().getResourceManager()
                     .getAllValuesOfAttribute(att);
             if (null != valueSet) {
@@ -189,14 +250,45 @@ public class AttributeEditingSupport {
 
             TypeInfo type = val.typeInfo();
 
+            if (type.mBaseType == ValueType.RESOURCEMODEL) {
+                return;
+            }
+
+            if (type.mType == ValueType.ARRAY) {
+                ResourceManager resourceManager = Activator.getDefault()
+                        .getResourceManager();
+
+                RemoteResource res = resourceManager
+                        .getCurrentResourceInSelection();
+                if (null != res && res.isConfigUploaded()
+                        && isArrayAttributeValid(att)) {
+                    return;
+                }
+            }
+
             String oldValue = String.valueOf(Utility
                     .getAttributeValueAsString(val));
+            if (null == oldValue) {
+                oldValue = "";
+            }
+
             String newValue = comboBox.getText();
+
+            if (type.mType == ValueType.ARRAY
+                    && type.mBaseType != ValueType.RESOURCEMODEL) {
+                newValue = Utility.removeWhiteSpacesInArrayValues(newValue);
+            }
+
             if (!oldValue.equals(newValue)) {
-                // Get the AttriuteValue from the string
-                AttributeValue attValue = AttributeValueBuilder.build(newValue,
-                        type.mBaseType);
                 boolean invalid = false;
+
+                // Get the AttriuteValue from the string
+                AttributeValue attValue = null;
+                try {
+                    attValue = AttributeValueBuilder.build(newValue,
+                            type.mBaseType);
+                } catch (Exception e) {
+                }
                 if (null == attValue) {
                     invalid = true;
                 } else {
@@ -219,6 +311,34 @@ public class AttributeEditingSupport {
             }
 
             viewer.update(element, null);
+        }
+
+        private boolean isArrayAttributeValid(
+                SimulatorResourceAttribute attribute) {
+            if (null == attribute)
+                return false;
+
+            AttributeValue val = attribute.value();
+            if (null == val)
+                return false;
+
+            AttributeProperty prop = attribute.property();
+            if (null == prop || !prop.isArray())
+                return false;
+
+            ArrayProperty arrProp = prop.asArray();
+            if (null == arrProp)
+                return false;
+
+            AttributeProperty elementProp = arrProp.getElementProperty();
+            if (null == elementProp)
+                return false;
+
+            TypeInfo info = val.typeInfo();
+            if (info.mBaseType == ValueType.RESOURCEMODEL)
+                return false;
+
+            return true;
         }
 
         public String[] convertListToStringArray(List<String> values) {

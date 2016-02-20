@@ -55,8 +55,9 @@ import org.oic.simulator.client.SimulatorRemoteResource.GetResponseListener;
 import org.oic.simulator.client.SimulatorRemoteResource.ObserveNotificationListener;
 import org.oic.simulator.client.SimulatorRemoteResource.PostResponseListener;
 import org.oic.simulator.client.SimulatorRemoteResource.PutResponseListener;
+import org.oic.simulator.client.SimulatorRemoteResource.RequestType;
 import org.oic.simulator.client.SimulatorRemoteResource.VerificationListener;
-import org.oic.simulator.client.SimulatorRemoteResource.VerificationType;
+import org.oic.simulator.client.SimulatorRequestModel;
 
 import oic.simulator.clientcontroller.Activator;
 import oic.simulator.clientcontroller.remoteresource.DeviceAndPlatformInfo;
@@ -438,12 +439,13 @@ public class ResourceManager {
                         // Update the automation status.
                         resource.updateAutomationStatus(autoId, true);
 
-                        int autoType = resource.getAutomationtype(autoId);
+                        RequestType reqType = resource
+                                .getAutomationtype(autoId);
 
                         // Notify the listeners.
                         UiListenerHandler.getInstance()
                                 .verificationStartedNotification(resource,
-                                        autoType);
+                                        reqType);
                     }
                 });
             }
@@ -461,12 +463,13 @@ public class ResourceManager {
                         // Update the automation status.
                         resource.updateAutomationStatus(autoId, false);
 
-                        int autoType = resource.getAutomationtype(autoId);
+                        RequestType reqType = resource
+                                .getAutomationtype(autoId);
 
                         // Notify the listeners.
                         UiListenerHandler.getInstance()
                                 .verificationCompletedNotification(resource,
-                                        autoType);
+                                        reqType);
                     }
                 });
             }
@@ -483,12 +486,13 @@ public class ResourceManager {
                         // Update the automation status.
                         resource.updateAutomationStatus(autoId, false);
 
-                        int autoType = resource.getAutomationtype(autoId);
+                        RequestType reqType = resource
+                                .getAutomationtype(autoId);
 
                         // Notify the listeners.
                         UiListenerHandler.getInstance()
                                 .verificationAbortedNotification(resource,
-                                        autoType);
+                                        reqType);
                     }
                 });
             }
@@ -514,7 +518,7 @@ public class ResourceManager {
         }
 
         resource.setResourceModelRef(resourceModelN);
-        resource.setResourceRepresentation(resourceModelN, false);
+        resource.setResourceRepresentation(resourceModelN);
 
         return resource;
     }
@@ -1390,7 +1394,7 @@ public class ResourceManager {
         return true;
     }
 
-    public void startAutomationRequest(VerificationType reqType,
+    public void startAutomationRequest(RequestType reqType,
             RemoteResource resource) {
         if (null == resource) {
             return;
@@ -1406,9 +1410,9 @@ public class ResourceManager {
         try {
             autoId = resourceN.startVerification(reqType, verifyListener);
             if (autoId != -1) {
-                if (reqType == VerificationType.GET) {
+                if (reqType == RequestType.GET) {
                     resource.setGetAutomtnId(autoId);
-                } else if (reqType == VerificationType.PUT) {
+                } else if (reqType == RequestType.PUT) {
                     resource.setPutAutomtnId(autoId);
                 } else {
                     resource.setPostAutomtnId(autoId);
@@ -1431,7 +1435,7 @@ public class ResourceManager {
         }
     }
 
-    public void stopAutomationRequest(VerificationType reqType,
+    public void stopAutomationRequest(RequestType reqType,
             RemoteResource resource) {
         if (null == resource) {
             return;
@@ -1441,10 +1445,10 @@ public class ResourceManager {
             return;
         }
         int autoId;
-        if (reqType == VerificationType.GET) {
+        if (reqType == RequestType.GET) {
             resource.setGetAutomtnInProgress(false);
             autoId = resource.getGetAutomtnId();
-        } else if (reqType == VerificationType.PUT) {
+        } else if (reqType == RequestType.PUT) {
             resource.setPutAutomtnInProgress(false);
             autoId = resource.getPutAutomtnId();
         } else {
@@ -1464,6 +1468,7 @@ public class ResourceManager {
 
     public boolean setConfigFilePath(RemoteResource resource,
             String configFilePath) throws SimulatorException {
+
         if (null == resource) {
             return false;
         }
@@ -1472,19 +1477,18 @@ public class ResourceManager {
             return false;
         }
         try {
-            SimulatorResourceModel configuredResourceModel;
-            configuredResourceModel = resourceN.setConfigInfo(configFilePath);
-            if (null == configuredResourceModel) {
+            Map<RequestType, SimulatorRequestModel> requestModels;
+            requestModels = resourceN.setConfigInfo(configFilePath);
+            if (null == requestModels) {
                 return false;
             }
 
+            resource.getResourceRepresentation().updateAttributeProperties(
+                    requestModels.get(RequestType.POST),
+                    resource.getResourceModelRef());
+
             // Store the resource model in the local cache
-            /*
-             * SimulatorResourceModel resourceModel = resource
-             * .getResourceModelRef(); if (null != resourceModel) {
-             * configuredResourceModel.update(resourceModel); }
-             * resource.setResourceModelRef(configuredResourceModel);
-             */
+            resource.setRequestModels(requestModels);
         } catch (SimulatorException e) {
             Activator
                     .getDefault()
@@ -1492,6 +1496,14 @@ public class ResourceManager {
                     .log(Level.ERROR.ordinal(), new Date(),
                             Utility.getSimulatorErrorString(e, null));
             throw e;
+        } catch (Exception e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            Utility.getSimulatorErrorString(e,
+                                    "Error while configuring the attribute properties"));
         }
         // Update the status
         resource.setConfigUploaded(true);

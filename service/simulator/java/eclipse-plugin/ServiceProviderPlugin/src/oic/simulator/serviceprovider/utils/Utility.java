@@ -462,63 +462,22 @@ public class Utility {
         if (null == val) {
             return null;
         }
+
         Object value = val.get();
         if (null == value) {
             return null;
         }
+
         TypeInfo type = val.typeInfo();
         if (type.mType == ValueType.RESOURCEMODEL
                 || (type.mType == ValueType.ARRAY && type.mBaseType == ValueType.RESOURCEMODEL)
                 || (type.mType == ValueType.ARRAY && type.mDepth > 1)) {
             return null;
         }
-        if (type.mType == ValueType.ARRAY) {
-            if (type.mBaseType == ValueType.INTEGER) {
-                Integer[] values = (Integer[]) value;
-                if (null == values || values.length < 1) {
-                    return null;
-                }
-                List<Integer> list = new ArrayList<Integer>();
-                for (Integer i : values) {
-                    list.add(i);
-                }
-                return list.toString();
-            } else if (type.mBaseType == ValueType.DOUBLE) {
-                Double[] values = (Double[]) value;
-                if (null == values || values.length < 1) {
-                    return null;
-                }
-                List<Double> list = new ArrayList<Double>();
-                for (Double i : values) {
-                    list.add(i);
-                }
-                return list.toString();
-            } else if (type.mBaseType == ValueType.BOOLEAN) {
-                Boolean[] values = (Boolean[]) value;
-                if (null == values || values.length < 1) {
-                    return null;
-                }
-                List<Boolean> list = new ArrayList<Boolean>();
-                for (Boolean i : values) {
-                    list.add(i);
-                }
-                return list.toString();
-            } else if (type.mBaseType == ValueType.STRING) {
-                String[] values = (String[]) value;
-                if (null == values || values.length < 1) {
-                    return null;
-                }
-                List<String> list = new ArrayList<String>();
-                for (String i : values) {
-                    list.add(i);
-                }
-                return list.toString();
-            } else {
-                return null;
-            }
-        } else {
-            return String.valueOf(value);
-        }
+
+        AttributeValueStringConverter converter = new AttributeValueStringConverter(
+                val);
+        return converter.toString();
     }
 
     public static boolean isUriValid(String resURI) {
@@ -560,5 +519,23 @@ public class Utility {
             ifTypes.put(Constants.SENSOR_INTERFACE, "Sensor");
         }
         return ifTypes;
+    }
+
+    public static String removeWhiteSpacesInArrayValues(String value) {
+        if (null == value || value.isEmpty())
+            return null;
+
+        value = value.trim();
+
+        String token[] = value.split(",");
+        String result = "";
+        for (int i = 0; i < token.length; i++) {
+            result += token[i].trim();
+            if (i + 1 < token.length) {
+                result += ",";
+            }
+        }
+
+        return result;
     }
 }

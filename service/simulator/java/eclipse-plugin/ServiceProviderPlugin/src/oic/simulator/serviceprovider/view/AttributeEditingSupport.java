@@ -22,6 +22,7 @@ import org.eclipse.jface.viewers.CheckboxCellEditor;
 import org.eclipse.jface.viewers.ComboBoxCellEditor;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
@@ -30,6 +31,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IPartListener2;
@@ -57,6 +59,7 @@ import oic.simulator.serviceprovider.model.SingleResource;
 import oic.simulator.serviceprovider.utils.AttributeValueBuilder;
 import oic.simulator.serviceprovider.utils.Utility;
 import oic.simulator.serviceprovider.view.dialogs.AutomationSettingDialog;
+import oic.simulator.serviceprovider.view.dialogs.UpdatePrimitiveArrayAttributeDialog;
 
 /**
  * This class provides editing support to the resources attributes table in the
@@ -219,39 +222,93 @@ public class AttributeEditingSupport {
                 return null;
             }
 
-            String values[] = null;
-            List<String> valueSet = resourceManager
-                    .getAllValuesOfAttribute(attribute);
-            values = Utility.convertListToStringArray(valueSet);
-
-            ComboBoxCellEditor comboEditor;
+            CellEditor editor;
             if (type.mType == ValueType.ARRAY) {
-                comboEditor = new ComboBoxCellEditor(viewer.getTree(), values);
-            } else {
-                comboEditor = new ComboBoxCellEditor(viewer.getTree(), values,
-                        SWT.READ_ONLY);
-            }
-            comboBox = (CCombo) comboEditor.getControl();
-            comboBox.addModifyListener(new ModifyListener() {
+                editor = new TextCellEditor(viewer.getTree());
+                editor.setStyle(SWT.READ_ONLY);
+                final Text txt = (Text) editor.getControl();
+                txt.addModifyListener(new ModifyListener() {
+                    @Override
+                    public void modifyText(ModifyEvent e) {
+                        String currentAttValue = txt.getText();
+                        UpdatePrimitiveArrayAttributeDialog dialog = new UpdatePrimitiveArrayAttributeDialog(
+                                Display.getDefault().getActiveShell(),
+                                attribute);
+                        if (dialog.open() == Window.OK) {
+                            updateAttributeValue(attribute,
+                                    dialog.getNewValueObj());
 
-                @Override
-                public void modifyText(ModifyEvent event) {
-                    if (type.mType == ValueType.ARRAY) {
-                        return;
+                            ResourceManager resourceManager;
+                            resourceManager = Activator.getDefault()
+                                    .getResourceManager();
+
+                            Resource resource = resourceManager
+                                    .getCurrentResourceInSelection();
+
+                            SimulatorResourceAttribute result = getResultantAttribute();
+
+                            boolean updated = resourceManager
+                                    .attributeValueUpdated(
+                                            (SingleResource) resource,
+                                            result.name(), result.value());
+                            if (!updated) {
+                                try {
+                                    updateAttributeValue(attribute,
+                                            AttributeValueBuilder.build(
+                                                    currentAttValue,
+                                                    type.mBaseType));
+                                } catch (Exception ex) {
+                                }
+                                MessageDialog
+                                        .openInformation(Display.getDefault()
+                                                .getActiveShell(),
+                                                "Operation failed",
+                                                "Failed to update the attribute value.");
+                            }
+                        }
+
+                        // Update the viewer in a separate UI thread.
+                        Display.getDefault().asyncExec(new Runnable() {
+                            @Override
+                            public void run() {
+                                viewer.refresh(element, true);
+                            }
+                        });
                     }
-                    String oldValue = String.valueOf(Utility
-                            .getAttributeValueAsString(val));
-                    String newValue = comboBox.getText();
+                });
+            } else {
+                String values[] = null;
+                List<String> valueSet = resourceManager
+                        .getAllValuesOfAttribute(attribute);
+                values = Utility.convertListToStringArray(valueSet);
 
-                    attributeElement.setEditLock(true);
-                    compareAndUpdateAttribute(oldValue, newValue, element,
-                            attribute, type);
-                    attributeElement.setEditLock(false);
+                editor = new ComboBoxCellEditor(viewer.getTree(), values,
+                        SWT.READ_ONLY);
+                comboBox = (CCombo) editor.getControl();
+                comboBox.addModifyListener(new ModifyListener() {
 
-                    comboBox.setVisible(false);
-                }
-            });
-            return comboEditor;
+                    @Override
+                    public void modifyText(ModifyEvent event) {
+                        if (type.mType == ValueType.ARRAY) {
+                            return;
+                        }
+                        String oldValue = String.valueOf(Utility
+                                .getAttributeValueAsString(val));
+                        if (null == oldValue) {
+                            oldValue = "";
+                        }
+                        String newValue = comboBox.getText();
+
+                        attributeElement.setEditLock(true);
+                        compareAndUpdateAttribute(oldValue, newValue, element,
+                                attribute, type);
+                        attributeElement.setEditLock(false);
+
+                        comboBox.setVisible(false);
+                    }
+                });
+            }
+            return editor;
         }
 
         @Override
@@ -268,7 +325,25 @@ public class AttributeEditingSupport {
                 return 0;
             }
 
+            final AttributeValue val = att.value();
+            if (null == val) {
+                return null;
+            }
+
+            final TypeInfo type = val.typeInfo();
+            if (type.mBaseType == ValueType.RESOURCEMODEL) {
+                return null;
+            }
+
             String valueString = Utility.getAttributeValueAsString(att.value());
+            if (null == valueString) {
+                valueString = "";
+            }
+
+            if (type.mType == ValueType.ARRAY) {
+                return valueString;
+            }
+
             List<String> valueSet = Activator.getDefault().getResourceManager()
                     .getAllValuesOfAttribute(att);
             if (null != valueSet) {
@@ -291,10 +366,16 @@ public class AttributeEditingSupport {
                 return;
             }
             if (!oldValue.equals(newValue)) {
-                // Get the AttriuteValue from the string
-                AttributeValue attValue = AttributeValueBuilder.build(newValue,
-                        type.mBaseType);
                 boolean invalid = false;
+
+                // Get the AttriuteValue from the string
+                AttributeValue attValue = null;
+                try {
+                    attValue = AttributeValueBuilder.build(newValue,
+                            type.mBaseType);
+                } catch (Exception e) {
+                }
+
                 if (null == attValue) {
                     invalid = true;
                 } else {
@@ -319,8 +400,11 @@ public class AttributeEditingSupport {
                     dialog.setMessage("Do you want to modify the value?");
                     int retval = dialog.open();
                     if (retval != SWT.OK) {
-                        attValue = AttributeValueBuilder.build(oldValue,
-                                type.mBaseType);
+                        try {
+                            attValue = AttributeValueBuilder.build(oldValue,
+                                    type.mBaseType);
+                        } catch (Exception e) {
+                        }
                         updateAttributeValue(att, attValue);
                     } else {
                         updateAttributeValue(att, attValue);
@@ -339,8 +423,11 @@ public class AttributeEditingSupport {
                                         (SingleResource) resource,
                                         result.name(), result.value());
                         if (!updated) {
-                            attValue = AttributeValueBuilder.build(oldValue,
-                                    type.mBaseType);
+                            try {
+                                attValue = AttributeValueBuilder.build(
+                                        oldValue, type.mBaseType);
+                            } catch (Exception e) {
+                            }
                             updateAttributeValue(att, attValue);
                             MessageDialog.openInformation(Display.getDefault()
                                     .getActiveShell(), "Operation failed",

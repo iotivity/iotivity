@@ -21,8 +21,10 @@ import java.util.Map;
 
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.InvalidArgsException;
+import org.oic.simulator.ModelProperty;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
+import org.oic.simulator.client.SimulatorRequestModel;
 
 public class ResourceRepresentation {
     private Map<String, AttributeElement> mAttributes = new HashMap<String, AttributeElement>();
@@ -31,34 +33,80 @@ public class ResourceRepresentation {
         if (resourceModel != null && resourceModel.size() > 0) {
             for (Map.Entry<String, AttributeValue> entry : resourceModel.get()
                     .entrySet())
-                mAttributes.put(entry.getKey(),
-                        new AttributeElement(this,
-                                new SimulatorResourceAttribute(entry.getKey(),
-                                        entry.getValue())));
+                if (isCoreAttribute(entry.getKey())) {
+                    mAttributes.put(entry.getKey(), new AttributeElement(this,
+                            new SimulatorResourceAttribute(entry.getKey(),
+                                    entry.getValue())));
+                }
         }
+    }
+
+    private boolean isCoreAttribute(String attName) {
+        if (null == attName || attName.isEmpty()) {
+            return false;
+        }
+
+        if (attName.equalsIgnoreCase("if") || attName.equalsIgnoreCase("rt")
+                || attName.equalsIgnoreCase("p")
+                || attName.equalsIgnoreCase("n")
+                || attName.equalsIgnoreCase("id")) {
+            return false;
+        }
+
+        return true;
     }
 
     public Map<String, AttributeElement> getAttributes() {
         return mAttributes;
     }
 
-    public void update(SimulatorResourceModel resourceModel,
-            boolean ramlUploaded) {
+    public void update(SimulatorResourceModel resourceModel) {
         for (Map.Entry<String, AttributeValue> entry : resourceModel.get()
                 .entrySet()) {
-            AttributeElement attributeElement = mAttributes.get(entry.getKey());
-            if (attributeElement != null) {
-                attributeElement.update(
-                        new SimulatorResourceAttribute(entry.getKey(), entry
-                                .getValue()), ramlUploaded);
-            } else {
-                // Display new attribute in UI
-                AttributeElement newAttribute = new AttributeElement(this,
-                        new SimulatorResourceAttribute(entry.getKey(),
-                                entry.getValue()));
-                mAttributes.put(entry.getKey(), newAttribute);
+            if (isCoreAttribute(entry.getKey())) {
+                AttributeElement attributeElement = mAttributes.get(entry
+                        .getKey());
+                if (attributeElement != null) {
+                    attributeElement.update(new SimulatorResourceAttribute(
+                            entry.getKey(), entry.getValue()));
+                } else {
+                    // Display new attribute in UI
+                    AttributeElement newAttribute = new AttributeElement(this,
+                            new SimulatorResourceAttribute(entry.getKey(),
+                                    entry.getValue()));
+                    mAttributes.put(entry.getKey(), newAttribute);
+                }
             }
         }
+    }
+
+    public boolean updateAttributeProperties(
+            SimulatorRequestModel requestModel,
+            SimulatorResourceModel resourceModelRef) throws Exception {
+        if (null == requestModel || null == resourceModelRef) {
+            return false;
+        }
+
+        ModelProperty modelProp = requestModel.getRequestBodyModel();
+        if (null == modelProp) {
+            return false;
+        }
+
+        for (Map.Entry<String, AttributeValue> entry : resourceModelRef.get()
+                .entrySet()) {
+            if (isCoreAttribute(entry.getKey())) {
+                AttributeElement attributeElement = mAttributes.get(entry
+                        .getKey());
+                if (attributeElement != null) {
+                    attributeElement
+                            .setAttributeProperty(new SimulatorResourceAttribute(
+                                    entry.getKey(), entry.getValue(), modelProp
+                                            .get(entry.getKey())));
+                }
+            }
+        }
+
+        return true;
     }
 
     public SimulatorResourceModel getModel() {

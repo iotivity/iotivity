@@ -22,7 +22,7 @@ import org.oic.simulator.AttributeValue;
 
 public class AttributeValueBuilder {
     public static AttributeValue build(String valueString,
-            AttributeValue.ValueType valueType) {
+            AttributeValue.ValueType valueType) throws Exception {
         int depth = findDepth(valueString);
         if (0 == depth) {
             return handleDepth0(valueString, valueType);

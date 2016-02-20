@@ -78,7 +78,7 @@ simulator_env.AppendUnique(CXXFLAGS = ['-O2', '-Wall', '-fmessage-length=0', '-s
 ######################################################################
 simulator_src = [env.Glob('src/*.cpp')
                  ,env.Glob('src/*/*.cpp')
-#                 ,env.Glob('java/jni/*.cpp')
+                 ,env.Glob('java/jni/*.cpp')
                 ]
 simulatorsdk = simulator_env.SharedLibrary('SimulatorManager', simulator_src)
 

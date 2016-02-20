@@ -177,8 +177,7 @@ public class AttributeElement {
         return (!(typeInfo.mType == AttributeValue.ValueType.ARRAY && typeInfo.mBaseType == AttributeValue.ValueType.RESOURCEMODEL) && typeInfo.mType != AttributeValue.ValueType.RESOURCEMODEL);
     }
 
-    public void update(SimulatorResourceAttribute attribute,
-            boolean ramlUploaded) {
+    public void update(SimulatorResourceAttribute attribute) {
         if (attribute == null)
             return;
 
@@ -192,7 +191,7 @@ public class AttributeElement {
                         .getKey());
                 if (attributeElement != null) {
                     attributeElement.update(new SimulatorResourceAttribute(
-                            entry.getKey(), entry.getValue()), ramlUploaded);
+                            entry.getKey(), entry.getValue()));
                 } else {
                     // Display new attribute in UI
                     AttributeElement newAttribute = new AttributeElement(this,
@@ -213,7 +212,7 @@ public class AttributeElement {
                     AttributeElement attributeElement = mChildAttributes
                             .get("[" + Integer.toString(i) + "]");
                     if (attributeElement != null) {
-                        attributeElement.update(indexAttribute, ramlUploaded);
+                        attributeElement.update(indexAttribute);
                     } else {
                         // Display new attribute in UI
                         AttributeElement newAttribute = new AttributeElement(
@@ -233,7 +232,7 @@ public class AttributeElement {
                     AttributeElement attributeElement = mChildAttributes
                             .get("[" + Integer.toString(i) + "]");
                     if (attributeElement != null) {
-                        attributeElement.update(indexAttribute, ramlUploaded);
+                        attributeElement.update(indexAttribute);
                     } else {
                         // Display new attribute in UI
                         AttributeElement newAttribute = new AttributeElement(
@@ -253,7 +252,7 @@ public class AttributeElement {
                     AttributeElement attributeElement = mChildAttributes
                             .get("[" + Integer.toString(i) + "]");
                     if (attributeElement != null) {
-                        attributeElement.update(indexAttribute, ramlUploaded);
+                        attributeElement.update(indexAttribute);
                     } else {
                         // Display new attribute in UI
                         AttributeElement newAttribute = new AttributeElement(
@@ -264,16 +263,12 @@ public class AttributeElement {
                 }
             }
         } else {
-            if (ramlUploaded) {
-                mAttribute.setProperty(attribute.property());
-            } else {
-                String currentValue = new AttributeValueStringConverter(
-                        mAttribute.value()).toString();
-                String newValue = new AttributeValueStringConverter(
-                        attribute.value()).toString();
-                if (!currentValue.equals(newValue)) {
-                    mAttribute.setValue(attribute.value());
-                }
+            String currentValue = new AttributeValueStringConverter(
+                    mAttribute.value()).toString();
+            String newValue = new AttributeValueStringConverter(
+                    attribute.value()).toString();
+            if (!currentValue.equals(newValue)) {
+                mAttribute.setValue(attribute.value());
             }
         }
     }
@@ -303,5 +298,114 @@ public class AttributeElement {
 
         if (mParent instanceof AttributeElement)
             ((AttributeElement) mParent).deepSetChildValue(mAttribute);
+    }
+
+    public void setAttributeProperty(SimulatorResourceAttribute attribute)
+            throws Exception {
+        if (attribute == null)
+            return;
+
+        AttributeValue.TypeInfo typeInfo = attribute.value().typeInfo();
+        if (typeInfo.mType == AttributeValue.ValueType.RESOURCEMODEL) {
+            SimulatorResourceModel resModel = (SimulatorResourceModel) attribute
+                    .value().get();
+
+            ModelProperty modelProp = attribute.property().asModel();
+            mAttribute.setProperty(modelProp);
+
+            for (Map.Entry<String, AttributeValue> entry : resModel.get()
+                    .entrySet()) {
+                AttributeElement attributeElement = mChildAttributes.get(entry
+                        .getKey());
+                if (attributeElement != null) {
+                    attributeElement
+                            .setAttributeProperty(new SimulatorResourceAttribute(
+                                    entry.getKey(), entry.getValue(), modelProp
+                                            .get(entry.getKey())));
+                } else {
+                    // Display new attribute in UI
+                    AttributeElement newAttribute = new AttributeElement(this,
+                            new SimulatorResourceAttribute(entry.getKey(),
+                                    entry.getValue(), modelProp.get(entry
+                                            .getKey())));
+                    mChildAttributes.put(entry.getKey(), newAttribute);
+                }
+            }
+        } else if (typeInfo.mType == AttributeValue.ValueType.ARRAY
+                && typeInfo.mBaseType == AttributeValue.ValueType.RESOURCEMODEL) {
+
+            ArrayProperty arrayProp = attribute.property().asArray();
+            mAttribute.setProperty(arrayProp);
+
+            ModelProperty elementModelProp = arrayProp.getElementProperty()
+                    .asModel();
+
+            if (typeInfo.mDepth == 1) {
+                SimulatorResourceModel[] resModelArray = (SimulatorResourceModel[]) attribute
+                        .value().get();
+
+                for (int i = 0; i < resModelArray.length; i++) {
+                    SimulatorResourceAttribute indexAttribute = new SimulatorResourceAttribute(
+                            "[" + Integer.toString(i) + "]",
+                            new AttributeValue(resModelArray[i]),
+                            elementModelProp);
+                    AttributeElement attributeElement = mChildAttributes
+                            .get("[" + Integer.toString(i) + "]");
+                    if (attributeElement != null) {
+                        attributeElement.setAttributeProperty(indexAttribute);
+                    } else {
+                        // Display new attribute in UI
+                        AttributeElement newAttribute = new AttributeElement(
+                                this, indexAttribute);
+                        mChildAttributes.put("[" + Integer.toString(i) + "]",
+                                newAttribute);
+                    }
+                }
+            }
+            if (typeInfo.mDepth == 2) {
+                SimulatorResourceModel[][] resModelArray = (SimulatorResourceModel[][]) attribute
+                        .value().get();
+                for (int i = 0; i < resModelArray.length; i++) {
+                    SimulatorResourceAttribute indexAttribute = new SimulatorResourceAttribute(
+                            "[" + Integer.toString(i) + "]",
+                            new AttributeValue(resModelArray[i]),
+                            elementModelProp);
+                    AttributeElement attributeElement = mChildAttributes
+                            .get("[" + Integer.toString(i) + "]");
+                    if (attributeElement != null) {
+                        attributeElement.setAttributeProperty(indexAttribute);
+                    } else {
+                        // Display new attribute in UI
+                        AttributeElement newAttribute = new AttributeElement(
+                                this, indexAttribute);
+                        mChildAttributes.put("[" + Integer.toString(i) + "]",
+                                newAttribute);
+                    }
+                }
+            }
+            if (typeInfo.mDepth == 3) {
+                SimulatorResourceModel[][][] resModelArray = (SimulatorResourceModel[][][]) attribute
+                        .value().get();
+                for (int i = 0; i < resModelArray.length; i++) {
+                    SimulatorResourceAttribute indexAttribute = new SimulatorResourceAttribute(
+                            "[" + Integer.toString(i) + "]",
+                            new AttributeValue(resModelArray[i]),
+                            elementModelProp);
+                    AttributeElement attributeElement = mChildAttributes
+                            .get("[" + Integer.toString(i) + "]");
+                    if (attributeElement != null) {
+                        attributeElement.setAttributeProperty(indexAttribute);
+                    } else {
+                        // Display new attribute in UI
+                        AttributeElement newAttribute = new AttributeElement(
+                                this, indexAttribute);
+                        mChildAttributes.put("[" + Integer.toString(i) + "]",
+                                newAttribute);
+                    }
+                }
+            }
+        } else {
+            mAttribute.setProperty(attribute.property());
+        }
     }
 }

@@ -368,6 +368,13 @@ public class AttributeElement {
                     attribute.value()).toString();
             if (!currentValue.equals(newValue)) {
                 mAttribute.setValue(attribute.value());
+                if (mParent instanceof AttributeElement) {
+                    try {
+                        ((AttributeElement) mParent)
+                                .deepSetChildValue(mAttribute);
+                    } catch (InvalidArgsException e) {
+                    }
+                }
                 UiListenerHandler.getInstance().attributeUpdatedUINotification(
                         this);
             }

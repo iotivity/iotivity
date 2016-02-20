@@ -45,6 +45,7 @@ import java.util.Map;
 
 import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.SimulatorResourceAttribute;
+import org.oic.simulator.client.SimulatorRemoteResource.RequestType;
 
 import oic.simulator.clientcontroller.Activator;
 import oic.simulator.clientcontroller.remoteresource.AttributeElement;
@@ -135,6 +136,15 @@ public class PutRequestDialog extends TitleAreaDialog {
 
         updatedRepresentation = new ResourceRepresentation(
                 resource.getResourceModelRef());
+
+        if (resource.isConfigUploaded()) {
+            try {
+                updatedRepresentation.updateAttributeProperties(resource
+                        .getRequestModels().get(RequestType.POST), resource
+                        .getResourceModelRef());
+            } catch (Exception e1) {
+            }
+        }
 
         attViewer.setInput(updatedRepresentation);
 
@@ -268,9 +278,15 @@ public class PutRequestDialog extends TitleAreaDialog {
                         SimulatorResourceAttribute attribute = attrElement
                                 .getSimulatorResourceAttribute();
 
-                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL)
-                            return Utility.getAttributeValueAsString(attribute
-                                    .value());
+                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL) {
+                            String value = Utility
+                                    .getAttributeValueAsString(attribute
+                                            .value());
+                            if (null == value) {
+                                value = "";
+                            }
+                            return value;
+                        }
                         return null;
                     }
                 }

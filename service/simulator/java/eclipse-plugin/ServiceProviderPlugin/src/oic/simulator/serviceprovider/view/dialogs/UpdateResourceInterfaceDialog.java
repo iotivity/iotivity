@@ -150,6 +150,10 @@ public class UpdateResourceInterfaceDialog extends TrayDialog {
                         return;
                     }
                     String ifType = addIfTypeDlg.getValue();
+                    if (null == ifType || ifType.isEmpty()) {
+                        return;
+                    }
+
                     ifTypesList.add(ifType);
                     ifTypesList.deselectAll();
                     ifTypesList.select(ifTypesList.getItemCount() - 1);

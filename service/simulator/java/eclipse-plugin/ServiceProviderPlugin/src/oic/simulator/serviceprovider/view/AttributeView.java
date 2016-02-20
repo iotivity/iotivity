@@ -428,9 +428,15 @@ public class AttributeView extends ViewPart {
                         SimulatorResourceAttribute attribute = attrElement
                                 .getSimulatorResourceAttribute();
 
-                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL)
-                            return Utility.getAttributeValueAsString(attribute
-                                    .value());
+                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL) {
+                            String value = Utility
+                                    .getAttributeValueAsString(attribute
+                                            .value());
+                            if (null == value) {
+                                value = "";
+                            }
+                            return value;
+                        }
                         return null;
                     }
 
