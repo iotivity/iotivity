@@ -85,7 +85,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCB
                 delete jniPinListener;
                 jniPinListener = new JniPinCheckListener(env, jListener);
                 CBData.loadSecretCB = InputPinCodeCallback;
-                CBData.createSecureSessionCB = CreateSecureSessionRandomPinCallbak;
+                CBData.createSecureSessionCB = CreateSecureSessionRandomPinCallback;
                 CBData.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
                 CBData.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
                 result = OCSecure::setOwnerTransferCallbackData((OicSecOxm_t)OxmType,

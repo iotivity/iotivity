@@ -107,7 +107,7 @@ namespace OCProvisioningTest
     {
         OTMCallbackData_t pinBasedCBData;
         pinBasedCBData.loadSecretCB = InputPinCodeCallback;
-        pinBasedCBData.createSecureSessionCB = CreateSecureSessionRandomPinCallbak;
+        pinBasedCBData.createSecureSessionCB = CreateSecureSessionRandomPinCallback;
         pinBasedCBData.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
         pinBasedCBData.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
         OTMSetOwnershipTransferCallbackData(OIC_RANDOM_DEVICE_PIN, &pinBasedCBData);

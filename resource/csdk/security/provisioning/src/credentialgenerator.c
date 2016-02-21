@@ -71,14 +71,13 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
         return OC_STACK_INVALID_PARAM;
     }
     OCStackResult res = OC_STACK_ERROR;
-    uint8_t* privData = NULL;
-    char* base64Buff = NULL;
+    uint8_t *privData = NULL;
     OicSecCred_t *tempFirstCred = NULL;
     OicSecCred_t *tempSecondCred = NULL;
 
     size_t privDataKeySize = keySize;
 
-    privData = (uint8_t*) OICCalloc(privDataKeySize,sizeof(uint8_t));
+    privData = (uint8_t *)OICCalloc(privDataKeySize, sizeof(uint8_t));
     PM_VERIFY_NON_NULL(TAG, privData, OC_STACK_NO_MEMORY, ERROR);
 
     OCFillRandomMem(privData,privDataKeySize);
@@ -97,7 +96,6 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
 
 bail:
     OICFree(privData);
-    OICFree(base64Buff);
 
     if(res != OC_STACK_OK)
     {

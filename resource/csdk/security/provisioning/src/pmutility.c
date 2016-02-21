@@ -489,16 +489,17 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                 OC_LOG(INFO, TAG, "Unknown payload type");
                 return OC_STACK_KEEP_TRANSACTION;
             }
-            OicSecDoxm_t *ptrDoxm = JSONToDoxmBin(
-                            ((OCSecurityPayload*)clientResponse->payload)->securityData);
-            if (NULL == ptrDoxm)
+            OicSecDoxm_t *ptrDoxm = NULL;
+            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData1;
+            OCStackResult res = CBORPayloadToDoxm(payload, 0, &ptrDoxm);
+            if ((NULL == ptrDoxm) && (OC_STACK_OK != res))
             {
-                OC_LOG(INFO, TAG, "Ignoring malformed JSON");
+                OC_LOG(INFO, TAG, "Ignoring malformed CBOR");
                 return OC_STACK_KEEP_TRANSACTION;
             }
             else
             {
-                OC_LOG(DEBUG, TAG, "Successfully converted doxm json to bin.");
+                OC_LOG(DEBUG, TAG, "Successfully converted doxm cbor to bin.");
 
                 //If this is owend device discovery we have to filter out the responses.
                 DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
