@@ -24,6 +24,7 @@ package org.iotivity.ca;
 
 import android.content.Context;
 import android.app.Activity;
+import android.bluetooth.BluetoothDevice;
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcConnectivityType;
 
@@ -33,6 +34,7 @@ public class CaInterface {
         System.loadLibrary("ca-interface");
     }
     private static volatile boolean isConnectionManagerInitialized = false;
+    private static volatile boolean isBtPairingInitialized = false;
 
     public static native void initialize(Activity activity, Context context);
 
@@ -105,4 +107,74 @@ public class CaInterface {
     private static native void caManagerTerminate();
     private static native void caManagerSetAutoConnectionDeviceInfo(String address);
     private static native void caManagerUnsetAutoConnectionDeviceInfo(String address);
+
+    /**
+     *  start bluetooth pairing service.
+     *  @param context                      application context
+     */
+    public synchronized static void startBtPairingService(Context context,
+            OnBtDeviceFoundListener listener) {
+        if (!isBtPairingInitialized) {
+            CaInterface.caBtPairingInitialize(context, listener);
+
+            isBtPairingInitialized = true;
+        }
+    }
+
+    /**
+     *  stop bluetooth pairing service.
+     */
+    public synchronized static void stopBtPairingService() {
+        if (isBtPairingInitialized) {
+            CaInterface.caBtPairingTerminate();
+
+            isBtPairingInitialized = false;
+        }
+    }
+
+    /**
+     *  start bluetooth device scan.
+     */
+    public synchronized static void startScan()
+            throws OcException {
+        CaInterface.initCheckForBtPairingUtil();
+        CaInterface.caBtPairingStartScan();
+    }
+
+    /**
+     *  stop bluetooth device scan.
+     */
+    public synchronized static void stopScan()
+            throws OcException {
+        CaInterface.initCheckForBtPairingUtil();
+        CaInterface.caBtPairingStopScan();
+    }
+
+    /**
+     *  create bond
+     */
+    public synchronized static void createBond(BluetoothDevice device)
+            throws OcException {
+        CaInterface.initCheckForBtPairingUtil();
+        CaInterface.caBtPairingCreateBond(device);
+    }
+
+    public interface OnBtDeviceFoundListener {
+        public void onBtDeviceFound(BluetoothDevice device) throws OcException;
+    }
+
+    private static void initCheckForBtPairingUtil() {
+        if (!isBtPairingInitialized) {
+            throw new IllegalStateException("BT pairing Util must be started by making "
+                    + "a call to CaInterface.startBtPairingService before any other API "
+                    + "calls are permitted");
+        }
+    }
+
+    private static native void caBtPairingInitialize(Context context,
+            OnBtDeviceFoundListener listener);
+    private static native void caBtPairingTerminate();
+    private static native void caBtPairingStartScan();
+    private static native void caBtPairingStopScan();
+    private static native void caBtPairingCreateBond(BluetoothDevice device);
 }

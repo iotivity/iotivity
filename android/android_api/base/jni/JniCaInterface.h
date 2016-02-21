@@ -74,6 +74,46 @@ extern "C" {
                                                                             jstring jaddress);
 
     /*
+     * Class:     Java_org_iotivity_ca_CaInterface_caBtPairingInitialize
+     * Method:    caBtPairingInitialize
+     * Signature: (Landroid/content/Context;)V
+     */
+    JNIEXPORT void JNICALL
+    Java_org_iotivity_ca_CaInterface_caBtPairingInitialize(JNIEnv *, jclass, jobject, jobject);
+
+    /*
+     * Class:     Java_org_iotivity_ca_CaInterface_caBtPairingTerminate
+     * Method:    caBtPairingTerminate
+     * Signature: ()V
+     */
+    JNIEXPORT void JNICALL
+    Java_org_iotivity_ca_CaInterface_caBtPairingTerminate(JNIEnv *env, jclass clazz);
+
+    /*
+     * Class:     Java_org_iotivity_ca_CaInterface_caBtPairingStartScan
+     * Method:    caBtPairingStartScan
+     * Signature: ()V
+     */
+    JNIEXPORT void JNICALL
+    Java_org_iotivity_ca_CaInterface_caBtPairingStartScan(JNIEnv *, jclass);
+
+    /*
+     * Class:     Java_org_iotivity_ca_CaInterface_caBtPairingStopScan
+     * Method:    caBtPairingStopScan
+     * Signature: ()V
+     */
+    JNIEXPORT void JNICALL
+    Java_org_iotivity_ca_CaInterface_caBtPairingStopScan(JNIEnv *, jclass);
+
+    /*
+     * Class:     Java_org_iotivity_ca_CaInterface_caBtPairingCreateBond
+     * Method:    caBtPairingCreateBond
+     * Signature: (Landroid/bluetooth/BluetoothDevice;)V
+     */
+    JNIEXPORT void JNICALL
+    Java_org_iotivity_ca_CaInterface_caBtPairingCreateBond(JNIEnv *, jclass, jobject);
+
+    /*
      * Class:     org_iotivity_ca_CaInterface_Initialize
      * Method:    Initialize
      * Signature: (Landroid/content/Context;)V

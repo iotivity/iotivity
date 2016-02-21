@@ -19,12 +19,13 @@
  ******************************************************************/
 
 #include "camanagerleinterface.h"
+#include "cabtpairinginterface.h"
 #include "cautilinterface.h"
 
 #include "cacommon.h"
 #include "logger.h"
 
-#define TAG "OIC_CA_UTIL_INF"
+#define TAG "OIC_CA_COMMON_UTILS"
 
 CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
                                            CAConnectionStateChangedCB connStateCB)
@@ -76,15 +77,24 @@ CAResult_t CAUnsetAutoConnectionDeviceInfo(const char *address)
 CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilClientInitialize");
+
+    CAResult_t res = CA_STATUS_OK;
 #ifdef LE_ADAPTER
-    return CAManagerLEClientInitialize(env, jvm, context);
-#else
-    OIC_LOG(DEBUG, TAG, "it is not supported");
-    (void)env;
-    (void)jvm;
-    (void)context;
-    return CA_NOT_SUPPORTED;
+    if (CA_STATUS_OK != CAManagerLEClientInitialize(env, jvm, context))
+    {
+        OIC_LOG(ERROR, TAG, "CAManagerLEClientInitialize has failed");
+        res = CA_STATUS_FAILED;
+    }
 #endif
+
+#ifdef EDR_ADAPTER
+    if (CA_STATUS_OK != CABTPairingInitialize(env, jvm, context))
+    {
+        OIC_LOG(ERROR, TAG, "CABTPairingInitialize has failed");
+        res = CA_STATUS_FAILED;
+    }
+#endif
+    return res;
 }
 
 /**
@@ -100,6 +110,50 @@ CAResult_t CAUtilClientTerminate(JNIEnv *env)
     OIC_LOG(DEBUG, TAG, "it is not supported");
     (void)env;
     return CA_NOT_SUPPORTED;
+#endif
+}
+
+// BT pairing
+CAResult_t CAUtilStartScan(JNIEnv *env)
+{
+#ifdef EDR_ADAPTER
+    return CABTPairingStartScan(env);
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    (void)env;
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+CAResult_t CAUtilStopScan(JNIEnv *env)
+{
+#ifdef EDR_ADAPTER
+    return CABTPairingStopScan(env);
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    (void)env;
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+CAResult_t CAUtilCreateBond(JNIEnv *env, jobject device)
+{
+#ifdef EDR_ADAPTER
+    return CABTPairingCreateBond(env, device);
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    (void)env;
+    (void)device;
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+void CAUtilSetFoundDeviceListener(jobject listener)
+{
+#ifdef EDR_ADAPTER
+    CABTPairingSetFoundDeviceListener(listener);
+#else
+    (void)listener;
 #endif
 }
 #endif

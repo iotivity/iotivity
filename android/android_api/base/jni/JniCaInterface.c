@@ -32,6 +32,7 @@
 #define  LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define  LOGE(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
+static jobject g_foundDeviceListenerObject = NULL;
 static jobject g_listenerObject = NULL;
 static JavaVM *g_jvm = NULL;
 
@@ -220,9 +221,9 @@ Java_org_iotivity_ca_CaInterface_caManagerInitialize(JNIEnv *env, jclass clazz,
 {
     LOGI("CaManagere_initialize");
 
-    g_listenerObject = (*env)->NewGlobalRef(env, listener);
-
     CAUtilClientInitialize(env, g_jvm, context);
+
+    g_listenerObject = (*env)->NewGlobalRef(env, listener);
 
     CARegisterNetworkMonitorHandler(CAManagerAdapterStateChangedCB,
                                     CAManagerConnectionStateChangedCB);
@@ -273,4 +274,53 @@ Java_org_iotivity_ca_CaInterface_caManagerUnsetAutoConnectionDeviceInfo(JNIEnv *
     }
 
     CAUnsetAutoConnectionDeviceInfo(address);
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_caBtPairingInitialize(JNIEnv *env, jclass clazz,
+                                                       jobject context, jobject listener)
+{
+    LOGI("caBtPairingInitialize");
+    (void)clazz;
+
+    CAUtilClientInitialize(env, g_jvm, context);
+
+    g_foundDeviceListenerObject = (*env)->NewGlobalRef(env, listener);
+    CAUtilSetFoundDeviceListener(g_foundDeviceListenerObject);
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_caBtPairingTerminate(JNIEnv *env, jclass clazz)
+{
+    LOGI("caBtPairingTerminate");
+    (void)clazz;
+
+    if (g_foundDeviceListenerObject)
+    {
+        (*env)->DeleteGlobalRef(env, g_foundDeviceListenerObject);
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_caBtPairingStartScan(JNIEnv *env, jclass clazz)
+{
+    LOGI("caBtPairingStartScan");
+    (void)clazz;
+    CAUtilStartScan(env);
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_caBtPairingStopScan(JNIEnv *env, jclass clazz)
+{
+    LOGI("caBtPairingStopScan");
+    (void)clazz;
+    CAUtilStopScan(env);
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_caBtPairingCreateBond(JNIEnv *env, jclass clazz, jobject device)
+{
+    LOGI("caBtPairingCreateBond");
+    (void)clazz;
+    CAUtilCreateBond(env, device);
 }

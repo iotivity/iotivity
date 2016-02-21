@@ -76,6 +76,33 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context);
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAUtilClientTerminate(JNIEnv *env);
+
+// BT pairing
+/**
+ * start discovery for BT device which has iotivity UUID.
+ * @param[in]  env              JNI interface pointer.
+ */
+CAResult_t CAUtilStartScan(JNIEnv *env);
+
+/**
+ * stop discovery
+ * @param[in]  env              JNI interface pointer.
+ */
+CAResult_t CAUtilStopScan(JNIEnv *env);
+
+/**
+ * bonding between devices.
+ * @param[in]  env              JNI interface pointer.
+ * @param[in]  device           bluetooth device object.
+ */
+CAResult_t CAUtilCreateBond(JNIEnv *env, jobject device);
+
+
+/**
+ * set callback listener of found device.
+ * @param[in]  listener         callback listener
+ */
+void CAUtilSetFoundDeviceListener(jobject listener);
 #endif
 
 #ifdef __cplusplus
