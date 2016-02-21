@@ -266,7 +266,7 @@ static int initProvisionClient(void)
         return -1;
     }
     otmcb.loadSecretCB = InputPinCodeCallback;
-    otmcb.createSecureSessionCB = CreateSecureSessionRandomPinCallbak;
+    otmcb.createSecureSessionCB = CreateSecureSessionRandomPinCallback;
     otmcb.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
     otmcb.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
     if(OC_STACK_OK != OCSetOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN, &otmcb))

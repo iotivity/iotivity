@@ -75,7 +75,8 @@ typedef OCStackResult (*OTMCreateSecureSession)(OTMContext_t* otmCtx);
 /*
  * Callback for creating CoAP payload.
  */
-typedef char* (*OTMCreatePayloadCallback)(OTMContext_t* otmCtx);
+typedef OCStackResult (*OTMCreatePayloadCallback)(OTMContext_t* otmCtx, uint8_t **payload, 
+                                                  size_t *size);
 
 /**
  * Required callback for performing ownership transfer

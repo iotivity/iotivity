@@ -111,15 +111,16 @@ static OCStackApplicationResult AmsMgrDiscoveryCallback(void *ctx, OCDoHandle ha
     }
 
     OicSecDoxm_t *doxm = NULL;
+
     OIC_LOG_V(INFO, TAG, "Doxm DeviceId Discovery response = %s\n",
-          ((OCSecurityPayload*)clientResponse->payload)->securityData);
-    doxm = JSONToDoxmBin(((OCSecurityPayload*)clientResponse->payload)->securityData);
+          ((OCSecurityPayload*)clientResponse->payload)->securityData1);
+    uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData1;
 
     //As doxm is NULL amsmgr can't test if response from trusted AMS service
     //so keep the transaction.
-    if (NULL == doxm)
+    if (OC_STACK_OK == CBORPayloadToDoxm(payload, 0, &doxm))
     {
-        OIC_LOG_V(ERROR, TAG, "%s : Unable to convert JSON to Binary",__func__);
+        OIC_LOG_V(ERROR, TAG, "%s : Unable to convert CBOR to Binary",__func__);
         return OC_STACK_KEEP_TRANSACTION;
     }
 

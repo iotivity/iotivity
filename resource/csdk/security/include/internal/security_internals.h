@@ -95,6 +95,18 @@ OCStackResult CreateCredResource();
 OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 OicSecCred_t **secCred);
 
+/**
+ * This internal method is used to create '/oic/sec/doxm' resource.
+ */
+OCStackResult CreateDoxmResource();
+
+/**
+ * This internal method is the entity handler for DOXM resources.
+ */
+OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
+                                        OCEntityHandlerRequest * ehRequest,
+                                        void* callbackParam);
+
 #ifdef __cplusplus
 }
 #endif

@@ -992,11 +992,14 @@ static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = g_OTMDatas[selectedOxm].createSelectOxmPayloadCB(otmCtx);
-    if (NULL == secPayload->securityData)
+    size_t size = 0;
+    OCStackResult res = g_OTMDatas[selectedOxm].createSelectOxmPayloadCB(otmCtx,
+                                                                         &secPayload->securityData1,
+                                                                         &size);
+    if (OC_STACK_OK != res && NULL == secPayload->securityData1)
     {
-        OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Error while converting bin to json");
+        OCPayloadDestroy((OCPayload *)secPayload);
+        OIC_LOG(ERROR, TAG, "Error while converting bin to cbor");
         return OC_STACK_ERROR;
     }
 
@@ -1004,9 +1007,9 @@ static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx)
     cbData.cb = &OwnerTransferModeHandler;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
-    OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query,
-                                     &deviceInfo->endpoint, (OCPayload*)secPayload,
-                                     deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+    res = OCDoResource(NULL, OC_REST_PUT, query,
+                       &deviceInfo->endpoint, (OCPayload *)secPayload,
+                       deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1085,23 +1088,24 @@ static OCStackResult PutOwnerUuid(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData =
-        g_OTMDatas[deviceInfo->doxm->oxmSel].createOwnerTransferPayloadCB(otmCtx);
-    if (NULL == secPayload->securityData)
+    size_t size = 0;
+    OCStackResult res =  g_OTMDatas[deviceInfo->doxm->oxmSel].createOwnerTransferPayloadCB(
+            otmCtx, &secPayload->securityData1, &size);
+    if (NULL == secPayload->securityData1)
     {
-        OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Error while converting doxm bin to json");
+        OCPayloadDestroy((OCPayload *)secPayload);
+        OIC_LOG(ERROR, TAG, "Error while converting doxm bin to cbor.");
         return OC_STACK_INVALID_PARAM;
     }
-    OIC_LOG_V(DEBUG, TAG, "Payload : %s", secPayload->securityData);
+    OIC_LOG_V(DEBUG, TAG, "Payload : %s", secPayload->securityData1);
 
     OCCallbackData cbData;
     cbData.cb = &OwnerUuidUpdateHandler;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
 
-    OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
-                                     deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+    res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload *)secPayload,
+            deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1143,10 +1147,14 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
     }
 
     otmCtx->selectedDeviceInfo->doxm->owned = true;
-    secPayload->securityData = BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
-    if (NULL == secPayload->securityData)
+
+    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
+    size_t size = 0;
+    OCStackResult res = DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm,
+            &secPayload->securityData1, &size);
+    if (OC_STACK_OK != res && NULL == secPayload->securityData1)
     {
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Error while converting doxm bin to json");
         return OC_STACK_INVALID_PARAM;
     }
@@ -1157,8 +1165,8 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
 
-    OCStackResult res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
-                                     deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
+    res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
+                       deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");

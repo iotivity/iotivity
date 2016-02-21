@@ -659,7 +659,7 @@ int main(void)
                             OTMCallbackData_t pinBasedCBData;
                             pinBasedCBData.loadSecretCB = InputPinCodeCallback;
                             pinBasedCBData.createSecureSessionCB =
-                                CreateSecureSessionRandomPinCallbak;
+                                CreateSecureSessionRandomPinCallback;
                             pinBasedCBData.createSelectOxmPayloadCB =
                                 CreatePinBasedSelectOxmPayload;
                             pinBasedCBData.createOwnerTransferPayloadCB =

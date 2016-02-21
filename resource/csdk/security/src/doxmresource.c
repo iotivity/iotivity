@@ -29,26 +29,35 @@
 #endif
 
 #include "ocstack.h"
-#include "logger.h"
 #include "oic_malloc.h"
-#include "cJSON.h"
+#include "payload_logging.h"
+#include "utlist.h"
+#include "ocrandom.h"
+#include "ocpayload.h"
+#include "cainterface.h"
+#include "ocserverrequest.h"
 #include "resourcemanager.h"
 #include "doxmresource.h"
 #include "pstatresource.h"
 #include "aclresource.h"
 #include "psinterface.h"
-#include "utlist.h"
 #include "srmresourcestrings.h"
 #include "securevirtualresourcetypes.h"
-#include "base64.h"
-#include "ocrandom.h"
-#include "cainterface.h"
 #include "credresource.h"
-#include "ocserverrequest.h"
 #include "srmutility.h"
 #include "pinoxmcommon.h"
 
 #define TAG  "SRM-DOXM"
+
+/** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
+ * The value of payload size is increased until reaching belox max cbor size. */
+static const uint8_t CBOR_SIZE = 255;
+
+/** Max cbor size payload. */
+static const uint16_t CBOR_MAX_SIZE = 4400;
+
+/** DOXM Map size - Number of mandatory items. */
+static const uint8_t DOXM_MAP_SIZE = 5;
 
 static OicSecDoxm_t        *gDoxm = NULL;
 static OCResourceHandle    gDoxmHandle = NULL;
@@ -87,58 +96,106 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm)
     }
 }
 
-char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
+OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, size_t *size)
 {
-    if (NULL == doxm)
+    if (NULL == doxm || NULL == payload || NULL != *payload || NULL == size)
     {
-        return NULL;
+        return OC_STACK_INVALID_PARAM;
     }
 
-    char *jsonStr = NULL;
-    cJSON *jsonDoxm = NULL;
-    char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
-    uint32_t outLen = 0;
-    B64Result b64Ret = B64_OK;
+    size_t cborLen = *size;
+    if (0 == cborLen)
+    {
+        cborLen = CBOR_SIZE;
+    }
 
-    cJSON *jsonRoot = cJSON_CreateObject();
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
+    *payload = NULL;
+    *size = 0;
 
-    jsonDoxm = cJSON_CreateObject();
-    VERIFY_NON_NULL(TAG, jsonDoxm, ERROR);
-    cJSON_AddItemToObject(jsonRoot, OIC_JSON_DOXM_NAME, jsonDoxm );
+    OCStackResult ret = OC_STACK_ERROR;
+
+    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
+    CborEncoder doxmMap = { {.ptr = NULL }, .end = 0 };
+
+    CborError cborEncoderResult = CborNoError;
+
+    uint8_t mapSize = DOXM_MAP_SIZE;
+
+    if (doxm->oxmTypeLen > 0)
+    {
+        mapSize++;
+    }
+    if (doxm->oxmLen > 0)
+    {
+        mapSize++;
+    }
+
+    uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
+    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    cbor_encoder_init(&encoder, outPayload, cborLen, 0);
+
+    cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, mapSize);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Doxm Map.");
 
     //OxmType -- Not Mandatory
     if (doxm->oxmTypeLen > 0)
     {
-        cJSON *jsonOxmTyArray = cJSON_CreateArray();
-        VERIFY_NON_NULL(TAG, jsonOxmTyArray, ERROR);
-        cJSON_AddItemToObject (jsonDoxm, OIC_JSON_OXM_TYPE_NAME, jsonOxmTyArray );
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_TYPE_NAME,
+            strlen(OIC_JSON_OXM_TYPE_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmType Tag.");
+        CborEncoder oxmType = { {.ptr = NULL }, .end = 0 };
+        cborEncoderResult = cbor_encoder_create_array(&doxmMap, &oxmType, doxm->oxmTypeLen);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmType Array.");
+
         for (size_t i = 0; i < doxm->oxmTypeLen; i++)
         {
-            cJSON_AddItemToArray (jsonOxmTyArray, cJSON_CreateString(doxm->oxmType[i]));
+            cborEncoderResult = cbor_encode_text_string(&oxmType, doxm->oxmType[i],
+                strlen(doxm->oxmType[i]));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmType Value.");
         }
+        cborEncoderResult = cbor_encoder_close_container(&doxmMap, &oxmType);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing oxmType.");
     }
 
     //Oxm -- Not Mandatory
     if (doxm->oxmLen > 0)
     {
-        cJSON *jsonOxmArray = cJSON_CreateArray();
-        VERIFY_NON_NULL(TAG, jsonOxmArray, ERROR);
-        cJSON_AddItemToObject (jsonDoxm, OIC_JSON_OXM_NAME,jsonOxmArray );
+        cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_NAME,
+            strlen(OIC_JSON_OXM_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmName Tag.");
+        CborEncoder oxm = { {.ptr = NULL }, .end = 0 };
+        cborEncoderResult = cbor_encoder_create_array(&doxmMap, &oxm, doxm->oxmLen);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmName Array.");
+
         for (size_t i = 0; i < doxm->oxmLen; i++)
         {
-            cJSON_AddItemToArray (jsonOxmArray, cJSON_CreateNumber(doxm->oxm[i]));
+            cborEncoderResult = cbor_encode_int(&oxm, doxm->oxm[i]);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding oxmName Value");
         }
+        cborEncoderResult = cbor_encoder_close_container(&doxmMap, &oxm);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing oxmName.");
     }
 
     //OxmSel -- Mandatory
-    cJSON_AddNumberToObject(jsonDoxm, OIC_JSON_OXM_SEL_NAME, (int)doxm->oxmSel);
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OXM_SEL_NAME,
+        strlen(OIC_JSON_OXM_SEL_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Sel Tag.");
+    cborEncoderResult = cbor_encode_int(&doxmMap, doxm->oxmSel);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Sel Value.");
 
     //sct -- Mandatory
-    cJSON_AddNumberToObject(jsonDoxm, OIC_JSON_SUPPORTED_CRED_TYPE_NAME, (int)doxm->sct);
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_SUPPORTED_CRED_TYPE_NAME,
+        strlen(OIC_JSON_SUPPORTED_CRED_TYPE_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Tag");
+    cborEncoderResult = cbor_encode_int(&doxmMap, doxm->sct);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Value.");
 
     //Owned -- Mandatory
-    cJSON_AddBoolToObject(jsonDoxm, OIC_JSON_OWNED_NAME, doxm->owned);
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OWNED_NAME,
+        strlen(OIC_JSON_OWNED_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owned Tag.");
+    cborEncoderResult = cbor_encode_boolean(&doxmMap, doxm->owned);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owned Value.");
 
     //TODO: Need more clarification on deviceIDFormat field type.
 #if 0
@@ -147,208 +204,209 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
 #endif
 
     //DeviceId -- Mandatory
-    outLen = 0;
-    b64Ret = b64Encode(doxm->deviceID.id, sizeof(doxm->deviceID.id), base64Buff,
-                    sizeof(base64Buff), &outLen);
-    VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-    cJSON_AddStringToObject(jsonDoxm, OIC_JSON_DEVICE_ID_NAME, base64Buff);
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVICE_ID_NAME,
+        strlen(OIC_JSON_DEVICE_ID_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Tag.");
+    cborEncoderResult = cbor_encode_byte_string(&doxmMap, doxm->deviceID.id,
+                                                sizeof(doxm->deviceID.id));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Value.");
 
     //DPC -- Mandatory
-    cJSON_AddBoolToObject(jsonDoxm, OIC_JSON_DPC_NAME, doxm->dpc);
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DPC_NAME,
+        strlen(OIC_JSON_DPC_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Tag.");
+    cborEncoderResult = cbor_encode_boolean(&doxmMap, doxm->dpc);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Value.");
 
     //Owner -- Mandatory
-    outLen = 0;
-    b64Ret = b64Encode(doxm->owner.id, sizeof(doxm->owner.id), base64Buff,
-                    sizeof(base64Buff), &outLen);
-    VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-    cJSON_AddStringToObject(jsonDoxm, OIC_JSON_OWNER_NAME, base64Buff);
+    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_OWNER_NAME,
+        strlen(OIC_JSON_OWNER_NAME));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owner tag.");
+    cborEncoderResult = cbor_encode_byte_string(&doxmMap, doxm->owner.id,
+                                                sizeof(doxm->owner.id));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owner Value");
 
-    jsonStr = cJSON_PrintUnformatted(jsonRoot);
+    cborEncoderResult = cbor_encoder_close_container(&encoder, &doxmMap);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing DoxmMap.");
 
-exit:
-    if (jsonRoot)
-    {
-        cJSON_Delete(jsonRoot);
-    }
-    return jsonStr;
-}
-
-OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
-{
-    if (NULL == jsonStr)
-    {
-        return NULL;
-    }
-
-    OCStackResult ret = OC_STACK_ERROR;
-    OicSecDoxm_t *doxm =  NULL;
-    cJSON *jsonDoxm = NULL;
-    cJSON *jsonObj = NULL;
-
-    size_t jsonObjLen = 0;
-    unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-    uint32_t outLen = 0;
-    B64Result b64Ret = B64_OK;
-
-    cJSON *jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-    jsonDoxm = cJSON_GetObjectItem(jsonRoot, OIC_JSON_DOXM_NAME);
-    VERIFY_NON_NULL(TAG, jsonDoxm, ERROR);
-
-    doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
-    VERIFY_NON_NULL(TAG, doxm, ERROR);
-
-    //OxmType -- not Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_TYPE_NAME);
-    if ((jsonObj) && (cJSON_Array == jsonObj->type))
-    {
-        doxm->oxmTypeLen = (size_t)cJSON_GetArraySize(jsonObj);
-        VERIFY_SUCCESS(TAG, doxm->oxmTypeLen > 0, ERROR);
-
-        doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(char *));
-        VERIFY_NON_NULL(TAG, (doxm->oxmType), ERROR);
-
-        for (size_t i  = 0; i < doxm->oxmTypeLen ; i++)
-        {
-            cJSON *jsonOxmTy = cJSON_GetArrayItem(jsonObj, i);
-            VERIFY_NON_NULL(TAG, jsonOxmTy, ERROR);
-
-            jsonObjLen = strlen(jsonOxmTy->valuestring) + 1;
-            doxm->oxmType[i] = (char*)OICMalloc(jsonObjLen);
-            VERIFY_NON_NULL(TAG, doxm->oxmType[i], ERROR);
-            strncpy((char *)doxm->oxmType[i], (char *)jsonOxmTy->valuestring, jsonObjLen);
-        }
-    }
-
-    //Oxm -- not Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_NAME);
-    if (jsonObj && cJSON_Array == jsonObj->type)
-    {
-        doxm->oxmLen = (size_t)cJSON_GetArraySize(jsonObj);
-        VERIFY_SUCCESS(TAG, doxm->oxmLen > 0, ERROR);
-
-        doxm->oxm = (OicSecOxm_t*)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
-        VERIFY_NON_NULL(TAG, doxm->oxm, ERROR);
-
-        for (size_t i  = 0; i < doxm->oxmLen ; i++)
-        {
-            cJSON *jsonOxm = cJSON_GetArrayItem(jsonObj, i);
-            VERIFY_NON_NULL(TAG, jsonOxm, ERROR);
-            doxm->oxm[i] = (OicSecOxm_t)jsonOxm->valueint;
-        }
-    }
-
-    //OxmSel -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_SEL_NAME);
-    if (jsonObj)
-    {
-        VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-        doxm->oxmSel = (OicSecOxm_t)jsonObj->valueint;
-    }
-    else // PUT/POST JSON may not have oxmsel so set it to the gDoxm->oxmSel
-    {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
-        doxm->oxmSel = gDoxm->oxmSel;
-    }
-
-    //sct -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_SUPPORTED_CRED_TYPE_NAME);
-    if (jsonObj)
-    {
-        VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-        doxm->sct = (OicSecCredType_t)jsonObj->valueint;
-    }
-    else // PUT/POST JSON may not have sct so set it to the gDoxm->sct
-    {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
-        doxm->sct = gDoxm->sct;
-    }
-
-    //Owned -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OWNED_NAME);
-    if (jsonObj)
-    {
-        VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type), ERROR);
-        doxm->owned = jsonObj->valueint;
-    }
-    else // PUT/POST JSON may not have owned so set it to the gDomx->owned
-    {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
-        doxm->owned = gDoxm->owned;
-    }
-
-    //DeviceId -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_NAME);
-    if (jsonObj)
-    {
-        VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-        if (cJSON_String == jsonObj->type)
-        {
-            //Check for empty string, in case DeviceId field has not been set yet
-            if (jsonObj->valuestring[0])
-            {
-                outLen = 0;
-                b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                        sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(doxm->deviceID.id)),
-                                ERROR);
-                memcpy(doxm->deviceID.id, base64Buff, outLen);
-            }
-        }
-    }
-    else // PUT/POST JSON will not have deviceID so set it to the gDoxm->deviceID.id
-    {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
-        memcpy((char *)doxm->deviceID.id, (char *)gDoxm->deviceID.id, sizeof(doxm->deviceID.id));
-    }
-
-    //DPC -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DPC_NAME);
-    if(jsonObj)
-    {
-        VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type), ERROR);
-        doxm->dpc = jsonObj->valueint;
-    }
-    else // PUT/POST JSON may not have owned so set it to the gDomx->dpc
-    {
-        if(NULL != gDoxm)
-        {
-            doxm->dpc = gDoxm->dpc;
-        }
-        else
-        {
-            doxm->dpc = false; // default is false
-        }
-    }
-
-    //Owner -- will be empty when device status is unowned.
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OWNER_NAME);
-    if (true == doxm->owned)
-    {
-        VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-    }
-    if (jsonObj)
-    {
-        VERIFY_SUCCESS(TAG, (cJSON_String == jsonObj->type), ERROR);
-        outLen = 0;
-        b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                sizeof(base64Buff), &outLen);
-        VERIFY_SUCCESS(TAG, ((b64Ret == B64_OK) && (outLen <= sizeof(doxm->owner.id))), ERROR);
-        memcpy(doxm->owner.id, base64Buff, outLen);
-    }
-
+    *size = encoder.ptr - outPayload;
+    *payload = outPayload;
     ret = OC_STACK_OK;
 
 exit:
-    cJSON_Delete(jsonRoot);
-    if (OC_STACK_OK != ret)
+    if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
     {
-        DeleteDoxmBinData(doxm);
-        doxm = NULL;
+       // reallocate and try again!
+       OICFree(outPayload);
+       // Since the allocated initial memory failed, double the memory.
+       cborLen += encoder.ptr - encoder.end;
+       cborEncoderResult = CborNoError;
+       ret = DoxmToCBORPayload(doxm, payload, &cborLen);
     }
 
-    return doxm;
+    if ((CborNoError != cborEncoderResult) || (OC_STACK_OK != ret))
+    {
+       OICFree(outPayload);
+       outPayload = NULL;
+       *payload = NULL;
+       *size = 0;
+       ret = OC_STACK_ERROR;
+    }
+
+    return ret;
+}
+
+OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
+                                OicSecDoxm_t **secDoxm)
+{
+    if (NULL == cborPayload || NULL == secDoxm || NULL != *secDoxm)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OCStackResult ret = OC_STACK_ERROR;
+    *secDoxm = NULL;
+
+    CborValue doxmCbor = { .parser = NULL };
+    CborParser parser = { .end = NULL };
+    CborError cborFindResult = CborNoError;
+    int cborLen = size;
+    if (0 == size)
+    {
+        cborLen = CBOR_SIZE;
+    }
+    cbor_parser_init(cborPayload, cborLen, 0, &parser, &doxmCbor);
+    CborValue doxmMap = { .parser = NULL } ;
+    OicSecDoxm_t *doxm = NULL;
+    cborFindResult = cbor_value_enter_container(&doxmCbor, &doxmMap);
+    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Doxm Map.")
+
+    doxm = (OicSecDoxm_t *)OICCalloc(1, sizeof(*doxm));
+    VERIFY_NON_NULL(TAG, doxm, ERROR);
+
+    while (cbor_value_is_valid(&doxmMap))
+    {
+        char *name = NULL;
+        size_t len = 0;
+        cborFindResult = cbor_value_dup_text_string(&doxmMap, &name, &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Doxm Map Name.")
+        cborFindResult = cbor_value_advance(&doxmMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Doxm Map.")
+
+        CborType type = cbor_value_get_type(&doxmMap);
+
+        //OxmType -- not Mandatory
+        if (0 == strcmp(OIC_JSON_OXM_TYPE_NAME, name))
+        {
+            CborValue oxmType = { .parser = NULL };
+
+            cborFindResult = cbor_value_get_array_length(&doxmMap, &doxm->oxmTypeLen);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding oxmTypeLen.")
+            VERIFY_SUCCESS(TAG, doxm->oxmTypeLen != 0, ERROR);
+
+            doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(*doxm->oxmType));
+            VERIFY_NON_NULL(TAG, doxm->oxmType, ERROR);
+
+            cborFindResult = cbor_value_enter_container(&doxmMap, &oxmType);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering oxmType Array.")
+
+            int i = 0;
+            size_t len = 0;
+            while (cbor_value_is_valid(&oxmType))
+            {
+                cborFindResult = cbor_value_dup_text_string(&oxmType, &doxm->oxmType[i++],
+                                                            &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding omxType text string.")
+                cborFindResult = cbor_value_advance(&oxmType);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing oxmType.")
+            }
+        }
+
+        //Oxm -- not Mandatory
+        if (0 == strcmp(OIC_JSON_OXM_NAME, name))
+        {
+            CborValue oxm = { .parser = NULL };
+
+            cborFindResult = cbor_value_get_array_length(&doxmMap, &doxm->oxmLen);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding oxmName array Length.")
+            VERIFY_SUCCESS(TAG, doxm->oxmLen != 0, ERROR);
+
+            doxm->oxm = (OicSecOxm_t *)OICCalloc(doxm->oxmLen, sizeof(*doxm->oxm));
+            VERIFY_NON_NULL(TAG, doxm->oxmType, ERROR);
+
+            cborFindResult = cbor_value_enter_container(&doxmMap, &oxm);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering oxmName Array.")
+
+            int i = 0;
+            while (cbor_value_is_valid(&oxm))
+            {
+                cborFindResult = cbor_value_get_int(&oxm, (int *) &doxm->oxm[i++]);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding oxmName Value")
+                cborFindResult = cbor_value_advance(&oxm);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing oxmName.")
+            }
+        }
+
+        if (0 == strcmp(OIC_JSON_OXM_SEL_NAME, name))
+        {
+            cborFindResult = cbor_value_get_int(&doxmMap, (int *) &doxm->oxmSel);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Sel Name Value.")
+        }
+
+        if (0 == strcmp(OIC_JSON_SUPPORTED_CRED_TYPE_NAME, name))
+        {
+            cborFindResult = cbor_value_get_int(&doxmMap, (int *) &doxm->sct);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Sct Name Value.")
+        }
+
+        if (0 == strcmp(OIC_JSON_OWNED_NAME, name))
+        {
+            cborFindResult = cbor_value_get_boolean(&doxmMap, &doxm->owned);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Owned Value.")
+        }
+
+        if (0 == strcmp(OIC_JSON_DPC_NAME, name))
+        {
+            cborFindResult = cbor_value_get_boolean(&doxmMap, &doxm->dpc);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding DPC Value.")
+        }
+
+        if (0 == strcmp(OIC_JSON_DEVICE_ID_NAME, name))
+        {
+            uint8_t *id = NULL;
+            cborFindResult = cbor_value_dup_byte_string(&doxmMap, &id, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding DeviceId Value.")
+            memcpy(doxm->deviceID.id, id, len);
+            OICFree(id);
+        }
+        if (0 == strcmp(OIC_JSON_OWNER_NAME, name))
+        {
+            uint8_t *id = NULL;
+            cborFindResult = cbor_value_dup_byte_string(&doxmMap, &id , &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Owner Name Value.")
+            memcpy(doxm->owner.id, id, len);
+            OICFree(id);
+        }
+        if (CborMapType != type && cbor_value_is_valid(&doxmMap))
+        {
+            cborFindResult = cbor_value_advance(&doxmMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing DoxmMap.")
+        }
+        OICFree(name);
+    }
+
+    *secDoxm = doxm;
+    ret = OC_STACK_OK;
+
+exit:
+    if (CborNoError != cborFindResult)
+    {
+        OIC_LOG (ERROR, TAG, "CBORPayloadToDoxm failed!!!");
+        DeleteDoxmBinData(doxm);
+        doxm = NULL;
+        ret = OC_STACK_ERROR;
+    }
+    return ret;
 }
 
 /**
@@ -361,20 +419,16 @@ static bool UpdatePersistentStorage(OicSecDoxm_t * doxm)
 
     if (NULL != doxm)
     {
-        // Convert Doxm data into JSON for update to persistent storage
-        char *jsonStr = BinToDoxmJSON(doxm);
-        if (jsonStr)
+        // Convert Doxm data into CBOR for update to persistent storage
+        uint8_t *payload = NULL;
+        size_t size = 0;
+        OCStackResult res = DoxmToCBORPayload(doxm, &payload, &size);
+        if (payload && (OC_STACK_OK == res)
+            && (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_DOXM_NAME, payload, size)))
         {
-            cJSON *jsonDoxm = cJSON_Parse(jsonStr);
-            OICFree(jsonStr);
-
-            if (jsonDoxm &&
-                    (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_DOXM_NAME, jsonDoxm)))
-            {
                 bRet = true;
-            }
-            cJSON_Delete(jsonDoxm);
         }
+        OICFree(payload);
     }
 
     return bRet;
@@ -426,15 +480,8 @@ static bool ValidateQuery(const char * query)
         {
             bDeviceIDQry = true;
             OicUuid_t subject = {.id={0}};
-            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-            uint32_t outLen = 0;
-            B64Result b64Ret = B64_OK;
 
-            b64Ret = b64Decode((char *)parseIter.valPos, parseIter.valLen, base64Buff,
-                                           sizeof(base64Buff), &outLen);
-
-            VERIFY_SUCCESS(TAG, (B64_OK == b64Ret && outLen <= sizeof(subject.id)), ERROR);
-                       memcpy(subject.id, base64Buff, outLen);
+            memcpy(subject.id, parseIter.valPos, parseIter.valLen);
             if (0 == memcmp(&gDoxm->deviceID.id, &subject.id, sizeof(gDoxm->deviceID.id)))
             {
                 bDeviceIDMatch = true;
@@ -442,13 +489,11 @@ static bool ValidateQuery(const char * query)
         }
     }
 
-exit:
     return ((bOwnedQry ? bOwnedMatch : true) && (bDeviceIDQry ? bDeviceIDMatch : true));
 }
 
 static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    char* jsonStr = NULL;
     OCEntityHandlerResult ehRet = OC_EH_OK;
 
     OIC_LOG(DEBUG, TAG, "Doxm EntityHandle processing GET request");
@@ -464,50 +509,61 @@ static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest 
     }
 
     /*
-     * For GET or Valid Query request return doxm resource json payload.
+     * For GET or Valid Query request return doxm resource CBOR payload.
      * For non-valid query return NULL json payload.
-     * A device will 'always' have a default Doxm, so BinToDoxmJSON will
+     * A device will 'always' have a default Doxm, so DoxmToCBORPayload will
      * return valid doxm resource json.
      */
+    uint8_t *payload = NULL;
 
-    jsonStr = (ehRet == OC_EH_OK) ? BinToDoxmJSON(gDoxm) : NULL;
-
-    // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, jsonStr))
+    if (ehRet == OC_EH_OK)
     {
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleDoxmGetRequest");
+        size_t size = 0;
+        if (OC_STACK_OK != DoxmToCBORPayload(gDoxm, &payload, &size))
+        {
+            payload = NULL;
+        }
     }
 
-    OICFree(jsonStr);
+    // Send response payload to request originator
+    if (OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, payload))
+    {
+        OIC_LOG(ERROR, TAG, "SendSRMCBORResponse failed in HandleDoxmGetRequest");
+    }
+
+    OICFree(payload);
 
     return ehRet;
 }
 
-static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandleDoxmPutRequest(const OCEntityHandlerRequest * ehRequest)
 {
     OIC_LOG (DEBUG, TAG, "Doxm EntityHandle  processing PUT request");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    OicUuid_t emptyOwner = {.id = {0}};
+    OicUuid_t emptyOwner = {.id = {0} };
 
     /*
-     * Convert JSON Doxm data into binary. This will also validate
+     * Convert CBOR Doxm data into binary. This will also validate
      * the Doxm data received.
      */
-    OicSecDoxm_t* newDoxm = JSONToDoxmBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
+    uint8_t *payload = ((OCSecurityPayload *)ehRequest->payload)->securityData1;
+    OicSecDoxm_t *newDoxm = NULL;
 
-    if (newDoxm)
+    if (payload)
     {
-        // Iotivity SRM ONLY supports OIC_JUST_WORKS now
-        if (OIC_JUST_WORKS == newDoxm->oxmSel)
+        OCStackResult res = CBORPayloadToDoxm(payload, CBOR_SIZE, &newDoxm);
+
+        if (newDoxm && OC_STACK_OK == res)
         {
-            if ((false == gDoxm->owned) && (false == newDoxm->owned))
+            // Iotivity SRM ONLY supports OIC_JUST_WORKS now
+            if (OIC_JUST_WORKS == newDoxm->oxmSel)
             {
                 /*
                  * If current state of the device is un-owned, enable
                  * anonymous ECDH cipher in tinyDTLS so that Provisioning
                  * tool can initiate JUST_WORKS ownership transfer process.
                  */
-                if(memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) == 0)
+                if ((false == gDoxm->owned) && (false == newDoxm->owned))
                 {
                     OIC_LOG (INFO, TAG, "Doxm EntityHandle  enabling AnonECDHCipherSuite");
 #ifdef __WITH_DTLS__
@@ -521,13 +577,13 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                     //Save the owner's UUID to derive owner credential
                     memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
 
-//                    OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
-//                    //Generating OwnerPSK
-//                    OIC_LOG (INFO, TAG, "Doxm EntityHandle  generating OwnerPSK");
-//                    //Generate new credential for provisioning tool
-//                    ehRet = AddOwnerPSK((CAEndpoint_t *)&request->devAddr, newDoxm,
-//                            (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS));
-//                    VERIFY_SUCCESS(TAG, OC_EH_OK == ehRet, ERROR);
+                    // OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
+                    // Generating OwnerPSK
+                    // OIC_LOG (INFO, TAG, "Doxm EntityHandle  generating OwnerPSK");
+                    // Generate new credential for provisioning tool
+                    // ehRet = AddOwnerPSK((CAEndpoint_t *)&request->devAddr, newDoxm,
+                    //       (uint8_t*) OXM_JUST_WORKS, strlen(OXM_JUST_WORKS));
+                    // VERIFY_SUCCESS(TAG, OC_EH_OK == ehRet, ERROR);
 
                     // Update new state in persistent storage
                     if (true == UpdatePersistentStorage(gDoxm))
@@ -540,10 +596,10 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                         ehRet = OC_EH_ERROR;
                     }
 
-                    /*
-                     * Disable anonymous ECDH cipher in tinyDTLS since device is now
-                     * in owned state.
-                     */
+                   /*
+                    * Disable anonymous ECDH cipher in tinyDTLS since device is now
+                    * in owned state.
+                    */
                     CAResult_t caRes = CA_STATUS_OK;
                     caRes = CAEnableAnonECDHCipherSuite(false);
                     VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
@@ -619,7 +675,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                     memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
 
                     //Update new state in persistent storage
-                    if((UpdatePersistentStorage(gDoxm) == true))
+                    if (UpdatePersistentStorage(gDoxm) == true)
                     {
                         ehRet = OC_EH_OK;
                     }
@@ -679,18 +735,15 @@ exit:
     }
 
     //Send payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
+    if (OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL))
     {
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
+        OIC_LOG(ERROR, TAG, "SendSRMCBORResponse failed in HandleDoxmPostRequest");
     }
     DeleteDoxmBinData(newDoxm);
 
     return ehRet;
 }
 
-/**
- * This internal method is the entity handler for DOXM resources.
- */
 OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParam)
@@ -705,7 +758,8 @@ OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OIC_LOG (DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG(DEBUG, TAG, "Flag includes OC_REQUEST_FLAG");
+
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -718,7 +772,7 @@ OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL);
+                SendSRMCBORResponse(ehRequest, ehRet, NULL);
                 break;
         }
     }
@@ -726,9 +780,6 @@ OCEntityHandlerResult DoxmEntityHandler(OCEntityHandlerFlag flag,
     return ehRet;
 }
 
-/**
- * This internal method is used to create '/oic/sec/doxm' resource.
- */
 OCStackResult CreateDoxmResource()
 {
     OCStackResult ret = OCCreateResource(&gDoxmHandle,
@@ -809,18 +860,25 @@ OCStackResult InitDoxmResource()
     OCStackResult ret = OC_STACK_ERROR;
 
     //Read DOXM resource from PS
-    char* jsonSVRDatabase = GetSVRDatabase();
-    if (jsonSVRDatabase)
+    uint8_t *data = NULL;
+    size_t size = 0;
+    ret = GetSecureVirtualDatabaseFromPS(OIC_JSON_DOXM_NAME, &data, &size);
+    // If database read failed
+    if (OC_STACK_OK != ret)
     {
-        //Convert JSON DOXM into binary format
-        gDoxm = JSONToDoxmBin(jsonSVRDatabase);
+       OIC_LOG (DEBUG, TAG, "ReadSVDataFromPS failed");
+    }
+    if (data)
+    {
+       // Read DOXM resource from PS
+       ret = CBORPayloadToDoxm(data, size, &gDoxm);
     }
     /*
      * If SVR database in persistent storage got corrupted or
      * is not available for some reason, a default doxm is created
      * which allows user to initiate doxm provisioning again.
      */
-    if (!jsonSVRDatabase || !gDoxm)
+     if ((OC_STACK_OK != ret) || !data || !gDoxm)
     {
         gDoxm = GetDoxmDefault();
     }
@@ -842,7 +900,7 @@ OCStackResult InitDoxmResource()
     {
         OIC_LOG (ERROR, TAG, "CheckDeviceID failed");
     }
-    OICFree(jsonSVRDatabase);
+    OICFree(data);
     return ret;
 }
 
@@ -878,9 +936,10 @@ OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID)
 OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner)
 {
     OCStackResult retVal = OC_STACK_ERROR;
-    if(gDoxm)
+    if (gDoxm)
     {
-        if(gDoxm->owned) {
+        if (gDoxm->owned)
+        {
             *devOwner = gDoxm->owner; // TODO change to devOwner when available
             retVal = OC_STACK_OK;
         }
