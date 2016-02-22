@@ -1010,8 +1010,8 @@ class ResponseDetails {
     }
 }
 
-class GetResponseCallbackListener implements
-        SimulatorRemoteResource.GetResponseListener {
+class GetResponseCallbackListener
+        implements SimulatorRemoteResource.GetResponseListener {
     private CountDownLatch                mLockObject;
     private ObjectHolder<ResponseDetails> mResponse;
 
@@ -1029,8 +1029,8 @@ class GetResponseCallbackListener implements
     }
 }
 
-class PutResponseCallbackListener implements
-        SimulatorRemoteResource.PutResponseListener {
+class PutResponseCallbackListener
+        implements SimulatorRemoteResource.PutResponseListener {
     private CountDownLatch                mLockObject;
     private ObjectHolder<ResponseDetails> mResponse;
 
@@ -1048,8 +1048,8 @@ class PutResponseCallbackListener implements
     }
 }
 
-class PostResponseCallbackListener implements
-        SimulatorRemoteResource.PostResponseListener {
+class PostResponseCallbackListener
+        implements SimulatorRemoteResource.PostResponseListener {
     private CountDownLatch                mLockObject;
     private ObjectHolder<ResponseDetails> mResponse;
 
@@ -1067,8 +1067,8 @@ class PostResponseCallbackListener implements
     }
 }
 
-class ObserveNotificationCallbackListener implements
-        SimulatorRemoteResource.ObserveNotificationListener {
+class ObserveNotificationCallbackListener
+        implements SimulatorRemoteResource.ObserveNotificationListener {
     private CountDownLatch                mLockObject;
     private ObjectHolder<ResponseDetails> mResponse;
 
@@ -1087,8 +1087,8 @@ class ObserveNotificationCallbackListener implements
     }
 }
 
-class VerificationCallbackListener implements
-        SimulatorRemoteResource.VerificationListener {
+class VerificationCallbackListener
+        implements SimulatorRemoteResource.VerificationListener {
     private CountDownLatch                mLockObject;
     private ObjectHolder<ResponseDetails> mResponse;
 
@@ -1100,22 +1100,22 @@ class VerificationCallbackListener implements
 
     @Override
     public void onVerificationStarted(String uid, int id) {
-        mResponse.set(new ResponseDetails(uid, SimulatorResult.SIMULATOR_OK,
-                null));
+        mResponse.set(
+                new ResponseDetails(uid, SimulatorResult.SIMULATOR_OK, null));
         mLockObject.countDown();
     }
 
     @Override
     public void onVerificationAborted(String uid, int id) {
-        mResponse.set(new ResponseDetails(uid, SimulatorResult.SIMULATOR_OK,
-                null));
+        mResponse.set(
+                new ResponseDetails(uid, SimulatorResult.SIMULATOR_OK, null));
         mLockObject.countDown();
     }
 
     @Override
     public void onVerificationCompleted(String uid, int id) {
-        mResponse.set(new ResponseDetails(uid, SimulatorResult.SIMULATOR_OK,
-                null));
+        mResponse.set(
+                new ResponseDetails(uid, SimulatorResult.SIMULATOR_OK, null));
         mLockObject.countDown();
     }
 }

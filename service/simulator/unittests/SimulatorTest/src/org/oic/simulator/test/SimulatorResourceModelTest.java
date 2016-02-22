@@ -18,12 +18,11 @@ package org.oic.simulator.test;
 
 import java.util.Map;
 
+import junit.framework.TestCase;
+
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.InvalidArgsException;
-import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
-
-import junit.framework.TestCase;
 
 /**
  * This class tests the APIs of SimulatorResourceModel class.

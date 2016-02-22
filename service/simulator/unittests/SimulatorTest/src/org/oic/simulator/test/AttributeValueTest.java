@@ -50,8 +50,10 @@ public class AttributeValueTest extends TestCase {
         AttributeValue attribute = new AttributeValue(new Integer(5));
         assertNotNull(attribute);
         assertTrue(attribute.typeInfo() != null
-                && attribute.typeInfo().mType == AttributeValue.ValueType.INTEGER
-                && attribute.typeInfo().mBaseType == AttributeValue.ValueType.INTEGER
+                && attribute
+                        .typeInfo().mType == AttributeValue.ValueType.INTEGER
+                && attribute
+                        .typeInfo().mBaseType == AttributeValue.ValueType.INTEGER
                 && attribute.typeInfo().mDepth == 0);
     }
 
@@ -171,7 +173,8 @@ public class AttributeValueTest extends TestCase {
     }
 
     public void testAttributeValueDoubleArray_P02() {
-        Double[] array = { new Double(1.00), new Double(2.00), new Double(3.00) };
+        Double[] array = { new Double(1.00), new Double(2.00),
+                new Double(3.00) };
         AttributeValue value = new AttributeValue(array);
 
         assertNotNull(value);
@@ -261,7 +264,8 @@ public class AttributeValueTest extends TestCase {
     }
 
     public void testAttributeValueIntArrayArray_P02() {
-        Integer[][] array = { { new Integer(1), new Integer(2), new Integer(3) } };
+        Integer[][] array = {
+                { new Integer(1), new Integer(2), new Integer(3) } };
         AttributeValue value = new AttributeValue(array);
 
         assertNotNull(value);
@@ -283,8 +287,8 @@ public class AttributeValueTest extends TestCase {
     }
 
     public void testAttributeValueDoubleArrayArray_P02() {
-        Double[][] array = { { new Double(1.00), new Double(2.00),
-                new Double(3.00) } };
+        Double[][] array = {
+                { new Double(1.00), new Double(2.00), new Double(3.00) } };
         AttributeValue value = new AttributeValue(array);
 
         assertNotNull(value);
@@ -374,8 +378,8 @@ public class AttributeValueTest extends TestCase {
     }
 
     public void testAttributeValueIntArrayArrayArray_P02() {
-        Integer[][][] array = { { { new Integer(1), new Integer(2),
-                new Integer(3) } } };
+        Integer[][][] array = {
+                { { new Integer(1), new Integer(2), new Integer(3) } } };
         AttributeValue value = new AttributeValue(array);
 
         assertNotNull(value);
@@ -397,8 +401,8 @@ public class AttributeValueTest extends TestCase {
     }
 
     public void testAttributeValueDoubleArrayArrayArray_P02() {
-        Double[][][] array = { { { new Double(1.00), new Double(2.00),
-                new Double(3.00) } } };
+        Double[][][] array = {
+                { { new Double(1.00), new Double(2.00), new Double(3.00) } } };
         AttributeValue value = new AttributeValue(array);
 
         assertNotNull(value);
