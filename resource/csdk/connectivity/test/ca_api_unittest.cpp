@@ -20,6 +20,7 @@
 
 #include "gtest/gtest.h"
 #include "cainterface.h"
+#include "cautilinterface.h"
 #include "cacommon.h"
 
 #define CA_TRANSPORT_ADAPTER_SCOPE  1000
@@ -39,6 +40,8 @@ class CATests : public testing::Test {
 void request_handler(CAEndpoint_t* object, CARequestInfo_t* requestInfo);
 void response_handler(CAEndpoint_t* object, CAResponseInfo_t* responseInfo);
 void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
+void adapter_handler(CATransportAdapter_t adapter, bool enabled);
+void connection_handler(CATransportAdapter_t adapter, const char *remote_address, bool connected);
 CAResult_t checkGetNetworkInfo();
 CAResult_t checkSelectNetwork();
 
@@ -63,6 +66,19 @@ void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo)
 
     //error handling shall be added
     return;
+}
+
+void adapter_handler(CATransportAdapter_t adapter,
+                     bool enabled)
+{
+
+}
+
+void connection_handler(CATransportAdapter_t adapter,
+                        const char *remote_address,
+                        bool connected)
+{
+
 }
 
 static char* addr = NULL;
@@ -202,11 +218,8 @@ TEST_F(CATests, CreateRemoteEndpointTestGood)
     EXPECT_EQ(CA_STATUS_OK, CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr,
                                              PORT, &tempRep));
 
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
+    CADestroyEndpoint(tempRep);
+    tempRep = NULL;
 }
 
 // check remoteEndpoint and values of remoteEndpoint
@@ -218,11 +231,8 @@ TEST_F(CATests, CreateRemoteEndpointTestValues)
 
     EXPECT_TRUE(tempRep != NULL);
 
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
+    CADestroyEndpoint(tempRep);
+    tempRep = NULL;
 }
 
 // CAGerateToken TC
@@ -281,12 +291,9 @@ TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
     EXPECT_EQ(CA_STATUS_OK, CASendRequest(tempRep, &requestInfo));
 
     CADestroyToken(tempToken);
-
-    free(requestData.payload);
-
     CADestroyEndpoint(tempRep);
+    free(requestData.payload);
     tempRep = NULL;
-
 }
 
 // check return value when a NULL is passed instead of a valid CARequestInfo_t address
@@ -297,11 +304,8 @@ TEST_F(CATests, SendRequestTestWithNullAddr)
 
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendRequest(tempRep, NULL));
 
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
+    CADestroyEndpoint(tempRep);
+    tempRep = NULL;
 }
 
 // CASendResponse TC
@@ -374,12 +378,9 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
     EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
 
     CADestroyToken(tempToken);
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
+    CADestroyEndpoint(tempRep);
     free (responseData.payload);
+    tempRep = NULL;
 }
 
 // check return value NULL is passed instead of a valid CAResponseInfo_t address
@@ -390,19 +391,15 @@ TEST_F(CATests, SendResponseTest)
 
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendResponse(tempRep, NULL));
 
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
+    CADestroyEndpoint(tempRep);
+    tempRep = NULL;
 }
 
 // CASelectNewwork TC
 // check return value
 TEST_F(CATests, SelectNetworkTestGood)
 {
-    CAResult_t res = checkSelectNetwork();
-    EXPECT_EQ(CA_STATUS_OK, res);
+    EXPECT_EQ(CA_STATUS_OK, checkSelectNetwork());
 }
 
 CAResult_t checkSelectNetwork()
@@ -457,6 +454,45 @@ TEST_F(CATests, RegisterDTLSCredentialsHandlerTest)
 {
 #ifdef __WITH_DTLS__
     EXPECT_EQ(CA_STATUS_OK, CARegisterDTLSCredentialsHandler(CAGetDtlsPskCredentials));
+#endif
+}
+
+// CARegisterNetworkMonitorHandler TC
+// check return value
+TEST_F(CATests, RegisterNetworkMonitorHandler)
+{
+#ifdef LE_ADAPTER
+    EXPECT_EQ(CA_STATUS_OK, CARegisterNetworkMonitorHandler(adapter_handler,
+                                                            connection_handler));
+#else
+    EXPECT_EQ(CA_NOT_SUPPORTED, CARegisterNetworkMonitorHandler(adapter_handler,
+                                                                connection_handler));
+#endif
+}
+
+// CASetAutoConnectionDeviceInfo TC
+// check return value
+TEST_F(CATests, SetAutoConnectionDeviceInfo)
+{
+    addr = (char *) ADDRESS;
+
+#if defined(__ANDROID__) && defined(LE_ADAPTER)
+    EXPECT_EQ(CA_STATUS_OK, CASetAutoConnectionDeviceInfo(addr));
+#else
+    EXPECT_EQ(CA_NOT_SUPPORTED, CASetAutoConnectionDeviceInfo(addr));
+#endif
+}
+
+// CAUnsetAutoConnectionDeviceInfo TC
+// check return value
+TEST_F(CATests, UnsetAutoConnectionDeviceInfo)
+{
+    addr = (char *) ADDRESS;
+
+#if defined(__ANDROID__) && defined(LE_ADAPTER)
+    EXPECT_EQ(CA_STATUS_OK, CAUnsetAutoConnectionDeviceInfo(addr));
+#else
+    EXPECT_EQ(CA_NOT_SUPPORTED, CAUnsetAutoConnectionDeviceInfo(addr));
 #endif
 }
 
