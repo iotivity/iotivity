@@ -25,6 +25,9 @@
 
 #include "OCApi.h"
 #include "logger.h"
+#include "RCSRemoteResourceObject.h"
+#include "OCPlatform.h"
+#include "SceneCommons.h"
 
 #define SCENE_CLIENT_PRINT_LOG(strError) \
         OIC_LOG_V(ERROR, "[SCENE_CLIENT]", "%s:%d %s", __PRETTY_FUNCTION__, __LINE__, strError);
@@ -47,6 +50,18 @@ namespace OIC
         const OCConnectivityType SCENE_CONNECTIVITY = CT_ADAPTER_IP;
         const std::string SCENE_CLIENT_REQ_IF = OC::DEFAULT_INTERFACE;
         const std::string SCENE_CLIENT_CREATE_REQ_IF = OC::BATCH_INTERFACE;
+
+        enum class SceneResource
+        {
+            List = 0,
+            Collection,
+            Member
+        };
+
+        // This function will be moved to SceneUtills.cpp
+        RCSRemoteResourceObject::Ptr createRCSResourceObject(
+            const std::string &address, const OCConnectivityType ct,
+            const std::vector< std::string > &vecRT, const std::vector< std::string > &vecIF);
 
     }
 }

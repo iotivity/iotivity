@@ -24,6 +24,7 @@
 #include "SceneCommons.h"
 #include "RCSRemoteResourceObject.h"
 #include "RCSRepresentation.h"
+#include "RemoteSceneUtils.h"
 
 namespace OIC
 {
@@ -55,6 +56,10 @@ namespace OIC
 
                 void requestSetName(const std::string &, InternalSetNameCallback);
 
+                void requestGet(const std::string &, RCSRemoteResourceObject::GetCallback);
+
+                RCSRemoteResourceObject::Ptr getRemoteResourceObject();
+
 
             private:
                 static void onSceneCollectionCreated
@@ -65,6 +70,15 @@ namespace OIC
                 void onSceneCollectionCreated_impl
                 (const HeaderOpts &, const RCSRepresentation &, int eCode,
                  const std::string &name, const InternalCreateSceneCollectionCallback &);
+
+                std::vector<std::pair<RCSResourceAttributes, std::vector<RCSResourceAttributes>>>
+               parseSceneListFromAttributes(const RCSResourceAttributes &);
+
+               std::vector<RCSResourceAttributes> getChildrenAttributes(
+                       const RCSResourceAttributes &) const;
+
+               RCSRemoteResourceObject::Ptr makeSceneRemoteResourceFromAttributes(
+                       const RCSResourceAttributes &, const SceneResource &);
 
 
             private:

@@ -67,13 +67,21 @@ namespace OIC
 
                 void requestAddSceneMember(RCSRemoteResourceObject::Ptr pMember,
                                            const std::string &sceneName,
-                                           RCSResourceAttributes &attr,
+                                           const RCSResourceAttributes &attr,
                                            InternalAddMemberCallback);
 
                 void requestSetName(const std::string &, InternalSetNameCallback);
 
+                void requestGet(const std::string &, RCSRemoteResourceObject::GetCallback);
+
+                RCSRemoteResourceObject::Ptr getRemoteResourceObject();
+
+                SceneMemberResourceRequestor::Ptr createSceneMemberResourceRequestor(
+                    const std::string &memlink, const std::string &id,
+                    const std::string &targetlink);
+
                 SceneMemberResourceRequestor::Ptr getSceneMemberResourceRequestor(
-                    const std::string &);
+                    const std::string &link);
 
 
             private:
@@ -89,11 +97,12 @@ namespace OIC
 
                 static void onSceneMemberAdded(
                     const HeaderOpts &, const RCSRepresentation &, int eCode,
-                    const InternalAddMemberCallback &, SceneCollectionResourceRequestor::wPtr);
+                    const std::string &, const InternalAddMemberCallback &,
+                    SceneCollectionResourceRequestor::wPtr);
 
                 void onSceneMemberAdded_impl(
                     const HeaderOpts &, const RCSRepresentation &, int eCode,
-                    const InternalAddMemberCallback &);
+                    const std::string &, const InternalAddMemberCallback &);
 
 
             private:

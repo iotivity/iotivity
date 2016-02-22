@@ -45,8 +45,10 @@ namespace OIC
                 ~SceneMemberResourceRequestor();
 
                 void requestSceneActionCreation(const std::string &sceneName,
-                                                RCSResourceAttributes &attr,
+                                                const RCSResourceAttributes &attr,
                                                 InternalAddSceneActionCallback);
+
+                void requestGet(const std::string &, RCSRemoteResourceObject::GetCallback);
 
                 RCSRemoteResourceObject::Ptr getRemoteResourceObject();
 

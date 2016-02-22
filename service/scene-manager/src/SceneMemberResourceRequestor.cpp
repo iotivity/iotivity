@@ -39,7 +39,7 @@ namespace OIC
         }
 
         void SceneMemberResourceRequestor::requestSceneActionCreation
-        (const std::string &sceneName, RCSResourceAttributes &attr,
+        (const std::string &sceneName, const RCSResourceAttributes &attr,
          InternalAddSceneActionCallback internalCB)
         {
             RCSResourceAttributes attributesToSet;
@@ -60,11 +60,20 @@ namespace OIC
             RCSRemoteResourceObject::RemoteAttributesSetCallback setRequestCB
                 = std::bind(&SceneMemberResourceRequestor::onSceneActionCreated,
                             std::placeholders::_1, std::placeholders::_2,
-                            sceneName, std::move(attr), std::move(internalCB),
+                            sceneName, attr, std::move(internalCB),
                             SceneMemberResourceRequestor::wPtr(shared_from_this()));
 
             m_SceneMemberResourcePtr->setRemoteAttributes
             (std::move(attributesToSet), std::move(setRequestCB));
+        }
+
+        void SceneMemberResourceRequestor::requestGet(
+            const std::string &ifType, RCSRemoteResourceObject::GetCallback cb)
+        {
+            RCSQueryParams params;
+            params.setResourceInterface(ifType);
+
+            m_SceneMemberResourcePtr->get(params, cb);
         }
 
         RCSRemoteResourceObject::Ptr SceneMemberResourceRequestor::getRemoteResourceObject()
@@ -92,7 +101,7 @@ namespace OIC
             // TODO: error code
             int result = SCENE_CLIENT_BADREQUEST;
 
-            if (eCode == SCENE_RESPONSE_SUCCESS)
+            if (eCode == OC_STACK_OK)
             {
                 try
                 {

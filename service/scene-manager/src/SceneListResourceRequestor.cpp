@@ -20,6 +20,7 @@
 
 #include "SceneListResourceRequestor.h"
 #include "RemoteSceneUtils.h"
+#include "OCPlatform.h"
 
 namespace OIC
 {
@@ -62,6 +63,20 @@ namespace OIC
 
         }
 
+        void SceneListResourceRequestor::requestGet(
+            const std::string &ifType, RCSRemoteResourceObject::GetCallback cb)
+        {
+            RCSQueryParams params;
+            params.setResourceInterface(ifType);
+
+            m_SceneListResourcePtr->get(params, cb);
+        }
+
+        RCSRemoteResourceObject::Ptr SceneListResourceRequestor::getRemoteResourceObject()
+        {
+            return m_SceneListResourcePtr;
+        }
+
         void SceneListResourceRequestor::onSceneCollectionCreated
         (const HeaderOpts &headOpts, const RCSRepresentation &rep, int eCode,
          const std::string &name, const InternalCreateSceneCollectionCallback &cb,
@@ -82,7 +97,7 @@ namespace OIC
             int result = SCENE_CLIENT_BADREQUEST;
             std::string link, id;
 
-            if (eCode == SCENE_RESPONSE_SUCCESS)
+            if (eCode == OC_STACK_OK)
             {
                 try
                 {
@@ -103,6 +118,73 @@ namespace OIC
             }
 
             internalCB(link, id, name, result);
+        }
+
+        std::vector<std::pair<RCSResourceAttributes, std::vector<RCSResourceAttributes>>>
+        SceneListResourceRequestor::parseSceneListFromAttributes(
+                const RCSResourceAttributes & listAttrs)
+        {
+            std::vector<std::pair<RCSResourceAttributes, std::vector<RCSResourceAttributes>>>
+            retParsed;
+
+            auto collectionsResourceAttrs = getChildrenAttributes(listAttrs);
+
+            for(unsigned int i = 0; i < collectionsResourceAttrs.size(); ++i)
+            {
+                retParsed.push_back(
+                        std::make_pair(
+                                collectionsResourceAttrs[i],
+                                getChildrenAttributes(collectionsResourceAttrs[i])));
+            }
+
+            return retParsed;
+        }
+
+        std::vector<RCSResourceAttributes> SceneListResourceRequestor::getChildrenAttributes(
+                const RCSResourceAttributes & attrs) const
+        {
+            const std::string SCENE_CHILD = "child";
+
+            std::vector<RCSResourceAttributes> retChildren = { };
+
+            if (attrs.contains(SCENE_CHILD))
+            {
+                retChildren
+                    = attrs.at(SCENE_CHILD).get<std::vector<RCSResourceAttributes>>();
+            }
+
+            return retChildren;
+        }
+
+        RCSRemoteResourceObject::Ptr
+        SceneListResourceRequestor::makeSceneRemoteResourceFromAttributes(
+                const RCSResourceAttributes & attrs, const SceneResource & resource)
+        {
+            if (resource != SceneResource::List && !attrs.contains("uri"))
+            {
+                // TODO error handle.
+                return nullptr;
+            }
+
+            auto uri = attrs.at("uri").get<std::string>();
+            std::vector<std::string> rts = {};
+            std::vector<std::string> ifs = {OC::DEFAULT_INTERFACE};
+
+            if (resource == SceneResource::Collection)
+            {
+                rts.push_back(SCENE_COLLECTION_RT);
+                ifs.push_back(OC::BATCH_INTERFACE);
+            }
+            else if (resource == SceneResource::Member)
+            {
+                rts.push_back(SCENE_MEMBER_RT);
+            }
+
+            auto ocResourceObj = OC::OCPlatform::constructResourceObject(
+                    m_SceneListResourcePtr->getAddress(),
+                    uri, SCENE_CONNECTIVITY, false, rts, ifs);
+
+            return RCSRemoteResourceObject::fromOCResource(ocResourceObj);
         }
 
     }
