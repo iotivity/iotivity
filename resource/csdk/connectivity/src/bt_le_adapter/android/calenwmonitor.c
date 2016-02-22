@@ -72,7 +72,7 @@ void CALESetNetStateCallback(CALEDeviceStateChangedCallback callback)
 CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-
+    (void)threadPool;
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }

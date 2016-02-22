@@ -28,10 +28,22 @@
 #define TAG "OIC_CA_NW_CONFIG"
 
 static u_arraylist_t *g_selectedNetworkList = NULL;
-static uint32_t NETWORK_IP = CA_ADAPTER_IP;
+
+#ifdef EDR_ADAPTER
 static uint32_t NETWORK_RFCOMM = CA_ADAPTER_RFCOMM_BTEDR;
+#endif
+
+#ifdef LE_ADAPTER
 static uint32_t NETWORK_GATT = CA_ADAPTER_GATT_BTLE;
+#endif
+
+#ifdef IP_ADAPTER
+static uint32_t NETWORK_IP = CA_ADAPTER_IP;
+#endif
+
+#ifdef NFC_ADAPTER
 static uint32_t NETWORK_NFC = CA_ADAPTER_NFC;
+#endif
 
 #ifdef RA_ADAPTER
 static uint32_t NETWORK_RA = CA_ADAPTER_REMOTE_ACCESS;

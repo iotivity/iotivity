@@ -453,14 +453,9 @@ size_t coap_get_opt_header_length(unsigned short key, size_t length)
     {
         optDeltaLength = 1;
     }
-    else if (COAP_OPTION_FIELD_16_BIT < key && COAP_OPTION_FIELD_32_BIT >= key)
-    {
-        optDeltaLength = 2;
-    }
     else
     {
-        printf("Error : Reserved for the Payload marker for Delta");
-        return 0;
+        optDeltaLength = 2;
     }
 
     size_t optLength = 0;

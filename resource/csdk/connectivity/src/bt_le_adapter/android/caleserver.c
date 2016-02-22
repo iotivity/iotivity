@@ -2507,6 +2507,7 @@ CAResult_t CAUpdateCharacteristicsToAllGattClients(const uint8_t *charValue,
 void CASetLEServerThreadPoolHandle(ca_thread_pool_t handle)
 {
     OIC_LOG(INFO, TAG, "CASetLEServerThreadPoolHandle is not support");
+    (void)handle;
 }
 
 CAResult_t CALEServerInitMutexVaraibles()
