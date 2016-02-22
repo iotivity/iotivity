@@ -118,11 +118,16 @@ static ca_thread_pool_t g_leServerThreadPool = NULL;
  */
 static GMainLoop *g_eventLoop = NULL;
 
+static CALEConnectionStateChangedCallback g_connStateCb = NULL;
+
+void CASetLEConnectionStateChangedCallback(CALEConnectionStateChangedCallback connStateCb)
+{
+    g_connStateCb = connStateCb;
+}
+
 void CALEGattServerConnectionStateChangedCb(int result, bool connected,
                                             const char *remoteAddress, void *userData)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     VERIFY_NON_NULL_VOID(remoteAddress, TAG, "remote address");
 
     OIC_LOG_V(DEBUG, TAG, "CABleGattConnectionStateChangedCb result[%d]", result);
@@ -130,8 +135,19 @@ void CALEGattServerConnectionStateChangedCb(int result, bool connected,
     if (connected)
     {
         OIC_LOG_V(DEBUG, TAG, "Connected to [%s]", remoteAddress);
+        if (g_connStateCb)
+        {
+            g_connStateCb(CA_ADAPTER_GATT_BTLE, remoteAddress, true);
+        }
     }
-    OIC_LOG(DEBUG, TAG, "OUT");
+    else
+    {
+        OIC_LOG_V(DEBUG, TAG, "Disconnected from [%s]", remoteAddress);
+        if (g_connStateCb)
+        {
+            g_connStateCb(CA_ADAPTER_GATT_BTLE, remoteAddress, false);
+        }
+    }
 }
 
 void CALEServerNotificationSentCB(int result, char *remote_address, bt_gatt_server_h server,

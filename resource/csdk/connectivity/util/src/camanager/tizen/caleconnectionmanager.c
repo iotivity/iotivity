@@ -18,8 +18,14 @@
  *
  ******************************************************************/
 
+#include <bluetooth.h>
+#include <bluetooth_type.h>
+#include <bluetooth_internal.h>
+
 #include "camanagerleinterface.h"
 #include "cacommon.h"
+#include "caleserver.h"
+#include "cagattservice.h"
 #include "logger.h"
 
 #define TAG "OIC_CA_MANAGER_TZ_LE"
@@ -27,35 +33,104 @@
 static CAAdapterStateChangedCB g_adapterStateCB = NULL;
 static CAConnectionStateChangedCB g_connStateCB = NULL;
 
+static void CAManagerAdapterMonitorHandler(const CAEndpoint_t *info, CANetworkStatus_t status);
+static void CAManagerConnectionMonitorHandler(CATransportAdapter_t adapter,
+                                              const char *remoteAddress, bool connected);
+
 void CASetLENetworkMonitorCallbacks(CAAdapterStateChangedCB adapterStateCB,
                                     CAConnectionStateChangedCB connStateCB)
 {
     OIC_LOG(DEBUG, TAG, "CASetLENetworkMonitorCallbacks");
 
     g_adapterStateCB = adapterStateCB;
+    CASetNetworkMonitorCallback(CAManagerAdapterMonitorHandler);
+
     g_connStateCB = connStateCB;
+    CASetLEConnectionStateChangedCallback(CAManagerConnectionMonitorHandler);
+}
+
+void CAStartServerLEAdvertising()
+{
+    OIC_LOG(DEBUG, TAG, "CAStartServerLEAdvertising");
+
+    CAResult_t res = CALEStartAdvertise(CA_GATT_SERVICE_UUID);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to start le advertising [%d]", res);
+        return;
+    }
+}
+
+void CAStopServerLEAdvertising()
+{
+    OIC_LOG(DEBUG, TAG, "CAStopServerLEAdvertising");
+
+    CAResult_t res = CALEStopAdvertise();
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to stop le advertising [%d]", res);
+        return;
+    }
 }
 
 CAResult_t CASetLEClientAutoConnectionDeviceInfo(const char * address)
 {
     OIC_LOG(DEBUG, TAG, "CASetLEClientAutoConnectionDeviceInfo");
-
     return CA_NOT_SUPPORTED;
 }
 
 CAResult_t CAUnsetLEClientAutoConnectionDeviceInfo(const char * address)
 {
     OIC_LOG(DEBUG, TAG, "CAUnsetLEClientAutoConnectionDeviceInfo");
-
     return CA_NOT_SUPPORTED;
 }
 
-void CAStartServerLEAdvertising()
+static void CAManagerAdapterMonitorHandler(const CAEndpoint_t *info, CANetworkStatus_t status)
 {
-    OIC_LOG(DEBUG, TAG, "CAStartServerLEAdvertising");
+    (void)info;
+    (void)status;
+
+    if (CA_INTERFACE_DOWN == status)
+    {
+        g_adapterStateCB(info->adapter, false);
+        OIC_LOG(DEBUG, TAG, "Pass the disabled adapter state to upper layer");
+    }
+    else if (CA_INTERFACE_UP == status)
+    {
+        g_adapterStateCB(info->adapter, true);
+        OIC_LOG(DEBUG, TAG, "Pass the enabled adapter state to upper layer");
+    }
 }
 
-void CAStopServerLEAdvertising()
+static void CAManagerConnectionMonitorHandler(CATransportAdapter_t adapter,
+                                              const char *remoteAddress, bool connected)
 {
-    OIC_LOG(DEBUG, TAG, "CAStopServerLEAdvertising");
+    if (!remoteAddress)
+    {
+        OIC_LOG(ERROR, TAG, "remoteAddress is NULL");
+        return;
+    }
+
+    if (connected)
+    {
+        if (g_connStateCB)
+        {
+            g_connStateCB(CA_ADAPTER_GATT_BTLE, remoteAddress, true);
+            OIC_LOG(DEBUG, TAG, "Pass the connected device info to upper layer");
+
+            // stop le advertising
+            CAStopServerLEAdvertising();
+        }
+    }
+    else
+    {
+        if (g_connStateCB)
+        {
+            g_connStateCB(CA_ADAPTER_GATT_BTLE, remoteAddress, false);
+            OIC_LOG(DEBUG, TAG, "Pass the disconnected device info to upper layer");
+
+            // start le advertising to receive new connection request.
+            CAStartServerLEAdvertising();
+        }
+    }
 }

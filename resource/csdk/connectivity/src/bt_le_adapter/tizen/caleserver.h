@@ -166,5 +166,20 @@ void CALEGattRemoteCharacteristicWriteCb(char *remoteAddress, bt_gatt_server_h s
 void CALEGattServerConnectionStateChangedCb(int result, bool connected,
                                             const char *remoteAddress, void *userData);
 
+/**
+ * Callback function type for network status changes delivery from CA common logic.
+ * @param[in]   adapter        Transport type information.
+ * @param[in]   remoteAddress  Endpoint object from which the connection status is changed.
+ * @param[in]   connected      State of connection.
+ */
+typedef void (*CALEConnectionStateChangedCallback)(CATransportAdapter_t adapter,
+                                                   const char *remoteAddress, bool connected);
+
+/**
+ * Setting the connection state changed callback.
+ * @param[in] connStateCb      callback for receiving the changed network info.
+ */
+void CASetLEConnectionStateChangedCallback(CALEConnectionStateChangedCallback connStateCb);
+
 #endif /* TZ_BLE_SERVER_H_ */
 
