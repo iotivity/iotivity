@@ -25,44 +25,54 @@
 #include <string>
 
 #include "RCSRemoteResourceObject.h"
-#include "RCSResourceAttributes.h"
 
 namespace OIC
 {
     namespace Service
     {
+
+        class SceneMemberResourceRequestor;
+
         class RemoteSceneAction
         {
             public:
                 typedef std::shared_ptr< RemoteSceneAction > Ptr;
 
-                typedef std::function< void(int eCode) > UpdateActionCallback;
+                typedef std::function< void(int eCode) >
+                UpdateCallback;
 
 
             public:
-                ~RemoteSceneAction();
+                ~RemoteSceneAction() = default;
 
-                void updateAction(const RCSResourceAttributes &attr, UpdateActionCallback);
-                void updateAction(const std::string &key,
-                                  const RCSResourceAttributes::Value &value,
-                                  UpdateActionCallback);
+                void update(const RCSResourceAttributes &attr, UpdateCallback);
+                void update(const std::string &key,
+                            const RCSResourceAttributes::Value &value,
+                            UpdateCallback);
 
                 RCSResourceAttributes getAction() const;
 
                 RCSRemoteResourceObject::Ptr getRemoteResourceObject() const;
 
+
             private:
-                RemoteSceneAction(RCSRemoteResourceObject::Ptr pResource,
-                                  const RCSResourceAttributes &attr);
-                RemoteSceneAction(RCSRemoteResourceObject::Ptr pResource,
-                                  const std::string &key,
-                                  const RCSResourceAttributes::Value &value);
+                RemoteSceneAction(std::shared_ptr< SceneMemberResourceRequestor >,
+                                  const std::string &sceneName, const RCSResourceAttributes &);
+                RemoteSceneAction(std::shared_ptr< SceneMemberResourceRequestor >,
+                                  const std::string &sceneName,
+                                  const std::string &key, const RCSResourceAttributes::Value &);
+
+                void onUpdated(int, const RCSResourceAttributes &, const UpdateCallback &);
 
 
             private:
+                std::string m_sceneName;
                 RCSResourceAttributes m_attributes;
-                RCSRemoteResourceObject::Ptr m_pRemoteResourceObject;
+                std::shared_ptr< SceneMemberResourceRequestor > m_requestorPtr;
+
+                friend class RemoteScene;
         };
+
     }
 }
 

@@ -22,6 +22,7 @@
 #define SM_REMOTE_SCENELIST_H_
 
 #include <memory>
+#include <vector>
 #include <functional>
 
 #include "RemoteSceneCollection.h"
@@ -31,21 +32,27 @@ namespace OIC
 {
     namespace Service
     {
+
         class SceneListResourceRequestor;
+
         class RemoteSceneList
+            : public std::enable_shared_from_this< RemoteSceneList >
         {
             public:
-                typedef std::shared_ptr< RemoteSceneList > Ptr;
+                typedef std::unique_ptr< RemoteSceneList > Ptr;
 
-                typedef std::function< void(RemoteSceneList::Ptr, int) > CreateInstanceCallback;
+                typedef std::function< void(RemoteSceneList::Ptr, int) >
+                CreateInstanceCallback;
 
                 typedef std::function< void(RemoteSceneCollection::Ptr, int) >
                 AddNewSceneCollectionCallback;
 
-                typedef std::function< void(int eCode) > SetNameCallback;
+                typedef std::function< void(int eCode) >
+                SetNameCallback;
+
 
             public:
-                ~RemoteSceneList();
+                ~RemoteSceneList() = default;
 
                 static void createInstance
                 (RCSRemoteResourceObject::Ptr pSceneListResource, CreateInstanceCallback);
@@ -58,20 +65,64 @@ namespace OIC
                 void setName(const std::string &name, SetNameCallback);
                 std::string getName() const;
 
+
             private:
-                RemoteSceneList(std::shared_ptr< SceneListResourceRequestor > pRequestor,
-                                const std::string &name);
+                class GetResponseHandler
+                {
+                    public:
+                        typedef std::shared_ptr< GetResponseHandler > Ptr;
+
+                        typedef std::function< void(int eCode) >
+                        GetCallback;
+
+                        GetResponseHandler(std::shared_ptr< RemoteSceneList > ptr);
+                        ~GetResponseHandler() = default;
+
+                        int m_numOfCollections;
+                        int m_respondedCollections;
+                        int m_errorCode;
+                        std::weak_ptr< RemoteSceneList > m_owner;
+                        GetCallback m_cb;
+
+                        void startGetResponseHandler(const std::string &host, GetCallback cb);
+
+                        void onGetCollectionAttrs(const HeaderOpts &, const RCSRepresentation &,
+                                                  int eCode, RemoteSceneCollection::Ptr,
+                                                  const std::string &);
+
+                        void onGetListAttrs(const HeaderOpts &, const RCSRepresentation &, int,
+                                            const std::string &);
+                };
+
+
+            private:
+                RemoteSceneList(std::shared_ptr< SceneListResourceRequestor > pRequestor);
+
+                static void onInstanceCreated(int, std::shared_ptr< RemoteSceneList >,
+                                              CreateInstanceCallback);
+
+                RemoteSceneCollection::Ptr createRemoteSceneCollectionInstance
+                (const std::string &link, const std::string &id, const std::string &name);
+
+                void setGetResponseHandler(const std::string &, GetResponseHandler::GetCallback);
 
                 void onSceneCollectionCreated
                 (const std::string &link, const std::string &id, const std::string &name,
-                 AddNewSceneCollectionCallback);
+                 int eCode, AddNewSceneCollectionCallback);
+
+                void onNameSet(int, const std::string &, const SetNameCallback &);
+
 
             private:
                 std::string m_name;
                 std::vector< RemoteSceneCollection::Ptr > m_remoteSceneCollections;
+                std::shared_ptr< SceneListResourceRequestor > m_requestorPtr;
 
-                std::shared_ptr< SceneListResourceRequestor > m_pRequestor;
+                GetResponseHandler::Ptr m_getResponseHandler;
+
+                friend class GetResponseHandler;
         };
+
     }
 }
 

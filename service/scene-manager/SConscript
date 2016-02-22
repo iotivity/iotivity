@@ -79,19 +79,7 @@ if target_os == 'android':
 # Source files and Targets
 ######################################################################
 SCENE_SRC_DIR = './src/' 
-scenemanager_src = [
-        SCENE_SRC_DIR + 'SceneCollection.cpp',
-        SCENE_SRC_DIR + 'SceneAction.cpp',
-        SCENE_SRC_DIR + 'Scene.cpp',
-        SCENE_SRC_DIR + 'SceneList.cpp',
-        SCENE_SRC_DIR + 'SceneListResourceObject.cpp',
-        SCENE_SRC_DIR + 'SceneCollectionResourceObject.cpp',
-        SCENE_SRC_DIR + 'SceneMemberResourceObject.cpp',
-        SCENE_SRC_DIR + 'SceneUtils.cpp',
-        SCENE_SRC_DIR + 'SceneListResourceRequestor.cpp',
-        SCENE_SRC_DIR + 'SceneCollectionResourceRequestor.cpp',
-        SCENE_SRC_DIR + 'SceneMemberResourceRequestor.cpp'
-        ]
+scenemanager_src = Glob(SCENE_SRC_DIR + '*.cpp')
 
 if target_os in ['tizen','android'] :
     scenemanagersdk = scenemanager_env.SharedLibrary('scene_manager', scenemanager_src)
@@ -100,8 +88,14 @@ else :
 
 scenemanager_env.InstallTarget(scenemanagersdk, 'libscene_manager')
 scenemanager_env.UserInstallTargetLib(scenemanagersdk, 'libscene_manager')
-scenemanager_env.UserInstallTargetHeader('include/SceneList.h',\
-    'service/scene-manager', 'SceneList.h')
+scenemanager_env.UserInstallTargetHeader('include/SceneList.h', 'service/scene-manager', 'SceneList.h')
+scenemanager_env.UserInstallTargetHeader('include/SceneCollection.h', 'service/scene-manager', 'SceneCollection.h')
+scenemanager_env.UserInstallTargetHeader('include/Scene.h', 'service/scene-manager', 'Scene.h')
+scenemanager_env.UserInstallTargetHeader('include/SceneAction.h', 'service/scene-manager', 'SceneAction.h')
+scenemanager_env.UserInstallTargetHeader('include/RemoteSceneList.h', 'service/scene-manager', 'RemoteSceneList.h')
+scenemanager_env.UserInstallTargetHeader('include/RemoteSceneCollection.h', 'service/scene-manager', 'RemoteSceneCollection.h')
+scenemanager_env.UserInstallTargetHeader('include/RemoteScene.h', 'service/scene-manager', 'RemoteScene.h')
+scenemanager_env.UserInstallTargetHeader('include/RemoteSceneAction.h', 'service/scene-manager', 'RemoteSceneAction.h')
 
 # Go to build Unit test
 #if target_os == 'linux':
