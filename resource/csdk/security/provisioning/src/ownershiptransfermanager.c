@@ -439,16 +439,10 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         OIC_LOG_BUFFER(INFO, TAG,ownerPSK, OWNER_PSK_LENGTH_128);
         //Generating new credential for provisioning tool
         size_t ownLen = 1;
-        uint32_t outLen = 0;
-
-        char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(ownerPSK)) + 1] = {};
-        B64Result b64Ret = b64Encode(ownerPSK, sizeof(ownerPSK), base64Buff, sizeof(base64Buff),
-                &outLen);
-        VERIFY_SUCCESS(TAG, B64_OK == b64Ret, ERROR);
 
         OicSecCred_t *cred = GenerateCredential(&selectedDeviceInfo->doxm->deviceID,
                 SYMMETRIC_PAIR_WISE_KEY, NULL,
-                base64Buff, ownLen, &ptDeviceID);
+                ownerPSK, ownLen, &ptDeviceID);
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
         res = AddCredential(cred);
@@ -936,8 +930,8 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         newCredential.privateData.data = NULL;
 
         //Send owner credential to new device : PUT /oic/sec/cred [ owner credential ]
-        secPayload->securityData = BinToCredJSON(&newCredential);
-        if (NULL == secPayload->securityData)
+        size_t size = 0;
+        if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData1, &size))
         {
             OICFree(secPayload);
             OIC_LOG(ERROR, TAG, "Error while converting bin to json");

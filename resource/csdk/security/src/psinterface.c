@@ -280,7 +280,7 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
     /*
      * This function stores cbor payload of each resource by appending resource name.
      */
-    if (!rsrcName || !*psPayload)
+    if (!rsrcName || !psPayload)
     {
         return OC_STACK_INVALID_PARAM;
     }
