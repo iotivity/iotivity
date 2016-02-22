@@ -3141,6 +3141,9 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
         pointer->entityHandlerCallbackParam = NULL;
     }
 
+    // Initialize a pointer indicating child resources in case of collection
+    pointer->rsrcChildResourcesHead = NULL;
+
     *handle = pointer;
     result = OC_STACK_OK;
 
@@ -3160,12 +3163,12 @@ exit:
     return result;
 }
 
-
 OCStackResult OCBindResource(
         OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
 {
     OCResource *resource = NULL;
-    uint8_t i = 0;
+    OCChildResource *tempChildResource = NULL;
+    OCChildResource *newChildResource = NULL;
 
     OIC_LOG(INFO, TAG, "Entering OCBindResource");
 
@@ -3189,35 +3192,54 @@ OCStackResult OCBindResource(
 
     // Look for an open slot to add add the child resource.
     // If found, add it and return success
-    for (i = 0; i < MAX_CONTAINED_RESOURCES; i++)
+
+    tempChildResource = resource->rsrcChildResourcesHead;
+
+    while(resource->rsrcChildResourcesHead && tempChildResource->next)
     {
-        if (!resource->rsrcResources[i])
-        {
-            resource->rsrcResources[i] = (OCResource *) resourceHandle;
-            OIC_LOG(INFO, TAG, "resource bound");
-
-#ifdef WITH_PRESENCE
-            if (presenceResource.handle)
-            {
-                ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
-                SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType,
-                        OC_PRESENCE_TRIGGER_CHANGE);
-            }
-#endif
-            return OC_STACK_OK;
-
-        }
+        // TODO: what if one of child resource was deregistered without unbinding?
+        tempChildResource = tempChildResource->next;
     }
 
-    // Unable to add resourceHandle, so return error
-    return OC_STACK_ERROR;
+    // Do memory allocation for child resource
+    newChildResource = (OCChildResource *) OICCalloc(1, sizeof(OCChildResource));
+    if(!newChildResource)
+    {
+        OIC_LOG(ERROR, TAG, "Adding new child resource is failed due to memory allocation failure");
+        return OC_STACK_ERROR;
+    }
+
+    newChildResource->rsrcResource = (OCResource *) resourceHandle;
+    newChildResource->next = NULL;
+
+    if(!resource->rsrcChildResourcesHead)
+    {
+        resource->rsrcChildResourcesHead = newChildResource;
+    }
+    else {
+        tempChildResource->next = newChildResource;
+    }
+
+    OIC_LOG(INFO, TAG, "resource bound");
+
+#ifdef WITH_PRESENCE
+    if (presenceResource.handle)
+    {
+        ((OCResource *)presenceResource.handle)->sequenceNum = OCGetRandom();
+        SendPresenceNotification(((OCResource *) resourceHandle)->rsrcType,
+                OC_PRESENCE_TRIGGER_CHANGE);
+    }
+#endif
+
+    return OC_STACK_OK;
 }
 
 OCStackResult OCUnBindResource(
         OCResourceHandle collectionHandle, OCResourceHandle resourceHandle)
 {
     OCResource *resource = NULL;
-    uint8_t i = 0;
+    OCChildResource *tempChildResource = NULL;
+    OCChildResource *tempLastChildResource = NULL;
 
     OIC_LOG(INFO, TAG, "Entering OCUnBindResource");
 
@@ -3241,11 +3263,37 @@ OCStackResult OCUnBindResource(
 
     // Look for an open slot to add add the child resource.
     // If found, add it and return success
-    for (i = 0; i < MAX_CONTAINED_RESOURCES; i++)
+    if(!resource->rsrcChildResourcesHead)
     {
-        if (resourceHandle == resource->rsrcResources[i])
+        OIC_LOG(INFO, TAG, "resource not found in collection");
+
+        // Unable to add resourceHandle, so return error
+        return OC_STACK_ERROR;
+
+    }
+
+    tempChildResource = resource->rsrcChildResourcesHead;
+
+    while (tempChildResource)
+    {
+        if(tempChildResource->rsrcResource == resourceHandle)
         {
-            resource->rsrcResources[i] = (OCResource *) NULL;
+            // if resource going to be unbinded is the head one.
+            if( tempChildResource == resource->rsrcChildResourcesHead )
+            {
+                OCChildResource *temp = resource->rsrcChildResourcesHead->next;
+                OICFree(resource->rsrcChildResourcesHead);
+                resource->rsrcChildResourcesHead = temp;
+                temp = NULL;
+            }
+            else
+            {
+                OCChildResource *temp = tempChildResource->next;
+                OICFree(tempChildResource);
+                tempLastChildResource->next = temp;
+                temp = NULL;
+            }
+
             OIC_LOG(INFO, TAG, "resource unbound");
 
             // Send notification when resource is unbounded successfully.
@@ -3257,11 +3305,21 @@ OCStackResult OCUnBindResource(
                         OC_PRESENCE_TRIGGER_CHANGE);
             }
 #endif
+            tempChildResource = NULL;
+            tempLastChildResource = NULL;
+
             return OC_STACK_OK;
+
         }
+
+        tempLastChildResource = tempChildResource;
+        tempChildResource = tempChildResource->next;
     }
 
     OIC_LOG(INFO, TAG, "resource not found in collection");
+
+    tempChildResource = NULL;
+    tempLastChildResource = NULL;
 
     // Unable to add resourceHandle, so return error
     return OC_STACK_ERROR;
@@ -3582,11 +3640,8 @@ OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHa
         uint8_t index)
 {
     OCResource *resource = NULL;
-
-    if (index >= MAX_CONTAINED_RESOURCES)
-    {
-        return NULL;
-    }
+    OCChildResource *tempChildResource = NULL;
+    uint8_t num = 0;
 
     resource = findResource((OCResource *) collectionHandle);
     if (!resource)
@@ -3594,7 +3649,21 @@ OCResourceHandle OCGetResourceHandleFromCollection(OCResourceHandle collectionHa
         return NULL;
     }
 
-    return resource->rsrcResources[index];
+    tempChildResource = resource->rsrcChildResourcesHead;
+
+    while(tempChildResource)
+    {
+        if( num == index )
+        {
+            return tempChildResource->rsrcResource;
+        }
+        num++;
+        tempChildResource = tempChildResource->next;
+    }
+
+    // In this case, the number of resource handles in the collection exceeds the index
+    tempChildResource = NULL;
+    return NULL;
 }
 
 OCStackResult OCBindResourceHandler(OCResourceHandle handle,
