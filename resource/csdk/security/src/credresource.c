@@ -27,24 +27,32 @@
 #endif
 #include <stdint.h>
 
-#include "ocstack.h"
-#include "logger.h"
-#include "oic_malloc.h"
-#include "cJSON.h"
-#include "resourcemanager.h"
-#include "psinterface.h"
-#include "utlist.h"
-#include "srmresourcestrings.h"
-#include "credresource.h"
-#include "ocrandom.h"
-#include "doxmresource.h"
-#include "base64.h"
-#include "srmutility.h"
 #include "cainterface.h"
-#include "pbkdf2.h"
+#include "payload_logging.h"
+#include "ocstack.h"
+#include "ocrandom.h"
+#include "oic_malloc.h"
+#include "utlist.h"
+#include "credresource.h"
+#include "doxmresource.h"
 #include "iotvticalendar.h"
+#include "pbkdf2.h"
+#include "resourcemanager.h"
+#include "srmresourcestrings.h"
+#include "srmutility.h"
+#include "psinterface.h"
 
 #define TAG  "SRM-CREDL"
+
+/** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
+ * The value of payload size is increased until reaching belox max cbor size. */
+static const uint8_t CBOR_SIZE = 255;
+
+/** Max cbor size payload. */
+static const uint16_t CBOR_MAX_SIZE = 4400;
+
+/** CRED Map size - Number of mandatory items. */
+static const uint8_t CRED_MAP_SIZE = 4;
 
 static OicSecCred_t        *gCred = NULL;
 static OCResourceHandle    gCredHandle = NULL;
@@ -56,7 +64,7 @@ static void FreeCred(OicSecCred_t *cred)
 {
     if(NULL == cred)
     {
-        OC_LOG (ERROR, TAG, "Invalid Parameter");
+        OC_LOG(ERROR, TAG, "Invalid Parameter");
         return;
     }
     //Note: Need further clarification on roleID data type
@@ -94,313 +102,363 @@ void DeleteCredList(OicSecCred_t* cred)
     }
 }
 
-char * BinToCredJSON(const OicSecCred_t * cred)
+
+static size_t OicSecCredCount(const OicSecCred_t *secCred)
 {
-    cJSON *jsonRoot = NULL;
-    char *jsonStr = NULL;
-
-    if (cred)
+    size_t size = 0;
+    for (const OicSecCred_t *cred = secCred; cred; cred = cred->next)
     {
-        char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
-        uint32_t outLen = 0;
-        B64Result b64Ret = B64_OK;
-
-        jsonRoot = cJSON_CreateObject();
-        VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-        cJSON *jsonCredArray = NULL;
-        cJSON_AddItemToObject(jsonRoot, OIC_JSON_CRED_NAME,
-                jsonCredArray = cJSON_CreateArray());
-        VERIFY_NON_NULL(TAG, jsonCredArray, ERROR);
-
-        while(cred)
-        {
-            cJSON *jsonCred = cJSON_CreateObject();
-            VERIFY_NON_NULL(TAG, jsonCred, ERROR);
-
-            //CredID -- Mandatory
-            cJSON_AddNumberToObject(jsonCred, OIC_JSON_CREDID_NAME, (int)cred->credId);
-
-            //Subject -- Mandatory
-            outLen = 0;
-            memset(base64Buff, 0, sizeof(base64Buff));
-            b64Ret = b64Encode(cred->subject.id, sizeof(cred->subject.id), base64Buff,
-                   sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-            cJSON_AddStringToObject(jsonCred, OIC_JSON_SUBJECT_NAME, base64Buff);
-
-            //Note: Need further clarification on roleID data type
-#if 0
-            //RoleId -- Not Mandatory
-            if(cred->roleIdsLen > 0)
-            {
-                cJSON *jsonRoleIdsArray = NULL;
-                cJSON_AddItemToObject (jsonCred, OIC_JSON_ROLEIDS_NAME,
-                                         jsonRoleIdsArray = cJSON_CreateArray());
-                VERIFY_NON_NULL(TAG, jsonRoleIdsArray, ERROR);
-                for (size_t i = 0; i < cred->roleIdsLen; i++)
-                {
-                    cJSON_AddItemToArray (jsonRoleIdsArray,
-                            cJSON_CreateString((char *)cred->roleIds[i].id));
-                }
-            }
-#endif
-
-            //CredType -- Mandatory
-            cJSON_AddNumberToObject(jsonCred, OIC_JSON_CREDTYPE_NAME,(int)cred->credType);
-
-#ifdef __WITH_X509__
-            //PublicData -- Not Mandatory
-            if(cred->publicData.data)
-            {
-                if (SIGNED_ASYMMETRIC_KEY == cred->credType)
-                {
-                    cJSON_AddItemToObject(jsonCred, OIC_JSON_PUBLICDATA_NAME,
-                                          cJSON_Parse(cred->publicData.data));
-                }
-                else
-                {
-                cJSON_AddStringToObject(jsonCred, OIC_JSON_PUBLICDATA_NAME, cred->publicData.data);
-                }
-            }
-#endif /*__WITH_X509__*/
-            //PrivateData -- Not Mandatory
-            if(cred->privateData.data)
-            {
-#ifdef __WITH_X509__
-                if (SIGNED_ASYMMETRIC_KEY == cred->credType)
-                {
-                    cJSON_AddItemToObject(jsonCred, OIC_JSON_PRIVATEDATA_NAME,
-                                          cJSON_Parse(cred->privateData.data));
-                }
-                else
-                {
-                    cJSON_AddStringToObject(jsonCred, OIC_JSON_PRIVATEDATA_NAME, cred->privateData.data);
-                }
-#else
-                cJSON_AddStringToObject(jsonCred, OIC_JSON_PRIVATEDATA_NAME, cred->privateData.data);
-#endif
-            }
-
-            //Period -- Not Mandatory
-            if(cred->period)
-            {
-                cJSON_AddStringToObject(jsonCred, OIC_JSON_PERIOD_NAME,
-                                        cred->period);
-            }
-
-            //Owners -- Mandatory
-            cJSON *jsonOwnrArray = NULL;
-            cJSON_AddItemToObject (jsonCred, OIC_JSON_OWNERS_NAME,
-                                             jsonOwnrArray = cJSON_CreateArray());
-            VERIFY_NON_NULL(TAG, jsonOwnrArray, ERROR);
-            for (size_t i = 0; i < cred->ownersLen; i++)
-            {
-                outLen = 0;
-                memset(base64Buff, 0, sizeof(base64Buff));
-                b64Ret = b64Encode(cred->owners[i].id, sizeof(cred->owners[i].id),
-                        base64Buff, sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-                cJSON_AddItemToArray (jsonOwnrArray,
-                                       cJSON_CreateString((char *)(base64Buff)));
-            }
-
-            /* Attach current cred node to cred Array */
-            cJSON_AddItemToArray(jsonCredArray, jsonCred);
-            cred = cred->next;
-        }
-
-        jsonStr = cJSON_PrintUnformatted(jsonRoot);
+        size++;
     }
-
-exit:
-    if (jsonRoot)
-    {
-        cJSON_Delete(jsonRoot);
-    }
-    return jsonStr;
+    return size;
 }
 
-OicSecCred_t * JSONToCredBin(const char * jsonStr)
+OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload,
+                                size_t *cborSize)
 {
-    OCStackResult ret = OC_STACK_ERROR;
-    OicSecCred_t * headCred = NULL;
-    OicSecCred_t * prevCred = NULL;
-    cJSON *jsonCredArray = NULL;
-
-    cJSON *jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-    jsonCredArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_CRED_NAME);
-    VERIFY_NON_NULL(TAG, jsonCredArray, ERROR);
-    if (cJSON_Array == jsonCredArray->type)
+    if (NULL == credS || NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
     {
-        int numCred = cJSON_GetArraySize(jsonCredArray);
-        int idx = 0;
-
-        unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-        uint32_t outLen = 0;
-        B64Result b64Ret = B64_OK;
-
-        VERIFY_SUCCESS(TAG, numCred > 0, ERROR);
-        do
-        {
-            cJSON *jsonCred = cJSON_GetArrayItem(jsonCredArray, idx);
-            VERIFY_NON_NULL(TAG, jsonCred, ERROR);
-
-            OicSecCred_t *cred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
-            VERIFY_NON_NULL(TAG, cred, ERROR);
-
-            headCred = (headCred) ? headCred : cred;
-            if (prevCred)
-            {
-                prevCred->next = cred;
-            }
-            size_t jsonObjLen = 0;
-            cJSON *jsonObj = NULL;
-
-            //CredId -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDID_NAME);
-            if(jsonObj)
-            {
-                VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-                cred->credId = jsonObj->valueint;
-            }
-
-            //subject -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_SUBJECT_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-            outLen = 0;
-            memset(base64Buff, 0, sizeof(base64Buff));
-            b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring),
-                    base64Buff, sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(cred->subject.id)),
-                           ERROR);
-            memcpy(cred->subject.id, base64Buff, outLen);
-
-            //CredType -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDTYPE_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-            cred->credType = (OicSecCredType_t)jsonObj->valueint;
-
-            //PrivateData is mandatory for some of the credential types listed below.
-            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PRIVATEDATA_NAME);
-            if ((cred->credType & SYMMETRIC_PAIR_WISE_KEY) ||
-                (cred->credType & SYMMETRIC_GROUP_KEY) ||
-                (cred->credType & PIN_PASSWORD))
-            {
-                VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-            }
-#ifdef __WITH_X509__
-            else if (cred->credType & SIGNED_ASYMMETRIC_KEY)
-            {
-                VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_Object == jsonObj->type, ERROR);
-            }
-#endif //  __WITH_X509__
-            if (NULL != jsonObj)
-            {
-                if (cJSON_String == jsonObj->type)
-                {
-                    jsonObjLen = strlen(jsonObj->valuestring) + 1;
-                    cred->privateData.data = (char *)OICMalloc(jsonObjLen);
-                    VERIFY_NON_NULL(TAG, (cred->privateData.data), ERROR);
-                    strncpy((char *)cred->privateData.data, (char *)jsonObj->valuestring, jsonObjLen);
-                }
-#ifdef __WITH_X509__
-                else if (SIGNED_ASYMMETRIC_KEY == cred->credType && cJSON_Object == jsonObj->type)
-                {
-                    cred->privateData.data = cJSON_PrintUnformatted(jsonObj);
-                    VERIFY_NON_NULL(TAG, (cred->privateData.data), ERROR);
-                }
-#endif // __WITH_X509__
-            }
-
-            //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
-            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PUBLICDATA_NAME);
-#ifdef __WITH_X509__
-            if (cred->credType & SIGNED_ASYMMETRIC_KEY)
-            {
-                VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_Object == jsonObj->type, ERROR);
-            }
-#endif //  __WITH_X509__
-            if (NULL != jsonObj)
-            {
-                if (cJSON_String == jsonObj->type)
-                {
-                    jsonObjLen = strlen(jsonObj->valuestring) + 1;
-                    cred->publicData.data = (char *)OICMalloc(jsonObjLen);
-                    VERIFY_NON_NULL(TAG, (cred->publicData.data), ERROR);
-                    strncpy((char *)cred->publicData.data, (char *)jsonObj->valuestring, jsonObjLen);
-                }
-#ifdef __WITH_X509__
-                else if (SIGNED_ASYMMETRIC_KEY == cred->credType && cJSON_Object == jsonObj->type)
-                {
-                    cred->publicData.data = cJSON_PrintUnformatted(jsonObj);
-                    VERIFY_NON_NULL(TAG, (cred->publicData.data), ERROR);
-                }
-#endif //  __WITH_X509__
-            }
-
-            //Period -- Not Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PERIOD_NAME);
-            if(jsonObj && cJSON_String == jsonObj->type)
-            {
-                jsonObjLen = strlen(jsonObj->valuestring) + 1;
-                cred->period = (char *)OICMalloc(jsonObjLen);
-                VERIFY_NON_NULL(TAG, cred->period, ERROR);
-                strncpy(cred->period, jsonObj->valuestring, jsonObjLen);
-            }
-
-            //Owners -- Mandatory
-            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_OWNERS_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-            cred->ownersLen = cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(TAG, cred->ownersLen > 0, ERROR);
-            cred->owners = (OicUuid_t*)OICCalloc(cred->ownersLen, sizeof(OicUuid_t));
-            VERIFY_NON_NULL(TAG, (cred->owners), ERROR);
-            for(size_t i = 0; i < cred->ownersLen; i++)
-            {
-                cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, i);
-                VERIFY_NON_NULL(TAG, jsonOwnr, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
-                outLen = 0;
-                memset(base64Buff, 0, sizeof(base64Buff));
-                b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring),
-                         base64Buff, sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK &&
-                               outLen <= sizeof(cred->owners[i].id)), ERROR);
-                memcpy(cred->owners[i].id, base64Buff, outLen);
-            }
-            prevCred = cred;
-        } while( ++idx < numCred);
+        return OC_STACK_INVALID_PARAM;
     }
 
+    OCStackResult ret = OC_STACK_ERROR;
+    size_t cborLen = *cborSize;
+    if (0 == cborLen)
+    {
+        cborLen = CBOR_SIZE;
+    }
+
+    *cborSize = 0;
+    *cborPayload = NULL;
+
+    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
+    CborEncoder credArray = { {.ptr = NULL }, .end = 0 };
+    CborError cborEncoderResult = CborNoError;
+
+    const OicSecCred_t *cred = credS;
+    size_t mapSize = CRED_MAP_SIZE;
+    if (cred->period)
+    {
+        mapSize++;
+    }
+    if (cred->publicData.data)
+    {
+        mapSize++;
+    }
+    if (cred->privateData.data)
+    {
+        mapSize++;
+    }
+    if (cred->period)
+    {
+        mapSize++;
+    }
+    uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
+    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    cbor_encoder_init(&encoder, outPayload, cborLen, 0);
+
+    // Create CRED Array
+    cborEncoderResult = cbor_encoder_create_array(&encoder, &credArray, OicSecCredCount(cred));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+    while (cred)
+    {
+        CborEncoder credMap = { {.ptr = NULL }, .end = 0 };
+        cborEncoderResult = cbor_encoder_create_map(&credArray, &credMap, mapSize);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+        //CredID -- Mandatory
+        cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_CREDID_NAME,
+            strlen(OIC_JSON_CREDID_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        cborEncoderResult = cbor_encode_int(&credMap, cred->credId);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+        //Subject -- Mandatory
+        cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_SUBJECT_NAME,
+            strlen(OIC_JSON_SUBJECT_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        cborEncoderResult = cbor_encode_byte_string(&credMap, cred->subject.id,
+            sizeof(cred->subject.id));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+        //CredType -- Mandatory
+        cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_CREDTYPE_NAME,
+            strlen(OIC_JSON_CREDTYPE_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        cborEncoderResult = cbor_encode_int(&credMap, cred->credType);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+#ifdef __WITH_X509__
+        //PublicData -- Not Mandatory
+        if (cred->publicData.data)
+        {
+            cborEncoderResult = cbor_encode_text_string(&credMap,
+                OIC_JSON_PUBLICDATA_NAME, strlen(OIC_JSON_PUBLICDATA_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+            cborEncoderResult = cbor_encode_byte_string(&credMap,
+                (uint8_t *) cred->publicData.data,
+                sizeof((uint8_t *) cred->publicData.data));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        }
+#endif /*__WITH_X509__*/
+        //PrivateData -- Not Mandatory
+        if(cred->privateData.data)
+        {
+            cborEncoderResult = cbor_encode_text_string(&credMap,
+                OIC_JSON_PRIVATEDATA_NAME, strlen(OIC_JSON_PRIVATEDATA_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+            cborEncoderResult = cbor_encode_byte_string(&credMap,
+                (uint8_t *) cred->privateData.data,
+                sizeof((uint8_t *) cred->privateData.data));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        }
+
+        //Period -- Not Mandatory
+        if(cred->period)
+        {
+            cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_PERIOD_NAME,
+                strlen(OIC_JSON_PERIOD_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+            cborEncoderResult = cbor_encode_text_string(&credMap, cred->period,
+                strlen(cred->period));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        }
+
+        //Owners -- Mandatory
+        {
+            cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_OWNERS_NAME,
+                strlen(OIC_JSON_OWNERS_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+            CborEncoder owners = { {.ptr = NULL }, .end = 0 };
+            cborEncoderResult = cbor_encoder_create_array(&credMap, &owners, cred->ownersLen);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+            for (size_t i = 0; i < cred->ownersLen; i++)
+            {
+                cborEncoderResult = cbor_encode_byte_string(&owners,
+                    (uint8_t *)cred->owners[i].id,
+                    sizeof(cred->owners[i].id));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+            }
+            cborEncoderResult = cbor_encoder_close_container(&credMap, &owners);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+        }
+        cborEncoderResult = cbor_encoder_close_container(&credArray, &credMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+        cred = cred->next;
+   }
+   cborEncoderResult = cbor_encoder_close_container(&encoder, &credArray);
+   VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
+
+   *cborPayload = outPayload;
+   *cborSize = encoder.ptr - outPayload;
     ret = OC_STACK_OK;
 
 exit:
-    cJSON_Delete(jsonRoot);
-    if (OC_STACK_OK != ret)
+if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
+    {
+       // reallocate and try again!
+       OICFree(outPayload);
+       outPayload = NULL;
+       // Since the allocated initial memory failed, double the memory.
+       cborLen += encoder.ptr - encoder.end;
+       cborEncoderResult = CborNoError;
+       ret = CredToCBORPayload(credS, cborPayload, &cborLen);
+    }
+
+    if (CborNoError != cborEncoderResult)
+    {
+       OICFree(outPayload);
+       outPayload = NULL;
+       *cborSize = 0;
+       *cborPayload = NULL;
+       ret = OC_STACK_ERROR;
+    }
+
+    return ret;
+}
+
+OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
+                                OicSecCred_t **secCred)
+{
+    if (NULL == cborPayload || NULL == secCred || NULL != *secCred)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    *secCred = NULL;
+
+    OCStackResult ret = OC_STACK_ERROR;
+
+    CborValue credCbor = { .parser = NULL };
+    CborParser parser = { .end = NULL };
+    CborError cborFindResult = CborNoError;
+    OicSecCred_t *cred = NULL;
+    char *name = NULL;
+
+    int cborLen = size;
+    if (0 == size)
+    {
+        cborLen = CBOR_SIZE;
+    }
+    cbor_parser_init(cborPayload, cborLen, 0, &parser, &credCbor);
+
+    OicSecCred_t *headCred = NULL;
+
+    CborValue credArray = { .parser = NULL };
+    cborFindResult = cbor_value_enter_container(&credCbor, &credArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+    while (cbor_value_is_valid(&credArray))
+    {
+        CborValue credMap = { .parser = NULL };
+        cborFindResult = cbor_value_enter_container(&credArray, &credMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+        cred = (OicSecCred_t *) OICCalloc(1, sizeof(*cred));
+        VERIFY_NON_NULL(TAG, cred, ERROR);
+
+        while (cbor_value_is_valid(&credMap))
+        {
+            size_t len = 0;
+            cborFindResult = cbor_value_dup_text_string(&credMap, &name, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            cborFindResult = cbor_value_advance(&credMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+
+            CborType type = cbor_value_get_type(&credMap);
+
+            //CredId -- Mandatory
+            if (0 == strcmp(OIC_JSON_CREDID_NAME, name))
+            {
+                cborFindResult = cbor_value_get_int(&credMap, (int *) &cred->credId);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            }
+            //subject -- Mandatory
+            if (0 == strcmp(OIC_JSON_SUBJECT_NAME, name))
+            {
+                uint8_t *id = NULL;
+                cborFindResult = cbor_value_dup_byte_string(&credMap, &id, &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                memcpy(cred->subject.id, id, len);
+                OICFree(id);
+            }
+            //CredType -- Mandatory
+            if (0 == strcmp(OIC_JSON_CREDTYPE_NAME, name))
+            {
+                cborFindResult = cbor_value_get_int(&credMap, (int *) &cred->credType);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            }
+            //Owners -- Mandatory
+            if (0 == strcmp(OIC_JSON_OWNERS_NAME, name))
+            {
+                CborValue owners = { .parser = NULL };
+                cborFindResult = cbor_value_get_array_length(&credMap, &cred->ownersLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                cborFindResult = cbor_value_enter_container(&credMap, &owners);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                int i = 0;
+                cred->owners = (OicUuid_t *)OICCalloc(cred->ownersLen, sizeof(*cred->owners));
+                VERIFY_NON_NULL(TAG, cred->owners, ERROR);
+                while (cbor_value_is_valid(&owners))
+                {
+                    uint8_t *owner = NULL;
+                    cborFindResult = cbor_value_dup_byte_string(&owners, &owner, &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                    memcpy(cred->owners[i].id, owner, len);
+                    OICFree(owner);
+                    cborFindResult = cbor_value_advance(&owners);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                }
+            }
+            //PrivateData is mandatory for some of the credential types listed below.
+            if (0 == strcmp(OIC_JSON_PRIVATEDATA_NAME, name))
+            {
+                if ((cred->credType & SYMMETRIC_PAIR_WISE_KEY) ||
+                    (cred->credType & SYMMETRIC_GROUP_KEY) ||
+                    (cred->credType & PIN_PASSWORD))
+                {
+                    cborFindResult = cbor_value_dup_byte_string(&credMap,
+                        &cred->privateData.data, &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                }
+            }
+
+            //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
+            if (0 == strcmp(OIC_JSON_PUBLICDATA_NAME, name))
+            {
+                if (cred->credType & SIGNED_ASYMMETRIC_KEY)
+                {
+                    cborFindResult = cbor_value_dup_byte_string(&credMap,
+                        &cred->publicData.data, &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+                }
+            }
+            //Period -- Not Mandatory
+            if (0 == strcmp(OIC_JSON_PERIOD_NAME, name))
+            {
+                cborFindResult = cbor_value_dup_text_string(&credMap,
+                    &cred->period, &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            }
+            if (CborMapType != type && cbor_value_is_valid(&credMap))
+            {
+                cborFindResult = cbor_value_advance(&credMap);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+            }
+            OICFree(name);
+            name = NULL;
+        }
+
+        cred->next = NULL;
+        if (NULL == headCred)
+        {
+            headCred = cred;
+        }
+        else
+        {
+            OicSecCred_t *temp = headCred;
+            while (temp->next)
+            {
+                temp = temp->next;
+            }
+            temp->next = cred;
+        }
+        if (cbor_value_is_valid(&credArray))
+        {
+            cborFindResult = cbor_value_advance(&credArray);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, ERROR);
+        }
+    }
+    *secCred = headCred;
+    ret = OC_STACK_OK;
+exit:
+    if (CborNoError != cborFindResult)
     {
         DeleteCredList(headCred);
         headCred = NULL;
+        ret = OC_STACK_ERROR;
     }
-    return headCred;
+    if (cred)
+    {
+        DeleteCredList(cred);
+    }
+    if (name)
+    {
+        OICFree(name);
+    }
+    return ret;
 }
 
 OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t credType,
-                                 const char * publicData, const char * privateData,
-                                 size_t ownersLen, const OicUuid_t * owners)
+                                  const uint8_t * publicData, const uint8_t* privateData,
+                                  size_t ownersLen, const OicUuid_t * owners)
 {
     (void)publicData;
     OCStackResult ret = OC_STACK_ERROR;
 
-    OicSecCred_t *cred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
+    OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(*cred));
     VERIFY_NON_NULL(TAG, cred, ERROR);
 
     //CredId is assigned before appending new cred to the existing
@@ -417,23 +475,25 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
 #ifdef __WITH_X509__
     if (publicData)
     {
-        cred->publicData.data = (char *)OICMalloc(strlen(publicData)+1);
+        cred->publicData.data = (uint8_t *)OICCalloc(1, sizeof(publicData));
         VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
-        strncpy((char *)cred->publicData.data, publicData, strlen(publicData)+1);
+        memcpy(cred->publicData.data, publicData, sizeof(publicData));
     }
 #endif // __WITH_X509__
 
     if (privateData)
     {
-        cred->privateData.data = (char *)OICMalloc(strlen(privateData)+1);
+#ifdef __WITH_X509__
+        cred->privateData.data = (uint8_t *)OICCalloc(1, sizeof(privateData));
         VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
-        strncpy((char *)cred->privateData.data, privateData, strlen(privateData)+1);
+        memcpy(cred->privateData.data, privateData, PRIVATE_KEY_SIZE);
+#endif // __WITH_X509__
     }
 
     VERIFY_SUCCESS(TAG, ownersLen > 0, ERROR);
     cred->ownersLen = ownersLen;
 
-    cred->owners = (OicUuid_t*)OICCalloc(cred->ownersLen, sizeof(OicUuid_t));
+    cred->owners = (OicUuid_t *)OICCalloc(cred->ownersLen, sizeof(*cred->owners));
     VERIFY_NON_NULL(TAG, cred->owners, ERROR);
     for (size_t i = 0; i < cred->ownersLen; i++)
     {
@@ -455,22 +515,20 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
     bool ret = false;
 
     // Convert Cred data into JSON for update to persistent storage
-    char *jsonStr = BinToCredJSON(cred);
-    if (jsonStr)
+    uint8_t *payload = NULL;
+    size_t size = 0;
+    OCStackResult res = CredToCBORPayload(cred, &payload, &size);
+    if ((OC_STACK_OK == res) && payload)
     {
-        cJSON *jsonCred = cJSON_Parse(jsonStr);
-        OICFree(jsonStr);
-
-        if ((jsonCred) &&
-          (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRED_NAME, jsonCred)))
+        if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, payload, size))
         {
             ret = true;
         }
-        cJSON_Delete(jsonCred );
+        OICFree(payload);
     }
     else //Empty cred list
     {
-        if (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRED_NAME, NULL))
+        if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, NULL, size))
         {
             ret = true;
         }
@@ -490,11 +548,11 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
  */
 static int CmpCredId(const OicSecCred_t * first, const OicSecCred_t *second)
 {
-    if(first->credId < second->credId)
+    if (first->credId < second->credId)
     {
         return -1;
     }
-    else if(first->credId > second->credId)
+    else if (first->credId > second->credId)
     {
         return 1;
     }
@@ -603,10 +661,11 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
 {
     OCEntityHandlerResult ret = OC_EH_ERROR;
 
-    //Get binary representation of json
-    OicSecCred_t * cred  = JSONToCredBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
-
-    if (cred)
+    //Get binary representation of CBOR
+    OicSecCred_t *cred  = NULL;
+    uint8_t *payload = ((OCSecurityPayload*)ehRequest->payload)->securityData1;
+    OCStackResult res = CBORPayloadToCred(payload, 0, &cred);
+    if ((OC_STACK_OK == res) && cred)
     {
         //If the Post request credential has credId, it will be
         //discarded and the next available credId will be assigned
@@ -628,7 +687,7 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
        return ehRet;
    }
 
-   OicParseQueryIter_t parseIter = {.attrPos=NULL};
+   OicParseQueryIter_t parseIter = { .attrPos=NULL };
    OicUuid_t subject = {.id={0}};
 
    //Parsing REST query to get the subject
@@ -638,15 +697,7 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
        if (strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECT_NAME,
                parseIter.attrLen) == 0)
        {
-           unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-           uint32_t outLen = 0;
-           B64Result b64Ret = B64_OK;
-
-           b64Ret = b64Decode((char *)parseIter.valPos, parseIter.valLen,
-                   base64Buff, sizeof(base64Buff), &outLen);
-
-           VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(subject.id)), ERROR);
-           memcpy(subject.id, base64Buff, outLen);
+           memcpy(subject.id, parseIter.valPos, parseIter.valLen);
        }
    }
 
@@ -655,14 +706,9 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
        ehRet = OC_EH_RESOURCE_DELETED;
    }
 
-exit:
     return ehRet;
 }
 
-/**
- * This internal method is the entity handler for Cred resources
- * to handle REST request (PUT/POST/DEL)
- */
 OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest * ehRequest,
                                         void* callbackParameter)
@@ -696,15 +742,12 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
     }
 
     //Send payload to request originator
-    ret = (SendSRMResponse(ehRequest, ret, NULL) == OC_STACK_OK ?
-                       ret : OC_EH_ERROR);
+    ret = (SendSRMCBORResponse(ehRequest, ret, NULL) == OC_STACK_OK) ?
+                       ret : OC_EH_ERROR;
 
     return ret;
 }
 
-/**
- * This internal method is used to create '/oic/sec/Cred' resource.
- */
 OCStackResult CreateCredResource()
 {
     OCStackResult ret = OCCreateResource(&gCredHandle,
@@ -728,25 +771,32 @@ OCStackResult InitCredResource()
     OCStackResult ret = OC_STACK_ERROR;
 
     //Read Cred resource from PS
-    char* jsonSVRDatabase = GetSVRDatabase();
-
-    if (jsonSVRDatabase)
+    uint8_t *data = NULL;
+    size_t size = 0;
+    ret = GetSecureVirtualDatabaseFromPS(OIC_JSON_CRED_NAME, &data, &size);
+    // If database read failed
+    if (ret != OC_STACK_OK)
     {
-        //Convert JSON Cred into binary format
-        gCred = JSONToCredBin(jsonSVRDatabase);
+        OC_LOG (DEBUG, TAG, "ReadSVDataFromPS failed");
     }
+    if (data)
+    {
+        // Read ACL resource from PS
+        ret = CBORPayloadToCred(data, size, &gCred);
+    }
+
     /*
      * If SVR database in persistent storage got corrupted or
      * is not available for some reason, a default Cred is created
      * which allows user to initiate Cred provisioning again.
      */
-    if (!jsonSVRDatabase || !gCred)
+    if (ret != OC_STACK_OK || !data || !gCred)
     {
         gCred = GetCredDefault();
     }
     //Instantiate 'oic.sec.cred'
     ret = CreateCredResource();
-    OICFree(jsonSVRDatabase);
+    OICFree(data);
     return ret;
 }
 
@@ -779,9 +829,9 @@ const OicSecCred_t* GetCredResourceData(const OicUuid_t* subject)
 
 
 #if defined(__WITH_DTLS__)
-int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
-              const unsigned char *desc, size_t desc_len,
-              unsigned char *result, size_t result_length)
+int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
+              const uint8_t *desc, size_t desc_len,
+              uint8_t *result, size_t result_length)
 {
     int32_t ret = -1;
 
@@ -840,18 +890,10 @@ int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
                             }
                         }
 
-                        // Convert PSK from Base64 encoding to binary before copying
-                        uint32_t outLen = 0;
-                        B64Result b64Ret = b64Decode(cred->privateData.data,
-                                strlen(cred->privateData.data), result,
-                                result_length, &outLen);
-                        if (B64_OK != b64Ret)
-                        {
-                            OC_LOG (ERROR, TAG, "Base64 decoding failed.");
-                            ret = -1;
-                            return ret;
-                        }
-                        return outLen;
+                        // Copy PSK.
+                        result_length = sizeof(cred->privateData.data);
+                        memcpy(result, cred->privateData.data, result_length);
+                        return result_length;
                     }
                 }
             }
@@ -874,25 +916,20 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    if(tmpSubject == NULL || pin == NULL || pinSize == 0 || tmpCredSubject == NULL)
+    if (tmpSubject == NULL || pin == NULL || pinSize == 0 || tmpCredSubject == NULL)
     {
         return OC_STACK_INVALID_PARAM;
     }
 
     uint8_t privData[OWNER_PSK_LENGTH_128] = {0,};
+    OicSecCred_t* cred = NULL;
     int dtlsRes = DeriveCryptoKeyFromPassword((const unsigned char *)pin, pinSize, owners->id,
                                               UUID_LENGTH, PBKDF_ITERATIONS,
                                               OWNER_PSK_LENGTH_128, privData);
     VERIFY_SUCCESS(TAG, (dtlsRes == 0) , ERROR);
 
-    uint32_t outLen = 0;
-    char base64Buff[B64ENCODE_OUT_SAFESIZE(OWNER_PSK_LENGTH_128) + 1] = {};
-    B64Result b64Ret = b64Encode(privData, OWNER_PSK_LENGTH_128, base64Buff,
-                                sizeof(base64Buff), &outLen);
-    VERIFY_SUCCESS(TAG, (B64_OK == b64Ret), ERROR);
-
-    OicSecCred_t* cred = GenerateCredential(tmpSubject, credType, NULL,
-                                            base64Buff, ownersLen, owners);
+    cred = GenerateCredential(tmpSubject, credType, NULL,
+                              privData, ownersLen, owners);
     if(NULL == cred)
     {
         OC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to generate credential");
@@ -933,7 +970,7 @@ static uint32_t ParseCertPrefix(uint8_t *prefix)
     uint32_t res = 0;
     if (NULL != prefix)
     {
-        for (int i=0; i < CERT_LEN_PREFIX; ++i)
+        for (int i = 0; i < CERT_LEN_PREFIX; ++i)
         {
             res |= (((uint32_t) prefix[i]) << ((CERT_LEN_PREFIX - 1 -i) * BYTE_SIZE));
         }
@@ -941,15 +978,14 @@ static uint32_t ParseCertPrefix(uint8_t *prefix)
     return res;
 }
 
-static uint32_t appendCert2Chain(uint8_t *appendPoint, char *cert, uint32_t max_len)
+static uint32_t appendCert2Chain(uint8_t *appendPoint, uint8_t *cert, uint32_t max_len)
 {
     uint32_t ret = 0;
     VERIFY_NON_NULL(TAG, appendPoint, ERROR);
     VERIFY_NON_NULL(TAG, cert, ERROR);
 
-    uint32_t certLen;
-    VERIFY_SUCCESS(TAG, B64_OK == b64Decode(cert, strlen(cert), appendPoint + CERT_LEN_PREFIX,
-                                            max_len - CERT_LEN_PREFIX, &certLen), ERROR);
+    memcpy(appendPoint + CERT_LEN_PREFIX, cert, max_len - CERT_LEN_PREFIX);
+    certLen = strlen(cert);
     WriteCertPrefix(appendPoint, certLen);
 
     ret = certLen + CERT_LEN_PREFIX;
@@ -957,7 +993,8 @@ exit:
     return ret;
 }
 
-static OCStackResult GetCAPublicKeyData(CADtlsX509Creds_t *credInfo){
+static OCStackResult GetCAPublicKeyData(CADtlsX509Creds_t *credInfo)
+{
     OCStackResult ret = OC_STACK_ERROR;
     uint8_t *ccPtr = credInfo->certificateChain;
     for (uint32_t i =0; i < credInfo->chainLen - 1; ++i)
@@ -965,10 +1002,7 @@ static OCStackResult GetCAPublicKeyData(CADtlsX509Creds_t *credInfo){
         ccPtr += CERT_LEN_PREFIX + ParseCertPrefix(ccPtr);
     }
 
-    ByteArray cert = {
-        .data = ccPtr + CERT_LEN_PREFIX,
-        .len = ParseCertPrefix(ccPtr)
-         };
+    ByteArray cert = { .data = ccPtr + CERT_LEN_PREFIX, .len = ParseCertPrefix(ccPtr) };
     CertificateX509 certStruct;
 
     VERIFY_SUCCESS(TAG, PKI_SUCCESS == DecodeCertificate(cert, &certStruct), ERROR);
@@ -990,8 +1024,8 @@ static OCStackResult GetCertCredPublicData(CADtlsX509Creds_t *credInfo, OicSecCr
     VERIFY_NON_NULL(TAG, cred, ERROR);
     VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
     //VERIFY_SUCCESS(TAG, NULL == credInfo->certificateChain.data, ERROR);
-    cJSON *jsonRoot = cJSON_Parse(cred->publicData.data);
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
+    (cred->publicData.data);
+
 
     //Get certificate chain
     cJSON *jsonObj = cJSON_GetObjectItem(jsonRoot, CERTIFICATE);//TODO define field names constants
@@ -1025,21 +1059,10 @@ static OCStackResult GetCertCredPrivateData(CADtlsX509Creds_t *credInfo, OicSecC
     VERIFY_NON_NULL(TAG, credInfo, ERROR);
     VERIFY_NON_NULL(TAG, cred, ERROR);
     VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
-    cJSON *jsonRoot = cJSON_Parse(cred->privateData.data);
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-    cJSON *jsonObj = cJSON_GetObjectItem(jsonRoot, PRIVATE_KEY);//TODO define field names constants
-    VERIFY_SUCCESS(TAG, NULL != jsonObj && cJSON_String == jsonObj->type, ERROR);
-
-    uint32_t read = 0u;
-    VERIFY_SUCCESS(TAG, B64_OK == b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring),
-                                            credInfo->devicePrivateKey, PRIVATE_KEY_SIZE, &read)
-                   && PRIVATE_KEY_SIZE == read, ERROR);
-
+    memcpy(credInfo->devicePrivateKey, cred->privateData.data, PRIVATE_KEY_SIZE);
     ret = OC_STACK_OK;
 
 exit:
-    cJSON_Delete(jsonRoot);
     return ret;
 }
 

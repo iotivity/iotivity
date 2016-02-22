@@ -287,7 +287,7 @@ struct OicUuid
 #define JWK_LENGTH 256/8 // 256 bit key length
 struct OicSecJwk
 {
-    char                *data;
+    uint8_t                *data;
 };
 
 /**

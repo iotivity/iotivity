@@ -68,6 +68,33 @@ OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
 OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t cborSize,
                                  OicSecAmacl_t **amacl);
 
+/**
+ * This internal method is the entity handler for Cred resources
+ * to handle REST request (PUT/POST/DEL)
+ */
+OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
+                                        OCEntityHandlerRequest * ehRequest,
+                                        void* callbackParameter);
+
+/**
+ * This internal method is used to create '/oic/sec/Cred' resource.
+ */
+OCStackResult CreateCredResource();
+
+/**
+ * This function converts from CBOR format into credential structure .
+ * Caller needs to invoke 'free' for allocated structure.
+ *
+ * @param cborPayload is the CBOR value that is assigned to the structure.
+ * @param size is the size of the CBOR.
+ * @param secCred is the pointer to instance of @ref OicSecCred_t structure that will be allocated.
+ * If it fails it will return NULL.
+ *
+ * @return ::OC_STACK_OK if conversion is successful, else ::OC_STACK_ERROR if unsuccessful.
+ */
+OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
+                                OicSecCred_t **secCred);
+
 #ifdef __cplusplus
 }
 #endif

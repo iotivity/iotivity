@@ -83,21 +83,12 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
 
     OCFillRandomMem(privData,privDataKeySize);
 
-    uint32_t outLen = 0;
-
-    base64Buff = (char*) OICCalloc(B64ENCODE_OUT_SAFESIZE(privDataKeySize) + 1, sizeof(char));
-    PM_VERIFY_NON_NULL(TAG, base64Buff, OC_STACK_NO_MEMORY, ERROR);
-    int memReq = (B64ENCODE_OUT_SAFESIZE(privDataKeySize) + 1) * sizeof(char);
-    B64Result b64Ret = b64Encode(privData, privDataKeySize*sizeof(uint8_t), base64Buff,
-                                 memReq, &outLen);
-    PM_VERIFY_SUCCESS(TAG, B64_OK == b64Ret, OC_STACK_ERROR, ERROR);
-
     // TODO: currently owner array is 1. only provisioning tool's id.
-    tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, base64Buff, 1, ptDeviceId);
+    tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, privData, 1, ptDeviceId);
     PM_VERIFY_NON_NULL(TAG, tempFirstCred, OC_STACK_ERROR, ERROR);
 
     // TODO: currently owner array is 1. only provisioning tool's id.
-    tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, base64Buff, 1, ptDeviceId);
+    tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, privData, 1, ptDeviceId);
     PM_VERIFY_NON_NULL(TAG, tempSecondCred, OC_STACK_ERROR, ERROR);
 
     *firstCred = tempFirstCred;

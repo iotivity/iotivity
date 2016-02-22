@@ -284,21 +284,21 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
         OCClientResponseHandler responseHandler)
 {
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if(!secPayload)
+    if (!secPayload)
     {
         OC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToCredJSON(cred);
-    if(NULL == secPayload->securityData)
+    size_t size = 0;
+    OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData1, &size);
+    if((OC_STACK_OK != res) && (NULL == secPayload->securityData1))
     {
         OICFree(secPayload);
-        OC_LOG(ERROR, TAG, "Failed to BinToCredJSON");
+        OC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
 
-    OC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr,
@@ -484,7 +484,7 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     crlData->resArr = (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
     if (crlData->resArr == NULL)
     {
-        OICFree(secPayload->securityData);
+        OICFree(secPayload->securityData1);
         OICFree(secPayload);
         OC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
@@ -528,16 +528,15 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToCredJSON(cred);
+    OCStackResult res =CredToCBORPayload(cred, 0, &secPayload->securityData1);
 
-    if (NULL == secPayload->securityData)
+    if ((OC_STACK_OK != res) || (NULL == secPayload->securityData1))
     {
         OICFree(secPayload);
-        OC_LOG(ERROR, TAG, "Failed to BinToCredJSON");
+        OC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
 
-    OC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr,
@@ -546,7 +545,7 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
                         query, sizeof(query), OIC_RSRC_CRED_URI))
     {
         OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
-        OICFree(secPayload->securityData);
+        OICFree(secPayload->securityData1);
         OICFree(secPayload);
         return OC_STACK_ERROR;
     }
