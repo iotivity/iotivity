@@ -943,7 +943,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
                 return CA_STATUS_FAILED;
             }
 
-            OIC_LOG_V(INFO, TAG, "EDR sendTo is successful: %ld bytes, to %s",
+            OIC_LOG_V(INFO, TAG, "EDR sendTo is successful: %u bytes, to %s",
                       dataLength, address);
         }
         else

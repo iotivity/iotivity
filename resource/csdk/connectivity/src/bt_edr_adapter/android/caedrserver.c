@@ -163,7 +163,7 @@ static void CAReceiveHandler(void *data)
         {
             for (uint32_t idx = 0; idx < length; idx++)
             {
-                CAEDRNativeReadData(env, idx, ctx->type);
+                CAEDRNativeReadData(env, idx);
             }
         }
     }
@@ -639,7 +639,7 @@ CAResult_t CAEDRStopMulticastServer()
     return CA_STATUS_OK;
 }
 
-CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t type)
+CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id)
 {
     if ((*env)->ExceptionCheck(env))
     {

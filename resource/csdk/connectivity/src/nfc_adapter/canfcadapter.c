@@ -132,6 +132,9 @@ void CANFCDeinitializeQueueHandles()
 void CANFCConnectionStateCB(const char *nfcAddress, CANetworkStatus_t status)
 {
     OIC_LOG(DEBUG, TAG, "Currently Not Supported");
+
+    (void)nfcAddress;
+    (void)status;
 }
 
 void CANFCPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data, uint32_t dataLength)
@@ -402,6 +405,7 @@ void CANFCDataDestroyer(void *data, uint32_t size)
     CANFCData *nfcData = (CANFCData *) data;
 
     CAFreeNFCData(nfcData);
+    (void)size;
 }
 
 CAResult_t CAGetNFCInterfaceInformation(CAEndpoint_t **info, uint32_t *size)

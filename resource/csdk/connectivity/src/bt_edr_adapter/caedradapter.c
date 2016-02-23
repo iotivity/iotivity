@@ -583,7 +583,10 @@ void CAAdapterDataReceiverHandler(void *context)
                                                           0);
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Sending data up !");
-    g_networkPacketReceivedCallback(remoteEndpoint, message->data, message->dataLen);
+
+    const CASecureEndpoint_t sep = { .endpoint = *remoteEndpoint };
+
+    g_networkPacketReceivedCallback(&sep, message->data, message->dataLen);
 
     CAFreeEndpoint(remoteEndpoint);
 

@@ -78,10 +78,9 @@ CAResult_t CAEDRStopMulticastServer();
  * This function will read the data from remote device.
  * @param[in]  env              JNI interface pointer.
  * @param[in]  id               index of remote address.
- * @param[in]  type             EDR server type.
  * @return ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id, CAAdapterServerType_t type);
+CAResult_t CAEDRNativeReadData(JNIEnv *env, uint32_t id);
 
 /**
  * Start Listen Task.
