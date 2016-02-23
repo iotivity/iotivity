@@ -19,16 +19,15 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "Scene.h"
-#include "SceneCollectionResourceObject.h"
-
 #include <algorithm>
+#include "SceneCollectionResource.h"
 
 namespace OIC
 {
     namespace Service
     {
         Scene::Scene(const std::string& sceneName,
-                SceneCollectionResourceObject::Ptr sceneCollectionResource) :
+                SceneCollectionResource::Ptr sceneCollectionResource) :
                 m_name(sceneName), m_sceneCollectionResourceObj(sceneCollectionResource) {}
 
         SceneAction::Ptr Scene::addNewSceneAction(
@@ -50,10 +49,10 @@ namespace OIC
                 throw RCSInvalidParameterException("RCSRemoteResoureObjectPtr value is null");
             }
 
-            SceneMemberResourceObject::Ptr sceneMemberResObj;
+            SceneMemberResource::Ptr sceneMemberResObj;
             auto members = m_sceneCollectionResourceObj->getSceneMembers();
             auto check = std::find_if(members.begin(), members.end(), [&RCSRemoteResourceObjectPtr] (
-                    const SceneMemberResourceObject::Ptr it){
+                    const SceneMemberResource::Ptr it){
                 return it->getRemoteResourceObject() == RCSRemoteResourceObjectPtr;});
 
             if(check != members.end())
@@ -63,7 +62,7 @@ namespace OIC
 
             else
             {
-                sceneMemberResObj = SceneMemberResourceObject::createSceneMemberResource(
+                sceneMemberResObj = SceneMemberResource::createSceneMemberResource(
                         RCSRemoteResourceObjectPtr);
                 m_sceneCollectionResourceObj->addSceneMember(sceneMemberResObj);
             }

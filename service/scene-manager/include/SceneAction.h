@@ -30,16 +30,16 @@ namespace OIC
 {
     namespace Service
     {
-        class SceneMemberResourceObject;
+        class SceneMemberResource;
         class SceneAction
         {
         public:
             typedef std::shared_ptr< SceneAction > Ptr;
 
         private:
-            SceneAction(const std::shared_ptr< SceneMemberResourceObject >,
+            SceneAction(const std::shared_ptr< SceneMemberResource >,
                     const std::string&, const RCSResourceAttributes&);
-            SceneAction(const std::shared_ptr< SceneMemberResourceObject >,
+            SceneAction(const std::shared_ptr< SceneMemberResource >,
                     const std::string&, const std::string&,
                     const RCSResourceAttributes::Value&);
             friend class Scene;
@@ -54,7 +54,7 @@ namespace OIC
         private:
             RCSRemoteResourceObject::Ptr m_pRemoteResourceObject;
             std::string m_sceneName;
-            std::shared_ptr< SceneMemberResourceObject > m_sceneMemberResourceObj;
+            std::shared_ptr< SceneMemberResource > m_sceneMemberResourceObj;
             RCSResourceAttributes m_attr;
         };
     } /* namespace Service */

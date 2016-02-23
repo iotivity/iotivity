@@ -19,12 +19,11 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SceneList.h"
-#include "SceneListResourceObject.h"
-#include "SceneCollectionResourceObject.h"
-
 #include "RCSRequest.h"
 #include "PrimitiveResource.h"
 #include "OCPlatform.h"
+#include "SceneCollectionResource.h"
+#include "SceneListResource.h"
 
 namespace OIC
 {
@@ -39,8 +38,8 @@ namespace OIC
         SceneCollection::Ptr SceneList::addNewSceneCollection()
         {
             auto sceneCollectionResObj =
-                    SceneCollectionResourceObject::createSceneCollectionObject();
-            SceneListResourceObject::getInstance()->addSceneCollectionResource(sceneCollectionResObj);
+                    SceneCollectionResource::createSceneCollectionObject();
+            SceneListResource::getInstance()->addSceneCollectionResource(sceneCollectionResObj);
 
             SceneCollection::Ptr sceneCollectionPtr(new SceneCollection(sceneCollectionResObj));
             return sceneCollectionPtr;
@@ -49,7 +48,7 @@ namespace OIC
         std::vector< SceneCollection::Ptr > SceneList::getSceneCollections() const
         {
             std::vector<SceneCollection::Ptr> sceneCollections;
-            auto sceneCollectionResObjs = SceneListResourceObject::getInstance()->getSceneCollections();
+            auto sceneCollectionResObjs = SceneListResource::getInstance()->getSceneCollections();
             for(const auto& it : sceneCollectionResObjs)
             {
                 SceneCollection::Ptr sceneCollectionPtr(new SceneCollection(it));
@@ -70,12 +69,12 @@ namespace OIC
 
         void SceneList::setName(const std::string& sceneListName)
         {
-            SceneListResourceObject::getInstance()->setName(sceneListName);
+            SceneListResource::getInstance()->setName(sceneListName);
         }
 
         std::string SceneList::getName() const
         {
-            return SceneListResourceObject::getInstance()->getName();
+            return SceneListResource::getInstance()->getName();
         }
     } /* namespace Service */
 } /* namespace OIC */

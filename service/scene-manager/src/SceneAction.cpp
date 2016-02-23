@@ -19,13 +19,14 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SceneAction.h"
-#include "SceneMemberResourceObject.h"
+
+#include "SceneMemberResource.h"
 
 namespace OIC
 {
     namespace Service
     {
-        SceneAction::SceneAction(const SceneMemberResourceObject::Ptr SceneMemberResource,
+        SceneAction::SceneAction(const SceneMemberResource::Ptr SceneMemberResource,
                 const std::string& sceneName, const RCSResourceAttributes& attr) :
                 m_pRemoteResourceObject(SceneMemberResource->getRemoteResourceObject()),
                 m_sceneName(sceneName),
@@ -34,18 +35,18 @@ namespace OIC
             for (const auto& it : attr)
             {
                 m_sceneMemberResourceObj->addMappingInfo(
-                        SceneMemberResourceObject::MappingInfo(m_sceneName, it.key(), it.value()));
+                        SceneMemberResource::MappingInfo(m_sceneName, it.key(), it.value()));
             }
         }
 
-        SceneAction::SceneAction(const SceneMemberResourceObject::Ptr SceneMemberResource,
+        SceneAction::SceneAction(const SceneMemberResource::Ptr SceneMemberResource,
                 const std::string& sceneName, const std::string& key,
                 const RCSResourceAttributes::Value& value) :
                 m_pRemoteResourceObject(SceneMemberResource->getRemoteResourceObject()),
                 m_sceneName(sceneName), m_sceneMemberResourceObj(SceneMemberResource)
         {
             m_sceneMemberResourceObj->addMappingInfo(
-                                SceneMemberResourceObject::MappingInfo(m_sceneName, key, value));
+                                SceneMemberResource::MappingInfo(m_sceneName, key, value));
         }
 
         void SceneAction::update(const std::string& key,
@@ -60,7 +61,7 @@ namespace OIC
             for(const auto& it : attr)
             {
                 m_sceneMemberResourceObj->addMappingInfo(
-                        SceneMemberResourceObject::MappingInfo(m_sceneName, it.key(), it.value()));
+                        SceneMemberResource::MappingInfo(m_sceneName, it.key(), it.value()));
             }
         }
 

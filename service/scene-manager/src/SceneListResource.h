@@ -30,27 +30,27 @@
 #include <string>
 
 #include "RCSResourceObject.h"
-#include "SceneCollectionResourceObject.h"
+#include "SceneCollectionResource.h"
 #include "SceneCommons.h"
 
 namespace OIC
 {
     namespace Service
     {
-        class SceneListResourceObject
+        class SceneListResource
         {
         public:
             /**
              * Returns Scene List Resource object as single instance.
              */
-            static SceneListResourceObject * getInstance();
+            static SceneListResource * getInstance();
 
             /**
              * Add Scene Collection resource object to Scene List Resource.
              *
              * @param collectionObj created Scene Collection Resource Object by constructor of SceneCollectionResourceObject class
              */
-            void addSceneCollectionResource(SceneCollectionResourceObject::Ptr collectionObj);
+            void addSceneCollectionResource(SceneCollectionResource::Ptr collectionObj);
 
             /**
              * Returns Scene List name.
@@ -72,7 +72,7 @@ namespace OIC
             /**
              * Returns all of Scene Collection Resource object.
              */
-            const std::vector<SceneCollectionResourceObject::Ptr> getSceneCollections();
+            const std::vector<SceneCollectionResource::Ptr> getSceneCollections();
 
         private:
             class SceneListRequestHandler
@@ -88,16 +88,16 @@ namespace OIC
             RCSResourceObject::Ptr m_SceneListObj;
             SceneListRequestHandler m_RequestHandler;
             std::mutex m_SceneCollectionLock;
-            std::vector<SceneCollectionResourceObject::Ptr> m_SceneCollections;
+            std::vector<SceneCollectionResource::Ptr> m_SceneCollections;
 
-            SceneListResourceObject();
-            ~SceneListResourceObject() = default;
+            SceneListResource();
+            ~SceneListResource() = default;
 
-            SceneListResourceObject(const SceneListResourceObject &) = delete;
-            SceneListResourceObject & operator = (const SceneListResourceObject &) = delete;
+            SceneListResource(const SceneListResource &) = delete;
+            SceneListResource & operator = (const SceneListResource &) = delete;
 
-            SceneListResourceObject(SceneListResourceObject &&) = delete;
-            SceneListResourceObject && operator = (SceneListResourceObject &&) = delete;
+            SceneListResource(SceneListResource &&) = delete;
+            SceneListResource && operator = (SceneListResource &&) = delete;
         };
     }
 }

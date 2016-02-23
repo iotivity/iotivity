@@ -29,7 +29,7 @@ namespace OIC
 {
     namespace Service
     {
-        class SceneCollectionResourceObject;
+        class SceneCollectionResource;
         class SceneCollection
         {
         public:
@@ -43,7 +43,7 @@ namespace OIC
             typedef std::shared_ptr< SceneCollection > Ptr;
 
         private:
-            SceneCollection(const std::shared_ptr< SceneCollectionResourceObject >&);
+            SceneCollection(const std::shared_ptr< SceneCollectionResource >&);
             friend class SceneList;
 
         public:
@@ -59,7 +59,7 @@ namespace OIC
 
         private:
             std::map< const std::string, Scene::Ptr > m_scenes;
-            std::shared_ptr< SceneCollectionResourceObject > m_sceneCollectionResourceObj;
+            std::shared_ptr< SceneCollectionResource > m_sceneCollectionResourceObj;
 
         };
     } /* namespace Service */

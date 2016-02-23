@@ -19,17 +19,16 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SceneCollection.h"
-#include "SceneCollectionResourceObject.h"
-
 #include "octypes.h"
 #include "ocrandom.h"
+#include "SceneCollectionResource.h"
 
 namespace OIC
 {
     namespace Service
     {
         SceneCollection::SceneCollection(
-                const SceneCollectionResourceObject::Ptr& sceneCollectionResource) :
+                const SceneCollectionResource::Ptr& sceneCollectionResource) :
                 m_sceneCollectionResourceObj(sceneCollectionResource) {}
 
         Scene::Ptr SceneCollection::addNewScene(const std::string& sceneName)

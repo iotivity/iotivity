@@ -35,11 +35,11 @@ namespace OIC
 {
     namespace Service
     {
-        class SceneMemberResourceObject
-                : public std::enable_shared_from_this<SceneMemberResourceObject>
+        class SceneMemberResource
+                : public std::enable_shared_from_this<SceneMemberResource>
         {
         public:
-            typedef std::shared_ptr< SceneMemberResourceObject > Ptr;
+            typedef std::shared_ptr< SceneMemberResource > Ptr;
 
             /**
              * Callback definition to be invoked when the response of setRemoteAttribitues is received.
@@ -69,7 +69,7 @@ namespace OIC
                 RCSResourceAttributes::Value value; ///< val to set at attributes of remote resource
             };
 
-            ~SceneMemberResourceObject() = default;
+            ~SceneMemberResource() = default;
 
             /**
              * Register a Scene member resource and return a SceneMemberResourceObject
@@ -77,13 +77,13 @@ namespace OIC
              *
              * @param attrs information to make scene member resource
              */
-            static SceneMemberResourceObject::Ptr
+            static SceneMemberResource::Ptr
             createSceneMemberResource(RCSResourceAttributes && attrs);
 
             /**
              * @overload
              */
-            static SceneMemberResourceObject::Ptr
+            static SceneMemberResource::Ptr
             createSceneMemberResource(const RCSResourceAttributes &);
 
             /**
@@ -92,7 +92,7 @@ namespace OIC
              *
              * @param remoteObj information to make scene member resource
              */
-            static SceneMemberResourceObject::Ptr
+            static SceneMemberResource::Ptr
             createSceneMemberResource(RCSRemoteResourceObject::Ptr remoteObj);
 
             /**
@@ -164,7 +164,7 @@ namespace OIC
                 SceneMemberRequestHandler() = default;
                 ~SceneMemberRequestHandler() = default;
 
-                std::weak_ptr<SceneMemberResourceObject> m_Owner;
+                std::weak_ptr<SceneMemberResource> m_Owner;
 
                 RCSSetResponse onSetRequest(const RCSRequest & , RCSResourceAttributes &);
             };
@@ -174,13 +174,13 @@ namespace OIC
             RCSRemoteResourceObject::Ptr m_RemoteMemberObj;
             SceneMemberRequestHandler m_RequestHandler;
 
-            SceneMemberResourceObject() = default;
+            SceneMemberResource() = default;
 
-            SceneMemberResourceObject(const SceneMemberResourceObject &) = delete;
-            SceneMemberResourceObject & operator = (const SceneMemberResourceObject &) = delete;
+            SceneMemberResource(const SceneMemberResource &) = delete;
+            SceneMemberResource & operator = (const SceneMemberResource &) = delete;
 
-            SceneMemberResourceObject(SceneMemberResourceObject &&) = delete;
-            SceneMemberResourceObject && operator = (SceneMemberResourceObject &&) = delete;
+            SceneMemberResource(SceneMemberResource &&) = delete;
+            SceneMemberResource && operator = (SceneMemberResource &&) = delete;
         };
     }
 }

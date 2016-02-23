@@ -18,15 +18,15 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "SceneListResourceObject.h"
 #include "RCSRequest.h"
 #include "OCApi.h"
+#include "SceneListResource.h"
 
 namespace OIC
 {
     namespace Service
     {
-        SceneListResourceObject::SceneListResourceObject()
+        SceneListResource::SceneListResource()
         : m_SceneListName(), m_SceneListObj(), m_RequestHandler()
         {
             m_SceneListObj = RCSResourceObject::Builder(
@@ -43,26 +43,26 @@ namespace OIC
             m_SceneListObj->setSetRequestHandler(&SceneListRequestHandler::onSetRequest);
         }
 
-        SceneListResourceObject * SceneListResourceObject::getInstance()
+        SceneListResource * SceneListResource::getInstance()
         {
-            static SceneListResourceObject instance;
+            static SceneListResource instance;
             return & instance;
         }
 
-        void SceneListResourceObject::addSceneCollectionResource(
-                SceneCollectionResourceObject::Ptr newObject)
+        void SceneListResource::addSceneCollectionResource(
+                SceneCollectionResource::Ptr newObject)
         {
             std::unique_lock<std::mutex> collectionlock(m_SceneCollectionLock);
             m_SceneCollections.push_back(newObject);
             m_SceneListObj->bindResource(newObject->getRCSResourceObject());
         }
 
-        std::string SceneListResourceObject::getName() const
+        std::string SceneListResource::getName() const
         {
             return m_SceneListName;
         }
 
-        void SceneListResourceObject::setName(std::string && newName)
+        void SceneListResource::setName(std::string && newName)
         {
             m_SceneListName = newName;
 
@@ -70,21 +70,21 @@ namespace OIC
             m_SceneListObj->setAttribute(SCENE_KEY_NAME, m_SceneListName);
         }
 
-        void SceneListResourceObject::setName(const std::string & newName)
+        void SceneListResource::setName(const std::string & newName)
         {
             setName(std::string(newName));
         }
 
-        const std::vector<SceneCollectionResourceObject::Ptr>
-        SceneListResourceObject::getSceneCollections()
+        const std::vector<SceneCollectionResource::Ptr>
+        SceneListResource::getSceneCollections()
         {
             std::unique_lock<std::mutex> collectionlock(m_SceneCollectionLock);
-            std::vector<SceneCollectionResourceObject::Ptr> retCollections(m_SceneCollections);
+            std::vector<SceneCollectionResource::Ptr> retCollections(m_SceneCollections);
             return retCollections;
         }
 
         RCSSetResponse
-        SceneListResourceObject::SceneListRequestHandler::onSetRequest(
+        SceneListResource::SceneListRequestHandler::onSetRequest(
                 const RCSRequest & request, RCSResourceAttributes & attributes)
         {
             if (request.getInterface() != OC::BATCH_INTERFACE)
@@ -94,14 +94,14 @@ namespace OIC
             }
 
             auto newObject
-                = SceneCollectionResourceObject::createSceneCollectionObject();
+                = SceneCollectionResource::createSceneCollectionObject();
 
             if (attributes.contains(SCENE_KEY_NAME))
             {
                 newObject->setName(attributes.at(SCENE_KEY_NAME).get<std::string>());
             }
 
-            SceneListResourceObject::getInstance()->addSceneCollectionResource(newObject);
+            SceneListResource::getInstance()->addSceneCollectionResource(newObject);
 
             auto responseAtt = attributes;
             responseAtt[SCENE_KEY_NAME] = RCSResourceAttributes::Value(newObject->getName());

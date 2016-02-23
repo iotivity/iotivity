@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "SceneMemberResourceObject.h"
+#include "SceneMemberResource.h"
 
 #include <atomic>
 #include "OCPlatform.h"
@@ -32,12 +32,12 @@ namespace OIC
             std::atomic_int numOfSceneMember(0);
         }
 
-        SceneMemberResourceObject::Ptr
-        SceneMemberResourceObject::createSceneMemberResource(
+        SceneMemberResource::Ptr
+        SceneMemberResource::createSceneMemberResource(
                 RCSRemoteResourceObject::Ptr remoteObject)
         {
-            auto instance = new SceneMemberResourceObject();
-            SceneMemberResourceObject::Ptr newSceneMemberObject;
+            auto instance = new SceneMemberResource();
+            SceneMemberResource::Ptr newSceneMemberObject;
             newSceneMemberObject.reset(instance);
 
             newSceneMemberObject->m_Uri = PREFIX_SCENE_MEMBER_URI + "/" +
@@ -48,7 +48,7 @@ namespace OIC
                         SCENE_MEMBER_RT, OC_RSRVD_INTERFACE_DEFAULT).
                         setDiscoverable(true).setObservable(false).build();
             newSceneMemberObject->m_RequestHandler.m_Owner
-                = std::weak_ptr<SceneMemberResourceObject>(newSceneMemberObject);
+                = std::weak_ptr<SceneMemberResource>(newSceneMemberObject);
 
             newSceneMemberObject->m_RemoteMemberObj = remoteObject;
 
@@ -70,21 +70,21 @@ namespace OIC
                     SCENE_KEY_SCENEMAPPINGS, std::vector<RCSResourceAttributes>());
 
             resourceObj->setSetRequestHandler(std::bind(
-                    &SceneMemberResourceObject::SceneMemberRequestHandler::onSetRequest,
+                    &SceneMemberResource::SceneMemberRequestHandler::onSetRequest,
                     newSceneMemberObject->m_RequestHandler,
                     std::placeholders::_1, std::placeholders::_2));
 
             return newSceneMemberObject;
         }
 
-        SceneMemberResourceObject::Ptr
-        SceneMemberResourceObject::createSceneMemberResource(const RCSResourceAttributes & link)
+        SceneMemberResource::Ptr
+        SceneMemberResource::createSceneMemberResource(const RCSResourceAttributes & link)
         {
             return createSceneMemberResource(RCSResourceAttributes(link));
         }
 
-        SceneMemberResourceObject::Ptr
-        SceneMemberResourceObject::createSceneMemberResource(RCSResourceAttributes && link)
+        SceneMemberResource::Ptr
+        SceneMemberResource::createSceneMemberResource(RCSResourceAttributes && link)
         {
             auto href = link.at(SCENE_KEY_HREF).get<std::string>();
 
@@ -102,7 +102,7 @@ namespace OIC
             return createSceneMemberResource(RCSRemoteResourceObject::fromOCResource(ocResourcePtr));
         }
 
-        void SceneMemberResourceObject::addMappingInfo(MappingInfo && mInfo)
+        void SceneMemberResource::addMappingInfo(MappingInfo && mInfo)
         {
             RCSResourceAttributes newAtt;
             {
@@ -141,13 +141,13 @@ namespace OIC
             m_SceneMemberResourceObj->setAttribute(SCENE_KEY_SCENEMAPPINGS, mappingInfo);
         }
 
-        void SceneMemberResourceObject::addMappingInfo(const MappingInfo & mInfo)
+        void SceneMemberResource::addMappingInfo(const MappingInfo & mInfo)
         {
             addMappingInfo(MappingInfo(mInfo));
         }
 
-        std::vector<SceneMemberResourceObject::MappingInfo>
-        SceneMemberResourceObject::getMappingInfo()
+        std::vector<SceneMemberResource::MappingInfo>
+        SceneMemberResource::getMappingInfo()
         {
             auto mappingInfo
                 = m_SceneMemberResourceObj->getAttributeValue(SCENE_KEY_SCENEMAPPINGS).
@@ -168,37 +168,37 @@ namespace OIC
             return retMInfo;
         }
 
-        std::string SceneMemberResourceObject::getId() const
+        std::string SceneMemberResource::getId() const
         {
             return m_SceneMemberResourceObj->getAttributeValue(SCENE_KEY_ID).get<std::string>();
         }
 
-        std::string SceneMemberResourceObject::getFullUri() const
+        std::string SceneMemberResource::getFullUri() const
         {
             return std::string(COAP_TAG + SceneUtils::getNetAddress() + m_Uri);
         }
 
-        RCSRemoteResourceObject::Ptr SceneMemberResourceObject::getRemoteResourceObject() const
+        RCSRemoteResourceObject::Ptr SceneMemberResource::getRemoteResourceObject() const
         {
             return m_RemoteMemberObj;
         }
 
-        RCSResourceObject::Ptr SceneMemberResourceObject::getRCSResourceObject() const
+        RCSResourceObject::Ptr SceneMemberResource::getRCSResourceObject() const
         {
             return m_SceneMemberResourceObj;
         }
 
-        void SceneMemberResourceObject::execute(std::string && sceneName)
+        void SceneMemberResource::execute(std::string && sceneName)
         {
             execute(std::move(sceneName), nullptr);
         }
 
-        void SceneMemberResourceObject::execute(const std::string & sceneName)
+        void SceneMemberResource::execute(const std::string & sceneName)
         {
             execute(std::string(sceneName));
         }
 
-        void SceneMemberResourceObject::execute(
+        void SceneMemberResource::execute(
                 std::string && sceneName, executeCallback executeCB)
         {
             bool hasScene = false;
@@ -221,13 +221,13 @@ namespace OIC
             }
         }
 
-        void SceneMemberResourceObject::execute(
+        void SceneMemberResource::execute(
                 const std::string & sceneName, executeCallback executeCB)
         {
             execute(std::string(sceneName), std::move(executeCB));
         }
 
-        RCSSetResponse SceneMemberResourceObject::SceneMemberRequestHandler::
+        RCSSetResponse SceneMemberResource::SceneMemberRequestHandler::
         onSetRequest(const RCSRequest & /*request*/, RCSResourceAttributes & attributes)
         {
             auto ptr = m_Owner.lock();
@@ -244,7 +244,7 @@ namespace OIC
                     = attributes.at(SCENE_KEY_SCENEMAPPINGS).get<std::vector<RCSResourceAttributes>>();
                 for (unsigned int it = 0; it < sceneMappings.size(); ++it)
                 {
-                    ptr->addMappingInfo(SceneMemberResourceObject::MappingInfo(
+                    ptr->addMappingInfo(SceneMemberResource::MappingInfo(
                             sceneMappings[it].at(SCENE_KEY_SCENE).get<std::string>(),
                             sceneMappings[it].at(SCENE_KEY_MEMBERPROPERTY).get<std::string>(),
                             sceneMappings[it].at(SCENE_KEY_MEMBERVALUE)));

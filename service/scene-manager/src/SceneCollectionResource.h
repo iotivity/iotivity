@@ -25,27 +25,27 @@
 
 #include "RCSResourceObject.h"
 #include "SceneCommons.h"
-#include "SceneMemberResourceObject.h"
+#include "SceneMemberResource.h"
 
 namespace OIC
 {
     namespace Service
     {
-        class SceneCollectionResourceObject
-                : public std::enable_shared_from_this<SceneCollectionResourceObject>
+        class SceneCollectionResource
+                : public std::enable_shared_from_this<SceneCollectionResource>
         {
         public:
-            typedef std::shared_ptr< SceneCollectionResourceObject > Ptr;
+            typedef std::shared_ptr< SceneCollectionResource > Ptr;
             typedef std::function< void(int) > SceneExecuteCallback;
 
-            ~SceneCollectionResourceObject() = default;
+            ~SceneCollectionResource() = default;
 
-            static SceneCollectionResourceObject::Ptr createSceneCollectionObject();
+            static SceneCollectionResource::Ptr createSceneCollectionObject();
 
             void addScene(std::string &&);
             void addScene(const std::string &);
 
-            void addSceneMember(SceneMemberResourceObject::Ptr);
+            void addSceneMember(SceneMemberResource::Ptr);
 
             void execute(std::string &&);
             void execute(const std::string &);
@@ -61,7 +61,7 @@ namespace OIC
             std::string getUri() const;
             std::string getAddress() const;
 
-            const std::vector<SceneMemberResourceObject::Ptr> getSceneMembers();
+            const std::vector<SceneMemberResource::Ptr> getSceneMembers();
 
             RCSResourceObject::Ptr getRCSResourceObject() const;
 
@@ -77,11 +77,11 @@ namespace OIC
                 int m_numOfMembers;
                 int m_responseMembers;
                 int m_errorCode;
-                std::weak_ptr<SceneCollectionResourceObject> m_Owner;
+                std::weak_ptr<SceneCollectionResource> m_Owner;
                 SceneExecuteCallback m_Cb;
 
                 static SceneExecuteResponseHandler::Ptr createExecuteHandler(
-                        const SceneCollectionResourceObject::Ptr, SceneExecuteCallback);
+                        const SceneCollectionResource::Ptr, SceneExecuteCallback);
                 void onResponse(const RCSResourceAttributes &, int);
             };
 
@@ -91,7 +91,7 @@ namespace OIC
                 SceneCollectionRequestHandler() = default;
                 ~SceneCollectionRequestHandler() = default;
 
-                std::weak_ptr<SceneCollectionResourceObject> m_Owner;
+                std::weak_ptr<SceneCollectionResource> m_Owner;
 
                 RCSSetResponse onSetRequest(
                         const RCSRequest &, RCSResourceAttributes &);
@@ -111,21 +111,21 @@ namespace OIC
 
             RCSResourceObject::Ptr m_SceneCollectionResourceObj;
             std::mutex m_SceneMemberLock;
-            std::vector<SceneMemberResourceObject::Ptr> m_SceneMembers;
+            std::vector<SceneMemberResource::Ptr> m_SceneMembers;
 
             SceneCollectionRequestHandler m_RequestHandler;
             std::mutex m_ExecuteHandlerLock;
             std::list<SceneExecuteResponseHandler::Ptr> m_ExecuteHandlers;
 
-            SceneCollectionResourceObject() = default;
+            SceneCollectionResource() = default;
 
-            SceneCollectionResourceObject(const SceneCollectionResourceObject &) = delete;
-            SceneCollectionResourceObject & operator = (
-                    const SceneCollectionResourceObject &) = delete;
+            SceneCollectionResource(const SceneCollectionResource &) = delete;
+            SceneCollectionResource & operator = (
+                    const SceneCollectionResource &) = delete;
 
-            SceneCollectionResourceObject(SceneCollectionResourceObject &&) = delete;
-            SceneCollectionResourceObject && operator = (
-                    SceneCollectionResourceObject &&) = delete;
+            SceneCollectionResource(SceneCollectionResource &&) = delete;
+            SceneCollectionResource && operator = (
+                    SceneCollectionResource &&) = delete;
 
             void onExecute(int, SceneExecuteCallback, SceneExecuteResponseHandler::Ptr);
         };
