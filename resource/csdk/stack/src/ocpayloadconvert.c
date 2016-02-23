@@ -664,51 +664,76 @@ static int64_t OCConvertRepPayload(OCRepPayload* payload, uint8_t* outPayload, s
     int64_t err = 0;
 
     cbor_encoder_init(&encoder, outPayload, *size, 0);
-    CborEncoder rootMap;
-    err = err | cbor_encoder_create_map(&encoder, &rootMap, CborIndefiniteLength);
+    CborEncoder rootMap ;
 
-    if (payload->types)
+    size_t arrayCount = 0;
+    for (OCRepPayload *temp = payload; temp; temp = temp->next)
     {
-        OIC_LOG(INFO, TAG, "Payload has types or interfaces");
-        char* joinedTypes = OCStringLLJoin(payload->types);
-        if (joinedTypes)
-        {
-            err = err | cbor_encode_text_string(&rootMap, OC_RSRVD_RESOURCE_TYPE,
-                    sizeof(OC_RSRVD_RESOURCE_TYPE) - 1);
-            err = err | cbor_encode_text_string(&rootMap, joinedTypes,
-                    strlen(joinedTypes));
-            OICFree(joinedTypes);
-        }
-        else
-        {
-            return OC_STACK_NO_MEMORY;
-        }
+        arrayCount++;
     }
-    if (payload->interfaces)
+    CborEncoder rootArray;
+    if (arrayCount > 1)
     {
-        char* joinedInterfaces = OCStringLLJoin(payload->interfaces);
-        if (joinedInterfaces)
-        {
-            err = err | cbor_encode_text_string(&rootMap, OC_RSRVD_INTERFACE,
-                    sizeof(OC_RSRVD_INTERFACE) - 1);
-            err = err | cbor_encode_text_string(&rootMap, joinedInterfaces,
-                    strlen(joinedInterfaces));
-            OICFree(joinedInterfaces);
-        }
-        else
-        {
-            return OC_STACK_NO_MEMORY;
-        }
+        err = err | cbor_encoder_create_array(&encoder, &rootArray, arrayCount);
     }
 
-    while(payload != NULL && (err == 0 || err == CborErrorOutOfMemory))
+    while (payload != NULL && (err == CborNoError))
     {
+        err = err | cbor_encoder_create_map(((arrayCount == 1)? &encoder: &rootArray),
+                                            &rootMap, CborIndefiniteLength);
+        // Only in case of collection href is included.
+        if (arrayCount > 1 && payload->uri && strlen(payload->uri) > 0)
+        {
+            OIC_LOG(INFO, TAG, "Payload has uri");
+            err = err | cbor_encode_text_string(&rootMap, OC_RSRVD_HREF,
+                    strlen(OC_RSRVD_HREF));
+            err = err | cbor_encode_text_string(&rootMap, payload->uri,
+                    strlen(payload->uri));
+        }
+        if (payload->types)
+        {
+            OIC_LOG(INFO, TAG, "Payload has types");
+            char* joinedTypes = OCStringLLJoin(payload->types);
+            if (joinedTypes)
+            {
+                err = err | cbor_encode_text_string(&rootMap, OC_RSRVD_RESOURCE_TYPE,
+                        strlen(OC_RSRVD_RESOURCE_TYPE));
+                err = err | cbor_encode_text_string(&rootMap, joinedTypes,
+                        strlen(joinedTypes));
+                OICFree(joinedTypes);
+            }
+            else
+            {
+                return OC_STACK_NO_MEMORY;
+            }
+        }
+        if (payload->interfaces)
+        {
+            OIC_LOG(INFO, TAG, "Payload has interfaces");
+            char* joinedInterfaces = OCStringLLJoin(payload->interfaces);
+            if (joinedInterfaces)
+            {
+                err = err | cbor_encode_text_string(&rootMap, OC_RSRVD_INTERFACE,
+                        strlen(OC_RSRVD_INTERFACE));
+                err = err | cbor_encode_text_string(&rootMap, joinedInterfaces,
+                        strlen(joinedInterfaces));
+                OICFree(joinedInterfaces);
+            }
+            else
+            {
+                return OC_STACK_NO_MEMORY;
+            }
+        }
+
         err = err | OCConvertSingleRepPayload(&rootMap, payload);
+        err = err | cbor_encoder_close_container(((arrayCount == 1) ? &encoder: &rootArray),
+                                                &rootMap);
         payload = payload->next;
     }
-
-    // Close main array
-    err = err | cbor_encoder_close_container(&encoder, &rootMap);
+    if (arrayCount > 1)
+    {
+        err = err | cbor_encoder_close_container(&encoder, &rootArray);
+    }
 
     return checkError(err, &encoder, outPayload, size);
 }

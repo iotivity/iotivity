@@ -993,18 +993,29 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue *objMap
         }
 
         OCRepPayload* curPayload = *outPayload;
-
-        size_t len;
-        CborValue repMap;
+        size_t len = 0;
+        CborValue repMap = *objMap;
         err = err || cbor_value_enter_container(objMap, &repMap);
-
-        while(!err && cbor_value_is_valid(&repMap))
+        while (!err && cbor_value_is_valid(&repMap))
         {
-            char* name;
-            err = err || cbor_value_dup_text_string(&repMap, &name, &len, NULL);
-            err = err || cbor_value_advance(&repMap);
+            char *name = NULL;
+            if (cbor_value_is_text_string(&repMap))
+            {
+                err = err || cbor_value_dup_text_string(&repMap, &name, &len, NULL);
+                err = err || cbor_value_advance(&repMap);
+                if (name &&
+                    ((0 == strcmp(OC_RSRVD_HREF, name)) ||
+                     (0 == strcmp(OC_RSRVD_RESOURCE_TYPE, name)) ||
+                    (0 == strcmp(OC_RSRVD_INTERFACE, name))))
+                {
+                    err = err || cbor_value_advance(&repMap);
+                    OICFree(name);
+                    continue;
+                }
 
+            }
             CborType type = cbor_value_get_type(&repMap);
+
             switch(type)
             {
                 case CborNullType:
@@ -1085,10 +1096,11 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue *objMap
             }
             OICFree(name);
         }
-
-        err = err || cbor_value_leave_container(objMap, &repMap);
-
-        if(err)
+        if (cbor_value_is_container(objMap))
+        {
+            err = err || cbor_value_leave_container(objMap, &repMap);
+        }
+        if (err)
         {
             OCRepPayloadDestroy(*outPayload);
             *outPayload = NULL;
@@ -1098,7 +1110,7 @@ static bool OCParseSingleRepPayload(OCRepPayload** outPayload, CborValue *objMap
     return err;
 }
 
-static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* rootMap)
+static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* root)
 {
     if (!outPayload)
     {
@@ -1107,64 +1119,83 @@ static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* rootMa
 
     OCRepPayload *rootPayload = NULL;
     OCRepPayload *curPayload = NULL;
-    OCRepPayload *temp = OCRepPayloadCreate();
-    if (!temp)
-    {
-        return OC_STACK_NO_MEMORY;
-    }
 
     CborValue curVal;
     bool err = false;
-    size_t len;
-    err = err || cbor_value_map_find_value(rootMap, OC_RSRVD_RESOURCE_TYPE, &curVal);
-    if(cbor_value_is_text_string(&curVal))
+    size_t len = 0;
+    CborValue rootMap = *root;
+    if (cbor_value_is_array(root))
     {
-        char* allRt = NULL;
-        err = err || cbor_value_dup_text_string(&curVal, &allRt, &len, NULL);
-        if (allRt)
+        cbor_value_enter_container(root, &rootMap);
+    }
+    while (!err && cbor_value_is_valid(&rootMap))
+    {
+        OCRepPayload *temp = OCRepPayloadCreate();
+        if (!temp)
         {
-            char* savePtr;
-            char* curPtr = strtok_r(allRt, " ", &savePtr);
-            while (curPtr)
+            return OC_STACK_NO_MEMORY;
+        }
+        if (!err && cbor_value_is_map(&rootMap))
+        {
+            err = err || cbor_value_map_find_value(&rootMap, OC_RSRVD_HREF, &curVal);
+            if (cbor_value_is_valid(&curVal))
             {
-                char* trimmed = InPlaceStringTrim(curPtr);
-                if (trimmed[0] != '\0')
-                {
-                    OCRepPayloadAddResourceType(temp, curPtr);
-                }
-                curPtr = strtok_r(NULL, " ", &savePtr);
+                err = err || cbor_value_dup_text_string(&curVal, &temp->uri, &len, NULL);
             }
         }
-        OICFree(allRt);
-    }
-
-    err = err || cbor_value_map_find_value(rootMap, OC_RSRVD_INTERFACE, &curVal);
-    if(cbor_value_is_text_string(&curVal))
-    {
-        char* allIf = NULL;
-        err = err || cbor_value_dup_text_string(&curVal, &allIf, &len, NULL);
-        if (allIf)
+        if (!err && cbor_value_is_map(&rootMap))
         {
-            char* savePtr;
-            char* curPtr = strtok_r(allIf, " ", &savePtr);
-            while (curPtr)
+            err = err || cbor_value_map_find_value(&rootMap, OC_RSRVD_RESOURCE_TYPE, &curVal);
+            if(cbor_value_is_text_string(&curVal))
             {
-                char* trimmed = InPlaceStringTrim(curPtr);
-                if (trimmed[0] != '\0')
+                char* allRt = NULL;
+                err = err || cbor_value_dup_text_string(&curVal, &allRt, &len, NULL);
+                if (allRt)
                 {
-                    OCRepPayloadAddInterface(temp, curPtr);
+                    char* savePtr;
+                    char* curPtr = strtok_r(allRt, " ", &savePtr);
+                    while (curPtr)
+                    {
+                        char* trimmed = InPlaceStringTrim(curPtr);
+                        if (trimmed[0] != '\0')
+                        {
+                            OCRepPayloadAddResourceType(temp, curPtr);
+                        }
+                        curPtr = strtok_r(NULL, " ", &savePtr);
+                    }
                 }
-                curPtr = strtok_r(NULL, " ", &savePtr);
+                OICFree(allRt);
             }
         }
-        OICFree(allIf);
-    }
-
-    while (!err && cbor_value_is_map(rootMap))
-    {
-         err = err || OCParseSingleRepPayload(&temp, rootMap);
-
-        if(rootPayload == NULL)
+        if (!err && cbor_value_is_map(&rootMap))
+        {
+            err = err || cbor_value_map_find_value(&rootMap, OC_RSRVD_INTERFACE, &curVal);
+            if(cbor_value_is_text_string(&curVal))
+            {
+                char* allIf = NULL;
+                err = err || cbor_value_dup_text_string(&curVal, &allIf, &len, NULL);
+                if (allIf)
+                {
+                    char* savePtr;
+                    char* curPtr = strtok_r(allIf, " ", &savePtr);
+                    while (curPtr)
+                    {
+                        char* trimmed = InPlaceStringTrim(curPtr);
+                        if (trimmed[0] != '\0')
+                        {
+                            OCRepPayloadAddInterface(temp, curPtr);
+                        }
+                        curPtr = strtok_r(NULL, " ", &savePtr);
+                    }
+                }
+                OICFree(allIf);
+            }
+        }
+        if (!err && cbor_value_is_map(&rootMap))
+        {
+             err = err || OCParseSingleRepPayload(&temp, &rootMap);
+        }
+        if (rootPayload == NULL)
         {
             rootPayload = temp;
             curPayload = temp;
@@ -1174,21 +1205,18 @@ static OCStackResult OCParseRepPayload(OCPayload** outPayload, CborValue* rootMa
             curPayload->next = temp;
             curPayload = curPayload->next;
         }
-
-        if (cbor_value_is_valid(rootMap))
-        {
-            err = err || cbor_value_advance(rootMap);
-        }
-
-        if(err)
+        if (err)
         {
             OCRepPayloadDestroy(rootPayload);
             OIC_LOG(ERROR, TAG, "CBOR error in ParseRepPayload");
             return OC_STACK_MALFORMED_RESPONSE;
         }
+        if (cbor_value_is_array(&rootMap))
+        {
+            err = err || cbor_value_advance(&rootMap);
+        }
     }
-
-    *outPayload = (OCPayload*)rootPayload;
+    *outPayload = (OCPayload *)rootPayload;
 
     return OC_STACK_OK;
 }

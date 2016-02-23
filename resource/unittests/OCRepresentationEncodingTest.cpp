@@ -232,6 +232,38 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(cparsed);
     }
 
+    TEST(RepresentationEncoding, RepAttributeEmpty)
+    {
+        OC::OCRepresentation startRep;
+        std::vector<int> iarr {};
+        startRep["iarr"] = {};
+
+        OC::MessageContainer mc1;
+        mc1.addRepresentation(startRep);
+
+        OCRepPayload* cstart = mc1.getPayload();
+        EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, cstart->base.type);
+
+        uint8_t *cborData = NULL;
+        size_t cborSize = 0;
+        OCPayload *cparsed = NULL;
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+                    cborData, cborSize));
+        OCPayloadDestroy((OCPayload*)cstart);
+        OICFree(cborData);
+
+        OC::MessageContainer mc2;
+        mc2.setPayload(cparsed);
+        EXPECT_EQ(1u, mc2.representations().size());
+        const OC::OCRepresentation& r = mc2.representations()[0];
+
+        std::vector<int> iarr2 = r["iarr"];
+
+        EXPECT_EQ(iarr, iarr2);
+        OCPayloadDestroy(cparsed);
+    }
+
     TEST(RepresentationEncoding, RepAttribute)
     {
         OC::OCRepresentation startRep;
@@ -1146,6 +1178,73 @@ namespace OCRepresentationEncodingTest
 
         OICFree(cborData);
         OCRepPayloadDestroy(payload);
+        OCPayloadDestroy(cparsed);
+    }
+    TEST(RepresentationEncodingRTandIF, TestPayloadContents)
+    {
+        OC::OCRepresentation subRep1;
+        std::vector<std::string> types;
+        types.push_back("rt.firstitem");
+        std::vector<std::string> interfaces;
+        interfaces.push_back("if.firstitem");
+        subRep1.setResourceTypes(types);
+        subRep1.setResourceInterfaces(interfaces);
+        subRep1.setNULL("NullAttr");
+        subRep1.setValue("IntAttr", 77);
+        subRep1.setValue("DoubleAttr", 3.333);
+        subRep1.setValue("BoolAttr", true);
+        subRep1.setValue("StringAttr", std::string("String attr"));
+
+        OC::MessageContainer mc1;
+        mc1.addRepresentation(subRep1);
+
+        OCRepPayload *repPayload = mc1.getPayload();
+        EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, repPayload->base.type);
+
+        uint8_t *cborData = NULL;
+        size_t cborSize = 0;
+        OCPayload *cparsed = NULL;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)repPayload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+                    cborData, cborSize));
+
+        OCRepPayload *parsedPayload = (OCRepPayload *)cparsed;
+        EXPECT_EQ(NULL, parsedPayload->uri);
+        EXPECT_STREQ("rt.firstitem", parsedPayload->types->value);
+        EXPECT_EQ(NULL, parsedPayload->types->next);
+        EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
+        EXPECT_EQ(NULL, parsedPayload->interfaces->next);
+
+        // To make sure rt and if are not duplicated.
+        EXPECT_STREQ("BoolAttr", parsedPayload->values->name);
+        EXPECT_EQ(true, parsedPayload->values->b);
+        EXPECT_EQ(OCREP_PROP_BOOL, parsedPayload->values->type);
+        parsedPayload->values = parsedPayload->values->next;
+
+        EXPECT_STREQ("DoubleAttr", parsedPayload->values->name);
+        EXPECT_EQ(OCREP_PROP_DOUBLE, parsedPayload->values->type);
+        EXPECT_EQ(3.3330000000000002, parsedPayload->values->d);
+        parsedPayload->values = parsedPayload->values->next;
+
+        EXPECT_STREQ("IntAttr", parsedPayload->values->name);
+        EXPECT_EQ(77, parsedPayload->values->i);
+        EXPECT_EQ(OCREP_PROP_INT, parsedPayload->values->type);
+        parsedPayload->values = parsedPayload->values->next;
+
+        EXPECT_STREQ("NullAttr", parsedPayload->values->name);
+        EXPECT_EQ(OCREP_PROP_NULL, parsedPayload->values->type);
+        parsedPayload->values = parsedPayload->values->next;
+
+        EXPECT_STREQ("StringAttr", parsedPayload->values->name);
+        EXPECT_STREQ("String attr", parsedPayload->values->str);
+        EXPECT_EQ(OCREP_PROP_STRING, parsedPayload->values->type);
+        parsedPayload->values = parsedPayload->values->next;
+
+        EXPECT_EQ(NULL, parsedPayload->values);
+
+        OICFree(cborData);
+        OCRepPayloadDestroy(repPayload);
         OCPayloadDestroy(cparsed);
     }
 }
