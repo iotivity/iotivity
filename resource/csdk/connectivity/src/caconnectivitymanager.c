@@ -61,6 +61,7 @@ extern void CADTLSSetCrlCallback(CAGetDTLSCrlHandler crlCallback);
 
 CAResult_t CAInitialize()
 {
+    OIC_LOG_V(DEBUG, TAG, "IoTivity version is v%s", IOTIVITY_VERSION);
     OIC_LOG(DEBUG, TAG, "CAInitialize");
 
     if (!g_isInitialized)
