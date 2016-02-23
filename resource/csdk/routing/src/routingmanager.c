@@ -1131,7 +1131,7 @@ rewriteandexit:
         }
         else if (isEMPTYPacket)
         {
-            OC_LOG(DEBUG, TAG, "The message to be Forwarded is a EMPTY message");
+            OIC_LOG(DEBUG, TAG, "The message to be Forwarded is a EMPTY message");
             CAResponseInfo_t responseMessage = {.result = CA_EMPTY};
             if (ACK == routeOption.msgType)
             {
@@ -1147,7 +1147,7 @@ rewriteandexit:
             CAResult_t caRes = CASendResponse(&nextHop, &responseMessage);
             if (CA_STATUS_OK != caRes)
             {
-                OC_LOG_V(ERROR, RM_TAG, "Failed to forward response to next hop [%d][%s]",
+                OIC_LOG_V(ERROR, RM_TAG, "Failed to forward response to next hop [%d][%s]",
                          caRes, nextHop.addr);
                 // Since a response is always unicast, return error here.
                 return OC_STACK_ERROR;
@@ -1206,7 +1206,7 @@ rewriteandexit:
         {
             if (isRequest)
             {
-                OC_LOG(DEBUG, TAG, "POST message with type ACK in Route Option");
+                OIC_LOG(DEBUG, TAG, "POST message with type ACK in Route Option");
                 if (NULL != isEmptyMsg)
                 {
                     *isEmptyMsg = true;
@@ -1214,7 +1214,7 @@ rewriteandexit:
             }
             else
             {
-                OC_LOG(DEBUG, TAG, "Response for EMPTY message is received");
+                OIC_LOG(DEBUG, TAG, "Response for EMPTY message is received");
                 CAResponseInfo_t *msg = message;
                 if (ACK == (MSGType)routeOption.msgType)
                 {

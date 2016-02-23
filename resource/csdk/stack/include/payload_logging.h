@@ -304,7 +304,6 @@ static inline void OCPayloadLog(LogLevel level, OCPayload* payload)
 }
 #else
     #define OIC_LOG_PAYLOAD(level, payload)
-    #define OC_LOG_PAYLOAD(level, payload)
 #endif
 
 #ifdef __cplusplus

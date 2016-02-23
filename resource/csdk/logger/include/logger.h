@@ -41,7 +41,7 @@ extern "C"
 #endif
 
 // Use the PCF macro to wrap strings stored in FLASH on the Arduino
-// Example:  OC_LOG(INFO, TAG, PCF("Entering function"));
+// Example:  OIC_LOG(INFO, TAG, PCF("Entering function"));
 #ifdef ARDUINO
 #ifdef __cplusplus
 #define PCF(str)  ((PROGMEM const char *)(F(str)))

@@ -1060,7 +1060,7 @@ exit:
 
 void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
-    OC_LOG(DEBUG, TAG, "Enter OCHandleResponse");
+    OIC_LOG(DEBUG, TAG, "Enter OCHandleResponse");
 
     if(responseInfo->info.resourceUri &&
         strcmp(responseInfo->info.resourceUri, OC_RSRVD_PRESENCE_URI) == 0)
@@ -1364,7 +1364,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
     VERIFY_NON_NULL_NR(endPoint, FATAL);
     VERIFY_NON_NULL_NR(responseInfo, FATAL);
 
-    OC_LOG(INFO, TAG, "Enter HandleCAResponses");
+    OIC_LOG(INFO, TAG, "Enter HandleCAResponses");
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #ifdef ROUTING_GATEWAY
@@ -1379,7 +1379,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
                                          &needRIHandling);
     if(ret != OC_STACK_OK || !needRIHandling)
     {
-        OC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
+        OIC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
         return;
     }
 #endif
@@ -1465,7 +1465,7 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
     }
     if (doPost)
     {
-        OC_LOG(DEBUG, TAG, "Sending a POST message for EMPTY ACK in Client Mode");
+        OIC_LOG(DEBUG, TAG, "Sending a POST message for EMPTY ACK in Client Mode");
         CARequestInfo_t reqInfo = {.method = CA_POST };
         /* The following initialization is not done in a single initializer block as in
          * arduino, .c file is compiled as .cpp and moves it from C99 to C++11.  The latter
@@ -1484,7 +1484,7 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
                 (CAHeaderOption_t *)OICCalloc(reqInfo.info.numOptions, sizeof(CAHeaderOption_t));
             if (NULL == reqInfo.info.options)
             {
-                OC_LOG(ERROR, TAG, "Calloc failed");
+                OIC_LOG(ERROR, TAG, "Calloc failed");
                 return OC_STACK_NO_MEMORY;
             }
             memcpy (reqInfo.info.options, respInfo.info.options,
@@ -1498,7 +1498,7 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
         OICFree (respInfo.info.options);
         if (CA_STATUS_OK != caResult)
         {
-            OC_LOG(ERROR, TAG, "CASendRequest error");
+            OIC_LOG(ERROR, TAG, "CASendRequest error");
             return CAResultToOCResult(caResult);
         }
     }
@@ -1517,7 +1517,7 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
             return CAResultToOCResult(caResult);
         }
     }
-    OC_LOG(DEBUG, TAG, "Exit SendDirectStackResponse");
+    OIC_LOG(DEBUG, TAG, "Exit SendDirectStackResponse");
     return OC_STACK_OK;
 }
 
@@ -1588,7 +1588,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 
 void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
 {
-    OC_LOG(DEBUG, TAG, "Enter OCHandleRequests");
+    OIC_LOG(DEBUG, TAG, "Enter OCHandleRequests");
 
 #ifdef TCP_ADAPTER
     if (requestInfo->info.resourceUri &&

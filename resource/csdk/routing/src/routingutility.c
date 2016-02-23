@@ -75,7 +75,7 @@ OCStackResult RMAddInfo(const char *destination, void *message, bool isRequest,
         CAResponseInfo_t *respMsg = message;
         if ('\0' == destination[0] && (CA_EMPTY == respMsg->result))
         {
-            OC_LOG(DEBUG, TAG, "Response is for an Endpoint, No need to add the routing Option");
+            OIC_LOG(DEBUG, TAG, "Response is for an Endpoint, No need to add the routing Option");
             return OC_STACK_OK;
         }
         options = &(respMsg->info.options);
@@ -127,18 +127,18 @@ OCStackResult RMAddInfo(const char *destination, void *message, bool isRequest,
         CAResponseInfo_t *respMsg = message;
         if (CA_EMPTY == respMsg->result && CA_MSG_ACKNOWLEDGE == respMsg->info.type)
         {
-            OC_LOG(DEBUG, TAG, "CA_EMPTY WITH ACKNOWLEDGEMENT");
+            OIC_LOG(DEBUG, TAG, "CA_EMPTY WITH ACKNOWLEDGEMENT");
             routeOption.msgType = ACK;
             if (OC_SERVER == g_rmStackMode)
             {
-                OC_LOG(DEBUG, TAG, "This is server mode");
+                OIC_LOG(DEBUG, TAG, "This is server mode");
                 // Send the Empty message in the response with adding the MSGType in Route option.
                 respMsg->info.type = CA_MSG_NONCONFIRM;
                 respMsg->result = CA_CONTENT;
             }
             else
             {
-                OC_LOG(DEBUG, TAG, "Send a POST request");
+                OIC_LOG(DEBUG, TAG, "Send a POST request");
                 if (NULL != doPost)
                 {
                     *doPost = true;
@@ -147,7 +147,7 @@ OCStackResult RMAddInfo(const char *destination, void *message, bool isRequest,
         }
         else if (CA_EMPTY == respMsg->result && CA_MSG_RESET == respMsg->info.type)
         {
-            OC_LOG(DEBUG, TAG, "CA_EMPTY WITH RESET");
+            OIC_LOG(DEBUG, TAG, "CA_EMPTY WITH RESET");
             routeOption.msgType = RST;
             respMsg->info.type = CA_MSG_NONCONFIRM;
             respMsg->result = CA_CONTENT;
