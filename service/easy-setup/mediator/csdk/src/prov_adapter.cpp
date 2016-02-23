@@ -89,6 +89,10 @@ OCStackResult StartProvisioning(const ProvConfig *provConfig, WiFiOnboadingConne
 
     char findQuery[64] = {0};
 
+    if(provConfig == NULL || onboardConn == NULL){
+        return OC_STACK_ERROR;
+    }
+
 #ifdef REMOTE_ARDUINO_ENROLEE
     //Arduino Enrollee needs mediator application provide IP and port55555 which is specific
     // to Arduino WiFi enrollee

@@ -124,8 +124,15 @@ if target_os in ['android','linux']:
 
 print "Files path is %s" % env.get('es_src')
 
-#Go to build sample apps
+######################################################################
+# Build RichSDK Mediator Sample App
+################################################ ######################
 if target_os == 'linux':
 	SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
 
+######################################################################
+#Build UnitTestcases for Mediator[RichSDK]
+################################################ ######################
+if target_os == 'linux':
+    SConscript('unittests/SConscript')
 
