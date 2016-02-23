@@ -21,29 +21,47 @@
 #include "UnitTestHelper.h"
 
 #include "ResourceEncapsulationTestSimulator.h"
-#include "OCResourceRequest.h"
 #include "RequestObject.h"
-#include "RCSRequest.h"
 
 using namespace testing;
 using namespace OIC::Service;
 
 namespace
 {
-    void setRequestCB(
-            const RCSResourceAttributes &, int,
-            const RCSRequest &, RequestObject::Ptr) { }
+    bool isStarted = false;
+    bool isFinished = false;
+
+    ResourceEncapsulationTestSimulator testObject;
+    RCSRemoteResourceObject::Ptr remoteObject;
+
+    void setRequestCB(const RCSResourceAttributes &, int, const RCSRequest &, RequestObject::Ptr)
+    {
+    }
+
+    void setup()
+    {
+        if(!isStarted)
+        {
+            testObject.defaultRunSimulator();
+            remoteObject = testObject.getRemoteResource();
+
+            isStarted = true;
+        }
+    }
+
+    void tearDown()
+    {
+        if(isFinished)
+        {
+            testObject.destroy();
+            isStarted = false;
+        }
+    }
 }
 
 class RequestObjectTest : public TestWithMock
 {
 public:
-    ResourceEncapsulationTestSimulator::Ptr testObject;
-    RCSResourceObject::Ptr server;
-    RCSRemoteResourceObject::Ptr remoteObject;
-
-    RCSResourceAttributes attr;
-
     std::mutex mutexForCondition;
     std::condition_variable responseCon;
 
@@ -52,27 +70,13 @@ protected:
     void SetUp()
     {
         TestWithMock::SetUp();
-
-        testObject = std::make_shared<ResourceEncapsulationTestSimulator>();
-        testObject->defaultRunSimulator();
-        remoteObject = testObject->getRemoteResource();
+        setup();
     }
 
     void TearDown()
     {
         TestWithMock::TearDown();
-        if(remoteObject)
-        {
-            if(remoteObject->isCaching())
-            {
-                remoteObject->stopCaching();
-            }
-            if(remoteObject->isMonitoring())
-            {
-                remoteObject->stopMonitoring();
-            }
-        }
-        testObject->destroy();
+        tearDown();
     }
 
 public:
@@ -102,7 +106,7 @@ TEST_F(RequestObjectTest, invokeRequestExpectCallwithSetter)
 
    RCSResourceAttributes att;
    std::shared_ptr<OC::OCResourceRequest> request;
-   RequestObject::invokeRequest(remoteObject, RCSRequest(testObject->getResourceServer(), request),
+   RequestObject::invokeRequest(remoteObject, RCSRequest(testObject.getResourceServer(), request),
            RequestObject::RequestMethod::Set, att, setRequestCB);
 
    waitForCondition();
