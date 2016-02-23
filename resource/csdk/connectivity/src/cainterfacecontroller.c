@@ -247,7 +247,18 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
     }
 
     CAEndpoint_t **tempInfo = (CAEndpoint_t**) OICCalloc(g_numberOfAdapters, sizeof(*tempInfo));
+    if (!tempInfo)
+    {
+        OIC_LOG(ERROR, TAG, "Out of memory!");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
     uint32_t *tempSize =(uint32_t*) OICCalloc(g_numberOfAdapters, sizeof(*tempSize));
+    if (!tempSize)
+    {
+        OIC_LOG(ERROR, TAG, "Out of memory!");
+        OICFree(tempInfo);
+        return CA_MEMORY_ALLOC_FAILED;
+    }
 
     CAResult_t res = CA_STATUS_FAILED;
     size_t resSize = 0;
