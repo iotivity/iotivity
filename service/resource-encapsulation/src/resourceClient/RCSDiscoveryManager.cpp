@@ -83,10 +83,8 @@ namespace OIC
                 const RCSAddress& address, const std::string& relativeUri,
                 const std::string& resourceType, ResourceDiscoveredCallback cb)
         {
-            return discoverResourceByTypes(address,
-                    relativeUri.empty() ? OC_RSRVD_WELL_KNOWN_URI : relativeUri,
-                    std::vector< std::string >
-                    { resourceType }, std::move(cb));
+            return discoverResourceByTypes(address, relativeUri,
+                    std::vector< std::string >{ resourceType }, std::move(cb));
         }
 
         RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManager::discoverResourceByTypes(
@@ -94,7 +92,9 @@ namespace OIC
                 const std::vector< std::string >& resourceTypes, ResourceDiscoveredCallback cb)
         {
             return RCSDiscoveryManagerImpl::getInstance()->startDiscovery(address,
-                    relativeUri.empty() ? OC_RSRVD_WELL_KNOWN_URI : relativeUri, resourceTypes,
+                    relativeUri.empty() ? OC_RSRVD_WELL_KNOWN_URI : relativeUri,
+                    resourceTypes.empty() ? std::vector< std::string >{
+                            RCSDiscoveryManagerImpl::ALL_RESOURCE_TYPE } : resourceTypes,
                     std::move(cb));
         }
     }
