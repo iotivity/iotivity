@@ -29,7 +29,7 @@
 
 const char *gSsid = "DLNA_LISMORE1";
 const char *gPass = "dlna@010203";
-char *gIpAddress;
+char *gIpAddress = NULL;
 wifi_ap_h connectedWifi;
 NetworkEventCallback gNetworkEventCb;
 static void ESActivateWifi();
@@ -53,6 +53,10 @@ print_state(wifi_connection_state_e state)
 void __wifi_connected_cb(wifi_error_e error_code, void *user_data)
 {
     OIC_LOG(INFO,LOG_TAG,"#### __connected ");
+
+    if (gIpAddress)
+        free(gIpAddress);
+
     wifi_ap_get_ip_address(connectedWifi, WIFI_ADDRESS_FAMILY_IPV4, &gIpAddress);
     OIC_LOG_V(INFO,LOG_TAG,"#### __connected, Ipaddress=%s", gIpAddress);
     gNetworkEventCb(ES_OK);
@@ -78,6 +82,7 @@ bool __wifi_found_ap_cb(wifi_ap_h ap, void *user_data)
     if (error_code != WIFI_ERROR_NONE)
     {
         OIC_LOG(ERROR,LOG_TAG,"#### Fail to get state.");
+        free(ap_name);
 
         return false;
     }
@@ -92,6 +97,7 @@ bool __wifi_found_ap_cb(wifi_ap_h ap, void *user_data)
         OIC_LOG_V(INFO,LOG_TAG,"Code=%d", error_code);
     }
     OIC_LOG(INFO,LOG_TAG,"#### __wifi_found_ap_cb received ");
+    free(ap_name);
     return true;
 }
 void __scan_request_cb(wifi_error_e error_code, void *user_data)
