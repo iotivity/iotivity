@@ -51,9 +51,9 @@
 
 
 
-static CAConnectivityHandler_t *g_adapterHandler;
+static CAConnectivityHandler_t *g_adapterHandler = NULL;
 
-static uint32_t g_numberOfAdapters;
+static uint32_t g_numberOfAdapters = 0;
 
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
@@ -607,6 +607,9 @@ void CATerminateAdapters()
             g_adapterHandler[index].terminate();
         }
     }
+
+    OICFree(g_adapterHandler);
+    g_adapterHandler = NULL;
     g_numberOfAdapters = 0;
 }
 
