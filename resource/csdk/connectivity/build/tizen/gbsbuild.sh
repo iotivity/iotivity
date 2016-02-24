@@ -117,7 +117,7 @@ if echo $BUILD_SAMPLE|grep -qi '^ON$'; then
       git commit -m "Initial commit"
    fi
    echo "Calling sample gbs build command"
-   gbscommand="gbs build -A armv7l --include-all --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --repository ./"
+   gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC --include-all --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --repository ./"
    echo $gbscommand
    if eval $gbscommand; then
       echo "Sample build is successful"
