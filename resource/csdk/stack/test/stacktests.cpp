@@ -1280,15 +1280,14 @@ TEST(StackBind, BindContainedResourceGood)
     EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle2));
     EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle3));
     EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle4));
-    EXPECT_EQ(OC_STACK_ERROR, OCBindResource(containerHandle, handle5));
+    EXPECT_EQ(OC_STACK_OK, OCBindResource(containerHandle, handle5));
 
     EXPECT_EQ(handle0, OCGetResourceHandleFromCollection(containerHandle, 0));
     EXPECT_EQ(handle1, OCGetResourceHandleFromCollection(containerHandle, 1));
     EXPECT_EQ(handle2, OCGetResourceHandleFromCollection(containerHandle, 2));
     EXPECT_EQ(handle3, OCGetResourceHandleFromCollection(containerHandle, 3));
     EXPECT_EQ(handle4, OCGetResourceHandleFromCollection(containerHandle, 4));
-
-    EXPECT_EQ(NULL, OCGetResourceHandleFromCollection(containerHandle, 5));
+    EXPECT_EQ(handle5, OCGetResourceHandleFromCollection(containerHandle, 5));
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }

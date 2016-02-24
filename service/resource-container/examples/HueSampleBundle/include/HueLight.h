@@ -40,9 +40,9 @@ namespace OIC
 
                 virtual void initAttributes();
 
-                virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs);
+                virtual void handleSetAttributesRequest(const RCSResourceAttributes &attrs);
 
-                virtual RCSResourceAttributes &handleGetAttributesRequest();
+                virtual RCSResourceAttributes handleGetAttributesRequest();
 
 
             private:

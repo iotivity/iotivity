@@ -34,6 +34,19 @@ namespace
     {
         return resource->getSid() + resource->getUri();
     }
+
+    void validateTypes(const std::vector< std::string >& resourceTypes) {
+        if (resourceTypes.size() == 1) return;
+
+        for (const auto& type : resourceTypes)
+        {
+            if (type == OIC::Service::RCSDiscoveryManagerImpl::ALL_RESOURCE_TYPE)
+            {
+                throw OIC::Service::RCSBadRequestException{
+                    "resource types must have no empty string!" };
+            }
+        }
+    }
 }
 
 namespace OIC
@@ -45,7 +58,7 @@ namespace OIC
 
         RCSDiscoveryManagerImpl::RCSDiscoveryManagerImpl()
         {
-            subscribePresenceWithMuticast();
+            subscribePresenceWithMulticast();
 
             m_timer.post(POLLING_INTERVAL_TIME,
                     std::bind(&RCSDiscoveryManagerImpl::onPolling, this));
@@ -83,13 +96,7 @@ namespace OIC
                 throw RCSInvalidParameterException{ "Callback is empty" };
             }
 
-            for(auto it = resourceTypes.begin()+1; it < resourceTypes.end(); it++)
-            {
-                if ((*it).compare(ALL_RESOURCE_TYPE) == 0)
-                {
-                   throw RCSInvalidParameterException{ "ResourceType is duplicated!" };
-                }
-            }
+            validateTypes(resourceTypes);
 
             const ID discoveryId = createId();
 
@@ -104,11 +111,11 @@ namespace OIC
                 m_discoveryMap.insert(std::make_pair(discoveryId, std::move(discoveryInfo)));
             }
 
-            return std::unique_ptr < RCSDiscoveryManager::DiscoveryTask
-                    > (new RCSDiscoveryManager::DiscoveryTask(discoveryId));
+            return std::unique_ptr< RCSDiscoveryManager::DiscoveryTask >(
+                    new RCSDiscoveryManager::DiscoveryTask(discoveryId));
         }
 
-        void RCSDiscoveryManagerImpl::subscribePresenceWithMuticast()
+        void RCSDiscoveryManagerImpl::subscribePresenceWithMulticast()
         {
             using namespace std::placeholders;
 

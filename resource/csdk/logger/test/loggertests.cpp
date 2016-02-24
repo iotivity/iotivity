@@ -136,7 +136,7 @@ TEST(LoggerTest, StringArg) {
 
     directStdOutToFile(testFile);
     const char *tag = "StringArg";
-	OC_LOG(INFO, tag, "This is a fixed string call");
+	OIC_LOG(INFO, tag, "This is a fixed string call");
     directStdOutToConsole();
 
     bool testFileExists = file_exist(testFile);
@@ -160,7 +160,7 @@ TEST(LoggerTest, StringArgNoTag) {
     char stdFile[]  = "std_stringargnotag.txt";
 
     directStdOutToFile(testFile);
-    OC_LOG(INFO, 0, "This is a fixed string call");
+    OIC_LOG(INFO, 0, "This is a fixed string call");
     directStdOutToConsole();
 
     bool testFileExists = file_exist(testFile);
@@ -185,7 +185,7 @@ TEST(LoggerTest, StringArgNoLogStr) {
 
     directStdOutToFile(testFile);
     const char *tag = "StringArgNoLogStr";
-    OC_LOG(INFO, tag, 0);
+    OIC_LOG(INFO, tag, 0);
     directStdOutToConsole();
 
     bool testFileExists = file_exist(testFile);
@@ -209,7 +209,7 @@ TEST(LoggerTest, StringArgNoTagNoLogStr) {
     char stdFile[]  = "std_stringargnotagnologstr.txt";
 
     directStdOutToFile(testFile);
-    OC_LOG(INFO, 0, 0);
+    OIC_LOG(INFO, 0, 0);
     directStdOutToConsole();
 
     bool testFileExists = file_exist(testFile);
@@ -235,11 +235,11 @@ TEST(LoggerTest, StringArgLevels) {
     directStdOutToFile(testFile);
     const char *tag = "StringArgLevels";
     // DEBUG, INFO, WARNING, ERROR, FATAL
-    OC_LOG(DEBUG, tag, "this is a DEBUG message");
-    OC_LOG(INFO, tag, "this is a INFO message");
-    OC_LOG(WARNING, tag, "this is a WARNING message");
-    OC_LOG(ERROR, tag, "this is a ERROR message");
-    OC_LOG(FATAL, tag, "this is a FATAL message");
+    OIC_LOG(DEBUG, tag, "this is a DEBUG message");
+    OIC_LOG(INFO, tag, "this is a INFO message");
+    OIC_LOG(WARNING, tag, "this is a WARNING message");
+    OIC_LOG(ERROR, tag, "this is a ERROR message");
+    OIC_LOG(FATAL, tag, "this is a FATAL message");
     directStdOutToConsole();
 
     bool testFileExists = file_exist(testFile);
@@ -264,7 +264,7 @@ TEST(LoggerTest, StringArgMultiline) {
 
     directStdOutToFile(testFile);
     const char *tag = "StringArgMultiline";
-    OC_LOG(DEBUG, tag, "this is a DEBUG message\non multiple\nlines");
+    OIC_LOG(DEBUG, tag, "this is a DEBUG message\non multiple\nlines");
     directStdOutToConsole();
 
     bool testFileExists = file_exist(testFile);
@@ -290,10 +290,10 @@ TEST(LoggerTest, VariableArg) {
     directStdOutToFile(testFile);
     const char *tag = "VariableArg";
     // DEBUG, INFO, WARNING, ERROR, FATAL
-    OC_LOG_V(DEBUG, tag, "this is a char: %c", 'A');
-    OC_LOG_V(DEBUG, tag, "this is an integer: %d", 123);
-    OC_LOG_V(DEBUG, tag, "this is a string: %s", "hello");
-    OC_LOG_V(DEBUG, tag, "this is a float: %5.2f", 123.45);
+    OIC_LOG_V(DEBUG, tag, "this is a char: %c", 'A');
+    OIC_LOG_V(DEBUG, tag, "this is an integer: %d", 123);
+    OIC_LOG_V(DEBUG, tag, "this is a string: %s", "hello");
+    OIC_LOG_V(DEBUG, tag, "this is a float: %5.2f", 123.45);
     directStdOutToConsole();
 
     bool testFileExists = file_exist(testFile);
@@ -324,28 +324,28 @@ TEST(LoggerTest, LogBuffer) {
     for (int i = 0; i < (int)(sizeof buffer); i++) {
         buffer[i] = i;
     }
-    OC_LOG_BUFFER(DEBUG, tag, buffer, sizeof buffer);
+    OIC_LOG_BUFFER(DEBUG, tag, buffer, sizeof buffer);
 
     // Log buffer, 128 bytes is a good boundary (8 rows of 16 values)
     uint8_t buffer1[128];
     for (int i = 0; i < (int)(sizeof buffer1); i++) {
         buffer1[i] = i;
     }
-    OC_LOG_BUFFER(DEBUG, tag, buffer1, sizeof buffer1);
+    OIC_LOG_BUFFER(DEBUG, tag, buffer1, sizeof buffer1);
 
     // 1 below 128 byte boundary
     uint8_t buffer2[127];
     for (int i = 0; i < (int)(sizeof buffer2); i++) {
         buffer2[i] = i;
     }
-    OC_LOG_BUFFER(DEBUG, tag, buffer2, sizeof buffer2);
+    OIC_LOG_BUFFER(DEBUG, tag, buffer2, sizeof buffer2);
 
     // 1 above 128 byte boundary
     uint8_t buffer3[129];
     for (int i = 0; i < (int)(sizeof buffer3); i++) {
         buffer3[i] = i;
     }
-    OC_LOG_BUFFER(DEBUG, tag, buffer3, sizeof buffer3);
+    OIC_LOG_BUFFER(DEBUG, tag, buffer3, sizeof buffer3);
 
     directStdOutToConsole();
 

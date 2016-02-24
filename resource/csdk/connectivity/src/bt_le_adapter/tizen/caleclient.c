@@ -45,6 +45,7 @@
 #define TAG "OIC_CA_LE_CLIENT"
 
 #define MICROSECS_PER_SEC 1000000
+#define WAIT_TIME_WRITE_CHARACTERISTIC 10 * MICROSECS_PER_SEC
 
 uint64_t const TIMEOUT = 30 * MICROSECS_PER_SEC;
 
@@ -122,6 +123,21 @@ static ca_mutex g_LEClientStateMutex = NULL;
 static ca_mutex g_LEClientThreadPoolMutex = NULL;
 
 /**
+ * Mutex to synchronize the task to write characteristic one packet after another.
+ */
+static ca_mutex g_threadWriteCharacteristicMutex = NULL;
+
+/**
+ * Condition for Writing characteristic.
+ */
+static ca_cond g_threadWriteCharacteristicCond = NULL;
+
+/**
+ * Flag to check status of write characteristic.
+ */
+static bool g_isSignalSetFlag = false;
+
+/**
  * Maintains the callback to be notified on receival of network packets from other
  *           BLE devices
  */
@@ -196,6 +212,21 @@ void CALEGattCharacteristicChangedCb(bt_gatt_h characteristic,
 void CALEGattCharacteristicWriteCb(int result, bt_gatt_h reqHandle, void *userData)
 {
     OIC_LOG(DEBUG, TAG, "IN ");
+
+    if (BT_ERROR_NONE != result)
+    {
+        OIC_LOG(ERROR, TAG, "Write failed Need Retry ");
+        //Need to Implement retry mechanism
+    }
+    else
+    {
+        ca_mutex_lock(g_threadWriteCharacteristicMutex);
+        OIC_LOG(DEBUG, TAG, "g_isSignalSetFlag is set true and signal");
+        g_isSignalSetFlag = true;
+        ca_cond_signal(g_threadWriteCharacteristicCond);
+        ca_mutex_unlock(g_threadWriteCharacteristicMutex);
+    }
+
     OIC_LOG(DEBUG, TAG, "OUT ");
 }
 
@@ -509,6 +540,10 @@ void CAStopLEGattClient()
     g_LEServerList = NULL;
     ca_mutex_unlock(g_LEServerListMutex);
 
+    ca_mutex_lock(g_threadWriteCharacteristicMutex);
+    ca_cond_signal(g_threadWriteCharacteristicCond);
+    ca_mutex_unlock(g_threadWriteCharacteristicMutex);
+
     CAResetRegisteredServiceCount();
 
     GMainContext  *context_event_loop = NULL;
@@ -630,6 +665,16 @@ CAResult_t CAInitGattClientMutexVariables()
         }
     }
 
+    if (NULL == g_threadWriteCharacteristicMutex)
+    {
+        g_threadWriteCharacteristicMutex = ca_mutex_new();
+        if (NULL == g_threadWriteCharacteristicMutex)
+        {
+            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
     if (NULL == g_startTimerCond)
     {
         g_startTimerCond = ca_cond_new();
@@ -644,6 +689,16 @@ CAResult_t CAInitGattClientMutexVariables()
     {
         g_scanningTimeCond = ca_cond_new();
         if (NULL == g_scanningTimeCond)
+        {
+            OIC_LOG(ERROR, TAG, "ca_cond_new failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
+    if (NULL == g_threadWriteCharacteristicCond)
+    {
+        g_threadWriteCharacteristicCond = ca_cond_new();
+        if (NULL == g_threadWriteCharacteristicCond)
         {
             OIC_LOG(ERROR, TAG, "ca_cond_new failed");
             return CA_STATUS_FAILED;
@@ -679,11 +734,18 @@ void CATerminateGattClientMutexVariables()
     ca_mutex_free(g_deviceDiscoveredListMutex);
     g_deviceDiscoveredListMutex = NULL;
 
+    ca_mutex_free(g_threadWriteCharacteristicMutex);
+    g_threadWriteCharacteristicMutex = NULL;
+
     ca_cond_free(g_startTimerCond);
     g_startTimerCond = NULL;
 
     ca_cond_free(g_scanningTimeCond);
     g_scanningTimeCond = NULL;
+
+    ca_cond_free(g_threadWriteCharacteristicCond);
+    g_threadWriteCharacteristicCond = NULL;
+    g_isSignalSetFlag = false;
 
     OIC_LOG(DEBUG,  TAG, "OUT");
 }
@@ -1013,6 +1075,26 @@ CAResult_t  CAUpdateCharacteristicsToGattServer(const char *remoteAddress,
                   CALEGetErrorMsg(result));
         return CA_STATUS_FAILED;
     }
+
+    // wait for callback for write Characteristic with success to sent data
+    OIC_LOG_V(DEBUG, TAG, "callback flag is %d", g_isSignalSetFlag);
+    ca_mutex_lock(g_threadWriteCharacteristicMutex);
+    if (!g_isSignalSetFlag)
+    {
+        OIC_LOG(DEBUG, TAG, "wait for callback to notify writeCharacteristic is success");
+        if (CA_WAIT_SUCCESS != ca_cond_wait_for(g_threadWriteCharacteristicCond,
+                                  g_threadWriteCharacteristicMutex,
+                                  WAIT_TIME_WRITE_CHARACTERISTIC))
+        {
+            OIC_LOG(ERROR, TAG, "there is no response. write has failed");
+            g_isSignalSetFlag = false;
+            ca_mutex_unlock(g_threadWriteCharacteristicMutex);
+            return CA_SEND_FAILED;
+        }
+    }
+    // reset flag set by writeCharacteristic Callback
+    g_isSignalSetFlag = false;
+    ca_mutex_unlock(g_threadWriteCharacteristicMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;

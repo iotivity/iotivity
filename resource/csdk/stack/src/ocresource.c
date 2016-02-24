@@ -310,13 +310,11 @@ uint8_t IsCollectionResource (OCResource *resource)
         return 0;
     }
 
-    for (int i = 0; i < MAX_CONTAINED_RESOURCES; i++)
+    if(resource->rsrcChildResourcesHead != NULL)
     {
-        if (resource->rsrcResources[i])
-        {
-            return 1;
-        }
+        return 1;
     }
+
     return 0;
 }
 

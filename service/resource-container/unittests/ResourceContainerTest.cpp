@@ -98,12 +98,12 @@ class TestBundleResource: public BundleResource
     public:
         virtual void initAttributes() { }
 
-        virtual void handleSetAttributesRequest(RCSResourceAttributes &attr)
+        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr)
         {
             BundleResource::setAttributes(attr);
         }
 
-        virtual RCSResourceAttributes &handleGetAttributesRequest()
+        virtual RCSResourceAttributes handleGetAttributesRequest()
         {
             return BundleResource::getAttributes();
         }

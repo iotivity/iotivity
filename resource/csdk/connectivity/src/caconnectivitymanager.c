@@ -61,6 +61,7 @@ extern void CADTLSSetCrlCallback(CAGetDTLSCrlHandler crlCallback);
 
 CAResult_t CAInitialize()
 {
+    OIC_LOG_V(DEBUG, TAG, "IoTivity version is v%s", IOTIVITY_VERSION);
     OIC_LOG(DEBUG, TAG, "CAInitialize");
 
     if (!g_isInitialized)
@@ -326,7 +327,11 @@ CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
                   "CAAddNetworkType(CA_ADAPTER_TCP) function returns result : %d", res);
     }
 #endif
-
+    else if (interestedNetwork & CA_ADAPTER_NFC)
+    {
+        res = CAAddNetworkType(CA_ADAPTER_NFC);
+        OIC_LOG_V(DEBUG, TAG, "CAAddNetworkType(CA_ADAPTER_NFC) function returns result : %d", res);
+    }
     else
     {
         res = CA_NOT_SUPPORTED;
@@ -487,3 +492,11 @@ CAResult_t CACloseDtlsSession(const CAEndpoint_t *endpoint)
 }
 
 #endif /* __WITH_DTLS__ */
+
+#ifdef TCP_ADAPTER
+void CARegisterKeepAliveHandler(CAKeepAliveConnectedCallback ConnHandler,
+                                CAKeepAliveDisconnectedCallback DisconnHandler)
+{
+    CATCPSetKeepAliveCallbacks(ConnHandler, DisconnHandler);
+}
+#endif

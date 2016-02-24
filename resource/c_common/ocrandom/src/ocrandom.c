@@ -37,6 +37,7 @@
 #include <sys/time.h>
 #include <time.h>
 #if defined(__ANDROID__)
+#include <ctype.h>
 #include <linux/time.h>
 #endif
 #endif

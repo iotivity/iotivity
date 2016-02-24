@@ -251,18 +251,21 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     CADTLSSetAdapterCallbacks(CAIPPacketReceivedCB, CAIPPacketSendCB, 0);
 #endif
 
-    CAConnectivityHandler_t ipHandler;
-    ipHandler.startAdapter = CAStartIP;
-    ipHandler.startListenServer = CAStartIPListeningServer;
-    ipHandler.stopListenServer = CAStopIPListeningServer;
-    ipHandler.startDiscoveryServer = CAStartIPDiscoveryServer;
-    ipHandler.sendData = CASendIPUnicastData;
-    ipHandler.sendDataToAll = CASendIPMulticastData;
-    ipHandler.GetnetInfo = CAGetIPInterfaceInformation;
-    ipHandler.readData = CAReadIPData;
-    ipHandler.stopAdapter = CAStopIP;
-    ipHandler.terminate = CATerminateIP;
-    registerCallback(ipHandler, CA_ADAPTER_IP);
+    static const CAConnectivityHandler_t ipHandler =
+        {
+            .startAdapter = CAStartIP,
+            .stopAdapter = CAStopIP,
+            .startListenServer = CAStartIPListeningServer,
+            .stopListenServer = CAStopIPListeningServer,
+            .startDiscoveryServer = CAStartIPDiscoveryServer,
+            .sendData = CASendIPUnicastData,
+            .sendDataToAll = CASendIPMulticastData,
+            .GetnetInfo = CAGetIPInterfaceInformation,
+            .readData = CAReadIPData,
+            .terminate = CATerminateIP,
+            .cType = CA_ADAPTER_IP
+        };
+    registerCallback(ipHandler);
 
     OIC_LOG(INFO, TAG, "OUT IntializeIP is Success");
     return CA_STATUS_OK;

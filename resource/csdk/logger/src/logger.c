@@ -52,11 +52,15 @@
 
 #ifndef __TIZEN__
 static oc_log_ctx_t *logCtx = 0;
-
-static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO, OC_LOG_WARNING, OC_LOG_ERROR, OC_LOG_FATAL};
-
 #endif
-static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;  // Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
+#ifdef __ANDROID__
+#elif defined __linux__ || defined __APPLE__
+static oc_log_level LEVEL_XTABLE[] = {OC_LOG_DEBUG, OC_LOG_INFO,
+                                      OC_LOG_WARNING, OC_LOG_ERROR, OC_LOG_FATAL};
+#endif
+
+// Show 16 bytes, 2 chars/byte, spaces between bytes, null termination
+static const uint16_t LINE_BUFFER_SIZE = (16 * 2) + 16 + 1;
 
 // Convert LogLevel to platform-specific severity level.  Store in PROGMEM on Arduino
 #ifdef __ANDROID__

@@ -27,88 +27,88 @@
 #define defaultComPort "/dev/ttyUSB0"
 int main()
 {
-    OC_LOG(INFO, TAG, "Initializing IoTivity...");
+    OIC_LOG(INFO, TAG, "Initializing IoTivity...");
     OCStackResult result = OCInit(NULL, 0, OC_SERVER);
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "OCInit Failed %d", result);
+        OIC_LOG_V(ERROR, TAG, "OCInit Failed %d", result);
         return -1;
     }
 
     result = SetPlatformInfo();
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "SetPlatformInfo Failed %d", result);
+        OIC_LOG_V(ERROR, TAG, "SetPlatformInfo Failed %d", result);
         goto IotivityStop;
     }
 
     result  = SetDeviceInfo();
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "SetPlatformInfo Failed: %d", result);
+        OIC_LOG_V(ERROR, TAG, "SetPlatformInfo Failed: %d", result);
         goto IotivityStop;
     }
 
     result  = OCStartPresence(0);
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "OCStartPresence Failed: %d", result);
+        OIC_LOG_V(ERROR, TAG, "OCStartPresence Failed: %d", result);
         goto IotivityStop;
     }
 
     // PIStartPlugin
     PIPlugin* plugin = NULL;
-    OC_LOG(INFO, TAG, "IoTivity Initialized properly, Starting Zigbee Plugin...");
+    OIC_LOG(INFO, TAG, "IoTivity Initialized properly, Starting Zigbee Plugin...");
     result = PIStartPlugin(defaultComPort, PLUGIN_ZIGBEE, &plugin);
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Zigbee Plugin Start Failed: %d", result);
+        OIC_LOG_V(ERROR, TAG, "Zigbee Plugin Start Failed: %d", result);
         goto IotivityStop;
     }
 
     if (signal(SIGINT, processCancel) == SIG_ERR)
     {
-        OC_LOG(ERROR, TAG, "Unable to catch SIGINT, terminating...");
+        OIC_LOG(ERROR, TAG, "Unable to catch SIGINT, terminating...");
     }
     else
     {
-        OC_LOG(INFO, TAG, "Zigbee Plugin started correctly, press Ctrl-C to terminate application");
+        OIC_LOG(INFO, TAG, "Zigbee Plugin started correctly, press Ctrl-C to terminate application");
         // Loop until sigint
         while (!processSignal(false) && result == OC_STACK_OK)
         {
             result = OCProcess();
             if (result != OC_STACK_OK)
             {
-                OC_LOG_V(ERROR, TAG, "OCProcess Failed: %d", result);
+                OIC_LOG_V(ERROR, TAG, "OCProcess Failed: %d", result);
                 break;
             }
 
             result = PIProcess(plugin);
             if (result != OC_STACK_OK)
             {
-                OC_LOG_V(ERROR, TAG, "PIProcess Failed: %d", result);
+                OIC_LOG_V(ERROR, TAG, "PIProcess Failed: %d", result);
             }
         }
     }
 
-    OC_LOG(INFO, TAG, "Stopping Zigbee Plugin...");
+    OIC_LOG(INFO, TAG, "Stopping Zigbee Plugin...");
     result = PIStopPlugin(plugin);
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Zigbee Plugin Stop Failed: %d", result);
+        OIC_LOG_V(ERROR, TAG, "Zigbee Plugin Stop Failed: %d", result);
     }
-    OC_LOG(INFO, TAG, "Zigbee Plugin Stopped");
+    OIC_LOG(INFO, TAG, "Zigbee Plugin Stopped");
     // OCStop
 IotivityStop:
-    OC_LOG(INFO, TAG, "Stopping IoTivity...");
+    OIC_LOG(INFO, TAG, "Stopping IoTivity...");
     result = OCStop();
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "OCStop Failed: %d", result);
+        OIC_LOG_V(ERROR, TAG, "OCStop Failed: %d", result);
         return 0;
     }
 
-    OC_LOG(INFO, TAG, "Application Completed Successfully");
+    OIC_LOG(INFO, TAG, "Application Completed Successfully");
     return 0;
 }
 

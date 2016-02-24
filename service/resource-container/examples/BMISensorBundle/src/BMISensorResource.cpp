@@ -32,12 +32,12 @@ BMISensorResource::~BMISensorResource()
 }
 
 void BMISensorResource::handleSetAttributesRequest(
-    RCSResourceAttributes &value)
+    const RCSResourceAttributes &value)
 {
     BundleResource::setAttributes(value);
 }
 
-RCSResourceAttributes &BMISensorResource::handleGetAttributesRequest()
+RCSResourceAttributes BMISensorResource::handleGetAttributesRequest()
 {
     return BundleResource::getAttributes();
 }

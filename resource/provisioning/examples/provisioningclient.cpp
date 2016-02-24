@@ -387,7 +387,7 @@ static int InputACL(OicSecAcl_t *acl)
     acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
     if (NULL == acl->resources)
     {
-        OC_LOG(ERROR, TAG, "Error while memory allocation");
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
         return -1;
     }
     for (size_t i = 0; i < acl->resourcesLen; i++)
@@ -404,7 +404,7 @@ static int InputACL(OicSecAcl_t *acl)
         OICFree(temp_rsc);
         if (NULL == acl->resources[i])
         {
-            OC_LOG(ERROR, TAG, "Error while memory allocation");
+            OIC_LOG(ERROR, TAG, "Error while memory allocation");
             return -1;
         }
     }
@@ -432,7 +432,7 @@ static int InputACL(OicSecAcl_t *acl)
     acl->owners = (OicUuid_t *)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
     if (NULL == acl->owners)
     {
-        OC_LOG(ERROR, TAG, "Error while memory allocation");
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
         return -1;
     }
     for (size_t i = 0; i < acl->ownersLen; i++)
@@ -681,7 +681,7 @@ int main(void)
                         acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
                         if (NULL == acl1)
                         {
-                            OC_LOG(ERROR, TAG, "Error while memory allocation");
+                            OIC_LOG(ERROR, TAG, "Error while memory allocation");
                             break;
                         }
 
@@ -749,7 +749,7 @@ int main(void)
                         acl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
                         if (NULL == acl1)
                         {
-                            OC_LOG(ERROR, TAG, "Error while memory allocation");
+                            OIC_LOG(ERROR, TAG, "Error while memory allocation");
                             break;
                         }
 
@@ -762,7 +762,7 @@ int main(void)
                         acl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
                         if (NULL == acl2)
                         {
-                            OC_LOG(ERROR, TAG, "Error while memory allocation");
+                            OIC_LOG(ERROR, TAG, "Error while memory allocation");
                             break;
                         }
 

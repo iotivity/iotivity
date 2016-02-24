@@ -395,6 +395,15 @@ int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu,
 
 #ifdef WITH_TCP
 /**
+ * Get total message length from header.
+ *
+ * @param data   The raw data to parse as CoAP PDU.
+ * @param size   payload size of pdu.
+ * @return Total message length.
+ */
+size_t coap_get_total_message_length(const unsigned char *data, size_t size);
+
+/**
  * Get transport type of coap header for coap over tcp through payload size.
  *
  * @param size   payload size of pdu.

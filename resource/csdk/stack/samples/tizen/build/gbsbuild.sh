@@ -87,7 +87,7 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6'"
+gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6'"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Core build is successful"
@@ -110,7 +110,7 @@ if echo $BUILD_SAMPLE|grep -qi '^ON$'; then
       git commit -m "Initial commit"
    fi
    echo "Calling sample gbs build command"
-   gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6'"
+   gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6'"
    echo $gbscommand
    if eval $gbscommand; then
       echo "Sample build is successful"
