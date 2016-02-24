@@ -149,5 +149,6 @@ if target_os == 'arduino':
 
 if target_os == 'linux':
 	SConscript('../sampleapp/enrollee/linux/SConscript')
-
+	#Build UnitTestcases for Enrollee
+	SConscript('../enrollee/unittests/SConscript')
 
