@@ -1,14 +1,148 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Usage example for the WSI SDK</title>
-    <script src="wsi.js"></script>
-    <script>
-        WSISDK.initialize('sometext');
-        WSISDK.getServices();
-    </script>
-  </head>
-  <body>
-  </body>
+
+<head>
+  <meta charset="utf-8">
+  <title>Examples for the WSI SDK APIs</title>
+</head>
+
+<body>
+  <script src="wsi.js"></script>
+  <script>
+    var config = {
+      serverURL: "http://localhost:8080",
+    }
+
+    var twitterId = "com.twitter";
+    var googleId = "com.google";
+    var openweathermapId = "org.openweathermap";
+
+    var newService = {
+      "capability": [{
+        "cid": "example.wsi.add",
+        "isauthrequired": "false",
+        "endpoint": "https://example.wsi.api/add",
+        "endpointtype": "REST",
+        "operation": "GET",
+        "tags": [
+          "add",
+          "service",
+          "example"
+        ]
+      }],
+      "auth": [],
+      "platforms": [],
+      "desc": "",
+      "handler": "wsi",
+      "sid": "example.wsi.api"
+    }
+
+    var googleBody = [{
+      "_id": "56a9f15bfad84ebc762c2363",
+      "capability": [{
+        "cid": "com.google.search",
+        "isauthrequired": "false",
+        "endpoint": "https://www.googleapis.com/customsearch/v1?key={{key}}&cx={{cx}}&q={{q}}",
+        "endpointtype": "REST",
+        "operation": "GET",
+        "params": {
+          "key": "AIzaSyBGXrtIyGsrOOT9soXavjGwj9lxmJYOli4",
+          "cx": "017576662512468239146:omuauf_lfve",
+          "q": "Topic"
+        },
+        "tags": [
+          "search",
+          "keyword",
+          "example",
+          "test"
+        ]
+      }],
+      "auth": [],
+      "platforms": [],
+      "desc": "",
+      "handler": "google",
+      "sid": "com.google"
+    }]
+
+    var authBody = {
+      "_id": "56c99918dd5c85b4a05757ef",
+      "capability": [],
+      "auth": [{
+        "type": "oauth2.0",
+        "consumerKey": "U5ofpxyQWPvcWUn8nMLr55vuJ",
+        "consumerSecret": "0bkHEoXMP2e51JSCrOl6Za3S4ZoWGHaIT4YdgIIJceWHnmLM2I",
+        "endpoint": "/wsi/twitter/auth",
+        "callbackURL": "/wsi/twitter/auth/callback",
+        "userid": "",
+        "token": "",
+        "secret": "",
+        "firstName": "",
+        "lastName": "",
+        "email": "",
+        "scope": [
+          "email",
+          "publish_actions"
+        ]
+      }],
+      "platforms": [],
+      "desc": "",
+      "handler": "twitter",
+      "sid": "com.twitter"
+    }
+
+    var googleBodyCap = {
+      "cid": "com.google.search",
+      "isauthrequired": "false",
+      "endpoint": "https://www.googleapis.com/customsearch/v1",
+      "endpointtype": "REST",
+      "operation": "GET",
+      "params": {
+        "key": "AIzaSyBGXrtIyGsrOOT9soXavjGwj9lxmJYOli4",
+        "cx": "017576662512468239146:omuauf_lfve",
+        "q": "Topic"
+      },
+      "tags": [
+        "search",
+        "keyword",
+        "example",
+        "test"
+      ]
+    }
+
+    function successCallback(response) {
+      console.log("calling successCallback");
+      document.getElementById("result").value = response;
+      //console.log(response);
+    }
+
+    WSISDK.initialize(config);
+  </script>
+
+  <div id="header">
+    <h1>WSI APIs</h1>
+  </div>
+
+  <div id="nav">
+    <button onclick="WSISDK.getServices(successCallback)">getServices</button>
+    <br>
+    <button onclick="WSISDK.getService(twitterId, successCallback);">getService</button>
+    <br>
+    <button onclick="WSISDK.addService(newService, successCallback)">addService</button>
+    <br>
+    <button onclick="WSISDK.deleteService(openweathermapId, successCallback);">deleteService</button>
+    <br>
+    <button onclick="WSISDK.updateService(googleBody, successCallback)">updateService</button>
+    <br>
+    <button onclick="WSISDK.authCapability(authBody, successCallback)">authCapability</button>
+    <br>
+    <button onclick="WSISDK.execCapability(googleId, googleBodyCap, successCallback)">execCapability</button>
+    <br>
+  </div>
+
+  <div id="section">
+    <h1>Result</h1>
+    <textarea id="result" <textarea rows="50" cols="150"></textarea>
+  </div>
+</body>
+
 </html>
