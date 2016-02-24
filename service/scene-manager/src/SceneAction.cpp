@@ -19,7 +19,6 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SceneAction.h"
-
 #include "SceneMemberResource.h"
 
 namespace OIC
@@ -49,14 +48,15 @@ namespace OIC
                                 SceneMemberResource::MappingInfo(m_sceneName, key, value));
         }
 
-        void SceneAction::update(const std::string& key,
+        void SceneAction::setExecutionParameter(const std::string& key,
                 RCSResourceAttributes::Value value)
         {
-            m_attr[key] = value;
-            update(m_attr);
+            RCSResourceAttributes attr;
+            attr[key] = value;
+            setExecutionParameter(attr);
         }
 
-        void SceneAction::update(const RCSResourceAttributes& attr)
+        void SceneAction::setExecutionParameter(const RCSResourceAttributes& attr)
         {
             for(const auto& it : attr)
             {
@@ -65,18 +65,17 @@ namespace OIC
             }
         }
 
-        const RCSResourceAttributes SceneAction::getAction()
+        const RCSResourceAttributes SceneAction::getExecutionParameter()
         {
-            m_attr.clear();
-            auto mappingInfo = m_sceneMemberResourceObj->getMappingInfo();
-            for(const auto& it : mappingInfo)
+            RCSResourceAttributes attr;
+            for(const auto& it : m_sceneMemberResourceObj->getMappingInfo())
             {
                 if(it.sceneName == m_sceneName)
                 {
-                    m_attr[it.key] = RCSResourceAttributes::Value(it.value);
+                    attr[it.key] = RCSResourceAttributes::Value(it.value);
                 }
             }
-            return m_attr;
+            return attr;
         }
 
         RCSRemoteResourceObject::Ptr SceneAction::getRemoteResourceObject() const

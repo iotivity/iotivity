@@ -19,11 +19,12 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SceneList.h"
+#include "SceneListResource.h"
+#include "SceneCollectionResource.h"
+
 #include "RCSRequest.h"
 #include "PrimitiveResource.h"
 #include "OCPlatform.h"
-#include "SceneCollectionResource.h"
-#include "SceneListResource.h"
 
 namespace OIC
 {
@@ -41,8 +42,7 @@ namespace OIC
                     SceneCollectionResource::createSceneCollectionObject();
             SceneListResource::getInstance()->addSceneCollectionResource(sceneCollectionResObj);
 
-            SceneCollection::Ptr sceneCollectionPtr(new SceneCollection(sceneCollectionResObj));
-            return sceneCollectionPtr;
+            return SceneCollection::Ptr(new SceneCollection(sceneCollectionResObj));
         }
 
         std::vector< SceneCollection::Ptr > SceneList::getSceneCollections() const
@@ -59,12 +59,12 @@ namespace OIC
 
         void SceneList::removeSceneCollection(SceneCollection::Ptr sceneCollectionPtr)
         {
-//            TODO : remove logic
-//            if (sceneCollectionPtr == nullptr)
-//            {
-//                throw RCSInvalidParameterException
-//                { "Scene Collection Ptr is empty!" };
-//            }
+//            TODO : need to implement
+            if (sceneCollectionPtr == nullptr)
+            {
+                throw RCSInvalidParameterException
+                { "Scene Collection Ptr is empty!" };
+            }
         }
 
         void SceneList::setName(const std::string& sceneListName)

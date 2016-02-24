@@ -19,8 +19,6 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SceneCollection.h"
-#include "octypes.h"
-#include "ocrandom.h"
 #include "SceneCollectionResource.h"
 
 namespace OIC
@@ -39,37 +37,36 @@ namespace OIC
             }
 
             m_sceneCollectionResourceObj->addScene(sceneName);
-
-            for (const auto& it : m_scenes)
-            {
-                if (it.first.compare(sceneName) == 0)
-                {
-                    return it.second;
-                }
-            }
-
-            Scene::Ptr scenePtr(new Scene(sceneName, m_sceneCollectionResourceObj));
-            m_scenes.insert(std::pair<const std::string, Scene::Ptr>(sceneName, scenePtr));
-
-            return scenePtr;
+            return Scene::Ptr(new Scene(sceneName, m_sceneCollectionResourceObj));
         }
 
-        std::map< const std::string, Scene::Ptr > SceneCollection::getScenes() const
+        std::unordered_map< std::string, Scene::Ptr > SceneCollection::getScenes() const
         {
-            return m_scenes;
+            std::unordered_map< std::string, Scene::Ptr > scenes;
+            auto sceneValues = m_sceneCollectionResourceObj->getSceneValues();
+
+            for(const auto &it : sceneValues)
+            {
+                Scene::Ptr scenePtr(new Scene(it, m_sceneCollectionResourceObj));
+                scenes.insert(std::pair< std::string, Scene::Ptr >(it, scenePtr));
+            }
+            return scenes;
         }
 
         Scene::Ptr SceneCollection::getScene(const std::string& sceneName) const
         {
-            auto it = m_scenes.find(sceneName);
-            if (it != m_scenes.end())
+            auto sceneValues = m_sceneCollectionResourceObj->getSceneValues();
+            auto it = std::find(sceneValues.begin(), sceneValues.end(), sceneName);
+            if(it != sceneValues.end())
             {
-                return it->second;
+                throw RCSInvalidParameterException("Scene Name is Invalid!");
             }
+            return Scene::Ptr(new Scene(sceneName, m_sceneCollectionResourceObj));
         }
 
         void SceneCollection::removeScene(Scene::Ptr scenePtr)
         {
+//            TODO : : need to implement
             if (scenePtr == nullptr)
             {
                 throw RCSInvalidParameterException("Scene Ptr is empty!");

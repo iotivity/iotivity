@@ -24,8 +24,6 @@
 #include "RCSRemoteResourceObject.h"
 #include "RCSResourceAttributes.h"
 
-#include <memory>
-
 namespace OIC
 {
     namespace Service
@@ -45,17 +43,16 @@ namespace OIC
             friend class Scene;
 
         public:
-            void update(const std::string&, RCSResourceAttributes::Value);
-            void update(const RCSResourceAttributes&);
+            void setExecutionParameter(const std::string&, RCSResourceAttributes::Value);
+            void setExecutionParameter(const RCSResourceAttributes&);
 
-            const RCSResourceAttributes getAction();
+            const RCSResourceAttributes getExecutionParameter();
             RCSRemoteResourceObject::Ptr getRemoteResourceObject() const;
 
         private:
             RCSRemoteResourceObject::Ptr m_pRemoteResourceObject;
             std::string m_sceneName;
             std::shared_ptr< SceneMemberResource > m_sceneMemberResourceObj;
-            RCSResourceAttributes m_attr;
         };
     } /* namespace Service */
 } /* namespace OIC */

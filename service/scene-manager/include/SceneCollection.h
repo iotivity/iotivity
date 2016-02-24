@@ -22,8 +22,7 @@
 #define SM_SCENECOLLECTION_H_
 
 #include "Scene.h"
-#include <functional>
-#include <map>
+#include <unordered_map>
 
 namespace OIC
 {
@@ -48,7 +47,7 @@ namespace OIC
 
         public:
             Scene::Ptr addNewScene(const std::string&);
-            std::map< const std::string, Scene::Ptr > getScenes() const;
+            std::unordered_map< std::string, Scene::Ptr > getScenes() const;
             Scene::Ptr getScene(const std::string&) const;
 
             void removeScene(Scene::Ptr);
@@ -58,7 +57,6 @@ namespace OIC
             std::string getId() const;
 
         private:
-            std::map< const std::string, Scene::Ptr > m_scenes;
             std::shared_ptr< SceneCollectionResource > m_sceneCollectionResourceObj;
 
         };

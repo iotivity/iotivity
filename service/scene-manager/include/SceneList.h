@@ -29,7 +29,7 @@ namespace OIC
 {
     namespace Service
     {
-        class SceneListResourceObject;
+        class SceneListResource;
         class SceneList
         {
         private:

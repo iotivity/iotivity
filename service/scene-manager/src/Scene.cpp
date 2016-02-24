@@ -19,8 +19,9 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "Scene.h"
-#include <algorithm>
 #include "SceneCollectionResource.h"
+#include <iostream>
+#include <algorithm>
 
 namespace OIC
 {
@@ -36,7 +37,6 @@ namespace OIC
         {
             RCSResourceAttributes resAttr;
             resAttr[key] = RCSResourceAttributes::Value(value);
-
             return addNewSceneAction(RCSRemoteResourceObjectPtr, resAttr);
         }
 
@@ -50,71 +50,81 @@ namespace OIC
             }
 
             SceneMemberResource::Ptr sceneMemberResObj;
-            auto members = m_sceneCollectionResourceObj->getSceneMembers();
-            auto check = std::find_if(members.begin(), members.end(), [&RCSRemoteResourceObjectPtr] (
-                    const SceneMemberResource::Ptr it){
-                return it->getRemoteResourceObject() == RCSRemoteResourceObjectPtr;});
-
-            if(check != members.end())
+            sceneMemberResObj = SceneMemberResource::createSceneMemberResource(
+                    RCSRemoteResourceObjectPtr);
+            try
             {
-                sceneMemberResObj = *check;
-            }
-
-            else
-            {
-                sceneMemberResObj = SceneMemberResource::createSceneMemberResource(
-                        RCSRemoteResourceObjectPtr);
                 m_sceneCollectionResourceObj->addSceneMember(sceneMemberResObj);
             }
+            catch(...)
+            {
+                throw InvalidAddMemberRequestException("Already existed Member!");
+            }
 
-            SceneAction::Ptr sceneActionPtr(new SceneAction(sceneMemberResObj, m_name, attr));
-            return sceneActionPtr;
+            return SceneAction::Ptr(new SceneAction(sceneMemberResObj, m_name, attr));
         }
-
-        std::vector< SceneAction::Ptr > Scene::getSceneAction( // need to confirm return type vector or Ptr
+//        TODO : need to confirm return type vector or Pointer
+        SceneAction::Ptr Scene::getSceneAction(
                 const RCSRemoteResourceObject::Ptr& RCSRemoteResourceObjectPtr) const
         {
-            std::vector<SceneAction::Ptr> actions;
             auto sceneMemberResObjs = m_sceneCollectionResourceObj->getSceneMembers();
-            for(const auto& member: sceneMemberResObjs)
-            {
-                if(member->getRemoteResourceObject() == RCSRemoteResourceObjectPtr)
-                {
-                    auto mappingInfo = member->getMappingInfo();
-                    for(const auto& it: mappingInfo)
+
+            RCSResourceAttributes actionParam;
+            SceneMemberResource::Ptr foundMember;
+
+            std::for_each (sceneMemberResObjs.begin(), sceneMemberResObjs.end(),
+                    [&, RCSRemoteResourceObjectPtr](
+                            const SceneMemberResource::Ptr& member)
                     {
-                        if(it.sceneName == m_name)
+                        if(RCSRemoteResourceObjectPtr == member->getRemoteResourceObject())
                         {
-                            SceneAction::Ptr sceneActionPtr(new SceneAction(
-                                    member, m_name, it.key, it.value));
-                            actions.push_back(sceneActionPtr);
+                            foundMember = member;
+                            for(const auto &it: member->getMappingInfo())
+                            {
+                                if(it.sceneName == m_name)
+                                {
+                                    actionParam[it.key] = it.value;
+                                }
+                            }
                         }
-                    }
-                }
+                    });
+
+            if(actionParam.empty())
+            {
+                throw RCSInvalidParameterException("Unknown Remote Resource!");
             }
-            return actions;
+
+            return SceneAction::Ptr(new SceneAction(foundMember, m_name, actionParam));
         }
 
-        std::vector< SceneAction::Ptr > Scene::getSceneActions() const
+        std::vector<SceneAction::Ptr> Scene::getSceneActions() const
         {
             std::vector<SceneAction::Ptr> actions;
             auto sceneMemberResObjs = m_sceneCollectionResourceObj->getSceneMembers();
-            for(const auto& member: sceneMemberResObjs)
-            {
-                auto mappingInfo = member->getMappingInfo();
-                for(const auto& it : mappingInfo)
-                {
-                    if(it.sceneName == m_name)
+
+            RCSResourceAttributes actionParam;
+
+            std::for_each (sceneMemberResObjs.begin(), sceneMemberResObjs.end(),
+                    [&](const SceneMemberResource::Ptr& member)
                     {
-                        SceneAction::Ptr sceneActionPtr(new SceneAction(
-                                member, m_name, it.key, it.value));
-//                        SceneAction::WeakPtr sceneActionWeakPtr(sceneActionPtr);
-                        actions.push_back(sceneActionPtr);
-                    }
-                }
-            }
+//                        actionParam = getActionParamofMappingInfo(mappingInfo);
+                        for(const auto &it: member->getMappingInfo())
+                        {
+                            if(it.sceneName == m_name)
+                            {
+                                actionParam[it.key] = it.value;
+                            }
+                        }
+                        if(!actionParam.empty())
+                        {
+                            actions.push_back(SceneAction::Ptr(
+                                    new SceneAction(member, m_name, actionParam)));
+                            actionParam.clear();
+                        }
+                    });
+
             return actions;
-        }
+         }
 
         std::string Scene::getName() const
         {
@@ -123,18 +133,40 @@ namespace OIC
 
         void Scene::removeSceneAction(const SceneAction::Ptr& sceneActionPtr)
         {
-//            TODO
+//            TODO : need to implement
         }
 
         void Scene::removeSceneAction(
                 const RCSRemoteResourceObject::Ptr& RCSRemoteResourceObjectPtr)
         {
-//            TODO
+//            TODO : : need to implement
         }
 
         void Scene::execute(ExecuteCallback cb)
         {
+            if(cb == nullptr)
+            {
+                throw RCSInvalidParameterException("Callback is empty!");
+            }
+
             m_sceneCollectionResourceObj->execute(m_name, cb);
         }
+
+//        RCSResourceAttributes Scene::getActionParamofMappingInfo(
+//                std::vector<SceneMemberResource::MappingInfo> mappingInfo)
+//        {
+//            RCSResourceAttributes actionParam;
+//
+//            std::for_each (mappingInfo.begin(), mappingInfo.end(),
+//                [& actionParam](const SCeneCollectionResource::MappingInfo & mInfo)
+//                {
+//                    if (mInfo.sceneName == m_name)
+//                    {
+//                        actionParam[mInfo.key] = mInfo.value;
+//                    }
+//                });
+//
+//            return actionParam;
+//        }
     } /* namespace Service */
 } /* namespace OIC */

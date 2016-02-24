@@ -33,17 +33,16 @@ namespace OIC
         class Scene
         {
         public:
-//            class InvalidRemoteResourceObjectException: public RCSException
-//            {
-//            public:
-//                InvalidRemoteResourceObjectException(std::string&& what) :
-//                    RCSException{ std::move(what) } {}
-//            };
-
             class InvalidExecuteCallbackException: public RCSException
             {
             public:
                 InvalidExecuteCallbackException(std::string&& what) :
+                    RCSException{ std::move(what) } {}
+            };
+            class InvalidAddMemberRequestException: public RCSException
+            {
+            public:
+                InvalidAddMemberRequestException(std::string&& what) :
                     RCSException{ std::move(what) } {}
             };
 
@@ -58,10 +57,11 @@ namespace OIC
         public:
             SceneAction::Ptr addNewSceneAction(const RCSRemoteResourceObject::Ptr&,
                     const RCSResourceAttributes&);
-            SceneAction::Ptr addNewSceneAction(const RCSRemoteResourceObject::Ptr&, const std::string&,
-                    const RCSResourceAttributes::Value&);
+            SceneAction::Ptr addNewSceneAction(const RCSRemoteResourceObject::Ptr&,
+                    const std::string&, const RCSResourceAttributes::Value&);
 
-            std::vector<SceneAction::Ptr> getSceneAction(const RCSRemoteResourceObject::Ptr&) const;
+            SceneAction::Ptr getSceneAction(
+                    const RCSRemoteResourceObject::Ptr&) const;
             std::vector<SceneAction::Ptr> getSceneActions() const ;
 
             std::string getName() const;

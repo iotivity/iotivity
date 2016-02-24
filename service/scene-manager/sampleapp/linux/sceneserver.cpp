@@ -201,19 +201,19 @@ void getSceneAction()
     {
         std::cout << it.use_count() << std::endl;
         std::cout << it->getRemoteResourceObject()->getUri() << std::endl;
-        auto attr = it->getAction();
+        auto attr = it->getExecutionParameter();
         for(const auto &att : attr)
         {
             std::cout << att.key() << " : "  << att.value().toString() << std::endl;
         }
     }
-    auto sceneActions = g_scene->getSceneAction(g_foundResourceList.at(0));
-    g_sceneAction = sceneActions.at(0);
+
+    g_sceneAction = g_scene->getSceneAction(g_foundResourceList.at(0));
 }
 
 void updateSceneAction()
 {
-    g_sceneAction->update("power", "on");
+    g_sceneAction->setExecutionParameter("power", "on");
     executeScene();
 }
 
