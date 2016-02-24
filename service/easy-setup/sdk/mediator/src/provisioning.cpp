@@ -287,7 +287,7 @@ void LogProvisioningResponse(OCRepPayloadValue * val) {
             OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s: NULL", val->name);
             break;
         case OCREP_PROP_INT:
-            OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(int):%ld", val->name, val->i);
+            OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(int):%lld", val->name, val->i);
             break;
         case OCREP_PROP_DOUBLE:
             OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(double):%f", val->name, val->d);
