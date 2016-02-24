@@ -30,7 +30,7 @@ es_target_enrollee = env.get('ES_TARGET_ENROLLEE')
 print "************************************************************************************"
 print " Easysetup device role --> %s " % es_role
 print "Target Platform --> %s " % es_target
-print "Target Enrollee platform --> %s " % es_target
+print "Target Enrollee platform --> %s " % es_target_enrollee
 print "************************************************************************************"
 
 #Go to build sample apps

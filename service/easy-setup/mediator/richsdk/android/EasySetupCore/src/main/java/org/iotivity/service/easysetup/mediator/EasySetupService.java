@@ -23,7 +23,6 @@
 package org.iotivity.service.easysetup.mediator;
 
 import android.content.Context;
-import android.net.wifi.WifiConfiguration;
 import android.util.Log;
 
 import java.io.IOException;

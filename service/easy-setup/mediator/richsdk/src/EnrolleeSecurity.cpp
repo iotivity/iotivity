@@ -52,16 +52,6 @@ namespace OIC
         {
             m_enrolleeSecState = EnrolleeSecState::ES_SEC_UNKNOWN;
             m_remoteEnrolleeResource = remoteEnrolleeResource;
-
-            //Initializing the provisioning client stack using the db path provided by the
-            // application.
-            // Note : If the path is NULL or empty, the PDM.db should be present in the same path.
-            OCStackResult result = OCSecure::provisionInit(secDbPath);
-
-            if (result != OC_STACK_OK)
-            {
-                throw ESPlatformException(result);
-            }
         }
 
         ESResult EnrolleeSecurity::registerCallbackHandler(EnrolleeSecStatusCb enrolleeSecStatusCb,
@@ -75,8 +65,7 @@ namespace OIC
             return ES_ERROR;
         }
 
-        std::shared_ptr< OC::OCSecureResource > EnrolleeSecurity::findEnrollee(std::string host,
-                DeviceList_t &list)
+        std::shared_ptr< OC::OCSecureResource > EnrolleeSecurity::getEnrollee(DeviceList_t &list)
         {
             for (unsigned int i = 0; i < list.size(); i++)
             {
@@ -84,13 +73,13 @@ namespace OIC
                         list[i]->getDeviceID().c_str());
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "From IP :%s", list[i]->getDevAddr().c_str());
 
-                if (list[i]->getDevAddr() == host)
-                {
-                    return list[i];
-                }
+                //Always return the first element of the unOwned devices. This is considering that Mediator is
+                // always connected with only one Enrollee for which ownership transfer is being performed.
+                // Incase of multiple Enrollee devices connected to the Mediator via any OnBoarding method (SoftAp
+                // for example), the Enrollee devices will be provisioned in the first come first serve basis in the order
+                // returned by the security layer.
+                return list[i];
             }
-
-            return nullptr;
         }
 
         void EnrolleeSecurity::convertUUIDToString(OicUuid_t uuid, std::string& uuidString)
@@ -161,7 +150,7 @@ namespace OIC
 
             //Developer note : Always test the mediator and enrollee applications on different devices. Running
             // Mediator and Enrollee in same device will result in returning the same device as already owned.
-            result = OCSecure::discoverOwnedDevices(ES_SEC_DISCOVERY_TIMEOUT,
+            /*result = OCSecure::discoverOwnedDevices(ES_SEC_DISCOVERY_TIMEOUT,
                     pOwnedDevList);
             if (result != OC_STACK_OK)
             {
@@ -175,11 +164,7 @@ namespace OIC
             {
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found owned devices. Count =%d",
                         pOwnedDevList.size());
-                std::shared_ptr< OC::OCSecureResource > ownedDevice =
-                        findEnrollee(
-                                std::string(
-                                        m_remoteEnrolleeResource->m_wifiOnboardingconn.ipAddress),
-                                pOwnedDevList);
+                std::shared_ptr< OC::OCSecureResource > ownedDevice = getEnrollee(pOwnedDevList);
                 if (ownedDevice)
                 {
                     ownershipStatus = DEVICE_OWNED;
@@ -190,7 +175,7 @@ namespace OIC
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "No owned devices found.");
                 ownershipStatus = DEVICE_NOT_OWNED;
-            }
+            }*/
 
             result = OCSecure::discoverUnownedDevices(ES_SEC_DISCOVERY_TIMEOUT, pUnownedDevList);
             if (result != OC_STACK_OK)
@@ -206,10 +191,7 @@ namespace OIC
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found Unowned devices. Count =%d",
                         pUnownedDevList.size());
 
-                m_unownedDevice =
-                        findEnrollee(
-                                m_remoteEnrolleeResource->m_wifiOnboardingconn.ipAddress,
-                                pUnownedDevList);
+                m_unownedDevice = getEnrollee(pUnownedDevList);
                 if (m_unownedDevice)
                 {
                     OTMCallbackData_t justWorksCBData;
@@ -231,8 +213,7 @@ namespace OIC
                     {
                         OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransferCallback is failed");
                         ownershipStatus = DEVICE_NOT_OWNED;
-                        //Throw exception
-                        throw ESPlatformException(result);
+                        return ownershipStatus;
                     }
                     ownershipStatus = DEVICE_NOT_OWNED;
                 }

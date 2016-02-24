@@ -58,8 +58,7 @@ namespace OIC
 
             EnrolleeSecState m_enrolleeSecState;std::shared_ptr< OC::OCSecureResource > m_securedResource;
 
-            std::shared_ptr< OC::OCSecureResource > findEnrollee(std::string host,
-                    OC::DeviceList_t &list);
+            std::shared_ptr< OC::OCSecureResource > getEnrollee(OC::DeviceList_t &list);
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
             void convertUUIDToString(OicUuid_t uuid, std::string& uuidString);
         };

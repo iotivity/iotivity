@@ -57,7 +57,7 @@ public class EnrolleeDeviceFactoryTest extends AndroidTestCase {
         WiFiProvConfig mWiFiProvConfig = new WiFiProvConfig("hub2.4G", "11112222");
 
         /* Create enrolling device */
-        EnrolleeDevice device = mFactory.newEnrolleeDevice(mWiFiOnBoardingConfig, mWiFiProvConfig);
+        EnrolleeDevice device = mFactory.newEnrolleeDevice(mWiFiProvConfig, mWiFiOnBoardingConfig);
 
         /* Check if the the device is created */
         assertTrue(device != null);

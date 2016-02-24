@@ -134,11 +134,13 @@ public class EasySetupStatusTest extends AndroidTestCase {
         mFactory = EnrolleeDeviceFactory.newInstance(getContext());
 
         /* Create enrolling device */
-        mDevice = mFactory.newEnrolleeDevice(mWiFiOnBoardingConfig, mWiFiProvConfig);
+        mDevice = mFactory.newEnrolleeDevice(mWiFiProvConfig, mWiFiOnBoardingConfig);
 
         try {
             mService.startSetup(mDevice);
-        } catch (IOException e) {
+        } catch (ESException e) {
+        }
+        catch (IOException e) {
         }
 
         try {

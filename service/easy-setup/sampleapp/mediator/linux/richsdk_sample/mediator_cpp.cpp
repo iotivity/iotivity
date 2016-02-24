@@ -25,6 +25,8 @@
 #include "EasySetup.h"
 #include "OCPlatform.h"
 #include "logger.h"
+#include "OCProvisioningManager.h"
+
 
 #define ES_SAMPLE_APP_TAG "ES_SAMPLE_APP_TAG"
 #define DECLARE_MENU(FUNC, ...) { #FUNC, FUNC }
@@ -178,7 +180,18 @@ int main()
     {
         OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos, &ps
     };
+
     OCPlatform::Configure(config);
+
+#ifdef __WITH_DTLS__
+    //Initializing the provisioning client stack using the db path provided by the application.
+    OCStackResult result = OCSecure::provisionInit("");
+
+    if (result != OC_STACK_OK)
+    {
+        return -1;
+    }
+#endif
 
     g_currentRun = runEasySetupMenu;
 

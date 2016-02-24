@@ -129,7 +129,7 @@ namespace OIC
 
             if (m_isSecured)
             {
-                if (m_currentESState > CurrentESState::ES_OWNED)
+                if (m_currentESState >= CurrentESState::ES_OWNED)
                 {
                     goto CALLBACK_CHECK;
                 }

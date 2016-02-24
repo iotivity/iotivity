@@ -334,12 +334,12 @@ namespace OIC
 
             }
 
-            ESResult& getESResult()
+            ESResult getESResult()
             {
                 return m_result;
             }
 
-            ESState& getESState()
+            ESState getESState()
             {
                 return m_esState;
             }
@@ -359,12 +359,12 @@ namespace OIC
 
             }
 
-            ProvConfig& getProvConfig()
+            ProvConfig getProvConfig()
             {
                 return m_ProvConfig;
             }
 
-            EasySetupState& getEasySetupState()
+            EasySetupState getEasySetupState()
             {
                 return m_easySetupState;
             }

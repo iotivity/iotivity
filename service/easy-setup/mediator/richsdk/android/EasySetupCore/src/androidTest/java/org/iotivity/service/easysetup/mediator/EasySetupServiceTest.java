@@ -92,7 +92,7 @@ public class EasySetupServiceTest extends AndroidTestCase {
         assertTrue(mFactory != null);
 
         /* Create enrolling device */
-        mDevice = mFactory.newEnrolleeDevice(mWiFiOnBoardingConfig, mWiFiProvConfig);
+        mDevice = mFactory.newEnrolleeDevice(mWiFiProvConfig, mWiFiOnBoardingConfig);
 
         /* Check if the the device is created successfully*/
         assertTrue(mDevice != null);
@@ -107,6 +107,9 @@ public class EasySetupServiceTest extends AndroidTestCase {
             assertTrue(true);
 
         } catch (IOException e) {
+            assertTrue(false);
+        }
+        catch (ESException e) {
             assertTrue(false);
         }
 
