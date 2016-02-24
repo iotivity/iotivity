@@ -75,6 +75,10 @@ if target_os in ['darwin', 'ios']:
 
 if env.get('LOGGING'):
 	examples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if target_os in ['msys_nt', 'windows']:
+	examples_env.AppendUnique(LIBS = ['Comctl32', 'Gdi32', 'User32'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -102,7 +106,8 @@ clientjson = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
 				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client.dat')
 serverjson = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
 				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_server.dat')
-Alias("examples", [simpleserver, simpleclient,
+
+examples_array = [simpleserver, simpleclient,
 		simpleserverHQ, simpleclientHQ,
 		fridgeserver, fridgeclient,
 		presenceserver, presenceclient,
@@ -113,5 +118,14 @@ Alias("examples", [simpleserver, simpleclient,
 		devicediscoveryserver, devicediscoveryclient,
 		threadingsample,
 		serverjson, clientjson
-     ])
+     ]
+
+# Add platform-specific examples
+
+if target_os in ['msys_nt', 'windows']:
+	winUIClient = examples_env.Program('winUIClient', ['winuiclientgui.cpp', 'winuiclient.cpp'])
+	mediaserver = examples_env.Program('mediaserver', 'mediaserver.cpp')
+	examples_array += [winUIClient, mediaserver]
+
+Alias("examples", examples_array)
 env.AppendTarget('examples')
