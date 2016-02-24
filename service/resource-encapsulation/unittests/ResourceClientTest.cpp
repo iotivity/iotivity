@@ -101,6 +101,7 @@ private:
                     std::bind(&RemoteResourceObjectTest::resourceDiscovered, this,
                             std::placeholders::_1));
             Wait(1000);
+            discoveryTask->cancel();
         }
     }
 
