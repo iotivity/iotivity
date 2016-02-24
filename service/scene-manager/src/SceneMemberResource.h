@@ -125,6 +125,11 @@ namespace OIC
             std::string getFullUri() const;
 
             /**
+             * Returns Uri of a Target resource of scene member. (e.g. coap://192.168.0.2.1:12345/light)
+             */
+            std::string getTargetUri() const;
+
+            /**
              * Returns RCSRemoteResourceObject about Scene member resource
              */
             RCSRemoteResourceObject::Ptr getRemoteResourceObject() const;

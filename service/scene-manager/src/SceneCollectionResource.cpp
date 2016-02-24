@@ -37,25 +37,25 @@ namespace OIC
         SceneCollectionResource::Ptr
         SceneCollectionResource::createSceneCollectionObject()
         {
-            SceneCollectionResource::Ptr newSceneCollectionObject(new SceneCollectionResource());
+            SceneCollectionResource::Ptr sceneCollectionResource(new SceneCollectionResource());
 
-            newSceneCollectionObject->m_uri
+            sceneCollectionResource->m_uri
                 = PREFIX_SCENE_COLLECTION_URI + "/" + std::to_string(numOfSceneCollection++);
 
-            newSceneCollectionObject->m_address = SceneUtils::getNetAddress();
+            sceneCollectionResource->createResourceObject();
 
-            newSceneCollectionObject->createResourceObject();
+            sceneCollectionResource->setDefaultAttributes();
 
-            newSceneCollectionObject->setDefaultAttributes();
+            sceneCollectionResource->initSetRequestHandler();
 
-            newSceneCollectionObject->initSetRequestHandler();
+            sceneCollectionResource->m_address = SceneUtils::getNetAddress();
 
-            return newSceneCollectionObject;
+            return sceneCollectionResource;
         }
 
         void SceneCollectionResource::createResourceObject()
         {
-            m_sceneCollectionResourceObj
+            m_sceneCollectionResourceObject
                 = RCSResourceObject::Builder(
                         m_uri, SCENE_COLLECTION_RT, OC_RSRVD_INTERFACE_DEFAULT).
                         addInterface(OC::BATCH_INTERFACE).
@@ -64,14 +64,14 @@ namespace OIC
 
         void SceneCollectionResource::setDefaultAttributes()
         {
-            m_sceneCollectionResourceObj->setAttribute(SCENE_KEY_LAST_SCENE, std::string());
-            m_sceneCollectionResourceObj->setAttribute(SCENE_KEY_NAME, std::string());
-            m_sceneCollectionResourceObj->setAttribute(
+            m_sceneCollectionResourceObject->setAttribute(SCENE_KEY_LAST_SCENE, std::string());
+            m_sceneCollectionResourceObject->setAttribute(SCENE_KEY_NAME, std::string());
+            m_sceneCollectionResourceObject->setAttribute(
                     SCENE_KEY_ID, SceneUtils::OICGenerateUUIDStr());
-            m_sceneCollectionResourceObj->setAttribute(SCENE_KEY_RTS, SCENE_MEMBER_RT);
-            m_sceneCollectionResourceObj->setAttribute(
+            m_sceneCollectionResourceObject->setAttribute(SCENE_KEY_RTS, SCENE_MEMBER_RT);
+            m_sceneCollectionResourceObject->setAttribute(
                     SCENE_KEY_SCENEVALUES, std::vector<std::string>());
-            m_sceneCollectionResourceObj->setAttribute(SCENE_KEY_URI, m_uri);
+            m_sceneCollectionResourceObject->setAttribute(SCENE_KEY_URI, m_uri);
         }
 
         void SceneCollectionResource::initSetRequestHandler()
@@ -79,7 +79,7 @@ namespace OIC
             m_requestHandler.m_owner
                 = std::weak_ptr<SceneCollectionResource>(shared_from_this());
 
-            m_sceneCollectionResourceObj->setSetRequestHandler(std::bind(
+            m_sceneCollectionResourceObject->setSetRequestHandler(std::bind(
                     &SceneCollectionResource::SceneCollectionRequestHandler::onSetRequest,
                     m_requestHandler, std::placeholders::_1, std::placeholders::_2));
         }
@@ -91,7 +91,7 @@ namespace OIC
 
         void SceneCollectionResource::addScene(std::string && newScene)
         {
-            auto sceneValues = m_sceneCollectionResourceObj->getAttributeValue(
+            auto sceneValues = m_sceneCollectionResourceObject->getAttributeValue(
                     SCENE_KEY_SCENEVALUES).get< std::vector< std::string > >();
 
             auto foundScene
@@ -100,7 +100,11 @@ namespace OIC
             {
                 sceneValues.push_back(std::move(newScene));
 
-                m_sceneCollectionResourceObj->setAttribute(SCENE_KEY_SCENEVALUES, sceneValues);
+                m_sceneCollectionResourceObject->setAttribute(SCENE_KEY_SCENEVALUES, sceneValues);
+            }
+            else
+            {
+                throw std::exception();
             }
         }
 
@@ -112,7 +116,7 @@ namespace OIC
             auto foundmember = std::find_if(m_sceneMembers.begin(), m_sceneMembers.end(),
                     [& newMember](const SceneMemberResource::Ptr & ptr) -> bool
                     {
-                        return ptr->getFullUri() == newMember->getFullUri();
+                        return ptr->getTargetUri() == newMember->getTargetUri();
                     });
 
             if (foundmember != m_sceneMembers.end())
@@ -121,7 +125,7 @@ namespace OIC
             }
 
             m_sceneMembers.push_back(newMember);
-            m_sceneCollectionResourceObj->bindResource(newMember->getRCSResourceObject());
+            m_sceneCollectionResourceObject->bindResource(newMember->getRCSResourceObject());
         }
 
         void SceneCollectionResource::execute(std::string && sceneName)
@@ -143,7 +147,7 @@ namespace OIC
         void SceneCollectionResource::execute(
                 std::string && sceneName, SceneExecuteCallback executeCB)
         {
-            auto sceneValues = m_sceneCollectionResourceObj->getAttributeValue(
+            auto sceneValues = m_sceneCollectionResourceObject->getAttributeValue(
                     SCENE_KEY_SCENEVALUES).get< std::vector< std::string > >();
 
             auto foundSceneValue
@@ -173,7 +177,7 @@ namespace OIC
                 }
             }
 
-            m_sceneCollectionResourceObj->setAttribute(SCENE_KEY_LAST_SCENE, sceneName);
+            m_sceneCollectionResourceObject->setAttribute(SCENE_KEY_LAST_SCENE, sceneName);
         }
 
         void SceneCollectionResource::onExecute(
@@ -189,7 +193,7 @@ namespace OIC
 
         std::string SceneCollectionResource::getId() const
         {
-            return m_sceneCollectionResourceObj->getAttributeValue(
+            return m_sceneCollectionResourceObject->getAttributeValue(
                     SCENE_KEY_ID).get<std::string>();
         }
 
@@ -205,7 +209,7 @@ namespace OIC
 
         std::vector<std::string> SceneCollectionResource::getSceneValues() const
         {
-            return m_sceneCollectionResourceObj->getAttributeValue(
+            return m_sceneCollectionResourceObject->getAttributeValue(
                     SCENE_KEY_SCENEVALUES).get<std::vector<std::string>>();
         }
 
@@ -216,12 +220,12 @@ namespace OIC
 
         RCSResourceObject::Ptr SceneCollectionResource::getRCSResourceObject() const
         {
-            return m_sceneCollectionResourceObj;
+            return m_sceneCollectionResourceObject;
         }
 
         void SceneCollectionResource::setName(std::string && sceneCollectionName)
         {
-            m_sceneCollectionResourceObj->setAttribute(
+            m_sceneCollectionResourceObject->setAttribute(
                     SCENE_KEY_NAME, std::move(sceneCollectionName));
         }
 
@@ -232,7 +236,7 @@ namespace OIC
 
         std::string SceneCollectionResource::getName() const
         {
-            return m_sceneCollectionResourceObj->getAttributeValue(
+            return m_sceneCollectionResourceObject->getAttributeValue(
                     SCENE_KEY_NAME).get<std::string>();
         }
 
@@ -274,13 +278,28 @@ namespace OIC
             }
 
             auto values = attributes.at(SCENE_KEY_SCENEVALUES).get<std::vector<std::string>>();
+
+            auto sizeofValues = values.size();
+            unsigned int sameSize = 0;
             std::for_each (values.begin(), values.end(),
-                    [& ptr](const std::string & value)
+                    [& ptr, & sizeofValues, & sameSize](const std::string & value)
                     {
-                        ptr->addScene(value);
+                        try
+                        {
+                            ptr->addScene(value);
+                        } catch (...)
+                        {
+                            sameSize++;
+                        }
                     });
 
-            return RCSSetResponse::create(attributes).
+            int eCode = SCENE_RESPONSE_SUCCESS;
+            if (sameSize == sizeofValues)
+            {
+                eCode = SCENE_CLIENT_BADREQUEST;
+            }
+
+            return RCSSetResponse::create(attributes, eCode).
                     setAcceptanceMethod(RCSSetResponse::AcceptanceMethod::IGNORE);
         }
 
@@ -435,4 +454,3 @@ namespace OIC
         }
     }
 }
-

@@ -118,7 +118,7 @@ namespace OIC
             std::string m_uri;
             std::string m_address;
 
-            RCSResourceObject::Ptr m_sceneCollectionResourceObj;
+            RCSResourceObject::Ptr m_sceneCollectionResourceObject;
             std::mutex m_sceneMemberLock;
             std::vector<SceneMemberResource::Ptr> m_sceneMembers;
 
@@ -144,7 +144,6 @@ namespace OIC
         };
     }
 }
-
 
 #endif // SCENE_COLLECTION_RESOURCE_OBJECT_H
 

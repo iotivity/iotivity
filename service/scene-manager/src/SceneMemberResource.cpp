@@ -36,18 +36,18 @@ namespace OIC
         SceneMemberResource::createSceneMemberResource(
                 RCSRemoteResourceObject::Ptr remoteObject)
         {
-            SceneMemberResource::Ptr newSceneMemberObject(new SceneMemberResource());
+            SceneMemberResource::Ptr sceneMemberResource(new SceneMemberResource());
 
-            newSceneMemberObject->m_uri = PREFIX_SCENE_MEMBER_URI + "/" +
+            sceneMemberResource->m_uri = PREFIX_SCENE_MEMBER_URI + "/" +
                 std::to_string(numOfSceneMember++);
 
-            newSceneMemberObject->m_remoteMemberObj = remoteObject;
+            sceneMemberResource->m_remoteMemberObj = remoteObject;
 
-            newSceneMemberObject->createResourceObject();
-            newSceneMemberObject->initSetRequestHandler();
-            newSceneMemberObject->setDefaultAttributes();
+            sceneMemberResource->createResourceObject();
+            sceneMemberResource->initSetRequestHandler();
+            sceneMemberResource->setDefaultAttributes();
 
-            return newSceneMemberObject;
+            return sceneMemberResource;
         }
 
         SceneMemberResource::Ptr
@@ -171,6 +171,11 @@ namespace OIC
         std::string SceneMemberResource::getFullUri() const
         {
             return std::string(COAP_TAG + SceneUtils::getNetAddress() + m_uri);
+        }
+
+        std::string SceneMemberResource::getTargetUri() const
+        {
+            return std::string(m_remoteMemberObj->getAddress() + m_remoteMemberObj->getUri());
         }
 
         RCSRemoteResourceObject::Ptr SceneMemberResource::getRemoteResourceObject() const
