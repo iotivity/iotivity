@@ -44,7 +44,6 @@ namespace OIC
             {
                 OIC_LOG_V(DEBUG, BROKER_TAG, "clear the brokerIDMap.");
                 s_brokerIDMap->erase(s_brokerIDMap->begin(), s_brokerIDMap->end());
-                s_brokerIDMap->clear();
             }
         }
 

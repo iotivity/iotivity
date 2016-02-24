@@ -42,7 +42,13 @@ namespace OIC
             if(presenceSubscriber.isSubscribing())
             {
                 OIC_LOG_V(DEBUG,BROKER_TAG,"unsubscribed presence.");
-                presenceSubscriber.unsubscribe();
+                try
+                {
+                    presenceSubscriber.unsubscribe();
+                } catch (std::exception & e)
+                {
+                    OIC_LOG_V(DEBUG,BROKER_TAG,"unsubscribed presence : %s", e.what());
+                }
             }
             resourcePresenceList.clear();
             OIC_LOG_V(DEBUG,BROKER_TAG,"destroy Timer.");
