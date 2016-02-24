@@ -72,7 +72,9 @@ namespace OIC
             /**
              * Returns all of Scene Collection Resource object.
              */
-            const std::vector<SceneCollectionResource::Ptr> getSceneCollections();
+            std::vector<SceneCollectionResource::Ptr> getSceneCollections() const;
+
+            std::vector<RCSResourceAttributes> getChildrenAttributes() const;
 
         private:
             class SceneListRequestHandler
@@ -82,13 +84,13 @@ namespace OIC
                 ~SceneListRequestHandler() = default;
 
                 static RCSSetResponse onSetRequest(const RCSRequest &, RCSResourceAttributes &);
+                static RCSGetResponse onGetRequest(const RCSRequest &, RCSResourceAttributes &);
             };
 
-            std::string m_SceneListName;
-            RCSResourceObject::Ptr m_SceneListObj;
-            SceneListRequestHandler m_RequestHandler;
-            std::mutex m_SceneCollectionLock;
-            std::vector<SceneCollectionResource::Ptr> m_SceneCollections;
+            std::string m_sceneListName;
+            RCSResourceObject::Ptr m_sceneListObj;
+            std::mutex m_sceneCollectionLock;
+            std::vector<SceneCollectionResource::Ptr> m_sceneCollections;
 
             SceneListResource();
             ~SceneListResource() = default;
@@ -97,10 +99,9 @@ namespace OIC
             SceneListResource & operator = (const SceneListResource &) = delete;
 
             SceneListResource(SceneListResource &&) = delete;
-            SceneListResource && operator = (SceneListResource &&) = delete;
+            SceneListResource & operator = (SceneListResource &&) = delete;
         };
     }
 }
-
 
 #endif // SCENE_LIST_RESOURCE_OBJECT_H

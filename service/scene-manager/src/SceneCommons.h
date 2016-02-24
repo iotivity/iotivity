@@ -50,6 +50,9 @@ namespace OIC
         const std::string SCENE_KEY_MEMBERVALUE = "memberValue";
         const std::string SCENE_KEY_CREATEDLINK = "createdlink";
 
+        const std::string SCENE_KEY_URI = "uri";
+        const std::string SCENE_KEY_CHILD = "child";
+
         const std::string SCENE_LIST_RT = "oic.wk.scenelist";
         const std::string SCENE_MEMBER_RT = "oic.r.scenemember";
         const std::string SCENE_COLLECTION_RT = "oic.wk.scenecollection";

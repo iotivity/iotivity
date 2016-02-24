@@ -55,13 +55,15 @@ namespace OIC
             void setName(std::string &&);
             void setName(const std::string &);
 
+            std::vector<std::string> getSceneValues() const;
+
             std::string getName() const;
 
             std::string getId() const;
             std::string getUri() const;
             std::string getAddress() const;
 
-            const std::vector<SceneMemberResource::Ptr> getSceneMembers();
+            std::vector<SceneMemberResource::Ptr> getSceneMembers() const;
 
             RCSResourceObject::Ptr getRCSResourceObject() const;
 
@@ -71,14 +73,15 @@ namespace OIC
             public:
                 typedef std::shared_ptr<SceneExecuteResponseHandler> Ptr;
 
-                SceneExecuteResponseHandler() = default;
+                SceneExecuteResponseHandler()
+                : m_numOfMembers(0), m_responseMembers(0), m_errorCode(0) { }
                 ~SceneExecuteResponseHandler() = default;
 
                 int m_numOfMembers;
                 int m_responseMembers;
                 int m_errorCode;
-                std::weak_ptr<SceneCollectionResource> m_Owner;
-                SceneExecuteCallback m_Cb;
+                std::weak_ptr<SceneCollectionResource> m_owner;
+                SceneExecuteCallback m_cb;
 
                 static SceneExecuteResponseHandler::Ptr createExecuteHandler(
                         const SceneCollectionResource::Ptr, SceneExecuteCallback);
@@ -91,11 +94,11 @@ namespace OIC
                 SceneCollectionRequestHandler() = default;
                 ~SceneCollectionRequestHandler() = default;
 
-                std::weak_ptr<SceneCollectionResource> m_Owner;
+                std::weak_ptr<SceneCollectionResource> m_owner;
 
                 RCSSetResponse onSetRequest(
                         const RCSRequest &, RCSResourceAttributes &);
-                void onExecute(int, /*const RCSRequest &,*/ RCSResourceAttributes &);
+                void onExecute(int, const RCSRequest &, RCSResourceAttributes &);
 
             private:
                 RCSSetResponse addSceneRequest(
@@ -104,18 +107,24 @@ namespace OIC
                         const RCSRequest &, RCSResourceAttributes &);
                 RCSSetResponse createSceneMemberRequest(
                         const RCSRequest &, RCSResourceAttributes &);
+                RCSSetResponse setSceneCollectionName(
+                        const RCSRequest &, RCSResourceAttributes &);
+
+                SceneMemberResource::Ptr createSceneMemberFromRemote(RCSResourceAttributes &);
+                void addMemberInfoFromRemote(SceneMemberResource::Ptr,
+                        std::vector<RCSResourceAttributes>);
             };
 
-            std::string m_Uri;
-            std::string m_Address;
+            std::string m_uri;
+            std::string m_address;
 
-            RCSResourceObject::Ptr m_SceneCollectionResourceObj;
-            std::mutex m_SceneMemberLock;
-            std::vector<SceneMemberResource::Ptr> m_SceneMembers;
+            RCSResourceObject::Ptr m_sceneCollectionResourceObj;
+            std::mutex m_sceneMemberLock;
+            std::vector<SceneMemberResource::Ptr> m_sceneMembers;
 
-            SceneCollectionRequestHandler m_RequestHandler;
-            std::mutex m_ExecuteHandlerLock;
-            std::list<SceneExecuteResponseHandler::Ptr> m_ExecuteHandlers;
+            SceneCollectionRequestHandler m_requestHandler;
+            std::mutex m_executeHandlerLock;
+            std::list<SceneExecuteResponseHandler::Ptr> m_executeHandlers;
 
             SceneCollectionResource() = default;
 
@@ -124,8 +133,12 @@ namespace OIC
                     const SceneCollectionResource &) = delete;
 
             SceneCollectionResource(SceneCollectionResource &&) = delete;
-            SceneCollectionResource && operator = (
+            SceneCollectionResource & operator = (
                     SceneCollectionResource &&) = delete;
+
+            void createResourceObject();
+            void setDefaultAttributes();
+            void initSetRequestHandler();
 
             void onExecute(int, SceneExecuteCallback, SceneExecuteResponseHandler::Ptr);
         };
@@ -134,3 +147,4 @@ namespace OIC
 
 
 #endif // SCENE_COLLECTION_RESOURCE_OBJECT_H
+

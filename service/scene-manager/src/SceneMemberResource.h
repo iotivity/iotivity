@@ -50,7 +50,7 @@ namespace OIC
              * @see RCSRemoteResourceObject::setRemoteAttributes
              */
             typedef std::function< void(const RCSResourceAttributes & attrs, int eCode) >
-                executeCallback;
+                MemberexecuteCallback;
 
             /**
              * A Mapping information about each scene values.
@@ -58,12 +58,14 @@ namespace OIC
             struct MappingInfo
             {
                 MappingInfo(
-                        std::string scene,
-                        std::string keyName,
-                        RCSResourceAttributes::Value val)
+                        const std::string & scene,
+                        const std::string & keyName,
+                        const RCSResourceAttributes::Value & val)
                 :sceneName(scene), key(keyName), value(val) { }
+
                 MappingInfo(MappingInfo &&) = default;
                 MappingInfo(const MappingInfo &) = default;
+
                 std::string sceneName;              ///< name of scene value
                 std::string key;                    ///< key to set at attributes of remote resource
                 RCSResourceAttributes::Value value; ///< val to set at attributes of remote resource
@@ -138,12 +140,12 @@ namespace OIC
              * @param sceneValue scene value to execute
              * @param cb callback to response
              */
-            void execute(std::string && sceneValue, executeCallback cb);
+            void execute(std::string && sceneValue, MemberexecuteCallback cb);
 
             /**
              * @overload
              */
-            void execute(const std::string &, executeCallback);
+            void execute(const std::string &, MemberexecuteCallback);
 
             /**
              * Execute of Scene Action (without callback for response).
@@ -157,6 +159,11 @@ namespace OIC
              */
             void execute(const std::string &);
 
+            void setName(const std::string &);
+            void setName(std::string &&);
+
+            std::string getName() const;
+
         private:
             class SceneMemberRequestHandler
             {
@@ -164,15 +171,18 @@ namespace OIC
                 SceneMemberRequestHandler() = default;
                 ~SceneMemberRequestHandler() = default;
 
-                std::weak_ptr<SceneMemberResource> m_Owner;
+                std::weak_ptr<SceneMemberResource> m_owner;
 
                 RCSSetResponse onSetRequest(const RCSRequest & , RCSResourceAttributes &);
+
+                RCSSetResponse addMappingInfos(const RCSRequest & , RCSResourceAttributes &);
+                RCSSetResponse setSceneMemberName(const RCSRequest & , RCSResourceAttributes &);
             };
 
-            std::string m_Uri;
-            RCSResourceObject::Ptr m_SceneMemberResourceObj;
-            RCSRemoteResourceObject::Ptr m_RemoteMemberObj;
-            SceneMemberRequestHandler m_RequestHandler;
+            std::string m_uri;
+            RCSResourceObject::Ptr m_sceneMemberResourceObj;
+            RCSRemoteResourceObject::Ptr m_remoteMemberObj;
+            SceneMemberRequestHandler m_requestHandler;
 
             SceneMemberResource() = default;
 
@@ -180,7 +190,11 @@ namespace OIC
             SceneMemberResource & operator = (const SceneMemberResource &) = delete;
 
             SceneMemberResource(SceneMemberResource &&) = delete;
-            SceneMemberResource && operator = (SceneMemberResource &&) = delete;
+            SceneMemberResource & operator = (SceneMemberResource &&) = delete;
+
+            void createResourceObject();
+            void setDefaultAttributes();
+            void initSetRequestHandler();
         };
     }
 }
