@@ -62,7 +62,10 @@ namespace OIC
 
         void RCSSeparateResponse::set()
         {
-            assert(m_request.getOCRequest());
+            if (!m_request.getOCRequest())
+            {
+                throw RCSBadRequestException{ "The state of this object is invalid!" };
+            }
 
             auto resObj = m_request.getResourceObject().lock();
             if (!resObj)
