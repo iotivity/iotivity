@@ -155,9 +155,11 @@ void CALEClientSetCallback(CAPacketReceiveCallback callback);
 /**
  * waiting to get scanned device from BT Platform.
  * if there is no scanned device in the list.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   address               LE address.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CALEClientIsThereScannedDevices();
+CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address);
 
 /**
  * send data for unicast (implement).

@@ -42,6 +42,16 @@
 #define MICROSECS_PER_SEC 1000000
 #define WAIT_TIME_WRITE_CHARACTERISTIC 10 * MICROSECS_PER_SEC
 
+#define GATT_CONNECTION_PRIORITY_BALANCED   0
+#define GATT_FAILURE                        257
+#define GATT_INSUFFICIENT_AUTHENTICATION    5
+#define GATT_INSUFFICIENT_ENCRYPTION        15
+#define GATT_INVALID_ATTRIBUTE_LENGTH       13
+#define GATT_INVALID_OFFSET                 7
+#define GATT_READ_NOT_PERMITTED             2
+#define GATT_REQUEST_NOT_SUPPORTED          6
+#define GATT_WRITE_NOT_PERMITTED            3
+
 static ca_thread_pool_t g_threadPoolHandle = NULL;
 
 JavaVM *g_jvm;
@@ -87,6 +97,32 @@ static ca_mutex g_scanMutex = NULL;
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
 
 static jboolean g_autoConnectFlag = JNI_FALSE;
+
+/**
+ * check if retry logic for connection routine has to be stopped or not.
+ * in case of error value including this method, connection routine has to be stopped.
+ * since there is no retry logic for this error reason in this client.
+ * @param state constant value of bluetoothgatt.
+ * @return true - waiting for background connection in BT platform.
+ *         false - connection routine has to be stopped.
+ */
+static bool CALECheckConnectionStateValue(jint state)
+{
+    switch(state)
+    {
+        case GATT_CONNECTION_PRIORITY_BALANCED:
+        case GATT_FAILURE:
+        case GATT_INSUFFICIENT_AUTHENTICATION:
+        case GATT_INSUFFICIENT_ENCRYPTION:
+        case GATT_INVALID_ATTRIBUTE_LENGTH:
+        case GATT_INVALID_OFFSET:
+        case GATT_READ_NOT_PERMITTED:
+        case GATT_REQUEST_NOT_SUPPORTED:
+        case GATT_WRITE_NOT_PERMITTED:
+            return true;
+    }
+    return false;
+}
 
 //getting jvm
 void CALEClientJniInit()
@@ -575,14 +611,17 @@ void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback)
     g_clientErrorCallback = callback;
 }
 
-CAResult_t CALEClientIsThereScannedDevices()
+CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
 {
+    VERIFY_NON_NULL(env, TAG, "env");
+
     if (!g_deviceList)
     {
         return CA_STATUS_FAILED;
     }
 
-    if (0 == u_arraylist_length(g_deviceList))
+    if (0 == u_arraylist_length(g_deviceList) // multicast
+            || (address && !CALEClientIsDeviceInScanDeviceList(env, address))) // unicast
     {
         // Wait for LE peripherals to be discovered.
 
@@ -593,16 +632,26 @@ CAResult_t CALEClientIsThereScannedDevices()
             2 * MICROSECS_PER_SEC;  // Microseconds
 
         bool devicesDiscovered = false;
-        for (size_t i = 0;
-             0 == u_arraylist_length(g_deviceList) && i < RETRIES;
-             ++i)
+        for (size_t i = 0; i < RETRIES; ++i)
         {
+            OIC_LOG(DEBUG, TAG, "waiting for target device");
             if (ca_cond_wait_for(g_deviceDescCond,
                                  g_threadSendMutex,
                                  TIMEOUT) == CA_WAIT_SUCCESS)
             {
-                devicesDiscovered = true;
-                break;
+                ca_mutex_lock(g_deviceListMutex);
+                size_t scannedDeviceLen = u_arraylist_length(g_deviceList);
+                ca_mutex_unlock(g_deviceListMutex);
+
+                if (0 < scannedDeviceLen)
+                {
+                    if (!address  // multicast
+                        || (address && CALEClientIsDeviceInScanDeviceList(env, address))) // unicast
+                    {
+                      devicesDiscovered = true;
+                      break;
+                    }
+                }
             }
         }
 
@@ -615,6 +664,7 @@ CAResult_t CALEClientIsThereScannedDevices()
 
     return CA_STATUS_OK;
 }
+
 
 CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* data,
                                       const uint32_t dataLen)
@@ -649,7 +699,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
 
     CALEClientSetSendFinishFlag(false);
 
-    CAResult_t ret = CALEClientIsThereScannedDevices();
+    CAResult_t ret = CALEClientIsThereScannedDevices(env, address);
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(INFO, TAG, "there is no scanned device");
@@ -806,7 +856,7 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
         g_sendBuffer = NULL;
     }
 
-    CAResult_t res = CALEClientIsThereScannedDevices();
+    CAResult_t res = CALEClientIsThereScannedDevices(env, NULL);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(INFO, TAG, "there is no scanned device");
@@ -2597,7 +2647,7 @@ CAResult_t CALEClientAddScanDeviceToList(JNIEnv *env, jobject device)
 
 bool CALEClientIsDeviceInScanDeviceList(JNIEnv *env, const char* remoteAddress)
 {
-    VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
+    VERIFY_NON_NULL_RET(env, TAG, "env is null", true);
     VERIFY_NON_NULL_RET(remoteAddress, TAG, "remoteAddress is null", true);
 
     if (!g_deviceList)
@@ -3867,6 +3917,46 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeScanCallback(JNIEnv *env, jobject o
     }
 }
 
+static jstring CALEClientGetAddressFromGatt(JNIEnv *env, jobject gatt)
+{
+    OIC_LOG(DEBUG, TAG, "IN - CAManagerGetAddressFromGatt");
+
+    VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
+    VERIFY_NON_NULL_RET(gatt, TAG, "gatt is null", NULL);
+
+    jclass jni_cid_gattdevice_list = (*env)->FindClass(env, CLASSPATH_BT_GATT);
+    if (!jni_cid_gattdevice_list)
+    {
+        OIC_LOG(ERROR, TAG, "jni_cid_gattdevice_list is null");
+        return NULL;
+    }
+
+    jmethodID jni_mid_getDevice = (*env)->GetMethodID(env, jni_cid_gattdevice_list, "getDevice",
+                                                      METHODID_BT_DEVICE);
+    if (!jni_mid_getDevice)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_getDevice is null");
+        return NULL;
+    }
+
+    jobject jni_obj_device = (*env)->CallObjectMethod(env, gatt, jni_mid_getDevice);
+    if (!jni_obj_device)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_device is null");
+        return NULL;
+    }
+
+    jstring jni_address = CALEGetAddressFromBTDevice(env, jni_obj_device);
+    if (!jni_address)
+    {
+        OIC_LOG(ERROR, TAG, "jni_address is null");
+        return NULL;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT - CAManagerGetAddressFromGatt");
+    return jni_address;
+}
+
 /*
  * Class:     org_iotivity_ca_jar_caleinterface
  * Method:    CALeGattConnectionStateChangeCallback
@@ -3928,27 +4018,8 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
             goto error_exit;
         }
     }
-    else if (GATT_ERROR == status && state_disconnected == newstate)
+    else if (state_disconnected == newstate) // le disconnected
     {
-        OIC_LOG(INFO, TAG, "Background connection running.. please wait");
-    }
-    else // le disconnected
-    {
-        CAResult_t res = CALEClientStartScan();
-        if (CA_STATUS_OK != res)
-        {
-            if (CA_ADAPTER_NOT_ENABLED == res)
-            {
-                // scan will be started with start server when adapter is enabled
-                OIC_LOG(INFO, TAG, "Adapter was disabled");
-            }
-            else
-            {
-                OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
-                goto error_exit;
-            }
-        }
-
         jstring jni_address = CALEClientGetAddressFromGattObj(env, gatt);
         if (!jni_address)
         {
@@ -3973,10 +4044,75 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
             (*env)->ReleaseStringUTFChars(env, jni_address, address);
         }
 
-        res = CALEClientGattClose(env, gatt);
+        CAResult_t res = CALEClientGattClose(env, gatt);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "CALEClientGattClose has failed");
+        }
+
+        if (gatt_success == status)
+        {
+            // that state is a general reason to disconnect BLE.
+            // its means manual disconnected message from BT platform.
+            // in this case Scanning has to start again and clean previous data.
+            CAResult_t res = CALEClientStartScan();
+            if (CA_STATUS_OK != res)
+            {
+                if (CA_ADAPTER_NOT_ENABLED == res)
+                {
+                    // scan will be started with start server when adapter is enabled
+                    OIC_LOG(INFO, TAG, "Adapter was disabled");
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
+                    goto error_exit;
+                }
+            }
+        }
+        else if (GATT_ERROR == status)
+        {
+            // when we get GATT ERROR(0x85), gatt connection can be called again.
+            OIC_LOG(INFO, TAG, "retry gatt connect");
+
+            jstring leAddress = CALEClientGetAddressFromGatt(env, gatt);
+            if (!leAddress)
+            {
+                OIC_LOG(ERROR, TAG, "CALEClientGetAddressFromGatt has failed");
+                goto error_exit;
+            }
+
+            jobject btObject = CALEGetRemoteDevice(env, leAddress);
+            if (!btObject)
+            {
+                OIC_LOG(ERROR, TAG, "CALEGetRemoteDevice has failed");
+                goto error_exit;
+            }
+
+            jobject newGatt = CALEClientConnect(env, btObject, CALEClientGetAutoConnectFlag());
+            if (!newGatt)
+            {
+                OIC_LOG(ERROR, TAG, "CALEClientConnect has failed");
+                goto error_exit;
+            }
+            return;
+        }
+        else
+        {
+            if (CALECheckConnectionStateValue(status))
+            {
+                // this state is unexpected reason to disconnect
+                // if the reason is suitable, connection logic of the device will be destroyed.
+                OIC_LOG(INFO, TAG, "connection logic destroy");
+                goto error_exit;
+            }
+            else
+            {
+                // other reason is expected to running background connection in BT platform.
+                OIC_LOG(INFO, TAG, "Background connection running.. please wait");
+                CALEClientUpdateSendCnt(env);
+                return;
+            }
         }
 
         if (g_sendBuffer)
@@ -4079,11 +4215,14 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
     }
     else
     {
-        CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
-        if (CA_STATUS_OK != res)
+        if (g_sendBuffer)
         {
-            OIC_LOG(ERROR, TAG, "CALEClientWriteCharacteristic has failed");
-            goto error_exit;
+            CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "CALEClientWriteCharacteristic has failed");
+                goto error_exit;
+            }
         }
     }
     OIC_LOG(INFO, TAG, "ServicesDiscovery is successful");
