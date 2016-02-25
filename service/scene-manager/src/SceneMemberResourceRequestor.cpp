@@ -26,21 +26,16 @@ namespace OIC
     namespace Service
     {
 
-        SceneMemberResourceRequestor::SceneMemberResourceRequestor
-        (RCSRemoteResourceObject::Ptr pSceneMember, const std::string &id)
-            : m_id{ id }, m_SceneMemberResourcePtr{ pSceneMember }
+        SceneMemberResourceRequestor::SceneMemberResourceRequestor(
+            RCSRemoteResourceObject::Ptr memberResource, const std::string &id)
+                : m_id{ id }, m_sceneMemberResource{ memberResource }
         {
-            SCENE_CLIENT_ASSERT_NOT_NULL(pSceneMember);
+            SCENE_CLIENT_ASSERT_NOT_NULL(memberResource);
         }
 
-        SceneMemberResourceRequestor::~SceneMemberResourceRequestor()
-        {
-
-        }
-
-        void SceneMemberResourceRequestor::requestSceneActionCreation
-        (const std::string &sceneName, const RCSResourceAttributes &attr,
-         InternalAddSceneActionCallback internalCB)
+        void SceneMemberResourceRequestor::requestSceneActionCreation(
+            const std::string &sceneName, const RCSResourceAttributes &attr,
+            InternalAddSceneActionCallback internalCB)
         {
             RCSResourceAttributes attributesToSet;
             std::vector< RCSResourceAttributes > vecSceneMappings;
@@ -63,8 +58,8 @@ namespace OIC
                             sceneName, attr, std::move(internalCB),
                             SceneMemberResourceRequestor::wPtr(shared_from_this()));
 
-            m_SceneMemberResourcePtr->setRemoteAttributes
-            (std::move(attributesToSet), std::move(setRequestCB));
+            m_sceneMemberResource->setRemoteAttributes(
+                std::move(attributesToSet), std::move(setRequestCB));
         }
 
         void SceneMemberResourceRequestor::requestGet(
@@ -73,32 +68,34 @@ namespace OIC
             RCSQueryParams params;
             params.setResourceInterface(ifType);
 
-            m_SceneMemberResourcePtr->get(params, cb);
+            m_sceneMemberResource->get(params, cb);
         }
 
-        RCSRemoteResourceObject::Ptr SceneMemberResourceRequestor::getRemoteResourceObject()
+        RCSRemoteResourceObject::Ptr SceneMemberResourceRequestor::getRemoteResourceObject() const
         {
-            return m_SceneMemberResourcePtr;
+            return m_sceneMemberResource;
         }
 
-        void SceneMemberResourceRequestor::onSceneActionCreated
-        (const RCSResourceAttributes &attrs, int eCode, const std::string &sceneName,
-         const RCSResourceAttributes &requestedAttrs, const InternalAddSceneActionCallback &cb,
-         SceneMemberResourceRequestor::wPtr ptr)
+        void SceneMemberResourceRequestor::onSceneActionCreated(
+            const RCSResourceAttributes &attrs, int eCode, const std::string &sceneName,
+            const RCSResourceAttributes &requestedAttrs, const InternalAddSceneActionCallback &cb,
+            SceneMemberResourceRequestor::wPtr ptr)
         {
-            SceneMemberResourceRequestor::Ptr memberPtr = ptr.lock();
+            SceneMemberResourceRequestor::Ptr member = ptr.lock();
 
-            if (memberPtr)
-                memberPtr->onSceneActionCreated_impl(
+            if (member)
+            {
+                member->onSceneActionCreated_impl(
                     std::move(attrs), eCode, sceneName, std::move(requestedAttrs), std::move(cb));
+            }
         }
 
-        void SceneMemberResourceRequestor::onSceneActionCreated_impl
-        (const RCSResourceAttributes &attrs, int eCode, const std::string &sceneName,
-         const RCSResourceAttributes &requestedAttrs,
-         const InternalAddSceneActionCallback &internalCB)
+        void SceneMemberResourceRequestor::onSceneActionCreated_impl(
+            const RCSResourceAttributes &attrs, int eCode, const std::string &sceneName,
+            const RCSResourceAttributes &requestedAttrs,
+            const InternalAddSceneActionCallback &internalCB)
         {
-            // TODO: error code
+            // TODO error code
             int result = SCENE_CLIENT_BADREQUEST;
 
             if (eCode == OC_STACK_OK)

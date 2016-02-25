@@ -38,51 +38,44 @@ namespace OIC
                 typedef std::shared_ptr< SceneListResourceRequestor > Ptr;
                 typedef std::weak_ptr< SceneListResourceRequestor > wPtr;
 
-                typedef std::function
-                < void(const std::string &link, const std::string &id,
-                       const std::string &name, int eCode) >
-                InternalCreateSceneCollectionCallback;
+                typedef std::function<
+                    void(const std::string &link, const std::string &id,
+                            const std::string &name, int eCode) >
+                    InternalCreateSceneCollectionCallback;
 
-                typedef std::function
-                < void(int eCode) > InternalSetNameCallback;
-
+                typedef std::function < void(int eCode) > InternalSetNameCallback;
 
             public:
-                SceneListResourceRequestor(RCSRemoteResourceObject::Ptr pSceneList);
-                ~SceneListResourceRequestor();
+                SceneListResourceRequestor(RCSRemoteResourceObject::Ptr listResource);
+                ~SceneListResourceRequestor() = default;
 
-                void requestSceneCollectionCreation
-                (const std::string &name, InternalCreateSceneCollectionCallback);
+                void requestSceneCollectionCreation(
+                    const std::string &name, InternalCreateSceneCollectionCallback);
 
                 void requestSetName(const std::string &, InternalSetNameCallback);
 
                 void requestGet(const std::string &, RCSRemoteResourceObject::GetCallback);
 
-                RCSRemoteResourceObject::Ptr getRemoteResourceObject();
-
-
-            private:
-                static void onSceneCollectionCreated
-                (const HeaderOpts &, const RCSRepresentation &, int eCode,
-                 const std::string &name, const InternalCreateSceneCollectionCallback &,
-                 SceneListResourceRequestor::wPtr);
-
-                void onSceneCollectionCreated_impl
-                (const HeaderOpts &, const RCSRepresentation &, int eCode,
-                 const std::string &name, const InternalCreateSceneCollectionCallback &);
-
-                std::vector<std::pair<RCSResourceAttributes, std::vector<RCSResourceAttributes>>>
-               parseSceneListFromAttributes(const RCSResourceAttributes &);
-
-               std::vector<RCSResourceAttributes> getChildrenAttributes(
-                       const RCSResourceAttributes &) const;
-
-               RCSRemoteResourceObject::Ptr makeSceneRemoteResourceFromAttributes(
-                       const RCSResourceAttributes &, const SceneResource &);
-
+                RCSRemoteResourceObject::Ptr getRemoteResourceObject() const;
 
             private:
-                RCSRemoteResourceObject::Ptr m_SceneListResourcePtr;
+                static void onSceneCollectionCreated(
+                    const RCSRepresentation &, int eCode,
+                    const std::string &name, const InternalCreateSceneCollectionCallback &,
+                    SceneListResourceRequestor::wPtr);
+
+                void onSceneCollectionCreated_impl(
+                    const RCSRepresentation &, int eCode,
+                    const std::string &name, const InternalCreateSceneCollectionCallback &);
+
+                static void onNameSet(const RCSRepresentation &, int eCode, const std::string &,
+                    const InternalSetNameCallback &, SceneListResourceRequestor::wPtr);
+
+                void onNameSet_impl(const RCSRepresentation &, int eCode, const std::string &,
+                    const InternalSetNameCallback &);
+
+            private:
+                RCSRemoteResourceObject::Ptr m_sceneListResource;
         };
 
     }

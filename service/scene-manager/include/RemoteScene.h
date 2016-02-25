@@ -23,7 +23,8 @@
 
 #include <memory>
 #include <string>
-#include <map>
+#include <unordered_map>
+#include <mutex>
 
 #include "RemoteSceneAction.h"
 #include "RCSRemoteResourceObject.h"
@@ -40,67 +41,64 @@ namespace OIC
             public:
                 typedef std::shared_ptr< RemoteScene > Ptr;
 
-                typedef std::function< void(RemoteSceneAction::Ptr, int) >
-                AddNewSceneActionCallback;
+                typedef std::function< void(RemoteSceneAction::Ptr, int eCode) >
+                    AddNewSceneActionCallback;
 
                 typedef std::function< void(const int eCode) >
-                RemoveSceneActionCallback;
+                    RemoveSceneActionCallback;
 
                 typedef std::function< void(const std::string &sceneName, int eCode) >
-                RemoteSceneExecuteCallback;
-
+                    RemoteSceneExecuteCallback;
 
             public:
                 ~RemoteScene() = default;
 
-                void addNewSceneAction(RCSRemoteResourceObject::Ptr pTargetResource,
-                                       const RCSResourceAttributes &attrs,
+                void addNewSceneAction(RCSRemoteResourceObject::Ptr targetResource,
+                                       const RCSResourceAttributes &,
                                        AddNewSceneActionCallback);
-                void addNewSceneAction(RCSRemoteResourceObject::Ptr pTargetResource,
+                void addNewSceneAction(RCSRemoteResourceObject::Ptr targetResource,
                                        const std::string &key,
-                                       const RCSResourceAttributes::Value &value,
+                                       const RCSResourceAttributes::Value &,
                                        AddNewSceneActionCallback);
 
-                void removeSceneAction(RemoteSceneAction::Ptr pRemoteSceneAction,
+                void removeSceneAction(RemoteSceneAction::Ptr remoteSceneAction,
                                        RemoveSceneActionCallback);
-                void removeSceneAction(RCSRemoteResourceObject::Ptr pTargetResource,
+                void removeSceneAction(RCSRemoteResourceObject::Ptr targetResource,
                                        RemoveSceneActionCallback);
 
                 std::vector< RemoteSceneAction::Ptr > getRemoteSceneActions() const;
-                std::vector< RemoteSceneAction::Ptr > getRemoteSceneAction
-                (const RCSRemoteResourceObject::Ptr pTargetResource) const;
+                RemoteSceneAction::Ptr getRemoteSceneAction(
+                    const RCSRemoteResourceObject::Ptr targetResource) const;
 
                 std::string getName() const;
 
                 void execute(RemoteSceneExecuteCallback);
 
-
             private:
-                RemoteScene
-                (const std::string &name, std::shared_ptr< SceneCollectionResourceRequestor >);
+                RemoteScene(
+                    const std::string &name, std::shared_ptr< SceneCollectionResourceRequestor >);
 
-                RemoteSceneAction::Ptr createRemoteSceneActionInstance
-                (const std::string &, const RCSResourceAttributes &);
+                RemoteSceneAction::Ptr createRemoteSceneActionInstance(
+                    const std::string &,  const RCSResourceAttributes &);
 
                 void addExistingRemoteSceneAction(const std::string &, const std::string &,
                                                   const std::string &, const std::string &key,
                                                   const RCSResourceAttributes::Value &);
 
                 void onSceneActionAdded(
-                    std::shared_ptr< SceneMemberResourceRequestor >,
-                    int eCode, RCSRemoteResourceObject::Ptr,
-                    const RCSResourceAttributes &, AddNewSceneActionCallback);
+                    int, RCSRemoteResourceObject::Ptr,
+                    const RCSResourceAttributes &, const AddNewSceneActionCallback &);
 
-                void onSceneExecuted(const int &reqType, const std::string &name,
-                                     int eCode, RemoteSceneExecuteCallback);
-
+                void onSceneExecuted(const std::string &name, int,
+                                    const RemoteSceneExecuteCallback &);
 
             private:
                 std::string m_name;
-                std::map < const std::string, std::vector< RemoteSceneAction::Ptr > >
-                m_remoteSceneActions;
+                mutable std::mutex m_sceneActionLock;
+                std::unordered_map < std::string, RemoteSceneAction::Ptr >
+                    m_remoteSceneActions;
 
-                std::shared_ptr< SceneCollectionResourceRequestor > m_requestorPtr;
+                std::shared_ptr< SceneCollectionResourceRequestor > m_requestor;
 
                 friend class RemoteSceneCollection;
         };

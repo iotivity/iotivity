@@ -21,6 +21,7 @@
 #include "RemoteSceneList.h"
 
 #include <map>
+#include <algorithm>
 
 #include "SceneCommons.h"
 #include "RemoteSceneUtils.h"
@@ -33,31 +34,44 @@ namespace OIC
     namespace Service
     {
 
-        RemoteSceneList::RemoteSceneList(SceneListResourceRequestor::Ptr pRequestor)
-            : m_requestorPtr{ pRequestor }, m_getResponseHandler{}
+        RemoteSceneList::RemoteSceneList(SceneListResourceRequestor::Ptr requestor)
+            : m_requestorPtr{ requestor }, m_getResponseHandler{}
         {
 
         }
 
-        void RemoteSceneList::createInstance(RCSRemoteResourceObject::Ptr pSceneListResource,
+        void RemoteSceneList::createInstance(RCSRemoteResourceObject::Ptr sceneListResource,
                                              CreateInstanceCallback clientCB)
         {
-            // TODO: check pRequestor not null
+            if (sceneListResource == nullptr)
+            {
+                throw RCSInvalidParameterException("Scene List resource object is null");
+            }
+
+            std::vector< std::string > rts = sceneListResource->getTypes();
+            auto it = std::find(rts.begin(), rts.end(), SCENE_LIST_RT);
+            if (it == rts.end())
+            {
+                throw RCSInvalidParameterException(
+                    "Remote resource object is not a Scene List Resource");
+            }
 
             SceneListResourceRequestor::Ptr pRequestor =
-                std::make_shared< SceneListResourceRequestor >(pSceneListResource);
+                std::make_shared< SceneListResourceRequestor >(sceneListResource);
 
-            RemoteSceneList::Ptr newSceneList(new RemoteSceneList(pRequestor));
-
-            clientCB(std::move(newSceneList), SCENE_RESPONSE_SUCCESS);
+            std::string requestIf = OC::DEFAULT_INTERFACE;
+            pRequestor->requestGet(requestIf, std::bind(
+                &RemoteSceneList::onInstanceCreated,
+                std::placeholders::_2, std::placeholders::_3, requestIf,
+                pRequestor, std::move(clientCB)));
         }
 
         void RemoteSceneList::addNewSceneCollection(AddNewSceneCollectionCallback clientCB)
         {
             SceneListResourceRequestor::InternalCreateSceneCollectionCallback internalCB
                 = std::bind(&RemoteSceneList::onSceneCollectionCreated, this,
-                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-                            std::placeholders::_4, std::move(clientCB));
+                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                std::placeholders::_4, std::move(clientCB));
 
             m_requestorPtr->requestSceneCollectionCreation("", internalCB);
         }
@@ -68,7 +82,7 @@ namespace OIC
         }
 
         std::vector< RemoteSceneCollection::Ptr >
-        RemoteSceneList::getRemoteSceneCollections() const
+            RemoteSceneList::getRemoteSceneCollections() const
         {
             return m_remoteSceneCollections;
         }
@@ -77,7 +91,7 @@ namespace OIC
         {
             SceneListResourceRequestor::InternalSetNameCallback internalCB
                 = std::bind(&RemoteSceneList::onNameSet, this,
-                            std::placeholders::_1, name, std::move(clientCB));
+                std::placeholders::_1, name, std::move(clientCB));
 
             m_requestorPtr->requestSetName(name, internalCB);
         }
@@ -87,169 +101,276 @@ namespace OIC
             return m_name;
         }
 
-        RemoteSceneCollection::Ptr RemoteSceneList::createRemoteSceneCollectionInstance
-        (const std::string &link, const std::string &id, const std::string &name)
+        void RemoteSceneList::onInstanceCreated(
+            const RCSRepresentation &rep, int eCode, const std::string &If,
+            SceneListResourceRequestor::Ptr requestor, const CreateInstanceCallback &cb)
         {
-            RemoteSceneCollection::Ptr pNewSceneCollection = nullptr;
-
-            std::vector< std::string > vecRT{ SCENE_COLLECTION_RT };
-            std::vector< std::string > vecIF{ SCENE_CLIENT_REQ_IF };
-
-            RCSRemoteResourceObject::Ptr pResource
-                = createRCSResourceObject(link, SCENE_CONNECTIVITY, vecRT, vecIF);
-
-            if (pResource)
+            if (eCode == OC_STACK_OK)
             {
-                SceneCollectionResourceRequestor::Ptr pRequestor
-                { new SceneCollectionResourceRequestor(pResource) };
-
-                pNewSceneCollection.reset(
-                    new RemoteSceneCollection(pRequestor, id, name));
-
-                m_remoteSceneCollections.push_back(pNewSceneCollection);
+                if (If == OC::DEFAULT_INTERFACE)
+                {
+                    auto retPtr = buildSceneList(requestor, rep.getAttributes());
+                    cb(std::move(retPtr), SCENE_RESPONSE_SUCCESS);
+                }
+                else if (If == OC::BATCH_INTERFACE)
+                {
+                    // TODO build remote scene list instance with batch interface.
+                }
+                else
+                {
+                    // TODO error handle.
+                }
             }
-
-            return pNewSceneCollection;
         }
 
-        void RemoteSceneList::setGetResponseHandler
-        (const std::string &host, GetResponseHandler::GetCallback cb)
+        RemoteSceneList::Ptr RemoteSceneList::buildSceneList(
+            SceneListResourceRequestor::Ptr requestor, const RCSResourceAttributes &attrs)
+        {
+            RemoteSceneList::Ptr newList(new RemoteSceneList(requestor));
+
+            auto collections = newList->parseSceneListFromAttributes(attrs);
+
+            try
+            {
+                for (const auto &itr : collections)
+                {
+                    auto collection = itr.first;
+                    auto host = newList->getListResourceRequestor()
+                                    ->getRemoteResourceObject()->getAddress();
+
+                    RemoteSceneCollection::Ptr newCollection
+                        = newList->createRemoteSceneCollectionInstance(
+                                    host + collection.at("uri").get< std::string >(),
+                                    collection.at(SCENE_KEY_ID).get< std::string >(),
+                                    collection.at(SCENE_KEY_NAME).get< std::string >());
+
+                    newCollection->initializeRemoteSceneCollection(itr.second, host);
+                }
+            }
+            catch (const std::exception &e)
+            {
+                SCENE_CLIENT_PRINT_LOG(e.what());
+            }
+
+            return std::move(newList);
+        }
+
+        RemoteSceneCollection::Ptr RemoteSceneList::createRemoteSceneCollectionInstance(
+            const std::string &link, const std::string &id, const std::string &name)
+        {
+            try
+            {
+                std::vector< std::string > vecRT{ SCENE_COLLECTION_RT };
+                std::vector< std::string > vecIF{ SCENE_CLIENT_REQ_IF };
+
+                RCSRemoteResourceObject::Ptr pResource
+                    = SceneUtils::createRCSResourceObject(link, SCENE_CONNECTIVITY, vecRT, vecIF);
+
+                SceneCollectionResourceRequestor::Ptr pRequestor(
+                    new SceneCollectionResourceRequestor(pResource));
+
+                RemoteSceneCollection::Ptr newCollection(
+                    new RemoteSceneCollection(pRequestor, id, name));
+                
+                {
+                    std::lock_guard< std::mutex > collectionlock(m_collectionLock);
+                    m_remoteSceneCollections.push_back(newCollection);
+                }
+
+                return newCollection;
+            }
+            catch (const std::exception &e)
+            {
+                SCENE_CLIENT_PRINT_LOG(e.what());
+                return nullptr;
+            }
+        }
+
+        SceneListResourceRequestor::Ptr RemoteSceneList::getListResourceRequestor() const
+        {
+            return m_requestorPtr;
+        }
+
+        void RemoteSceneList::setGetResponseHandler(
+            const std::string &host, GetResponseHandler::GetCallback cb)
         {
             m_getResponseHandler.reset(new GetResponseHandler(shared_from_this()));
-
             m_getResponseHandler->startGetResponseHandler(host, std::move(cb));
         }
 
-        void RemoteSceneList::onSceneCollectionCreated
-        (const std::string &link, const std::string &id, const std::string &name, int eCode,
-         AddNewSceneCollectionCallback clientCB)
+        std::vector<std::pair<RCSResourceAttributes, std::vector<RCSResourceAttributes>>>
+            RemoteSceneList::parseSceneListFromAttributes(const RCSResourceAttributes & listAttrs)
+        {
+            std::vector<std::pair<RCSResourceAttributes, std::vector<RCSResourceAttributes>>>
+                retParsed;
+
+            auto collectionsResourceAttrs = getChildrenAttributes(listAttrs);
+
+            for (unsigned int i = 0; i < collectionsResourceAttrs.size(); ++i)
+            {
+                retParsed.push_back(
+                    std::make_pair(
+                        collectionsResourceAttrs[i],
+                        getChildrenAttributes(collectionsResourceAttrs[i])));
+            }
+
+            return retParsed;
+        }
+
+        std::vector<RCSResourceAttributes> RemoteSceneList::getChildrenAttributes(
+            const RCSResourceAttributes & attrs) const
+        {
+            const std::string SCENE_CHILD = "child";
+
+            std::vector<RCSResourceAttributes> retChildren = {};
+
+            if (attrs.contains(SCENE_CHILD))
+            {
+                retChildren
+                    = attrs.at(SCENE_CHILD).get<std::vector<RCSResourceAttributes>>();
+            }
+
+            return retChildren;
+        }
+
+        void RemoteSceneList::onSceneCollectionCreated(
+            const std::string &link, const std::string &id, const std::string &name, int eCode,
+            const AddNewSceneCollectionCallback &clientCB)
         {
             int result = SCENE_CLIENT_BADREQUEST;
-            RemoteSceneCollection::Ptr pNewRemoteSceneCollection = nullptr;
+            RemoteSceneCollection::Ptr newCollection = nullptr;
 
             if (eCode == SCENE_RESPONSE_SUCCESS)
             {
-                pNewRemoteSceneCollection =
+                newCollection =
                     createRemoteSceneCollectionInstance(link, id, name);
 
-                // TODO: result type check
-                if (pNewRemoteSceneCollection)
+                if (newCollection)
                     result = SCENE_RESPONSE_SUCCESS;
             }
-            clientCB(pNewRemoteSceneCollection, result);
+
+            clientCB(newCollection, result);
         }
 
         void RemoteSceneList::onNameSet(int eCode, const std::string &name,
-                                        const SetNameCallback &clientCB)
+            const SetNameCallback &clientCB)
         {
+            int result = SCENE_CLIENT_BADREQUEST;
             if (eCode == SCENE_RESPONSE_SUCCESS)
+            {
                 m_name = name;
-
-            clientCB(eCode);
+                result = SCENE_RESPONSE_SUCCESS;
+            }
+            
+            clientCB(result);
         }
 
-        RemoteSceneList::GetResponseHandler::GetResponseHandler
-        (std::shared_ptr< RemoteSceneList > ptr)
-            : m_errorCode{ SCENE_RESPONSE_SUCCESS }, m_owner{ ptr }
+        RemoteSceneList::GetResponseHandler::GetResponseHandler(
+            std::shared_ptr< RemoteSceneList > ptr)
+                :m_numOfCollections{ 0 }, m_respondedCollections{ 0 },
+                    m_errorCode{ SCENE_RESPONSE_SUCCESS }, m_owner{ ptr }
         {
 
         }
 
-        void RemoteSceneList::GetResponseHandler::startGetResponseHandler
-        (const std::string &host, GetCallback cb)
+        void RemoteSceneList::GetResponseHandler::startGetResponseHandler(
+            const std::string &host, GetCallback cb)
         {
             RCSRemoteResourceObject::GetCallback ListGetCB
                 = std::bind(&GetResponseHandler::onGetListAttrs, this,
-                            std::placeholders::_1, std::placeholders::_2,
-                            std::placeholders::_3,
-                            host);
+                            std::placeholders::_2, std::placeholders::_3, host);
 
             m_cb = cb;
 
-            std::shared_ptr< RemoteSceneList > pList = m_owner.lock();
+            std::shared_ptr< RemoteSceneList > list = m_owner.lock();
 
-            if (pList)
+            if (list)
             {
-                pList->m_requestorPtr->
-                requestGet(SCENE_CLIENT_CREATE_REQ_IF, ListGetCB);
+                list->getListResourceRequestor()
+                    ->requestGet(SCENE_CLIENT_CREATE_REQ_IF, ListGetCB);
             }
         }
 
-        void RemoteSceneList::GetResponseHandler::onGetListAttrs
-        (const HeaderOpts &, const RCSRepresentation &rep,
-         int eCode, const std::string &host)
+        void RemoteSceneList::GetResponseHandler::onGetListAttrs(
+            const RCSRepresentation &rep, int eCode, const std::string &host)
         {
-            if (eCode == SCENE_RESPONSE_SUCCESS)
+            if (eCode == OC_STACK_OK)
             {
-                std::shared_ptr< RemoteSceneList > pList = m_owner.lock();
+                std::shared_ptr< RemoteSceneList > list = m_owner.lock();
 
-                if (pList)
+                if (list == nullptr)
                 {
-                    pList->m_name
-                        = rep.getAttributes().at(SCENE_KEY_NAME).get< std::string >();
+                    SCENE_CLIENT_PRINT_LOG("remote scene list deleted.");
+                    return;
+                }
 
-                    std::vector< RCSRepresentation > childReps
-                        = rep.getChildren();
+                list->m_name
+                    = rep.getAttributes().at(SCENE_KEY_NAME).get< std::string >();
 
-                    if (childReps.size() > 0)
+                std::vector< RCSRepresentation > childReps = rep.getChildren();
+
+                if (childReps.size() > 0)
+                {
+                    for (const auto &itr : childReps)
                     {
-                        for (auto itr : childReps)
-                        {
-                            std::vector< std::string > childRTs = itr.getResourceTypes();
-                            if (std::find(childRTs.begin(), childRTs.end(), SCENE_COLLECTION_RT)
+                        std::vector< std::string > childRTs = itr.getResourceTypes();
+                        if (std::find(childRTs.begin(), childRTs.end(), SCENE_COLLECTION_RT)
                                 != childRTs.end())
-                            {
-                                RCSResourceAttributes attr = itr.getAttributes();
-                                RemoteSceneCollection::Ptr pNewSceneCollection
-                                    = pList->createRemoteSceneCollectionInstance(
-                                          host + rep.getUri(),
-                                          attr.at(SCENE_KEY_ID).get< std::string >(),
-                                          attr.at(SCENE_KEY_NAME).get< std::string >());
+                        {
+                            RCSResourceAttributes attrs = itr.getAttributes();
+                            RemoteSceneCollection::Ptr newCollection
+                                = list->createRemoteSceneCollectionInstance(
+                                            host + rep.getUri(),
+                                            attrs.at(SCENE_KEY_ID).get< std::string >(),
+                                            attrs.at(SCENE_KEY_NAME).get< std::string >());
 
-                                if (pNewSceneCollection == nullptr)
-                                {
-                                    // error
-                                    continue;
-                                }
+                            if (newCollection == nullptr) continue;
 
-                                RCSRemoteResourceObject::GetCallback handlerGetCB
-                                    = std::bind(&GetResponseHandler::onGetCollectionAttrs,
-                                                this, std::placeholders::_1,
-                                                std::placeholders::_2, std::placeholders::_3,
-                                                pNewSceneCollection, host);
+                            RCSRemoteResourceObject::GetCallback handlerGetCB
+                                = std::bind(&GetResponseHandler::onGetCollectionAttrs,
+                                            this, std::placeholders::_2, std::placeholders::_3,
+                                            newCollection, host);
 
-                                pNewSceneCollection->m_requestorPtr->requestGet(
-                                    SCENE_CLIENT_REQ_IF, handlerGetCB);
-                            }
+                            newCollection->m_requestor
+                                ->requestGet(SCENE_CLIENT_REQ_IF, handlerGetCB);
                         }
                     }
                 }
             }
             else
             {
-                // error
+                // TODO error
             }
         }
 
-        void RemoteSceneList::GetResponseHandler::onGetCollectionAttrs
-        (const HeaderOpts &, const RCSRepresentation &reps, int eCode,
-         RemoteSceneCollection::Ptr pRemoteSceneCollection, const std::string &host)
+        void RemoteSceneList::GetResponseHandler::onGetCollectionAttrs(
+            const RCSRepresentation &reps, int eCode,
+            RemoteSceneCollection::Ptr collection, const std::string &host)
         {
             m_respondedCollections++;
-            if (eCode == SCENE_RESPONSE_SUCCESS)
+            if (eCode == OC_STACK_OK)
             {
-                pRemoteSceneCollection->
-                initializeRemoteSceneCollection(reps.getChildren(), std::string(host));
+                auto children = reps.getChildren();
+                std::vector< RCSResourceAttributes > childrenAttr;
+
+                std::for_each(children.begin(), children.end(),
+                    [&childrenAttr](const RCSRepresentation & rep)
+                {
+                    childrenAttr.push_back(rep.getAttributes());
+                });
+
+                collection->
+                    initializeRemoteSceneCollection(childrenAttr, host);
             }
             else
             {
-                // error
-                m_errorCode = eCode;
+                // TODO error
+                m_errorCode = SCENE_CLIENT_BADREQUEST;
             }
 
             if (m_respondedCollections == m_numOfCollections)
             {
-                m_cb(eCode);
+                m_cb(m_errorCode);
             }
         }
 

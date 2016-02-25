@@ -25,6 +25,7 @@
 #include "oic_malloc.h"
 #include "RCSException.h"
 #include "cainterface.h"
+#include "OCPlatform.h"
 
 namespace OIC
 {
@@ -98,6 +99,27 @@ namespace OIC
 
             delete[] netInfo;
             throw RCSException("Not supported Network");
+        }
+
+        RCSRemoteResourceObject::Ptr SceneUtils::createRCSResourceObject(
+            const std::string &address, const OCConnectivityType ct,
+            const std::vector< std::string > &vecRT, const std::vector< std::string > &vecIF)
+        {
+            try
+            {
+                std::string hostaddress, uri;
+                SceneUtils::getHostUriString(address, &hostaddress, &uri);
+
+                OC::OCResource::Ptr pOCResource =
+                    OC::OCPlatform::constructResourceObject(
+                        hostaddress, uri, ct, false, vecRT, vecIF);
+
+                return RCSRemoteResourceObject::fromOCResource(pOCResource);
+            }
+            catch (const std::exception &e)
+            {
+                throw RCSException("Fail to create RCSResourceObject");
+            }
         }
     }
 }

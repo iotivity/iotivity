@@ -24,6 +24,7 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <mutex>
 
 #include "RemoteSceneCollection.h"
 #include "RCSRemoteResourceObject.h"
@@ -41,21 +42,19 @@ namespace OIC
             public:
                 typedef std::unique_ptr< RemoteSceneList > Ptr;
 
-                typedef std::function< void(RemoteSceneList::Ptr, int) >
-                CreateInstanceCallback;
+                typedef std::function< void(RemoteSceneList::Ptr, int eCode) >
+                    CreateInstanceCallback;
 
-                typedef std::function< void(RemoteSceneCollection::Ptr, int) >
-                AddNewSceneCollectionCallback;
+                typedef std::function< void(RemoteSceneCollection::Ptr, int eCode) >
+                    AddNewSceneCollectionCallback;
 
-                typedef std::function< void(int eCode) >
-                SetNameCallback;
-
+                typedef std::function< void(int eCode) > SetNameCallback;
 
             public:
                 ~RemoteSceneList() = default;
 
-                static void createInstance
-                (RCSRemoteResourceObject::Ptr pSceneListResource, CreateInstanceCallback);
+                static void createInstance(
+                    RCSRemoteResourceObject::Ptr sceneListResource, CreateInstanceCallback);
 
                 void addNewSceneCollection(AddNewSceneCollectionCallback);
                 void removeSceneCollection(RemoteSceneCollection::Ptr);
@@ -65,7 +64,6 @@ namespace OIC
                 void setName(const std::string &name, SetNameCallback);
                 std::string getName() const;
 
-
             private:
                 class GetResponseHandler
                 {
@@ -73,9 +71,9 @@ namespace OIC
                         typedef std::shared_ptr< GetResponseHandler > Ptr;
 
                         typedef std::function< void(int eCode) >
-                        GetCallback;
+                            GetCallback;
 
-                        GetResponseHandler(std::shared_ptr< RemoteSceneList > ptr);
+                        GetResponseHandler(std::shared_ptr< RemoteSceneList >);
                         ~GetResponseHandler() = default;
 
                         int m_numOfCollections;
@@ -86,35 +84,43 @@ namespace OIC
 
                         void startGetResponseHandler(const std::string &host, GetCallback cb);
 
-                        void onGetCollectionAttrs(const HeaderOpts &, const RCSRepresentation &,
-                                                  int eCode, RemoteSceneCollection::Ptr,
-                                                  const std::string &);
-
-                        void onGetListAttrs(const HeaderOpts &, const RCSRepresentation &, int,
-                                            const std::string &);
+                        void onGetListAttrs(const RCSRepresentation &, int, const std::string &);
+                        
+                        void onGetCollectionAttrs(const RCSRepresentation &, int eCode,
+                            RemoteSceneCollection::Ptr, const std::string &);
                 };
-
-
+                
             private:
-                RemoteSceneList(std::shared_ptr< SceneListResourceRequestor > pRequestor);
+                RemoteSceneList(std::shared_ptr< SceneListResourceRequestor >);
 
-                static void onInstanceCreated(int, std::shared_ptr< RemoteSceneList >,
-                                              CreateInstanceCallback);
+                static void onInstanceCreated(const RCSRepresentation &, int, const std::string &,
+                    std::shared_ptr< SceneListResourceRequestor >, const CreateInstanceCallback &);
 
-                RemoteSceneCollection::Ptr createRemoteSceneCollectionInstance
-                (const std::string &link, const std::string &id, const std::string &name);
+                static RemoteSceneList::Ptr buildSceneList(std::shared_ptr< SceneListResourceRequestor >,
+                    const RCSResourceAttributes &);
 
+                RemoteSceneCollection::Ptr createRemoteSceneCollectionInstance(
+                    const std::string &link, const std::string &id, const std::string &name);
+
+                std::shared_ptr< SceneListResourceRequestor > getListResourceRequestor() const;
+                
                 void setGetResponseHandler(const std::string &, GetResponseHandler::GetCallback);
 
-                void onSceneCollectionCreated
-                (const std::string &link, const std::string &id, const std::string &name,
-                 int eCode, AddNewSceneCollectionCallback);
+                std::vector<std::pair<RCSResourceAttributes, std::vector<RCSResourceAttributes>>>
+                    parseSceneListFromAttributes(const RCSResourceAttributes &);
+
+                std::vector<RCSResourceAttributes> getChildrenAttributes(
+                    const RCSResourceAttributes &) const;
+
+                void onSceneCollectionCreated(
+                    const std::string &link, const std::string &id, const std::string &name,
+                    int, const AddNewSceneCollectionCallback &);
 
                 void onNameSet(int, const std::string &, const SetNameCallback &);
 
-
             private:
                 std::string m_name;
+                std::mutex m_collectionLock;
                 std::vector< RemoteSceneCollection::Ptr > m_remoteSceneCollections;
                 std::shared_ptr< SceneListResourceRequestor > m_requestorPtr;
 

@@ -22,6 +22,7 @@
 #define SM_SCENECOLLECTION_RESOURCE_REQUESTOR_H_
 
 #include <map>
+#include <mutex>
 
 #include "SceneCommons.h"
 #include "RCSRemoteResourceObject.h"
@@ -45,27 +46,24 @@ namespace OIC
                     ADD_SCENE, REMOVE_SCENE, EXECUTE_SCENE
                 };
 
-                typedef std::function
-                < void(const REQUEST_TYPE, const std::string &name, int eCode) >
-                InternalSceneRequestCallback;
+                typedef std::function< 
+                    void(REQUEST_TYPE, const std::string &name, int eCode) >
+                        InternalSceneRequestCallback;
 
-                typedef std::function
-                < void(SceneMemberResourceRequestor::Ptr, int eCode) > InternalAddMemberCallback;
+                typedef std::function < void(int eCode) > InternalAddMemberCallback;
 
-                typedef std::function
-                < void(int eCode) > InternalSetNameCallback;
-
+                typedef std::function < void(int eCode) > InternalSetNameCallback;
 
             public:
-                SceneCollectionResourceRequestor(RCSRemoteResourceObject::Ptr pSceneCollection);
-                ~SceneCollectionResourceRequestor();
+                SceneCollectionResourceRequestor(RCSRemoteResourceObject::Ptr collectionResource);
+                ~SceneCollectionResourceRequestor() = default;
 
                 void requestSceneCreation(const std::string &name, InternalSceneRequestCallback);
                 void requestSceneRemoval(const std::string &name, InternalSceneRequestCallback);
 
                 void requestSceneExecution(const std::string &name, InternalSceneRequestCallback);
 
-                void requestAddSceneMember(RCSRemoteResourceObject::Ptr pMember,
+                void requestAddSceneMember(RCSRemoteResourceObject::Ptr targetResource,
                                            const std::string &sceneName,
                                            const RCSResourceAttributes &attr,
                                            InternalAddMemberCallback);
@@ -74,15 +72,14 @@ namespace OIC
 
                 void requestGet(const std::string &, RCSRemoteResourceObject::GetCallback);
 
-                RCSRemoteResourceObject::Ptr getRemoteResourceObject();
+                RCSRemoteResourceObject::Ptr getRemoteResourceObject() const;
 
                 SceneMemberResourceRequestor::Ptr createSceneMemberResourceRequestor(
-                    const std::string &memlink, const std::string &id,
-                    const std::string &targetlink);
+                    const std::string &memHref, const std::string &id,
+                    const std::string &targetHref);
 
                 SceneMemberResourceRequestor::Ptr getSceneMemberResourceRequestor(
-                    const std::string &link);
-
+                    const std::string &targetHref) const;
 
             private:
                 static void onSetResponseForScene(
@@ -96,20 +93,26 @@ namespace OIC
                     REQUEST_TYPE);
 
                 static void onSceneMemberAdded(
-                    const HeaderOpts &, const RCSRepresentation &, int eCode,
+                    const RCSRepresentation &, int eCode,
                     const std::string &, const InternalAddMemberCallback &,
                     SceneCollectionResourceRequestor::wPtr);
 
                 void onSceneMemberAdded_impl(
-                    const HeaderOpts &, const RCSRepresentation &, int eCode,
+                    const RCSRepresentation &, int eCode,
                     const std::string &, const InternalAddMemberCallback &);
 
+                static void onNameSet(const RCSRepresentation &, int eCode, const std::string &,
+                    const InternalSetNameCallback &, SceneCollectionResourceRequestor::wPtr);
+
+                void onNameSet_impl(const RCSRepresentation &, int eCode, const std::string &,
+                    const InternalSetNameCallback &);
 
             private:
-                RCSRemoteResourceObject::Ptr m_SceneCollectionResourcePtr;
-                std::map< std::string, SceneMemberResourceRequestor::Ptr > m_mapMemberRequestors;
+                RCSRemoteResourceObject::Ptr m_sceneCollectionResource;
+                mutable std::mutex m_memberRequestorLock;
+                std::map< std::string, SceneMemberResourceRequestor::Ptr > m_memberRequestors;
         };
-
+        
     }
 }
 

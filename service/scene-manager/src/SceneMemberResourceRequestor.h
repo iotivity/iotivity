@@ -38,11 +38,10 @@ namespace OIC
 
                 typedef std::function < void(int eCode) > InternalAddSceneActionCallback;
 
-
             public:
-                SceneMemberResourceRequestor(RCSRemoteResourceObject::Ptr pSceneMember,
+                SceneMemberResourceRequestor(RCSRemoteResourceObject::Ptr memberResource,
                                              const std::string &id);
-                ~SceneMemberResourceRequestor();
+                ~SceneMemberResourceRequestor() = default;
 
                 void requestSceneActionCreation(const std::string &sceneName,
                                                 const RCSResourceAttributes &attr,
@@ -50,8 +49,7 @@ namespace OIC
 
                 void requestGet(const std::string &, RCSRemoteResourceObject::GetCallback);
 
-                RCSRemoteResourceObject::Ptr getRemoteResourceObject();
-
+                RCSRemoteResourceObject::Ptr getRemoteResourceObject() const;
 
             private:
                 static void onSceneActionCreated(
@@ -64,10 +62,9 @@ namespace OIC
                     const std::string &sceneName, const RCSResourceAttributes &requestedAttrs,
                     const InternalAddSceneActionCallback &);
 
-
             private:
                 std::string m_id;
-                RCSRemoteResourceObject::Ptr m_SceneMemberResourcePtr;
+                RCSRemoteResourceObject::Ptr m_sceneMemberResource;
         };
 
     }

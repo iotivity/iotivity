@@ -20,8 +20,9 @@
 
 #include "RemoteSceneAction.h"
 
+#include <cassert>
+
 #include "SceneCommons.h"
-#include "RemoteSceneUtils.h"
 #include "SceneMemberResourceRequestor.h"
 
 namespace OIC
@@ -29,64 +30,76 @@ namespace OIC
     namespace Service
     {
 
-        RemoteSceneAction::RemoteSceneAction
-        (std::shared_ptr< SceneMemberResourceRequestor > pRequestor,
-         const std::string &sceneName, const RCSResourceAttributes &attrs)
-            : m_sceneName{ sceneName }, m_attributes{ attrs }, m_requestorPtr{ pRequestor }
+        RemoteSceneAction::RemoteSceneAction(
+            SceneMemberResourceRequestor::Ptr requestor,
+            const std::string &sceneName, const RCSResourceAttributes &attrs)
+                : m_sceneName{ sceneName }, m_attributes{ attrs }, m_requestor{ requestor }
         {
-            // TODO: check pRequestor not null
+            assert(requestor);
         }
 
-        RemoteSceneAction::RemoteSceneAction
-        (std::shared_ptr< SceneMemberResourceRequestor > pRequestor,
-         const std::string &sceneName,
-         const std::string &key, const RCSResourceAttributes::Value &value)
-            : m_sceneName{ sceneName }, m_requestorPtr{ pRequestor }
+        RemoteSceneAction::RemoteSceneAction(
+            SceneMemberResourceRequestor::Ptr requestor, const std::string &sceneName,
+            const std::string &key, const RCSResourceAttributes::Value &value)
+                : m_sceneName{ sceneName }, m_requestor{ requestor }
         {
-            // TODO: check pRequestor not null
+            assert(requestor);
             m_attributes[key] = value;
         }
 
-        void RemoteSceneAction::update(const RCSResourceAttributes &attr,
-                                       UpdateCallback clientCB)
-        {
-            SceneMemberResourceRequestor::InternalAddSceneActionCallback internalCB
-                = std::bind(&RemoteSceneAction::onUpdated, this,
-                            std::placeholders::_1, attr, std::move(clientCB));
-
-            m_requestorPtr->requestSceneActionCreation(m_sceneName,
-                    attr, internalCB);
-        }
-
-        void RemoteSceneAction::update(const std::string &key,
+        void RemoteSceneAction::setExecutionParameter(const std::string &key,
                                        const RCSResourceAttributes::Value &value,
                                        UpdateCallback clientCB)
         {
+            if (key.empty())
+            {
+                throw RCSInvalidParameterException("Scene action key value is empty");
+            }
+
             RCSResourceAttributes attr;
             attr[key] = RCSResourceAttributes::Value(value);
 
-            update(attr, std::move(clientCB));
+            setExecutionParameter(attr, std::move(clientCB));
         }
 
-        RCSResourceAttributes RemoteSceneAction::getAction() const
+        void RemoteSceneAction::setExecutionParameter(const RCSResourceAttributes &attr,
+            UpdateCallback clientCB)
+        {
+            if (attr.empty())
+            {
+                throw RCSInvalidParameterException("RCSResourceAttributes is empty");
+            }
+
+            SceneMemberResourceRequestor::InternalAddSceneActionCallback internalCB
+                = std::bind(&RemoteSceneAction::onUpdated, this,
+                std::placeholders::_1, attr, std::move(clientCB));
+
+            m_requestor->requestSceneActionCreation(
+                m_sceneName, attr, internalCB);
+        }
+
+        RCSResourceAttributes RemoteSceneAction::getExecutionParameter() const
         {
             return m_attributes;
         }
 
         RCSRemoteResourceObject::Ptr RemoteSceneAction::getRemoteResourceObject() const
         {
-            return m_requestorPtr->getRemoteResourceObject();
+            return m_requestor->getRemoteResourceObject();
         }
 
         void RemoteSceneAction::onUpdated(int eCode, const RCSResourceAttributes &attr,
                                           const UpdateCallback &clientCB)
         {
+            int result = SCENE_CLIENT_BADREQUEST;
             if (eCode == SCENE_RESPONSE_SUCCESS)
             {
+                std::lock_guard< std::mutex > lock(m_attributeLock);
                 m_attributes = attr;
+                result = SCENE_RESPONSE_SUCCESS;
             }
 
-            clientCB(eCode);
+            clientCB(result);
         }
 
     }

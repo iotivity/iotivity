@@ -24,7 +24,8 @@
 #include <memory>
 #include <functional>
 #include <string>
-#include <map>
+#include <unordered_map>
+#include <mutex>
 
 #include "RemoteScene.h"
 #include "RCSRemoteResourceObject.h"
@@ -41,23 +42,20 @@ namespace OIC
             public:
                 typedef std::shared_ptr< RemoteSceneCollection > Ptr;
 
-                typedef std::function< void(RemoteScene::Ptr, int) >
-                AddNewSceneCallback;
+                typedef std::function< void(RemoteScene::Ptr, int eCode) >
+                    AddNewSceneCallback;
 
-                typedef std::function< void(int eCode) >
-                RemoveSceneCallback;
+                typedef std::function< void(int eCode) > RemoveSceneCallback;
 
-                typedef std::function< void(int eCode) >
-                SetNameCallback;
-
+                typedef std::function< void(int eCode) > SetNameCallback;
 
             public:
                 ~RemoteSceneCollection() = default;
 
                 void addNewScene(const std::string &name, AddNewSceneCallback);
-                void removeScene(const std::string &name, RemoveSceneCallback);
+                void removeScene(RemoteScene::Ptr, RemoveSceneCallback);
 
-                std::map< const std::string, RemoteScene::Ptr > getRemoteScenes() const;
+                std::unordered_map< std::string, RemoteScene::Ptr > getRemoteScenes() const;
                 RemoteScene::Ptr getRemoteScene(const std::string &sceneName) const;
 
                 void setName(const std::string &name, SetNameCallback);
@@ -65,29 +63,27 @@ namespace OIC
 
                 std::string getId() const;
 
-
             private:
-                RemoteSceneCollection
-                (std::shared_ptr< SceneCollectionResourceRequestor > pRequestor,
-                 const std::string &id, const std::string &name);
+                RemoteSceneCollection(
+                    std::shared_ptr< SceneCollectionResourceRequestor >,
+                    const std::string &id, const std::string &name);
 
-                void initializeRemoteSceneCollection(const std::vector< RCSRepresentation > &,
+                void initializeRemoteSceneCollection(const std::vector< RCSResourceAttributes > &,
                                                      const std::string &);
 
                 RemoteScene::Ptr createRemoteSceneInstance(const std::string &);
 
-                void onSceneAddedRemoved(const int &reqType, const std::string &name, int eCode,
+                void onSceneAddedRemoved(int, const std::string &name, int,
                                          const AddNewSceneCallback &, const RemoveSceneCallback &);
 
                 void onNameSet(int, const std::string &, const SetNameCallback &);
 
-
             private:
                 std::string m_id;
                 std::string m_name;
-                std::map< const std::string, RemoteScene::Ptr > m_remoteScenes;
-
-                std::shared_ptr< SceneCollectionResourceRequestor > m_requestorPtr;
+                mutable std::mutex m_sceneLock;
+                std::unordered_map< std::string, RemoteScene::Ptr > m_remoteScenes;
+                std::shared_ptr< SceneCollectionResourceRequestor > m_requestor;
 
                 friend class RemoteSceneList;
         };

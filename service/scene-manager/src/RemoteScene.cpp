@@ -20,8 +20,10 @@
 
 #include "RemoteScene.h"
 
+#include <utility>
+#include <cassert>
+
 #include "SceneCommons.h"
-#include "RemoteSceneUtils.h"
 #include "SceneCollectionResourceRequestor.h"
 #include "SceneMemberResourceRequestor.h"
 #include "OCPlatform.h"
@@ -32,110 +34,92 @@ namespace OIC
     {
 
         RemoteScene::RemoteScene
-        (const std::string &name, std::shared_ptr< SceneCollectionResourceRequestor > pRequestor)
-            : m_name{ name }, m_requestorPtr{ pRequestor }
+        (const std::string &name, std::shared_ptr< SceneCollectionResourceRequestor > requestor)
+            : m_name{ name }, m_requestor{ requestor }
         {
-            // TODO: check pRequestor not null
+            assert(requestor);
         }
 
         void RemoteScene::addNewSceneAction(
-            RCSRemoteResourceObject::Ptr, const RCSResourceAttributes &, AddNewSceneActionCallback)
+            RCSRemoteResourceObject::Ptr targetResource, const RCSResourceAttributes &attrs,
+            AddNewSceneActionCallback clientCB)
         {
-
-        }
-
-        void RemoteScene::addNewSceneAction
-        (RCSRemoteResourceObject::Ptr pTargetResource,
-         const std::string &key, const RCSResourceAttributes::Value &value,
-         AddNewSceneActionCallback clientCB)
-        {
-            // TODO: check pTargetResource not null
-            // TODO: check key not empty
-
-            RCSResourceAttributes attr;
-            attr[key] = RCSResourceAttributes::Value(value);
-
-            std::string targetLink = pTargetResource->getAddress() + pTargetResource->getUri();
-
-            auto sceneActions = m_remoteSceneActions.find(targetLink);
-
-            // if the target is not a scene member
-            if (sceneActions == m_remoteSceneActions.end())
+            if (targetResource == nullptr)
             {
-                SceneCollectionResourceRequestor::InternalAddMemberCallback internalCB
-                    = std::bind(&RemoteScene::onSceneActionAdded, this,
-                                std::placeholders::_1, std::placeholders::_2,
-                                pTargetResource, attr, std::move(clientCB));
-
-                m_requestorPtr->requestAddSceneMember
-                (pTargetResource, m_name, attr, internalCB);
+                throw RCSInvalidParameterException("RCSRemoteResoureObject value is null");
             }
-            else
+            if (attrs.empty())
             {
-                // check if sceneAction already exists
-                for (auto itr : sceneActions->second)
-                {
-                    if (itr->getAction().contains(key))
-                    {
-                        // throw exception
-                        break;
-                    }
-                }
-
-                SceneMemberResourceRequestor::Ptr pMemberRequestor
-                    = m_requestorPtr->getSceneMemberResourceRequestor(targetLink);
-
-                if (pMemberRequestor)
-                {
-                    SceneMemberResourceRequestor::InternalAddSceneActionCallback internalCB
-                        = std::bind(&RemoteScene::onSceneActionAdded, this,
-                                    nullptr,
-                                    std::placeholders::_1, pTargetResource,
-                                    attr, std::move(clientCB));
-
-                    pMemberRequestor->
-                    requestSceneActionCreation(m_name, attr, internalCB);
-                }
+                throw RCSInvalidParameterException("RCSResourceAttributes is empty");
             }
+
+            SceneCollectionResourceRequestor::InternalAddMemberCallback internalCB
+                = std::bind(&RemoteScene::onSceneActionAdded, this,
+                std::placeholders::_1, targetResource, attrs, std::move(clientCB));
+
+            m_requestor->requestAddSceneMember(
+                targetResource, m_name, attrs, internalCB);
         }
 
-        void RemoteScene::removeSceneAction(RemoteSceneAction::Ptr/* pRemoteSceneAction */,
-                                            RemoveSceneActionCallback /* clientCB */)
+        void RemoteScene::addNewSceneAction(
+            RCSRemoteResourceObject::Ptr targetResource,
+            const std::string &key, const RCSResourceAttributes::Value &value,
+            AddNewSceneActionCallback clientCB)
+        {
+            if (targetResource == nullptr)
+            {
+                throw RCSInvalidParameterException("RCSRemoteResoureObject value is null");
+            }
+            if (key.empty())
+            {
+                throw RCSInvalidParameterException("Scene action key value is empty");
+            }
+
+            RCSResourceAttributes attrs;
+            attrs[key] = RCSResourceAttributes::Value(value);
+
+            addNewSceneAction(targetResource, attrs, clientCB);
+        }
+
+        void RemoteScene::removeSceneAction(RemoteSceneAction::Ptr, RemoveSceneActionCallback)
         {
 
         }
 
-        void RemoteScene::removeSceneAction(RCSRemoteResourceObject::Ptr/* pTargetResource*/,
-                                            RemoveSceneActionCallback /* clientCB */)
+        void RemoteScene::removeSceneAction(RCSRemoteResourceObject::Ptr /* rargetResource*/,
+                                            RemoveSceneActionCallback)
         {
 
         }
 
         std::vector< RemoteSceneAction::Ptr > RemoteScene::getRemoteSceneActions() const
         {
-            std::vector< RemoteSceneAction::Ptr > vecSceneActions;
+            std::lock_guard< std::mutex > actionlock(m_sceneActionLock);
+            std::vector< RemoteSceneAction::Ptr > sceneActionList;
 
             for (auto itrMap : m_remoteSceneActions)
             {
-                for (auto itrVec : itrMap.second)
-                {
-                    vecSceneActions.push_back(itrVec);
-                }
+                sceneActionList.push_back(itrMap.second);
             }
 
-            return vecSceneActions;
+            return sceneActionList;
         }
 
-        std::vector< RemoteSceneAction::Ptr > RemoteScene::getRemoteSceneAction
-        (const RCSRemoteResourceObject::Ptr pTargetResource) const
+        RemoteSceneAction::Ptr RemoteScene::getRemoteSceneAction(
+            const RCSRemoteResourceObject::Ptr targetResource) const
         {
+            if (targetResource == nullptr)
+            {
+                throw RCSInvalidParameterException("RCSRemoteResoureObject value is null");
+            }
+
+            std::lock_guard< std::mutex > actionlock(m_sceneActionLock);
             auto itr = m_remoteSceneActions.find(
-                           pTargetResource->getAddress() + pTargetResource->getUri());
+                targetResource->getAddress() + targetResource->getUri());
 
             if (itr == m_remoteSceneActions.end())
             {
-                ;
-                // TODO: throw unadded scene action exception
+                throw RCSInvalidParameterException("Invalid RCSRemoteResoureObject");
             }
 
             return itr->second;
@@ -149,71 +133,73 @@ namespace OIC
         void RemoteScene::execute(RemoteSceneExecuteCallback clientCB)
         {
             SceneCollectionResourceRequestor::InternalSceneRequestCallback internalCB
-                = std::bind(&RemoteScene::onSceneExecuted, this,
-                            std::placeholders::_1, std::placeholders::_2,
+                = std::bind(&RemoteScene::onSceneExecuted, this, std::placeholders::_2,
                             std::placeholders::_3, std::move(clientCB));
 
-            m_requestorPtr->requestSceneExecution(m_name, internalCB);
+            m_requestor->requestSceneExecution(m_name, internalCB);
         }
 
         RemoteSceneAction::Ptr RemoteScene::createRemoteSceneActionInstance
-        (const std::string &targetLink, const RCSResourceAttributes &attrs)
+        (const std::string &targetHref, const RCSResourceAttributes &attrs)
         {
-            RemoteSceneAction::Ptr pNewSceneAction = nullptr;
-            SceneMemberResourceRequestor::Ptr pMemRequestor
-                = m_requestorPtr->getSceneMemberResourceRequestor(targetLink);
-            if (pMemRequestor)
+            SceneMemberResourceRequestor::Ptr memRequestor
+                = m_requestor->getSceneMemberResourceRequestor(targetHref);
+            
+            if (memRequestor == nullptr)
             {
-                pNewSceneAction.reset(new RemoteSceneAction(pMemRequestor, m_name, attrs));
-                m_remoteSceneActions[targetLink].push_back(pNewSceneAction);
+                return nullptr;
             }
 
-            return pNewSceneAction;
+            RemoteSceneAction::Ptr newAction(new RemoteSceneAction(memRequestor, m_name, attrs));
+
+            {
+                std::lock_guard< std::mutex > actionlock(m_sceneActionLock);
+                m_remoteSceneActions.insert(
+                    std::make_pair(targetHref, newAction));
+            }
+
+            return newAction;
         }
 
-        void RemoteScene::addExistingRemoteSceneAction
-        (const std::string &address, const std::string &targetLink,
-         const std::string &id, const std::string &key,  const RCSResourceAttributes::Value &value)
+        void RemoteScene::addExistingRemoteSceneAction(
+            const std::string &href, const std::string &targetHref,
+            const std::string &id, const std::string &key,
+            const RCSResourceAttributes::Value &value)
         {
-            SceneMemberResourceRequestor::Ptr pfoundMember
-                = m_requestorPtr->getSceneMemberResourceRequestor(targetLink);
+            SceneMemberResourceRequestor::Ptr foundMemberRequestor
+                = m_requestor->getSceneMemberResourceRequestor(targetHref);
 
-            if (pfoundMember == nullptr)
-                m_requestorPtr->createSceneMemberResourceRequestor(address, id, targetLink);
+            if (foundMemberRequestor == nullptr)
+                m_requestor->createSceneMemberResourceRequestor(href, id, targetHref);
 
             RCSResourceAttributes attrs;
             attrs[key] = RCSResourceAttributes::Value(value);
 
-            createRemoteSceneActionInstance(targetLink, attrs);
+            createRemoteSceneActionInstance(targetHref, attrs);
         }
 
-        void RemoteScene::onSceneActionAdded
-        (SceneMemberResourceRequestor::Ptr, int eCode, RCSRemoteResourceObject::Ptr target,
-         const RCSResourceAttributes &attrs,
-         AddNewSceneActionCallback clientCB)
+        void RemoteScene::onSceneActionAdded(
+            int eCode, RCSRemoteResourceObject::Ptr target, const RCSResourceAttributes &attrs,
+            const AddNewSceneActionCallback &clientCB)
         {
             int result = SCENE_CLIENT_BADREQUEST;
-            RemoteSceneAction::Ptr pNewRemoteSceneAction = nullptr;
+            RemoteSceneAction::Ptr newAction = nullptr;
 
             if (eCode == SCENE_RESPONSE_SUCCESS)
             {
                 std::string targetLink = target->getAddress() + target->getUri();
 
-                pNewRemoteSceneAction = createRemoteSceneActionInstance(targetLink, attrs);
+                newAction = createRemoteSceneActionInstance(targetLink, attrs);
 
-                if (pNewRemoteSceneAction)
+                if (newAction)
                     result = SCENE_RESPONSE_SUCCESS;
             }
-            else
-            {
-                // error
-            }
-
-            clientCB(pNewRemoteSceneAction, result);
+            
+            clientCB(newAction, result);
         }
 
-        void RemoteScene::onSceneExecuted(const int &, const std::string &sceneName,
-                                          const int eCode, RemoteSceneExecuteCallback clientCB)
+        void RemoteScene::onSceneExecuted(const std::string &sceneName, const int eCode,
+            const RemoteSceneExecuteCallback &clientCB)
         {
             clientCB(sceneName, eCode);
         }

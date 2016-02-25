@@ -28,6 +28,10 @@
 #define SCENE_COMMONS_H
 
 #include <string>
+#include <vector>
+
+#include "OCApi.h"
+#include "RCSRemoteResourceObject.h"
 
 namespace OIC
 {
@@ -61,6 +65,10 @@ namespace OIC
         const std::string SCENE_LIST_URI = "/SceneListResURI";
         const std::string PREFIX_SCENE_COLLECTION_URI = "/a/sceneCollection";
         const std::string PREFIX_SCENE_MEMBER_URI = "/a/sceneMember";
+
+        const OCConnectivityType SCENE_CONNECTIVITY = CT_ADAPTER_IP;
+        const std::string SCENE_CLIENT_REQ_IF = OC::DEFAULT_INTERFACE;
+        const std::string SCENE_CLIENT_CREATE_REQ_IF = OC::BATCH_INTERFACE;
 
         const int SCENE_RESPONSE_SUCCESS = 200;
         const int SCENE_CLIENT_BADREQUEST = 400;
@@ -97,6 +105,20 @@ namespace OIC
              * @throw RCSException
              */
             static std::string getNetAddress();
+
+            /**
+            * Returns RCSRemoteResourceObject pointer created with provided resource information.
+            *
+            * @param address uri of resource (e.g. coap://192.168.0.2:12345/a/light)
+            * @param ct OCConnectivityType type of connectivity indicating the interface
+            * @param vecRT a vector of resource types implemented by the resource
+            * @param vecIF a vector of interfaces that the resource supports/implements
+            *
+            * @throw RCSException
+            */
+            static RCSRemoteResourceObject::Ptr createRCSResourceObject(
+                const std::string &address, const OCConnectivityType ct,
+                const std::vector< std::string > &vecRT, const std::vector< std::string > &vecIF);
         };
     }
 }

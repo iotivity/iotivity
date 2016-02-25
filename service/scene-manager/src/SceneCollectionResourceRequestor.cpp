@@ -27,25 +27,20 @@ namespace OIC
     namespace Service
     {
 
-        SceneCollectionResourceRequestor::SceneCollectionResourceRequestor
-        (RCSRemoteResourceObject::Ptr pSceneCollection)
-            : m_SceneCollectionResourcePtr{ pSceneCollection }
+        SceneCollectionResourceRequestor::SceneCollectionResourceRequestor(
+            RCSRemoteResourceObject::Ptr collectionResource)
+                : m_sceneCollectionResource{ collectionResource }
         {
-            SCENE_CLIENT_ASSERT_NOT_NULL(pSceneCollection);
+            SCENE_CLIENT_ASSERT_NOT_NULL(collectionResource);
         }
 
-        SceneCollectionResourceRequestor::~SceneCollectionResourceRequestor()
-        {
-
-        }
-
-        void SceneCollectionResourceRequestor::requestSceneCreation
-        (const std::string &name, InternalSceneRequestCallback createSceneCB)
+        void SceneCollectionResourceRequestor::requestSceneCreation(
+            const std::string &name, InternalSceneRequestCallback createSceneCB)
         {
             RCSResourceAttributes attributesToSet;
-            std::vector< std::string > vecScenes{ name };
-
-            attributesToSet[SCENE_KEY_SCENEVALUES] = vecScenes;
+            std::vector< std::string > scenenames{ name };
+            
+            attributesToSet[SCENE_KEY_SCENEVALUES] = scenenames;
 
             RCSRemoteResourceObject::RemoteAttributesSetCallback setRequestCB
                 = std::bind(&SceneCollectionResourceRequestor::onSetResponseForScene,
@@ -53,12 +48,12 @@ namespace OIC
                             name, std::move(createSceneCB), ADD_SCENE,
                             SceneCollectionResourceRequestor::wPtr(shared_from_this()));
 
-            m_SceneCollectionResourcePtr->setRemoteAttributes(
+            m_sceneCollectionResource->setRemoteAttributes(
                 std::move(attributesToSet), std::move(setRequestCB));
         }
 
         void SceneCollectionResourceRequestor::requestSceneRemoval
-        (const std::string &/* name */, InternalSceneRequestCallback /* removeSceneCB */)
+        (const std::string &/* name */, InternalSceneRequestCallback)
         {
 
         }
@@ -75,21 +70,21 @@ namespace OIC
                             name, std::move(executeSceneCB), EXECUTE_SCENE,
                             SceneCollectionResourceRequestor::wPtr(shared_from_this()));
 
-            m_SceneCollectionResourcePtr->setRemoteAttributes
-            (std::move(attributesToSet), std::move(setRequestCB));
+            m_sceneCollectionResource->setRemoteAttributes(
+                std::move(attributesToSet), std::move(setRequestCB));
         }
 
-        void SceneCollectionResourceRequestor::requestAddSceneMember
-        (RCSRemoteResourceObject::Ptr pMember, const std::string &sceneName,
-         const RCSResourceAttributes &attr, InternalAddMemberCallback addMemberCB)
+        void SceneCollectionResourceRequestor::requestAddSceneMember(
+            RCSRemoteResourceObject::Ptr targetResource, const std::string &sceneName,
+            const RCSResourceAttributes &attr, InternalAddMemberCallback addMemberCB)
         {
-            SCENE_CLIENT_ASSERT_NOT_NULL(pMember);
+            SCENE_CLIENT_ASSERT_NOT_NULL(targetResource);
 
             RCSResourceAttributes attributesToSet, linkAttrs;
 
-            linkAttrs[SCENE_KEY_HREF] = pMember->getAddress() + pMember->getUri();
-            linkAttrs[SCENE_KEY_IF] = pMember->getInterfaces();
-            linkAttrs[SCENE_KEY_RT] = pMember->getTypes();
+            linkAttrs[SCENE_KEY_HREF] = targetResource->getAddress() + targetResource->getUri();
+            linkAttrs[SCENE_KEY_IF] = targetResource->getInterfaces();
+            linkAttrs[SCENE_KEY_RT] = targetResource->getTypes();
 
             attributesToSet[SCENE_KEY_PAYLOAD_LINK] = linkAttrs;
 
@@ -111,23 +106,33 @@ namespace OIC
 
             RCSRemoteResourceObject::SetCallback setRequestCB
                 = std::bind(&SceneCollectionResourceRequestor::onSceneMemberAdded,
-                            std::placeholders::_1, std::placeholders::_2,
-                            std::placeholders::_3,
-                            pMember->getAddress() + pMember->getUri(),
+                            std::placeholders::_2, std::placeholders::_3,
+                            targetResource->getAddress() + targetResource->getUri(),
                             std::move(addMemberCB),
                             SceneCollectionResourceRequestor::wPtr(shared_from_this()));
 
             RCSQueryParams queryParams;
             queryParams.setResourceInterface(SCENE_CLIENT_CREATE_REQ_IF);
 
-            m_SceneCollectionResourcePtr->set(queryParams, std::move(attributesToSet),
+            m_sceneCollectionResource->set(queryParams, std::move(attributesToSet),
                                               std::move(setRequestCB));
         }
 
         void SceneCollectionResourceRequestor::requestSetName
-        (const std::string &, InternalSetNameCallback)
+        (const std::string &name, InternalSetNameCallback internalCB)
         {
+            RCSResourceAttributes attrs;
+            attrs[SCENE_KEY_NAME] = name;
 
+            RCSRemoteResourceObject::SetCallback setRequestCB
+                = std::bind(&SceneCollectionResourceRequestor::onNameSet,
+                std::placeholders::_2, std::placeholders::_3, name, std::move(internalCB),
+                SceneCollectionResourceRequestor::wPtr(shared_from_this()));
+
+            RCSQueryParams queryParams;
+            queryParams.setResourceInterface(SCENE_CLIENT_REQ_IF);
+
+            m_sceneCollectionResource->set(queryParams, std::move(attrs), std::move(setRequestCB));
         }
 
         void SceneCollectionResourceRequestor::requestGet(
@@ -136,62 +141,74 @@ namespace OIC
             RCSQueryParams params;
             params.setResourceInterface(ifType);
 
-            m_SceneCollectionResourcePtr->get(params, cb);
+            m_sceneCollectionResource->get(params, cb);
         }
 
-        RCSRemoteResourceObject::Ptr SceneCollectionResourceRequestor::getRemoteResourceObject()
+        RCSRemoteResourceObject::Ptr 
+            SceneCollectionResourceRequestor::getRemoteResourceObject() const
         {
-            return m_SceneCollectionResourcePtr;
+            return m_sceneCollectionResource;
         }
 
         SceneMemberResourceRequestor::Ptr
         SceneCollectionResourceRequestor::createSceneMemberResourceRequestor(
-            const std::string &memLink, const std::string &id, const std::string &targetlink)
+            const std::string &memHref, const std::string &id, const std::string &targetHref)
         {
-            SceneMemberResourceRequestor::Ptr pMemRequestor = nullptr;
-
-            std::vector< std::string > vecRT{ SCENE_MEMBER_RT };
-            std::vector< std::string > vecIF{ SCENE_CLIENT_REQ_IF };
-
-            RCSRemoteResourceObject::Ptr pResource
-                = createRCSResourceObject(memLink, SCENE_CONNECTIVITY, vecRT, vecIF);
-
-            if (pResource)
+            try
             {
-                pMemRequestor =
+                std::vector< std::string > vecRT{ SCENE_MEMBER_RT };
+                std::vector< std::string > vecIF{ SCENE_CLIENT_REQ_IF };
+
+                RCSRemoteResourceObject::Ptr pResource
+                    = SceneUtils::createRCSResourceObject(
+                        memHref, SCENE_CONNECTIVITY, vecRT, vecIF);
+
+                SceneMemberResourceRequestor::Ptr pMemRequestor =
                     std::make_shared< SceneMemberResourceRequestor >(pResource, id);
 
-                m_mapMemberRequestors[targetlink] = pMemRequestor;
-            }
+                {
+                    std::lock_guard< std::mutex > memberlock(m_memberRequestorLock);
+                    m_memberRequestors[targetHref] = pMemRequestor;
+                }
 
-            return pMemRequestor;
+                return pMemRequestor;
+            }
+            catch (const std::exception &e)
+            {
+                SCENE_CLIENT_PRINT_LOG(e.what());
+                return nullptr;
+            }
         }
 
         SceneMemberResourceRequestor::Ptr
-        SceneCollectionResourceRequestor::getSceneMemberResourceRequestor
-        (const std::string &memLink)
+        SceneCollectionResourceRequestor::getSceneMemberResourceRequestor(
+            const std::string &targetHref) const
         {
-            return m_mapMemberRequestors.find(memLink) != m_mapMemberRequestors.end() ?
-                   m_mapMemberRequestors.at(memLink) : nullptr;
+            std::lock_guard< std::mutex > memberlock(m_memberRequestorLock);
+
+            return m_memberRequestors.find(targetHref) != m_memberRequestors.end() ?
+                m_memberRequestors.at(targetHref) : nullptr;
         }
 
-        void SceneCollectionResourceRequestor::onSetResponseForScene
-        (const RCSResourceAttributes &attrs, int eCode,
-         const std::string &name, const InternalSceneRequestCallback &cb,
-         REQUEST_TYPE reqType, SceneCollectionResourceRequestor::wPtr ptr)
+        void SceneCollectionResourceRequestor::onSetResponseForScene(
+            const RCSResourceAttributes &attrs, int eCode,
+            const std::string &name, const InternalSceneRequestCallback &cb,
+            REQUEST_TYPE reqType, SceneCollectionResourceRequestor::wPtr ptr)
         {
             SceneCollectionResourceRequestor::Ptr collectionPtr = ptr.lock();
 
             if (collectionPtr)
+            {
                 collectionPtr->onSetResponseForScene_impl(
                     std::move(attrs), eCode, name, std::move(cb), reqType);
+            }
         }
 
-        void SceneCollectionResourceRequestor::onSetResponseForScene_impl
-        (const RCSResourceAttributes &attrs, int eCode, const std::string &name,
-         const InternalSceneRequestCallback &internalCB, REQUEST_TYPE reqType)
+        void SceneCollectionResourceRequestor::onSetResponseForScene_impl(
+            const RCSResourceAttributes &attrs, int eCode, const std::string &name,
+            const InternalSceneRequestCallback &internalCB, REQUEST_TYPE reqType)
         {
-            // TODO: error code
+            // TODO error code
             int resultCode = SCENE_CLIENT_BADREQUEST;
 
             if (eCode == OC_STACK_OK)
@@ -203,12 +220,14 @@ namespace OIC
                         case ADD_SCENE:
                             {
                                 auto scenes
-                                    = attrs.at(SCENE_KEY_SCENEVALUES).get
-                                      < std::vector< std::string > >();
+                                    = attrs.at(SCENE_KEY_SCENEVALUES).
+                                        get< std::vector< std::string > >();
 
                                 if ((std::find(scenes.begin(), scenes.end(), name))
                                     != scenes.end())
+                                {
                                     resultCode = SCENE_RESPONSE_SUCCESS;
+                                }
                             }
                             break;
 
@@ -221,7 +240,9 @@ namespace OIC
                                     = attrs.at(SCENE_KEY_LAST_SCENE).get< std::string >();
 
                                 if (lastScene.compare(name) == 0)
+                                {
                                     resultCode = SCENE_RESPONSE_SUCCESS;
+                                }
                             }
                             break;
                     }
@@ -236,26 +257,27 @@ namespace OIC
             internalCB(reqType, name, resultCode);
         }
 
-        void SceneCollectionResourceRequestor::onSceneMemberAdded
-        (const HeaderOpts &headOpt, const RCSRepresentation &rep, int eCode,
-         const std::string &targetLink, const InternalAddMemberCallback &internalCB,
-         SceneCollectionResourceRequestor::wPtr ptr)
+        void SceneCollectionResourceRequestor::onSceneMemberAdded(
+            const RCSRepresentation &rep, int eCode,
+            const std::string &targetHref, const InternalAddMemberCallback &internalCB,
+            SceneCollectionResourceRequestor::wPtr ptr)
         {
-            SceneCollectionResourceRequestor::Ptr pSceneCollectionRequestor
-                = ptr.lock();
+            SceneCollectionResourceRequestor::Ptr collection = ptr.lock();
 
-            if (pSceneCollectionRequestor)
-                pSceneCollectionRequestor->onSceneMemberAdded_impl(
-                    headOpt, rep, eCode, targetLink, std::move(internalCB));
+            if (collection)
+            {
+                collection->onSceneMemberAdded_impl(
+                    std::move(rep), eCode, targetHref, std::move(internalCB));
+            }
         }
 
-        void SceneCollectionResourceRequestor::onSceneMemberAdded_impl
-        (const HeaderOpts &, const RCSRepresentation &rep, int eCode,
-         const std::string &targetLink, const InternalAddMemberCallback &internalCB)
+        void SceneCollectionResourceRequestor::onSceneMemberAdded_impl(
+            const RCSRepresentation &rep, int eCode,
+            const std::string &targetHref, const InternalAddMemberCallback &internalCB)
         {
-            // TODO: error code
+            // TODO error code
             int result = SCENE_CLIENT_BADREQUEST;
-            SceneMemberResourceRequestor::Ptr pMemRequestor = nullptr;
+            SceneMemberResourceRequestor::Ptr memRequestor = nullptr;
 
             if (eCode == OC_STACK_OK)
             {
@@ -263,14 +285,13 @@ namespace OIC
                 {
                     RCSResourceAttributes receivedAttrs = rep.getAttributes();
 
-                    pMemRequestor
+                    memRequestor
                         = createSceneMemberResourceRequestor(
                               receivedAttrs.at(SCENE_KEY_CREATEDLINK).get< std::string >(),
                               receivedAttrs.at(SCENE_KEY_ID).get< std::string >(),
-                              targetLink);
+                              targetHref);
 
-                    if (pMemRequestor)
-                        result = SCENE_RESPONSE_SUCCESS;
+                    if (memRequestor) result = SCENE_RESPONSE_SUCCESS;
                 }
                 catch (const std::exception &e)
                 {
@@ -279,7 +300,36 @@ namespace OIC
                 }
             }
 
-            internalCB(pMemRequestor, result);
+            internalCB(result);
+        }
+
+        void SceneCollectionResourceRequestor::onNameSet(const RCSRepresentation &rep, int eCode,
+            const std::string &name, const InternalSetNameCallback &internalCB,
+            SceneCollectionResourceRequestor::wPtr ptr)
+        {
+            SceneCollectionResourceRequestor::Ptr collectionPtr = ptr.lock();
+
+            if (collectionPtr)
+            {
+                collectionPtr->onNameSet_impl(std::move(rep), eCode, name, std::move(internalCB));
+            }
+        }
+
+        void SceneCollectionResourceRequestor::onNameSet_impl(
+            const RCSRepresentation &rep, int eCode, const std::string &name,
+            const InternalSetNameCallback &internalCB)
+        {
+            int result = SCENE_CLIENT_BADREQUEST;
+            if (eCode == OC_STACK_OK)
+            {
+                if (rep.getAttributes().at(SCENE_KEY_NAME).get< std::string >() == name)
+                {
+                    result = SCENE_RESPONSE_SUCCESS;
+                }
+
+            }
+
+            internalCB(result);
         }
 
     }

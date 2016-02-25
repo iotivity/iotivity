@@ -23,6 +23,7 @@
 
 #include <memory>
 #include <string>
+#include <mutex>
 
 #include "RCSRemoteResourceObject.h"
 
@@ -38,22 +39,18 @@ namespace OIC
             public:
                 typedef std::shared_ptr< RemoteSceneAction > Ptr;
 
-                typedef std::function< void(int eCode) >
-                UpdateCallback;
-
+                typedef std::function< void(int eCode) > UpdateCallback;
 
             public:
                 ~RemoteSceneAction() = default;
 
-                void update(const RCSResourceAttributes &attr, UpdateCallback);
-                void update(const std::string &key,
-                            const RCSResourceAttributes::Value &value,
-                            UpdateCallback);
+                void setExecutionParameter(const std::string &key,
+                    const RCSResourceAttributes::Value &value, UpdateCallback);
+                void setExecutionParameter(const RCSResourceAttributes &attr, UpdateCallback);
 
-                RCSResourceAttributes getAction() const;
+                RCSResourceAttributes getExecutionParameter() const;
 
                 RCSRemoteResourceObject::Ptr getRemoteResourceObject() const;
-
 
             private:
                 RemoteSceneAction(std::shared_ptr< SceneMemberResourceRequestor >,
@@ -64,11 +61,11 @@ namespace OIC
 
                 void onUpdated(int, const RCSResourceAttributes &, const UpdateCallback &);
 
-
             private:
                 std::string m_sceneName;
+                std::mutex m_attributeLock;
                 RCSResourceAttributes m_attributes;
-                std::shared_ptr< SceneMemberResourceRequestor > m_requestorPtr;
+                std::shared_ptr< SceneMemberResourceRequestor > m_requestor;
 
                 friend class RemoteScene;
         };
