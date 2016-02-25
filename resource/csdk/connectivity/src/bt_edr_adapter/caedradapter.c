@@ -263,6 +263,15 @@ CAResult_t CAStopEDRListeningServer()
 
 CAResult_t CAStartEDRDiscoveryServer()
 {
+#ifdef __TIZEN__
+    // Start device discovery
+    CAResult_t result = CAEDRStartDeviceDiscovery();
+    if(CA_STATUS_OK != result)
+    {
+        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Failed to Start Device discovery");
+    }
+#endif
+
     return CAStartServer();
 }
 
