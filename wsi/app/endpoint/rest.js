@@ -10,7 +10,7 @@ module.exports = {
         console.log("Trying to perform rest request : "+ JSON.stringify(cap));
         if (cap.operation == "GET") {
             var ep = cap.endpoint;
-            if(ep.startsWith('http')){ //local URI
+            if(!ep.indexOf('http', 0)){ // local URI
                 var uri = mustache.render(cap.endpoint, cap.params);
                 console.log("Final URL = " + uri + " " + cap.params);
                 request.get(uri, function (error, response, body) {
