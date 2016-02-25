@@ -59,18 +59,30 @@ namespace OIC
             RCSRequest(const std::shared_ptr< RCSResourceObject >&,
                     const std::shared_ptr< OC::OCResourceRequest >&);
 
+            /**
+             * @return the resource object which receives this request.
+             */
             std::weak_ptr< RCSResourceObject > getResourceObject() const noexcept;
 
             /**
-            * @return Returns the URI of the request.
+            * @return the URI of the request.
             *
             */
             std::string getResourceUri() const;
 
-            const std::shared_ptr< OC::OCResourceRequest >& getOCRequest() const noexcept;
+            /**
+             * @return the OCResourceRequest.
+             */
+            std::shared_ptr< OC::OCResourceRequest > getOCRequest() const noexcept;
 
+            /**
+             * @return the query parameters of the request.
+             */
             const std::map< std::string, std::string >& getQueryParams() const;
 
+            /**
+             * @return the interface of the request.
+             */
             std::string getInterface() const;
 
         private:
