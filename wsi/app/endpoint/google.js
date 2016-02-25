@@ -11,7 +11,7 @@ module.exports = {
                 {
                     "cid": "com.google.search",
                     "isauthrequired": "false",
-                    "endpoint": "https://www.googleapis.com/customsearch/v1",
+                    "endpoint": "https://www.googleapis.com/customsearch/v1?key={{key}}&cx={{cx}}&q={{q}}",
                     "endpointtype": "REST",
                     "operation": "GET",
                     "params": {

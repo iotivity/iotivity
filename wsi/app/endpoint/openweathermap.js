@@ -10,12 +10,12 @@ module.exports = {
                 {
                     "cid": "org.owm.getbycity",
                     "isauthrequired": false,
-                    "endpoint": "http://api.openweathermap.org/data/2.5/weather",
+                    "endpoint": "http://api.openweathermap.org/data/2.5/weather?q={{q}}&appid={{appid}}",
                     "endpointtype": "REST",
                     "operation": "GET",
                     "params": {
-                        "q": "cityname",
-                        "appid": "appid"                            
+                        "q": "cityname",  // Replace with specific cityname
+                        "appid": "appid"  // Replace with specific API key
                     },
                     "tags": [
                         "weather by name"
@@ -24,13 +24,13 @@ module.exports = {
                 {
                     "cid": "org.owm.getbylocation",
                     "isauthrequired": false,
-                    "endpoint": "http://api.openweathermap.org/data/2.5/weather",
+                    "endpoint": "http://api.openweathermap.org/data/2.5/weather?lat={{lat}}&lon={{lon}}&appid={{appid}}",
                     "endpointtype": "REST",
                     "operation": "GET",
                     "params": {
                         "lat": "135",
-                        "long": "135",
-                        "appid": "appid"
+                        "lon": "135",
+                        "appid": "appid"  // Replace with specific API key
                     },
                     "tags": [
                         "weather by name"
@@ -39,13 +39,13 @@ module.exports = {
                 {
                     "cid": "org.owm.getbycode",
                     "isauthrequired": false,
-                    "endpoint": "http://api.openweathermap.org/data/2.5/weather",
+                    "endpoint": "http://api.openweathermap.org/data/2.5/weather?zip={{zip}},{{cc}}&appid={{appid}}",
                     "endpointtype": "REST",
                     "operation": "GET",
                     "params": {
-                        "zip": "zip",
-                        "cc": "country code",
-                        "appid": "appid"
+                        "zip": "zip",  // Replace with specific zip code
+                        "cc": "country code",  // Replace with specific country code
+                        "appid": "appid"  // Replace with specific API key
                     },
                     "tags": [
                         "weather by name"
@@ -62,7 +62,3 @@ module.exports = {
     }
 }
 console.log("openweathermap  initialized");
-
-
-
-
