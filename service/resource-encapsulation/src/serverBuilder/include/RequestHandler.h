@@ -21,12 +21,11 @@
 #ifndef SERVERBUILDER_REQUESTHANDLER_H
 #define SERVERBUILDER_REQUESTHANDLER_H
 
-#include <RCSResponse.h>
-#include <RCSResourceAttributes.h>
+#include "RCSResponse.h"
+#include "RCSResourceAttributes.h"
 
 namespace OC
 {
-    class OCResourceResponse;
     class OCRepresentation;
 }
 
@@ -40,13 +39,9 @@ namespace OIC
         class RequestHandler
         {
         private:
-            typedef std::function< std::shared_ptr< OC::OCResourceResponse >(RCSResourceObject&) >
-                        BuildResponseHolder;
+            typedef std::function< OC::OCRepresentation() > RepresentationBuilder;
 
         public:
-            typedef std::shared_ptr< RequestHandler > Pre;
-
-            static constexpr int DEFAULT_ERROR_CODE = 200;
 
             RequestHandler();
 
@@ -61,10 +56,18 @@ namespace OIC
 
             virtual ~RequestHandler() { };
 
-            std::shared_ptr< OC::OCResourceResponse > buildResponse(RCSResourceObject&);
+            int getErrorCode() const;
+
+            bool hasCustomRepresentation() const;
+
+            OC::OCRepresentation getRepresentation() const;
+
+        public:
+            static constexpr int DEFAULT_ERROR_CODE = 200;
 
         private:
-            const BuildResponseHolder m_holder;
+            const int m_errorCode;
+            const RepresentationBuilder m_repBuilder;
         };
 
         class SetRequestHandler: public RequestHandler

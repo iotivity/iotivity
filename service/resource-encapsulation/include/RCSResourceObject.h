@@ -29,6 +29,7 @@
 #include <string>
 #include <mutex>
 #include <thread>
+#include <map>
 
 #include "RCSResourceAttributes.h"
 #include "RCSResponse.h"
@@ -45,6 +46,7 @@ namespace OIC
 
         class RCSRequest;
         class RCSRepresentation;
+        class InterfaceHandler;
 
         /**
          * @brief Thrown when lock has not been acquired.
@@ -149,6 +151,14 @@ namespace OIC
                         Builder& addType(std::string&& type);
 
                         /**
+                         * Sets the default interface
+                         *
+                         * @param interface default interface name
+                         *
+                         */
+                        Builder& setDefaultInterface(std::string interface);
+
+                        /**
                          * Sets whether the resource is discoverable.
                          *
                          * @param discoverable whether to be discoverable.
@@ -197,6 +207,7 @@ namespace OIC
                         std::string m_uri;
                         std::vector< std::string > m_types;
                         std::vector< std::string > m_interfaces;
+                        std::string m_defaultInterface;
                         uint8_t m_properties;
                         RCSResourceAttributes m_resourceAttributes;
                 };
@@ -462,6 +473,9 @@ namespace OIC
 
                 std::vector< RCSResourceObject::Ptr > getBoundResources() const;
 
+                std::string getUri() const;
+                std::string getDefaultInterface() const;
+
                 std::vector< std::string > getInterfaces() const;
                 std::vector< std::string > getTypes() const;
 
@@ -470,13 +484,20 @@ namespace OIC
         private:
             RCSResourceObject(const std::string&, uint8_t, RCSResourceAttributes&&);
 
+            void init(OCResourceHandle, const std::vector< std::string >&,
+                    const std::vector< std::string >&, const std::string&);
+
             static OCEntityHandlerResult entityHandler(const std::weak_ptr< RCSResourceObject >&,
                     const std::shared_ptr< OC::OCResourceRequest >&);
 
             OCEntityHandlerResult handleRequest(const std::shared_ptr< OC::OCResourceRequest >&);
-            OCEntityHandlerResult handleRequestGet(const std::shared_ptr< OC::OCResourceRequest >&);
-            OCEntityHandlerResult handleRequestSet(const std::shared_ptr< OC::OCResourceRequest >&);
+            OCEntityHandlerResult handleRequestGet(const RCSRequest&);
+            OCEntityHandlerResult handleRequestSet(const RCSRequest&);
             OCEntityHandlerResult handleObserve(const std::shared_ptr< OC::OCResourceRequest >&);
+
+            template <typename RESPONSE, typename RESPONSE_BUILDER>
+            OCEntityHandlerResult sendResponse(const RCSRequest&,
+                     const RESPONSE&, const RESPONSE_BUILDER&);
 
             void expectOwnLock() const;
 
@@ -492,7 +513,10 @@ namespace OIC
             template< typename K, typename V >
             void setAttributeInternal(K&&, V&&);
 
-            bool applyAcceptanceMethod(const RCSSetResponse&, const RCSResourceAttributes&);
+            RCSResourceAttributes applyAcceptanceMethod(const RCSSetResponse&,
+                    const RCSResourceAttributes&);
+
+            InterfaceHandler findInterfaceHandler(const std::string&) const;
 
         private:
             const uint8_t m_properties;
@@ -500,6 +524,7 @@ namespace OIC
             const std::string m_uri;
             std::vector< std::string > m_interfaces;
             std::vector< std::string > m_types;
+            std::string m_defaultInterface;
 
             OCResourceHandle m_resourceHandle;
 
@@ -522,6 +547,8 @@ namespace OIC
             mutable std::mutex m_mutexForBoundResources;
 
             std::vector< RCSResourceObject::Ptr > m_boundResources;
+
+            std::map< std::string, InterfaceHandler > m_interfaceHandlers;
 
         };
 

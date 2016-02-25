@@ -31,37 +31,6 @@ namespace
 {
     using namespace OIC::Service;
 
-    typedef std::function< OC::OCRepresentation(RCSResourceObject&) > OCRepresentationGetter;
-
-    OC::OCRepresentation getOCRepresentationFromResource(RCSResourceObject& resource)
-    {
-        RCSResourceObject::LockGuard lock{ resource, RCSResourceObject::AutoNotifyPolicy::NEVER };
-        return ResourceAttributesConverter::toOCRepresentation(resource.getAttributes());
-    }
-
-    OC::OCRepresentation getOCRepresentation(const RCSResourceAttributes& attrs)
-    {
-        return ResourceAttributesConverter::toOCRepresentation(attrs);
-    }
-
-    template< typename T >
-    OCRepresentationGetter wrapGetOCRepresentation(T&& attrs)
-    {
-        return std::bind(getOCRepresentation, std::forward<T>(attrs));
-    }
-
-    std::shared_ptr< OC::OCResourceResponse > doBuildResponse(RCSResourceObject& resource,
-             int errorCode, OCRepresentationGetter ocRepGetter)
-    {
-        auto response = std::make_shared< OC::OCResourceResponse >();
-
-        response->setResponseResult(OC_EH_OK);
-        response->setErrorCode(errorCode);
-        response->setResourceRepresentation(ocRepGetter(resource));
-
-        return response;
-    }
-
     AttrKeyValuePairs applyAcceptMethod(RCSResourceObject& resource,
             const RCSResourceAttributes& requestAttrs)
     {
@@ -117,35 +86,46 @@ namespace OIC
         constexpr int RequestHandler::DEFAULT_ERROR_CODE;
 
         RequestHandler::RequestHandler() :
-                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, DEFAULT_ERROR_CODE,
-                        getOCRepresentationFromResource) }
+                m_errorCode{ DEFAULT_ERROR_CODE },
+                m_repBuilder{ }
         {
         }
 
         RequestHandler::RequestHandler(int errorCode) :
-                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, errorCode,
-                        getOCRepresentationFromResource) }
+                m_errorCode{ errorCode },
+                m_repBuilder{ }
+
         {
         }
 
         RequestHandler::RequestHandler(const RCSResourceAttributes& attrs, int errorCode) :
-                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, errorCode,
-                        wrapGetOCRepresentation(attrs)) }
+                m_errorCode{ errorCode },
+                m_repBuilder{ std::bind(ResourceAttributesConverter::toOCRepresentation, attrs) }
         {
         }
 
         RequestHandler::RequestHandler(RCSResourceAttributes&& attrs, int errorCode) :
-                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, errorCode,
-                        wrapGetOCRepresentation(std::move(attrs))) }
+                m_errorCode{ errorCode },
+                m_repBuilder{ std::bind(ResourceAttributesConverter::toOCRepresentation,
+                        std::move(attrs)) }
         {
         }
 
-        std::shared_ptr< OC::OCResourceResponse > RequestHandler::buildResponse(
-                RCSResourceObject& resource)
+        int RequestHandler::getErrorCode() const
         {
-            return m_holder(resource);
+            return m_errorCode;
         }
 
+        bool RequestHandler::hasCustomRepresentation() const
+        {
+            return m_repBuilder != nullptr;
+        }
+
+        OC::OCRepresentation RequestHandler::getRepresentation() const
+        {
+            assert(m_repBuilder);
+            return m_repBuilder();
+        }
 
         SetRequestHandler::SetRequestHandler() :
                 RequestHandler{ }

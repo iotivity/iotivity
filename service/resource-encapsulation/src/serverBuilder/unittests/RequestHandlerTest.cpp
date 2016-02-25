@@ -37,6 +37,7 @@ constexpr int NEW_VALUE{ 1 };
 typedef OCStackResult (*RegisterResource)(OCResourceHandle&, std::string&,
         const std::string&, const std::string&, OC::EntityHandler, uint8_t);
 
+
 class RequestHandlerTest: public TestWithMock
 {
 public:
@@ -58,40 +59,6 @@ protected:
         server->setAttribute(EXISTING, ORIGIN_VALUE);
     }
 };
-
-TEST_F(RequestHandlerTest, ResponseHasSameValuesPassedToHandlerConstructor)
-{
-    RequestHandler handler{ -1000 };
-
-    auto response = handler.buildResponse(*server);
-
-    ASSERT_EQ(-1000, response->getErrorCode());
-}
-
-TEST_F(RequestHandlerTest, ResponseHasSameAttrsWithServerAttrs)
-{
-    RequestHandler handler{};
-
-    auto response = handler.buildResponse(*server);
-
-    ASSERT_EQ(ORIGIN_VALUE, response->getResourceRepresentation()[EXISTING].getValue<int>());
-}
-
-TEST_F(RequestHandlerTest, ResponseHasAttrsSetByCustomAttrRequestHandler)
-{
-    constexpr char key[] { "key" };
-    constexpr int newValue{ 100 };
-
-    RCSResourceAttributes attrs;
-    attrs[key] = newValue;
-    RequestHandler handler{ attrs };
-
-    auto response = handler.buildResponse(*server);
-
-    ASSERT_EQ(ORIGIN_VALUE, response->getResourceRepresentation()[key].getValue<int>());
-}
-
-
 
 class SetRequestHandlerAcceptanceTest: public RequestHandlerTest
 {
