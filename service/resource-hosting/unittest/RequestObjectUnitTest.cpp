@@ -21,14 +21,18 @@
 #include "UnitTestHelper.h"
 
 #include "ResourceEncapsulationTestSimulator.h"
+#include "OCResourceRequest.h"
 #include "RequestObject.h"
+#include "RCSRequest.h"
 
 using namespace testing;
 using namespace OIC::Service;
 
 namespace
 {
-    void setRequestCB(const RCSResourceAttributes &, const RCSResourceAttributes & ) { }
+    void setRequestCB(
+            const RCSResourceAttributes &, int,
+            const RCSRequest &, RequestObject::Ptr) { }
 }
 
 class RequestObjectTest : public TestWithMock
@@ -87,17 +91,19 @@ public:
 TEST_F(RequestObjectTest, invokeRequestExpectCallwithSetter)
 {
    bool isCalled = false;
-   RequestObject::Ptr instance = std::make_shared<RequestObject>(setRequestCB);
 
    mocks.ExpectCallFunc(setRequestCB).Do(
-           [this, &isCalled](const RCSResourceAttributes &, const RCSResourceAttributes &)
+           [this, &isCalled](const RCSResourceAttributes &, int,
+                   const RCSRequest &, RequestObject::Ptr)
            {
                isCalled = true;
                notifyCondition();
            });
 
    RCSResourceAttributes att;
-   instance->invokeRequest(remoteObject, RequestObject::RequestMethod::Set, att);
+   std::shared_ptr<OC::OCResourceRequest> request;
+   RequestObject::invokeRequest(remoteObject, RCSRequest(testObject->getResourceServer(), request),
+           RequestObject::RequestMethod::Set, att, setRequestCB);
 
    waitForCondition();
 

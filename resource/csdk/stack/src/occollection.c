@@ -237,23 +237,29 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
     }
 
     OCResource *collResource = (OCResource *)ehRequest->resource;
-
+    OCChildResource *tempChildResource = NULL;
     OCRepPayload* payload = NULL;
+
+    if(!collResource)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     OCStackResult ret = BuildResponseRepresentation(collResource, &payload);
     if (ret == OC_STACK_OK)
     {
-        for (size_t i = 0; i < MAX_CONTAINED_RESOURCES && ret == OC_STACK_OK; i++)
+        tempChildResource = collResource->rsrcChildResourcesHead;
+        while (tempChildResource && ret == OC_STACK_OK)
         {
-            if (collResource)
+            OCResource* temp = tempChildResource->rsrcResource;
+            if (temp)
             {
-                OCResource* temp = collResource->rsrcResources[i];
-                if (temp)
-                {
-                    //TODO : Add resource type filtering once collections
-                    // start supporting queries.
-                    ret = BuildResponseRepresentation(temp, &payload);
-                }
+                //TODO : Add resource type filtering once collections
+                // start supporting queries.
+                ret = BuildResponseRepresentation(temp, &payload);
             }
+
+            tempChildResource = tempChildResource->next;
         }
     }
 
@@ -267,6 +273,7 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
         response.resourceHandle = (OCResourceHandle) collResource;
         ret = OCDoResponse(&response);
     }
+
     OCRepPayloadDestroy(payload);
     return ret;
 }
@@ -280,6 +287,7 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
     }
 
     OCResource * collResource = (OCResource *) ehRequest->resource;
+    OCChildResource *tempChildResource = NULL;
 
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -302,18 +310,21 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
     if (stackRet == OC_STACK_OK)
     {
-        for (uint8_t i = 0; i < MAX_CONTAINED_RESOURCES; i++)
+        tempChildResource = collResource->rsrcChildResourcesHead;
+
+        while(tempChildResource)
         {
-            OCResource* temp = collResource->rsrcResources[i];
-            if (temp)
+            OCResource* tempRsrcResource = tempChildResource->rsrcResource;
+
+            if (tempRsrcResource)
             {
                 // Note that all entity handlers called through a collection
                 // will get the same pointer to ehRequest, the only difference
                 // is ehRequest->resource
-                ehRequest->resource = (OCResourceHandle) temp;
+                ehRequest->resource = (OCResourceHandle) tempRsrcResource;
 
-                OCEntityHandlerResult ehResult = temp->entityHandler(OC_REQUEST_FLAG, ehRequest,
-                                                                     temp->entityHandlerCallbackParam);
+                OCEntityHandlerResult ehResult = tempRsrcResource->entityHandler(OC_REQUEST_FLAG, ehRequest,
+                                                        tempRsrcResource->entityHandlerCallbackParam);
 
                 // The default collection handler is returning as OK
                 if (stackRet != OC_STACK_SLOW_RESOURCE)
@@ -333,7 +344,11 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
             {
                 break;
             }
+
+            tempChildResource = tempChildResource->next;
+
         }
+
         ehRequest->resource = (OCResourceHandle) collResource;
     }
     return stackRet;
@@ -344,13 +359,16 @@ uint8_t GetNumOfResourcesInCollection (OCResource *resource)
     if (resource)
     {
         uint8_t num = 0;
-        for (uint8_t i = 0; i < MAX_CONTAINED_RESOURCES; i++)
+        OCChildResource *tempChildResource = NULL;
+
+        tempChildResource = resource->rsrcChildResourcesHead;
+
+        while(tempChildResource)
         {
-            if (resource->rsrcResources[i])
-            {
-                num++;
-            }
+            num++;
+            tempChildResource = tempChildResource->next;
         }
+
         return num;
     }
     else

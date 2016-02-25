@@ -1,6 +1,7 @@
 package org.iotivity.ca.service;
 
 import android.content.Context;
+import android.app.Activity;
 
 public class RMInterface {
 
@@ -13,7 +14,7 @@ public class RMInterface {
 
     public native void setNativeResponseListener(Object listener);
 
-    public native void RMInitialize(Context context);
+    public native void RMInitialize(Context context, Activity activity);
 
     public native void RMTerminate();
 

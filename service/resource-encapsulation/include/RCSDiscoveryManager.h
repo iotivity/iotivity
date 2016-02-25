@@ -65,7 +65,7 @@ namespace OIC
                 DiscoveryTask& operator =(DiscoveryTask&&) const = delete;
 
                 /**
-                 * It is cancelling the task of discovery.
+                 * It cancels the task of discovery.
                  * If it is already canceled, the operation is ignored.
                  */
                 void cancel();

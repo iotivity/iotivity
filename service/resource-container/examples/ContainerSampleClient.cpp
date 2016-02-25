@@ -289,7 +289,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 
         // Invoke resource's put API with rep, query map and the callback parameter
 
-        resource->put(rep, QueryParamsMap(), &onPut);
+        resource->post(rep, QueryParamsMap(), &onPut);
     }
 }
 
@@ -314,7 +314,7 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
             std::cout << "\tcolor: " << mylight.m_color << std::endl;
             std::cout << "\tdim: " << mylight.m_dim << std::endl;
 
-            putLightRepresentation(curResource);
+            postLightRepresentation(curResource);
         }
         else
         {

@@ -75,6 +75,9 @@ else :
     rdsdk = rd_env.StaticLibrary('resource_directory', rd_src)
 
 rd_env.InstallTarget(rdsdk, 'libresource_directory')
+rd_env.UserInstallTargetLib(rdsdk, 'libresource_directory')
+rd_env.UserInstallTargetHeader('/include/rd_client.h', 'service/resource-directory', 'rd_client.h')
+rd_env.UserInstallTargetHeader('/include/rd_server.h', 'service/resource-directory', 'rd_server.h')
 
 ######################################################################
 # Samples for the resource directory

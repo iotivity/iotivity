@@ -243,6 +243,23 @@ void coap_delete_pdu(coap_pdu_t *pdu)
 }
 
 #ifdef WITH_TCP
+size_t coap_get_total_message_length(const unsigned char *data, size_t size)
+{
+    if (!data || !size)
+    {
+        debug("received data length is null\n");
+        return 0;
+    }
+
+    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+            ((unsigned char *)data)[0] >> 4);
+    size_t optPaylaodLen = coap_get_length_from_header((unsigned char *)data,
+                                                        transport);
+    size_t headerLen = coap_get_tcp_header_length((unsigned char *)data);
+
+    return headerLen + optPaylaodLen;
+}
+
 coap_transport_type coap_get_tcp_header_type_from_size(unsigned int size)
 {
     if (COAP_TCP_LENGTH_FIELD_8_BIT < size && COAP_TCP_LENGTH_FIELD_16_BIT >= size)
@@ -436,14 +453,9 @@ size_t coap_get_opt_header_length(unsigned short key, size_t length)
     {
         optDeltaLength = 1;
     }
-    else if (COAP_OPTION_FIELD_16_BIT < key && COAP_OPTION_FIELD_32_BIT >= key)
-    {
-        optDeltaLength = 2;
-    }
     else
     {
-        printf("Error : Reserved for the Payload marker for Delta");
-        return 0;
+        optDeltaLength = 2;
     }
 
     size_t optLength = 0;

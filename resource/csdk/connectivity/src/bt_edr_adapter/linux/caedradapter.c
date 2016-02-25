@@ -53,10 +53,11 @@ CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
         .GetnetInfo = CAGetEDRInterfaceInformation,
         .readData = CAReadEDRData,
         .stopAdapter = CAStopEDR,
-        .terminate = CATerminateEDR
+        .terminate = CATerminateEDR,
+        .cType = CA_ADAPTER_RFCOMM_BTEDR
     };
 
-    registerCallback(handler, CA_ADAPTER_RFCOMM_BTEDR);
+    registerCallback(handler);
 
     return CA_STATUS_OK;
 }

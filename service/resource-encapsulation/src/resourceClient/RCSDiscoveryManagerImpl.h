@@ -118,7 +118,7 @@ namespace OIC
                 RCSDiscoveryManagerImpl();
                 ~RCSDiscoveryManagerImpl() = default;
 
-                void subscribePresenceWithMuticast();
+                void subscribePresenceWithMulticast();
 
                 /**
                  * Check duplicated callback and invoke callback when resource is discovered

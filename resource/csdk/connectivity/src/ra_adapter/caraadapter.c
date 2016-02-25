@@ -374,15 +374,17 @@ CAResult_t CAInitializeRA(CARegisterConnectivityCallback registerCallback,
 
     CAConnectivityHandler_t raHandler = {
         .startAdapter = CAStartRA,
+        .stopAdapter = CAStopRA,
         .startListenServer = CAStartRAListeningServer,
         .startDiscoveryServer = CAStartRADiscoveryServer,
         .sendData = CASendRAUnicastData,
         .sendDataToAll = CASendRAMulticastData,
         .GetnetInfo = CAGetRAInterfaceInformation,
         .readData = CAReadRAData,
-        .stopAdapter = CAStopRA,
-        .terminate = CATerminateRA};
-    registerCallback(raHandler, CA_ADAPTER_REMOTE_ACCESS);
+        .terminate = CATerminateRA,
+        .cType = CA_ADAPTER_REMOTE_ACCESS};
+
+    registerCallback(raHandler);
 #ifdef NDEBUG
     xmpp_log_t *log = xmpp_get_default_logger(XMPP_LEVEL_ERROR);
 #else
@@ -793,18 +795,19 @@ CAResult_t CAInitializeRA(CARegisterConnectivityCallback registerCallback,
     g_networkChangeCallback = netCallback;
     g_networkPacketCallback = networkPacketCallback;
 
-    CAConnectivityHandler_t raHandler = {};
-    raHandler.startAdapter = CAStartRA;
-    raHandler.startListenServer = CAStartRAListeningServer;
-    raHandler.stopListenServer = CAStopRAListeningServer;
-    raHandler.startDiscoveryServer = CAStartRADiscoveryServer;
-    raHandler.sendData = CASendRAUnicastData;
-    raHandler.sendDataToAll = CASendRAMulticastData;
-    raHandler.GetnetInfo = CAGetRAInterfaceInformation;
-    raHandler.readData = CAReadRAData;
-    raHandler.stopAdapter = CAStopRA;
-    raHandler.terminate = CATerminateRA;
-    registerCallback(raHandler, CA_ADAPTER_REMOTE_ACCESS);
+    CAConnectivityHandler_t raHandler = {
+        .startAdapter = CAStartRA,
+        .stopAdapter = CAStopRA,
+        .startListenServer = CAStartRAListeningServer,
+        .stopListenServer = CAStopRAListeningServer,
+        .startDiscoveryServer = CAStartRADiscoveryServer,
+        .sendData = CASendRAUnicastData,
+        .sendDataToAll = CASendRAMulticastData,
+        .GetnetInfo = CAGetRAInterfaceInformation,
+        .readData = CAReadRAData,
+        .terminate = CATerminateRA,
+        .cType = CA_ADAPTER_REMOTE_ACCESS};
+    registerCallback(raHandler);
 
     return CA_STATUS_OK;
 }

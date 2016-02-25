@@ -64,7 +64,7 @@ extern "C" {
 
 /** Resource Type.*/
 #define OC_RSRVD_RESOURCE_TYPES_URI           "/oic/res/types/d"
-#ifdef ROUTING_GATEWAY
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 /** Gateway URI.*/
 #define OC_RSRVD_GATEWAY_URI                  "/oic/gateway"
 #endif
@@ -340,14 +340,15 @@ typedef enum
 
     /** RFCOMM over Bluetooth EDR.*/
     OC_ADAPTER_RFCOMM_BTEDR = (1 << 2),
-
 #ifdef RA_ADAPTER
     /**Remote Access over XMPP.*/
     OC_ADAPTER_REMOTE_ACCESS = (1 << 3),
 #endif
     /** CoAP over TCP.*/
-    OC_ADAPTER_TCP           = (1 << 4)
+    OC_ADAPTER_TCP           = (1 << 4),
 
+    /** NFC Transport for Messaging.*/
+    OC_ADAPTER_NFC           = (1 << 5)
 } OCTransportAdapter;
 
 /**
@@ -469,7 +470,10 @@ typedef enum
     CT_ADAPTER_REMOTE_ACCESS = (1 << 19),
 #endif
     /** CoAP over TCP.*/
-    CT_ADAPTER_TCP          = (1 << 20),
+    CT_ADAPTER_TCP     = (1 << 20),
+
+    /** NFC Transport.*/
+    CT_ADAPTER_NFC     = (1 << 21),
 
     /** Insecure transport is the default (subject to change).*/
 

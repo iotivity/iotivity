@@ -67,7 +67,7 @@ namespace OIC
                 *
                 * @return Value of all attributes
                 */
-                virtual RCSResourceAttributes &handleGetAttributesRequest() = 0;
+                virtual RCSResourceAttributes handleGetAttributesRequest() = 0;
 
                 /**
                 * This function should be implemented by the according bundle resource
@@ -85,7 +85,7 @@ namespace OIC
                 *
                 * @return void
                 */
-                virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs) = 0;
+                virtual void handleSetAttributesRequest(const RCSResourceAttributes &attrs) = 0;
         };
     }
 }

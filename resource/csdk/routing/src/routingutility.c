@@ -37,17 +37,53 @@
 
 /**
  * Minimum routing option data length is
- * length of src address(1byte) + length of destination address(1byte) + hop count(2bytes)
+ * length of src address(1byte) + length of destination address(1byte) +
+ * Seq Num(2bytes) + Msg Type(1 bytes)
  */
-#define MIN_ROUTE_OPTION_LEN 4
+#define MIN_ROUTE_OPTION_LEN 5
+
+/**
+ * Stack mode.
+ */
+static OCMode g_rmStackMode = OC_CLIENT;
+
+void RMSetStackMode(OCMode mode)
+{
+    g_rmStackMode = mode;
+}
 
 // destination and source are <GatewayId><ClientId> here, where ClientId is optional.
-OCStackResult RMAddInfo(const char *destination, CAHeaderOption_t **options,
-                        uint8_t *numOptions)
+OCStackResult RMAddInfo(const char *destination, void *message, bool isRequest,
+                        bool *doPost)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    RM_NULL_CHECK_WITH_RET(options, TAG, "options");
-    RM_NULL_CHECK_WITH_RET(numOptions, TAG, "numOptions");
+    RM_NULL_CHECK_WITH_RET(message, TAG, "options");
+
+    CAHeaderOption_t **options = NULL;
+    uint8_t *numOptions = NULL;
+
+    if (isRequest)
+    {
+        CARequestInfo_t *requestMsg = message;
+        options = &(requestMsg->info.options);
+        RM_NULL_CHECK_WITH_RET(options, TAG, "options");
+        numOptions = &(requestMsg->info.numOptions);
+        RM_NULL_CHECK_WITH_RET(numOptions, TAG, "numOptions");
+    }
+    else
+    {
+        CAResponseInfo_t *respMsg = message;
+        if ('\0' == destination[0] && (CA_EMPTY == respMsg->result))
+        {
+            OIC_LOG(DEBUG, TAG, "Response is for an Endpoint, No need to add the routing Option");
+            return OC_STACK_OK;
+        }
+        options = &(respMsg->info.options);
+        RM_NULL_CHECK_WITH_RET(options, TAG, "options");
+        numOptions = &(respMsg->info.numOptions);
+        RM_NULL_CHECK_WITH_RET(numOptions, TAG, "numOptions");
+    }
+
 
     CAHeaderOption_t *optionPtr = NULL;
     int8_t index = -1;
@@ -83,6 +119,38 @@ OCStackResult RMAddInfo(const char *destination, CAHeaderOption_t **options,
         {
             OIC_LOG(ERROR, TAG, "RMParseRouteOption failed");
             return OC_STACK_ERROR;
+        }
+    }
+
+    if (!isRequest)
+    {
+        CAResponseInfo_t *respMsg = message;
+        if (CA_EMPTY == respMsg->result && CA_MSG_ACKNOWLEDGE == respMsg->info.type)
+        {
+            OIC_LOG(DEBUG, TAG, "CA_EMPTY WITH ACKNOWLEDGEMENT");
+            routeOption.msgType = ACK;
+            if (OC_SERVER == g_rmStackMode)
+            {
+                OIC_LOG(DEBUG, TAG, "This is server mode");
+                // Send the Empty message in the response with adding the MSGType in Route option.
+                respMsg->info.type = CA_MSG_NONCONFIRM;
+                respMsg->result = CA_CONTENT;
+            }
+            else
+            {
+                OIC_LOG(DEBUG, TAG, "Send a POST request");
+                if (NULL != doPost)
+                {
+                    *doPost = true;
+                }
+            }
+        }
+        else if (CA_EMPTY == respMsg->result && CA_MSG_RESET == respMsg->info.type)
+        {
+            OIC_LOG(DEBUG, TAG, "CA_EMPTY WITH RESET");
+            routeOption.msgType = RST;
+            respMsg->info.type = CA_MSG_NONCONFIRM;
+            respMsg->result = CA_CONTENT;
         }
     }
 
@@ -268,6 +336,8 @@ OCStackResult RMCreateRouteOption(const RMRouteOption_t *optValue, CAHeaderOptio
     }
 
     memcpy(tempData + count, &optValue->mSeqNum, sizeof(optValue->mSeqNum));
+    count += sizeof(optValue->mSeqNum);
+    memcpy(tempData + count, &optValue->msgType, sizeof(optValue->msgType));
     memcpy(options->optionData, tempData, totalLength);
 
     options->optionID = RM_OPTION_MESSAGE_SWITCHING;
@@ -321,10 +391,13 @@ OCStackResult RMParseRouteOption(const CAHeaderOption_t *options, RMRouteOption_
         }
     }
     memcpy(&optValue->mSeqNum, options->optionData + count, sizeof(optValue->mSeqNum));
+    count += sizeof(optValue->mSeqNum);
+    memcpy(&optValue->msgType, options->optionData + count, sizeof(optValue->msgType));
 
     OIC_LOG_V(INFO, RM_TAG, "Option hopcount is %d", optValue->mSeqNum);
     OIC_LOG_V(INFO, RM_TAG, "Option Sender Addr is [%u][%u]", optValue->srcGw, optValue->srcEp);
     OIC_LOG_V(INFO, RM_TAG, "Option Dest Addr is [%u][%u]", optValue->destGw, optValue->destEp);
+    OIC_LOG_V(INFO, RM_TAG, "Message Type is [%u]", optValue->msgType);
     OIC_LOG(DEBUG, RM_TAG, "OUT");
     return OC_STACK_OK;
 }

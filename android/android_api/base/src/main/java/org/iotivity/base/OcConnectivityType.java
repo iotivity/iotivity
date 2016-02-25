@@ -44,6 +44,9 @@ public enum OcConnectivityType {
     /** CoAP over TCP.*/
     CT_ADAPTER_TCP(1 << 20),
 
+    /** NFC Transport.*/
+    CT_ADAPTER_NFC(1 << 21),
+
     /** Insecure transport is the default (subject to change).*/
 
     /** secure the transport path.*/
