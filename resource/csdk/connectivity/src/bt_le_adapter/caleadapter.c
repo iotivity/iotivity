@@ -551,21 +551,6 @@ static void CALEClearSenderInfo()
     CALEClearSenderInfoImpl(&g_bleClientSenderInfo);
 }
 
-static size_t CAGetMessageLengthFromData(const unsigned char *recvBuffer)
-{
-    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
-            ((unsigned char *)recvBuffer)[0] >> 4);
-    size_t optPaylaodLen = coap_get_length_from_header((unsigned char *)recvBuffer,
-                                                        transport);
-    size_t headerLen = coap_get_tcp_header_length((unsigned char *)recvBuffer);
-
-    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "option/paylaod length [%d]", optPaylaodLen);
-    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "header length [%d]", headerLen);
-    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "total data length [%d]", headerLen + optPaylaodLen);
-
-    return headerLen + optPaylaodLen;
-}
-
 static CAResult_t CAInitLEClientSenderQueue()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CAInitLEClientSenderQueue");
@@ -730,7 +715,7 @@ static void CALEDataReceiverHandler(void *threadData)
 
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Parsing the header");
 
-            newSender->totalDataLen = CAGetMessageLengthFromData(bleData->data);
+            newSender->totalDataLen = coap_get_total_message_length(bleData->data, bleData->dataLen);
 
             if(!(newSender->totalDataLen))
             {
@@ -2273,30 +2258,13 @@ static CAResult_t CALEAdapterServerSendData(const CAEndpoint_t *remoteEndpoint,
     VERIFY_NON_NULL(data, CALEADAPTER_TAG, "Param data is NULL");
 
 #ifdef SINGLE_THREAD
-    uint8_t header[CA_HEADER_LENGTH] = { 0 };
-
-    CAResult_t result =
-        CAGenerateHeader(header, CA_HEADER_LENGTH, dataLen);
-
-    if (CA_STATUS_OK != result)
-    {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "Generate header failed");
-        return CA_STATUS_FAILED;
-    }
-
     if (!CAIsLEConnected())
     {
         OIC_LOG(ERROR, CALEADAPTER_TAG, "le not conn");
         return CA_STATUS_FAILED;
     }
 
-    result = CAUpdateCharacteristicsToAllGattClients(header, CA_HEADER_LENGTH);
-    if (CA_STATUS_OK != result)
-    {
-        OIC_LOG(ERROR, CALEADAPTER_TAG, "Update characteristics failed");
-        return CA_STATUS_FAILED;
-    }
-
+    CAResult_t result = CA_STATUS_OK;
     const uint32_t dataLimit = dataLen / CA_SUPPORTED_BLE_MTU_SIZE;
     for (uint32_t iter = 0; iter < dataLimit; iter++)
     {

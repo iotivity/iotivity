@@ -411,7 +411,6 @@ void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback);
  *                     adapter.
  */
 void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback);
-
 #ifdef __cplusplus
 }
 #endif
