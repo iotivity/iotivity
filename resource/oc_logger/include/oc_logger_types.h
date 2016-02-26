@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __OC_LOGGER_TYPES_H_2024_09_5
- #define __OC_LOGGER_TYPES_H_2024_09_5
+#ifndef OC_LOGGER_TYPES_H_
+#define OC_LOGGER_TYPES_H_
 
 #include <stddef.h>
 

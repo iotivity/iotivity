@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TAG  PCF("SRM-SVC")
+#define TAG  "SRM-SVC"
 
 OicSecSvc_t        *gSvc = NULL;
 static OCResourceHandle    gSvcHandle = NULL;
@@ -239,7 +239,7 @@ static OCEntityHandlerResult HandleSVCGetRequest (const OCEntityHandlerRequest *
 
     OICFree(jsonStr);
 
-    OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
+    OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -274,7 +274,7 @@ static OCEntityHandlerResult HandleSVCPostRequest (const OCEntityHandlerRequest 
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
-    OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ehRet);
+    OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
@@ -332,7 +332,7 @@ OCStackResult CreateSVCResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG (FATAL, TAG, PCF("Unable to instantiate SVC resource"));
+        OIC_LOG (FATAL, TAG, "Unable to instantiate SVC resource");
         DeInitSVCResource();
     }
     return ret;
@@ -343,7 +343,7 @@ OCStackResult InitSVCResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    OC_LOG_V (INFO, TAG, PCF("Begin %s "), __func__ );
+    OIC_LOG_V (DEBUG, TAG, "Begin %s ", __func__ );
 
     // Read SVC resource from PS
     char* jsonSVRDatabase = GetSVRDatabase();
@@ -363,7 +363,7 @@ OCStackResult InitSVCResource()
         DeInitSVCResource();
     }
 
-    OC_LOG_V (INFO, TAG, PCF("%s RetVal %d"), __func__ , ret);
+    OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ret);
     return ret;
 }
 

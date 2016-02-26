@@ -25,8 +25,8 @@
  * to OCRepresentation.
  */
 
-#ifndef __OCREPRESENTATION_H
-#define __OCREPRESENTATION_H
+#ifndef OC_REPRESENTATION_H_
+#define OC_REPRESENTATION_H_
 
 
 #include <string>
@@ -89,6 +89,7 @@ namespace OC
     class OCRepresentation
     {
         public:
+            friend bool operator==(const OC::OCRepresentation&, const OC::OCRepresentation&);
             // Note: Implementation of all constructors and destructors
             // are all placed in the same location due to a crash that
             // was observed in Android, where merely constructing/destructing
@@ -107,6 +108,10 @@ namespace OC
             OCRepresentation& operator=(OCRepresentation&&) = default;
 
             virtual ~OCRepresentation(){}
+
+            void setDevAddr(const OCDevAddr addr);
+
+            const std::string getHost() const;
 
             OCRepPayload* getPayload() const;
 
@@ -163,8 +168,16 @@ namespace OC
 
                 if(x!= m_values.end())
                 {
-                    val = boost::get<T>(x->second);
-                    return true;
+                    try
+                    {
+                        val = boost::get<T>(x->second);
+                        return true;
+                    }
+                    catch (boost::bad_get& e)
+                    {
+                        val = T();
+                        return false;
+                    }
                 }
                 else
                 {
@@ -188,7 +201,14 @@ namespace OC
                 auto x = m_values.find(str);
                 if(x != m_values.end())
                 {
-                    val = boost::get<T>(x->second);
+                    try
+                    {
+                        val = boost::get<T>(x->second);
+                    }
+                    catch (boost::bad_get& e)
+                    {
+                        return val;
+                    }
                 }
                 return val;
             }
@@ -223,6 +243,9 @@ namespace OC
 
             bool isNULL(const std::string& str) const;
 
+        private:
+            std::string m_host;
+
             // STL Container stuff
         public:
             class iterator;
@@ -242,7 +265,15 @@ namespace OC
                     template<typename T>
                     T getValue() const
                     {
-                        return boost::get<T>(m_values[m_attrName]);
+                        try
+                        {
+                            return boost::get<T>(m_values[m_attrName]);
+                        }
+                        catch (boost::bad_get& e)
+                        {
+                            T val = T();
+                            return val;
+                        }
                     }
 
                     std::string getValueToString() const;
@@ -264,35 +295,22 @@ namespace OC
                     // Enable-if required to prevent conversions to alternate types.  This prevents
                     // ambigious conversions in the case where conversions can include a number of
                     // types, such as the string constructor.
-                    template<typename T, typename= typename std::enable_if<
-                     std::is_same<T, int>::value ||
-                     std::is_same<T, double>::value ||
-                     std::is_same<T, bool>::value ||
-                     std::is_same<T, std::string>::value ||
-                     std::is_same<T, OCRepresentation>::value ||
-                     std::is_same<T, std::vector<int>>::value ||
-                     std::is_same<T, std::vector<std::vector<int>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<int>>>>::value ||
-                     std::is_same<T, std::vector<double>>::value ||
-                     std::is_same<T, std::vector<std::vector<double>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<double>>>>::value ||
-                     std::is_same<T, std::vector<bool>>::value ||
-                     std::is_same<T, std::vector<std::vector<bool>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<bool>>>>::value ||
-                     std::is_same<T, std::vector<std::string>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::string>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<std::string>>>>::value ||
-                     std::is_same<T, std::vector<OCRepresentation>>::value ||
-                     std::is_same<T, std::vector<std::vector<OCRepresentation>>>::value ||
-                     std::is_same<T, std::vector<std::vector<std::vector<OCRepresentation>>>>::value
-                     >::type // enable_if
+                    template<typename T, typename std::enable_if<
+                        is_component<T,
+                            remove_first<AttributeValue>::type
+                            >::value
+                        , int>::type = 0
                     >
                     operator T() const
                     {
                         return this->getValue<T>();
                     }
 
-                    operator std::nullptr_t() const
+                    template<typename T, typename std::enable_if<
+                        std::is_same<T, std::nullptr_t>::value
+                        , int>::type = 0
+                    >
+                    operator T() const
                     {
                         this->getValue<NullType>();
                         return nullptr;
@@ -435,5 +453,5 @@ namespace OC
 } // namespace OC
 
 
-#endif //__OCREPRESENTATION_H
+#endif // OC_REPRESENTATION_H_
 

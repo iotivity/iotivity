@@ -33,10 +33,7 @@
 
 #include "org_iotivity_ca_CaLeClientInterface.h"
 
-#define TAG PCF("CA_LE_MONITOR")
-
-#define BT_STATE_ON (12)
-#define BT_STATE_OFF (10)
+#define TAG PCF("OIC_CA_LE_MONITOR")
 
 static JavaVM *g_jvm;
 
@@ -72,18 +69,22 @@ void CALESetNetStateCallback(CALEDeviceStateChangedCallback callback)
     gCALEDeviceStateChangedCallback = callback;
 }
 
-CAResult_t CAInitializeLEAdapter()
+CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-
-    CALENetworkMonitorJNISetContext();
-    CALENetworkMonitorJniInit();
-
+    (void)threadPool;
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
 CAResult_t CAStartLEAdapter()
+{
+    // Nothing to do.
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAStopLEAdapter()
 {
     // Nothing to do.
 
@@ -174,6 +175,9 @@ CAResult_t CAInitializeLENetworkMonitor()
         return CA_STATUS_FAILED;
     }
 
+    CALENetworkMonitorJNISetContext();
+    CALENetworkMonitorJniInit();
+
     OIC_LOG(DEBUG, TAG, "OUT");
 
     return CA_STATUS_OK;
@@ -216,20 +220,36 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
 
-    OIC_LOG(DEBUG, TAG, "CaLeClientInterface - Network State Changed");
+    OIC_LOG_V(DEBUG, TAG, "CaLeClientInterface - Network State Changed : status(%d)", status);
 
     if (!gCALEDeviceStateChangedCallback)
     {
-        OIC_LOG_V(ERROR, TAG, "gNetworkChangeCb is null", status);
+        OIC_LOG(ERROR, TAG, "gNetworkChangeCb is null");
+        return;
     }
 
-    if (BT_STATE_ON == status) // STATE_ON:12
+    jint state_on = CALEGetConstantsValue(env, CLASSPATH_BT_ADAPTER, "STATE_ON");
+    jint state_off = CALEGetConstantsValue(env, CLASSPATH_BT_ADAPTER, "STATE_OFF");
+    jint state_turning_off = CALEGetConstantsValue(env, CLASSPATH_BT_ADAPTER, "STATE_TURNING_OFF");
+
+    if (state_on == status) // STATE_ON:12
     {
         CANetworkStatus_t newStatus = CA_INTERFACE_UP;
+        CALEClientCreateDeviceList();
+        CALEServerCreateCachedDeviceList();
+
         gCALEDeviceStateChangedCallback(newStatus);
     }
-    else if (BT_STATE_OFF == status) // STATE_OFF:10
+    else if (state_turning_off == status) // BT_STATE_TURNING_OFF:13
     {
+        // gatt Device list will be removed.
+        // so it is need to create list again when adapter is enabled.
+        CAStopLEGattClient();
+    }
+    else if (state_off == status) // STATE_OFF:10
+    {
+        CALEClientStopMulticastServer();
+
         // remove obj for client
         CAResult_t res = CALEClientRemoveAllGattObjs(env);
         if (CA_STATUS_OK != res)
@@ -237,18 +257,20 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
             OIC_LOG(ERROR, TAG, "CALEClientRemoveAllGattObjs has failed");
         }
 
-        res = CALEClientRemoveAllScanDevices(env);
+        res = CALEClientRemoveAllDeviceState();
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "CALEClientRemoveAllScanDevices has failed");
+            OIC_LOG(ERROR, TAG, "CALEClientRemoveAllDeviceState has failed");
         }
 
-        // remove obej for server
+        // remove obj for server
         res = CALEServerRemoveAllDevices(env);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "CALEServerRemoveAllDevices has failed");
         }
+
+        CALEClientSetScanFlag(false);
 
         CANetworkStatus_t newStatus = CA_INTERFACE_DOWN;
         gCALEDeviceStateChangedCallback(newStatus);
@@ -264,8 +286,17 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeBondStateChangedCallback(JNIEnv *en
     VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(addr, TAG, "addr is null");
 
+    // geneally 'addr' parameter will be not ble address, if you didn't bond for BLE.
+    // below logics will be needed when ble pairing is set.
+
+    CAResult_t res = CALEClientDisconnectforAddress(env, addr);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CALEClientDisconnectforAddress has failed");
+    }
+
     // remove obj for client
-    CAResult_t res = CALEClientRemoveGattObjForAddr(env, addr);
+    res = CALEClientRemoveGattObjForAddr(env, addr);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "CANativeRemoveGattObjForAddr has failed");

@@ -1,6 +1,7 @@
 package org.iotivity.ca.service;
 
 import android.content.Context;
+import android.app.Activity;
 
 public class RMInterface {
 
@@ -13,7 +14,7 @@ public class RMInterface {
 
     public native void setNativeResponseListener(Object listener);
 
-    public native void RMInitialize(Context context);
+    public native void RMInitialize(Context context, Activity activity);
 
     public native void RMTerminate();
 
@@ -26,7 +27,7 @@ public class RMInterface {
     public native void RMFindResource(String uri);
 
     public native void RMSendRequest(String uri, String payload,
-            int selectedNetwork, int isSecured, int msgType);
+            int selectedNetwork, int isSecured, int msgType, boolean isBigData);
 
     public native void RMSendReqestToAll(String uri, int selectedNetwork);
 
@@ -36,7 +37,7 @@ public class RMInterface {
     public native void RMAdvertiseResource(String advertiseResource);
 
     public native void RMSendNotification(String uri, String payload,
-            int selectedNetwork, int isSecured, int msgType, int responseValue);
+            int selectedNetwork, int isSecured, int msgType);
 
     public native void RMSelectNetwork(int interestedNetwork);
 

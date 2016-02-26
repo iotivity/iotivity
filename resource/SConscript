@@ -30,6 +30,10 @@ Import('env')
 target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 
+if target_os not in ['tizen']:
+	# Build liblogger
+	SConscript('csdk/logger/SConscript')
+
 if target_os not in ['arduino', 'darwin', 'ios', 'android']:
 	env.AppendUnique(LIBS=['rt'])
 
@@ -41,6 +45,10 @@ SConscript('c_common/SConscript')
 
 # Build connectivity
 SConscript('csdk/connectivity/SConscript')
+
+if env.get('ROUTING') in ['GW', 'EP']:
+	# Build Routing
+	SConscript('csdk/routing/SConscript')
 
 # Build libocsrm
 SConscript('csdk/security/SConscript')
@@ -55,7 +63,7 @@ if target_os not in ['arduino','darwin','ios']:
 	# Build liboc
 	SConscript('src/SConscript')
 
-if target_os not in ['arduino','darwin','ios','android','tizen']:
+if target_os not in ['arduino','darwin','ios','android']:
 	# Build examples
 	SConscript('examples/SConscript')
 

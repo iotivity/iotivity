@@ -31,62 +31,61 @@
  * Connectivity Abstraction Interface APIs.
  */
 #include "cacommon.h"
-
-#ifdef __WITH_DTLS__
-#include "ocsecurityconfig.h"
-#endif
+#include "casecurityinterface.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-/**
- * Callback function type for request delivery.
- * @param[out]   object       Endpoint object from which the request is received.
- *                            It contains endpoint address based on the connectivity type.
- * @param[out]   requestInfo  Info for resource model to understand about the request.
- */
-typedef void (*CARequestCallback)(const CAEndpoint_t *object,
-                                  const CARequestInfo_t *requestInfo);
+#ifdef RA_ADAPTER
 
 /**
- * Callback function type for response delivery.
- * @param[out]   object           Endpoint object from which the response is received.
- * @param[out]   responseInfo     Identifier which needs to be mapped with response.
+ * Callback for bound JID
+ * @param[out]   jid           Boud Jabber Identifier.
  */
-typedef void (*CAResponseCallback)(const CAEndpoint_t *object,
-                                   const CAResponseInfo_t *responseInfo);
-/**
- * Callback function type for error.
- * @param[out]   object           remote device information.
- * @param[out]   errorInfo        CA Error information.
- */
-typedef void (*CAErrorCallback)(const CAEndpoint_t *object,
-                                const CAErrorInfo_t *errorInfo);
-
-#ifdef __WITH_DTLS__
+typedef void (*CAJidBoundCallback)(char *jid);
 
 /**
- * Binary blob containing device identity and the credentials for all devices
- * trusted by this device.
+ * CA Remote Access information for XMPP Client
+ *
  */
 typedef struct
 {
-   unsigned char identity[DTLS_PSK_ID_LEN]; /** identity of self. */
-   uint32_t num;                            /** number of credentials in this blob. */
-   OCDtlsPskCreds *creds;                   /** list of credentials. Size of this
-                                                array is determined by 'num' variable. */
-} CADtlsPskCredsBlob_t;
+    char *hostName;     /**< XMPP server hostname */
+    uint16_t port;      /**< XMPP server serivce port */
+    char *xmppDomain;  /**< XMPP login domain */
+    char *userName;     /**< login username */
+    char *password;     /**< login password */
+    char *resource;     /**< specific resource for login */
+    char *userJid;     /**< specific JID for login */
+    CAJidBoundCallback jidBoundCallback;  /**< callback when JID bound */
+} CARAInfo_t;
+
+#endif //RA_ADAPTER
+
+#ifdef TCP_ADAPTER
+/**
+ * Callback function to pass the connection information from CA to RI.
+ * @param[out]   object           remote device information.
+ */
+typedef void (*CAKeepAliveConnectedCallback)(const CAEndpoint_t *object);
 
 /**
- * Callback function type for getting DTLS credentials.
- * @param[out]   credInfo     DTLS credentials info. Handler has to allocate new memory for.
- *                            both credInfo and credInfo->creds which is then freed by CA.
+ * Callback function to pass the disconnection information from CA to RI.
+ * @param[out]   object           remote device information.
  */
-typedef void (*CAGetDTLSCredentialsHandler)(CADtlsPskCredsBlob_t **credInfo);
-#endif //__WITH_DTLS__
+typedef void (*CAKeepAliveDisconnectedCallback)(const CAEndpoint_t *object);
 
+/**
+ * Register connected callback and disconnected callback to process KeepAlive.
+ * connection informations are delivered these callbacks.
+ * @param[in]   ConnHandler     Connected callback.
+ * @param[in]   DisconnHandler  Disconnected Callback.
+ */
+void CARegisterKeepAliveHandler(CAKeepAliveConnectedCallback ConnHandler,
+                                CAKeepAliveDisconnectedCallback DisconnHandler);
+#endif
 /**
  * Initialize the connectivity abstraction module.
  * It will initialize adapters, thread pool and other modules based on the platform
@@ -106,15 +105,22 @@ void CATerminate();
  * Starts listening servers.
  * This API is used by resource hosting server for listening multicast requests.
  * Based on the adapters configurations, different kinds of servers are started.
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED
  */
 CAResult_t CAStartListeningServer();
+
+/**
+ * Stops the server from receiving the multicast traffic. This is used by sleeping
+ * device to not receives the multicast traffic.
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED
+ */
+CAResult_t CAStopListeningServer();
 
 /**
  * Starts discovery servers.
  * This API is used by resource required clients for listening multicast requests.
  * Based on the adapters configurations, different kinds of servers are started.
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED
  */
 CAResult_t CAStartDiscoveryServer();
 
@@ -123,6 +129,7 @@ CAResult_t CAStartDiscoveryServer();
  *          Requests and responses are delivered these callbacks.
  * @param[in]   ReqHandler    Request callback ( for GET,PUT ..etc).
  * @param[in]   RespHandler   Response Handler Callback.
+ * @param[in]   ErrorHandler  Error Handler Callback.
  * @see     CARequestCallback
  * @see     CAResponseCallback
  * @see     CAErrorCallback
@@ -130,23 +137,14 @@ CAResult_t CAStartDiscoveryServer();
 void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler,
                        CAErrorCallback ErrorHandler);
 
-#ifdef __WITH_DTLS__
-/**
- * Register callback to get DTLS PSK credentials.
- * @param[in]   GetDTLSCredentials    GetDTLS Credetials callback.
- * @return  ::CA_STATUS_OK
- */
-CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSCredentialsHandler GetDTLSCredentials);
-#endif //__WITH_DTLS__
-
 /**
  * Create an endpoint description.
  * @param[in]   flags                 how the adapter should be used.
  * @param[in]   adapter               which adapter to use.
  * @param[in]   addr                  string representation of address.
  * @param[in]   port                  port (for IP_ADAPTER).
- * @param[in]   endpoint              Endpoint which contains the above.
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED
+ * @param[out]  object                Endpoint which contains the above.
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_INVALID_PARAM
  * @remark  The created Remote endpoint can be freed using CADestroyEndpoint().
  * @see     CADestroyEndpoint
  */
@@ -164,10 +162,10 @@ void CADestroyEndpoint(CAEndpoint_t *object);
 
 /**
  * Generating the token for matching the request and response.
- * @param[in]   token            Token for the request.
+ * @param[out]  token            Token for the request.
  * @param[in]   tokenLength      length of the token.
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or
- *          ::CA_MEMORY_ALLOC_FAILED or ::CA_STATUS_NOT_INITIALIZED
+ *          ::CA_MEMORY_ALLOC_FAILED or ::CA_STATUS_INVALID_PARAM
  * @remark  Token memory is destroyed by the caller using CADestroyToken().
  * @see     CADestroyToken
  */
@@ -184,7 +182,8 @@ void CADestroyToken(CAToken_t token);
  * @param[in]   object       Endpoint where the payload need to be sent.
  *                           This endpoint is delivered with Request or response callback.
  * @param[in]   requestInfo  Information for the request.
- * @return  ::CA_STATUS_OK ::CA_STATUS_FAILED ::CA_MEMORY_ALLOC_FAILED
+ * @return ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED or
+           ::CA_SEND_FAILED or ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo);
 
@@ -193,32 +192,24 @@ CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requ
  * @param[in]   object           Endpoint where the payload need to be sent.
  *                               This endpoint is delivered with Request or response callback.
  * @param[in]   responseInfo     Information for the response.
- * @return  ::CA_STATUS_OK or  ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ * @return ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED or
+           ::CA_SEND_FAILED or ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo);
 
 /**
- * Send notification to the remote object.
- * @param[in]   object           Endpoint where the payload need to be sent.
- *                               This endpoint is delivered with Request or response callback.
- * @param[in]   responseInfo     Information for the response.
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
- */
-CAResult_t CASendNotification(const CAEndpoint_t *object,
-                      const  CAResponseInfo_t *responseInfo);
-
-/**
  * Select network to use.
  * @param[in]   interestedNetwork    Connectivity Type enum.
- * @return  ::CA_STATUS_OK or ::CA_NOT_SUPPORTED or
- *          ::CA_STATUS_FAILED or ::CA_NOT_SUPPORTED
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED or
+ *          ::CA_NOT_SUPPORTED or ::CA_ADAPTER_NOT_ENABLED or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork);
 
 /**
  * Select network to unuse.
  * @param[in]   nonInterestedNetwork     Connectivity Type enum.
- * @return  ::CA_STATUS_OK or ::CA_NOT_SUPPORTED or ::CA_STATUS_FAILED
+ * @return  ::CA_STATUS_OK or ::CA_NOT_SUPPORTED or ::CA_STATUS_FAILED or
+            ::CA_STATUS_NOT_INITIALIZED
  */
 CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork);
 
@@ -227,123 +218,28 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork);
  * It should be destroyed by the caller as it Get Information.
  * @param[out]   info     LocalConnectivity objects
  * @param[out]   size     No Of Array objects
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED or
  *          ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size);
 
 /**
  * To Handle the Request or Response.
- * @return   ::CA_STATUS_OK
+ * @return   ::CA_STATUS_OK or ::CA_STATUS_NOT_INITIALIZED
  */
 CAResult_t CAHandleRequestResponse();
-
-#ifdef CI_ADAPTER
-/**
- * Connect to CI Server.
- * @param[in]   ciServerInfo     CI Server information
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or
- *          ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
- */
-CAResult_t CACreateTCPConnection(const CACIServerInfo_t *ciServerInfo);
-
-/**
- * Disconnect to CI Server.
- * @param[in]   ciServerInfo     CI Server information
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or
- *          ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
- */
-CAResult_t CADestroyTCPConnection(const CACIServerInfo_t *ciServerInfo);
-#endif
 
 #ifdef RA_ADAPTER
 /**
  * Set Remote Access information for XMPP Client.
  * @param[in]   caraInfo          remote access info.
  *
- * @return  ::CA_STATUS_OK
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_INVALID_PARAM
  */
 CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo);
 #endif
 
 
-#ifdef __WITH_DTLS__
-
-/**
- * Select the cipher suite for dtls handshake.
- *
- * @param[in] cipher  cipher suite (Note : Make sure endianness).
- *                    0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
- *                    0xC0A8 : TLS_PSK_WITH_AES_128_CCM_8
- *                    0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
- *
- * @retval  ::CA_STATUS_OK    Successful.
- * @retval  ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
- * @retval  ::CA_STATUS_FAILED Operation failed.
- */
-CAResult_t CASelectCipherSuite(const uint16_t cipher);
-
-/**
- * Enable TLS_ECDH_anon_WITH_AES_128_CBC_SHA cipher suite in dtls.
- *
- * @param[in] enable  TRUE/FALSE enables/disables anonymous cipher suite.
- *
- * @retval  ::CA_STATUS_OK    Successful.
- * @retval  ::CA_STATUS_FAILED Operation failed.
- *
- * @note anonymous cipher suite should only be enabled for 'JustWorks' provisioning.
- */
-CAResult_t CAEnableAnonECDHCipherSuite(const bool enable);
-
-
-/**
- * Generate ownerPSK using PRF.
- * OwnerPSK = TLS-PRF('master key' , 'oic.sec.doxm.jw',
- *                    'ID of new device(Resource Server)',
- *                    'ID of owner smart-phone(Provisioning Server)')
- *
- * @param[in] endpoint  information of network address.
- * @param[in] label  Ownership transfer method e.g)"oic.sec.doxm.jw".
- * @param[in] labelLen  Byte length of label.
- * @param[in] rsrcServerDeviceID  ID of new device(Resource Server).
- * @param[in] rsrcServerDeviceIDLen  Byte length of rsrcServerDeviceID.
- * @param[in] provServerDeviceID  label of previous owner.
- * @param[in] provServerDeviceIDLen  byte length of provServerDeviceID.
- * @param[in,out] ownerPSK  Output buffer for owner PSK.
- * @param[in] ownerPSKSize  Byte length of the ownerPSK to be generated.
- *
- * @retval  ::CA_STATUS_OK    Successful.
- * @retval  ::CA_STATUS_FAILED Operation failed.
- */
-CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t *endpoint,
-                              const uint8_t* label, const size_t labelLen,
-                              const uint8_t* rsrcServerDeviceID,
-                              const size_t rsrcServerDeviceIDLen,
-                              const uint8_t* provServerDeviceID,
-                              const size_t provServerDeviceIDLen,
-                              uint8_t* ownerPSK, const size_t ownerPSKSize);
-
-/**
- * Initiate DTLS handshake with selected cipher suite.
- *
- * @param[in] endpoint  information of network address.
- *
- * @retval  ::CA_STATUS_OK    Successful.
- * @retval  ::CA_STATUS_FAILED Operation failed.
- */
-CAResult_t CAInitiateHandshake(const CAEndpoint_t *endpoint);
-
-/**
- * Close the DTLS session.
- *
- * @param[in] endpoint  information of network address.
- *
- * @retval  ::CA_STATUS_OK    Successful.
- * @retval  ::CA_STATUS_FAILED Operation failed.
- */
-CAResult_t CACloseDtlsSession(const CAEndpoint_t *endpoint);
-
-#endif /* __WITH_DTLS__ */
 
 #ifdef __cplusplus
 } /* extern "C" */

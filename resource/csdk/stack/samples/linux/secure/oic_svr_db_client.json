@@ -36,6 +36,7 @@
 	"doxm":	{
 		"oxm":	[0],
 		"oxmsel": 0,
+		"sct": 1,
 		"owned": true,
 		"deviceid":	"MjIyMjIyMjIyMjIyMjIyMg==",
 		"ownr":	"MjIyMjIyMjIyMjIyMjIyMg=="
@@ -44,6 +45,7 @@
 		"credid": 1,
 		"sub": "MTExMTExMTExMTExMTExMQ==",
 		"credtyp": 1,
+		"prd": "20150630T060000/20990920T220000",
 		"pvdata": "QUFBQUFBQUFBQUFBQUFBQQ==",
         "ownrs" : ["MjIyMjIyMjIyMjIyMjIyMg=="]
 	}]

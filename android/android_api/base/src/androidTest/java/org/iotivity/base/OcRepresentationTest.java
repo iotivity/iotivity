@@ -190,6 +190,12 @@ public class OcRepresentationTest extends InstrumentationTestCase {
     public void testAttributeAccessByType() throws OcException {
         OcRepresentation rep = new OcRepresentation();
 
+        //null
+        OcRepresentation repNull = null;
+        rep.setValue("nullKey", repNull);
+        OcRepresentation repNullActual = rep.getValue("nullKey");
+        assertNull(repNullActual);
+
         //integer
         String intK = "intK";
         int intV = 4;

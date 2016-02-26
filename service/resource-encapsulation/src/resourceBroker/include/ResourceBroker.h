@@ -44,11 +44,11 @@ namespace OIC
                 InvalidParameterException(std::string&& what)
                 : RCSException{ std::move(what) } {}
             };
-            class FailedSubscribePresenceException: public PlatformException
+            class FailedSubscribePresenceException: public RCSPlatformException
             {
             public:
                 FailedSubscribePresenceException(OCStackResult reason)
-                : PlatformException{reason} {}
+                : RCSPlatformException{reason} {}
             };
 
             static ResourceBroker * getInstance();

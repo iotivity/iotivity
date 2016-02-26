@@ -118,13 +118,13 @@ namespace OCResourceResponseTest
         OCResourceResponse response;
         OCResourceHandle resHandle;
 
-        std::string resourceURI = "/a/light1";
+        std::string resourceURI = "/a/light2";
         std::string resourceTypeName = "core.light";
         std::string resourceInterface = DEFAULT_INTERFACE;
         uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
 
-        EXPECT_EQ(OC_STACK_OK, OCCreateResource(&resHandle, resourceURI.c_str(),
-                resourceTypeName.c_str(), resourceInterface.c_str(), nullptr, nullptr,
+        EXPECT_EQ(OC_STACK_OK, OCCreateResource(&resHandle, resourceTypeName.c_str(),
+                resourceInterface.c_str(), resourceURI.c_str(), nullptr, nullptr,
                 resourceProperty));
         EXPECT_EQ(NULL, response.getResourceHandle());
         EXPECT_NO_THROW(response.setResourceHandle(resHandle));

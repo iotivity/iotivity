@@ -20,8 +20,10 @@
 
 #include "gtest/gtest.h"
 #include "cainterface.h"
+#include "cautilinterface.h"
 #include "cacommon.h"
 
+#define CA_TRANSPORT_ADAPTER_SCOPE  1000
 
 class CATests : public testing::Test {
     protected:
@@ -38,6 +40,8 @@ class CATests : public testing::Test {
 void request_handler(CAEndpoint_t* object, CARequestInfo_t* requestInfo);
 void response_handler(CAEndpoint_t* object, CAResponseInfo_t* responseInfo);
 void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo);
+void adapter_handler(CATransportAdapter_t adapter, bool enabled);
+void connection_handler(CATransportAdapter_t adapter, const char *remote_address, bool connected);
 CAResult_t checkGetNetworkInfo();
 CAResult_t checkSelectNetwork();
 
@@ -64,6 +68,19 @@ void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo)
     return;
 }
 
+void adapter_handler(CATransportAdapter_t adapter,
+                     bool enabled)
+{
+
+}
+
+void connection_handler(CATransportAdapter_t adapter,
+                        const char *remote_address,
+                        bool connected)
+{
+
+}
+
 static char* addr = NULL;
 static CAEndpoint_t* tempRep = NULL;
 static CARequestInfo_t requestInfo;
@@ -81,66 +98,68 @@ static const char NORMAL_INFO_DATA[] =
 
 #ifdef __WITH_DTLS__
 
-/**
- * @def RS_IDENTITY
- * @brief
- */
-#define IDENTITY     ("1111111111111111")
-/* @def RS_CLIENT_PSK
- * @brief
- */
-#define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
+// Iotivity Device Identity.
+const unsigned char IDENTITY[] = ("1111111111111111");
 
-static CADtlsPskCredsBlob_t *pskCredsBlob = NULL;
+// PSK between this device and peer device.
+const unsigned char RS_CLIENT_PSK[] = ("AAAAAAAAAAAAAAAA");
 
-void clearDtlsCredentialInfo()
-{
-    printf("clearDtlsCredentialInfo IN\n");
-    if (pskCredsBlob)
-    {
-        // Initialize sensitive data to zeroes before freeing.
-        memset(pskCredsBlob->creds, 0, sizeof(OCDtlsPskCreds) * (pskCredsBlob->num));
-        free(pskCredsBlob->creds);
-
-        memset(pskCredsBlob, 0, sizeof(CADtlsPskCredsBlob_t));
-        free(pskCredsBlob);
-        pskCredsBlob = NULL;
-    }
-    printf("clearDtlsCredentialInfo OUT\n");
-}
-
-// Internal API. Invoked by OC stack to retrieve credentials from this module
-void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
+// Internal API. Invoked by CA stack to retrieve credentials from this module
+int32_t CAGetDtlsPskCredentials( CADtlsPskCredType_t type,
+              const unsigned char *desc, size_t desc_len,
+              unsigned char *result, size_t result_length)
 {
     printf("CAGetDtlsPskCredentials IN\n");
 
-    if (pskCredsBlob != NULL)
+    int32_t ret = -1;
+
+    if (NULL == result)
     {
-        *credInfo = pskCredsBlob;
+        return ret;
     }
 
+    switch (type)
+    {
+        case CA_DTLS_PSK_HINT:
+        case CA_DTLS_PSK_IDENTITY:
+
+            if (result_length < sizeof(IDENTITY))
+            {
+                printf("ERROR : Wrong value for result for storing IDENTITY");
+                return ret;
+            }
+
+            memcpy(result, IDENTITY, sizeof(IDENTITY));
+            ret = sizeof(IDENTITY);
+            break;
+
+        case CA_DTLS_PSK_KEY:
+
+            if ((desc_len == sizeof(IDENTITY)) &&
+                memcmp(desc, IDENTITY, sizeof(IDENTITY)) == 0)
+            {
+                if (result_length < sizeof(RS_CLIENT_PSK))
+                {
+                    printf("ERROR : Wrong value for result for storing RS_CLIENT_PSK");
+                    return ret;
+                }
+
+                memcpy(result, RS_CLIENT_PSK, sizeof(RS_CLIENT_PSK));
+                ret = sizeof(RS_CLIENT_PSK);
+            }
+            break;
+
+        default:
+
+            printf("Wrong value passed for PSK_CRED_TYPE.");
+            ret = -1;
+    }
+
+
     printf("CAGetDtlsPskCredentials OUT\n");
+    return ret;
 }
-
-int32_t SetCredentials()
-{
-    printf("SetCredentials IN\n");
-    pskCredsBlob = (CADtlsPskCredsBlob_t *)malloc(sizeof(CADtlsPskCredsBlob_t));
-
-    memset(pskCredsBlob, 0x0, sizeof(CADtlsPskCredsBlob_t));
-    memcpy(pskCredsBlob->identity, IDENTITY, DTLS_PSK_ID_LEN);
-
-    pskCredsBlob->num = 1;
-
-    pskCredsBlob->creds = (OCDtlsPskCreds *)malloc(sizeof(OCDtlsPskCreds) * (pskCredsBlob->num));
-
-    memcpy(pskCredsBlob->creds[0].id, IDENTITY, DTLS_PSK_ID_LEN);
-    memcpy(pskCredsBlob->creds[0].psk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
-
-    printf("SetCredentials OUT\n");
-    return 1;
-}
-#endif
+#endif  //__WITH_DTLS__
 
 int main(int argc, char **argv)
 {
@@ -199,11 +218,8 @@ TEST_F(CATests, CreateRemoteEndpointTestGood)
     EXPECT_EQ(CA_STATUS_OK, CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr,
                                              PORT, &tempRep));
 
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
+    CADestroyEndpoint(tempRep);
+    tempRep = NULL;
 }
 
 // check remoteEndpoint and values of remoteEndpoint
@@ -215,11 +231,8 @@ TEST_F(CATests, CreateRemoteEndpointTestValues)
 
     EXPECT_TRUE(tempRep != NULL);
 
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
+    CADestroyEndpoint(tempRep);
+    tempRep = NULL;
 }
 
 // CAGerateToken TC
@@ -278,12 +291,9 @@ TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
     EXPECT_EQ(CA_STATUS_OK, CASendRequest(tempRep, &requestInfo));
 
     CADestroyToken(tempToken);
-
-    free(requestData.payload);
-
     CADestroyEndpoint(tempRep);
+    free(requestData.payload);
     tempRep = NULL;
-
 }
 
 // check return value when a NULL is passed instead of a valid CARequestInfo_t address
@@ -294,11 +304,8 @@ TEST_F(CATests, SendRequestTestWithNullAddr)
 
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendRequest(tempRep, NULL));
 
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
+    CADestroyEndpoint(tempRep);
+    tempRep = NULL;
 }
 
 // CASendResponse TC
@@ -371,12 +378,9 @@ TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
     EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
 
     CADestroyToken(tempToken);
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
+    CADestroyEndpoint(tempRep);
     free (responseData.payload);
+    tempRep = NULL;
 }
 
 // check return value NULL is passed instead of a valid CAResponseInfo_t address
@@ -387,59 +391,15 @@ TEST_F(CATests, SendResponseTest)
 
     EXPECT_EQ(CA_STATUS_INVALID_PARAM, CASendResponse(tempRep, NULL));
 
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
-}
-
-// CASendNotification TC
-// check return value
-TEST(SendNotificationTest, DISABLED_TC_22_Positive_01)
-{
-    addr = (char *) ADDRESS;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
-
-    memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.type = CA_MSG_NONCONFIRM;
-    responseData.payload = (CAPayload_t)malloc(sizeof("Temp Notification Data"));
-
-    EXPECT_TRUE(responseData.payload != NULL);
-    if(!responseData.payload)
-    {
-        CADestroyEndpoint(tempRep);
-        return;
-    }
-
-    memcpy(responseData.payload, "Temp Notification Data", sizeof("Temp Notification Data"));
-    responseData.payloadSize = sizeof("Temp Notification Data");
-
-    CAGenerateToken(&tempToken, tokenLength);
-    requestData.token = tempToken;
-    requestData.tokenLength = tokenLength;
-
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_CONTENT;
-    responseInfo.info = responseData;
-
-    EXPECT_EQ(CA_STATUS_OK, CASendNotification(tempRep, &responseInfo));
-
-    CADestroyToken(tempToken);
-    if (tempRep != NULL)
-    {
-        CADestroyEndpoint(tempRep);
-        tempRep = NULL;
-    }
-    free(responseData.payload);
+    CADestroyEndpoint(tempRep);
+    tempRep = NULL;
 }
 
 // CASelectNewwork TC
 // check return value
 TEST_F(CATests, SelectNetworkTestGood)
 {
-    CAResult_t res = checkSelectNetwork();
-    EXPECT_EQ(CA_STATUS_OK, res);
+    EXPECT_EQ(CA_STATUS_OK, checkSelectNetwork());
 }
 
 CAResult_t checkSelectNetwork()
@@ -464,14 +424,16 @@ CAResult_t checkSelectNetwork()
 TEST_F(CATests, SelectNetworkTestBad)
 {
     //Select disable network
-    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork((CATransportAdapter_t)10000));
+    EXPECT_EQ(CA_NOT_SUPPORTED, CASelectNetwork((CATransportAdapter_t)
+                                                CA_TRANSPORT_ADAPTER_SCOPE));
 }
 
 // check return value when selected network is disable
 TEST_F(CATests, UnSelectNetworkTest)
 {
     //UnSelect disable network
-    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork((CATransportAdapter_t)10000));
+    EXPECT_EQ(CA_STATUS_FAILED, CAUnSelectNetwork((CATransportAdapter_t)
+                                                  CA_TRANSPORT_ADAPTER_SCOPE));
 }
 
 // CAHandlerRequestResponse TC
@@ -491,12 +453,46 @@ TEST_F (CATests, GetNetworkInformationTestGood)
 TEST_F(CATests, RegisterDTLSCredentialsHandlerTest)
 {
 #ifdef __WITH_DTLS__
-    if (SetCredentials() == 0)
-    {
-        printf("SetCredentials failed\n");
-    }
-
     EXPECT_EQ(CA_STATUS_OK, CARegisterDTLSCredentialsHandler(CAGetDtlsPskCredentials));
+#endif
+}
+
+// CARegisterNetworkMonitorHandler TC
+// check return value
+TEST_F(CATests, RegisterNetworkMonitorHandler)
+{
+#ifdef LE_ADAPTER
+    EXPECT_EQ(CA_STATUS_OK, CARegisterNetworkMonitorHandler(adapter_handler,
+                                                            connection_handler));
+#else
+    EXPECT_EQ(CA_NOT_SUPPORTED, CARegisterNetworkMonitorHandler(adapter_handler,
+                                                                connection_handler));
+#endif
+}
+
+// CASetAutoConnectionDeviceInfo TC
+// check return value
+TEST_F(CATests, SetAutoConnectionDeviceInfo)
+{
+    addr = (char *) ADDRESS;
+
+#if defined(__ANDROID__) && defined(LE_ADAPTER)
+    EXPECT_EQ(CA_STATUS_OK, CASetAutoConnectionDeviceInfo(addr));
+#else
+    EXPECT_EQ(CA_NOT_SUPPORTED, CASetAutoConnectionDeviceInfo(addr));
+#endif
+}
+
+// CAUnsetAutoConnectionDeviceInfo TC
+// check return value
+TEST_F(CATests, UnsetAutoConnectionDeviceInfo)
+{
+    addr = (char *) ADDRESS;
+
+#if defined(__ANDROID__) && defined(LE_ADAPTER)
+    EXPECT_EQ(CA_STATUS_OK, CAUnsetAutoConnectionDeviceInfo(addr));
+#else
+    EXPECT_EQ(CA_NOT_SUPPORTED, CAUnsetAutoConnectionDeviceInfo(addr));
 #endif
 }
 

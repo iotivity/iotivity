@@ -70,7 +70,7 @@ else:
 ######################################################################
 # Common build options (release, target os, target arch)
 ######################################################################
-targets_disallow_multitransport = ['arduino', 'android']
+targets_disallow_multitransport = ['arduino']
 
 help_vars = Variables()
 help_vars.Add(BoolVariable('VERBOSE', 'Show compilation', False))
@@ -79,17 +79,26 @@ help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map
 
 
 help_vars.Add(BoolVariable('WITH_RA', 'Build with Remote Access module', False))
+help_vars.Add(BoolVariable('WITH_TCP', 'Build with TCP adapter', False))
+help_vars.Add(EnumVariable('WITH_RD', 'Build including Resource Directory', '0', allowed_values=('0', '1')))
+
+help_vars.Add(BoolVariable('SIMULATOR', 'Build with simulator module', False))
+
+help_vars.Add(BoolVariable('WITH_RA_IBB', 'Build with Remote Access module(workssys)', False))
+
 
 if target_os in targets_disallow_multitransport:
-	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'IP', ['BT', 'BLE', 'IP', 'CI']))
+	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'IP', ['BT', 'BLE', 'IP', 'NFC']))
 else:
-	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'BT', 'BLE', 'IP', 'CI']))
+	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'BT', 'BLE', 'IP', 'NFC']))
 
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
 help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
+help_vars.Add(EnumVariable('DTLS_WITH_X509', 'DTLS with X.509 support', '0', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('TEST', 'Run unit tests', '0', allowed_values=('0', '1')))
 help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', logging_default))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
+help_vars.Add(EnumVariable('ROUTING', 'Enable routing', 'EP', allowed_values=('GW', 'EP')))
 help_vars.Add(EnumVariable('BUILD_SAMPLE', 'Build with sample', 'ON', allowed_values=('ON', 'OFF')))
 help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device (For Arduino)', device_name, None, None),)
 help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable.PathAccept))
@@ -118,11 +127,14 @@ if target_os in targets_support_cc:
 
 if target_os in ['android', 'arduino']: # Android/Arduino always uses GNU compiler regardless of the host
 	env = Environment(variables = help_vars,
-			tools = ['gnulink', 'gcc', 'g++', 'ar', 'as']
+			tools = ['gnulink', 'gcc', 'g++', 'ar', 'as', 'textfile']
 			)
 else:
-	env = Environment(variables = help_vars, TARGET_ARCH = target_arch, TARGET_OS = target_os, PREFIX = GetOption('prefix'))
-
+	env = Environment(variables = help_vars, tools = ['default', 'textfile'],
+			TARGET_ARCH = target_arch, TARGET_OS = target_os,
+			PREFIX = GetOption('prefix'),
+			LIB_INSTALL_DIR = ARGUMENTS.get('LIB_INSTALL_DIR') #for 64bit build
+			)
 Help(help_vars.GenerateHelpText(env))
 
 tc_set_msg = '''
@@ -205,18 +217,34 @@ def __install(ienv, targets, name):
 def __installlib(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
 	if user_prefix:
-		i_n = ienv.Install(user_prefix + '/lib', targets)
-	else:
-		i_n = ienv.Install(env.get('BUILD_DIR'), targets)
-	ienv.Alias("install", i_n)
+		user_lib = env.get('LIB_INSTALL_DIR')
+		if user_lib:
+			i_n = ienv.Install(user_lib, targets)
+		else:
+			i_n = ienv.Install(user_prefix + '/lib', targets)
+		ienv.Alias("install", i_n)
 
 def __installbin(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
 	if user_prefix:
 		i_n = ienv.Install(user_prefix + '/bin', targets)
-	else:
-		i_n = ienv.Install(env.get('BUILD_DIR'), targets)
-	ienv.Alias("install", i_n)
+		ienv.Alias("install", i_n)
+
+def __installheader(ienv, targets, dir, name):
+	user_prefix = env.get('PREFIX')
+	if user_prefix:
+		i_n = ienv.Install(user_prefix + '/include/' + dir ,targets)
+		ienv.Alias("install", i_n)
+
+def __installpcfile(ienv, targets, name):
+	user_prefix = env.get('PREFIX')
+	if user_prefix:
+		user_lib = env.get('LIB_INSTALL_DIR')
+		if user_lib:
+			i_n = ienv.Install(user_lib + '/pkgconfig', targets)
+		else:
+			i_n = ienv.Install(user_prefix + '/lib/pkgconfig', targets)
+		ienv.Alias("install", i_n)
 
 def __append_target(ienv, name, targets = None):
 	if targets:
@@ -243,10 +271,44 @@ env.AddMethod(__append_target, 'AppendTarget')
 env.AddMethod(__install, 'InstallTarget')
 env.AddMethod(__installlib, 'UserInstallTargetLib')
 env.AddMethod(__installbin, 'UserInstallTargetBin')
+env.AddMethod(__installheader, 'UserInstallTargetHeader')
+env.AddMethod(__installpcfile, 'UserInstallTargetPCFile')
 env.SetDir(env.GetLaunchDir())
 env['ROOT_DIR']=env.GetLaunchDir()+'/..'
 
 Export('env')
+
+######################################################################
+# Scons to generate the iotivity.pc file from iotivity.pc.in file
+######################################################################
+pc_file = env.get('SRC_DIR') + '/iotivity.pc.in'
+
+if env.get('ROUTING') == 'GW':
+	routing_define = 'ROUTING_GATEWAY'
+elif env.get('ROUTING') == 'EP':
+	routing_define = 'ROUTING_EP'
+
+user_prefix = env.get('PREFIX')
+user_lib = env.get('LIB_INSTALL_DIR')
+if not user_lib:
+	user_lib = '$${prefix}/lib'
+
+if user_prefix:
+	pc_vars = {'\@PREFIX\@': user_prefix,
+				'\@EXEC_PREFIX\@':user_prefix,
+				'\@VERSION\@': '1.0.1',
+				'\@LIB_INSTALL_DIR\@': user_lib,
+				'\@ROUTING_DEFINE\@': routing_define
+				}
+else:
+	pc_vars = {'\@PREFIX\@': env.get('BUILD_DIR'),
+				'\@EXEC_PREFIX\@': env.get('BUILD_DIR'),
+				'\@VERSION\@': '1.0.1',
+				'\@LIB_INSTALL_DIR\@': user_lib,
+				'\@ROUTING_DEFINE\@': routing_define
+				}
+
+env.Substfile(pc_file, SUBST_DICT = pc_vars)
 
 ######################################################################
 # Link scons to Yocto cross-toolchain ONLY when target_os is yocto

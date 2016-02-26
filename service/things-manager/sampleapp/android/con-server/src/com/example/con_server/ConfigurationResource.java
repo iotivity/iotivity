@@ -37,8 +37,9 @@ public class ConfigurationResource {
                                                                        .getSimpleName();
     // Configuration resource members
     protected String           configurationUri;
+    protected String           deviceName;
     protected String           location;
-    protected String           systemTime;
+    protected String           locationName;
     protected String           currency;
     protected String           region;
     protected Vector<String>   configurationTypes      = new Vector<String>();
@@ -50,8 +51,9 @@ public class ConfigurationResource {
     public ConfigurationResource() {
         Log.i(LOG_TAG, "ConfigurationResource: enter");
 
+        deviceName = ConfigurationDefaultValues.defaultDeviceName;
         location = ConfigurationDefaultValues.defaultLocation;
-        systemTime = ConfigurationDefaultValues.defaultSystemTime;
+        locationName = ConfigurationDefaultValues.defaultLocationName;
         currency = ConfigurationDefaultValues.defaultCurrency;
         region = ConfigurationDefaultValues.defaultRegion;
 
@@ -60,10 +62,12 @@ public class ConfigurationResource {
                 .add(ConfigurationDefaultValues.ConResourceTypePrefix);
         configurationInterfaces.add(OcPlatform.DEFAULT_INTERFACE);
 
+        configurationRep.setValueString("n", deviceName);
         configurationRep.setValueString("loc", location);
-        configurationRep.setValueString("st", systemTime);
+        configurationRep.setValueString("locn", locationName);
         configurationRep.setValueString("c", currency);
         configurationRep.setValueString("r", region);
+
         configurationRep.setUri(configurationUri);
         configurationRep.setResourceTypes(configurationTypes);
         configurationRep.setResourceInterfaces(configurationInterfaces);
@@ -88,25 +92,29 @@ public class ConfigurationResource {
     public void setConfigurationRepresentation(OcRepresentation rep) {
         Log.i(LOG_TAG, "setConfigurationRepresentation: enter");
 
-        String loc;
-        String st;
-        String cur;
-        String reg;
-        loc = rep.getValueString("loc");
-        st = rep.getValueString("st");
-        cur = rep.getValueString("c");
-        reg = rep.getValueString("r");
+        String dName = rep.getValueString("n");
+        String loc = rep.getValueString("loc");
+        String locn = rep.getValueString("locn");
+        String cur = rep.getValueString("c");
+        String reg = rep.getValueString("r");
+
+        if (!(dName.equalsIgnoreCase(""))) {
+            deviceName = dName;
+            Log.i(LOG_TAG,
+                    "setConfigurationRepresentation: New value(deviceName): "
+                            + deviceName);
+        }
         if (!(loc.equalsIgnoreCase(""))) {
             location = loc;
             Log.i(LOG_TAG,
                     "setConfigurationRepresentation: New value(location): "
                             + location);
         }
-        if (!(st.equalsIgnoreCase(""))) {
-            systemTime = st;
+        if (!(locn.equalsIgnoreCase(""))) {
+            locationName = locn;
             Log.i(LOG_TAG,
-                    "setConfigurationRepresentation: New value(system time): "
-                            + systemTime);
+                    "setConfigurationRepresentation: New value(locationName): "
+                            + locationName);
         }
         if (!(cur.equalsIgnoreCase(""))) {
             currency = cur;
@@ -126,8 +134,9 @@ public class ConfigurationResource {
 
     public OcRepresentation getConfigurationRepresentation() {
 
+        configurationRep.setValueString("n", deviceName);
         configurationRep.setValueString("loc", location);
-        configurationRep.setValueString("st", systemTime);
+        configurationRep.setValueString("locn", locationName);
         configurationRep.setValueString("c", currency);
         configurationRep.setValueString("r", region);
         return configurationRep;
@@ -140,12 +149,12 @@ public class ConfigurationResource {
     // For resetting the default values to configuration Resource
     public void factoryReset() {
 
+        deviceName = ConfigurationDefaultValues.defaultDeviceName;
         location = ConfigurationDefaultValues.defaultLocation;
-        systemTime = ConfigurationDefaultValues.defaultSystemTime;
+        locationName = ConfigurationDefaultValues.defaultLocationName;
         currency = ConfigurationDefaultValues.defaultCurrency;
         region = ConfigurationDefaultValues.defaultRegion;
         Log.i(LOG_TAG, "ConfiguartionResource: factoryReset done");
-
     }
 
     // Deleting all the resources, that we have created using createResources()

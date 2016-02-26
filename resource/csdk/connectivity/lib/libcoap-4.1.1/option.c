@@ -18,6 +18,7 @@
 
 #include "option.h"
 #include "debug.h"
+#include "pdu.h"
 
 coap_opt_t *
 options_start(coap_pdu_t *pdu, coap_transport_type transport)
@@ -34,14 +35,15 @@ options_start(coap_pdu_t *pdu, coap_transport_type transport)
         }
 #ifdef WITH_TCP
         else if(coap_tcp == transport && (pdu->hdr->coap_hdr_tcp_t.token +
-                pdu->hdr->coap_hdr_tcp_t.token_length
+                ((pdu->hdr->coap_hdr_tcp_t.header_data[0]) & 0x0f)
                 < (unsigned char *) pdu->hdr + pdu->length))
         {
             coap_opt_t *opt = pdu->hdr->coap_hdr_tcp_t.token +
-                    pdu->hdr->coap_hdr_tcp_t.token_length;
+                    ((pdu->hdr->coap_hdr_tcp_t.header_data[0]) & 0x0f);
             return (*opt == COAP_PAYLOAD_START) ? NULL : opt;
         }
 #endif
+        return NULL;
     }
     else
         return NULL;
@@ -149,14 +151,20 @@ coap_option_iterator_init(coap_pdu_t *pdu, coap_opt_iterator_t *oi,
     {
 #ifdef WITH_TCP
         case coap_tcp:
+            token_length = (pdu->hdr->coap_hdr_tcp_t.header_data[0]) & 0x0f;
+            headerSize = COAP_TCP_HEADER_NO_FIELD;
+            break;
         case coap_tcp_8bit:
+            token_length = (pdu->hdr->coap_hdr_tcp_8bit_t.header_data[0]) & 0x0f;
+            headerSize = COAP_TCP_HEADER_8_BIT;
+            break;
         case coap_tcp_16bit:
-            token_length = pdu->hdr->coap_hdr_tcp_t.token_length;
-            headerSize = sizeof(pdu->hdr->coap_hdr_tcp_t);
+            token_length = (pdu->hdr->coap_hdr_tcp_16bit_t.header_data[0]) & 0x0f;
+            headerSize = COAP_TCP_HEADER_16_BIT;
             break;
         case coap_tcp_32bit:
             token_length = pdu->hdr->coap_hdr_tcp_32bit_t.header_data[0] & 0x0f;
-            headerSize = sizeof(pdu->hdr->coap_hdr_tcp_32bit_t);
+            headerSize = COAP_TCP_HEADER_32_BIT;
             break;
 #endif
         default:
@@ -486,4 +494,44 @@ size_t coap_opt_encode(coap_opt_t *opt, size_t maxlen, unsigned short delta,
         memcpy(opt, val, length);
 
     return l + length;
+}
+
+static coap_option_def_t coap_option_def[] = {
+    { COAP_OPTION_IF_MATCH,       'o',	0,   8 },
+    { COAP_OPTION_URI_HOST,       's',	1, 255 },
+    { COAP_OPTION_ETAG,           'o',	1,   8 },
+    { COAP_OPTION_IF_NONE_MATCH,  'e',	0,   0 },
+    { COAP_OPTION_URI_PORT,       'u',	0,   2 },
+    { COAP_OPTION_LOCATION_PATH,  's',	0, 255 },
+    { COAP_OPTION_URI_PATH,       's',	0, 255 },
+    { COAP_OPTION_CONTENT_TYPE,   'u',	0,   2 },
+    { COAP_OPTION_MAXAGE,         'u',	0,   4 },
+    { COAP_OPTION_URI_QUERY,      's',	1, 255 },
+    { COAP_OPTION_ACCEPT,         'u',	0,   2 },
+    { COAP_OPTION_LOCATION_QUERY, 's',	0, 255 },
+    { COAP_OPTION_PROXY_URI,      's',	1,1034 },
+    { COAP_OPTION_PROXY_SCHEME,   's',	1, 255 },
+    { COAP_OPTION_SIZE1,          'u',	0,   4 },
+    { COAP_OPTION_SIZE2,          'u',	0,   4 },
+    { COAP_OPTION_OBSERVE,        'u',	0,   3 },
+    { COAP_OPTION_BLOCK2,         'u',	0,   3 },
+    { COAP_OPTION_BLOCK1,         'u',	0,   3 },
+};
+
+
+coap_option_def_t* coap_opt_def(unsigned short key)
+{
+    int i;
+
+    if (COAP_MAX_OPT < key)
+    {
+        return NULL;
+    }
+    for (i = 0; i < (int)(sizeof(coap_option_def)/sizeof(coap_option_def_t)); i++)
+    {
+        if (key == coap_option_def[i].key)
+            return &(coap_option_def[i]);
+    }
+    debug("coap_opt_def: add key:[%d] to coap_is_var_bytes", key);
+    return NULL;
 }

@@ -28,7 +28,7 @@
 #include "srmutility.h"
 #include "logger.h"
 
-#define TAG PCF("SRM-CRED-UT")
+#define TAG "SRM-CRED-UT"
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,7 +69,7 @@ OicSecCred_t * getCredList()
 
 #endif
 
-    cred->credType = 1;
+    cred->credType = SYMMETRIC_PAIR_WISE_KEY;
     cred->privateData.data = (char *)OICCalloc(1, strlen("My private Key11") + 1);
     VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
     strcpy(cred->privateData.data, "My private Key11");
@@ -85,7 +85,7 @@ OicSecCred_t * getCredList()
 #if 0
     cred->next->roleIdsLen = 0;
 #endif
-    cred->next->credType = 1;
+    cred->next->credType = SYMMETRIC_PAIR_WISE_KEY;
     sz = strlen("My private Key21") + 1;
     cred->next->privateData.data = (char *)OICCalloc(1, sz);
     VERIFY_NON_NULL(TAG, cred->next->privateData.data, ERROR);
@@ -120,21 +120,21 @@ static void printCred(const OicSecCred_t * cred)
     const OicSecCred_t *credTmp1 = NULL;
     for(credTmp1 = cred; credTmp1; credTmp1 = credTmp1->next)
     {
-        OC_LOG_V(INFO, TAG, PCF("\ncred->credId = %d"), credTmp1->credId);
-        OC_LOG_V(INFO, TAG, PCF("cred->subject.id = %s"), credTmp1->subject.id);
-        OC_LOG_V(INFO, TAG, PCF("cred->credType = %d"), credTmp1->credType);
+        OIC_LOG_V(INFO, TAG, "\ncred->credId = %d", credTmp1->credId);
+        OIC_LOG_V(INFO, TAG, "cred->subject.id = %s", credTmp1->subject.id);
+        OIC_LOG_V(INFO, TAG, "cred->credType = %d", credTmp1->credType);
         if(credTmp1->privateData.data)
         {
-            OC_LOG_V(INFO, TAG, PCF("cred->privateData.data = %s"), credTmp1->privateData.data);
+            OIC_LOG_V(INFO, TAG, "cred->privateData.data = %s", credTmp1->privateData.data);
         }
         if(credTmp1->publicData.data)
         {
-           OC_LOG_V(INFO, TAG, PCF("cred->publicData.data = %s"), credTmp1->publicData.data);
+           OIC_LOG_V(INFO, TAG, "cred->publicData.data = %s", credTmp1->publicData.data);
         }
-        OC_LOG_V(INFO, TAG, PCF("cred->ownersLen = %zd"), credTmp1->ownersLen);
+        OIC_LOG_V(INFO, TAG, "cred->ownersLen = %zu", credTmp1->ownersLen);
         for(size_t i = 0; i < cred->ownersLen; i++)
         {
-            OC_LOG_V(INFO, TAG, PCF("cred->owners[%zd].id = %s"), i, credTmp1->owners[i].id);
+            OIC_LOG_V(INFO, TAG, "cred->owners[%zu].id = %s", i, credTmp1->owners[i].id);
         }
     }
 }
@@ -246,7 +246,7 @@ TEST(BinToCredJSONTest, BinToCredJSONValidCred)
 
     json = BinToCredJSON(cred);
 
-    OC_LOG_V(INFO, TAG, PCF("BinToCredJSON:%s\n"), json);
+    OIC_LOG_V(INFO, TAG, "BinToCredJSON:%s\n", json);
     EXPECT_TRUE(json != NULL);
     DeleteCredList(cred);
     OICFree(json);

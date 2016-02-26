@@ -23,7 +23,7 @@
 #include "iotvticalendar.h"
 #include "logger.h"
 
-#define TAG  PCF("CALENDAR-UT")
+#define TAG  "CALENDAR-UT"
 
 static void printPeriod(IotvtICalPeriod_t *period)
 {
@@ -32,56 +32,110 @@ static void printPeriod(IotvtICalPeriod_t *period)
         return;
     }
 
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_year = %d"),period->startDateTime.tm_year);
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_mon = %d"),period->startDateTime.tm_mon);
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_mday = %d"),period->startDateTime.tm_mday);
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_hour = %d"),period->startDateTime.tm_hour);
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_min = %d"),period->startDateTime.tm_min);
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_sec = %d"),period->startDateTime.tm_sec);
+    OIC_LOG_V(INFO, TAG, "period->startDateTime.tm_year = %d",period->startDateTime.tm_year);
+    OIC_LOG_V(INFO, TAG, "period->startDateTime.tm_mon = %d",period->startDateTime.tm_mon);
+    OIC_LOG_V(INFO, TAG, "period->startDateTime.tm_mday = %d",period->startDateTime.tm_mday);
+    OIC_LOG_V(INFO, TAG, "period->startDateTime.tm_hour = %d",period->startDateTime.tm_hour);
+    OIC_LOG_V(INFO, TAG, "period->startDateTime.tm_min = %d",period->startDateTime.tm_min);
+    OIC_LOG_V(INFO, TAG, "period->startDateTime.tm_sec = %d",period->startDateTime.tm_sec);
 
-    OC_LOG_V(INFO, TAG, PCF("period->endDateTime.tm_year = %d"),period->endDateTime.tm_year);
-    OC_LOG_V(INFO, TAG, PCF("period->endDateTime.tm_mon = %d"),period->endDateTime.tm_mon);
-    OC_LOG_V(INFO, TAG, PCF("period->endDateTime.tm_mday = %d"),period->endDateTime.tm_mday);
-    OC_LOG_V(INFO, TAG, PCF("period->endDateTime.tm_hour = %d"),period->endDateTime.tm_hour);
-    OC_LOG_V(INFO, TAG, PCF("period->endDateTime.tm_min = %d"),period->endDateTime.tm_min);
-    OC_LOG_V(INFO, TAG, PCF("period->startDateTime.tm_sec = %d"),period->endDateTime.tm_sec);
+    OIC_LOG_V(INFO, TAG, "period->endDateTime.tm_year = %d",period->endDateTime.tm_year);
+    OIC_LOG_V(INFO, TAG, "period->endDateTime.tm_mon = %d",period->endDateTime.tm_mon);
+    OIC_LOG_V(INFO, TAG, "period->endDateTime.tm_mday = %d",period->endDateTime.tm_mday);
+    OIC_LOG_V(INFO, TAG, "period->endDateTime.tm_hour = %d",period->endDateTime.tm_hour);
+    OIC_LOG_V(INFO, TAG, "period->endDateTime.tm_min = %d",period->endDateTime.tm_min);
+    OIC_LOG_V(INFO, TAG, "period->startDateTime.tm_sec = %d",period->endDateTime.tm_sec);
 }
 
 
 static void printRecur(IotvtICalRecur_t *recur)
 {
-    OC_LOG_V(INFO, TAG, PCF("recur->freq = %d"), recur->freq);
-    OC_LOG_V(INFO, TAG, PCF("recur->until.tm_year = %d"), recur->until.tm_year);
-    OC_LOG_V(INFO, TAG, PCF("recur->until.tm_mon = %d"), recur->until.tm_mon);
-    OC_LOG_V(INFO, TAG, PCF("recur->until.tm_mday = %d"), recur->until.tm_mday);
+    OIC_LOG_V(INFO, TAG, "recur->freq = %d", recur->freq);
+    OIC_LOG_V(INFO, TAG, "recur->until.tm_year = %d", recur->until.tm_year);
+    OIC_LOG_V(INFO, TAG, "recur->until.tm_mon = %d", recur->until.tm_mon);
+    OIC_LOG_V(INFO, TAG, "recur->until.tm_mday = %d", recur->until.tm_mday);
 
     if(recur->byDay & SUNDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Sunday");
+        OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Sunday");
     }
     if(recur->byDay & MONDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Monday");
+        OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Monday");
     }
     if(recur->byDay & TUESDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Tuesday");
+        OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Tuesday");
     }
     if(recur->byDay & WEDNESDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Wednesday");
+        OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Wednesday");
     }
     if(recur->byDay & THURSDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Thursday");
+        OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Thursday");
     }
     if(recur->byDay & FRIDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Friday");
+        OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Friday");
     }
     if(recur->byDay & SATURDAY)
     {
-        OC_LOG_V(INFO, TAG, PCF("recur->byDay = %s"), "Saturday");
+        OIC_LOG_V(INFO, TAG, "recur->byDay = %s", "Saturday");
+    }
+}
+
+
+static void checkValidityOfRequest(char *recurStr, char *periodStr,int startTime, int endTime,
+                                    int byDay)
+{
+    time_t rt;
+    IotvtICalDateTime_t t1;
+    IotvtICalDateTime_t t2;
+    int isValidWD;
+    IotvtICalResult_t result;
+
+    memset(&t1, 0, sizeof(t1));
+    memset(&t2, 0, sizeof(t2));
+
+    do
+    {
+        rt = time(0);
+        tzset();
+        localtime_r(&rt, &t1);
+
+        result = IsRequestWithinValidTime(periodStr, recurStr);
+
+        rt = time(0);
+        tzset();
+        localtime_r(&rt, &t2);
+
+        OIC_LOG_V(INFO, TAG, "t1 = %02d:%02d:%02d", t1.tm_hour, t1.tm_min, t1.tm_sec );
+        OIC_LOG_V(INFO, TAG, "t2 = %02d:%02d:%02d", t2.tm_hour, t2.tm_min, t2.tm_sec );
+    }while(t1.tm_hour != t2.tm_hour);
+
+    if(byDay > 0)
+    {
+        isValidWD = (0x1 << t2.tm_wday) & byDay;
+        if(isValidWD && startTime <= t2.tm_hour && endTime > t2.tm_hour)
+        {
+            EXPECT_EQ(IOTVTICAL_VALID_ACCESS, result);
+        }
+        else
+        {
+            EXPECT_EQ(IOTVTICAL_INVALID_ACCESS, result);
+        }
+    }
+    else
+    {
+        if(startTime <= t2.tm_hour && endTime > t2.tm_hour)
+        {
+            EXPECT_EQ(IOTVTICAL_VALID_ACCESS, result);
+        }
+        else
+        {
+            EXPECT_EQ(IOTVTICAL_INVALID_ACCESS, result);
+        }
     }
 }
 
@@ -201,33 +255,22 @@ TEST(ParseRecurTest, ParseRecurInValidByday)
     EXPECT_EQ(IOTVTICAL_INVALID_RRULE, ParseRecur(recurStr, &recur));
 }
 
-//FIXME: ALL IsRequestWithinValidTime tests will fail after 20151230
 TEST(IsRequestWithinValidTimeTest, IsRequestWithinValidTimeValidPeriod1)
 {
-    char periodStr[] = "20150630/20151230";
+    char periodStr[] = "20150630/20551230";
     EXPECT_EQ(IOTVTICAL_VALID_ACCESS, IsRequestWithinValidTime(periodStr, NULL));
 }
 
 TEST(IsRequestWithinValidTimeTest, IsRequestWithinValidTimeValidPeriodAndRecur1)
 {
-    //Daily on days MO, WE & FR from 6:00:00am to 8:00:00pm until 20151230
-    char recurStr[] = "FREQ=DAILY; UNTIL=20151230; BYDAY=MO, WE, FR";
+    //Daily on days MO, WE & FR from 6:00:00am to 8:00:00pm until 20551230
+    char recurStr[] = "FREQ=DAILY; UNTIL=20551230; BYDAY=MO, WE, FR";
     char periodStr[] = "20150630T060000/20150630T200000";
-
-    time_t rt = time(0);
-    IotvtICalDateTime_t *ct = localtime(&rt);
-
+    int startTime = 6;
+    int endTime = 20;
     int byDay = MONDAY | WEDNESDAY | FRIDAY;
-    int isValidWD = (0x1 << ct->tm_wday) & byDay;
 
-    if(isValidWD && 6 <= ct->tm_hour && 20>= ct->tm_hour)
-    {
-        EXPECT_EQ(IOTVTICAL_VALID_ACCESS, IsRequestWithinValidTime(periodStr, recurStr));
-    }
-    else
-    {
-        EXPECT_EQ(IOTVTICAL_INVALID_ACCESS, IsRequestWithinValidTime(periodStr, recurStr));
-    }
+    checkValidityOfRequest(recurStr, periodStr, startTime, endTime, byDay);
 }
 
 TEST(IsRequestWithinValidTimeTest, IsRequestWithinValidTimeValidPeriodAndRecur2)
@@ -235,37 +278,24 @@ TEST(IsRequestWithinValidTimeTest, IsRequestWithinValidTimeValidPeriodAndRecur2)
     //Daily forever from 6:00:00am to 8:00:00pm
     char recurStr[] = "FREQ=DAILY";
     char periodStr[] = "20150630T060000/20150630T200000";
+    int startTime = 6;
+    int endTime = 20;
+    int byDay = -1;
 
-    time_t rt = time(0);
-    IotvtICalDateTime_t *ct = localtime(&rt);
-
-    if(6 <= ct->tm_hour && 20>= ct->tm_hour)
-    {
-        EXPECT_EQ(IOTVTICAL_VALID_ACCESS, IsRequestWithinValidTime(periodStr, recurStr));
-    }
-    else
-    {
-        EXPECT_EQ(IOTVTICAL_INVALID_ACCESS, IsRequestWithinValidTime(periodStr, recurStr));
-    }
+    checkValidityOfRequest(recurStr, periodStr, startTime, endTime, byDay);
 }
 
 TEST(IsRequestWithinValidTimeTest, IsRequestWithinValidTimeValidPeriodAndRecur3)
 {
-    //Daily until 20151230 from 6:00:00am to 8:00:00pm
-    char recurStr[] = "FREQ=DAILY; UNTIL=20151230";
+    //Daily until 20551230 from 6:00:00am to 8:00:00pm
+    char recurStr[] = "FREQ=DAILY; UNTIL=20551230";
     char periodStr[] = "20150630T060000/20150630T200000";
+    int startTime = 6;
+    int endTime = 20;
+    int byDay = -1;
 
-    time_t rt = time(0);
-    IotvtICalDateTime_t *ct = localtime(&rt);
+    checkValidityOfRequest(recurStr, periodStr, startTime, endTime, byDay);
 
-    if(6 <= ct->tm_hour && 20>= ct->tm_hour)
-    {
-        EXPECT_EQ(IOTVTICAL_VALID_ACCESS, IsRequestWithinValidTime(periodStr, recurStr));
-    }
-    else
-    {
-        EXPECT_EQ(IOTVTICAL_INVALID_ACCESS, IsRequestWithinValidTime(periodStr, recurStr));
-    }
 }
 
 TEST(IsRequestWithinValidTimeTest, IsRequestWithinValidTimeValidPeriodAndRecur4)
@@ -273,22 +303,13 @@ TEST(IsRequestWithinValidTimeTest, IsRequestWithinValidTimeValidPeriodAndRecur4)
     //Daily forever on days MO, WE & Fr from 6:00:00am to 8:00:00pm
     char recurStr[] = "FREQ=DAILY; BYDAY=MO, WE, FR";
     char periodStr[] = "20150630T060000/20150630T200000";
-
-    time_t rt = time(0);
-    IotvtICalDateTime_t *ct = localtime(&rt);
-
+    int startTime = 6;
+    int endTime = 20;
     int byDay = MONDAY | WEDNESDAY | FRIDAY;
-    int isValidWD = (0x1 << ct->tm_wday) & byDay;
 
-    if(isValidWD && 6 <= ct->tm_hour && 20>= ct->tm_hour)
-    {
-        EXPECT_EQ(IOTVTICAL_VALID_ACCESS, IsRequestWithinValidTime(periodStr, recurStr));
-    }
-    else
-    {
-        EXPECT_EQ(IOTVTICAL_INVALID_ACCESS, IsRequestWithinValidTime(periodStr, recurStr));
-    }
-}
+    checkValidityOfRequest(recurStr, periodStr, startTime, endTime, byDay);
+
+ }
 
 TEST(IsRequestWithinValidTimeTest, IsRequestWithinValidTimeInValidPeriodAndValidRecur)
 {

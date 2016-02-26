@@ -3,6 +3,8 @@ package org.iotivity.ca.service;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -14,8 +16,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+import java.io.File;
 
 import org.iotivity.ca.sample_service.R;
+import org.iotivity.ca.service.FileChooser;
+import org.iotivity.ca.service.FileChooser.FileSelectedListener;
 
 public class MainActivity extends Activity {
 
@@ -24,7 +30,7 @@ public class MainActivity extends Activity {
     private final static String TAG = "Sample_Service : MainActivity";
 
     private final CharSequence[] mNetworkCheckBoxItems = { Network.IP.name(),
-            Network.LE.name(), Network.EDR.name()};
+            Network.LE.name(), Network.EDR.name(), Network.TCP.name(), Network.NFC.name()};
 
     private final CharSequence[] mDTLSCheckBoxItems = { DTLS.UNSECURED.name(),
             DTLS.SECURED.name() };
@@ -33,12 +39,11 @@ public class MainActivity extends Activity {
             MsgType.NON.name(), MsgType.ACK.name(), MsgType.RESET.name() };
 
     private final CharSequence[] mResponseResultCheckBoxItems = {
-            ResponseResult.CA_SUCCESS.name(), ResponseResult.CA_CREATED.name(),
-            ResponseResult.CA_DELETED.name(), ResponseResult.CA_VALID.name(),
-            ResponseResult.CA_CHANGED.name(), ResponseResult.CA_CONTENT.name(),
-            ResponseResult.CA_EMPTY.name(), ResponseResult.CA_BAD_REQ.name(),
-            ResponseResult.CA_BAD_OPT.name(), ResponseResult.CA_NOT_FOUND.name(),
-            ResponseResult.CA_INTERNAL_SERVER_ERROR.name(),
+            ResponseResult.CA_CREATED.name(), ResponseResult.CA_DELETED.name(),
+            ResponseResult.CA_VALID.name(), ResponseResult.CA_CHANGED.name(),
+            ResponseResult.CA_CONTENT.name(), ResponseResult.CA_EMPTY.name(),
+            ResponseResult.CA_BAD_REQ.name(), ResponseResult.CA_BAD_OPT.name(),
+            ResponseResult.CA_NOT_FOUND.name(), ResponseResult.CA_INTERNAL_SERVER_ERROR.name(),
             ResponseResult.CA_RETRANSMIT_TIMEOUT.name() };
 
     private enum Mode {
@@ -46,7 +51,7 @@ public class MainActivity extends Activity {
     };
 
     private enum Network {
-        IP, LE, EDR
+        IP, LE, EDR, TCP, NFC
     };
 
     private enum DTLS {
@@ -58,17 +63,17 @@ public class MainActivity extends Activity {
     };
 
     private enum ResponseResult {
-        CA_SUCCESS, CA_CREATED, CA_DELETED, CA_VALID, CA_CHANGED, CA_CONTENT, CA_EMPTY,
+        CA_CREATED, CA_DELETED, CA_VALID, CA_CHANGED, CA_CONTENT, CA_EMPTY,
         CA_BAD_REQ, CA_BAD_OPT, CA_NOT_FOUND, CA_INTERNAL_SERVER_ERROR, CA_RETRANSMIT_TIMEOUT
     }
 
     private boolean mCheckedItems[] = {
-            false, false, false, false
+            false, false, false, false, false
     };
 
-    private int mSelectedItems[] = { 0, 0, 0 };
+    private int mSelectedItems[] = { 0, 0, 0, 0, 0, 0};
 
-    private int mUnSelectedItems[] = { 0, 0, 0 };
+    private int mUnSelectedItems[] = { 0, 0, 0, 0, 0, 0};
 
     private Mode mCurrentMode = Mode.UNKNOWN;
 
@@ -122,16 +127,20 @@ public class MainActivity extends Activity {
 
     private Button mRecv_btn = null;
 
+    private Button mBig_btn = null;
+
     private Handler mLogHandler = null;
 
     /**
      * Defined ConnectivityType in cacommon.c
      *
-     * CA_IP = (1 << 0) CA_LE = (1 << 2) CA_EDR = (1 << 3)
+     * CA_IP = (1 << 0) CA_LE = (1 << 1) CA_EDR = (1 << 2) CA_TCP = (1 << 4) CA_NFC= (1 << 5)
      */
     private int CA_IP = (1 << 0);
     private int CA_LE = (1 << 1);
     private int CA_EDR = (1 << 2);
+    private int CA_TCP = (1 << 4);
+    private int CA_NFC = (1 << 5);
     private int isSecured = 0;
     private int msgType = 1;
     private int responseValue = 0;
@@ -144,6 +153,7 @@ public class MainActivity extends Activity {
     int uninterestedNetwork = 0;
     private boolean isSendResponseSetting = false;
     private boolean isSendRequestToAllSetting = false;
+    private boolean isBigData = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -195,6 +205,8 @@ public class MainActivity extends Activity {
         mResponse_Notify_setting_btn = (Button) findViewById(R.id.btn_Request_setting_for_server);
         mGetNetworkInfo_btn = (Button) findViewById(R.id.btn_get_network_info);
         mRecv_btn = (Button) findViewById(R.id.btn_receive);
+        mBig_btn = (Button) findViewById(R.id.btn_big_data);
+        mBig_btn.setOnClickListener(mSelectLargeDataButtonHandler);
 
         mResponse_btn.setOnClickListener(mSendResponseHandler);
         mNotify_btn.setOnClickListener(mNotifyHandler);
@@ -210,8 +222,7 @@ public class MainActivity extends Activity {
         showSelectModeView();
 
         // Initialize Connectivity Abstraction
-        RM.RMInitialize(getApplicationContext());
-
+        RM.RMInitialize(getApplicationContext(), this);
         // set handler
         RM.RMRegisterHandler();
     }
@@ -242,42 +253,46 @@ public class MainActivity extends Activity {
 
     private void showModeView() {
 
+        mReceiveLayout.setVisibility(View.VISIBLE);
+        mSendRequestToAllLayout.setVisibility(View.VISIBLE);
+        mSendRequestToAllSettingLayout.setVisibility(View.VISIBLE);
+        mRequestToAllTitleLayout.setVisibility(View.VISIBLE);
+        mHandleTitleLayout.setVisibility(View.VISIBLE);
+
         if (mCurrentMode == Mode.SERVER) {
 
             mSendNotificationLayout.setVisibility(View.VISIBLE);
             mSendRequestLayout.setVisibility(View.INVISIBLE);
-            mSendRequestToAllLayout.setVisibility(View.VISIBLE);
             mSendRequestSettingLayout.setVisibility(View.INVISIBLE);
-            mSendRequestToAllSettingLayout.setVisibility(View.VISIBLE);
-            mReceiveLayout.setVisibility(View.VISIBLE);
 
             mRequestTitleLayout.setVisibility(View.INVISIBLE);
-            mRequestToAllTitleLayout.setVisibility(View.VISIBLE);
-            mHandleTitleLayout.setVisibility(View.VISIBLE);
 
             mResponseNotificationTitleLayout.setVisibility(View.VISIBLE);
             mSendResponseNotiSettingLayout.setVisibility(View.VISIBLE);
-
-            mNetwork_tv.setText("");
 
         } else if (mCurrentMode == Mode.CLIENT) {
 
             mSendNotificationLayout.setVisibility(View.INVISIBLE);
             mSendRequestLayout.setVisibility(View.VISIBLE);
-            mSendRequestToAllLayout.setVisibility(View.VISIBLE);
             mSendRequestSettingLayout.setVisibility(View.VISIBLE);
-            mSendRequestToAllSettingLayout.setVisibility(View.VISIBLE);
-            mReceiveLayout.setVisibility(View.VISIBLE);
 
             mRequestTitleLayout.setVisibility(View.VISIBLE);
-            mRequestToAllTitleLayout.setVisibility(View.VISIBLE);
-            mHandleTitleLayout.setVisibility(View.VISIBLE);
 
             mResponseNotificationTitleLayout.setVisibility(View.INVISIBLE);
             mSendResponseNotiSettingLayout.setVisibility(View.INVISIBLE);
-
-            mNetwork_tv.setText("");
         }
+        mNetwork_tv.setText("");
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Intent i = new Intent();
+        i.setAction(intent.getAction());
+        i.putExtra(NfcAdapter.EXTRA_NDEF_MESSAGES,
+                   intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES));
+        sendBroadcast(i);
+        Log.d(TAG, "Broadcast intent complete");
     }
 
     @Override
@@ -375,7 +390,7 @@ public class MainActivity extends Activity {
             DLog.v(TAG, "SendNotification click");
             if ( selectedNetwork != -1) {
                 RM.RMSendNotification(mNotification_ed.getText().toString(),
-                    null, selectedNetwork, isSecured, msgType, responseValue);
+                    null, selectedNetwork, isSecured, msgType);
             }
             else {
                 DLog.v(TAG, "Please Select Network Type");
@@ -391,7 +406,7 @@ public class MainActivity extends Activity {
             DLog.v(TAG, "SendRequest click");
             if ( selectedNetwork != -1) {
                 RM.RMSendRequest(mReqData_ed.getText().toString(), null,
-                    selectedNetwork, isSecured, msgType);
+                    selectedNetwork, isSecured, msgType, false);
             }
             else {
                 DLog.v(TAG, "Please Select Network Type");
@@ -457,6 +472,15 @@ public class MainActivity extends Activity {
         }
     };
 
+    private OnClickListener mSelectLargeDataButtonHandler = new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+            isBigData = true;
+            checkSendNetworkType("Select Send Network Type");
+        }
+    };
+
     private void checkInterestedNetwork(String title) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -468,8 +492,13 @@ public class MainActivity extends Activity {
                             public void onClick(DialogInterface dialog,
                                     int which, boolean isChecked) {
 
+                                // in case of TCP increase value,
+                                // because CASample not support RA.
+                                // which: 0(IP), 1(BT), 2(BLE), 3(TCP)
+                                if (which == 3) {
+                                    which = 4;
+                                }
                                 if (isChecked) {
-
                                     mSelectedItems[which] = 1;
                                     mUnSelectedItems[which] = 0;
 
@@ -601,11 +630,7 @@ public class MainActivity extends Activity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
 
-                        if (selectedResponseValue == ResponseResult.CA_SUCCESS.ordinal()) {
-                            responseValue = 200;
-                            DLog.v(TAG, "Response Value is CA_SUCCESS");
-                        } else if (selectedResponseValue == ResponseResult.CA_CREATED
-                                .ordinal()) {
+                        if (selectedResponseValue == ResponseResult.CA_CREATED.ordinal()) {
                             responseValue = 201;
                             DLog.v(TAG, "Response Value is CA_CREATED");
                         } else if (selectedResponseValue == ResponseResult.CA_DELETED
@@ -675,22 +700,52 @@ public class MainActivity extends Activity {
 
                         if (selectedNetworkType == Network.IP.ordinal()) {
                             selectedNetwork = CA_IP;
-                            DLog.v(TAG, "Selected Network is CA_IP");
+                            DLog.v(TAG, "Selected Network is IP");
                         } else if (selectedNetworkType == Network.LE.ordinal()) {
                             selectedNetwork = CA_LE;
                             DLog.v(TAG, "Selected Network is LE");
                         } else if (selectedNetworkType == Network.EDR.ordinal()) {
                             selectedNetwork = CA_EDR;
                             DLog.v(TAG, "Selected Network is EDR");
+                        } else if (selectedNetworkType == Network.TCP.ordinal()) {
+                            selectedNetwork = CA_TCP;
+                            DLog.v(TAG, "Selected Network is TCP");
+                        } else if (selectedNetworkType == Network.NFC.ordinal()) {
+                            selectedNetwork = CA_NFC;
+                            DLog.v(TAG, "Selected Network is NFC");
                         } else {
                             DLog.v(TAG, "Selected Network is NULL");
                             selectedNetwork = -1;
                         }
 
-                        if (isSendRequestToAllSetting != true) {
-                            checkMsgSecured("Select DTLS Type");
+                        if (isBigData)
+                        {
+                            new FileChooser(MainActivity.this).setFileListener(
+                                    new FileSelectedListener() {
+                                public void fileSelected(final File file) {
+                                    if (selectedNetwork != -1) {
+
+                                        String path = file.getAbsolutePath();
+                                        Log.d(TAG, "File Path: " + path);
+
+                                        RM.RMSendRequest(mReqData_ed.getText().toString(), path,
+                                                         selectedNetwork, isSecured, msgType, true);
+                                    } else {
+                                        Toast.makeText(getApplicationContext(),
+                                                       "Request Setting Fisrt!!",
+                                                        Toast.LENGTH_LONG).show();
+                                    }
+                                }
+                            } ).showDialog();
+                            isBigData = false;
+                        } else {
+                            if (isSendRequestToAllSetting != true) {
+                                checkMsgSecured("Select DTLS Type");
+                            }
                         }
+
                         isSendRequestToAllSetting = false;
+                        isBigData = false;
                     }
                 }).show();
     }

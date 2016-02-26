@@ -1,16 +1,17 @@
 Name: iotivity
-Version: 0.9.1
+Version: 1.0.1
 Release: 0
-Summary: IoTivity Base Stack & IoTivity Services
-Group: System Environment/Libraries
+Summary: IoT Connectivity sponsored by the OIC
+Group: Network & Connectivity/Other
 License: Apache-2.0
 URL: https://www.iotivity.org/
 Source0: %{name}-%{version}.tar.bz2
-
-BuildRequires:	gettext, expat-devel
-BuildRequires:	python, libcurl-devel
-BuildRequires:	scons
-BuildRequires:	openssl-devel
+Source1001: %{name}.manifest
+Source1002: %{name}-test.manifest
+BuildRequires:  gettext-tools, expat-devel
+BuildRequires:  python, libcurl-devel
+BuildRequires:  scons
+BuildRequires:  openssl-devel
 BuildRequires:  boost-devel
 BuildRequires:  boost-thread
 BuildRequires:  boost-system
@@ -19,16 +20,51 @@ BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth)
-BuildRequires:  pkgconfig(capi-appfw-app-common)
+BuildRequires:  pkgconfig(glib-2.0)
+BuildRequires:  pkgconfig(sqlite3)
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
 
+
+## If tizen 2.x, RELEASE follows tizen_build_binary_release_type_eng. ##
+## and if tizen 3.0, RELEASE follows tizen_build_devel_mode. ##
+%if 0%{?tizen_build_devel_mode} == 1 || 0%{?tizen_build_binary_release_type_eng} == 1
+%define RELEASE False
+%else
+%define RELEASE True
+%endif
+
+%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
+%{!?SECURED: %define SECURED 0}
+%{!?LOGGING: %define LOGGING True}
+%{!?ROUTING: %define ROUTING GW}
+
 %description
-IoTivity Base (RICH & LITE) Stack & IoTivity Services
+An open source reference implementation of the OIC standard specifications
+IoTivity Base Libraries are included.
+
+
+%package service
+Summary: Development files for %{name}
+Group: Network & Connectivity/Service
+Requires: %{name} = %{version}-%{release}
+
+%description service
+The %{name}-service package contains service libraries files for
+developing applications that use %{name}-service.
+
+%package test
+Summary: Development files for %{name}
+Group: Network & Connectivity/Testing
+Requires: %{name} = %{version}-%{release}
+
+%description test
+The %{name}-test package contains example files to show
+how the iotivity works using %{name}-test
 
 %package devel
 Summary: Development files for %{name}
-Group: Development/Libraries
+Group: Network & Connectivity/Development
 Requires: %{name} = %{version}-%{release}
 Requires: pkgconfig
 
@@ -37,72 +73,154 @@ The %{name}-devel package contains libraries and header files for
 developing applications that use %{name}.
 
 %prep
-%setup -q -n %{name}-%{version}
+%setup -q
+chmod g-w %_sourcedir/*
+
+cp LICENSE.md LICENSE.APLv2
+cp %{SOURCE1001} .
+%if 0%{?tizen_version_major} < 3
+cp %{SOURCE1002} .
+%else
+cp %{SOURCE1001} ./%{name}-test.manifest
+%endif
 
 %build
-%ifarch armv7l
-export RPM_ARCH=armeabi-v7a
-%else
-%ifarch %arm
-export RPM_ARCH=arm
-%else
+%define RPM_ARCH %{_arch}
+
+%ifarch armv7l armv7hl armv7nhl armv7tnhl armv7thl
+%define RPM_ARCH "armeabi-v7a"
+%endif
+
 %ifarch aarch64
-export RPM_ARCH=arm64
-%else
-%ifarch i586 i686 %{ix86}
-export RPM_ARCH=x86
-%else
-export RPM_ARCH=%{_arch}
-%endif
-%endif
-%endif
+%define RPM_ARCH "arm64"
 %endif
 
+%ifarch x86_64
+%define RPM_ARCH "x86_64"
+%endif
 
-scons -j 4 TARGET_OS=tizen TARGET_ARCH=$RPM_ARCH TARGET_TRANSPORT=IP
+%ifarch %{ix86}
+%define RPM_ARCH "x86"
+%endif
+
+#VERBOSE=1
+scons -j2 --prefix=%{_prefix} \
+	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
+	RELEASE=%{RELEASE} SECURED=%{SECURED} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
+	LIB_INSTALL_DIR=%{_libdir}
+
 
 %install
 rm -rf %{buildroot}
-mkdir -p %{buildroot}%{_includedir}
-mkdir -p %{buildroot}%{_includedir}/targets
-mkdir -p %{buildroot}%{_libdir}
-mkdir -p %{buildroot}%{_sbindir}
-
-cp out/tizen/*/release/lib*.so %{buildroot}%{_libdir}
-cp out/tizen/*/release/libSSMSDK.a %{buildroot}%{_libdir}
-cp out/tizen/*/release/libppm.a %{buildroot}%{_libdir}
-cp out/tizen/*/release/service/protocol-plugin/plugins/mqtt-fan/*.so %{buildroot}%{_libdir}
-cp out/tizen/*/release/service/protocol-plugin/plugins/mqtt-light/*.so %{buildroot}%{_libdir}
-cp /usr/lib/libuuid.so %{buildroot}%{_libdir}
-
-cp resource/csdk/stack/include/ocstack.h %{buildroot}%{_includedir}
-cp resource/csdk/stack/include/ocstackconfig.h %{buildroot}%{_includedir}
-cp resource/oc_logger/include/oc_logger.hpp %{buildroot}%{_includedir}
-cp resource/oc_logger/include/oc_log_stream.hpp %{buildroot}%{_includedir}
-cp resource/oc_logger/include/oc_logger.h %{buildroot}%{_includedir}
-cp resource/oc_logger/include/oc_logger_types.h %{buildroot}%{_includedir}
-cp resource/oc_logger/include/targets/oc_console_logger.h %{buildroot}%{_includedir}/targets
-cp resource/oc_logger/include/targets/oc_ostream_logger.h %{buildroot}%{_includedir}/targets
-cp resource/include/*.h %{buildroot}%{_includedir}
-
-cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
-cp service/soft-sensor-manager/SDK/cpp/include/*.h %{buildroot}%{_includedir}
+CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
+scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
+	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
+	RELEASE=%{RELEASE} SECURED=%{SECURED} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
+	LIB_INSTALL_DIR=%{_libdir}
 
 
-%clean
-rm -rf %{buildroot}
+# For Example
+%if %{RELEASE} == "True"
+%define build_mode release
+%else
+%define build_mode debug
+%endif
+%define ex_install_dir %{buildroot}%{_bindir}
+mkdir -p %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/examples/OICMiddle/OICMiddle %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/devicediscoveryclient %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/devicediscoveryserver %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/fridgeclient %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/fridgeserver %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/garageclient %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/garageserver %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/groupclient %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/groupserver %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/lightserver %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/presenceclient %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/presenceserver %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/roomclient %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/roomserver %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/simpleclient %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/simpleclientHQ %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/simpleclientserver %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/simpleserver %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/simpleserverHQ %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/threadingsample %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_server.json %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_client.json %{ex_install_dir}
+%if 0%{?SECURED} == 1
+mkdir -p %{ex_install_dir}/provisioning
+cp out/tizen/*/%{build_mode}/resource/provisioning/examples/oic_svr_db_client.json %{ex_install_dir}/provisioning/
+cp out/tizen/*/%{build_mode}/resource/provisioning/examples/provisioningclient %{ex_install_dir}/provisioning/
+
+cp ./resource/csdk/security/include/pinoxmcommon.h %{buildroot}%{_includedir}
+cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
+cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
+cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
+
+cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/provisioningclient %{ex_install_dir}/provision-sample/
+cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_justworks %{ex_install_dir}/provision-sample/
+cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_randompin %{ex_install_dir}/provision-sample/
+cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/*.json %{ex_install_dir}/provision-sample/
+%endif
+
+
+%if 0%{?tizen_version_major} < 3
+mkdir -p %{buildroot}/%{_datadir}/license
+cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}
+cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}-service
+cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}-test
+%endif
 
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
 %files
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
-%{_libdir}/lib*.so
-%{_libdir}/lib*.a
-%{_libdir}/fanserver*.so
-%{_libdir}/lightserver*.so
+%{_libdir}/liboc.so
+%{_libdir}/liboc_logger.so
+%{_libdir}/liboc_logger_core.so
+%{_libdir}/liboctbstack.so
+%{_libdir}/libconnectivity_abstraction.so
+%if 0%{?tizen_version_major} < 3
+%{_datadir}/license/%{name}
+%else
+%license LICENSE.APLv2
+%endif
+
+%files service
+%manifest %{name}.manifest
+%defattr(-,root,root,-)
+%{_libdir}/libBMISensorBundle.so
+%{_libdir}/libDISensorBundle.so
+%{_libdir}/libresource_hosting.so
+%{_libdir}/libTGMSDKLibrary.so
+%{_libdir}/libHueBundle.so
+%{_libdir}/librcs_client.so
+%{_libdir}/librcs_common.so
+%{_libdir}/librcs_container.so
+%{_libdir}/librcs_server.so
+%if 0%{?tizen_version_major} < 3
+%{_datadir}/license/%{name}-service
+%else
+%license LICENSE.APLv2
+%endif
+
+%files test
+%manifest %{name}-test.manifest
+%defattr(-,root,root,-)
+%{_bindir}/*
+%if 0%{?tizen_version_major} < 3
+%{_datadir}/license/%{name}-test
+%else
+%license LICENSE.APLv2
+%endif
 
 %files devel
 %defattr(-,root,root,-)
+%{_libdir}/lib*.a
+%{_libdir}/pkgconfig/%{name}.pc
 %{_includedir}/*

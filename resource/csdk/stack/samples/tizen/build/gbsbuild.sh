@@ -23,6 +23,8 @@ export RELEASE=$4
 echo $5
 export LOGGING=$5
 
+echo $6
+export ROUTING=$6
 
 echo $TARGET_TRANSPORT
 echo $BUILD_SAMPLE
@@ -34,17 +36,26 @@ sourcedir=`pwd`
 
 echo `pwd`
 
+rm -rf ./tmp
 mkdir ./tmp
 mkdir ./tmp/extlibs/
 mkdir ./tmp/packaging
-cp -R ./extlibs/tinycbor $sourcedir/tmp/extlibs
+cp -LR ./extlibs/tinycbor $sourcedir/tmp/extlibs
+rm -rf $sourcedir/tmp/extlibs/tinycbor/tinycbor/.git
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/timer $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
+cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
 cp -R ./resource/csdk/stack/samples/tizen/build/packaging/*.spec $sourcedir/tmp/packaging
 cp -R ./resource $sourcedir/tmp/
 cp -R ./build_common/external_libs.scons $sourcedir/tmp/
+
+# copy dependency RPMs and conf files for tizen build
+cp ./tools/tizen/*.rpm $sourcedir/tmp
+cp ./tools/tizen/*.rpm $sourcedir/tmp/resource/csdk/stack/samples/tizen/SimpleClientServer
+cp ./tools/tizen/.gbs.conf ./tmp
+cp ./tools/tizen/.gbs.conf ./tmp/resource/csdk/stack/samples/tizen/SimpleClientServer
 
 cd $sourcedir
 cd ./resource/csdk/stack/samples/tizen/build/
@@ -58,6 +69,8 @@ mkdir -p $sourcedir/tmp/iotivityconfig
 cd $sourcedir/build_common/
 cp -R ./iotivityconfig/* $sourcedir/tmp/iotivityconfig/
 cp -R ./SConscript $sourcedir/tmp/
+
+cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp/
 
 cd $sourcedir/tmp
 
@@ -74,15 +87,15 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI --include-all --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --repository ./"
+gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6'"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Core build is successful"
 else
-   echo "Core build failed. Try 'sudo find . -type f -exec dos2unix {} \;' in the 'connectivity/' folder"
+   echo "Core build failed. Try 'find . -type f -exec dos2unix {} \;' in the 'connectivity/' folder"
    cd $sourcedir
    rm -rf $sourcedir/tmp
-   exit
+   exit 1
 fi
 
 if echo $BUILD_SAMPLE|grep -qi '^ON$'; then
@@ -97,18 +110,19 @@ if echo $BUILD_SAMPLE|grep -qi '^ON$'; then
       git commit -m "Initial commit"
    fi
    echo "Calling sample gbs build command"
-   gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI --include-all --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --repository ./"
+   gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-RI-OIC --include-all --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'ROUTING $6'"
    echo $gbscommand
    if eval $gbscommand; then
       echo "Sample build is successful"
    else
-      echo "Sample build is failed. Try 'sudo find . -type f -exec dos2unix {} \;' in the 'connectivity/' folder"
+      echo "Sample build is failed. Try 'find . -type f -exec dos2unix {} \;' in the 'connectivity/' folder"
+      exit 1
    fi
 else
 	echo "Sample build is not enabled"
 fi
 
-
 cd $sourcedir
 rm -rf $sourcedir/tmp
 
+exit 0

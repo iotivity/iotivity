@@ -23,11 +23,27 @@
 package org.iotivity.base;
 
 /**
+ * Quality of Service attempts to abstract the guarantees provided by the underlying transport
+ * protocol. The precise definitions of each quality of service level depend on the
+ * implementation. In descriptions below are for the current implementation and may changed
+ * over time.
  */
 public enum QualityOfService {
+    /**
+     * Packet delivery is best effort.
+     */
     LOW(0),
+    /**
+     * Packet delivery is best effort.
+     */
     MEDIUM(1),
+    /**
+     * Acknowledgments are used to confirm delivery.
+     */
     HIGH(2),
+    /**
+     * No Quality is defined, let the stack decide.
+     */
     NA(3);
 
     private int value;

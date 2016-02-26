@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TAG  PCF("SRM-PSI")
+#define TAG  "SRM-PSI"
 
 //SVR database buffer block size
 const size_t DB_FILE_SIZE_BLOCK = 1023;
@@ -81,7 +81,7 @@ char * GetSVRDatabase()
     int size = GetSVRDatabaseSize(ps);
     if (0 == size)
     {
-        OC_LOG (ERROR, TAG, PCF("FindSVRDatabaseSize failed"));
+        OIC_LOG (ERROR, TAG, "FindSVRDatabaseSize failed");
         return NULL;
     }
 
@@ -96,13 +96,13 @@ char * GetSVRDatabase()
             size_t bytesRead = ps->read(jsonStr, 1, size, fp);
             jsonStr[bytesRead] = '\0';
 
-            OC_LOG_V(INFO, TAG, PCF("Read %d bytes from SVR database file"), bytesRead);
+            OIC_LOG_V(DEBUG, TAG, "Read %zu bytes from SVR database file", bytesRead);
             ps->close(fp);
             fp = NULL;
         }
         else
         {
-            OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!!"));
+            OIC_LOG (ERROR, TAG, "Unable to open SVR database file!!");
         }
     }
 
@@ -159,7 +159,8 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
          ACL, PStat & Doxm resources at least have default entries in the database but
          Cred resource may have no entries. The first cred resource entry (for provisioning tool)
          is created when the device is owned by provisioning tool and it's ownerpsk is generated.*/
-        if((strcmp(rsrcName, OIC_JSON_CRED_NAME) == 0) && (!jsonObj))
+        if((strcmp(rsrcName, OIC_JSON_CRED_NAME) == 0 || strcmp(rsrcName, OIC_JSON_CRL_NAME) == 0)
+                                                                                    && (!jsonObj))
         {
             // Add the fist cred object in existing SVR database json
             cJSON_AddItemToObject(jsonSVRDb, rsrcName, jsonDuplicateObj->child);
@@ -189,13 +190,13 @@ OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
             {
                 ret = OC_STACK_OK;
             }
-            OC_LOG_V(INFO, TAG, PCF("Written %d bytes into SVR database file"), bytesWritten);
+            OIC_LOG_V(DEBUG, TAG, "Written %zu bytes into SVR database file", bytesWritten);
             ps->close(fp);
             fp = NULL;
         }
         else
         {
-            OC_LOG (ERROR, TAG, PCF("Unable to open SVR database file!! "));
+            OIC_LOG (ERROR, TAG, "Unable to open SVR database file!! ");
         }
     }
 

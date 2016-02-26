@@ -34,7 +34,7 @@ examples_env = lib_env.Clone()
 examples_env.AppendUnique(CPPPATH = [
 		'../include/',
 		'../csdk/stack/include',
-		'../csdk/ocrandom/include',
+		'../c_common/ocrandom/include',
 		'../csdk/logger/include',
 		'../oc_logger/include'
 		])
@@ -87,6 +87,10 @@ devicediscoveryserver = examples_env.Program('devicediscoveryserver', 'devicedis
 devicediscoveryclient = examples_env.Program('devicediscoveryclient', 'devicediscoveryclient.cpp')
 threadingsample = examples_env.Program('threadingsample', 'threadingsample.cpp')
 
+clientjson = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
+				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client.json')
+serverjson = examples_env.Install(env.get('BUILD_DIR') + '/resource/examples/',
+				env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_server.json')
 Alias("examples", [simpleserver, simpleclient,
 		simpleserverHQ, simpleclientHQ,
 		fridgeserver, fridgeclient,
@@ -96,14 +100,7 @@ Alias("examples", [simpleserver, simpleclient,
 		groupserver, groupclient,
 		lightserver,
 		devicediscoveryserver, devicediscoveryclient,
-		threadingsample
+		threadingsample,
+		serverjson, clientjson
      ])
 env.AppendTarget('examples')
-
-src_dir = examples_env.get('SRC_DIR')
-svr_db_src_dir = src_dir + '/resource/examples/'
-svr_db_build_dir = env.get('BUILD_DIR') +'/resource/examples/'
-examples_env.Alias("install", examples_env.Install( svr_db_build_dir,
-                svr_db_src_dir + 'oic_svr_db_client.json'))
-examples_env.Alias("install", examples_env.Install( svr_db_build_dir,
-                svr_db_src_dir + 'oic_svr_db_server.json'))

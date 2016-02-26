@@ -39,6 +39,8 @@ namespace OIC
 
             const std::string& getAddress() const;
 
+            bool isMulticast() const;
+
         private:
             std::string m_addr;
         };

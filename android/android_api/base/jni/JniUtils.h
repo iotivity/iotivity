@@ -67,6 +67,8 @@ public:
             return OC::ModeType::Client;
         case 2:
             return OC::ModeType::Both;
+        case 3:
+            return OC::ModeType::Gateway;
         default:
             ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected mode type");
             return OC::ModeType::Both;
@@ -118,6 +120,8 @@ public:
             return OCEntityHandlerResult::OC_EH_SLOW;
         case 5:
             return OCEntityHandlerResult::OC_EH_FORBIDDEN;
+        case 6:
+            return OCEntityHandlerResult::OC_EH_RESOURCE_NOT_FOUND;
         default:
             ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected OCEntityHandlerResult");
             return OCEntityHandlerResult::OC_EH_ERROR;
@@ -128,6 +132,7 @@ public:
     {
         switch (result)
         {
+        /** Success status code - START HERE.*/
         case OC_STACK_OK:
             return "OK";
         case OC_STACK_RESOURCE_CREATED:
@@ -136,21 +141,20 @@ public:
             return "RESOURCE_DELETED";
         case OC_STACK_CONTINUE:
             return "CONTINUE";
-            /* Success status code - END HERE */
-            /* Error status code - START HERE */
+        /* Error status code - START HERE */
         case OC_STACK_INVALID_URI:
             return "INVALID_URI";
         case OC_STACK_INVALID_QUERY:
             return "INVALID_QUERY";
         case OC_STACK_INVALID_IP:
             return "INVALID_IP";
-
         case OC_STACK_INVALID_PORT:
             return "INVALID_PORT";
         case OC_STACK_INVALID_CALLBACK:
             return "INVALID_CALLBACK";
         case OC_STACK_INVALID_METHOD:
             return "INVALID_METHOD";
+        /** Invalid parameter.*/
         case OC_STACK_INVALID_PARAM:
             return "INVALID_PARAM";
         case OC_STACK_INVALID_OBSERVE_PARAM:
@@ -159,16 +163,23 @@ public:
             return "NO_MEMORY";
         case OC_STACK_COMM_ERROR:
             return "COMM_ERROR";
+        case OC_STACK_TIMEOUT:
+            return "TIMEOUT";
+        case OC_STACK_ADAPTER_NOT_ENABLED:
+            return "ADAPTER_NOT_ENABLED";
         case OC_STACK_NOTIMPL:
             return "NOTIMPL";
+        /** Resource not found.*/
         case OC_STACK_NO_RESOURCE:
             return "NO_RESOURCE";
+        /** e.g: not supported method or interface.*/
         case  OC_STACK_RESOURCE_ERROR:
             return "RESOURCE_ERROR";
         case OC_STACK_SLOW_RESOURCE:
             return "SLOW_RESOURCE";
-            //case OC_STACK_DUPLICATE_REQUEST:
-            //    return "DUPLICATE_REQUEST";
+        case OC_STACK_DUPLICATE_REQUEST:
+            return "DUPLICATE_REQUEST";
+        /** Resource has no registered observers.*/
         case OC_STACK_NO_OBSERVERS:
             return "NO_OBSERVERS";
         case OC_STACK_OBSERVER_NOT_FOUND:
@@ -177,6 +188,7 @@ public:
             return "VIRTUAL_DO_NOT_HANDLE";
         case OC_STACK_INVALID_OPTION:
             return "INVALID_OPTION";
+        /** The remote reply contained malformed data.*/
         case OC_STACK_MALFORMED_RESPONSE:
             return "MALFORMED_RESPONSE";
         case OC_STACK_PERSISTENT_BUFFER_REQUIRED:
@@ -185,16 +197,27 @@ public:
             return "INVALID_REQUEST_HANDLE";
         case OC_STACK_INVALID_DEVICE_INFO:
             return "INVALID_DEVICE_INFO";
-            //case OC_STACK_INVALID_JSON:
-            //    return "INVALID_JSON";
-
+        case OC_STACK_INVALID_JSON:
+            return "INVALID_JSON";
+        /** Request is not authorized by Resource Server. */
+        case OC_STACK_UNAUTHORIZED_REQ:
+            return "UNAUTHORIZED_REQ";
+        /** Error code from PDM */
+        case OC_STACK_PDM_IS_NOT_INITIALIZED:
+            return "PDM_IS_NOT_INITIALIZED";
+        case OC_STACK_DUPLICATE_UUID:
+            return "DUPLICATE_UUID";
+        case OC_STACK_INCONSISTENT_DB:
+            return "INCONSISTENT_DB";
+        /** Insert all new error codes here!.*/
+#ifdef WITH_PRESENCE
         case OC_STACK_PRESENCE_STOPPED:
             return "PRESENCE_STOPPED";
         case OC_STACK_PRESENCE_TIMEOUT:
             return "PRESENCE_TIMEOUT";
         case OC_STACK_PRESENCE_DO_NOT_HANDLE:
             return "PRESENCE_DO_NOT_HANDLE";
-
+#endif
         case OC_STACK_ERROR:
             return "ERROR";
 

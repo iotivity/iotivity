@@ -21,8 +21,9 @@
 #ifndef IOTVT_SRM_CREDR_H
 #define IOTVT_SRM_CREDR_H
 
-#include "ocsecurityconfig.h"
 #include "cainterface.h"
+#include "securevirtualresourcetypes.h"
+#include "octypes.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -109,20 +110,32 @@ OCStackResult AddCredential(OicSecCred_t * cred);
  */
 OCStackResult RemoveCredential(const OicUuid_t* credId);
 
+/**
+ * Remove all credential data on credential resource and persistent storage
+ *
+ * @retval
+ *     OC_STACK_OK              - no errors
+ *     OC_STACK_ERROR           - stack process error
+ */
+OCStackResult RemoveAllCredentials(void);
+
 #if defined(__WITH_DTLS__)
 /**
  * This internal callback is used by lower stack (i.e. CA layer) to
  * retrieve PSK credentials from RI security layer.
  *
- * Note: When finished, caller should initialize memory to zeroes and
- * invoke OCFree to delete @p credInfo.
+ * @param[in]  type type of PSK data required by CA layer during DTLS handshake.
+ * @param[in]  desc Additional request information.
+ * @param[in]  desc_len The actual length of desc.
+ * @param[out] result  Must be filled with the requested information.
+ * @param[in]  result_length  Maximum size of @p result.
  *
- * @param credInfo
- *     binary blob containing PSK credentials
- *
- * @retval none
+ * @return The number of bytes written to @p result or a value
+ *         less than zero on error.
  */
-void GetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo);
+int32_t GetDtlsPskCredentials( CADtlsPskCredType_t type,
+              const unsigned char *desc, size_t desc_len,
+              unsigned char *result, size_t result_length);
 
 /**
  * Add temporal PSK to PIN based OxM
@@ -142,6 +155,18 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
                             size_t ownersLen, const OicUuid_t * owners, OicUuid_t* tmpCredSubject);
 
 #endif /* __WITH_DTLS__ */
+
+#ifdef __WITH_X509__
+/**
+ * This function is used toretrieve certificate credentials from RI security layer.
+ *
+ * @param credInfo
+ *     binary structure containing certificate credentials
+ *
+ * @retval 0  on scuccess
+ */
+int GetDtlsX509Credentials(CADtlsX509Creds_t *credInfo);
+#endif /*__WITH_X509__*/
 
 /**
  * Function to deallocate allocated memory to OicSecCred_t

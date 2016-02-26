@@ -26,8 +26,8 @@
  * central entrance to the stack.
  */
 
-#ifndef __OCPLATFORM_IMPL_H
-#define __OCPLATFORM_IMPL_H
+#ifndef OC_PLATFORM_IMPL_H_
+#define OC_PLATFORM_IMPL_H_
 
 #include <map>
 
@@ -221,6 +221,8 @@ namespace OC
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
+
+        std::weak_ptr<std::recursive_mutex> csdkLock();
 
     private:
         PlatformConfig m_cfg;

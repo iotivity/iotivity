@@ -27,7 +27,7 @@
 // Enable extra debug logging for malloc.  Comment out to disable
 #ifdef ENABLE_MALLOC_DEBUG
 #include "logger.h"
-#define TAG "OICMalloc"
+#define TAG "OIC_MALLOC"
 #endif
 
 //-----------------------------------------------------------------------------
@@ -66,7 +66,10 @@ void *OICMalloc(size_t size)
 
 #ifdef ENABLE_MALLOC_DEBUG
     void *ptr = malloc(size);
-    count++;
+    if (ptr)
+    {
+        count++;
+    }
     OIC_LOG_V(INFO, TAG, "malloc: ptr=%p, size=%u, count=%u", ptr, size, count);
     return ptr;
 #else
@@ -83,7 +86,11 @@ void *OICCalloc(size_t num, size_t size)
 
 #ifdef ENABLE_MALLOC_DEBUG
     void *ptr = calloc(num, size);
-    OIC_LOG_V(INFO, TAG, "calloc: ptr=%p, num=%u, size=%u", ptr, num, size);
+    if (ptr)
+    {
+        count++;
+    }
+    OIC_LOG_V(INFO, TAG, "calloc: ptr=%p, num=%u, size=%u, count=%u", ptr, num, size, count);
     return ptr;
 #else
     return calloc(num, size);

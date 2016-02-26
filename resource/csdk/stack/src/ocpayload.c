@@ -27,14 +27,16 @@
 #include "ocstackinternal.h"
 #include "ocresource.h"
 #include "logger.h"
+#include "rdpayload.h"
 
-#define TAG "OCPayload"
+#define TAG "OIC_RI_PAYLOAD"
+
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val);
 static void FreeOCDiscoveryResource(OCResourcePayload* payload);
 
 void OCPayloadDestroy(OCPayload* payload)
 {
-    if(!payload)
+    if (!payload)
     {
         return;
     }
@@ -59,8 +61,11 @@ void OCPayloadDestroy(OCPayload* payload)
         case PAYLOAD_TYPE_SECURITY:
             OCSecurityPayloadDestroy((OCSecurityPayload*)payload);
             break;
+        case PAYLOAD_TYPE_RD:
+           OCRDPayloadDestroy((OCRDPayload*)payload);
+           break;
         default:
-            OC_LOG_V(ERROR, TAG, "Unsupported payload type in destroy: %d", payload->type);
+            OIC_LOG_V(ERROR, TAG, "Unsupported payload type in destroy: %d", payload->type);
             OICFree(payload);
             break;
     }
@@ -69,7 +74,7 @@ OCRepPayload* OCRepPayloadCreate()
 {
     OCRepPayload* payload = (OCRepPayload*)OICCalloc(1, sizeof(OCRepPayload));
 
-    if(!payload)
+    if (!payload)
     {
         return NULL;
     }
@@ -81,7 +86,7 @@ OCRepPayload* OCRepPayloadCreate()
 
 void OCRepPayloadAppend(OCRepPayload* parent, OCRepPayload* child)
 {
-    if(!parent)
+    if (!parent)
     {
         return;
     }
@@ -97,7 +102,7 @@ void OCRepPayloadAppend(OCRepPayload* parent, OCRepPayload* child)
 
 static OCRepPayloadValue* OCRepPayloadFindValue(const OCRepPayload* payload, const char* name)
 {
-    if(!payload || !name)
+    if (!payload || !name)
     {
         return NULL;
     }
@@ -105,7 +110,7 @@ static OCRepPayloadValue* OCRepPayloadFindValue(const OCRepPayload* payload, con
     OCRepPayloadValue* val = payload->values;
     while(val)
     {
-        if(0 == strcmp(val->name, name))
+        if (0 == strcmp(val->name, name))
         {
             return val;
         }
@@ -113,11 +118,15 @@ static OCRepPayloadValue* OCRepPayloadFindValue(const OCRepPayload* payload, con
     }
 
     return NULL;
-
 }
 
 static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source)
 {
+    if (!dest || !source)
+    {
+        return;
+    }
+
     size_t dimTotal = calcDimTotal(source->arr.dimensions);
     switch(source->arr.type)
     {
@@ -148,7 +157,7 @@ static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue*
             }
             break;
         default:
-            OC_LOG(ERROR, TAG, PCF("CopyPropertyValueArray invalid type"));
+            OIC_LOG(ERROR, TAG, "CopyPropertyValueArray invalid type");
             break;
     }
 }
@@ -179,14 +188,18 @@ static void OCCopyPropertyValue (OCRepPayloadValue *dest, OCRepPayloadValue *sou
 
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
 {
-    if(!val)
+    if (!val)
     {
         return;
     }
 
-    if(val->type == OCREP_PROP_STRING)
+    if (val->type == OCREP_PROP_STRING)
     {
         OICFree(val->str);
+    }
+    else if (val->type == OCREP_PROP_BYTE_STRING)
+    {
+        OICFree(val->ocByteStr.bytes);
     }
     else if (val->type == OCREP_PROP_OBJECT)
     {
@@ -205,14 +218,21 @@ static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
                 OICFree(val->arr.iArray);
                 break;
             case OCREP_PROP_STRING:
-                for(size_t i = 0; i< dimTotal;++i)
+                for(size_t i = 0; i< dimTotal; ++i)
                 {
                     OICFree(val->arr.strArray[i]);
                 }
                 OICFree(val->arr.strArray);
                 break;
+            case OCREP_PROP_BYTE_STRING:
+                for (size_t i = 0; i< dimTotal; ++i)
+                {
+                    OICFree(val->arr.ocByteStrArray[i].bytes);
+                }
+                OICFree(val->arr.ocByteStrArray);
+                break;
             case OCREP_PROP_OBJECT:
-                for(size_t i = 0; i< dimTotal;++i)
+                for(size_t i = 0; i< dimTotal; ++i)
                 {
                     OCRepPayloadDestroy(val->arr.objArray[i]);
                 }
@@ -220,7 +240,7 @@ static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
                 break;
             case OCREP_PROP_NULL:
             case OCREP_PROP_ARRAY:
-                OC_LOG_V(ERROR, TAG, "FreeRepPayloadValueContents: Illegal type\
+                OIC_LOG_V(ERROR, TAG, "FreeRepPayloadValueContents: Illegal type\
                         inside an array: %d", val->arr.type);
                 break;
         }
@@ -229,7 +249,7 @@ static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
 
 static void OCFreeRepPayloadValue(OCRepPayloadValue* val)
 {
-    if(!val)
+    if (!val)
     {
         return;
     }
@@ -284,21 +304,21 @@ static OCRepPayloadValue* OCRepPayloadValueClone (OCRepPayloadValue* source)
 static OCRepPayloadValue* OCRepPayloadFindAndSetValue(OCRepPayload* payload, const char* name,
         OCRepPayloadPropType type)
 {
-    if(!payload || !name)
+    if (!payload || !name)
     {
         return NULL;
     }
 
     OCRepPayloadValue* val = payload->values;
-    if(val == NULL)
+    if (val == NULL)
     {
         payload->values = (OCRepPayloadValue*)OICCalloc(1, sizeof(OCRepPayloadValue));
-        if(!payload->values)
+        if (!payload->values)
         {
             return NULL;
         }
         payload->values->name = OICStrdup(name);
-        if(!payload->values->name)
+        if (!payload->values->name)
         {
             OICFree(payload->values);
             payload->values = NULL;
@@ -310,21 +330,21 @@ static OCRepPayloadValue* OCRepPayloadFindAndSetValue(OCRepPayload* payload, con
 
     while(val)
     {
-        if(0 == strcmp(val->name, name))
+        if (0 == strcmp(val->name, name))
         {
             OCFreeRepPayloadValueContents(val);
             val->type = type;
             return val;
         }
-        else if(val->next == NULL)
+        else if (val->next == NULL)
         {
             val->next = (OCRepPayloadValue*)OICCalloc(1, sizeof(OCRepPayloadValue));
-            if(!val->next)
+            if (!val->next)
             {
                 return NULL;
             }
             val->next->name = OICStrdup(name);
-            if(!val->next->name)
+            if (!val->next->name)
             {
                 OICFree(val->next);
                 val->next = NULL;
@@ -337,7 +357,7 @@ static OCRepPayloadValue* OCRepPayloadFindAndSetValue(OCRepPayload* payload, con
         val = val->next;
     }
 
-    OC_LOG(ERROR, TAG, PCF("FindAndSetValue reached point after while loop, pointer corruption?"));
+    OIC_LOG(ERROR, TAG, "FindAndSetValue reached point after while loop, pointer corruption?");
     return NULL;
 }
 
@@ -348,12 +368,12 @@ bool OCRepPayloadAddResourceType(OCRepPayload* payload, const char* resourceType
 
 bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceType)
 {
-    if(!payload || !resourceType)
+    if (!payload || !resourceType)
     {
         return false;
     }
 
-    if(payload->types)
+    if (payload->types)
     {
         OCStringLL* cur = payload->types;
         while(cur->next)
@@ -362,7 +382,7 @@ bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceTyp
         }
         cur->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
 
-        if(!cur->next)
+        if (!cur->next)
         {
             return false;
         }
@@ -373,7 +393,7 @@ bool OCRepPayloadAddResourceTypeAsOwner(OCRepPayload* payload, char* resourceTyp
     else
     {
         payload->types = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-        if(!payload->types)
+        if (!payload->types)
         {
             return false;
         }
@@ -389,12 +409,12 @@ bool OCRepPayloadAddInterface(OCRepPayload* payload, const char* interface)
 
 bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface)
 {
-    if(!payload || !interface)
+    if (!payload || !interface)
     {
         return false;
     }
 
-    if(payload->interfaces)
+    if (payload->interfaces)
     {
         OCStringLL* cur = payload->interfaces;
         while(cur->next)
@@ -403,7 +423,7 @@ bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface)
         }
         cur->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
 
-        if(!cur->next)
+        if (!cur->next)
         {
             return false;
         }
@@ -413,7 +433,7 @@ bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface)
     else
     {
         payload->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-        if(!payload->interfaces)
+        if (!payload->interfaces)
         {
             return false;
         }
@@ -424,11 +444,11 @@ bool OCRepPayloadAddInterfaceAsOwner(OCRepPayload* payload, char* interface)
 
 bool OCRepPayloadSetUri(OCRepPayload* payload, const char*  uri)
 {
-    if(!payload)
+    if (!payload)
     {
         return false;
     }
-
+    OICFree(payload->uri);
     payload->uri = OICStrdup(uri);
     return payload->uri != NULL;
 }
@@ -437,7 +457,7 @@ bool OCRepPayloadIsNull(const OCRepPayload* payload, const char* name)
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if(!val)
+    if (!val)
     {
         return false;
     }
@@ -449,7 +469,7 @@ static bool OCRepPayloadSetProp(OCRepPayload* payload, const char* name,
         void* value, OCRepPayloadPropType type)
 {
     OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, type);
-    if(!val)
+    if (!val)
     {
         return false;
     }
@@ -470,6 +490,9 @@ static bool OCRepPayloadSetProp(OCRepPayload* payload, const char* name,
         case OCREP_PROP_STRING:
                val->str = (char*)value;
                return val->str != NULL;
+        case OCREP_PROP_BYTE_STRING:
+               val->ocByteStr = *(OCByteString*)value;
+               break;
         case OCREP_PROP_NULL:
                return val != NULL;
         case OCREP_PROP_ARRAY:
@@ -495,7 +518,7 @@ bool OCRepPayloadGetPropInt(const OCRepPayload* payload, const char* name, int64
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if(!val || val->type != OCREP_PROP_INT)
+    if (!val || val->type != OCREP_PROP_INT)
     {
         return false;
     }
@@ -505,7 +528,7 @@ bool OCRepPayloadGetPropInt(const OCRepPayload* payload, const char* name, int64
 }
 
 bool OCRepPayloadSetPropDouble(OCRepPayload* payload,
-        const char* name, double value)
+                               const char* name, double value)
 {
     return OCRepPayloadSetProp(payload, name, &value, OCREP_PROP_DOUBLE);
 }
@@ -514,7 +537,7 @@ bool OCRepPayloadGetPropDouble(const OCRepPayload* payload, const char* name, do
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if(!val || val->type != OCREP_PROP_DOUBLE)
+    if (!val || val->type != OCREP_PROP_DOUBLE)
     {
         return false;
     }
@@ -528,7 +551,7 @@ bool OCRepPayloadSetPropString(OCRepPayload* payload, const char* name, const ch
     char* temp = OICStrdup(value);
     bool b = OCRepPayloadSetPropStringAsOwner(payload, name, temp);
 
-    if(!b)
+    if (!b)
     {
         OICFree(temp);
     }
@@ -540,11 +563,11 @@ bool OCRepPayloadSetPropStringAsOwner(OCRepPayload* payload, const char* name, c
     return OCRepPayloadSetProp(payload, name, value, OCREP_PROP_STRING);
 }
 
-bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, const char** value)
+bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, char** value)
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if(!val || val->type != OCREP_PROP_STRING)
+    if (!val || val->type != OCREP_PROP_STRING)
     {
         return false;
     }
@@ -553,8 +576,64 @@ bool OCRepPayloadGetPropString(const OCRepPayload* payload, const char* name, co
     return *value != NULL;
 }
 
+bool OCRepPayloadSetPropByteString(OCRepPayload* payload, const char* name, OCByteString value)
+{
+    if (!value.bytes || !value.len)
+    {
+        return false;
+    }
+
+    OCByteString ocByteStr = {
+                    .bytes = (uint8_t*)OICMalloc(value.len * sizeof(uint8_t)),
+                    .len = value.len };
+
+    if (!ocByteStr.bytes)
+    {
+        return false;
+    }
+    memcpy(ocByteStr.bytes, value.bytes, ocByteStr.len);
+
+    bool b = OCRepPayloadSetPropByteStringAsOwner(payload, name, &ocByteStr);
+
+    if (!b)
+    {
+        OICFree(ocByteStr.bytes);
+    }
+    return b;
+}
+
+bool OCRepPayloadSetPropByteStringAsOwner(OCRepPayload* payload, const char* name, OCByteString* value)
+{
+    return OCRepPayloadSetProp(payload, name, value, OCREP_PROP_BYTE_STRING);
+}
+
+bool OCRepPayloadGetPropByteString(const OCRepPayload* payload, const char* name, OCByteString* value)
+{
+    OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
+
+    if (!val || val->type != OCREP_PROP_BYTE_STRING)
+    {
+        return false;
+    }
+
+    if (!value)
+    {
+        return false;
+    }
+
+    value->bytes = (uint8_t*)OICMalloc(val->ocByteStr.len * sizeof(uint8_t));
+    if (!value->bytes)
+    {
+        return false;
+    }
+    value->len = val->ocByteStr.len;
+    memcpy(value->bytes, val->ocByteStr.bytes, value->len);
+
+    return true;
+}
+
 bool OCRepPayloadSetPropBool(OCRepPayload* payload,
-        const char* name, bool value)
+                             const char* name, bool value)
 {
     return OCRepPayloadSetProp(payload, name, &value, OCREP_PROP_BOOL);
 }
@@ -563,7 +642,7 @@ bool OCRepPayloadGetPropBool(const OCRepPayload* payload, const char* name, bool
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if(!val || val->type != OCREP_PROP_BOOL)
+    if (!val || val->type != OCREP_PROP_BOOL)
     {
         return false;
     }
@@ -577,7 +656,7 @@ bool OCRepPayloadSetPropObject(OCRepPayload* payload, const char* name, const OC
     OCRepPayload* temp = OCRepPayloadClone(value);
     bool b = OCRepPayloadSetPropObjectAsOwner(payload, name, temp);
 
-    if(!b)
+    if (!b)
     {
         OCRepPayloadDestroy(temp);
     }
@@ -593,7 +672,7 @@ bool OCRepPayloadGetPropObject(const OCRepPayload* payload, const char* name, OC
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if(!val || val->type != OCREP_PROP_OBJECT)
+    if (!val || val->type != OCREP_PROP_OBJECT)
     {
         return false;
     }
@@ -604,7 +683,7 @@ bool OCRepPayloadGetPropObject(const OCRepPayload* payload, const char* name, OC
 
 size_t calcDimTotal(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
 {
-    if(dimensions[0] == 0)
+    if (dimensions[0] == 0)
     {
         return 0;
     }
@@ -617,12 +696,129 @@ size_t calcDimTotal(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
     return total;
 }
 
+
+bool OCRepPayloadSetByteStringArrayAsOwner(OCRepPayload* payload, const char* name,
+        OCByteString* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
+{
+    OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_ARRAY);
+
+    if (!val)
+    {
+        return false;
+    }
+
+    val->arr.type = OCREP_PROP_BYTE_STRING;
+    memcpy(val->arr.dimensions, dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
+    val->arr.ocByteStrArray = array;
+
+    return true;
+}
+
+bool OCRepPayloadSetByteStringArray(OCRepPayload* payload, const char* name,
+        const OCByteString* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
+{
+    if (!array)
+    {
+        return NULL;
+    }
+
+    size_t dimTotal = calcDimTotal(dimensions);
+    if (dimTotal == 0)
+    {
+        return false;
+    }
+
+    OCByteString* newArray = (OCByteString*)OICCalloc(dimTotal, sizeof(OCByteString));
+
+    if (!newArray)
+    {
+        return false;
+    }
+
+    for (size_t i = 0; i < dimTotal; ++i)
+    {
+        newArray[i].bytes = (uint8_t*)OICMalloc(array[i].len * sizeof(uint8_t));
+        if (NULL == newArray[i].bytes)
+        {
+            for (size_t j = 0; j < i; ++j)
+            {
+                OICFree(newArray[j].bytes);
+            }
+
+            OICFree(newArray);
+            return false;
+        }
+        newArray[i].len = array[i].len;
+        memcpy(newArray[i].bytes, array[i].bytes, newArray[i].len);
+    }
+
+    bool b = OCRepPayloadSetByteStringArrayAsOwner(payload, name, newArray, dimensions);
+    if (!b)
+    {
+        for (size_t i = 0; i < dimTotal; ++i)
+        {
+            OICFree(newArray[i].bytes);
+        }
+
+        OICFree(newArray);
+    }
+    return b;
+}
+
+bool OCRepPayloadGetByteStringArray(const OCRepPayload* payload, const char* name,
+        OCByteString** array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
+{
+    OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
+
+    if (!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_BYTE_STRING
+            || !val->arr.ocByteStrArray)
+    {
+        return false;
+    }
+
+    size_t dimTotal = calcDimTotal(val->arr.dimensions);
+    if (dimTotal == 0)
+    {
+        return false;
+    }
+
+    *array = (OCByteString*)OICCalloc(dimTotal, sizeof(OCByteString));
+    if (!*array)
+    {
+        return false;
+    }
+
+    for (size_t i = 0; i < dimTotal; ++i)
+    {
+        OCByteString* tmp = &(*array)[i];
+        tmp->bytes = (uint8_t*)OICMalloc(val->arr.ocByteStrArray[i].len * sizeof(uint8_t));
+        if (NULL == tmp->bytes)
+        {
+            for (size_t j = 0; j < i; ++j)
+            {
+                OCByteString* tmp = &(*array)[j];
+                OICFree(tmp->bytes);
+            }
+            OICFree(*array);
+            *array = NULL;
+
+            return false;
+        }
+        tmp->len = val->arr.ocByteStrArray[i].len;
+        memcpy(tmp->bytes, val->arr.ocByteStrArray[i].bytes, tmp->len);
+    }
+
+    memcpy(dimensions, val->arr.dimensions, MAX_REP_ARRAY_DEPTH * sizeof(size_t));
+    return true;
+}
+
+
 bool OCRepPayloadSetIntArrayAsOwner(OCRepPayload* payload, const char* name,
         int64_t* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
 {
     OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_ARRAY);
 
-    if(!val)
+    if (!val)
     {
         return false;
     }
@@ -638,14 +834,14 @@ bool OCRepPayloadSetIntArray(OCRepPayload* payload, const char* name,
         const int64_t* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
 {
     size_t dimTotal = calcDimTotal(dimensions);
-    if(dimTotal == 0)
+    if (dimTotal == 0)
     {
         return false;
     }
 
     int64_t* newArray = (int64_t*)OICMalloc(dimTotal * sizeof(int64_t));
 
-    if(!newArray)
+    if (!newArray)
     {
         return false;
     }
@@ -654,7 +850,7 @@ bool OCRepPayloadSetIntArray(OCRepPayload* payload, const char* name,
 
 
     bool b = OCRepPayloadSetIntArrayAsOwner(payload, name, newArray, dimensions);
-    if(!b)
+    if (!b)
     {
         OICFree(newArray);
     }
@@ -666,19 +862,19 @@ bool OCRepPayloadGetIntArray(const OCRepPayload* payload, const char* name,
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if(!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_INT
+    if (!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_INT
             || !val->arr.iArray)
     {
         return false;
     }
 
     size_t dimTotal = calcDimTotal(val->arr.dimensions);
-    if(dimTotal == 0)
+    if (dimTotal == 0)
     {
         return false;
     }
     *array = (int64_t*)OICMalloc(dimTotal * sizeof(int64_t));
-    if(!*array)
+    if (!*array)
     {
         return false;
     }
@@ -693,7 +889,7 @@ bool OCRepPayloadSetDoubleArrayAsOwner(OCRepPayload* payload, const char* name,
 {
     OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_ARRAY);
 
-    if(!val)
+    if (!val)
     {
         return false;
     }
@@ -708,14 +904,14 @@ bool OCRepPayloadSetDoubleArray(OCRepPayload* payload, const char* name,
         const double* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
 {
     size_t dimTotal = calcDimTotal(dimensions);
-    if(dimTotal == 0)
+    if (dimTotal == 0)
     {
         return false;
     }
 
     double* newArray = (double*)OICMalloc(dimTotal * sizeof(double));
 
-    if(!newArray)
+    if (!newArray)
     {
         return false;
     }
@@ -723,7 +919,7 @@ bool OCRepPayloadSetDoubleArray(OCRepPayload* payload, const char* name,
     memcpy(newArray, array, dimTotal * sizeof(double));
 
     bool b = OCRepPayloadSetDoubleArrayAsOwner(payload, name, newArray, dimensions);
-    if(!b)
+    if (!b)
     {
         OICFree(newArray);
     }
@@ -735,19 +931,19 @@ bool OCRepPayloadGetDoubleArray(const OCRepPayload* payload, const char* name,
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if(!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_DOUBLE
+    if (!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_DOUBLE
             || !val->arr.dArray)
     {
         return false;
     }
 
     size_t dimTotal = calcDimTotal(val->arr.dimensions);
-    if(dimTotal == 0)
+    if (dimTotal == 0)
     {
         return false;
     }
     *array = (double*)OICMalloc(dimTotal * sizeof(double));
-    if(!*array)
+    if (!*array)
     {
         return false;
     }
@@ -762,7 +958,7 @@ bool OCRepPayloadSetStringArrayAsOwner(OCRepPayload* payload, const char* name,
 {
     OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_ARRAY);
 
-    if(!val)
+    if (!val)
     {
         return false;
     }
@@ -777,14 +973,14 @@ bool OCRepPayloadSetStringArray(OCRepPayload* payload, const char* name,
         const char** array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
 {
     size_t dimTotal = calcDimTotal(dimensions);
-    if(dimTotal == 0)
+    if (dimTotal == 0)
     {
         return false;
     }
 
     char** newArray = (char**)OICMalloc(dimTotal * sizeof(char*));
 
-    if(!newArray)
+    if (!newArray)
     {
         return false;
     }
@@ -796,7 +992,7 @@ bool OCRepPayloadSetStringArray(OCRepPayload* payload, const char* name,
 
     bool b = OCRepPayloadSetStringArrayAsOwner(payload, name, newArray, dimensions);
 
-    if(!b)
+    if (!b)
     {
         for(size_t i = 0; i < dimTotal; ++i)
         {
@@ -812,19 +1008,19 @@ bool OCRepPayloadGetStringArray(const OCRepPayload* payload, const char* name,
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if(!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_STRING
+    if (!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_STRING
             || !val->arr.strArray)
     {
         return false;
     }
 
     size_t dimTotal = calcDimTotal(val->arr.dimensions);
-    if(dimTotal == 0)
+    if (dimTotal == 0)
     {
         return false;
     }
     *array = (char**)OICMalloc(dimTotal * sizeof(char*));
-    if(!*array)
+    if (!*array)
     {
         return false;
     }
@@ -846,7 +1042,7 @@ bool OCRepPayloadSetBoolArrayAsOwner(OCRepPayload* payload, const char* name,
 
     OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_ARRAY);
 
-    if(!val)
+    if (!val)
     {
         return false;
     }
@@ -861,14 +1057,14 @@ bool OCRepPayloadSetBoolArray(OCRepPayload* payload, const char* name,
         const bool* array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
 {
     size_t dimTotal = calcDimTotal(dimensions);
-    if(dimTotal == 0)
+    if (dimTotal == 0)
     {
         return false;
     }
 
     bool* newArray = (bool*)OICMalloc(dimTotal * sizeof(bool));
 
-    if(!newArray)
+    if (!newArray)
     {
         return false;
     }
@@ -877,7 +1073,7 @@ bool OCRepPayloadSetBoolArray(OCRepPayload* payload, const char* name,
 
 
     bool b = OCRepPayloadSetBoolArrayAsOwner(payload, name, newArray, dimensions);
-    if(!b)
+    if (!b)
     {
         OICFree(newArray);
     }
@@ -889,19 +1085,19 @@ bool OCRepPayloadGetBoolArray(const OCRepPayload* payload, const char* name,
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if(!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_BOOL
+    if (!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_BOOL
             || !val->arr.bArray)
     {
         return false;
     }
 
     size_t dimTotal = calcDimTotal(val->arr.dimensions);
-    if(dimTotal == 0)
+    if (dimTotal == 0)
     {
         return false;
     }
     *array = (bool*)OICMalloc(dimTotal * sizeof(bool));
-    if(!*array)
+    if (!*array)
     {
         return false;
     }
@@ -916,7 +1112,7 @@ bool OCRepPayloadSetPropObjectArrayAsOwner(OCRepPayload* payload, const char* na
 {
     OCRepPayloadValue* val = OCRepPayloadFindAndSetValue(payload, name, OCREP_PROP_ARRAY);
 
-    if(!val)
+    if (!val)
     {
         return false;
     }
@@ -932,14 +1128,14 @@ bool OCRepPayloadSetPropObjectArray(OCRepPayload* payload, const char* name,
         const OCRepPayload** array, size_t dimensions[MAX_REP_ARRAY_DEPTH])
 {
     size_t dimTotal = calcDimTotal(dimensions);
-    if(dimTotal == 0)
+    if (dimTotal == 0)
     {
         return false;
     }
 
     OCRepPayload** newArray = (OCRepPayload**)OICMalloc(dimTotal * sizeof(OCRepPayload*));
 
-    if(!newArray)
+    if (!newArray)
     {
         return false;
     }
@@ -951,7 +1147,7 @@ bool OCRepPayloadSetPropObjectArray(OCRepPayload* payload, const char* name,
 
     bool b = OCRepPayloadSetPropObjectArrayAsOwner(payload, name, newArray, dimensions);
 
-    if(!b)
+    if (!b)
     {
         for(size_t i = 0; i < dimTotal; ++i)
         {
@@ -967,19 +1163,19 @@ bool OCRepPayloadGetPropObjectArray(const OCRepPayload* payload, const char* nam
 {
     OCRepPayloadValue* val = OCRepPayloadFindValue(payload, name);
 
-    if(!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_OBJECT
+    if (!val || val->type != OCREP_PROP_ARRAY || val->arr.type != OCREP_PROP_OBJECT
             || !val->arr.objArray)
     {
         return false;
     }
 
     size_t dimTotal = calcDimTotal(val->arr.dimensions);
-    if(dimTotal == 0)
+    if (dimTotal == 0)
     {
         return false;
     }
     *array = (OCRepPayload**)OICMalloc(dimTotal * sizeof(OCRepPayload*));
-    if(!*array)
+    if (!*array)
     {
         return false;
     }
@@ -996,7 +1192,7 @@ bool OCRepPayloadGetPropObjectArray(const OCRepPayload* payload, const char* nam
 
 void OCFreeOCStringLL(OCStringLL* ll)
 {
-    if(!ll)
+    if (!ll)
     {
         return;
     }
@@ -1067,7 +1263,7 @@ OCRepPayload* OCRepPayloadClone (const OCRepPayload* payload)
 
 void OCRepPayloadDestroy(OCRepPayload* payload)
 {
-    if(!payload)
+    if (!payload)
     {
         return;
     }
@@ -1084,7 +1280,7 @@ OCDiscoveryPayload* OCDiscoveryPayloadCreate()
 {
     OCDiscoveryPayload* payload = (OCDiscoveryPayload*)OICCalloc(1, sizeof(OCDiscoveryPayload));
 
-    if(!payload)
+    if (!payload)
     {
         return NULL;
     }
@@ -1098,7 +1294,7 @@ OCSecurityPayload* OCSecurityPayloadCreate(const char* securityData)
 {
     OCSecurityPayload* payload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
 
-    if(!payload)
+    if (!payload)
     {
         return NULL;
     }
@@ -1111,7 +1307,7 @@ OCSecurityPayload* OCSecurityPayloadCreate(const char* securityData)
 
 void OCSecurityPayloadDestroy(OCSecurityPayload* payload)
 {
-    if(!payload)
+    if (!payload)
     {
         return;
     }
@@ -1138,7 +1334,7 @@ OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, si
     OCResourcePayload* p = payload->resources;
     while(p)
     {
-        if(i == index)
+        if (i == index)
         {
             return p;
         }
@@ -1151,33 +1347,32 @@ OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, si
 static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
 {
     OCResourcePayload* pl = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
-    if(!pl)
+    if (!pl)
     {
         return NULL;
     }
 
     pl->uri = OICStrdup(res->uri);
-    pl->sid = (uint8_t*)OICCalloc(1, UUID_SIZE);
-    if(!pl->uri || ! pl->sid)
+
+    if (!pl->uri)
     {
         FreeOCDiscoveryResource(pl);
         return NULL;
     }
-    memcpy(pl->sid, OCGetServerInstanceID(), UUID_SIZE);
 
     // types
     OCResourceType* typePtr = res->rsrcType;
 
-    if(typePtr != NULL)
+    if (typePtr != NULL)
     {
         pl->types = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-        if(!pl->types)
+        if (!pl->types)
         {
             FreeOCDiscoveryResource(pl);
             return NULL;
         }
         pl->types->value = OICStrdup(typePtr->resourcetypename);
-        if(!pl->types->value)
+        if (!pl->types->value)
         {
             FreeOCDiscoveryResource(pl);
             return NULL;
@@ -1188,13 +1383,13 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
         while(typePtr)
         {
             cur->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-            if(!cur->next)
+            if (!cur->next)
             {
                 FreeOCDiscoveryResource(pl);
                 return NULL;
             }
             cur->next->value = OICStrdup(typePtr->resourcetypename);
-            if(!cur->next->value)
+            if (!cur->next->value)
             {
                 FreeOCDiscoveryResource(pl);
                 return NULL;
@@ -1206,16 +1401,16 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
 
     // interfaces
     OCResourceInterface* ifPtr = res->rsrcInterface;
-    if(ifPtr != NULL)
+    if (ifPtr != NULL)
     {
         pl->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-        if(!pl->interfaces)
+        if (!pl->interfaces)
         {
             FreeOCDiscoveryResource(pl);
             return NULL;
         }
         pl->interfaces->value = OICStrdup(ifPtr->name);
-        if(!pl->interfaces->value)
+        if (!pl->interfaces->value)
         {
             FreeOCDiscoveryResource(pl);
             return NULL;
@@ -1223,16 +1418,16 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
 
         OCStringLL* cur = pl->interfaces;
         ifPtr = ifPtr->next;
-        while(ifPtr)
+        while(ifPtr && cur)
         {
             cur->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-            if(!cur->next)
+            if (!cur->next)
             {
                 FreeOCDiscoveryResource(pl);
                 return NULL;
             }
             cur->next->value = OICStrdup(ifPtr->name);
-            if(!cur->next->value)
+            if (!cur->next->value)
             {
                 FreeOCDiscoveryResource(pl);
                 return NULL;
@@ -1255,9 +1450,112 @@ void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource
     OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, port));
 }
 
+bool OCResourcePayloadAddResourceType(OCResourcePayload* payload, const char* resourceType)
+{
+    if (!resourceType || !payload)
+    {
+        return false;
+    }
+
+    char* dup = OICStrdup(resourceType);
+
+    if (!dup)
+    {
+        return false;
+    }
+
+    if (!payload->types)
+    {
+        payload->types = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+
+        if (!payload->types)
+        {
+            OICFree(dup);
+            return false;
+        }
+
+        payload->types->value = dup;
+        return true;
+    }
+
+    else
+    {
+        OCStringLL* temp = payload->types;
+
+        while(temp->next)
+        {
+            temp = temp->next;
+        }
+
+        temp->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+        if (!temp->next)
+        {
+            OICFree(dup);
+            return false;
+        }
+
+        temp->next->value = dup;
+        return true;
+    }
+}
+
+bool OCResourcePayloadAddInterface(OCResourcePayload* payload, const char* interface)
+{
+    if (!interface || !payload)
+    {
+        return false;
+    }
+
+    char* dup = OICStrdup(interface);
+
+    if (!dup)
+    {
+        return false;
+    }
+
+    if (!payload->interfaces)
+    {
+        payload->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+
+        if (!payload->interfaces)
+        {
+            OICFree(dup);
+            return false;
+        }
+
+        payload->interfaces->value = dup;
+        return true;
+    }
+
+    else
+    {
+        OCStringLL* temp = payload->interfaces;
+
+        while(temp->next)
+        {
+            temp = temp->next;
+        }
+
+        temp->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+        if (!temp->next)
+        {
+            OICFree(dup);
+            return false;
+        }
+
+        temp->next->value = dup;
+        return true;
+    }
+}
+
 void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res)
 {
-    if(!payload->resources)
+    if (!payload)
+    {
+        return;
+    }
+
+    if (!payload->resources)
     {
         payload->resources = res;
     }
@@ -1274,13 +1572,12 @@ void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePay
 
 static void FreeOCDiscoveryResource(OCResourcePayload* payload)
 {
-    if(!payload)
+    if (!payload)
     {
         return;
     }
 
     OICFree(payload->uri);
-    OICFree(payload->sid);
     OCFreeOCStringLL(payload->types);
     OCFreeOCStringLL(payload->interfaces);
     FreeOCDiscoveryResource(payload->next);
@@ -1289,38 +1586,32 @@ static void FreeOCDiscoveryResource(OCResourcePayload* payload)
 }
 void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
 {
-    if(!payload)
+    if (!payload)
     {
         return;
     }
-
+    OICFree(payload->sid);
     FreeOCDiscoveryResource(payload->resources);
     OICFree(payload);
 }
 
-OCDevicePayload* OCDevicePayloadCreate(const char* uri, const uint8_t* sid, const char* dname,
+OCDevicePayload* OCDevicePayloadCreate(const uint8_t* sid, const char* dname,
         const char* specVer, const char* dmVer)
 {
 
     OCDevicePayload* payload = (OCDevicePayload*)OICCalloc(1, sizeof(OCDevicePayload));
 
-    if(!payload)
+    if (!payload)
     {
         return NULL;
     }
 
     payload->base.type = PAYLOAD_TYPE_DEVICE;
 
-    payload->uri = OICStrdup(uri);
-    if(uri && !payload->uri)
-    {
-        goto exit;
-    }
-
-    if(sid)
+    if (sid)
     {
         payload->sid = (uint8_t*)OICMalloc(UUID_SIZE);
-        if(!payload->sid)
+        if (!payload->sid)
         {
             goto exit;
         }
@@ -1328,19 +1619,19 @@ OCDevicePayload* OCDevicePayloadCreate(const char* uri, const uint8_t* sid, cons
     }
 
     payload->deviceName = OICStrdup(dname);
-    if(dname && !payload->deviceName)
+    if (dname && !payload->deviceName)
     {
         goto exit;
     }
 
     payload->specVersion = OICStrdup(specVer);
-    if(specVer && !payload->specVersion)
+    if (specVer && !payload->specVersion)
     {
         goto exit;
     }
 
     payload->dataModelVersion = OICStrdup(dmVer);
-    if(dmVer && !payload->dataModelVersion)
+    if (dmVer && !payload->dataModelVersion)
     {
         goto exit;
     }
@@ -1354,12 +1645,11 @@ exit:
 
 void OCDevicePayloadDestroy(OCDevicePayload* payload)
 {
-    if(!payload)
+    if (!payload)
     {
         return;
     }
 
-    OICFree(payload->uri);
     OICFree(payload->sid);
     OICFree(payload->deviceName);
     OICFree(payload->specVersion);
@@ -1369,6 +1659,11 @@ void OCDevicePayloadDestroy(OCDevicePayload* payload)
 
 static void OCCopyPlatformInfo(const OCPlatformInfo* platformInfo, OCPlatformPayload* target)
 {
+    if (!platformInfo || !target)
+    {
+        return;
+    }
+
     target->info.platformID = OICStrdup(platformInfo->platformID);
     target->info.manufacturerName = OICStrdup(platformInfo->manufacturerName);
     target->info.manufacturerUrl = OICStrdup(platformInfo->manufacturerUrl);
@@ -1382,32 +1677,30 @@ static void OCCopyPlatformInfo(const OCPlatformInfo* platformInfo, OCPlatformPay
     target->info.systemTime = OICStrdup(platformInfo->systemTime);
 }
 
-OCPlatformPayload* OCPlatformPayloadCreateAsOwner(char* uri, OCPlatformInfo* platformInfo)
+OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo)
 {
     OCPlatformPayload* payload = (OCPlatformPayload*)OICCalloc(1, sizeof(OCPlatformPayload));
-    if(!payload)
+    if (!payload)
     {
         return NULL;
     }
 
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
-    payload->uri = uri;
     payload->info = *platformInfo;
 
     return payload;
 }
 
-OCPlatformPayload* OCPlatformPayloadCreate(const char* uri, const OCPlatformInfo* platformInfo)
+OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo)
 {
     OCPlatformPayload* payload = (OCPlatformPayload*)OICCalloc(1, sizeof(OCPlatformPayload));
 
-    if(!payload)
+    if (!payload)
     {
         return NULL;
     }
 
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
-    payload->uri = OICStrdup(uri);
     OCCopyPlatformInfo(platformInfo, payload);
 
     return payload;
@@ -1415,7 +1708,7 @@ OCPlatformPayload* OCPlatformPayloadCreate(const char* uri, const OCPlatformInfo
 
 void OCPlatformPayloadDestroy(OCPlatformPayload* payload)
 {
-    if(!payload)
+    if (!payload)
     {
         return;
     }
@@ -1438,7 +1731,7 @@ OCPresencePayload* OCPresencePayloadCreate(uint32_t seqNum, uint32_t maxAge,
         OCPresenceTrigger trigger, const char* resourceType)
 {
     OCPresencePayload* payload = (OCPresencePayload*)OICCalloc(1, sizeof(OCPresencePayload));
-    if(!payload)
+    if (!payload)
     {
         return NULL;
     }
@@ -1453,7 +1746,7 @@ OCPresencePayload* OCPresencePayloadCreate(uint32_t seqNum, uint32_t maxAge,
 
 void OCPresencePayloadDestroy(OCPresencePayload* payload)
 {
-    if(!payload)
+    if (!payload)
     {
         return;
     }

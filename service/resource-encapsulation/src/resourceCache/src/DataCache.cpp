@@ -40,7 +40,7 @@ namespace OIC
         {
             void verifyObserveCB(
                 const HeaderOptions &_hos, const ResponseStatement &_rep,
-                int _result, int _seq, std::weak_ptr<DataCache> rpPtr)
+                int _result, unsigned int _seq, std::weak_ptr<DataCache> rpPtr)
             {
                 std::shared_ptr<DataCache> Ptr = rpPtr.lock();
                 if (Ptr)
@@ -203,7 +203,7 @@ namespace OIC
         }
 
         void DataCache::onObserve(const HeaderOptions & /*_hos*/,
-                                  const ResponseStatement &_rep, int _result, int _seq)
+                                  const ResponseStatement &_rep, int _result, unsigned int _seq)
         {
 
             if (_result != OC_STACK_OK || _rep.getAttributes().empty() || lastSequenceNum > _seq)

@@ -31,27 +31,32 @@ extern "C" {
 #endif // __cplusplus
 
 #define OXM_STRING_MAX_LENGTH 32
-
+#define WRONG_PIN_MAX_ATTEMP 5
 
 /**
  * Context for ownership transfer(OT)
  */
 typedef struct OTMContext{
-    void* userCtx; /**< Context for user**/
-    OCProvisionDev_t* selectedDeviceInfo; /**< Selected device info for OT */
-    OicUuid_t tempCredId;
+    void* userCtx;                            /**< Context for user.*/
+    OCProvisionDev_t* selectedDeviceInfo;     /**< Selected device info for OT. */
+    OicUuid_t subIdForPinOxm;                 /**< Subject Id which uses PIN based OTM. */
+    OCProvisionResultCB ctxResultCallback;    /**< Function pointer to store result callback. */
+    OCProvisionResult_t* ctxResultArray;      /**< Result array having result of all device. */
+    size_t ctxResultArraySize;                /**< No of elements in result array. */
+    bool ctxHasError;                         /**< Does OT process have any error. */
+    int attemptCnt;
 }OTMContext_t;
 
 /**
- * Do ownership transfer for un-owned device.
+ * Do ownership transfer for the unowned devices.
  *
  * @param[in] ctx Application context would be returned in result callback
- * @param[in] selectedDeviceInfo selected device information
+ * @param[in] selectedDeviceList linked list of ownership transfer candidate devices.
  * @param[in] resultCB Result callback function to be invoked when ownership transfer finished.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OTMDoOwnershipTransfer(void* ctx,
-                                     OCProvisionDev_t* selectedDeviceInfo, OCProvisionResultCB resultCB);
+                                     OCProvisionDev_t* selectedDeviceList, OCProvisionResultCB resultCB);
 
 /*
  *Callback for load secret for temporal secure session
@@ -90,7 +95,6 @@ typedef struct OTMCallbackData{
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OTMSetOwnershipTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData);
-
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -17,34 +17,36 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include "jni_things_manager_jvm.h"
+
 #include <string>
-#include "jni_things_manager.h"
+
+#include "jni_things_manager_jvm.h"
+#include "jni_group_manager.h"
+#include "jni_things_configuration.h"
+#include "jni_things_maintenance.h"
 #include "jni_things_manager_util.h"
 #include "JniOcResource.h"
 
 #define TM_ERROR_JNI_FOUND_CLASS_FAILED -2005
 
 /**
- * @class   JClassMap
- * @brief   This class provides functions for initializing the Java class path and Java class.
- *
+ * This class provides functions for initializing the Java class path and Java class.
  */
 class JClassMap
 {
     public:
         /**
-              *  Java Class
-              */
+         *  Java Class
+         */
         jclass classRef;
         /**
-              *  Java Class Path
-              */
+         *  Java Class Path
+         */
         const char *szClassPath;
 
         /**
-             * @brief constructor
-             */
+         * constructor
+         */
         JClassMap(const char *path)
             : classRef(NULL)
         {
@@ -53,26 +55,24 @@ class JClassMap
 };
 
 /**
- * @class   JObjectMap
- * @brief   This class provides functins for initializing the Java Class path and Java Class
- * Object.
- *
+ * This class provides functions for initializing the Java Class path
+ *  and Java Class Object.
  */
 class JObjectMap
 {
     public:
         /**
-            *  Java Object
-            */
+         *  Java Object
+         */
         jobject object;
         /**
-             *  Java Class Path
-             */
+         *  Java Class Path
+         */
         const char *szClassPath;
 
         /**
-             * @brief constructor
-             */
+         * @brief constructor
+         */
         JObjectMap(const char *path)
             : object(NULL)
         {
@@ -82,8 +82,9 @@ class JObjectMap
 
 static JClassMap gJClassMapArray[] =
 {
-    JClassMap(TM_SERVICE_NATIVE_API_CLASS_PATH),
-    JClassMap(TM_SERVICE_CALLBACK_CLASS_PATH),
+    JClassMap(TM_SERVICE_GROUP_MANAGER_CLASS_PATH),
+    JClassMap(TM_SERVICE_THINGS_CONFIGURATION_CLASS_PATH),
+    JClassMap(TM_SERVICE_THINGS_MAINTENANCE_CLASS_PATH),
     JClassMap(TM_SERVICE_OCRESOURCE_PATH),
     JClassMap(TM_SERVICE_OCREPRESENTATION_PATH),
     JClassMap(TM_SERVICE_HEADER_OPTION_PATH),
@@ -97,38 +98,47 @@ static JClassMap gJClassMapArray[] =
 
 static JObjectMap gJObjectMapArray[] =
 {
-    JObjectMap(TM_SERVICE_CALLBACK_CLASS_PATH)
+    JObjectMap(TM_SERVICE_THINGS_CONFIGURATION_CLASS_PATH),
+    JObjectMap(TM_SERVICE_THINGS_MAINTENANCE_CLASS_PATH)
 };
 
-static JNINativeMethod gThingsManagerMethodTable[] =
+static JNINativeMethod gGroupManagerMethodTable[] =
 {
-    { "findCandidateResources", "(Ljava/util/Vector;I)I", (void *) JNIThingsManagerFindCandidateResource},
-    { "subscribeCollectionPresence", "(Lorg/iotivity/base/OcResource;)I", (void *) JNIThingsManagerSubscribeCollectionPresence},
-    { "bindResourceToGroup", "(Lorg/iotivity/base/OcResource;Lorg/iotivity/base/OcResourceHandle;)Lorg/iotivity/base/OcResourceHandle;", (void *) JNIThingsManagerBindResourceToGroup},
-    { "findGroup", "(Ljava/util/Vector;)I", (void *) JNIThingsManagerFindGroup},
-    { "createGroup", "(Ljava/lang/String;)I", (void *) JNIThingsManagerCreateGroup},
-    { "joinGroup", "(Ljava/lang/String;Lorg/iotivity/base/OcResourceHandle;)I", (void *) JNIThingsManagerJoinGroupString},
-    { "joinGroup", "(Lorg/iotivity/base/OcResource;Lorg/iotivity/base/OcResourceHandle;)I", (void *) JNIThingsManagerJoinGroupObject},
-    { "leaveGroup", "(Ljava/lang/String;Lorg/iotivity/base/OcResourceHandle;)I", (void *) JNIThingsManagerLeaveGroup},
-    { "leaveGroup", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;Lorg/iotivity/base/OcResourceHandle;)I", (void *) JNIThingsManagerLeaveGroupForResource},
-    { "deleteGroup", "(Ljava/lang/String;)V", (void *) JNIThingsManagerDeleteGroup},
-    { "getGroupList", "()Ljava/util/Map;", (void *) JNIThingsManagerGetGroupList},
-    { "updateConfigurations", "(Lorg/iotivity/base/OcResource;Ljava/util/Map;)I", (void *) JNIThingsManagerUpdateConfigurations},
-    { "getConfigurations", "(Lorg/iotivity/base/OcResource;Ljava/util/Vector;)I", (void *) JNIThingsManagerGetConfigurations},
-    { "getListOfSupportedConfigurationUnits", "()Ljava/lang/String;", (void *) JNIThingsManagerGetListOfSupportedConfigurationUnits},
-    { "doBootstrap", "()I", (void *) JNIThingsManagerDoBootstrap},
-    { "reboot", "(Lorg/iotivity/base/OcResource;)I", (void *) JNIThingsManagerReboot},
-    { "factoryReset", "(Lorg/iotivity/base/OcResource;)I", (void *) JNIThingsManagerFactoryReset},
-    { "addActionSet", "(Lorg/iotivity/base/OcResource;Lorg/iotivity/service/tm/ActionSet;)I", (void *) JNIThingsManagerAddActionSet},
-    { "executeActionSet", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;)I", (void *) JNIThingsManagerExecuteActionSet},
-    { "executeActionSet", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;J)I", (void *) JNIThingsManagerExecuteActionSetWithDelay},
-    { "cancelActionSet", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;)I", (void *) JNIThingsManagerCancelActionSet},
-    { "getActionSet", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;)I", (void *) JNIThingsManagerGetActionSet},
-    { "deleteActionSet", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;)I", (void *) JNIThingsManagerDeleteActionSet},
+    { "nativeFindCandidateResource", "(Ljava/util/Vector;I)I", (void *) JNIGroupManagerFindCandidateResource},
+    { "nativeSubscribeCollectionPresence", "(Lorg/iotivity/base/OcResource;)I", (void *) JNIGroupManagerSubscribeCollectionPresence},
+    { "nativeBindResourceToGroup", "(Lorg/iotivity/base/OcResource;Lorg/iotivity/base/OcResourceHandle;)Lorg/iotivity/base/OcResourceHandle;", (void *) JNIGroupManagerBindResourceToGroup},
+    { "nativeAddActionSet", "(Lorg/iotivity/base/OcResource;Lorg/iotivity/service/tm/ActionSet;)I", (void *) JNIGroupManagerAddActionSet},
+    { "nativeExecuteActionSet", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;)I", (void *) JNIGroupManagerExecuteActionSet},
+    { "nativeExecuteActionSetWithDelay", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;J)I", (void *) JNIGroupManagerExecuteActionSetWithDelay},
+    { "nativeCancelActionSet", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;)I", (void *) JNIGroupManagerCancelActionSet},
+    { "nativeGetActionSet", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;)I", (void *) JNIGroupManagerGetActionSet},
+    { "nativeDeleteActionSet", "(Lorg/iotivity/base/OcResource;Ljava/lang/String;)I", (void *) JNIGroupManagerDeleteActionSet}
 };
 
-static int gThingsManagerMethodTableSize = sizeof(gThingsManagerMethodTable) / sizeof(
-            gThingsManagerMethodTable[0]);
+static JNINativeMethod gThingsConfigurationMethodTable[] =
+{
+    { "nativeUpdateConfigurations", "(Lorg/iotivity/base/OcResource;Ljava/util/Map;)I", (void *) JNIThingsConfigurationUpdateConfigurations},
+    { "nativeGetConfigurations", "(Lorg/iotivity/base/OcResource;Ljava/util/Vector;)I", (void *) JNIThingsConfigurationGetConfigurations},
+    { "nativeGetListOfSupportedConfigurationUnits", "()Ljava/lang/String;", (void *) JNIThingsConfigurationGetListOfSupportedConfigurationUnits},
+    { "nativeDoBootstrap", "()I", (void *) JNIThingsConfigurationDoBootstrap},
+};
+
+static JNINativeMethod gThingsMaintenanceMethodTable[] =
+{
+    { "nativeReboot", "(Lorg/iotivity/base/OcResource;)I", (void *) JNIThingsMaintenanceReboot},
+    { "nativeFactoryReset", "(Lorg/iotivity/base/OcResource;)I", (void *) JNIThingsMaintenanceFactoryReset},
+    { "nativeGetListOfSupportedMaintenanceUnits", "()Ljava/lang/String;", (void *) JNIThingsMaintenanceGetListOfSupportedConfigurationUnits}
+
+};
+
+static int gGroupManagerMethodTableSize = sizeof(gGroupManagerMethodTable) / sizeof(
+            gGroupManagerMethodTable[0]);
+
+static int gThingsConfigurationMethodTableSize = sizeof(gThingsConfigurationMethodTable) / sizeof(
+            gThingsConfigurationMethodTable[0]);
+
+static int gThingsMaintenanceMethodTableSize = sizeof(gThingsMaintenanceMethodTable) / sizeof(
+            gThingsMaintenanceMethodTable[0]);
 
 
 int InitializeJClassMapArray(JNIEnv *env)
@@ -346,14 +356,41 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
         return JNI_ERR;
     }
 
-    jclass thingsManagerClassRef = GetJClass(TM_SERVICE_NATIVE_API_CLASS_PATH);
-    if (NULL == thingsManagerClassRef)
+    // Group Manager
+    jclass groupManagerClassRef = GetJClass(TM_SERVICE_GROUP_MANAGER_CLASS_PATH);
+
+    if (NULL == groupManagerClassRef)
     {
         LOGE("JNI_OnLoad: GetJClass gThingsManagerClass failed !");
         return JNI_ERR;
     }
-    env->RegisterNatives(thingsManagerClassRef, gThingsManagerMethodTable,
-                         gThingsManagerMethodTableSize);
+
+    env->RegisterNatives(groupManagerClassRef, gGroupManagerMethodTable,
+                         gGroupManagerMethodTableSize);
+
+    //Things Configuration
+    jclass thingsConfigurationClassRef = GetJClass(TM_SERVICE_THINGS_CONFIGURATION_CLASS_PATH);
+
+    if (NULL == thingsConfigurationClassRef)
+    {
+        LOGE("JNI_OnLoad: GetJClass gThingsManagerClass failed !");
+        return JNI_ERR;
+    }
+
+    env->RegisterNatives(thingsConfigurationClassRef, gThingsConfigurationMethodTable,
+                         gThingsConfigurationMethodTableSize);
+
+    //Things Maintenance
+    jclass thingsMaintenanceClassRef = GetJClass(TM_SERVICE_THINGS_MAINTENANCE_CLASS_PATH);
+
+    if (NULL == thingsMaintenanceClassRef)
+    {
+        LOGE("JNI_OnLoad: GetJClass gThingsManagerClass failed !");
+        return JNI_ERR;
+    }
+
+    env->RegisterNatives(thingsMaintenanceClassRef, gThingsMaintenanceMethodTable,
+                         gThingsMaintenanceMethodTableSize);
 
     ThingsManagerJVM::m_jvm = vm;
 

@@ -21,7 +21,7 @@
 /**
  * @file
  *
- * This file contains the "RCSResourceAttributes" class & its helper classes
+ * This file contains the declaration of classes and its members related to RCSResourceAttributes
  */
 #ifndef RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
 #define RES_ENCAPSULATION_RESOURCEATTRIBUTES_H
@@ -34,15 +34,16 @@
 
 #include <functional>
 #include <unordered_map>
+#include <vector>
 
-#include <boost/variant.hpp>
-#include <boost/mpl/contains.hpp>
-#include <boost/mpl/find.hpp>
-#include <boost/mpl/distance.hpp>
-#include <boost/mpl/begin_end.hpp>
-#include <boost/scoped_ptr.hpp>
+#include "boost/variant.hpp"
+#include "boost/mpl/contains.hpp"
+#include "boost/mpl/find.hpp"
+#include "boost/mpl/distance.hpp"
+#include "boost/mpl/begin_end.hpp"
+#include "boost/scoped_ptr.hpp"
 
-#include <RCSException.h>
+#include "RCSException.h"
 
 namespace OIC
 {
@@ -50,17 +51,12 @@ namespace OIC
     {
 
         /**
-        * RCSResourceAttributes represents the attributes for a resource.
+        * This represents the attributes for a resource.
         *
         * It provides similar usage to c++ standard containers. (iterator,
         * operators and accessors)<br/>
         * An attribute value can be one of various types. <br/>
         *
-        * @note If client developer wants to get the RCSResourceAttributes for the resource of
-        *            interest following are the steps:
-        *            - first call the discover API of DiscoveryManager class.
-        *            - After getting the RemoteResourceObject, call getRemoteAttributes() API
-        *               of RemoteResourceObject class
         *
         * @see Value
         * @see Type
@@ -81,7 +77,28 @@ namespace OIC
                 double,
                 bool,
                 std::string,
-                RCSResourceAttributes
+                RCSResourceAttributes,
+
+                std::vector< int >,
+                std::vector< double >,
+                std::vector< bool >,
+                std::vector< std::string >,
+                std::vector< RCSResourceAttributes >,
+
+                std::vector< std::vector< int > >,
+                std::vector< std::vector< std::vector< int > > >,
+
+                std::vector< std::vector< double > >,
+                std::vector< std::vector< std::vector< double > > >,
+
+                std::vector< std::vector< bool > >,
+                std::vector< std::vector< std::vector< bool > > >,
+
+                std::vector< std::vector< std::string > >,
+                std::vector< std::vector< std::vector< std::string > > >,
+
+                std::vector< std::vector< RCSResourceAttributes > >,
+                std::vector< std::vector< std::vector< RCSResourceAttributes > > >
             > ValueVariant;
 
             template< typename T, typename V = void,
@@ -123,7 +140,7 @@ namespace OIC
                 IsSupportedTypeHelper< T >::type::value, std::true_type, std::false_type>::type { };
 
             /**
-             * Identifier for types of Value.
+             * Identifiers for types of Value.
              *
              * @see Type
              */
@@ -158,22 +175,60 @@ namespace OIC
                  * Returns type identifier.
                  *
                  * @return Identifier of type.
+                 *
+                 * @see getBaseTypeId
                  */
                 TypeId getId() const noexcept;
+
+                /**
+                 * Returns the type identifier of a base type of sequence.
+                 *
+                 * For non sequence types, it is equivalent to calling getId.
+                 *
+                 * @return Identifier of type.
+                 *
+                 * @see getDepth
+                 * @see getId
+                 */
+                static TypeId getBaseTypeId(const Type& t) noexcept;
+
+                /**
+                 * Returns the depth of a type.
+                 *
+                 * The return will be zero for non sequence types.
+                 *
+                 * @see getBaseTypeId
+                 */
+                static size_t getDepth(const Type& t) noexcept;
 
                 /**
                  * Factory method to create Type instance from T.
                  *
                  * @return An instance that has TypeId for T.
                  *
-                 * @note T must be supported by Value. Otherwise, it won't be compiled.
+                 * @note T must be supported by Value. Otherwise, it won't compile.
                  *
                  * @see is_supported_type
                  */
                 template < typename T >
-                static Type typeOf(const T& value) noexcept
+                constexpr static Type typeOf(const T&) noexcept
                 {
-                    return Type(value);
+                    return Type{ IndexOfType< T >::value };
+                }
+
+                /**
+                 * Factory method to create Type instance from T.
+                 *
+                 * @return An instance that has TypeId for T.
+                 *
+                 * @note T must be supported by Value. Otherwise, it won't compile.
+                 *
+                 * @see is_supported_type
+                 */
+                template < typename T >
+                constexpr static Type typeOf() noexcept
+                {
+                    return Type{ IndexOfType< T >::value };
                 }
 
                 //! @cond
@@ -181,9 +236,8 @@ namespace OIC
                 //! @endcond
 
             private:
-                template < typename T >
-                explicit Type(const T&) noexcept :
-                    m_which{ IndexOfType< T >::value }
+                constexpr explicit Type(int which) noexcept :
+                    m_which{ which }
                 {
                 }
 
@@ -195,6 +249,36 @@ namespace OIC
              * Value holds a value among various types at a time.
              *
              * Type helps identify type information of Value.
+             *
+             * Supported types are below
+             * @code
+                int
+                double
+                bool
+                std::string
+                RCSResourceAttributes
+
+                std::vector< int >
+                std::vector< double >
+                std::vector< bool >
+                std::vector< std::string >
+                std::vector< RCSResourceAttributes >
+
+                std::vector< std::vector< int > >
+                std::vector< std::vector< std::vector< int > > >
+
+                std::vector< std::vector< double > >
+                std::vector< std::vector< std::vector< double > > >
+
+                std::vector< std::vector< bool > >
+                std::vector< std::vector< std::vector< bool > > >
+
+                std::vector< std::vector< std::string > >
+                std::vector< std::vector< std::vector< std::string > > >
+
+                std::vector< std::vector< RCSResourceAttributes > >
+                std::vector< std::vector< std::vector< RCSResourceAttributes > > >
+             * @endcode
              *
              * @see RCSResourceAttributes
              * @see Type
@@ -211,7 +295,7 @@ namespace OIC
 
                 /**
                  * Constructs a Value if T is a supported type.<br/>
-                 *       Otherwise it won't be compiled.
+                 *       Otherwise it won't compile.
                  */
                 template< typename T, typename = typename enable_if_supported< T >::type >
                 Value(T&& value) :
@@ -219,7 +303,7 @@ namespace OIC
                 {
                 }
 
-                Value(const char* value);
+                Value(const char*);
 
                 Value& operator=(const Value&);
                 Value& operator=(Value&&);
@@ -292,7 +376,7 @@ namespace OIC
                     }
                     catch (const boost::bad_get&)
                     {
-                        throw BadGetException{ "Wrong type" };
+                        throw RCSBadGetException{ "Wrong type" };
                     }
                 }
 
@@ -303,7 +387,7 @@ namespace OIC
                     {
                         return get< T >() == rhs;
                     }
-                    catch (const BadGetException&)
+                    catch (const RCSBadGetException&)
                     {
                         return false;
                     }
@@ -439,7 +523,7 @@ namespace OIC
             bool erase(const std::string& key);
 
             /**
-             * Checks the container has an element with a Key equivalent to key.
+             * Checks this contains an element for the specified key.
              *
              * @param key Key to check.
              *
@@ -498,6 +582,9 @@ namespace OIC
         public:
             ComparisonHelper(const Value&);
 
+            ComparisonHelper(const ComparisonHelper&) = delete;
+            ComparisonHelper& operator=(const ComparisonHelper&) = delete;
+
             template< typename T >
             typename std::enable_if< is_supported_type< T >::value, bool >::type equals(
                     const T& v) const
@@ -516,20 +603,27 @@ namespace OIC
             const Value& m_valueRef;
         };
 
+        //! @cond
         template< typename T >
         struct RCSResourceAttributes::IsSupportedTypeHelper
         {
-            typedef boost::mpl::contains<ValueVariant::types, typename std::decay< T >::type> type;
+            typedef boost::mpl::contains< ValueVariant::types, typename std::decay< T >::type > type;
         };
 
-        template <typename T>
+        template < typename T >
         struct RCSResourceAttributes::IndexOfType
         {
+            static_assert(RCSResourceAttributes::is_supported_type< T >::value,
+                "The type is not supported!");
+
             typedef typename boost::mpl::find< ValueVariant::types, T >::type iter;
             typedef typename boost::mpl::begin< ValueVariant::types >::type mpl_begin;
 
             static constexpr int value = boost::mpl::distance< mpl_begin, iter >::value;
         };
+
+        template < typename T > constexpr int RCSResourceAttributes::IndexOfType< T >::value;
+        //! @endcond
 
         /**
          * @relates RCSResourceAttributes::Type

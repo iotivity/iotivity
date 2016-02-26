@@ -59,3 +59,10 @@ void CATerminateLEGattClient()
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
 }
+
+CAResult_t CAInitializeLEGattClient()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}

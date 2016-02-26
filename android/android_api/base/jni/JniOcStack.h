@@ -79,6 +79,9 @@ extern jclass g_cls_OcPresenceStatus;
 extern jclass g_cls_OcHeaderOption;
 extern jclass g_cls_ObservationInfo;
 extern jclass g_cls_OcResourceIdentifier;
+extern jclass g_cls_OcProvisionResult;
+extern jclass g_cls_OcSecureResource;
+extern jclass g_cls_OcOicSecAcl;
 
 extern jmethodID g_mid_Integer_ctor;
 extern jmethodID g_mid_Double_ctor;
@@ -109,6 +112,17 @@ extern jmethodID g_mid_OcHeaderOption_get_data;
 extern jmethodID g_mid_ObservationInfo_N_ctor;
 extern jmethodID g_mid_OcPresenceStatus_get;
 extern jmethodID g_mid_OcResourceIdentifier_N_ctor;
+extern jmethodID g_mid_OcProvisionResult_ctor;
+extern jmethodID g_mid_OcSecureResource_ctor;
+extern jmethodID g_mid_OcOicSecAcl_get_subject;
+extern jmethodID g_mid_OcOicSecAcl_get_resources_cnt;
+extern jmethodID g_mid_OcOicSecAcl_get_resources;
+extern jmethodID g_mid_OcOicSecAcl_get_permission;
+extern jmethodID g_mid_OcOicSecAcl_get_periods_cnt;
+extern jmethodID g_mid_OcOicSecAcl_get_periods;
+extern jmethodID g_mid_OcOicSecAcl_get_recurrences;
+extern jmethodID g_mid_OcOicSecAcl_get_owners_cnt;
+extern jmethodID g_mid_OcOicSecAcl_get_owners;
 
 typedef void(*RemoveListenerCallback)(JNIEnv* env, jobject jListener);
 
@@ -135,14 +149,14 @@ static void SetHandle(JNIEnv *env, jobject jobj, T *type)
 
 static JNIEnv* GetJNIEnv(jint& ret)
 {
-    JNIEnv *env = NULL;
+    JNIEnv *env = nullptr;
 
     ret = g_jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION);
     switch (ret) {
     case JNI_OK:
         return env;
     case JNI_EDETACHED:
-        if (g_jvm->AttachCurrentThread(&env, NULL) < 0)
+        if (g_jvm->AttachCurrentThread(&env, nullptr) < 0)
         {
             LOGE("Failed to get the environment");
             return nullptr;

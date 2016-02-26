@@ -6,12 +6,19 @@
  * README for terms of use.
  */
 
+#include "config.h"
+
+#if defined(HAVE_ASSERT_H) && !defined(assert)
+# include <assert.h>
+#endif
+
 #ifndef NDEBUG
 #  include <stdio.h>
 #endif
 
 #include "config.h"
 #include "encode.h"
+#include "option.h"
 
 /* Carsten suggested this when fls() is not available: */
 int coap_fls(unsigned int i)
@@ -48,3 +55,16 @@ unsigned int coap_encode_var_bytes(unsigned char *buf, unsigned int val)
     return n;
 }
 
+bool coap_is_var_bytes(coap_option_def_t* def)
+{
+    assert (def);
+
+    if('u' == def->type)
+    {
+        return 1;
+    }
+    else
+    {
+      return 0;
+    }
+}

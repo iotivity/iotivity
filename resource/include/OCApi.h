@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef __INTEL_OCAPI_H_2014_07_10
-#define __INTEL_OCAPI_H_2014_07_10
+#ifndef OC_OCAPI_H_
+#define OC_OCAPI_H_
 
 #include <string>
 #include <sstream>
@@ -97,7 +97,8 @@ namespace OC
     {
         Server,
         Client,
-        Both
+        Both,
+        Gateway  /**< Client server mode along with routing capabilities.*/
     };
 
     /**
@@ -228,6 +229,10 @@ namespace OC
         ObserveAction action;
         // Identifier for observation being registered/unregistered
         OCObservationId obsId;
+
+        OCConnectivityType connectivityType;
+        std::string address;
+        uint16_t port;
     } ObservationInfo;
 
     // const strings for different interfaces

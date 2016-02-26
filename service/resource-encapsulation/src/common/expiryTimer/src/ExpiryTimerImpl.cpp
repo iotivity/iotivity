@@ -34,13 +34,14 @@ namespace OIC
 
         ExpiryTimerImpl::ExpiryTimerImpl() :
                 m_tasks{ },
-                m_thread{ std::thread(&ExpiryTimerImpl::run, this) },
+                m_thread{ },
                 m_mutex{ },
                 m_cond{ },
                 m_stop{ false },
                 m_mt{ std::random_device{ }() },
                 m_dist{ }
         {
+            m_thread = std::thread(&ExpiryTimerImpl::run, this);
         }
 
         ExpiryTimerImpl::~ExpiryTimerImpl()
@@ -64,12 +65,12 @@ namespace OIC
         {
             if (delay < 0LL)
             {
-                throw InvalidParameterException{ "delay can't be negative." };
+                throw RCSInvalidParameterException{ "delay can't be negative." };
             }
 
             if (!cb)
             {
-                throw InvalidParameterException{ "callback is empty." };
+                throw RCSInvalidParameterException{ "callback is empty." };
             }
 
             return addTask(convertToTime(Milliseconds{ delay }), std::move(cb), generateId());

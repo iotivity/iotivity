@@ -63,7 +63,10 @@ typedef enum
 
     /** "/oic/res/d/type" .*/
     OC_RESOURCE_TYPES_URI,
-
+#ifdef ROUTING_GATEWAY
+    /** "/oic/gateway" .*/
+    OC_GATEWAY_URI,
+#endif
     #ifdef WITH_PRESENCE
     /** "/oic/ad" .*/
     OC_PRESENCE,
@@ -169,13 +172,6 @@ void DeleteDeviceInfo();
  */
 OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
                     OCRepPayload** payload);
-
-/**
- * Prepares a Payload for response.
- */
-OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
-                                           OCDiscoveryPayload* payload,
-                                           OCDevAddr *endpoint);
 
 /**
  * A helper function that Maps an @ref OCEntityHandlerResult type to an

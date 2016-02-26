@@ -28,7 +28,7 @@
 /**
  * Debugging tag for fragmentation module.
  */
-#define CA_FRAGMENTATION_TAG "CA_FRAGMENTATION"
+#define CA_FRAGMENTATION_TAG "OIC_CA_FRAG"
 
 CAResult_t CAGenerateHeader(uint8_t *header,
                             size_t headerLength,

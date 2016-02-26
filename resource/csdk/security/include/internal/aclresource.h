@@ -62,6 +62,24 @@ const OicSecAcl_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAcl_t **
  */
 char* BinToAclJSON(const OicSecAcl_t * acl);
 
+
+/**
+ * This function deletes ACL data.
+ *
+ * @param acl  instance of OicSecAcl_t structure.
+ */
+void DeleteACLList(OicSecAcl_t* acl);
+
+
+/**
+ * This function installs a new ACL.
+ * @param newJsonStr JSON string representing a new ACL.
+ *
+ * @retval  OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult InstallNewACL(const char* newJsonStr);
+
+
 #ifdef __cplusplus
 }
 #endif

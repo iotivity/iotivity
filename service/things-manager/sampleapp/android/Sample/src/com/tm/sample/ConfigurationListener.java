@@ -23,7 +23,8 @@ import java.util.Vector;
 
 import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcRepresentation;
-import org.iotivity.service.tm.IConfigurationListener;
+import org.iotivity.service.tm.ThingsConfiguration;
+import org.iotivity.service.tm.ThingsConfiguration.*;
 
 import android.util.Log;
 
@@ -32,7 +33,8 @@ import android.util.Log;
  */
 public class ConfigurationListener implements IConfigurationListener {
 
-    private final String LOG_TAG = "[TMSample] " + this.getClass().getSimpleName();
+    private final String LOG_TAG = "[TMSample] "
+                                         + this.getClass().getSimpleName();
 
     @Override
     public void onBootStrapCallback(Vector<OcHeaderOption> headerOptions,
@@ -55,5 +57,4 @@ public class ConfigurationListener implements IConfigurationListener {
         Log.i(LOG_TAG, "Got Callback : onGetConfigurationsCallback");
 
     }
-
 }

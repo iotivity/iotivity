@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef COMMON_INTERNAL_RESOURCEATTRIBUTESCONVERTER_H
-#define COMMON_INTERNAL_RESOURCEATTRIBUTESCONVERTER_H
+#ifndef COMMON_RESOURCEATTRIBUTESCONVERTER_H
+#define COMMON_RESOURCEATTRIBUTESCONVERTER_H
 
 #include <RCSResourceAttributes.h>
 
@@ -29,6 +29,72 @@ namespace OIC
 {
     namespace Service
     {
+        namespace Detail
+        {
+            template< int >
+            struct Int2Type {};
+
+            template < typename T >
+            struct TypeDef
+            {
+                typedef T type;
+            };
+
+            template< OC::AttributeType TYPE >
+            struct OCBaseType;
+
+            template< >
+            struct OCBaseType< OC::AttributeType::Integer > : TypeDef< int >{ };
+
+            template< >
+            struct OCBaseType< OC::AttributeType::Double > : TypeDef< double > { };
+
+            template< >
+            struct OCBaseType< OC::AttributeType::Boolean > : TypeDef< bool > { };
+
+            template< >
+            struct OCBaseType< OC::AttributeType::String > : TypeDef< std::string > { };
+
+            template< >
+            struct OCBaseType< OC::AttributeType::OCRepresentation >
+                : TypeDef< OC::OCRepresentation >
+            {};
+
+            template< int DEPTH, typename BASE_TYPE >
+            struct SeqType
+            {
+                typedef std::vector< typename SeqType< DEPTH - 1, BASE_TYPE >::type > type;
+            };
+
+            template< typename BASE_TYPE >
+            struct SeqType< 0, BASE_TYPE >
+            {
+                typedef BASE_TYPE type;
+            };
+
+            template< int DEPTH, OC::AttributeType BASE_TYPE >
+            struct OCItemType
+            {
+                typedef typename SeqType< DEPTH,
+                                        typename OCBaseType< BASE_TYPE >::type >::type type;
+            };
+
+            template< typename T >
+            struct TypeInfo
+            {
+                typedef T type;
+                typedef T base_type;
+                constexpr static size_t depth = 0;
+            };
+
+            template< typename T >
+            struct TypeInfo< std::vector< T > >
+            {
+                typedef T type;
+                typedef typename TypeInfo< T >::base_type base_type;
+                constexpr static size_t depth = 1 + TypeInfo< T >::depth;
+            };
+        }
 
         class ResourceAttributesConverter
         {
@@ -37,36 +103,91 @@ namespace OIC
 
             class ResourceAttributesBuilder
             {
-            public:
-                ResourceAttributesBuilder() = default;
-
-                void insertItemTo(const OC::OCRepresentation::AttributeItem& item)
+            private:
+                template < int DEPTH >
+                void insertItem(Detail::Int2Type< DEPTH >,
+                        const OC::OCRepresentation::AttributeItem& item)
                 {
-                    switch (item.type())
-                    {
+                    switch (item.base_type()) {
                         case OC::AttributeType::Null:
                             return putValue(item.attrname(), nullptr);
 
                         case OC::AttributeType::Integer:
-                            return putValue(item.attrname(), item.getValue< int >());
+                            return insertItem< DEPTH, OC::AttributeType::Integer >(item);
 
                         case OC::AttributeType::Double:
-                            return putValue(item.attrname(), item.getValue< double >());
+                            return insertItem< DEPTH, OC::AttributeType::Double >(item);
 
                         case OC::AttributeType::Boolean:
-                            return putValue(item.attrname(), item.getValue< bool >());
+                            return insertItem< DEPTH, OC::AttributeType::Boolean >(item);
 
                         case OC::AttributeType::String:
-                            return putValue(item.attrname(), item.getValue< std::string >());
+                            return insertItem< DEPTH, OC::AttributeType::String >(item);
 
                         case OC::AttributeType::OCRepresentation:
-                            return putValue(item.attrname(),
-                                    ResourceAttributesConverter::fromOCRepresentation(
-                                            item.getValue< OC::OCRepresentation >()));
+                            return insertOcRep(Detail::Int2Type< DEPTH >{ }, item);
 
-                        case OC::AttributeType::Vector:
-                            // RCSResourceAttributes doesn't support vector yet!
-                            return;
+                        default:
+                            assert("There must be no another base type!");
+                    }
+                }
+
+                template< int DEPTH, OC::AttributeType BASE_TYPE >
+                void insertItem(const OC::OCRepresentation::AttributeItem& item)
+                {
+                    typedef typename Detail::OCItemType< DEPTH, BASE_TYPE >::type ItemType;
+                    putValue(item.attrname(), item.getValue< ItemType >());
+                }
+
+                RCSResourceAttributes insertOcRep(Detail::Int2Type< 0 >,
+                        const OC::OCRepresentation& ocRep)
+                {
+                    return ResourceAttributesConverter::fromOCRepresentation(ocRep);
+                }
+
+                template< int DEPTH, typename OCREPS,
+                    typename ATTRS = typename Detail::SeqType< DEPTH, RCSResourceAttributes >::type >
+                ATTRS insertOcRep(Detail::Int2Type< DEPTH >, const OCREPS& ocRepVec)
+                {
+                    ATTRS result;
+
+                    for (const auto& nested : ocRepVec)
+                    {
+                        result.push_back(insertOcRep(Detail::Int2Type< DEPTH - 1 >{ }, nested));
+                    }
+
+                    return result;
+                }
+
+                template< int DEPTH >
+                void insertOcRep(Detail::Int2Type< DEPTH >,
+                        const OC::OCRepresentation::AttributeItem& item)
+                {
+                    typedef typename Detail::OCItemType< DEPTH,
+                            OC::AttributeType::OCRepresentation >::type ItemType;
+
+                    putValue(item.attrname(),
+                            insertOcRep(Detail::Int2Type< DEPTH >{ }, item.getValue< ItemType >()));
+                }
+
+            public:
+                ResourceAttributesBuilder() = default;
+
+                void insertItem(const OC::OCRepresentation::AttributeItem& item)
+                {
+                    switch (item.depth())
+                    {
+                        case 0:
+                            return insertItem(Detail::Int2Type< 0 >{ }, item);
+                        case 1:
+                            return insertItem(Detail::Int2Type< 1 >{ }, item);
+                        case 2:
+                            return insertItem(Detail::Int2Type< 2 >{ }, item);
+                        case 3:
+                            return insertItem(Detail::Int2Type< 3 >{ }, item);
+
+                        default:
+                            assert("There must be no another depth!");
                     }
                 }
 
@@ -77,16 +198,9 @@ namespace OIC
 
             private:
                 template< typename T >
-                typename std::enable_if<RCSResourceAttributes::is_supported_type< T >::value >::type
-                putValue(const std::string& key, T && value)
+                void putValue(const std::string& key, T&& value)
                 {
                     m_target[key] = std::forward< T >(value);
-                }
-
-                template< typename T >
-                typename std::enable_if<!RCSResourceAttributes::is_supported_type< T >::value >::type
-                putValue(const std::string& key, T && value)
-                {
                 }
 
             private:
@@ -98,10 +212,19 @@ namespace OIC
             public:
                 OCRepresentationBuilder() = default;
 
-                template< typename T >
-                void operator()(const std::string& key, const T& value)
+                template< typename T, typename B = typename Detail::TypeInfo< T >::base_type >
+                typename std::enable_if< !std::is_same< B, RCSResourceAttributes >::value >::type
+                operator()(const std::string& key, const T& value)
                 {
                     m_target[key] = value;
+                }
+
+                template< typename T, typename I = Detail::TypeInfo< T > >
+                typename std::enable_if< std::is_same< typename I::base_type,
+                                                RCSResourceAttributes >::value >::type
+                operator()(const std::string& key, const T& value)
+                {
+                    m_target[key] = convertAttributes(Detail::Int2Type< I::depth >{ }, value);
                 }
 
                 void operator()(const std::string& key, const std::nullptr_t&)
@@ -109,9 +232,25 @@ namespace OIC
                     m_target.setNULL(key);
                 }
 
-                void operator()(const std::string& key, const RCSResourceAttributes& value)
+                OC::OCRepresentation convertAttributes(Detail::Int2Type< 0 >,
+                        const RCSResourceAttributes& attrs)
                 {
-                    m_target[key] = ResourceAttributesConverter::toOCRepresentation(value);
+                    return ResourceAttributesConverter::toOCRepresentation(attrs);
+                }
+
+                template< int DEPTH, typename ATTRS, typename OCREPS = typename Detail::SeqType<
+                        DEPTH, OC::OCRepresentation >::type >
+                OCREPS convertAttributes(Detail::Int2Type< DEPTH >, const ATTRS& attrs)
+                {
+                    OCREPS result;
+
+                    for (const auto& nested : attrs)
+                    {
+                        result.push_back(
+                                convertAttributes(Detail::Int2Type< DEPTH - 1 >{ }, nested));
+                    }
+
+                    return result;
                 }
 
                 OC::OCRepresentation&& extract()
@@ -131,7 +270,7 @@ namespace OIC
 
                 for (const auto& item : ocRepresentation)
                 {
-                    builder.insertItemTo(item);
+                    builder.insertItem(item);
                 }
 
                 return builder.extract();
@@ -151,4 +290,4 @@ namespace OIC
     }
 }
 
-#endif // COMMON_INTERNAL_RESOURCEATTRIBUTESCONVERTER_H
+#endif // COMMON_RESOURCEATTRIBUTESCONVERTER_H

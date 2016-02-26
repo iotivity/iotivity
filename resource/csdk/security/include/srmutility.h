@@ -65,7 +65,7 @@ struct OicParseQueryIter
  *
  */
 #define VERIFY_SUCCESS(tag, op, logLevel) do{ if (!(op)) \
-            {OC_LOG((logLevel), tag, PCF(#op " failed!!")); goto exit; } }while(0)
+            {OIC_LOG((logLevel), tag, #op " failed!!"); goto exit; } }while(0)
 
 /**
  * @def VERIFY_NON_NULL
@@ -75,7 +75,7 @@ struct OicParseQueryIter
  *
  */
 #define VERIFY_NON_NULL(tag, arg, logLevel) do{ if (NULL == (arg)) \
-            { OC_LOG((logLevel), tag, PCF(#arg " is NULL")); goto exit; } }while(0)
+            { OIC_LOG((logLevel), tag, #arg " is NULL"); goto exit; } }while(0)
 
 /**
  * This method initializes the OicParseQueryIter_t struct

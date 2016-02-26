@@ -62,7 +62,7 @@ public:
 
 public:
     /// Constructor
-    LightResource(PlatformConfig& cfg)
+    LightResource(PlatformConfig& /*cfg*/)
         :m_name("John's light"), m_state(false), m_power(0), m_lightUri("/a/light") {
         // Initialize representation
         m_lightRep.setUri(m_lightUri);

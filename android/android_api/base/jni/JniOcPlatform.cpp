@@ -31,7 +31,7 @@ using namespace OC;
 
 JniOnResourceFoundListener* AddOnResourceFoundListener(JNIEnv* env, jobject jListener)
 {
-    JniOnResourceFoundListener *onResourceFoundListener = NULL;
+    JniOnResourceFoundListener *onResourceFoundListener = nullptr;
 
     resourceFoundMapLock.lock();
 
@@ -103,7 +103,7 @@ void RemoveOnResourceFoundListener(JNIEnv* env, jobject jListener)
 
 JniOnDeviceInfoListener* AddOnDeviceInfoListener(JNIEnv* env, jobject jListener)
 {
-    JniOnDeviceInfoListener *onDeviceInfoListener = NULL;
+    JniOnDeviceInfoListener *onDeviceInfoListener = nullptr;
 
     deviceInfoMapLock.lock();
 
@@ -179,7 +179,7 @@ void RemoveOnDeviceInfoListener(JNIEnv* env, jobject jListener)
 
 JniOnPlatformInfoListener* AddOnPlatformInfoListener(JNIEnv* env, jobject jListener)
 {
-    JniOnPlatformInfoListener *onPlatformInfoListener = NULL;
+    JniOnPlatformInfoListener *onPlatformInfoListener = nullptr;
 
     platformInfoMapLock.lock();
 
@@ -254,7 +254,7 @@ void RemoveOnPlatformInfoListener(JNIEnv* env, jobject jListener)
 
 JniOnPresenceListener* AddOnPresenceListener(JNIEnv* env, jobject jListener)
 {
-    JniOnPresenceListener *onPresenceListener = NULL;
+    JniOnPresenceListener *onPresenceListener = nullptr;
 
     presenceMapLock.lock();
 
@@ -335,7 +335,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
     std::string dbfile;
     if (jIpAddress)
     {
-        ipAddress = env->GetStringUTFChars(jIpAddress, NULL);
+        ipAddress = env->GetStringUTFChars(jIpAddress, nullptr);
     }
     if (jDbPath)
     {
@@ -347,6 +347,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
     {
         port = static_cast<uint16_t>(jPort);
     }
+
     PlatformConfig cfg{
         JniUtils::getServiceType(env, jServiceType),
         JniUtils::getModeType(env, jModeType),
@@ -355,7 +356,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
         JniUtils::getQOS(env, static_cast<int>(jQOS)),
         JniOcSecurity::getOCPersistentStorage()
     };
-
     OCPlatform::Configure(cfg);
 }
 
@@ -392,7 +392,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers0
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -433,7 +433,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyAllObservers1
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -506,7 +506,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyListOfObservers2(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -581,7 +581,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_notifyListOfObservers3(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -602,12 +602,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource0(
     std::string host;
     if (jHost)
     {
-        host = env->GetStringUTFChars(jHost, NULL);
+        host = env->GetStringUTFChars(jHost, nullptr);
     }
     std::string resourceUri;
     if (jResourceUri)
     {
-        resourceUri = env->GetStringUTFChars(jResourceUri, NULL);
+        resourceUri = env->GetStringUTFChars(jResourceUri, nullptr);
     }
     if (!jListener)
     {
@@ -639,7 +639,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -661,12 +661,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1(
     std::string host;
     if (jHost)
     {
-        host = env->GetStringUTFChars(jHost, NULL);
+        host = env->GetStringUTFChars(jHost, nullptr);
     }
     std::string resourceUri;
     if (jResourceUri)
     {
-        resourceUri = env->GetStringUTFChars(jResourceUri, NULL);
+        resourceUri = env->GetStringUTFChars(jResourceUri, nullptr);
     }
     if (!jListener)
     {
@@ -698,7 +698,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_findResource1(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -719,12 +719,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo0(
     std::string host;
     if (jHost)
     {
-        host = env->GetStringUTFChars(jHost, NULL);
+        host = env->GetStringUTFChars(jHost, nullptr);
     }
     std::string resourceUri;
     if (jResourceUri)
     {
-        resourceUri = env->GetStringUTFChars(jResourceUri, NULL);
+        resourceUri = env->GetStringUTFChars(jResourceUri, nullptr);
     }
     if (!jListener)
     {
@@ -755,7 +755,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -777,12 +777,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo1(
     std::string host;
     if (jHost)
     {
-        host = env->GetStringUTFChars(jHost, NULL);
+        host = env->GetStringUTFChars(jHost, nullptr);
     }
     std::string resourceUri;
     if (jResourceUri)
     {
-        resourceUri = env->GetStringUTFChars(jResourceUri, NULL);
+        resourceUri = env->GetStringUTFChars(jResourceUri, nullptr);
     }
     if (!jListener)
     {
@@ -814,7 +814,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getDeviceInfo1(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -835,12 +835,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo0(
     std::string host;
     if (jHost)
     {
-        host = env->GetStringUTFChars(jHost, NULL);
+        host = env->GetStringUTFChars(jHost, nullptr);
     }
     std::string resourceUri;
     if (jResourceUri)
     {
-        resourceUri = env->GetStringUTFChars(jResourceUri, NULL);
+        resourceUri = env->GetStringUTFChars(jResourceUri, nullptr);
     }
     if (!jListener)
     {
@@ -871,7 +871,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -893,12 +893,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo1(
     std::string host;
     if (jHost)
     {
-        host = env->GetStringUTFChars(jHost, NULL);
+        host = env->GetStringUTFChars(jHost, nullptr);
     }
     std::string resourceUri;
     if (jResourceUri)
     {
-        resourceUri = env->GetStringUTFChars(jResourceUri, NULL);
+        resourceUri = env->GetStringUTFChars(jResourceUri, nullptr);
     }
     if (!jListener)
     {
@@ -930,7 +930,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo1(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -966,7 +966,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_registerResource0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
         return nullptr;
     }
     JniOcResourceHandle* jniHandle = new JniOcResourceHandle(resourceHandle);
@@ -999,29 +999,29 @@ jobject jListener, jint jResourceProperty)
     std::string resourceUri;
     if (jResourceUri)
     {
-        resourceUri = env->GetStringUTFChars(jResourceUri, NULL);
+        resourceUri = env->GetStringUTFChars(jResourceUri, nullptr);
     }
     std::string resourceTypeName;
     if (jResourceTypeName)
     {
-        resourceTypeName = env->GetStringUTFChars(jResourceTypeName, NULL);
+        resourceTypeName = env->GetStringUTFChars(jResourceTypeName, nullptr);
     }
     std::string resourceInterface;
     if (jResourceInterface)
     {
-        resourceInterface = env->GetStringUTFChars(jResourceInterface, NULL);
+        resourceInterface = env->GetStringUTFChars(jResourceInterface, nullptr);
     }
-    if (!jListener)
+    JniEntityHandler* entityHandler = NULL;
+    EntityHandler handleEntityCallback = NULL;
+    if (jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "entityHandler cannot be null");
-        return nullptr;
+        entityHandler = new JniEntityHandler(env, jListener);
+        handleEntityCallback =
+            [entityHandler](const std::shared_ptr<OCResourceRequest> request) -> OCEntityHandlerResult
+            {
+                return entityHandler->handleEntity(request);
+            };
     }
-    JniEntityHandler* entityHandler = new JniEntityHandler(env, jListener);
-    EntityHandler handleEntityCallback =
-        [entityHandler](const std::shared_ptr<OCResourceRequest> request) -> OCEntityHandlerResult
-        {
-            return entityHandler->handleEntity(request);
-        };
 
     OCResourceHandle resourceHandle;
     try
@@ -1045,7 +1045,7 @@ jobject jListener, jint jResourceProperty)
     {
         LOGE("%s", e.reason().c_str());
         delete entityHandler;
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
         return nullptr;
     }
 
@@ -1077,7 +1077,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0(
     std::string deviceName;
     if (jDeviceName)
     {
-        deviceName = env->GetStringUTFChars(jDeviceName, NULL);
+        deviceName = env->GetStringUTFChars(jDeviceName, nullptr);
     }
 
     OCDeviceInfo deviceInfo;
@@ -1106,7 +1106,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1147,47 +1147,47 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerPlatformInfo0(
 
         if (jPlatformID)
         {
-            platformID = env->GetStringUTFChars(jPlatformID, NULL);
+            platformID = env->GetStringUTFChars(jPlatformID, nullptr);
         }
         if (jManufacturerName)
         {
-            manufacturerName = env->GetStringUTFChars(jManufacturerName, NULL);
+            manufacturerName = env->GetStringUTFChars(jManufacturerName, nullptr);
         }
         if (jManufacturerUrl)
         {
-            manufacturerUrl = env->GetStringUTFChars(jManufacturerUrl, NULL);
+            manufacturerUrl = env->GetStringUTFChars(jManufacturerUrl, nullptr);
         }
         if (jModelNumber)
         {
-            modelNumber = env->GetStringUTFChars(jModelNumber, NULL);
+            modelNumber = env->GetStringUTFChars(jModelNumber, nullptr);
         }
         if (jDateOfManufacture)
         {
-            dateOfManufacture = env->GetStringUTFChars(jDateOfManufacture, NULL);
+            dateOfManufacture = env->GetStringUTFChars(jDateOfManufacture, nullptr);
         }
         if (jPlatformVersion)
         {
-            platformVersion = env->GetStringUTFChars(jPlatformVersion, NULL);
+            platformVersion = env->GetStringUTFChars(jPlatformVersion, nullptr);
         }
         if (jOperatingSystemVersion)
         {
-            operatingSystemVersion = env->GetStringUTFChars(jOperatingSystemVersion, NULL);
+            operatingSystemVersion = env->GetStringUTFChars(jOperatingSystemVersion, nullptr);
         }
         if (jHardwareVersion)
         {
-            hardwareVersion = env->GetStringUTFChars(jHardwareVersion, NULL);
+            hardwareVersion = env->GetStringUTFChars(jHardwareVersion, nullptr);
         }
         if (jFirmwareVersion)
         {
-            firmwareVersion = env->GetStringUTFChars(jFirmwareVersion, NULL);
+            firmwareVersion = env->GetStringUTFChars(jFirmwareVersion, nullptr);
         }
         if (jSupportUrl)
         {
-            supportUrl = env->GetStringUTFChars(jSupportUrl, NULL);
+            supportUrl = env->GetStringUTFChars(jSupportUrl, nullptr);
         }
         if (jSystemTime)
         {
-            systemTime = env->GetStringUTFChars(jSystemTime, NULL);
+            systemTime = env->GetStringUTFChars(jSystemTime, nullptr);
         }
 
         OCPlatformInfo platformInfo;
@@ -1237,7 +1237,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerPlatformInfo0(
         catch (OCException& e)
         {
             LOGE("Error is due to %s", e.reason().c_str());
-            ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+            ThrowOcException(e.code(), e.reason().c_str());
         }
 }
 
@@ -1274,7 +1274,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unregisterResource0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1323,7 +1323,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResource0
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1395,7 +1395,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindResources0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1450,7 +1450,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResource0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1521,7 +1521,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unbindResources0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1545,7 +1545,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource0(
     std::string typeName;
     if (jResourceTypeName)
     {
-        typeName = env->GetStringUTFChars(jResourceTypeName, NULL);
+        typeName = env->GetStringUTFChars(jResourceTypeName, nullptr);
     }
 
     JniOcResourceHandle* jniOcResourceHandle =
@@ -1567,7 +1567,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindTypeToResource0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1588,7 +1588,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindInterfaceToResource
     std::string interfaceName;
     if (jResourceInterfaceName)
     {
-        interfaceName = env->GetStringUTFChars(jResourceInterfaceName, NULL);
+        interfaceName = env->GetStringUTFChars(jResourceInterfaceName, nullptr);
     }
 
     JniOcResourceHandle* jniOcResourceHandle =
@@ -1613,7 +1613,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_bindInterfaceToResource
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1639,7 +1639,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_startPresence0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1665,7 +1665,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_stopPresence0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1685,7 +1685,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence0(
     std::string host;
     if (jHost)
     {
-        host = env->GetStringUTFChars(jHost, NULL);
+        host = env->GetStringUTFChars(jHost, nullptr);
     }
     if (!jListener)
     {
@@ -1720,7 +1720,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
         return nullptr;
     }
 
@@ -1755,12 +1755,12 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence1(
     std::string host;
     if (jHost)
     {
-        host = env->GetStringUTFChars(jHost, NULL);
+        host = env->GetStringUTFChars(jHost, nullptr);
     }
     std::string resourceType;
     if (jResourceType)
     {
-        resourceType = env->GetStringUTFChars(jResourceType, NULL);
+        resourceType = env->GetStringUTFChars(jResourceType, nullptr);
     }
     if (!jListener)
     {
@@ -1794,7 +1794,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_subscribePresence1(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
         return nullptr;
     }
 
@@ -1853,7 +1853,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_unsubscribePresence0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }
 
@@ -1877,12 +1877,12 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructResourceObj
     std::string host;
     if (jHost)
     {
-        host = env->GetStringUTFChars(jHost, NULL);
+        host = env->GetStringUTFChars(jHost, nullptr);
     }
     std::string uri;
     if (jUri)
     {
-        uri = env->GetStringUTFChars(jUri, NULL);
+        uri = env->GetStringUTFChars(jUri, nullptr);
     }
     if (!jResourceTypeArray)
     {
@@ -1965,6 +1965,6 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_sendResponse0(
     catch (OCException& e)
     {
         LOGE("%s", e.reason().c_str());
-        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
     }
 }

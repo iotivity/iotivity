@@ -156,8 +156,8 @@ struct FooResource
     }
 };
 
-void putResourceInfo(const HeaderOptions& headerOptions,
-        const OCRepresentation rep, const OCRepresentation rep2, const int eCode)
+void putResourceInfo(const HeaderOptions& /*headerOptions*/,
+        const OCRepresentation rep, const OCRepresentation /*rep2*/, const int eCode)
 {
    bool m_isFoo = false;
    int m_barCount = 0;
@@ -186,7 +186,7 @@ void putResourceInfo(const HeaderOptions& headerOptions,
    }
 }
 
-void getResourceInfo(std::shared_ptr<OCResource> resource, const HeaderOptions& headerOptions,
+void getResourceInfo(std::shared_ptr<OCResource> resource, const HeaderOptions& /*headerOptions*/,
             const OCRepresentation rep,
             const int eCode)
 {
@@ -327,7 +327,7 @@ void server()
     cv.wait(lock);
 }
 
-int main(int argc, char* argv[])
+int main(int /*argc*/, char** /*argv[]*/)
 {
 
     requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.foo";

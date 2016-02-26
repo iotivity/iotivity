@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -17,11 +17,11 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 /**
- * @file    OCStackResult.java
- *
- * @brief     This file provides a Enum which contains Status codes for Success and Errors
- *
+ * @file
+ * This file provides a Enum which contains Status codes
+ * for Success and Errors
  */
 
 package org.iotivity.service.tm;
@@ -30,6 +30,7 @@ package org.iotivity.service.tm;
  * This Enum contains Status codes for Success and Errors
  */
 public enum OCStackResult {
+
     OC_STACK_OK,
     OC_STACK_RESOURCE_CREATED,
     OC_STACK_RESOURCE_DELETED,

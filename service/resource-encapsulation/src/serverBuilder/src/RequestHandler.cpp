@@ -23,6 +23,9 @@
 #include <OCResourceResponse.h>
 #include <ResourceAttributesConverter.h>
 #include <RCSResourceObject.h>
+#include <ResourceAttributesUtils.h>
+
+#include <octypes.h>
 
 namespace
 {
@@ -48,11 +51,11 @@ namespace
     }
 
     std::shared_ptr< OC::OCResourceResponse > doBuildResponse(RCSResourceObject& resource,
-            const OCEntityHandlerResult result, int errorCode, OCRepresentationGetter ocRepGetter)
+             int errorCode, OCRepresentationGetter ocRepGetter)
     {
         auto response = std::make_shared< OC::OCResourceResponse >();
 
-        response->setResponseResult(result);
+        response->setResponseResult(OC_EH_OK);
         response->setErrorCode(errorCode);
         response->setResourceRepresentation(ocRepGetter(resource));
 
@@ -112,30 +115,27 @@ namespace OIC
     namespace Service
     {
         constexpr int RequestHandler::DEFAULT_ERROR_CODE;
-        constexpr OCEntityHandlerResult RequestHandler::DEFAULT_RESULT;
 
         RequestHandler::RequestHandler() :
-                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, DEFAULT_RESULT,
-                        DEFAULT_ERROR_CODE, getOCRepresentationFromResource) }
-        {
-        }
-
-        RequestHandler::RequestHandler(const OCEntityHandlerResult& result, int errorCode) :
-                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, result, errorCode,
+                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, DEFAULT_ERROR_CODE,
                         getOCRepresentationFromResource) }
         {
         }
 
-        RequestHandler::RequestHandler(const RCSResourceAttributes& attrs,
-                const OCEntityHandlerResult& result, int errorCode) :
-                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, result, errorCode,
+        RequestHandler::RequestHandler(int errorCode) :
+                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, errorCode,
+                        getOCRepresentationFromResource) }
+        {
+        }
+
+        RequestHandler::RequestHandler(const RCSResourceAttributes& attrs, int errorCode) :
+                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, errorCode,
                         wrapGetOCRepresentation(attrs)) }
         {
         }
 
-        RequestHandler::RequestHandler(RCSResourceAttributes&& attrs,
-                const OCEntityHandlerResult& result, int errorCode) :
-                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, result, errorCode,
+        RequestHandler::RequestHandler(RCSResourceAttributes&& attrs, int errorCode) :
+                m_holder{ std::bind(doBuildResponse, std::placeholders::_1, errorCode,
                         wrapGetOCRepresentation(std::move(attrs))) }
         {
         }
@@ -152,21 +152,19 @@ namespace OIC
         {
         }
 
-        SetRequestHandler::SetRequestHandler(const OCEntityHandlerResult& result, int errorCode) :
-                RequestHandler{ result, errorCode }
+        SetRequestHandler::SetRequestHandler(int errorCode) :
+                RequestHandler{ errorCode }
         {
         }
 
 
-        SetRequestHandler::SetRequestHandler(const RCSResourceAttributes& attrs,
-                const OCEntityHandlerResult& result, int errorCode) :
-                RequestHandler{ attrs, result, errorCode }
+        SetRequestHandler::SetRequestHandler(const RCSResourceAttributes& attrs, int errorCode) :
+                RequestHandler{ attrs, errorCode }
         {
         }
 
-        SetRequestHandler::SetRequestHandler(RCSResourceAttributes&& attrs,
-                const OCEntityHandlerResult& result, int errorCode) :
-                RequestHandler{ std::move(attrs), result, errorCode }
+        SetRequestHandler::SetRequestHandler(RCSResourceAttributes&& attrs,  int errorCode) :
+                RequestHandler{ std::move(attrs), errorCode }
         {
         }
 

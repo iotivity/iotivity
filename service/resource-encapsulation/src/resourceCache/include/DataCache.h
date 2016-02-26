@@ -43,6 +43,11 @@ namespace OIC
                 DataCache();
                 ~DataCache();
 
+                DataCache(const DataCache &) = default;
+                DataCache(DataCache &&) = default;
+                DataCache & operator = (const DataCache &) = default;
+                DataCache & operator = (DataCache &&) = default;
+
                 void initializeDataCache(PrimitiveResourcePtr pResource);
 
                 CacheID addSubscriber(CacheCB func, REPORT_FREQUENCY rf, long repeatTime);
@@ -85,7 +90,7 @@ namespace OIC
 
             public:
                 void onObserve(const HeaderOptions &_hos,
-                               const ResponseStatement &_rep, int _result, int _seq);
+                               const ResponseStatement &_rep, int _result, unsigned int _seq);
                 void onGet(const HeaderOptions &_hos, const ResponseStatement &_rep, int _result);
             private:
                 void onTimeOut(const unsigned int timerID);

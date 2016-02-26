@@ -28,9 +28,6 @@
 #include "cacommon.h"
 #include "cainterface.h"
 
-#ifdef __WITH_DTLS__
-#include "ocsecurityconfig.h"
-#endif
 /**
  * @def MAX_BUF_LEN
  * @brief maximum buffer length
@@ -62,15 +59,14 @@
 #define COAPS_PREFIX         "coaps://"
 #define COAPS_PREFIX_LEN     8
 
-/**
- * @def RS_IDENTITY
- * @brief
- */
-#define IDENTITY     ("1111111111111111")
-/* @def RS_CLIENT_PSK
- * @brief
- */
-#define RS_CLIENT_PSK   ("AAAAAAAAAAAAAAAA")
+#define COAP_TCP_PREFIX      "coap+tcp://"
+#define COAP_TCP_PREFIX_LEN  11
+
+// Iotivity Device Identity.
+const unsigned char IDENTITY[] = ("1111111111111111");
+
+// PSK between this device and peer device.
+const unsigned char RS_CLIENT_PSK[] = ("AAAAAAAAAAAAAAAA");
 
 /**
  * Max size for big payload.
@@ -129,88 +125,59 @@ static const char NORMAL_INFO_DATA[] =
     "\"if\":[\"oic.if.baseline\"],\"obs\":1}}]}";
 
 #ifdef __WITH_DTLS__
-static CADtlsPskCredsBlob_t *pskCredsBlob = NULL;
-
-void clearDtlsCredentialInfo()
-{
-    printf("clearDtlsCredentialInfo IN\n");
-    if (pskCredsBlob)
-    {
-        // Initialize sensitive data to zeroes before freeing.
-        if (pskCredsBlob->creds)
-        {
-            memset(pskCredsBlob->creds, 0, sizeof(OCDtlsPskCreds) * (pskCredsBlob->num));
-            free(pskCredsBlob->creds);
-        }
-
-        memset(pskCredsBlob, 0, sizeof(CADtlsPskCredsBlob_t));
-        free(pskCredsBlob);
-        pskCredsBlob = NULL;
-    }
-    printf("clearDtlsCredentialInfo OUT\n");
-}
-
 // Internal API. Invoked by CA stack to retrieve credentials from this module.
-void CAGetDtlsPskCredentials(CADtlsPskCredsBlob_t **credInfo)
+int32_t CAGetDtlsPskCredentials( CADtlsPskCredType_t type,
+              const unsigned char *desc, size_t desc_len,
+              unsigned char *result, size_t result_length)
 {
     printf("CAGetDtlsPskCredentials IN\n");
 
-    if(NULL == credInfo)
+    int32_t ret = -1;
+
+    if (NULL == result)
     {
-        printf("Invalid credential container");
-        return;
+        return ret;
     }
 
-    *credInfo = (CADtlsPskCredsBlob_t *)malloc(sizeof(CADtlsPskCredsBlob_t));
-    if (NULL == *credInfo)
+    switch (type)
     {
-        printf("Failed to allocate credential blob.");
-        return;
-    }
+        case CA_DTLS_PSK_HINT:
+        case CA_DTLS_PSK_IDENTITY:
 
-    int16_t credLen = sizeof(OCDtlsPskCreds) * (pskCredsBlob->num);
-    (*credInfo)->creds = (OCDtlsPskCreds *)malloc(credLen);
-    if (NULL == (*credInfo)->creds)
-    {
-        printf("Failed to allocate credentials.");
-        free(*credInfo);
-        *credInfo = NULL;
-        return;
-    }
+            if (result_length < sizeof(IDENTITY))
+            {
+                printf("ERROR : Wrong value for result for storing IDENTITY");
+                return ret;
+            }
 
-    memcpy((*credInfo)->identity, pskCredsBlob->identity, DTLS_PSK_ID_LEN);
-    (*credInfo)->num = pskCredsBlob->num;
-    memcpy((*credInfo)->creds, pskCredsBlob->creds, credLen);
+            memcpy(result, IDENTITY, sizeof(IDENTITY));
+            ret = sizeof(IDENTITY);
+            break;
+
+        case CA_DTLS_PSK_KEY:
+
+            if ((desc_len == sizeof(IDENTITY)) &&
+                memcmp(desc, IDENTITY, sizeof(IDENTITY)) == 0)
+            {
+                if (result_length < sizeof(RS_CLIENT_PSK))
+                {
+                    printf("ERROR : Wrong value for result for storing RS_CLIENT_PSK");
+                    return ret;
+                }
+
+                memcpy(result, RS_CLIENT_PSK, sizeof(RS_CLIENT_PSK));
+                ret = sizeof(RS_CLIENT_PSK);
+            }
+            break;
+
+        default:
+
+            printf("Wrong value passed for PSK_CRED_TYPE.");
+            ret = -1;
+    }
 
     printf("CAGetDtlsPskCredentials OUT\n");
-}
-
-CAResult_t SetCredentials()
-{
-    printf("SetCredentials IN\n");
-    pskCredsBlob = (CADtlsPskCredsBlob_t *)malloc(sizeof(CADtlsPskCredsBlob_t));
-    if (NULL == pskCredsBlob)
-    {
-        printf("Memory allocation failed!\n");
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-    memcpy(pskCredsBlob->identity, IDENTITY, DTLS_PSK_ID_LEN);
-
-    pskCredsBlob->num = 1;
-
-    pskCredsBlob->creds = (OCDtlsPskCreds *)malloc(sizeof(OCDtlsPskCreds) * (pskCredsBlob->num));
-    if (NULL == pskCredsBlob->creds)
-    {
-        printf("Memory allocation failed!\n");
-        free(pskCredsBlob);
-        return CA_MEMORY_ALLOC_FAILED;
-    }
-
-    memcpy(pskCredsBlob->creds[0].id, IDENTITY, DTLS_PSK_ID_LEN);
-    memcpy(pskCredsBlob->creds[0].psk, RS_CLIENT_PSK, DTLS_PSK_PSK_LEN);
-
-    printf("SetCredentials OUT\n");
-    return CA_STATUS_OK;
+    return ret;
 }
 #endif
 
@@ -263,18 +230,8 @@ int main()
         return -1;
     }
 
-    /*
-     * Read DTLS PSK credentials from persistent storage and
-     * set in the OC stack.
-     */
+    // Set the PSK Credentials callback handler.
 #ifdef __WITH_DTLS__
-    res = SetCredentials();
-    if (CA_STATUS_OK != res)
-    {
-        printf("SetCredentials failed\n");
-        return -1;
-    }
-
     res = CARegisterDTLSCredentialsHandler(CAGetDtlsPskCredentials);
     if (CA_STATUS_OK != res)
     {
@@ -291,9 +248,6 @@ int main()
     CADestroyToken(g_last_request_token);
 
     CATerminate();
-#ifdef __WITH_DTLS__
-    clearDtlsCredentialInfo();
-#endif
     return 0;
 }
 
@@ -474,6 +428,7 @@ void send_request()
         printf("Enter the URI like below....\n");
         printf("coap://10.11.12.13:4545/resource_uri ( for IP )\n");
         printf("coap://10:11:12:13:45:45/resource_uri ( for BT )\n");
+        printf("coap+tcp://10:11:12:13:45:45/resource_uri ( for TCP )\n");
     }
     else
     {
@@ -729,7 +684,6 @@ void send_request_all()
     if (CA_STATUS_OK != res)
     {
         printf("Could not send request to all\n");
-        CADestroyEndpoint(endpoint);
     }
     else
     {
@@ -820,20 +774,20 @@ void send_notification()
 
     printf("Generated token %s\n", token);
 
-    CAInfo_t respondData = { 0 };
-    respondData.token = token;
-    respondData.tokenLength = tokenLength;
-    respondData.payload = (CAPayload_t) "TempNotificationData";
-    respondData.payloadSize = strlen((const char *) respondData.payload);
-    respondData.type = messageType;
-    respondData.resourceUri = (CAURI_t)uri;
+    CAInfo_t requestData = { 0 };
+    requestData.token = token;
+    requestData.tokenLength = tokenLength;
+    requestData.payload = (CAPayload_t) "TempNotificationData";
+    requestData.payloadSize = strlen((const char *) requestData.payload);
+    requestData.type = messageType;
+    requestData.resourceUri = (CAURI_t)uri;
 
-    CAResponseInfo_t responseInfo = { 0 };
-    responseInfo.result = CA_CONTENT;
-    responseInfo.info = respondData;
+    CARequestInfo_t requestInfo = { 0 };
+    requestInfo.method = CA_GET;
+    requestInfo.info = requestData;
 
     // send notification
-    res = CASendNotification(endpoint, &responseInfo);
+    res = CASendRequest(endpoint, &requestInfo);
     if (CA_STATUS_OK != res)
     {
         printf("Send notification error, error code: %d\n", res);
@@ -858,6 +812,7 @@ void select_network()
     printf("IP     : 0\n");
     printf("GATT   : 1\n");
     printf("RFCOMM : 2\n");
+    printf("TCP    : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -868,7 +823,7 @@ void select_network()
 
     int number = buf[0] - '0';
 
-    if (number < 0 || number > 3)
+    if (number < 0 || number > 4)
     {
         printf("Invalid network type\n");
         return;
@@ -894,6 +849,7 @@ void unselect_network()
     printf("IP     : 0\n");
     printf("GATT   : 1\n");
     printf("RFCOMM : 2\n");
+    printf("TCP    : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -904,7 +860,7 @@ void unselect_network()
 
     int number = buf[0] - '0';
 
-    if (number < 0 || number > 3)
+    if (number < 0 || number > 4)
     {
         printf("Invalid network type\n");
         return;
@@ -1190,7 +1146,6 @@ void send_response(const CAEndpoint_t *endpoint, const CAInfo_t *info)
         printf("\n=============================================\n");
         printf("\tselect response code\n");
         printf("EMPTY                    :   0\n");
-        printf("SUCCESS                  : 200\n");
         printf("CREATED                  : 201\n");
         printf("DELETED                  : 202\n");
         printf("VALID                    : 203\n");
@@ -1362,6 +1317,7 @@ CAResult_t get_network_type()
     printf("IP     : 0\n");
     printf("GATT   : 1\n");
     printf("RFCOMM : 2\n");
+    printf("TCP    : 4\n");
     printf("select : ");
 
     char buf[MAX_BUF_LEN] = { 0 };
@@ -1371,7 +1327,7 @@ CAResult_t get_network_type()
     }
 
     int number = buf[0] - '0';
-    if (0 > number || 2 < number)
+    if (0 > number || 4 < number)
     {
         printf("\nInvalid Network type");
         return CA_NOT_SUPPORTED;
@@ -1421,6 +1377,12 @@ void parse_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t *
     {
         printf("uri has '%s' prefix\n", COAP_PREFIX);
         startIndex = COAP_PREFIX_LEN;
+        *flags = CA_IPV4;
+    }
+    else if (strncmp(COAP_TCP_PREFIX, uri, COAP_TCP_PREFIX_LEN) == 0)
+    {
+        printf("uri has '%s' prefix\n", COAP_TCP_PREFIX);
+        startIndex = COAP_TCP_PREFIX_LEN;
         *flags = CA_IPV4;
     }
 

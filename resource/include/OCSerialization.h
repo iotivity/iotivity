@@ -21,6 +21,7 @@
 #include <StringConstants.h>
 #include "ocpayload.h"
 #include "ocrandom.h"
+#include "oic_string.h"
 
 namespace OC
 {
@@ -44,37 +45,54 @@ namespace OC
                     : m_clientWrapper(cw), m_devAddr(devAddr)
             {
                 OCResourcePayload* res = payload->resources;
-
-                while(res)
+                if (res)
                 {
-                    char uuidString[UUID_STRING_SIZE];
-                    if(OCConvertUuidToString(res->sid, uuidString) != RAND_UUID_OK)
+                    while(res)
                     {
-                        uuidString[0]= '\0';
-                    }
+                        char uuidString[UUID_STRING_SIZE];
+                        if(OCConvertUuidToString(payload->sid, uuidString) != RAND_UUID_OK)
+                        {
+                            uuidString[0]= '\0';
+                        }
 
-                    if (res->secure)
-                    {
-                        m_devAddr.flags =
-                              (OCTransportFlags)(OC_FLAG_SECURE | m_devAddr.flags);
-                    }
+                        if (res->secure)
+                        {
+                            m_devAddr.flags =
+                                  (OCTransportFlags)(OC_FLAG_SECURE | m_devAddr.flags);
+                        }
 
-                    if (res->port != 0)
-                    {
-                         m_devAddr.port = res->port;
+                        if (res->port != 0)
+                        {
+                             m_devAddr.port = res->port;
+                        }
+                        if (payload->baseURI)
+                        {
+                            OCDevAddr rdPubAddr = m_devAddr;
+                            OICStrcpy(rdPubAddr.addr, sizeof(rdPubAddr.addr), payload->baseURI);
+                            rdPubAddr.port = res->port;
+                            m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                                        new OC::OCResource(m_clientWrapper, rdPubAddr,
+                                            std::string(res->uri),
+                                            std::string((char*)uuidString),
+                                            (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
+                                            StringLLToVector(res->types),
+                                            StringLLToVector(res->interfaces)
+                                            )));
+                        }
+                        else
+                        {
+                            m_resources.push_back(std::shared_ptr<OC::OCResource>(
+                                    new OC::OCResource(m_clientWrapper, m_devAddr,
+                                        std::string(res->uri),
+                                        std::string(uuidString),
+                                        (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
+                                        StringLLToVector(res->types),
+                                        StringLLToVector(res->interfaces)
+                                        )));
+                        }
+                        res = res->next;
                     }
-
-                    m_resources.push_back(std::shared_ptr<OC::OCResource>(
-                                new OC::OCResource(m_clientWrapper, m_devAddr,
-                                    std::string(res->uri),
-                                    std::string(uuidString),
-                                    (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
-                                    StringLLToVector(res->types),
-                                    StringLLToVector(res->interfaces)
-                                    )));
-                    res = res->next;
                 }
-
             }
 
             const std::vector<std::shared_ptr<OCResource>>& Resources() const

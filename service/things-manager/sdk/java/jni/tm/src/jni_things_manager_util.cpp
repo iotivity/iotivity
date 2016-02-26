@@ -1,4 +1,4 @@
-/******************************************************************
+/* *****************************************************************
  *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
  *
@@ -17,8 +17,119 @@
  * limitations under the License.
  *
  ******************************************************************/
+
 #include "jni_things_manager_util.h"
 #include "JniOcResource.h"
+#include "jni_string.h"
+
+jobject ocResourceHandleToJava(JNIEnv *env, jlong resourceHandle)
+{
+    jclass resourceClass = GetJClass(TM_SERVICE_OCRESOURCEHANDLE_PATH);
+    if (NULL == resourceClass)
+    {
+        LOGE("ocResourceHandleToJava : failed to find OCResourceHandle java class!");
+        return NULL;
+    }
+
+    jmethodID constructor = env->GetMethodID(resourceClass, "<init>", "(J)V");
+    if (NULL == constructor)
+    {
+        LOGE("ocResourceHandleToJava: Failed to get constructor method!");
+        return NULL;
+    }
+
+    jobject resourceObj = (jobject) env->NewObject(resourceClass, constructor, resourceHandle);
+    if (NULL == resourceObj)
+    {
+        LOGE("ocResourceHandleToJava: Failed to create OCResouceHandle java object!");
+        return NULL;
+    }
+    return resourceObj;
+}
+
+jobject OcResourceToJava(JNIEnv *env, jlong resource)
+{
+    jclass resourceClass = GetJClass(TM_SERVICE_OCRESOURCE_PATH);
+    if (NULL == resourceClass)
+    {
+        LOGE("OcResourceToJava : failed to find OCResouce java class!");
+        return NULL;
+    }
+
+    jmethodID constructor = env->GetMethodID(resourceClass, "<init>", "(J)V");
+    if (NULL == constructor)
+    {
+        LOGE("OcResourceToJava: Failed to get constructor method!");
+        return NULL;
+    }
+
+    jobject resourceObj = (jobject) env->NewObject(resourceClass, constructor, resource);
+    if (NULL == resourceObj)
+    {
+        LOGE("OcResourceToJava: Failed to create OCResouce java object!");
+        return NULL;
+    }
+    return resourceObj;
+}
+
+jobject OcHeaderOptionToJava(JNIEnv *env, OC::HeaderOption::OCHeaderOption headerOption)
+{
+    JString *optionData = new JString(env, headerOption.getOptionData());
+    if (!optionData)
+    {
+        LOGE("OcHeaderOptionToJava : failed to get JString!");
+        return NULL;
+    }
+
+    jclass headerOptionClass = GetJClass(TM_SERVICE_HEADER_OPTION_PATH);
+    if (NULL == headerOptionClass)
+    {
+        LOGE("OcHeaderOptionToJava : failed to find OCRepresentation java class!");
+        return NULL;
+    }
+
+    jmethodID constructor = env->GetMethodID(headerOptionClass, "<init>", "(JLjava/lang/String;)V");
+    if (NULL == constructor)
+    {
+        LOGE("OcHeaderOptionToJava: Failed to get constructor method!");
+        return NULL;
+    }
+
+    jobject headerOptionObj = (jobject) env->NewObject(headerOptionClass, constructor,
+                              (jlong)headerOption.getOptionID(), optionData);
+    if (NULL == headerOptionObj)
+    {
+        LOGE("OcHeaderOptionToJava: Failed to create OCRepresentation java object!");
+        return NULL;
+    }
+    return headerOptionObj;
+}
+
+jobject OcRepresentationToJava(JNIEnv *env, jlong ocRepresentation)
+{
+    jclass ocRepresentationClass = GetJClass(TM_SERVICE_OCREPRESENTATION_PATH);
+    if (NULL == ocRepresentationClass)
+    {
+        LOGE("OcRepresentationToJava : failed to find OCRepresentation java class!");
+        return NULL;
+    }
+
+    jmethodID constructor = env->GetMethodID(ocRepresentationClass, "<init>", "(J)V");
+    if (NULL == constructor)
+    {
+        LOGE("OcRepresentationToJava: Failed to get constructor method!");
+        return NULL;
+    }
+
+    jobject ocRepresentationObj = (jobject) env->NewObject(ocRepresentationClass, constructor,
+                                  ocRepresentation);
+    if (NULL == ocRepresentationObj)
+    {
+        LOGE("OcRepresentationToJava: Failed to create OCRepresentation java object!");
+        return NULL;
+    }
+    return ocRepresentationObj;
+}
 
 std::vector<std::string> convertStringVector(JNIEnv *env, jobject jVectorString)
 {
@@ -66,7 +177,6 @@ std::vector<std::string> convertStringVector(JNIEnv *env, jobject jVectorString)
 
         env->ReleaseStringUTFChars(jContactInfoObj, buff);
     }
-
     return vectorString;
 }
 
@@ -126,6 +236,5 @@ std::map<std::string, std::string> convertStringMap(JNIEnv *env, jobject jMapStr
         env->ReleaseStringUTFChars(jMapKeyStr, key);
         env->ReleaseStringUTFChars(jMapValueStr, value);
     }
-
     return mapString;
 }

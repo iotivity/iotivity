@@ -1,22 +1,22 @@
 /******************************************************************
-*
-* Copyright 2015 Samsung Electronics All Rights Reserved.
-*
-*
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-******************************************************************/
+ *
+ * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *****************************************************************/
 
 #include <stdio.h>
 #include <string.h>
@@ -24,550 +24,1210 @@
 
 #include "logger.h"
 #include "oic_malloc.h"
-#include "utlist.h"
+#include "oic_string.h"
 #include "ocprovisioningmanager.h"
-#include "secureresourceprovider.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
-#include "pinoxmcommon.h"
-#include "oic_string.h"
+#include "securevirtualresourcetypes.h"
+#include "srmutility.h"
+#include "pmtypes.h"
 
-#define MAX_URI_LENGTH (64)
-#define MAX_PERMISSION_LENGTH (5)
-#define CREATE (1)
-#define READ (2)
-#define UPDATE (4)
-#define DELETE (8)
-#define NOTIFY (16)
-#define DASH '-'
-#define PREDEFINED_TIMEOUT (10)
-#define MAX_OWNED_DEVICE (10)
-#define TAG  "provisioningclient"
-
-static char CRED_FILE[] = "oic_svr_db_client.json";
-static OicSecAcl_t        *gAcl1 = NULL;
-static OicSecAcl_t        *gAcl2 = NULL;
-static int gOwnershipState = 0;
-
-typedef enum
+#ifdef __cplusplus
+extern "C"
 {
-    ownershipDone = 1 << 1,
-    finalizeDone = 1 << 2,
-    provisionCredDone = 1 << 3,
-    provisionAclDone = 1 << 4
-} StateManager;
+#endif //__cplusplus
 
+// declaration(s) for provisioning client using C-level provisioning API
+// user input definition for main loop on provisioning client
+#define _10_DISCOV_ALL_DEVS_    10
+#define _11_DISCOV_UNOWN_DEVS_  11
+#define _12_DISCOV_OWN_DEVS_    12
+#define _20_REGIST_DEVS_        20
+#define _30_PROVIS_PAIR_DEVS_   30
+#define _31_PROVIS_CRED_        31
+#define _32_PROVIS_ACL_         32
+#define _33_CHECK_LINK_STATUS_  33
+#define _40_UNLINK_PAIR_DEVS_   40
+#define _50_REMOVE_SELEC_DEV_   50
+#define _99_EXIT_PRVN_CLT_      99
 
-/**
- * Perform cleanup for ACL
- * @param[in]    ACL
- */
-static void deleteACL(OicSecAcl_t *acl)
+#define ACL_RESRC_MAX_NUM   16
+#define ACL_RESRC_MAX_LEN   128
+#define ACL_PEMISN_CNT      5
+#define DISCOVERY_TIMEOUT   10  // 10 sec
+#define CALLBACK_TIMEOUT    60  // 1 min
+#define TAG "provisioningclient"
+
+static const char* ACL_PEMISN[5] = {"CREATE", "READ", "WRITE", "DELETE", "NOTIFY"};
+static const char* SVR_DB_FILE_NAME = "oic_svr_db_client.json";
+        // '_' for separaing from the same constant variable in |srmresourcestrings.c|
+static const char* PRVN_DB_FILE_NAME = "oic_prvn_mng.db";
+// |g_ctx| means provision manager application context and
+// the following, includes |un/own_list|, could be variables, which |g_ctx| has,
+// for accessing all function(s) for these, they are declared on global domain
+static const char* g_ctx = "Provision Manager Client Application Context";
+static char* g_svr_fname;
+static char* g_prvn_fname;
+static OCProvisionDev_t* g_own_list;
+static OCProvisionDev_t* g_unown_list;
+static int g_own_cnt;
+static int g_unown_cnt;
+static bool g_doneCB;
+
+// function declaration(s) for calling them before implementing
+static OicSecAcl_t* createAcl(const int);
+static OCProvisionDev_t* getDevInst(const OCProvisionDev_t*, const int);
+static int printDevList(const OCProvisionDev_t*);
+static size_t printUuidList(const OCUuidList_t*);
+static int printResultList(const OCProvisionResult_t*, const int);
+static void printUuid(const OicUuid_t*);
+static FILE* fopen_prvnMng(const char*, const char*);
+static int waitCallbackRet(void);
+static int selectTwoDiffNum(int*, int*, const int, const char*);
+
+// callback function(s) for provisioning client using C-level provisioning API
+static void ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
-    if (acl)
+    if(!hasError)
     {
-        /* Clean Resources */
-        for (size_t i = 0; i < (acl)->resourcesLen; i++)
-        {
-            OICFree((acl)->resources[i]);
-        }
-        OICFree((acl)->resources);
-
-        /* Clean Owners */
-        OICFree((acl)->owners);
-
-        /* Clean ACL node itself */
-        OICFree((acl));
-
-        acl = NULL;
-    }
-}
-
-/**
- * Calculate ACL permission from string to bit
- *
- * @param[in] temp_psm    Input data of ACL permission string
- * @param[in,out] pms    The pointer of ACL permission value
- * @return  0 on success otherwise -1.
- */
-static int CalculateAclPermission(const char *temp_pms, uint16_t *pms)
-{
-    int i = 0;
-
-    if (NULL == temp_pms || NULL == pms)
-    {
-        return -1;
-    }
-    *pms = 0;
-    while (temp_pms[i] != '\0')
-    {
-        switch (temp_pms[i])
-        {
-            case 'C':
-                {
-                    *pms += CREATE;
-                    i++;
-                    break;
-                }
-            case 'R':
-                {
-                    *pms += READ;
-                    i++;
-                    break;
-                }
-            case 'U':
-                {
-                    *pms += UPDATE;
-                    i++;
-                    break;
-                }
-            case 'D':
-                {
-                    *pms += DELETE;
-                    i++;
-                    break;
-                }
-            case 'N':
-                {
-                    *pms += NOTIFY;
-                    i++;
-                    break;
-                }
-            case '_':
-                {
-                    i++;
-                    break;
-                }
-            default:
-                {
-                    return -1;
-                }
-        }
-    }
-    return 0;
-}
-
-/**
- * Get the ACL property from user
- *
- * @param[in]    ACL Datastructure to save user inputs
- * @return  0 on success otherwise -1.
- */
-static int InputACL(OicSecAcl_t *acl)
-{
-    int ret;
-    char temp_id [UUID_LENGTH + 4] = {0,};
-    char temp_rsc[MAX_URI_LENGTH + 1] = {0,};
-    char temp_pms[MAX_PERMISSION_LENGTH + 1] = {0,};
-    printf("******************************************************************************\n");
-    printf("-Set ACL policy for target device\n");
-    printf("******************************************************************************\n");
-    //Set Subject.
-    printf("-URN identifying the subject\n");
-    printf("ex) 1111-1111-1111-1111 (16 Numbers except to '-')\n");
-    printf("Subject : ");
-    char *ptr = NULL;
-    ret = scanf("%19ms", &ptr);
-    if(1==ret)
-    {
-        OICStrcpy(temp_id, sizeof(temp_id), ptr);
-        OICFree(ptr);
+        OIC_LOG_V(INFO, TAG, "Ownership Transfer SUCCEEDED - ctx: %s", (char*) ctx);
     }
     else
     {
-         printf("Error while input\n");
-         return -1;
+        OIC_LOG_V(ERROR, TAG, "Ownership Transfer FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-    int j = 0;
-    for (int i = 0; temp_id[i] != '\0'; i++)
+    g_doneCB = true;
+}
+
+static void provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
     {
-        if (DASH != temp_id[i])
-        {
-            if(j>UUID_LENGTH)
-            {
-                printf("Invalid input\n");
-                return -1;
-            }
-            acl->subject.id[j++] = temp_id[i];
-        }
+        OIC_LOG_V(INFO, TAG, "Provision Pairwise SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Provision Pairwise FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
+static void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Provision Credential SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Provision Credential FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
+static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Provision ACL SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Provision ACL FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
+static void unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Unlink Devices SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Unlink Devices FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
+static void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Remove Device SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Remove Device FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
+static void inputPinCB(char* pin, size_t len)
+{
+    if(!pin || OXM_RANDOM_PIN_SIZE>=len)
+    {
+        OIC_LOG(ERROR, TAG, "inputPinCB invalid parameters");
+        return;
     }
 
-    //Set Resource.
-    printf("Num. of Resource : \n");
-    ret = scanf("%zu", &acl->resourcesLen);
-    printf("-URI of resource\n");
-    printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
-    acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
-    if (NULL == acl->resources)
+    printf("   > INPUT PIN: ");
+    for(int ret=0; 1!=ret; )
     {
-        OC_LOG(ERROR, TAG, "Error while memory allocation");
+        ret = scanf("%8s", pin);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                    // '0x20<=code' is character region
+    }
+}
+
+// function(s) for provisioning client using C-level provisioning API
+static int initProvisionClient(void)
+{
+    // initialize persistent storage for SVR DB
+    static OCPersistentStorage pstStr =
+    {
+        .open = fopen_prvnMng,
+        .read = fread,
+        .write = fwrite,
+        .close = fclose,
+        .unlink = unlink
+    };
+    if(OC_STACK_OK != OCRegisterPersistentStorageHandler(&pstStr))
+    {
+        OIC_LOG(ERROR, TAG, "OCRegisterPersistentStorageHandler error");
         return -1;
     }
-    for (size_t i = 0; i < acl->resourcesLen; i++)
-    {
-        printf("[%zu]Resource : ", i + 1);
-        char *ptr_tempRsc = NULL;
-        ret = scanf("%64ms", &ptr_tempRsc);
-        if (1==ret)
-        {
-            OICStrcpy(temp_rsc, sizeof(temp_rsc), ptr_tempRsc);
-            OICFree(ptr_tempRsc);
-        }
-        else
-        {
-            printf("Error while input\n");
-            return -1;
-        }
-        acl->resources[i] = OICStrdup(temp_rsc);
 
-        if (NULL == acl->resources[i])
-        {
-            OC_LOG(ERROR, TAG, "Error while memory allocation");
-            return -1;
-        }
-    }
-    // Set Permission
-    do
+    // initialize OC stack and provisioning manager
+    if(OC_STACK_OK != OCInit(NULL, 0, OC_CLIENT_SERVER))
     {
-        printf("-Set the permission(C,R,U,D,N)\n");
-        printf("ex) CRUDN, CRU_N,..(5 Charaters)\n");
-        printf("Permission : ");
-        char *ptr_temp_pms = NULL;
-        ret = scanf("%5ms", &ptr_temp_pms);
-        if(1 == ret)
-        {
-            OICStrcpy(temp_pms, sizeof(temp_pms), ptr_temp_pms);
-            OICFree(ptr_temp_pms);
-
-        }
-        else
-        {
-            printf("Error while input\n");
-            return -1;
-        }
-    }
-    while (0 != CalculateAclPermission(temp_pms, &(acl->permission)) );
-    // Set Rowner
-    printf("Num. of Rowner : ");
-    ret = scanf("%zu", &acl->ownersLen);
-    printf("-URN identifying the rowner\n");
-    printf("ex) 1111-1111-1111-1111 (16 Numbers except to '-')\n");
-    acl->owners = (OicUuid_t *)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
-    if (NULL == acl->owners)
-    {
-        OC_LOG(ERROR, TAG, "Error while memory allocation");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return -1;
     }
-    for (size_t i = 0; i < acl->ownersLen; i++)
+
+    if (access(PRVN_DB_FILE_NAME, F_OK) != -1)
     {
-        printf("[%zu]Rowner : ", i + 1);
-        char *ptr_temp_id = NULL;
-        ret = scanf("%19ms", &ptr_temp_id);
-        if (1 == ret)
-        {
-            OICStrcpy(temp_id, sizeof(temp_id), ptr_temp_id);
-            OICFree(ptr_temp_id);
-        }
-        else
-        {
-            printf("Error while input\n");
-            return -1;
-        }
-        j = 0;
-        for (int k = 0; temp_id[k] != '\0'; k++)
-        {
-            if (DASH != temp_id[k])
-            {
-                acl->owners[i].id[j++] = temp_id[k];
-            }
-        }
+        printf("************************************************************\n");
+        printf("************Provisioning DB file already exists.************\n");
+        printf("************************************************************\n");
     }
+    else
+    {
+        printf("*************************************************************\n");
+        printf("************No provisioning DB file, creating new************\n");
+        printf("*************************************************************\n");
+    }
+
+    if(OC_STACK_OK != OCInitPM(PRVN_DB_FILE_NAME))
+    {
+        OIC_LOG(ERROR, TAG, "OC_PM init error");
+        return -1;
+    }
+
+    // register callback function(s) to each OxM
+    OTMCallbackData_t otmcb =
+    {
+        .loadSecretCB = LoadSecretJustWorksCallback,
+        .createSecureSessionCB = CreateSecureSessionJustWorksCallback,
+        .createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload,
+        .createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload
+    };
+    if(OC_STACK_OK != OCSetOwnerTransferCallbackData(OIC_JUST_WORKS, &otmcb))
+    {
+        OIC_LOG(ERROR, TAG, "OCSetOwnerTransferCallbackData error: OIC_JUST_WORKS");
+        return -1;
+    }
+    otmcb.loadSecretCB = InputPinCodeCallback;
+    otmcb.createSecureSessionCB = CreateSecureSessionRandomPinCallbak;
+    otmcb.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
+    otmcb.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
+    if(OC_STACK_OK != OCSetOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN, &otmcb))
+    {
+        OIC_LOG(ERROR, TAG, "OCSetOwnerTransferCallbackData error: OIC_RANDOM_DEVICE_PIN");
+        return -1;
+    }
+    SetInputPinCB(inputPinCB);
+
+    return 0;
+}
+
+static int discoverAllDevices(void)
+{
+    // delete un/owned device lists before updating them
+    if(g_own_list)
+    {
+        OCDeleteDiscoveredDevices(g_own_list);
+        g_own_list = NULL;
+    }
+    if(g_unown_list)
+    {
+        OCDeleteDiscoveredDevices(g_unown_list);
+        g_unown_list = NULL;
+    }
+
+    // call |OCGetDevInfoFromNetwork| API actually
+    printf("   Discovering All Un/Owned Devices on Network..\n");
+    if(OC_STACK_OK != OCGetDevInfoFromNetwork(DISCOVERY_TIMEOUT, &g_own_list, &g_unown_list))
+    {
+        OIC_LOG(ERROR, TAG, "OCGetDevInfoFromNetwork API error");
+        return -1;
+    }
+
+    // display the discovered un/owned lists
+    printf("   > Discovered Owned Devices\n");
+    g_own_cnt = printDevList(g_own_list);
+    printf("   > Discovered Unowned Devices\n");
+    g_unown_cnt = printDevList(g_unown_list);
+
     return 0;
 }
 
 
-//FILE *client_fopen(const char *path, const char *mode)
-FILE *client_fopen(const char* UNUSED_PARAM , const char *mode)
+static int discoverUnownedDevices(void)
 {
-    (void)UNUSED_PARAM;
-    return fopen(CRED_FILE, mode);
+    // delete unowned device list before updating it
+    if(g_unown_list)
+    {
+        OCDeleteDiscoveredDevices(g_unown_list);
+        g_unown_list = NULL;
+    }
+
+    // call |OCDiscoverUnownedDevices| API actually
+    printf("   Discovering Only Unowned Devices on Network..\n");
+    if(OC_STACK_OK != OCDiscoverUnownedDevices(DISCOVERY_TIMEOUT, &g_unown_list))
+    {
+        OIC_LOG(ERROR, TAG, "OCDiscoverUnownedDevices API error");
+        return -1;
+    }
+
+    // display the discovered unowned list
+    printf("   > Discovered Unowned Devices\n");
+    g_unown_cnt = printDevList(g_unown_list);
+
+    return 0;
 }
 
-void PrintfResult(const char* procName, void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static int discoverOwnedDevices(void)
 {
-    printf("-----------------------------------------------------------\n");
-    if(!hasError)
+    // delete owned device list before updating it
+    if(g_own_list)
     {
-        printf("%s was successfully done.\n", procName);
+        OCDeleteDiscoveredDevices(g_own_list);
+        g_own_list = NULL;
     }
-    else
+
+    // call |OCDiscoverOwnedDevices| API actually
+    printf("   Discovering Only Owned Devices on Network..\n");
+    if(OC_STACK_OK != OCDiscoverOwnedDevices(DISCOVERY_TIMEOUT, &g_own_list))
     {
-        for(int i = 0; i < nOfRes; i++)
+        OIC_LOG(ERROR, TAG, "OCDiscoverOwnedDevices API error");
+        return -1;
+    }
+
+    // display the discovered owned list
+    printf("   > Discovered Owned Devices\n");
+    g_own_cnt = printDevList(g_own_list);
+
+    return 0;
+}
+
+static int registerDevices(void)
+{
+    // check |unown_list| for registering devices
+    if(!g_unown_list || 0>=g_unown_cnt)
+    {
+        printf("   > Unowned Device List, to Register Devices, is Empty\n");
+        printf("   > Please Discover Unowned Devices first, with [10|11] Menu\n");
+        return 0;  // normal case
+    }
+
+    // call |OCDoOwnershipTransfer| API actually
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    printf("   Registering All Discovered Unowned Devices..\n");
+    OCStackResult rst = OCDoOwnershipTransfer((void*) g_ctx, g_unown_list, ownershipTransferCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCDoOwnershipTransfer API error: %d", rst);
+        return -1;
+    }
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        return -1;
+    }
+
+    // display the registered result
+    printf("   > Registered Discovered Unowned Devices\n");
+    printf("   > Please Discover Owned Devices for the Registered Result, with [10|12] Menu\n");
+
+    return 0;
+}
+
+static int provisionPairwise(void)
+{
+    // check |own_list| for provisioning pairwise devices
+    if(!g_own_list || 2>g_own_cnt)
+    {
+        printf("   > Owned Device List, to Provision the Pairwise, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select two devices for provisioning pairwise devices
+    int dev_num[2] = {0};
+    if(selectTwoDiffNum(&(dev_num[0]), &(dev_num[1]), g_own_cnt, "for Linking Devices"))
+    {
+        OIC_LOG(ERROR, TAG, "selectTwoDiffNum error return");
+        return -1;  // not need to 'goto' |ERROR| before allocating |acl|
+    }
+
+    // create ACL(s) for each selected device
+    OicSecAcl_t* acl[2] = {0};
+    for(int i=0; 2>i; ++i)
+    {
+        acl[i] = createAcl(dev_num[i]);
+        if(!acl[i])
         {
-            printf("UUID : ");
-            for(int j = 0; j < UUID_LENGTH; i++)
+            OIC_LOG(ERROR, TAG, "createAcl error return");
+            goto PVPWS_ERROR;
+        }
+    }
+
+    // call |OCProvisionPairwiseDevices| API actually
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    printf("   Provisioning Selected Pairwise Devices..\n");
+    OCStackResult rst =
+            OCProvisionPairwiseDevices((void*) g_ctx,
+                    SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
+                    getDevInst((const OCProvisionDev_t*) g_own_list, dev_num[0]), acl[0],
+                    getDevInst((const OCProvisionDev_t*) g_own_list, dev_num[1]), acl[1],
+                    provisionPairwiseCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCProvisionPairwiseDevices API error: %d", rst);
+        goto PVPWS_ERROR;
+    }
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        goto PVPWS_ERROR;
+    }
+    OCDeleteACLList(acl[0]);
+    OCDeleteACLList(acl[1]);
+
+    // display the pairwise-provisioned result
+    printf("   > Provisioned Selected Pairwise Devices\n");
+    printf("   > Please Check Device's Status for the Linked Result, with [33] Menu\n");
+
+    return 0;
+
+PVPWS_ERROR:
+    OCDeleteACLList(acl[0]);
+    OCDeleteACLList(acl[1]);
+    return -1;
+}
+
+static int provisionCred(void)
+{
+    // check |own_list| for provisioning pairwise credentials
+    if(!g_own_list || 2>g_own_cnt)
+    {
+        printf("   > Owned Device List, to Provision Credentials, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select two devices for provisioning pairwise credentials
+    int dev_num[2] = {0};
+    if(selectTwoDiffNum(&(dev_num[0]), &(dev_num[1]), g_own_cnt, "for Linking CRED(s)"))
+    {
+        OIC_LOG(ERROR, TAG, "selectTwoDiffNum error return");
+        return -1;
+    }
+
+    printf("   Select PSK length..\n");
+    printf("   1 - 128bit(Default)\n");
+    printf("   2 - 256bit\n");
+    int sizeOption = 0;
+
+    for(int ret=0; 1!=ret; )
+    {
+         ret = scanf("%d",&sizeOption);
+         for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                    // '0x20<=code' is character region
+    }
+    size_t size = 0;
+
+    switch(sizeOption)
+    {
+        case 1:
+        {
+            size = OWNER_PSK_LENGTH_128;
+            break;
+        }
+        case 2:
+        {
+            size = OWNER_PSK_LENGTH_256;
+            break;
+        }
+        default:
+        {
+            size = OWNER_PSK_LENGTH_128;
+            break;
+        }
+    }
+
+
+    // call |OCProvisionCredentials| API actually
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    printf("   Provisioning Selected Pairwise Credentials..\n");
+    OCStackResult rst =
+            OCProvisionCredentials((void*) g_ctx,
+                    SYMMETRIC_PAIR_WISE_KEY, size,
+                    getDevInst((const OCProvisionDev_t*) g_own_list, dev_num[0]),
+                    getDevInst((const OCProvisionDev_t*) g_own_list, dev_num[1]),
+                    provisionCredCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCProvisionCredentials API error: %d", rst);
+        return -1;
+    }
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        return -1;
+    }
+
+    // display the CRED-provisioned result
+    printf("   > Provisioned Selected Pairwise Crendentials\n");
+    printf("   > Please Check Device's Status for the Linked Result, with [33] Menu\n");
+
+    return 0;
+}
+
+static int provisionAcl(void)
+{
+    // check |own_list| for provisioning access control list
+    if(!g_own_list || 1>g_own_cnt)
+    {
+        printf("   > Owned Device List, to Provision ACL, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for provisioning access control list
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for Provisioning ACL: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_own_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    // create ACL for selected device
+    OicSecAcl_t* acl = NULL;
+    acl = createAcl(dev_num);
+    if(!acl)
+    {
+        OIC_LOG(ERROR, TAG, "createAcl error return");
+        goto PVACL_ERROR;
+    }
+
+    // call |OCProvisionACL| API actually
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    printf("   Provisioning Selected ACL..\n");
+    OCStackResult rst =
+            OCProvisionACL((void*) g_ctx,
+                    getDevInst((const OCProvisionDev_t*) g_own_list, dev_num),
+                    acl, provisionAclCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCProvisionACL API error: %d", rst);
+        goto PVACL_ERROR;
+    }
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        goto PVACL_ERROR;
+    }
+    OCDeleteACLList(acl);  // after here |acl| points nothing
+
+    // display the ACL-provisioned result
+    printf("   > Provisioned Selected ACL\n");
+
+    return 0;
+
+PVACL_ERROR:
+    OCDeleteACLList(acl);  // after here |acl| points nothing
+    return -1;
+}
+
+static int checkLinkedStatus(void)
+{
+    // check |own_list| for checking selected link status on PRVN DB
+    if(!g_own_list || 1>g_own_cnt)
+    {
+        printf("   > Owned Device List, to Check Linked Status on PRVN DB, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for checking selected link status on PRVN DB
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for Checking Linked Status on PRVN DB: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_own_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    // call |OCGetLinkedStatus| API actually
+    printf("   Checking Selected Link Status on PRVN DB..\n");
+    OCUuidList_t* dvid_lst = NULL;
+    size_t dvid_cnt = 0;
+    if(OC_STACK_OK !=
+            OCGetLinkedStatus(
+                    &getDevInst((const OCProvisionDev_t*) g_own_list, dev_num)->doxm->deviceID,
+                    &dvid_lst, &dvid_cnt))  // allow empty list
+    {
+        OIC_LOG(ERROR, TAG, "OCGetLinkedStatus API error");
+        goto CKLST_ERROR;
+    }
+
+    // display the linked status result
+    printf("   > Checked Selected Link Status on PRVN DB\n");
+    if(!dvid_lst || !dvid_cnt)  // |size_t| is unsigned
+    {
+        printf("     Linked Device List is Empty..\n");
+        return 0;  // normal case
+    }
+    if(dvid_cnt != printUuidList((const OCUuidList_t*) dvid_lst))
+    {
+        OIC_LOG(ERROR, TAG, "printUuidList error return");
+        goto CKLST_ERROR;
+    }
+    OCDeleteUuidList(dvid_lst);
+
+    return 0;
+
+CKLST_ERROR:
+    OCDeleteUuidList(dvid_lst);
+    return -1;
+}
+
+static int unlinkPairwise(void)
+{
+    // check |own_list| for unlinking pairwise devices
+    if(!g_own_list || 2>g_own_cnt)
+    {
+        printf("   > Owned Device List, to Unlink the Pairwise, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select two devices for unlinking pairwise devices
+    int dev_num[2] = {0};
+    if(selectTwoDiffNum(&(dev_num[0]), &(dev_num[1]), g_own_cnt, "for Unlinking Devices"))
+    {
+        OIC_LOG(ERROR, TAG, "selectTwoDiffNum error return");
+        return -1;
+    }
+
+    // call |OCUnlinkDevices| API actually
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    printf("   Unlinking Selected Pairwise Devices..\n");
+    OCStackResult rst =
+            OCUnlinkDevices((void*) g_ctx,
+                    getDevInst((const OCProvisionDev_t*) g_own_list, dev_num[0]),
+                    getDevInst((const OCProvisionDev_t*) g_own_list, dev_num[1]),
+                    unlinkDevicesCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCUnlinkDevices API error: %d", rst);
+        return -1;
+    }
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        return -1;
+    }
+
+    // display the pairwise-unlinked result
+    printf("   > Unlinked Selected Pairwise Devices\n");
+    printf("   > Please Check Device's Status for the Unlinked Result, with [33] Menu\n");
+
+    return 0;
+}
+
+static int removeDevice(void)
+{
+    // check |own_list| for removing device
+    if(!g_own_list || 1>g_own_cnt)
+    {
+        printf("   > Owned Device List, to Remove Device, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for removing it
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for Removing Device: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_own_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    // call |OCRemoveDevice| API actually
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    printf("   Removing Selected Owned Device..\n");
+    OCStackResult rst =
+            OCRemoveDevice((void*) g_ctx, DISCOVERY_TIMEOUT,
+                    getDevInst((const OCProvisionDev_t*) g_own_list, dev_num), removeDeviceCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCRemoveDevice API error: %d", rst);
+        return -1;
+    }
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        return -1;
+    }
+
+    // display the removed result
+    printf("   > Removed Selected Owned Device\n");
+    printf("   > Please Discover Owned Devices for the Registered Result, with [10|12] Menu\n");
+
+    return 0;
+}
+
+static OicSecAcl_t* createAcl(const int dev_num)
+{
+    if(0>=dev_num || g_own_cnt<dev_num)
+    {
+        OIC_LOG(ERROR, TAG, "createAcl invalid parameters");
+        return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
+    }
+
+    // allocate memory for |acl| struct
+    printf("   **** Create ACL for the Selected Device[%d]\n", dev_num);
+    OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
+    if(!acl)
+    {
+        OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
+        return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
+    }
+
+    // enter |subject| device number
+    int num = 0;
+    for( ; ; )
+    {
+        printf("   > [A] Enter Subject Device Number: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(num && g_own_cnt>=num && dev_num!=num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+    memcpy(&acl->subject,
+            &getDevInst((const OCProvisionDev_t*) g_own_list, num)->doxm->deviceID,
+            UUID_LENGTH);  // not need |*sizeof(uint8_t)|
+
+    // enter number of |resources| in 'accessed' device
+    for( ; ; )
+    {
+        printf("   > [B] Enter Number of Accessed Resources (under 16): ");
+                // '16' is |ACL_RESRC_MAX_NUM|
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%zu", &acl->resourcesLen);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(acl->resourcesLen && ACL_RESRC_MAX_NUM>=acl->resourcesLen)
+                // |acl->resourcesLen| is unsigned
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter under 16 Again\n");
+                // '16' is |ACL_RESRC_MAX_NUM|
+    }
+
+    // enter actually each 'accessed' |resources| name
+    printf("         Enter Each Accessed Resource Name (each under 128 char)\n");
+            // '128' is ACL_RESRC_MAX_LEN
+    num = acl->resourcesLen;
+    acl->resources = (char**) OICCalloc(num, sizeof(char*));
+    if(!acl->resources)
+    {
+        OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
+        goto CRACL_ERROR;
+    }
+    char rsrc_in[ACL_RESRC_MAX_LEN+1] = {0};  // '1' for null termination
+    for(int i=0; num>i; ++i)
+    {
+        printf("         Enter Accessed Resource[%d] Name: ", i+1);
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        size_t len = strlen(rsrc_in)+1;  // '1' for null termination
+        char* rsrc = (char*) OICCalloc(len, sizeof(char));
+        if(!rsrc)
+        {
+            OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
+            goto CRACL_ERROR;
+        }
+        OICStrcpy(rsrc, len, rsrc_in);
+        acl->resources[i] = rsrc;  // after here, |rsrc| points nothing
+    }
+
+    // enter |permission| for this access
+    printf("   > [C] Enter Permission for This Access\n");
+    uint16_t pmsn = PERMISSION_FULL_CONTROL;  // default full permission
+    uint16_t pmsn_msk = PERMISSION_CREATE;  // default permission mask
+    for(int i=0; ACL_PEMISN_CNT>i; ++i)
+    {
+        char ans = 0;
+        for( ; ; )
+        {
+            printf("         Enter %s Permission (y/n): ", ACL_PEMISN[i]);
+            for(int ret=0; 1!=ret; )
             {
-                printf("%c", arr[i].deviceId.id[j]);
+                ret = scanf("%c", &ans);
+                for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                            // '0x20<=code' is character region
             }
-            printf("\t");
-            printf("Result=%d\n", arr[i].res);
+            if('y'==ans || 'Y'==ans || 'n'==ans|| 'N'==ans)
+            {
+                ans &= ~0x20;  // for masking lower case, 'y/n'
+                break;
+            }
+            printf("         Entered Wrong Answer. Please Enter 'y/n' Again\n");
         }
-    }
-
-    if(ctx)
-    {
-        printf("Context is %s\n", (char*)ctx);
-    }
-    printf("-----------------------------------------------------------\n");
-}
-
-void ProvisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
-{
-    if(!hasError)
-    {
-        gOwnershipState = 1;
-        PrintfResult("Provision Credential", ctx, nOfRes, arr, hasError);
-    }
-}
-
-void ProvisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
-{
-    if(!hasError)
-    {
-        gOwnershipState = 1;
-        PrintfResult("Provision ACL", ctx, nOfRes, arr, hasError);
-    }
-}
-
-void ProvisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
-{
-    if(!hasError)
-    {
-        gOwnershipState = 1;
-        PrintfResult("Provision Pairwise Credential", ctx, nOfRes, arr, hasError);
-    }
-}
-
-void OwnershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
-{
-    if(!hasError)
-    {
-        gOwnershipState = 1;
-        PrintfResult("Ownership transfer", ctx, nOfRes, arr, hasError);
-    }
-}
-
-void InputPinCB(char* pinBuf, size_t bufSize)
-{
-    if(pinBuf)
-    {
-        printf("INPUT PIN : ");
-        char *ptr = NULL;
-        int ret = scanf("%ms", &ptr);
-        if(1 == ret)
+        if('N' == ans)  // masked lower case, 'n'
         {
-            OICStrcpy(pinBuf, bufSize, ptr);
-            OICFree(ptr);
+            pmsn -= pmsn_msk;
         }
-        else
+        pmsn_msk <<= 1;
+    }
+    acl->permission = pmsn;
+
+    // enter |owner| device number
+    for( ; ; )
+    {
+        printf("   > [D] Enter Owner Device Number: ");
+        for(int ret=0; 1!=ret; )
         {
-             printf("Error in input\n");
-             return;
+            ret = scanf("%d", &num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(num && g_own_cnt>=num)
+        {
+            break;
+        }
+        printf("         Entered Wrong Number. Please Enter Again\n");
+    }
+    acl->ownersLen = 1;
+    acl->owners = (OicUuid_t*) OICCalloc(1, sizeof(OicUuid_t));
+    if(!acl->owners)
+    {
+        OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
+        goto CRACL_ERROR;
+    }
+    memcpy(acl->owners,
+            &getDevInst((const OCProvisionDev_t*) g_own_list, num)->doxm->deviceID,
+            UUID_LENGTH);  // not need |*sizeof(uint8_t)|
+    printf("\n");
+
+    return acl;
+
+CRACL_ERROR:
+    OCDeleteACLList(acl);  // after here |acl| points nothing
+    return NULL;
+}
+
+static OCProvisionDev_t* getDevInst(const OCProvisionDev_t* dev_lst, const int dev_num)
+{
+    if(!dev_lst || 0>=dev_num)
+    {
+        printf("     Device List is Empty..\n");
+        return NULL;
+    }
+
+    OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
+    for(int i=0; lst; )
+    {
+        if(dev_num == ++i)
+        {
+            return lst;
+        }
+        lst = lst->next;
+    }
+
+    return NULL;  // in here |lst| is always |NULL|
+}
+
+static int printDevList(const OCProvisionDev_t* dev_lst)
+{
+    if(!dev_lst)
+    {
+        printf("     Device List is Empty..\n\n");
+        return 0;
+    }
+
+    OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
+    int lst_cnt = 0;
+    for( ; lst; )
+    {
+        printf("     [%d] ", ++lst_cnt);
+        printUuid((const OicUuid_t*) &lst->doxm->deviceID);
+        printf("\n");
+        lst = lst->next;
+    }
+    printf("\n");
+
+    return lst_cnt;
+}
+
+static size_t printUuidList(const OCUuidList_t* uid_lst)
+{
+    if(!uid_lst)
+    {
+        printf("     Device List is Empty..\n\n");
+        return 0;
+    }
+
+    OCUuidList_t* lst = (OCUuidList_t*) uid_lst;
+    size_t lst_cnt = 0;
+    for( ; lst; )
+    {
+        printf("     [%zu] ", ++lst_cnt);
+        printUuid((const OicUuid_t*) &lst->dev);
+        printf("\n");
+        lst = lst->next;
+    }
+    printf("\n");
+
+    return lst_cnt;
+}
+
+static int printResultList(const OCProvisionResult_t* rslt_lst, const int rslt_cnt)
+{
+    if(!rslt_lst || 0>=rslt_cnt)
+    {
+        printf("     Device List is Empty..\n\n");
+        return 0;
+    }
+
+    int lst_cnt = 0;
+    for( ; rslt_cnt>lst_cnt; ++lst_cnt)
+    {
+        printf("     [%d] ", lst_cnt+1);
+        printUuid((const OicUuid_t*) &rslt_lst[lst_cnt].deviceId);
+        printf(" - result: %d\n", rslt_lst[lst_cnt].res);
+    }
+    printf("\n");
+
+    return lst_cnt;
+}
+
+static void printUuid(const OicUuid_t* uid)
+{
+    for(int i=0; i<UUID_LENGTH; )
+    {
+        printf("%02X", (*uid).id[i++]);
+        if(i==4 || i==6 || i==8 || i==10)  // canonical format for UUID has '8-4-4-4-12'
+        {
+            printf("-");
         }
     }
 }
 
-/**
- * Provisioning client sample using ProvisioningAPI
- */
+static FILE* fopen_prvnMng(const char* path, const char* mode)
+{
+    (void)path;  // unused |path| parameter
+
+    // input |g_svr_db_fname| internally by force, not using |path| parameter
+    // because |OCPersistentStorage::open| is called |OCPersistentStorage| internally
+    // with its own |SVR_DB_FILE_NAME|
+    return fopen(SVR_DB_FILE_NAME, mode);
+}
+
+static int waitCallbackRet(void)
+{
+    for(int i=0; !g_doneCB && CALLBACK_TIMEOUT>i; ++i)
+    {
+        sleep(1);
+        if(OC_STACK_OK != OCProcess())
+        {
+            OIC_LOG(ERROR, TAG, "OCStack process error");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
+{
+    if(!a || !b || 2>=max || !str)
+    {
+        return -1;
+    }
+
+    for( ; ; )
+    {
+        for(int i=0; 2>i; ++i)
+        {
+            int* num = 0==i?a:b;
+            for( ; ; )
+            {
+                printf("   > Enter Device[%d] Number, %s: ", i+1, str);
+                for(int ret=0; 1!=ret; )
+                {
+                    ret = scanf("%d", num);
+                    for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                                // '0x20<=code' is character region
+                }
+                if(0<*num && max>=*num)
+                {
+                    break;
+                }
+                printf("     Entered Wrong Number. Please Enter Again\n");
+            }
+        }
+        if(*a != *b)
+        {
+            printf("\n");
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
+static void printMenu(void)
+{
+    printf("************************************************************\n");
+    printf("****** OIC Provisioning Client with using C-level API ******\n");
+    printf("************************************************************\n\n");
+
+    printf("** [A] DISCOVER DEVICES ON NETWORK\n");
+    printf("** 10. Discover All Un/Owned Devices on Network\n");
+    printf("** 11. Discover Only Unowned Devices on Network\n");
+    printf("** 12. Discover Only Owned Devices on Network\n\n");
+
+    printf("** [B] REGISTER/OWN ALL DISCOVERED UNOWNED DEVICES\n");
+    printf("** 20. Register/Own All Discovered Unowned Devices\n\n");
+
+    printf("** [C] PROVISION/LINK PAIRWISE THINGS\n");
+    printf("** 30. Provision/Link Pairwise Things\n");
+    printf("** 31. Provision Credentials for Pairwise Things\n");
+    printf("** 32. Provision the Selected Access Control List(ACL)\n");
+    printf("** 33. Check Linked Status of the Selected Device on PRVN DB\n\n");
+
+    printf("** [D] UNLINK PAIRWISE THINGS\n");
+    printf("** 40. Unlink Pairwise Things\n\n");
+
+    printf("** [E] REMOVE THE SELECTED DEVICE\n");
+    printf("** 50. Remove the Selected Device\n\n");
+
+    printf("** [F] EXIT PROVISIONING CLIENT\n");
+    printf("** 99. Exit Provisionong Client\n\n");
+
+    printf("************************************************************\n\n");
+}
+
+#if 0 // Code for enabling path configuration for PDB and SVR DBf
+static void printUsage(void)
+{
+    printf("\n");
+    printf("OIC Provisioning Client with using C-level API\n");
+    printf("Usage: provisioningclient [option]...\n");
+    printf("\n");
+    printf("  -h                           print help for this provisioning client\n");
+    printf("  -p=[prvn_db_file_path/name]  input PRVN DB file path and name\n");
+    printf("                               if not exists, will load default DB file\n");
+    printf("                               (default: |oic_prvn_mng.db| on working dir)\n");
+    printf("                               (ex. -p=oic_prvn_mng.db)\n");
+    printf("  -s=[svr_db_file_path/name]   input SVR DB file path and name\n");
+    printf("                               if not exists, will load default DB file\n");
+    printf("                               (default: |oic_svr_db_client.json| on working dir)\n");
+    printf("                               (ex. -s=oic_svr_db_client.json)\n");
+    printf("\n");
+}
+#endif
+
+// main function for provisioning client using C-level provisioning API
 int main()
 {
-    OCStackResult res = OC_STACK_OK;
-    int unused;
-    (void)unused;
-
-    // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = { .open = NULL,
-                               .read = NULL,
-                               .write = NULL,
-                               .close = NULL,
-                               .unlink = NULL };
-    ps.open = client_fopen;
-    ps.read = fread;
-    ps.write = fwrite;
-    ps.close = fclose;
-    ps.unlink = unlink;
-    OCRegisterPersistentStorageHandler(&ps);
-
-    if (OC_STACK_OK != OCInit(NULL, 0, OC_CLIENT_SERVER))
+    // initialize provisioning client
+    if(initProvisionClient())
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
-        goto error;
+        OIC_LOG(ERROR, TAG, "ProvisionClient init error");
+        goto PMCLT_ERROR;
     }
 
-    OCProvisionDev_t* pDeviceList = NULL;
-    res = OCDiscoverUnownedDevices(PREDEFINED_TIMEOUT, &pDeviceList);
-    if(OC_STACK_OK != res)
+    // main loop for provisioning manager
+    int mn_num = 0;
+    for( ; ; )
     {
-        OC_LOG_V(ERROR, TAG, "Failed to PMDeviceDiscovery : %d", res);
-        goto error;
-    }
-
-    OCProvisionDev_t* pCurDev = pDeviceList;
-    int i;
-    while(pCurDev !=NULL)
-    {
-        for(i = 0; i < UUID_LENGTH; i++)
-            printf("%c", pCurDev->doxm->deviceID.id[i]);
         printf("\n");
-        pCurDev = pCurDev->next;
-    }
-
-    //Register callback function to each OxM
-    OTMCallbackData_t justWorksCBData = {.loadSecretCB=NULL,
-                                         .createSecureSessionCB=NULL,
-                                         .createSelectOxmPayloadCB=NULL,
-                                         .createOwnerTransferPayloadCB=NULL};
-    justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
-    justWorksCBData.createSecureSessionCB = CreateSecureSessionJustWorksCallback;
-    justWorksCBData.createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload;
-    justWorksCBData.createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload;
-    OTMSetOwnershipTransferCallbackData(OIC_JUST_WORKS, &justWorksCBData);
-
-    OTMCallbackData_t pinBasedCBData = {.loadSecretCB=NULL,
-                                         .createSecureSessionCB=NULL,
-                                         .createSelectOxmPayloadCB=NULL,
-                                         .createOwnerTransferPayloadCB=NULL};
-    pinBasedCBData.loadSecretCB = InputPinCodeCallback;
-    pinBasedCBData.createSecureSessionCB = CreateSecureSessionRandomPinCallbak;
-    pinBasedCBData.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
-    pinBasedCBData.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
-    OTMSetOwnershipTransferCallbackData(OIC_RANDOM_DEVICE_PIN, &pinBasedCBData);
-
-    SetInputPinCB(&InputPinCB);
-
-    char* myContext = "OTM Context";
-    //Perform ownership transfer
-    res = OCDoOwnershipTransfer((void*)myContext, pDeviceList, OwnershipTransferCB);
-    if(OC_STACK_OK == res)
-    {
-        OC_LOG(INFO, TAG, "Request for ownership transfer is sent successfully.");
-    }
-    else
-    {
-        OC_LOG_V(ERROR, TAG, "Failed to OCDoOwnershipTransfer : %d", res);
-    }
-
-    gOwnershipState = 0;
-    while ( gOwnershipState == 0 )
-    {
-        if (OCProcess() != OC_STACK_OK)
+        printMenu();
+        printf(">> Enter Menu Number: ");
+        for(int ret=0; 1!=ret; )
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
-            goto error;
+            ret = scanf("%d", &mn_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
         }
-        sleep(1);
-    }
-
-// Credential & ACL provisioning between two devices.
-
-    OCProvisionDev_t *pOwnedList = NULL;
-    OCProvisionDev_t *pOwnedDevices [MAX_OWNED_DEVICE] = {0,};
-    int nOwnedDevice = 0;
-
-    res = OCDiscoverOwnedDevices(PREDEFINED_TIMEOUT, &pOwnedList);
-    if (OC_STACK_OK == res)
-    {
-        printf("################## Owned Device List #######################\n");
-        while (pOwnedList != NULL)
+        printf("\n");
+        switch(mn_num)
         {
-            nOwnedDevice ++;
-            printf(" %d : ", nOwnedDevice);
-            for (int i = 0; i < UUID_LENGTH; i++)
+        case _10_DISCOV_ALL_DEVS_:
+            if(discoverAllDevices())
             {
-                printf("%c", pOwnedList->doxm->deviceID.id[i]);
+                OIC_LOG(ERROR, TAG, "_10_DISCOV_ALL_DEVS_: error");
             }
-            printf("\n");
-            pOwnedDevices[nOwnedDevice] = pOwnedList;
-            pOwnedList = pOwnedList->next;
+            break;
+        case _11_DISCOV_UNOWN_DEVS_:
+            if(discoverUnownedDevices())
+            {
+                OIC_LOG(ERROR, TAG, "_11_DISCOV_UNOWN_DEVS_: error");
+            }
+            break;
+        case _12_DISCOV_OWN_DEVS_:
+            if(discoverOwnedDevices())
+            {
+                OIC_LOG(ERROR, TAG, "_12_DISCOV_OWN_DEVS_: error");
+            }
+            break;
+        case _20_REGIST_DEVS_:
+            if(registerDevices())
+            {
+                OIC_LOG(ERROR, TAG, "_20_REGIST_DEVS_: error");
+            }
+            break;
+        case _30_PROVIS_PAIR_DEVS_:
+            if(provisionPairwise())
+            {
+                OIC_LOG(ERROR, TAG, "_30_PROVIS_PAIR_DEVS_: error");
+            }
+            break;
+        case _31_PROVIS_CRED_:
+            if(provisionCred())
+            {
+                OIC_LOG(ERROR, TAG, "_31_PROVIS_CRED_: error");
+            }
+            break;
+        case _32_PROVIS_ACL_:
+            if(provisionAcl())
+            {
+                OIC_LOG(ERROR, TAG, "_32_PROVIS_ACL_: error");
+            }
+            break;
+        case _33_CHECK_LINK_STATUS_:
+            if(checkLinkedStatus())
+            {
+                OIC_LOG(ERROR, TAG, "_33_CHECK_LINK_STATUS_: error");
+            }
+            break;
+        case _40_UNLINK_PAIR_DEVS_:
+            if(unlinkPairwise())
+            {
+                OIC_LOG(ERROR, TAG, "_40_UNLINK_PAIR_DEVS_: error");
+            }
+            break;
+        case _50_REMOVE_SELEC_DEV_:
+            if(removeDevice())
+            {
+                OIC_LOG(ERROR, TAG, "_50_REMOVE_SELEC_DEV_: error");
+            }
+            break;
+        case _99_EXIT_PRVN_CLT_:
+            goto PMCLT_ERROR;
+        default:
+            printf(">> Entered Wrong Number. Please Enter Again\n\n");
+            break;
         }
     }
-    else
+
+PMCLT_ERROR:
+    if(OC_STACK_OK != OCStop())
     {
-        OC_LOG(ERROR, TAG, "Error while Owned Device Discovery");
+        OIC_LOG(ERROR, TAG, "OCStack stop error");
     }
+    OCDeleteDiscoveredDevices(g_own_list);  // after here |g_own_list| points nothing
+    OCDeleteDiscoveredDevices(g_unown_list);  // after here |g_unown_list| points nothing
 
-    int Device1 = 0;
-    int Device2 = 0;
-
-    printf("Select 2 devices for Credential & ACL provisioning\n");
-    printf("Device 1: ");
-    unused = scanf("%d", &Device1);
-    printf("Device 2: ");
-    unused = scanf("%d", &Device2);
-
-
-    gAcl1 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
-    if (NULL == gAcl1)
+    if(g_svr_fname)
     {
-        OC_LOG(ERROR, TAG, "Error while memory allocation");
-        goto error;
+        OICFree(g_svr_fname);  // after here |g_svr_fname| points nothing
     }
-
-    gAcl2 = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
-    if (NULL == gAcl2)
+    if(g_prvn_fname)
     {
-        OC_LOG(ERROR, TAG, "Error while memory allocation");
-        goto error;
+        OICFree(g_prvn_fname);  // after here |g_prvn_fname| points nothing
     }
-
-    printf("Input ACL for Device1\n");
-    if ( 0 == InputACL(gAcl1))
-    {
-        printf("Success Input ACL\n");
-    }
-    else
-    {
-        OC_LOG(ERROR, TAG, "InputACL error");
-        goto error;
-    }
-
-    printf("Input ACL for Device2\n");
-    if (0 == InputACL(gAcl2))
-    {
-        printf("Success Input ACL\n");
-    }
-    else
-    {
-        OC_LOG(ERROR, TAG, "InputACL error");
-        goto error;
-    }
-    char *ctx = "DUMMY";
-    OCProvisionPairwiseDevices(ctx,SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128, pOwnedDevices[Device1],
-                           gAcl1, pOwnedDevices[Device2], gAcl2, ProvisionPairwiseCB);
-
-    gOwnershipState = 0;
-    while ( gOwnershipState == 0 )
-    {
-        if (OCProcess() != OC_STACK_OK)
-        {
-            OC_LOG(ERROR, TAG, "OCStack process error");
-            goto error;
-        }
-        sleep(1);
-    }
-
-    if (OCStop() != OC_STACK_OK)
-    {
-        OC_LOG(ERROR, TAG, "OCStack process error");
-        goto error;
-    }
-
-error:
-    deleteACL(gAcl1);
-    deleteACL(gAcl2);
-    OCDeleteDiscoveredDevices(&pDeviceList);
-    OCDeleteDiscoveredDevices(&pOwnedList);
-
-    return 0;
+    return 0;  // always return normal case
 }
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus

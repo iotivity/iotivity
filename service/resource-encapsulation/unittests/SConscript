@@ -25,13 +25,13 @@ import os
 Import('env')
 
 if env.get('RELEASE'):
-        env.AppendUnique(CCFLAGS = ['-Os'])
-        env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+    env.AppendUnique(CCFLAGS = ['-Os'])
+    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-        env.AppendUnique(CCFLAGS = ['-g'])
+    env.AppendUnique(CCFLAGS = ['-g'])
 
 if env.get('LOGGING'):
-        env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+    env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 # Add third party libraries
 lib_env = env.Clone()
@@ -39,15 +39,15 @@ SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 
 target_os = env.get('TARGET_OS')
 if target_os == 'linux':
-        # Verify that 'google unit test' library is installed.  If not,
-        # get it and install it
-        SConscript(env.get('SRC_DIR') + '/extlibs/gtest/SConscript')
+    # Verify that 'google unit test' library is installed.  If not,
+    # get it and install it
+    SConscript(env.get('SRC_DIR') + '/extlibs/gtest/SConscript')
 
-        # Verify that 'hippomocks' mocking code is installed.  If not,
-        # get it and install it
-        SConscript(env.get('SRC_DIR') + '/extlibs/hippomocks.scons')
+    # Verify that 'hippomocks' mocking code is installed.  If not,
+    # get it and install it
+    SConscript(env.get('SRC_DIR') + '/extlibs/hippomocks.scons')
 
-ResourceClient_gtest_env = lib_env.Clone()
+rcs_test_env = lib_env.Clone()
 
 ######################################################################
 #unit test setting
@@ -61,24 +61,21 @@ gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
 gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
 gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
-ResourceClient_gtest_env.AppendUnique(
+rcs_test_env.AppendUnique(
         CPPPATH = [
                 src_dir + '/extlibs/hippomocks-master',
                 src_dir + '/extlibs/gtest/gtest-1.7.0/include',
                 '../include',
                 '../src/common/utils/include',
-                '../src/serverBuilder/include',
-                '../src/common/primitiveResource/include',
-                '../src/common/include/expiryTimer'
         ])
 
 if target_os not in ['windows', 'winrt']:
-        ResourceClient_gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
+        rcs_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
         if target_os != 'android':
-                ResourceClient_gtest_env.AppendUnique(CXXFLAGS = ['-pthread'])
-                ResourceClient_gtest_env.AppendUnique(LIBS = ['pthread'])
+                rcs_test_env.AppendUnique(CXXFLAGS = ['-pthread'])
+                rcs_test_env.AppendUnique(LIBS = ['pthread'])
 
-ResourceClient_gtest_env.PrependUnique(LIBS = [
+rcs_test_env.PrependUnique(LIBS = [
     'rcs_client',
     'rcs_server',
     'rcs_common',
@@ -90,20 +87,19 @@ ResourceClient_gtest_env.PrependUnique(LIBS = [
     gtest,
     gtest_main])
 
-ResourceClient_gtest_env.AppendUnique(LIBS = ['dl'])
+rcs_test_env.AppendUnique(LIBS = ['dl'])
 
 ######################################################################
 # Build Test
 ######################################################################
-ResourceClient_gtest_src = env.Glob('./*.cpp')
+rcs_test_src = env.Glob('./*.cpp')
 
-ResourceClient_test = ResourceClient_gtest_env.Program('ResourceClientTest', ResourceClient_gtest_src)
-Alias("ResourceClientTest", ResourceClient_test)
-env.AppendTarget('ResourceClient_test')
+rcs_client_test = rcs_test_env.Program('rcs_client_test', rcs_test_src)
+Alias("rcs_client_test", rcs_client_test)
+env.AppendTarget('rcs_client_test')
 
 if env.get('TEST') == '1':
     target_os = env.get('TARGET_OS')
     if target_os == 'linux':
         from tools.scons.RunTest import *
-        run_test(ResourceClient_gtest_env, '',
-                'service/resource-encapsulation/unittests/ResourceClientTest')
+        run_test(rcs_test_env, '', 'service/resource-encapsulation/unittests/rcs_client_test')

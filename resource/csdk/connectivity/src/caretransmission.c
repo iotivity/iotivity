@@ -61,7 +61,7 @@
 #include "oic_malloc.h"
 #include "logger.h"
 
-#define TAG "CA_RETRANS"
+#define TAG "OIC_CA_RETRANS"
 
 typedef struct
 {
@@ -140,7 +140,7 @@ static bool CACheckTimeout(uint64_t currentTime, CARetransmissionData_t *retData
 
     if (currentTime >= retData->timeStamp + timeout)
     {
-        OIC_LOG_V(DEBUG, TAG, "%d microseconds time out!!, tried count(%ld)",
+        OIC_LOG_V(DEBUG, TAG, "%llu microseconds time out!!, tried count(%d)",
                   timeout, retData->triedCount);
         return true;
     }
@@ -274,7 +274,7 @@ void CARetransmissionBaseRoutine(void *threadValue)
         else if (!context->isStop)
         {
             // check each RETRANSMISSION_CHECK_PERIOD_SEC time.
-            OIC_LOG_V(DEBUG, TAG, "wait..(%ld)microseconds",
+            OIC_LOG_V(DEBUG, TAG, "wait..(%lld)microseconds",
                       RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) USECS_PER_SEC);
 
             // wait
@@ -490,10 +490,13 @@ CAResult_t CARetransmissionReceivedData(CARetransmission_t *context,
     // ACK, RST --> remove the CON data
     CAMessageType_t type = CAGetMessageTypeFromPduBinaryData(pdu, size);
     uint16_t messageId = CAGetMessageIdFromPduBinaryData(pdu, size);
+    CAResponseResult_t code = CAGetCodeFromPduBinaryData(pdu, size);
 
-    OIC_LOG_V(DEBUG, TAG, "received pdu, msgtype=%d, msgid=%d", type, messageId);
+    OIC_LOG_V(DEBUG, TAG, "received pdu, msgtype=%d, msgid=%d, code=%d",
+              type, messageId, code);
 
-    if ((CA_MSG_ACKNOWLEDGE != type) && (CA_MSG_RESET != type))
+    if (((CA_MSG_ACKNOWLEDGE != type) && (CA_MSG_RESET != type))
+        || (CA_MSG_RESET == type && CA_EMPTY != code))
     {
         return CA_STATUS_OK;
     }
@@ -634,7 +637,7 @@ uint64_t getCurrentTimeInMicroSeconds()
     clock_gettime(CLOCK_MONOTONIC, &getTs);
 
     currentTime = (getTs.tv_sec * (uint64_t)1000000000 + getTs.tv_nsec)/1000;
-    OIC_LOG_V(DEBUG, TAG, "current time = %ld", currentTime);
+    OIC_LOG_V(DEBUG, TAG, "current time = %lld", currentTime);
 #elif defined __ARDUINO__
     currentTime = millis() * 1000;
     OIC_LOG_V(DEBUG, TAG, "currtime=%lu", currentTime);

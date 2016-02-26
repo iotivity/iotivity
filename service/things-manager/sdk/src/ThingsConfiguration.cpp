@@ -73,9 +73,10 @@ namespace OIC
         ConfigurationUnitInfo unit[] =
         {
         { "all", "All attributes", "/oic/con" },
-        { "r", "Region", "/oic/con" },
-        { "st", "System Time", "/oic/con"},
+        { "n", "Device Name", "/oic/con"},
         { "loc", "Location", "/oic/con"},
+        { "locn", "Location Name", "/oic/con"},
+        { "r", "Region", "/oic/con" },
         { "c","Currency", "/oic/con" } };
 
         for (int i = 0; i < NUMCONFUNIT; i++)
@@ -198,8 +199,8 @@ namespace OIC
         return newUri;
     }
 
-    void ThingsConfiguration::onDeleteActionSet(const HeaderOptions& headerOptions,
-            const OCRepresentation& rep, const int eCode, std::string conf)
+    void ThingsConfiguration::onDeleteActionSet(const HeaderOptions& /*headerOptions*/,
+            const OCRepresentation& /*rep*/, const int /*eCode*/, std::string conf)
     {
         std::shared_ptr < OCResource > resource = getResource(conf);
 
@@ -326,10 +327,16 @@ namespace OIC
 
             std::string host = getHostFromURI(oit->getUri());
 
-            tempResource = OCPlatform::constructResourceObject(host, uri, CT_ADAPTER_IP, true,
-                    oit->getResourceTypes(), m_if);
+            try
+            {
+                tempResource = OCPlatform::constructResourceObject(host, uri, CT_ADAPTER_IP, true,
+                        oit->getResourceTypes(), m_if);
 
-            p_resources.push_back(tempResource);
+                p_resources.push_back(tempResource);
+            } catch (std::exception& e)
+            {
+                std::cout << "Exception: " << e.what() << std::endl;
+            }
         }
 
         // Send GET messages to the child resources in turn.

@@ -53,6 +53,8 @@ samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 # Source files and Targets
 ######################################################################
 ocserver         = samples_env.Program('ocserver', ['ocserver.cpp', 'common.cpp'])
+if samples_env.get('ROUTING') == 'GW':
+	ocrouting        = samples_env.Program('ocrouting', ['ocrouting.cpp', 'common.cpp'])
 occlient         = samples_env.Program('occlient', ['occlient.cpp', 'common.cpp'])
 ocserverslow     = samples_env.Program('ocserverslow', ['ocserverslow.cpp', 'common.cpp'])
 occlientslow     = samples_env.Program('occlientslow', ['occlientslow.cpp', 'common.cpp'])

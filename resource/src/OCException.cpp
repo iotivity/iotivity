@@ -97,6 +97,14 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::INVALID_REPRESENTATION;
         case OC_STACK_UNAUTHORIZED_REQ:
             return OC::Exception::UNAUTHORIZED_REQUEST;
+        case OC_STACK_PDM_IS_NOT_INITIALIZED:
+            return OC::Exception::PDM_DB_NOT_INITIALIZED;
+        case OC_STACK_DUPLICATE_UUID:
+            return OC::Exception::DUPLICATE_UUID;
+        case OC_STACK_INCONSISTENT_DB:
+            return OC::Exception::INCONSISTENT_DB;
+        case OC_STACK_AUTHENTICATION_FAILURE:
+            return OC::Exception::AUTHENTICATION_FAILURE;
     }
 
     return OC::Exception::UNKNOWN_ERROR;

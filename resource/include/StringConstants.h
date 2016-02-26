@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef _STRING_CONSTANTS_H_
-#define _STRING_CONSTANTS_H_
+#ifndef OC_STRING_CONSTANTS_H_
+#define OC_STRING_CONSTANTS_H_
 
 #include <string>
 
@@ -105,7 +105,10 @@ namespace OC
         static const char INVALID_ATTRIBUTE[]          = "Invalid Attribute: ";
         static const char INVALID_DEVICE_INFO[]        = "Invalid Device Information";
         static const char UNAUTHORIZED_REQUEST[]       = "Unauthorized Request";
-
+        static const char PDM_DB_NOT_INITIALIZED[]     = "Provisioning DB is not initialized";
+        static const char DUPLICATE_UUID[]             = "Duplicate UUID in DB";
+        static const char INCONSISTENT_DB[]            = "Data in provisioning DB is inconsistent";
+        static const char AUTHENTICATION_FAILURE[]     = "Authentication failure";
     }
 
     namespace Error
@@ -140,5 +143,5 @@ namespace OC
 
 }
 
-#endif // _STRING_CONSTANTS_H_
+#endif // OC_STRING_CONSTANTS_H_
 

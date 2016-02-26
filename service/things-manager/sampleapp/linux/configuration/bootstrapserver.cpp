@@ -37,11 +37,11 @@ bool prepareResponse(std::shared_ptr< OCResourceRequest > request);
 OCStackResult sendResponse(std::shared_ptr< OCResourceRequest > pRequest);
 OCEntityHandlerResult entityHandlerBootstrap(std::shared_ptr< OCResourceRequest > request);
 
-#define DefaultRegion "Seoul, Korea"
-#define DefaultSystemTime "00:00:00"
+#define DefaultDeviceName "Legacy Device"
 #define DefaultLocation "37.256616, 127.052806"
+#define DefaultLocationName "Living Room"
 #define DefaultCurrency "Won"
-
+#define DefaultRegion "Seoul, Korea"
 
 class BootstrapResource
 {
@@ -81,17 +81,18 @@ public:
         }
     }
 
-    void setBootstrapRepresentation(OCRepresentation& rep)
+    void setBootstrapRepresentation(OCRepresentation& /*rep*/)
     {
         // Not allowed
     }
 
     OCRepresentation getBootstrapRepresentation()
     {
-        m_bootstrapRep.setValue< std::string >("r", DefaultRegion);
-        m_bootstrapRep.setValue< std::string >("st", DefaultSystemTime);
+        m_bootstrapRep.setValue< std::string >("n", DefaultDeviceName);
         m_bootstrapRep.setValue< std::string >("loc", DefaultLocation);
+        m_bootstrapRep.setValue< std::string >("locn", DefaultLocationName);
         m_bootstrapRep.setValue< std::string >("c", DefaultCurrency);
+        m_bootstrapRep.setValue< std::string >("r", DefaultRegion);
 
         return m_bootstrapRep;
     }

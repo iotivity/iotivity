@@ -20,11 +20,10 @@
 #include "gtest/gtest.h"
 #include "secureresourceprovider.h"
 
-
 static OicSecAcl_t acl;
 static OCProvisionDev_t pDev1;
 static OCProvisionDev_t pDev2;
-static OicSecCredType_t credType;
+static OicSecCredType_t credType = SYMMETRIC_PAIR_WISE_KEY;
 
 static void provisioningCB (void* UNUSED1, int UNUSED2, OCProvisionResult_t *UNUSED3, bool UNUSED4)
 {
@@ -69,4 +68,42 @@ TEST(SRPProvisionCredentialsTest, InvalidKeySize)
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
                                                                 0, &pDev1, &pDev2,
                                                                 &provisioningCB));
+}
+
+TEST(SRPUnlinkDevicesTest, NullDevice1)
+{
+    OCProvisionDev_t dev2;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, NULL, &dev2, provisioningCB));
+}
+
+TEST(SRPUnlinkDevicesTest, NullDevice2)
+{
+    OCProvisionDev_t dev1;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, &dev1, NULL, provisioningCB));
+}
+
+TEST(SRPUnlinkDevicesTest, NullCallback)
+{
+    OCProvisionDev_t dev1;
+    OCProvisionDev_t dev2;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, &dev1, &dev2, NULL));
+}
+
+TEST(SRPRemoveDeviceTest, NullTargetDevice)
+{
+    unsigned short waitTime = 10 ;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPRemoveDevice(NULL, waitTime, NULL, provisioningCB));
+}
+
+TEST(SRPRemoveDeviceTest, NullResultCallback)
+{
+    unsigned short waitTime = 10;
+    OCProvisionDev_t dev1;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPRemoveDevice(NULL, waitTime, &dev1, NULL));
+}
+
+TEST(SRPRemoveDeviceTest, ZeroWaitTime)
+{
+    OCProvisionDev_t dev1;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPRemoveDevice(NULL, 0, &dev1, NULL));
 }

@@ -54,6 +54,12 @@ liboc_logger = liboc_logger_env.SharedLibrary('oc_logger',
 
 liboc_logger_env.InstallTarget([liboc_logger_core, liboc_logger], 'liboc_logger')
 liboc_logger_env.UserInstallTargetLib([liboc_logger_core, liboc_logger], 'liboc_logger')
+liboc_logger_env.UserInstallTargetHeader('include/oc_logger.hpp', 'resource', 'oc_logger.hpp')
+liboc_logger_env.UserInstallTargetHeader('include/oc_logger.h', 'resource', 'oc_logger.h')
+liboc_logger_env.UserInstallTargetHeader('include/oc_logger_types.h', 'resource', 'oc_logger_types.h')
+liboc_logger_env.UserInstallTargetHeader('include/oc_log_stream.hpp', 'resource', 'oc_log_stream.hpp')
+liboc_logger_env.UserInstallTargetHeader('include/targets/oc_console_logger.h', 'resource/targets', 'oc_console_logger.h')
+liboc_logger_env.UserInstallTargetHeader('include/targets/oc_ostream_logger.h', 'resource/targets', 'oc_ostream_logger.h')
 
 if target_os not in ['ios', 'android']:
 	SConscript('examples/SConscript')

@@ -29,6 +29,35 @@ extern "C" {
 #endif
 
 /**
+ * Node to construct list of UUID pair list.
+ */
+typedef struct OCPairList OCPairList_t;
+struct OCPairList
+{
+    OicUuid_t dev;
+    OicUuid_t dev2;
+    OCPairList_t *next;
+};
+
+/**
+ * Node to construct UUID linked list.
+ */
+typedef struct OCUuidList  OCUuidList_t;
+struct OCUuidList
+{
+    OicUuid_t dev;
+    OCUuidList_t *next;
+};
+
+/*
+ * Device's power on/off state.
+ */
+typedef enum {
+    DEV_STATUS_ON = (1 << 0),
+    DEV_STATUS_OFF = (1 << 1)
+}DeviceStatus;
+
+/**
  * Device Information of discoverd unowned/owned device(s) for provisioning.
  */
 typedef struct OCProvisionDev
@@ -36,8 +65,10 @@ typedef struct OCProvisionDev
     OCDevAddr       endpoint;        /**< target address **/
     OicSecPstat_t   *pstat;          /**< Pointer to target's pstat resource. **/
     OicSecDoxm_t    *doxm;           /**< Pointer to target's doxm resource. **/
+    OCConnectivityType connType;     /**< Connectivity type of endpoint */
     uint16_t        securePort;      /**< secure port **/
-    struct OCProvisionDev  *next;           /**< Next pointer. **/
+    DeviceStatus    devStatus;       /**< status of device **/
+    struct OCProvisionDev  *next;    /**< Next pointer. **/
 }OCProvisionDev_t;
 
 /**

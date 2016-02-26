@@ -46,7 +46,9 @@ import android.widget.EditText;
  */
 public class MainActivity extends Activity {
 
-    private final String         LOG_TAG = "[CON-SERVER]" + this.getClass().getSimpleName();
+    private final String         LOG_TAG = "[CON-SERVER]"
+                                                 + this.getClass()
+                                                         .getSimpleName();
     private Handler              mHandler;
     private static MainActivity  mainActivityObj;
     private ConfigurationServer  conServerObj;
@@ -62,6 +64,7 @@ public class MainActivity extends Activity {
         mainActivityObj = this;
         Button doBootStrap = (Button) findViewById(R.id.button1);
         final Button createConfig = (Button) findViewById(R.id.button2);
+        createConfig.setEnabled(false);
         editText = (EditText) findViewById(R.id.EditText);
         conServerObj = new ConfigurationServer();
 
@@ -125,14 +128,16 @@ public class MainActivity extends Activity {
 
             AlertDialog dialog = dialogBuilder.create();
             dialog.show();
-            Log.i(LOG_TAG, "WiFi is not enabled/connected! Please connect the WiFi and start application again...");
+            Log.i(LOG_TAG,
+                    "WiFi is not enabled/connected! Please connect the WiFi and start application again...");
             return;
         }
 
         // If wifi is connected calling the configure method for configuring the
         // ocPlatform
-        PlatformConfig cfg = new PlatformConfig(getApplicationContext(),ServiceType.IN_PROC,
-                ModeType.CLIENT_SERVER, "0.0.0.0", 0, QualityOfService.LOW);
+        PlatformConfig cfg = new PlatformConfig(getApplicationContext(),
+                ServiceType.IN_PROC, ModeType.CLIENT_SERVER, "0.0.0.0", 0,
+                QualityOfService.LOW);
         OcPlatform.Configure(cfg);
         Log.i(LOG_TAG, "Configuration done Successfully");
     }
@@ -164,7 +169,7 @@ public class MainActivity extends Activity {
         dialog.setProgress(0);
         dialog.setMax(100);
         dialog.show();
-        Log.i(LOG_TAG, "Rebooting.. Please wait ...");
+        // Log.i(LOG_TAG, "Rebooting.. Please wait ...");
         Thread thread = new Thread() {
             @Override
             public void run() {

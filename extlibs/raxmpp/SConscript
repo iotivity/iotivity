@@ -31,7 +31,8 @@ src_dir = env.get('SRC_DIR')
 target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
 with_ra = env.get('WITH_RA')
-if with_ra:
+with_ra_ibb = env.get('WITH_RA_IBB')
+if with_ra and not with_ra_ibb :
 	# check 'raxmppl' library, if it doesn't exits, ask user to download it
 	if not os.path.exists('raxmpp'):
 		print '''

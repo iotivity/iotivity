@@ -33,10 +33,10 @@ OCResourceHandle configurationFoundHandle = NULL;
 std::shared_ptr< OCResource > g_configurationCollection; // For a group of multiple resources
 std::shared_ptr< OCResource > g_configurationResource; // For a single resource
 
-OCResourceHandle diagnosticsCollectionHandle = NULL;
-OCResourceHandle diagnosticsFoundHandle = NULL;
-std::shared_ptr< OCResource > g_diagnosticsCollection; // For a group of multiple resources
-std::shared_ptr< OCResource > g_diagnosticsResource; // For a single resource
+OCResourceHandle maintenanceCollectionHandle = NULL;
+OCResourceHandle maintenanceFoundHandle = NULL;
+std::shared_ptr< OCResource > g_maintenanceCollection; // For a group of multiple resources
+std::shared_ptr< OCResource > g_maintenanceResource; // For a single resource
 
 OCResourceHandle setCollectionHandle = NULL;
 OCResourceHandle setFoundHandle = NULL;
@@ -53,16 +53,19 @@ static Evas_Object *log_entry = NULL;
 
 string CONFIGURATION_COLLECTION_RESOURCE_URI  = "/core/a/configuration/resourceset";
 string CONFIGURATION_COLLECTION_RESOURCE_TYPE = "core.configuration.resourceset";
-string DIAGNOSTIC_COLLECTION_RESOURCE_URI     = "/core/a/diagnostics/resourceset";
-string DIAGNOSTIC_COLLECTION_RESOURCE_TYPE    = "core.diagnostics.resourceset";
+string MAINTENANCE_COLLECTION_RESOURCE_URI     = "/core/a/maintenance/resourceset";
+string MAINTENANCE_COLLECTION_RESOURCE_TYPE    = "core.maintenance.resourceset";
 string FACTORYSET_COLLECTION_RESOURCE_URI     = "/core/a/factoryset/resourceset";
 string FACTORYSET_COLLECTION_RESOURCE_TYPE    = "core.factoryset.resourceset";
 
 string CONFIGURATION_RESOURCE_URI             = "/oic/con";
-string DIAGNOSTIC_RESOURCE_URI                = "/oic/diag";
-string FACTORYSET_RESOURCE_URI                = "/factorySet";
+string MAINTENANCE_RESOURCE_URI                = "/oic/mnt";
+string FACTORYSET_RESOURCE_URI                = "/factoryset";
 
-ThingsManager *configthingsMgr = new ThingsManager();
+GroupManager *g_groupManager = nullptr;
+ThingsConfiguration *g_thingsConfig = nullptr;
+ThingsMaintenance *g_thingsMnt = nullptr;
+
 
 typedef struct region_popup
 {
@@ -105,8 +108,8 @@ void onFoundCollectionResource(std::vector< std::shared_ptr< OCResource > > reso
 
                 if (resource->uri() == CONFIGURATION_COLLECTION_RESOURCE_URI)
                     g_configurationCollection = resource;
-                else if (resource->uri() == DIAGNOSTIC_COLLECTION_RESOURCE_URI)
-                    g_diagnosticsCollection = resource;
+                else if (resource->uri() == MAINTENANCE_COLLECTION_RESOURCE_URI)
+                    g_maintenanceCollection = resource;
                 else if (resource->uri() == FACTORYSET_COLLECTION_RESOURCE_URI)
                     g_setCollection = resource;
                 else
@@ -192,22 +195,22 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
                                            "g_configurationResource is not null");
                             }
                         }
-                        else if (resource->uri() == DIAGNOSTIC_RESOURCE_URI &&
-                                 NULL != diagnosticsCollectionHandle)
+                        else if (resource->uri() == MAINTENANCE_RESOURCE_URI &&
+                                 NULL != maintenanceCollectionHandle)
                         {
-                            OCPlatform::bindResource(diagnosticsCollectionHandle,
+                            OCPlatform::bindResource(maintenanceCollectionHandle,
                                                      foundResourceHandle);
-                            diagnosticsFoundHandle = foundResourceHandle;
-                            if (NULL == g_diagnosticsResource)
+                            maintenanceFoundHandle = foundResourceHandle;
+                            if (NULL == g_maintenanceResource)
                             {
                                 dlog_print(DLOG_INFO, LOG_TAG,
-                                           "g_diagnosticsResource updated");
-                                g_diagnosticsResource = resource;
+                                           "g_maintenanceResource updated");
+                                g_maintenanceResource = resource;
                             }
                             else
                             {
                                 dlog_print(DLOG_INFO, LOG_TAG,
-                                           "g_diagnosticsResource is not null");
+                                           "g_maintenanceResource is not null");
                             }
                         }
                         else if (resource->uri() == FACTORYSET_RESOURCE_URI &&
@@ -273,29 +276,40 @@ static void onUpdateConfigurationsCallback(const HeaderOptions &headerOptions,
     string logMessage = "Resource URI: " + rep.getUri() + "<br>";
     dlog_print(DLOG_INFO, LOG_TAG, "#### Resource URI: %s", rep.getUri().c_str());
 
-    if (rep.hasAttribute("loc"))
+    if (rep.hasAttribute(DEFAULT_DEVICENAME))
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Device Name : %s",
+                   rep.getValue< std::string >(DEFAULT_DEVICENAME).c_str());
+        logMessage = logMessage + "Device Name : " +
+                     rep.getValue< std::string >(DEFAULT_DEVICENAME) + "<br>";
+    }
+    if (rep.hasAttribute(DEFAULT_LOCATION))
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Location : %s",
-                   rep.getValue< std::string >("loc").c_str());
-        logMessage = logMessage + "Location : " + rep.getValue< std::string >("loc") + "<br>";
+                   rep.getValue< std::string >(DEFAULT_LOCATION).c_str());
+        logMessage = logMessage + "Location : " +
+                     rep.getValue< std::string >(DEFAULT_LOCATION) + "<br>";
     }
-    if (rep.hasAttribute("st"))
+    if (rep.hasAttribute(DEFAULT_LOCATIONNAME))
     {
-        dlog_print(DLOG_INFO, LOG_TAG, "#### SystemTime : %s",
-                   rep.getValue< std::string >("st").c_str());
-        logMessage = logMessage + "SystemTime : " + rep.getValue< std::string >("st") + "<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Location Name : %s",
+                   rep.getValue< std::string >(DEFAULT_LOCATIONNAME).c_str());
+        logMessage = logMessage + "Location Name: " +
+                     rep.getValue< std::string >(DEFAULT_LOCATIONNAME) + "<br>";
     }
-    if (rep.hasAttribute("c"))
+    if (rep.hasAttribute(DEFAULT_CURRENCY))
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Currency : %s",
-                   rep.getValue< std::string >("c").c_str());
-        logMessage = logMessage + "Currency : " + rep.getValue< std::string >("c") + "<br>";
+                   rep.getValue< std::string >(DEFAULT_CURRENCY).c_str());
+        logMessage = logMessage + "Currency : " +
+                     rep.getValue< std::string >(DEFAULT_CURRENCY) + "<br>";
     }
-    if (rep.hasAttribute("r"))
+    if (rep.hasAttribute(DEFAULT_REGION))
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Region : %s",
-                   rep.getValue< std::string >("r").c_str());
-        logMessage = logMessage + "Region : " + rep.getValue< std::string >("r") + "<br>";
+                   rep.getValue< std::string >(DEFAULT_REGION).c_str());
+        logMessage = logMessage + "Region : " +
+                     rep.getValue< std::string >(DEFAULT_REGION) + "<br>";
     }
     logMessage += "----------------------<br>";
     dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
@@ -322,29 +336,40 @@ static void onGetConfigurationsCallback(const HeaderOptions &headerOptions,
     string logMessage = "Resource URI: " + rep.getUri() + "<br>";
     dlog_print(DLOG_INFO, LOG_TAG, "#### Resource URI: %s", rep.getUri().c_str());
 
-    if (rep.hasAttribute("loc"))
+    if (rep.hasAttribute(DEFAULT_DEVICENAME))
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Device Name : %s",
+                   rep.getValue< std::string >(DEFAULT_DEVICENAME).c_str());
+        logMessage = logMessage + "Device Name : "
+                     + rep.getValue< std::string >(DEFAULT_DEVICENAME) + "<br>";
+    }
+    if (rep.hasAttribute(DEFAULT_LOCATION))
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Location : %s",
-                   rep.getValue< std::string >("loc").c_str());
-        logMessage = logMessage + "Location : " + rep.getValue< std::string >("loc") + "<br>";
+                   rep.getValue< std::string >(DEFAULT_LOCATION).c_str());
+        logMessage = logMessage + "Location : "
+                     + rep.getValue< std::string >(DEFAULT_LOCATION) + "<br>";
     }
-    if (rep.hasAttribute("st"))
+    if (rep.hasAttribute(DEFAULT_LOCATIONNAME))
     {
-        dlog_print(DLOG_INFO, LOG_TAG, "#### SystemTime : %s",
-                   rep.getValue< std::string >("st").c_str());
-        logMessage = logMessage + "SystemTime : " + rep.getValue< std::string >("st") + "<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Location Name : %s",
+                   rep.getValue< std::string >(DEFAULT_LOCATIONNAME).c_str());
+        logMessage = logMessage + "Location Name : "
+                     + rep.getValue< std::string >(DEFAULT_LOCATIONNAME) + "<br>";
     }
-    if (rep.hasAttribute("c"))
+    if (rep.hasAttribute(DEFAULT_CURRENCY))
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Currency : %s",
-                   rep.getValue< std::string >("c").c_str());
-        logMessage = logMessage + "Currency : " + rep.getValue< std::string >("c") + "<br>";
+                   rep.getValue< std::string >(DEFAULT_CURRENCY).c_str());
+        logMessage = logMessage + "Currency : "
+                     + rep.getValue< std::string >(DEFAULT_CURRENCY) + "<br>";
     }
-    if (rep.hasAttribute("r"))
+    if (rep.hasAttribute(DEFAULT_REGION))
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Region : %s",
-                   rep.getValue< std::string >("r").c_str());
-        logMessage = logMessage + "Region : " + rep.getValue< std::string >("r") + "<br>";
+                   rep.getValue< std::string >(DEFAULT_REGION).c_str());
+        logMessage = logMessage + "Region : "
+                     + rep.getValue< std::string >(DEFAULT_REGION) + "<br>";
     }
 
     logMessage += "----------------------<br>";
@@ -466,23 +491,26 @@ static void findAllGroups(void *data, Evas_Object *obj, void *event_info)
     std::vector<string> resourceTypes;
     resourceTypes.push_back(CONFIGURATION_COLLECTION_RESOURCE_TYPE);
 
-    if (NULL != configthingsMgr)
+    if (NULL != g_groupManager)
     {
-        configthingsMgr->findCandidateResources(resourceTypes, &onFoundCollectionResource, 5);
+        g_groupManager->findCandidateResources(resourceTypes, &onFoundCollectionResource,
+                                               FINDGROUP_TIMEOUT);
     }
 
     resourceTypes.clear();
-    resourceTypes.push_back(DIAGNOSTIC_COLLECTION_RESOURCE_TYPE);
-    if (NULL != configthingsMgr)
+    resourceTypes.push_back(MAINTENANCE_COLLECTION_RESOURCE_TYPE);
+    if (NULL != g_groupManager)
     {
-        configthingsMgr->findCandidateResources(resourceTypes, &onFoundCollectionResource, 5);
+        g_groupManager->findCandidateResources(resourceTypes, &onFoundCollectionResource,
+                                               FINDGROUP_TIMEOUT);
     }
 
     resourceTypes.clear();
     resourceTypes.push_back(FACTORYSET_COLLECTION_RESOURCE_TYPE);
-    if (NULL != configthingsMgr)
+    if (NULL != g_groupManager)
     {
-        configthingsMgr->findCandidateResources(resourceTypes, &onFoundCollectionResource, 5);
+        g_groupManager->findCandidateResources(resourceTypes, &onFoundCollectionResource,
+                                               FINDGROUP_TIMEOUT);
     }
 
     dlog_print(DLOG_INFO, LOG_TAG, "#### calling findCandidateResources EXIT!!!!");
@@ -492,25 +520,14 @@ static void findAllResources(void *data, Evas_Object *obj, void *event_info)
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### calling findCandidateResources ENTRY!!!!");
     std::vector<string> resourceTypes;
-    resourceTypes.push_back("oic.con");
+    resourceTypes.push_back("oic.wk.con");
+    resourceTypes.push_back("oic.wk.mnt");
+    resourceTypes.push_back("factoryset");
 
-    if (NULL != configthingsMgr)
+    if (NULL != g_groupManager)
     {
-        configthingsMgr->findCandidateResources(resourceTypes, &onFoundCandidateResource, 7);
-    }
-
-    resourceTypes.clear();
-    resourceTypes.push_back("oic.diag");
-    if (NULL != configthingsMgr)
-    {
-        configthingsMgr->findCandidateResources(resourceTypes, &onFoundCandidateResource, 7);
-    }
-
-    resourceTypes.clear();
-    resourceTypes.push_back("factorySet");
-    if (NULL != configthingsMgr)
-    {
-        configthingsMgr->findCandidateResources(resourceTypes, &onFoundCandidateResource, 7);
+        g_groupManager->findCandidateResources(resourceTypes, &onFoundCandidateResource,
+                                               FINDRESOURCE_TIMEOUT);
     }
 
     dlog_print(DLOG_INFO, LOG_TAG, "#### calling findCandidateResources EXIT!!!!");
@@ -528,14 +545,25 @@ static void getConfiguration(void *data, Evas_Object *obj, void *event_info)
         return;
     }
 
+    if (NULL == g_configurationResource)
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "Configuration Resource not found.");
+        string logMessage = "FIRST FIND CONFIGURATION RESOURCE <br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
+        return;
+    }
+
     ConfigurationName name = "all";
     std::vector< ConfigurationName > configurations;
     configurations.push_back(name);
 
     try
     {
-        configthingsMgr->getConfigurations(g_configurationCollection, configurations,
-                                           &onGetConfigurationsCallback);
+        g_thingsConfig->getConfigurations(g_configurationCollection, configurations,
+                                          &onGetConfigurationsCallback);
+
+        isWaiting = 0;
     }
     catch (std::exception &e)
     {
@@ -546,11 +574,11 @@ static void getConfiguration(void *data, Evas_Object *obj, void *event_info)
     dlog_print(DLOG_INFO, LOG_TAG, "#### getConfiguration EXIT!!!!");
 }
 
-// Updates the configuration i.e. region value to INDIA
-static void updateConfiguration(std::string newRegionValue)
+// Updates the configuration i.e. Device name to OIC Device
+static void updateConfiguration(std::string newDeviceName)
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### updateConfiguration ENTRY!!!!");
-    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", newRegionValue.c_str());
+    dlog_print(DLOG_INFO, LOG_TAG, "#### %s", newDeviceName.c_str());
 
     if (NULL == g_configurationCollection || NULL == g_configurationCollection.get())
     {
@@ -562,16 +590,25 @@ static void updateConfiguration(std::string newRegionValue)
         return;
     }
 
+    if (NULL == g_configurationResource)
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "Configuration Resource not found.");
+        string logMessage = "FIRST FIND CONFIGURATION RESOURCE <br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
+        return;
+    }
+
     OCStackResult result;
-    ConfigurationName name = "r";
-    ConfigurationValue value = newRegionValue;
+    ConfigurationName name = DEFAULT_DEVICENAME;
+    ConfigurationValue value = newDeviceName;
 
     std::map< ConfigurationName, ConfigurationValue > configurations;
     configurations.insert(std::make_pair(name, value));
 
     try
     {
-        result = configthingsMgr->updateConfigurations(g_configurationCollection, configurations,
+        result = g_thingsConfig->updateConfigurations(g_configurationCollection, configurations,
                  &onUpdateConfigurationsCallback);
     }
     catch (std::exception &e)
@@ -594,7 +631,7 @@ static void updateConfiguration(std::string newRegionValue)
 static void factoryReset(void *data, Evas_Object *obj, void *event_info)
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### factoryReset ENTRY!!!!");
-    if (NULL == g_diagnosticsCollection || NULL == g_diagnosticsCollection.get())
+    if (NULL == g_maintenanceCollection || NULL == g_maintenanceCollection.get())
     {
         dlog_print(DLOG_ERROR, LOG_TAG, "Note that you first create a group to use this command");
         string logMessage = "FIRST CREATE GROUP <br>";
@@ -604,11 +641,20 @@ static void factoryReset(void *data, Evas_Object *obj, void *event_info)
         return;
     }
 
+    if (NULL == g_maintenanceResource)
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "Maintenance Resource not found.");
+        string logMessage = "FIRST FIND MAINTENANCE RESOURCE <br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
+        return;
+    }
+
     OCStackResult result;
 
     try
     {
-        result = configthingsMgr->factoryReset(g_diagnosticsCollection, &onFactoryReset);
+        result = g_thingsMnt->factoryReset(g_maintenanceCollection, &onFactoryReset);
     }
     catch (std::exception &e)
     {
@@ -630,7 +676,7 @@ static void factoryReset(void *data, Evas_Object *obj, void *event_info)
 static void reboot(void *data, Evas_Object *obj, void *event_info)
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### reboot ENTRY!!!!");
-    if (NULL == g_diagnosticsCollection || NULL == g_diagnosticsCollection.get())
+    if (NULL == g_maintenanceCollection || NULL == g_maintenanceCollection.get())
     {
         dlog_print(DLOG_INFO, LOG_TAG, "Note that you first create a group to use this command");
         string logMessage = "FIRST CREATE GROUP <br>";
@@ -640,11 +686,20 @@ static void reboot(void *data, Evas_Object *obj, void *event_info)
         return;
     }
 
+    if (NULL == g_maintenanceResource)
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "Maintenance Resource not found.");
+        string logMessage = "FIRST FIND MAINTENANCE RESOURCE <br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateConfigLog, &logMessage);
+        return;
+    }
+
     OCStackResult result;
 
     try
     {
-        result = configthingsMgr->reboot(g_diagnosticsCollection, &onReboot);
+        result = g_thingsMnt->reboot(g_maintenanceCollection, &onReboot);
     }
     catch (std::exception &e)
     {
@@ -667,7 +722,7 @@ static void getListOfSupportedConfigurationUnits(void *data, Evas_Object *obj, v
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### getListOfSupportedConfigurationUnits ENTRY!!!!");
     string listOfSupportedConfigurationUnits =
-        configthingsMgr->getListOfSupportedConfigurationUnits();
+        g_thingsConfig->getListOfSupportedConfigurationUnits();
     dlog_print(DLOG_INFO, LOG_TAG, "#### List : %s", listOfSupportedConfigurationUnits.c_str());
 
     string logMessage;
@@ -684,12 +739,16 @@ static void onStartConfigure()
     createResourceCollection(CONFIGURATION_COLLECTION_RESOURCE_URI,
                              CONFIGURATION_COLLECTION_RESOURCE_TYPE,
                              configurationCollectionHandle);
-    createResourceCollection(DIAGNOSTIC_COLLECTION_RESOURCE_URI,
-                             DIAGNOSTIC_COLLECTION_RESOURCE_TYPE,
-                             diagnosticsCollectionHandle);
+    createResourceCollection(MAINTENANCE_COLLECTION_RESOURCE_URI,
+                             MAINTENANCE_COLLECTION_RESOURCE_TYPE,
+                             maintenanceCollectionHandle);
     createResourceCollection(FACTORYSET_COLLECTION_RESOURCE_URI,
                              FACTORYSET_COLLECTION_RESOURCE_TYPE,
                              setCollectionHandle);
+
+    g_groupManager = new GroupManager();
+    g_thingsConfig = new ThingsConfiguration();
+    g_thingsMnt = new ThingsMaintenance();
 }
 
 // Deletes all the resources
@@ -697,11 +756,15 @@ static void onDestroyConfigure()
 {
     dlog_print(DLOG_INFO, LOG_TAG, "#### Destroy sequence called");
 
+    deleteResource(setCollectionHandle, setFoundHandle);
+
+    deleteResource(maintenanceCollectionHandle, maintenanceFoundHandle);
+
     deleteResource(configurationCollectionHandle, configurationFoundHandle);
 
-    deleteResource(diagnosticsCollectionHandle, diagnosticsFoundHandle);
-
-    deleteResource(setCollectionHandle, setFoundHandle);
+    delete g_thingsMnt;
+    delete g_thingsConfig;
+    delete g_groupManager;
 
     dlog_print(DLOG_INFO, LOG_TAG, "#### Resources destroyed successfully");
 }
@@ -738,7 +801,7 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
 }
 
 static void
-list_update_region_cb(void *data, Evas_Object *obj, void *event_info)
+list_update_devicename_cb(void *data, Evas_Object *obj, void *event_info)
 {
     if (NULL == g_configurationCollection || NULL == g_configurationCollection.get())
     {
@@ -759,7 +822,7 @@ list_update_region_cb(void *data, Evas_Object *obj, void *event_info)
     elm_popup_align_set(popup, ELM_NOTIFY_ALIGN_FILL, 1.0);
     eext_object_event_callback_add(popup, EEXT_CALLBACK_BACK, eext_popup_back_cb, NULL);
     evas_object_size_hint_weight_set(popup, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-    elm_object_part_text_set(popup, "title,text", "Enter New Region Value");
+    elm_object_part_text_set(popup, "title,text", "Enter new device name to update");
 
     layout = elm_layout_add(popup);
     elm_layout_file_set(layout, ELM_DEMO_EDJ, "popup_region_text");
@@ -772,7 +835,7 @@ list_update_region_cb(void *data, Evas_Object *obj, void *event_info)
     evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
     evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
     eext_entry_selection_back_event_allow_set(entry, EINA_TRUE);
-    elm_object_part_text_set(entry, "elm.guide", "region value");
+    elm_object_part_text_set(entry, "elm.guide", "e.g. OIC Device");
     elm_object_part_content_set(layout, "elm.swallow.content" , entry);
 
     region_popup_fields *popup_fields;
@@ -886,8 +949,8 @@ configuration_cb(void *data, Evas_Object *obj, void *event_info)
     elm_list_item_append(list, "Find All Resources",
                          NULL, NULL, findAllResources, NULL);
     elm_list_item_append(list, "Get a Configuration Resource", NULL, NULL, getConfiguration, NULL);
-    elm_list_item_append(list, "Update Attribute (Region)", NULL, NULL,
-                         list_update_region_cb, nf);
+    elm_list_item_append(list, "Update Attribute (Device Name)", NULL, NULL,
+                         list_update_devicename_cb, nf);
     elm_list_item_append(list, "Factory Reset", NULL, NULL, factoryReset, NULL);
     elm_list_item_append(list, "Reboot", NULL, NULL, reboot, NULL);
     elm_list_item_append(list, "Get Supported Configuration Units", NULL, NULL,

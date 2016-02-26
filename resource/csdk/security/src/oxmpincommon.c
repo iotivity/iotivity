@@ -22,7 +22,7 @@
 #include "logger.h"
 #include "pinoxmcommon.h"
 
-#define TAG PCF("PIN_OXM_COMMON")
+#define TAG "PIN_OXM_COMMON"
 
 static GeneratePinCallback gGenPinCallback = NULL;
 static InputPinCallback gInputPinCallback = NULL;
@@ -31,7 +31,7 @@ void SetInputPinCB(InputPinCallback pinCB)
 {
     if(NULL == pinCB)
     {
-        OC_LOG(ERROR, TAG, "Failed to set callback for input pin.");
+        OIC_LOG(ERROR, TAG, "Failed to set callback for input pin.");
         return;
     }
 
@@ -42,7 +42,7 @@ void SetGeneratePinCB(GeneratePinCallback pinCB)
 {
     if(NULL == pinCB)
     {
-        OC_LOG(ERROR, TAG, "Failed to set callback for generate pin.");
+        OIC_LOG(ERROR, TAG, "Failed to set callback for generate pin.");
         return;
     }
 
@@ -53,12 +53,12 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize)
 {
     if(!pinBuffer)
     {
-        OC_LOG(ERROR, TAG, "PIN buffer is NULL");
+        OIC_LOG(ERROR, TAG, "PIN buffer is NULL");
         return OC_STACK_INVALID_PARAM;
     }
     if(OXM_RANDOM_PIN_SIZE + 1 > bufferSize)
     {
-        OC_LOG(ERROR, TAG, "PIN buffer size is too small");
+        OIC_LOG(ERROR, TAG, "PIN buffer size is too small");
         return OC_STACK_INVALID_PARAM;
     }
     for(size_t i = 0; i < OXM_RANDOM_PIN_SIZE; i++)
@@ -73,8 +73,8 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize)
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Invoke PIN callback failed!");
-        OC_LOG(ERROR, TAG, "Callback for genrate PIN should be registered to use PIN based OxM.");
+        OIC_LOG(ERROR, TAG, "Invoke PIN callback failed!");
+        OIC_LOG(ERROR, TAG, "Callback for genrate PIN should be registered to use PIN based OxM.");
         return OC_STACK_ERROR;
     }
 
@@ -86,12 +86,12 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
 {
     if(!pinBuffer)
     {
-        OC_LOG(ERROR, TAG, "PIN buffer is NULL");
+        OIC_LOG(ERROR, TAG, "PIN buffer is NULL");
         return OC_STACK_INVALID_PARAM;
     }
     if(OXM_RANDOM_PIN_SIZE + 1 > bufferSize)
     {
-        OC_LOG(ERROR, TAG, "PIN buffer size is too small");
+        OIC_LOG(ERROR, TAG, "PIN buffer size is too small");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -101,8 +101,8 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Invoke PIN callback failed!");
-        OC_LOG(ERROR, TAG, "Callback for input PIN should be registered to use PIN based OxM.");
+        OIC_LOG(ERROR, TAG, "Invoke PIN callback failed!");
+        OIC_LOG(ERROR, TAG, "Callback for input PIN should be registered to use PIN based OxM.");
         return OC_STACK_ERROR;
     }
 

@@ -25,8 +25,8 @@
  * ResourceRequest.
  */
 
-#ifndef __OCRESOURCEREQUEST_H
-#define __OCRESOURCEREQUEST_H
+#ifndef OC_RESOURCEREQUEST_H_
+#define OC_RESOURCEREQUEST_H_
 
 #include "OCApi.h"
 #include "OCRepresentation.h"
@@ -52,7 +52,7 @@ namespace OC
             m_queryParameters{},
             m_requestHandlerFlag{},
             m_representation{},
-            m_observationInfo{ObserveAction::ObserveRegister, 0},
+            m_observationInfo{},
             m_headerOptions{},
             m_requestHandle{nullptr},
             m_resourceHandle{nullptr}
@@ -219,4 +219,4 @@ namespace OC
     };
  }// namespace OC
 
-#endif //__OCRESOURCEREQUEST_H
+#endif // OC_RESOURCEREQUEST_H_
