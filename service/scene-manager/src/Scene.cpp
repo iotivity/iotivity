@@ -20,7 +20,6 @@
 
 #include "Scene.h"
 #include "SceneCollectionResource.h"
-#include <iostream>
 #include <algorithm>
 
 namespace OIC
@@ -49,6 +48,45 @@ namespace OIC
                 throw RCSInvalidParameterException("RCSRemoteResoureObjectPtr value is null");
             }
 
+
+            auto sceneMemberResObjs = m_sceneCollectionResourceObj->getSceneMembers();
+            bool isRegistered = false;
+
+            SceneMemberResource::Ptr foundMember;
+            std::function<void(const RCSRemoteResourceObject::Ptr&,
+                    const SceneMemberResource::Ptr&)> buildActionParam = [&](
+                            const RCSRemoteResourceObject::Ptr & RCSRemoteResourceObjectPtr,
+                            const SceneMemberResource::Ptr & member)
+                            {
+                                if(RCSRemoteResourceObjectPtr == member->getRemoteResourceObject())
+                                {
+                                    foundMember = member;
+                                    for(const auto &it: member->getMappingInfo())
+                                    {
+                                        isRegistered = (it.sceneName == m_name);
+                                    }
+                                }
+                            };
+
+
+            std::for_each(sceneMemberResObjs.begin(), sceneMemberResObjs.end(),
+                    [&buildActionParam, &RCSRemoteResourceObjectPtr](
+                            const SceneMemberResource::Ptr& member)
+                        {
+                            buildActionParam(RCSRemoteResourceObjectPtr, member);
+                        });
+
+            if(isRegistered)
+            {
+                throw InvalidAddMemberRequestException(
+                        "It is already registered member. Please set Execution Parameter!");
+            }
+
+            if(foundMember)
+            {
+                return SceneAction::Ptr(new SceneAction(foundMember, m_name, attr));
+            }
+
             SceneMemberResource::Ptr sceneMemberResObj;
             sceneMemberResObj = SceneMemberResource::createSceneMemberResource(
                     RCSRemoteResourceObjectPtr);
@@ -56,14 +94,16 @@ namespace OIC
             {
                 m_sceneCollectionResourceObj->addSceneMember(sceneMemberResObj);
             }
-            catch(...)
+            catch(std::exception e)
             {
-                throw InvalidAddMemberRequestException("Already existed Member!");
+                throw InvalidAddMemberRequestException(
+                        "It is already registered member. Please set Execution Parameter!");
             }
 
             return SceneAction::Ptr(new SceneAction(sceneMemberResObj, m_name, attr));
+
         }
-//        TODO : need to confirm return type vector or Pointer
+
         SceneAction::Ptr Scene::getSceneAction(
                 const RCSRemoteResourceObject::Ptr& RCSRemoteResourceObjectPtr) const
         {
@@ -72,21 +112,29 @@ namespace OIC
             RCSResourceAttributes actionParam;
             SceneMemberResource::Ptr foundMember;
 
-            std::for_each (sceneMemberResObjs.begin(), sceneMemberResObjs.end(),
-                    [&, RCSRemoteResourceObjectPtr](
-                            const SceneMemberResource::Ptr& member)
-                    {
-                        if(RCSRemoteResourceObjectPtr == member->getRemoteResourceObject())
-                        {
-                            foundMember = member;
-                            for(const auto &it: member->getMappingInfo())
+            std::function<void(const RCSRemoteResourceObject::Ptr&,
+                    const SceneMemberResource::Ptr&)> buildActionParam = [&](
+                            const RCSRemoteResourceObject::Ptr & RCSRemoteResourceObjectPtr,
+                            const SceneMemberResource::Ptr & member)
                             {
-                                if(it.sceneName == m_name)
+                                if(RCSRemoteResourceObjectPtr == member->getRemoteResourceObject())
                                 {
-                                    actionParam[it.key] = it.value;
+                                    foundMember = member;
+                                for(const auto &it: member->getMappingInfo())
+                                {
+                                    if(it.sceneName == m_name)
+                                    {
+                                        actionParam[it.key] = it.value;
+                                    }
                                 }
                             }
-                        }
+                            };
+
+            std::for_each (sceneMemberResObjs.begin(), sceneMemberResObjs.end(),
+                    [&RCSRemoteResourceObjectPtr, &buildActionParam](
+                            const SceneMemberResource::Ptr& member)
+                    {
+                        buildActionParam(RCSRemoteResourceObjectPtr, member);
                     });
 
             if(actionParam.empty())
@@ -104,10 +152,9 @@ namespace OIC
 
             RCSResourceAttributes actionParam;
 
-            std::for_each (sceneMemberResObjs.begin(), sceneMemberResObjs.end(),
-                    [&](const SceneMemberResource::Ptr& member)
+            std::function<void(const SceneMemberResource::Ptr&)> buildActionParams =
+                    [&](const SceneMemberResource::Ptr & member)
                     {
-//                        actionParam = getActionParamofMappingInfo(mappingInfo);
                         for(const auto &it: member->getMappingInfo())
                         {
                             if(it.sceneName == m_name)
@@ -121,6 +168,12 @@ namespace OIC
                                     new SceneAction(member, m_name, actionParam)));
                             actionParam.clear();
                         }
+                    };
+
+            std::for_each (sceneMemberResObjs.begin(), sceneMemberResObjs.end(),
+                    [&buildActionParams](const SceneMemberResource::Ptr& member)
+                    {
+                        buildActionParams(member);
                     });
 
             return actions;
@@ -131,13 +184,13 @@ namespace OIC
             return m_name;
         }
 
-        void Scene::removeSceneAction(const SceneAction::Ptr& sceneActionPtr)
+        void Scene::removeSceneAction(const SceneAction::Ptr& /*sceneActionPtr*/)
         {
 //            TODO : need to implement
         }
 
         void Scene::removeSceneAction(
-                const RCSRemoteResourceObject::Ptr& RCSRemoteResourceObjectPtr)
+                const RCSRemoteResourceObject::Ptr& /*RCSRemoteResourceObjectPtr*/)
         {
 //            TODO : : need to implement
         }
@@ -151,22 +204,5 @@ namespace OIC
 
             m_sceneCollectionResourceObj->execute(m_name, cb);
         }
-
-//        RCSResourceAttributes Scene::getActionParamofMappingInfo(
-//                std::vector<SceneMemberResource::MappingInfo> mappingInfo)
-//        {
-//            RCSResourceAttributes actionParam;
-//
-//            std::for_each (mappingInfo.begin(), mappingInfo.end(),
-//                [& actionParam](const SCeneCollectionResource::MappingInfo & mInfo)
-//                {
-//                    if (mInfo.sceneName == m_name)
-//                    {
-//                        actionParam[mInfo.key] = mInfo.value;
-//                    }
-//                });
-//
-//            return actionParam;
-//        }
     } /* namespace Service */
 } /* namespace OIC */

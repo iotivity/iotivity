@@ -32,13 +32,6 @@ namespace OIC
         class SceneCollection
         {
         public:
-            class InvalidSceneNameException: public RCSException
-            {
-                public:
-                InvalidSceneNameException(std::string&& what) :
-                    RCSException{ std::move(what) } {}
-            };
-
             typedef std::shared_ptr< SceneCollection > Ptr;
 
         private:

@@ -33,12 +33,6 @@ namespace OIC
         class Scene
         {
         public:
-            class InvalidExecuteCallbackException: public RCSException
-            {
-            public:
-                InvalidExecuteCallbackException(std::string&& what) :
-                    RCSException{ std::move(what) } {}
-            };
             class InvalidAddMemberRequestException: public RCSException
             {
             public:
