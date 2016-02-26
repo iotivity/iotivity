@@ -33,13 +33,18 @@ using namespace OC;
 using namespace OIC::Service;
 
 constexpr int CREATE_SCENE_LIST = 1;
-constexpr int CREATE_SCENE_COLLECTION = 2;
-constexpr int GET_SCENE_COLLECTIONS = 3;
-constexpr int CREATE_SCENE = 4;
-constexpr int GET_SCENE = 5;
-constexpr int EXECUTE_SCENE = 6;
-constexpr int GET_SCENE_ACTION = 7;
-constexpr int UPDATE_SCENE_ACTION = 8;
+constexpr int CREATE_SCENE_COLLECTION = 1;
+constexpr int CREATE_SCENE = 1;
+constexpr int CREATE_SCENE_ACTION = 1;
+
+constexpr int EXECUTE_SCENE_1 = 1;
+constexpr int EXECUTE_SCENE_2 = 2;
+
+typedef void (*DisplayControlMenuFunc)();
+typedef std::function<void()> Run;
+
+std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask;
+Run g_currentRun;
 
 struct CloseApp {};
 
@@ -57,6 +62,7 @@ std::vector<RCSResourceObject::Ptr> g_memberResourceList;
 
 SceneCollection::Ptr g_sceneColObj;
 Scene::Ptr g_scene;
+Scene::Ptr g_scene_2;
 SceneAction::Ptr g_sceneAction;
 
 typedef std::function<void(std::shared_ptr<RCSRemoteResourceObject>)> DiscoveryCallback;
@@ -96,6 +102,114 @@ int processUserInput(int min, int max)
     throw std::runtime_error("Invalid Input, please try again");
 }
 
+void displayCreateSceneListMenu()
+{
+    std::cout << "========================================================\n";
+    std::cout << CREATE_SCENE_LIST  << ". Create a SceneList                       \n";
+    std::cout << CREATE_SCENE_LIST + 1  << ". Quit                       \n";
+    std::cout << "========================================================\n";
+}
+
+void displayCreateSceneCollectionMenu()
+{
+    std::cout << "========================================================\n";
+    std::cout << CREATE_SCENE_COLLECTION  << ". Create a SceneCollection                       \n";
+    std::cout << CREATE_SCENE_COLLECTION + 1  << ". Quit                       \n";
+    std::cout << "========================================================\n";
+}
+
+void displayCreateSceneMenu()
+{
+    std::cout << "========================================================\n";
+    std::cout << CREATE_SCENE  << ". Create a Scene                       \n";
+    std::cout << CREATE_SCENE + 1  << ". Quit                       \n";
+    std::cout << "========================================================\n";
+}
+
+void displayCreateSceneActionMenu()
+{
+    std::cout << "========================================================\n";
+    std::cout << CREATE_SCENE_ACTION  << ". Create a SceneAction                       \n";
+    std::cout << CREATE_SCENE_ACTION + 1  << ". Quit                       \n";
+    std::cout << "========================================================\n";
+}
+
+void displayExecuteSceneMenu()
+{
+    std::cout << "========================================================\n";
+    std::cout << EXECUTE_SCENE_1  << ". Execute Scene1                       \n";
+    std::cout << EXECUTE_SCENE_2  << ". Execute Scene2                       \n";
+    std::cout << EXECUTE_SCENE_2 + 1  << ". Quit                       \n";
+    std::cout << "========================================================\n";
+}
+
+void displaySceneList()
+{
+    std::cout << "\t" << SceneList::getInstance()->getName();
+    std::cout << "(SceneList)" << std::endl;
+}
+
+void displaySceneCollection()
+{
+    std::cout << "\t\t   |_ _ _ " << g_sceneColObj->getName();
+    std::cout << "(SceneCollection)" << std::endl;
+}
+
+void displayScene()
+{
+    std::cout << "\t\t\t      |_ _ _ " << g_scene->getName();
+    std::cout << "(Scene)" << std::endl;
+    std::cout << "\t\t\t      |_ _ _ " << g_scene_2->getName();
+    std::cout << "(Scene)" << std::endl;
+}
+
+void displayClear(Run runFunc)
+{
+    std::cout << "\nPress Enter to Continue....." << std::endl;
+    std::cin.ignore();
+    if(std::cin.get() == '\n')
+    {
+        auto ret = std::system("clear");
+        if(ret == -1)
+        {
+            std::cout << "clear error!" << std::endl;
+        }
+        g_currentRun = runFunc;
+    }
+}
+
+void displaySceneAction()
+{
+    std::cout << "\t\t\t      |_ _ _ " << g_scene->getName();
+    std::cout << "(Scene)" << std::endl;
+    auto sceneActionList = g_scene->getSceneActions();
+    for(const auto &it : sceneActionList)
+    {
+        auto attr = it->getExecutionParameter();
+        for(const auto &att : attr)
+        {
+            std::cout << "\t\t\t      |\t\t|_ _ _ ";
+            std::cout << it->getRemoteResourceObject()->getUri() << ":";
+            std::cout << att.key() << " - "  << att.value().toString() << std::endl;
+        }
+    }
+
+    std::cout << "\t\t\t      |_ _ _ " << g_scene_2->getName();
+    std::cout << "(Scene)" << std::endl;
+
+    sceneActionList = g_scene_2->getSceneActions();
+    for(const auto &it : sceneActionList)
+    {
+        auto attr = it->getExecutionParameter();
+        for(const auto &att : attr)
+        {
+            std::cout << "\t\t\t       \t\t|_ _ _ ";
+            std::cout << it->getRemoteResourceObject()->getUri() << ":";
+            std::cout << att.key() << " - "  << att.value().toString() << std::endl;
+        }
+    }
+}
+
 void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource)
 {
     std::cout << "onResourceDiscovered callback" << std::endl;
@@ -115,11 +229,10 @@ bool discoverResource()
 {
     std::cout << "Wait 2 seconds until discovered." << std::endl;
 
-
     try
     {
-        RCSDiscoveryManager::getInstance()->discoverResourceByTypes(RCSAddress::multicast(),
-                relativetUri, resourceTypes, &onResourceDiscovered);
+        discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByTypes(
+                RCSAddress::multicast(), relativetUri, resourceTypes, &onResourceDiscovered);
     }
     catch(const RCSPlatformException& e)
     {
@@ -133,88 +246,160 @@ bool discoverResource()
 
 void createSceneList()
 {
-    SceneList::getInstance()->setName("sceneList Name");
-    std::cout << SceneList::getInstance()->getName() << std::endl;
+    SceneList::getInstance()->setName("Home");
+    displaySceneList();
 }
 
 void createSceneCollection()
 {
     g_sceneColObj = SceneList::getInstance()->addNewSceneCollection();
     g_sceneColObj->setName("Living Room");
-    std::cout << "Created CollectionName : " << g_sceneColObj->getName() << std::endl;
-    std::cout << "Id : " << g_sceneColObj->getId() << std::endl;
-
-    g_sceneColObj = SceneList::getInstance()->addNewSceneCollection();
-    g_sceneColObj->setName("Kitchen");
-    std::cout << "Created CollectionName : " << g_sceneColObj->getName() << std::endl;
-    std::cout << "Id : " << g_sceneColObj->getId() << std::endl;
-}
-
-void getSceneCollection()
-{
-    auto sceneCollectionList = SceneList::getInstance()->getSceneCollections();
-    int i = 1;
-
-    for(const auto& it : sceneCollectionList)
-    {
-        std::cout << i++ << "." << it->getName() << std::endl;
-    }
+    displaySceneList();
+    displaySceneCollection();
 }
 
 void createScene()
 {
-    g_scene = g_sceneColObj->addNewScene("Going Out");
-    g_scene->addNewSceneAction(g_foundResourceList.at(0), "power", "off");
-    g_scene->addNewSceneAction(g_foundResourceList.at(1), "speed", "10");
-
-    g_sceneColObj->addNewScene("Cooking");
-
-    auto sceneList = g_sceneColObj->getScenes();
-    for(const auto &it : sceneList)
+    try
     {
-        std::cout << it.first << std::endl;
+        g_scene = g_sceneColObj->addNewScene("Going Out");
+        g_scene_2 = g_sceneColObj->addNewScene("TV mode");
+    }
+    catch(const RCSException& e)
+    {
+        std::cout << e.what() << std::endl;
+    }
+
+    displaySceneList();
+    displaySceneCollection();
+    displayScene();
+}
+
+void createSceneAction()
+{
+    try
+    {
+        g_scene->addNewSceneAction(g_foundResourceList.at(0), "power", "off");
+        g_scene->addNewSceneAction(g_foundResourceList.at(1), "speed", "0");
+
+        g_scene_2->addNewSceneAction(g_foundResourceList.at(0), "power", "on");
+        g_scene_2->addNewSceneAction(g_foundResourceList.at(1), "speed", "20");
+    }
+    catch(const RCSException& e)
+    {
+        std::cout << e.what() << std::endl;
+    }
+
+    displaySceneList();
+    displaySceneCollection();
+    displaySceneAction();
+}
+
+void executeScene(int sceneNum)
+{
+    displaySceneList();
+    displaySceneCollection();
+    displaySceneAction();
+
+    switch(sceneNum)
+    {
+        case 1:
+            try
+            {
+                g_scene->execute(onExecute);
+                std::cout << "\t'" << g_scene->getName() << "' is executed!" << std::endl;
+            }
+            catch(const RCSException& e)
+            {
+                std::cout << e.what() <<std::endl;
+            }
+            break;
+        case 2:
+            try
+            {
+                g_scene_2->execute(onExecute);
+                std::cout << "\t'" << g_scene_2->getName() << "' is executed!" << std::endl;
+            }
+            catch(const RCSException& e)
+            {
+                std::cout << e.what() <<std::endl;
+            }
+            break;
     }
 }
 
-void getScene()
+void runExecuteScene()
 {
-    auto sceneList = g_sceneColObj->getScenes();
-    for(const auto &it : sceneList)
+    displayExecuteSceneMenu();
+
+    int command = processUserInput(EXECUTE_SCENE_1, EXECUTE_SCENE_2);
+    switch(command)
     {
-        std::cout << it.first << std::endl;
+        case EXECUTE_SCENE_1:
+            executeScene(1);
+            break;
+        case EXECUTE_SCENE_2:
+            executeScene(2);
+            break;
     }
-
-    g_scene = g_sceneColObj->getScene("Going Out");
+    displayClear(runExecuteScene);
 }
 
-void executeScene()
+void runCreateSceneAction()
 {
-    g_scene->execute(onExecute);
-    std::cout << "execute scene!" << std::endl;
-}
+    displayCreateSceneActionMenu();
 
-void getSceneAction()
-{
-    auto sceneActionList = g_scene->getSceneActions();
-    std::cout << g_scene->getName() << std::endl;
-    for(const auto &it : sceneActionList)
+    int command = processUserInput(CREATE_SCENE_ACTION, CREATE_SCENE_ACTION);
+    switch(command)
     {
-        std::cout << it.use_count() << std::endl;
-        std::cout << it->getRemoteResourceObject()->getUri() << std::endl;
-        auto attr = it->getExecutionParameter();
-        for(const auto &att : attr)
-        {
-            std::cout << att.key() << " : "  << att.value().toString() << std::endl;
-        }
+        case CREATE_SCENE_ACTION:
+            createSceneAction();
+            displayClear(runExecuteScene);
+            break;
     }
-
-    g_sceneAction = g_scene->getSceneAction(g_foundResourceList.at(0));
 }
 
-void updateSceneAction()
+void runCreateScene()
 {
-    g_sceneAction->setExecutionParameter("power", "on");
-    executeScene();
+    displayCreateSceneMenu();
+
+    int command = processUserInput(CREATE_SCENE, CREATE_SCENE);
+    switch(command)
+    {
+        case CREATE_SCENE:
+            createScene();
+            displayClear(runCreateSceneAction);
+            break;
+    }
+}
+
+void runCreateSceneCollection()
+{
+    displayCreateSceneCollectionMenu();
+
+    int command = processUserInput(CREATE_SCENE_COLLECTION, CREATE_SCENE_COLLECTION);
+    switch(command)
+    {
+        case CREATE_SCENE_COLLECTION:
+            createSceneCollection();
+            displayClear(runCreateScene);
+            break;
+    }
+}
+
+void runCreateSceneList()
+{
+    displayCreateSceneListMenu();
+
+    int command = processUserInput(CREATE_SCENE_LIST, CREATE_SCENE_LIST);
+    switch(command)
+    {
+        case CREATE_SCENE_LIST:
+            discoveryTask->cancel();
+            createSceneList();
+            displayClear(runCreateSceneCollection);
+            break;
+    }
 }
 
 int main()
@@ -223,52 +408,13 @@ int main()
 
     discoverResource();
 
-    int command;
+    g_currentRun = runCreateSceneList;
 
     while (true)
     {
         try
         {
-            std::cout << "========================================================\n";
-            std::cout << CREATE_SCENE_LIST  << ". Create a SceneList                       \n";
-            std::cout << CREATE_SCENE_COLLECTION << ". Create a SceneCollection                     \n";
-            std::cout << GET_SCENE_COLLECTIONS << ". Get SceneCollections                      \n";
-            std::cout << CREATE_SCENE << ". Create a Scene                      \n";
-            std::cout << GET_SCENE << ". Get a Scene                      \n";
-            std::cout << EXECUTE_SCENE << ". Execute Scene                      \n";
-            std::cout << GET_SCENE_ACTION << ". Get a SceneAction                      \n";
-            std::cout << UPDATE_SCENE_ACTION << ". Update SceneAction                      \n";
-            std::cout << "========================================================\n";
-
-            command = processUserInput(CREATE_SCENE_LIST, UPDATE_SCENE_ACTION);
-
-            switch(command)
-            {
-                case CREATE_SCENE_LIST:
-                    createSceneList();
-                    break;
-                case CREATE_SCENE_COLLECTION:
-                    createSceneCollection();
-                    break;
-                case GET_SCENE_COLLECTIONS:
-                    getSceneCollection();
-                    break;
-                case CREATE_SCENE:
-                    createScene();
-                    break;
-                case GET_SCENE:
-                    getScene();
-                    break;
-                case EXECUTE_SCENE:
-                    executeScene();
-                    break;
-                case GET_SCENE_ACTION:
-                    getSceneAction();
-                    break;
-                case UPDATE_SCENE_ACTION:
-                    updateSceneAction();
-                    break;
-            }
+            g_currentRun();
         }
         catch (const std::exception& e)
         {
