@@ -1,6 +1,6 @@
 #******************************************************************
 #
-# Copyright 2015 Samsung Electronics All Rights Reserved.
+# Copyright 2016 Samsung Electronics All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
@@ -103,6 +103,26 @@ scene_action_test = scene_test_env.Program('scene_action_test', scene_action_tes
 Alias("scene_action_test", scene_action_test)
 env.AppendTarget('scene_action_test')
 scene_test_env.InstallTarget(scene_action_test, 'scene_action_test')
+
+remote_scene_list_test_src = env.Glob('./RemoteSceneListTest.cpp')
+remote_scene_list_test = scene_test_env.Program('remote_scene_list_test', remote_scene_list_test_src)
+Alias("remote_scene_list_test", remote_scene_list_test)
+env.AppendTarget('remote_scene_list_test')
+
+remote_scene_col_test_src = env.Glob('./RemoteSceneCollectionTest.cpp')
+remote_scene_col_test = scene_test_env.Program('remote_scene_col_test', remote_scene_col_test_src)
+Alias("remote_scene_col_test", remote_scene_col_test)
+env.AppendTarget('remote_scene_col_test')
+
+remote_scene_test_src = env.Glob('./RemoteSceneTest.cpp')
+remote_scene_test = scene_test_env.Program('remote_scene_test', remote_scene_test_src)
+Alias("remote_scene_test", remote_scene_test)
+env.AppendTarget('remote_scene_test')
+
+remote_scene_action_test_src = env.Glob('./RemoteSceneActionTest.cpp')
+remote_scene_action_test = scene_test_env.Program('remote_scene_action_test', remote_scene_action_test_src)
+Alias("remote_scene_action_test", remote_scene_action_test)
+env.AppendTarget('remote_scene_action_test')
 
 #target_os = env.get('TARGET_OS')
 #if target_os == 'linux':
