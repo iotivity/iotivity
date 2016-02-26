@@ -21,8 +21,12 @@
 #ifndef OCPAYLOAD_H_
 #define OCPAYLOAD_H_
 
+#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
+#endif
+#ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
+#endif
 #include <stdbool.h>
 #include <inttypes.h>
 #include "octypes.h"
