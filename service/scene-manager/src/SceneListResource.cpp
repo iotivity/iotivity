@@ -105,7 +105,10 @@ namespace OIC
                                     membersAttrs.push_back(pMember->getRCSResourceObject()->getAttributes());
                                 });
 
-                        collectionAttr[SCENE_KEY_CHILD] = membersAttrs;
+                        if (membersAttrs.size())
+                        {
+                            collectionAttr[SCENE_KEY_CHILD] = membersAttrs;
+                        }
 
                         childrenAttrs.push_back(collectionAttr);
                     });
