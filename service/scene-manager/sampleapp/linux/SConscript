@@ -40,10 +40,6 @@ if 'rt' in scenemanager_sample_env.get('LIBS'):
 # Source files and Targets
 ######################################################################
 sceneserver = scenemanager_sample_env.Program('sceneserver', 'sceneserver.cpp')
+sceneclient = scenemanager_sample_env.Program('sceneclient', 'sceneclient.cpp')
 fanserver = scenemanager_sample_env.Program('fanserver', 'fanserver.cpp')
 lightserver = scenemanager_sample_env.Program('lightserver', 'lightserver.cpp')
-#groupclient = scenemanager_sample_env.Program('groupclient', 'groupclient.cpp')
-
-#scenemanager_sample_env.InstallTarget(sampleprovider, 'sampleprovider')
-#scenemanager_sample_env.InstallTarget(sampleconsumer, 'sampleconsumer')
-#scenemanager_env.InstallTarget(samplescenemanager, 'samplescenemanager')
