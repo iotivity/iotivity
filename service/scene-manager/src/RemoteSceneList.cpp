@@ -144,7 +144,10 @@ namespace OIC
                                     collection.at(SCENE_KEY_ID).get< std::string >(),
                                     collection.at(SCENE_KEY_NAME).get< std::string >());
 
-                    newCollection->initializeRemoteSceneCollection(itr.second, host);
+                    newCollection->addExistingRemoteScenes(
+                        collection.at(SCENE_KEY_SCENEVALUES).get< std::vector< std::string > >());
+
+                    newCollection->initializeRemoteScenes(itr.second, host);
                 }
             }
             catch (const std::exception &e)
@@ -360,7 +363,7 @@ namespace OIC
                 });
 
                 collection->
-                    initializeRemoteSceneCollection(childrenAttr, host);
+                    initializeRemoteScenes(childrenAttr, host);
             }
             else
             {

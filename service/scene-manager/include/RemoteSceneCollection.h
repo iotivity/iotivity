@@ -68,7 +68,9 @@ namespace OIC
                     std::shared_ptr< SceneCollectionResourceRequestor >,
                     const std::string &id, const std::string &name);
 
-                void initializeRemoteSceneCollection(const std::vector< RCSResourceAttributes > &,
+                void addExistingRemoteScenes(const std::vector< std::string > &);
+
+                void initializeRemoteScenes(const std::vector< RCSResourceAttributes > &,
                                                      const std::string &);
 
                 RemoteScene::Ptr createRemoteSceneInstance(const std::string &);

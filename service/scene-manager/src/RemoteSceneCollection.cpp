@@ -47,7 +47,7 @@ namespace OIC
             {
                 throw RCSInvalidParameterException("Scene name is an empty string");
             }
-            
+
             SceneCollectionResourceRequestor::InternalSceneRequestCallback internalCB
                 = std::bind(&RemoteSceneCollection::onSceneAddedRemoved, this,
                             std::placeholders::_1, std::placeholders::_2,
@@ -100,7 +100,15 @@ namespace OIC
             return m_id;
         }
 
-        void RemoteSceneCollection::initializeRemoteSceneCollection(
+        void RemoteSceneCollection::addExistingRemoteScenes(const std::vector< std::string > &scenes)
+        {
+            for (const auto &scenename : scenes)
+            {
+                createRemoteSceneInstance(scenename);
+            }
+        }
+
+        void RemoteSceneCollection::initializeRemoteScenes(
             const std::vector< RCSResourceAttributes > &MemberReps, const std::string &host)
         {
             try
@@ -118,14 +126,9 @@ namespace OIC
                         RemoteScene::Ptr pRemoteScene = nullptr;
 
                         auto remoteScene = m_remoteScenes.find(sceneName);
-                        if (remoteScene == m_remoteScenes.end())
-                        {
-                            pRemoteScene = createRemoteSceneInstance(sceneName);
-                        }
-                        else
-                        {
-                            pRemoteScene = m_remoteScenes.at(sceneName);
-                        }
+                        if (remoteScene == m_remoteScenes.end()) return;
+
+                        pRemoteScene = m_remoteScenes.at(sceneName);
 
                         std::string targetHref
                             = attrs.at(SCENE_KEY_PAYLOAD_LINK).get< RCSResourceAttributes >().
@@ -155,7 +158,7 @@ namespace OIC
             RemoteScene::Ptr pNewRemoteScene(new RemoteScene(name, m_requestor));
 
             m_remoteScenes[name] = pNewRemoteScene;
-            
+
             return pNewRemoteScene;
         }
 
