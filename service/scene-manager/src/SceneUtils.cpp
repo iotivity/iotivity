@@ -81,7 +81,7 @@ namespace OIC
 
             if (size == 0)
             {
-                delete[] netInfo;
+                OICFree(netInfo);
                 throw RCSException("Disabled Network");
             }
 
@@ -92,12 +92,12 @@ namespace OIC
                     std::string retAddress
                         = std::string(netInfo[i]->addr) + ":" + std::to_string(netInfo[i]->port);
 
-                    delete[] netInfo;
+                    OICFree(netInfo);
                     return retAddress;
                 }
             }
 
-            delete[] netInfo;
+            OICFree(netInfo);
             throw RCSException("Not supported Network");
         }
 

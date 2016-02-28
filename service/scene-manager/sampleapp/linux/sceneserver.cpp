@@ -238,6 +238,10 @@ bool discoverResource()
     {
          std::cout << e.what() << std::endl;
     }
+    catch(const RCSException& e)
+    {
+        std::cout << e.what() << std::endl;
+    }
     std::unique_lock<std::mutex> lck(mtx);
 
     cond.wait_for(lck, std::chrono::seconds(4));
