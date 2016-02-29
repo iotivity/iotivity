@@ -127,8 +127,22 @@ namespace OIC
              */
             static RCSGetResponse create(RCSResourceAttributes&& attrs, int errorCode);
 
+            /**
+             * Creates a RCSGetResponse for the separate response.
+             * The separate response is to delay sending actual response to the client.
+             *
+             * @note A separate response needs to be set with RCSSeparateResponse
+             * to send the result of the request.
+             *
+             * @see RCSSeparateResponse
+             */
             static RCSGetResponse separate();
 
+            /**
+             * Returns whether it is a separate response.
+             *
+             * @see separate()
+             */
             bool isSeparate() const;
 
             //! @cond
@@ -294,8 +308,22 @@ namespace OIC
              */
             static RCSSetResponse create(RCSResourceAttributes&& attrs, int errorCode);
 
+            /**
+             * Creates a RCSSetResponse for a separate response.
+             * The separate response is to delay sending actual response to the client.
+             *
+             * @note A separate response needs to be set with RCSSeparateResponse
+             * to send the result of the request.
+             *
+             * @see RCSSeparateResponse
+             */
             static RCSSetResponse separate();
 
+            /**
+             * Returns whether it is a separate response.
+             *
+             * @see separate()
+             */
             bool isSeparate() const;
 
             //! @cond

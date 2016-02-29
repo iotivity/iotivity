@@ -20,20 +20,11 @@
 
 #include "UnitTestHelper.h"
 
-#include "RCSRequest.h"
 #include "RCSResponse.h"
 #include "RCSSeparateResponse.h"
-#include "RCSResourceObject.h"
-
-#include "RequestHandler.h"
-#include "ResourceAttributesConverter.h"
-
-#include "OCPlatform.h"
-
-using namespace std;
+#include "RCSException.h"
 
 using namespace OIC::Service;
-using namespace OC;
 
 TEST(RCSResponseTest, DefaultSetResponseHasDefaultMethod)
 {
