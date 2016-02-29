@@ -152,7 +152,7 @@ namespace OIC
 
             auto foundSceneValue
                 = std::find(sceneValues.begin(), sceneValues.end(), sceneName);
-            if (foundSceneValue == sceneValues.end() && executeCB)
+            if (foundSceneValue == sceneValues.end() && executeCB && !m_sceneMembers.size())
             {
                 std::thread(executeCB, SCENE_CLIENT_BADREQUEST).detach();
                 return;
