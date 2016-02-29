@@ -66,6 +66,8 @@ namespace OIC
         const std::string PREFIX_SCENE_COLLECTION_URI = "/a/sceneCollection";
         const std::string PREFIX_SCENE_MEMBER_URI = "/a/sceneMember";
 
+        const std::string LINK_BATCH = "oic.if.lb";
+
         const OCConnectivityType SCENE_CONNECTIVITY = CT_ADAPTER_IP;
         const std::string SCENE_CLIENT_REQ_IF = OC::DEFAULT_INTERFACE;
         const std::string SCENE_CLIENT_CREATE_REQ_IF = OC::BATCH_INTERFACE;

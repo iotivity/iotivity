@@ -112,7 +112,7 @@ namespace OIC
                             SceneCollectionResourceRequestor::wPtr(shared_from_this()));
 
             RCSQueryParams queryParams;
-            queryParams.setResourceInterface(SCENE_CLIENT_CREATE_REQ_IF);
+            queryParams.setResourceInterface(LINK_BATCH);
 
             m_sceneCollectionResource->set(queryParams, std::move(attributesToSet),
                                               std::move(setRequestCB));

@@ -34,8 +34,7 @@ namespace OIC
             std::atomic_int numOfSceneCollection(0);
         }
 
-        SceneCollectionResource::Ptr
-        SceneCollectionResource::createSceneCollectionObject()
+        SceneCollectionResource::Ptr SceneCollectionResource::createSceneCollectionObject()
         {
             SceneCollectionResource::Ptr sceneCollectionResource(new SceneCollectionResource());
 
@@ -49,6 +48,33 @@ namespace OIC
             sceneCollectionResource->initSetRequestHandler();
 
             sceneCollectionResource->m_address = SceneUtils::getNetAddress();
+
+            return sceneCollectionResource;
+        }
+
+        SceneCollectionResource::Ptr SceneCollectionResource::createSceneCollectionObject(
+                const RCSResourceAttributes & inputAttr)
+        {
+            auto sceneCollectionResource = SceneCollectionResource::createSceneCollectionObject();
+            if (inputAttr.contains(SCENE_KEY_NAME))
+            {
+                sceneCollectionResource->setName(inputAttr.at(SCENE_KEY_NAME).get<std::string>());
+            }
+
+            if (inputAttr.contains(SCENE_KEY_SCENEVALUES))
+            {
+                auto sceneValues = inputAttr.at(SCENE_KEY_SCENEVALUES).
+                        get<std::vector<std::string>>();
+                sceneCollectionResource->getRCSResourceObject()->setAttribute(
+                        SCENE_KEY_SCENEVALUES, sceneValues);
+            }
+
+            if (inputAttr.contains(SCENE_KEY_LAST_SCENE))
+            {
+                auto sceneValues = inputAttr.at(SCENE_KEY_LAST_SCENE).get<std::string>();
+                sceneCollectionResource->getRCSResourceObject()->setAttribute(
+                        SCENE_KEY_LAST_SCENE, sceneValues);
+            }
 
             return sceneCollectionResource;
         }
@@ -243,7 +269,7 @@ namespace OIC
         RCSSetResponse SceneCollectionResource::SceneCollectionRequestHandler::
         onSetRequest(const RCSRequest & request, RCSResourceAttributes & attributes)
         {
-            if (request.getInterface() == OC::BATCH_INTERFACE)
+            if (request.getInterface() == LINK_BATCH)
             {
                 return createSceneMemberRequest(request, attributes);
             }

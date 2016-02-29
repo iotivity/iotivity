@@ -119,15 +119,10 @@ namespace OIC
         RCSSetResponse SceneListResource::SceneListRequestHandler::onSetRequest(
                 const RCSRequest & request, RCSResourceAttributes & attributes)
         {
-            if(request.getInterface() == OC::BATCH_INTERFACE)
+            if(request.getInterface() == LINK_BATCH)
             {
                 auto newObject
-                    = SceneCollectionResource::createSceneCollectionObject();
-
-                if (attributes.contains(SCENE_KEY_NAME))
-                {
-                    newObject->setName(attributes.at(SCENE_KEY_NAME).get<std::string>());
-                }
+                    = SceneCollectionResource::createSceneCollectionObject(attributes);
 
                 SceneListResource::getInstance()->addSceneCollectionResource(newObject);
 

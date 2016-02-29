@@ -41,6 +41,8 @@ namespace OIC
             ~SceneCollectionResource() = default;
 
             static SceneCollectionResource::Ptr createSceneCollectionObject();
+            static SceneCollectionResource::Ptr createSceneCollectionObject(
+                    const RCSResourceAttributes &);
 
             void addScene(std::string &&);
             void addScene(const std::string &);
