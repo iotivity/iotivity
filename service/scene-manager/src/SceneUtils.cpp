@@ -76,6 +76,11 @@ namespace OIC
         {
             CAEndpoint_t ** netInfo = (CAEndpoint_t **)OICMalloc(sizeof(CAEndpoint_t*)*5);
 
+            if(netInfo == nullptr)
+            {
+                throw RCSException("memory allocation fail");
+            }
+
             uint32_t size = 0;
             CAGetNetworkInformation(netInfo, &size);
 
@@ -121,5 +126,6 @@ namespace OIC
                 throw RCSException("Fail to create RCSResourceObject");
             }
         }
+
     }
 }

@@ -169,7 +169,7 @@ void displayClear(Run runFunc)
     std::cin.ignore();
     if(std::cin.get() == '\n')
     {
-        auto ret = std::system("clear");
+        auto ret = std::system("/usr/bin/clear");
         if(ret == -1)
         {
             std::cout << "clear error!" << std::endl;

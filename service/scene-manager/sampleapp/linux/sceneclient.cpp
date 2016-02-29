@@ -226,7 +226,7 @@ void configurePlatform()
     OCPlatform::Configure(config);
 }
 
-int processUserInput(int min, int max)
+void processUserInput(int min, int max)
 {
     assert(min <= max);
 
@@ -237,7 +237,7 @@ int processUserInput(int min, int max)
     if (!std::cin.fail())
     {
         if (input == max + 1)  exit(0);
-        if (min <= input && input <= max) return input;
+        if (min <= input && input <= max) return;
     }
 
     std::cin.clear();
@@ -253,8 +253,15 @@ void excecuteCommand(std::string str, Run runFunc)
     std::cout << "2. Quit         \n";
     std::cout << "========================================================  \n";
 
-    processUserInput(1, numMenu);
-    runFunc();
+    try
+    {
+        processUserInput(1, numMenu);
+        runFunc();
+    }
+    catch(std::exception & e)
+    {
+        std::cout << e.what() << std::endl;
+    }
 }
 
 void runMenu(Menu menu)
@@ -397,9 +404,25 @@ int main()
 {
     configurePlatform();
 
-    discoverResource();
+    try
+    {
+        discoverResource();
+    }
+    catch(std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
+        return 0;
+    }
 
-    runMenu(CREATE_REMOTE_SCENE_LIST);
+    try
+    {
+        runMenu(CREATE_REMOTE_SCENE_LIST);
+    }
+    catch(std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
+        return 0;
+    }
 
     while (true) { }
 
