@@ -750,8 +750,8 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
     }
 
     ca_mutex_unlock(g_threadSendMutex);
-    OIC_LOG(INFO, TAG, "unicast - send success");
-    return CA_STATUS_OK;
+    OIC_LOG(INFO, TAG, "unicast - send logic has finished");
+    return CALECheckSendState(address);
 
     // error label.
 error_exit:
@@ -918,6 +918,8 @@ CAResult_t CALECheckSendState(const char* address)
         ca_mutex_unlock(g_deviceStateListMutex);
         return CA_SEND_FAILED;
     }
+
+    OIC_LOG(INFO, TAG, "sendstate is STATE_SEND_SUCCESS");
     ca_mutex_unlock(g_deviceStateListMutex);
     return CA_STATUS_OK;
 }
