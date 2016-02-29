@@ -57,9 +57,6 @@ public class EasySetupService {
 
     static {
         // Load Easy Setup JNI interface
-        System.loadLibrary("gnustl_shared");
-        System.loadLibrary("octbstack");
-        System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("ESMediatorRich");
         System.loadLibrary("easysetup-jni");
     }

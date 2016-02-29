@@ -85,6 +85,15 @@
 
     </LinearLayout>
 
+    <RadioButton
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:text="Enable Security"
+        android:id="@+id/enablesecurity"
+        android:textStyle="bold"
+        android:layout_gravity="center_horizontal"
+        android:checked="false"/>
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

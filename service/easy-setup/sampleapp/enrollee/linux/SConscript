@@ -56,6 +56,8 @@ enrollee_env.PrependUnique(CPPPATH = [
         env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
 
 enrollee_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'ocsrm', 'pthread', 'connectivity_abstraction','coap', 'ESEnrolleeSDK'])
+if enrollee_env.get('SECURED') == '1':
+	enrollee_env.PrependUnique(LIBS = ['ocpmapi', 'ocprovision'])
 
 enrollee = enrollee_env.Program('enrollee', 'enrolleewifi.cpp')
 

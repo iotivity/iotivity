@@ -62,30 +62,36 @@ easy_setup_env.AppendUnique(CPPPATH = ['inc', 'src', '../../inc'])
 if target_os not in ['windows', 'winrt']:
     easy_setup_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
 
-if target_os == 'linux':
+if target_os in ['linux']:
    easy_setup_env.AppendUnique(LIBS = ['pthread', 'dl'])
 
 if target_os in ['android']:
 	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+	if env.get('SECURED') == '1':
+		easy_setup_env.AppendUnique(LIBPATH = [env.get('SRC_DIR')+'/android/android_api/base/libs/armeabi'])
 	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'gnustl_shared'])
+	if env.get('SECURED') == '1':
+		easy_setup_env.AppendUnique(LIBS = ['ocpmapi','ocprovision'])
 	if not env.get('RELEASE'):
 		easy_setup_env.AppendUnique(LIBS = ['log'])
 
-if target_os == 'linux':
+if target_os in ['linux']:
 	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(CXXFLAGS = ['-pthread'])
 	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'pthread', 'connectivity_abstraction'])
+	if env.get('SECURED') == '1':
+		easy_setup_env.AppendUnique(LIBS = ['ocpmapi', 'ocprovision'])
 
 if target_os in ['android','linux']:
 	easy_setup_env.PrependUnique(CPPPATH = [
 		env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',
 		env.get('SRC_DIR') + '/resource/include',
 		env.get('SRC_DIR') + '/resource/csdk/logger/include',
-        env.get('SRC_DIR') + '/resource/csdk/stack/include',
-        env.get('SRC_DIR') + '/resource/csdk/logger/include',
+        	env.get('SRC_DIR') + '/resource/csdk/stack/include',
+        	env.get('SRC_DIR') + '/resource/csdk/logger/include',
 		env.get('SRC_DIR') + '/resource/csdk/security/include',
 		env.get('SRC_DIR') + '/extlibs/cjson',
 		env.get('SRC_DIR') + '/extlibs/sqlite3',
@@ -96,8 +102,6 @@ if target_os in ['android','linux']:
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
 	                env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm'])
-		easy_setup_env.PrependUnique(LIBS = ['ocprovision', 'ocpmapi'])
-
 
 ######################################################################
 # Source files and Targets

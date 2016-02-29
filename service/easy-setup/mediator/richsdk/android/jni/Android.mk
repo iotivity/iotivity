@@ -2,14 +2,8 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../../../out/android/$(TARGET_ARCH_ABI)/debug
-LOCAL_MODULE := android-octbstack
-LOCAL_SRC_FILES := $(OIC_LIB_PATH)/liboctbstack.so
-include $(PREBUILT_SHARED_LIBRARY)
-
-include $(CLEAR_VARS)
-OIC_LIB_PATH := ../../../../../../out/android/$(TARGET_ARCH_ABI)/debug
-LOCAL_MODULE := android-connectivity_abstraction
-LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libconnectivity_abstraction.so
+LOCAL_MODULE := android-oc
+LOCAL_SRC_FILES := $(OIC_LIB_PATH)/liboc.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -59,8 +53,8 @@ LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/*.cpp
 LOCAL_SRC_FILES += $(patsubst $(LOCAL_PATH)/%, %, $(wildcard $(LOCAL_PATH)/*.h))
 
 LOCAL_LDLIBS := -llog
-LOCAL_SHARED_LIBRARIES += android-connectivity_abstraction
-LOCAL_SHARED_LIBRARIES += android-octbstack
+#LOCAL_SHARED_LIBRARIES += android-connectivity_abstraction
+LOCAL_SHARED_LIBRARIES += android-oc
 LOCAL_SHARED_LIBRARIES += android-easysetup
 
 include $(BUILD_SHARED_LIBRARY)

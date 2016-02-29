@@ -22,18 +22,12 @@
 
 package org.iotivity.service.easysetup;
 
-import org.iotivity.service.easysetup.mediator.EasySetupService;
-import org.iotivity.service.easysetup.mediator.EasySetupStatus;
-import org.iotivity.service.easysetup.mediator.EnrolleeDevice;
-import org.iotivity.service.easysetup.mediator.IpOnBoardingConnection;
-import org.iotivity.service.easysetup.mediator.EnrolleeDeviceFactory;
-import org.iotivity.service.easysetup.mediator.WiFiOnBoardingConfig;
-import org.iotivity.service.easysetup.mediator.WiFiProvConfig;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiConfiguration;
@@ -41,6 +35,7 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -53,12 +48,45 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.iotivity.base.ModeType;
+import org.iotivity.base.OcException;
+import org.iotivity.base.OcPlatform;
+import org.iotivity.base.OcProvisioning;
+import org.iotivity.base.PlatformConfig;
+import org.iotivity.base.QualityOfService;
+import org.iotivity.base.ServiceType;
+import org.iotivity.service.easysetup.mediator.EasySetupService;
+import org.iotivity.service.easysetup.mediator.EasySetupStatus;
+import org.iotivity.service.easysetup.mediator.EnrolleeDevice;
+import org.iotivity.service.easysetup.mediator.IpOnBoardingConnection;
+import org.iotivity.service.easysetup.mediator.EnrolleeDeviceFactory;
+import org.iotivity.service.easysetup.mediator.WiFiOnBoardingConfig;
+import org.iotivity.service.easysetup.mediator.WiFiProvConfig;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+
 public class MainActivity extends Activity {
+    private static final String TAG = "Easysetup Mediator: ";
 
     /* Status to update the UI */
     public static final int SUCCESS       = 0;
     public static final int FAILED        = 1;
     public static final int STATE_CHANGED = 2;
+
+    public static final String OIC_CLIENT_JSON_DB_FILE =  "oic_svr_db_client.json";
+    public static final String OIC_SQL_DB_FILE =  "PDM.db";
+
+    private static final int BUFFER_SIZE = 1024;
+    private String filePath = "";
+    //create platform config
+    PlatformConfig cfg;
+
 
     String                  mSoftAPSsid;
     String                  mSoftAPPassword;
@@ -81,6 +109,7 @@ public class MainActivity extends Activity {
 
     RadioButton             mEnrollee;
     RadioButton             mMediator;
+    RadioButton             mEnableSecurity;
 
     LinearLayout            mSoftAP;
     RelativeLayout          mDeviceInfo;
@@ -122,6 +151,7 @@ public class MainActivity extends Activity {
 
         mEnrollee = (RadioButton) findViewById(R.id.enrollee);
         mMediator = (RadioButton) findViewById(R.id.mediator);
+        mEnableSecurity = (RadioButton) findViewById(R.id.enablesecurity);
 
         mStartButton = (Button) findViewById(R.id.startSetup);
 
@@ -132,6 +162,7 @@ public class MainActivity extends Activity {
         /* Create EnrolleeDevice Factory instance */
         mDeviceFactory = EnrolleeDeviceFactory
                 .newInstance(getApplicationContext());
+
         addListenerForStartAP();
         addListenerForStopAP();
 
@@ -155,7 +186,7 @@ public class MainActivity extends Activity {
                         .setPositiveButton("Yes",
                                 new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog,
-                                            int id) {
+                                                        int id) {
                                         MainActivity.this
                                                 .startActivity(new Intent(
                                                         WifiManager.ACTION_PICK_WIFI_NETWORK));
@@ -171,7 +202,7 @@ public class MainActivity extends Activity {
                         .setNegativeButton("No",
                                 new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog,
-                                            int id) {
+                                                        int id) {
                                         mEnrollee.setChecked(false);
                                         mStartButton.setEnabled(false);
                                         dialog.cancel();
@@ -199,6 +230,25 @@ public class MainActivity extends Activity {
             }
         });
 
+        mEnableSecurity.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                filePath = getFilesDir().getPath() + "/";
+
+                //copy json when application runs first time
+                SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences
+                        (getApplicationContext());
+                boolean isFirstRun = wmbPreference.getBoolean("FIRSTRUN", true);
+                if (isFirstRun) {
+                    copyJsonFromAsset();
+                    SharedPreferences.Editor editor = wmbPreference.edit();
+                    editor.putBoolean("FIRSTRUN", false);
+                    editor.commit();
+                }
+
+                initOICStack();
+            }
+        });
         /* Create Easy Setup Service instance */
         mEasySetupService = EasySetupService.getInstance(
                 getApplicationContext(), new EasySetupStatus() {
@@ -221,6 +271,90 @@ public class MainActivity extends Activity {
                     }
                 });
     }
+
+    /**
+     * configure OIC platform and call findResource
+     */
+    private void initOICStack() {
+        cfg = new PlatformConfig(
+                this,
+                ServiceType.IN_PROC,
+                ModeType.CLIENT_SERVER,
+                "0.0.0.0", // bind to all available interfaces
+                0,
+                QualityOfService.LOW, filePath + OIC_CLIENT_JSON_DB_FILE);
+        OcPlatform.Configure(cfg);
+        try {
+            /*
+             * Initialize DataBase
+             */
+            String sqlDbPath = getFilesDir().getAbsolutePath().replace("files", "databases") +
+                    File.separator;
+            File file = new File(sqlDbPath);
+            //check files directory exists
+            if (!(file.isDirectory())) {
+                file.mkdirs();
+                Log.d(TAG, "Sql db directory created at " + sqlDbPath);
+            }
+            Log.d(TAG, "Sql db directory exists at " + sqlDbPath);
+
+            //SQLiteDatabase.openOrCreateDatabase(sqlDbPath+ OIC_SQL_DB_FILE, null);
+            OcProvisioning.provisionInit(sqlDbPath + OIC_SQL_DB_FILE);
+        } catch (OcException e) {
+            logMessage(TAG + "provisionInit error: " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        }
+    }
+    /**
+     * Copy svr db json file from assets folder to app data files dir
+     */
+    private void copyJsonFromAsset() {
+        InputStream inputStream = null;
+        OutputStream outputStream = null;
+        int length;
+        byte[] buffer = new byte[BUFFER_SIZE];
+        try {
+            inputStream = getAssets().open(OIC_CLIENT_JSON_DB_FILE);
+            File file = new File(filePath);
+            //check files directory exists
+            if (!(file.exists() && file.isDirectory())) {
+                file.mkdirs();
+            }
+            outputStream = new FileOutputStream(filePath + OIC_CLIENT_JSON_DB_FILE);
+            while ((length = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, length);
+            }
+        } catch (NullPointerException e) {
+            logMessage(TAG + "Null pointer exception " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        } catch (FileNotFoundException e) {
+            logMessage(TAG + "Json svr db file not found " + e.getMessage());
+            Log.e(TAG, e.getMessage());
+        } catch (IOException e) {
+            logMessage(TAG + OIC_CLIENT_JSON_DB_FILE + " file copy failed");
+            Log.e(TAG, e.getMessage());
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+        }
+    }
+
+    public void logMessage(String text) {
+
+    }
+
 
     public void onDestroy() {
         super.onDestroy();
@@ -248,6 +382,7 @@ public class MainActivity extends Activity {
 
                         mWiFiProvConfig = new WiFiProvConfig(mEnrollerSsid,
                                 mEnrollerPassword);
+                        mWiFiProvConfig.setSecured(true);
                         mDevice = mDeviceFactory
                                 .newEnrolleeDevice(mWiFiProvConfig);
                             Thread thread = new Thread() {
@@ -270,6 +405,7 @@ public class MainActivity extends Activity {
 
                         mWiFiProvConfig = new WiFiProvConfig(mEnrollerSsid,
                                 mEnrollerPassword);
+                        mWiFiProvConfig.setSecured(true);
                         mWiFiOnBoardingConfig = new WiFiOnBoardingConfig();
 
                         /*

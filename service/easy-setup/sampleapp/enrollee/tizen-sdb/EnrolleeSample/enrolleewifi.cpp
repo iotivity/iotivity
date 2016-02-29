@@ -50,6 +50,9 @@ static char passwd[] = "EasySetup123";
  */
 static char CRED_FILE[] = "oic_svr_db_server.json";
 
+OCPersistentStorage ps ;
+
+
 /**
  * @var gIsSecured
  * @brief Variable to check if secure mode is enabled or not.
@@ -59,8 +62,8 @@ static bool gIsSecured = false;
 void PrintMenu()
 {
     cout<<"============"<<endl;
-    cout<<"I: Init easy setup"<<endl;
     cout<<"S: Enabled Security"<<endl;
+    cout<<"I: Init easy setup"<<endl;
     cout<<"P: start provisioning resources"<<endl;
     cout<<"T: terminate"<<endl;
     cout<<"Q: quit"<<endl;
@@ -111,7 +114,7 @@ void EnableSecurity()
     gIsSecured = true;
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = { server_fopen, fread, fwrite, fclose, unlink };
+    ps = { server_fopen, fread, fwrite, fclose, unlink };
     OCRegisterPersistentStorageHandler(&ps);
 }
 
@@ -123,12 +126,6 @@ void StartEasySetup()
     {
         cout<<"StartEasySetup and onboarding Fail!!"<<endl;
         return;
-    }
-
-    pthread_t thread_handle;
-    if (pthread_create(&thread_handle, NULL, listeningFunc, NULL))
-    {
-        cout<<"Thread creation failed"<<endl;
     }
 }
 
@@ -147,6 +144,12 @@ void StartOICStackAndStartResources()
     {
         cout<<"Init Provisioning Failed!!"<<endl;
         return;
+    }
+
+    pthread_t thread_handle;
+    if (pthread_create(&thread_handle, NULL, listeningFunc, NULL))
+    {
+        cout<<"Thread creation failed"<<endl;
     }
 
     cout<<"InitProvisioning Success"<<endl;
@@ -195,14 +198,14 @@ int main()
                 cout<<"quit";
                 break;
 
-            case 'I': // Init EasySetup
-            case 'i':
-                StartEasySetup();
-                break;
-
             case 'S': // Enable Security
             case 's':
                 EnableSecurity();
+                break;
+
+            case 'I': // Init EasySetup
+            case 'i':
+                StartEasySetup();
                 break;
 
             case 'P': // start provisioning
