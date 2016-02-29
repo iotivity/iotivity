@@ -394,6 +394,123 @@ static void CAReceiveThreadProcess(void *threadData)
 }
 #endif // SINGLE_THREAD
 
+static CAResult_t CAProcessMulticastData(const CAData_t *data)
+{
+    VERIFY_NON_NULL(data, TAG, "data");
+    VERIFY_NON_NULL(data->remoteEndpoint, TAG, "remoteEndpoint");
+
+    CAResult_t res = CA_STATUS_FAILED;
+
+    coap_pdu_t *pdu = NULL;
+    CAInfo_t *info = NULL;
+    coap_list_t *options = NULL;
+    coap_transport_type transport;
+    if (NULL != data->requestInfo)
+    {
+        OIC_LOG(DEBUG, TAG, "requestInfo is available..");
+
+        info = &data->requestInfo->info;
+        pdu = CAGeneratePDU(CA_GET, info, data->remoteEndpoint, &options, &transport);
+
+        if (NULL != pdu)
+        {
+#ifdef WITH_BWT
+            if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
+#ifdef WITH_TCP
+                    && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
+#endif
+                    )
+            {
+                // Blockwise transfer
+                CAResult_t res = CAAddBlockOption(&pdu, info,
+                                                  data->remoteEndpoint,
+                                                  &options);
+                if (CA_STATUS_OK != res)
+                {
+                    OIC_LOG(DEBUG, TAG, "CAAddBlockOption has failed");
+                    CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+                    coap_delete_list(options);
+                    coap_delete_pdu(pdu);
+                    return res;
+                }
+            }
+#endif // WITH_BWT
+        }
+        else
+        {
+            OIC_LOG(ERROR,TAG,"Failed to generate multicast PDU");
+            CASendErrorInfo(data->remoteEndpoint, info, CA_SEND_FAILED);
+            return CA_SEND_FAILED;
+        }
+    }
+    else if (NULL != data->responseInfo)
+    {
+        OIC_LOG(DEBUG, TAG, "responseInfo is available..");
+
+        info = &data->responseInfo->info;
+        pdu = CAGeneratePDU(data->responseInfo->result, info, data->remoteEndpoint,
+                            &options, &transport);
+
+        if (NULL != pdu)
+        {
+#ifdef WITH_BWT
+            if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
+#ifdef WITH_TCP
+                    && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
+#endif
+                    )
+            {
+                // Blockwise transfer
+                if (NULL != info)
+                {
+                    CAResult_t res = CAAddBlockOption(&pdu, info,
+                                                      data->remoteEndpoint,
+                                                      &options);
+                    if (CA_STATUS_OK != res)
+                    {
+                        OIC_LOG(INFO, TAG, "to write block option has failed");
+                        CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+                        coap_delete_list(options);
+                        coap_delete_pdu(pdu);
+                        return res;
+                    }
+                }
+            }
+#endif // WITH_BWT
+        }
+        else
+        {
+            OIC_LOG(ERROR,TAG,"Failed to generate multicast PDU");
+            CASendErrorInfo(data->remoteEndpoint, info, CA_SEND_FAILED);
+            return CA_SEND_FAILED;
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "request or response info is empty");
+        return CA_SEND_FAILED;
+    }
+
+    CALogPDUInfo(pdu, data->remoteEndpoint);
+
+    OIC_LOG(DEBUG, TAG, "pdu to send :");
+    OIC_LOG_BUFFER(DEBUG, TAG,  (uint8_t*)pdu->hdr, pdu->length);
+
+    res = CASendMulticastData(data->remoteEndpoint, pdu->hdr, pdu->length);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
+        CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
+        coap_delete_list(options);
+        coap_delete_pdu(pdu);
+        return res;
+    }
+
+    coap_delete_list(options);
+    coap_delete_pdu(pdu);
+    return CA_STATUS_OK;
+}
+
 static CAResult_t CAProcessSendData(const CAData_t *data)
 {
     VERIFY_NON_NULL(data, TAG, "data");
@@ -523,109 +640,29 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
     else if (SEND_TYPE_MULTICAST == type)
     {
         OIC_LOG(DEBUG,TAG,"Multicast message");
-        if (NULL != data->requestInfo)
-        {
-            OIC_LOG(DEBUG, TAG, "requestInfo is available..");
-
-            info = &data->requestInfo->info;
-            pdu = CAGeneratePDU(CA_GET, info, data->remoteEndpoint, &options, &transport);
-
-            if (NULL != pdu)
-            {
-#ifdef WITH_BWT
-                if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
 #ifdef WITH_TCP
-                        && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
-#endif
-                        )
-                {
-                    // Blockwise transfer
-                    CAResult_t res = CAAddBlockOption(&pdu, info,
-                                                      data->remoteEndpoint,
-                                                      &options);
-                    if (CA_STATUS_OK != res)
-                    {
-                        OIC_LOG(DEBUG, TAG, "CAAddBlockOption has failed");
-                        CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
-                        coap_delete_list(options);
-                        coap_delete_pdu(pdu);
-                        return res;
-                    }
-                }
-#endif // WITH_BWT
-            }
-            else
-            {
-                OIC_LOG(ERROR,TAG,"Failed to generate multicast PDU");
-                CASendErrorInfo(data->remoteEndpoint, info, CA_SEND_FAILED);
-                return CA_SEND_FAILED;
-            }
-        }
-        else if (NULL != data->responseInfo)
+        /*
+         * If CoAP over TCP is enabled, the CoAP pdu wont be same for IP and other adapters.
+         * That's why we need to generate two pdu's, one for IP and second for other transports.
+         * Two possible cases we might have to split: a) when adapter is CA_DEFAULT_ADAPTER
+         * b) when one of the adapter is IP adapter(ex: CA_ADAPTER_IP | CA_ADAPTER_GATT_BTLE)
+         */
+        if (data->remoteEndpoint->adapter == CA_DEFAULT_ADAPTER ||
+                (CA_ADAPTER_IP & data->remoteEndpoint->adapter &&
+                    CA_ADAPTER_IP != data->remoteEndpoint->adapter))
         {
-            OIC_LOG(DEBUG, TAG, "responseInfo is available..");
-
-            info = &data->responseInfo->info;
-            pdu = CAGeneratePDU(data->responseInfo->result, info, data->remoteEndpoint,
-                                &options, &transport);
-
-            if (NULL != pdu)
-            {
-#ifdef WITH_BWT
-                if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
-#ifdef WITH_TCP
-                        && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
-#endif
-                        )
-                {
-                    // Blockwise transfer
-                    if (NULL != info)
-                    {
-                        CAResult_t res = CAAddBlockOption(&pdu, info,
-                                                          data->remoteEndpoint,
-                                                          &options);
-                        if (CA_STATUS_OK != res)
-                        {
-                            OIC_LOG(INFO, TAG, "to write block option has failed");
-                            CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
-                            coap_delete_list(options);
-                            coap_delete_pdu(pdu);
-                            return res;
-                        }
-                    }
-                }
-#endif // WITH_BWT
-            }
-            else
-            {
-                OIC_LOG(ERROR,TAG,"Failed to generate multicast PDU");
-                CASendErrorInfo(data->remoteEndpoint, info, CA_SEND_FAILED);
-                return CA_SEND_FAILED;
-            }
+            data->remoteEndpoint->adapter = data->remoteEndpoint->adapter ^ CA_ADAPTER_IP;
+            CAProcessMulticastData(data);
+            data->remoteEndpoint->adapter = CA_ADAPTER_IP;
+            CAProcessMulticastData(data);
         }
         else
         {
-            OIC_LOG(ERROR, TAG, "request or response info is empty");
-            return CA_SEND_FAILED;
+            CAProcessMulticastData(data);
         }
-
-        CALogPDUInfo(pdu, data->remoteEndpoint);
-
-        OIC_LOG(DEBUG, TAG, "pdu to send :");
-        OIC_LOG_BUFFER(DEBUG, TAG,  (uint8_t*)pdu->hdr, pdu->length);
-
-        res = CASendMulticastData(data->remoteEndpoint, pdu->hdr, pdu->length);
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG_V(ERROR, TAG, "send failed:%d", res);
-            CAErrorHandler(data->remoteEndpoint, pdu->hdr, pdu->length, res);
-            coap_delete_list(options);
-            coap_delete_pdu(pdu);
-            return res;
-        }
-
-        coap_delete_list(options);
-        coap_delete_pdu(pdu);
+#else
+        CAProcessMulticastData(data);
+#endif
     }
 
     return CA_STATUS_OK;

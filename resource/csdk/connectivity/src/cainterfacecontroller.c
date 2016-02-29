@@ -416,7 +416,7 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
         return CA_SEND_FAILED;
     }
 
-    CATransportFlags_t requestedAdapter = endpoint->adapter ? endpoint->adapter : CA_ALL_ADAPTERS;
+    CATransportAdapter_t requestedAdapter = endpoint->adapter ? endpoint->adapter : CA_ALL_ADAPTERS;
     size_t selectedLength = u_arraylist_length(list);
     for (size_t i = 0; i < selectedLength; i++)
     {
