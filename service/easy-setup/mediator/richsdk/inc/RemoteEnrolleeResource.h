@@ -24,7 +24,7 @@
 #include <mutex>
 #include <memory>
 
-#include "esrichcommon.h"
+#include "ESRichCommon.h"
 
 #include "OCApi.h"
 

@@ -18,12 +18,14 @@
  *
  ******************************************************************/
 
+#include "networkhandler.h"
+
 #include <wifi.h>
 #include <unistd.h>
 
 #include "logger.h"
 #include "easysetup.h"
-#include "networkhandler.h"
+#include "oic_string.h"
 
 #define LOG_TAG "TIZEN ES"
 
@@ -167,7 +169,7 @@ ESResult getCurrentNetworkInfo(OCConnectivityType targetType, NetworkInfo *info)
         info->ipaddr = gIpAddress;
         if (strlen(gSsid) <= MAXSSIDLEN)
         {
-            strcpy(info->ssid, gSsid);
+            OICStrcpy(info->ssid, sizeof(info->ssid), gSsid);
             return ES_OK;
         }
         else

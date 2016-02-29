@@ -174,15 +174,6 @@ ESResult TerminateEasySetup()
         return ES_ERROR;
     }
 
-    //Delete Prov resource
-#ifdef ESWIFI
-    if (DeleteNetworkResource() != OC_STACK_OK)
-    {
-        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "Deleting prov resource error!!");
-        return ES_ERROR;
-    }
-#endif
-
     OIC_LOG(ERROR, ES_ENROLLEE_TAG, "TerminateEasySetup success");
     return ES_OK;
 }
@@ -196,14 +187,6 @@ ESResult InitProvisioning()
         OIC_LOG(ERROR, ES_ENROLLEE_TAG, "CreateProvisioningResource error");
         return ES_ERROR;
     }
-
-#ifdef ESWIFI
-    if (CreateNetworkResource() != OC_STACK_OK)
-    {
-        OIC_LOG(ERROR, ES_ENROLLEE_TAG, "CreateNetworkResource error");
-        return ES_ERROR;
-    }
-#endif
 
     RegisterResourceEventCallBack(ProvisioningCallback);
 

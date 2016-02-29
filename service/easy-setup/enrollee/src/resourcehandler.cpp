@@ -19,8 +19,11 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "resourcehandler.h"
-#include "ocpayload.h"
 
+#include <stdio.h>
+
+#include "ocpayload.h"
+#include "oic_string.h"
 
 /**
  * @var ES_RH_TAG
@@ -78,8 +81,8 @@ void GetTargetNetworkInfoFromProvResource(char *name, char *pass)
 {
     if (name != NULL && pass != NULL)
     {
-        sprintf(name, "%s", gProvResource.tnn);
-        sprintf(pass, "%s", gProvResource.cd);
+        OICStrcpy(name, sizeof(name), gProvResource.tnn);
+        OICStrcpy(pass, sizeof(pass), gProvResource.cd);
     }
 }
 
@@ -88,8 +91,8 @@ OCStackResult CreateProvisioningResource(bool isSecured)
     gProvResource.ps = ES_PS_NEED_PROVISIONING;
 
     gProvResource.tnt = CT_ADAPTER_IP;
-    sprintf(gProvResource.tnn, "Unknown");
-    sprintf(gProvResource.cd, "Unknown");
+    OICStrcpy(gProvResource.tnn, sizeof(gProvResource.tnn),"Unknown");
+    OICStrcpy(gProvResource.cd, sizeof(gProvResource.cd), "Unknown");
 
     OCStackResult res = OC_STACK_ERROR;
     if (isSecured)
@@ -125,55 +128,6 @@ OCStackResult DeleteProvisioningResource()
 
     return res;
 }
-
-#ifdef ESWIFI
-OCStackResult CreateNetworkResource()
-{
-    NetworkInfo netInfo;
-
-    if (getCurrentNetworkInfo(CT_ADAPTER_IP, &netInfo) != ES_OK)
-    {
-        return OC_STACK_ERROR;
-    }
-
-    if (netInfo.type != CT_ADAPTER_IP)
-    {
-        return OC_STACK_ERROR;
-    }
-
-    gNetResource.cnt = (int) netInfo.type;
-    gNetResource.ant[0] = (int) CT_ADAPTER_IP;
-
-    if(netInfo.ipaddr != NULL)
-    {
-        sprintf(gNetResource.ipaddr, "%d.%d.%d.%d", netInfo.ipaddr[0], netInfo.ipaddr[1],
-                                            netInfo.ipaddr[2], netInfo.ipaddr[3]);
-    }
-    sprintf(gNetResource.cnn, "%s", netInfo.ssid);
-
-    OIC_LOG_V(INFO, ES_RH_TAG, "SSID: %s", gNetResource.cnn);
-    OIC_LOG_V(INFO, ES_RH_TAG, "IP Address: %s", gNetResource.ipaddr);
-
-    OCStackResult res = OCCreateResource(&gNetResource.handle, "oic.r.net", OC_RSRVD_INTERFACE_DEFAULT,
-            OC_RSRVD_ES_URI_NET, OCEntityHandlerCb,NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
-
-    OIC_LOG_V(INFO, ES_RH_TAG, "Created Net resource with result: %s", getResult(res));
-
-    return res;
-}
-
-OCStackResult DeleteNetworkResource()
-{
-    OCStackResult res = OCDeleteResource(gNetResource.handle);
-    if (res != OC_STACK_OK)
-    {
-        OIC_LOG_V(INFO, ES_RH_TAG, "Deleting Network resource error with result: %s",
-                                                                            getResult(res));
-    }
-
-    return res;
-}
-#endif
 
 OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
                                                 OCRepPayload **payload)
@@ -235,24 +189,24 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
     // PUT request is appropriate for provisioning information to the enrollee.
     // When an enrollee receives the put request, the entire resource information should
     // be overwritten.
-    sprintf(gProvResource.tnn, "%s", "");
-    sprintf(gProvResource.tnn, "%s", "");
+    OICStrcpy(gProvResource.tnn, sizeof(gProvResource.tnn), "");
+    OICStrcpy(gProvResource.cd, sizeof(gProvResource.cd), "");
 
     char* tnn;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_TNN, &tnn))
     {
-        sprintf(gProvResource.tnn, "%s", tnn);
+        OICStrcpy(gProvResource.tnn, sizeof(gProvResource.tnn), tnn);
         OIC_LOG(INFO, ES_RH_TAG, "got ssid");
     }
 
-	OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.tnn %s", gProvResource.tnn);
+    OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.tnn %s", gProvResource.tnn);
     char* cd;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd))
     {
-        sprintf(gProvResource.cd, "%s", cd);
+        OICStrcpy(gProvResource.cd, sizeof(gProvResource.cd), cd);
         OIC_LOG(INFO, ES_RH_TAG, "got password");
     }
-	OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.cd %s", gProvResource.cd);
+    OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.cd %s", gProvResource.cd);
     gProvResource.ps = 2;
     OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.ps %d", gProvResource.ps);
     g_flag = 1;

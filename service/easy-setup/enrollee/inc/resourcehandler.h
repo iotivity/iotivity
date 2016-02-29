@@ -54,12 +54,6 @@ typedef struct NETRESOURCE
 
 OCStackResult CreateProvisioningResource(bool isSecured);
 OCStackResult DeleteProvisioningResource();
-OCStackResult DeleteNetworkResource();
-
-//created only for in case of wifi
-#ifdef ESWIFI
-OCStackResult CreateNetworkResource();
-#endif
 
 void GetTargetNetworkInfoFromProvResource(char *, char *);
 void RegisterResourceEventCallBack(ResourceEventCallback);

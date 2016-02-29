@@ -28,7 +28,7 @@
 #define __JNI_ES_REMOTEENROLLEE_H
 
 #include "RemoteEnrollee.h"
-#include "esrichcommon.h"
+#include "ESRichCommon.h"
 #include "ESException.h"
 
 #include "JniJvm.h"

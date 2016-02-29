@@ -18,11 +18,13 @@
  *
  ******************************************************************/
 
+#include "networkhandler.h"
+
 #include <unistd.h>
 
 #include "logger.h"
 #include "easysetup.h"
-#include "networkhandler.h"
+#include "oic_string.h"
 
 #define LOG_TAG "TIZEN ES"
 
@@ -30,8 +32,11 @@ const char *gSsid = "DLNA_LISMORE1";
 const char *gPass = "dlna@010203";
 char *gIpAddress;
 NetworkEventCallback gNetworkEventCb;
-static void ESActivateWifi();
 
+/*
+ * All the functions defined in this file are stub functions to be implemented by the end user of
+ * Easysetup Enrollee applications.
+ */
 static void ESActivateWifi()
 {
 
@@ -60,7 +65,7 @@ ESResult getCurrentNetworkInfo(OCConnectivityType targetType, NetworkInfo *info)
         info->ipaddr = gIpAddress;
         if (strlen(gSsid) <= MAXSSIDLEN)
         {
-            strcpy(info->ssid, gSsid);
+            OICStrcpy(info->ssid, sizeof(info->ssid), gSsid);
             return ES_OK;
         }
         else

@@ -30,7 +30,7 @@
 #include <jni.h>
 #include <string>
 
-#include "esrichcommon.h"
+#include "ESRichCommon.h"
 #include "octypes.h"
 
 #include "JniJvm.h"

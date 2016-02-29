@@ -26,7 +26,7 @@
 #include "oic_string.h"
 #include "logger.h"
 
-#include "prov_adapter.h"
+#include "provisioningapi.h"
 #include "provisioning.h"
 #include "escommon.h"
 

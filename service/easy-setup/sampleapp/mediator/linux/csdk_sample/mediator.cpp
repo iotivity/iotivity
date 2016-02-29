@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <sstream>
 
-#include "prov_adapter.h"
+#include "provisioningapi.h"
 #include "logger.h"
 
 #define ES_MEDIATOR_TAG "easysetupsample"

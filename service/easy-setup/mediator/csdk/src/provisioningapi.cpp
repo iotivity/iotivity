@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <sstream>
 
-#include "prov_adapter.h"
+#include "provisioningapi.h"
 #include "oic_string.h"
 
 

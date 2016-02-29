@@ -149,10 +149,12 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* /*ctx*/, OCDoHandle /*h
             if (!strcmp(tnn, gProvConfig->provData.WIFI.ssid)) {
                 OIC_LOG_V(DEBUG, ES_PROV_TAG, "SSID is proper");
                 input = input->next;
+                OICFree(tnn);
                 continue;
             }
             else {
                 OIC_LOG_V(DEBUG, ES_PROV_TAG, "SSID is NOT proper");
+                OICFree(tnn);
                 goto Error;
             }
         }
@@ -161,10 +163,12 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* /*ctx*/, OCDoHandle /*h
             if (!strcmp(cd, gProvConfig->provData.WIFI.pwd)) {
                 OIC_LOG_V(DEBUG, ES_PROV_TAG, "Password is proper");
                 input = input->next;
+                OICFree(cd);
                 continue;
             }
             else {
                 OIC_LOG_V(DEBUG, ES_PROV_TAG, "Password is NOT proper");
+                OICFree(cd);
                 goto Error;
             }
         }
@@ -172,22 +176,14 @@ OCStackApplicationResult ProvisionEnrolleeResponse(void* /*ctx*/, OCDoHandle /*h
         LogProvisioningResponse(input->values);
 
         input = input->next;
-
-        OICFree(tnn);
-        OICFree(cd);
     }
 
     SuccessCallback(clientResponse);
-
     return OC_STACK_KEEP_TRANSACTION;
 
     Error:
     {
-        OICFree(tnn);
-        OICFree(cd);
-
         ErrorCallback(DEVICE_NOT_PROVISIONED);
-
         return OC_STACK_DELETE_TRANSACTION;
     }
 

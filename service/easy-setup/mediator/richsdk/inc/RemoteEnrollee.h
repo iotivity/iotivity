@@ -21,7 +21,7 @@
 #ifndef REMOTE_ENROLLEE_H_
 #define REMOTE_ENROLLEE_H_
 
-#include "esrichcommon.h"
+#include "ESRichCommon.h"
 
 namespace OIC
 {

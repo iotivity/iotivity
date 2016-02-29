@@ -106,15 +106,15 @@ if target_os in ['android','linux']:
 
 if target_os == 'android':
 	es_m_csdk_static = easy_setup_env.StaticLibrary('libESMediatorCSDK',
-					['src/prov_adapter.cpp',
-					'src/wifi_provisioning.cpp',
+					['src/provisioningapi.cpp',
+					'src/wifiprovisioning.cpp',
                     'src/provisioning.cpp'])
 	easy_setup_env.InstallTarget(es_m_csdk_static, 'libESMediatorCSDK')
 
 if target_os == 'linux':
 	es_m_csdk_shared = easy_setup_env.SharedLibrary('ESMediatorCSDK',
-					['src/prov_adapter.cpp',
-					'src/wifi_provisioning.cpp',
+					['src/provisioningapi.cpp',
+					'src/wifiprovisioning.cpp',
                     'src/provisioning.cpp'])
 	easy_setup_env.InstallTarget(es_m_csdk_shared, 'libESMediatorCSDK')
 

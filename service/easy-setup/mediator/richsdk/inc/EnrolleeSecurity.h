@@ -23,7 +23,7 @@
 
 #include <functional>
 
-#include "esrichcommon.h"
+#include "ESRichCommon.h"
 #include "OCProvisioningManager.h"
 
 namespace OIC
