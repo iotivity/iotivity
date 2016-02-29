@@ -636,7 +636,6 @@ namespace OIC
             }
 
             auto attrs = getAttributesFromOCRequest(request.getOCRequest());
-
             auto response = invokeHandler(shared_from_this(), attrs, request.getOCRequest(),
                     m_getRequestHandler);
 

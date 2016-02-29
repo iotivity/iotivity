@@ -19,6 +19,9 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "RemoteResourceUnit.h"
+#include "InternalTypes.h"
+
+#include <exception>
 
 using namespace OIC::Service;
 
@@ -36,11 +39,21 @@ RemoteResourceUnit::~RemoteResourceUnit()
     {
         if(remoteObject->isCaching())
         {
-            remoteObject->stopCaching();
+            try{
+                remoteObject->stopCaching();
+            }
+            catch(std::exception &e){
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "%s", e.what());
+            }
         }
         if(remoteObject->isMonitoring())
         {
-            remoteObject->stopMonitoring();
+            try{
+                remoteObject->stopMonitoring();
+            }
+            catch(std::exception &e){
+                OIC_LOG_V(ERROR, CONTAINER_TAG, "%s", e.what());
+            }
         }
     }
 }
