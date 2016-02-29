@@ -32,23 +32,37 @@
 #include "camutex.h"
 
 #include "org_iotivity_ca_CaLeClientInterface.h"
+#include "org_iotivity_ca_CaLeServerInterface.h"
 
 #define TAG PCF("OIC_CA_LE_MONITOR")
 
 static JavaVM *g_jvm;
 
 /**
- * @var gCALEDeviceStateChangedCallback
+ * @var g_bleDeviceStateChangedCallback
  * @brief Maintains the callback to be notified on device state changed.
  */
-static CALEDeviceStateChangedCallback gCALEDeviceStateChangedCallback = NULL;
+static CALEDeviceStateChangedCallback g_bleDeviceStateChangedCallback = NULL;
 
 /**
- * @var gCALEDeviceStateChangedCbMutex
+ * @var g_bleConnectionStateChangedCallback
+ * @brief Maintains the callback to be notified on device state changed.
+ */
+static CALEConnectionStateChangedCallback g_bleConnectionStateChangedCallback = NULL;
+
+/**
+ * @var g_bleDeviceStateChangedCbMutex
  * @brief Mutex to synchronize access to the deviceStateChanged Callback when the state
  *           of the LE adapter gets change.
  */
-static ca_mutex gCALEDeviceStateChangedCbMutex = NULL;
+static ca_mutex g_bleDeviceStateChangedCbMutex = NULL;
+
+/**
+ * @var g_bleConnectionStateChangedCbMutex
+ * @brief Mutex to synchronize access to the LE ConnectionStateChanged Callback when the state
+ *           of the LE adapter gets change.
+ */
+static ca_mutex g_bleConnectionStateChangedCbMutex = NULL;
 
 //getting context
 void CALENetworkMonitorJNISetContext()
@@ -63,10 +77,10 @@ void CALENetworkMonitorJniInit()
     g_jvm = CANativeJNIGetJavaVM();
 }
 
-void CALESetNetStateCallback(CALEDeviceStateChangedCallback callback)
+void CALESetAdapterStateCallback(CALEDeviceStateChangedCallback callback)
 {
-    OIC_LOG(DEBUG, TAG, "CALESetNetStateCallback");
-    gCALEDeviceStateChangedCallback = callback;
+    OIC_LOG(DEBUG, TAG, "CALESetAdapterStateCallback");
+    g_bleDeviceStateChangedCallback = callback;
 }
 
 CAResult_t CAInitializeLEAdapter(const ca_thread_pool_t threadPool)
@@ -94,27 +108,40 @@ CAResult_t CAStopLEAdapter()
 CAResult_t CAInitLENwkMonitorMutexVaraibles()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    if (NULL == gCALEDeviceStateChangedCbMutex)
+    if (NULL == g_bleDeviceStateChangedCbMutex)
     {
-        gCALEDeviceStateChangedCbMutex = ca_mutex_new();
-        if (NULL == gCALEDeviceStateChangedCbMutex)
+        g_bleDeviceStateChangedCbMutex = ca_mutex_new();
+        if (NULL == g_bleDeviceStateChangedCbMutex)
         {
             OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
             return CA_STATUS_FAILED;
         }
     }
 
+    if (NULL == g_bleConnectionStateChangedCbMutex)
+    {
+    	g_bleConnectionStateChangedCbMutex = ca_mutex_new();
+        if (NULL == g_bleConnectionStateChangedCbMutex)
+        {
+            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            ca_mutex_free(g_bleDeviceStateChangedCbMutex);
+            return CA_STATUS_FAILED;
+        }
+    }
+
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
-
 }
 
 void CATerminateLENwkMonitorMutexVaraibles()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    ca_mutex_free(gCALEDeviceStateChangedCbMutex);
-    gCALEDeviceStateChangedCbMutex = NULL;
+    ca_mutex_free(g_bleDeviceStateChangedCbMutex);
+    g_bleDeviceStateChangedCbMutex = NULL;
+
+    ca_mutex_free(g_bleConnectionStateChangedCbMutex);
+    g_bleConnectionStateChangedCbMutex = NULL;
 
     OIC_LOG(DEBUG, TAG, "OUT");
 }
@@ -199,9 +226,9 @@ CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
 
     OIC_LOG(DEBUG, TAG, "Setting CALEDeviceStateChangedCallback");
 
-    ca_mutex_lock(gCALEDeviceStateChangedCbMutex);
-    CALESetNetStateCallback(callback);
-    ca_mutex_unlock(gCALEDeviceStateChangedCbMutex);
+    ca_mutex_lock(g_bleDeviceStateChangedCbMutex);
+    CALESetAdapterStateCallback(callback);
+    ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
@@ -210,6 +237,26 @@ CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
 CAResult_t CAUnSetLEAdapterStateChangedCb()
 {
     OIC_LOG(DEBUG, TAG, "it is not required in this platform");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback callback)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
+    g_bleConnectionStateChangedCallback = callback;
+    ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAUnsetLENWConnectionStateChangedCb()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
+    g_bleConnectionStateChangedCallback = NULL;
+    ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -222,7 +269,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
 
     OIC_LOG_V(DEBUG, TAG, "CaLeClientInterface - Network State Changed : status(%d)", status);
 
-    if (!gCALEDeviceStateChangedCallback)
+    if (!g_bleDeviceStateChangedCallback)
     {
         OIC_LOG(ERROR, TAG, "gNetworkChangeCb is null");
         return;
@@ -238,7 +285,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
         CALEClientCreateDeviceList();
         CALEServerCreateCachedDeviceList();
 
-        gCALEDeviceStateChangedCallback(newStatus);
+        g_bleDeviceStateChangedCallback(newStatus);
     }
     else if (state_turning_off == status) // BT_STATE_TURNING_OFF:13
     {
@@ -273,46 +320,54 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
         CALEClientSetScanFlag(false);
 
         CANetworkStatus_t newStatus = CA_INTERFACE_DOWN;
-        gCALEDeviceStateChangedCallback(newStatus);
+        g_bleDeviceStateChangedCallback(newStatus);
     }
 }
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caLeBondStateChangedCallback(JNIEnv *env, jobject obj,
-                                                                       jstring addr)
+                                                                       jstring jaddr, jboolean jconnected)
 {
     OIC_LOG(DEBUG, TAG, "CaLeClientInterface - Bond State Changed");
     VERIFY_NON_NULL_VOID(env, TAG, "env is null");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
-    VERIFY_NON_NULL_VOID(addr, TAG, "addr is null");
+    VERIFY_NON_NULL_VOID(jaddr, TAG, "jaddr is null");
 
     // geneally 'addr' parameter will be not ble address, if you didn't bond for BLE.
     // below logics will be needed when ble pairing is set.
 
-    CAResult_t res = CALEClientDisconnectforAddress(env, addr);
+    CAResult_t res = CALEClientDisconnectforAddress(env, jaddr);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "CALEClientDisconnectforAddress has failed");
     }
 
     // remove obj for client
-    res = CALEClientRemoveGattObjForAddr(env, addr);
+    res = CALEClientRemoveGattObjForAddr(env, jaddr);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "CANativeRemoveGattObjForAddr has failed");
     }
 
-    res = CALEClientRemoveDeviceInScanDeviceList(env, addr);
+    res = CALEClientRemoveDeviceInScanDeviceList(env, jaddr);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "CALEClientRemoveDeviceInScanDeviceList has failed");
     }
 
     // remove obej for server
-    res = CALEServerRemoveDevice(env, addr);
+    res = CALEServerRemoveDevice(env, jaddr);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "CALEServerRemoveDevice has failed");
     }
 
+    const char* address = (*env)->GetStringUTFChars(env, jaddr, NULL);
+    if (!address)
+    {
+        OIC_LOG(ERROR, TAG, "address is null");
+        return;
+    }
+
+    g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, address, (bool)jconnected);
 }

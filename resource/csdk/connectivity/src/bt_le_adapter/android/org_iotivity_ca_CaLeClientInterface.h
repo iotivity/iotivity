@@ -112,11 +112,11 @@ Java_org_iotivity_ca_caLeClientInterface_caLeStateChangedCallback
 /*
  * Class:     org_iotivity_ca_caLeClientInterface
  * Method:    caLeBondStateChangedCallback
- * Signature: (I)V
+ * Signature: (Ljava/lang/String;Z)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_caLeClientInterface_caLeBondStateChangedCallback
-(JNIEnv *, jobject, jstring);
+(JNIEnv *, jobject, jstring, jboolean);
 
 #ifdef __cplusplus
 }

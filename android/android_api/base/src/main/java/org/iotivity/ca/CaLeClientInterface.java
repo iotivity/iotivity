@@ -102,7 +102,7 @@ public class CaLeClientInterface {
     private native static void caLeStateChangedCallback(int state);
 
     // bond state
-    private native static void caLeBondStateChangedCallback(String address);
+    private native static void caLeBondStateChangedCallback(String address, boolean connected);
 
     // Callback
     private static BluetoothAdapter.LeScanCallback mLeScanCallback =
@@ -266,7 +266,7 @@ public class CaLeClientInterface {
                             BluetoothDevice device = intent
                                 .getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
-                        caLeBondStateChangedCallback(device.getAddress());
+                        caLeBondStateChangedCallback(device.getAddress(), false);
                     }
                 }
             }

@@ -52,10 +52,21 @@ static ca_thread_pool_t g_threadPoolHandle = NULL;
 static CALEDeviceStateChangedCallback g_bleDeviceStateChangedCallback = NULL;
 
 /**
+ * Maintains the callback to be notified on device state changed.
+ */
+static CALEConnectionStateChangedCallback g_bleConnectionStateChangedCallback = NULL;
+
+/**
  * Mutex to synchronize access to the deviceStateChanged Callback when the state
  *           of the LE adapter gets change.
  */
 static ca_mutex g_bleDeviceStateChangedCbMutex = NULL;
+
+/**
+ * Mutex to synchronize access to the ConnectionStateChanged Callback when the state
+ * of the LE adapter gets change.
+ */
+static ca_mutex g_bleConnectionStateChangedCbMutex = NULL;
 
 /**
 * This is the callback which will be called when the adapter state gets changed.
@@ -67,7 +78,20 @@ static ca_mutex g_bleDeviceStateChangedCbMutex = NULL;
 * @return  None.
 */
 void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
-                        void *user_data);
+                               void *user_data);
+
+/**
+* This is the callback which will be called when the connection state gets changed.
+*
+* @param result         [IN] Result of the query done to the platform.
+* @param connected      [IN] State of connection.
+* @param remoteAddress  [IN] LE address of the device to be notified.
+* @param user_data      [IN] Any user_data passed by the caller when querying for the state changed cb.
+*
+* @return  None.
+*/
+void CALENWConnectionStateChangedCb(int result, bool connected,
+                                    const char *remoteAddress, void *userData);
 
 void CALEMainLoopThread(void *param)
 {
@@ -87,6 +111,17 @@ CAResult_t CAInitializeLENetworkMonitor()
             return CA_STATUS_FAILED;
         }
     }
+
+    if (NULL == g_bleConnectionStateChangedCbMutex)
+    {
+        g_bleConnectionStateChangedCbMutex = ca_mutex_new();
+        if (NULL == g_bleConnectionStateChangedCbMutex)
+        {
+            OIC_LOG(ERROR, TAG, "ca_mutex_new failed");
+            ca_mutex_free(g_bleDeviceStateChangedCbMutex);
+            return CA_STATUS_FAILED;
+        }
+    }
     OIC_LOG(DEBUG, TAG, "OUT");
 
     return CA_STATUS_OK;
@@ -99,6 +134,8 @@ void CATerminateLENetworkMonitor()
     ca_mutex_free(g_bleDeviceStateChangedCbMutex);
     g_bleDeviceStateChangedCbMutex = NULL;
 
+    ca_mutex_free(g_bleConnectionStateChangedCbMutex);
+    g_bleConnectionStateChangedCbMutex = NULL;
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
@@ -144,6 +181,14 @@ CAResult_t CAStartLEAdapter()
     if (BT_ERROR_NONE != ret)
     {
         OIC_LOG(DEBUG, TAG, "bt_adapter_set_state_changed_cb failed");
+        return CA_STATUS_FAILED;
+    }
+
+    ret = bt_gatt_set_connection_state_changed_cb(CALENWConnectionStateChangedCb, NULL);
+    if (BT_ERROR_NONE != ret)
+    {
+        OIC_LOG_V(ERROR, TAG,
+                  "bt_gatt_set_connection_state_changed_cb has failed");
         return CA_STATUS_FAILED;
     }
 
@@ -245,6 +290,26 @@ CAResult_t CAUnSetLEAdapterStateChangedCb()
     return CA_STATUS_OK;
 }
 
+CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback callback)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
+    g_bleConnectionStateChangedCallback = callback;
+    ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAUnsetLENWConnectionStateChangedCb()
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
+    g_bleConnectionStateChangedCallback = NULL;
+    ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
 void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
                                           void *user_data)
 {
@@ -270,6 +335,29 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
     OIC_LOG(DEBUG, TAG, "Adapter is Enabled");
     g_bleDeviceStateChangedCallback(CA_ADAPTER_ENABLED);
     ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+}
+
+void CALENWConnectionStateChangedCb(int result, bool connected,
+                                    const char *remoteAddress, void *userData)
+{
+    OIC_LOG(DEBUG, TAG, "IN ");
+
+    VERIFY_NON_NULL_VOID(remoteAddress, TAG, "remote address is NULL");
+
+    if (!connected)
+    {
+        OIC_LOG_V(DEBUG, TAG, "disconnected [%s] ", remoteAddress);
+        ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
+        const char *addr = OICStrdup(remoteAddress);
+        g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, addr, connected);
+        ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+    }
+    else
+    {
+        OIC_LOG_V(DEBUG, TAG, "connected [%s] ", remoteAddress);
+    }
 
     OIC_LOG(DEBUG, TAG, "OUT");
 }

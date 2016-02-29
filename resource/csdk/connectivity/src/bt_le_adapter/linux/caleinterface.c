@@ -997,6 +997,12 @@ CAResult_t CASetLEAdapterStateChangedCb(
     return CA_STATUS_OK;
 }
 
+CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback callback)
+{
+    //TODO
+    return CA_STATUS_OK;
+}
+
 CAResult_t CAGetLEAddress(char **local_address)
 {
     OIC_LOG(DEBUG, TAG, "Get Linux BLE local device information.");

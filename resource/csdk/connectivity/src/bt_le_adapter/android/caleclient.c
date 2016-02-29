@@ -4252,11 +4252,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
     VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
 
-    jboolean isCopy;
-    char* wroteData = (char*) (*env)->GetByteArrayElements(env, data, &isCopy);
-
-    OIC_LOG_V(DEBUG, TAG, "CALeGattCharacteristicWriteCallback - write data : %s", wroteData);
-
     // send success & signal
     jstring jni_address = CALEClientGetAddressFromGattObj(env, gatt);
     if (!jni_address)

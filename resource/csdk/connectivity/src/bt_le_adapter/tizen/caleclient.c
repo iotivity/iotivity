@@ -230,8 +230,7 @@ void CALEGattCharacteristicWriteCb(int result, bt_gatt_h reqHandle, void *userDa
     OIC_LOG(DEBUG, TAG, "OUT ");
 }
 
-void CALEGattConnectionStateChangedCb(int result, bool connected,
-                                      const char *remoteAddress, void *userData)
+void CALEGattConnectionStateChanged(bool connected, const char *remoteAddress)
 {
     OIC_LOG(DEBUG, TAG, "IN ");
 
@@ -753,15 +752,6 @@ void CATerminateGattClientMutexVariables()
 CAResult_t CALEGattSetCallbacks()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-
-    int ret = bt_gatt_set_connection_state_changed_cb(CALEGattConnectionStateChangedCb, NULL);
-    if (BT_ERROR_NONE != ret)
-    {
-        OIC_LOG_V(ERROR, TAG,
-                  "bt_gatt_set_connection_state_changed_cb Failed with return as [%s ]",
-                  CALEGetErrorMsg(ret));
-        return CA_STATUS_FAILED;
-    }
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
