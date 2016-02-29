@@ -177,7 +177,7 @@ TEST_F(RemoteResourceObjectTest, QueryParamsForGetWillBePassedToBase)
     constexpr char PARAM_KEY[] { "aKey" };
     constexpr char VALUE[] { "value" };
 
-    object->get(RCSQueryParams().setResourceInterface(RESOURCEINTERFACE).setResuorceType(RESOURCETYPE).
+    object->get(RCSQueryParams().setResourceInterface(RESOURCEINTERFACE).setResourceType(RESOURCETYPE).
             put(PARAM_KEY, VALUE),
             [](const HeaderOpts&, const RCSRepresentation&, int){});
 
