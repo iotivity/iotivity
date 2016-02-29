@@ -18,14 +18,11 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <RequestHandler.h>
+#include "RequestHandler.h"
 
-#include <OCResourceResponse.h>
-#include <ResourceAttributesConverter.h>
-#include <RCSResourceObject.h>
-#include <ResourceAttributesUtils.h>
-
-#include <octypes.h>
+#include "ResourceAttributesConverter.h"
+#include "RCSResourceObject.h"
+#include "ResourceAttributesUtils.h"
 
 namespace
 {
@@ -87,27 +84,30 @@ namespace OIC
 
         RequestHandler::RequestHandler() :
                 m_errorCode{ DEFAULT_ERROR_CODE },
-                m_repBuilder{ }
+                m_customRep{ false },
+                m_ocRep{ }
         {
         }
 
         RequestHandler::RequestHandler(int errorCode) :
                 m_errorCode{ errorCode },
-                m_repBuilder{ }
+                m_customRep{ false },
+                m_ocRep{ }
 
         {
         }
 
         RequestHandler::RequestHandler(const RCSResourceAttributes& attrs, int errorCode) :
                 m_errorCode{ errorCode },
-                m_repBuilder{ std::bind(ResourceAttributesConverter::toOCRepresentation, attrs) }
+                m_customRep{ true },
+                m_ocRep{ ResourceAttributesConverter::toOCRepresentation(attrs) }
         {
         }
 
         RequestHandler::RequestHandler(RCSResourceAttributes&& attrs, int errorCode) :
                 m_errorCode{ errorCode },
-                m_repBuilder{ std::bind(ResourceAttributesConverter::toOCRepresentation,
-                        std::move(attrs)) }
+                m_customRep{ true },
+                m_ocRep{ ResourceAttributesConverter::toOCRepresentation(std::move(attrs)) }
         {
         }
 
@@ -118,13 +118,12 @@ namespace OIC
 
         bool RequestHandler::hasCustomRepresentation() const
         {
-            return m_repBuilder != nullptr;
+            return m_customRep;
         }
 
         OC::OCRepresentation RequestHandler::getRepresentation() const
         {
-            assert(m_repBuilder);
-            return m_repBuilder();
+            return m_ocRep;
         }
 
         SetRequestHandler::SetRequestHandler() :

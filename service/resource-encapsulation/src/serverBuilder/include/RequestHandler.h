@@ -24,10 +24,7 @@
 #include "RCSResponse.h"
 #include "RCSResourceAttributes.h"
 
-namespace OC
-{
-    class OCRepresentation;
-}
+#include "OCRepresentation.h"
 
 namespace OIC
 {
@@ -38,11 +35,7 @@ namespace OIC
 
         class RequestHandler
         {
-        private:
-            typedef std::function< OC::OCRepresentation() > RepresentationBuilder;
-
         public:
-
             RequestHandler();
 
             RequestHandler(const RequestHandler&) = delete;
@@ -67,7 +60,8 @@ namespace OIC
 
         private:
             const int m_errorCode;
-            const RepresentationBuilder m_repBuilder;
+            const bool m_customRep;
+            const OC::OCRepresentation m_ocRep;
         };
 
         class SetRequestHandler: public RequestHandler
@@ -77,8 +71,6 @@ namespace OIC
             typedef std::vector< AttrKeyValuePair > AttrKeyValuePairs;
 
         public:
-            typedef std::shared_ptr< SetRequestHandler > Ptr;
-
             SetRequestHandler(const SetRequestHandler&) = delete;
             SetRequestHandler(SetRequestHandler&&) = default;
 

@@ -23,6 +23,7 @@ OIC_SRC_DIR := ../../../../../..
 LOCAL_MODULE := rcs_jni
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/util
+LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/c_common
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/stack/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/extlibs/boost/boost_1_58_0
