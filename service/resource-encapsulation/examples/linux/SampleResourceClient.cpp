@@ -453,7 +453,7 @@ void discoverResource()
     {
         std::cout << "onResourceDiscovered callback :: " << std::endl;
 
-        std::cout << "luri : " << discoveredResource->getUri() << std::endl;
+        std::cout << "uri : " << discoveredResource->getUri() << std::endl;
         std::cout << "host address : " << discoveredResource->getAddress() << std::endl;
 
         g_discoveredResources.push_back(discoveredResource);
