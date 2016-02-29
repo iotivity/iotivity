@@ -202,8 +202,14 @@ namespace OIC
         {
             SCOPE_LOG_F(DEBUG, TAG);
 
-            stopCaching();
-            stopMonitoring();
+            try{
+                stopCaching();
+                stopMonitoring();
+            }
+            catch(std::exception &e){
+                OIC_LOG_V(ERROR, TAG, "%s", e.what());
+            }
+
         }
 
         RCSRemoteResourceObject::Ptr RCSRemoteResourceObject::fromOCResource(

@@ -66,6 +66,11 @@ namespace OIC
 
         void BundleResource::setAttributes(const RCSResourceAttributes &attrs)
         {
+            setAttributes(attrs, true);
+        }
+
+        void BundleResource::setAttributes(const RCSResourceAttributes &attrs, bool notify)
+        {
             std::lock_guard<std::mutex> lock(m_resourceAttributes_mutex);
 
             for (auto &it : m_resourceAttributes){
@@ -75,16 +80,18 @@ namespace OIC
                 m_resourceAttributes[it.key()] = it.value();
             }
 
-            // asynchronous notification
-            auto notifyFunc = [](NotificationReceiver *notificationReceiver,
-                                    std::string uri)
-            {
-                if (notificationReceiver){
-                    notificationReceiver->onNotificationReceived(uri);
-                }
-            };
-            auto f = std::bind(notifyFunc, m_pNotiReceiver, m_uri);
-            boost::thread notifyThread(f);
+            if(notify){
+                // asynchronous notification
+                auto notifyFunc = [](NotificationReceiver *notificationReceiver,
+                                        std::string uri)
+                {
+                    if (notificationReceiver){
+                        notificationReceiver->onNotificationReceived(uri);
+                    }
+                };
+                auto f = std::bind(notifyFunc, m_pNotiReceiver, m_uri);
+                boost::thread notifyThread(f);
+            }
 
         }
 

@@ -74,14 +74,14 @@ void HueSampleBundleActivator::deactivateBundle()
 
 void HueSampleBundleActivator::createResource(resourceInfo resourceInfo)
 {
-
     if (resourceInfo.resourceType == "oic.r.light")
     {
         static int lightCount = 1;
         BundleResource::Ptr hueLight = std::make_shared< HueLight >(m_connector, resourceInfo.address);
-        resourceInfo.uri = "/hue/light/" + std::to_string(lightCount++);
+
         hueLight->m_bundleId = m_bundleId;
-        hueLight->m_uri = resourceInfo.uri;
+        hueLight->m_uri = resourceInfo.uri.empty() ?
+                          "/hue/light/" + std::to_string(lightCount++) : resourceInfo.uri;
         hueLight->m_resourceType = resourceInfo.resourceType;
         hueLight->m_name = resourceInfo.name;
 
