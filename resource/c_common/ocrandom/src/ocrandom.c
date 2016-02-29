@@ -48,6 +48,10 @@
 #include <uuid/uuid.h>
 #endif
 
+#if !defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__) || defined(__TIZEN__)
+#define NANO_SEC 1000000000
+#endif
+
 #ifdef ARDUINO
 #include "Arduino.h"
 
@@ -106,15 +110,15 @@ int8_t OCSeedRandom()
 #ifdef __ANDROID__
     struct timespec getTs;
     clock_gettime(CLOCK_MONOTONIC, &getTs);
-    currentTime = (getTs.tv_sec * (uint64_t)1000000000 + getTs.tv_nsec)/1000;
+    currentTime = (getTs.tv_sec * (uint64_t)NANO_SEC + getTs.tv_nsec)/1000;
 #elif  _POSIX_TIMERS > 0
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    currentTime = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+    currentTime = (ts.tv_sec * (uint64_t)NANO_SEC + ts.tv_nsec)/ 1000;
 #else
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    currentTime = tv.tv_sec * 1000000 + tv.tv_usec;
+    currentTime = tv.tv_sec * (uint64_t)1000000 + tv.tv_usec;
 #endif
 
     int32_t fd = open("/dev/urandom", O_RDONLY);
