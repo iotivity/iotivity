@@ -1029,6 +1029,30 @@ public class ResourceManager {
         return true;
     }
 
+    public boolean changeResourceType(Resource resource, String newResourceType)
+            throws SimulatorException {
+        if (null == resource || null == newResourceType) {
+            return false;
+        }
+
+        if (!stopResource(resource)) {
+            return false;
+        }
+
+        String curResourceType = resource.getResourceType();
+        setResourceType(resource, newResourceType);
+
+        try {
+            if (!startResource(resource)) {
+                return false;
+            }
+        } catch (SimulatorException e) {
+            setResourceType(resource, curResourceType);
+        }
+
+        return true;
+    }
+
     public void setResourceURI(Resource resource, String newURI)
             throws SimulatorException {
         String curURI = resource.getResourceURI();
@@ -1048,9 +1072,28 @@ public class ResourceManager {
         }
     }
 
+    public void setResourceType(Resource resource, String newResourceType)
+            throws SimulatorException {
+        SimulatorResource server = resource.getSimulatorResource();
+        try {
+            server.setResourceType(newResourceType);
+            resource.setResourceType(newResourceType);
+        } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "There is an error while changing the resource Type.\n"
+                                    + Utility.getSimulatorErrorString(e, null));
+            throw e;
+        }
+    }
+
     public boolean updateResourceProperties(Resource resource,
             List<MetaProperty> properties, boolean uriChanged,
-            boolean nameChanged) throws SimulatorException {
+            boolean nameChanged, boolean resTypeChanged)
+            throws SimulatorException {
         if (null == resource || null == properties) {
             return false;
         }
@@ -1062,6 +1105,7 @@ public class ResourceManager {
         String propValue;
         String resName = null;
         String resURI = null;
+        String resType = null;
         while (itr.hasNext()) {
             property = itr.next();
             if (null == property) {
@@ -1073,6 +1117,8 @@ public class ResourceManager {
                 resName = propValue;
             } else if (propName.equals(Constants.RESOURCE_URI)) {
                 resURI = propValue;
+            } else if (propName.equals(Constants.RESOURCE_TYPE)) {
+                resType = propValue;
             }
         }
 
@@ -1088,6 +1134,12 @@ public class ResourceManager {
 
         if (uriChanged) {
             if (!changeResourceURI(resource, resURI)) {
+                return false;
+            }
+        }
+
+        if (resTypeChanged) {
+            if (!changeResourceType(resource, resType)) {
                 return false;
             }
         }
@@ -1195,6 +1247,10 @@ public class ResourceManager {
                 String value = prop.getPropValue();
                 if (propName.equals(Constants.RESOURCE_URI)) {
                     if (!Utility.isUriValid(value)) {
+                        invalid = true;
+                    }
+                } else if (propName.equals(Constants.RESOURCE_TYPE)) {
+                    if (!Utility.isResourceTypeValid(value)) {
                         invalid = true;
                     }
                 } else {

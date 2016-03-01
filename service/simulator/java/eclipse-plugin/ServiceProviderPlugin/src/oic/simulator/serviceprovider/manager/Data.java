@@ -18,7 +18,6 @@ package oic.simulator.serviceprovider.manager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -30,13 +29,8 @@ import oic.simulator.serviceprovider.model.SingleResource;
 public class Data {
     private Map<String, SingleResource> singleResourceMap;
 
-    // Holds resource type as key and a resource URI set as values.
-    // Helps in performing operations based on resource type.
-    private Map<String, Set<String>>    resTypeToResUriMap;
-
     public Data() {
         singleResourceMap = new HashMap<String, SingleResource>();
-        resTypeToResUriMap = new HashMap<String, Set<String>>();
     }
 
     public synchronized void addResource(Resource resource) {
@@ -47,28 +41,6 @@ public class Data {
             singleResourceMap.put(resource.getResourceURI(),
                     (SingleResource) resource);
         }
-        addToTypeAndUriMap(resource);
-    }
-
-    public synchronized void addToTypeAndUriMap(Resource resource) {
-        if (null == resource) {
-            return;
-        }
-        String resType = resource.getResourceType();
-        if (null == resType || resType.isEmpty()) {
-            return;
-        }
-        String uri = resource.getResourceURI();
-        if (null == uri || uri.isEmpty()) {
-            return;
-        }
-        Set<String> newTypeSet;
-        newTypeSet = resTypeToResUriMap.get(resType);
-        if (null == newTypeSet) {
-            newTypeSet = new HashSet<String>();
-            resTypeToResUriMap.put(resType, newTypeSet);
-        }
-        newTypeSet.add(uri);
     }
 
     public synchronized void deleteResource(Resource resource) {
@@ -77,29 +49,6 @@ public class Data {
         }
         if (resource instanceof SingleResource) {
             singleResourceMap.remove(resource.getResourceURI());
-        }
-        removeFromTypeAndUriMap(resource);
-    }
-
-    public synchronized void removeFromTypeAndUriMap(Resource resource) {
-        if (null == resource) {
-            return;
-        }
-        String resType = resource.getResourceType();
-        if (null == resType || !resType.isEmpty()) {
-            return;
-        }
-        String uri = resource.getResourceURI();
-        if (null == uri || uri.isEmpty()) {
-            return;
-        }
-        Set<String> newTypeSet;
-        newTypeSet = resTypeToResUriMap.get(resType);
-        if (null != newTypeSet) {
-            newTypeSet.remove(uri);
-        }
-        if (null == newTypeSet || newTypeSet.isEmpty()) {
-            resTypeToResUriMap.remove(resType);
         }
     }
 

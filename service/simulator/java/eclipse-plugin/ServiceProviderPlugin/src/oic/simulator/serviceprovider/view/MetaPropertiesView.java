@@ -174,8 +174,19 @@ public class MetaPropertiesView extends ViewPart {
                             return;
                         }
 
+                        result = resourceManagerRef.isPropertyValueInvalid(
+                                resourceInSelection, properties,
+                                Constants.RESOURCE_TYPE);
+                        if (result) {
+                            MessageDialog.openError(parent.getShell(),
+                                    "Invalid Resource Type.",
+                                    Constants.INVALID_RESOURCE_TYPE_MESSAGE);
+                            return;
+                        }
+
                         boolean update = false;
                         boolean uriChange = false;
+                        boolean typeChange = false;
                         boolean nameChange = false;
                         boolean interfaceChange = false;
 
@@ -185,6 +196,7 @@ public class MetaPropertiesView extends ViewPart {
                             update = true;
                             nameChange = true;
                         }
+
                         if (resourceManagerRef.isPropValueChanged(
                                 resourceInSelection, properties,
                                 Constants.RESOURCE_URI)) {
@@ -196,19 +208,15 @@ public class MetaPropertiesView extends ViewPart {
                                 return;
                             }
 
-                            if (resourceManagerRef
-                                    .isResourceStarted(resourceInSelection)) {
-                                update = MessageDialog.openQuestion(
-                                        parent.getShell(), "Save Details",
-                                        "Resource will be restarted to take the changes."
-                                                + " Do you want to continue?");
-                                if (!update) {
-                                    return;
-                                }
-                            }
-
                             update = true;
                             uriChange = true;
+                        }
+
+                        if (resourceManagerRef.isPropValueChanged(
+                                resourceInSelection, properties,
+                                Constants.RESOURCE_TYPE)) {
+                            update = true;
+                            typeChange = true;
                         }
                         // Checking whether any changes made in resource
                         // interfaces by
@@ -232,8 +240,21 @@ public class MetaPropertiesView extends ViewPart {
                             }
                         }
                         if (update) {
+                            if (uriChange || typeChange || interfaceChange) {
+                                if (resourceManagerRef
+                                        .isResourceStarted(resourceInSelection)) {
+                                    update = MessageDialog.openQuestion(
+                                            parent.getShell(),
+                                            "Save Details",
+                                            "Resource will be restarted to take the changes."
+                                                    + " Do you want to continue?");
+                                    if (!update) {
+                                        return;
+                                    }
+                                }
+                            }
                             try {
-                                if (uriChange || nameChange)
+                                if (uriChange || nameChange || typeChange)
                                     result = Activator
                                             .getDefault()
                                             .getResourceManager()
@@ -241,7 +262,7 @@ public class MetaPropertiesView extends ViewPart {
                                                     resourceManagerRef
                                                             .getCurrentResourceInSelection(),
                                                     properties, uriChange,
-                                                    nameChange);
+                                                    nameChange, typeChange);
                                 if (interfaceChange)
                                     result = Activator
                                             .getDefault()
@@ -442,12 +463,7 @@ public class MetaPropertiesView extends ViewPart {
             if (!getEnableEdit()) {
                 return null;
             }
-            // Disabling edit for resource type
             String propName = ((MetaProperty) element).getPropName();
-            if (null != propName && propName.equals(Constants.RESOURCE_TYPE)) {
-                return null;
-            }
-
             CellEditor editor = new TextCellEditor(viewer.getTable());
             if (null != propName && propName.equals(Constants.INTERFACE_TYPES)) {
                 editor.setStyle(SWT.READ_ONLY);
