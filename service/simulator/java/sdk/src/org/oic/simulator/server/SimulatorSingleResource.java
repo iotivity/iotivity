@@ -77,6 +77,8 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @param attribute
      *            Attribute to be added to resource's representation model.
      *
+     * @return True if the attribute is added properly.
+     *
      * @throws InvalidArgsException
      *             This exception will be thrown on invalid input.
      * @throws SimulatorException
@@ -93,6 +95,8 @@ public final class SimulatorSingleResource extends SimulatorResource {
      *
      * @param attrName
      *            Name of the attribute to be deleted.
+     *
+     * @return True if the attribute is removed properly.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown on invalid input.
@@ -112,6 +116,8 @@ public final class SimulatorSingleResource extends SimulatorResource {
      *            Name of the attribute.
      * @param value
      *            New value of the attribute.
+     *
+     * @return True if the attribute's value is updated properly.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown on invalid input.

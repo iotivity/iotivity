@@ -64,10 +64,6 @@ public class SimulatorResource {
      * resource.
      *
      * @return True if the resource is collection, otherwise false.
-     *
-     * @throws SimulatorException
-     *             This exception will be thrown if the native resource object
-     *             does not exist or for some general errors.
      */
     public boolean isCollection() {
         return (this instanceof SimulatorCollectionResource);
@@ -78,10 +74,6 @@ public class SimulatorResource {
      * collection resource.
      *
      * @return Type of resource.
-     *
-     * @throws SimulatorException
-     *             This exception will be thrown if the native resource object
-     *             does not exist or for some general errors.
      */
     public Type getType() {
         if (this instanceof SimulatorSingleResource) {
@@ -287,6 +279,9 @@ public class SimulatorResource {
      * @throws InvalidArgsException
      *             This exception will be thrown if the interface type is
      *             invalid.
+     * @throws NoSupportException
+     *             This exception will be thrown if the interface type is
+     *             not supported by the resource.
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.

@@ -88,6 +88,16 @@ public class SimulatorResourceAttribute {
     }
 
     /**
+     * API to set the name of attribute.
+     *
+     * @param name
+     *            Name of the attribute.
+     */
+    public void setName(String name) {
+        this.mName = name;
+    }
+
+    /**
      * API to set the value of attribute.
      *
      * @param value

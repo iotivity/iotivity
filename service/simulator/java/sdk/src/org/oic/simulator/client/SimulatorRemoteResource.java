@@ -293,8 +293,6 @@ public final class SimulatorRemoteResource {
     /**
      * API to start observing the resource.
      *
-     * @param type
-     *            Type of observation.
      * @param onObserveListener
      *            The handler method which will be invoked with a map of
      *            attribute names and values whenever there is a change in
@@ -314,8 +312,6 @@ public final class SimulatorRemoteResource {
     /**
      * API to start observing the resource.
      *
-     * @param type
-     *            Type of observation.
      * @param queryParams
      *            Map which can have the query parameter names and values.
      * @param onObserveListener
