@@ -306,6 +306,7 @@ class ResourceContainerBundleAPITest: public TestWithMock
             m_pBundleResource->m_bundleId = "oic.bundle.test";
             m_pBundleResource->m_uri = "/test_resource";
             m_pBundleResource->m_resourceType = "container.test";
+            m_pBundleResource->m_interface = "oic.if.baseline";
         }
 };
 
@@ -315,6 +316,7 @@ TEST_F(ResourceContainerBundleAPITest, ResourceServerCreatedWhenRegisterResource
     m_pBundleResource->m_bundleId = "oic.bundle.test";
     m_pBundleResource->m_uri = "/test_resource/test";
     m_pBundleResource->m_resourceType = "container.test";
+    m_pBundleResource->m_interface = "oic.if.baseline";
 
     mocks.ExpectCallFunc(ResourceContainerImpl::buildResourceObject).With(m_pBundleResource->m_uri,
             m_pBundleResource->m_resourceType, m_pBundleResource->m_interface).Return(nullptr);
@@ -780,7 +782,6 @@ class RemoteResourceUnitTest: public TestWithMock
         void SetUp()
         {
             TestWithMock::SetUp();
-
             testObject = std::make_shared<ResourceContainerTestSimulator>();
             testObject->defaultRunSimulator();
             m_pRCSRemoteResourceObject = testObject->getRemoteResource();
