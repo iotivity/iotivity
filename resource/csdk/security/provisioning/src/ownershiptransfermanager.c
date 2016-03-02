@@ -1274,9 +1274,13 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
 {
     OIC_LOG(DEBUG, TAG, "IN OTMDoOwnershipTransfer");
 
-    if (NULL == selectedDevicelist || NULL == resultCallback )
+    if (NULL == selectedDevicelist)
     {
         return OC_STACK_INVALID_PARAM;
+    }
+    if (NULL == resultCallback)
+    {
+        return OC_STACK_INVALID_CALLBACK;
     }
 
     OTMContext_t* otmCtx = (OTMContext_t*)OICCalloc(1,sizeof(OTMContext_t));
