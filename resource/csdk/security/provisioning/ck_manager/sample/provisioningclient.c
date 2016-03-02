@@ -205,7 +205,7 @@ static int InputACL(OicSecAcl_t *acl)
     {
         if (DASH != temp_id[i])
         {
-            if(j>UUID_LENGTH)
+            if(j >= UUID_LENGTH)
             {
                 printf("Invalid input\n");
                 return -1;
@@ -217,6 +217,11 @@ static int InputACL(OicSecAcl_t *acl)
     //Set Resource.
     printf("Num. of Resource : \n");
     ret = scanf("%zu", &acl->resourcesLen);
+    if(-1 == ret)
+    {
+        printf("Error while input\n");
+        return -1;
+    }
     printf("-URI of resource\n");
     printf("ex) /a/light (Max_URI_Length: 64 Byte )\n");
     acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
@@ -272,6 +277,11 @@ static int InputACL(OicSecAcl_t *acl)
     // Set Rowner
     printf("Num. of Rowner : ");
     ret = scanf("%zu", &acl->ownersLen);
+    if(-1 == ret)
+    {
+        printf("Error while input\n");
+        return -1;
+    }
     printf("-URN identifying the rowner\n");
     printf("ex) lightDeviceUUID0 (16 Numbers except to '-')\n");
     acl->owners = (OicUuid_t *)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
@@ -446,18 +456,42 @@ static int InputCRL(OicSecCrl_t *crlRes)
    // const uint8_t revocationDatesContent[MAX_Revoked_NUMBER][DATE_LENGTH];
     uint32_t nuberOfRevoked = 0;
     printf("Enter number of Revoked certificates(1..%d)\n", MAX_Revoked_NUMBER);
-    scanf("%u", &nuberOfRevoked);
+    int ret = 0;
+    ret = scanf("%u", &nuberOfRevoked);
+    if(-1 == ret)
+    {
+        printf("Error while input\n");
+        return PKI_UNKNOWN_ERROR;
+    }
+
+    if((uint32_t)MAX_Revoked_NUMBER < nuberOfRevoked)
+    {
+        OIC_LOG(ERROR, TAG, "Wrong revoked certificate number");
+        return PKI_UNKNOWN_ERROR;
+    }
 
     for (size_t i = 0; i < nuberOfRevoked; ++i)
     {
         printf("Revoked certificate %d:", i);
         printf("Serial number (E. g.: 100):");
-        scanf("%u", &revokedNumbers[i]);
+        ret = scanf("%u", &revokedNumbers[i]);
+        if(-1 == ret)
+        {
+            printf("Error while input\n");
+            return PKI_UNKNOWN_ERROR;
+        }
+
         revocationDates[i] = (const uint8_t*)"130101000005Z";
     }
 
     crl.len = CRL_MIN_SIZE + nuberOfRevoked * (sizeof(CertificateRevocationInfo_t) + 4)/* + 1000*/;
     crl.data = (uint8_t *)OICCalloc(1, crl.len);
+
+    if (NULL == crl.data)
+    {
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
+        return PKI_MEMORY_ALLOC_FAILED;
+    }
 
     CHECK_CALL(CKMIssueCRL, uint8ThisUpdateTime, nuberOfRevoked, revokedNumbers,
             revocationDates, &crl);
@@ -586,13 +620,30 @@ int main()
 
     int Device1 = 0;
     int Device2 = 0;
+    int ret = 0;
 
     printf("Select 2 devices for Credential & ACL provisioning\n");
     printf("Device 1: ");
-    scanf("%d", &Device1);
-    printf("Device 2: ");
-    scanf("%d", &Device2);
+    ret = scanf("%d", &Device1);
+    if(-1 == ret)
+    {
+        printf("Error while input\n");
+        goto error;
+    }
 
+    printf("Device 2: ");
+    ret = scanf("%d", &Device2);
+    if(-1 == ret)
+    {
+        printf("Error while input\n");
+        goto error;
+    }
+
+    if( 0 > Device1 || 0 > Device2 || Device1 > nOwnedDevice || Device2 > nOwnedDevice)
+    {
+        OIC_LOG(ERROR, TAG, "Wrong devices number");
+        goto error;
+    }
 
     gAcl = (OicSecAcl_t *)OICCalloc(1,sizeof(OicSecAcl_t));
     if (NULL == gAcl)
@@ -669,6 +720,13 @@ int main()
         sleep(1);
     }
     gCrl = (OicSecCrl_t *)OICMalloc(sizeof(OicSecCrl_t));
+
+    if (NULL == gCrl)
+    {
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
+        goto error;
+    }
+
     if (PKI_SUCCESS != InputCRL(gCrl))
     {
         OIC_LOG(ERROR, TAG, "CA init error");

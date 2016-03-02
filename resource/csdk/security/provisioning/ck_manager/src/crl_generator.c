@@ -42,7 +42,7 @@ PKIError GenerateCRL (const UTF8String_t *issuerName,
     RelativeDistinguishedName_t *issuerRDN          = NULL;
     CertificateRevocationInfo_t *cri                = NULL;
 
-    uint32_t crlMaxSize = (CRL_MIN_SIZE +
+    uint32_t crlMaxSize = (uint32_t)(CRL_MIN_SIZE +
             numberOfRevoked * (sizeof(CertificateRevocationInfo_t) + 4));
 
     uint32_t i;
