@@ -49,11 +49,15 @@ namespace OIC
 
         void RemoteSceneAction::setExecutionParameter(const std::string &key,
                                        const RCSResourceAttributes::Value &value,
-                                       UpdateCallback clientCB)
+                                       setExecutionParameterCallback clientCB)
         {
             if (key.empty())
             {
                 throw RCSInvalidParameterException("Scene action key value is empty");
+            }
+            if (!clientCB)
+            {
+                throw RCSInvalidParameterException{ "setExecutionParameter : Callback is NULL" };
             }
 
             RCSResourceAttributes attr;
@@ -63,15 +67,19 @@ namespace OIC
         }
 
         void RemoteSceneAction::setExecutionParameter(const RCSResourceAttributes &attr,
-            UpdateCallback clientCB)
+            setExecutionParameterCallback clientCB)
         {
             if (attr.empty())
             {
                 throw RCSInvalidParameterException("RCSResourceAttributes is empty");
             }
+            if (!clientCB)
+            {
+                throw RCSInvalidParameterException{ "setExecutionParameter : Callback is NULL" };
+            }
 
             SceneMemberResourceRequestor::InternalAddSceneActionCallback internalCB
-                = std::bind(&RemoteSceneAction::onUpdated, this,
+                = std::bind(&RemoteSceneAction::onExecutionParameterSet, this,
                 std::placeholders::_1, attr, std::move(clientCB));
 
             m_requestor->requestSceneActionCreation(
@@ -80,6 +88,7 @@ namespace OIC
 
         RCSResourceAttributes RemoteSceneAction::getExecutionParameter() const
         {
+            std::lock_guard< std::mutex > lock(m_attributeLock);
             return m_attributes;
         }
 
@@ -88,8 +97,8 @@ namespace OIC
             return m_requestor->getRemoteResourceObject();
         }
 
-        void RemoteSceneAction::onUpdated(int eCode, const RCSResourceAttributes &attr,
-                                          const UpdateCallback &clientCB)
+        void RemoteSceneAction::onExecutionParameterSet(int eCode, const RCSResourceAttributes &attr,
+            const setExecutionParameterCallback &clientCB)
         {
             int result = SCENE_CLIENT_BADREQUEST;
             if (eCode == SCENE_RESPONSE_SUCCESS)

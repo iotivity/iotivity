@@ -71,9 +71,15 @@ namespace OIC
             m_sceneMemberResource->get(params, cb);
         }
 
+        void SceneMemberResourceRequestor::setRemoteResourceObject(
+            RCSRemoteResourceObject::Ptr target)
+        {
+            m_remoteResource = target;
+        }
+
         RCSRemoteResourceObject::Ptr SceneMemberResourceRequestor::getRemoteResourceObject() const
         {
-            return m_sceneMemberResource;
+            return m_remoteResource;
         }
 
         void SceneMemberResourceRequestor::onSceneActionCreated(

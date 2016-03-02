@@ -78,12 +78,12 @@ namespace OIC
                 RemoteScene(
                     const std::string &name, std::shared_ptr< SceneCollectionResourceRequestor >);
 
-                RemoteSceneAction::Ptr createRemoteSceneActionInstance(
+                RemoteSceneAction::Ptr createRemoteSceneAction(
                     const std::string &,  const RCSResourceAttributes &);
 
                 void addExistingRemoteSceneAction(const std::string &, const std::string &,
-                                                  const std::string &, const std::string &key,
-                                                  const RCSResourceAttributes::Value &);
+                    RCSRemoteResourceObject::Ptr, const std::string &key,
+                    const RCSResourceAttributes::Value &);
 
                 void onSceneActionAdded(
                     int, RCSRemoteResourceObject::Ptr,

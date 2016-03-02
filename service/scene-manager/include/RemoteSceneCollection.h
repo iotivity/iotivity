@@ -73,7 +73,7 @@ namespace OIC
                 void initializeRemoteScenes(const std::vector< RCSResourceAttributes > &,
                                                      const std::string &);
 
-                RemoteScene::Ptr createRemoteSceneInstance(const std::string &);
+                RemoteScene::Ptr createRemoteScene(const std::string &);
 
                 void onSceneAddedRemoved(int, const std::string &name, int,
                                          const AddNewSceneCallback &, const RemoveSceneCallback &);
@@ -83,6 +83,7 @@ namespace OIC
             private:
                 std::string m_id;
                 std::string m_name;
+                mutable std::mutex m_nameLock;
                 mutable std::mutex m_sceneLock;
                 std::unordered_map< std::string, RemoteScene::Ptr > m_remoteScenes;
                 std::shared_ptr< SceneCollectionResourceRequestor > m_requestor;

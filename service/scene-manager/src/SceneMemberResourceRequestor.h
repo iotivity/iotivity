@@ -49,6 +49,8 @@ namespace OIC
 
                 void requestGet(const std::string &, RCSRemoteResourceObject::GetCallback);
 
+                void setRemoteResourceObject(RCSRemoteResourceObject::Ptr);
+
                 RCSRemoteResourceObject::Ptr getRemoteResourceObject() const;
 
             private:
@@ -64,6 +66,7 @@ namespace OIC
 
             private:
                 std::string m_id;
+                RCSRemoteResourceObject::Ptr m_remoteResource;
                 RCSRemoteResourceObject::Ptr m_sceneMemberResource;
         };
 

@@ -39,14 +39,15 @@ namespace OIC
             public:
                 typedef std::shared_ptr< RemoteSceneAction > Ptr;
 
-                typedef std::function< void(int eCode) > UpdateCallback;
+                typedef std::function< void(int eCode) > setExecutionParameterCallback;
 
             public:
                 ~RemoteSceneAction() = default;
 
                 void setExecutionParameter(const std::string &key,
-                    const RCSResourceAttributes::Value &value, UpdateCallback);
-                void setExecutionParameter(const RCSResourceAttributes &attr, UpdateCallback);
+                    const RCSResourceAttributes::Value &value, setExecutionParameterCallback);
+                void setExecutionParameter(
+                    const RCSResourceAttributes &attr, setExecutionParameterCallback);
 
                 RCSResourceAttributes getExecutionParameter() const;
 
@@ -59,11 +60,12 @@ namespace OIC
                                   const std::string &sceneName,
                                   const std::string &key, const RCSResourceAttributes::Value &);
 
-                void onUpdated(int, const RCSResourceAttributes &, const UpdateCallback &);
+                void onExecutionParameterSet(int, const RCSResourceAttributes &,
+                    const setExecutionParameterCallback &);
 
             private:
                 std::string m_sceneName;
-                std::mutex m_attributeLock;
+                mutable std::mutex m_attributeLock;
                 RCSResourceAttributes m_attributes;
                 std::shared_ptr< SceneMemberResourceRequestor > m_requestor;
 

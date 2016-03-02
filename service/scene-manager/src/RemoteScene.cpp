@@ -33,8 +33,8 @@ namespace OIC
     namespace Service
     {
 
-        RemoteScene::RemoteScene
-        (const std::string &name, std::shared_ptr< SceneCollectionResourceRequestor > requestor)
+        RemoteScene::RemoteScene(
+            const std::string &name, std::shared_ptr< SceneCollectionResourceRequestor > requestor)
             : m_name{ name }, m_requestor{ requestor }
         {
             assert(requestor);
@@ -51,6 +51,10 @@ namespace OIC
             if (attrs.empty())
             {
                 throw RCSInvalidParameterException("RCSResourceAttributes is empty");
+            }
+            if (!clientCB)
+            {
+                throw RCSInvalidParameterException{ "addNewSceneAction : Callback is NULL" };
             }
 
             SceneCollectionResourceRequestor::InternalAddMemberCallback internalCB
@@ -73,6 +77,10 @@ namespace OIC
             if (key.empty())
             {
                 throw RCSInvalidParameterException("Scene action key value is empty");
+            }
+            if (!clientCB)
+            {
+                throw RCSInvalidParameterException{ "addNewSceneAction : Callback is NULL" };
             }
 
             RCSResourceAttributes attrs;
@@ -132,6 +140,11 @@ namespace OIC
 
         void RemoteScene::execute(RemoteSceneExecuteCallback clientCB)
         {
+            if (!clientCB)
+            {
+                throw RCSInvalidParameterException{ "execute : Callback is NULL" };
+            }
+
             SceneCollectionResourceRequestor::InternalSceneRequestCallback internalCB
                 = std::bind(&RemoteScene::onSceneExecuted, this, std::placeholders::_2,
                             std::placeholders::_3, std::move(clientCB));
@@ -139,8 +152,8 @@ namespace OIC
             m_requestor->requestSceneExecution(m_name, internalCB);
         }
 
-        RemoteSceneAction::Ptr RemoteScene::createRemoteSceneActionInstance
-        (const std::string &targetHref, const RCSResourceAttributes &attrs)
+        RemoteSceneAction::Ptr RemoteScene::createRemoteSceneAction(
+            const std::string &targetHref, const RCSResourceAttributes &attrs)
         {
             SceneMemberResourceRequestor::Ptr memRequestor
                 = m_requestor->getSceneMemberResourceRequestor(targetHref);
@@ -162,20 +175,21 @@ namespace OIC
         }
 
         void RemoteScene::addExistingRemoteSceneAction(
-            const std::string &href, const std::string &targetHref,
-            const std::string &id, const std::string &key,
-            const RCSResourceAttributes::Value &value)
+            const std::string &href, const std::string &id, RCSRemoteResourceObject::Ptr target,
+            const std::string &key, const RCSResourceAttributes::Value &value)
         {
+            std::string targetHref = target->getAddress() + target->getUri();
+            
             SceneMemberResourceRequestor::Ptr foundMemberRequestor
                 = m_requestor->getSceneMemberResourceRequestor(targetHref);
 
             if (foundMemberRequestor == nullptr)
-                m_requestor->createSceneMemberResourceRequestor(href, id, targetHref);
+                m_requestor->createSceneMemberResourceRequestor(href, id, target);
 
             RCSResourceAttributes attrs;
             attrs[key] = RCSResourceAttributes::Value(value);
 
-            createRemoteSceneActionInstance(targetHref, attrs);
+            createRemoteSceneAction(targetHref, attrs);
         }
 
         void RemoteScene::onSceneActionAdded(
@@ -189,7 +203,7 @@ namespace OIC
             {
                 std::string targetLink = target->getAddress() + target->getUri();
 
-                newAction = createRemoteSceneActionInstance(targetLink, attrs);
+                newAction = createRemoteSceneAction(targetLink, attrs);
 
                 if (newAction)
                     result = SCENE_RESPONSE_SUCCESS;

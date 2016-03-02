@@ -47,6 +47,10 @@ namespace OIC
             {
                 throw RCSInvalidParameterException("Scene name is an empty string");
             }
+            if (!clientCB)
+            {
+                throw RCSInvalidParameterException{ "addNewScene : Callback is NULL" };
+            }
 
             SceneCollectionResourceRequestor::InternalSceneRequestCallback internalCB
                 = std::bind(&RemoteSceneCollection::onSceneAddedRemoved, this,
@@ -65,6 +69,7 @@ namespace OIC
         std::unordered_map< std::string, RemoteScene::Ptr >
             RemoteSceneCollection::getRemoteScenes() const
         {
+            std::lock_guard< std::mutex > scenelock(m_sceneLock);
             return m_remoteScenes;
         }
 
@@ -83,6 +88,11 @@ namespace OIC
 
         void RemoteSceneCollection::setName(const std::string &name, SetNameCallback clientCB)
         {
+            if (!clientCB)
+            {
+                throw RCSInvalidParameterException{ "setName : Callback is NULL" };
+            }
+
             SceneCollectionResourceRequestor::InternalSetNameCallback internalCB
                 = std::bind(&RemoteSceneCollection::onNameSet, this,
                             std::placeholders::_1, name, std::move(clientCB));
@@ -92,6 +102,7 @@ namespace OIC
 
         std::string RemoteSceneCollection::getName() const
         {
+            std::lock_guard< std::mutex > lock(m_nameLock);
             return m_name;
         }
 
@@ -104,7 +115,7 @@ namespace OIC
         {
             for (const auto &scenename : scenes)
             {
-                createRemoteSceneInstance(scenename);
+                createRemoteScene(scenename);
             }
         }
 
@@ -113,34 +124,38 @@ namespace OIC
         {
             try
             {
-                for (const auto &itr : MemberReps)
+                for (const auto &attrs : MemberReps)
                 {
-                    RCSResourceAttributes attrs = itr;
-
                     for (const auto &mappingInfo :
                             attrs.at(SCENE_KEY_SCENEMAPPINGS).get
                                 <std::vector< RCSResourceAttributes > >())
                     {
                         std::string sceneName
                             = mappingInfo.at(SCENE_KEY_SCENE).get< std::string >();
-                        RemoteScene::Ptr pRemoteScene = nullptr;
 
                         auto remoteScene = m_remoteScenes.find(sceneName);
-                        if (remoteScene == m_remoteScenes.end()) return;
+                        if (remoteScene == m_remoteScenes.end()) continue;
 
-                        pRemoteScene = m_remoteScenes.at(sceneName);
+                        RemoteScene::Ptr pRemoteScene = m_remoteScenes.at(sceneName);
 
-                        std::string targetHref
-                            = attrs.at(SCENE_KEY_PAYLOAD_LINK).get< RCSResourceAttributes >().
-                                at(SCENE_KEY_HREF).get< std::string >();
+                        RCSResourceAttributes targetLinkAttrs
+                            = attrs.at(SCENE_KEY_PAYLOAD_LINK).get< RCSResourceAttributes >();
+
+                        RCSRemoteResourceObject::Ptr targetResource
+                            = SceneUtils::createRCSResourceObject(
+                            targetLinkAttrs.at(SCENE_KEY_HREF).get< std::string >(),
+                            SCENE_CONNECTIVITY,
+                            targetLinkAttrs.at(SCENE_KEY_RT).get< std::vector< std::string > >(),
+                            targetLinkAttrs.at(SCENE_KEY_IF).get< std::vector< std::string > >());
+                            
                         std::string mappingInfoKey
                             = mappingInfo.at(SCENE_KEY_MEMBERPROPERTY).get< std::string >();
                         RCSResourceAttributes::Value mappingInfoValue
                             = mappingInfo.at(SCENE_KEY_MEMBERVALUE);
 
                         pRemoteScene->addExistingRemoteSceneAction(
-                            host + attrs.at("uri").get< std::string >(),
-                            targetHref, attrs.at(SCENE_KEY_ID).get< std::string >(),
+                            host + attrs.at(SCENE_KEY_URI).get< std::string >(),
+                            attrs.at(SCENE_KEY_ID).get< std::string >(), targetResource,
                             mappingInfoKey, mappingInfoValue);
                     }
                 }
@@ -151,8 +166,7 @@ namespace OIC
             }
         }
 
-        RemoteScene::Ptr RemoteSceneCollection::createRemoteSceneInstance(
-            const std::string &name)
+        RemoteScene::Ptr RemoteSceneCollection::createRemoteScene(const std::string &name)
         {
             std::lock_guard< std::mutex > scenelock(m_sceneLock);
             RemoteScene::Ptr pNewRemoteScene(new RemoteScene(name, m_requestor));
@@ -172,7 +186,7 @@ namespace OIC
                 {
                     if (eCode == SCENE_RESPONSE_SUCCESS)
                     {
-                        addCB(createRemoteSceneInstance(name), SCENE_RESPONSE_SUCCESS);
+                        addCB(createRemoteScene(name), SCENE_RESPONSE_SUCCESS);
                     }
                     else
                     {
@@ -192,6 +206,7 @@ namespace OIC
             int result = SCENE_CLIENT_BADREQUEST;
             if (eCode == SCENE_RESPONSE_SUCCESS)
             {
+                std::lock_guard< std::mutex > lock(m_nameLock);
                 m_name = name;
                 result = SCENE_RESPONSE_SUCCESS;
             }
