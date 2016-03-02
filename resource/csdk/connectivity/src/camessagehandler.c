@@ -651,7 +651,14 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 (CA_ADAPTER_IP & data->remoteEndpoint->adapter &&
                     CA_ADAPTER_IP != data->remoteEndpoint->adapter))
         {
-            data->remoteEndpoint->adapter = data->remoteEndpoint->adapter ^ CA_ADAPTER_IP;
+            if (data->remoteEndpoint->adapter == CA_DEFAULT_ADAPTER)
+            {
+                data->remoteEndpoint->adapter = CA_ALL_ADAPTERS ^ CA_ADAPTER_IP;
+            }
+            else
+            {
+                data->remoteEndpoint->adapter = data->remoteEndpoint->adapter ^ CA_ADAPTER_IP;
+            }
             CAProcessMulticastData(data);
             data->remoteEndpoint->adapter = CA_ADAPTER_IP;
             CAProcessMulticastData(data);
