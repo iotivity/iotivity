@@ -96,8 +96,6 @@ static ca_mutex g_scanMutex = NULL;
 
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
 
-static jboolean g_autoConnectFlag = JNI_FALSE;
-
 /**
  * check if retry logic for connection routine has to be stopped or not.
  * in case of error value including this method, connection routine has to be stopped.
@@ -382,7 +380,6 @@ void CALEClientTerminate()
     g_threadCond = NULL;
     g_threadWriteCharacteristicCond = NULL;
     g_isSignalSetFlag = false;
-    CALEClientSetAutoConnectFlag(JNI_FALSE);
 
     if (isAttached)
     {
@@ -1027,7 +1024,8 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
         }
 
         // connection request
-        jobject newGatt = CALEClientConnect(env, device, CALEClientGetAutoConnectFlag());
+        jobject newGatt = CALEClientConnect(env, device,
+                                            CALEClientGetAutoConnectFlag(env, jni_address));
         if (NULL == newGatt)
         {
             OIC_LOG(ERROR, TAG, "CALEClientConnect has failed");
@@ -1549,16 +1547,72 @@ CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback)
     return CA_STATUS_OK;
 }
 
-void CALEClientSetAutoConnectFlag(jboolean flag)
+CAResult_t CALEClientSetAutoConnectFlag(JNIEnv *env, jstring jni_address, jboolean flag)
 {
-    OIC_LOG_V(INFO, TAG, "auto connect flag is set %d", flag);
-    g_autoConnectFlag = flag;
+    OIC_LOG(DEBUG, TAG, "IN - CALEClientSetAutoConnectFlag");
+    VERIFY_NON_NULL(env, TAG, "env");
+    VERIFY_NON_NULL(jni_address, TAG, "jni_address");
+
+    ca_mutex_lock(g_deviceStateListMutex);
+
+    char* address = (char*)(*env)->GetStringUTFChars(env, jni_address, NULL);
+    if (!address)
+    {
+        OIC_LOG(ERROR, TAG, "address is not available");
+        return CA_STATUS_FAILED;
+    }
+
+    if (CALEClientIsDeviceInList(address))
+    {
+        CALEState_t* curState = CALEClientGetStateInfo(address);
+        if(!curState)
+        {
+            OIC_LOG(ERROR, TAG, "curState is null");
+            (*env)->ReleaseStringUTFChars(env, jni_address, address);
+            ca_mutex_unlock(g_deviceStateListMutex);
+            return CA_STATUS_FAILED;
+        }
+        OIC_LOG_V(INFO, TAG, "auto connect flag is set %d", flag);
+
+        curState->autoConnectFlag = flag;
+    }
+
+    (*env)->ReleaseStringUTFChars(env, jni_address, address);
+    ca_mutex_unlock(g_deviceStateListMutex);
+    OIC_LOG(DEBUG, TAG, "OUT - CALEClientSetAutoConnectFlag");
+    return CA_STATUS_OK;
 }
 
-jboolean CALEClientGetAutoConnectFlag()
+jboolean CALEClientGetAutoConnectFlag(JNIEnv *env, jstring jni_address)
 {
-    OIC_LOG_V(INFO, TAG, "auto connect flag is %d", g_autoConnectFlag);
-    return g_autoConnectFlag;
+    OIC_LOG(DEBUG, TAG, "IN - CALEClientGetAutoConnectFlag");
+    VERIFY_NON_NULL_RET(env, TAG, "env", false);
+    VERIFY_NON_NULL_RET(jni_address, TAG, "jni_address", false);
+
+    ca_mutex_lock(g_deviceStateListMutex);
+
+    char* address = (char*)(*env)->GetStringUTFChars(env, jni_address, NULL);
+    if (!address)
+    {
+        OIC_LOG(ERROR, TAG, "address is not available");
+        return JNI_FALSE;
+    }
+
+    CALEState_t* curState = CALEClientGetStateInfo(address);
+    if(!curState)
+    {
+        OIC_LOG(INFO, TAG, "there is no information. auto connect flag is false");
+        (*env)->ReleaseStringUTFChars(env, jni_address, address);
+        ca_mutex_unlock(g_deviceStateListMutex);
+        return JNI_FALSE;
+    }
+    OIC_LOG_V(INFO, TAG, "auto connect flag is %d", curState->autoConnectFlag);
+
+    (*env)->ReleaseStringUTFChars(env, jni_address, address);
+    ca_mutex_unlock(g_deviceStateListMutex);
+
+    OIC_LOG(DEBUG, TAG, "OUT - CALEClientGetAutoConnectFlag");
+    return curState->autoConnectFlag;
 }
 
 jobject CALEClientConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autoconnect)
@@ -3300,6 +3354,7 @@ CAResult_t CALEClientAddDeviceStateToList(CALEState_t* state)
         {
             state->notificationState = curState->notificationState;
         }
+        state->autoConnectFlag = curState->autoConnectFlag;
 
         // delete previous state for update new state
         CAResult_t res = CALEClientRemoveDeviceState(state->address);
@@ -3379,6 +3434,39 @@ CAResult_t CALEClientRemoveAllDeviceState()
 
     OICFree(g_deviceStateList);
     g_deviceStateList = NULL;
+    ca_mutex_unlock(g_deviceStateListMutex);
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CALEClientResetDeviceStateForAll()
+{
+    OIC_LOG(DEBUG, TAG, "CALEClientResetDeviceStateForAll");
+
+    ca_mutex_lock(g_deviceStateListMutex);
+    if (!g_deviceStateList)
+    {
+        OIC_LOG(ERROR, TAG, "g_deviceStateList is null");
+        ca_mutex_unlock(g_deviceStateListMutex);
+        return CA_STATUS_FAILED;
+    }
+
+    size_t length = u_arraylist_length(g_deviceStateList);
+    for (size_t index = 0; index < length; index++)
+    {
+        CALEState_t* state = (CALEState_t*) u_arraylist_get(g_deviceStateList, index);
+        if (!state)
+        {
+            OIC_LOG(ERROR, TAG, "jarrayObj is null");
+            continue;
+        }
+
+        // autoConnectFlag value will be not changed,
+        // since it has reset only termination case.
+        state->connectedState = STATE_DISCONNECTED;
+        state->notificationState = STATE_CHARACTER_UNSET;
+        state->sendState = STATE_SEND_NONE;
+    }
     ca_mutex_unlock(g_deviceStateListMutex);
 
     return CA_STATUS_OK;
@@ -4089,7 +4177,8 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
                 goto error_exit;
             }
 
-            jobject newGatt = CALEClientConnect(env, btObject, CALEClientGetAutoConnectFlag());
+            jobject newGatt = CALEClientConnect(env, btObject,
+                                                CALEClientGetAutoConnectFlag(env, leAddress));
             if (!newGatt)
             {
                 OIC_LOG(ERROR, TAG, "CALEClientConnect has failed");

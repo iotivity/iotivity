@@ -304,10 +304,10 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
             OIC_LOG(ERROR, TAG, "CALEClientRemoveAllGattObjs has failed");
         }
 
-        res = CALEClientRemoveAllDeviceState();
+        res = CALEClientResetDeviceStateForAll();
         if (CA_STATUS_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "CALEClientRemoveAllDeviceState has failed");
+            OIC_LOG(ERROR, TAG, "CALEClientResetDeviceStateForAll has failed");
         }
 
         // remove obj for server
@@ -360,12 +360,5 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeBondStateChangedCallback(JNIEnv *en
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "CALEServerRemoveDevice has failed");
-    }
-
-    const char* address = (*env)->GetStringUTFChars(env, jaddr, NULL);
-    if (!address)
-    {
-        OIC_LOG(ERROR, TAG, "address is null");
-        return;
     }
 }

@@ -54,6 +54,7 @@ typedef struct le_state_info
     jint connectedState;
     uint16_t notificationState;
     uint16_t sendState;
+    jboolean autoConnectFlag;
 } CALEState_t;
 
 /**
@@ -275,15 +276,19 @@ CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback);
 
 /**
  * set auto connect flag for connectGatt API.
- * @param[in]   flag        auto connect flag.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jni_address           remote address.
+ * @param[in]   flag                  auto connect flag.
  */
-void CALEClientSetAutoConnectFlag(jboolean flag);
+CAResult_t CALEClientSetAutoConnectFlag(JNIEnv *env, jstring jni_address, jboolean flag);
 
 /**
  * get auto connect flag.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jni_address           remote address.
  * @return  current auto connect flag;
  */
-jboolean CALEClientGetAutoConnectFlag();
+jboolean CALEClientGetAutoConnectFlag(JNIEnv *env, jstring jni_address);
 
 /**
  * connect to gatt server hosted.
@@ -530,6 +535,13 @@ bool CALEClientIsDeviceInList(const char *remoteAddress);
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEClientRemoveAllDeviceState();
+
+/**
+ * Reset values of device state for all of devices.
+ * this method has to be invoked when BT adapter is disabled.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientResetDeviceStateForAll();
 
 /**
  * remove the device state for a remote device.
