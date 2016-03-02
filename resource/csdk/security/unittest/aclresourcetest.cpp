@@ -90,7 +90,7 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
     CborEncoder map = { 0, 0, 0, 0 };
     CborError cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
     EXPECT_EQ(CborNoError, cborEncoderResult);
-    cborEncoderResult = cbor_encode_text_string(&map, OIC_JSON_ACL_NAME, sizeof(OIC_JSON_ACL_NAME) - 1);
+    cborEncoderResult = cbor_encode_text_string(&map, OIC_JSON_ACL_NAME, strlen(OIC_JSON_ACL_NAME));
     EXPECT_EQ(CborNoError, cborEncoderResult);
     cborEncoderResult = cbor_encode_byte_string(&map, defaultPsStorage, defaultAclSize);
     EXPECT_EQ(CborNoError, cborEncoderResult);

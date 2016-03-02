@@ -167,7 +167,7 @@ uint8_t* AclToCBORPayload(const OicSecAcl_t *secAcl, size_t *size)
 
         // Subject -- Mandatory
         cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_SUBJECT_NAME,
-            sizeof(OIC_JSON_SUBJECT_NAME) - 1);
+            strlen(OIC_JSON_SUBJECT_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
         size_t inLen = 0;
         if (memcmp(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0)
@@ -184,7 +184,7 @@ uint8_t* AclToCBORPayload(const OicSecAcl_t *secAcl, size_t *size)
         // Resources
         CborEncoder resources = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
         cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_RESOURCES_NAME,
-            sizeof(OIC_JSON_RESOURCES_NAME) -1);
+            strlen(OIC_JSON_RESOURCES_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
         cborEncoderResult = cbor_encoder_create_array(&oicSecAclMap, &resources, acl->resourcesLen);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
@@ -200,7 +200,7 @@ uint8_t* AclToCBORPayload(const OicSecAcl_t *secAcl, size_t *size)
 
         // Permissions -- Mandatory
         cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_PERMISSION_NAME,
-            sizeof(OIC_JSON_PERMISSION_NAME) -1);
+            strlen(OIC_JSON_PERMISSION_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
         cborEncoderResult = cbor_encode_int(&oicSecAclMap, acl->permission);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
@@ -210,7 +210,7 @@ uint8_t* AclToCBORPayload(const OicSecAcl_t *secAcl, size_t *size)
         {
             CborEncoder period = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
             cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_PERIODS_NAME,
-                sizeof(OIC_JSON_PERIODS_NAME) -1);
+                strlen(OIC_JSON_PERIODS_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
             cborEncoderResult = cbor_encoder_create_array(&oicSecAclMap, &period, acl->prdRecrLen);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
@@ -230,7 +230,7 @@ uint8_t* AclToCBORPayload(const OicSecAcl_t *secAcl, size_t *size)
         {
             CborEncoder recurrences = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
             cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_RECURRENCES_NAME,
-                sizeof(OIC_JSON_RECURRENCES_NAME) -1);
+                strlen(OIC_JSON_RECURRENCES_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
             cborEncoderResult = cbor_encoder_create_array(&oicSecAclMap, &recurrences, acl->prdRecrLen);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
@@ -246,7 +246,7 @@ uint8_t* AclToCBORPayload(const OicSecAcl_t *secAcl, size_t *size)
         }
 
         cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_OWNERS_NAME,
-            sizeof(OIC_JSON_OWNERS_NAME) - 1);
+            strlen(OIC_JSON_OWNERS_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, ERROR);
         CborEncoder owners = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
         cborEncoderResult = cbor_encoder_create_array(&oicSecAclMap, &owners, acl->ownersLen);
