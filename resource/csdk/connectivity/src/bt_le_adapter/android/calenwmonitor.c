@@ -362,3 +362,82 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeBondStateChangedCallback(JNIEnv *en
         OIC_LOG(ERROR, TAG, "CALEServerRemoveDevice has failed");
     }
 }
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaLeClientInterface_caLeGattNWConnectionStateChangeCallback(JNIEnv *env,
+                                                                                 jobject obj,
+                                                                                 jobject gatt,
+                                                                                 jint status,
+                                                                                 jint newstate)
+{
+    VERIFY_NON_NULL_VOID(env, TAG, "env is null");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj is null");
+    VERIFY_NON_NULL_VOID(gatt, TAG, "gatt is null");
+
+    OIC_LOG_V(DEBUG, TAG, "CALeGattNWConnectionStateChangeCallback - status %d, newstate %d",
+              status, newstate);
+
+    jint state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE,
+                                                    "STATE_DISCONNECTED");
+    if (state_disconnected == newstate)
+    {
+        jstring jni_address = CALEClientGetAddressFromGattObj(env, gatt);
+        if (!jni_address)
+        {
+            OIC_LOG(ERROR, TAG, "jni_address is null");
+            return;
+        }
+
+        const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
+        if (!address)
+        {
+            OIC_LOG(ERROR, TAG, "address is null");
+            return;
+        }
+
+        if (g_bleConnectionStateChangedCallback)
+        {
+            g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, address, false);
+        }
+
+        (*env)->ReleaseStringUTFChars(env, jni_address, address);
+    }
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNWConnectionStateChangeCallback(
+        JNIEnv *env, jobject obj, jobject device, jint status, jint newState)
+{
+    OIC_LOG(DEBUG, TAG, " Gatt Server NWConnectionStateChange Callback");
+
+    VERIFY_NON_NULL_VOID(env, TAG, "env");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj");
+    VERIFY_NON_NULL_VOID(device, TAG, "device");
+
+    // STATE_DISCONNECTED
+    jint state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE,
+                                                    "STATE_DISCONNECTED");
+    if (state_disconnected == newState)
+    {
+        jstring jni_remoteAddress = CALEGetAddressFromBTDevice(env, device);
+        if (!jni_remoteAddress)
+        {
+            OIC_LOG(ERROR, TAG, "jni_remoteAddress is null");
+            return;
+        }
+
+        const char* address = (*env)->GetStringUTFChars(env, jni_remoteAddress, NULL);
+        if (!address)
+        {
+            OIC_LOG(ERROR, TAG, "address is null");
+            return;
+        }
+
+        if (g_bleConnectionStateChangedCallback)
+        {
+            g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, address, false);
+        }
+
+        (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, address);
+    }
+}

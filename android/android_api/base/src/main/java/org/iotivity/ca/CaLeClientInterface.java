@@ -86,6 +86,9 @@ public class CaLeClientInterface {
     private native static void caManagerLeGattConnectionStateChangeCB(
             BluetoothGatt gatt, int status, int newState);
 
+    private native static void caLeGattNWConnectionStateChangeCallback(
+            BluetoothGatt gatt, int status, int newState);
+
     private native static void caLeGattServicesDiscoveredCallback(BluetoothGatt gatt, int status);
 
     private native static void caLeGattCharacteristicWriteCallback(
@@ -199,6 +202,7 @@ public class CaLeClientInterface {
 
             caLeGattConnectionStateChangeCallback(gatt, status, newState);
             caManagerLeGattConnectionStateChangeCB(gatt, status, newState);
+            caLeGattNWConnectionStateChangeCallback(gatt, status, newState);
         }
 
         @Override
