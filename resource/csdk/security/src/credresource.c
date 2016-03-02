@@ -375,7 +375,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_OWNERS_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-            cred->ownersLen = cJSON_GetArraySize(jsonObj);
+            cred->ownersLen = (size_t)cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(TAG, cred->ownersLen > 0, ERROR);
             cred->owners = (OicUuid_t*)OICCalloc(cred->ownersLen, sizeof(OicUuid_t));
             VERIFY_NON_NULL(TAG, (cred->owners), ERROR);
@@ -1188,18 +1188,20 @@ static OCStackResult GetCAPublicKeyData(CADtlsX509Creds_t *credInfo){
 static OCStackResult GetCertCredPublicData(CADtlsX509Creds_t *credInfo, OicSecCred_t *cred)
 {
     OCStackResult ret = OC_STACK_ERROR;
+    cJSON *jsonRoot = NULL;
+
     VERIFY_NON_NULL(TAG, credInfo, ERROR);
     VERIFY_NON_NULL(TAG, cred, ERROR);
     VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
     //VERIFY_SUCCESS(TAG, NULL == credInfo->certificateChain.data, ERROR);
-    cJSON *jsonRoot = cJSON_Parse(cred->publicData.data);
+    jsonRoot = cJSON_Parse(cred->publicData.data);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
     //Get certificate chain
     cJSON *jsonObj = cJSON_GetObjectItem(jsonRoot, CERTIFICATE);//TODO define field names constants
     VERIFY_SUCCESS(TAG, NULL != jsonObj && cJSON_Array == jsonObj->type, ERROR);
 
-    size_t certChainLen = cJSON_GetArraySize(jsonObj);
+    size_t certChainLen = (size_t)cJSON_GetArraySize(jsonObj);
     credInfo->chainLen = certChainLen;
     VERIFY_SUCCESS(TAG, MAX_CHAIN_LEN >= certChainLen, ERROR);
 
@@ -1207,6 +1209,7 @@ static OCStackResult GetCertCredPublicData(CADtlsX509Creds_t *credInfo, OicSecCr
     for (size_t i = 0; i < certChainLen; ++i)
     {
         cJSON *item = cJSON_GetArrayItem(jsonObj, i);
+        VERIFY_NON_NULL(TAG, item, ERROR);
         VERIFY_SUCCESS(TAG, cJSON_String == item->type, ERROR);
         uint32_t appendedLen = appendCert2Chain(credInfo->certificateChain + len, item->valuestring,
                                               MAX_CERT_MESSAGE_LEN - len);
@@ -1224,10 +1227,11 @@ exit:
 static OCStackResult GetCertCredPrivateData(CADtlsX509Creds_t *credInfo, OicSecCred_t *cred)
 {
     OCStackResult ret = OC_STACK_ERROR;
+    cJSON *jsonRoot = NULL;
     VERIFY_NON_NULL(TAG, credInfo, ERROR);
     VERIFY_NON_NULL(TAG, cred, ERROR);
     VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
-    cJSON *jsonRoot = cJSON_Parse(cred->privateData.data);
+    jsonRoot = cJSON_Parse(cred->privateData.data);
     VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
 
     cJSON *jsonObj = cJSON_GetObjectItem(jsonRoot, PRIVATE_KEY);//TODO define field names constants
