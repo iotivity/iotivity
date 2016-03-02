@@ -167,10 +167,7 @@ public class RemoteResource {
     }
 
     public void setResourceRepresentation(SimulatorResourceModel resModel) {
-        if (mResourceRepresentation == null)
-            mResourceRepresentation = new ResourceRepresentation(resModel);
-        else
-            mResourceRepresentation.update(resModel);
+        mResourceRepresentation = new ResourceRepresentation(resModel);
     }
 
     public ResourceRepresentation getResourceRepresentation() {

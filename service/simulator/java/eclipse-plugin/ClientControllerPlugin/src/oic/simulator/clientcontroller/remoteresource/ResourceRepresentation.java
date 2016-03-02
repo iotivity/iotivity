@@ -41,6 +41,23 @@ public class ResourceRepresentation {
         }
     }
 
+    public ResourceRepresentation(
+            Map<String, SimulatorResourceAttribute> attributes,
+            boolean onlyCoreAttributes) {
+        if (attributes != null && attributes.size() > 0) {
+            for (Map.Entry<String, SimulatorResourceAttribute> entry : attributes
+                    .entrySet()) {
+                if (onlyCoreAttributes && !isCoreAttribute(entry.getKey())) {
+                    // Skip this attribute.
+                    continue;
+                }
+
+                mAttributes.put(entry.getKey(), new AttributeElement(this,
+                        entry.getValue()));
+            }
+        }
+    }
+
     private boolean isCoreAttribute(String attName) {
         if (null == attName || attName.isEmpty()) {
             return false;
@@ -58,26 +75,6 @@ public class ResourceRepresentation {
 
     public Map<String, AttributeElement> getAttributes() {
         return mAttributes;
-    }
-
-    public void update(SimulatorResourceModel resourceModel) {
-        for (Map.Entry<String, AttributeValue> entry : resourceModel.get()
-                .entrySet()) {
-            if (isCoreAttribute(entry.getKey())) {
-                AttributeElement attributeElement = mAttributes.get(entry
-                        .getKey());
-                if (attributeElement != null) {
-                    attributeElement.update(new SimulatorResourceAttribute(
-                            entry.getKey(), entry.getValue()));
-                } else {
-                    // Display new attribute in UI
-                    AttributeElement newAttribute = new AttributeElement(this,
-                            new SimulatorResourceAttribute(entry.getKey(),
-                                    entry.getValue()));
-                    mAttributes.put(entry.getKey(), newAttribute);
-                }
-            }
-        }
     }
 
     public boolean updateAttributeProperties(

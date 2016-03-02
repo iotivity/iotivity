@@ -33,8 +33,10 @@ import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorException;
+import org.oic.simulator.SimulatorResourceModel;
 
 import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.model.AttributeElement;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.SingleResource;
 
@@ -364,97 +366,146 @@ public class Utility {
         return strArr;
     }
 
-    public static Comparator<Resource>       resourceComparator       = new Comparator<Resource>() {
-                                                                          public int compare(
-                                                                                  Resource res1,
-                                                                                  Resource res2) {
-                                                                              String s1 = res1
-                                                                                      .getResourceName();
-                                                                              String s2 = res2
-                                                                                      .getResourceName();
+    public static Comparator<Resource>         resourceComparator       = new Comparator<Resource>() {
+                                                                            public int compare(
+                                                                                    Resource res1,
+                                                                                    Resource res2) {
+                                                                                String s1 = res1
+                                                                                        .getResourceName();
+                                                                                String s2 = res2
+                                                                                        .getResourceName();
 
-                                                                              String s1Part = s1
-                                                                                      .replaceAll(
-                                                                                              "\\d",
-                                                                                              "");
-                                                                              String s2Part = s2
-                                                                                      .replaceAll(
-                                                                                              "\\d",
-                                                                                              "");
+                                                                                String s1Part = s1
+                                                                                        .replaceAll(
+                                                                                                "\\d",
+                                                                                                "");
+                                                                                String s2Part = s2
+                                                                                        .replaceAll(
+                                                                                                "\\d",
+                                                                                                "");
 
-                                                                              if (s1Part
-                                                                                      .equalsIgnoreCase(s2Part)) {
-                                                                                  return extractInt(s1)
-                                                                                          - extractInt(s2);
-                                                                              }
-                                                                              return s1
-                                                                                      .compareTo(s2);
-                                                                          }
+                                                                                if (s1Part
+                                                                                        .equalsIgnoreCase(s2Part)) {
+                                                                                    return extractInt(s1)
+                                                                                            - extractInt(s2);
+                                                                                }
+                                                                                return s1
+                                                                                        .compareTo(s2);
+                                                                            }
 
-                                                                          int extractInt(
-                                                                                  String s) {
-                                                                              String num = s
-                                                                                      .replaceAll(
-                                                                                              "\\D",
-                                                                                              "");
-                                                                              // return
-                                                                              // 0
-                                                                              // if
-                                                                              // no
-                                                                              // digits
-                                                                              // found
-                                                                              return num
-                                                                                      .isEmpty() ? 0
-                                                                                      : Integer
-                                                                                              .parseInt(num);
-                                                                          }
-                                                                      };
+                                                                            int extractInt(
+                                                                                    String s) {
+                                                                                String num = s
+                                                                                        .replaceAll(
+                                                                                                "\\D",
+                                                                                                "");
+                                                                                // return
+                                                                                // 0
+                                                                                // if
+                                                                                // no
+                                                                                // digits
+                                                                                // found
+                                                                                return num
+                                                                                        .isEmpty() ? 0
+                                                                                        : Integer
+                                                                                                .parseInt(num);
+                                                                            }
+                                                                        };
 
-    public static Comparator<SingleResource> singleResourceComparator = new Comparator<SingleResource>() {
-                                                                          public int compare(
-                                                                                  SingleResource res1,
-                                                                                  SingleResource res2) {
-                                                                              String s1 = res1
-                                                                                      .getResourceName();
-                                                                              String s2 = res2
-                                                                                      .getResourceName();
+    public static Comparator<SingleResource>   singleResourceComparator = new Comparator<SingleResource>() {
+                                                                            public int compare(
+                                                                                    SingleResource res1,
+                                                                                    SingleResource res2) {
+                                                                                String s1 = res1
+                                                                                        .getResourceName();
+                                                                                String s2 = res2
+                                                                                        .getResourceName();
 
-                                                                              String s1Part = s1
-                                                                                      .replaceAll(
-                                                                                              "\\d",
-                                                                                              "");
-                                                                              String s2Part = s2
-                                                                                      .replaceAll(
-                                                                                              "\\d",
-                                                                                              "");
+                                                                                String s1Part = s1
+                                                                                        .replaceAll(
+                                                                                                "\\d",
+                                                                                                "");
+                                                                                String s2Part = s2
+                                                                                        .replaceAll(
+                                                                                                "\\d",
+                                                                                                "");
 
-                                                                              if (s1Part
-                                                                                      .equalsIgnoreCase(s2Part)) {
-                                                                                  return extractInt(s1)
-                                                                                          - extractInt(s2);
-                                                                              }
-                                                                              return s1
-                                                                                      .compareTo(s2);
-                                                                          }
+                                                                                if (s1Part
+                                                                                        .equalsIgnoreCase(s2Part)) {
+                                                                                    return extractInt(s1)
+                                                                                            - extractInt(s2);
+                                                                                }
+                                                                                return s1
+                                                                                        .compareTo(s2);
+                                                                            }
 
-                                                                          int extractInt(
-                                                                                  String s) {
-                                                                              String num = s
-                                                                                      .replaceAll(
-                                                                                              "\\D",
-                                                                                              "");
-                                                                              // return
-                                                                              // 0
-                                                                              // if
-                                                                              // no
-                                                                              // digits
-                                                                              // found
-                                                                              return num
-                                                                                      .isEmpty() ? 0
-                                                                                      : Integer
-                                                                                              .parseInt(num);
-                                                                          }
-                                                                      };
+                                                                            int extractInt(
+                                                                                    String s) {
+                                                                                String num = s
+                                                                                        .replaceAll(
+                                                                                                "\\D",
+                                                                                                "");
+                                                                                // return
+                                                                                // 0
+                                                                                // if
+                                                                                // no
+                                                                                // digits
+                                                                                // found
+                                                                                return num
+                                                                                        .isEmpty() ? 0
+                                                                                        : Integer
+                                                                                                .parseInt(num);
+                                                                            }
+                                                                        };
+
+    public static Comparator<AttributeElement> attributeComparator      = new Comparator<AttributeElement>() {
+                                                                            public int compare(
+                                                                                    AttributeElement att1,
+                                                                                    AttributeElement att2) {
+                                                                                String s1 = att1
+                                                                                        .getSimulatorResourceAttribute()
+                                                                                        .name();
+                                                                                String s2 = att2
+                                                                                        .getSimulatorResourceAttribute()
+                                                                                        .name();
+
+                                                                                String s1Part = s1
+                                                                                        .replaceAll(
+                                                                                                "\\d",
+                                                                                                "");
+                                                                                String s2Part = s2
+                                                                                        .replaceAll(
+                                                                                                "\\d",
+                                                                                                "");
+
+                                                                                if (s1Part
+                                                                                        .equalsIgnoreCase(s2Part)) {
+                                                                                    return extractInt(s1)
+                                                                                            - extractInt(s2);
+                                                                                }
+                                                                                return s1
+                                                                                        .compareTo(s2);
+                                                                            }
+
+                                                                            int extractInt(
+                                                                                    String s) {
+                                                                                String num = s
+                                                                                        .replaceAll(
+                                                                                                "\\D",
+                                                                                                "");
+
+                                                                                // Return
+                                                                                // 0
+                                                                                // if
+                                                                                // no
+                                                                                // digits
+                                                                                // found
+                                                                                return num
+                                                                                        .isEmpty() ? 0
+                                                                                        : Integer
+                                                                                                .parseInt(num);
+                                                                            }
+                                                                        };
 
     // This method only works for attributes whose values are of type int,
     // double, bool, string and 1-D array of primitive types
@@ -469,8 +520,7 @@ public class Utility {
         }
 
         TypeInfo type = val.typeInfo();
-        if (type.mType == ValueType.RESOURCEMODEL
-                || (type.mType == ValueType.ARRAY && type.mBaseType == ValueType.RESOURCEMODEL)
+        if (type.mBaseType == ValueType.RESOURCEMODEL
                 || (type.mType == ValueType.ARRAY && type.mDepth > 1)) {
             return null;
         }
@@ -537,5 +587,75 @@ public class Utility {
         }
 
         return result;
+    }
+
+    public static AttributeValue cloneAttributeValue(AttributeValue value)
+            throws Exception {
+        AttributeValue clone = null;
+
+        AttributeValue.TypeInfo typeInfo = value.typeInfo();
+
+        if (typeInfo.mType == AttributeValue.ValueType.RESOURCEMODEL) {
+            SimulatorResourceModel resModel = (SimulatorResourceModel) value
+                    .get();
+            SimulatorResourceModel modelCopy = new SimulatorResourceModel();
+
+            for (Map.Entry<String, AttributeValue> entry : resModel.get()
+                    .entrySet()) {
+                String attName = entry.getKey();
+                AttributeValue attValue = entry.getValue();
+                modelCopy.set(attName, cloneAttributeValue(attValue));
+            }
+            clone = new AttributeValue(modelCopy);
+        } else if (typeInfo.mType == AttributeValue.ValueType.ARRAY
+                && typeInfo.mBaseType == AttributeValue.ValueType.RESOURCEMODEL) {
+            if (typeInfo.mDepth == 1) {
+                SimulatorResourceModel[] resModelArray = (SimulatorResourceModel[]) value
+                        .get();
+                SimulatorResourceModel[] modelArrayCopy = new SimulatorResourceModel[resModelArray.length];
+                for (int i = 0; i < resModelArray.length; i++) {
+                    AttributeValue attValue = cloneAttributeValue(new AttributeValue(
+                            resModelArray[i]));
+                    if (null != attValue) {
+                        modelArrayCopy[i] = (SimulatorResourceModel) attValue
+                                .get();
+                    }
+                }
+                clone = new AttributeValue(modelArrayCopy);
+            } else if (typeInfo.mDepth == 2) {
+                SimulatorResourceModel[][] resModelArray = (SimulatorResourceModel[][]) value
+                        .get();
+                SimulatorResourceModel[][] modelArrayCopy = new SimulatorResourceModel[resModelArray.length][];
+                for (int i = 0; i < resModelArray.length; i++) {
+                    AttributeValue attValue = cloneAttributeValue(new AttributeValue(
+                            resModelArray[i]));
+                    if (null != attValue) {
+                        modelArrayCopy[i] = (SimulatorResourceModel[]) attValue
+                                .get();
+                    }
+                }
+                clone = new AttributeValue(modelArrayCopy);
+            } else if (typeInfo.mDepth == 3) {
+                SimulatorResourceModel[][][] resModelArray = (SimulatorResourceModel[][][]) value
+                        .get();
+                SimulatorResourceModel[][][] modelArrayCopy = new SimulatorResourceModel[resModelArray.length][][];
+                for (int i = 0; i < resModelArray.length; i++) {
+                    AttributeValue attValue = cloneAttributeValue(new AttributeValue(
+                            resModelArray[i]));
+                    if (null != attValue) {
+                        modelArrayCopy[i] = (SimulatorResourceModel[][]) attValue
+                                .get();
+                    }
+                }
+                clone = new AttributeValue(modelArrayCopy);
+            }
+        } else {
+            String attValueInString = new AttributeValueStringConverter(value)
+                    .toString();
+            clone = AttributeValueBuilder.build(attValueInString,
+                    typeInfo.mBaseType);
+        }
+
+        return clone;
     }
 }

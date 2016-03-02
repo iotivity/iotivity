@@ -16,8 +16,8 @@
 
 package oic.simulator.serviceprovider.model;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.oic.simulator.ArrayProperty;
 import org.oic.simulator.AttributeProperty;
@@ -38,7 +38,7 @@ import oic.simulator.serviceprovider.utils.Constants;
 public class AttributeElement {
     private Object                        mParent             = null;
     private SimulatorResourceAttribute    mAttribute          = null;
-    private Map<String, AttributeElement> mChildAttributes    = new HashMap<String, AttributeElement>();
+    private Map<String, AttributeElement> mChildAttributes    = new TreeMap<String, AttributeElement>();
     private boolean                       mAutoUpdateSupport  = false;
     private int                           mAutoUpdateId       = -1;
     private boolean                       mAutoUpdateState    = false;
@@ -275,20 +275,44 @@ public class AttributeElement {
         if (typeInfo.mType == AttributeValue.ValueType.RESOURCEMODEL) {
             SimulatorResourceModel resModel = (SimulatorResourceModel) attribute
                     .value().get();
+            String attName;
             for (Map.Entry<String, AttributeValue> entry : resModel.get()
                     .entrySet()) {
-                AttributeElement attributeElement = mChildAttributes.get(entry
-                        .getKey());
+                attName = entry.getKey();
+                AttributeElement attributeElement = mChildAttributes
+                        .get(attName);
+
                 if (attributeElement != null) {
                     attributeElement.update(new SimulatorResourceAttribute(
-                            entry.getKey(), entry.getValue()));
+                            attName, entry.getValue()));
                 } else {
-                    // Display new attribute in UI
-                    AttributeElement newAttribute = new AttributeElement(this,
-                            new SimulatorResourceAttribute(entry.getKey(),
-                                    entry.getValue()), false);
-                    mChildAttributes.put(entry.getKey(), newAttribute);
+                    // Get the property from the newly received attribute.
+                    ModelProperty modelProp = null;
+                    if (null != attribute.property()) {
+                        modelProp = attribute.property().asModel();
+                    }
 
+                    AttributeProperty prop = null;
+                    if (null != modelProp)
+                        prop = modelProp.get(attName);
+
+                    AttributeElement newAttribute = new AttributeElement(this,
+                            new SimulatorResourceAttribute(attName,
+                                    entry.getValue(), prop), false);
+
+                    // Update the attribute's value (Adding the new child
+                    // attribute).
+                    AttributeValue currentValue = mAttribute.value();
+                    SimulatorResourceModel curModel = (SimulatorResourceModel) currentValue
+                            .get();
+                    try {
+                        curModel.set(attName, entry.getValue());
+                    } catch (InvalidArgsException e) {
+                    }
+
+                    mChildAttributes.put(attName, newAttribute);
+
+                    // Refresh UI to display the new attribute.
                     UiListenerHandler.getInstance()
                             .attributeAddedUINotification(newAttribute);
                 }
@@ -298,42 +322,96 @@ public class AttributeElement {
             if (typeInfo.mDepth == 1) {
                 SimulatorResourceModel[] resModelArray = (SimulatorResourceModel[]) attribute
                         .value().get();
+
+                ArrayProperty arrProp = null;
+                ModelProperty modelProp = null;
+                if (null != mAttribute.property()) {
+                    arrProp = mAttribute.property().asArray();
+                    if (null != arrProp && null != arrProp.getElementProperty()) {
+                        modelProp = arrProp.getElementProperty().asModel();
+                    }
+                }
+
+                mChildAttributes.clear();
+
+                SimulatorResourceModel[] newModelArray = new SimulatorResourceModel[resModelArray.length];
+
                 for (int i = 0; i < resModelArray.length; i++) {
                     SimulatorResourceAttribute indexAttribute = new SimulatorResourceAttribute(
                             "[" + Integer.toString(i) + "]",
-                            new AttributeValue(resModelArray[i]), null);
-                    AttributeElement attributeElement = mChildAttributes
-                            .get("[" + Integer.toString(i) + "]");
-                    if (attributeElement != null) {
-                        attributeElement.update(indexAttribute);
-                    } else {
-                        // Display new attribute in UI
-                        AttributeElement newAttribute = new AttributeElement(
-                                this, indexAttribute, false);
-                        mChildAttributes.put("[" + Integer.toString(i) + "]",
-                                newAttribute);
-                        UiListenerHandler.getInstance()
-                                .attributeAddedUINotification(newAttribute);
-                    }
+                            new AttributeValue(resModelArray[i]), modelProp);
+
+                    // Update the attribute's value (Adding the new child
+                    // attribute).
+                    AttributeElement newAttributeElement = new AttributeElement(
+                            this, indexAttribute, false);
+
+                    newModelArray[i] = resModelArray[i];
+
+                    mChildAttributes.put("[" + Integer.toString(i) + "]",
+                            newAttributeElement);
                 }
+
+                // Changing the value of the model array attribute. Property
+                // remains the same.
+                mAttribute.setValue(new AttributeValue(newModelArray));
+
+                // Refresh UI to display the new attribute.
+                UiListenerHandler.getInstance().attributeAddedUINotification(
+                        this);
             }
             if (typeInfo.mDepth == 2) {
                 SimulatorResourceModel[][] resModelArray = (SimulatorResourceModel[][]) attribute
                         .value().get();
+
+                ArrayProperty arrProp = null;
+                ArrayProperty arrChildPropLevel1 = null;
+                ModelProperty modelProp = null;
+                if (null != mAttribute.property()) {
+                    arrProp = mAttribute.property().asArray();
+                    if (null != arrProp && null != arrProp.getElementProperty()) {
+                        arrChildPropLevel1 = arrProp.getElementProperty()
+                                .asArray();
+                        if (null != arrChildPropLevel1
+                                && null != arrChildPropLevel1
+                                        .getElementProperty()) {
+                            modelProp = arrProp.getElementProperty().asModel();
+                        }
+                    }
+                }
+
                 for (int i = 0; i < resModelArray.length; i++) {
                     SimulatorResourceAttribute indexAttribute = new SimulatorResourceAttribute(
                             "[" + Integer.toString(i) + "]",
-                            new AttributeValue(resModelArray[i]), null);
+                            new AttributeValue(resModelArray[i]));
                     AttributeElement attributeElement = mChildAttributes
                             .get("[" + Integer.toString(i) + "]");
                     if (attributeElement != null) {
                         attributeElement.update(indexAttribute);
                     } else {
-                        // Display new attribute in UI
+                        indexAttribute.setProperty(modelProp);
+
+                        // Update the attribute's value (Adding the new child
+                        // attribute).
                         AttributeElement newAttribute = new AttributeElement(
                                 this, indexAttribute, false);
+                        AttributeValue currentValue = mAttribute.value();
+
+                        SimulatorResourceModel[][] curModelArray = (SimulatorResourceModel[][]) currentValue
+                                .get();
+                        SimulatorResourceModel[][] newModelArray = new SimulatorResourceModel[curModelArray.length + 1][];
+
+                        int j = 0;
+                        for (SimulatorResourceModel[] modelArray : curModelArray) {
+                            newModelArray[j++] = modelArray;
+                        }
+                        newModelArray[j] = resModelArray[i];
+
+                        mAttribute.setValue(new AttributeValue(newModelArray));
                         mChildAttributes.put("[" + Integer.toString(i) + "]",
                                 newAttribute);
+
+                        // Refresh UI to display the new attribute.
                         UiListenerHandler.getInstance()
                                 .attributeAddedUINotification(newAttribute);
                     }
@@ -342,20 +420,63 @@ public class AttributeElement {
             if (typeInfo.mDepth == 3) {
                 SimulatorResourceModel[][][] resModelArray = (SimulatorResourceModel[][][]) attribute
                         .value().get();
+
+                ArrayProperty arrProp = null;
+                ArrayProperty arrChildPropLevel1 = null;
+                ArrayProperty arrChildPropLevel2 = null;
+                ModelProperty modelProp = null;
+                if (null != mAttribute.property()) {
+                    arrProp = mAttribute.property().asArray();
+                    if (null != arrProp && null != arrProp.getElementProperty()) {
+                        arrChildPropLevel1 = arrProp.getElementProperty()
+                                .asArray();
+                        if (null != arrChildPropLevel1
+                                && null != arrChildPropLevel1
+                                        .getElementProperty()) {
+                            arrChildPropLevel2 = arrChildPropLevel1
+                                    .getElementProperty().asArray();
+                            if (null != arrChildPropLevel2
+                                    && null != arrChildPropLevel2
+                                            .getElementProperty()) {
+                                modelProp = arrChildPropLevel2
+                                        .getElementProperty().asModel();
+                            }
+                        }
+                    }
+                }
+
                 for (int i = 0; i < resModelArray.length; i++) {
                     SimulatorResourceAttribute indexAttribute = new SimulatorResourceAttribute(
                             "[" + Integer.toString(i) + "]",
-                            new AttributeValue(resModelArray[i]), null);
+                            new AttributeValue(resModelArray[i]));
                     AttributeElement attributeElement = mChildAttributes
                             .get("[" + Integer.toString(i) + "]");
                     if (attributeElement != null) {
                         attributeElement.update(indexAttribute);
                     } else {
-                        // Display new attribute in UI
+                        indexAttribute.setProperty(modelProp);
+
+                        // Update the attribute's value (Adding the new child
+                        // attribute).
                         AttributeElement newAttribute = new AttributeElement(
                                 this, indexAttribute, false);
+                        AttributeValue currentValue = mAttribute.value();
+
+                        SimulatorResourceModel[][][] curModelArray = (SimulatorResourceModel[][][]) currentValue
+                                .get();
+                        SimulatorResourceModel[][][] newModelArray = new SimulatorResourceModel[curModelArray.length + 1][][];
+
+                        int j = 0;
+                        for (SimulatorResourceModel[][] modelArray : curModelArray) {
+                            newModelArray[j++] = modelArray;
+                        }
+                        newModelArray[j] = resModelArray[i];
+
+                        mAttribute.setValue(new AttributeValue(newModelArray));
                         mChildAttributes.put("[" + Integer.toString(i) + "]",
                                 newAttribute);
+
+                        // Refresh UI to display the new attribute.
                         UiListenerHandler.getInstance()
                                 .attributeAddedUINotification(newAttribute);
                     }

@@ -39,7 +39,10 @@ import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.oic.simulator.AttributeValue.ValueType;
@@ -777,8 +780,15 @@ public class AttributeView extends ViewPart {
         @Override
         public Object[] getChildren(Object attribute) {
             if (attribute instanceof AttributeElement) {
-                return ((AttributeElement) attribute).getChildren().values()
-                        .toArray();
+                List<AttributeElement> attElementList = new ArrayList<AttributeElement>();
+                Map<String, AttributeElement> children = ((AttributeElement) attribute)
+                        .getChildren();
+                if (null != children) {
+                    attElementList.addAll(children.values());
+                    Collections.sort(attElementList,
+                            Utility.attributeComparator);
+                    return attElementList.toArray();
+                }
             }
 
             return new Object[0];

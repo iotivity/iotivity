@@ -1087,8 +1087,7 @@ public class ResourceManager {
 
         TypeInfo type = val.typeInfo();
 
-        if (type.mType == ValueType.RESOURCEMODEL
-                || type.mBaseType == ValueType.RESOURCEMODEL) {
+        if (type.mBaseType == ValueType.RESOURCEMODEL) {
             return null;
         }
 
@@ -1110,14 +1109,14 @@ public class ResourceManager {
                         case INTEGER:
                             IntegerProperty intProperty = childProp.asInteger();
                             if (null != intProperty) {
-                                values.addAll(getAllValues(intProperty,
+                                values.addAll(getAllValues(att, intProperty,
                                         Type.INTEGER));
                             }
                             break;
                         case DOUBLE:
                             DoubleProperty dblProperty = childProp.asDouble();
                             if (null != dblProperty) {
-                                values.addAll(getAllValues(dblProperty,
+                                values.addAll(getAllValues(att, dblProperty,
                                         Type.DOUBLE));
                             }
                             break;
@@ -1125,7 +1124,7 @@ public class ResourceManager {
                             BooleanProperty boolProperty = childProp
                                     .asBoolean();
                             if (null != boolProperty) {
-                                values.addAll(getAllValues(boolProperty,
+                                values.addAll(getAllValues(att, boolProperty,
                                         Type.BOOLEAN));
                             }
                             break;
@@ -1133,7 +1132,7 @@ public class ResourceManager {
                             StringProperty stringProperty = childProp
                                     .asString();
                             if (null != stringProperty) {
-                                values.addAll(getAllValues(stringProperty,
+                                values.addAll(getAllValues(att, stringProperty,
                                         Type.STRING));
                             }
                             break;
@@ -1147,25 +1146,29 @@ public class ResourceManager {
                 case INTEGER:
                     IntegerProperty intProperty = prop.asInteger();
                     if (null != intProperty) {
-                        values.addAll(getAllValues(intProperty, Type.INTEGER));
+                        values.addAll(getAllValues(att, intProperty,
+                                Type.INTEGER));
                     }
                     break;
                 case DOUBLE:
                     DoubleProperty dblProperty = prop.asDouble();
                     if (null != dblProperty) {
-                        values.addAll(getAllValues(dblProperty, Type.DOUBLE));
+                        values.addAll(getAllValues(att, dblProperty,
+                                Type.DOUBLE));
                     }
                     break;
                 case BOOLEAN:
                     BooleanProperty boolProperty = prop.asBoolean();
                     if (null != boolProperty) {
-                        values.addAll(getAllValues(boolProperty, Type.BOOLEAN));
+                        values.addAll(getAllValues(att, boolProperty,
+                                Type.BOOLEAN));
                     }
                     break;
                 case STRING:
                     StringProperty stringProperty = prop.asString();
                     if (null != stringProperty) {
-                        values.addAll(getAllValues(stringProperty, Type.STRING));
+                        values.addAll(getAllValues(att, stringProperty,
+                                Type.STRING));
                     }
                     break;
                 default:
@@ -1176,8 +1179,8 @@ public class ResourceManager {
         return values;
     }
 
-    public List<String> getAllValues(IntegerProperty intProperty,
-            AttributeProperty.Type type) {
+    public List<String> getAllValues(SimulatorResourceAttribute attribute,
+            IntegerProperty intProperty, AttributeProperty.Type type) {
         List<String> values = new ArrayList<String>();
 
         if (intProperty.hasRange()) {
@@ -1191,14 +1194,17 @@ public class ResourceManager {
                 values.add(String.valueOf(val));
             }
         } else {
-            // Adding the default value.
-            values.add(String.valueOf(intProperty.getDefaultValue()));
+            AttributeValue value = attribute.value();
+            if (null != value && null != value.get()) {
+                // Adding the current value of the attribute.
+                values.add(String.valueOf(value.get()));
+            }
         }
         return values;
     }
 
-    public List<String> getAllValues(DoubleProperty dblProperty,
-            AttributeProperty.Type type) {
+    public List<String> getAllValues(SimulatorResourceAttribute attribute,
+            DoubleProperty dblProperty, AttributeProperty.Type type) {
         NumberFormat formatter = NumberFormat.getInstance();
         List<String> values = new ArrayList<String>();
 
@@ -1215,22 +1221,25 @@ public class ResourceManager {
                 values.add(String.valueOf(val));
             }
         } else {
-            // Adding the default value.
-            values.add(String.valueOf(dblProperty.getDefaultValue()));
+            AttributeValue value = attribute.value();
+            if (null != value && null != value.get()) {
+                // Adding the current value of the attribute.
+                values.add(String.valueOf(value.get()));
+            }
         }
         return values;
     }
 
-    public List<String> getAllValues(BooleanProperty boolProperty,
-            AttributeProperty.Type type) {
+    public List<String> getAllValues(SimulatorResourceAttribute attribute,
+            BooleanProperty boolProperty, AttributeProperty.Type type) {
         List<String> values = new ArrayList<String>();
         values.add("true");
         values.add("false");
         return values;
     }
 
-    public List<String> getAllValues(StringProperty stringProperty,
-            AttributeProperty.Type type) {
+    public List<String> getAllValues(SimulatorResourceAttribute attribute,
+            StringProperty stringProperty, AttributeProperty.Type type) {
         List<String> values = new ArrayList<String>();
 
         if (stringProperty.hasValues()) {
@@ -1238,8 +1247,11 @@ public class ResourceManager {
                 values.add(String.valueOf(val));
             }
         } else {
-            // Adding the default value.
-            values.add(String.valueOf(stringProperty.getDefaultValue()));
+            AttributeValue value = attribute.value();
+            if (null != value && null != value.get()) {
+                // Adding the current value of the attribute.
+                values.add(String.valueOf(value.get()));
+            }
         }
         return values;
     }
@@ -1482,10 +1494,6 @@ public class ResourceManager {
             if (null == requestModels) {
                 return false;
             }
-
-            resource.getResourceRepresentation().updateAttributeProperties(
-                    requestModels.get(RequestType.POST),
-                    resource.getResourceModelRef());
 
             // Store the resource model in the local cache
             resource.setRequestModels(requestModels);

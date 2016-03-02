@@ -31,8 +31,6 @@ import org.eclipse.swt.widgets.Text;
 import org.oic.simulator.ArrayProperty;
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
-import org.oic.simulator.AttributeValue.TypeInfo;
-import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.DoubleProperty;
 import org.oic.simulator.IntegerProperty;
 import org.oic.simulator.SimulatorResourceAttribute;

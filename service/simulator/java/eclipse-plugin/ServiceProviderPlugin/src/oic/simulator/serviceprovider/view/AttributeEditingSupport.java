@@ -40,7 +40,6 @@ import org.eclipse.ui.IWorkbenchPartReference;
 import java.util.Date;
 import java.util.List;
 
-import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
@@ -70,8 +69,12 @@ public class AttributeEditingSupport {
     private AttributeValueEditor attValueEditor;
     private AutomationEditor     automationEditor;
 
-    public AttributeValueEditor createAttributeValueEditor(TreeViewer viewer) {
-        attValueEditor = new AttributeValueEditor(viewer);
+    private Boolean              valueChangeInProgress;
+
+    public AttributeValueEditor createAttributeValueEditor(TreeViewer viewer,
+            Boolean nativeUpdateValueCall) {
+        attValueEditor = new AttributeValueEditor(viewer, nativeUpdateValueCall);
+        valueChangeInProgress = false;
         return attValueEditor;
     }
 
@@ -80,15 +83,26 @@ public class AttributeEditingSupport {
         return automationEditor;
     }
 
+    public synchronized boolean isValueChangeInProgress() {
+        return valueChangeInProgress;
+    }
+
+    public synchronized void setValueChangeInProgress(boolean value) {
+        valueChangeInProgress = value;
+    }
+
     class AttributeValueEditor extends EditingSupport {
 
         private final TreeViewer viewer;
         private CCombo           comboBox;
 
-        public AttributeValueEditor(TreeViewer viewer) {
+        private Boolean          callNativeUpdateValue;
+
+        public AttributeValueEditor(TreeViewer viewer,
+                Boolean nativeUpdateValueCall) {
             super(viewer);
             this.viewer = viewer;
-
+            callNativeUpdateValue = nativeUpdateValueCall;
             // Using the part listener to refresh the viewer on various part
             // events.
             // If combo list is open, then click events on other parts of the
@@ -118,7 +132,9 @@ public class AttributeEditingSupport {
                 public void partDeactivated(IWorkbenchPartReference partRef) {
                     String viewId = partRef.getId();
                     if (viewId.equals(AttributeView.VIEW_ID)) {
-                        refreshViewer();
+                        synchronized (valueChangeInProgress) {
+                            updateUnSavedData();
+                        }
                     }
                 }
 
@@ -134,7 +150,14 @@ public class AttributeEditingSupport {
                 public void partActivated(IWorkbenchPartReference partRef) {
                     String viewId = partRef.getId();
                     if (viewId.equals(AttributeView.VIEW_ID)) {
-                        refreshViewer();
+                        if (null == AttributeValueEditor.this.viewer)
+                            return;
+
+                        Tree tree = AttributeValueEditor.this.viewer.getTree();
+                        if (null == tree || tree.isDisposed())
+                            return;
+
+                        AttributeValueEditor.this.viewer.refresh();
                     }
                 }
             };
@@ -155,15 +178,61 @@ public class AttributeEditingSupport {
             }
         }
 
-        public void refreshViewer() {
-            if (null == viewer)
+        public void updateUnSavedData() {
+            if (null == viewer || null == comboBox)
                 return;
 
             Tree tree = viewer.getTree();
             if (null == tree || tree.isDisposed())
                 return;
 
-            viewer.refresh();
+            TreeItem[] selectedItems = tree.getSelection();
+            if (null == selectedItems || 1 != selectedItems.length)
+                return;
+
+            Object element = selectedItems[0].getData();
+            if (null == element || !(element instanceof AttributeElement))
+                return;
+
+            AttributeElement attElement = (AttributeElement) element;
+            SimulatorResourceAttribute att = attElement
+                    .getSimulatorResourceAttribute();
+            if (null == att)
+                return;
+
+            if (Activator.getDefault().getResourceManager()
+                    .isAttHasRangeOrAllowedValues(att)) {
+                viewer.refresh();
+                return;
+            }
+
+            if (!isValueChangeInProgress()) {
+
+                AttributeValue value = att.value();
+                if (value == null)
+                    return;
+
+                TypeInfo type = value.typeInfo();
+
+                if (type.mBaseType == ValueType.RESOURCEMODEL
+                        || type.mType == ValueType.ARRAY) {
+                    return;
+                }
+
+                if (null == value.get()) {
+                    return;
+                }
+
+                String oldValue = String.valueOf(Utility
+                        .getAttributeValueAsString(value));
+
+                attElement.setEditLock(true);
+                compareAndUpdateAttribute(oldValue, comboBox.getText(),
+                        element, att, type);
+                attElement.setEditLock(false);
+
+                viewer.refresh();
+            }
         }
 
         @Override
@@ -213,14 +282,7 @@ public class AttributeEditingSupport {
                 return null;
             }
 
-            AttributeProperty prop = attribute.property();
-            if (null == prop) {
-                return null;
-            }
-
-            if (!resourceManager.isAttHasRangeOrAllowedValues(attribute)) {
-                return null;
-            }
+            setValueChangeInProgress(false);
 
             CellEditor editor;
             if (type.mType == ValueType.ARRAY) {
@@ -238,32 +300,35 @@ public class AttributeEditingSupport {
                             updateAttributeValue(attribute,
                                     dialog.getNewValueObj());
 
-                            ResourceManager resourceManager;
-                            resourceManager = Activator.getDefault()
-                                    .getResourceManager();
+                            if (callNativeUpdateValue) {
+                                ResourceManager resourceManager;
+                                resourceManager = Activator.getDefault()
+                                        .getResourceManager();
 
-                            Resource resource = resourceManager
-                                    .getCurrentResourceInSelection();
+                                Resource resource = resourceManager
+                                        .getCurrentResourceInSelection();
 
-                            SimulatorResourceAttribute result = getResultantAttribute();
+                                SimulatorResourceAttribute result = getResultantAttribute();
 
-                            boolean updated = resourceManager
-                                    .attributeValueUpdated(
-                                            (SingleResource) resource,
-                                            result.name(), result.value());
-                            if (!updated) {
-                                try {
-                                    updateAttributeValue(attribute,
-                                            AttributeValueBuilder.build(
-                                                    currentAttValue,
-                                                    type.mBaseType));
-                                } catch (Exception ex) {
+                                boolean updated = resourceManager
+                                        .attributeValueUpdated(
+                                                (SingleResource) resource,
+                                                result.name(), result.value());
+                                if (!updated) {
+                                    try {
+                                        updateAttributeValue(attribute,
+                                                AttributeValueBuilder.build(
+                                                        currentAttValue,
+                                                        type.mBaseType));
+                                    } catch (Exception ex) {
+                                    }
+                                    MessageDialog
+                                            .openInformation(Display
+                                                    .getDefault()
+                                                    .getActiveShell(),
+                                                    "Operation failed",
+                                                    "Failed to update the attribute value.");
                                 }
-                                MessageDialog
-                                        .openInformation(Display.getDefault()
-                                                .getActiveShell(),
-                                                "Operation failed",
-                                                "Failed to update the attribute value.");
                             }
                         }
 
@@ -282,31 +347,38 @@ public class AttributeEditingSupport {
                         .getAllValuesOfAttribute(attribute);
                 values = Utility.convertListToStringArray(valueSet);
 
-                editor = new ComboBoxCellEditor(viewer.getTree(), values,
-                        SWT.READ_ONLY);
+                boolean hasValueSet = resourceManager
+                        .isAttHasRangeOrAllowedValues(attribute);
+
+                if (hasValueSet) {
+                    editor = new ComboBoxCellEditor(viewer.getTree(), values,
+                            SWT.READ_ONLY);
+                } else {
+                    editor = new ComboBoxCellEditor(viewer.getTree(), values);
+                }
+
                 comboBox = (CCombo) editor.getControl();
-                comboBox.addModifyListener(new ModifyListener() {
+                if (hasValueSet) {
+                    comboBox.addModifyListener(new ModifyListener() {
 
-                    @Override
-                    public void modifyText(ModifyEvent event) {
-                        if (type.mType == ValueType.ARRAY) {
-                            return;
+                        @Override
+                        public void modifyText(ModifyEvent event) {
+                            String oldValue = String.valueOf(Utility
+                                    .getAttributeValueAsString(val));
+                            if (null == oldValue) {
+                                oldValue = "";
+                            }
+                            String newValue = comboBox.getText();
+
+                            attributeElement.setEditLock(true);
+                            compareAndUpdateAttribute(oldValue, newValue,
+                                    element, attribute, type);
+                            attributeElement.setEditLock(false);
+
+                            comboBox.setVisible(false);
                         }
-                        String oldValue = String.valueOf(Utility
-                                .getAttributeValueAsString(val));
-                        if (null == oldValue) {
-                            oldValue = "";
-                        }
-                        String newValue = comboBox.getText();
-
-                        attributeElement.setEditLock(true);
-                        compareAndUpdateAttribute(oldValue, newValue, element,
-                                attribute, type);
-                        attributeElement.setEditLock(false);
-
-                        comboBox.setVisible(false);
-                    }
-                });
+                    });
+                }
             }
             return editor;
         }
@@ -357,6 +429,48 @@ public class AttributeEditingSupport {
 
         @Override
         protected void setValue(Object element, Object value) {
+            synchronized (valueChangeInProgress) {
+                if (isValueChangeInProgress()) {
+                    return;
+                }
+
+                SimulatorResourceAttribute att = null;
+                if (element instanceof AttributeElement) {
+                    att = ((AttributeElement) element)
+                            .getSimulatorResourceAttribute();
+                }
+
+                if (att == null) {
+                    return;
+                }
+
+                if (Activator.getDefault().getResourceManager()
+                        .isAttHasRangeOrAllowedValues(att)) {
+                    return;
+                }
+
+                AttributeValue val = att.value();
+                if (null == val) {
+                    return;
+                }
+
+                TypeInfo type = val.typeInfo();
+
+                String oldValue = String.valueOf(Utility
+                        .getAttributeValueAsString(val));
+                if (null == oldValue) {
+                    oldValue = "";
+                }
+
+                String newValue = comboBox.getText();
+
+                ((AttributeElement) element).setEditLock(true);
+                compareAndUpdateAttribute(oldValue, newValue, element, att,
+                        type);
+                ((AttributeElement) element).setEditLock(false);
+
+            }
+
         }
 
         public void compareAndUpdateAttribute(String oldValue, String newValue,
@@ -365,6 +479,9 @@ public class AttributeEditingSupport {
                     || null == att || null == type) {
                 return;
             }
+
+            setValueChangeInProgress(true);
+
             if (!oldValue.equals(newValue)) {
                 boolean invalid = false;
 
@@ -393,45 +510,53 @@ public class AttributeEditingSupport {
                     dialog.setMessage("Given value is invalid");
                     dialog.open();
                 } else {
-                    MessageBox dialog = new MessageBox(viewer.getTree()
-                            .getShell(), SWT.ICON_QUESTION | SWT.OK
-                            | SWT.CANCEL);
-                    dialog.setText("Confirm action");
-                    dialog.setMessage("Do you want to modify the value?");
-                    int retval = dialog.open();
-                    if (retval != SWT.OK) {
-                        try {
-                            attValue = AttributeValueBuilder.build(oldValue,
-                                    type.mBaseType);
-                        } catch (Exception e) {
-                        }
-                        updateAttributeValue(att, attValue);
-                    } else {
-                        updateAttributeValue(att, attValue);
 
-                        ResourceManager resourceManager;
-                        resourceManager = Activator.getDefault()
-                                .getResourceManager();
+                    // To show the new value till decision made.
+                    updateAttributeValue(att, attValue);
+                    viewer.update(element, null);
 
-                        Resource resource = resourceManager
-                                .getCurrentResourceInSelection();
-
-                        SimulatorResourceAttribute result = getResultantAttribute();
-
-                        boolean updated = resourceManager
-                                .attributeValueUpdated(
-                                        (SingleResource) resource,
-                                        result.name(), result.value());
-                        if (!updated) {
+                    if (callNativeUpdateValue) {
+                        MessageBox dialog = new MessageBox(viewer.getTree()
+                                .getShell(), SWT.ICON_QUESTION | SWT.OK
+                                | SWT.CANCEL);
+                        dialog.setText("Confirm action");
+                        dialog.setMessage("Do you want to modify the value?");
+                        int retval = dialog.open();
+                        if (retval != SWT.OK) {
                             try {
                                 attValue = AttributeValueBuilder.build(
                                         oldValue, type.mBaseType);
                             } catch (Exception e) {
                             }
                             updateAttributeValue(att, attValue);
-                            MessageDialog.openInformation(Display.getDefault()
-                                    .getActiveShell(), "Operation failed",
-                                    "Failed to update the attribute value.");
+
+                        } else {
+                            ResourceManager resourceManager;
+                            resourceManager = Activator.getDefault()
+                                    .getResourceManager();
+
+                            Resource resource = resourceManager
+                                    .getCurrentResourceInSelection();
+
+                            SimulatorResourceAttribute result = getResultantAttribute();
+
+                            boolean updated = resourceManager
+                                    .attributeValueUpdated(
+                                            (SingleResource) resource,
+                                            result.name(), result.value());
+                            if (!updated) {
+                                try {
+                                    attValue = AttributeValueBuilder.build(
+                                            oldValue, type.mBaseType);
+                                } catch (Exception e) {
+                                }
+                                updateAttributeValue(att, attValue);
+                                MessageDialog
+                                        .openInformation(Display.getDefault()
+                                                .getActiveShell(),
+                                                "Operation failed",
+                                                "Failed to update the attribute value.");
+                            }
                         }
                     }
                 }

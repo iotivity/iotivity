@@ -33,8 +33,13 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Vector;
 
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.remoteresource.RemoteResource;
+import oic.simulator.clientcontroller.utils.Constants;
 import oic.simulator.clientcontroller.utils.Utility;
 
 /**
@@ -86,15 +91,54 @@ public class GetRequestDialog extends TitleAreaDialog {
             }
         });
 
-        // Set the interface types.
+        RemoteResource resource = Activator.getDefault().getResourceManager()
+                .getCurrentResourceInSelection();
+
+        // Set the interface types in combo box.
         Map<String, String> ifTypes = Utility.getResourceInterfaces();
-        if (null != ifTypes && !ifTypes.isEmpty()) {
-            this.ifTypes = new HashMap<String, String>();
-            String key;
-            for (Map.Entry<String, String> entry : ifTypes.entrySet()) {
-                key = entry.getValue() + " (" + entry.getKey() + ")";
-                this.ifTypes.put(key, entry.getKey());
-                ifTypesCmb.add(key);
+        this.ifTypes = new HashMap<String, String>();
+        String key;
+        for (Map.Entry<String, String> entry : ifTypes.entrySet()) {
+            key = entry.getValue() + " (" + entry.getKey() + ")";
+            this.ifTypes.put(key, entry.getKey());
+            ifTypesCmb.add(key);
+        }
+
+        // Select the default value to be shown in the interface types combo.
+        Vector<String> ifTypesSupportedByResource = resource
+                .getRemoteResourceRef().getResourceInterfaces();
+        if (null != ifTypesSupportedByResource) {
+            int index = -1;
+            if (ifTypesSupportedByResource
+                    .contains(Constants.BASELINE_INTERFACE)
+                    && ifTypes.containsKey(Constants.BASELINE_INTERFACE)) {
+                // Baseline interface is given preference to be shown in the if
+                // types combo.
+                String value = ifTypes.get(Constants.BASELINE_INTERFACE);
+                index = ifTypesCmb.indexOf(value + " ("
+                        + Constants.BASELINE_INTERFACE + ")");
+                if (index != -1)
+                    ifTypesCmb.select(index);
+            }
+            if (index == -1) {
+                // Baseline interface is not selected so selecting some other
+                // interface supported by the resource.
+                Iterator<String> itr = ifTypesSupportedByResource.iterator();
+                while (itr.hasNext() && index == -1) {
+                    key = itr.next();
+                    if (ifTypes.containsKey(key)) {
+                        String value = ifTypes.get(key);
+                        index = ifTypesCmb.indexOf(value + " (" + key + ")");
+                        if (index != -1) {
+                            ifTypesCmb.select(index);
+                            break;
+                        }
+                    }
+                }
+                if (index == -1 && !ifTypesSupportedByResource.isEmpty()) {
+                    // Resource has custom interfaces.
+                    ifTypesCmb.setText(ifTypesSupportedByResource.get(0));
+                }
             }
         }
 

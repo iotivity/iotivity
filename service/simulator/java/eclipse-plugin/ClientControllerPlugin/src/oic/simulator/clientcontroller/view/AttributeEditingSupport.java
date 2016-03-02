@@ -49,6 +49,7 @@ import oic.simulator.clientcontroller.Activator;
 import oic.simulator.clientcontroller.manager.ResourceManager;
 import oic.simulator.clientcontroller.remoteresource.AttributeElement;
 import oic.simulator.clientcontroller.remoteresource.RemoteResource;
+import oic.simulator.clientcontroller.remoteresource.ResourceRepresentation;
 import oic.simulator.clientcontroller.utils.AttributeValueBuilder;
 import oic.simulator.clientcontroller.utils.Utility;
 import oic.simulator.clientcontroller.view.dialogs.PostRequestDialog;
@@ -61,7 +62,7 @@ import oic.simulator.clientcontroller.view.dialogs.UpdatePrimitiveArrayAttribute
 public class AttributeEditingSupport {
 
     private AttributeValueEditor attValueEditor;
-    private PostRequestEditor    postReqEditor;
+    private PostSelectionEditor  postSelectionEditor;
 
     public AttributeValueEditor createAttributeValueEditor(TreeViewer viewer,
             TitleAreaDialog dialog) {
@@ -69,9 +70,9 @@ public class AttributeEditingSupport {
         return attValueEditor;
     }
 
-    public PostRequestEditor createAutomationEditor(TreeViewer viewer) {
-        postReqEditor = new PostRequestEditor(viewer);
-        return postReqEditor;
+    public PostSelectionEditor createPostSelectionEditor(TreeViewer viewer) {
+        postSelectionEditor = new PostSelectionEditor(viewer);
+        return postSelectionEditor;
     }
 
     class AttributeValueEditor extends EditingSupport {
@@ -144,8 +145,11 @@ public class AttributeEditingSupport {
                         Display.getDefault().asyncExec(new Runnable() {
                             @Override
                             public void run() {
-                                attributeElement.setPostState(true);
-                                viewer.refresh(element, true);
+                                // Set the post state of the top-level
+                                // attribute.
+                                AttributeElement rootElement = getRootElement(attributeElement);
+                                rootElement.setPostState(true);
+                                viewer.refresh(rootElement, true);
                             }
                         });
                     }
@@ -162,16 +166,11 @@ public class AttributeEditingSupport {
 
                     @Override
                     public void modifyText(ModifyEvent event) {
-                        String newValue = comboBox.getText();
-
-                        if (null != newValue && !newValue.isEmpty()) {
-                            attributeElement.setPostState(true);
-                        } else {
-                            attributeElement.setPostState(false);
-                        }
-
-                        if (dialog instanceof PostRequestDialog) {
-                            viewer.update(attributeElement, null);
+                        // Set the post state of the top-level attribute.
+                        AttributeElement rootElement = getRootElement(attributeElement);
+                        rootElement.setPostState(true);
+                        if (AttributeValueEditor.this.dialog instanceof PostRequestDialog) {
+                            viewer.update(rootElement, null);
                         }
                     }
                 });
@@ -398,11 +397,11 @@ public class AttributeEditingSupport {
         }
     }
 
-    class PostRequestEditor extends EditingSupport {
+    class PostSelectionEditor extends EditingSupport {
 
         private final TreeViewer viewer;
 
-        public PostRequestEditor(TreeViewer viewer) {
+        public PostSelectionEditor(TreeViewer viewer) {
             super(viewer);
             this.viewer = viewer;
         }
@@ -414,29 +413,12 @@ public class AttributeEditingSupport {
 
         @Override
         protected CellEditor getCellEditor(Object element) {
-            SimulatorResourceAttribute att = null;
-            if (element instanceof AttributeElement) {
-                att = ((AttributeElement) element)
-                        .getSimulatorResourceAttribute();
+            if (element instanceof AttributeElement
+                    && ((AttributeElement) element).getParent() instanceof ResourceRepresentation) {
+                return new CheckboxCellEditor(null, SWT.CHECK | SWT.READ_ONLY);
             }
 
-            if (null == att) {
-                return null;
-            }
-
-            AttributeValue val = att.value();
-            if (null == val) {
-                return null;
-            }
-
-            TypeInfo type = val.typeInfo();
-
-            if (type.mType == ValueType.RESOURCEMODEL
-                    || type.mBaseType == ValueType.RESOURCEMODEL) {
-                return null;
-            }
-
-            return new CheckboxCellEditor(null, SWT.CHECK | SWT.READ_ONLY);
+            return null;
         }
 
         @Override
@@ -464,8 +446,7 @@ public class AttributeEditingSupport {
                 return;
             }
 
-            // Set the post state of the top-most parent of this attribute to
-            // false.
+            // Update the post state of the top-most parent of this attribute.
             TreeItem parent = item.getParentItem();
             if (null != parent) {
                 while (parent.getParentItem() != null) {
@@ -475,5 +456,21 @@ public class AttributeEditingSupport {
                 ((AttributeElement) data).setPostState(status);
             }
         }
+    }
+
+    private AttributeElement getRootElement(AttributeElement element) {
+        AttributeElement root = null;
+
+        Object parent = element.getParent();
+        if (parent instanceof ResourceRepresentation) {
+            return element;
+        }
+
+        while (!(parent instanceof ResourceRepresentation)) {
+            root = (AttributeElement) parent;
+            parent = ((AttributeElement) parent).getParent();
+        }
+
+        return root;
     }
 }

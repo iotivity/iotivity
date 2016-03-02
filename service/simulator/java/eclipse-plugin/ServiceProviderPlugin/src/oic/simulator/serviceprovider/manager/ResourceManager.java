@@ -63,6 +63,7 @@ import oic.simulator.serviceprovider.model.MetaProperty;
 import oic.simulator.serviceprovider.model.Resource;
 import oic.simulator.serviceprovider.model.ResourceType;
 import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.AttributeValueStringConverter;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.utils.Utility;
 
@@ -1575,105 +1576,108 @@ public class ResourceManager {
             return null;
         }
 
-        AttributeValue val = att.value();
-        if (null == val) {
+        AttributeValue value = att.value();
+        if (null == value || null == value.get()) {
             return null;
         }
 
-        TypeInfo type = val.typeInfo();
+        TypeInfo type = value.typeInfo();
 
-        AttributeProperty prop = att.property();
-        if (null == prop) {
+        if (type.mBaseType == ValueType.RESOURCEMODEL) {
             return null;
         }
 
         List<String> values = new ArrayList<String>();
 
-        if (type.mType != ValueType.RESOURCEMODEL) {
-            if (type.mType == ValueType.ARRAY) {
-                if (type.mDepth == 1) {
-                    ArrayProperty arrayProperty = prop.asArray();
-                    if (null != arrayProperty) {
-                        AttributeProperty childProp = arrayProperty
-                                .getElementProperty();
-                        switch (childProp.getType()) {
-                            case INTEGER:
-                                IntegerProperty intProperty = childProp
-                                        .asInteger();
-                                if (null != intProperty) {
-                                    values.addAll(getAllValues(intProperty,
-                                            Type.INTEGER));
-                                }
-                                break;
-                            case DOUBLE:
-                                DoubleProperty dblProperty = childProp
-                                        .asDouble();
-                                if (null != dblProperty) {
-                                    values.addAll(getAllValues(dblProperty,
-                                            Type.DOUBLE));
-                                }
-                                break;
-                            case BOOLEAN:
-                                BooleanProperty boolProperty = childProp
-                                        .asBoolean();
-                                if (null != boolProperty) {
-                                    values.addAll(getAllValues(boolProperty,
-                                            Type.BOOLEAN));
-                                }
-                                break;
-                            case STRING:
-                                StringProperty stringProperty = childProp
-                                        .asString();
-                                if (null != stringProperty) {
-                                    values.addAll(getAllValues(stringProperty,
-                                            Type.STRING));
-                                }
-                                break;
-                            default:
-                                break;
-                        }
+        AttributeProperty prop = att.property();
+        if (null == prop) {
+            // Adding the current value of the attribute.
+            values.add(new AttributeValueStringConverter(value).toString());
+            return values;
+        }
+
+        if (type.mType == ValueType.ARRAY) {
+            if (type.mDepth == 1) {
+                ArrayProperty arrayProperty = prop.asArray();
+                if (null != arrayProperty) {
+                    AttributeProperty childProp = arrayProperty
+                            .getElementProperty();
+                    switch (childProp.getType()) {
+                        case INTEGER:
+                            IntegerProperty intProperty = childProp.asInteger();
+                            if (null != intProperty) {
+                                values.addAll(getAllValues(att, intProperty,
+                                        Type.INTEGER));
+                            }
+                            break;
+                        case DOUBLE:
+                            DoubleProperty dblProperty = childProp.asDouble();
+                            if (null != dblProperty) {
+                                values.addAll(getAllValues(att, dblProperty,
+                                        Type.DOUBLE));
+                            }
+                            break;
+                        case BOOLEAN:
+                            BooleanProperty boolProperty = childProp
+                                    .asBoolean();
+                            if (null != boolProperty) {
+                                values.addAll(getAllValues(att, boolProperty,
+                                        Type.BOOLEAN));
+                            }
+                            break;
+                        case STRING:
+                            StringProperty stringProperty = childProp
+                                    .asString();
+                            if (null != stringProperty) {
+                                values.addAll(getAllValues(att, stringProperty,
+                                        Type.STRING));
+                            }
+                            break;
+                        default:
+                            break;
                     }
                 }
-            } else {
-                switch (prop.getType()) {
-                    case INTEGER:
-                        IntegerProperty intProperty = prop.asInteger();
-                        if (null != intProperty) {
-                            values.addAll(getAllValues(intProperty,
-                                    Type.INTEGER));
-                        }
-                        break;
-                    case DOUBLE:
-                        DoubleProperty dblProperty = prop.asDouble();
-                        if (null != dblProperty) {
-                            values.addAll(getAllValues(dblProperty, Type.DOUBLE));
-                        }
-                        break;
-                    case BOOLEAN:
-                        BooleanProperty boolProperty = prop.asBoolean();
-                        if (null != boolProperty) {
-                            values.addAll(getAllValues(boolProperty,
-                                    Type.BOOLEAN));
-                        }
-                        break;
-                    case STRING:
-                        StringProperty stringProperty = prop.asString();
-                        if (null != stringProperty) {
-                            values.addAll(getAllValues(stringProperty,
-                                    Type.STRING));
-                        }
-                        break;
-                    default:
-                        break;
-                }
+            }
+        } else {
+            switch (prop.getType()) {
+                case INTEGER:
+                    IntegerProperty intProperty = prop.asInteger();
+                    if (null != intProperty) {
+                        values.addAll(getAllValues(att, intProperty,
+                                Type.INTEGER));
+                    }
+                    break;
+                case DOUBLE:
+                    DoubleProperty dblProperty = prop.asDouble();
+                    if (null != dblProperty) {
+                        values.addAll(getAllValues(att, dblProperty,
+                                Type.DOUBLE));
+                    }
+                    break;
+                case BOOLEAN:
+                    BooleanProperty boolProperty = prop.asBoolean();
+                    if (null != boolProperty) {
+                        values.addAll(getAllValues(att, boolProperty,
+                                Type.BOOLEAN));
+                    }
+                    break;
+                case STRING:
+                    StringProperty stringProperty = prop.asString();
+                    if (null != stringProperty) {
+                        values.addAll(getAllValues(att, stringProperty,
+                                Type.STRING));
+                    }
+                    break;
+                default:
+                    break;
             }
         }
 
         return values;
     }
 
-    public List<String> getAllValues(IntegerProperty intProperty,
-            AttributeProperty.Type type) {
+    public List<String> getAllValues(SimulatorResourceAttribute attribute,
+            IntegerProperty intProperty, AttributeProperty.Type type) {
         List<String> values = new ArrayList<String>();
 
         if (intProperty.hasRange()) {
@@ -1687,14 +1691,17 @@ public class ResourceManager {
                 values.add(String.valueOf(val));
             }
         } else {
-            // Adding the default value.
-            values.add(String.valueOf(intProperty.getDefaultValue()));
+            AttributeValue value = attribute.value();
+            if (null != value && null != value.get()) {
+                // Adding the current value of the attribute.
+                values.add(String.valueOf(value.get()));
+            }
         }
         return values;
     }
 
-    public List<String> getAllValues(DoubleProperty dblProperty,
-            AttributeProperty.Type type) {
+    public List<String> getAllValues(SimulatorResourceAttribute attribute,
+            DoubleProperty dblProperty, AttributeProperty.Type type) {
         NumberFormat formatter = NumberFormat.getInstance();
         List<String> values = new ArrayList<String>();
 
@@ -1711,22 +1718,25 @@ public class ResourceManager {
                 values.add(String.valueOf(val));
             }
         } else {
-            // Adding the default value.
-            values.add(String.valueOf(dblProperty.getDefaultValue()));
+            AttributeValue value = attribute.value();
+            if (null != value && null != value.get()) {
+                // Adding the current value of the attribute.
+                values.add(String.valueOf(value.get()));
+            }
         }
         return values;
     }
 
-    public List<String> getAllValues(BooleanProperty boolProperty,
-            AttributeProperty.Type type) {
+    public List<String> getAllValues(SimulatorResourceAttribute attribute,
+            BooleanProperty boolProperty, AttributeProperty.Type type) {
         List<String> values = new ArrayList<String>();
         values.add("true");
         values.add("false");
         return values;
     }
 
-    public List<String> getAllValues(StringProperty stringProperty,
-            AttributeProperty.Type type) {
+    public List<String> getAllValues(SimulatorResourceAttribute attribute,
+            StringProperty stringProperty, AttributeProperty.Type type) {
         List<String> values = new ArrayList<String>();
 
         if (stringProperty.hasValues()) {
@@ -1734,8 +1744,11 @@ public class ResourceManager {
                 values.add(String.valueOf(val));
             }
         } else {
-            // Adding the default value.
-            values.add(String.valueOf(stringProperty.getDefaultValue()));
+            AttributeValue value = attribute.value();
+            if (null != value && null != value.get()) {
+                // Adding the current value of the attribute.
+                values.add(String.valueOf(value.get()));
+            }
         }
         return values;
     }
