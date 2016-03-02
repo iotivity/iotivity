@@ -30,18 +30,58 @@ namespace OIC
     namespace Service
     {
         class SceneListResource;
+        /**
+         * @class SceneList
+         *
+         * @brief SceneList class is an interface class to manage SceneList resource. This class
+         * provides APIs for creating a new SceneCollection instance and retrieving the existing
+         * instances as well as for setting/getting a name attribute of SceneList resource.
+         *
+         */
         class SceneList
         {
         private:
             ~SceneList() = default;
 
         public:
+            /**
+             * Gets static instance of SceneList
+             *
+             * @return SceneList instance
+             *
+             */
             static SceneList* getInstance();
+
+            /**
+             * Adds new SceneCollection instance
+             *
+             * @return A shared pointer of SceneCollection instance
+             *
+             * @note SceneCollection instance is only produced by SceneList class
+             */
             SceneCollection::Ptr addNewSceneCollection();
+
+            /**
+             * Gets all SceneCollection instances stored in SceneList resource
+             *
+             * @return A vector of shared pointers of SceneCollection instances
+             */
             std::vector<SceneCollection::Ptr> getSceneCollections() const;
+
             void removeSceneCollection(SceneCollection::Ptr);
 
-            void setName(const std::string&);
+            /**
+             * Sets a name attribute of SceneList resource
+             *
+             * @param sceneListName               A SceneList resource's name
+             */
+            void setName(const std::string& sceneListName);
+
+            /**
+             * Gets a name attribute of SceneList resource
+             *
+             * @return A SceneList resource's name
+             */
             std::string getName() const;
         };
     } /* namespace Service */

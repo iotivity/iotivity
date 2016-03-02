@@ -29,6 +29,16 @@ namespace OIC
     namespace Service
     {
         class SceneCollectionResource;
+
+        /**
+         * @class SceneCollection
+         *
+         * @brief SceneCollection class is an interface class to manage SceneCollection resource.
+         * This class provides APIs to create a new Scene instance and retrieve all Scene instances
+         * created before. Besides, it provide APIs for retrieving and updating attribute values
+         * like name attribute
+         *
+         */
         class SceneCollection
         {
         public:
@@ -39,14 +49,61 @@ namespace OIC
             friend class SceneList;
 
         public:
-            Scene::Ptr addNewScene(const std::string&);
+
+            /**
+             * Adds new Scene instance to SceneCollection resource
+             *
+             * @param sceneName              A scene's name
+             *
+             * @return A shared pointer of Scene instance
+             *
+             * @note Scene instance is only produced by SceneCollection class
+             * @note Scene's name must unique in one SceneCollection resource
+             */
+            Scene::Ptr addNewScene(const std::string& sceneName);
+
+            /**
+             * Gets all Scene instances from SceneCollection resource
+             *
+             * @return A unordered_map of shared pointers of Scene instances with a Scene's name
+             */
             std::unordered_map< std::string, Scene::Ptr > getScenes() const;
-            Scene::Ptr getScene(const std::string&) const;
+
+            /**
+             * Gets a Scene instance with a specific Scene's name.
+             *
+             * @param sceneName             A Scene's name
+             *
+             * @return A shared pointer of Scene instance
+             *
+             * @throws RCSInvalidParameterException
+             * if Scene's name does not exist in SceneCollection resource
+             */
+            Scene::Ptr getScene(const std::string& sceneName) const;
+
 
             void removeScene(Scene::Ptr);
 
-            void setName(const std::string&);
+            /**
+             * Sets a name attribute of SceneCollection resource
+             *
+             * @param name               A SceneCollection resource's name
+             */
+            void setName(const std::string& name);
+
+            /**
+             * Gets a name attribute from SceneCollection resource.
+             *
+             * @return A SceneCollection resource's name
+             */
             std::string getName() const;
+
+            /**
+             * Gets a Id attribute of SceneCollection resource.
+             *
+             * @return A SceneCollection resource's Id
+             *
+             */
             std::string getId() const;
 
         private:

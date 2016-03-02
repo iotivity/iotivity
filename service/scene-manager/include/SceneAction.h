@@ -29,6 +29,16 @@ namespace OIC
     namespace Service
     {
         class SceneMemberResource;
+
+        /**
+         * @class SceneAction
+         *
+         * @brief SceneAction class indicates a unit of actions when a scene is executed.
+         * SceneAction instance is initialized with 3 essential parameters: a target resource,
+         * target attribute key, and its target value. And this class also provide APIs to update
+         * a target attribute information if one wants
+         *
+         */
         class SceneAction
         {
         public:
@@ -43,10 +53,39 @@ namespace OIC
             friend class Scene;
 
         public:
-            void setExecutionParameter(const std::string&, RCSResourceAttributes::Value);
-            void setExecutionParameter(const RCSResourceAttributes&);
+            /**
+             * Sets attributes of the SceneMember resource when the Scene is executed
+             *
+             * @param key                   A key of attributes
+             * @param value                 A value to be mapped against the key
+             *
+             * @see RCSResourceAttributes
+             */
+            void setExecutionParameter(const std::string& key, RCSResourceAttributes::Value value);
 
+            /**
+             * Sets attributes of the SceneMember resource when the Scene is executed
+             *
+             * @param attr                  Attributes to set
+             *
+             * @see RCSResourceAttributes
+             */
+            void setExecutionParameter(const RCSResourceAttributes& attr);
+
+            /**
+             * Gets execution parameter of the SceneAction instance
+             *
+             * @return attributes of SceneMember resource
+             *
+             * @see RCSResourceAttributes
+             */
             const RCSResourceAttributes getExecutionParameter();
+
+            /**
+             * Gets remote resource object of SceneMember resource
+             *
+             * @return RCSRemoteResourceObject
+             */
             RCSRemoteResourceObject::Ptr getRemoteResourceObject() const;
 
         private:
