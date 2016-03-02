@@ -197,7 +197,6 @@ PKIError CKMIssueDeviceCertificate (const uint8_t *uint8SubjectName,
     uint8_t caPrivateKey[PRIVATE_KEY_SIZE];
     uint8_t uint8caName[ISSUER_MAX_NAME_SIZE];
 
-    CHECK_NULL(uint8SubjectPublicKey, ISSUER_NULL_PASSED);
     CHECK_NULL(issuedCertificate, ISSUER_NULL_PASSED);
     CHECK_NULL(issuedCertificate->data, ISSUER_NULL_PASSED);
     CHECK_LESS_EQUAL(ISSUER_MAX_CERT_SIZE, issuedCertificate->len, ISSUER_WRONG_BYTE_ARRAY_LEN);
@@ -425,6 +424,7 @@ PKIError GenerateCSR (const uint8_t *uint8SubjectName,
 
     FUNCTION_CLEAR(
         OICFree(subjectName);
+        OICFree(subjectPublicKey->buf);
         OICFree(subjectPublicKey);
         OICFree(subjectPrivateKey->buf);
         OICFree(subjectPrivateKey);
@@ -582,7 +582,7 @@ PKIError CKMRevocateCertificate (const uint8_t *uint8ThisUpdateTime, const long 
     CHECK_CALL(InitCKMInfo);
     CHECK_CALL(GetNumberOfRevoked, &numberOfRevoked);
 
-    crlMaxSize = (CRL_MIN_SIZE +
+    crlMaxSize = (uint32_t)(CRL_MIN_SIZE +
             (numberOfRevoked + 1) * (sizeof(CertificateRevocationInfo_t) + 4));
 
     CHECK_NULL(encodedCRL, ISSUER_NULL_PASSED);

@@ -237,7 +237,7 @@ PKIError SetCAName (const ByteArray *CAName)
     CHECK_NULL_BYTE_ARRAY_PTR(CAName, ISSUER_CA_STORAGE_NULL_PASSED);
     CHECK_LESS_EQUAL(CAName->len, ISSUER_MAX_NAME_SIZE, ISSUER_CA_STORAGE_WRONG_CA_NAME_LEN);
     memcpy(g_ckmInfo.CAName, CAName->data, CAName->len);
-    g_ckmInfo.CANameSize = CAName->len;
+    g_ckmInfo.CANameSize = (uint32_t)CAName->len;
 
     FUNCTION_CLEAR();
 }
@@ -297,7 +297,7 @@ PKIError InitCRT(void)
 
         for (int i = 0; i < g_ckmInfo.CAChainLength; i++)
         {
-            objectsRead = fread(prefix, sizeof(uint8_t), CERT_LEN_PREFIX, filePointer);
+            objectsRead = (uint32_t)fread(prefix, sizeof(uint8_t), CERT_LEN_PREFIX, filePointer);
             CHECK_EQUAL(objectsRead, CERT_LEN_PREFIX, ISSUER_CA_STORAGE_CRT_READ_ERROR);
             g_ckmInfo.CACertificateChain[i].len = ParseCertPrefix(prefix);
 
@@ -305,7 +305,7 @@ PKIError InitCRT(void)
                             (uint8_t *)OICMalloc(g_ckmInfo.CACertificateChain[i].len);
             CHECK_NULL(g_ckmInfo.CACertificateChain[i].data,
                        ISSUER_CA_STORAGE_MEMORY_ALLOC_FAILED);
-            objectsRead = fread(g_ckmInfo.CACertificateChain[i].data, sizeof(uint8_t),
+            objectsRead = (uint32_t)fread(g_ckmInfo.CACertificateChain[i].data, sizeof(uint8_t),
                                 g_ckmInfo.CACertificateChain[i].len, filePointer);
             CHECK_EQUAL(objectsRead, g_ckmInfo.CACertificateChain[i].len,
                         ISSUER_CA_STORAGE_CRT_READ_ERROR);
@@ -333,9 +333,9 @@ PKIError SaveCRT(void)
     for (int i = 0; i < g_ckmInfo.CAChainLength; i++)
     {
         WriteCertPrefix(prefix, g_ckmInfo.CACertificateChain[i].len);
-        objectsWrote = fwrite(prefix, sizeof(uint8_t), CERT_LEN_PREFIX, filePointer);
+        objectsWrote = (uint32_t)fwrite(prefix, sizeof(uint8_t), CERT_LEN_PREFIX, filePointer);
         CHECK_EQUAL(objectsWrote, CERT_LEN_PREFIX, ISSUER_CA_STORAGE_CRT_WRITE_ERROR);
-        objectsWrote = fwrite(g_ckmInfo.CACertificateChain[i].data, sizeof(uint8_t),
+        objectsWrote = (uint32_t)fwrite(g_ckmInfo.CACertificateChain[i].data, sizeof(uint8_t),
                               g_ckmInfo.CACertificateChain[i].len, filePointer);
         CHECK_EQUAL(objectsWrote, g_ckmInfo.CACertificateChain[i].len,
                     ISSUER_CA_STORAGE_CRT_WRITE_ERROR);
