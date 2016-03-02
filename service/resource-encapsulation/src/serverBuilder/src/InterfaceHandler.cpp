@@ -1,6 +1,5 @@
 #include "InterfaceHandler.h"
 
-#include "OCApi.h"
 #include "OCResourceRequest.h"
 
 #include "RCSRepresentation.h"
@@ -15,32 +14,39 @@ namespace
 {
     using namespace OIC::Service;
 
-    RCSRepresentation buildGetBaselineResponse(const RCSRequest&, RCSResourceObject& resource)
+    RCSRepresentation toRepresentation(const RCSResourceObject& resource)
     {
-        RCSResourceObject::LockGuard lock(resource);
+        RCSResourceObject::LockGuard lock{ resource, RCSResourceObject::AutoNotifyPolicy::NEVER };
 
         return RCSRepresentation{ resource.getUri(), resource.getInterfaces(), resource.getTypes(),
             resource.getAttributes()};
     }
 
-    RCSRepresentation buildSetBaselineResponse(const RCSRequest& rcsRequest, RCSResourceObject& resource)
+    RCSRepresentation buildGetBaselineResponse(const RCSRequest&, const RCSResourceObject& resource)
+    {
+        return toRepresentation(resource);
+    }
+
+    RCSRepresentation buildSetBaselineResponse(const RCSRequest& rcsRequest,
+            const RCSResourceObject& resource)
     {
         return buildGetBaselineResponse(rcsRequest, resource);
     }
 
-    RCSRepresentation buildGetRequestResponse(const RCSRequest&, RCSResourceObject& resource)
+    RCSRepresentation buildGetRequestResponse(const RCSRequest&, const RCSResourceObject& resource)
     {
-        RCSResourceObject::LockGuard lock(resource);
+        RCSResourceObject::LockGuard lock{ resource, RCSResourceObject::AutoNotifyPolicy::NEVER };
 
-        return RCSRepresentation{resource.getAttributes()};
+        return RCSRepresentation{ resource.getAttributes() };
     }
 
-    RCSRepresentation buildSetRequestResponse(const RCSRequest& rcsRequest, RCSResourceObject& resource)
+    RCSRepresentation buildSetRequestResponse(const RCSRequest& rcsRequest,
+            const RCSResourceObject& resource)
     {
         auto requestAttr = ResourceAttributesConverter::fromOCRepresentation(
                 (rcsRequest.getOCRequest())->getResourceRepresentation());
 
-        RCSResourceObject::LockGuard lock(resource);
+        RCSResourceObject::LockGuard lock{ resource, RCSResourceObject::AutoNotifyPolicy::NEVER };
 
         const RCSResourceAttributes& updatedAttr = resource.getAttributes();
 
@@ -60,13 +66,13 @@ namespace
         return RCSRepresentation{ requestAttr };
     }
 
-    RCSRepresentation buildGetBatchResponse(RCSRequest, RCSResourceObject& resource)
+    RCSRepresentation buildGetBatchResponse(RCSRequest, const RCSResourceObject& resource)
     {
         RCSRepresentation rcsRep;
 
         for (const auto& bound : resource.getBoundResources())
         {
-            rcsRep.addChild(bound->toRepresentation());
+            rcsRep.addChild(toRepresentation(*bound));
         }
 
         return rcsRep;

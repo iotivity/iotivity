@@ -130,36 +130,24 @@ namespace OIC
     namespace Service
     {
 
-        RCSResourceObject::Builder::Builder(const std::string& uri, const std::string& type,
-                const std::string& interface) :
-                m_uri{ uri },
-                m_types{ type },
-                m_interfaces{ interface },
+        RCSResourceObject::Builder::Builder(std::string uri, std::string type,
+                std::string interface) :
+                m_uri{ std::move(uri) },
+                m_types{ std::move(type) },
+                m_interfaces{ std::move(interface) },
                 m_defaultInterface { BASELINE_INTERFACE },
                 m_properties{ OC_DISCOVERABLE | OC_OBSERVABLE },
                 m_resourceAttributes{ }
         {
         }
 
-        RCSResourceObject::Builder& RCSResourceObject::Builder::addInterface(
-                const std::string& interface)
-        {
-            return addInterface(std::string{ interface });
-        }
-
-        RCSResourceObject::Builder& RCSResourceObject::Builder::addInterface(
-                std::string&& interface)
+        RCSResourceObject::Builder& RCSResourceObject::Builder::addInterface(std::string interface)
         {
             m_interfaces.push_back(std::move(interface));
             return *this;
         }
 
-        RCSResourceObject::Builder& RCSResourceObject::Builder::addType(const std::string& type)
-        {
-            return addType(std::string{ type });
-        }
-
-        RCSResourceObject::Builder& RCSResourceObject::Builder::addType(std::string&& type)
+        RCSResourceObject::Builder& RCSResourceObject::Builder::addType(std::string type)
         {
             m_types.push_back(std::move(type));
             return *this;
@@ -289,7 +277,7 @@ namespace OIC
             {
                 try
                 {
-                    OC::OCPlatform::unregisterResource(m_resourceHandle);
+                    invokeOCFunc(OC::OCPlatform::unregisterResource, m_resourceHandle);
                 }
                 catch (...)
                 {
@@ -540,10 +528,21 @@ namespace OIC
             return m_types;
         }
 
-        RCSRepresentation RCSResourceObject::toRepresentation() const
+        RCSRepresentation RCSResourceObject::getRepresentation(const RCSRequest& request) const
         {
-            WeakGuard lock{*this};
-            return RCSRepresentation{ m_uri, m_interfaces, m_types, m_resourceAttributes };
+            if (request.getOCRequest()->getRequestType() == "GET")
+            {
+                return findInterfaceHandler(
+                        request.getInterface()).getGetResponseBuilder()(request, *this);
+            }
+
+            if (request.getOCRequest()->getRequestType() == "POST")
+            {
+                return findInterfaceHandler(
+                        request.getInterface()).getSetResponseBuilder()(request, *this);
+            }
+
+            throw RCSBadRequestException{ "Unsupported request type!" };
         }
 
         void RCSResourceObject::autoNotify(bool isAttributesChanged) const
@@ -645,7 +644,7 @@ namespace OIC
                          findInterfaceHandler(request.getInterface()).getGetResponseBuilder());
         }
 
-        RCSResourceAttributes RCSResourceObject::applyAcceptanceMethod(
+        bool RCSResourceObject::applyAcceptanceMethod(
                 const RCSSetResponse& response, const RCSResourceAttributes& requestAttrs)
         {
             auto requestHandler = response.getHandler();
@@ -675,11 +674,9 @@ namespace OIC
                 {
                     (*foundListener)(attrKeyValPair.second, requestAttrs.at(attrKeyValPair.first));
                 }
-
-                result[attrKeyValPair.first] = attrKeyValPair.second;
             }
 
-            return result;
+            return !replaced.empty();
         }
 
         OCEntityHandlerResult RCSResourceObject::handleRequestSet(
@@ -697,9 +694,7 @@ namespace OIC
 
             if (response.isSeparate()) return OC_EH_SLOW;
 
-            auto replaced = applyAcceptanceMethod(response, attrs);
-
-            autoNotify(!replaced.empty(), m_autoNotifyPolicy);
+            autoNotify(applyAcceptanceMethod(response, attrs), m_autoNotifyPolicy);
 
             return sendResponse(request, response,
                     findInterfaceHandler(request.getInterface()).getSetResponseBuilder());
@@ -746,8 +741,7 @@ namespace OIC
             else
             {
                 ocResponse->setResourceRepresentation(
-                        RCSRepresentation::toOCRepresentation(
-                                resBuilder(request, *this)));
+                        RCSRepresentation::toOCRepresentation(resBuilder(request, *this)));
             }
 
             return ::sendResponse(request.getOCRequest(), ocResponse);

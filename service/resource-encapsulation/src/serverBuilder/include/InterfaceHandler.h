@@ -41,10 +41,10 @@ namespace OIC
         class InterfaceHandler
         {
         public:
-            typedef std::function< RCSRepresentation(RCSRequest, RCSResourceObject&) >
+            typedef std::function< RCSRepresentation(RCSRequest, const RCSResourceObject&) >
                 GetResponseBuilder;
 
-            typedef std::function< RCSRepresentation(RCSRequest, RCSResourceObject&) >
+            typedef std::function< RCSRepresentation(RCSRequest, const RCSResourceObject&) >
                 SetResponseBuilder;
 
         public:
