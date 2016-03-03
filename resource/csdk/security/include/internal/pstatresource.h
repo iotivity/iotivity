@@ -61,6 +61,11 @@ char * BinToPstatJSON(const OicSecPstat_t * pstat);
  */
 void DeletePstatBinData(OicSecPstat_t* pstat);
 
+/**
+ * Function to restore pstat resurce to initial status.
+ * This function will use in case of error while ownership transfer
+ */
+void RestorePstatToInitState();
 
 #ifdef __cplusplus
 }

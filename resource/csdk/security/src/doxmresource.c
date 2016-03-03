@@ -24,6 +24,7 @@
 #include "cJSON.h"
 #include "resourcemanager.h"
 #include "doxmresource.h"
+#include "pstatresource.h"
 #include "psinterface.h"
 #include "utlist.h"
 #include "srmresourcestrings.h"
@@ -576,7 +577,6 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                          */
                         caRes = CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-
                         ehRet = OC_EH_OK;
                     }
                     else
@@ -591,12 +591,6 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
 #ifdef __WITH_DTLS__
                     //Save the owner's UUID to derive owner credential
                     memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
-
-//                    OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
-//                    //Generate new credential for provisioning tool
-//                    ehRet = AddOwnerPSK((CAEndpoint_t*)(&request->devAddr), newDoxm,
-//                                        (uint8_t*)OXM_RANDOM_DEVICE_PIN, strlen(OXM_RANDOM_DEVICE_PIN));
-//                    VERIFY_SUCCESS(TAG, OC_EH_OK == ehRet, ERROR);
 
                     //Update new state in persistent storage
                     if((UpdatePersistentStorage(gDoxm) == true))
@@ -623,7 +617,7 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
         {
             gDoxm->owned = true;
             // Update new state in persistent storage
-            if (true == UpdatePersistentStorage(gDoxm))
+            if (UpdatePersistentStorage(gDoxm))
             {
                 ehRet = OC_EH_OK;
             }
@@ -642,17 +636,11 @@ exit:
                             "DOXM will be reverted.");
 
         /*
-         * If persistent storage update failed, revert back the state
-         * for global variable.
+         * If some error is occured while ownership transfer,
+         * ownership transfer related resource should be revert back to initial status.
          */
-        gDoxm->owned = false;
-        gDoxm->oxmSel = OIC_JUST_WORKS;
-        memset(&(gDoxm->owner), 0, sizeof(OicUuid_t));
-
-        if(!UpdatePersistentStorage(gDoxm))
-        {
-            OIC_LOG(ERROR, TAG, "Failed to revert DOXM in persistent storage");
-        }
+        RestoreDoxmToInitState();
+        RestorePstatToInitState();
     }
 
     //Send payload to request originator
@@ -813,6 +801,14 @@ OCStackResult InitDoxmResource()
     {
         gDoxm = GetDoxmDefault();
     }
+
+    //In case of the server is shut down unintentionally, we should initialize the owner
+    if(false == gDoxm->owned)
+    {
+        OicUuid_t emptyUuid = {.id={0}};
+        memcpy(&gDoxm->owner, &emptyUuid, sizeof(OicUuid_t));
+    }
+
     ret = CheckDeviceID();
     if (ret == OC_STACK_OK)
     {
@@ -886,4 +882,26 @@ OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner)
         }
     }
     return retVal;
+}
+
+/**
+ * Function to restore doxm resurce to initial status.
+ * This function will use in case of error while ownership transfer
+ */
+void RestoreDoxmToInitState()
+{
+    if(gDoxm)
+    {
+        OIC_LOG(INFO, TAG, "DOXM resource will revert back to initial status.");
+
+        OicUuid_t emptyUuid = {.id={0}};
+        memcpy(&(gDoxm->owner), &emptyUuid, sizeof(OicUuid_t));
+        gDoxm->owned = false;
+        gDoxm->oxmSel = OIC_JUST_WORKS;
+
+        if(!UpdatePersistentStorage(gDoxm))
+        {
+            OIC_LOG(ERROR, TAG, "Failed to revert DOXM in persistent storage");
+        }
+    }
 }

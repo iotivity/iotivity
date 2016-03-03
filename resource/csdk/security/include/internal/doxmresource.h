@@ -94,6 +94,11 @@ OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner);
  */
 void DeleteDoxmBinData(OicSecDoxm_t* doxm);
 
+/**
+ * Function to restore doxm resurce to initial status.
+ * This function will use in case of error while ownership transfer
+ */
+void RestoreDoxmToInitState();
 
 #ifdef __cplusplus
 }
