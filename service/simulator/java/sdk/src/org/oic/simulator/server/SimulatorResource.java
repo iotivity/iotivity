@@ -280,8 +280,8 @@ public class SimulatorResource {
      *             This exception will be thrown if the interface type is
      *             invalid.
      * @throws NoSupportException
-     *             This exception will be thrown if the interface type is
-     *             not supported by the resource.
+     *             This exception will be thrown if the interface type is not
+     *             supported by the resource.
      * @throws SimulatorException
      *             This exception will be thrown if the native resource object
      *             does not exist or for some general errors.

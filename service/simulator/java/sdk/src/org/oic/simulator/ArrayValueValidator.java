@@ -16,6 +16,9 @@
 
 package org.oic.simulator;
 
+import java.util.HashSet;
+import java.util.Set;
+
 class ArrayValueValidator implements
         AttributeValueVisitor.VisitingMethods<Boolean> {
 
@@ -75,7 +78,12 @@ class ArrayValueValidator implements
             return false;
         }
 
+        Set<Integer> uniqueSet = new HashSet<Integer>();
         for (Integer value : values) {
+            if (mProperty.isUnique() && uniqueSet.add(value) == false) {
+                return false;
+            }
+
             if (false == elementProperty.asInteger().validate(value))
                 return false;
         }
@@ -103,7 +111,12 @@ class ArrayValueValidator implements
             return false;
         }
 
+        Set<Double> uniqueSet = new HashSet<Double>();
         for (Double value : values) {
+            if (mProperty.isUnique() && uniqueSet.add(value) == false) {
+                return false;
+            }
+
             if (false == elementProperty.asDouble().validate(value))
                 return false;
         }
@@ -131,7 +144,12 @@ class ArrayValueValidator implements
             return false;
         }
 
+        Set<Boolean> uniqueSet = new HashSet<Boolean>();
         for (Boolean value : values) {
+            if (mProperty.isUnique() && uniqueSet.add(value) == false) {
+                return false;
+            }
+
             if (false == elementProperty.asBoolean().validate(value))
                 return false;
         }
@@ -159,7 +177,12 @@ class ArrayValueValidator implements
             return false;
         }
 
+        Set<String> uniqueSet = new HashSet<String>();
         for (String value : values) {
+            if (mProperty.isUnique() && uniqueSet.add(value) == false) {
+                return false;
+            }
+
             if (false == elementProperty.asString().validate(value))
                 return false;
         }
