@@ -36,43 +36,124 @@ namespace OIC
         class SceneCollectionResourceRequestor;
         class SceneMemberResourceRequestor;
 
+        /*
+        * @class RemoteScene
+        *
+        * @brief RemoteScene class is an interface class to send a request to a Scene provided by
+        * SceneCollection resource on remote side. This class provides APIs for adding new
+        * SceneAction to the Scene and creating a new SceneAction instance, retrieving all
+        * SceneAction instances created before. And it also provides an API to execute a Scene
+        * on remote side.
+        */
         class RemoteScene
         {
             public:
                 typedef std::shared_ptr< RemoteScene > Ptr;
 
-                typedef std::function< void(RemoteSceneAction::Ptr, int eCode) >
+                /**
+                * Callback definition to be invoked a the response of addNewSceneAction is
+                * received.
+                *
+                * @param action created RemoteSceneAction instance pointer
+                * @param eCode the error code received
+                *
+                * @note Error code '200' stands for success, '400' for bad request,
+                * and '500' for internal error.
+                *
+                * @see addNewSceneAction
+                */
+                typedef std::function< void(RemoteSceneAction::Ptr action, int eCode) >
                     AddNewSceneActionCallback;
 
-                typedef std::function< void(const int eCode) >
-                    RemoveSceneActionCallback;
-
+                /**
+                * Callback definition to be invoked when a response of execute is
+                * received.
+                *
+                * @param sceneName name of the scene which is executed
+                * @param eCode the error code received
+                *
+                * @note Error code '200' stands for success, '400' for bad request,
+                * and '500' for internal error.
+                *
+                * @see execute
+                */
                 typedef std::function< void(const std::string &sceneName, int eCode) >
                     RemoteSceneExecuteCallback;
 
             public:
                 ~RemoteScene() = default;
 
+                /**
+                * Requests to add new SceneAction to the Scene on remote side and
+                * creates RemoteSceneAction instance corresponding to the created SceneAction.
+                *
+                * @param targetResource A pointer of discovered resource
+                * @param attrs AttributeS to set when the Scene executed
+                * @param cb A callback to receive created RemoteSceneAction instance
+                *
+                * @throws RCSInvalidParameterException If parameter is invalid.
+                *
+                * @note RemoteSceneAction instance is only produced by RemoteScene class
+                *
+                * @see RCSResourceAttributes
+                */
                 void addNewSceneAction(RCSRemoteResourceObject::Ptr targetResource,
-                                       const RCSResourceAttributes &,
-                                       AddNewSceneActionCallback);
+                    const RCSResourceAttributes &attrs, AddNewSceneActionCallback cb);
+
+                /**
+                * Requests to add new SceneAction to the Scene on remote side and
+                * creates RemoteSceneAction instance corresponding to the created SceneAction.
+                *
+                * @param targetResource A pointer of discovered resource
+                * @param key A key of an attribute
+                * @param value A value to be mapped against the key
+                * @param cb A callback to receive created RemoteSceneAction instance
+                *
+                * @throws RCSInvalidParameterException If parameter is invalid.
+                *
+                * @note RemoteSceneAction instance is only produced by RemoteScene class
+                *
+                * @see RCSResourceAttributes::Value
+                */
                 void addNewSceneAction(RCSRemoteResourceObject::Ptr targetResource,
                                        const std::string &key,
-                                       const RCSResourceAttributes::Value &,
-                                       AddNewSceneActionCallback);
+                                       const RCSResourceAttributes::Value &value,
+                                       AddNewSceneActionCallback cb);
 
-                void removeSceneAction(RemoteSceneAction::Ptr remoteSceneAction,
-                                       RemoveSceneActionCallback);
-                void removeSceneAction(RCSRemoteResourceObject::Ptr targetResource,
-                                       RemoveSceneActionCallback);
-
+                /**
+                * Gets all RemoteSceneAction instances included in the Scene.
+                *
+                * @return A vector of shared pointer of RemoteSceneAction instances
+                */
                 std::vector< RemoteSceneAction::Ptr > getRemoteSceneActions() const;
+
+                /**
+                * Gets RemoteSceneAction instance by using a certain discovered resource.
+                *
+                * @param targetResource A pointer of discovered resource
+                *
+                * @return A shared pointer of RemoteSceneAction instance
+                *
+                * @throws RCSInvalidParameterException If targetResource is invalid
+                */
                 RemoteSceneAction::Ptr getRemoteSceneAction(
                     const RCSRemoteResourceObject::Ptr targetResource) const;
 
+                /**
+                * Gets a name attribute of the Scene.
+                *
+                * @return A name of the Scene
+                */
                 std::string getName() const;
 
-                void execute(RemoteSceneExecuteCallback);
+                /**
+                * Requests to execute the Scene on remote side.
+                *
+                * @param cb A callback to receive result of Scene execution
+                *
+                * @throws RCSInvalidParameterException If callback is null
+                */
+                void execute(RemoteSceneExecuteCallback cb);
 
             private:
                 RemoteScene(
@@ -107,4 +188,3 @@ namespace OIC
 }
 
 #endif /* SM_REMOTE_SCENE_H_ */
-

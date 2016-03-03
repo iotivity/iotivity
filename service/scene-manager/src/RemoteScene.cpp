@@ -48,10 +48,7 @@ namespace OIC
             {
                 throw RCSInvalidParameterException("RCSRemoteResoureObject value is null");
             }
-            if (attrs.empty())
-            {
-                throw RCSInvalidParameterException("RCSResourceAttributes is empty");
-            }
+
             if (!clientCB)
             {
                 throw RCSInvalidParameterException{ "addNewSceneAction : Callback is NULL" };
@@ -70,34 +67,10 @@ namespace OIC
             const std::string &key, const RCSResourceAttributes::Value &value,
             AddNewSceneActionCallback clientCB)
         {
-            if (targetResource == nullptr)
-            {
-                throw RCSInvalidParameterException("RCSRemoteResoureObject value is null");
-            }
-            if (key.empty())
-            {
-                throw RCSInvalidParameterException("Scene action key value is empty");
-            }
-            if (!clientCB)
-            {
-                throw RCSInvalidParameterException{ "addNewSceneAction : Callback is NULL" };
-            }
-
             RCSResourceAttributes attrs;
             attrs[key] = RCSResourceAttributes::Value(value);
 
             addNewSceneAction(targetResource, attrs, clientCB);
-        }
-
-        void RemoteScene::removeSceneAction(RemoteSceneAction::Ptr, RemoveSceneActionCallback)
-        {
-
-        }
-
-        void RemoteScene::removeSceneAction(RCSRemoteResourceObject::Ptr /* rargetResource*/,
-                                            RemoveSceneActionCallback)
-        {
-
         }
 
         std::vector< RemoteSceneAction::Ptr > RemoteScene::getRemoteSceneActions() const
@@ -157,7 +130,7 @@ namespace OIC
         {
             SceneMemberResourceRequestor::Ptr memRequestor
                 = m_requestor->getSceneMemberResourceRequestor(targetHref);
-            
+
             if (memRequestor == nullptr)
             {
                 return nullptr;
@@ -179,7 +152,7 @@ namespace OIC
             const std::string &key, const RCSResourceAttributes::Value &value)
         {
             std::string targetHref = target->getAddress() + target->getUri();
-            
+
             SceneMemberResourceRequestor::Ptr foundMemberRequestor
                 = m_requestor->getSceneMemberResourceRequestor(targetHref);
 
@@ -208,7 +181,7 @@ namespace OIC
                 if (newAction)
                     result = SCENE_RESPONSE_SUCCESS;
             }
-            
+
             clientCB(newAction, result);
         }
 

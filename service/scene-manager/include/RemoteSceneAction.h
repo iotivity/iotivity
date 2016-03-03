@@ -34,23 +34,78 @@ namespace OIC
 
         class SceneMemberResourceRequestor;
 
+        /*
+        * @class RemoteSceneAction
+        *
+        * @brief RemoteSceneAction class indicates a unit of actions when a scene is executed.
+        * RemoteSceneAction instance is initialized with 3 essential parameters:
+        * a target resource, target attribute key, and its target value.
+        * And this class also provides APIs to update a target attribute information if one wants.
+        * Note that, adding a new RemoteSceneAction is done by sending a CoAP request to update a
+        * SceneMember resource's attribute.
+        */
         class RemoteSceneAction
         {
             public:
                 typedef std::shared_ptr< RemoteSceneAction > Ptr;
 
-                typedef std::function< void(int eCode) > setExecutionParameterCallback;
+                /**
+                * Callback definition to be invoked when a response of resetExecutionParameter is
+                * received.
+                *
+                * @param eCode the error code received on a remote-side scene resource server
+                *
+                * @note Error code '200' stands for success, '400' for bad request,
+                * and '500' for internal error.
+                *
+                * @see resetExecutionParameter
+                */
+                typedef std::function< void(int eCode) > ResetExecutionParameterCallback;
 
             public:
                 ~RemoteSceneAction() = default;
 
-                void setExecutionParameter(const std::string &key,
-                    const RCSResourceAttributes::Value &value, setExecutionParameterCallback);
-                void setExecutionParameter(
-                    const RCSResourceAttributes &attr, setExecutionParameterCallback);
+                /**
+                * Requests to reset the RemoteSceneAction parameters like
+                * a target attribute key and its value.
+                *
+                * @param key key of attribute
+                * @param value value to be mapped against the key
+                * @param cb A callback to receive the response
+                *
+                * @throws RCSInvalidParameterException If parameter is invalid.
+                *
+                * @see RCSResourceAttributes::Value
+                */
+                void resetExecutionParameter(const std::string &key,
+                    const RCSResourceAttributes::Value &value, ResetExecutionParameterCallback cb);
 
+                /**
+                * Requests to reset the RemoteSceneAction parameters like
+                * a target attribute key and its value.
+                *
+                * @param attr Attributes to set
+                * @param cb A callback to receive the response
+                *
+                * @throws RCSInvalidParameterException If parameter is invalid.
+                *
+                * @see RCSResourceAttributes
+                */
+                void resetExecutionParameter(
+                    const RCSResourceAttributes &attr, ResetExecutionParameterCallback cb);
+
+                /**
+                * Returns an execution parameter of the SceneAction.
+                *
+                * @return RCSResourceAttributes
+                */
                 RCSResourceAttributes getExecutionParameter() const;
 
+                /**
+                * Returns a target remote resource object of the RemoteSceneAction instance
+                *
+                * @return pointer of RCSRemoteResourceObject
+                */
                 RCSRemoteResourceObject::Ptr getRemoteResourceObject() const;
 
             private:
@@ -61,7 +116,7 @@ namespace OIC
                                   const std::string &key, const RCSResourceAttributes::Value &);
 
                 void onExecutionParameterSet(int, const RCSResourceAttributes &,
-                    const setExecutionParameterCallback &);
+                    const ResetExecutionParameterCallback &);
 
             private:
                 std::string m_sceneName;

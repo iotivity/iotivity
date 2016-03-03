@@ -37,30 +37,106 @@ namespace OIC
 
         class SceneCollectionResourceRequestor;
 
+        /**
+        * @class RemoteSceneCollection
+        *
+        * @brief RemoteSceneCollection class is an interface class to send a request to
+        * SceneCollection resource on remote side. This class provides APIs for adding new Scene
+        * to the SceneCollection resource and creating a new RemoteSceneCollection instance
+        * corresponding to the created SceneCollection resource. This class also supports
+        * retrieving all Scene instances created before. Besides, it provides APIs for retrieving
+        * and updating attribute values of the SceneCollection resource like name attribute.
+        */
         class RemoteSceneCollection
         {
             public:
                 typedef std::shared_ptr< RemoteSceneCollection > Ptr;
 
-                typedef std::function< void(RemoteScene::Ptr, int eCode) >
+                /**
+                * Callback definition to be invoked when a response of addNewScene is
+                * received.
+                *
+                * @param scene created RemoteScene instance pointer
+                * @param eCode the error code received from the SceneCollection on remote
+                *
+                * @note Error code '200' stands for success, '400' for bad request,
+                * and '500' for internal error.
+                *
+                * @see addNewScene
+                */
+                typedef std::function< void(RemoteScene::Ptr scene, int eCode) >
                     AddNewSceneCallback;
 
-                typedef std::function< void(int eCode) > RemoveSceneCallback;
-
+                /**
+                * Callback definition to be invoked when a response of setName is
+                * received.
+                *
+                * @param eCode the error code received from the SceneCollection on remote
+                *
+                * @note Error code '200' stands for success, '400' for bad request,
+                * and '500' for internal error.
+                *
+                * @see setName
+                */
                 typedef std::function< void(int eCode) > SetNameCallback;
 
             public:
                 ~RemoteSceneCollection() = default;
 
-                void addNewScene(const std::string &name, AddNewSceneCallback);
-                void removeScene(RemoteScene::Ptr, RemoveSceneCallback);
+                /**
+                * Requests to add new Scene to the SceneCollection resource on remote side
+                * and creates RemoteScene instance corresponding to the created Scene.
+                *
+                * @param name A name of Scene to add
+                * @param cb A callback to receive created RemoteScene instance
+                *
+                * @throws RCSInvalidParameterException If parameter is invalid
+                *
+                * @note RemoteScene instance is only produced by RemoteSceneCollection class.
+                * @note Name of Scene must be unique in one SceneCollection
+                */
+                void addNewScene(const std::string &name, AddNewSceneCallback cb);
 
+                /**
+                * Gets all RemoteScene instances from RemoteSceneCollection instance.
+                *
+                * @return A unordered_map of shared pointers of RemoteScene instances
+                */
                 std::unordered_map< std::string, RemoteScene::Ptr > getRemoteScenes() const;
+
+                /**
+                * Gets RemoteScene instance with a specific Scene name.
+                *
+                * @param sceneName name of the Scene to get
+                *
+                * @return A shared pointer of RemoteScene instance
+                *
+                * @throws RCSInvalidParameterException If sceneName is invalid
+                */
                 RemoteScene::Ptr getRemoteScene(const std::string &sceneName) const;
 
-                void setName(const std::string &name, SetNameCallback);
+                /**
+                * Request to set a name attribute of the SceneCollection resource on remote side.
+                *
+                * @param name A name of the SceneCollection
+                * @param cb A callback to receive the response
+                *
+                * @throws RCSInvalidParameterException If callback is null
+                */
+                void setName(const std::string &name, SetNameCallback cb);
+
+                /**
+                * Gets a name attribute of the SceneCollection resource
+                *
+                * @return A name of the SceneCollection
+                */
                 std::string getName() const;
 
+                /**
+                * Gets an id attribute of the SceneCollection resource.
+                *
+                * @return an id of the SceneCollection resource
+                */
                 std::string getId() const;
 
             private:
@@ -76,7 +152,7 @@ namespace OIC
                 RemoteScene::Ptr createRemoteScene(const std::string &);
 
                 void onSceneAddedRemoved(int, const std::string &name, int,
-                                         const AddNewSceneCallback &, const RemoveSceneCallback &);
+                                         const AddNewSceneCallback &);
 
                 void onNameSet(int, const std::string &, const SetNameCallback &);
 
@@ -95,4 +171,3 @@ namespace OIC
 }
 
 #endif /* SM_REMOTE_SCENECOLLECTION_H_ */
-

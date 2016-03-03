@@ -55,15 +55,9 @@ namespace OIC
             SceneCollectionResourceRequestor::InternalSceneRequestCallback internalCB
                 = std::bind(&RemoteSceneCollection::onSceneAddedRemoved, this,
                             std::placeholders::_1, std::placeholders::_2,
-                            std::placeholders::_3, std::move(clientCB), nullptr);
+                            std::placeholders::_3, std::move(clientCB));
 
             m_requestor->requestSceneCreation(name, internalCB);
-        }
-
-        void RemoteSceneCollection::removeScene(RemoteScene::Ptr,
-                                                RemoveSceneCallback /* clientCB */)
-        {
-
         }
 
         std::unordered_map< std::string, RemoteScene::Ptr >
@@ -147,7 +141,7 @@ namespace OIC
                             SCENE_CONNECTIVITY,
                             targetLinkAttrs.at(SCENE_KEY_RT).get< std::vector< std::string > >(),
                             targetLinkAttrs.at(SCENE_KEY_IF).get< std::vector< std::string > >());
-                            
+
                         std::string mappingInfoKey
                             = mappingInfo.at(SCENE_KEY_MEMBERPROPERTY).get< std::string >();
                         RCSResourceAttributes::Value mappingInfoValue
@@ -178,7 +172,7 @@ namespace OIC
 
         void RemoteSceneCollection::onSceneAddedRemoved(int reqType,
             const std::string &name, int eCode,
-            const AddNewSceneCallback &addCB, const RemoveSceneCallback &)
+            const AddNewSceneCallback &addCB)
         {
             switch (reqType)
             {

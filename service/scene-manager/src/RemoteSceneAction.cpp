@@ -47,35 +47,22 @@ namespace OIC
             m_attributes[key] = value;
         }
 
-        void RemoteSceneAction::setExecutionParameter(const std::string &key,
+        void RemoteSceneAction::resetExecutionParameter(const std::string &key,
                                        const RCSResourceAttributes::Value &value,
-                                       setExecutionParameterCallback clientCB)
+                                       ResetExecutionParameterCallback clientCB)
         {
-            if (key.empty())
-            {
-                throw RCSInvalidParameterException("Scene action key value is empty");
-            }
-            if (!clientCB)
-            {
-                throw RCSInvalidParameterException{ "setExecutionParameter : Callback is NULL" };
-            }
-
             RCSResourceAttributes attr;
             attr[key] = RCSResourceAttributes::Value(value);
 
-            setExecutionParameter(attr, std::move(clientCB));
+            resetExecutionParameter(attr, std::move(clientCB));
         }
 
-        void RemoteSceneAction::setExecutionParameter(const RCSResourceAttributes &attr,
-            setExecutionParameterCallback clientCB)
+        void RemoteSceneAction::resetExecutionParameter(const RCSResourceAttributes &attr,
+            ResetExecutionParameterCallback clientCB)
         {
-            if (attr.empty())
-            {
-                throw RCSInvalidParameterException("RCSResourceAttributes is empty");
-            }
             if (!clientCB)
             {
-                throw RCSInvalidParameterException{ "setExecutionParameter : Callback is NULL" };
+                throw RCSInvalidParameterException{ "resetExecutionParameter : Callback is NULL" };
             }
 
             SceneMemberResourceRequestor::InternalAddSceneActionCallback internalCB
@@ -98,7 +85,7 @@ namespace OIC
         }
 
         void RemoteSceneAction::onExecutionParameterSet(int eCode, const RCSResourceAttributes &attr,
-            const setExecutionParameterCallback &clientCB)
+            const ResetExecutionParameterCallback &clientCB)
         {
             int result = SCENE_CLIENT_BADREQUEST;
             if (eCode == SCENE_RESPONSE_SUCCESS)
@@ -110,6 +97,5 @@ namespace OIC
 
             clientCB(result);
         }
-
     }
 }

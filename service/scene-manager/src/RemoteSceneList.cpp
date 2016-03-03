@@ -35,7 +35,7 @@ namespace OIC
     {
 
         RemoteSceneList::RemoteSceneList(SceneListResourceRequestor::Ptr requestor)
-            : m_requestorPtr{ requestor }
+            : m_requestor{ requestor }
         {
 
         }
@@ -83,12 +83,7 @@ namespace OIC
                 std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                 std::placeholders::_4, std::move(clientCB));
 
-            m_requestorPtr->requestSceneCollectionCreation("", internalCB);
-        }
-
-        void RemoteSceneList::removeSceneCollection(RemoteSceneCollection::Ptr)
-        {
-
+            m_requestor->requestSceneCollectionCreation("", internalCB);
         }
 
         std::vector< RemoteSceneCollection::Ptr >
@@ -109,7 +104,7 @@ namespace OIC
                 = std::bind(&RemoteSceneList::onNameSet, this,
                 std::placeholders::_1, name, std::move(clientCB));
 
-            m_requestorPtr->requestSetName(name, internalCB);
+            m_requestor->requestSetName(name, internalCB);
         }
 
         std::string RemoteSceneList::getName() const
@@ -158,7 +153,7 @@ namespace OIC
 
                     RemoteSceneCollection::Ptr newCollection
                         = newList->createRemoteSceneCollection(
-                                    host + collection.at("uri").get< std::string >(),
+                                    host + collection.at(SCENE_KEY_URI).get< std::string >(),
                                     collection.at(SCENE_KEY_ID).get< std::string >(),
                                     collection.at(SCENE_KEY_NAME).get< std::string >());
 
@@ -192,7 +187,7 @@ namespace OIC
 
                 RemoteSceneCollection::Ptr newCollection(
                     new RemoteSceneCollection(pRequestor, id, name));
-                
+
                 {
                     std::lock_guard< std::mutex > collectionlock(m_collectionLock);
                     m_remoteSceneCollections.push_back(newCollection);
@@ -209,7 +204,7 @@ namespace OIC
 
         SceneListResourceRequestor::Ptr RemoteSceneList::getListResourceRequestor() const
         {
-            return m_requestorPtr;
+            return m_requestor;
         }
 
         std::vector<std::pair<RCSResourceAttributes, std::vector<RCSResourceAttributes>>>
@@ -276,7 +271,7 @@ namespace OIC
                 m_name = name;
                 result = SCENE_RESPONSE_SUCCESS;
             }
-            
+
             clientCB(result);
         }
 

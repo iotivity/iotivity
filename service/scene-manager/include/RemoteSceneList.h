@@ -33,35 +33,125 @@ namespace OIC
 {
     namespace Service
     {
-
         class SceneListResourceRequestor;
 
+        /**
+        * @class RemoteSceneList
+        *
+        * @brief RemoteSceneList class is an interface class to send a request to
+        * SceneList resource on remote side. This class provides APIs for adding
+        * new SceneCollection resource to the SceneList resource and
+        * creating a RemoteSceneCollection instance corresponding to the
+        * created SceneCollection resource. This class also supports retrieving the existing
+        * instances as well as setting/getting a name attribute of the SceneList resource.
+        */
         class RemoteSceneList
-            : public std::enable_shared_from_this< RemoteSceneList >
         {
             public:
                 typedef std::unique_ptr< RemoteSceneList > Ptr;
 
-                typedef std::function< void(RemoteSceneList::Ptr, int eCode) >
+                /**
+                * Callback definition to be invoked when a response of createInstance is
+                * received.
+                *
+                * @param list Created RemoteSceneList instance pointer
+                * @param eCode The error code received from the SceneList on remote side
+                *
+                * @note Error code '200' stands for success, '400' for bad request,
+                * and '500' for internal error.
+                *
+                * @see createInstance
+                */
+                typedef std::function< void(RemoteSceneList::Ptr list, int eCode) >
                     CreateInstanceCallback;
 
-                typedef std::function< void(RemoteSceneCollection::Ptr, int eCode) >
+                /**
+                * Callback definition to be invoked when a response of addNewSceneCollection is
+                * received.
+                *
+                * @param collection Created RemoteSceneCollection instance pointer
+                * @param eCode The error code received from the SceneList on remote
+                *
+                * @note Error code '200' stands for success, '400' for bad request,
+                * and '500' for internal error.
+                *
+                * @see addNewSceneCollection
+                */
+                typedef std::function< void(RemoteSceneCollection::Ptr collection, int eCode) >
                     AddNewSceneCollectionCallback;
 
+                /**
+                * Callback definition to be invoked when a response of setName is
+                * received.
+                *
+                * @param eCode the error code received from the SceneList on remote
+                *
+                * @note Error code '200' stands for success, '400' for bad request,
+                * and '500' for internal error.
+                *
+                * @see setName
+                */
                 typedef std::function< void(int eCode) > SetNameCallback;
 
             public:
                 ~RemoteSceneList() = default;
 
+                /**
+                * Creates RemoteSceneList instance with provided RCSRemoteResourceObject of
+                * discovered SceneList resource on remote side.
+                *
+                * To create RemoteSceneList instance, discovery of SceneList resource
+                * which has 'oic.wk.scenelist' as resource type is required,
+                * and the found resource should be provided as parameter.
+                * After that, one can acceess existing SceneCollections, Scenes, and SceneActions
+                * instances that are already produced at the SceneList resource.
+                * Created RemoteSceneList will be delivered to CreateInstanceCallback.
+                *
+                * @param sceneListResource RCSRemoteResourceObject pointer of SceneList
+                * @param cb A callback to receive the response
+                *
+                * @throws RCSInvalidParameterException If parameter is invalid.
+                *
+                * @see RCSRemoteResourceObject
+                */
                 static void createInstance(
-                    RCSRemoteResourceObject::Ptr sceneListResource, CreateInstanceCallback);
+                    RCSRemoteResourceObject::Ptr sceneListResource, CreateInstanceCallback cb);
 
-                void addNewSceneCollection(AddNewSceneCollectionCallback);
-                void removeSceneCollection(RemoteSceneCollection::Ptr);
+                /**
+                * Requests to add new SceneCollection resource to the SceneList resource on remote
+                * side and creates RemoteSceneCollection instance corresponding to the created
+                * SceneCollection resource.
+                *
+                * @param cb A callback to receive created RemoteSceneCollection instance
+                *
+                * @throws RCSInvalidParameterException If callback is null.
+                *
+                * @note RemoteSceneCollection instance is only produced by RemoteSceneList class.
+                */
+                void addNewSceneCollection(AddNewSceneCollectionCallback cb);
 
+                /**
+                * Gets all RemoteSceneCollection instances stored in the RemoteSceneList instance.
+                *
+                * @return A vector of shared pointers of RemoteSceneCollection instances
+                */
                 std::vector< RemoteSceneCollection::Ptr > getRemoteSceneCollections() const;
 
-                void setName(const std::string &name, SetNameCallback);
+                /**
+                * Request to set a name attribute of the SceneList resource on remote side.
+                *
+                * @param name A name of the SceneList
+                * @param cb A callback to receive the response
+                *
+                * @throws RCSInvalidParameterException If callback is null.
+                */
+                void setName(const std::string &name, SetNameCallback cb);
+
+                /**
+                * Gets a name attribute of the SceneList resource.
+                *
+                * @return A name of the SceneList resource
+                */
                 std::string getName() const;
 
             private:
@@ -77,7 +167,7 @@ namespace OIC
                     const std::string &link, const std::string &id, const std::string &name);
 
                 std::shared_ptr< SceneListResourceRequestor > getListResourceRequestor() const;
-                
+
                 std::vector<std::pair<RCSResourceAttributes, std::vector<RCSResourceAttributes>>>
                     parseSceneListFromAttributes(const RCSResourceAttributes &);
 
@@ -95,11 +185,10 @@ namespace OIC
                 std::vector< RemoteSceneCollection::Ptr > m_remoteSceneCollections;
                 mutable std::mutex m_nameLock;
                 mutable std::mutex m_collectionLock;
-                std::shared_ptr< SceneListResourceRequestor > m_requestorPtr;
+                std::shared_ptr< SceneListResourceRequestor > m_requestor;
         };
 
     }
 }
 
 #endif /* SM_REMOTE_SCENELIST_H_ */
-
