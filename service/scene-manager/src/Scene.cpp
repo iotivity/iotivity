@@ -61,7 +61,7 @@ namespace OIC
                                 if(RCSRemoteResourceObjectPtr == member->getRemoteResourceObject())
                                 {
                                     foundMember = member;
-                                    for(const auto &it: member->getMappingInfo())
+                                    for(const auto &it: member->getMappingInfos())
                                     {
                                         isRegistered = (it.sceneName == m_name);
                                     }
@@ -120,7 +120,7 @@ namespace OIC
                                 if(RCSRemoteResourceObjectPtr == member->getRemoteResourceObject())
                                 {
                                     foundMember = member;
-                                for(const auto &it: member->getMappingInfo())
+                                for(const auto &it: member->getMappingInfos())
                                 {
                                     if(it.sceneName == m_name)
                                     {
@@ -155,7 +155,7 @@ namespace OIC
             std::function<void(const SceneMemberResource::Ptr&)> buildActionParams =
                     [&](const SceneMemberResource::Ptr & member)
                     {
-                        for(const auto &it: member->getMappingInfo())
+                        for(const auto &it: member->getMappingInfos())
                         {
                             if(it.sceneName == m_name)
                             {

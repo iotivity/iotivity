@@ -40,9 +40,8 @@ namespace OIC
 
             ~SceneCollectionResource() = default;
 
-            static SceneCollectionResource::Ptr createSceneCollectionObject();
-            static SceneCollectionResource::Ptr createSceneCollectionObject(
-                    const RCSResourceAttributes &);
+            static SceneCollectionResource::Ptr create();
+            static SceneCollectionResource::Ptr create(const RCSResourceAttributes &);
 
             void addScene(std::string &&);
             void addScene(const std::string &);
@@ -66,6 +65,9 @@ namespace OIC
             std::string getAddress() const;
 
             std::vector<SceneMemberResource::Ptr> getSceneMembers() const;
+
+            std::vector<SceneMemberResource::Ptr> findSceneMembers(
+                    const std::string & sceneName) const;
 
             RCSResourceObject::Ptr getRCSResourceObject() const;
 
@@ -100,7 +102,6 @@ namespace OIC
 
                 RCSSetResponse onSetRequest(
                         const RCSRequest &, RCSResourceAttributes &);
-                void onExecute(int, const RCSRequest &, RCSResourceAttributes &);
 
             private:
                 RCSSetResponse addSceneRequest(
@@ -112,7 +113,6 @@ namespace OIC
                 RCSSetResponse setSceneCollectionName(
                         const RCSRequest &, RCSResourceAttributes &);
 
-                SceneMemberResource::Ptr createSceneMemberFromRemote(RCSResourceAttributes &);
                 void addMemberInfoFromRemote(SceneMemberResource::Ptr,
                         std::vector<RCSResourceAttributes>);
             };
@@ -121,14 +121,12 @@ namespace OIC
             std::string m_address;
 
             RCSResourceObject::Ptr m_sceneCollectionResourceObject;
-            std::mutex m_sceneMemberLock;
+            mutable std::mutex m_sceneMemberLock;
             std::vector<SceneMemberResource::Ptr> m_sceneMembers;
 
             SceneCollectionRequestHandler m_requestHandler;
-            std::mutex m_executeHandlerLock;
-            std::list<SceneExecuteResponseHandler::Ptr> m_executeHandlers;
 
-            SceneCollectionResource() = default;
+            SceneCollectionResource();
 
             SceneCollectionResource(const SceneCollectionResource &) = delete;
             SceneCollectionResource & operator = (
@@ -138,11 +136,9 @@ namespace OIC
             SceneCollectionResource & operator = (
                     SceneCollectionResource &&) = delete;
 
-            void createResourceObject();
+            RCSResourceObject::Ptr createResourceObject();
             void setDefaultAttributes();
             void initSetRequestHandler();
-
-            void onExecute(int, SceneExecuteCallback, SceneExecuteResponseHandler::Ptr);
         };
     }
 }

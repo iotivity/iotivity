@@ -76,6 +76,8 @@ namespace OIC
 
             std::vector<RCSResourceAttributes> getChildrenAttributes() const;
 
+            RCSResourceObject::Ptr getResourceObject() const;
+
         private:
             class SceneListRequestHandler
             {
@@ -87,9 +89,8 @@ namespace OIC
                 static RCSGetResponse onGetRequest(const RCSRequest &, RCSResourceAttributes &);
             };
 
-            std::string m_sceneListName;
             RCSResourceObject::Ptr m_sceneListObj;
-            std::mutex m_sceneCollectionLock;
+            mutable std::mutex m_sceneCollectionLock;
             std::vector<SceneCollectionResource::Ptr> m_sceneCollections;
 
             SceneListResource();
@@ -100,6 +101,8 @@ namespace OIC
 
             SceneListResource(SceneListResource &&) = delete;
             SceneListResource & operator = (SceneListResource &&) = delete;
+
+            RCSResourceObject::Ptr createResourceObject();
         };
     }
 }

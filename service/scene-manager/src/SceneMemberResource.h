@@ -66,6 +66,8 @@ namespace OIC
                 MappingInfo(MappingInfo &&) = default;
                 MappingInfo(const MappingInfo &) = default;
 
+                static MappingInfo create(const RCSResourceAttributes &);
+
                 std::string sceneName;              ///< name of scene value
                 std::string key;                    ///< key to set at attributes of remote resource
                 RCSResourceAttributes::Value value; ///< val to set at attributes of remote resource
@@ -112,7 +114,11 @@ namespace OIC
             /**
              * Returns all Mapping information of a scene member resource.
              */
-            std::vector<MappingInfo> getMappingInfo();
+            std::vector<MappingInfo> getMappingInfos() const;
+
+            std::vector<MappingInfo> findMappingInfos(const std::string & sceneValue) const;
+
+            bool hasSceneValue(const std::string &) const;
 
             /**
              * Returns ID of a Scene member resource.

@@ -28,13 +28,8 @@ namespace OIC
     namespace Service
     {
         SceneListResource::SceneListResource()
-        : m_sceneListName(), m_sceneListObj()
+        : m_sceneListObj(createResourceObject())
         {
-            m_sceneListObj = RCSResourceObject::Builder(
-                    SCENE_LIST_URI, SCENE_LIST_RT, OC_RSRVD_INTERFACE_DEFAULT).
-                            addInterface(OC::BATCH_INTERFACE).
-                            setDiscoverable(true).setObservable(false).build();
-
             m_sceneListObj->setAttribute(SCENE_KEY_NAME, SCENE_LIST_DEFAULT_NAME);
             m_sceneListObj->setAttribute(SCENE_KEY_RTS, SCENE_LIST_RT);
 
@@ -48,6 +43,14 @@ namespace OIC
             return & instance;
         }
 
+        RCSResourceObject::Ptr SceneListResource::createResourceObject()
+        {
+            return RCSResourceObject::Builder(
+                    SCENE_LIST_URI, SCENE_LIST_RT, OC_RSRVD_INTERFACE_DEFAULT).
+                            addInterface(OC::BATCH_INTERFACE).
+                            setDiscoverable(true).setObservable(false).build();
+        }
+
         void SceneListResource::addSceneCollectionResource(
                 SceneCollectionResource::Ptr newObject)
         {
@@ -58,15 +61,12 @@ namespace OIC
 
         std::string SceneListResource::getName() const
         {
-            return m_sceneListName;
+            return m_sceneListObj->getAttributeValue(SCENE_KEY_NAME).get<std::string>();
         }
 
         void SceneListResource::setName(std::string && newName)
         {
-            m_sceneListName = std::move(newName);
-
-            RCSResourceObject::LockGuard guard(m_sceneListObj);
-            m_sceneListObj->setAttribute(SCENE_KEY_NAME, m_sceneListName);
+            m_sceneListObj->setAttribute(SCENE_KEY_NAME, std::move(newName));
         }
 
         void SceneListResource::setName(const std::string & newName)
@@ -76,7 +76,13 @@ namespace OIC
 
         std::vector<SceneCollectionResource::Ptr> SceneListResource::getSceneCollections() const
         {
+            std::lock_guard<std::mutex> collectionlock(m_sceneCollectionLock);
             return m_sceneCollections;
+        }
+
+        RCSResourceObject::Ptr SceneListResource::getResourceObject() const
+        {
+            return m_sceneListObj;
         }
 
         std::vector<RCSResourceAttributes> SceneListResource::getChildrenAttributes() const
@@ -119,10 +125,13 @@ namespace OIC
         RCSSetResponse SceneListResource::SceneListRequestHandler::onSetRequest(
                 const RCSRequest & request, RCSResourceAttributes & attributes)
         {
+            RCSResourceAttributes responseAttr;
+            int eCode = SCENE_CLIENT_BADREQUEST;
+
             if(request.getInterface() == LINK_BATCH)
             {
                 auto newObject
-                    = SceneCollectionResource::createSceneCollectionObject(attributes);
+                    = SceneCollectionResource::create(attributes);
 
                 SceneListResource::getInstance()->addSceneCollectionResource(newObject);
 
@@ -134,24 +143,30 @@ namespace OIC
                 responseAtt[SCENE_KEY_PAYLOAD_LINK]
                             = RCSResourceAttributes::Value(uri);
 
-                return RCSSetResponse::create(responseAtt, SCENE_RESPONSE_SUCCESS).
-                        setAcceptanceMethod(RCSSetResponse::AcceptanceMethod::IGNORE);
+                responseAttr = responseAtt;
+                eCode = SCENE_RESPONSE_SUCCESS;
             }
 
-            if (attributes.contains(SCENE_KEY_NAME))
+            else if (attributes.contains(SCENE_KEY_NAME))
             {
                 SceneListResource::getInstance()->setName(
                         attributes.at(SCENE_KEY_NAME).get<std::string>());
-                return RCSSetResponse::create(attributes, SCENE_RESPONSE_SUCCESS).
-                        setAcceptanceMethod(RCSSetResponse::AcceptanceMethod::IGNORE);
+
+                responseAttr = attributes;
+                eCode = SCENE_RESPONSE_SUCCESS;
+            }
+            else
+            {
+                responseAttr = attributes;
+                eCode = SCENE_CLIENT_BADREQUEST;
             }
 
-            return RCSSetResponse::create(attributes, SCENE_CLIENT_BADREQUEST).
+            return RCSSetResponse::create(responseAttr, eCode).
                     setAcceptanceMethod(RCSSetResponse::AcceptanceMethod::IGNORE);
         }
 
         RCSGetResponse SceneListResource::SceneListRequestHandler::onGetRequest(
-                const RCSRequest & request, RCSResourceAttributes & attributes)
+                const RCSRequest & request, RCSResourceAttributes & /*attributes*/)
         {
 
             if(request.getInterface() != OC::DEFAULT_INTERFACE)
@@ -161,7 +176,14 @@ namespace OIC
 
             auto childrenAttrs = SceneListResource::getInstance()->getChildrenAttributes();
 
-            RCSResourceAttributes retAttr =  attributes;
+            RCSResourceAttributes retAttr;
+
+            {
+                RCSResourceObject::LockGuard lock(
+                        SceneListResource::getInstance()->getResourceObject());
+                retAttr = SceneListResource::getInstance()->getResourceObject()->getAttributes();
+            }
+
             if (childrenAttrs.size())
             {
                 retAttr[SCENE_KEY_CHILD] = childrenAttrs;
@@ -169,5 +191,6 @@ namespace OIC
 
             return RCSGetResponse::create(retAttr);
         }
+
     }
 }

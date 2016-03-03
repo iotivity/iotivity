@@ -39,7 +39,7 @@ namespace OIC
         SceneCollection::Ptr SceneList::addNewSceneCollection()
         {
             auto sceneCollectionResObj =
-                    SceneCollectionResource::createSceneCollectionObject();
+                    SceneCollectionResource::create();
             SceneListResource::getInstance()->addSceneCollectionResource(sceneCollectionResObj);
 
             return SceneCollection::Ptr(new SceneCollection(sceneCollectionResObj));

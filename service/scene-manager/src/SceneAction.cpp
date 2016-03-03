@@ -68,7 +68,7 @@ namespace OIC
         const RCSResourceAttributes SceneAction::getExecutionParameter()
         {
             RCSResourceAttributes attr;
-            for(const auto& it : m_sceneMemberResourceObj->getMappingInfo())
+            for(const auto& it : m_sceneMemberResourceObj->getMappingInfos())
             {
                 if(it.sceneName == m_sceneName)
                 {

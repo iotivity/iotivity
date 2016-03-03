@@ -29,7 +29,7 @@ namespace OIC
     {
         namespace
         {
-            std::atomic_int numOfSceneMember(0);
+            std::atomic_int g_numOfSceneMember(0);
         }
 
         SceneMemberResource::Ptr
@@ -39,7 +39,7 @@ namespace OIC
             SceneMemberResource::Ptr sceneMemberResource(new SceneMemberResource());
 
             sceneMemberResource->m_uri = PREFIX_SCENE_MEMBER_URI + "/" +
-                std::to_string(numOfSceneMember++);
+                std::to_string(g_numOfSceneMember++);
 
             sceneMemberResource->m_remoteMemberObj = remoteObject;
 
@@ -132,9 +132,9 @@ namespace OIC
                 mappingInfo.erase(foundMInfo);
             }
             RCSResourceAttributes newMapInfo;
-            newMapInfo[SCENE_KEY_SCENE] = RCSResourceAttributes::Value(mInfo.sceneName);
-            newMapInfo[SCENE_KEY_MEMBERPROPERTY] = RCSResourceAttributes::Value(mInfo.key);
-            newMapInfo[SCENE_KEY_MEMBERVALUE] = mInfo.value;
+            newMapInfo[SCENE_KEY_SCENE] = RCSResourceAttributes::Value(std::move(mInfo.sceneName));
+            newMapInfo[SCENE_KEY_MEMBERPROPERTY] = RCSResourceAttributes::Value(std::move(mInfo.key));
+            newMapInfo[SCENE_KEY_MEMBERVALUE] = std::move(mInfo.value);
             mappingInfo.push_back(newMapInfo);
 
             m_sceneMemberResourceObj->setAttribute(SCENE_KEY_SCENEMAPPINGS, mappingInfo);
@@ -145,7 +145,7 @@ namespace OIC
             addMappingInfo(MappingInfo(mInfo));
         }
 
-        std::vector<SceneMemberResource::MappingInfo> SceneMemberResource::getMappingInfo()
+        std::vector<SceneMemberResource::MappingInfo> SceneMemberResource::getMappingInfos() const
         {
             std::vector<MappingInfo> retMInfo;
 
@@ -154,10 +154,7 @@ namespace OIC
             std::for_each(mInfo.begin(), mInfo.end(),
                     [& retMInfo](const RCSResourceAttributes & att)
                     {
-                        MappingInfo info(att.at(SCENE_KEY_SCENE).get<std::string>(),
-                                att.at(SCENE_KEY_MEMBERPROPERTY).get<std::string>(),
-                                att.at(SCENE_KEY_MEMBERVALUE));
-                        retMInfo.push_back(info);
+                        retMInfo.push_back(MappingInfo::create(att));
                     });
 
             return retMInfo;
@@ -202,8 +199,8 @@ namespace OIC
         {
             RCSResourceAttributes setAtt;
 
-            auto mInfo = getMappingInfo();
-            std::for_each (mInfo.begin(), mInfo.end(),
+            auto mInfo = getMappingInfos();
+            std::for_each(mInfo.begin(), mInfo.end(),
                     [& setAtt, & sceneName](const MappingInfo & info)
                     {
                         if(info.sceneName == sceneName)
@@ -241,6 +238,45 @@ namespace OIC
             return m_sceneMemberResourceObj->getAttributeValue(SCENE_KEY_NAME).toString();
         }
 
+        std::vector<SceneMemberResource::MappingInfo> SceneMemberResource::findMappingInfos(
+                const std::string & sceneValue) const
+        {
+            auto mInfo = getMappingInfos();
+            std::vector<MappingInfo> retMInfo;
+
+            std::for_each(mInfo.begin(), mInfo.end(),
+                    [& retMInfo, & sceneValue](const MappingInfo & info)
+                    {
+                        if(info.sceneName == sceneValue)
+                        {
+                            retMInfo.push_back(MappingInfo(info));
+                        }
+                    });
+            return retMInfo;
+        }
+
+        bool SceneMemberResource::hasSceneValue(const std::string & sceneValue) const
+        {
+            auto mInfo = getMappingInfos();
+            if (std::find_if(mInfo.begin(), mInfo.end(),
+                    [& sceneValue](const MappingInfo & info) -> bool
+                    {
+                        return info.sceneName == sceneValue;
+                    }) != mInfo.end())
+            {
+                return true;
+            }
+            return false;
+        }
+
+        SceneMemberResource::MappingInfo
+        SceneMemberResource::MappingInfo::create(const RCSResourceAttributes & att)
+        {
+            return MappingInfo(att.at(SCENE_KEY_SCENE).get<std::string>(),
+                    att.at(SCENE_KEY_MEMBERPROPERTY).get<std::string>(),
+                    att.at(SCENE_KEY_MEMBERVALUE));
+        }
+
         RCSSetResponse SceneMemberResource::SceneMemberRequestHandler::
         onSetRequest(const RCSRequest & request, RCSResourceAttributes & attributes)
         {
@@ -262,25 +298,24 @@ namespace OIC
         SceneMemberResource::SceneMemberRequestHandler::addMappingInfos(
                 const RCSRequest & /*request*/, RCSResourceAttributes & attributes)
         {
+            int eCode = SCENE_RESPONSE_SUCCESS;
             auto ptr = m_owner.lock();
             if (!ptr)
             {
-                return RCSSetResponse::create(attributes, SCENE_CLIENT_BADREQUEST).
-                        setAcceptanceMethod(RCSSetResponse::AcceptanceMethod::IGNORE);
+                eCode = SCENE_CLIENT_BADREQUEST;
+            }
+            else
+            {
+                auto mInfo = attributes.at(SCENE_KEY_SCENEMAPPINGS).
+                        get<std::vector<RCSResourceAttributes>>();
+                std::for_each(mInfo.begin(), mInfo.end(),
+                        [& ptr](const RCSResourceAttributes & att)
+                        {
+                            ptr->addMappingInfo(SceneMemberResource::MappingInfo::create(att));
+                        });
             }
 
-            auto mInfo = attributes.at(SCENE_KEY_SCENEMAPPINGS).
-                    get<std::vector<RCSResourceAttributes>>();
-            std::for_each (mInfo.begin(), mInfo.end(),
-                    [& ptr](const RCSResourceAttributes & att)
-                    {
-                        ptr->addMappingInfo(SceneMemberResource::MappingInfo(
-                                att.at(SCENE_KEY_SCENE).get<std::string>(),
-                                att.at(SCENE_KEY_MEMBERPROPERTY).get<std::string>(),
-                                att.at(SCENE_KEY_MEMBERVALUE)));
-                    });
-
-            return RCSSetResponse::create(attributes).
+            return RCSSetResponse::create(attributes, eCode).
                     setAcceptanceMethod(RCSSetResponse::AcceptanceMethod::IGNORE);
         }
 
@@ -288,16 +323,18 @@ namespace OIC
         SceneMemberResource::SceneMemberRequestHandler::setSceneMemberName(
                 const RCSRequest & /*request*/, RCSResourceAttributes & attributes)
         {
+            int eCode = SCENE_RESPONSE_SUCCESS;
             auto ptr = m_owner.lock();
             if (!ptr)
             {
-                return RCSSetResponse::create(attributes, SCENE_CLIENT_BADREQUEST).
-                        setAcceptanceMethod(RCSSetResponse::AcceptanceMethod::IGNORE);
+                eCode = SCENE_CLIENT_BADREQUEST;
+            }
+            else
+            {
+                ptr->setName(attributes.at(SCENE_KEY_NAME).get<std::string>());
             }
 
-            ptr->setName(attributes.at(SCENE_KEY_NAME).get<std::string>());
-
-            return RCSSetResponse::create(attributes).
+            return RCSSetResponse::create(attributes, eCode).
                     setAcceptanceMethod(RCSSetResponse::AcceptanceMethod::IGNORE);
         }
     }
