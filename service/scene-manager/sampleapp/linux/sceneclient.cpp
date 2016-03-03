@@ -31,19 +31,25 @@
 using namespace OC;
 using namespace OIC::Service;
 
+constexpr int CREATE_REMOTE_SCENE_LIST = 1;
 
-typedef std::function< void() > Run;
+constexpr int CREATE_REMOTE_SCENE_COLLECTION = 1;
+constexpr int SHOW_REMOTE_SCENE_COLLECTION = 2;
 
-enum Menu
-{
-    CREATE_REMOTE_SCENE_LIST = 1, CREATE_REMOTE_SCENE_COLLECTION,
-    CREATE_REMOTE_SCENE, CREATE_REMOTE_SCENE_ACTION, EXECUTE_REMOTE_SCENE
-};
+constexpr int CREATE_REMOTE_SCENE = 1;
+constexpr int CREATE_REMOTE_SCENE_ACTION = 1;
+
+constexpr int EXECUTE_REMOTE_SCENE = 1;
 
 constexpr int SCENE_RESULT_OK = 200;
-constexpr int numMenu = 1;
 
-const std::string scene_name = "Going Out";
+constexpr int numCreatedSceneAction = 2;
+static int numRecvSceneActionCreationResp = 0;
+
+typedef std::function< void() > Run;
+Run g_currentRun;
+
+const std::string scene_name = "Night mode";
 const std::string relativetUri = OC_RSRVD_WELL_KNOWN_URI;
 const std::vector<std::string> resourceTypes{ "oic.wk.scenelist", "core.light", "core.fan" };
 
@@ -62,12 +68,12 @@ RemoteSceneCollection::Ptr g_sceneCollection;
 RemoteScene::Ptr g_scene;
 
 void displaySceneList();
-void displaySceneCollection();
-void displayScene();
-void displaySceneAction();
-
-void runMenu(Menu);
-
+void runCreateRemoteSceneList();
+void runRemoteSceneCollection();
+void runCreateRemoteScene();
+void runCreateRemoteSceneAction();
+void runExecuteCreatedRemoteScene();
+void runExecuteExistingRemoteScene();
 
 // Scene Manager Remote API sample ---
 void onRemoteSceneListCreated(RemoteSceneList::Ptr remoteSceneList, int eCode)
@@ -77,15 +83,14 @@ void onRemoteSceneListCreated(RemoteSceneList::Ptr remoteSceneList, int eCode)
     if (eCode == SCENE_RESULT_OK)
     {
         g_sceneList = std::move(remoteSceneList);
-
-        displaySceneList();
-        runMenu(CREATE_REMOTE_SCENE_COLLECTION);
+        g_currentRun = runRemoteSceneCollection;
     }
     else
     {
         std::cout << "Create Remote scene list failed." << std::endl;
-        runMenu(CREATE_REMOTE_SCENE_LIST);
+        g_currentRun = runCreateRemoteSceneList;
     }
+    g_currentRun();
 }
 
 void onRemoteSceneCollectionCreated(RemoteSceneCollection::Ptr remoteSceneCol, int eCode)
@@ -95,16 +100,15 @@ void onRemoteSceneCollectionCreated(RemoteSceneCollection::Ptr remoteSceneCol, i
     if (eCode == SCENE_RESULT_OK)
     {
         g_sceneCollection = remoteSceneCol;
-
-        displaySceneList();
-        displaySceneCollection();
-        runMenu(CREATE_REMOTE_SCENE);
+        g_currentRun = runCreateRemoteScene;
     }
     else
     {
         std::cout << "Create Remote scene collection failed." << std::endl;
-        runMenu(CREATE_REMOTE_SCENE_COLLECTION);
+        g_currentRun = runRemoteSceneCollection;
     }
+
+    g_currentRun();
 }
 
 void onRemoteSceneCreated(RemoteScene::Ptr remoteScene, int eCode)
@@ -115,16 +119,15 @@ void onRemoteSceneCreated(RemoteScene::Ptr remoteScene, int eCode)
     {
         g_scene = remoteScene;
 
-        displaySceneList();
-        displaySceneCollection();
-        displayScene();
-        runMenu(CREATE_REMOTE_SCENE_ACTION);
+        g_currentRun = runCreateRemoteSceneAction;
     }
     else
     {
         std::cout << "Create Remote scene failed." << std::endl;
-        runMenu(CREATE_REMOTE_SCENE);
+        g_currentRun = runCreateRemoteScene;
     }
+
+    g_currentRun();
 }
 
 void onRemoteSceneActionCreated(RemoteSceneAction::Ptr, int eCode)
@@ -133,16 +136,18 @@ void onRemoteSceneActionCreated(RemoteSceneAction::Ptr, int eCode)
 
     if (eCode == SCENE_RESULT_OK)
     {
-        displaySceneList();
-        displaySceneCollection();
-        displaySceneAction();
-        runMenu(EXECUTE_REMOTE_SCENE);
+        g_currentRun = runExecuteCreatedRemoteScene;
     }
     else
     {
         std::cout << "Create Remote scene action failed." << std::endl;
-        runMenu(CREATE_REMOTE_SCENE_ACTION);
+        g_currentRun = runCreateRemoteSceneAction;
     }
+
+    numRecvSceneActionCreationResp++;
+
+    if(numCreatedSceneAction == numRecvSceneActionCreationResp)
+        g_currentRun();
 }
 
 void onRemoteSceneExecuted(const std::string &sceneName, int eCode)
@@ -155,8 +160,10 @@ void onRemoteSceneExecuted(const std::string &sceneName, int eCode)
         std::cout << "Execute scene failed." << std::endl;
     }
 
-    runMenu(EXECUTE_REMOTE_SCENE);
+    g_currentRun();
 }
+
+// --- Scene Manager Remote API sample
 
 void createRemoteSceneList()
 {
@@ -167,7 +174,7 @@ void createRemoteSceneList()
     else
     {
         std::cout << "Scene List Resource is not discovered." << std::endl;
-        runMenu(CREATE_REMOTE_SCENE_LIST);
+        g_currentRun();
     }
 }
 
@@ -176,6 +183,19 @@ void createRemoteSceneCollection()
     if (!g_sceneList) return;
 
     g_sceneList->addNewSceneCollection(onRemoteSceneCollectionCreated);
+}
+
+void showRemoteSceneCollection()
+{
+    if (!g_sceneList) return;
+
+    if (g_sceneList->getRemoteSceneCollections().size() == 0) return;
+
+    g_sceneCollection = g_sceneList->getRemoteSceneCollections().at(0);
+
+    if( g_sceneCollection->getRemoteScenes().size() == 0) return;
+
+    g_scene = g_sceneCollection->getRemoteScenes().begin()->second;
 }
 
 void createRemoteScene()
@@ -198,15 +218,13 @@ void createRemoteSceneAction(
 
 void createRemoteSceneActions()
 {
-    createRemoteSceneAction(g_scene, g_foundLightResource, "power", "off");
-    createRemoteSceneAction(g_scene, g_foundFanResource, "speed", "0");
+    createRemoteSceneAction(g_scene, g_foundLightResource, "power", "on");
+    createRemoteSceneAction(g_scene, g_foundFanResource, "speed", "50");
 }
 
 void executeScene()
 {
     displaySceneList();
-    displaySceneCollection();
-    displaySceneAction();
 
     if (g_scene)
     {
@@ -214,8 +232,8 @@ void executeScene()
         std::cout << "\n\t'" << g_scene->getName() << "' is executed!\n" << std::endl;
     }
 }
-// --- Scene Manager Remote API sample
 
+// --- Scene Manager Remote API sample
 
 void configurePlatform()
 {
@@ -226,7 +244,7 @@ void configurePlatform()
     OCPlatform::Configure(config);
 }
 
-void processUserInput(int min, int max)
+int processUserInput(int min, int max)
 {
     assert(min <= max);
 
@@ -237,7 +255,7 @@ void processUserInput(int min, int max)
     if (!std::cin.fail())
     {
         if (input == max + 1)  exit(0);
-        if (min <= input && input <= max) return;
+        if (min <= input && input <= max) return input;
     }
 
     std::cin.clear();
@@ -246,100 +264,231 @@ void processUserInput(int min, int max)
     throw std::runtime_error("Invalid Input, please try again");
 }
 
-void excecuteCommand(std::string str, Run runFunc)
+void displaySceneList()
 {
-    std::cout << "\n========================================================\n";
-    std::cout << "1. " << str << "\n";
-    std::cout << "2. Quit         \n";
-    std::cout << "========================================================  \n";
+    if (!g_sceneList) return;
+
+    std::cout << "\t" << g_sceneList->getName() << "(SceneList)" << std::endl;
+
+    if (!g_sceneCollection) return;
+
+    std::cout << "\t\t   |_ _ _ " << g_sceneCollection->getId() << " (SceneCollection)" << std::endl;
+
+    for( const auto &it_scene : g_sceneCollection->getRemoteScenes() )
+    {
+        std::cout << "\t\t\t   |_ _ _ " << it_scene.first << " (Scene)" << std::endl;
+
+        auto sceneActionList = it_scene.second->getRemoteSceneActions();
+        for (const auto &it : sceneActionList)
+        {
+            auto attr = it->getExecutionParameter();
+            for (const auto &att : attr)
+            {
+                std::cout << "\t\t\t      \t\t|_ _ _ ";
+                std::cout << it->getRemoteResourceObject()->getUri() << " : ";
+                std::cout << att.key() << " - " << att.value().toString() << std::endl;
+            }
+        }
+    }
+}
+
+void displayClear(Run runFunc)
+{
+    auto ret = std::system("/usr/bin/clear");
+    if(ret == -1)
+    {
+        std::cout << "clear error!" << std::endl;
+    }
+    g_currentRun = runFunc;
+}
+
+void displayCreateRemoteSceneListMenu()
+{
+    std::cout << "========================================================\n";
+    std::cout << CREATE_REMOTE_SCENE_LIST  << ". Create a RemoteSceneList \n";
+    std::cout << CREATE_REMOTE_SCENE_LIST + 1  << ". Quit                 \n";
+    std::cout << "========================================================\n";
+}
+
+void displayRemoteSceneCollectionMenu()
+{
+    std::cout << "========================================================               \n";
+    std::cout << CREATE_REMOTE_SCENE_COLLECTION  << ". Create a RemoteSceneCollection    \n";
+    std::cout << SHOW_REMOTE_SCENE_COLLECTION  << ". Show existing RemoteSceneCollection \n";
+    std::cout << SHOW_REMOTE_SCENE_COLLECTION + 1  << ". Quit                            \n";
+    std::cout << "========================================================               \n";
+}
+
+void displayRemoteSceneCreationMenu()
+{
+    std::cout << "========================================================\n";
+    std::cout << CREATE_REMOTE_SCENE  << ". Create a RemoteScene          \n";
+    std::cout << CREATE_REMOTE_SCENE + 1  << ". Quit                      \n";
+    std::cout << "========================================================\n";
+}
+
+void displayRemoteSceneActionCreationMenu()
+{
+    std::cout << "========================================================   \n";
+    std::cout << CREATE_REMOTE_SCENE_ACTION  << ". Create RemoteSceneActions \n";
+    std::cout << CREATE_REMOTE_SCENE_ACTION + 1  << ". Quit                  \n";
+    std::cout << "========================================================   \n";
+}
+
+void displayExecuteCreatedRemoteSceneCreationMenu()
+{
+    std::cout << "========================================================\n";
+    std::cout << EXECUTE_REMOTE_SCENE  << ". Execute RemoteScene          \n";
+    std::cout << EXECUTE_REMOTE_SCENE + 1  << ". Quit                     \n";
+    std::cout << "========================================================\n";
+}
+
+void displayExecuteExistingRemoteSceneCreationMenu()
+{
+    std::cout << "========================================================\n";
+    std::cout << EXECUTE_REMOTE_SCENE  << ". Execute a first RemoteScene  \n";
+    std::cout << EXECUTE_REMOTE_SCENE + 1  << ". Quit                     \n";
+    std::cout << "========================================================\n";
+}
+
+void runExecuteExistingRemoteScene()
+{
+    displaySceneList();
+
+    displayExecuteExistingRemoteSceneCreationMenu();
 
     try
     {
-        processUserInput(1, numMenu);
-        runFunc();
-    }
-    catch(std::exception & e)
+        int command = processUserInput(EXECUTE_REMOTE_SCENE, EXECUTE_REMOTE_SCENE);
+        switch(command)
+        {
+            case EXECUTE_REMOTE_SCENE:
+                executeScene();
+                displayClear(runExecuteExistingRemoteScene);
+                break;
+        }
+    } catch (std::exception &e)
     {
         std::cout << e.what() << std::endl;
+        g_currentRun();
     }
 }
 
-void runMenu(Menu menu)
+void runExecuteCreatedRemoteScene()
 {
-    std::string strMenu;
-    Run runFunc;
+    displaySceneList();
 
-    switch (menu)
+    displayExecuteCreatedRemoteSceneCreationMenu();
+
+    try
     {
-    case CREATE_REMOTE_SCENE_LIST:
-        strMenu = "Create a RemoteSceneList";
-        runFunc = createRemoteSceneList;
-        break;
-    case CREATE_REMOTE_SCENE_COLLECTION:
-        strMenu = "Create a RemoteSceneCollection";
-        runFunc = createRemoteSceneCollection;
-        break;
-    case CREATE_REMOTE_SCENE:
-        strMenu = "Create a RemoteScene";
-        runFunc = createRemoteScene;
-        break;
-    case CREATE_REMOTE_SCENE_ACTION:
-        strMenu = "Create RemoteSceneActions";
-        runFunc = createRemoteSceneActions;
-        break;
-    case EXECUTE_REMOTE_SCENE:
-        strMenu = "Execute RemoteScene";
-        runFunc = executeScene;
-        break;
-    default:
-        return;
-    }
-
-    excecuteCommand(strMenu, runFunc);
-}
-
-void displaySceneList()
-{
-    if (g_sceneList)
-    {
-        std::cout << "\tSceneList" << "\n\t   |_ _ _ ";
-        std::cout << g_sceneList->getName() << std::endl;
-    }
-}
-
-void displaySceneCollection()
-{
-    if (g_sceneCollection)
-    {
-        std::cout << "\t\t   |_ _ _ " << g_sceneCollection->getId() 
-            << " (SceneCollection)" << std::endl;
-    }
-}
-
-void displayScene()
-{
-    if (g_scene)
-    {
-        std::cout << "\t\t\t   |_ _ _ " << g_scene->getName() << " (Scene)" << std::endl;
-    }
-}
-
-void displaySceneAction()
-{
-    if (!g_scene) return;
-
-    displayScene();
-
-    auto sceneActionList = g_scene->getRemoteSceneActions();
-    for (const auto &it : sceneActionList)
-    {
-        auto attr = it->getExecutionParameter();
-        for (const auto &att : attr)
+        int command = processUserInput(EXECUTE_REMOTE_SCENE, EXECUTE_REMOTE_SCENE);
+        switch(command)
         {
-            std::cout << "\t\t\t      \t\t|_ _ _ ";
-            std::cout << it->getRemoteResourceObject()->getUri() << " : ";
-            std::cout << att.key() << " - " << att.value().toString() << std::endl;
+            case EXECUTE_REMOTE_SCENE:
+                executeScene();
+                displayClear(runExecuteCreatedRemoteScene);
+                break;
         }
+    } catch (std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
+        g_currentRun();
+    }
+}
+
+void runCreateRemoteSceneAction()
+{
+    displaySceneList();
+
+    displayRemoteSceneActionCreationMenu();
+
+    try
+    {
+        int command = processUserInput(CREATE_REMOTE_SCENE_ACTION, CREATE_REMOTE_SCENE_ACTION);
+        switch(command)
+        {
+            case CREATE_REMOTE_SCENE_ACTION:
+                createRemoteSceneActions();
+                displayClear(runExecuteCreatedRemoteScene);
+                break;
+        }
+    } catch (std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
+        g_currentRun();
+    }
+}
+
+void runCreateRemoteScene()
+{
+    displaySceneList();
+
+    displayRemoteSceneCreationMenu();
+
+    try
+    {
+        int command = processUserInput(CREATE_REMOTE_SCENE, CREATE_REMOTE_SCENE);
+        switch(command)
+        {
+            case CREATE_REMOTE_SCENE:
+                createRemoteScene();
+                displayClear(runCreateRemoteSceneAction);
+                break;
+        }
+    } catch (std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
+        g_currentRun();
+    }
+}
+
+void runRemoteSceneCollection()
+{
+    displaySceneList();
+
+    displayRemoteSceneCollectionMenu();
+
+    try
+    {
+        int command = processUserInput(CREATE_REMOTE_SCENE_COLLECTION, SHOW_REMOTE_SCENE_COLLECTION);
+        switch(command)
+        {
+            case CREATE_REMOTE_SCENE_COLLECTION:
+                createRemoteSceneCollection();
+                displayClear(runCreateRemoteScene);
+                break;
+            case SHOW_REMOTE_SCENE_COLLECTION:
+                showRemoteSceneCollection();
+                displayClear(runExecuteExistingRemoteScene);
+                g_currentRun();
+                break;
+        }
+    } catch (std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
+        g_currentRun();
+    }
+}
+
+void runCreateRemoteSceneList()
+{
+    displayCreateRemoteSceneListMenu();
+
+    try
+    {
+        int command = processUserInput(CREATE_REMOTE_SCENE_LIST, CREATE_REMOTE_SCENE_LIST);
+        switch(command)
+        {
+            case CREATE_REMOTE_SCENE_LIST:
+                createRemoteSceneList();
+                displayClear(runRemoteSceneCollection);
+                break;
+        }
+    } catch (std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
+        g_currentRun();
     }
 }
 
@@ -416,7 +565,8 @@ int main()
 
     try
     {
-        runMenu(CREATE_REMOTE_SCENE_LIST);
+        g_currentRun = runCreateRemoteSceneList;
+        g_currentRun();
     }
     catch(std::exception &e)
     {
