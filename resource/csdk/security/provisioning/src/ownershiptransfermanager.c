@@ -323,64 +323,83 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
  */
 void DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
-    if(g_otmCtx && endpoint && info)
+    if(NULL != g_otmCtx && NULL != g_otmCtx->selectedDeviceInfo &&
+       NULL != endpoint && NULL != info)
     {
         OIC_LOG_V(INFO, TAG, "Received status from remote device(%s:%d) : %d",
                  endpoint->addr, endpoint->port, info->result);
 
-        //Make sure the address matches.
-        if(strncmp(g_otmCtx->selectedDeviceInfo->endpoint.addr,
-           endpoint->addr,
-           sizeof(endpoint->addr)) == 0 &&
-           g_otmCtx->selectedDeviceInfo->securePort == endpoint->port)
+        OicSecDoxm_t* newDevDoxm = g_otmCtx->selectedDeviceInfo->doxm;
+
+        if(NULL != newDevDoxm)
         {
-            OCStackResult res = OC_STACK_ERROR;
+            OicUuid_t emptyUuid = {.id={0}};
 
-            //In case of success, send next coaps request.
-            if(CA_STATUS_OK == info->result)
+            //Make sure the address matches.
+            if(strncmp(g_otmCtx->selectedDeviceInfo->endpoint.addr,
+               endpoint->addr,
+               sizeof(endpoint->addr)) == 0 &&
+               g_otmCtx->selectedDeviceInfo->securePort == endpoint->port)
             {
-                //Send request : PUT /oic/sec/doxm [{... , "devowner":"PT's UUID"}]
-                res = PutOwnerUuid(g_otmCtx);
-                if(OC_STACK_OK != res)
-                {
-                    OIC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to send owner information");
-                    SetResult(g_otmCtx, res);
-                }
-            }
-            //In case of failure, re-start the ownership transfer in case of PIN OxM
-            else if(CA_DTLS_AUTHENTICATION_FAILURE == info->result)
-            {
-                g_otmCtx->selectedDeviceInfo->doxm->owned = false;
-                g_otmCtx->attemptCnt++;
+                OCStackResult res = OC_STACK_ERROR;
 
-                if(g_otmCtx->selectedDeviceInfo->doxm->oxmSel == OIC_RANDOM_DEVICE_PIN)
+                //If temporal secure sesstion established successfully
+                if(CA_STATUS_OK == info->result &&
+                   false == newDevDoxm->owned &&
+                   memcmp(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t)) == 0)
                 {
-                    /*
-                    res = RemoveCredential(&g_otmCtx->subIdForPinOxm);
-                    if(OC_STACK_RESOURCE_DELETED != res)
+                    //Send request : PUT /oic/sec/doxm [{... , "devowner":"PT's UUID"}]
+                    res = PutOwnerUuid(g_otmCtx);
+                    if(OC_STACK_OK != res)
                     {
-                        OIC_LOG_V(ERROR, TAG, "Failed to remove temporal PSK : %d", res);
+                        OIC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to send owner information");
                         SetResult(g_otmCtx, res);
-                        return;
-                    }*/
-
-                    if(WRONG_PIN_MAX_ATTEMP > g_otmCtx->attemptCnt)
+                    }
+                }
+                //In case of authentication failure
+                else if(CA_DTLS_AUTHENTICATION_FAILURE == info->result)
+                {
+                    //in case of error from owner credential
+                    if(memcmp(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0 &&
+                        true == newDevDoxm->owned)
                     {
-                        res = StartOwnershipTransfer(g_otmCtx, g_otmCtx->selectedDeviceInfo);
-                        if(OC_STACK_OK != res)
+                        OIC_LOG(ERROR, TAG, "The owner credential may incorrect.");
+
+                        if(OC_STACK_OK != RemoveCredential(&(newDevDoxm->deviceID)))
                         {
-                            SetResult(g_otmCtx, res);
-                            OIC_LOG(ERROR, TAG, "Failed to Re-StartOwnershipTransfer");
+                            OIC_LOG(WARNING, TAG, "Failed to remove the invaild owner credential");
+                        }
+                        SetResult(g_otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
+                    }
+                    //in case of error from wrong PIN, re-start the ownership transfer
+                    else if(OIC_RANDOM_DEVICE_PIN == newDevDoxm->oxmSel)
+                    {
+                        OIC_LOG(ERROR, TAG, "The PIN number may incorrect.");
+
+                        memcpy(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t));
+                        newDevDoxm->owned = false;
+                        g_otmCtx->attemptCnt++;
+
+                        if(WRONG_PIN_MAX_ATTEMP > g_otmCtx->attemptCnt)
+                        {
+                            res = StartOwnershipTransfer(g_otmCtx, g_otmCtx->selectedDeviceInfo);
+                            if(OC_STACK_OK != res)
+                            {
+                                SetResult(g_otmCtx, res);
+                                OIC_LOG(ERROR, TAG, "Failed to Re-StartOwnershipTransfer");
+                            }
+                        }
+                        else
+                        {
+                            OIC_LOG(ERROR, TAG, "User has exceeded the number of authentication attempts.");
+                            SetResult(g_otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
                         }
                     }
                     else
                     {
+                        OIC_LOG(ERROR, TAG, "Failed to establish secure session.");
                         SetResult(g_otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
                     }
-                }
-                else
-                {
-                    SetResult(g_otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
                 }
             }
         }
@@ -711,6 +730,46 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
     {
         if(otmCtx && otmCtx->selectedDeviceInfo)
         {
+            //Close the temporal secure session to verify the owner credential
+            CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
+            endpoint->port = otmCtx->selectedDeviceInfo->securePort;
+            CAResult_t caResult = CACloseDtlsSession(endpoint);
+            if(CA_STATUS_OK != caResult)
+            {
+                OIC_LOG(ERROR, TAG, "Failed to close DTLS session");
+                SetResult(otmCtx, caResult);
+                return OC_STACK_DELETE_TRANSACTION;
+            }
+
+            /**
+             * If we select NULL cipher,
+             * client will select appropriate cipher suite according to server's cipher-suite list.
+             */
+            caResult = CASelectCipherSuite(TLS_NULL_WITH_NULL_NULL);
+            if(CA_STATUS_OK != caResult)
+            {
+                OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
+                SetResult(otmCtx, caResult);
+                return OC_STACK_DELETE_TRANSACTION;
+            }
+
+            /**
+             * in case of random PIN based OxM,
+             * revert get_psk_info callback of tinyDTLS to use owner credential.
+             */
+            if(OIC_RANDOM_DEVICE_PIN == otmCtx->selectedDeviceInfo->doxm->oxmSel)
+            {
+                OicUuid_t emptyUuid = { .id={0}};
+                SetUuidForRandomPinOxm(&emptyUuid);
+
+                if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to revert DTLS credential handler.");
+                    SetResult(otmCtx, OC_STACK_INVALID_CALLBACK);
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
+            }
+
             //PUT /oic/sec/doxm [{ ..., "owned":"TRUE" }]
             res = PutOwnershipInformation(otmCtx);
             if(OC_STACK_OK != res)
@@ -907,7 +966,12 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         OicSecCred_t newCredential;
         memcpy(&newCredential, ownerCredential, sizeof(OicSecCred_t));
         newCredential.next = NULL;
+
+        //Set subject ID as PT's ID
         memcpy(&(newCredential.subject), &credSubjectId, sizeof(OicUuid_t));
+
+        //Fill private data as empty string
+        newCredential.privateData.data = NULL;
 
         //Send owner credential to new device : PUT /oic/sec/cred [ owner credential ]
         secPayload->securityData = BinToCredJSON(&newCredential);
