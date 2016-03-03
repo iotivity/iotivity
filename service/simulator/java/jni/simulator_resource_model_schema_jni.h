@@ -26,7 +26,7 @@
 #include "simulator_resource_model_schema.h"
 
 jobject AttributePropertyToJava(JNIEnv *env,
-        const std::shared_ptr<AttributeProperty> &property);
+                                const std::shared_ptr<AttributeProperty> &property);
 
 std::shared_ptr<AttributeProperty> AttributePropertyToCpp(JNIEnv *env,
         jobject &jProperty);

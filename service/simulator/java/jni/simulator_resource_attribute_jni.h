@@ -28,7 +28,7 @@ jobject SimulatorResourceAttributeToJava(JNIEnv *env,
         const SimulatorResourceAttribute &attribute);
 
 bool SimulatorResourceAttributeToCpp(JNIEnv *env, jobject jAttribute,
-        SimulatorResourceAttribute &attribute);
+                                     SimulatorResourceAttribute &attribute);
 
 jobject SimulatorResourceAttributesToJava(JNIEnv *env,
         const std::map<std::string, SimulatorResourceAttribute> &attributes);

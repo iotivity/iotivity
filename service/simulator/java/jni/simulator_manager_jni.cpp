@@ -96,7 +96,8 @@ static void onResourceFound(jobject listener, SimulatorRemoteResourceSP remoteRe
     ReleaseEnv();
 }
 
-static void onDeviceInfoReceived(jobject listener, const std::string &hostUri, DeviceInfo &deviceInfo)
+static void onDeviceInfoReceived(jobject listener, const std::string &hostUri,
+                                 DeviceInfo &deviceInfo)
 {
     JNIEnv *env = GetEnv();
     if (!env)
@@ -126,7 +127,7 @@ static void onDeviceInfoReceived(jobject listener, const std::string &hostUri, D
 }
 
 static void onPlatformInfoReceived(jobject listener, const std::string &hostUri,
-                            PlatformInfo &platformInfo)
+                                   PlatformInfo &platformInfo)
 {
     JNIEnv *env = GetEnv();
     if (!env)

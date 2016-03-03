@@ -58,8 +58,8 @@ class JniIntegerProperty
             // Set Range or enum value set
             if (property->hasRange())
             {
-                int min;
-                int max;
+                int min = 0;
+                int max = 0;
                 property->getRange(min, max);
 
                 static jmethodID setRangeMID = env->GetMethodID(
@@ -122,6 +122,7 @@ class JniIntegerProperty
                     {
                         values.push_back(jIntArray[index]);
                     }
+                    integerProperty->setValues(values);
 
                     env->ReleaseIntArrayElements(jValues, jIntArray, 0);
                 }
@@ -153,8 +154,8 @@ class JniDoubleProperty
             // Set Range or enum value set
             if (property->hasRange())
             {
-                double min;
-                double max;
+                double min = 0.0;
+                double max = 0.0;
                 property->getRange(min, max);
 
                 static jmethodID setRangeMID = env->GetMethodID(
@@ -187,7 +188,7 @@ class JniDoubleProperty
             static jfieldID hasRangeFID = env->GetFieldID(gSimulatorClassRefs.doublePropertyCls,
                                           "mHasRange", "Z");
 
-            jdouble defaultValue = env->GetIntField(jProperty, defaultValueFID);
+            jdouble defaultValue = env->GetDoubleField(jProperty, defaultValueFID);
             jboolean hasRange = env->GetBooleanField(jProperty, hasRangeFID);
 
             std::shared_ptr<DoubleProperty> doubleProperty =
@@ -218,6 +219,7 @@ class JniDoubleProperty
                     {
                         values.push_back(jDoubleArray[index]);
                     }
+                    doubleProperty->setValues(values);
 
                     env->ReleaseDoubleArrayElements(jValues, jDoubleArray, 0);
                 }
@@ -285,8 +287,8 @@ class JniStringProperty
             // Set Range or enum value set
             if (property->hasRange())
             {
-                size_t min;
-                size_t max;
+                size_t min = 0;
+                size_t max = 0;
                 property->getRange(min, max);
 
                 static jmethodID setRangeMID = env->GetMethodID(
@@ -357,6 +359,7 @@ class JniStringProperty
                         jstring jValue = (jstring) env->GetObjectArrayElement(jValues, index);
                         values.push_back(JniString(env, jValue).get());
                     }
+                    stringProperty->setValues(values);
                 }
             }
 

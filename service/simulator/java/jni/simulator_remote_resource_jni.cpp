@@ -45,7 +45,7 @@ static SimulatorRemoteResourceSP simulatorRemoteResourceToCpp(
 }
 
 static void onObserveCallback(jobject listener, const std::string &uid, SimulatorResult /*result*/,
-                       const SimulatorResourceModel &representation, const int seq)
+                              const SimulatorResourceModel &representation, const int seq)
 {
     JNIEnv *env = GetEnv();
     if (!env)
@@ -62,7 +62,7 @@ static void onObserveCallback(jobject listener, const std::string &uid, Simulato
 }
 
 static void onGetCallback(jobject listener, const std::string &uid, SimulatorResult result,
-                   const SimulatorResourceModel &representation)
+                          const SimulatorResourceModel &representation)
 {
     JNIEnv *env = GetEnv();
     if (!env)
@@ -81,7 +81,7 @@ static void onGetCallback(jobject listener, const std::string &uid, SimulatorRes
 }
 
 static void onPutCallback(jobject listener, const std::string &uid, SimulatorResult result,
-                   const SimulatorResourceModel &representation)
+                          const SimulatorResourceModel &representation)
 {
     JNIEnv *env = GetEnv();
     if (!env)
@@ -100,7 +100,7 @@ static void onPutCallback(jobject listener, const std::string &uid, SimulatorRes
 }
 
 static void onPostCallback(jobject listener, const std::string &uid, SimulatorResult result,
-                    const SimulatorResourceModel &representation)
+                           const SimulatorResourceModel &representation)
 {
     JNIEnv *env = GetEnv();
     if (!env)
@@ -119,14 +119,14 @@ static void onPostCallback(jobject listener, const std::string &uid, SimulatorRe
 }
 
 static void onVerificationCallback(jobject listener, const std::string &uid, int id,
-                            OperationState opState)
+                                   OperationState opState)
 {
     JNIEnv *env = GetEnv();
     if (!env)
         return;
 
     jclass listenerCls = env->GetObjectClass(listener);
-    jmethodID listenerMethodId;
+    jmethodID listenerMethodId = nullptr;
     if (OP_START == opState)
     {
         listenerMethodId = env->GetMethodID(listenerCls, "onVerificationStarted", "(Ljava/lang/String;I)V");
@@ -141,8 +141,12 @@ static void onVerificationCallback(jobject listener, const std::string &uid, int
         listenerMethodId = env->GetMethodID(listenerCls, "onVerificationAborted", "(Ljava/lang/String;I)V");
     }
 
-    jstring jUid = env->NewStringUTF(uid.c_str());
-    env->CallVoidMethod(listener, listenerMethodId, jUid, id);
+    // Invoke java callback method
+    if (nullptr != listenerMethodId)
+    {
+        jstring jUid = env->NewStringUTF(uid.c_str());
+        env->CallVoidMethod(listener, listenerMethodId, jUid, id);
+    }
 
     if (OP_COMPLETE == opState || OP_ABORT == opState)
         env->DeleteGlobalRef(listener);
@@ -201,7 +205,7 @@ class JniRequestType
         static RequestType toCpp(JNIEnv *env, jobject jRequestType)
         {
             static jmethodID ordinalMID = env->GetMethodID(
-                                    gSimulatorClassRefs.requestTypeCls, "ordinal", "()I");
+                                              gSimulatorClassRefs.requestTypeCls, "ordinal", "()I");
             int ordinal = env->CallIntMethod(jRequestType, ordinalMID);
             return RequestType(ordinal);
         }
@@ -231,13 +235,13 @@ class JniSimulatorRequestModel
 
             // Create Java SimulatorResourceModel object
             static jmethodID simulatorRequestModelCtor = env->GetMethodID(
-                gSimulatorClassRefs.simulatorRequestModelCls, "<init>",
-                "(Lorg/oic/simulator/client/SimulatorRemoteResource$RequestType;"
-                "Ljava/util/Map;Lorg/oic/simulator/ModelProperty;)V");
+                        gSimulatorClassRefs.simulatorRequestModelCls, "<init>",
+                        "(Lorg/oic/simulator/client/SimulatorRemoteResource$RequestType;"
+                        "Ljava/util/Map;Lorg/oic/simulator/ModelProperty;)V");
 
             return env->NewObject(gSimulatorClassRefs.simulatorRequestModelCls,
-                simulatorRequestModelCtor, jRequestType,
-                jQueryParams.get(), jRequestBodyModel);
+                                  simulatorRequestModelCtor, jRequestType,
+                                  jQueryParams.get(), jRequestBodyModel);
         }
 };
 

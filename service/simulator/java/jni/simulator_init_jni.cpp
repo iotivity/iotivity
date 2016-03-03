@@ -159,10 +159,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void * /*reserved*/)
     getClassRef(env, SIMULATOR_RESOURCE_TYPE_CLS, gSimulatorClassRefs.simulatorResourceTypeCls);
     getClassRef(env, SIMULATOR_SINGLE_RESOURCE_CLS, gSimulatorClassRefs.simulatorSingleResourceCls);
     getClassRef(env, SIMULATOR_COLLECTION_RESOURCE_CLS,
-        gSimulatorClassRefs.simulatorCollectionResourceCls);
+                gSimulatorClassRefs.simulatorCollectionResourceCls);
     getClassRef(env, SIMULATOR_RESOURCE_MODEL_CLS, gSimulatorClassRefs.simulatorResourceModelCls);
     getClassRef(env, SIMULATOR_RESOURCE_ATTRIBUTE_CLS,
-        gSimulatorClassRefs.simulatorResourceAttributeCls);
+                gSimulatorClassRefs.simulatorResourceAttributeCls);
     getClassRef(env, ATTRIBUTE_VALUE_CLS, gSimulatorClassRefs.attributeValueCls);
     getClassRef(env, ATTRIBUTE_VALUE_TYPE_CLS, gSimulatorClassRefs.attributeValueTypeCls);
     getClassRef(env, ATTRIBUTE_TYPE_INFO_CLS, gSimulatorClassRefs.attributeTypeInfoCls);
@@ -182,7 +182,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void * /*reserved*/)
     getClassRef(env, AUTO_UPDATE_TYPE_CLS, gSimulatorClassRefs.autoUpdateTypeCls);
 
     getClassRef(env, SIMULATOR_REMOTE_RESOURCE_CLS,
-        gSimulatorClassRefs.simulatorRemoteResourceCls);
+                gSimulatorClassRefs.simulatorRemoteResourceCls);
     getClassRef(env, REQUEST_TYPE_CLS, gSimulatorClassRefs.requestTypeCls);
     getClassRef(env, OBSERVER_CLS, gSimulatorClassRefs.observerCls);
     getClassRef(env, DEVICE_INFO_CLS, gSimulatorClassRefs.deviceInfoCls);
@@ -193,7 +193,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void * /*reserved*/)
     getClassRef(env, INVALID_ARGS_EXCEPTION_CLS, gSimulatorClassRefs.invalidArgsExceptionCls);
     getClassRef(env, NO_SUPPORT_EXCEPTION_CLS, gSimulatorClassRefs.noSupportExceptionCls);
     getClassRef(env, OPERATION_IN_PROGRESS_EXCEPTION_CLS,
-        gSimulatorClassRefs.operationInProgressExceptionCls);
+                gSimulatorClassRefs.operationInProgressExceptionCls);
     getClassRef(env, SIMULATOR_RESULT_CLS, gSimulatorClassRefs.simulatorResultCls);
 
     getClassRef(env, INTEGER_1D_ARRAY, gSimulatorClassRefs.integer1DArrayCls);
@@ -209,11 +209,11 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void * /*reserved*/)
     getClassRef(env, STRING_2D_ARRAY, gSimulatorClassRefs.string2DArrayCls);
     getClassRef(env, STRING_3D_ARRAY, gSimulatorClassRefs.string3DArrayCls);
     getClassRef(env, SIMULATOR_RESOURCE_MODEL_1D_ARRAY,
-        gSimulatorClassRefs.simulatorResModel1DArrayCls);
+                gSimulatorClassRefs.simulatorResModel1DArrayCls);
     getClassRef(env, SIMULATOR_RESOURCE_MODEL_2D_ARRAY,
-        gSimulatorClassRefs.simulatorResModel2DArrayCls);
+                gSimulatorClassRefs.simulatorResModel2DArrayCls);
     getClassRef(env, SIMULATOR_RESOURCE_MODEL_3D_ARRAY,
-        gSimulatorClassRefs.simulatorResModel3DArrayCls);
+                gSimulatorClassRefs.simulatorResModel3DArrayCls);
 
     gJavaVM = vm;
     return JNI_VERSION_1_6;

@@ -223,7 +223,7 @@ Java_org_oic_simulator_server_SimulatorSingleResource_nativeStartAttributeUpdati
         JniString jniAttrName(env, jAttrName);
         AutoUpdateType autoUpdateType = autoUpdateTypeToCpp(env, jType);
         return singleResource->startAttributeUpdation(jniAttrName.get(), autoUpdateType,
-                 jInterval, callback);
+                jInterval, callback);
     }
     catch (InvalidArgsException &e)
     {

@@ -26,14 +26,14 @@ JniMap::JniMap(JNIEnv *env)
     m_env = env;
 
     static jmethodID mapCtor = env->GetMethodID(
-                                       gSimulatorClassRefs.hashMapCls, "<init>", "()V");
+                                   gSimulatorClassRefs.hashMapCls, "<init>", "()V");
     m_hashMap = env->NewObject(gSimulatorClassRefs.hashMapCls, mapCtor);
 }
 
 void JniMap::put(jobject jKey, jobject jValue)
 {
     static jmethodID putMethod = m_env->GetMethodID(gSimulatorClassRefs.hashMapCls,
-                                        "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                                 "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
     m_env->CallObjectMethod(m_hashMap, putMethod, jKey, jValue);
 }
 
