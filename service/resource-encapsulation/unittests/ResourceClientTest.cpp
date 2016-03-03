@@ -95,9 +95,8 @@ private:
     {
         for (int i=0; i<10 && !object; ++i)
         {
-            const std::string uri  = "/oic/res";
             auto discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
-                    RCSAddress::multicast(), uri, RESOURCETYPE,
+                    RCSAddress::multicast(), RESOURCETYPE,
                     std::bind(&RemoteResourceObjectTest::resourceDiscovered, this,
                             std::placeholders::_1));
             Wait(1000);

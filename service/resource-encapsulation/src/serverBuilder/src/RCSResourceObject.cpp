@@ -21,7 +21,6 @@
 #include "RCSResourceObject.h"
 
 #include <functional>
-#include <vector>
 
 #include "RequestHandler.h"
 #include "AssertUtils.h"
@@ -86,13 +85,12 @@ namespace
 
     template< typename HANDLER, typename RESPONSE =
             typename std::decay<HANDLER>::type::result_type >
-    RESPONSE invokeHandler(const RCSResourceObject::Ptr& resObj, RCSResourceAttributes& attrs,
-            const std::shared_ptr< OC::OCResourceRequest >& ocRequest,
+    RESPONSE invokeHandler(RCSResourceAttributes& attrs, const RCSRequest& request,
             std::shared_ptr< HANDLER > handler)
     {
         if (handler)
         {
-            return (*handler)(RCSRequest{ resObj, ocRequest }, attrs);
+            return (*handler)(request, attrs);
         }
 
         return RESPONSE::defaultAction();
@@ -576,14 +574,16 @@ namespace OIC
 
             try
             {
+                RCSRequest rcsRequest{ resource, request };
+
                 if (request->getRequestHandlerFlag() & OC::RequestHandlerFlag::RequestFlag)
                 {
-                    return resource->handleRequest(request);
+                    return resource->handleRequest(rcsRequest);
                 }
 
                 if (request->getRequestHandlerFlag() & OC::RequestHandlerFlag::ObserverFlag)
                 {
-                    return resource->handleObserve(request);
+                    return resource->handleObserve(rcsRequest);
                 }
             }
             catch (const std::exception& e)
@@ -601,33 +601,28 @@ namespace OIC
         }
 
         OCEntityHandlerResult RCSResourceObject::handleRequest(
-                const std::shared_ptr< OC::OCResourceRequest >& request)
+                const RCSRequest& request)
         {
-            assert(request != nullptr);
-
-            RCSRequest rcsRequest{ shared_from_this(), request };
-
-            if (rcsRequest.getInterface() != "" && m_interfaceHandlers.find(
-                    rcsRequest.getInterface()) == m_interfaceHandlers.end())
+            if (request.getInterface() != "" &&
+                    m_interfaceHandlers.find(request.getInterface()) == m_interfaceHandlers.end())
             {
                 return OC_EH_ERROR;
             }
 
-            if (request->getRequestType() == "GET")
+            if (request.getOCRequest()->getRequestType() == "GET")
             {
-                return handleRequestGet(rcsRequest);
+                return handleRequestGet(request);
             }
 
-            if (request->getRequestType() == "POST")
+            if (request.getOCRequest()->getRequestType() == "POST")
             {
-                return handleRequestSet(rcsRequest);
+                return handleRequestSet(request);
             }
 
             return OC_EH_ERROR;
         }
 
-        OCEntityHandlerResult RCSResourceObject::handleRequestGet(
-                const RCSRequest& request)
+        OCEntityHandlerResult RCSResourceObject::handleRequestGet(const RCSRequest& request)
         {
             if (!findInterfaceHandler(request.getInterface()).isGetSupported())
             {
@@ -635,8 +630,8 @@ namespace OIC
             }
 
             auto attrs = getAttributesFromOCRequest(request.getOCRequest());
-            auto response = invokeHandler(shared_from_this(), attrs, request.getOCRequest(),
-                    m_getRequestHandler);
+
+            auto response = invokeHandler(attrs, request, m_getRequestHandler);
 
             if (response.isSeparate()) return OC_EH_SLOW;
 
@@ -679,8 +674,7 @@ namespace OIC
             return !replaced.empty();
         }
 
-        OCEntityHandlerResult RCSResourceObject::handleRequestSet(
-                const RCSRequest& request)
+        OCEntityHandlerResult RCSResourceObject::handleRequestSet(const RCSRequest& request)
         {
             if (!findInterfaceHandler(request.getInterface()).isSetSupported())
             {
@@ -689,8 +683,7 @@ namespace OIC
 
             auto attrs = getAttributesFromOCRequest(request.getOCRequest());
 
-            auto response = invokeHandler(shared_from_this(), attrs, request.getOCRequest(),
-                    m_setRequestHandler);
+            auto response = invokeHandler(attrs, request, m_setRequestHandler);
 
             if (response.isSeparate()) return OC_EH_SLOW;
 
@@ -700,8 +693,7 @@ namespace OIC
                     findInterfaceHandler(request.getInterface()).getSetResponseBuilder());
         }
 
-        OCEntityHandlerResult RCSResourceObject::handleObserve(
-                const std::shared_ptr< OC::OCResourceRequest >&)
+        OCEntityHandlerResult RCSResourceObject::handleObserve(const RCSRequest&)
         {
             if (!isObservable())
             {

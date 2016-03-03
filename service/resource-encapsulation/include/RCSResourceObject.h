@@ -57,7 +57,7 @@ namespace OIC
         class NoLockException: public RCSException
         {
             public:
-                NoLockException(std::string &&what) : RCSException { std::move(what) } {}
+                NoLockException(std::string what) : RCSException { std::move(what) } {}
         };
 
         //! @cond
@@ -79,7 +79,7 @@ namespace OIC
          * in instead of overriding SetRequestHandler.
          * </p>
          */
-        class RCSResourceObject : public std::enable_shared_from_this< RCSResourceObject >
+        class RCSResourceObject
         {
         private:
             class WeakGuard;
@@ -545,10 +545,10 @@ namespace OIC
             static OCEntityHandlerResult entityHandler(const std::weak_ptr< RCSResourceObject >&,
                     const std::shared_ptr< OC::OCResourceRequest >&);
 
-            OCEntityHandlerResult handleRequest(const std::shared_ptr< OC::OCResourceRequest >&);
+            OCEntityHandlerResult handleRequest(const RCSRequest&);
             OCEntityHandlerResult handleRequestGet(const RCSRequest&);
             OCEntityHandlerResult handleRequestSet(const RCSRequest&);
-            OCEntityHandlerResult handleObserve(const std::shared_ptr< OC::OCResourceRequest >&);
+            OCEntityHandlerResult handleObserve(const RCSRequest&);
 
             template <typename RESPONSE, typename RESPONSE_BUILDER>
             OCEntityHandlerResult sendResponse(const RCSRequest&,
