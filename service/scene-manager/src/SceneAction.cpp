@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "SceneAction.h"
+
 #include "SceneMemberResource.h"
 
 namespace OIC
@@ -29,11 +30,11 @@ namespace OIC
                 const std::string& sceneName, const RCSResourceAttributes& attr) :
                 m_pRemoteResourceObject(SceneMemberResource->getRemoteResourceObject()),
                 m_sceneName(sceneName),
-                m_sceneMemberResourceObj(SceneMemberResource)
+                m_sceneMemberResource(SceneMemberResource)
         {
             for (const auto& it : attr)
             {
-                m_sceneMemberResourceObj->addMappingInfo(
+                m_sceneMemberResource->addMappingInfo(
                         SceneMemberResource::MappingInfo(m_sceneName, it.key(), it.value()));
             }
         }
@@ -42,33 +43,33 @@ namespace OIC
                 const std::string& sceneName, const std::string& key,
                 const RCSResourceAttributes::Value& value) :
                 m_pRemoteResourceObject(SceneMemberResource->getRemoteResourceObject()),
-                m_sceneName(sceneName), m_sceneMemberResourceObj(SceneMemberResource)
+                m_sceneName(sceneName), m_sceneMemberResource(SceneMemberResource)
         {
-            m_sceneMemberResourceObj->addMappingInfo(
+            m_sceneMemberResource->addMappingInfo(
                                 SceneMemberResource::MappingInfo(m_sceneName, key, value));
         }
 
-        void SceneAction::setExecutionParameter(const std::string& key,
+        void SceneAction::resetExecutionParameter(const std::string& key,
                 RCSResourceAttributes::Value value)
         {
             RCSResourceAttributes attr;
             attr[key] = value;
-            setExecutionParameter(attr);
+            resetExecutionParameter(attr);
         }
 
-        void SceneAction::setExecutionParameter(const RCSResourceAttributes& attr)
+        void SceneAction::resetExecutionParameter(const RCSResourceAttributes& attr)
         {
             for(const auto& it : attr)
             {
-                m_sceneMemberResourceObj->addMappingInfo(
+                m_sceneMemberResource->addMappingInfo(
                         SceneMemberResource::MappingInfo(m_sceneName, it.key(), it.value()));
             }
         }
 
-        const RCSResourceAttributes SceneAction::getExecutionParameter()
+        RCSResourceAttributes SceneAction::getExecutionParameter() const
         {
             RCSResourceAttributes attr;
-            for(const auto& it : m_sceneMemberResourceObj->getMappingInfos())
+            for(const auto& it : m_sceneMemberResource->getMappingInfos())
             {
                 if(it.sceneName == m_sceneName)
                 {

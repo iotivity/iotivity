@@ -22,12 +22,12 @@
 #define SM_SCENECOLLECTION_H_
 
 #include "Scene.h"
-#include <unordered_map>
 
 namespace OIC
 {
     namespace Service
     {
+
         class SceneCollectionResource;
 
         /**
@@ -81,9 +81,6 @@ namespace OIC
              */
             Scene::Ptr getScene(const std::string& sceneName) const;
 
-
-            void removeScene(Scene::Ptr);
-
             /**
              * Sets a name attribute of SceneCollection resource
              *
@@ -107,7 +104,7 @@ namespace OIC
             std::string getId() const;
 
         private:
-            std::shared_ptr< SceneCollectionResource > m_sceneCollectionResourceObj;
+            std::shared_ptr< SceneCollectionResource > m_sceneCollectionResource;
 
         };
     } /* namespace Service */

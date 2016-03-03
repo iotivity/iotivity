@@ -152,7 +152,7 @@ TEST_F(SceneTest, getSceneActionUsingRemoteResource)
     createScene();
 
     auto pSceneAction1 = pScene1->addNewSceneAction(pRemoteResource1, KEY, VALUE);
-    pSceneAction1->setExecutionParameter(KEY_2, VALUE_2);
+    pSceneAction1->resetExecutionParameter(KEY_2, VALUE_2);
 
     ASSERT_EQ(pScene1->getSceneAction(pRemoteResource1)->getExecutionParameter(),
             pSceneAction1->getExecutionParameter());
@@ -165,7 +165,7 @@ TEST_F(SceneTest, getSceneActions)
     createScene();
 
     auto pSceneAction1 = pScene1->addNewSceneAction(pRemoteResource1, KEY, VALUE);
-//    auto pSceneAction2 = pScene1->addNewSceneAction(pRemoteResource2, KEY, VALUE);
+    auto pSceneAction2 = pScene1->addNewSceneAction(pRemoteResource2, KEY, VALUE);
 
     for(const auto & it : pScene1->getSceneActions())
     {
@@ -197,9 +197,3 @@ TEST_F(SceneTest, executeSceneUsingEmptyCallback)
 
     ASSERT_THROW(pScene1->execute(nullptr), RCSInvalidParameterException);
 }
-
-//TEST_F(SceneTest, executeSceneByNotExistedSceneName)
-//{
-//
-//}
-

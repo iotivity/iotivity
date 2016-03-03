@@ -29,6 +29,7 @@ namespace OIC
 {
     namespace Service
     {
+
         class SceneCollectionResource;
 
         /**
@@ -71,35 +72,17 @@ namespace OIC
             friend class SceneCollection;
 
         public:
-            /**
-             * Adds new SceneAction instance to the Scene instance
-             *
-             * @param RCSRemoteResourceObjectPtr        A pointer of discovered resource
-             * @param attr                              A attribute set of key and value
-             *
-             * @return A shared pointer of SceneAction instance
-             *
-             * @throws RCSInvalidParameterException if RCSRemoteResourceObjectPtr is nullptr
-             * @throws InvalidAddMemberRequestException if SceneMember is already registered
-             *
-             * @note SceneAction instance is only produced by Scene class
-             *
-             * @see RCSResourceAttributes
-             */
-            SceneAction::Ptr addNewSceneAction(
-                    const RCSRemoteResourceObject::Ptr& RCSRemoteResourceObjectPtr,
-                    const RCSResourceAttributes& attr);
 
             /**
              * Adds new SceneAction instance to the Scene instance
              *
-             * @param RCSRemoteResourceObjectPtr        A pointer of discovered resource
+             * @param pRCSRemoteResourceObject        A pointer of discovered resource
              * @param key                               A key of attributes
              * @param value                             A value to be mapped against the key
              *
              * @return A shared pointer of SceneAction instance
              *
-             * @throws RCSInvalidParameterException if RCSRemoteResourceObjectPtr is nullptr
+             * @throws RCSInvalidParameterException if pRCSRemoteResourceObject is nullptr
              * @throws InvalidAddMemberRequestException
              *         if scene member resource is already registered
              *
@@ -108,21 +91,40 @@ namespace OIC
              * @see RCSResourceAttributes
              */
             SceneAction::Ptr addNewSceneAction(
-                    const RCSRemoteResourceObject::Ptr& RCSRemoteResourceObjectPtr,
-                    const std::string& key, const RCSResourceAttributes::Value& value);
+                    const RCSRemoteResourceObject::Ptr& pRCSRemoteResourceObject,
+                    std::string key, RCSResourceAttributes::Value value);
+
+            /**
+             * Adds new SceneAction instance to the Scene instance
+             *
+             * @param pRCSRemoteResourceObject        A pointer of discovered resource
+             * @param attr                              A attribute set of key and value
+             *
+             * @return A shared pointer of SceneAction instance
+             *
+             * @throws RCSInvalidParameterException if pRCSRemoteResourceObject is nullptr
+             * @throws InvalidAddMemberRequestException if SceneMember is already registered
+             *
+             * @note SceneAction instance is only produced by Scene class
+             *
+             * @see RCSResourceAttributes
+             */
+            SceneAction::Ptr addNewSceneAction(
+                    const RCSRemoteResourceObject::Ptr& pRCSRemoteResourceObject,
+                    RCSResourceAttributes attr);
 
             /**
              * Gets SceneAction using discovered resource
              *
-             * @param RCSRemoteResourceObjectPtr        A pointer of discovered resource
+             * @param pRCSRemoteResourceObject        A pointer of discovered resource
              *
              * @return A shared pointer of SceneAction
              *
              * @throws RCSInvalidParameterException
-             * if RCSRemoteResourceObjectPtr is unknown resource
+             * if pRCSRemoteResourceObject is unknown resource
              */
             SceneAction::Ptr getSceneAction(
-                    const RCSRemoteResourceObject::Ptr& RCSRemoteResourceObjectPtr) const;
+                    const RCSRemoteResourceObject::Ptr& pRCSRemoteResourceObject) const;
 
             /**
              * Gets all SceneActions include current Scene
@@ -139,9 +141,6 @@ namespace OIC
              */
             std::string getName() const;
 
-            void removeSceneAction(const SceneAction::Ptr&);
-            void removeSceneAction(const RCSRemoteResourceObject::Ptr&);
-
             /**
              * Requests executing Scene to SceneCollection resource
              *
@@ -151,10 +150,11 @@ namespace OIC
 
         private:
             std::string m_name;
-            std::shared_ptr< SceneCollectionResource > m_sceneCollectionResourceObj;
+            std::shared_ptr< SceneCollectionResource > m_sceneCollectionResource;
 
         };
     } /* namespace Service */
 } /* namespace OIC */
+
 #endif /* SM_SCENE_H_ */
 

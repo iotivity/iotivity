@@ -29,7 +29,7 @@ namespace OIC
 {
     namespace Service
     {
-        class SceneListResource;
+
         /**
          * @class SceneList
          *
@@ -41,6 +41,7 @@ namespace OIC
         class SceneList
         {
         private:
+            SceneList() = default;
             ~SceneList() = default;
 
         public:
@@ -65,10 +66,11 @@ namespace OIC
              * Gets all SceneCollection instances stored in SceneList resource
              *
              * @return A vector of shared pointers of SceneCollection instances
+             *
+             * @note SceneCollection instance that addNewSceneCollection returns is not same
+             * instance that getSceneCollections returns
              */
             std::vector<SceneCollection::Ptr> getSceneCollections() const;
-
-            void removeSceneCollection(SceneCollection::Ptr);
 
             /**
              * Sets a name attribute of SceneList resource
@@ -86,4 +88,5 @@ namespace OIC
         };
     } /* namespace Service */
 } /* namespace OIC */
+
 #endif /* SM_SCENELIST_H_ */

@@ -37,7 +37,7 @@ constexpr char RESOURCE_TYPE[]{ "core.light" };
 constexpr char RESOURCE_URI2[]{ "/a/fan" };
 constexpr char RESOURCE_TYPE2[]{ "core.fan" };
 constexpr char KEY[]{ "power" };
-constexpr char VALUE[]{ "off" };
+constexpr char VALUE[]{ "on" };
 constexpr char KEY_2[]{ "state" };
 constexpr char VALUE_2[]{ "100" };
 
@@ -141,7 +141,7 @@ TEST_F(SceneActionTest, updateSceneAction)
     createSceneCollectionAndScene();
     createSceneAction();
 
-    pSceneAction1->setExecutionParameter(KEY, "off");
+    pSceneAction1->resetExecutionParameter(KEY, "off");
     for(const auto &it : pSceneAction1->getExecutionParameter())
     {
         ASSERT_EQ(it.key(), KEY);

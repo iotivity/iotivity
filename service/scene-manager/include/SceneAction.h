@@ -28,6 +28,7 @@ namespace OIC
 {
     namespace Service
     {
+
         class SceneMemberResource;
 
         /**
@@ -54,23 +55,25 @@ namespace OIC
 
         public:
             /**
-             * Sets attributes of the SceneMember resource when the Scene is executed
+             * Sets the SceneAction parameters like a target attribute key and its value
+             * It replaces existing execution parameter
              *
              * @param key                   A key of attributes
              * @param value                 A value to be mapped against the key
              *
              * @see RCSResourceAttributes
              */
-            void setExecutionParameter(const std::string& key, RCSResourceAttributes::Value value);
+            void resetExecutionParameter(const std::string& key, RCSResourceAttributes::Value value);
 
             /**
-             * Sets attributes of the SceneMember resource when the Scene is executed
+             * Sets the SceneAction parameters like a target attribute key and its value
+             * It replaces existing execution parameter
              *
              * @param attr                  Attributes to set
              *
              * @see RCSResourceAttributes
              */
-            void setExecutionParameter(const RCSResourceAttributes& attr);
+            void resetExecutionParameter(const RCSResourceAttributes& attr);
 
             /**
              * Gets execution parameter of the SceneAction instance
@@ -79,10 +82,10 @@ namespace OIC
              *
              * @see RCSResourceAttributes
              */
-            const RCSResourceAttributes getExecutionParameter();
+            RCSResourceAttributes getExecutionParameter() const;
 
             /**
-             * Gets remote resource object of SceneMember resource
+             * Gets remote resource object
              *
              * @return RCSRemoteResourceObject
              */
@@ -91,8 +94,9 @@ namespace OIC
         private:
             RCSRemoteResourceObject::Ptr m_pRemoteResourceObject;
             std::string m_sceneName;
-            std::shared_ptr< SceneMemberResource > m_sceneMemberResourceObj;
+            std::shared_ptr< SceneMemberResource > m_sceneMemberResource;
         };
     } /* namespace Service */
 } /* namespace OIC */
+
 #endif /* SM_SCENEACTION_H_ */
