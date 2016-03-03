@@ -510,15 +510,15 @@ namespace RAML
         {
             if (itemValues->type == 5)
             {
-                int item_size = cJSON_GetArraySize(itemValues);
+                //int item_size = cJSON_GetArraySize(itemValues);
                 int item_index = 0;
-                do
-                {
-                    cJSON *item = cJSON_GetArrayItem(itemValues, item_index);
-                    readItems(item, property);
-                    break; 
-                }
-                while ( ++item_index < item_size);
+                //do
+                //{
+                cJSON *item = cJSON_GetArrayItem(itemValues, item_index);
+                readItems(item, property);
+                //break;
+                //}
+                //while ( ++item_index < item_size);
             }
             else
             {
@@ -527,7 +527,7 @@ namespace RAML
         }
         cJSON *itemsMax = cJSON_GetObjectItem(childProperties, "maxItems");
         int min = INT_MIN, max = INT_MAX;
-        bool unique = cJSON_True, addItems = cJSON_True;
+        bool unique = cJSON_False, addItems = cJSON_False;
         if (itemsMax)
         {
             cJSON *exclusiveMax = cJSON_GetObjectItem(childProperties, "exclusiveMaximum");
@@ -649,6 +649,7 @@ namespace RAML
             {
                 readAllowedValues(allowedvalues, prop, type);
             }
+            readValues(item, prop, type);
             prop->setTypeString(type);
             property->setValue(*prop);
         }
@@ -718,6 +719,11 @@ namespace RAML
 
     void JsonSchema::readFile(std::string &fileName ,  JsonParameters &param)
     {
+        std::string name = fileName;
+        std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+        if (name.compare("oic.baseresource.json") == 0)
+            return;
+
         cJSON *json = m_includeResolver->readToJson(fileName);
         JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(json, m_includeResolver);
 
@@ -728,6 +734,11 @@ namespace RAML
 
     void JsonSchema::readFile(std::string &fileName , std::string &defName ,  JsonParameters &param)
     {
+        std::string name = fileName;
+        std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+        if (name.compare("oic.baseresource.json") == 0)
+            return;
+
         cJSON *json = m_includeResolver->readToJson(fileName);
         JsonSchemaPtr Refparser = std::make_shared<JsonSchema>(json, m_includeResolver);
 
@@ -747,7 +758,7 @@ namespace RAML
         std::string fileName;
         if (! ref.empty())
         {
-            std::size_t pos = ref.find(delimiter1);
+            std::size_t pos = std::string::npos;
             if ( (pos = ref.find(delimiter1)) != std::string::npos)
             {
                 fileName = ref.substr(0, pos);

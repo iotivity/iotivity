@@ -137,10 +137,8 @@ namespace RAML
         m_typeString = type;
     }
 
-    Properties::TypeInfo::TypeInfo(
-        VariantType type = VariantType::UNKNOWN,
-        VariantType baseType = VariantType::UNKNOWN,
-        int depth = 0)
+    Properties::TypeInfo::TypeInfo(VariantType type,
+                                   VariantType baseType, int depth)
         :   m_type (type), m_baseType(baseType), m_depth(depth) {}
 
     VariantType Properties::TypeInfo::type() const
@@ -338,22 +336,23 @@ namespace RAML
             m_min(INT_MIN),
             m_max(INT_MAX),
             m_multipleOf(INT_MAX),
-            m_minItems(INT_MIN),
-            m_maxItems(INT_MAX),
+            m_minItems(1),
+            m_maxItems(20),
             m_unique(false),
             m_additionalItems(false)
     {
         if (type == ValueProperty::Type::ARRAY)
         {
             m_type = ValueProperty::Type::ARRAY;
-            m_minItems = minItems;
-            m_maxItems = maxItems;
+
+            if (minItems > 0)
+                m_minItems = minItems;
+
+            if (maxItems != INT_MAX && maxItems > m_minItems)
+                m_maxItems = maxItems;
+
             m_unique = unique;
             m_additionalItems = additionalItems;
-        }
-        else
-        {
-            m_type = ValueProperty::Type::UNKNOWN;
         }
     }
 

@@ -63,10 +63,11 @@ namespace RAML
         ARRAY,
         OBJECT
     };
+
     /**
-        * @class   ValueProperty
-        * @brief   This class provides data Model for Json Schema Value Property.
-        */
+     * @class   ValueProperty
+     * @brief   This class provides data Model for Json Schema Value Property.
+     */
     class ValueProperty
     {
         public:
@@ -82,146 +83,145 @@ namespace RAML
             };
 
             /**
-                             * Constructor of ValueProperty.
-                             */
+             * Constructor of ValueProperty.
+             */
             ValueProperty();
-            /**
-                             * Copy Constructor of ValueProperty.
-                             *
-                             * @param ValueProperty.
-                             */
+
             ValueProperty(const ValueProperty &) = default;
-            /**
-                             * Assignment operator for  ValueProperty.
-                             *
-                             * @param ValueProperty.
-                             */
+
             ValueProperty &operator=(const ValueProperty &) = default;
-            /**
-                             * Copy Constructor of ValueProperty.
-                             *
-                             * @param ValueProperty.
-                             */
+
             ValueProperty(ValueProperty &&) = default;
-            /**
-                             * Assignment operator for  ValueProperty.
-                             *
-                             * @param ValueProperty.
-                             */
+
             ValueProperty &operator=(ValueProperty &&) = default;
 
             /**
-                             * explicit Constructor of ValueProperty for Type RANGE.
-                             *
-                             * @param min - minimum value of property.
-                             * @param max- maximum value of property.
-                             * @param multipleOf- multipleOf value of property.
-                             */
+             * explicit Constructor of ValueProperty for Type RANGE.
+             *
+             * @param min - minimum value of property.
+             * @param max- maximum value of property.
+             * @param multipleOf- multipleOf value of property.
+             */
             explicit ValueProperty(double min, double max, int multipleOf);
+
             /**
-                             * explicit Constructor of ValueProperty for Type VALUE_SET.
-                             *
-                             * @param valueSet - allowed values in the Properties.
-                             */
+             * explicit Constructor of ValueProperty for Type VALUE_SET.
+             *
+             * @param valueSet - allowed values in the Properties.
+             */
             explicit ValueProperty(const std::vector<int> &valueSet);
+
             /**
-                             * explicit Constructor of ValueProperty for Type VALUE_SET.
-                             *
-                             * @param valueSet - allowed values in the Properties.
-                             */
+             * explicit Constructor of ValueProperty for Type VALUE_SET.
+             *
+             * @param valueSet - allowed values in the Properties.
+             */
             explicit ValueProperty(const std::vector<double> &valueSet);
+
             /**
-                             * explicit Constructor of ValueProperty for Type VALUE_SET.
-                             *
-                             * @param valueSet - allowed values in the Properties.
-                             */
+             * explicit Constructor of ValueProperty for Type VALUE_SET.
+             *
+             * @param valueSet - allowed values in the Properties.
+             */
             explicit ValueProperty(const std::vector<bool> &valueSet);
+
             /**
-                             * explicit Constructor of ValueProperty for Type VALUE_SET.
-                             *
-                             * @param valueSet - allowed values in the Properties.
-                             */
+             * explicit Constructor of ValueProperty for Type VALUE_SET.
+             *
+             * @param valueSet - allowed values in the Properties.
+             */
             explicit ValueProperty(const std::vector<std::string> &valueSet);
+
             /**
-                             * explicit Constructor of ValueProperty for Type VALUE_SET.
-                             *
-                             * @param valueSet - allowed values in the Properties.
-                             */
+             * explicit Constructor of ValueProperty for Type VALUE_SET.
+             *
+             * @param valueSet - allowed values in the Properties.
+             */
             explicit ValueProperty(const std::vector<ValueVariant> &valueSet);
+
             /**
-                             * explicit Constructor of ValueProperty for Type PATTERN or FORMAT.
-                             *
-                             * @param type - ValueProperty Type.
-                             * @param value - value for the pattern or format.
-                             */
+             * explicit Constructor of ValueProperty for Type PATTERN or FORMAT.
+             *
+             * @param type - ValueProperty Type.
+             * @param value - value for the pattern or format.
+             */
             explicit ValueProperty(Type type, std::string value);
+
             /**
-                             * explicit Constructor of ValueProperty for Type ARRAY.
-                             *
-                             * @param type - ValueProperty Type.
-                             * @param minItems - minimum elements in the Array property.
-                             * @param maxItems - maximum elements in the Array property.
-                             * @param unique - unique elements in the Array property.
-                             * @param additionalItems - additional elements in the Array property.
-                             */
+             * explicit Constructor of ValueProperty for Type ARRAY.
+             *
+             * @param type - ValueProperty Type.
+             * @param minItems - minimum elements in the Array property.
+             * @param maxItems - maximum elements in the Array property.
+             * @param unique - unique elements in the Array property.
+             * @param additionalItems - additional elements in the Array property.
+             */
             explicit ValueProperty(Type type, int minItems, int maxItems, bool unique, bool additionalItems);
 
             /**
-                             * This method is for getting type of ValueProperty.
-                             *
-                             * @return Type of ValueProperty
-                             */
+             * This method is for getting type of ValueProperty.
+             *
+             * @return Type of ValueProperty
+             */
             Type type() const;
+
             /**
-                             * This method is for getting minimum value of ValueProperty.
-                             *
-                             * @return min value of ValueProperty
-                             */
+             * This method is for getting minimum value of ValueProperty.
+             *
+             * @return min value of ValueProperty
+             */
             double min() const;
+
             /**
-                             * This method is for getting maximum value of ValueProperty.
-                             *
-                             * @return max value of ValueProperty
-                             */
+             * This method is for getting maximum value of ValueProperty.
+             *
+             * @return max value of ValueProperty
+             */
             double max() const;
+
             /**
-                             * This method is for getting multipleOf value of ValueProperty.
-                             *
-                             * @return multipleOf value of ValueProperty
-                             */
+             * This method is for getting multipleOf value of ValueProperty.
+             *
+             * @return multipleOf value of ValueProperty
+             */
             int multipleOf() const;
+
             /**
-                             * This method is for getting pattern value of ValueProperty.
-                             *
-                             * @return pattern value of ValueProperty
-                             */
+             * This method is for getting pattern value of ValueProperty.
+             *
+             * @return pattern value of ValueProperty
+             */
             std::string pattern() const;
+
             /**
-                             * This method is for getting format value of ValueProperty.
-                             *
-                             * @return format value of ValueProperty
-                             */
+             * This method is for getting format value of ValueProperty.
+             *
+             * @return format value of ValueProperty
+             */
             std::string format() const;
+
             /**
-                             * This method is for getting valueSet of ValueProperty.
-                             *
-                             * @return valueSet of ValueProperty
-                             */
+             * This method is for getting valueSet of ValueProperty.
+             *
+             * @return valueSet of ValueProperty
+             */
             int valueSetSize() const;
+
             /**
-                             * This method is for getting valueSet of ValueProperty.
-                             *
-                             * @return valueSet of ValueProperty
-                             */
+             * This method is for getting valueSet of ValueProperty.
+             *
+             * @return valueSet of ValueProperty
+             */
             std::vector<ValueVariant> valueSet() const;
+
             /**
-                             * This method is for getting valueArray of ValueProperty.
-                             *
-                             * @param minItems - reference to get minimum elements in the Array property.
-                             * @param maxItems - reference to get maximum elements in the Array property.
-                             * @param unique - reference to get unique elements in the Array property.
-                             * @param additionalItems - reference to get additional elements in the Array property.
-                             */
+             * This method is for getting valueArray of ValueProperty.
+             *
+             * @param minItems - reference to get minimum elements in the Array property.
+             * @param maxItems - reference to get maximum elements in the Array property.
+             * @param unique - reference to get unique elements in the Array property.
+             * @param additionalItems - reference to get additional elements in the Array property.
+             */
             void valueArray(int &minItems, int &maxItems, bool &unique, bool &additionalItems) const;
 
         private:
@@ -246,78 +246,64 @@ namespace RAML
     {
         public:
             /**
-                 * @class   TypeInfo
-                 * @brief   This class provides type information of Json Properties.
-                 */
+             * @class   TypeInfo
+             * @brief   This class provides type information of Json Properties.
+             */
             class TypeInfo
             {
                 public:
                     /**
-                                     * Constructor of TypeInfo.
-                                     *
-                                     * @param VariantType - type of property.
-                                     * @param VariantType - type of parent property.
-                                     * @param int - depth of property.
-                                     */
-                    TypeInfo(VariantType, VariantType, int);
-                    /**
-                                     * Copy Constructor of TypeInfo.
-                                     *
-                                     * @param TypeInfo.
-                                     */
+                     * Constructor of TypeInfo.
+                     *
+                     * @param VariantType - type of property.
+                     * @param VariantType - type of parent property.
+                     * @param int - depth of property.
+                     */
+                    TypeInfo(VariantType type = VariantType::UNKNOWN,
+                             VariantType baseType = VariantType::UNKNOWN,
+                             int depth = 0);
+
                     TypeInfo(const TypeInfo &) = default;
-                    /**
-                                     * Assignment operator for  TypeInfo.
-                                     *
-                                     * @param TypeInfo.
-                                     */
+
                     TypeInfo &operator=(const TypeInfo &) = default;
-                    /**
-                                     * Copy Constructor of TypeInfo.
-                                     *
-                                     * @param TypeInfo.
-                                     */
+
                     TypeInfo(TypeInfo &&) = default;
-                    /**
-                                     * Assignment operator for  TypeInfo.
-                                     *
-                                     * @param TypeInfo.
-                                     */
+
                     TypeInfo &operator=(TypeInfo &&) = default;
-                    /**
-                                     * Constructor of TypeInfo.
-                                     */
-                    TypeInfo() = default;
 
                     /**
-                                     * This method is for getting type of properties.
-                                     *
-                                     * @return VariantType of Property
-                                     */
+                     * This method is for getting type of properties.
+                     *
+                     * @return VariantType of Property
+                     */
                     VariantType type() const;
+
                     /**
-                                     * This method is for getting base or parent type of properties.
-                                     *
-                                     * @return VariantType of parent Property
-                                     */
+                     * This method is for getting base or parent type of properties.
+                     *
+                     * @return VariantType of parent Property
+                     */
                     VariantType baseType() const;
+
                     /**
-                                     * This method is for getting depth of properties.
-                                     *
-                                     * @return depth as int
-                                     */
+                     * This method is for getting depth of properties.
+                     *
+                     * @return depth as int
+                     */
                     int depth() const;
+
                     /**
-                                     *  operator for TypeInfo to check equality.
-                                     *
-                                     * @param TypeInfo.
-                                     */
+                     *  operator for TypeInfo to check equality.
+                     *
+                     * @param TypeInfo.
+                     */
                     bool operator ==(const TypeInfo &) const;
+
                     /**
-                                     *  operator for TypeInfo to check inequality.
-                                     *
-                                     * @param TypeInfo.
-                                     */
+                     *  operator for TypeInfo to check inequality.
+                     *
+                     * @param TypeInfo.
+                     */
                     bool operator !=(const TypeInfo &) const;
 
                 private:
@@ -327,85 +313,69 @@ namespace RAML
             };
 
             /**
-                  * Constructor of Properties.
-                  *
-                  * @param name - Properties name as string.
-                  */
+              * Constructor of Properties.
+              *
+              * @param name - Properties name as string.
+              */
             Properties(const std::string &name) : m_name(name) {}
-            /**
-                  * Constructor of Properties.
-                  */
+
             Properties() = default;
-            /**
-                     * Copy Constructor of Properties.
-                     *
-                     * @param Properties.
-                     */
+
             Properties(const Properties &) = default;
-            /**
-                     * Assignment operator for  Properties.
-                     *
-                     * @param Properties.
-                     */
+
             Properties &operator=(const Properties &) = default;
-            /**
-                     * Copy Constructor of Properties.
-                     *
-                     * @param Properties.
-                     */
+
             Properties(Properties &&) = default;
-            /**
-                     * Assignment operator for  Properties.
-                     *
-                     * @param Properties.
-                     */
+
             Properties &operator=(Properties &&) = default;
 
             /**
-                 * This method is for getting TypeInfo of Properties.
-                 *
-                 * @return Properties TypeInfo
-                 */
+             * This method is for getting TypeInfo of Properties.
+             *
+             * @return Properties TypeInfo
+             */
             TypeInfo getType() const;
 
             /**
-                 * This method is for setting type of Properties.
-                 *
-                 * @param type -Propertie's Type
-                 */
+             * This method is for setting type of Properties.
+             *
+             * @param type -Propertie's Type
+             */
             void setTypeString(const std::string &type);
 
             /**
-                 * This method is for getting Name from Properties.
-                 *
-                 * @return Properties name as string
-                 */
+             * This method is for getting Name from Properties.
+             *
+             * @return Properties name as string
+             */
             std::string getName() const;
+
             /**
-                 * This method is for setting name to Properties
-                 *
-                 * @param name - Properties name as string.
-                 */
+             * This method is for setting name to Properties
+             *
+             * @param name - Properties name as string.
+             */
             void setName(const std::string &name);
+
             /**
-                 * This method is for getting Description from Properties.
-                 *
-                 * @return Description as string
-                 */
+             * This method is for getting Description from Properties.
+             *
+             * @return Description as string
+             */
             std::string getDescription() const;
 
             /**
-                 * This method is for setting Description to Properties
-                 *
-                 * @param description - Description as string.
-                 */
+             * This method is for setting Description to Properties
+             *
+             * @param description - Description as string.
+             */
             void setDescription(const std::string &description);
 
             /**
-                 * This method is for setting Value to Properties.
-                 *
-                 * @param value -  Value of Properties
-                 */
+             * This method is for setting Value to Properties.
+             *
+             * @param value -  Value of Properties
+             */
             template <typename T>
             void setValue(const T &value)
             {
@@ -413,17 +383,17 @@ namespace RAML
             }
 
             /**
-                 * This method is for getting Value from Properties.
-                 *
-                 * @return Properties Value
-                 */
+             * This method is for getting Value from Properties.
+             *
+             * @return Properties Value
+             */
             ValueVariant getValue() const;
 
             /**
-                 * This method is for getting Value from Properties.
-                 *
-                 * @return Properties Value
-                 */
+             * This method is for getting Value from Properties.
+             *
+             * @return Properties Value
+             */
             template <typename T>
             T getValue() const
             {
@@ -431,38 +401,39 @@ namespace RAML
             }
 
             /**
-                 * This method is for checking if default Value exists in the Properties.
-                 *
-                 * @return true if present and false if not present
-                 */
+             * This method is for checking if default Value exists in the Properties.
+             *
+             * @return true if present and false if not present
+             */
             bool isDefaultValue() const { return ((m_value != nullptr) ? true : false); }
+
             /**
-                 * This method is for getting ValueProperty from Properties.
-                 *
-                 * @return vector of pointer to ValueProperty
-                 */
+             * This method is for getting ValueProperty from Properties.
+             *
+             * @return vector of pointer to ValueProperty
+             */
             std::vector<std::shared_ptr<ValueProperty> > const &getValueProperties() const;
 
             /**
-                 * This method is for setting ValueProperty to Properties
-                 *
-                 * @param value - pointer to ValueProperty
-                 */
+             * This method is for setting ValueProperty to Properties
+             *
+             * @param value - pointer to ValueProperty
+             */
             void setValueProperty(const std::shared_ptr<ValueProperty> &value);
 
 
             /**
-                 * This method is for getting RequiredValue from Properties.
-                 *
-                 * @return list of RequiredValue as string
-                 */
+             * This method is for getting RequiredValue from Properties.
+             *
+             * @return list of RequiredValue as string
+             */
             std::vector<std::string> const &getRequiredValues() const;
 
             /**
-                 * This method is for setting RequiredValue to Properties
-                 *
-                 * @param reqValue - RequiredValue as string.
-                 */
+             * This method is for setting RequiredValue to Properties
+             *
+             * @param reqValue - RequiredValue as string.
+             */
             void setRequiredValue(const std::string &reqValue);
 
         private:
