@@ -26,6 +26,7 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <algorithm>
 
 #include <UnitTestHelper.h>
 
@@ -42,6 +43,7 @@
 
 #include "RCSResourceObject.h"
 #include "RCSRemoteResourceObject.h"
+#include "SoftSensorResource.h"
 
 #include "ResourceContainerTestSimulator.h"
 
@@ -109,6 +111,56 @@ class TestBundleResource: public BundleResource
         }
 };
 
+/*Fake bundle resource class for testing*/
+class TestBundleResourceWithAttrs: public BundleResource
+{
+    public:
+        virtual void initAttributes() {
+            setAttribute("attrib1", RCSResourceAttributes::Value("test"));
+            setAttribute("attrib2", RCSResourceAttributes::Value(1));
+            setAttribute("attrib3", RCSResourceAttributes::Value(true));
+        }
+
+        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr)
+        {
+            BundleResource::setAttributes(attr);
+        }
+
+        virtual RCSResourceAttributes handleGetAttributesRequest()
+        {
+            return BundleResource::getAttributes();
+        }
+};
+
+
+/*Fake bundle resource class for testing*/
+class TestSoftSensorResource: public SoftSensorResource
+{
+    public:
+        virtual void initAttributes() {
+            SoftSensorResource::initAttributes();
+        }
+
+        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr)
+        {
+            BundleResource::setAttributes(attr);
+        }
+
+        virtual RCSResourceAttributes handleGetAttributesRequest()
+        {
+            return BundleResource::getAttributes();
+        }
+
+        virtual void executeLogic(){
+
+        }
+
+        virtual void onUpdatedInputResource(
+                std::string, std::vector<OIC::Service::RCSResourceAttributes::Value>){
+
+        }
+};
+
 class ResourceContainerTest: public TestWithMock
 {
 
@@ -127,18 +179,70 @@ class ResourceContainerTest: public TestWithMock
         }
 };
 
+TEST_F(ResourceContainerTest, TestBundleResource)
+{
+    TestBundleResourceWithAttrs testResource;
+    testResource.initAttributes();
+
+    // check if initAttributes worked
+    EXPECT_STREQ("\"test\"", testResource.getAttribute("attrib1").toString().c_str());
+
+    std::list<string> attrNames = testResource.getAttributeNames();
+    ASSERT_TRUE(std::find(attrNames.begin(), attrNames.end(), "attrib1") != attrNames.end());
+
+    ASSERT_FALSE(testResource.getAttributes().contains("attrib4"));
+
+    testResource.getAttributeNames();
+
+    RCSResourceAttributes fullAttributes;
+
+    fullAttributes["attrib1"] = "test";
+    fullAttributes["attrib2"] = 1;
+    fullAttributes["attrib3"] = true;
+
+    testResource.setAttributes(fullAttributes);
+
+    ASSERT_TRUE(testResource.getAttributes().contains("attrib1"));
+
+    fullAttributes["attrib1"] = "test2";
+    fullAttributes["attrib2"] = 2;
+    fullAttributes["attrib3"] = false;
+
+    testResource.handleSetAttributesRequest(fullAttributes);
+
+    EXPECT_EQ(3, testResource.getAttributeNames().size());
+
+    EXPECT_EQ(3, testResource.handleGetAttributesRequest().size());
+    std::string testString = "test";
+    testResource.setAttribute("attrib1", testString, false);
+
+    testResource.setAttributes(fullAttributes, false);
+
+    EXPECT_STREQ("\"test\"", testResource.getAttribute("attrib1").toString().c_str());
+    EXPECT_EQ(1, testResource.getAttribute("attrib2"));
+
+    testResource.setAttribute("attrib1", "test");
+    EXPECT_STREQ("\"test\"", testResource.getAttribute("attrib1").toString().c_str());
+    EXPECT_EQ(1, testResource.getAttribute("attrib2"));
+}
+
+TEST_F(ResourceContainerTest, TestSoftSensorResource)
+{
+    TestSoftSensorResource softSensorResource;
+    softSensorResource.initAttributes();
+    EXPECT_EQ(0, softSensorResource.getAttributeNames().size());
+}
+
+
 TEST_F(ResourceContainerTest, BundleRegisteredWhenContainerStartedWithValidConfigFile)
 {
     m_pResourceContainer->startContainer(m_strConfigPath);
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
-    cout << "now checking for bunlde ids " << endl;
     EXPECT_STREQ("oic.bundle.test",
                  (*m_pResourceContainer->listBundles().begin())->getID().c_str());
     EXPECT_STREQ("libTestBundle.so",
                  (*m_pResourceContainer->listBundles().begin())->getPath().c_str());
     EXPECT_STREQ("1.0.0", (*m_pResourceContainer->listBundles().begin())->getVersion().c_str());
-
-    cout << "Now stopping container." << endl;
     m_pResourceContainer->stopContainer();
 }
 
