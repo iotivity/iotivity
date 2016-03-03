@@ -296,7 +296,7 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
     {
         OICFree(secPayload);
         OC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
-        return OC_STACK_NO_MEMORY;
+        return OC_STACK_ERROR;
     }
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
@@ -442,14 +442,14 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     }
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToCrlJSON(crl);
-    if (NULL == secPayload->securityData)
+    size_t size = 0;
+    OCStackResult res = CrlToCBORPayload(crl, &secPayload->securityData1, &size);
+    if((OC_STACK_OK != res) && (NULL == secPayload->securityData1))
     {
         OICFree(secPayload);
-        OC_LOG(ERROR, TAG, "Failed to BinToCrlJSON");
-        return OC_STACK_NO_MEMORY;
+        OC_LOG(ERROR, TAG, "Failed to CrlToCBORPayload");
+        return OC_STACK_ERROR;
     }
-    OC_LOG_V(INFO, TAG, "CRL : %s", secPayload->securityData);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
@@ -459,7 +459,7 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
                         query, sizeof(query), OIC_RSRC_CRL_URI))
     {
         OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
-        OICFree(secPayload->securityData);
+        OICFree(secPayload->securityData1);
         OICFree(secPayload);
         return OC_STACK_ERROR;
     }
@@ -470,7 +470,7 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     CRLData_t *crlData = (CRLData_t *) OICCalloc(1, sizeof(CRLData_t));
     if (crlData == NULL)
     {
-        OICFree(secPayload->securityData);
+        OICFree(secPayload->securityData1);
         OICFree(secPayload);
         OC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
@@ -534,7 +534,7 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
     {
         OICFree(secPayload);
         OC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
-        return OC_STACK_NO_MEMORY;
+        return OC_STACK_ERROR;
     }
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
@@ -840,7 +840,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         OC_LOG(ERROR, TAG, "Failed to AclToCBORPayload");
-        return OC_STACK_NO_MEMORY;
+        return OC_STACK_ERROR;
     }
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
@@ -1342,7 +1342,7 @@ static OCStackResult GetListofDevToReqDeleteCred(const OCProvisionDev_t* pRevoke
                     if (NULL == targetDev)
                     {
                         OC_LOG(ERROR, TAG, "SRPRemoveDevice : Cloning OCProvisionDev_t Failed.");
-                        return OC_STACK_NO_MEMORY;
+                        return OC_STACK_ERROR;
                     }
 
                     LL_PREPEND(*ppLinkedDevList, targetDev);
@@ -1441,7 +1441,7 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
     if (!removeData->revokeTargetDev)
     {
         OC_LOG(ERROR, TAG, "SRPRemoveDevices : PMCloneOCProvisionDev Failed");
-        res = OC_STACK_NO_MEMORY;
+        res = OC_STACK_ERROR;
         goto error;
     }
 

@@ -687,6 +687,7 @@ typedef enum
     OC_STACK_INVALID_REQUEST_HANDLE,
     OC_STACK_INVALID_DEVICE_INFO,
     OC_STACK_INVALID_JSON,
+    OC_STACK_INVALID_CBOR,
 
     /** Request is not authorized by Resource Server. */
     OC_STACK_UNAUTHORIZED_REQ,

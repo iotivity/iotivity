@@ -752,7 +752,7 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
     if (OC_STACK_OK != res && NULL == secPayload->securityData1)
     {
         OICFree(secPayload);
-        OC_LOG(ERROR, TAG, "Error while converting doxm bin to json");
+        OC_LOG(ERROR, TAG, "Error while converting doxm bin to cbor");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -1039,7 +1039,7 @@ static OCStackApplicationResult ProvisionDefaultACLCB(void *ctx, OCDoHandle UNUS
         if (OC_STACK_OK != res || NULL == secPayload->securityData1)
         {
             OICFree(secPayload);
-            SetResult(otmCtx, OC_STACK_INVALID_JSON);
+            SetResult(otmCtx, OC_STACK_INVALID_CBOR);
             return OC_STACK_DELETE_TRANSACTION;
         }
 
@@ -1144,7 +1144,7 @@ OCStackResult FinalizeProvisioning(OTMContext_t* otmCtx)
     if(!secPayload->securityData1)
     {
         OICFree(secPayload);
-        OC_LOG(INFO, TAG, "FinalizeProvisioning : Failed to BinToAclJSON");
+        OC_LOG(INFO, TAG, "FinalizeProvisioning : Failed to AclToCBORPayload");
         SetResult(otmCtx, OC_STACK_ERROR);
         return OC_STACK_ERROR;
     }

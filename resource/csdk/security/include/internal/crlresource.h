@@ -84,6 +84,19 @@ void DeInitCRLResource();
  */
 OicSecCrl_t *GetCRLResource();
 
+/**
+ * This function converts crl data into CBOR format.
+ * Caller needs to invoke 'free' when done using returned string.
+ *
+ * @param crl is the pointer to instance of OicSecCrl_t structure.
+ * @param cborPayload is the CBOR converted value.
+ * @param cborSize is the size of the CBOR.
+ *
+ * @return ::OC_STACK_OK if conversion is successful, else ::OC_STACK_ERROR if unsuccessful.
+ */
+OCStackResult CrlToCBORPayload(const OicSecCrl_t* crl, uint8_t **cborPayload,
+                                size_t *cborSize);
+
 #ifdef __cplusplus
 }
 #endif
