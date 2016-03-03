@@ -191,10 +191,9 @@ public class CreateResourceWizard extends Wizard {
             // Handling multiple instance creation of simple resource with RAML
             if ((loadRamlPage.getResourceCount() + Activator.getDefault()
                     .getResourceManager().getResourceCount()) > Constants.MAX_RESOURCE_COUNT) {
-                MessageDialog
-                        .openInformation(Display.getDefault().getActiveShell(),
-                                "Resource limit exceeded",
-                                "Exceeded the limit of resources that can exist in the server.");
+                MessageDialog.openInformation(Display.getDefault()
+                        .getActiveShell(), "Resource limit exceeded",
+                        Constants.RESOURCE_LIMIT_EXCEEDED_MSG);
                 return false;
             }
 

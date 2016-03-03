@@ -23,6 +23,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
@@ -50,6 +51,10 @@ public class UpdatePrimitiveArrayAttributeDialog extends TitleAreaDialog {
     private Text                       currentValueTxt;
     private Text                       newValueTxt;
     private Text                       allowedValuesTxt;
+    private Text                       minRangeTxt;
+    private Text                       maxRangeTxt;
+    private Text                       allowDuplicatesTxt;
+    private Text                       additionalItemsTxt;
     private SimulatorResourceAttribute attribute;
     private String                     newValue;
 
@@ -91,10 +96,104 @@ public class UpdatePrimitiveArrayAttributeDialog extends TitleAreaDialog {
         gd.horizontalAlignment = SWT.FILL;
         attNameTxt.setLayoutData(gd);
 
-        Label allowedValuesLbl = new Label(container, SWT.NONE);
+        Group subGroup = new Group(container, SWT.NONE);
+        subGroup.setText("Array Properties");
+        layout = new GridLayout(2, true);
+        subGroup.setLayout(layout);
+        gd = new GridData();
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalAlignment = SWT.FILL;
+        gd.horizontalSpan = 2;
+        subGroup.setLayoutData(gd);
+
+        Composite minRangeContainer = new Composite(subGroup, SWT.NONE);
+        gd = new GridData();
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalAlignment = SWT.FILL;
+        minRangeContainer.setLayoutData(gd);
+        layout = new GridLayout(2, true);
+        minRangeContainer.setLayout(layout);
+
+        Label minRangeLbl = new Label(minRangeContainer, SWT.NONE);
+        minRangeLbl.setText("Minimum Items");
+
+        minRangeTxt = new Text(minRangeContainer, SWT.BORDER | SWT.READ_ONLY);
+        gd = new GridData();
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalAlignment = SWT.FILL;
+        minRangeTxt.setLayoutData(gd);
+        minRangeTxt.setBackground(container.getBackground());
+
+        Composite maxRangeContainer = new Composite(subGroup, SWT.NONE);
+        gd = new GridData();
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalAlignment = SWT.FILL;
+        maxRangeContainer.setLayoutData(gd);
+        layout = new GridLayout(2, true);
+        maxRangeContainer.setLayout(layout);
+
+        Label maxRangeLbl = new Label(maxRangeContainer, SWT.NONE);
+        maxRangeLbl.setText("Maximum Items");
+
+        maxRangeTxt = new Text(maxRangeContainer, SWT.BORDER | SWT.READ_ONLY);
+        gd = new GridData();
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalAlignment = SWT.FILL;
+        maxRangeTxt.setLayoutData(gd);
+        maxRangeTxt.setBackground(container.getBackground());
+
+        Composite uniqueContainer = new Composite(subGroup, SWT.NONE);
+        gd = new GridData();
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalAlignment = SWT.FILL;
+        uniqueContainer.setLayoutData(gd);
+        layout = new GridLayout(2, true);
+        uniqueContainer.setLayout(layout);
+
+        Label uniqueLbl = new Label(uniqueContainer, SWT.NONE);
+        uniqueLbl.setText("Allow Duplicates");
+
+        allowDuplicatesTxt = new Text(uniqueContainer, SWT.BORDER
+                | SWT.READ_ONLY);
+        gd = new GridData();
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalAlignment = SWT.FILL;
+        allowDuplicatesTxt.setLayoutData(gd);
+        allowDuplicatesTxt.setBackground(container.getBackground());
+
+        Composite addlItemsContainer = new Composite(subGroup, SWT.NONE);
+        gd = new GridData();
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalAlignment = SWT.FILL;
+        addlItemsContainer.setLayoutData(gd);
+        layout = new GridLayout(2, true);
+        addlItemsContainer.setLayout(layout);
+
+        Label addlItemsLbl = new Label(addlItemsContainer, SWT.NONE);
+        addlItemsLbl.setText("Allow Extra Items");
+
+        additionalItemsTxt = new Text(addlItemsContainer, SWT.BORDER
+                | SWT.READ_ONLY);
+        gd = new GridData();
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalAlignment = SWT.FILL;
+        additionalItemsTxt.setLayoutData(gd);
+        additionalItemsTxt.setBackground(container.getBackground());
+
+        Group elementPropGroup = new Group(container, SWT.NONE);
+        elementPropGroup.setText("Element Property");
+        layout = new GridLayout(2, false);
+        elementPropGroup.setLayout(layout);
+        gd = new GridData();
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalAlignment = SWT.FILL;
+        gd.horizontalSpan = 2;
+        elementPropGroup.setLayoutData(gd);
+
+        Label allowedValuesLbl = new Label(elementPropGroup, SWT.NONE);
         allowedValuesLbl.setText("Allowed Values");
 
-        allowedValuesTxt = new Text(container, SWT.MULTI | SWT.READ_ONLY
+        allowedValuesTxt = new Text(elementPropGroup, SWT.MULTI | SWT.READ_ONLY
                 | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL);
         allowedValuesTxt.setBackground(container.getBackground());
         gd = new GridData();
@@ -133,15 +232,17 @@ public class UpdatePrimitiveArrayAttributeDialog extends TitleAreaDialog {
         newValueTxt.setLayoutData(gd);
         newValueTxt.setFocus();
 
-        Label hintHeader = new Label(container, SWT.NULL);
-        hintHeader.setText("Note:-");
+        Group hintGroup = new Group(container, SWT.NONE);
+        hintGroup.setText("Note");
+        layout = new GridLayout();
+        hintGroup.setLayout(layout);
         gd = new GridData();
         gd.grabExcessHorizontalSpace = true;
         gd.horizontalAlignment = SWT.FILL;
         gd.horizontalSpan = 2;
-        hintHeader.setLayoutData(gd);
+        hintGroup.setLayoutData(gd);
 
-        Label hint = new Label(container, SWT.NULL);
+        Label hint = new Label(hintGroup, SWT.NULL);
         hint.setText("Array values should be comma-seperated and surrounded by square brackets.\n"
                 + "Ex: \"[value]\", \"[value1,value2]\", \"[[value1], [value2]]\"");
         gd = new GridData();
@@ -168,7 +269,7 @@ public class UpdatePrimitiveArrayAttributeDialog extends TitleAreaDialog {
         if (elementProp.isInteger()) {
             IntegerProperty intProp = elementProp.asInteger();
             if (intProp.hasRange()) {
-                values = "From " + intProp.min() + " To " + intProp.max();
+                values = intProp.min() + " - " + intProp.max();
             } else if (intProp.hasValues()) {
                 int[] arr = intProp.getValues();
                 for (int i = 0; i < arr.length; i++) {
@@ -185,7 +286,7 @@ public class UpdatePrimitiveArrayAttributeDialog extends TitleAreaDialog {
         } else if (elementProp.isDouble()) {
             DoubleProperty dblProp = elementProp.asDouble();
             if (dblProp.hasRange()) {
-                values = "From " + dblProp.min() + " To " + dblProp.max();
+                values = dblProp.min() + " - " + dblProp.max();
             } else if (dblProp.hasValues()) {
                 double[] arr = dblProp.getValues();
                 for (int i = 0; i < arr.length; i++) {
@@ -222,6 +323,14 @@ public class UpdatePrimitiveArrayAttributeDialog extends TitleAreaDialog {
         // Set the current value.
         currentValueTxt.setText(new AttributeValueStringConverter(attribute
                 .value()).toString());
+
+        minRangeTxt.setText(String.valueOf(arrProp.minItems()));
+
+        maxRangeTxt.setText(String.valueOf(arrProp.maxItems()));
+
+        allowDuplicatesTxt.setText(!arrProp.isUnique() ? "Yes" : "No");
+
+        additionalItemsTxt.setText(arrProp.isVariable() ? "Yes" : "No");
     }
 
     public String getNewValue() {

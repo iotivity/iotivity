@@ -259,7 +259,7 @@ public class AttributeView extends ViewPart {
                                         new Date(),
                                         "["
                                                 + reqType.toString()
-                                                + "] Verification Completed for \""
+                                                + "] Verification is successful for \""
                                                 + remoteResource.getURI()
                                                 + "\".");
                     }
@@ -290,7 +290,7 @@ public class AttributeView extends ViewPart {
                                         new Date(),
                                         "["
                                                 + reqType
-                                                + "] Verification Aborted for \""
+                                                + "] Verification is failed for \""
                                                 + remoteResource.getURI()
                                                 + "\".");
                     }
@@ -698,11 +698,7 @@ public class AttributeView extends ViewPart {
                                     }
                                 }
                             }
-                            if (startCount == 0 && stopCount == 0) {
-                                MessageDialog.openInformation(Display
-                                        .getDefault().getActiveShell(),
-                                        "Verification", "No New Changes.");
-                            } else {
+                            if (!(startCount == 0 && stopCount == 0)) {
                                 boolean answer = MessageDialog.openQuestion(
                                         Display.getDefault().getActiveShell(),
                                         "Verification", status

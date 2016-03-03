@@ -112,9 +112,19 @@ public class PutRequestDialog extends TitleAreaDialog {
     protected Control createDialogArea(Composite parent) {
         Composite compLayout = (Composite) super.createDialogArea(parent);
 
-        Group paramsGrp = new Group(compLayout, SWT.NONE);
-        paramsGrp.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        GridLayout layout = new GridLayout(2, false);
+        Composite rootContainer = new Composite(compLayout, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        rootContainer.setLayout(layout);
+        GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        rootContainer.setLayoutData(gd);
+
+        Group paramsGrp = new Group(rootContainer, SWT.NONE);
+        gd = new GridData();
+        gd.horizontalAlignment = SWT.FILL;
+        gd.grabExcessHorizontalSpace = true;
+        gd.minimumHeight = 50;
+        paramsGrp.setLayoutData(gd);
+        layout = new GridLayout(2, false);
         layout.verticalSpacing = 10;
         layout.marginTop = 10;
         paramsGrp.setLayout(layout);
@@ -123,7 +133,7 @@ public class PutRequestDialog extends TitleAreaDialog {
         ifTypeLbl.setText("Interface Type");
 
         ifTypesCmb = new Combo(paramsGrp, SWT.NULL);
-        GridData gd = new GridData();
+        gd = new GridData();
         gd.grabExcessHorizontalSpace = true;
         gd.horizontalAlignment = SWT.FILL;
         ifTypesCmb.setLayoutData(gd);
@@ -185,8 +195,9 @@ public class PutRequestDialog extends TitleAreaDialog {
             }
         }
 
-        Composite container = new Composite(compLayout, SWT.NONE);
-        container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        Composite container = new Composite(rootContainer, SWT.NONE);
+        gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        container.setLayoutData(gd);
         layout = new GridLayout(1, false);
         layout.verticalSpacing = 10;
         layout.marginTop = 10;
@@ -241,7 +252,8 @@ public class PutRequestDialog extends TitleAreaDialog {
 
         // make lines and header visible
         Tree tree = attViewer.getTree();
-        tree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        tree.setLayoutData(gd);
         tree.setHeaderVisible(true);
         tree.setLinesVisible(true);
 

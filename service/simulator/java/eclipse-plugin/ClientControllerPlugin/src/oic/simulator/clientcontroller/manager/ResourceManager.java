@@ -141,23 +141,30 @@ public class ResourceManager {
                         // If resource already exist, then ignore it.
                         boolean exist = isUidExist(uid);
                         if (exist) {
+                            handleExistingResource(resourceN);
                             return;
                         }
 
                         RemoteResource resource = new RemoteResource();
                         resource.setRemoteResourceRef(resourceN);
 
+                        boolean observeRequestSent = false;
+
                         String uri = resourceN.getURI();
                         if (null != uri && uri.trim().length() > 0) {
                             // Add resource to favorite list if it was in
                             // favorites list during find/refresh operation.
-                            if (favoriteURIList.contains(uri)) {
-                                addResourcetoFavorites(resource);
-                            }
-                            // Add resource to observed resources list if it was
-                            // in observe list during find/refresh operation.
-                            if (observedResourceURIList.contains(uri)) {
-                                sendObserveRequest(resource);
+                            synchronized (favoriteURIList) {
+                                if (favoriteURIList.contains(uri)) {
+                                    addResourcetoFavorites(resource);
+                                }
+                            } // Add resource to observed resources list if it
+                              // was
+                              // in observe list during find/refresh operation.
+                            synchronized (observedResourceURIList) {
+                                if (observedResourceURIList.contains(uri)) {
+                                    observeRequestSent = sendObserveRequest(resource);
+                                }
                             }
                         } else {
                             Activator
@@ -183,25 +190,29 @@ public class ResourceManager {
                                         "Resource Found [" + resourceN.getURI()
                                                 + "].");
 
-                        // Send an initial GET request to get the resource
+                        // Send an initial GET request(If observe request has
+                        // not been sent already) to get the resource
                         // attributes on an interface supported by the resource.
-                        try {
-                            String ifType = null;
-                            Vector<String> resInterfaces = resourceN
-                                    .getResourceInterfaces();
-                            if (null != resInterfaces) {
-                                ifType = resInterfaces.get(0);
+                        if (!observeRequestSent) {
+                            try {
+                                String ifType = null;
+                                Vector<String> resInterfaces = resourceN
+                                        .getResourceInterfaces();
+                                if (null != resInterfaces) {
+                                    ifType = resInterfaces.get(0);
+                                }
+                                resourceN.get(
+                                        formQueryParameters(ifType, null),
+                                        getListener);
+                            } catch (SimulatorException e) {
+                                Activator
+                                        .getDefault()
+                                        .getLogManager()
+                                        .log(Level.ERROR.ordinal(),
+                                                new Date(),
+                                                Utility.getSimulatorErrorString(
+                                                        e, null));
                             }
-                            resourceN.get(formQueryParameters(ifType, null),
-                                    getListener);
-                        } catch (SimulatorException e) {
-                            Activator
-                                    .getDefault()
-                                    .getLogManager()
-                                    .log(Level.ERROR.ordinal(),
-                                            new Date(),
-                                            Utility.getSimulatorErrorString(e,
-                                                    null));
                         }
 
                         // Get the device information
@@ -504,6 +515,154 @@ public class ResourceManager {
         threadHandle.start();
     }
 
+    private void handleExistingResource(
+            final SimulatorRemoteResource newNativeResourceRef) {
+        if (null == newNativeResourceRef) {
+            return;
+        }
+
+        RemoteResource existingResource = getResource(newNativeResourceRef
+                .getId());
+        if (null == existingResource) {
+            return;
+        }
+
+        SimulatorRemoteResource existingNativeResourceRef = existingResource
+                .getRemoteResourceRef();
+        if (null == existingNativeResourceRef) {
+            return;
+        }
+
+        // Compare the resource properties(resource types, interface types and
+        // observable)
+        // of the received resource with the existing resource.
+        // If there is a change, then replace the existing resource properties
+        // and send
+        // a GET request to receive the latest resource representation.
+        boolean change = compareResourceProperties(existingNativeResourceRef,
+                newNativeResourceRef);
+        if (!change) {
+            return;
+        }
+
+        existingResource.setRemoteResourceRef(newNativeResourceRef);
+
+        try {
+            String ifType = null;
+            Vector<String> resInterfaces = newNativeResourceRef
+                    .getResourceInterfaces();
+            if (null != resInterfaces) {
+                ifType = resInterfaces.get(0);
+            }
+            newNativeResourceRef.get(formQueryParameters(ifType, null),
+                    getListener);
+        } catch (SimulatorException e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(), new Date(),
+                            Utility.getSimulatorErrorString(e, null));
+        }
+
+        // Notify the UI listener which may be looking for this callback for
+        // further processing.
+        UiListenerHandler.getInstance().newResourceFoundNotification(
+                existingResource);
+
+        // Notify the UI listeners by re-selecting the same resource.
+        // This is just to refresh the resource properties being shown.
+        RemoteResource resourceInSelection = getCurrentResourceInSelection();
+        if (null != resourceInSelection) {
+            if (resourceInSelection.getRemoteResourceRef().getURI()
+                    .equals(newNativeResourceRef.getURI())) {
+                UiListenerHandler.getInstance()
+                        .resourceSelectionChangedUINotification(
+                                existingResource);
+            }
+        }
+    }
+
+    private boolean compareResourceProperties(
+            SimulatorRemoteResource existingNativeResourceRef,
+            SimulatorRemoteResource newNativeResourceRef) {
+        boolean change = false;
+
+        try {
+            // Compare URI.
+            if (!existingNativeResourceRef.getURI().equals(
+                    existingNativeResourceRef.getURI())) {
+                change = true;
+            }
+
+            // Compare ID.
+            if (!change
+                    && !existingNativeResourceRef.getId().equals(
+                            existingNativeResourceRef.getId())) {
+                change = true;
+            }
+
+            // Compare Host.
+            if (!change
+                    && !existingNativeResourceRef.getHost().equals(
+                            existingNativeResourceRef.getHost())) {
+                change = true;
+            }
+
+            // Compare Observable flag.
+            if (!change
+                    && existingNativeResourceRef.isObservable() != existingNativeResourceRef
+                            .isObservable()) {
+                change = true;
+            }
+
+            // Compare Resource Types.
+            Vector<String> existingResTypes = existingNativeResourceRef
+                    .getResourceTypes();
+            Vector<String> newResTypes = newNativeResourceRef
+                    .getResourceTypes();
+
+            if (!change) {
+                if (existingResTypes.size() != newResTypes.size()) {
+                    change = true;
+                } else {
+                    // Compare both lists.
+                    Iterator<String> itr = existingResTypes.iterator();
+                    while (itr.hasNext()) {
+                        if (!newResTypes.contains(itr.next())) {
+                            change = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Compare Interface Types.
+            Vector<String> existingInterfaceTypes = existingNativeResourceRef
+                    .getResourceInterfaces();
+            Vector<String> newInterfaceTypes = newNativeResourceRef
+                    .getResourceInterfaces();
+
+            if (!change) {
+                if (existingInterfaceTypes.size() != newInterfaceTypes.size()) {
+                    change = true;
+                } else {
+                    // Compare both lists.
+                    Iterator<String> itr = existingInterfaceTypes.iterator();
+                    while (itr.hasNext()) {
+                        if (!newInterfaceTypes.contains(itr.next())) {
+                            change = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            change = true;
+        }
+
+        return change;
+    }
+
     private RemoteResource handleResponse(String uid,
             SimulatorResourceModel resourceModelN) {
         if (null == uid || null == resourceModelN) {
@@ -742,10 +901,15 @@ public class ResourceManager {
                         }
                         // Delete all cached details of resources
                         resourceMap.clear();
-                        favoriteResources.clear();
+
+                        synchronized (favoriteResources) {
+                            favoriteResources.clear();
+                        }
 
                         // Clearing the device and platform information
-                        hostDeviceAndPlatformMap.clear();
+                        synchronized (hostDeviceAndPlatformMap) {
+                            hostDeviceAndPlatformMap.clear();
+                        }
                     }
                     // Change the current resource in selection
                     setCurrentResourceInSelection(null);
@@ -908,11 +1072,12 @@ public class ResourceManager {
     }
 
     public List<MetaProperty> getDeviceProperties() {
-        if (null == currentResourceInSelection) {
+        RemoteResource resourceInSelection = getCurrentResourceInSelection();
+        if (null == resourceInSelection) {
             return null;
         }
 
-        SimulatorRemoteResource remoteResource = currentResourceInSelection
+        SimulatorRemoteResource remoteResource = resourceInSelection
                 .getRemoteResourceRef();
         if (null == remoteResource) {
             return null;
@@ -955,11 +1120,12 @@ public class ResourceManager {
     }
 
     public List<MetaProperty> getPlatformProperties() {
-        if (null == currentResourceInSelection) {
+        RemoteResource resourceInSelection = getCurrentResourceInSelection();
+        if (null == resourceInSelection) {
             return null;
         }
 
-        SimulatorRemoteResource remoteResource = currentResourceInSelection
+        SimulatorRemoteResource remoteResource = resourceInSelection
                 .getRemoteResourceRef();
         if (null == remoteResource) {
             return null;

@@ -613,6 +613,12 @@ public class ResourceManager {
         UiListenerHandler.getInstance().resourceCreatedUINotification(
                 ResourceType.SINGLE);
 
+        Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.INFO.ordinal(), new Date(),
+                        "Resource created [" + resource.getResourceURI() + "].");
+
         return true;
     }
 
@@ -745,6 +751,12 @@ public class ResourceManager {
                             Utility.getSimulatorErrorString(e, null));
             throw e;
         }
+
+        Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.INFO.ordinal(), new Date(),
+                        "Resource created [" + resource.getResourceURI() + "].");
         return true;
     }
 
@@ -850,6 +862,12 @@ public class ResourceManager {
 
         // Delete this resource
         data.deleteResource(res);
+
+        Activator
+                .getDefault()
+                .getLogManager()
+                .log(Level.INFO.ordinal(), new Date(),
+                        "Resource deleted [" + res.getResourceURI() + "].");
     }
 
     public boolean isUriUnique(List<MetaProperty> properties) {

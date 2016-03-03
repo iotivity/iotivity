@@ -433,6 +433,37 @@ public class AttributeView extends ViewPart {
                                     "Unable to perform the operation.",
                                     "Failed to obtain the required data. Operation cannot be performed.");
                 } else {
+                    // Check whether a new item can be added to the array by
+                    // checking
+                    // the array property of the current attribute in
+                    // selection(Model Array type attribute).
+                    AttributeElement attElement = getSelectedElement();
+                    SimulatorResourceAttribute attribute = attElement
+                            .getSimulatorResourceAttribute();
+
+                    AttributeValue attValue = attribute.value();
+                    AttributeProperty attProperty = attribute.property();
+                    if (null != attProperty
+                            && attProperty instanceof ArrayProperty) {
+                        ArrayProperty prop = attProperty.asArray();
+                        if (null != prop && !prop.isVariable()) {
+                            SimulatorResourceModel[] model = (SimulatorResourceModel[]) attValue
+                                    .get();
+                            if (null != model
+                                    && model.length >= prop.maxItems()) {
+                                MessageDialog
+                                        .openError(
+                                                Display.getDefault()
+                                                        .getActiveShell(),
+                                                "Unable to perform the operation.",
+                                                "Exceeding the maximum number of array elements allowed for this attribute.\n"
+                                                        + "Maximum number of allowed array element(s): "
+                                                        + prop.maxItems());
+                                return;
+                            }
+                        }
+                    }
+
                     ModelArrayAddItemDialog dialog = new ModelArrayAddItemDialog(
                             Display.getDefault().getActiveShell(),
                             representation);
@@ -446,9 +477,6 @@ public class AttributeView extends ViewPart {
                         SimulatorResourceModel newModel = (SimulatorResourceModel) newAttribute
                                 .value().get();
 
-                        AttributeElement attElement = getSelectedElement();
-                        SimulatorResourceAttribute attribute = attElement
-                                .getSimulatorResourceAttribute();
                         SimulatorResourceModel[] modelArray = (SimulatorResourceModel[]) attribute
                                 .value().get();
                         SimulatorResourceModel[] newModelArray = new SimulatorResourceModel[modelArray.length + 1];
@@ -504,6 +532,33 @@ public class AttributeView extends ViewPart {
         addItems.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
+                // Check whether any existing item can be removed from the array
+                // by checking
+                // the array property of the current attribute in
+                // selection(Model Array type attribute).
+                SimulatorResourceAttribute parentSRA = parentElement
+                        .getSimulatorResourceAttribute();
+                AttributeValue value = parentSRA.value();
+                AttributeProperty attProperty = parentSRA.property();
+                if (null != attProperty && attProperty instanceof ArrayProperty) {
+                    ArrayProperty prop = attProperty.asArray();
+                    if (null != prop) {
+                        SimulatorResourceModel[] model = (SimulatorResourceModel[]) value
+                                .get();
+                        if (null != model && model.length <= prop.minItems()) {
+                            MessageDialog
+                                    .openError(
+                                            Display.getDefault()
+                                                    .getActiveShell(),
+                                            "Unable to perform the operation.",
+                                            "Violating the minimum number of array elements allowed for this attribute.\n"
+                                                    + "Minimum number of allowed array element(s): "
+                                                    + prop.minItems());
+                            return;
+                        }
+                    }
+                }
+
                 MessageBox dialog = new MessageBox(menu.getShell(),
                         SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);
                 dialog.setText("Confirm action");
@@ -514,9 +569,6 @@ public class AttributeView extends ViewPart {
                 }
 
                 // Removing the element from the attribute value.
-                SimulatorResourceAttribute parentSRA = parentElement
-                        .getSimulatorResourceAttribute();
-                AttributeValue value = parentSRA.value();
                 SimulatorResourceModel[] modelArray = (SimulatorResourceModel[]) value
                         .get();
 

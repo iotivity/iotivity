@@ -113,10 +113,19 @@ public class PostRequestDialog extends TitleAreaDialog {
     protected Control createDialogArea(Composite parent) {
         Composite compLayout = (Composite) super.createDialogArea(parent);
 
-        Group paramsGrp = new Group(compLayout, SWT.NONE);
+        Composite rootContainer = new Composite(compLayout, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        rootContainer.setLayout(layout);
         GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        rootContainer.setLayoutData(gd);
+
+        Group paramsGrp = new Group(rootContainer, SWT.NONE);
+        gd = new GridData();
+        gd.horizontalAlignment = SWT.FILL;
+        gd.grabExcessHorizontalSpace = true;
+        gd.minimumHeight = 50;
         paramsGrp.setLayoutData(gd);
-        GridLayout layout = new GridLayout(2, false);
+        layout = new GridLayout(2, false);
         layout.verticalSpacing = 10;
         layout.marginTop = 10;
         paramsGrp.setLayout(layout);
@@ -187,7 +196,7 @@ public class PostRequestDialog extends TitleAreaDialog {
             }
         }
 
-        Composite container = new Composite(compLayout, SWT.NONE);
+        Composite container = new Composite(rootContainer, SWT.NONE);
         container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         layout = new GridLayout(1, false);
         layout.verticalSpacing = 10;

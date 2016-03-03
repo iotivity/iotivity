@@ -169,6 +169,8 @@ public class Constants {
                                                                                           + "It should contain only lowercase alphabets, "
                                                                                           + "numbers(0-9), dot(.) and hyphen(-).";
 
+    public static final String         RESOURCE_LIMIT_EXCEEDED_MSG                = "A maximum of 200 resources can exist in the server.";
+
     public static final int            TREE_EXPANSION_LEVEL                       = 10;
 
     public static final String         BASELINE_INTERFACE                         = "oic.if.baseline";
