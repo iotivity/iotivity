@@ -66,6 +66,9 @@ using namespace std;
  */
 #define ES_PS_NEED_PROVISIONING         1
 #define ES_PS_PROVISIONING_COMPLETED    2
+#define ES_PS_TRIGGER_INIT_VALUE        0
+#define ES_PS_TRIGGER_CONNECTION        1
+
 
 /**
 * Device Roles defined for each device type used in easy setup

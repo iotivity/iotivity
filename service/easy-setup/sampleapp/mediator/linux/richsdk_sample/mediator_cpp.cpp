@@ -96,27 +96,16 @@ void initEasySetup()
     easySetupIntance = EasySetup::getInstance();
 
     ipaddress = "192.168.1.104";
-    //std::cout << "Enter the target enrollee ipv4 address ";
-
-
     ssid = "hub2.4G";
-    //std::cout << "Enter the ssid of the target Enrolleer ";
-    //std:: cin >> ssid;
-
     pwd = "22221111";
-    //std::cout << "Enter the pwd of the target Enrolleer ";
-    //std::cin >> pwd;
 
     netInfo.connType = CT_ADAPTER_IP;
-    //netInfo.isSecured = false;
-    //netInfo.needSecuredEasysetup = false;
 
     OICStrcpy(netInfo.provData.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, ssid.c_str());
     OICStrcpy(netInfo.provData.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, pwd.c_str());
 
     onboardingConn.isSecured = false;
     OICStrcpy(onboardingConn.ipAddress, IPV4_ADDR_SIZE - 1, ipaddress.c_str());
-
 
     try
     {

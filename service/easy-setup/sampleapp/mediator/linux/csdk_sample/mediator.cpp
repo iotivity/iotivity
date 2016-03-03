@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
     InitProvProcess();
 
 
-    RegisterCallback(ProvisioningStatusCallback);
+    RegisterCallback(&ProvisioningStatusCallback);
 
     while ((opt = getopt(argc, argv, "d:s:p:")) != -1) {
         switch (opt) {
@@ -102,6 +102,16 @@ int main(int argc, char **argv) {
 
     signal(SIGINT, handleSigInt);
     while (!quitFlag) {
+        OCStackResult result;
+
+        result = OCProcess();
+
+        if (result != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, "Mediator_CSDK", "OCStack stop error");
+        }
+
+        // To minimize CPU utilization we may wish to do this with sleep
         sleep(1);
     }
 

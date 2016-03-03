@@ -118,6 +118,12 @@ namespace OIC
             ESResult ESDiscoveryTimeout(unsigned short waittime);
 
             void onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource);
+
+            void triggerNetworkConnection();
+
+            void triggerNetworkConnectionCb(
+                    const HeaderOptions& headerOptions, const OCRepresentation& rep,
+                    const int eCode);
         };
     }
 }

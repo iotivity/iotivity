@@ -32,7 +32,6 @@
 #include "ocpayload.h"
 #include "escommon.h"
 
-
 // External includes
 #include "logger.h"
 #include "oic_malloc.h"
@@ -44,7 +43,8 @@ bool gProvisioningCondFlag = false;
 
 static ProvConfig *gProvConfig;
 static WiFiOnboadingConnection *gOnboardConn;
-static char gSzFindResourceQueryUri[64] = {0};
+static char gSzFindResourceQueryUri[64] =
+{ 0 };
 
 /**
  * @var cbData
@@ -52,148 +52,40 @@ static char gSzFindResourceQueryUri[64] = {0};
  */
 static OCProvisioningStatusCB cbData = NULL;
 
-
-void ErrorCallback(ProvStatus status) {
+/**
+ * Utility function for error callback.
+ */
+void ErrorCallback(ProvStatus status)
+{
     ProvisioningInfo *provInfo = GetCallbackObjectOnError(status);
-    cbData(provInfo);
-    ResetProgress();
+    if(cbData != NULL)
+    {
+        cbData(provInfo);
+    }
 }
 
-
-OCStackResult InitProvisioningHandler() {
+/**
+ * Functions implementing the exposed APIs.
+ */
+OCStackResult InitProvisioningHandler()
+{
     OCStackResult ret = OC_STACK_ERROR;
     /* Initialize OCStack*/
-    if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK) {
+    if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK)
+    {
         OIC_LOG(ERROR, ES_PROV_TAG, "OCStack init error");
         return ret;
-    }
-
-
-    pthread_t thread_handle;
-
-    if (pthread_create(&thread_handle, NULL, listeningFunc, NULL)) {
-        OIC_LOG(DEBUG, ES_PROV_TAG, "Thread creation failed");
-        return OC_STACK_ERROR;
     }
 
     return OC_STACK_OK;
 }
 
-OCStackResult TerminateProvisioningHandler() {
-    OCStackResult ret = OC_STACK_ERROR;
-    if (OCStop() != OC_STACK_OK) {
-        OIC_LOG(ERROR, ES_PROV_TAG, "OCStack stop error");
-    }
+OCStackResult StartProvisioningProcess(const ProvConfig *netInfo,
+        WiFiOnboadingConnection *onboardConn, OCProvisioningStatusCB provisioningStatusCallback,
+        char *findResQuery)
+{
 
-    gProvisioningCondFlag = true;
-
-    ret = OC_STACK_OK;
-    return ret;
-}
-
-void *listeningFunc(void* /*data*/) {
-    while (!gProvisioningCondFlag) {
-        OCStackResult result;
-
-        result = OCProcess();
-
-        if (result != OC_STACK_OK) {
-            OIC_LOG(ERROR, ES_PROV_TAG, "OCStack stop error");
-        }
-
-        // To minimize CPU utilization we may wish to do this with sleep
-        sleep(1);
-    }
-    return NULL;
-}
-
-
-OCStackApplicationResult ProvisionEnrolleeResponse(void* /*ctx*/, OCDoHandle /*handle*/,
-                                                   OCClientResponse *clientResponse) {
-    OIC_LOG_V(DEBUG, ES_PROV_TAG, "INSIDE ProvisionEnrolleeResponse");
-
-    // If user stopped the process then return from this function;
-    if (IsSetupStopped()) {
-        ErrorCallback(DEVICE_NOT_PROVISIONED);
-        ClearMemory();
-        return OC_STACK_DELETE_TRANSACTION;
-    }
-
-    if (!ValidateEnrolleResponse(clientResponse)) {
-        ErrorCallback(DEVICE_NOT_PROVISIONED);
-        return OC_STACK_DELETE_TRANSACTION;
-    }
-
-    char *tnn = NULL;
-    char *cd = NULL;
-
-    OCRepPayload *input = (OCRepPayload * )(clientResponse->payload);
-
-    while (input) {
-
-        int64_t ps;
-        if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_PS, &ps)) {
-
-            if (ps == 2) {
-                input = input->next;
-                continue;
-            }
-            else {
-                OIC_LOG_V(DEBUG, ES_PROV_TAG, "PS is NOT proper");
-                goto Error;
-
-            }
-        }
-
-        if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_TNN, &tnn)) {
-            if (!strcmp(tnn, gProvConfig->provData.WIFI.ssid)) {
-                OIC_LOG_V(DEBUG, ES_PROV_TAG, "SSID is proper");
-                input = input->next;
-                OICFree(tnn);
-                continue;
-            }
-            else {
-                OIC_LOG_V(DEBUG, ES_PROV_TAG, "SSID is NOT proper");
-                OICFree(tnn);
-                goto Error;
-            }
-        }
-
-        if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CD, &cd)) {
-            if (!strcmp(cd, gProvConfig->provData.WIFI.pwd)) {
-                OIC_LOG_V(DEBUG, ES_PROV_TAG, "Password is proper");
-                input = input->next;
-                OICFree(cd);
-                continue;
-            }
-            else {
-                OIC_LOG_V(DEBUG, ES_PROV_TAG, "Password is NOT proper");
-                OICFree(cd);
-                goto Error;
-            }
-        }
-
-        LogProvisioningResponse(input->values);
-
-        input = input->next;
-    }
-
-    SuccessCallback(clientResponse);
-    return OC_STACK_KEEP_TRANSACTION;
-
-    Error:
-    {
-        ErrorCallback(DEVICE_NOT_PROVISIONED);
-        return OC_STACK_DELETE_TRANSACTION;
-    }
-
-}
-
-OCStackResult StartProvisioningProcess(const ProvConfig *netInfo,WiFiOnboadingConnection *onboardConn,
-                                       OCProvisioningStatusCB provisioningStatusCallback,
-                                       char *findResQuery) {
-
-    if(findResQuery != NULL)
+    if (findResQuery != NULL)
     {
         OICStrcpy(gSzFindResourceQueryUri, sizeof(gSzFindResourceQueryUri) - 1, findResQuery);
     }
@@ -205,27 +97,30 @@ OCStackResult StartProvisioningProcess(const ProvConfig *netInfo,WiFiOnboadingCo
 
     pthread_t thread_handle;
 
-    if (!ValidateEasySetupParams(netInfo, onboardConn, provisioningStatusCallback)) {
+    if (!ValidateEasySetupParams(netInfo, onboardConn, provisioningStatusCallback))
+    {
         goto Error;
     }
 
-    if (!SetProgress(provisioningStatusCallback)) {
+    if (!SetProgress(provisioningStatusCallback))
+    {
         // Device provisioning session is running already.
         OIC_LOG(INFO, ES_PROV_TAG, PCF("Device provisioning session is running already"));
         goto Error;
     }
 
-    if (!ConfigEnrolleeObject(netInfo, onboardConn)) {
+    if (!ConfigEnrolleeObject(netInfo, onboardConn))
+    {
         goto Error;
     }
 
-    if (pthread_create(&thread_handle, NULL, FindProvisioningResource, NULL)) {
+    if (pthread_create(&thread_handle, NULL, FindProvisioningResource, NULL))
+    {
         goto Error;
 
     }
 
     pthread_join(thread_handle, NULL);
-
 
     return OC_STACK_OK;
 
@@ -238,12 +133,71 @@ OCStackResult StartProvisioningProcess(const ProvConfig *netInfo,WiFiOnboadingCo
 
 }
 
-void StopProvisioningProcess() {
-    //Only basis test is done for below API
+void StopProvisioningProcess()
+{
     ResetProgress();
 }
 
-bool ClearMemory() {
+OCStackResult TerminateProvisioningHandler()
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    if (OCStop() != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, ES_PROV_TAG, "OCStack stop error");
+    }
+
+    gProvisioningCondFlag = true;
+    ResetProgress();
+
+    ret = OC_STACK_OK;
+    return ret;
+}
+
+OCStackApplicationResult TriggerNetworkConnectionResponse(void* /*ctx*/, OCDoHandle /*handle*/,
+        OCClientResponse *clientResponse)
+{
+    OIC_LOG_V(DEBUG, ES_PROV_TAG, "INSIDE TriggerNetworkConnectionResponse");
+
+    // If user stopped the process then return from this function;
+    if (IsSetupStopped())
+    {
+        ErrorCallback(DEVICE_NOT_PROVISIONED);
+        ClearMemory();
+        return OC_STACK_DELETE_TRANSACTION;
+    }
+
+    if (!ValidateEnrolleeBasicResponse(clientResponse))
+    {
+        ErrorCallback(DEVICE_NOT_PROVISIONED);
+        return OC_STACK_DELETE_TRANSACTION;
+    }
+
+    SuccessCallback(clientResponse);
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+OCStackResult TriggerNetworkConnection(OCQualityOfService qos, const char *query,
+        const char *resUri, OCDevAddr *destination, int /*pauseBeforeStart*/)
+{
+    OIC_LOG_V(INFO, ES_PROV_TAG, "Inside TriggerNetworkConnection");
+
+    OCRepPayload *payload = OCRepPayloadCreate();
+
+    OCRepPayloadSetUri(payload, resUri);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_TR, ES_PS_TRIGGER_CONNECTION);
+
+    OIC_LOG_V(DEBUG, ES_PROV_TAG, "Triggering network connection from Mediator");
+
+    OCStackResult ret = InvokeOCDoResource(query, OC_REST_POST, destination, qos,
+            TriggerNetworkConnectionResponse, payload, NULL, 0);
+
+    return ret;
+}
+
+
+
+bool ClearMemory()
+{
 
     OIC_LOG(DEBUG, ES_PROV_TAG, "thread_pool_add_task of FindProvisioningResource failed");
     OICFree(gProvConfig);
@@ -253,18 +207,21 @@ bool ClearMemory() {
 
 }
 
-bool ConfigEnrolleeObject(const ProvConfig *netInfo, WiFiOnboadingConnection *connection) {
+bool ConfigEnrolleeObject(const ProvConfig *netInfo, WiFiOnboadingConnection *connection)
+{
 
     //Copy Network Provisioning  Information
     gProvConfig = (ProvConfig *) OICCalloc(1, sizeof(ProvConfig));
     gOnboardConn = (WiFiOnboadingConnection *) OICCalloc(1, sizeof(WiFiOnboadingConnection));
 
-    if (gProvConfig == NULL) {
+    if (gProvConfig == NULL)
+    {
         OIC_LOG(ERROR, ES_PROV_TAG, "Invalid input..");
         return false;
     }
 
-    if (gOnboardConn == NULL) {
+    if (gOnboardConn == NULL)
+    {
         OIC_LOG(ERROR, ES_PROV_TAG, "Invalid input..");
         return false;
     }
@@ -273,18 +230,20 @@ bool ConfigEnrolleeObject(const ProvConfig *netInfo, WiFiOnboadingConnection *co
     memcpy(gOnboardConn, connection, sizeof(WiFiOnboadingConnection));
 
     OIC_LOG_V(DEBUG, ES_PROV_TAG, "Network Provisioning Info. SSID = %s",
-              gProvConfig->provData.WIFI.ssid);
+            gProvConfig->provData.WIFI.ssid);
 
     OIC_LOG_V(DEBUG, ES_PROV_TAG, "Network Provisioning Info. PWD = %s",
-              gProvConfig->provData.WIFI.pwd);
+            gProvConfig->provData.WIFI.pwd);
 
     return true;
 
 }
 
-void LogProvisioningResponse(OCRepPayloadValue * val) {
+void LogProvisioningResponse(OCRepPayloadValue * val)
+{
 
-    switch (val->type) {
+    switch (val->type)
+    {
         case OCREP_PROP_NULL:
             OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s: NULL", val->name);
             break;
@@ -306,36 +265,37 @@ void LogProvisioningResponse(OCRepPayloadValue * val) {
             OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(OCRep):%s", val->name, val->obj->uri);
             break;
         case OCREP_PROP_ARRAY:
-            switch (val->arr.type) {
+            switch (val->arr.type)
+            {
                 case OCREP_PROP_INT:
                     OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(int array):%zu x %zu x %zu",
-                              val->name,
-                              val->arr.dimensions[0], val->arr.dimensions[1],
-                              val->arr.dimensions[2]);
+                            val->name,
+                            val->arr.dimensions[0], val->arr.dimensions[1],
+                            val->arr.dimensions[2]);
                     break;
                 case OCREP_PROP_DOUBLE:
                     OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(double array):%zu x %zu x %zu",
-                              val->name,
-                              val->arr.dimensions[0], val->arr.dimensions[1],
-                              val->arr.dimensions[2]);
+                            val->name,
+                            val->arr.dimensions[0], val->arr.dimensions[1],
+                            val->arr.dimensions[2]);
                     break;
                 case OCREP_PROP_BOOL:
                     OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(bool array):%zu x %zu x %zu",
-                              val->name,
-                              val->arr.dimensions[0], val->arr.dimensions[1],
-                              val->arr.dimensions[2]);
+                            val->name,
+                            val->arr.dimensions[0], val->arr.dimensions[1],
+                            val->arr.dimensions[2]);
                     break;
                 case OCREP_PROP_STRING:
                     OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(string array):%zu x %zu x %zu",
-                              val->name,
-                              val->arr.dimensions[0], val->arr.dimensions[1],
-                              val->arr.dimensions[2]);
+                            val->name,
+                            val->arr.dimensions[0], val->arr.dimensions[1],
+                            val->arr.dimensions[2]);
                     break;
                 case OCREP_PROP_OBJECT:
                     OIC_LOG_V(DEBUG, ES_PROV_TAG, "\t\t%s(OCRep array):%zu x %zu x %zu",
-                              val->name,
-                              val->arr.dimensions[0], val->arr.dimensions[1],
-                              val->arr.dimensions[2]);
+                            val->name,
+                            val->arr.dimensions[0], val->arr.dimensions[1],
+                            val->arr.dimensions[2]);
                     break;
                 default:
                     break;
@@ -346,9 +306,11 @@ void LogProvisioningResponse(OCRepPayloadValue * val) {
     }
 }
 
-OCStackResult FindNetworkResource() {
+OCStackResult FindNetworkResource()
+{
     OCStackResult ret = OC_STACK_ERROR;
-    if (OCStop() != OC_STACK_OK) {
+    if (OCStop() != OC_STACK_OK)
+    {
         OIC_LOG(ERROR, ES_PROV_TAG, "OCStack stop error");
     }
 
@@ -356,18 +318,21 @@ OCStackResult FindNetworkResource() {
 }
 
 ProvisioningInfo *PrepareProvisioingStatusCB(OCClientResponse *clientResponse,
-                                             ProvStatus provStatus) {
+        ProvStatus provStatus)
+{
 
     ProvisioningInfo *provInfo = (ProvisioningInfo *) OICCalloc(1, sizeof(ProvisioningInfo));
 
-    if (provInfo == NULL) {
+    if (provInfo == NULL)
+    {
         OIC_LOG_V(ERROR, ES_PROV_TAG, "Failed to allocate memory");
         return NULL;
     }
 
     OCDevAddr *devAddr = (OCDevAddr *) OICCalloc(1, sizeof(OCDevAddr));
 
-    if (devAddr == NULL) {
+    if (devAddr == NULL)
+    {
         OIC_LOG_V(ERROR, ES_PROV_TAG, "Failed to allocate memory");
         OICFree(provInfo);
         return NULL;
@@ -384,11 +349,12 @@ ProvisioningInfo *PrepareProvisioingStatusCB(OCClientResponse *clientResponse,
     return provInfo;
 }
 
-
-bool InProgress() {
+bool InProgress()
+{
 
     // It means already Easy Setup provisioning session is going on.
-    if (NULL != cbData) {
+    if (NULL != cbData)
+    {
         OIC_LOG(ERROR, ES_PROV_TAG, "Easy setup session is already in progress");
         return true;
     }
@@ -396,35 +362,39 @@ bool InProgress() {
     return false;
 }
 
-bool SetProgress(OCProvisioningStatusCB provisioningStatusCallback) {
+bool SetProgress(OCProvisioningStatusCB provisioningStatusCallback)
+{
 
     if (InProgress())
         return false;
 
     cbData = provisioningStatusCallback;
 
-
     return true;
 }
 
-bool ResetProgress() {
+bool ResetProgress()
+{
 
     cbData = NULL;
     return true;
 }
 
-ProvisioningInfo *CreateCallBackObject() {
+ProvisioningInfo *CreateCallBackObject()
+{
 
     ProvisioningInfo *provInfo = (ProvisioningInfo *) OICCalloc(1, sizeof(ProvisioningInfo));
 
-    if (provInfo == NULL) {
+    if (provInfo == NULL)
+    {
         OIC_LOG_V(ERROR, ES_PROV_TAG, "Failed to allocate memory");
         return NULL;
     }
 
     OCDevAddr *devAddr = (OCDevAddr *) OICCalloc(1, sizeof(OCDevAddr));
 
-    if (devAddr == NULL) {
+    if (devAddr == NULL)
+    {
         OIC_LOG_V(ERROR, ES_PROV_TAG, "Failed to allocate memory");
         OICFree(provInfo);
         return NULL;
@@ -436,11 +406,12 @@ ProvisioningInfo *CreateCallBackObject() {
 
 }
 
-ProvisioningInfo *GetCallbackObjectOnError(ProvStatus status) {
+ProvisioningInfo *GetCallbackObjectOnError(ProvStatus status)
+{
 
     ProvisioningInfo *provInfo = CreateCallBackObject();
     OICStrcpy(provInfo->provDeviceInfo.addr->addr, sizeof(provInfo->provDeviceInfo.addr->addr),
-        gOnboardConn->ipAddress);
+            gOnboardConn->ipAddress);
 
     provInfo->provDeviceInfo.addr->port = IP_PORT;
     provInfo->provStatus = status;
@@ -448,60 +419,86 @@ ProvisioningInfo *GetCallbackObjectOnError(ProvStatus status) {
 }
 
 ProvisioningInfo *GetCallbackObjectOnSuccess(OCClientResponse *clientResponse,
-                                             ProvStatus provStatus) {
+        ProvStatus provStatus)
+{
     ProvisioningInfo *provInfo = CreateCallBackObject();
     OICStrcpy(provInfo->provDeviceInfo.addr->addr, sizeof(provInfo->provDeviceInfo.addr->addr),
-                        clientResponse->addr->addr);
+            clientResponse->addr->addr);
 
     provInfo->provDeviceInfo.addr->port = clientResponse->addr->port;
     provInfo->provStatus = provStatus;
     return provInfo;
 }
 
-bool ValidateFinddResourceResponse(OCClientResponse * clientResponse) {
-
-    if (!(clientResponse) || !(clientResponse->payload)) {
-
-        OIC_LOG_V(INFO, ES_PROV_TAG, "ProvisionEnrolleeResponse received Null clientResponse");
-
+bool ValidateFindResourceResponse(OCClientResponse * clientResponse)
+{
+    if (!(clientResponse) || !(clientResponse->payload))
+    {
+        OIC_LOG_V(INFO, ES_PROV_TAG, "Received Null clientResponse");
         return false;
-
     }
+
+    if (clientResponse->payload->type != PAYLOAD_TYPE_DISCOVERY)
+    {
+        OIC_LOG_V(DEBUG, ES_PROV_TAG, "Payload is not discovery type");
+        return false;
+    }
+
     return true;
 }
 
-bool ValidateEnrolleResponse(OCClientResponse * clientResponse) {
-
-    if (!(clientResponse) || !(clientResponse->payload)) {
-
-        OIC_LOG_V(INFO, ES_PROV_TAG, "ProvisionEnrolleeResponse received Null clientResponse");
-
+bool ValidateEnrolleeResponse(OCClientResponse * clientResponse)
+{
+    if (!(clientResponse) || !(clientResponse->payload))
+    {
+        OIC_LOG_V(INFO, ES_PROV_TAG, "Received Null clientResponse");
         return false;
-
     }
 
-    if (clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION) {
-
-        OIC_LOG_V(DEBUG, ES_PROV_TAG, "Incoming payload not a representation");
+    if (clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+    {
+        OIC_LOG_V(DEBUG, ES_PROV_TAG, "Incoming payload is not a representation");
         return false;
-
     }
 
     // If flow reachese here means no error condition hit.
     return true;
-
 }
 
-void SuccessCallback(OCClientResponse * clientResponse) {
+bool ValidateEnrolleeBasicResponse(OCClientResponse * clientResponse)
+{
+    if (!clientResponse)
+    {
+        OIC_LOG_V(INFO, ES_PROV_TAG, "Received Null clientResponse");
+        return false;
+    }
+
+    if(clientResponse->result != OC_STACK_OK)
+    {
+        OIC_LOG_V(INFO, ES_PROV_TAG, "Received error response");
+        return false;
+    }
+
+    // If flow reaches, then there no error condition hit.
+    return true;
+}
+
+
+void SuccessCallback(OCClientResponse * clientResponse)
+{
     ProvisioningInfo *provInfo = GetCallbackObjectOnSuccess(clientResponse, DEVICE_PROVISIONED);
-    cbData(provInfo);
-    ResetProgress();
+    if(cbData != NULL)
+    {
+        cbData(provInfo);
+    }
 }
 
-void* FindProvisioningResource(void* /*data*/) {
+void* FindProvisioningResource(void* /*data*/)
+{
 
     // If user stopped the process before thread get scheduled then check and return from this function;
-    if (IsSetupStopped()) {
+    if (IsSetupStopped())
+    {
         ErrorCallback(DEVICE_NOT_PROVISIONED);
         ClearMemory();
         return NULL;
@@ -517,12 +514,11 @@ void* FindProvisioningResource(void* /*data*/) {
     ocCBData.context = (void *) EASY_SETUP_DEFAULT_CONTEXT_VALUE;
     ocCBData.cd = NULL;
 
-
     ret = OCDoResource(NULL, OC_REST_DISCOVER, gSzFindResourceQueryUri, NULL, NULL,
-                       gProvConfig->connType, OC_LOW_QOS,
-                       &ocCBData, NULL, 0);
+            gProvConfig->connType, OC_LOW_QOS, &ocCBData, NULL, 0);
 
-    if (ret != OC_STACK_OK) {
+    if (ret != OC_STACK_OK)
+    {
         ErrorCallback(DEVICE_NOT_PROVISIONED);
         ClearMemory();
     }
@@ -531,9 +527,9 @@ void* FindProvisioningResource(void* /*data*/) {
 }
 
 OCStackResult InvokeOCDoResource(const char *query, OCMethod method, const OCDevAddr *dest,
-                                 OCQualityOfService qos, OCClientResponseHandler cb,
-                                 OCRepPayload *payload,
-                                 OCHeaderOption *options, uint8_t numOptions) {
+        OCQualityOfService qos, OCClientResponseHandler cb, OCRepPayload *payload,
+        OCHeaderOption *options, uint8_t numOptions)
+{
     OCStackResult ret;
     OCCallbackData cbData;
 
@@ -542,9 +538,10 @@ OCStackResult InvokeOCDoResource(const char *query, OCMethod method, const OCDev
     cbData.cd = NULL;
 
     ret = OCDoResource(NULL, method, query, dest, (OCPayload *) payload, gProvConfig->connType, qos,
-                       &cbData, options, numOptions);
+            &cbData, options, numOptions);
 
-    if (ret != OC_STACK_OK) {
+    if (ret != OC_STACK_OK)
+    {
         OIC_LOG_V(ERROR, ES_PROV_TAG, "OCDoResource returns error %d with method %d", ret, method);
     }
 
@@ -552,8 +549,8 @@ OCStackResult InvokeOCDoResource(const char *query, OCMethod method, const OCDev
 }
 
 OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char *query, const char *resUri,
-                                OCDevAddr *destination, int pauseBeforeStart) {
-
+        OCDevAddr *destination, int pauseBeforeStart)
+{
 
     // This sleep is required in case of BLE provisioning due to packet drop issue.
     OIC_LOG_V(INFO, ES_PROV_TAG, "Sleeping for %d seconds", pauseBeforeStart);
@@ -568,12 +565,13 @@ OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char *query, const
 
     OIC_LOG_V(DEBUG, ES_PROV_TAG, "OCPayload ready for ProvisionEnrollee");
 
-    OCStackResult ret = InvokeOCDoResource(query, OC_REST_PUT, destination, qos,
-                                           ProvisionEnrolleeResponse, payload, NULL, 0);
+    OCStackResult ret = InvokeOCDoResource(query, OC_REST_POST, destination, qos,
+            ProvisionEnrolleeResponse, payload, NULL, 0);
 
     return ret;
 }
 
-bool IsSetupStopped() {
+bool IsSetupStopped()
+{
     return (cbData == NULL) ? true : false;
 }

@@ -36,20 +36,21 @@ typedef void (*ResourceEventCallback)(ESResult);
 typedef struct PROVRESOURCE
 {
     OCResourceHandle handle;
-    int ps; // provisiong status, 1 : need to provisioning, 2 : Connected to Enroller
-    int tnt; // target network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee, ...
-    char tnn[MAXSSIDLEN]; // target network name, i.e. SSID for WLAN, MAC address for BT
-    char cd[MAXNETCREDLEN]; // credential information
+    int64_t ps; // provisiong status, 1 : need to provisioning, 2 : Connected to Enroller.
+    int64_t tr; // Trigger network connection, 0 : Init value, 1 : Connected to the target network.
+    int64_t tnt; // target network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee.
+    char tnn[MAXSSIDLEN]; // target network name, i.e. SSID for WLAN, MAC address for BT.
+    char cd[MAXNETCREDLEN]; // credential information.
 } ProvResource;
 
 /* Structure to represent a Light resource */
 typedef struct NETRESOURCE
 {
     OCResourceHandle handle;
-    int cnt; // current network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee, ...
-    int ant[MAXNUMTYPE]; // available network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee, ...
-    char ipaddr[MAXADDRLEN]; // ip address
-    char cnn[MAXSSIDLEN]; // current network name
+    int64_t cnt; // current network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee.
+    int64_t ant[MAXNUMTYPE]; // available network type, 1: WLAN, 2: BT, 3: BLE, 4: Zigbee.
+    char ipaddr[MAXADDRLEN]; // ip address.
+    char cnn[MAXSSIDLEN]; // current network name.
 } NetResource;
 
 OCStackResult CreateProvisioningResource(bool isSecured);

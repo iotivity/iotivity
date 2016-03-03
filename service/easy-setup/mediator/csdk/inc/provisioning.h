@@ -18,9 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
-#ifndef __PROVISIONING_HANDLER_H_
-#define __PROVISIONING_HANDLER_H_
+#ifndef __ES_PROVISIONING_HANDLER_H_
+#define __ES_PROVISIONING_HANDLER_H_
 
 #include "octypes.h"
 
@@ -33,11 +32,6 @@
 //-----------------------------------------------------------------------------
 #define EASY_SETUP_DEFAULT_CONTEXT_VALUE 0x99
 
-
-//-----------------------------------------------------------------------------
-// Typedefs
-//-----------------------------------------------------------------------------
-
 /**
  * List of methods that can be inititated from the client
  */
@@ -45,41 +39,48 @@ OCStackResult InitProvisioningHandler();
 
 OCStackResult TerminateProvisioningHandler();
 
-void *listeningFunc(void *);
-
-OCStackApplicationResult ProvisionEnrolleeResponse(void *ctx, OCDoHandle handle,
-                                                   OCClientResponse *clientResponse);
-
-OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char *query, const char *resUri,
-                                OCDevAddr *destination, int pauseBeforeStart);
-
-OCStackApplicationResult GetProvisioningStatusResponse(void *ctx, OCDoHandle handle,
-                                                       OCClientResponse *clientResponse);
-
-OCStackResult InvokeOCDoResource(const char *query, OCMethod method, const OCDevAddr *dest,
-                                 OCQualityOfService qos, OCClientResponseHandler cb,
-                                 OCRepPayload *payload,
-                                 OCHeaderOption *options, uint8_t numOptions);
-
 OCStackResult GetProvisioningStatus(OCQualityOfService qos, const char *query,
-                                    const OCDevAddr *destination);
+        const OCDevAddr *destination);
 
-OCStackResult StartProvisioningProcess(const ProvConfig *netInfo,WiFiOnboadingConnection *onboardConn,
-                                       OCProvisioningStatusCB provisioningStatusCallback,
-                                       char *findResQuery);
+OCStackResult StartProvisioningProcess(const ProvConfig *netInfo,
+        WiFiOnboadingConnection *onboardConn, OCProvisioningStatusCB provisioningStatusCallback,
+        char *findResQuery);
 
 void StopProvisioningProcess();
 
+/**
+ * Internal worker functions.
+ */
+OCStackResult TriggerNetworkConnection(OCQualityOfService qos, const char *query,
+        const char *resUri, OCDevAddr *destination, int /*pauseBeforeStart*/);
+
+OCStackApplicationResult TriggerNetworkConnectionResponse(void *ctx, OCDoHandle handle,
+        OCClientResponse *clientResponse);
+
+OCStackApplicationResult ProvisionEnrolleeResponse(void *ctx, OCDoHandle handle,
+        OCClientResponse *clientResponse);
+
+OCStackResult ProvisionEnrollee(OCQualityOfService qos, const char *query, const char *resUri,
+        OCDevAddr *destination, int pauseBeforeStart);
+
+OCStackApplicationResult GetProvisioningStatusResponse(void *ctx, OCDoHandle handle,
+        OCClientResponse *clientResponse);
+
+OCStackResult InvokeOCDoResource(const char *query, OCMethod method, const OCDevAddr *dest,
+        OCQualityOfService qos, OCClientResponseHandler cb, OCRepPayload *payload,
+        OCHeaderOption *options, uint8_t numOptions);
+
 OCStackApplicationResult FindProvisioningResourceResponse(void *ctx, OCDoHandle handle,
-                                                          OCClientResponse *clientResponse);
+        OCClientResponse *clientResponse);
 
 void *FindProvisioningResource(void *data);
 
-//Invoke Provisioning Status Callback
 ProvisioningInfo *PrepareProvisioingStatusCB(OCClientResponse *clientResponse,
-                                             ProvStatus provStatus);
+        ProvStatus provStatus);
 
-
+/**
+ * Internal Util functions.
+ */
 void LogProvisioningResponse(OCRepPayloadValue * val);
 
 bool ConfigEnrolleeObject(const ProvConfig *netInfo, WiFiOnboadingConnection *onboardConn);
@@ -90,12 +91,14 @@ void SuccessCallback(OCClientResponse * clientResponse);
 
 void ErrorCallback(ProvStatus status);
 
-bool ValidateEnrolleResponse(OCClientResponse * clientResponse);
+bool ValidateEnrolleeResponse(OCClientResponse * clientResponse);
 
-bool ValidateFinddResourceResponse(OCClientResponse * clientResponse);
+bool ValidateFindResourceResponse(OCClientResponse * clientResponse);
+
+bool ValidateEnrolleeBasicResponse(OCClientResponse * clientResponse);
 
 ProvisioningInfo *GetCallbackObjectOnSuccess(OCClientResponse *clientResponse,
-                                             ProvStatus provStatus);
+        ProvStatus provStatus);
 
 ProvisioningInfo *GetCallbackObjectOnError(ProvStatus status);
 
@@ -107,11 +110,10 @@ bool SetProgress(OCProvisioningStatusCB provisioningStatusCallback);
 
 bool InProgress();
 
-bool ValidateEasySetupParams(const ProvConfig *netInfo,WiFiOnboadingConnection *onboardConn,
-                             OCProvisioningStatusCB provisioningStatusCallback);
+bool ValidateEasySetupParams(const ProvConfig *netInfo, WiFiOnboadingConnection *onboardConn,
+        OCProvisioningStatusCB provisioningStatusCallback);
 
 bool IsSetupStopped();
 
-
-#endif
+#endif //__ES_PROVISIONING_HANDLER_H_
 

@@ -47,6 +47,54 @@ namespace OIC
             m_discoveryResponse = false;
         }
 
+        void RemoteEnrolleeResource::triggerNetworkConnectionCb(
+                const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep,
+                const int eCode)
+        {
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : %s, eCode = %d",
+                    rep.getUri().c_str(),
+                    eCode);
+
+            if (eCode != 0)
+            {
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                        "triggerNetworkConnectionCb : Trigger action failed ");
+                std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
+                        ProvisioningStatus >(ESResult::ES_ERROR, ESState::ES_PROVISIONING_ERROR);
+                m_provStatusCb(provStatus);
+                return;
+            }
+            else
+            {
+                OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                        "triggerNetworkConnectionCb : Provisioning is success ");
+                std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
+                        ProvisioningStatus >(ESResult::ES_OK, ESState::ES_PROVISIONING_SUCCESS);
+                m_provStatusCb(provStatus);
+                return;
+            }
+        }
+
+        void RemoteEnrolleeResource::triggerNetworkConnection()
+        {
+            if (m_ocResource == nullptr)
+            {
+                throw ESBadRequestException("Resource is not initialized");
+            }
+
+            OCRepresentation provisioningRepresentation;
+
+            provisioningRepresentation.setValue(OC_RSRVD_ES_TR, 1);
+
+            m_ocResource->post(provisioningRepresentation, QueryParamsMap(),
+                    std::function<
+                            void(const HeaderOptions& headerOptions, const OCRepresentation& rep,
+                                    const int eCode) >(
+                            std::bind(&RemoteEnrolleeResource::triggerNetworkConnectionCb, this,
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    std::placeholders::_3)));
+        }
+
         void RemoteEnrolleeResource::checkProvInformationCb(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& rep, const int eCode)
         {
@@ -65,51 +113,19 @@ namespace OIC
             }
 
             int ps = -1;
-            std::string tnn = "";
-            std::string cd = "";
 
             rep.getValue(OC_RSRVD_ES_PS, ps);
-            rep.getValue(OC_RSRVD_ES_TNN, tnn);
-            rep.getValue(OC_RSRVD_ES_CD, cd);
 
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : ps - %d", ps);
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                    "checkProvInformationCb : tnn - %s", tnn.c_str());
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                    "checkProvInformationCb : cd - %s", cd.c_str());
 
             //Provisioning status check
             if (ps == ES_PS_PROVISIONING_COMPLETED)
             {
-                if (tnn != std::string(m_ProvConfig.provData.WIFI.ssid))
-                {
-                    OIC_LOG_V (ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
-                            "checkProvInformationCb : Network SSID is not the same as the "
-                            "SSID provisioned");
-                    std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
-                            ProvisioningStatus >(ESResult::ES_ERROR,
-                            ESState::ES_PROVISIONING_ERROR);
-                    m_provStatusCb(provStatus);
-                    return;
-                }
-
-                if (cd != std::string(m_ProvConfig.provData.WIFI.pwd))
-                {
-                    OIC_LOG_V (ERROR, ES_REMOTE_ENROLLEE_RES_TAG,
-                            "checkProvInformationCb : Network PWD is not the same as the "
-                            "PWD provisioned");
-                    std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
-                            ProvisioningStatus >(ESResult::ES_ERROR,
-                            ESState::ES_PROVISIONING_ERROR);
-                    m_provStatusCb(provStatus);
-                    return;
-                }
-
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                        "checkProvInformationCb : Provisioning is success ");
-                std::shared_ptr< ProvisioningStatus > provStatus = std::make_shared<
-                        ProvisioningStatus >(ESResult::ES_OK, ESState::ES_PROVISIONING_SUCCESS);
-                m_provStatusCb(provStatus);
+                        "checkProvInformationCb : Provisioning is success. "
+                        "Now trigger network connection ");
+
+                triggerNetworkConnection();
                 return;
             }
             else
@@ -141,19 +157,11 @@ namespace OIC
             }
 
             int ps = -1;
-            std::string tnn = "";
-            std::string cd = "";
 
             rep.getValue(OC_RSRVD_ES_PS, ps);
-            rep.getValue(OC_RSRVD_ES_TNN, tnn);
-            rep.getValue(OC_RSRVD_ES_CD, cd);
 
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : ps - %d",
                     ps);
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : tnn - %s",
-                    tnn.c_str());
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : cd - %s",
-                    cd.c_str());
 
             if (ps == ES_PS_NEED_PROVISIONING) //Indicates the need for provisioning
             {
@@ -169,7 +177,7 @@ namespace OIC
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getProvStatusResponse : pwd - %s",
                         m_ProvConfig.provData.WIFI.pwd);
 
-                m_ocResource->put(provisioningRepresentation, QueryParamsMap(),
+                m_ocResource->post(provisioningRepresentation, QueryParamsMap(),
                         std::function<
                                 void(const HeaderOptions& headerOptions,
                                         const OCRepresentation& rep, const int eCode) >(

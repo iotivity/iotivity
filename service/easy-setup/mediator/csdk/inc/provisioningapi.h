@@ -29,28 +29,26 @@
 
 #include "provisioning.h"
 
-
 //-----------------------------------------------------------------------------
 // Defines
 //-----------------------------------------------------------------------------
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
+    OCStackResult InitProvProcess();
 
-OCStackResult InitProvProcess();
+    OCStackResult ResetProvProcess();
 
-OCStackResult ResetProvProcess();
+    OCStackResult RegisterCallback(OCProvisioningStatusCB provisioningStatusCallback);
 
-OCStackResult RegisterCallback(
-        OCProvisioningStatusCB provisioningStatusCallback);
+    void UnRegisterCallback();
 
-void UnRegisterCallback();
+    OCStackResult StartProvisioning(const ProvConfig *netInfo,
+            WiFiOnboadingConnection *onboardConn);
 
-OCStackResult StartProvisioning(const ProvConfig *netInfo, WiFiOnboadingConnection *onboardConn);
-
-OCStackResult StopProvisioning(OCConnectivityType connectivityType);
-
+    OCStackResult StopProvisioning(OCConnectivityType connectivityType);
 #ifdef __cplusplus
 }
 #endif
