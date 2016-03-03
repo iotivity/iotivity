@@ -564,7 +564,7 @@ OCStackResult PDMGetOwnedDevices(OCUuidList_t **uuidList, size_t *numOfDevices)
                               strlen(PDM_SQLITE_LIST_ALL_UUID) + 1, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    int counter  = 0;
+    size_t counter  = 0;
     while (SQLITE_ROW == sqlite3_step(stmt))
     {
         const void *ptr = sqlite3_column_blob(stmt, PDM_FIRST_INDEX);
@@ -667,7 +667,7 @@ OCStackResult PDMGetLinkedDevices(const OicUuid_t *UUID, OCUuidList_t **UUIDLIST
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_SECOND, id);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    int counter  = 0;
+    size_t counter  = 0;
     while (SQLITE_ROW == sqlite3_step(stmt))
     {
         int i1 = sqlite3_column_int(stmt, PDM_FIRST_INDEX);
@@ -717,7 +717,7 @@ OCStackResult PDMGetToBeUnlinkedDevices(OCPairList_t **staleDevList, size_t *num
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, PDM_STALE_STATE);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    int counter  = 0;
+    size_t counter  = 0;
     while (SQLITE_ROW == sqlite3_step(stmt))
     {
         int i1 = sqlite3_column_int(stmt, PDM_FIRST_INDEX);

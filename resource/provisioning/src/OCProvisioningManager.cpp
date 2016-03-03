@@ -142,7 +142,7 @@ namespace OC
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCSetOwnerTransferCallbackData(oxm, callbackData);
-            if(result == OC_STACK_OK && (OIC_RANDOM_DEVICE_PIN & oxm))
+            if(result == OC_STACK_OK && (OIC_RANDOM_DEVICE_PIN == oxm))
             {
                 SetInputPinCB(inputPin);
             }
@@ -234,7 +234,16 @@ namespace OC
         PMResultList_t *results = nullptr;
         ProvisionContext* context = static_cast<ProvisionContext*>(ctx);
 
-        results = new PMResultList_t;
+        try
+        {
+            results = new PMResultList_t;
+        }
+        catch (std::bad_alloc& e)
+        {
+            oclog() <<"Bad alloc exception";
+            return;
+        }
+
         for (int i = 0; i < nOfRes; i++)
         {
             results->push_back(arr[i]);
