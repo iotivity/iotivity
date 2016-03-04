@@ -2167,6 +2167,7 @@ static void CALEConnectionStateChangedCb(CATransportAdapter_t adapter, const cha
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CALEConnectionStateChangedCb");
 
     VERIFY_NON_NULL_VOID(address, CALEADAPTER_TAG, "address");
+    (void)adapter;
 
 #ifdef __TIZEN__
     ca_mutex_lock(g_bleIsServerMutex);

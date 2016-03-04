@@ -76,35 +76,42 @@ void CAStopServerLEAdvertising()
 CAResult_t CASetLEClientAutoConnectionDeviceInfo(const char * address)
 {
     OIC_LOG(DEBUG, TAG, "CASetLEClientAutoConnectionDeviceInfo");
+    (void)address;
     return CA_NOT_SUPPORTED;
 }
 
 CAResult_t CAUnsetLEClientAutoConnectionDeviceInfo(const char * address)
 {
     OIC_LOG(DEBUG, TAG, "CAUnsetLEClientAutoConnectionDeviceInfo");
+    (void)address;
     return CA_NOT_SUPPORTED;
 }
 
 static void CAManagerAdapterMonitorHandler(const CAEndpoint_t *info, CANetworkStatus_t status)
 {
-    (void)info;
-    (void)status;
-
     if (CA_INTERFACE_DOWN == status)
     {
-        g_adapterStateCB(info->adapter, false);
-        OIC_LOG(DEBUG, TAG, "Pass the disabled adapter state to upper layer");
+        if (info && g_adapterStateCB)
+        {
+            g_adapterStateCB(info->adapter, false);
+            OIC_LOG(DEBUG, TAG, "Pass the disabled adapter state to upper layer");
+        }
     }
     else if (CA_INTERFACE_UP == status)
     {
-        g_adapterStateCB(info->adapter, true);
-        OIC_LOG(DEBUG, TAG, "Pass the enabled adapter state to upper layer");
+        if (info && g_adapterStateCB)
+        {
+            g_adapterStateCB(info->adapter, true);
+            OIC_LOG(DEBUG, TAG, "Pass the enabled adapter state to upper layer");
+        }
     }
 }
 
 static void CAManagerConnectionMonitorHandler(CATransportAdapter_t adapter,
                                               const char *remoteAddress, bool connected)
 {
+    (void)adapter;
+
     if (!remoteAddress)
     {
         OIC_LOG(ERROR, TAG, "remoteAddress is NULL");

@@ -413,6 +413,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNWConnectionStateChangeCa
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(device, TAG, "device");
+    (void)status;
 
     // STATE_DISCONNECTED
     jint state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE,
