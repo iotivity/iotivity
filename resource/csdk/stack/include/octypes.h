@@ -278,7 +278,8 @@ extern "C" {
 #ifdef RA_ADAPTER
 #define MAX_ADDR_STR_SIZE (256)
 #else
-#define MAX_ADDR_STR_SIZE (40)
+/** Max Address could be "coaps://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx]:xxxxx */
+#define MAX_ADDR_STR_SIZE (56)
 #endif
 
 /** Max identity size. */
