@@ -24,7 +24,9 @@
  * This file provides APIs related to thread pool.
  */
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <errno.h>
 #include <pthread.h>
 #include "cathreadpool.h"

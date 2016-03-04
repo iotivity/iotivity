@@ -18,8 +18,12 @@
  *
  ******************************************************************/
 
+#ifndef __APPLE_USE_RFC_3542
 #define __APPLE_USE_RFC_3542 // for PKTINFO
+#endif
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE // for in6_pktinfo
+#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>

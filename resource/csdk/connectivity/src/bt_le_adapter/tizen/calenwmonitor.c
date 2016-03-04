@@ -20,23 +20,24 @@
 
 #include "caleinterface.h"
 
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<glib.h>
-#include<arpa/inet.h>
-#include<sys/types.h>
-#include<sys/socket.h>
-#include<netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <glib.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 #include <bluetooth.h>
 #include <bluetooth_internal.h>
 #include <bluetooth_type.h>
 
-
 #include "camutex.h"
 #include "caleadapter.h"
 #include "caadapterutils.h"
+#include "oic_string.h"
+#include "oic_malloc.h"
 
 /**
  * Logging tag for module name
@@ -340,7 +341,7 @@ void CALENWConnectionStateChangedCb(int result, bool connected,
     VERIFY_NON_NULL_VOID(remoteAddress, TAG, "remote address is NULL");
 
     ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
-    const char *addr = OICStrdup(remoteAddress);
+    char *addr = OICStrdup(remoteAddress);
     if (NULL == addr)
     {
         OIC_LOG(ERROR, TAG, "addr is NULL");
