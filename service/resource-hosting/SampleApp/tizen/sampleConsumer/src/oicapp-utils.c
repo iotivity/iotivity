@@ -79,9 +79,11 @@ char* oicapp_util_wifi()
     if(WIFI_ERROR_NONE != ret)
     {
         ERR("wifi_ap_get_ip_address() Fail");
+        wifi_ap_destroy(ap);
         return NULL;
     }
 
+    wifi_ap_destroy(ap);
     return ip_addr;
 }
 
