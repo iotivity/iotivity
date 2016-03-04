@@ -584,6 +584,15 @@ namespace RAML
         {
             readAllOf(itemAllOf , param);
         }
+        else
+        {
+            cJSON *itemOneOf = cJSON_GetObjectItem(item, "oneOf");
+            if (itemOneOf)
+            {
+                readAllOf(itemOneOf , param);
+            }
+        }
+
         cJSON *itemReference = cJSON_GetObjectItem(item, "$ref");
         if (itemReference)
         {
