@@ -172,6 +172,12 @@ cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}
 cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}-service
 cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}-test
 %endif
+cp resource/c_common/*.h %{buildroot}%{_includedir}
+
+cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
+cp service/easy-setup/inc/*.h %{buildroot}%{_includedir}
+cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
+
 
 %post -p /sbin/ldconfig
 

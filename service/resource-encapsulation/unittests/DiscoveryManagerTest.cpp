@@ -60,6 +60,9 @@ public:
         return m_task.get();
     }
 
+    ScopedTask(ScopedTask&&) = default;
+    ScopedTask& operator=(ScopedTask&&) = default;
+
 private:
     DiscoveryTaskPtr m_task;
 };
