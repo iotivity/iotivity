@@ -98,6 +98,12 @@ void CATerminateMessageHandler();
 void CAHandleRequestResponseCallbacks();
 
 /**
+ * Setting the Callback funtion for network state change callback.
+ * @param[in] nwMonitorHandler    callback for network state change.
+ */
+void CASetNetworkMonitorCallback(CANetworkMonitorCallback nwMonitorHandler);
+
+/**
  * To log the PDU data.
  * @param[in] pdu    pdu data.
  * @param[in] endpoint  endpoint

@@ -18,10 +18,6 @@
 *
 ******************************************************************/
 
-#include <bluetooth.h>
-#include <bluetooth_type.h>
-#include <bluetooth_internal.h>
-
 #include "caleserver.h"
 #include "cacommon.h"
 #include "cacommonutil.h"
