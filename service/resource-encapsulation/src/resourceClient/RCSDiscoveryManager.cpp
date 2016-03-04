@@ -28,6 +28,8 @@ namespace OIC
         RCSDiscoveryManager::DiscoveryTask::DiscoveryTask(unsigned int id) :
                 m_id { id } {}
 
+        RCSDiscoveryManager::DiscoveryTask::~DiscoveryTask() = default;
+
         bool RCSDiscoveryManager::DiscoveryTask::isCanceled()
         {
             return m_id == RCSDiscoveryManagerImpl::INVALID_ID;
