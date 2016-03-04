@@ -138,8 +138,8 @@ namespace OIC
     namespace Service
     {
 
-        RCSResourceObject::Builder::Builder(std::string uri, std::string type,
-                std::string interface) :
+        RCSResourceObject::Builder::Builder(std::string &&uri, std::string &&type,
+                std::string &&interface) :
                 m_uri{ std::move(uri) },
                 m_types{ std::move(type) },
                 m_interfaces{ },
@@ -154,6 +154,17 @@ namespace OIC
             {
                 m_defaultInterface = BASELINE_INTERFACE;
             }
+        }
+
+        RCSResourceObject::Builder::Builder(const std::string &uri, const std::string &type,
+                const std::string &interface) :
+                m_uri{ uri },
+                m_types{ type },
+                m_interfaces{ interface },
+                m_defaultInterface { BASELINE_INTERFACE },
+                m_properties{ OC_DISCOVERABLE | OC_OBSERVABLE },
+                m_resourceAttributes{ }
+        {
         }
 
         RCSResourceObject::Builder& RCSResourceObject::Builder::addInterface(std::string interface)
