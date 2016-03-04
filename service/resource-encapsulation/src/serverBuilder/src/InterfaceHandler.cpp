@@ -19,7 +19,7 @@ namespace
         RCSResourceObject::LockGuard lock{ resource, RCSResourceObject::AutoNotifyPolicy::NEVER };
 
         return RCSRepresentation{ resource.getUri(), resource.getInterfaces(), resource.getTypes(),
-            resource.getAttributes()};
+            resource.getAttributes() };
     }
 
     RCSRepresentation buildGetBaselineResponse(const RCSRequest&, const RCSResourceObject& resource)
@@ -44,22 +44,22 @@ namespace
             const RCSResourceObject& resource)
     {
         auto requestAttr = ResourceAttributesConverter::fromOCRepresentation(
-                (rcsRequest.getOCRequest())->getResourceRepresentation());
+                rcsRequest.getOCRequest()->getResourceRepresentation());
 
         RCSResourceObject::LockGuard lock{ resource, RCSResourceObject::AutoNotifyPolicy::NEVER };
 
         const RCSResourceAttributes& updatedAttr = resource.getAttributes();
 
-        for (auto& kvPair : requestAttr)
+        for (auto it = requestAttr.begin(); it != requestAttr.end();)
         {
-            if(updatedAttr.contains(kvPair.key()))
+            if(updatedAttr.contains(it->key()))
             {
-                kvPair.value() = updatedAttr.at(kvPair.key());
+                it->value() = updatedAttr.at(it->key());
+                ++it;
             }
             else
             {
-                //FIXME erase item with iterator.
-                requestAttr.erase(kvPair.key());
+                it = requestAttr.erase(it);
             }
         }
 
