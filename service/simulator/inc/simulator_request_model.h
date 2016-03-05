@@ -27,7 +27,7 @@
 class SimulatorRequestModel
 {
     public:
-        SimulatorRequestModel() = default;
+        SimulatorRequestModel();
         SimulatorRequestModel(RequestType type);
 
         RequestType getType() const;

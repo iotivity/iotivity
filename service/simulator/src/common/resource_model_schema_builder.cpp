@@ -216,12 +216,7 @@ std::shared_ptr<ArrayProperty> ResourceModelSchemaBuilder::buildArrayAttribute(
                 std::shared_ptr<IntegerProperty> elementProperty =
                     buildIntegerAttribute(elementAttribute);
 
-                if (arrayAttribute.isDefaultValue())
-                {
-                    auto defaultValue = boost::get<int>(arrayAttribute.getValue());
-                    elementProperty->setDefaultValue(defaultValue);
-                }
-
+                setArrayProperties(property, arrayProperty);
                 arrayProperty->setElementProperty(elementProperty);
             }
             break;
@@ -234,12 +229,7 @@ std::shared_ptr<ArrayProperty> ResourceModelSchemaBuilder::buildArrayAttribute(
                 std::shared_ptr<DoubleProperty> elementProperty =
                     buildDoubleAttribute(elementAttribute);
 
-                if (arrayAttribute.isDefaultValue())
-                {
-                    auto defaultValue = boost::get<double>(arrayAttribute.getValue());
-                    elementProperty->setDefaultValue(defaultValue);
-                }
-
+                setArrayProperties(property, arrayProperty);
                 arrayProperty->setElementProperty(elementProperty);
             }
             break;
@@ -252,12 +242,7 @@ std::shared_ptr<ArrayProperty> ResourceModelSchemaBuilder::buildArrayAttribute(
                 std::shared_ptr<BooleanProperty> elementProperty =
                     buildBooleanAttribute(elementAttribute);
 
-                if (arrayAttribute.isDefaultValue())
-                {
-                    auto defaultValue = boost::get<bool>(arrayAttribute.getValue());
-                    elementProperty->setDefaultValue(defaultValue);
-                }
-
+                setArrayProperties(property, arrayProperty);
                 arrayProperty->setElementProperty(elementProperty);
             }
             break;
@@ -270,12 +255,7 @@ std::shared_ptr<ArrayProperty> ResourceModelSchemaBuilder::buildArrayAttribute(
                 std::shared_ptr<StringProperty> elementProperty =
                     buildStringAttribute(elementAttribute);
 
-                if (arrayAttribute.isDefaultValue())
-                {
-                    auto defaultValue = boost::get<std::string>(arrayAttribute.getValue());
-                    elementProperty->setDefaultValue(defaultValue);
-                }
-
+                setArrayProperties(property, arrayProperty);
                 arrayProperty->setElementProperty(elementProperty);
             }
             break;
@@ -303,6 +283,7 @@ std::shared_ptr<ArrayProperty> ResourceModelSchemaBuilder::buildModelArrayAttrib
     }
 
     std::shared_ptr<ArrayProperty> arrayProperty = ArrayProperty::build();
+    setArrayProperties(property, arrayProperty);
     arrayProperty->setElementProperty(modelProperty);
 
     return arrayProperty;
@@ -323,4 +304,26 @@ std::shared_ptr<ModelProperty> ResourceModelSchemaBuilder::buildModelAttribute(
     }
 
     return modelProperty;
+}
+
+void ResourceModelSchemaBuilder::setArrayProperties(
+    const std::shared_ptr<RAML::Properties> &property,
+    const std::shared_ptr<ArrayProperty> &arrayProperty)
+{
+    for (auto &valueProperty : property->getValueProperties())
+    {
+        if (RAML::ValueProperty::Type::ARRAY == valueProperty->type())
+        {
+            int minItems = 0;
+            int maxItems = 0;
+            bool unique = false;
+            bool additionalItems = false;
+
+            valueProperty->valueArray(minItems, maxItems, unique, additionalItems);
+            arrayProperty->setRange(minItems, maxItems);
+            arrayProperty->setUnique(unique);
+            arrayProperty->setVariable(additionalItems);
+            break;
+        }
+    }
 }

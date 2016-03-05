@@ -62,6 +62,10 @@ class ResourceModelSchemaBuilder
         std::shared_ptr<ModelProperty> buildModelAttribute(
             const std::shared_ptr<RAML::Properties> &property);
 
+        void setArrayProperties(
+            const std::shared_ptr<RAML::Properties> &property,
+            const std::shared_ptr<ArrayProperty> &arrayProperty);
+
         std::shared_ptr<RAML::RequestResponseBody> m_ramlSchema;
 };
 

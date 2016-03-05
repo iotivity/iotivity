@@ -91,6 +91,9 @@ class SimulatorResourceFactory
         std::shared_ptr<SimulatorResource> buildResource(
             const std::shared_ptr<RAML::RamlResource> &ramlResource);
 
+        void addInterfaceFromQueryParameter(
+            std::vector<std::string> queryParamValue, std::vector<std::string> &interfaceTypes);
+
         SimulatorResourceFactory() = default;
         SimulatorResourceFactory(const SimulatorResourceFactory &) = delete;
         SimulatorResourceFactory &operator=(const SimulatorResourceFactory &) = delete;

@@ -27,7 +27,6 @@
 #define TAG "SIMULATOR_COLLECTION_RESOURCE"
 
 SimulatorCollectionResourceImpl::SimulatorCollectionResourceImpl()
-    :   m_resourceHandle(nullptr)
 {
     m_type = SimulatorResource::Type::COLLECTION_RESOURCE;
     m_interfaces.push_back(OC::LINK_INTERFACE);
@@ -36,6 +35,8 @@ SimulatorCollectionResourceImpl::SimulatorCollectionResourceImpl()
     // Add empty vector of OIC Links
     std::vector<SimulatorResourceModel> links;
     m_resModel.add("links", links);
+
+    m_resourceHandle = nullptr;
 }
 
 bool SimulatorCollectionResourceImpl::isCollection() const
@@ -181,12 +182,12 @@ void SimulatorCollectionResourceImpl::setModelChangeCallback(ResourceModelUpdate
 
 bool SimulatorCollectionResourceImpl::isObservable() const
 {
-    return (m_property & OC_OBSERVABLE);
+    return ((m_property & OC_OBSERVABLE) == OC_OBSERVABLE);
 }
 
 bool SimulatorCollectionResourceImpl::isDiscoverable() const
 {
-    return (m_property & OC_DISCOVERABLE);
+    return ((m_property & OC_DISCOVERABLE) == OC_DISCOVERABLE);
 }
 
 bool SimulatorCollectionResourceImpl::isStarted() const
@@ -596,8 +597,8 @@ void SimulatorCollectionResourceImpl::addLink(const SimulatorResourceSP &resourc
         std::string linkURI = link.get<std::string>("href");
         if (linkURI == resource->getURI())
         {
-            break;
             found = true;
+            break;
         }
     }
 

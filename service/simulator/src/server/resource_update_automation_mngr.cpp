@@ -38,7 +38,8 @@ int UpdateAutomationMngr::startResourceAutomation(
     std::lock_guard<std::mutex> lock(m_lock);
     resourceAutomation->start();
 
-    SIM_LOG(ILogger::INFO, "Resource automation successfully started [ id: " << m_id << " ]");
+    SIM_LOG(ILogger::INFO, "Resource automation started [URI: \"" << resource->getURI()
+            << "\", id: " << m_id << "].");
 
     m_resourceUpdationList[m_id] = resourceAutomation;
     return m_id++;
@@ -56,8 +57,8 @@ int UpdateAutomationMngr::startAttributeAutomation(
     std::lock_guard<std::mutex> lock(m_lock);
     attributeAutomation->start();
 
-    SIM_LOG(ILogger::INFO, "Automation for " << attrName << " attribute has successfully started [ id: "
-            << m_id << " ]");
+    SIM_LOG(ILogger::INFO, "Attribute automation started [Name: \"" << attrName << "\", id: "
+            << m_id << "].");
 
     m_attrUpdationList[m_id] = attributeAutomation;
     return m_id++;

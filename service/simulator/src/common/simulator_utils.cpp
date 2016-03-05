@@ -163,6 +163,5 @@ std::string getRequestString(const std::map<std::string, std::string> &queryPara
     }
 
     requestString << std::endl;
-    requestString << "Payload:  No payload";
     return requestString.str();
 }

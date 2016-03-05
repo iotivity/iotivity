@@ -41,7 +41,7 @@ class RangeValueGen : public AttributeValueGen
         TYPE m_cur;
 
     public:
-        RangeValueGen(TYPE min, TYPE max) : m_min(min), m_max(max), m_cur(m_min) {}
+        RangeValueGen(TYPE min, TYPE max) : m_min(min), m_max(max), m_cur(min) {}
 
         bool hasNext()
         {

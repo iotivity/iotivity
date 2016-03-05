@@ -120,7 +120,14 @@ class SimulatorResourceModel
             auto x = m_attributes.find(name);
             if (x != m_attributes.end())
             {
-                val = boost::get<T>(x->second);
+                try
+                {
+                    val = boost::get<T>(x->second);
+                }
+                catch (boost::bad_get &e)
+                {
+                    return val;
+                }
             }
             return val;
         }

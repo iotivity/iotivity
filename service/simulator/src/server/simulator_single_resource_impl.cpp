@@ -27,12 +27,18 @@
 #define TAG "SIMULATOR_SINGLE_RESOURCE"
 
 SimulatorSingleResourceImpl::SimulatorSingleResourceImpl()
-    :   m_resourceHandle(nullptr)
 {
     m_type = SimulatorResource::Type::SINGLE_RESOURCE;
     m_interfaces.push_back(OC::DEFAULT_INTERFACE);
     m_property = static_cast<OCResourceProperty>(OC_DISCOVERABLE | OC_OBSERVABLE);
     m_resModelSchema = SimulatorResourceModelSchema::build();
+
+    // Set resource supports GET, PUT and POST by default
+    m_requestModels["GET"] = nullptr;
+    m_requestModels["POST"] = nullptr;
+    m_requestModels["PUT"] = nullptr;
+
+    m_resourceHandle = nullptr;
 }
 
 void SimulatorSingleResourceImpl::setName(const std::string &name)
@@ -55,7 +61,6 @@ void SimulatorSingleResourceImpl::setURI(const std::string &uri)
     m_uri = uri;
 }
 
-// TODO: Support adding multiple resource types for a resource
 void SimulatorSingleResourceImpl::setResourceType(const std::string &resourceType)
 {
     VALIDATE_INPUT(resourceType.empty(), "Resource type is empty!")
@@ -70,7 +75,6 @@ void SimulatorSingleResourceImpl::setResourceType(const std::string &resourceTyp
     m_resourceType = resourceType;
 }
 
-// TODO:  Assuming baseline is not mandatory to be present always.
 void SimulatorSingleResourceImpl::setInterface(const std::string &interfaceType)
 {
     VALIDATE_INPUT(interfaceType.empty(), "Interface type list is empty!")
@@ -85,7 +89,6 @@ void SimulatorSingleResourceImpl::setInterface(const std::string &interfaceType)
     m_interfaces = {interfaceType};
 }
 
-// TODO:  Assuming baseline is not mandatory to be present always.
 void SimulatorSingleResourceImpl::setInterface(const std::vector<std::string> &interfaceTypes)
 {
     VALIDATE_INPUT(interfaceTypes.empty(), "Interface type list is empty!")
@@ -97,9 +100,15 @@ void SimulatorSingleResourceImpl::setInterface(const std::vector<std::string> &i
                                  "Resource interface can not be reset when resource is started!");
     }
 
-    m_interfaces = interfaceTypes;
-    auto lastElement = std::unique(m_interfaces.begin(), m_interfaces.end());
-    m_interfaces.erase(lastElement, m_interfaces.end());
+    m_interfaces.clear();
+    for (auto &interfaceType : interfaceTypes)
+    {
+        if (m_interfaces.end() ==
+            std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType))
+        {
+            m_interfaces.push_back(interfaceType);
+        }
+    }
 }
 
 void SimulatorSingleResourceImpl::addInterface(const std::string &interfaceType)
@@ -108,7 +117,8 @@ void SimulatorSingleResourceImpl::addInterface(const std::string &interfaceType)
 
     if (m_interfaces.end() != std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType))
     {
-        SIM_LOG(ILogger::ERROR, "Resource already supporting this Interface: " << interfaceType);
+        SIM_LOG(ILogger::ERROR, "[" << m_uri << "] "
+                << "Resource already supporting this Interface: " << interfaceType)
         return;
     }
 
@@ -170,12 +180,12 @@ void SimulatorSingleResourceImpl::setModelChangeCallback(ResourceModelUpdateCall
 
 bool SimulatorSingleResourceImpl::isObservable() const
 {
-    return (m_property & OC_OBSERVABLE);
+    return ((m_property & OC_OBSERVABLE) == OC_OBSERVABLE);
 }
 
 bool SimulatorSingleResourceImpl::isDiscoverable() const
 {
-    return (m_property & OC_DISCOVERABLE);
+    return ((m_property & OC_DISCOVERABLE) == OC_DISCOVERABLE);
 }
 
 bool SimulatorSingleResourceImpl::isStarted() const
@@ -188,7 +198,7 @@ void SimulatorSingleResourceImpl::start()
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (m_resourceHandle)
     {
-        SIM_LOG(ILogger::INFO, "[" << m_name << "] " << "Resource already started!")
+        SIM_LOG(ILogger::ERROR, "[" << m_uri << "] " << "Resource already started!")
         return;
     }
 
@@ -229,7 +239,7 @@ void SimulatorSingleResourceImpl::stop()
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (!m_resourceHandle)
     {
-        SIM_LOG(ILogger::INFO, "[" << m_name << "] " << "Resource is not started yet!")
+        SIM_LOG(ILogger::ERROR, "[" << m_uri << "] " << "Resource is not started yet!")
         return;
     }
 
@@ -325,17 +335,31 @@ bool SimulatorSingleResourceImpl::addAttribute(
         return false;
     }
 
+    // Add attribute to resource representation and its schema
     std::lock_guard<std::recursive_mutex> modelLock(m_modelLock);
     std::lock_guard<std::mutex> schemaLock(m_modelSchemaLock);
 
-    if (!m_resModel.contains(attribute.getName()))
+    if (!m_resModel.add(attribute.getName(), attribute.getValue()))
     {
-        m_resModel.add(attribute.getName(), attribute.getValue());
-        m_resModelSchema->add(attribute.getName(), attribute.getProperty());
-        return true;
+        return false;
     }
 
-    return false;
+    m_resModelSchema->add(attribute.getName(), attribute.getProperty());
+
+    if (notify && isStarted())
+    {
+        try
+        {
+            notifyAll();
+        }
+        catch (SimulatorException &e)
+        {
+            SIM_LOG(ILogger::ERROR, "[" << m_uri << "] " << "Error when notifying the observers!")
+        }
+        notifyApp();
+    }
+
+    return true;
 }
 
 bool SimulatorSingleResourceImpl::updateAttributeValue(
@@ -346,25 +370,35 @@ bool SimulatorSingleResourceImpl::updateAttributeValue(
         return false;
     }
 
-    std::lock_guard<std::recursive_mutex> modelLock(m_modelLock);
-    if (m_resModel.update(attribute.getName(), attribute.getValue()))
+    // Validate the new value against attribute schema property
+    std::lock_guard<std::mutex> schemaLock(m_modelSchemaLock);
+    auto property = m_resModelSchema->get(attribute.getName());
+    if (!(property->validate(attribute.getValue())))
     {
-        if (notify && isStarted())
-        {
-            try
-            {
-                notifyAll();
-            }
-            catch (SimulatorException &e)
-            {
-                SIM_LOG(ILogger::ERROR, "Error when notifying the observers.")
-            }
-            notifyApp();
-        }
-        return true;
+        return false;
     }
 
-    return false;
+    // Update the attribute value
+    std::lock_guard<std::recursive_mutex> modelLock(m_modelLock);
+    if (!m_resModel.update(attribute.getName(), attribute.getValue()))
+    {
+        return false;
+    }
+
+    if (notify && isStarted())
+    {
+        try
+        {
+            notifyAll();
+        }
+        catch (SimulatorException &e)
+        {
+            SIM_LOG(ILogger::ERROR, "[" << m_uri << "] " << "Error when notifying the observers!")
+        }
+        notifyApp();
+    }
+
+    return true;
 }
 
 bool SimulatorSingleResourceImpl::removeAttribute(
@@ -375,10 +409,28 @@ bool SimulatorSingleResourceImpl::removeAttribute(
         return false;
     }
 
+    // Remove attribute from resource representation and its schema
     std::lock_guard<std::recursive_mutex> modelLock(m_modelLock);
     std::lock_guard<std::mutex> schemaLock(m_modelSchemaLock);
-    m_resModel.remove(attrName);
+
     m_resModelSchema->remove(attrName);
+    if (!m_resModel.remove(attrName))
+    {
+        return false;
+    }
+
+    if (notify && isStarted())
+    {
+        try
+        {
+            notifyAll();
+        }
+        catch (SimulatorException &e)
+        {
+            SIM_LOG(ILogger::ERROR, "[" << m_uri << "] " << "Error when notifying the observers!")
+        }
+        notifyApp();
+    }
 
     return true;
 }
@@ -522,7 +574,7 @@ bool SimulatorSingleResourceImpl::updateResourceModel(const SimulatorResourceMod
         }
         catch (SimulatorException &e)
         {
-            SIM_LOG(ILogger::ERROR, "Error when notifying the observers.")
+            SIM_LOG(ILogger::ERROR, "[" << m_uri << "] " << "Error when notifying the observers!")
         }
         notifyApp();
     }
@@ -581,7 +633,6 @@ void SimulatorSingleResourceImpl::setCommonProperties(OC::OCRepresentation &ocRe
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     ocResRep.setValue("rt", m_resourceType);
     ocResRep.setValue("if", m_interfaces);
-    // TODO: How to set property "p" ????
     ocResRep.setValue("n", m_name);
 }
 
@@ -602,7 +653,7 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleRequests(
         {
             OC::OCRepresentation rep = request->getResourceRepresentation();
             std::string payload = getPayloadString(rep);
-            SIM_LOG(ILogger::INFO, "[" << m_name << "] " << request->getRequestType()
+            SIM_LOG(ILogger::INFO, "[" << m_uri << "] " << request->getRequestType()
                     << " request received. \n**Payload details**\n" << payload)
         }
 
@@ -632,14 +683,16 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleRequests(
         if (OC::ObserveAction::ObserveRegister == observationInfo.action)
         {
             addObserver(observationInfo);
-            SIM_LOG(ILogger::INFO, "[" << m_uri << "] Observer added [id: " << observationInfo.obsId <<
-                    ", address: " << observationInfo.address << "port: " << observationInfo.port << "]");
+            SIM_LOG(ILogger::INFO, "[" << m_uri << "] Observer added [id: "
+                    << (int)observationInfo.obsId << ", address: " << observationInfo.address
+                    << ", port: " << observationInfo.port << "].");
         }
         else if (OC::ObserveAction::ObserveUnregister == observationInfo.action)
         {
             removeObserver(observationInfo);
-            SIM_LOG(ILogger::INFO, "[" << m_uri << "] Observer removed [id: " << observationInfo.obsId <<
-                    ", address: " << observationInfo.address << "port: " << observationInfo.port << "]");
+            SIM_LOG(ILogger::INFO, "[" << m_uri << "] Observer removed [id: "
+                    << (int)observationInfo.obsId << ", address: " << observationInfo.address
+                    << ", port: " << observationInfo.port << "].");
         }
     }
 
@@ -691,11 +744,10 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleGET(
     // Check if resource support GET request
     if (m_requestModels.end() == m_requestModels.find("GET"))
     {
-        SIM_LOG(ILogger::INFO, "Resource does not support GET request!")
+        SIM_LOG(ILogger::ERROR, "[" << m_uri << "] "
+                << "Resource does not support GET request!")
         return sendResponse(request, 405, OC_EH_ERROR);
     }
-
-    RequestModelSP requestModel = m_requestModels["GET"];
 
     // Handling interface query parameter "if"
     auto interfaceType = m_interfaces[0];
@@ -707,7 +759,8 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleGET(
 
     if (!isValidInterface(interfaceType, "GET"))
     {
-        SIM_LOG(ILogger::INFO, "Invalid interface type: " << interfaceType)
+        SIM_LOG(ILogger::ERROR, "[" << m_uri << "] "
+                << "GET request received on invalid interface : " << interfaceType)
         return OC_EH_ERROR;
     }
 
@@ -721,16 +774,7 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleGET(
         setCommonProperties(resourceRep);
     }
 
-    if (OC_EH_OK == sendResponse(request, 200, OC_EH_OK, resourceRep, interfaceType))
-    {
-        SIM_LOG(ILogger::INFO, "[" << m_uri <<
-                "] Sent response for GET request \n**Payload details**" <<
-                getPayloadString(resourceRep))
-        return OC_EH_OK;
-    }
-
-    SIM_LOG(ILogger::INFO, "[" << m_uri << "] Failed to send response for GET request!")
-    return OC_EH_ERROR;
+    return sendResponse(request, 200, OC_EH_OK, resourceRep, interfaceType);
 }
 
 OCEntityHandlerResult SimulatorSingleResourceImpl::handlePUT(
@@ -739,11 +783,10 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handlePUT(
     // Check if resource support PUT request
     if (m_requestModels.end() == m_requestModels.find("PUT"))
     {
-        SIM_LOG(ILogger::INFO, "Resource does not support PUT request!")
+        SIM_LOG(ILogger::ERROR, "[" << m_uri << "] "
+                << "Resource does not support PUT request!")
         return sendResponse(request, 405, OC_EH_ERROR);
     }
-
-    RequestModelSP requestModel = m_requestModels["PUT"];
 
     // Handling interface query parameter "if"
     auto interfaceType = m_interfaces[0];
@@ -755,24 +798,34 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handlePUT(
 
     if (!isValidInterface(interfaceType, "PUT"))
     {
-        SIM_LOG(ILogger::INFO, "Invalid interface type: " << interfaceType)
+        SIM_LOG(ILogger::ERROR, "[" << m_uri << "] "
+                << "PUT request received on invalid interface : " << interfaceType)
         return OC_EH_ERROR;
     }
 
     OC::OCRepresentation reqOcRep = request->getResourceRepresentation();
     SimulatorResourceModel reqResModel = SimulatorResourceModel::build(reqOcRep);
     SimulatorResourceModel updatedResModel;
-    if (true == updateResourceModel(reqResModel, updatedResModel, true))
+    if (true == updateResourceModel(reqResModel, updatedResModel, true, false))
     {
         auto ocRep = updatedResModel.asOCRepresentation();
         auto result = sendResponse(request, 200, OC_EH_OK,
                                    ocRep, m_interfaces[0]);
         notifyApp(updatedResModel);
-        notifyAll();
+        try
+        {
+            notifyAll();
+        }
+        catch (SimulatorException &e)
+        {
+            SIM_LOG(ILogger::ERROR, "[" << m_uri << "] "
+                    << "Error when notifying the observers!")
+        }
+
         return result;
     }
 
-    SIM_LOG(ILogger::ERROR, "Updating resource representation failed!");
+    SIM_LOG(ILogger::ERROR, "[" << m_uri << "] " << "Updating resource representation failed!")
     return sendResponse(request, 400, OC_EH_ERROR);
 }
 
@@ -782,11 +835,10 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handlePOST(
     // Check if resource support PUT request
     if (m_requestModels.end() == m_requestModels.find("POST"))
     {
-        SIM_LOG(ILogger::INFO, "Resource does not support POST request!")
+        SIM_LOG(ILogger::ERROR, "[" << m_uri << "] "
+                << "Resource does not support POST request!")
         return sendResponse(request, 405, OC_EH_ERROR);
     }
-
-    RequestModelSP requestModel = m_requestModels["POST"];
 
     // Handling interface query parameter "if"
     auto interfaceType = m_interfaces[0];
@@ -798,31 +850,43 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handlePOST(
 
     if (!isValidInterface(interfaceType, "POST"))
     {
-        SIM_LOG(ILogger::INFO, "Invalid interface type: " << interfaceType)
+        SIM_LOG(ILogger::ERROR, "[" << m_uri << "] "
+                << "POST request received on invalid interface : " << interfaceType)
         return OC_EH_ERROR;
     }
 
     OC::OCRepresentation reqOcRep = request->getResourceRepresentation();
     SimulatorResourceModel reqResModel = SimulatorResourceModel::build(reqOcRep);
     SimulatorResourceModel updatedResModel;
-    if (true == updateResourceModel(reqResModel, updatedResModel))
+    if (true == updateResourceModel(reqResModel, updatedResModel, false, false))
     {
         auto ocRep = updatedResModel.asOCRepresentation();
         auto result = sendResponse(request, 200, OC_EH_OK,
                                    ocRep, m_interfaces[0]);
         notifyApp(updatedResModel);
-        notifyAll();
+        try
+        {
+            notifyAll();
+        }
+        catch (SimulatorException &e)
+        {
+            SIM_LOG(ILogger::ERROR, "[" << m_uri << "] "
+                    << "Error when notifying the observers!")
+        }
+
         return result;
     }
 
-    SIM_LOG(ILogger::ERROR, "Updating resource representation failed!");
+    SIM_LOG(ILogger::ERROR, "[" << m_uri << "] " << "Updating resource representation failed!")
     return sendResponse(request, 400, OC_EH_ERROR);
 }
 
 OCEntityHandlerResult SimulatorSingleResourceImpl::handleDELETE(
     const std::shared_ptr<OC::OCResourceRequest> &request)
 {
-    return OC_EH_ERROR;
+    SIM_LOG(ILogger::ERROR, "[" << m_uri << "] "
+            << "Resource does not support DELETE request!")
+    return sendResponse(request, 405, OC_EH_ERROR);;
 }
 
 bool SimulatorSingleResourceImpl::isValidInterface(const std::string &interfaceType,
@@ -857,15 +921,20 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::sendResponse(
     response->setResponseResult(responseResult);
     if (OC_STACK_OK != OC::OCPlatform::sendResponse(response))
     {
+        SIM_LOG(ILogger::ERROR, "[" << m_uri << "] Failed to send response for " <<
+            request->getRequestType() <<" request!")
         return OC_EH_ERROR;
     }
+
+    SIM_LOG(ILogger::INFO, "[" << m_uri << "] Sent response for " <<
+        request->getRequestType() << " request.")
 
     return OC_EH_OK;
 }
 
 OCEntityHandlerResult SimulatorSingleResourceImpl::sendResponse(
     const std::shared_ptr<OC::OCResourceRequest> &request, const int errorCode,
-    OCEntityHandlerResult responseResult, OC::OCRepresentation &Payload,
+    OCEntityHandlerResult responseResult, OC::OCRepresentation &payload,
     const std::string &interfaceType)
 {
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse());
@@ -873,11 +942,17 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::sendResponse(
     response->setResourceHandle(request->getResourceHandle());
     response->setErrorCode(errorCode);
     response->setResponseResult(responseResult);
-    response->setResourceRepresentation(Payload, interfaceType);
+    response->setResourceRepresentation(payload, interfaceType);
     if (OC_STACK_OK != OC::OCPlatform::sendResponse(response))
     {
+        SIM_LOG(ILogger::ERROR, "[" << m_uri << "] Failed to send response for " <<
+            request->getRequestType() <<" request!")
         return OC_EH_ERROR;
     }
+
+    SIM_LOG(ILogger::INFO, "[" << m_uri << "] Sent response for " <<
+        request->getRequestType() << " request \n\n" <<
+        "**Payload details**" << getPayloadString(payload))
 
     return OC_EH_OK;
 }

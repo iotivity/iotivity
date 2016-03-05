@@ -111,7 +111,13 @@ void AttributeUpdateAutomation::updateAttribute(SimulatorResourceAttribute attri
     if (!m_stopRequested)
     {
         OC_LOG_V(DEBUG, ATAG, "Attribute:%s automation is completed!", m_attrName.c_str());
-        SIM_LOG(ILogger::INFO, "Automation of " << m_attrName << " attribute is completed.");
+        SIM_LOG(ILogger::INFO, "Attribute automation completed [Name: \"" << m_attrName
+                    << "\", id: " << m_id <<"].");
+    }
+    else
+    {
+        SIM_LOG(ILogger::INFO, "Attribute automation stopped [Name: \"" << m_attrName
+                    << "\", id: " << m_id <<"].");
     }
 
     // Notify application through callback
@@ -203,7 +209,13 @@ void ResourceUpdateAutomation::updateAttributes(
     if (!m_stopRequested)
     {
         OC_LOG_V(DEBUG, ATAG, "Resource update automation complete [id: %d]!", m_id);
-        SIM_LOG(ILogger::INFO, "Resource update automation complete [id: " << m_id << "]");
+        SIM_LOG(ILogger::INFO, "Resource automation completed [URI: \"" << m_resource->getURI()
+                << "\", id: " << m_id << "].");
+    }
+    else
+    {
+        SIM_LOG(ILogger::INFO, "Resource automation stopped [URI: \"" << m_resource->getURI()
+                << "\", id: " << m_id <<"].");
     }
 
     // Notify application

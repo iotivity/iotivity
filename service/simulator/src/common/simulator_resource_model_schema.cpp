@@ -42,6 +42,33 @@ static AttributeValueVariant buildArrayValue(int depth, AttributeValueVariant &c
     return arrayValue;
 }
 
+template <typename T, typename=void>
+struct UniquenessChecker
+{
+    static bool get(const std::vector<T> &/*value*/)
+    {
+        return true;
+    }
+};
+
+template <typename T>
+struct UniquenessChecker<T, typename std::enable_if<
+    std::is_same<T, int>::value
+    || std::is_same<T, double>::value
+    || std::is_same<T, bool>::value
+    || std::is_same<T, std::string>::value
+    >::type >
+{
+    static bool get(const std::vector<T> &value)
+    {
+        std::vector<T> valueCopy = value;
+        std::sort(valueCopy.begin(), valueCopy.end());
+        if(valueCopy.end() != std::unique(valueCopy.begin(), valueCopy.end()))
+            return false;
+        return true;
+    }
+};
+
 class IntegerValidator : public boost::static_visitor<bool>
 {
     public:
@@ -121,13 +148,15 @@ class ArrayValidator : public boost::static_visitor<bool>
         bool operator ()(const std::vector<T> &value)
         {
             // Validating length of array
-            if (m_property->hasRange())
+            if (!checkLength(value))
             {
-                if (value.size() < m_property->getMinItems()
-                    || (value.size() > m_property->getMaxItems() && !m_property->isVariable()))
-                {
-                    return false;
-                }
+                return false;
+            }
+
+            // Validate the uniqueness of elements of array
+            if (!checkUniqueness(value))
+            {
+                return false;
             }
 
             // Validating elements of array
@@ -147,6 +176,32 @@ class ArrayValidator : public boost::static_visitor<bool>
         }
 
     private:
+        template <typename T>
+        bool checkLength(const std::vector<T> &value)
+        {
+            if (m_property->hasRange())
+            {
+                if (value.size() < m_property->getMinItems()
+                    || (value.size() > m_property->getMaxItems() && !m_property->isVariable()))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        template <typename T>
+        bool checkUniqueness(const std::vector<T> &value)
+        {
+            if (m_property->isUnique())
+            {
+                return UniquenessChecker<T>::get(value);
+            }
+
+            return true;
+        }
+
         std::shared_ptr<ArrayProperty> m_property;
 };
 
@@ -181,6 +236,8 @@ AttributeProperty::Type AttributeProperty::getType() const
 IntegerProperty::IntegerProperty(int defaultValue)
     : AttributeProperty(AttributeProperty::Type::INTEGER),
       m_defaultValue(defaultValue),
+      m_min(0),
+      m_max(0),
       m_hasRange(false) {}
 
 std::shared_ptr<IntegerProperty> IntegerProperty::build(int defaultValue)
@@ -290,6 +347,8 @@ AttributeValueVariant IntegerProperty::buildValue()
 DoubleProperty::DoubleProperty(double defaultValue)
     : AttributeProperty(AttributeProperty::Type::DOUBLE),
       m_defaultValue(defaultValue),
+      m_min(0),
+      m_max(0),
       m_hasRange(false) {}
 
 std::shared_ptr<DoubleProperty> DoubleProperty::build(double defaultValue)
@@ -438,6 +497,8 @@ AttributeValueVariant BooleanProperty::buildValue()
 StringProperty::StringProperty(const std::string &defaultValue)
     : AttributeProperty(AttributeProperty::Type::STRING),
       m_defaultValue(defaultValue),
+      m_min(0),
+      m_max(0),
       m_hasRange(false) {}
 
 std::shared_ptr<StringProperty> StringProperty::build(const std::string &defaultValue)
@@ -552,6 +613,8 @@ AttributeValueVariant StringProperty::buildValue()
 
 ArrayProperty::ArrayProperty()
     :   AttributeProperty(AttributeProperty::Type::ARRAY),
+        m_min(0),
+        m_max(0),
         m_isVariableSize(false),
         m_isUnique(false),
         m_hasRange(false) {}

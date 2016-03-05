@@ -19,6 +19,10 @@
  ******************************************************************/
 #include "simulator_request_model.h"
 
+SimulatorRequestModel::SimulatorRequestModel()
+    : m_type(RequestType::RQ_TYPE_UNKNOWN),
+        m_reqBodySchema(nullptr) {}
+
 SimulatorRequestModel::SimulatorRequestModel(RequestType type)
     : m_type(type) {}
 

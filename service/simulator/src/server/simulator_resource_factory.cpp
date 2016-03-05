@@ -142,18 +142,36 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
     std::string resourceURI = ramlResource->getResourceUri();
     std::string resourceName = ramlResource->getDisplayName();
     std::string resourceType;
+
+    // Extracting resource type.
     if (resourceModel.contains("rt"))
     {
         resourceType = resourceModel.get<std::string>("rt");
         resourceModel.remove("rt");
     }
-
-    if (resourceModel.contains("resourceType"))
+    else if (resourceModel.contains("resourceType"))
     {
         resourceType = resourceModel.get<std::string>("resourceType");
         resourceModel.remove("resourceType");
     }
 
+    // Construct resource type from uri
+    if(resourceType.empty())
+    {
+        std::ostringstream rtString;
+        rtString << "oic.r.";
+
+        size_t pos = resourceURI.rfind("/");
+        if (pos == std::string::npos)
+            pos = -1;
+
+        std::string rtName = resourceURI.substr(pos+1);
+        std::transform(rtName.begin(), rtName.end(), rtName.begin(), ::tolower);
+        rtString << rtName;
+        resourceType = rtString.str();
+    }
+
+    // Extracting interface type.
     std::vector<std::string> interfaceTypes;
     if (resourceModel.contains("if"))
     {
@@ -162,19 +180,28 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
         {
             interfaceTypes.push_back(resourceModel.get<std::string>("if"));
         }
-        else if(AttributeValueType::STRING == typeInfo.baseType()
-            && AttributeValueType::VECTOR == typeInfo.type()
+        else if(AttributeValueType::VECTOR == typeInfo.type()
+            && AttributeValueType::STRING == typeInfo.baseType()
             && typeInfo.depth() == 1)
         {
             interfaceTypes = resourceModel.get<std::vector<std::string>>("if");
+            if (interfaceTypes.size() > 1)
+                interfaceTypes.erase(interfaceTypes.begin()+1, interfaceTypes.end());
         }
-        else
-        {
-            return nullptr;
-        }
+
         resourceModel.remove("if");
     }
 
+    for (auto &requestModel : requestModels)
+    {
+        if (requestModel.second)
+        {
+            addInterfaceFromQueryParameter((requestModel.second)->getQueryParams("if"),
+                interfaceTypes);
+        }
+    }
+
+    // Remove properties which are not part of resource representation
     resourceModel.remove("p");
     resourceModel.remove("n");
     resourceModel.remove("id");
@@ -188,7 +215,8 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
 
         collectionRes->setName(resourceName);
         collectionRes->setResourceType(resourceType);
-        collectionRes->setInterface(interfaceTypes);
+        if (interfaceTypes.size() > 0)
+            collectionRes->setInterface(interfaceTypes);
         collectionRes->setURI(ResourceURIFactory::getInstance()->makeUniqueURI(resourceURI));
 
         // Set the resource model and its schema to simulated resource
@@ -205,7 +233,8 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
 
         singleRes->setName(resourceName);
         singleRes->setResourceType(resourceType);
-        singleRes->setInterface(interfaceTypes);
+        if (interfaceTypes.size() > 0)
+            singleRes->setInterface(interfaceTypes);
         singleRes->setURI(ResourceURIFactory::getInstance()->makeUniqueURI(resourceURI));
 
         // Set the resource model and its schema to simulated resource
@@ -217,6 +246,19 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
     }
 
     return simResource;
+}
+
+void SimulatorResourceFactory::addInterfaceFromQueryParameter(
+    std::vector<std::string> queryParamValue, std::vector<std::string> &interfaceTypes)
+{
+    for (auto &interfaceType : queryParamValue)
+    {
+        if (interfaceTypes.end() ==
+            std::find(interfaceTypes.begin(), interfaceTypes.end(), interfaceType))
+        {
+            interfaceTypes.push_back(interfaceType);
+        }
+    }
 }
 
 ResourceURIFactory *ResourceURIFactory::getInstance()

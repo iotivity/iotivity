@@ -118,7 +118,6 @@ bool AttributeCombinationGen::next(SimulatorResourceModel &resModel)
     {
         updateAttributeInModel(m_index);
         resModel = m_resModel;
-        return true;
     }
     else
     {
@@ -140,10 +139,9 @@ bool AttributeCombinationGen::next(SimulatorResourceModel &resModel)
         }
 
         resModel = m_resModel;
-        return true;
     }
 
-    return false;
+    return true;
 }
 
 void AttributeCombinationGen::updateAttributeInModel(int index)

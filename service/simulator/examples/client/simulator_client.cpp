@@ -115,7 +115,7 @@ class ClientController
 
             int index = 1;
             std::vector<std::string> ids;
-            for (auto & resourceEntry : m_resList)
+            for (auto &resourceEntry : m_resList)
             {
                 std::cout << index++ << ": " << (resourceEntry.second)->getURI() << "[" <<
                           (resourceEntry.second)->getHost()  << "]" << std::endl;
@@ -187,13 +187,13 @@ class ClientController
             std::cout << "Host: " << resource->getHost().c_str() << std::endl;
             std::cout << "ID: " << resource->getID().c_str() << std::endl;
             std::cout << "Resource Types: ";
-            for (auto & type : resource->getResourceTypes())
+            for (auto &type : resource->getResourceTypes())
                 std::cout << type << " ";
             std::cout << "\nInterface Types: ";
-            for (auto & type : resource->getInterface())
+            for (auto &type : resource->getInterface())
                 std::cout << type << " ";
             std::cout << std::boolalpha << "\nisObservable : " << resource->isObservable()
-                    << std::noboolalpha << std::endl;
+                      << std::noboolalpha << std::endl;
             std::cout << "#############################" << std::endl;
         }
 
@@ -204,11 +204,11 @@ class ClientController
 
             // callback implementaion
             SimulatorRemoteResource::ObserveNotificationCallback callback =
-                [](const std::string &uid, SimulatorResult result,
-                    const SimulatorResourceModel &rep, int seq)
+                [](const std::string & uid, SimulatorResult result,
+                   const SimulatorResourceModel & rep, int seq)
             {
                 std::cout << "\nObserve notification received ###[errorcode:  " << result <<
-                    " seq:  " << seq << "UID: " << uid << "]" << std::endl;
+                          " seq:  " << seq << "UID: " << uid << "]" << std::endl;
 
                 std::cout << "Representation is: " << std::endl;
                 std::cout << rep.asString() << std::endl;
@@ -222,12 +222,12 @@ class ClientController
             catch (InvalidArgsException &e)
             {
                 std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
-                        << e.what() << "]" << std::endl;
+                          << e.what() << "]" << std::endl;
             }
             catch (SimulatorException &e)
             {
                 std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
         }
 
@@ -244,7 +244,7 @@ class ClientController
             catch (SimulatorException &e)
             {
                 std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
         }
 
@@ -255,10 +255,10 @@ class ClientController
 
             // callback implementaion
             SimulatorRemoteResource::ResponseCallback callback =
-                [](const std::string &uid, SimulatorResult result, const SimulatorResourceModel &rep)
+                [](const std::string & uid, SimulatorResult result, const SimulatorResourceModel & rep)
             {
                 std::cout << "\nGET Response received ### [errorcode:  " << result << "]"
-                        << std::endl;
+                          << std::endl;
                 std::cout << "UID is: " << uid << std::endl;
                 std::cout << "Representation is: " << std::endl;
                 std::cout << rep.asString() << std::endl;
@@ -272,17 +272,17 @@ class ClientController
             catch (InvalidArgsException &e)
             {
                 std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
-                        << e.what() << "]" << std::endl;
+                          << e.what() << "]" << std::endl;
             }
             catch (NoSupportException &e)
             {
                 std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
             catch (SimulatorException &e)
             {
                 std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
         }
 
@@ -293,10 +293,10 @@ class ClientController
 
             // callback implementaion
             SimulatorRemoteResource::ResponseCallback callback =
-                [](const std::string &uid, SimulatorResult result, const SimulatorResourceModel &rep)
+                [](const std::string & uid, SimulatorResult result, const SimulatorResourceModel & rep)
             {
                 std::cout << "\nPUT Response received ![errorcode:  " << result << "]"
-                        << std::endl;
+                          << std::endl;
                 std::cout << "UID is: " << uid << std::endl;
                 std::cout << "Representation is: " << std::endl;
                 std::cout << rep.asString() << std::endl;
@@ -314,17 +314,17 @@ class ClientController
             catch (InvalidArgsException &e)
             {
                 std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
-                        << e.what() << "]" << std::endl;
+                          << e.what() << "]" << std::endl;
             }
             catch (NoSupportException &e)
             {
                 std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
             catch (SimulatorException &e)
             {
                 std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
         }
 
@@ -335,10 +335,10 @@ class ClientController
 
             // callback implementaion
             SimulatorRemoteResource::ResponseCallback callback =
-                [](const std::string &uid, SimulatorResult result, const SimulatorResourceModel &rep)
+                [](const std::string & uid, SimulatorResult result, const SimulatorResourceModel & rep)
             {
                 std::cout << "\nPOST Response received ![errorcode:  " << result << "]"
-                        << std::endl;
+                          << std::endl;
                 std::cout << "UID is: " << uid << std::endl;
                 std::cout << "Representation is: " << std::endl;
                 std::cout << rep.asString() << std::endl;
@@ -356,17 +356,17 @@ class ClientController
             catch (InvalidArgsException &e)
             {
                 std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
-                        << e.what() << "]" << std::endl;
+                          << e.what() << "]" << std::endl;
             }
             catch (NoSupportException &e)
             {
                 std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
             catch (SimulatorException &e)
             {
                 std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
         }
 
@@ -376,11 +376,11 @@ class ClientController
             if (!resource) return;
 
             SimulatorRemoteResource::AutoRequestGenerationCallback callback =
-                [] (const std::string &uid, int sessionId, OperationState state)
+                [] (const std::string & uid, int sessionId, OperationState state)
             {
                 std::cout << "\nResource verification status received ![id:  " << sessionId <<
-                        "  State: " << getOperationStateString(state) << " UID: " << uid << "]" <<
-                        std::endl;
+                          "  State: " << getOperationStateString(state) << " UID: " << uid << "]" <<
+                          std::endl;
             };
 
             try
@@ -391,17 +391,17 @@ class ClientController
             catch (InvalidArgsException &e)
             {
                 std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
-                        << e.what() << "]" << std::endl;
+                          << e.what() << "]" << std::endl;
             }
             catch (NoSupportException &e)
             {
                 std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
             catch (SimulatorException &e)
             {
                 std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
         }
 
@@ -411,11 +411,11 @@ class ClientController
             if (!resource) return;
 
             SimulatorRemoteResource::AutoRequestGenerationCallback callback =
-                [] (const std::string &uid, int sessionId, OperationState state)
+                [] (const std::string & uid, int sessionId, OperationState state)
             {
                 std::cout << "\nResource verification status received ![id:  " << sessionId <<
-                        "  State: " << getOperationStateString(state) << " UID: " << uid << "]" <<
-                        std::endl;
+                          "  State: " << getOperationStateString(state) << " UID: " << uid << "]" <<
+                          std::endl;
             };
 
             try
@@ -426,17 +426,17 @@ class ClientController
             catch (InvalidArgsException &e)
             {
                 std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
-                        << e.what() << "]" << std::endl;
+                          << e.what() << "]" << std::endl;
             }
             catch (NoSupportException &e)
             {
                 std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
             catch (SimulatorException &e)
             {
                 std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
         }
 
@@ -446,11 +446,11 @@ class ClientController
             if (!resource) return;
 
             SimulatorRemoteResource::AutoRequestGenerationCallback callback =
-                [] (const std::string &uid, int sessionId, OperationState state)
+                [] (const std::string & uid, int sessionId, OperationState state)
             {
                 std::cout << "\nResource verification status received ![id:  " << sessionId <<
-                        "  State: " << getOperationStateString(state) << " UID: " << uid << "]"
-                        << std::endl;
+                          "  State: " << getOperationStateString(state) << " UID: " << uid << "]"
+                          << std::endl;
             };
 
             try
@@ -461,17 +461,17 @@ class ClientController
             catch (InvalidArgsException &e)
             {
                 std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
-                        << e.what() << "]" << std::endl;
+                          << e.what() << "]" << std::endl;
             }
             catch (NoSupportException &e)
             {
                 std::cout << "NoSupportException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
             catch (SimulatorException &e)
             {
                 std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
         }
 
@@ -492,12 +492,12 @@ class ClientController
             catch (InvalidArgsException &e)
             {
                 std::cout << "InvalidArgsException occured [code : " << e.code() << " Detail: "
-                        << e.what() << "]" << std::endl;
+                          << e.what() << "]" << std::endl;
             }
             catch (SimulatorException &e)
             {
                 std::cout << "SimulatorException occured [code : " << e.code() << " Detail: " <<
-                        e.what() << "]" << std::endl;
+                          e.what() << "]" << std::endl;
             }
         }
 
@@ -510,7 +510,7 @@ class ClientController
             try
             {
                 SimulatorManager::getInstance()->getDeviceInfo(resource->getHost(),
-                    std::bind([](const std::string & host, DeviceInfo & deviceInfo)
+                        std::bind([](const std::string & host, DeviceInfo & deviceInfo)
                 {
                     std::cout << "###Device Information received...." << std::endl;
                     std::ostringstream out;
@@ -544,7 +544,7 @@ class ClientController
             try
             {
                 SimulatorManager::getInstance()->getPlatformInfo(resource->getHost(),
-                    std::bind([](const std::string & host, PlatformInfo & platformInfo)
+                        std::bind([](const std::string & host, PlatformInfo & platformInfo)
                 {
                     std::cout << "###Platform Information received...." << std::endl;
                     std::ostringstream out;
@@ -567,12 +567,12 @@ class ClientController
             catch (InvalidArgsException &e)
             {
                 std::cout << "InvalidArgsException occured [code : " << e.code()
-                        << " Detail: " << e.what() << "]" << std::endl;
+                          << " Detail: " << e.what() << "]" << std::endl;
             }
             catch (SimulatorException &e)
             {
                 std::cout << "SimulatorException occured [code : " << e.code()
-                        << " Detail: " << e.what() << "]" << std::endl;
+                          << " Detail: " << e.what() << "]" << std::endl;
             }
         }
 

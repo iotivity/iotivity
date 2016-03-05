@@ -31,7 +31,8 @@ std::unique_ptr<AttributeValueGen> AttributeValueGenFactory::create(
         std::shared_ptr<IntegerProperty> intProperty = property->asInteger();
         if (intProperty->hasRange())
         {
-            int min, max;
+            int min = 0;
+            int max = 0;
             intProperty->getRange(min, max);
             return std::unique_ptr<AttributeValueGen>(
                        new RangeValueGen<int>(min, max));
@@ -49,7 +50,8 @@ std::unique_ptr<AttributeValueGen> AttributeValueGenFactory::create(
         std::shared_ptr<DoubleProperty> doubleProperty = property->asDouble();
         if (doubleProperty->hasRange())
         {
-            double min, max;
+            double min = 0.0;
+            double max = 0.0;
             doubleProperty->getRange(min, max);
             return std::unique_ptr<AttributeValueGen>(
                        new RangeValueGen<double>(min, max));
