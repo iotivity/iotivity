@@ -44,7 +44,11 @@ if target_os not in ['windows', 'winrt']:
 if target_os == 'android':
 	ocprovision_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	ocprovision_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-	ocprovision_env.AppendUnique(LIBS = ['ocspapi', 'octbstack', 'oc_logger', 'boost_thread', 'gnustl_shared', 'log'])
+	ocprovision_env.AppendUnique(LIBS = ['oc', 'octbstack', 'ocpmapi', 'oc_logger', 'boost_thread', 'gnustl_shared', 'log'])
+
+if target_os == 'linux':
+	ocprovision_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+        ocprovision_env.AppendUnique(LIBS = ['oc', 'octbstack', 'ocpmapi', 'oc_logger', 'boost_thread'])
 
 if target_os in ['darwin', 'ios']:
 	ocprovision_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
@@ -57,7 +61,7 @@ ocprovision_src = [
 		'src/OCProvisioningManager.cpp'
 	]
 
-ocprovision = ocprovision_env.StaticLibrary('ocprovision', ocprovision_src)
+ocprovision = ocprovision_env.SharedLibrary('ocprovision', ocprovision_src)
 ocprovision_env.InstallTarget(ocprovision, 'libocprovision')
 
 if target_os in ['linux']:

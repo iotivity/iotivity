@@ -26,6 +26,9 @@ Import('env')
 lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
 
+with_ra = env.get('WITH_RA')
+with_ra_ibb = env.get('WITH_RA_IBB')
+
 examples_env = lib_env.Clone()
 
 ######################################################################
@@ -56,8 +59,19 @@ examples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 examples_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 examples_env.PrependUnique(LIBS = ['ocprovision', 'oc', 'ocpmapi', 'octbstack',
                                     'oc_logger', 'connectivity_abstraction', 'coap'])
+if with_ra_ibb:
+	examples_env.AppendUnique(LIBS = examples_env['RALIBS'], LIBPATH = examples_env['RALIBPATH'], RPATH = examples_env['RARPATH'])
+	print "RALIBS = %s" % examples_env['RALIBS']
+	print "RALIBPATH = %s" % examples_env['RALIBPATH']
+	print "RARPATH = %s" % examples_env['RARPATH']
+	examples_env.AppendUnique(LIBS = 'wksxmppxep')
+else :
+	if with_ra:
+		examples_env.AppendUnique(LIBS = ['ra_xmpp'])
+
 if env.get('SECURED') == '1':
     examples_env.AppendUnique(LIBS = ['tinydtls'])
+    examples_env.AppendUnique(LIBS = ['timer'])
 if env.get('DTLS_WITH_X509') == '1':
 	examples_env.AppendUnique(LIBS = ['CKManager'])
 	examples_env.AppendUnique(LIBS = ['asn1'])
