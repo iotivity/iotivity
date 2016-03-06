@@ -1,22 +1,23 @@
-/* *****************************************************************
- *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
- *
- *
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * *****************************************************************/
+//******************************************************************
+//
+// Copyright 2015 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200112L
 #endif
@@ -60,7 +61,7 @@ typedef struct _DiscoveryInfo{
  *
  * @return pointer of OCProvisionDev_t if exist, otherwise NULL
  */
-OCProvisionDev_t* GetDevice(OCProvisionDev_t **ppDevicesList, const char* addr, const uint16_t port)
+static OCProvisionDev_t* GetDevice(OCProvisionDev_t **ppDevicesList, const char* addr, const uint16_t port)
 {
     if(NULL == addr || NULL == *ppDevicesList)
     {
@@ -136,7 +137,7 @@ OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr, cons
  *
  * @return OC_STACK_OK for success and errorcode otherwise.
  */
-OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, const char *addr,
+static OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, const char *addr,
                                        uint16_t port, uint16_t securePort)
 {
     OCProvisionDev_t *ptr = GetDevice(ppDevicesList, addr, port);
@@ -230,14 +231,6 @@ exit:
     return NULL;
 }
 
-/**
- * Timeout implementation for secure discovery. When performing secure discovery,
- * we should wait a certain period of time for getting response of each devices.
- *
- * @param[in]  waittime  Timeout in seconds.
- * @param[in]  waitForStackResponse if true timeout function will call OCProcess while waiting.
- * @return OC_STACK_OK on success otherwise error.
- */
 OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse)
 {
     struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
@@ -537,15 +530,6 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
     return  OC_STACK_DELETE_TRANSACTION;
 }
 
-/**
- * Discover owned/unowned devices in the same IP subnet. .
- *
- * @param[in] waittime      Timeout in seconds.
- * @param[in] isOwned       bool flag for owned / unowned discovery
- * @param[in] ppDevicesList        List of OCProvisionDev_t.
- *
- * @return OC_STACK_OK on success otherwise error.
- */
 OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisionDev_t **ppDevicesList)
 {
     OC_LOG(DEBUG, TAG, "IN PMDeviceDiscovery");
@@ -613,12 +597,6 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     return res;
 }
 
-/**
- * Function to print OCProvisionDev_t for debug purpose.
- *
- * @param[in] pDev Pointer to OCProvisionDev_t. It's information will be printed by OC_LOG_XX
- *
- */
 void PMPrintOCProvisionDev(const OCProvisionDev_t* pDev)
 {
     if (pDev)

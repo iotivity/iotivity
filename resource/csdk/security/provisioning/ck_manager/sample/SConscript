@@ -21,6 +21,8 @@
 
 Import('env')
 
+target_os = env.get('TARGET_OS')
+
 provisioning_env = env.Clone()
 
 ######################################################################
@@ -37,7 +39,6 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../../include',
 		'../../../include/internal',
 		'../../../../../../extlibs/tinydtls',
-		'../../../../../../extlibs/cjson',
 		'../../../../../../extlibs/asn1cert/',
 		'../../../../../../extlibs/tinydtls/ecc/',
 		'../../../../../../extlibs/tinydtls/sha2/',
@@ -55,7 +56,12 @@ provisioning_env.AppendUnique(CFLAGS = ['-D__WITH_DTLS__','-std=c99'])
 provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread', '-fpermissive'])
 provisioning_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
+provisioning_env.ParseConfig('pkg-config --libs glib-2.0')
+
+# Note: 'pthread' is in libc for android. On other platform, if use
+# new gcc(>4.9?) it isn't required, otherwise, it's required
+if target_os != 'android':
+	provisioning_env.AppendUnique(LIBS = ['-lpthread', '-ldl'])
 
 provisioning_env.PrependUnique(LIBS = ['ocpmapi','oc', 'oc_logger', 'ocsrm','m', 'octbstack', 'connectivity_abstraction', 'coap'])
 provisioning_env.AppendUnique(LIBS = ['CKManager'])

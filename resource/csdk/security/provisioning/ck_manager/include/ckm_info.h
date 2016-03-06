@@ -1,23 +1,22 @@
-/******************************************************************
- *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
- *
- *
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
-
- ******************************************************************/
+///******************************************************************
+//
+// Copyright 2015 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
 #ifndef INCLUDE_CA_STORAGE_H_
@@ -96,15 +95,15 @@ PKIError CloseCKMInfo(void);
 /**
  * Sets CKM Info.
  *
- * @param[in] nextSN pointer to the next serial number to set
+ * @param nextSN pointer to the next serial number to set
  *                   or 0 to skip this parameter
- * @param[in] CRLSerialNumber pointer to the next CRL serial number to set
+ * @param CRLSerialNumber pointer to the next CRL serial number to set
  *                   or 0 to skip this parameter
- * @param[in] CAPrivateKey pointer to the CA's private key to set
+ * @param CAPrivateKey pointer to the CA's private key to set
  *                   or 0 to skip this parameter
- * @param[in] CAPublicKey pointer to the CA's public key to set
+ * @param CAPublicKey pointer to the CA's public key to set
  *                   or 0 to skip this parameter
- * @param[in] CAName pointer to the CA's common name to set
+ * @param CAName pointer to the CA's common name to set
  *                   or 0 to skip this parameter
  * @return PKI_SUCCESS if success, error code otherwise
  */
@@ -139,7 +138,7 @@ PKIError GetCKMInfo (long *nextSN, long *CRLSerialNumber,
 /**
  * Sets CA's private key.
  *
- * @param[in] CAPrivateKey pointer to the CA's private key to set
+ * @param CAPrivateKey pointer to the CA's private key to set
  * @return PKI_SUCCESS if success, error code otherwise
  */
 PKIError SetCAPrivateKey (const ByteArray *CAPrivateKey);
@@ -147,7 +146,7 @@ PKIError SetCAPrivateKey (const ByteArray *CAPrivateKey);
 /**
  * Gets CA's private key.
  *
- * @param[out] CAPrivateKey pointer to the CA's private key to get
+ * @param CAPrivateKey pointer to the CA's private key to get
  *             (PRIVATE_KEY_SIZE bytes should be allocated before call)
  * @return PKI_SUCCESS if success, error code otherwise
  */
@@ -156,7 +155,7 @@ PKIError GetCAPrivateKey (ByteArray *CAPrivateKey);
 /**
  * Sets CA's public key.
  *
- * @param[in] CAPublicKey pointer to the CA's public key to set
+ * @param CAPublicKey pointer to the CA's public key to set
  * @return PKI_SUCCESS if success, error code otherwise
  */
 PKIError SetCAPublicKey (const ByteArray *CAPublicKey);
@@ -164,7 +163,7 @@ PKIError SetCAPublicKey (const ByteArray *CAPublicKey);
 /**
  * Gets CA's public key.
  *
- * @param[out] CAPublicKey pointer to the CA's public key to get
+ * @param CAPublicKey pointer to the CA's public key to get
  *            (PUBLIC_KEY_SIZE bytes should be allocated before call)
  * @return PKI_SUCCESS if success, error code otherwise
  */
@@ -173,7 +172,7 @@ PKIError GetCAPublicKey (ByteArray *CAPublicKey);
 /**
  * Sets CA's common name.
  *
- * @param[in] CAName pointer to the CA's common name to set
+ * @param CAName pointer to the CA's common name to set
  * @return PKI_SUCCESS if success, error code otherwise
  */
 PKIError SetCAName (const ByteArray *CAName);
@@ -206,7 +205,7 @@ PKIError SaveCRT(void);
 /**
  * Sets next serial number for certificate issuer.
  *
- * @param[in] nextSN pointer to the next serial number to set
+ * @param nextSN pointer to the next serial number to set
  * @return PKI_SUCCESS if success, error code otherwise
  */
 PKIError SetNextSerialNumber (const long *nextSN);
@@ -214,7 +213,7 @@ PKIError SetNextSerialNumber (const long *nextSN);
 /**
  * Gets next serial number for certificate issuer.
  *
- * @param[out] nextSN pointer to the next serial number to get
+ * @param nextSN pointer to the next serial number to get
  *            (Memory should be allocated before call)
  * @return PKI_SUCCESS if success, error code otherwise
  */
@@ -223,7 +222,7 @@ PKIError GetNextSerialNumber (long *nextSN);
 /**
  * Sets DER encoded CA's certificate chain.
  *
- * @param[in] CAChain pointer to the CA's certificate to set
+ * @para CAChain pointer to the CA's certificate to set
  * @return PKI_SUCCESS if success, error code otherwise
  */
 PKIError SetCAChain (const uint8_t CAChainLength, const ByteArray *CAChain);
@@ -231,7 +230,7 @@ PKIError SetCAChain (const uint8_t CAChainLength, const ByteArray *CAChain);
 /**
  * Gets DER encoded CA's certificate chain.
  *
- * @param[out] CAChain pointer to allocated memory to get the CA's certificate chain
+ * @param CAChain pointer to allocated memory to get the CA's certificate chain
  *            (ISSUER_MAX_CHAIN_SIZE bytes should be allocated before call)
  * @return PKI_SUCCESS if success, error code otherwise
  */
@@ -240,7 +239,7 @@ PKIError GetCAChain (uint8_t* CAChainLength, ByteArray *CAChain);
 /**
  * Sets DER encoded CA's certificate.
  *
- * @param[in] CACertificate pointer to the CA's certificate to set
+ * @param CACertificate pointer to the CA's certificate to set
  * @return PKI_SUCCESS if success, error code otherwise
  */
 PKIError SetCACertificate (const ByteArray *CACertificate);
@@ -248,7 +247,7 @@ PKIError SetCACertificate (const ByteArray *CACertificate);
 /**
  * Gets DER encoded CA's certificate.
  *
- * @param[out] CACertificate pointer to the CA's certificate to get
+ * @param CACertificate pointer to the CA's certificate to get
  *            (ISSUER_MAX_CERT_SIZE bytes should be allocated before call)
  * @return PKI_SUCCESS if success, error code otherwise
  */
@@ -273,7 +272,7 @@ PKIError SaveCRL(void);
 /**
  * Sets next CRL serial number for certificate issuer.
  *
- * @param[in] CRLSerialNumber pointer to the next CRL serial number to set
+ * @param CRLSerialNumber pointer to the next CRL serial number to set
  * @return PKI_SUCCESS if success, error code otherwise
  */
 PKIError SetCRLSerialNumber (const long *CRLSerialNumber);
@@ -281,7 +280,7 @@ PKIError SetCRLSerialNumber (const long *CRLSerialNumber);
 /**
  * Gets next CRL serial number for certificate issuer.
  *
- * @param[out] CRLSerialNumber pointer to the next CRL serial number to get
+ * @param CRLSerialNumber pointer to the next CRL serial number to get
  *            (Memory should be allocated before call)
  * @return PKI_SUCCESS if success, error code otherwise
  */
@@ -290,7 +289,7 @@ PKIError GetCRLSerialNumber (long *CRLSerialNumber);
 /**
  * Sets current certificate revocation list.
  *
- * @param[in] certificateRevocationList pointer to the certificate revocation list to set
+ * @param certificateRevocationList pointer to the certificate revocation list to set
  * @return PKI_SUCCESS if success, error code otherwise
  */
 PKIError SetCertificateRevocationList (const ByteArray *certificateRevocationList);
@@ -298,7 +297,7 @@ PKIError SetCertificateRevocationList (const ByteArray *certificateRevocationLis
 /**
  * Gets current certificate revocation list.
  *
- * @param[out] certificateRevocationList pointer to the certificate revocation list to get
+ * @param certificateRevocationList pointer to the certificate revocation list to get
  *            (Memory should be allocated before call)
  * @return PKI_SUCCESS if success, error code otherwise
  */
@@ -307,7 +306,7 @@ PKIError GetCertificateRevocationList (ByteArray *certificateRevocationList);
 /**
  * Sets number of revoked certificates.
  *
- * @param[in] numberOfRevoked pointer to number of revoked certificates to set
+ * @param numberOfRevoked pointer to number of revoked certificates to set
  * @return PKI_SUCCESS if success, error code otherwise
  */
 PKIError SetNumberOfRevoked (const long *numberOfRevoked);
@@ -315,7 +314,7 @@ PKIError SetNumberOfRevoked (const long *numberOfRevoked);
 /**
  * Gets number of revoked certificates.
  *
- * @param[out] numberOfRevoked pointer to number of revoked certificates to get
+ * @param numberOfRevoked pointer to number of revoked certificates to get
  *            (Memory should be allocated before call)
  * @return PKI_SUCCESS if success, error code otherwise
  */

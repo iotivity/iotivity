@@ -1,22 +1,23 @@
-/* *****************************************************************
- *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
- *
- *
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * *****************************************************************/
+//******************************************************************
+//
+// Copyright 2015 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -48,31 +49,11 @@ struct Linkdata
 
 };
 
-/**
- * The function is responsible for initializaton of the provisioning manager. It will load
- * provisioning database which have owned device's list and their linked status.
- * TODO: In addition, if there is a device(s) which has not up-to-date credentials, this function will
- * automatically try to update the deivce(s).
- *
- * @param[in] dbPath file path of the sqlite3 db
- *
- * @return OC_STACK_OK in case of success and other value otherwise.
- */
 OCStackResult OCInitPM(const char* dbPath)
 {
     return PDMInit(dbPath);
 }
 
-/**
- * The function is responsible for discovery of device is current subnet. It will list
- * all the device in subnet which are not yet owned. Please call OCInit with OC_CLIENT_SERVER as
- * OCMode.
- *
- * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
- *                    client before returning the list of devices.
- * @param[out] ppList List of candidate devices to be provisioned
- * @return OTM_SUCCESS in case of success and other value otherwise.
- */
 OCStackResult OCDiscoverUnownedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
 {
     if( ppList == NULL || *ppList != NULL)
@@ -83,15 +64,6 @@ OCStackResult OCDiscoverUnownedDevices(unsigned short timeout, OCProvisionDev_t 
     return PMDeviceDiscovery(timeout, false, ppList);
 }
 
-/**
- * The function is responsible for discovery of owned device is current subnet. It will list
- * all the device in subnet which are owned by calling provisioning client.
- *
- * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
- *                    client before returning the list of devices.
- * @param[out] ppList List of device owned by provisioning tool.
- * @return OTM_SUCCESS in case of success and other value otherwise.
- */
 OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
 {
     if( ppList == NULL || *ppList != NULL)
@@ -102,13 +74,6 @@ OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **
     return PMDeviceDiscovery(timeout, true, ppList);
 }
 
-/**
- * API to register for particular OxM.
- *
- * @param[in] Ownership transfer method.
- * @param[in] Implementation of callback functions for owership transfer.
- * @return  OC_STACK_OK in case of success and other value otherwise.
- */
 OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
 {
     if(NULL == callbackData)
@@ -131,43 +96,17 @@ OCStackResult OCDoOwnershipTransfer(void* ctx,
     return OTMDoOwnershipTransfer(ctx, targetDevices, resultCallback);
 }
 
-/**
- * This function deletes memory allocated to linked list created by OCDiscover_XXX_Devices API.
- *
- * @param[in] pList Pointer to OCProvisionDev_t which should be deleted.
- */
 void OCDeleteDiscoveredDevices(OCProvisionDev_t *pList)
 {
     PMDeleteDeviceList(pList);
 }
 
-/**
- * this function sends ACL information to resource.
- *
- * @param[in] ctx Application context would be returned in result callback.
- * @param[in] selectedDeviceInfo Selected target device.
- * @param[in] acl ACL to provision.
- * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
-              request recieves a response from resource server.
- * @return  OC_STACK_OK in case of success and other value otherwise.
- */
 OCStackResult OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecAcl_t *acl,
                              OCProvisionResultCB resultCallback)
 {
     return SRPProvisionACL(ctx, selectedDeviceInfo, acl, resultCallback);
 }
 
-/**
- * function to provision credential to devices.
- *
- * @param[in] ctx Application context would be returned in result callback.
- * @param[in] type Type of credentials to be provisioned to the device.
- * @param[in] pDev1 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
-   @param[in] pDev2 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
- * @param[in] resultCallback callback provided by API user, callback will be called when
- *            provisioning request recieves a response from first resource server.
- * @return  OC_STACK_OK in case of success and other value otherwise.
- */
 OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
                                       const OCProvisionDev_t *pDev1,
                                       const OCProvisionDev_t *pDev2,
@@ -178,17 +117,6 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
 
 }
 
-/*
-* Function to unlink devices.
-* This function will remove the credential & relationship between the two devices.
-*
-* @param[in] ctx Application context would be returned in result callback
-* @param[in] pTargetDev1 first device information to be unlinked.
-* @param[in] pTargetDev2 second device information to be unlinked.
-* @param[in] resultCallback callback provided by API user, callback will be called when
-*            device unlink is finished.
- * @return  OC_STACK_OK in case of success and other value otherwise.
-*/
 OCStackResult OCUnlinkDevices(void* ctx,
                               const OCProvisionDev_t* pTargetDev1,
                               const OCProvisionDev_t* pTargetDev2,
@@ -243,17 +171,6 @@ error:
     return res;
 }
 
-/*
-* Function to device revocation
-* This function will remove credential of target device from all devices in subnet.
-*
-* @param[in] ctx Application context would be returned in result callback
-* @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
-* @param[in] pTargetDev Device information to be revoked.
-* @param[in] resultCallback callback provided by API user, callback will be called when
-*            credential revocation is finished.
- * @return  OC_STACK_OK in case of success and other value otherwise.
-*/
 OCStackResult OCRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
                             const OCProvisionDev_t* pTargetDev,
                             OCProvisionResultCB resultCallback)
@@ -489,19 +406,7 @@ static void ProvisionCredsCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bo
     }
     return;
 }
-/**
- * function to provision credentials between two devices and ACLs for the devices who act as a server.
- *
- * @param[in] ctx Application context would be returned in result callback.
- * @param[in] type Type of credentials to be provisioned to the device.
- * @param[in] pDev1 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
- * @param[in] acl ACL for device 1. If this is not required set NULL.
- * @param[in] pDev2 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
- * @param[in] acl ACL for device 2. If this is not required set NULL.
- * @param[in] resultCallback callback provided by API user, callback will be called when
- *            provisioning request recieves a response from first resource server.
- * @return  OC_STACK_OK in case of success and other value otherwise.
- */
+
 OCStackResult OCProvisionPairwiseDevices(void* ctx, OicSecCredType_t type, size_t keySize,
                                          const OCProvisionDev_t *pDev1, OicSecAcl_t *pDev1Acl,
                                          const OCProvisionDev_t *pDev2, OicSecAcl_t *pDev2Acl,
@@ -679,11 +584,6 @@ void OCDeleteUuidList(OCUuidList_t* pList)
     PDMDestoryOicUuidLinkList(pList);
 }
 
-/**
- * This function deletes ACL data.
- *
- * @param pAcl Pointer to OicSecAcl_t structure.
- */
 void OCDeleteACLList(OicSecAcl_t* pAcl)
 {
     DeleteACLList(pAcl);
@@ -691,16 +591,6 @@ void OCDeleteACLList(OicSecAcl_t* pAcl)
 
 
 #ifdef __WITH_X509__
-/**
- * this function sends CRL information to resource.
- *
- * @param[in] ctx Application context would be returned in result callback.
- * @param[in] selectedDeviceInfo Selected target device.
- * @param[in] crl CRL to provision.
- * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
-              request recieves a response from resource server.
- * @return  OC_STACK_OK in case of success and other value otherwise.
- */
 OCStackResult OCProvisionCRL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecCrl_t *crl,
                              OCProvisionResultCB resultCallback)
 {

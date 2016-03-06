@@ -1,22 +1,22 @@
-/* *****************************************************************
- *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
- *
- *
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * *****************************************************************/
+//******************************************************************
+//
+// Copyright 2015 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #ifndef OC_PROVISIONING_TYPES_H
 #define OC_PROVISIONING_TYPES_H
@@ -82,10 +82,10 @@ typedef struct OCPMResult{
 /**
  * Callback function definition of provisioning API
  *
- * @param[OUT] ctx - If user set his/her context, it will be returned here.
- * @param[OUT] nOfRes - total number of results, it depends on using which provisioning API.
- * @param[OUT] arr - Array of OCPMResult_t, each OCPMResult_t contains result for target Device.
- * @param[OUT} hasError - If there is no error, it's returned with 'false' but if there is a single
+ * @param ctx - If user set his/her context, it will be returned here.
+ * @param nOfRes - total number of results, it depends on using which provisioning API.
+ * @param arr - Array of OCPMResult_t, each OCPMResult_t contains result for target Device.
+ * @param hasError - If there is no error, it's returned with 'false' but if there is a single
  *                        or more error is/are occured during operation, it will be 'true'.
  */
 typedef void (*OCProvisionResultCB)(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError);

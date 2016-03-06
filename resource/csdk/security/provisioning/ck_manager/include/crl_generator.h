@@ -1,23 +1,22 @@
-/******************************************************************
- *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
- *
- *
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
-
- ******************************************************************/
+//******************************************************************
+//
+// Copyright 2015 Samsung Electronics All Rights Reserved.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
 #ifndef INCLUDE_MASTER_CRL_ENCODER_H_
@@ -39,12 +38,12 @@ extern "C" {
 /**
  * Encode certificate revocation list with specified parameters.
  *
- * @param[in] issuerName pointer to issuer's common name
- * @param[in] thisUpdateTime pointer to time of issuing CRL
- * @param[in] nuberOfRevoked number of revoked certificates
- * @param[in] certificateRevocationInfo array with certificate revocation info
- * @param[in] issuerPrivateKey pointer to issuer's private key to sign CRL
- * @param[out] encodedCRL pointer to allocated memory for DER encoded certificate revocation list
+ * @param issuerName pointer to issuer's common name
+ * @param thisUpdateTime pointer to time of issuing CRL
+ * @param nuberOfRevoked number of revoked certificates
+ * @param certificateRevocationInfo array with certificate revocation info
+ * @param issuerPrivateKey pointer to issuer's private key to sign CRL
+ * @param encodedCRL pointer to allocated memory for DER encoded certificate revocation list
  *          ( (CRL_MIN_SIZE + nuberOfRevoked * (sizeof(CertificateRevocationInfo_t) + 4)) bytes
  *          should be allocated)
  * @return PKI_SUCCESS if success, error code otherwise
@@ -57,10 +56,10 @@ PKIError GenerateCRL (const UTF8String_t *issuerName,
 /**
  * Sign certificate revocation list.
  *
- * @param[in] certificateRevocationList pointer to CRL for signing
- * @param[in] crlMaxSize max size of DER encoded CRL
- * @param[in] issuerPrivateKey pointer to issuer private key
- * @param[out] encodedCRL pointer to allocated memory for DER encoded certificate revocation list
+ * @param certificateRevocationList pointer to CRL for signing
+ * @param crlMaxSize max size of DER encoded CRL
+ * @param issuerPrivateKey pointer to issuer private key
+ * @param encodedCRL pointer to allocated memory for DER encoded certificate revocation list
  *          crlMaxSize bytes should be allocated)
  * @return PKI_SUCCESS if success, error code otherwise
  */

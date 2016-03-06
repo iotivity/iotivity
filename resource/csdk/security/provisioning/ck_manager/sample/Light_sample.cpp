@@ -27,7 +27,6 @@
 #include <pthread.h>
 #include "ocstack.h"
 #include "logger.h"
-#include "cJSON.h"
 #include "global.h"
 #include "cainterface.h"
 #include "cacommon.h"

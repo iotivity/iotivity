@@ -27,8 +27,6 @@
 #include <iostream>
 #include <sstream>
 #include "ocstack.h"
-#include "logger.h"
-#include "cJSON.h"
 #include "global.h"
 #include "cainterface.h"
 #include "cacommon.h"
@@ -323,8 +321,8 @@ static const char *getResult(OCStackResult result)
 
 /**
  * CreateDoorResource creates a new door resource by calling the OCCreateResource() method.
- * @param   uri                   [IN] uri
- * @param   doorResource          [IN] info of resource
+ * @param   uri of the resource.
+ * @param   doorResource info of resource.
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 int  createDoorResource (const char *uri, DoorResource *doorResource)
@@ -366,7 +364,7 @@ OCStackApplicationResult putReqCB(void * ctx, OCDoHandle /*handle*/, OCClientRes
         if ((OCSecurityPayload*)clientResponse->payload)
         {
             OC_LOG_V(INFO, TAG, "=============> Put Response",
-                    ((OCSecurityPayload*)clientResponse->payload)->securityData);
+                    ((OCSecurityPayload*)clientResponse->payload)->securityData1);
         }
     }
     return OC_STACK_DELETE_TRANSACTION;
