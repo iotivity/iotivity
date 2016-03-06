@@ -55,9 +55,6 @@ public:
         if (m_task) m_task->cancel();
     }
 
-    ScopedTask(ScopedTask&&) = default;
-    ScopedTask& operator=(ScopedTask&&) = default;
-
     RCSDiscoveryManager::DiscoveryTask* operator->()
     {
         return m_task.get();
