@@ -531,7 +531,7 @@ void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource
 
 void discoverResource()
 {
-    std::cout << "Wait 2 seconds until discovered." << std::endl;
+    std::cout << "Wait 4 seconds until discovered." << std::endl;
 
     try
     {
@@ -556,15 +556,7 @@ int main()
     try
     {
         discoverResource();
-    }
-    catch(std::exception &e)
-    {
-        std::cout << e.what() << std::endl;
-        return 0;
-    }
 
-    try
-    {
         g_currentRun = runCreateRemoteSceneList;
         g_currentRun();
     }
