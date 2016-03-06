@@ -134,7 +134,9 @@ OCStackResult OCProcess();
  *                          well-known multicast IP address, the qos will be forced to ::OC_LOW_QOS
  *                          since it is impractical to send other QOS levels on such addresses.
  * @param cbData            Asynchronous callback function that is invoked by the stack when
- *                          discovery or resource interaction is complete.
+ *                          discovery or resource interaction is received. The discovery could be
+ *                          related to filtered/scoped/particular resource. The callback is
+ *                          generated for each response received.
  * @param options           The address of an array containing the vendor specific header options
  *                          to be sent with the request.
  * @param numOptions        Number of header options to be included.
