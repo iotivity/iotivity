@@ -22,7 +22,7 @@ import org.oic.simulator.AttributeValue;
 
 public class AttributeValueBuilder {
     public static AttributeValue build(String valueString,
-            AttributeValue.ValueType valueType) {
+            AttributeValue.ValueType valueType) throws Exception {
         int depth = findDepth(valueString);
         if (0 == depth) {
             return handleDepth0(valueString, valueType);
@@ -127,36 +127,67 @@ public class AttributeValueBuilder {
             return null;
 
         if (valueType == AttributeValue.ValueType.INTEGER) {
+            if (1 == valuesString.length && valuesString[0].isEmpty()) {
+                return new AttributeValue(new Integer[0]);
+            }
+
             Integer[] result = new Integer[valuesString.length];
             for (int index = 0; index < valuesString.length; index++) {
-                Integer value = (Integer) handleDepth0(valuesString[index],
-                        valueType).get();
-                if (null == value)
-                    return null;
-                result[index] = value;
+                if (null != valuesString[index]
+                        && !valuesString[index].isEmpty()) {
+                    Integer value = (Integer) handleDepth0(valuesString[index],
+                            valueType).get();
+                    if (null == value)
+                        return null;
+                    result[index] = value;
+                }
             }
             return new AttributeValue(result);
         } else if (valueType == AttributeValue.ValueType.DOUBLE) {
+            if (1 == valuesString.length && valuesString[0].isEmpty()) {
+                return new AttributeValue(new Double[0]);
+            }
+
             Double[] result = new Double[valuesString.length];
             for (int index = 0; index < valuesString.length; index++) {
-                Double value = (Double) handleDepth0(valuesString[index],
-                        valueType).get();
-                if (null == value)
-                    return null;
-                result[index] = value;
+                if (null != valuesString[index]
+                        && !valuesString[index].isEmpty()) {
+                    Double value = (Double) handleDepth0(valuesString[index],
+                            valueType).get();
+                    if (null == value)
+                        return null;
+                    result[index] = value;
+                }
             }
             return new AttributeValue(result);
         } else if (valueType == AttributeValue.ValueType.BOOLEAN) {
+            if (1 == valuesString.length && valuesString[0].isEmpty()) {
+                return new AttributeValue(new Boolean[0]);
+            }
+
             Boolean[] result = new Boolean[valuesString.length];
             for (int index = 0; index < valuesString.length; index++) {
-                Boolean value = (Boolean) handleDepth0(valuesString[index],
-                        valueType).get();
-                if (null == value)
-                    return null;
-                result[index] = value;
+                if (null != valuesString[index]
+                        && !valuesString[index].isEmpty()) {
+                    Boolean value = (Boolean) handleDepth0(valuesString[index],
+                            valueType).get();
+                    if (null == value)
+                        return null;
+                    result[index] = value;
+                }
             }
             return new AttributeValue(result);
         } else if (valueType == AttributeValue.ValueType.STRING) {
+            if (1 == valuesString.length && valuesString[0].isEmpty()) {
+                return new AttributeValue(new String[0]);
+            }
+
+            for (int index = 0; index < valuesString.length; index++) {
+                if (null != valuesString[index]
+                        && !valuesString[index].isEmpty()) {
+                    valuesString[index] = valuesString[index].trim();
+                }
+            }
             return new AttributeValue(valuesString);
         }
 

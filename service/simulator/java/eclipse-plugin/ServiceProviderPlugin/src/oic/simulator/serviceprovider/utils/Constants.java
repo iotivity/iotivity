@@ -159,7 +159,18 @@ public class Constants {
     public static final String         SIMPLE_RESOURCE_OTHER_DETAILS_PAGE_MESSAGE = "Fill other details of the resource";
 
     public static final String         SINGLE_RESOURCE                            = "Single Resource";
-    public static final String         INVALID_URI_MESSAGE                        = "Resource URI should start with a '/' followed by atleast one character and it should not contain either # or ? or % or consecutive '/'.";
+    public static final String         INVALID_URI_MESSAGE                        = "Resource URI should start with a '/'."
+                                                                                          + "\nIt should be 2 to 63 chars long.\n"
+                                                                                          + "It should not contain # or ? or % or "
+                                                                                          + "consecutive '/' or '/./' or "
+                                                                                          + "'/..'(more than one dot following a slash).";
+
+    public static final String         INVALID_RESOURCE_TYPE_MESSAGE              = "Resource Type should start with an alphabet.\n"
+                                                                                          + "It should contain only lowercase alphabets, "
+                                                                                          + "numbers(0-9), dot(.) and hyphen(-).";
+
+    public static final String         RESOURCE_LIMIT_EXCEEDED_MSG                = "A maximum of 200 resources can exist in the server.";
+
     public static final int            TREE_EXPANSION_LEVEL                       = 10;
 
     public static final String         BASELINE_INTERFACE                         = "oic.if.baseline";

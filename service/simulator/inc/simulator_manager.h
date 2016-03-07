@@ -28,7 +28,6 @@
 #ifndef SIMULATOR_MANAGER_H_
 #define SIMULATOR_MANAGER_H_
 
-#include "simulator_server_types.h"
 #include "simulator_client_types.h"
 #include "simulator_device_info.h"
 #include "simulator_platform_info.h"
@@ -39,7 +38,8 @@
 #include "simulator_logger.h"
 
 typedef std::function<void(const std::string &hostUri, DeviceInfo &deviceInfo)> DeviceInfoCallback;
-typedef std::function<void(const std::string &hostUri, PlatformInfo &platformInfo)> PlatformInfoCallback;
+typedef std::function<void(const std::string &hostUri, PlatformInfo &platformInfo)>
+PlatformInfoCallback;
 
 /**
  * @class   SimulatorManager
@@ -83,9 +83,35 @@ class SimulatorManager
         std::vector<std::shared_ptr<SimulatorResource>> createResource(
                     const std::string &configPath, unsigned int count);
 
+        /**
+         * This method is for creating single type resource.
+         *
+         * @param name - Name of resource to be set if resource created successfully.
+         * @param uri - URI on which resource to be created.
+         * @param resourceType - Resource type of resource to be set if resource
+         * created successfully.
+         *
+         * @return shared object of @SimulatorSingleResource.
+         *
+         * NOTE: API would throw @InvalidArgsException when invalid arguments passed, and
+         * @SimulatorException if any other error occured.
+         */
         std::shared_ptr<SimulatorSingleResource> createSingleResource(
             const std::string &name, const std::string &uri, const std::string &resourceType);
 
+        /**
+         * This method is for creating collection type resource.
+         *
+         * @param name - Name of resource to be set if resource created successfully.
+         * @param uri - URI on which resource to be created.
+         * @param resourceType - Resource type of resource to be set if resource
+         * created successfully.
+         *
+         * @return shared object of @SimulatorCollectionResource.
+         *
+         * NOTE: API would throw @InvalidArgsException when invalid arguments passed, and
+         * @SimulatorException if any other error occured.
+         */
         std::shared_ptr<SimulatorCollectionResource> createCollectionResource(
             const std::string &name, const std::string &uri, const std::string &resourceType);
 

@@ -16,35 +16,47 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
-
-import oic.simulator.serviceprovider.utils.Constants;
-
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TrayDialog;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Shell;
+
+import java.util.ArrayList;
+import java.util.Map;
+
+import oic.simulator.serviceprovider.utils.Constants;
 
 /**
  * Dialog for starting and stopping the automatic verifications.
  */
 public class UpdateResourceInterfaceDialog extends TrayDialog {
-    private Map<String, Boolean> resourceIfStatus;
+
+    private Button              addIfTypeBtn;
+    private Button              removeIfTypeBtn;
+
+    private List                ifTypesList;
+
+    private Map<String, String> supportedResInterfaces;
+    private Map<String, String> updatedResInterfaces;
 
     public UpdateResourceInterfaceDialog(Shell shell,
-            Map<String, Boolean> resourceIfStatus) {
+            Map<String, String> updatedResInterfaces,
+            Map<String, String> supportedResInterfaces) {
         super(shell);
-        this.resourceIfStatus = resourceIfStatus;
+        this.updatedResInterfaces = updatedResInterfaces;
+        this.supportedResInterfaces = supportedResInterfaces;
     }
 
     @Override
@@ -55,51 +67,158 @@ public class UpdateResourceInterfaceDialog extends TrayDialog {
     @Override
     protected Control createDialogArea(Composite parent) {
         Composite composite = (Composite) super.createDialogArea(parent);
-        createAutomationGroup(composite);
         getShell().setText("Resource Interfaces");
+
+        Composite content = new Composite(parent, SWT.NULL);
+        GridLayout gridLayout = new GridLayout(3, false);
+        content.setLayout(gridLayout);
+        GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        content.setLayoutData(gd);
+
+        ifTypesList = new List(content, SWT.BORDER | SWT.MULTI | SWT.V_SCROLL
+                | SWT.H_SCROLL);
+        gd = new GridData();
+        gd.horizontalAlignment = SWT.FILL;
+        gd.grabExcessHorizontalSpace = true;
+        gd.verticalAlignment = SWT.FILL;
+        gd.grabExcessHorizontalSpace = true;
+        gd.horizontalSpan = 2;
+        ifTypesList.setLayoutData(gd);
+        ifTypesList.setBackground(Display.getDefault().getSystemColor(
+                SWT.COLOR_WHITE));
+
+        Composite ifTypesOpComp = new Composite(content, SWT.NONE);
+        gridLayout = new GridLayout();
+        ifTypesOpComp.setLayout(gridLayout);
+        gd = new GridData();
+        gd.verticalAlignment = SWT.TOP;
+        ifTypesOpComp.setLayoutData(gd);
+
+        addIfTypeBtn = new Button(ifTypesOpComp, SWT.PUSH);
+        addIfTypeBtn.setText("Add");
+        gd = new GridData();
+        gd.widthHint = 70;
+        addIfTypeBtn.setLayoutData(gd);
+        if (null != updatedResInterfaces && null != supportedResInterfaces
+                && updatedResInterfaces.size() == supportedResInterfaces.size()) {
+            addIfTypeBtn.setEnabled(false);
+        }
+
+        removeIfTypeBtn = new Button(ifTypesOpComp, SWT.PUSH);
+        removeIfTypeBtn.setText("Remove");
+        gd = new GridData();
+        gd.widthHint = 70;
+        removeIfTypeBtn.setLayoutData(gd);
+        removeIfTypeBtn.setEnabled(false);
+
+        initInterfaceList();
+
+        addUiListeners();
+
         return composite;
     }
 
-    /**
-     * Dynamically creates a check-box list for changing the resource interface
-     * selection.
-     */
-    private void createAutomationGroup(Composite parent) {
-        Group group = new Group(parent, SWT.NONE);
-        group.setLayout(new GridLayout());
-        GridData gd = new GridData(GridData.FILL_HORIZONTAL);
-        gd.widthHint = 275;
-        group.setLayoutData(gd);
-        group.setText("Resource Interfaces");
-
-        Set<String> keySet = resourceIfStatus.keySet();
-        if (null == keySet) {
-            return;
+    private void initInterfaceList() {
+        for (Map.Entry<String, String> entry : updatedResInterfaces.entrySet()) {
+            ifTypesList.add(entry.getKey());
         }
-        ArrayList<String> list = new ArrayList<String>(keySet);
-        for (final String str : list) {
-            final Button checkbox = new Button(group, SWT.CHECK);
-            checkbox.setText(str);
-            checkbox.setSelection(resourceIfStatus.get(str));
+    }
 
-            // Disabling the check-box for baseline interface.
-            if (str.contains(Constants.DEFAULT_SINGLE_RESOURCE_INTERFACE)) {
-                checkbox.setEnabled(false);
-            }
+    private void addUiListeners() {
+        addIfTypeBtn.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                boolean addAll = false;
+                int itemsAddedCount = ifTypesList.getItemCount();
+                if (itemsAddedCount < supportedResInterfaces.size()) {
+                    String key;
+                    ArrayList<String> pendingItems = new ArrayList<String>();
+                    if (0 == itemsAddedCount) {
+                        addAll = true;
+                    }
+                    for (Map.Entry<String, String> entry : supportedResInterfaces
+                            .entrySet()) {
+                        key = entry.getKey();
+                        if (addAll || -1 == ifTypesList.indexOf(key)) {
+                            pendingItems.add(key);
+                        }
+                    }
 
-            checkbox.addSelectionListener(new SelectionAdapter() {
-
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    Button btn = (Button) e.getSource();
-                    if (null == btn) {
+                    AddInterfaceTypeDialog addIfTypeDlg = new AddInterfaceTypeDialog(
+                            getShell(), pendingItems);
+                    if (Window.CANCEL == addIfTypeDlg.open()) {
                         return;
                     }
-                    String btnText = btn.getText();
-                    resourceIfStatus.put(btnText, btn.getSelection());
+                    String ifType = addIfTypeDlg.getValue();
+                    if (null == ifType || ifType.isEmpty()) {
+                        return;
+                    }
+
+                    ifTypesList.add(ifType);
+                    ifTypesList.deselectAll();
+                    ifTypesList.select(ifTypesList.getItemCount() - 1);
+                    ifTypesList.showSelection();
+                    removeIfTypeBtn.setEnabled(true);
+
+                    if (itemsAddedCount + 1 == supportedResInterfaces.size()) {
+                        addIfTypeBtn.setEnabled(false);
+                    }
                 }
-            });
+            }
+        });
+
+        removeIfTypeBtn.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                int[] selection = ifTypesList.getSelectionIndices();
+                if (null != selection && selection.length > 0) {
+                    ifTypesList.remove(selection);
+                }
+
+                ifTypesList.deselectAll();
+                removeIfTypeBtn.setEnabled(false);
+                addIfTypeBtn.setEnabled(true);
+            }
+        });
+
+        ifTypesList.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                int[] selection = ifTypesList.getSelectionIndices();
+                if (null != selection && selection.length > 0) {
+                    removeIfTypeBtn.setEnabled(true);
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void okPressed() {
+        String[] items = ifTypesList.getItems();
+        if (null == items || items.length == 0) {
+            MessageDialog
+                    .openInformation(
+                            getShell(),
+                            "Default Interface Type Selection",
+                            "As no interface types are added, the resource will be "
+                                    + "configured with the default interface type(oic.if.baseline).");
+            ifTypesList.add("Baseline" + " ("
+                    + Constants.DEFAULT_SINGLE_RESOURCE_INTERFACE + ")");
         }
+
+        // Clearing the map to freshly add selected items.
+        updatedResInterfaces.clear();
+        for (String item : ifTypesList.getItems()) {
+            String value = supportedResInterfaces.get(item);
+            updatedResInterfaces.put(item, value);
+        }
+        close();
+    }
+
+    @Override
+    protected Point getInitialSize() {
+        Point actualSize = super.getInitialSize();
+        return new Point(actualSize.x + 100, actualSize.y);
     }
 
     @Override
@@ -114,9 +233,5 @@ public class UpdateResourceInterfaceDialog extends TrayDialog {
     @Override
     public boolean isHelpAvailable() {
         return false;
-    }
-
-    public Map<String, Boolean> getResourceInterfaceStatus() {
-        return resourceIfStatus;
     }
 }

@@ -19,49 +19,25 @@
  ******************************************************************/
 
 #include "put_request_generator.h"
-#include "simulator_resource_model.h"
+#include "request_model.h"
+#include "simulator_exceptions.h"
 #include "logger.h"
 
 #define TAG "PUT_REQUEST_GEN"
 
-PUTRequestGenerator::PUTRequestGenerator(int id, RequestSenderSP &requestSender,
-        SimulatorResourceModelSP &representation,
-        AutoRequestGeneration::ProgressStateCallback callback)
-    :   AutoRequestGeneration(RequestType::RQ_TYPE_GET, id, requestSender, callback),
-        m_rep(representation),
-        m_status(false),
-        m_stopRequested(false) {}
-
-PUTRequestGenerator::PUTRequestGenerator(int id, RequestSenderSP &requestSender,
-        const std::map<std::string, std::vector<std::string>> &queryParams,
-        SimulatorResourceModelSP &representation,
-        AutoRequestGeneration::ProgressStateCallback callback)
-    :   AutoRequestGeneration(RequestType::RQ_TYPE_GET, id, requestSender, callback),
-        m_queryParamGen(queryParams),
-        m_rep(representation),
-        m_status(false),
-        m_stopRequested(false) {}
+PUTRequestGenerator::PUTRequestGenerator(int id,
+        const std::shared_ptr<OC::OCResource> &ocResource,
+        const std::shared_ptr<RequestModel> &requestSchema,
+        RequestGeneration::ProgressStateCallback callback)
+    :   RequestGeneration(RequestType::RQ_TYPE_GET, id, callback),
+        m_stopRequested(false),
+        m_requestSchema(requestSchema),
+        m_requestSender(ocResource) {}
 
 void PUTRequestGenerator::startSending()
 {
-    // Check the representation
-    if (!m_rep)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid Representation given!");
-        throw SimulatorException(SIMULATOR_ERROR, "Invalid representation detected!");
-    }
-
-    // Check if the operation is already in progress
-    std::lock_guard<std::mutex> lock(m_statusLock);
-    if (m_status)
-    {
-        OIC_LOG(ERROR, TAG, "Operation already in progress !");
-        throw OperationInProgressException("Another PUT request generation session is already in progress!");
-    }
-
     // Create thread and start sending requests in dispatched thread
-    m_thread = std::make_shared<std::thread>(&PUTRequestGenerator::SendAllRequests, this);
-    m_status = true;
+    m_thread.reset(new std::thread(&PUTRequestGenerator::SendAllRequests, this));
     m_thread->detach();
 }
 
@@ -75,29 +51,42 @@ void PUTRequestGenerator::SendAllRequests()
     OIC_LOG(DEBUG, TAG, "Sending OP_START event");
     m_callback(m_id, OP_START);
 
+    std::shared_ptr<SimulatorResourceModelSchema> repSchema =
+        m_requestSchema->getRequestRepSchema();
+
+    if (!repSchema)
+    {
+        OIC_LOG(ERROR, TAG, "Request representation model is null!");
+        m_callback(m_id, OP_ABORT);
+        return;
+    }
+
+    SimulatorResourceModel representation = repSchema->buildResourceModel();
+
     // Create attribute combination generator for generating resource model
     // with different attribute values
-    std::vector<SimulatorResourceModel::Attribute> attributes;
-    for (auto &attributeElement : m_rep->getAttributes())
+    std::vector<SimulatorResourceAttribute> attributes;
+    for (auto &attributeElement : representation.getAttributeValues())
     {
-        attributes.push_back(attributeElement.second);
+        SimulatorResourceAttribute attribute;
+        attribute.setName(attributeElement.first);
+        attribute.setValue(attributeElement.second);
+        attribute.setProperty(repSchema->get(attributeElement.first));
+        attributes.push_back(attribute);
     }
 
     if (!attributes.size())
     {
         OIC_LOG(ERROR, TAG, "Zero attribute found from resource model!");
+        m_callback(m_id, OP_COMPLETE);
         return;
     }
 
+    QPGenerator queryParamGen(m_requestSchema->getQueryParams());
     do
     {
-        if (m_stopRequested)
-        {
-            break;
-        }
-
         // Get the next possible queryParameter
-        std::map<std::string, std::string> queryParam = m_queryParamGen.next();
+        std::map<std::string, std::string> queryParam = queryParamGen.next();
 
         AttributeCombinationGen attrCombGen(attributes);
 
@@ -105,26 +94,23 @@ void PUTRequestGenerator::SendAllRequests()
         SimulatorResourceModel resModel;
         while (!m_stopRequested && attrCombGen.next(resModel))
         {
-            SimulatorResourceModelSP repModel(new SimulatorResourceModel(resModel));
-
             // Send the request
-            m_requestSender->sendRequest(queryParam, repModel,
-                                         std::bind(&PUTRequestGenerator::onResponseReceived, this,
-                                                   std::placeholders::_1, std::placeholders::_2), true);
+            m_requestSender.send(queryParam, resModel,
+                                 std::bind(&PUTRequestGenerator::onResponseReceived, this,
+                                           std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
             m_requestCnt++;
         }
     }
-    while (m_queryParamGen.hasNext());
+    while (!m_stopRequested && queryParamGen.hasNext());
 
-    m_requestsSent = true;
     completed();
 }
 
 void PUTRequestGenerator::onResponseReceived(SimulatorResult result,
-        SimulatorResourceModelSP repModel)
+        const SimulatorResourceModel &repModel, const RequestInfo &reqInfo)
 {
-    OIC_LOG_V(INFO, TAG, "Response recieved result:%d", result);
+    OIC_LOG(DEBUG, TAG, "Response recieved");
     m_responseCnt++;
     completed();
 }

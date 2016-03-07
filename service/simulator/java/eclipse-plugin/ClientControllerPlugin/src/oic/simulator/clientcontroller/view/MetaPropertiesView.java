@@ -16,16 +16,6 @@
 
 package oic.simulator.clientcontroller.view;
 
-import java.util.List;
-
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.listener.IDevicePlatformInfoUIListener;
-import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
-import oic.simulator.clientcontroller.manager.ResourceManager;
-import oic.simulator.clientcontroller.manager.UiListenerHandler;
-import oic.simulator.clientcontroller.remoteresource.MetaProperty;
-import oic.simulator.clientcontroller.remoteresource.RemoteResource;
-
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.TableViewer;
@@ -42,6 +32,16 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.ui.part.ViewPart;
+
+import java.util.List;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.listener.IDevicePlatformInfoUIListener;
+import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
+import oic.simulator.clientcontroller.manager.ResourceManager;
+import oic.simulator.clientcontroller.manager.UiListenerHandler;
+import oic.simulator.clientcontroller.remoteresource.MetaProperty;
+import oic.simulator.clientcontroller.remoteresource.RemoteResource;
 
 /**
  * This class manages and shows the meta properties view in the perspective.

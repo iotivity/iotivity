@@ -16,27 +16,6 @@
 
 package oic.simulator.clientcontroller.view;
 
-import java.util.Map;
-
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.listener.IConfigurationUpload;
-import oic.simulator.clientcontroller.listener.IGetUIListener;
-import oic.simulator.clientcontroller.listener.IObserveUIListener;
-import oic.simulator.clientcontroller.listener.IPostUIListener;
-import oic.simulator.clientcontroller.listener.IPutUIListener;
-import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
-import oic.simulator.clientcontroller.listener.IVerificationUIListener;
-import oic.simulator.clientcontroller.manager.ResourceManager;
-import oic.simulator.clientcontroller.manager.UiListenerHandler;
-import oic.simulator.clientcontroller.remoteresource.AttributeElement;
-import oic.simulator.clientcontroller.remoteresource.RemoteResource;
-import oic.simulator.clientcontroller.remoteresource.ResourceRepresentation;
-import oic.simulator.clientcontroller.utils.Constants;
-import oic.simulator.clientcontroller.utils.Utility;
-import oic.simulator.clientcontroller.view.dialogs.PostRequestDialog;
-import oic.simulator.clientcontroller.view.dialogs.PutRequestDialog;
-import oic.simulator.clientcontroller.view.dialogs.VerificationDialog;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -59,9 +38,38 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
 import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorResourceAttribute;
-import org.oic.simulator.client.SimulatorRemoteResource.VerificationType;
+import org.oic.simulator.client.SimulatorRemoteResource;
+import org.oic.simulator.client.SimulatorRemoteResource.RequestType;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.listener.IConfigurationUpload;
+import oic.simulator.clientcontroller.listener.IGetUIListener;
+import oic.simulator.clientcontroller.listener.IObserveUIListener;
+import oic.simulator.clientcontroller.listener.IPostUIListener;
+import oic.simulator.clientcontroller.listener.IPutUIListener;
+import oic.simulator.clientcontroller.listener.IResourceSelectionChangedUIListener;
+import oic.simulator.clientcontroller.listener.IVerificationUIListener;
+import oic.simulator.clientcontroller.manager.ResourceManager;
+import oic.simulator.clientcontroller.manager.UiListenerHandler;
+import oic.simulator.clientcontroller.remoteresource.AttributeElement;
+import oic.simulator.clientcontroller.remoteresource.RemoteResource;
+import oic.simulator.clientcontroller.remoteresource.ResourceRepresentation;
+import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.utils.Utility;
+import oic.simulator.clientcontroller.view.dialogs.GetRequestDialog;
+import oic.simulator.clientcontroller.view.dialogs.PostRequestDialog;
+import oic.simulator.clientcontroller.view.dialogs.PutRequestDialog;
+import oic.simulator.clientcontroller.view.dialogs.VerificationDialog;
 
 /**
  * This class manages and shows the attribute view in the perspective.
@@ -223,36 +231,68 @@ public class AttributeView extends ViewPart {
 
             @Override
             public void onVerificationStarted(final RemoteResource resource,
-                    final int autoType) {
-                Display.getDefault().asyncExec(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        // changeReqBtnVisibility(autoType, false);
-                    }
-                });
+                    final RequestType reqType) {
+                // Do Nothing. For Future Use.
             }
 
             @Override
             public void onVerificationCompleted(final RemoteResource resource,
-                    final int autoType) {
+                    final RequestType reqType) {
+
+                if (null == resource) {
+                    return;
+                }
+
                 Display.getDefault().asyncExec(new Runnable() {
 
                     @Override
                     public void run() {
-                        // changeReqBtnVisibility(autoType, true);
+                        SimulatorRemoteResource remoteResource = resource
+                                .getRemoteResourceRef();
+                        if (null == remoteResource) {
+                            return;
+                        }
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.INFO.ordinal(),
+                                        new Date(),
+                                        "["
+                                                + reqType.toString()
+                                                + "] Verification is successful for \""
+                                                + remoteResource.getURI()
+                                                + "\".");
                     }
                 });
             }
 
             @Override
             public void onVerificationAborted(final RemoteResource resource,
-                    final int autoType) {
+                    final RequestType reqType) {
+
+                if (null == resource) {
+                    return;
+                }
+
                 Display.getDefault().asyncExec(new Runnable() {
 
                     @Override
                     public void run() {
-                        // changeReqBtnVisibility(autoType, true);
+                        SimulatorRemoteResource remoteResource = resource
+                                .getRemoteResourceRef();
+                        if (null == remoteResource) {
+                            return;
+                        }
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.INFO.ordinal(),
+                                        new Date(),
+                                        "["
+                                                + reqType
+                                                + "] Verification is failed for \""
+                                                + remoteResource.getURI()
+                                                + "\".");
                     }
                 });
             }
@@ -279,22 +319,6 @@ public class AttributeView extends ViewPart {
                 });
             }
         };
-    }
-
-    private void changeReqBtnVisibility(int reqType, boolean visibility) {
-        if (reqType == Constants.GET_AUTOMATION_INDEX) {
-            if (!getButton.isDisposed()) {
-                getButton.setEnabled(visibility);
-            }
-        } else if (reqType == Constants.PUT_AUTOMATION_INDEX) {
-            if (!putButton.isDisposed()) {
-                putButton.setEnabled(visibility);
-            }
-        } else {// if(reqType == Constants.POST_AUTOMATION_INDEX) {
-            if (!postButton.isDisposed()) {
-                postButton.setEnabled(visibility);
-            }
-        }
     }
 
     private void updateViewer(RemoteResource resource) {
@@ -455,7 +479,15 @@ public class AttributeView extends ViewPart {
                 PlatformUI.getWorkbench().getDisplay().syncExec(new Thread() {
                     @Override
                     public void run() {
-                        resourceManager.sendGetRequest(resourceInSelection);
+                        GetRequestDialog getDialog = new GetRequestDialog(
+                                Display.getDefault().getActiveShell());
+                        if (getDialog.open() == Window.OK) {
+                            // Call the native GET method
+                            String query = getDialog.getOtherFilters();
+                            String ifType = getDialog.getIfType();
+                            resourceManager.sendGetRequest(ifType, query,
+                                    resourceInSelection);
+                        }
                     }
                 });
             }
@@ -487,8 +519,11 @@ public class AttributeView extends ViewPart {
                         PutRequestDialog putDialog = new PutRequestDialog(
                                 Display.getDefault().getActiveShell());
                         if (putDialog.open() == Window.OK) {
-                            resourceManager.sendPutRequest(resourceInSelection,
-                                    putDialog.getUpdatedRepresentation()
+                            // Call the native PUT method
+                            String ifType = putDialog.getIfType();
+                            resourceManager.sendPutRequest(ifType,
+                                    resourceInSelection, putDialog
+                                            .getUpdatedRepresentation()
                                             .getModel());
                         }
                     }
@@ -523,9 +558,11 @@ public class AttributeView extends ViewPart {
                         PostRequestDialog postDialog = new PostRequestDialog(
                                 Display.getDefault().getActiveShell());
                         if (postDialog.open() == Window.OK) {
+                            // Call the native POST method
+                            String ifType = postDialog.getIfType();
                             ResourceRepresentation representation = postDialog
                                     .getUpdatedRepresentation();
-                            resourceManager.sendPostRequest(
+                            resourceManager.sendPostRequest(ifType,
                                     resourceInSelection,
                                     representation.getSelectedModel());
                         }
@@ -661,24 +698,20 @@ public class AttributeView extends ViewPart {
                                     }
                                 }
                             }
-                            if (startCount == 0 && stopCount == 0) {
-                                MessageDialog.openInformation(Display
-                                        .getDefault().getActiveShell(),
-                                        "Verification", "No New Changes.");
-                            } else {
+                            if (!(startCount == 0 && stopCount == 0)) {
                                 boolean answer = MessageDialog.openQuestion(
                                         Display.getDefault().getActiveShell(),
                                         "Verification", status
                                                 + "\nDo you want to proceed?");
                                 if (answer) {
                                     if (startGet || stopGet)
-                                        automate(VerificationType.GET,
+                                        automate(RequestType.GET,
                                                 autoStatus.get(Constants.GET));
                                     if (startPut || stopPut)
-                                        automate(VerificationType.PUT,
+                                        automate(RequestType.PUT,
                                                 autoStatus.get(Constants.PUT));
                                     if (startPost || stopPost)
-                                        automate(VerificationType.POST,
+                                        automate(RequestType.POST,
                                                 autoStatus.get(Constants.POST));
                                 }
                             }
@@ -689,7 +722,7 @@ public class AttributeView extends ViewPart {
         });
     }
 
-    private void automate(VerificationType type, boolean start) {
+    private void automate(RequestType type, boolean start) {
         if (start) {
             resourceManager.startAutomationRequest(type, resourceInSelection);
         } else {
@@ -743,8 +776,15 @@ public class AttributeView extends ViewPart {
         @Override
         public Object[] getChildren(Object attribute) {
             if (attribute instanceof AttributeElement) {
-                return ((AttributeElement) attribute).getChildren().values()
-                        .toArray();
+                List<AttributeElement> attElementList = new ArrayList<AttributeElement>();
+                Map<String, AttributeElement> children = ((AttributeElement) attribute)
+                        .getChildren();
+                if (null != children) {
+                    attElementList.addAll(children.values());
+                    Collections.sort(attElementList,
+                            Utility.attributeComparator);
+                    return attElementList.toArray();
+                }
             }
 
             return new Object[0];
@@ -817,9 +857,15 @@ public class AttributeView extends ViewPart {
                         SimulatorResourceAttribute attribute = attrElement
                                 .getSimulatorResourceAttribute();
 
-                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL)
-                            return Utility.getAttributeValueAsString(attribute
-                                    .value());
+                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL) {
+                            String value = Utility
+                                    .getAttributeValueAsString(attribute
+                                            .value());
+                            if (null == value) {
+                                value = "";
+                            }
+                            return value;
+                        }
                         return null;
                     }
                 }

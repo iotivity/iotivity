@@ -16,12 +16,12 @@
 
 package oic.simulator.serviceprovider;
 
+import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.osgi.framework.BundleContext;
+
 import oic.simulator.serviceprovider.manager.ImageManager;
 import oic.simulator.serviceprovider.manager.LogManager;
 import oic.simulator.serviceprovider.manager.ResourceManager;
-
-import org.eclipse.ui.plugin.AbstractUIPlugin;
-import org.osgi.framework.BundleContext;
 
 /**
  * The activator class controls the plug-in life cycle.

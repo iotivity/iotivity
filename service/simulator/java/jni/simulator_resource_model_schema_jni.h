@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -18,24 +18,17 @@
  *
  ******************************************************************/
 
-#include "auto_request_gen.h"
+#ifndef SIMULATOR_RESOURCE_MODEL_SCHEMA_JNI_H_
+#define SIMULATOR_RESOURCE_MODEL_SCHEMA_JNI_H_
 
-AutoRequestGeneration::AutoRequestGeneration(RequestType type, int id,
-        RequestSenderSP &requestSender, ProgressStateCallback callback)
-    :   m_type(type),
-        m_id(id),
-        m_requestSender(requestSender),
-        m_callback(callback),
-        m_requestsSent(false),
-        m_requestCnt(0),
-        m_responseCnt(0) {}
+#include <jni.h>
 
-void AutoRequestGeneration::start()
-{
-    startSending();
-}
+#include "simulator_resource_model_schema.h"
 
-void AutoRequestGeneration::stop()
-{
-    stopSending();
-}
+jobject AttributePropertyToJava(JNIEnv *env,
+                                const std::shared_ptr<AttributeProperty> &property);
+
+std::shared_ptr<AttributeProperty> AttributePropertyToCpp(JNIEnv *env,
+        jobject &jProperty);
+
+#endif

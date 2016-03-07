@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -18,44 +18,52 @@
  *
  ******************************************************************/
 
-#include "auto_request_gen_mngr.h"
+#include "request_automation_manager.h"
 #include "get_request_generator.h"
 #include "put_request_generator.h"
 #include "post_request_generator.h"
+#include "request_model.h"
 #include "simulator_exceptions.h"
 #include "logger.h"
 
 #define TAG "AUTO_REQ_GEN_MNGR"
 
-int AutoRequestGenMngr::startOnGET(RequestSenderSP requestSender,
-                                   const std::map<std::string, std::vector<std::string>> &queryParams,
-                                   AutoRequestGeneration::ProgressStateCallback callback)
+RequestAutomationMngr::RequestAutomationMngr(
+    const std::shared_ptr<OC::OCResource> &ocResource)
+    :   m_id(0), m_ocResource(ocResource) {}
+
+int RequestAutomationMngr::startOnGET(
+    const std::shared_ptr<RequestModel> &requestSchema,
+    RequestGeneration::ProgressStateCallback callback)
 {
-    // Input validation
-    if (!requestSender)
+    if (!requestSchema)
     {
-        throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Invalid request sender given!");
+        OIC_LOG(ERROR, TAG, "Request schema is null!");
+        throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Request model is null!");
     }
 
     if (!callback)
     {
+        OIC_LOG(ERROR, TAG, "Invalid callback!");
         throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
     }
 
     // Check is there auto request generation session already going on for GET requests
     if (isInProgress(RequestType::RQ_TYPE_GET))
     {
-        throw OperationInProgressException("Another GET request generation session is already in progress!");
+        OIC_LOG(ERROR, TAG, "Auto requesting for GET is already in progress!");
+        throw OperationInProgressException(
+            "Another GET request generation session is already in progress!");
     }
 
     // Create request generation session
-    AutoRequestGeneration::ProgressStateCallback localCallback = std::bind(
-                &AutoRequestGenMngr::onProgressChange, this,
+    RequestGeneration::ProgressStateCallback localCallback = std::bind(
+                &RequestAutomationMngr::onProgressChange, this,
                 std::placeholders::_1, std::placeholders::_2, callback);
 
     std::lock_guard<std::mutex> lock(m_lock);
-    std::shared_ptr<AutoRequestGeneration> requestGen(
-        new GETRequestGenerator(m_id, requestSender, queryParams, localCallback));
+    std::shared_ptr<RequestGeneration> requestGen(
+        new GETRequestGenerator(m_id, m_ocResource, requestSchema, localCallback));
     m_requestGenList[m_id] = requestGen;
 
     try
@@ -71,37 +79,38 @@ int AutoRequestGenMngr::startOnGET(RequestSenderSP requestSender,
     return m_id++;
 }
 
-int AutoRequestGenMngr::startOnPUT(RequestSenderSP requestSender,
-                                   const std::map<std::string, std::vector<std::string>> &queryParams,
-                                   SimulatorResourceModelSP resModel,
-                                   AutoRequestGeneration::ProgressStateCallback callback)
+int RequestAutomationMngr::startOnPUT(const std::shared_ptr<RequestModel> &requestSchema,
+                                      RequestGeneration::ProgressStateCallback callback)
 {
-    // Input validation
-    if (!requestSender)
+    if (!requestSchema)
     {
-        throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Invalid request sender given!");
+        OIC_LOG(ERROR, TAG, "Request schema is null!");
+        throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Request model is null!");
     }
 
     if (!callback)
     {
+        OIC_LOG(ERROR, TAG, "Invalid callback!");
         throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
     }
 
     // Check is there auto request generation session already going on for GET requests
     if (isInProgress(RequestType::RQ_TYPE_PUT))
     {
-        throw OperationInProgressException("Another GET request generation session is already in progress!");
+        OIC_LOG(ERROR, TAG, "Auto requesting for PUT is already in progress!");
+        throw OperationInProgressException(
+            "Another PUT request generation session is already in progress!");
     }
 
     // Create request generation session
-    AutoRequestGeneration::ProgressStateCallback localCallback = std::bind(
-                &AutoRequestGenMngr::onProgressChange, this,
+    RequestGeneration::ProgressStateCallback localCallback = std::bind(
+                &RequestAutomationMngr::onProgressChange, this,
                 std::placeholders::_1, std::placeholders::_2, callback);
 
     // Create and make the entry in list
     std::lock_guard<std::mutex> lock(m_lock);
-    std::shared_ptr<AutoRequestGeneration> requestGen(
-        new PUTRequestGenerator(m_id, requestSender, queryParams, resModel, localCallback));
+    std::shared_ptr<RequestGeneration> requestGen(
+        new PUTRequestGenerator(m_id, m_ocResource, requestSchema, localCallback));
     m_requestGenList[m_id] = requestGen;
 
     try
@@ -117,37 +126,38 @@ int AutoRequestGenMngr::startOnPUT(RequestSenderSP requestSender,
     return m_id++;
 }
 
-int AutoRequestGenMngr::startOnPOST(RequestSenderSP requestSender,
-                                    const std::map<std::string, std::vector<std::string>> &queryParams,
-                                    SimulatorResourceModelSP resModel,
-                                    AutoRequestGeneration::ProgressStateCallback callback)
+int RequestAutomationMngr::startOnPOST(const std::shared_ptr<RequestModel> &requestSchema,
+                                       RequestGeneration::ProgressStateCallback callback)
 {
-    // Input validation
-    if (!requestSender)
+    if (!requestSchema)
     {
-        throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Invalid request sender given!");
+        OIC_LOG(ERROR, TAG, "Request schema is null!");
+        throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Request model is null!");
     }
 
     if (!callback)
     {
+        OIC_LOG(ERROR, TAG, "Invalid callback!");
         throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
     }
 
     // Check is there auto request generation session already going on for GET requests
     if (isInProgress(RequestType::RQ_TYPE_POST))
     {
-        throw OperationInProgressException("Another GET request generation session is already in progress!");
+        OIC_LOG(ERROR, TAG, "Auto requesting for POST is already in progress!");
+        throw OperationInProgressException(
+            "Another POST request generation session is already in progress!");
     }
 
     // Create request generation session
-    AutoRequestGeneration::ProgressStateCallback localCallback = std::bind(
-                &AutoRequestGenMngr::onProgressChange, this,
+    RequestGeneration::ProgressStateCallback localCallback = std::bind(
+                &RequestAutomationMngr::onProgressChange, this,
                 std::placeholders::_1, std::placeholders::_2, callback);
 
     // Create and make the entry in list
     std::lock_guard<std::mutex> lock(m_lock);
-    std::shared_ptr<AutoRequestGeneration> requestGen(
-        new POSTRequestGenerator(m_id, requestSender, queryParams, resModel, localCallback));
+    std::shared_ptr<RequestGeneration> requestGen(
+        new POSTRequestGenerator(m_id, m_ocResource, requestSchema, localCallback));
     m_requestGenList[m_id] = requestGen;
 
     try
@@ -163,21 +173,17 @@ int AutoRequestGenMngr::startOnPOST(RequestSenderSP requestSender,
     return m_id++;
 }
 
-void AutoRequestGenMngr::stop(int id)
+void RequestAutomationMngr::stop(int id)
 {
     std::lock_guard<std::mutex> lock(m_lock);
     if (m_requestGenList.end() != m_requestGenList.find(id))
     {
         m_requestGenList[id]->stop();
-        OIC_LOG_V(INFO, TAG, "Auto request generation session stopped [%d]", id);
-        return;
     }
-
-    OIC_LOG_V(ERROR, TAG, "Invalid verification id : %d", id);
 }
 
-void AutoRequestGenMngr::onProgressChange(int sessionId, OperationState state,
-        AutoRequestGeneration::ProgressStateCallback clientCallback)
+void RequestAutomationMngr::onProgressChange(int sessionId, OperationState state,
+        RequestGeneration::ProgressStateCallback clientCallback)
 {
     if (!isValid(sessionId))
         return;
@@ -192,7 +198,7 @@ void AutoRequestGenMngr::onProgressChange(int sessionId, OperationState state,
     clientCallback(sessionId, state);
 }
 
-bool AutoRequestGenMngr::isValid(int id)
+bool RequestAutomationMngr::isValid(int id)
 {
     std::lock_guard<std::mutex> lock(m_lock);
     if (m_requestGenList.end() != m_requestGenList.find(id))
@@ -203,7 +209,7 @@ bool AutoRequestGenMngr::isValid(int id)
     return false;
 }
 
-bool AutoRequestGenMngr::isInProgress(RequestType type)
+bool RequestAutomationMngr::isInProgress(RequestType type)
 {
     std::lock_guard<std::mutex> lock(m_lock);
     for (auto &session : m_requestGenList)
@@ -215,7 +221,7 @@ bool AutoRequestGenMngr::isInProgress(RequestType type)
     return false;
 }
 
-void AutoRequestGenMngr::remove(int id)
+void RequestAutomationMngr::remove(int id)
 {
     std::lock_guard<std::mutex> lock(m_lock);
     if (m_requestGenList.end() != m_requestGenList.find(id))

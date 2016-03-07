@@ -20,63 +20,33 @@
 
 #include "simulator_collection_resource_impl.h"
 #include "simulator_utils.h"
+#include "oc_interface_details.h"
 #include "simulator_logger.h"
 #include "logger.h"
 
-#define TAG "SIM_COLLECTION_RESOURCE"
+#define TAG "SIMULATOR_COLLECTION_RESOURCE"
 
 SimulatorCollectionResourceImpl::SimulatorCollectionResourceImpl()
-    :   m_type(SimulatorResource::Type::COLLECTION_RESOURCE),
-        m_interfaces {OC::DEFAULT_INTERFACE, OC::LINK_INTERFACE},
-        m_resourceHandle(NULL)
 {
+    m_type = SimulatorResource::Type::COLLECTION_RESOURCE;
+    m_interfaces.push_back(OC::LINK_INTERFACE);
     m_property = static_cast<OCResourceProperty>(OC_DISCOVERABLE | OC_OBSERVABLE);
 
+    // Add empty vector of OIC Links
     std::vector<SimulatorResourceModel> links;
     m_resModel.add("links", links);
+
+    m_resourceHandle = nullptr;
 }
 
-std::string SimulatorCollectionResourceImpl::getName() const
+bool SimulatorCollectionResourceImpl::isCollection() const
 {
-    return m_name;
-}
-
-SimulatorResource::Type SimulatorCollectionResourceImpl::getType() const
-{
-    return m_type;
-}
-
-std::string SimulatorCollectionResourceImpl::getURI() const
-{
-    return m_uri;
-}
-
-std::string SimulatorCollectionResourceImpl::getResourceType() const
-{
-    return m_resourceType;
-}
-
-std::vector<std::string> SimulatorCollectionResourceImpl::getInterface() const
-{
-    return m_interfaces;
-}
-
-void SimulatorCollectionResourceImpl::setInterface(const std::vector<std::string> &interfaces)
-{
-    m_interfaces = interfaces;
+    return true;
 }
 
 void SimulatorCollectionResourceImpl::setName(const std::string &name)
 {
     VALIDATE_INPUT(name.empty(), "Name is empty!")
-
-    std::lock_guard<std::recursive_mutex> lock(m_objectLock);
-    if (m_resourceHandle)
-    {
-        throw SimulatorException(SIMULATOR_OPERATION_NOT_ALLOWED,
-                                 "Name can not be set when collection is started!");
-    }
-
     m_name = name;
 }
 
@@ -88,7 +58,7 @@ void SimulatorCollectionResourceImpl::setURI(const std::string &uri)
     if (m_resourceHandle)
     {
         throw SimulatorException(SIMULATOR_OPERATION_NOT_ALLOWED,
-                                 "URI can not be set when collection is started!");
+                                 "URI can not be set when resource is started!");
     }
 
     m_uri = uri;
@@ -102,31 +72,70 @@ void SimulatorCollectionResourceImpl::setResourceType(const std::string &resourc
     if (m_resourceHandle)
     {
         throw SimulatorException(SIMULATOR_OPERATION_NOT_ALLOWED,
-                                 "Resource type can not be set when collection is started!");
+                                 "Resource type can not be set when resource is started!");
     }
 
     m_resourceType = resourceType;
 }
 
-void SimulatorCollectionResourceImpl::addInterface(std::string interfaceType)
+void SimulatorCollectionResourceImpl::setInterface(const std::string &interfaceType)
 {
-    VALIDATE_INPUT(interfaceType.empty(), "Interface type is empty!")
-
-    if (interfaceType == OC::GROUP_INTERFACE)
-    {
-        throw NoSupportException("Collection resource does not support this interface type!");
-    }
+    VALIDATE_INPUT(interfaceType.empty(), "Interface type list is empty!")
 
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (m_resourceHandle)
     {
         throw SimulatorException(SIMULATOR_OPERATION_NOT_ALLOWED,
-                                 "Interface type can not be set when resource is started!");
+                                 "Resource interface can not be reset when resource is started!");
     }
 
-    auto found = std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType);
-    if (found != m_interfaces.end())
-        m_interfaces.push_back(interfaceType);
+    m_interfaces = {interfaceType};
+}
+
+void SimulatorCollectionResourceImpl::setInterface(const std::vector<std::string> &interfaceTypes)
+{
+    VALIDATE_INPUT(interfaceTypes.empty(), "Interface type list is empty!")
+
+    std::lock_guard<std::recursive_mutex> lock(m_objectLock);
+    if (m_resourceHandle)
+    {
+        throw SimulatorException(SIMULATOR_OPERATION_NOT_ALLOWED,
+                                 "Resource interface can not be reset when resource is started!");
+    }
+
+    m_interfaces = interfaceTypes;
+    auto lastElement = std::unique(m_interfaces.begin(), m_interfaces.end());
+    m_interfaces.erase(lastElement, m_interfaces.end());
+}
+
+void SimulatorCollectionResourceImpl::addInterface(const std::string &interfaceType)
+{
+    VALIDATE_INPUT(interfaceType.empty(), "Interface type is empty!")
+
+    if (interfaceType == OC::LINK_INTERFACE
+        || interfaceType == OC::BATCH_INTERFACE
+        || interfaceType == OC::DEFAULT_INTERFACE)
+    {
+        if (m_interfaces.end() != std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType))
+        {
+            SIM_LOG(ILogger::ERROR, "Resource already supporting this Interface: " << interfaceType);
+            return;
+        }
+
+        std::lock_guard<std::recursive_mutex> lock(m_objectLock);
+        typedef OCStackResult (*bindInterfaceToResource)(const OCResourceHandle &,
+                const std::string &);
+
+        invokeocplatform(static_cast<bindInterfaceToResource>(
+                             OC::OCPlatform::bindInterfaceToResource), m_resourceHandle,
+                         interfaceType);
+    }
+    else
+    {
+        throw NoSupportException("Invalid interface type for a collection type resource!");
+    }
+
+    m_interfaces.push_back(interfaceType);
 }
 
 void SimulatorCollectionResourceImpl::setObservable(bool state)
@@ -138,10 +147,25 @@ void SimulatorCollectionResourceImpl::setObservable(bool state)
                                  "Observation state can not be changed when resource is started!");
     }
 
-    if (true == state)
+    if (state)
         m_property = static_cast<OCResourceProperty>(m_property | OC_OBSERVABLE);
     else
         m_property = static_cast<OCResourceProperty>(m_property ^ OC_OBSERVABLE);
+}
+
+void SimulatorCollectionResourceImpl::setDiscoverable(bool state)
+{
+    std::lock_guard<std::recursive_mutex> lock(m_objectLock);
+    if (m_resourceHandle)
+    {
+        throw SimulatorException(SIMULATOR_OPERATION_NOT_ALLOWED,
+                                 "Discoverable state can not be changed when resource is started!");
+    }
+
+    if (state)
+        m_property = static_cast<OCResourceProperty>(m_property | OC_DISCOVERABLE);
+    else
+        m_property = static_cast<OCResourceProperty>(m_property ^ OC_DISCOVERABLE);
 }
 
 void SimulatorCollectionResourceImpl::setObserverCallback(ObserverCallback callback)
@@ -150,18 +174,23 @@ void SimulatorCollectionResourceImpl::setObserverCallback(ObserverCallback callb
     m_observeCallback = callback;
 }
 
-void SimulatorCollectionResourceImpl::setModelChangeCallback(ResourceModelChangedCallback callback)
+void SimulatorCollectionResourceImpl::setModelChangeCallback(ResourceModelUpdateCallback callback)
 {
     VALIDATE_CALLBACK(callback)
     m_modelCallback = callback;
 }
 
-bool SimulatorCollectionResourceImpl::isObservable()
+bool SimulatorCollectionResourceImpl::isObservable() const
 {
-    return (m_property & OC_OBSERVABLE);
+    return ((m_property & OC_OBSERVABLE) == OC_OBSERVABLE);
 }
 
-bool SimulatorCollectionResourceImpl::isStarted()
+bool SimulatorCollectionResourceImpl::isDiscoverable() const
+{
+    return ((m_property & OC_DISCOVERABLE) == OC_DISCOVERABLE);
+}
+
+bool SimulatorCollectionResourceImpl::isStarted() const
 {
     return (nullptr != m_resourceHandle);
 }
@@ -171,12 +200,13 @@ void SimulatorCollectionResourceImpl::start()
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (m_resourceHandle)
     {
-        throw SimulatorException(SIMULATOR_ERROR, "Collection already registered!");
+        SIM_LOG(ILogger::INFO, "[" << m_name << "] " << "Resource already started!")
+        return;
     }
 
     if (m_uri.empty() || m_resourceType.empty())
     {
-        throw SimulatorException(SIMULATOR_ERROR, "Found incomplete data to start resource!");
+        throw SimulatorException(SIMULATOR_ERROR, "Incomplete data to start resource!");
     }
 
     typedef OCStackResult (*RegisterResource)(OCResourceHandle &, std::string &, const std::string &,
@@ -210,8 +240,12 @@ void SimulatorCollectionResourceImpl::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (!m_resourceHandle)
+    {
+        SIM_LOG(ILogger::INFO, "[" << m_name << "] " << "Resource is not started yet!")
         return;
+    }
 
+    // Unregister the resource from stack
     typedef OCStackResult (*UnregisterResource)(const OCResourceHandle &);
 
     invokeocplatform(static_cast<UnregisterResource>(OC::OCPlatform::unregisterResource),
@@ -226,29 +260,18 @@ SimulatorResourceModel SimulatorCollectionResourceImpl::getResourceModel()
     return m_resModel;
 }
 
-void SimulatorCollectionResourceImpl::setResourceModel(const SimulatorResourceModel &resModel)
-{
-    std::lock_guard<std::mutex> lock(m_modelLock);
-    m_resModel = resModel;
-}
-
-void SimulatorCollectionResourceImpl::setActionType(std::map<RAML::ActionType, RAML::ActionPtr> &actionType)
-{
-    m_actionTypes = actionType;
-}
-
-std::vector<ObserverInfo> SimulatorCollectionResourceImpl::getObserversList()
+std::vector<ObserverInfo> SimulatorCollectionResourceImpl::getObservers() const
 {
     return m_observersList;
 }
 
-void SimulatorCollectionResourceImpl::notify(int id)
+void SimulatorCollectionResourceImpl::notify(int observerID)
 {
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (!m_resourceHandle)
         return;
 
-    OC::ObservationIds observers {static_cast<OCObservationId>(id)};
+    OC::ObservationIds observers {static_cast<OCObservationId>(observerID)};
     sendNotification(observers);
 }
 
@@ -272,7 +295,7 @@ std::vector<std::string> SimulatorCollectionResourceImpl::getSupportedResources(
     return m_supportedTypes;
 }
 
-void SimulatorCollectionResourceImpl::addChildResource(SimulatorResourceSP &resource)
+void SimulatorCollectionResourceImpl::addChildResource(const SimulatorResourceSP &resource)
 {
     VALIDATE_INPUT(!resource, "Invalid child resource!")
 
@@ -291,7 +314,7 @@ void SimulatorCollectionResourceImpl::addChildResource(SimulatorResourceSP &reso
     notifyAll();
 }
 
-void SimulatorCollectionResourceImpl::removeChildResource(SimulatorResourceSP &resource)
+void SimulatorCollectionResourceImpl::removeChildResource(const SimulatorResourceSP &resource)
 {
     VALIDATE_INPUT(!resource, "Invalid child resource!")
 
@@ -340,12 +363,35 @@ std::vector<SimulatorResourceSP> SimulatorCollectionResourceImpl::getChildResour
     return result;
 }
 
+void SimulatorCollectionResourceImpl::setResourceModel(const SimulatorResourceModel &resModel)
+{
+    std::lock_guard<std::mutex> lock(m_modelLock);
+    m_resModel = resModel;
+}
+
+void SimulatorCollectionResourceImpl::setResourceModelSchema(
+    const std::shared_ptr<SimulatorResourceModelSchema> &resModelSchema)
+{
+    std::lock_guard<std::mutex> lock(m_modelSchemaLock);
+    m_resModelSchema = resModelSchema;
+}
+
+void SimulatorCollectionResourceImpl::setRequestModel(
+    const std::unordered_map<std::string, std::shared_ptr<RequestModel>> &requestModels)
+{
+    m_requestModels = requestModels;
+}
+
 OCEntityHandlerResult SimulatorCollectionResourceImpl::handleRequests(
     std::shared_ptr<OC::OCResourceRequest> request)
 {
     if (!request)
+    {
+        OIC_LOG(ERROR, TAG, "Request received from stack is null!");
         return OC_EH_ERROR;
+    }
 
+    // Handle GET, PUT, POST and DELETE requests
     if (OC::RequestHandlerFlag::RequestFlag & request->getRequestHandlerFlag())
     {
         {
@@ -355,12 +401,28 @@ OCEntityHandlerResult SimulatorCollectionResourceImpl::handleRequests(
                     << " request received. \n**Payload details**\n" << payload)
         }
 
-        // Handover the request to appropriate interface handler
-        std::string interfaceType(OC::DEFAULT_INTERFACE);
-        OC::QueryParamsMap queryParams = request->getQueryParameters();
-        if (queryParams.end() != queryParams.find("if"))
-            interfaceType = queryParams["if"];
+        // Check if resource support GET request
+        if (m_requestModels.end() == m_requestModels.find(request->getRequestType()))
+        {
+            SIM_LOG(ILogger::INFO, "Resource does not support GET request!")
+            return sendResponse(request, 405, OC_EH_ERROR);
+        }
 
+        // Handling interface query parameter "if"
+        auto interfaceType = m_interfaces[0];
+        auto requestQueryParams = request->getQueryParameters();
+        if (requestQueryParams.end() != requestQueryParams.find("if"))
+        {
+            interfaceType = requestQueryParams["if"];
+        }
+
+        if (!isValidInterface(interfaceType, request->getRequestType()))
+        {
+            SIM_LOG(ILogger::INFO, "Invalid interface type: " << interfaceType)
+            return OC_EH_ERROR;
+        }
+
+        // Handover the request to appropriate interface handler
         std::shared_ptr<OC::OCResourceResponse> response;
         if (interfaceType == OC::DEFAULT_INTERFACE)
         {
@@ -392,8 +454,7 @@ OCEntityHandlerResult SimulatorCollectionResourceImpl::handleRequests(
     {
         if (!isObservable())
         {
-            SIM_LOG(ILogger::INFO, "[" << m_uri << "] OBSERVE request received")
-            SIM_LOG(ILogger::INFO, "[" << m_uri << "] Sending error as resource is in unobservable state!")
+            SIM_LOG(ILogger::INFO, "[" << m_uri << "] Resource is not observable, sending error response!")
             return OC_EH_ERROR;
         }
 
@@ -434,19 +495,10 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
     std::shared_ptr<OC::OCResourceRequest> request)
 {
     std::shared_ptr<OC::OCResourceResponse> response;
-
-    RAML::ActionType type = getActionType(request->getRequestType());
-
-    if (!m_actionTypes.empty())
-    {
-        if (m_actionTypes.end() == m_actionTypes.find(type))
-            return response;
-    }
-
     if ("GET" == request->getRequestType())
     {
         // Construct the representation
-        OC::OCRepresentation ocRep = m_resModel.getOCRepresentation();
+        OC::OCRepresentation ocRep = m_resModel.asOCRepresentation();
         response = std::make_shared<OC::OCResourceResponse>();
         response->setErrorCode(200);
         response->setResponseResult(OC_EH_OK);
@@ -455,8 +507,6 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
         SIM_LOG(ILogger::INFO, "[" << m_uri <<
                 "] Sending response for GET request. \n**Payload details**" << resPayload)
     }
-
-    // TODO: Handle PUT, POST and DELETE requests
 
     if (response)
     {
@@ -472,14 +522,6 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
 {
     std::lock_guard<std::mutex> lock(m_childResourcesLock);
     std::shared_ptr<OC::OCResourceResponse> response;
-
-    RAML::ActionType type = getActionType(request->getRequestType());
-
-    if (!m_actionTypes.empty())
-    {
-        if (m_actionTypes.end() == m_actionTypes.find(type))
-            return response;
-    }
 
     if ("GET" == request->getRequestType())
     {
@@ -514,7 +556,6 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
 std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::requestOnBatchInterface(
     std::shared_ptr<OC::OCResourceRequest>)
 {
-    // TODO: Handle this interface
     return nullptr;
 }
 
@@ -525,7 +566,7 @@ void SimulatorCollectionResourceImpl::sendNotification(OC::ObservationIds &obser
     response->setErrorCode(200);
     response->setResponseResult(OC_EH_OK);
 
-    OC::OCRepresentation ocRep = m_resModel.getOCRepresentation();
+    OC::OCRepresentation ocRep = m_resModel.asOCRepresentation();
     response->setResourceRepresentation(ocRep, OC::DEFAULT_INTERFACE);
 
     typedef OCStackResult (*NotifyListOfObservers)(OCResourceHandle, OC::ObservationIds &,
@@ -535,10 +576,10 @@ void SimulatorCollectionResourceImpl::sendNotification(OC::ObservationIds &obser
                      m_resourceHandle, observers, response);
 }
 
-void SimulatorCollectionResourceImpl::addLink(SimulatorResourceSP &resource)
+void SimulatorCollectionResourceImpl::addLink(const SimulatorResourceSP &resource)
 {
     std::lock_guard<std::mutex> lock(m_modelLock);
-    if (!m_resModel.containsAttribute("links"))
+    if (!m_resModel.contains("links"))
         return;
 
     // Create new OIC Link
@@ -556,22 +597,22 @@ void SimulatorCollectionResourceImpl::addLink(SimulatorResourceSP &resource)
         std::string linkURI = link.get<std::string>("href");
         if (linkURI == resource->getURI())
         {
-            break;
             found = true;
+            break;
         }
     }
 
     if (false ==  found)
     {
         links.push_back(newLink);
-        m_resModel.updateValue("links", links);
+        m_resModel.update("links", links);
     }
 }
 
 void SimulatorCollectionResourceImpl::removeLink(std::string uri)
 {
     std::lock_guard<std::mutex> lock(m_modelLock);
-    if (!m_resModel.containsAttribute("links"))
+    if (!m_resModel.contains("links"))
         return;
 
     // Add OIC Link if it is not present
@@ -583,25 +624,46 @@ void SimulatorCollectionResourceImpl::removeLink(std::string uri)
         if (linkURI == uri)
         {
             links.erase(links.begin() + i);
-            m_resModel.updateValue("links", links);
+            m_resModel.update("links", links);
             break;
         }
     }
 }
 
-RAML::ActionType SimulatorCollectionResourceImpl::getActionType(std::string requestType)
+OCEntityHandlerResult SimulatorCollectionResourceImpl::sendResponse(
+    const std::shared_ptr<OC::OCResourceRequest> &request, const int errorCode,
+    OCEntityHandlerResult responseResult)
 {
-    if (!requestType.compare("GET"))
-        return RAML::ActionType::GET;
+    std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse());
+    response->setRequestHandle(request->getRequestHandle());
+    response->setResourceHandle(request->getResourceHandle());
+    response->setErrorCode(errorCode);
+    response->setResponseResult(responseResult);
+    if (OC_STACK_OK != OC::OCPlatform::sendResponse(response))
+    {
+        return OC_EH_ERROR;
+    }
 
-    if (!requestType.compare("PUT"))
-        return RAML::ActionType::PUT;
+    return OC_EH_OK;
+}
 
-    if (!requestType.compare("POST"))
-        return RAML::ActionType::POST;
+bool SimulatorCollectionResourceImpl::isValidInterface(const std::string &interfaceType,
+        const std::string &requestType)
+{
+    // Is this OIC defined interface ?
+    if (false ==
+        OCInterfaceDetails::getInstance()->isRequestSupported(interfaceType, requestType))
+    {
+        return false;
+    }
 
-    if (!requestType.compare("DELETE"))
-        return RAML::ActionType::DELETE;
+    // Does resource support this interface ?
+    std::lock_guard<std::recursive_mutex> lock(m_objectLock);
+    if (m_interfaces.end() ==
+        std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType))
+    {
+        return false;
+    }
 
-    return RAML::ActionType::NONE;
+    return true;
 }

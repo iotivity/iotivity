@@ -23,21 +23,6 @@
 std::vector<SimulatorSingleResourceSP> g_singleResources;
 std::vector<SimulatorCollectionResourceSP> g_collectionResources;
 
-std::string getPropertyTypeString(SimulatorResourceModel::AttributeProperty::Type type)
-{
-    switch(type)
-    {
-        case SimulatorResourceModel::AttributeProperty::Type::RANGE:
-            return "RANGE";
-        case SimulatorResourceModel::AttributeProperty::Type::VALUE_SET:
-            return "VALUE_SET";
-        default:
-            break;
-    }
-
-    return "UNKNOWN";
-}
-
 class AppLogger : public ILogger
 {
     public:
@@ -58,7 +43,7 @@ int selectResource()
     }
 
     int index = 1;
-    for (auto & resource : g_singleResources)
+    for (auto &resource : g_singleResources)
     {
         std::cout << index++ << ": " << resource->getURI().c_str() << std::endl;
     }
@@ -81,19 +66,19 @@ void simulateResource()
     try
     {
         // Resource model change callback
-        SimulatorResource::ResourceModelChangedCallback modelChangeCB =
-        [](const std::string &uri, SimulatorResourceModel &resModel)
+        SimulatorResource::ResourceModelUpdateCallback modelChangeCB =
+            [](const std::string & uri, const SimulatorResourceModel & resModel)
         {
             std::cout << "[callback] Resource model is changed URI: " << uri.c_str() << std::endl;
             std::cout << "#### Modified attributes are ####" << std::endl;
             std::cout << "#### Updated resource model ####" << std::endl;
-            std::cout << resModel.toString() << std::endl;
+            std::cout << resModel.asString() << std::endl;
             std::cout << "########################" << std::endl;
         };
 
         // Observer added/removed callback
         SimulatorResource::ObserverCallback observerCB =
-        [] (const std::string &uri, ObservationStatus state, const ObserverInfo &observerInfo)
+            [] (const std::string & uri, ObservationStatus state, const ObserverInfo & observerInfo)
         {
             std::cout << "[callback] Observer notification received..." << uri << std::endl;
 
@@ -101,13 +86,15 @@ void simulateResource()
             out << "ID:  " << (int) observerInfo.id << std::endl;
             out << " [address: " << observerInfo.address << " port: " << observerInfo.port
                 << "]" << std::endl;
+            out << "State: " << ((state == ObservationStatus::REGISTER) ? "REGISTER" : "UNREGISTER") <<
+                std::endl;
             std::cout << out.str();
         };
 
         // Get the RAML file path from user
         std::string configPath;
         std::cout << "Enter RAML path: ";
-        std::cin>>configPath;
+        std::cin >> configPath;
 
         SimulatorResourceSP resource =
             SimulatorManager::getInstance()->createResource(configPath);
@@ -160,28 +147,8 @@ void displayResource()
         std::cout << " " << interfaceType << std::endl;
 
     // Attributes
-    SimulatorResourceModel resModel = resource->getResourceModel();
-    std::map<std::string, SimulatorResourceModel::Attribute> attributes =
-        resModel.getAttributes();
-    std::cout << "##### Attributes [" << attributes.size() << "]" << std::endl;
-    for (auto & attribute : attributes)
-    {
-        std::cout << (attribute.second).getName() << " :  {" << std::endl;
-        std::cout << "value: " << (attribute.second).toString() << std::endl;
-        SimulatorResourceModel::AttributeProperty prop = (attribute.second).getProperty();
-        std::cout << "Supported values given by : " << getPropertyTypeString(prop.type()) << std::endl;
-        if (SimulatorResourceModel::AttributeProperty::Type::RANGE == prop.type())
-        {
-            std::cout << "Min: " << prop.min() << std::endl;
-            std::cout << "Max: " << prop.max() << std::endl;
-        }
-        else if (SimulatorResourceModel::AttributeProperty::Type::VALUE_SET == prop.type())
-        {
-            std::cout << "Value set: " << prop.valueSetToString() << std::endl;
-        }
-
-        std::cout << "}" << std::endl << std::endl;
-    }
+    std::cout << "##### Representation #####" << std::endl;
+    std::cout << resource->getResourceModel().asString() << std::endl;
     std::cout << "#############################" << std::endl;
 }
 
@@ -209,7 +176,8 @@ void stopResource()
 
 void automateResourceUpdate()
 {
-    updateCompleteCallback callback = [](const std::string &uri, const int id)
+    SimulatorSingleResource::AutoUpdateCompleteCallback callback =
+        [](const std::string & uri, const int id)
     {
         std::cout << "Update automation is completed [URI: " << uri
                   << "  AutomationID: " << id << "] ###" << std::endl;
@@ -219,12 +187,12 @@ void automateResourceUpdate()
     if (-1 == index)
         return;
 
-    AutomationType type = AutomationType::NORMAL;
+    AutoUpdateType type = AutoUpdateType::ONE_TIME;
     int choice = 0;
     std::cout << "Press 1 if you want recurrent automation: ";
     std::cin >> choice;
     if (1 == choice)
-        type = AutomationType::RECURRENT;
+        type = AutoUpdateType::REPEAT;
 
     try
     {
@@ -241,7 +209,8 @@ void automateResourceUpdate()
 
 void automateAttributeUpdate()
 {
-    updateCompleteCallback callback = [](const std::string &uri, const int id)
+    SimulatorSingleResource::AutoUpdateCompleteCallback callback =
+        [](const std::string & uri, const int id)
     {
         std::cout << "Update automation is completed [URI: " << uri
                   << "  AutomationID: " << id << "] ###" << std::endl;
@@ -252,13 +221,12 @@ void automateAttributeUpdate()
         return;
 
     SimulatorSingleResourceSP resource = g_singleResources[index - 1];
-    SimulatorResourceModel resModel = resource->getResourceModel();
-    std::map<std::string, SimulatorResourceModel::Attribute> attributes =
-        resModel.getAttributes();
+    std::map<std::string, SimulatorResourceAttribute> attributes =
+        resource->getAttributes();
     int size = 0;
-    for (auto & attribute : attributes)
+    for (auto &attributeEntry : attributes)
     {
-        std::cout << ++size << ": " << attribute.first.c_str() << std::endl;
+        std::cout << ++size << ": " << attributeEntry.first << std::endl;
     }
 
     if (0 == size)
@@ -279,29 +247,28 @@ void automateAttributeUpdate()
 
     int count = 0;
     std::string attributeName;
-    for (auto & attribute : attributes)
+    for (auto &attributeEntry : attributes)
     {
         if (count == choice - 1)
         {
-            attributeName = attribute.first;
+            attributeName = attributeEntry.first;
             break;
         }
 
         count++;
     }
 
-    AutomationType type = AutomationType::NORMAL;
+    AutoUpdateType type = AutoUpdateType::ONE_TIME;
     std::cout << "Press 1 if you want recurrent automation: ";
     std::cin >> choice;
     if (1 == choice)
-        type = AutomationType::RECURRENT;
+        type = AutoUpdateType::REPEAT;
 
     std::cout << "Requesting attribute automation for " << attributeName <<
               std::endl;
 
     try
     {
-
         int id = resource->startAttributeUpdation(attributeName, type, -1, callback);
         std::cout << "startUpdateAutomation() returned succces : " << id << std::endl;
     }
@@ -323,8 +290,8 @@ void stopAutomation()
     // Select the automation to stop
     std::vector<int> ids;
     {
-        std::vector<int> rids = resource->getResourceUpdationIds();
-        std::vector<int> aids = resource->getAttributeUpdationIds();
+        std::vector<int> rids = resource->getResourceUpdations();
+        std::vector<int> aids = resource->getAttributeUpdations();
         ids.insert(ids.end(), rids.begin(), rids.end());
         ids.insert(ids.end(), aids.begin(), aids.end());
     }
@@ -336,7 +303,7 @@ void stopAutomation()
         return;
     }
 
-    for (auto & id : ids)
+    for (auto &id : ids)
     {
         std::cout <<  id  << " ";
         resource->stopUpdation(id);
@@ -351,10 +318,10 @@ void getObservers()
 
     SimulatorSingleResourceSP resource = g_singleResources[index - 1];
 
-    std::vector<ObserverInfo> observersList = resource->getObserversList();
+    std::vector<ObserverInfo> observersList = resource->getObservers();
 
     std::cout << "##### Number of Observers [" << observersList.size() << "]" << std::endl;
-    for (auto & observerInfo : observersList)
+    for (auto &observerInfo : observersList)
     {
         std::cout << " ID :  " << (int) observerInfo.id << " [address: " <<
                   observerInfo.address << " port: " << observerInfo.port << "]" << std::endl;
@@ -376,7 +343,8 @@ void printMainMenu()
     std::cout << "9. Set Logger" << std::endl;
     std::cout << "10. Set Device Info" << std::endl;
     std::cout << "11. Set Platform Info" << std::endl;
-    std::cout << "12. Help" << std::endl;
+    std::cout << "12. Add Interface" << std::endl;
+    std::cout << "13. Help" << std::endl;
     std::cout << "0. Exit" << std::endl;
     std::cout << "######################################" << std::endl;
 }
@@ -416,8 +384,21 @@ void setLogger()
 
 void setDeviceInfo()
 {
-    SimulatorManager::getInstance()->setDeviceInfo("IoTivity Simulator Linux Sample");
-    std::cout << "Setting Device Info is successful" << std::endl;
+    try
+    {
+        SimulatorManager::getInstance()->setDeviceInfo("IoTivity Simulator Linux Sample");
+        std::cout << "Setting Device Info is successful" << std::endl;
+    }
+    catch (InvalidArgsException &e)
+    {
+        std::cout << "InvalidArgsException occured [code : " << e.code() << " Details: "
+                  << e.what() << "]" << std::endl;
+    }
+    catch (SimulatorException &e)
+    {
+        std::cout << "SimulatorException occured [code : " << e.code() << " Details: "
+                  << e.what() << "]" << std::endl;
+    }
 }
 
 void setPlatformInfo()
@@ -435,8 +416,28 @@ void setPlatformInfo()
     pInfo.setSystemTime("2015-09-10T11:10:30Z");
     pInfo.setDateOfManfacture("2015-09-10T11:10:30Z");
 
-    SimulatorManager::getInstance()->setPlatformInfo(pInfo);
-    std::cout << "Setting Platform Info is successful" << std::endl;
+    try
+    {
+        SimulatorManager::getInstance()->setPlatformInfo(pInfo);
+        std::cout << "Setting Platform Info is successful" << std::endl;
+    }
+    catch (SimulatorException &e)
+    {
+        std::cout << "SimulatorException occured [code : " << e.code() << " Details: "
+                  << e.what() << "]" << std::endl;
+    }
+}
+
+void addInterface()
+{
+
+    int index = selectResource();
+    if (-1 == index)
+        return;
+
+    SimulatorSingleResourceSP resource = g_singleResources[index - 1];
+    resource->addInterface("oic.if.s");
+    resource->addInterface("oic.if.a");
 }
 
 int main(int argc, char *argv[])
@@ -448,7 +449,7 @@ int main(int argc, char *argv[])
         int choice = -1;
         std::cout << "Enter your choice: ";
         std::cin >> choice;
-        if (choice < 0 || choice > 12)
+        if (choice < 0 || choice > 14)
         {
             std::cout << "Invaild choice !" << std::endl; continue;
         }
@@ -466,7 +467,8 @@ int main(int argc, char *argv[])
             case 9 : setLogger(); break;
             case 10: setDeviceInfo(); break;
             case 11: setPlatformInfo(); break;
-            case 12: printMainMenu(); break;
+            case 12: addInterface(); break;
+            case 13: printMainMenu(); break;
             case 0: cont = false;
         }
     }

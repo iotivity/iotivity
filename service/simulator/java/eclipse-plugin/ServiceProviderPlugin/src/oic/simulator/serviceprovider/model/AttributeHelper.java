@@ -20,14 +20,17 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-
 import org.oic.simulator.AttributeProperty;
-import org.oic.simulator.AttributeProperty.Type;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.BooleanProperty;
+import org.oic.simulator.DoubleProperty;
+import org.oic.simulator.IntegerProperty;
 import org.oic.simulator.SimulatorResourceAttribute;
+import org.oic.simulator.StringProperty;
+
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
 
 public class AttributeHelper {
     private String      attributeName;
@@ -37,11 +40,15 @@ public class AttributeHelper {
     private Set<String> allowedValues;
     private String      attributeDflValue;
 
-    private Type        validValuesType;
+    public enum ValidValuesType {
+        RANGE, VALUESET, UNKNOWN
+    }
+
+    private ValidValuesType validValuesType;
 
     public AttributeHelper() {
         allowedValues = new HashSet<String>();
-        setValidValuesType(Type.UNKNOWN);
+        setValidValuesType(ValidValuesType.UNKNOWN);
         min = max = "";
     }
 
@@ -134,11 +141,11 @@ public class AttributeHelper {
         this.attributeDflValue = attributeDflValue;
     }
 
-    public Type getValidValuesType() {
+    public ValidValuesType getValidValuesType() {
         return validValuesType;
     }
 
-    public void setValidValuesType(Type validValuesType) {
+    public void setValidValuesType(ValidValuesType validValuesType) {
         this.validValuesType = validValuesType;
     }
 
@@ -223,7 +230,8 @@ public class AttributeHelper {
         }
         boolean result = true;
         if (attributeType.equals(Constants.STRING)) {
-            if (validValuesType == Type.VALUESET && null != allowedValues) {
+            if (validValuesType == ValidValuesType.VALUESET
+                    && null != allowedValues) {
                 result = allowedValues.contains(value);
             } else {
                 result = true;
@@ -234,7 +242,7 @@ public class AttributeHelper {
                 result = false;
             }
         } else {
-            if (validValuesType == Type.RANGE) {
+            if (validValuesType == ValidValuesType.RANGE) {
                 if (attributeType.equals(Constants.INT)) {
                     int min, max, dflValue;
                     try {
@@ -267,7 +275,7 @@ public class AttributeHelper {
                         result = false;
                     }
                 }
-            } else if (validValuesType == Type.VALUESET
+            } else if (validValuesType == ValidValuesType.VALUESET
                     && null != allowedValues && !allowedValues.isEmpty()) {
                 boolean found = false;
                 if (attributeType.equals(Constants.INT)) {
@@ -330,51 +338,74 @@ public class AttributeHelper {
         ValueType valueType = Utility.getAttributeTypeEnum(attributeType);
         switch (valueType) {
             case INTEGER:
+                IntegerProperty.Builder intPropertyBuilder = new IntegerProperty.Builder();
                 attValue = new AttributeValue(
                         Integer.parseInt(attributeDflValue));
-                if (validValuesType == Type.VALUESET) {
-                    attProperty = new AttributeProperty(
-                            Utility.convertSetToArrayInt(Utility
+
+                // Set default value.
+                intPropertyBuilder.setDefaultValue(Integer
+                        .parseInt(attributeDflValue));
+
+                if (validValuesType == ValidValuesType.VALUESET) {
+                    // Set allowed values.
+                    intPropertyBuilder.setValues(Utility
+                            .convertSetToArrayInt(Utility
                                     .convertSetStringToSetObject(allowedValues,
                                             valueType)));
-                } else if (validValuesType == Type.RANGE) {
-                    attProperty = new AttributeProperty(
-                            Double.parseDouble(min), Double.parseDouble(max));
-                } else {
-                    attProperty = null;
+                } else if (validValuesType == ValidValuesType.RANGE) {
+                    // Set Range.
+                    intPropertyBuilder.setRange(Integer.parseInt(min),
+                            Integer.parseInt(max));
                 }
+                attProperty = intPropertyBuilder.build();
                 break;
             case DOUBLE:
+                DoubleProperty.Builder dblPropertyBuilder = new DoubleProperty.Builder();
                 attValue = new AttributeValue(
                         Double.parseDouble(attributeDflValue));
-                if (validValuesType == Type.VALUESET) {
-                    attProperty = new AttributeProperty(
-                            Utility.convertSetToArrayDouble(Utility
+
+                // Set default value.
+                dblPropertyBuilder.setDefaultValue(Double
+                        .parseDouble(attributeDflValue));
+
+                if (validValuesType == ValidValuesType.VALUESET) {
+                    // Set allowed values.
+                    dblPropertyBuilder.setValues(Utility
+                            .convertSetToArrayDouble(Utility
                                     .convertSetStringToSetObject(allowedValues,
                                             valueType)));
-                } else if (validValuesType == Type.RANGE) {
-                    attProperty = new AttributeProperty(
-                            Double.parseDouble(min), Double.parseDouble(max));
-                } else {
-                    attProperty = null;
+                } else if (validValuesType == ValidValuesType.RANGE) {
+                    // Set Range.
+                    dblPropertyBuilder.setRange(Double.parseDouble(min),
+                            Double.parseDouble(max));
                 }
+                attProperty = dblPropertyBuilder.build();
                 break;
             case BOOLEAN:
                 attValue = new AttributeValue(
                         Boolean.parseBoolean(attributeDflValue));
-                boolean[] arr = { true, false };
-                attProperty = new AttributeProperty(arr);
+                BooleanProperty.Builder boolPropertyBuilder = new BooleanProperty.Builder();
+                // Set Default Value.
+                boolPropertyBuilder.setDefaultValue(Boolean
+                        .parseBoolean(attributeDflValue));
+
+                attProperty = boolPropertyBuilder.build();
                 break;
             case STRING:
                 attValue = new AttributeValue(attributeDflValue);
-                if (validValuesType == Type.VALUESET) {
-                    attProperty = new AttributeProperty(
-                            Utility.convertSetToArrayString(Utility
+                StringProperty.Builder stringPropertyBuilder = new StringProperty.Builder();
+
+                // Set Default Value.
+                stringPropertyBuilder.setDefaultValue(attributeDflValue);
+
+                if (validValuesType == ValidValuesType.VALUESET) {
+                    // Set Allowed Values.
+                    stringPropertyBuilder.setValues(Utility
+                            .convertSetToArrayString(Utility
                                     .convertSetStringToSetObject(allowedValues,
                                             valueType)));
-                } else {
-                    attProperty = null;
                 }
+                attProperty = stringPropertyBuilder.build();
                 break;
             default:
                 break;

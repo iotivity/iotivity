@@ -16,6 +16,51 @@
 
 package oic.simulator.serviceprovider.view;
 
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.ILabelProviderListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.TreeViewerColumn;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.window.Window;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MenuAdapter;
+import org.eclipse.swt.events.MenuEvent;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeColumn;
+import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.ui.part.ViewPart;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.oic.simulator.ArrayProperty;
+import org.oic.simulator.AttributeProperty;
+import org.oic.simulator.AttributeValue;
+import org.oic.simulator.AttributeValue.TypeInfo;
+import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.ModelProperty;
+import org.oic.simulator.SimulatorResourceAttribute;
+import org.oic.simulator.SimulatorResourceModel;
+
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.listener.IAutomationListener;
 import oic.simulator.serviceprovider.listener.IDataChangeListener;
@@ -28,30 +73,7 @@ import oic.simulator.serviceprovider.model.ResourceRepresentation;
 import oic.simulator.serviceprovider.model.SingleResource;
 import oic.simulator.serviceprovider.utils.Constants;
 import oic.simulator.serviceprovider.utils.Utility;
-
-import org.eclipse.jface.viewers.ILabelProviderListener;
-import org.eclipse.jface.viewers.ITableLabelProvider;
-import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.jface.viewers.TreeViewerColumn;
-import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeColumn;
-import org.eclipse.ui.part.ViewPart;
-import org.oic.simulator.AttributeValue;
-import org.oic.simulator.AttributeValue.TypeInfo;
-import org.oic.simulator.AttributeValue.ValueType;
-import org.oic.simulator.SimulatorResourceAttribute;
+import oic.simulator.serviceprovider.view.dialogs.ModelArrayAddItemDialog;
 
 /**
  * This class manages and shows the attribute view in the perspective.
@@ -162,7 +184,7 @@ public class AttributeView extends ViewPart {
 
                     @Override
                     public void run() {
-                        if (null == resource) {
+                        if (null == resource || null == attViewer) {
                             return;
                         }
                         Resource resourceInSelection = resourceManager
@@ -177,8 +199,6 @@ public class AttributeView extends ViewPart {
                             Tree tree;
                             tree = attViewer.getTree();
                             if (!tree.isDisposed()) {
-                                attViewer.refresh();
-
                                 // Disabling the table to prevent interactions
                                 // during the automation
                                 tree.setEnabled(false);
@@ -216,7 +236,6 @@ public class AttributeView extends ViewPart {
                         tree = attViewer.getTree();
                         if (!tree.isDisposed()) {
                             tree.setEnabled(true);
-                            attViewer.refresh();
                         }
                     }
                 });
@@ -281,7 +300,7 @@ public class AttributeView extends ViewPart {
         TreeViewerColumn attValueVwrCol = new TreeViewerColumn(attViewer,
                 attValue);
         attValueVwrCol.setEditingSupport(attributeEditor
-                .createAttributeValueEditor(attViewer));
+                .createAttributeValueEditor(attViewer, true));
 
         TreeColumn automation = new TreeColumn(tree, SWT.NONE);
         automation.setWidth(attTblColWidth[2]);
@@ -292,6 +311,8 @@ public class AttributeView extends ViewPart {
                 .createAutomationEditor(attViewer));
 
         addColumnListeners();
+
+        addMenuItems();
     }
 
     private void addColumnListeners() {
@@ -309,6 +330,401 @@ public class AttributeView extends ViewPart {
                 }
             });
         }
+    }
+
+    private void addMenuItems() {
+        if (null != attViewer) {
+            final Tree resourceTreeHead = attViewer.getTree();
+            if (null != resourceTreeHead) {
+                // Below code creates menu entries and shows them on right
+                // clicking a resource
+                final Menu menu = new Menu(resourceTreeHead);
+                resourceTreeHead.setMenu(menu);
+                menu.addMenuListener(new MenuAdapter() {
+                    @Override
+                    public void menuShown(MenuEvent e) {
+                        // Clear existing menu items
+                        MenuItem[] items = menu.getItems();
+                        for (int index = 0; index < items.length; index++) {
+                            items[index].dispose();
+                        }
+
+                        IStructuredSelection selection = ((IStructuredSelection) attViewer
+                                .getSelection());
+                        final AttributeElement attElement = (AttributeElement) selection
+                                .getFirstElement();
+                        if (null == attElement) {
+                            return;
+                        }
+
+                        // Check the type of attribute.
+                        SimulatorResourceAttribute attribute = attElement
+                                .getSimulatorResourceAttribute();
+                        if (null == attribute) {
+                            return;
+                        }
+
+                        AttributeValue value = attribute.value();
+                        if (null == value || null == value.get()) {
+                            return;
+                        }
+
+                        TypeInfo type = value.typeInfo();
+
+                        final Object parent = attElement.getParent();
+
+                        if ((type.mType == ValueType.ARRAY
+                                && type.mBaseType == ValueType.RESOURCEMODEL && type.mDepth == 1)
+                                && (null == parent || parent instanceof ResourceRepresentation)) {
+                            addMenuToOneDimensionalTopLevelModelAttributes(menu);
+                            return;
+                        }
+
+                        if (null != parent
+                                && !(parent instanceof ResourceRepresentation)) {
+                            Object grandParent = ((AttributeElement) parent)
+                                    .getParent();
+                            if (null == grandParent
+                                    || grandParent instanceof ResourceRepresentation) {
+                                AttributeElement parentElement = (AttributeElement) parent;
+
+                                // Check the type of attribute.
+                                SimulatorResourceAttribute parentAttribute = parentElement
+                                        .getSimulatorResourceAttribute();
+                                if (null != parentAttribute
+                                        && null != parentAttribute.value()
+                                        && null != parentAttribute.value()
+                                                .get()) {
+                                    AttributeValue parentValue = parentAttribute
+                                            .value();
+
+                                    TypeInfo parentType = parentValue
+                                            .typeInfo();
+                                    if (parentType.mType == ValueType.ARRAY
+                                            && parentType.mBaseType == ValueType.RESOURCEMODEL
+                                            && parentType.mDepth == 1) {
+                                        addDeleteMenuToArrayItemsOfOneDimensionalModelAttribute(
+                                                menu, attElement, parentElement);
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                });
+            }
+        }
+    }
+
+    private void addMenuToOneDimensionalTopLevelModelAttributes(Menu menu) {
+        // Menu to add items to the array.
+        MenuItem addItems = new MenuItem(menu, SWT.NONE);
+        addItems.setText("Add Items");
+        addItems.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                // Get the attributes.
+                ResourceRepresentation representation;
+                representation = getRepresentationForOneDimensionTopLevelAttribute();
+                if (null == representation) {
+                    MessageDialog
+                            .openError(Display.getDefault().getActiveShell(),
+                                    "Unable to perform the operation.",
+                                    "Failed to obtain the required data. Operation cannot be performed.");
+                } else {
+                    // Check whether a new item can be added to the array by
+                    // checking
+                    // the array property of the current attribute in
+                    // selection(Model Array type attribute).
+                    AttributeElement attElement = getSelectedElement();
+                    SimulatorResourceAttribute attribute = attElement
+                            .getSimulatorResourceAttribute();
+
+                    AttributeValue attValue = attribute.value();
+                    AttributeProperty attProperty = attribute.property();
+                    if (null != attProperty
+                            && attProperty instanceof ArrayProperty) {
+                        ArrayProperty prop = attProperty.asArray();
+                        if (null != prop && !prop.isVariable()) {
+                            SimulatorResourceModel[] model = (SimulatorResourceModel[]) attValue
+                                    .get();
+                            if (null != model
+                                    && model.length >= prop.maxItems()) {
+                                MessageDialog
+                                        .openError(
+                                                Display.getDefault()
+                                                        .getActiveShell(),
+                                                "Unable to perform the operation.",
+                                                "Exceeding the maximum number of array elements allowed for this attribute.\n"
+                                                        + "Maximum number of allowed array element(s): "
+                                                        + prop.maxItems());
+                                return;
+                            }
+                        }
+                    }
+
+                    ModelArrayAddItemDialog dialog = new ModelArrayAddItemDialog(
+                            Display.getDefault().getActiveShell(),
+                            representation);
+                    if (Window.OK == dialog.open()) {
+                        // Add the new item to the local resource
+                        // representation.
+                        AttributeElement newElement = (AttributeElement) representation
+                                .getAttributes().values().toArray()[0];
+                        SimulatorResourceAttribute newAttribute = newElement
+                                .getSimulatorResourceAttribute();
+                        SimulatorResourceModel newModel = (SimulatorResourceModel) newAttribute
+                                .value().get();
+
+                        SimulatorResourceModel[] modelArray = (SimulatorResourceModel[]) attribute
+                                .value().get();
+                        SimulatorResourceModel[] newModelArray = new SimulatorResourceModel[modelArray.length + 1];
+
+                        int i;
+                        for (i = 0; i < modelArray.length; i++) {
+                            newModelArray[i] = modelArray[i];
+                        }
+                        newModelArray[i] = newModel;
+
+                        AttributeValue newValue = new AttributeValue(
+                                newModelArray);
+
+                        newAttribute.setValue(newValue);
+
+                        newAttribute.setProperty(attribute.property());
+
+                        attElement.update(newAttribute);
+
+                        boolean updated = resourceManager.attributeValueUpdated(
+                                (SingleResource) resourceManager
+                                        .getCurrentResourceInSelection(),
+                                attribute.name(), newValue);
+
+                        if (!updated) {
+                            attribute.setValue(new AttributeValue(modelArray));
+                            attElement.update(newAttribute);
+
+                            MessageDialog
+                                    .openInformation(Display.getDefault()
+                                            .getActiveShell(),
+                                            "Operation failed",
+                                            "Failed to insert a new item in the array.");
+                        } else {
+                            // Highlight the newly added item.
+                            AttributeElement addedElement = attElement
+                                    .getChildren().get("[" + i + "]");
+                            attViewer.setSelection(new StructuredSelection(
+                                    addedElement), true);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private void addDeleteMenuToArrayItemsOfOneDimensionalModelAttribute(
+            final Menu menu, final AttributeElement elementToDelete,
+            final AttributeElement parentElement) {
+        // Menu to add items to the array.
+        MenuItem addItems = new MenuItem(menu, SWT.NONE);
+        addItems.setText("Delete Item");
+        addItems.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                // Check whether any existing item can be removed from the array
+                // by checking
+                // the array property of the current attribute in
+                // selection(Model Array type attribute).
+                SimulatorResourceAttribute parentSRA = parentElement
+                        .getSimulatorResourceAttribute();
+                AttributeValue value = parentSRA.value();
+                AttributeProperty attProperty = parentSRA.property();
+                if (null != attProperty && attProperty instanceof ArrayProperty) {
+                    ArrayProperty prop = attProperty.asArray();
+                    if (null != prop) {
+                        SimulatorResourceModel[] model = (SimulatorResourceModel[]) value
+                                .get();
+                        if (null != model && model.length <= prop.minItems()) {
+                            MessageDialog
+                                    .openError(
+                                            Display.getDefault()
+                                                    .getActiveShell(),
+                                            "Unable to perform the operation.",
+                                            "Violating the minimum number of array elements allowed for this attribute.\n"
+                                                    + "Minimum number of allowed array element(s): "
+                                                    + prop.minItems());
+                            return;
+                        }
+                    }
+                }
+
+                MessageBox dialog = new MessageBox(menu.getShell(),
+                        SWT.ICON_QUESTION | SWT.OK | SWT.CANCEL);
+                dialog.setText("Confirm action");
+                dialog.setMessage("Do you want to delete this item from the array?");
+                int retval = dialog.open();
+                if (retval != SWT.OK) {
+                    return;
+                }
+
+                // Removing the element from the attribute value.
+                SimulatorResourceModel[] modelArray = (SimulatorResourceModel[]) value
+                        .get();
+
+                String elementIndexName = elementToDelete
+                        .getSimulatorResourceAttribute().name();
+                int elementIndex = Integer.parseInt(elementIndexName.substring(
+                        elementIndexName.indexOf('[') + 1,
+                        elementIndexName.indexOf(']')));
+
+                SimulatorResourceModel[] newModelArray = new SimulatorResourceModel[modelArray.length - 1];
+                int sIndex = 0, dIndex = 0;
+                for (SimulatorResourceModel model : modelArray) {
+                    if (sIndex != elementIndex)
+                        newModelArray[dIndex++] = model;
+                    sIndex++;
+                }
+
+                // Setting the new model array in the attribute.
+                AttributeValue newValue = new AttributeValue(newModelArray);
+                parentSRA.setValue(newValue);
+
+                // Removing the element from the child map.
+                Map<String, AttributeElement> elements = parentElement
+                        .getChildren();
+                List<AttributeElement> attElementList = new ArrayList<AttributeElement>();
+                attElementList.addAll(elements.values());
+                Collections.sort(attElementList, Utility.attributeComparator);
+
+                // Renaming the index of the elements.
+                AttributeElement[] attElementArray = attElementList
+                        .toArray(new AttributeElement[0]);
+                boolean deleted = false;
+                int index, newIndex;
+                for (index = 0, newIndex = 0; index < attElementArray.length; index++) {
+                    if (index == elementIndex) {
+                        elements.remove(elementIndexName);
+                        deleted = true;
+                    } else {
+                        if (deleted) {
+                            AttributeElement element = attElementArray[index];
+                            String curIndexStr = "[" + index + "]";
+                            String newIndexStr = "[" + newIndex + "]";
+
+                            element.getSimulatorResourceAttribute().setName(
+                                    newIndexStr);
+
+                            elements.remove(curIndexStr);
+                            elements.put(newIndexStr, element);
+                        }
+                        newIndex++;
+                    }
+                }
+
+                resourceManager.attributeValueUpdated(
+                        (SingleResource) resourceManager
+                                .getCurrentResourceInSelection(), parentSRA
+                                .name(), newValue);
+
+                attViewer.refresh(parentElement);
+            }
+        });
+    }
+
+    private ResourceRepresentation getRepresentationForOneDimensionTopLevelAttribute() {
+        ResourceRepresentation representation = null;
+
+        AttributeValue value = null;
+        ModelProperty property = null;
+        SimulatorResourceAttribute attribute;
+
+        AttributeElement element = getSelectedElement();
+        if (null == element)
+            return null;
+
+        SimulatorResourceAttribute modelArrayAtt = element
+                .getSimulatorResourceAttribute();
+        if (null == modelArrayAtt) {
+            return null;
+        }
+
+        AttributeValue attValue = modelArrayAtt.value();
+        if (null == attValue) {
+            return null;
+        }
+
+        TypeInfo type = attValue.typeInfo();
+
+        if (!(type.mType == ValueType.ARRAY
+                && type.mBaseType == ValueType.RESOURCEMODEL && type.mDepth == 1)) {
+            return null;
+        }
+
+        SimulatorResourceModel[] modelValue = (SimulatorResourceModel[]) attValue
+                .get();
+        if (null == modelValue || modelValue.length < 0) {
+            return null;
+        }
+
+        // Clone an instance of model value.
+        try {
+            value = Utility.cloneAttributeValue(new AttributeValue(
+                    modelValue[0]));
+        } catch (Exception e) {
+            return null;
+        }
+
+        if (null == value) {
+            return null;
+        }
+
+        // Get the model property of the model value instance.
+        AttributeProperty attProperty = modelArrayAtt.property();
+        if (null != attProperty && attProperty instanceof ArrayProperty) {
+            ArrayProperty prop = attProperty.asArray();
+            if (null != prop) {
+                AttributeProperty elementProperty = prop.getElementProperty();
+                if (null != elementProperty && elementProperty.isModel()) {
+                    property = elementProperty.asModel();
+                }
+            }
+        }
+
+        attribute = new SimulatorResourceAttribute(modelArrayAtt.name(), value,
+                property);
+
+        Map<String, SimulatorResourceAttribute> attributes = new HashMap<String, SimulatorResourceAttribute>();
+        attributes.put(attribute.name(), attribute);
+
+        representation = new ResourceRepresentation(attributes);
+
+        return representation;
+    }
+
+    private AttributeElement getSelectedElement() {
+        IStructuredSelection selection = (IStructuredSelection) attViewer
+                .getSelection();
+        if (null == selection) {
+            return null;
+        }
+
+        Object obj = selection.getFirstElement();
+        if (null == obj) {
+            return null;
+        }
+
+        Tree t = attViewer.getTree();
+        TreeItem item = t.getSelection()[0];
+        if (null == item) {
+            return null;
+        }
+
+        if (!(item.getData() instanceof AttributeElement)) {
+            return null;
+        }
+
+        return (AttributeElement) item.getData();
     }
 
     private void addManagerListeners() {
@@ -334,8 +750,15 @@ public class AttributeView extends ViewPart {
         @Override
         public Object[] getChildren(Object attribute) {
             if (attribute instanceof AttributeElement) {
-                return ((AttributeElement) attribute).getChildren().values()
-                        .toArray();
+                List<AttributeElement> attElementList = new ArrayList<AttributeElement>();
+                Map<String, AttributeElement> children = ((AttributeElement) attribute)
+                        .getChildren();
+                if (null != children) {
+                    attElementList.addAll(children.values());
+                    Collections.sort(attElementList,
+                            Utility.attributeComparator);
+                    return attElementList.toArray();
+                }
             }
 
             return new Object[0];
@@ -430,9 +853,15 @@ public class AttributeView extends ViewPart {
                         SimulatorResourceAttribute attribute = attrElement
                                 .getSimulatorResourceAttribute();
 
-                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL)
-                            return Utility.getAttributeValueAsString(attribute
-                                    .value());
+                        if (attribute.value().typeInfo().mBaseType != ValueType.RESOURCEMODEL) {
+                            String value = Utility
+                                    .getAttributeValueAsString(attribute
+                                            .value());
+                            if (null == value) {
+                                value = "";
+                            }
+                            return value;
+                        }
                         return null;
                     }
 
@@ -454,7 +883,7 @@ public class AttributeView extends ViewPart {
                                         && !(parent instanceof ResourceRepresentation)) {
                                     return "NA";
                                 } else if (attrElement.isReadOnly()) {
-                                    return "Read-only";
+                                    return "NA";
                                 } else if (attrElement.isAutoUpdateSupport()) {
                                     if (attrElement.isAutoUpdateInProgress())
                                         return Constants.ENABLED;

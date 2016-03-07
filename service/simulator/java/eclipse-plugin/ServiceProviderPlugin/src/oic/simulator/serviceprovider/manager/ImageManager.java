@@ -16,15 +16,15 @@
 
 package oic.simulator.serviceprovider.manager;
 
-import java.net.URL;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.utils.Constants;
-
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.osgi.framework.Bundle;
+
+import java.net.URL;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.utils.Constants;
 
 /**
  * Class which loads the icons/images into the image registry, and has methods

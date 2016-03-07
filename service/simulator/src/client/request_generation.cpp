@@ -1,5 +1,8 @@
-/*
+/******************************************************************
+ *
  * Copyright 2015 Samsung Electronics All Rights Reserved.
+ *
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,31 +15,26 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *
+ ******************************************************************/
 
-package oic.simulator.clientcontroller.view;
+#include "request_generation.h"
 
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.ui.part.ViewPart;
+RequestGeneration::RequestGeneration(RequestType type, int id,
+                                     ProgressStateCallback callback)
+    :   m_type(type),
+        m_id(id),
+        m_callback(callback),
+        m_requestsSent(false),
+        m_requestCnt(0),
+        m_responseCnt(0) {}
 
-/**
- * This class manages and shows the multi-resource automation view in the
- * perspective.
- */
-public class MultiResourceOrchestrationView extends ViewPart {
+void RequestGeneration::start()
+{
+    startSending();
+}
 
-    public static final String VIEW_ID = "oic.simulator.clientcontroller.view.orchestration";
-
-    @Override
-    public void createPartControl(Composite arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void setFocus() {
-        // TODO Auto-generated method stub
-
-    }
-
+void RequestGeneration::stop()
+{
+    stopSending();
 }

@@ -22,14 +22,18 @@
 #define SIMULATOR_RESOURCE_MODEL_JNI_H_
 
 #include <jni.h>
+
 #include "simulator_resource_model.h"
 
-jobject simulatorResourceModelToJava(JNIEnv *env, SimulatorResourceModel &resModel);
-jobject simulatorResourceAttributeToJava(JNIEnv *env, SimulatorResourceModel::Attribute &attribute);
-bool simulatorResourceModelToCpp(JNIEnv *env, jobject jResModel, SimulatorResourceModel &resModel);
-bool simulatorResourceAttributeToCpp(JNIEnv *env, jobject jAttribute,
-                                     SimulatorResourceModel::Attribute &attribute);
+jobject SimulatorResourceModelToJava(JNIEnv *env,
+                                     const SimulatorResourceModel &resModel);
+
+bool SimulatorResourceModelToCpp(JNIEnv *env, jobject jResModel,
+                                 SimulatorResourceModel &resModel);
+
+jobject AttributeValueToJava(JNIEnv *env, const AttributeValueVariant &value);
+
 bool AttributeValueToCpp(JNIEnv *env, jobject jAttributeValue,
-                         SimulatorResourceModel::ValueVariant &value);
+                         AttributeValueVariant &jValue);
 
 #endif

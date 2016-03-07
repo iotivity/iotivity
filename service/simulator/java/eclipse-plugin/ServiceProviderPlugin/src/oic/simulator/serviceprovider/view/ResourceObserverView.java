@@ -16,19 +16,6 @@
 
 package oic.simulator.serviceprovider.view;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.IObserverListChangedListener;
-import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
-import oic.simulator.serviceprovider.manager.ResourceManager;
-import oic.simulator.serviceprovider.manager.UiListenerHandler;
-import oic.simulator.serviceprovider.model.ObserverDetail;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.utils.Constants;
-
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.CheckboxCellEditor;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
@@ -47,6 +34,19 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.ui.part.ViewPart;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.listener.IObserverListChangedListener;
+import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
+import oic.simulator.serviceprovider.manager.ResourceManager;
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
+import oic.simulator.serviceprovider.model.ObserverDetail;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.utils.Constants;
 
 /**
  * This class manages and shows the resource observer view in the perspective.

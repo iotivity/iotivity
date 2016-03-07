@@ -44,17 +44,32 @@
 #define ATTRIBUTE_TYPE_INFO_CLS "org/oic/simulator/AttributeValue$TypeInfo"
 #define ATTRIBUTE_PROPERTY_CLS "org/oic/simulator/AttributeProperty"
 #define ATTRIBUTE_PROPERTY_TYPE_CLS "org/oic/simulator/AttributeProperty$Type"
-#define AUTOMATION_TYPE_CLS "org/oic/simulator/server/SimulatorResource$AutoUpdateType"
+#define AUTO_UPDATE_TYPE_CLS "org/oic/simulator/server/SimulatorResource$AutoUpdateType"
 
 #define SIMULATOR_REMOTE_RESOURCE_CLS "org/oic/simulator/client/SimulatorRemoteResource"
+#define REQUEST_TYPE_CLS "org/oic/simulator/client/SimulatorRemoteResource$RequestType"
 #define OBSERVER_CLS "org/oic/simulator/server/Observer"
 #define DEVICE_INFO_CLS "org/oic/simulator/DeviceInfo"
 #define PLATFORM_INFO_CLS "org/oic/simulator/PlatformInfo"
+#define SIMULATOR_REQUEST_MODEL_CLS "org/oic/simulator/client/SimulatorRequestModel"
+
 #define SIMULATOR_EXCEPTION_CLS "org/oic/simulator/SimulatorException"
 #define INVALID_ARGS_EXCEPTION_CLS "org/oic/simulator/InvalidArgsException"
 #define NO_SUPPORT_EXCEPTION_CLS "org/oic/simulator/NoSupportException"
 #define OPERATION_IN_PROGRESS_EXCEPTION_CLS "org/oic/simulator/OperationInProgressException"
 #define SIMULATOR_RESULT_CLS "org/oic/simulator/SimulatorResult"
+
+#define INTEGER_PROPERTY "org/oic/simulator/IntegerProperty"
+#define INTEGER_PROPERTY_BUILDER "org/oic/simulator/IntegerProperty$Builder"
+#define DOUBLE_PROPERTY "org/oic/simulator/DoubleProperty"
+#define DOUBLE_PROPERTY_BUILDER "org/oic/simulator/DoubleProperty$Builder"
+#define BOOLEAN_PROPERTY "org/oic/simulator/BooleanProperty"
+#define BOOLEAN_PROPERTY_BUILDER "org/oic/simulator/BooleanProperty$Builder"
+#define STRING_PROPERTY "org/oic/simulator/StringProperty"
+#define STRING_PROPERTY_BUILDER "org/oic/simulator/StringProperty$Builder"
+#define ARRAY_PROPERTY "org/oic/simulator/ArrayProperty"
+#define ARRAY_PROPERTY_BUILDER "org/oic/simulator/ArrayProperty$Builder"
+#define MODEL_PROPERTY "org/oic/simulator/ModelProperty"
 
 #define INTEGER_1D_ARRAY "[Ljava/lang/Integer;"
 #define INTEGER_2D_ARRAY "[[Ljava/lang/Integer;"
@@ -76,7 +91,7 @@ SimulatorClassRefs gSimulatorClassRefs;
 static std::mutex gJvmMutex;
 static JavaVM *gJavaVM;
 
-JNIEnv *getEnv()
+JNIEnv *GetEnv()
 {
     std::unique_lock<std::mutex> lock(gJvmMutex);
     if (!gJavaVM)
@@ -96,7 +111,7 @@ JNIEnv *getEnv()
     return nullptr;
 }
 
-void releaseEnv()
+void ReleaseEnv()
 {
     std::unique_lock<std::mutex> lock(gJvmMutex);
     if (!gJavaVM)
@@ -118,7 +133,7 @@ static void getClassRef(JNIEnv *env, const char *className, jclass &classRef)
 extern "C" {
 #endif
 
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void * /*reserved*/)
 {
     if (!vm)
         return JNI_ERR;
@@ -139,12 +154,12 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     getClassRef(env, MAP_ENTRY_CLS, gSimulatorClassRefs.mapEntryCls);
     getClassRef(env, SET_CLS, gSimulatorClassRefs.setCls);
     getClassRef(env, ITERATOR_CLS, gSimulatorClassRefs.iteratorCls);
+
     getClassRef(env, SIMULATOR_RESOURCE_CLS, gSimulatorClassRefs.simulatorResourceCls);
     getClassRef(env, SIMULATOR_RESOURCE_TYPE_CLS, gSimulatorClassRefs.simulatorResourceTypeCls);
     getClassRef(env, SIMULATOR_SINGLE_RESOURCE_CLS, gSimulatorClassRefs.simulatorSingleResourceCls);
     getClassRef(env, SIMULATOR_COLLECTION_RESOURCE_CLS,
                 gSimulatorClassRefs.simulatorCollectionResourceCls);
-    getClassRef(env, SIMULATOR_REMOTE_RESOURCE_CLS, gSimulatorClassRefs.simulatorRemoteResourceCls);
     getClassRef(env, SIMULATOR_RESOURCE_MODEL_CLS, gSimulatorClassRefs.simulatorResourceModelCls);
     getClassRef(env, SIMULATOR_RESOURCE_ATTRIBUTE_CLS,
                 gSimulatorClassRefs.simulatorResourceAttributeCls);
@@ -153,16 +168,34 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     getClassRef(env, ATTRIBUTE_TYPE_INFO_CLS, gSimulatorClassRefs.attributeTypeInfoCls);
     getClassRef(env, ATTRIBUTE_PROPERTY_CLS, gSimulatorClassRefs.attributePropertyCls);
     getClassRef(env, ATTRIBUTE_PROPERTY_TYPE_CLS, gSimulatorClassRefs.attributePropertyTypeCls);
-    getClassRef(env, AUTOMATION_TYPE_CLS, gSimulatorClassRefs.automationTypeCls);
+    getClassRef(env, INTEGER_PROPERTY, gSimulatorClassRefs.integerPropertyCls);
+    getClassRef(env, INTEGER_PROPERTY_BUILDER, gSimulatorClassRefs.integerPropertyBuilderCls);
+    getClassRef(env, DOUBLE_PROPERTY, gSimulatorClassRefs.doublePropertyCls);
+    getClassRef(env, DOUBLE_PROPERTY_BUILDER, gSimulatorClassRefs.doublePropertyBuilderCls);
+    getClassRef(env, BOOLEAN_PROPERTY, gSimulatorClassRefs.booleanPropertyCls);
+    getClassRef(env, BOOLEAN_PROPERTY_BUILDER, gSimulatorClassRefs.booleanPropertyBuilderCls);
+    getClassRef(env, STRING_PROPERTY, gSimulatorClassRefs.stringPropertyCls);
+    getClassRef(env, STRING_PROPERTY_BUILDER, gSimulatorClassRefs.stringPropertyBuilderCls);
+    getClassRef(env, ARRAY_PROPERTY, gSimulatorClassRefs.arrayPropertyCls);
+    getClassRef(env, ARRAY_PROPERTY_BUILDER, gSimulatorClassRefs.arrayPropertyBuilderCls);
+    getClassRef(env, MODEL_PROPERTY, gSimulatorClassRefs.modelPropertyCls);
+    getClassRef(env, AUTO_UPDATE_TYPE_CLS, gSimulatorClassRefs.autoUpdateTypeCls);
+
+    getClassRef(env, SIMULATOR_REMOTE_RESOURCE_CLS,
+                gSimulatorClassRefs.simulatorRemoteResourceCls);
+    getClassRef(env, REQUEST_TYPE_CLS, gSimulatorClassRefs.requestTypeCls);
     getClassRef(env, OBSERVER_CLS, gSimulatorClassRefs.observerCls);
     getClassRef(env, DEVICE_INFO_CLS, gSimulatorClassRefs.deviceInfoCls);
     getClassRef(env, PLATFORM_INFO_CLS, gSimulatorClassRefs.platformInfoCls);
+    getClassRef(env, SIMULATOR_REQUEST_MODEL_CLS, gSimulatorClassRefs.simulatorRequestModelCls);
+
     getClassRef(env, SIMULATOR_EXCEPTION_CLS, gSimulatorClassRefs.simulatorExceptionCls);
     getClassRef(env, INVALID_ARGS_EXCEPTION_CLS, gSimulatorClassRefs.invalidArgsExceptionCls);
     getClassRef(env, NO_SUPPORT_EXCEPTION_CLS, gSimulatorClassRefs.noSupportExceptionCls);
     getClassRef(env, OPERATION_IN_PROGRESS_EXCEPTION_CLS,
                 gSimulatorClassRefs.operationInProgressExceptionCls);
     getClassRef(env, SIMULATOR_RESULT_CLS, gSimulatorClassRefs.simulatorResultCls);
+
     getClassRef(env, INTEGER_1D_ARRAY, gSimulatorClassRefs.integer1DArrayCls);
     getClassRef(env, INTEGER_2D_ARRAY, gSimulatorClassRefs.integer2DArrayCls);
     getClassRef(env, INTEGER_3D_ARRAY, gSimulatorClassRefs.integer3DArrayCls);
@@ -186,7 +219,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     return JNI_VERSION_1_6;
 }
 
-JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
+JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void * /*reserved*/)
 {
     if (!vm)
         return;
@@ -207,6 +240,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     env->DeleteGlobalRef(gSimulatorClassRefs.mapEntryCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.setCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.iteratorCls);
+
     env->DeleteGlobalRef(gSimulatorClassRefs.simulatorResourceCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.simulatorSingleResourceCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.simulatorCollectionResourceCls);
@@ -217,18 +251,49 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
     env->DeleteGlobalRef(gSimulatorClassRefs.attributeTypeInfoCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.attributePropertyCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.attributePropertyTypeCls);
-    env->DeleteGlobalRef(gSimulatorClassRefs.automationTypeCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.integerPropertyCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.integerPropertyBuilderCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.doublePropertyCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.doublePropertyBuilderCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.booleanPropertyCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.booleanPropertyBuilderCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.stringPropertyCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.stringPropertyBuilderCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.arrayPropertyCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.arrayPropertyBuilderCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.modelPropertyCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.autoUpdateTypeCls);
+
     env->DeleteGlobalRef(gSimulatorClassRefs.simulatorRemoteResourceCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.requestTypeCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.observerCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.deviceInfoCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.platformInfoCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.simulatorRequestModelCls);
+
     env->DeleteGlobalRef(gSimulatorClassRefs.simulatorExceptionCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.invalidArgsExceptionCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.noSupportExceptionCls);
     env->DeleteGlobalRef(gSimulatorClassRefs.operationInProgressExceptionCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.simulatorResultCls);
+
+    env->DeleteGlobalRef(gSimulatorClassRefs.integer1DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.integer2DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.integer3DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.double1DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.double2DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.double3DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.boolean1DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.boolean2DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.boolean3DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.string1DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.string2DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.string3DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.simulatorResModel1DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.simulatorResModel2DArrayCls);
+    env->DeleteGlobalRef(gSimulatorClassRefs.simulatorResModel3DArrayCls);
 }
 
 #ifdef __cplusplus
 }
 #endif
-

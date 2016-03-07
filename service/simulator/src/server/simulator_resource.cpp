@@ -18,31 +18,35 @@
  *
  ******************************************************************/
 
-#ifndef SIMULATOR_SERVER_TYPES_H_
-#define SIMULATOR_SERVER_TYPES_H_
+#include "simulator_resource.h"
 
-#include <iostream>
-#include <functional>
-
-enum class ObservationStatus
+bool SimulatorResource::isCollection() const
 {
-    REGISTER,
-    UNREGISTER
-};
+    return false;
+}
 
-typedef struct
+SimulatorResource::Type SimulatorResource::getType() const
 {
-    uint8_t id;
-    std::string address;
-    uint16_t port;
-} ObserverInfo;
+    return m_type;
+}
 
-enum class AutomationType
+std::string SimulatorResource::getName() const
 {
-    NORMAL,
-    RECURRENT
-};
+    return m_name;
+}
 
-typedef std::function<void (const std::string &, const int)> updateCompleteCallback;
+std::string SimulatorResource::getURI() const
+{
+    return m_uri;
+}
 
-#endif
+std::string SimulatorResource::getResourceType() const
+{
+    return m_resourceType;
+}
+
+std::vector<std::string> SimulatorResource::getInterface() const
+{
+    return m_interfaces;
+}
+
