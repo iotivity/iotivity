@@ -59,10 +59,10 @@ typedef enum
 
 void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : ocservercoll -t <Test Case>");
-    OC_LOG(INFO, TAG,
+    OIC_LOG(INFO, TAG, "Usage : ocservercoll -t <Test Case>");
+    OIC_LOG(INFO, TAG,
             "Test Case 1 : Create room resource with default collection entity handler.");
-    OC_LOG(INFO, TAG,
+    OIC_LOG(INFO, TAG,
             "Test Case 2 : Create room resource with application collection entity handler.");
 }
 
@@ -99,7 +99,7 @@ PrintReceivedMsgInfo(OCEntityHandlerFlag flag, OCEntityHandlerRequest * ehReques
         typeOfMethod = "OC_REST_PUT";
     }
 
-    OC_LOG_V(INFO, TAG, "Receiving message type: %s, method %s", typeOfMessage,
+    OIC_LOG_V(INFO, TAG, "Receiving message type: %s, method %s", typeOfMessage,
             typeOfMethod);
 }
 
@@ -108,25 +108,25 @@ OCEntityHandlerResult
 OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, char* uri, void* /*callbackParam*/)
 {
-    OC_LOG_V(INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
+    OIC_LOG_V(INFO, TAG, "Inside device default entity handler - flags: 0x%x, uri: %s", flag, uri);
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
     OCEntityHandlerResponse response;
 
     if (!entityHandlerRequest)
     {
-        OC_LOG(ERROR, TAG, "Invalid request pointer");
+        OIC_LOG(ERROR, TAG, "Invalid request pointer");
         return OC_EH_ERROR;
     }
 
     if (entityHandlerRequest->resource == NULL)
     {
-        OC_LOG(INFO, TAG, "Received request from client to a non-existing resource");
+        OIC_LOG(INFO, TAG, "Received request from client to a non-existing resource");
         ehResult = OC_EH_RESOURCE_NOT_FOUND;
     }
     else
     {
-        OC_LOG_V(INFO, TAG, "Device Handler: Received unsupported request from client %d",
+        OIC_LOG_V(INFO, TAG, "Device Handler: Received unsupported request from client %d",
                         entityHandlerRequest->method);
         ehResult = OC_EH_ERROR;
     }
@@ -147,7 +147,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
         // Send the response
         if (OCDoResponse(&response) != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "Error sending response");
+            OIC_LOG(ERROR, TAG, "Error sending response");
             ehResult = OC_EH_ERROR;
         }
     }
@@ -161,7 +161,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
 
-    OC_LOG_V(INFO, TAG, "Callback for Room");
+    OIC_LOG_V(INFO, TAG, "Callback for Room");
     PrintReceivedMsgInfo(flag, ehRequest );
 
     if(ehRequest && flag == OC_REQUEST_FLAG )
@@ -229,7 +229,7 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                 // Send the response
                 if (OCDoResponse(&response) != OC_STACK_OK)
                 {
-                    OC_LOG(ERROR, TAG, "Error sending response");
+                    OIC_LOG(ERROR, TAG, "Error sending response");
                     ret = OC_EH_ERROR;
                 }
             }
@@ -302,14 +302,14 @@ OCEntityHandlerResult OCEntityHandlerRoomCb(OCEntityHandlerFlag flag,
                 // Send the response
                 if (OCDoResponse(&response) != OC_STACK_OK)
                 {
-                    OC_LOG(ERROR, TAG, "Error sending response");
+                    OIC_LOG(ERROR, TAG, "Error sending response");
                     ret = OC_EH_ERROR;
                 }
             }
         }
         else
         {
-            OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+            OIC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                     ehRequest->method);
             OCRepPayloadDestroy(payload);
             ret = OC_EH_ERROR;
@@ -328,7 +328,7 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
 
-    OC_LOG_V(INFO, TAG, "Callback for Light");
+    OIC_LOG_V(INFO, TAG, "Callback for Light");
     PrintReceivedMsgInfo(flag, ehRequest );
 
     if(ehRequest && flag == OC_REQUEST_FLAG)
@@ -348,7 +348,7 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
         }
         else
         {
-            OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+            OIC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                     ehRequest->method);
             ret = OC_EH_ERROR;
         }
@@ -370,7 +370,7 @@ OCEntityHandlerResult OCEntityHandlerLightCb(OCEntityHandlerFlag flag,
             // Send the response
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG(ERROR, TAG, "Error sending response");
+                OIC_LOG(ERROR, TAG, "Error sending response");
                 ret = OC_EH_ERROR;
             }
         }
@@ -393,7 +393,7 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
     OCEntityHandlerResult ret = OC_EH_OK;
     OCEntityHandlerResponse response;
 
-    OC_LOG_V(INFO, TAG, "Callback for Fan");
+    OIC_LOG_V(INFO, TAG, "Callback for Fan");
     PrintReceivedMsgInfo(flag, ehRequest );
 
     if(ehRequest && flag == OC_REQUEST_FLAG)
@@ -414,7 +414,7 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
         }
         else
         {
-            OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+            OIC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                     ehRequest->method);
             ret = OC_EH_ERROR;
         }
@@ -436,7 +436,7 @@ OCEntityHandlerResult OCEntityHandlerFanCb(OCEntityHandlerFlag flag,
             // Send the response
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG(ERROR, TAG, "Error sending response");
+                OIC_LOG(ERROR, TAG, "Error sending response");
                 ret = OC_EH_ERROR;
             }
         }
@@ -471,7 +471,7 @@ void *ChangeLightRepresentation (void *param)
         light.power += 5;
         if (gLightUnderObservation)
         {
-            OC_LOG_V(INFO, TAG,
+            OIC_LOG_V(INFO, TAG,
                 " =====> Notifying stack of new power level %d\n", light.power);
             result = OCNotifyAllObservers (light.handle, OC_NA_QOS);
             if (OC_STACK_NO_OBSERVERS == result)
@@ -506,11 +506,11 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    OC_LOG(DEBUG, TAG, "OCServer is starting...");
+    OIC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 
@@ -527,13 +527,13 @@ int main(int argc, char* argv[])
     pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)NULL);
 
     // Break from loop with Ctrl-C
-    OC_LOG(INFO, TAG, "Entering ocserver main loop...");
+    OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
     signal(SIGINT, handleSigInt);
     while (!gQuitFlag)
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
         sleep(2);
@@ -545,11 +545,11 @@ int main(int argc, char* argv[])
     pthread_cancel(threadId);
     pthread_join(threadId, NULL);
 
-    OC_LOG(INFO, TAG, "Exiting ocserver main loop...");
+    OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 
     if (OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack process error");
+        OIC_LOG(ERROR, TAG, "OCStack process error");
     }
 
     return 0;
@@ -567,7 +567,7 @@ void createResources()
             OCEntityHandlerFanCb,
             NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
-    OC_LOG_V(INFO, TAG, "Created fan resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, TAG, "Created fan resource with result: %s", getResult(res));
 
     OCResourceHandle light;
     res = OCCreateResource(&light,
@@ -577,7 +577,7 @@ void createResources()
             OCEntityHandlerLightCb,
             NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
-    OC_LOG_V(INFO, TAG, "Created light resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, TAG, "Created light resource with result: %s", getResult(res));
 
     OCResourceHandle room;
 
@@ -602,14 +602,14 @@ void createResources()
                 OC_DISCOVERABLE);
     }
 
-    OC_LOG_V(INFO, TAG, "Created room resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, TAG, "Created room resource with result: %s", getResult(res));
     OCBindResourceInterfaceToResource(room, OC_RSRVD_INTERFACE_LL);
     OCBindResourceInterfaceToResource(room, OC_RSRVD_INTERFACE_DEFAULT);
 
     res = OCBindResource(room, light);
-    OC_LOG_V(INFO, TAG, "OC Bind Contained Resource to resource: %s", getResult(res));
+    OIC_LOG_V(INFO, TAG, "OC Bind Contained Resource to resource: %s", getResult(res));
 
     res = OCBindResource(room, fan);
-    OC_LOG_V(INFO, TAG, "OC Bind Contained Resource to resource: %s", getResult(res));
+    OIC_LOG_V(INFO, TAG, "OC Bind Contained Resource to resource: %s", getResult(res));
 }
 

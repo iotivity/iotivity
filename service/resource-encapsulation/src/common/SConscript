@@ -83,12 +83,13 @@ rcs_common_src = [
 		RESOURCE_SRC + 'RCSException.cpp',
 		RESOURCE_SRC + 'RCSAddress.cpp',
 		RESOURCE_SRC + 'RCSResourceAttributes.cpp',
-		RESOURCE_SRC + 'ResponseStatement.cpp'
+		RESOURCE_SRC + 'RCSRepresentation.cpp'
         ]
 
 rcs_common_static = rcs_common_env.StaticLibrary('rcs_common', rcs_common_src)
 rcs_common_shared = rcs_common_env.SharedLibrary('rcs_common', rcs_common_src)
 rcs_common_env.InstallTarget([rcs_common_static,rcs_common_shared], 'rcs_common')
+rcs_common_env.UserInstallTargetLib([rcs_common_static,rcs_common_shared], 'rcs_common')
 
 ######################################################################
 # Build Test Expiry Timer and primitive Resource

@@ -80,6 +80,7 @@ server_builder_static = server_builder_env.StaticLibrary('rcs_server', server_bu
 server_builder_shared = server_builder_env.SharedLibrary('rcs_server', server_builder_src)
 
 server_builder_env.InstallTarget([server_builder_static, server_builder_shared], 'rcs_server')
+server_builder_env.UserInstallTargetLib([server_builder_static, server_builder_shared], 'rcs_server')
 
 ######################################################################
 # Build Test

@@ -37,7 +37,7 @@
  */
 void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter)
 {
-    OC_LOG (INFO, TAG, "Initializing coap iterator");
+    OIC_LOG (INFO, TAG, "Initializing coap iterator");
     if((NULL == query) || (NULL == parseIter))
         return;
 
@@ -61,7 +61,7 @@ void ParseQueryIterInit(unsigned char * query, OicParseQueryIter_t * parseIter)
  */
 OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter)
 {
-    OC_LOG (INFO, TAG, "Getting Next Query");
+    OIC_LOG (INFO, TAG, "Getting Next Query");
     if(NULL == parseIter)
         return NULL;
 
@@ -128,3 +128,26 @@ exit:
     return OC_STACK_ERROR;
 
 }
+
+/**
+ * Function to getting string of ownership transfer method
+ *
+ * @prarm oxmType ownership transfer method
+ *
+ * @return string value of ownership transfer method
+ */
+const char* GetOxmString(OicSecOxm_t oxmType)
+{
+    switch(oxmType)
+    {
+        case OIC_JUST_WORKS:
+            return OXM_JUST_WORKS;
+        case OIC_RANDOM_DEVICE_PIN:
+            return OXM_RANDOM_DEVICE_PIN;
+        case OIC_MANUFACTURER_CERTIFICATE:
+            return OXM_MANUFACTURER_CERTIFICATE;
+        default:
+            return NULL;
+    }
+}
+

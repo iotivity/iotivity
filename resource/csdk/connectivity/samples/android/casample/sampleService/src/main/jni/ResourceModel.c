@@ -192,10 +192,11 @@ void JNI_OnUnload(JavaVM *jvm, void *reserved)
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_ca_service_RMInterface_RMInitialize(JNIEnv *env, jobject obj, jobject context)
+Java_org_iotivity_ca_service_RMInterface_RMInitialize(JNIEnv *env, jobject obj, jobject context,
+                                                      jobject activity)
 {
     LOGI("RMInitialize");
-    if (!env || !obj || !context)
+    if (!env || !obj || !context || !activity)
     {
         LOGI("Invalid input parameter");
         return;
@@ -203,6 +204,7 @@ Java_org_iotivity_ca_service_RMInterface_RMInitialize(JNIEnv *env, jobject obj, 
 
     //Currently set context for Android Platform
     CANativeJNISetContext(env, context);
+    CANativeSetActivity(env, activity);
 
     CAResult_t res = CAInitialize();
 
@@ -455,6 +457,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendRequest(JNIEnv *env, jobject obj,
 
     free(requestData.payload);
     free(requestData.resourceUri);
+    LOGI("send request success");
 }
 
 JNIEXPORT void JNICALL
@@ -472,6 +475,7 @@ Java_org_iotivity_ca_service_RMInterface_RMSendReqestToAll(JNIEnv *env, jobject 
     CAResult_t res = get_network_type(selectedNetwork, &flags);
     if (CA_STATUS_OK != res)
     {
+        LOGE("Not supported network type");
         return;
     }
 
@@ -1384,20 +1388,43 @@ uint32_t get_secure_information(CAPayload_t payLoad)
 
 CAResult_t get_network_type(uint32_t selectedNetwork, CATransportFlags_t *flags)
 {
+
     uint32_t number = selectedNetwork;
 
-    switch (number)
+    if (!(number & CA_ALL_ADAPTERS))
     {
-        case CA_ADAPTER_IP:
-            *flags = CA_IPV4;
-        case CA_ADAPTER_GATT_BTLE:
-        case CA_ADAPTER_RFCOMM_BTEDR:
-        case CA_ADAPTER_TCP:
-            g_selectedNwType = number;
-            return CA_STATUS_OK;
-        default:
-            return CA_NOT_SUPPORTED;
+        LOGE("get_network_type Out of range");
+        return CA_NOT_SUPPORTED;
     }
+    if ((number & CA_ADAPTER_IP) == CA_ADAPTER_IP)
+    {
+        *flags = CA_IPV4;
+        g_selectedNwType = CA_ADAPTER_IP;
+        return CA_STATUS_OK;
+    }
+    if ((number & CA_ADAPTER_RFCOMM_BTEDR) == CA_ADAPTER_RFCOMM_BTEDR)
+    {
+        g_selectedNwType = CA_ADAPTER_RFCOMM_BTEDR;
+        return CA_STATUS_OK;
+    }
+    if ((number & CA_ADAPTER_GATT_BTLE) == CA_ADAPTER_GATT_BTLE)
+    {
+        g_selectedNwType = CA_ADAPTER_GATT_BTLE;
+        return CA_STATUS_OK;
+    }
+    if ((number & CA_ADAPTER_TCP) == CA_ADAPTER_TCP)
+    {
+        g_selectedNwType = CA_ADAPTER_TCP;
+        return CA_STATUS_OK;
+    }
+    if ((number & CA_ADAPTER_NFC) == CA_ADAPTER_NFC)
+    {
+        g_selectedNwType = CA_ADAPTER_NFC;
+        return CA_STATUS_OK;
+    }
+
+   LOGE("Invalid transport");
+   return CA_NOT_SUPPORTED;
 }
 
 void callback(char *subject, char *receivedData)
@@ -1539,7 +1566,6 @@ void parsing_coap_uri(const char* uri, addressSet_t* address, CATransportFlags_t
         if (res == -1)
         {
             LOGE("address parse error");
-
             return;
         }
     }
@@ -1619,6 +1645,7 @@ void delete_global_references(JNIEnv *env, jobject obj)
         return;
     }
 
+    CADeleteGlobalReferences(env);
     (*env)->DeleteGlobalRef(env, g_responseListenerObject);
 }
 
@@ -1633,7 +1660,7 @@ bool read_file(const char* name, char** bytes, size_t* length)
 
     FILE* file;
     char* buffer;
-    size_t fileLen;
+    long fileLen;
 
     // Open file
     file = fopen(name, "rt");
@@ -1654,7 +1681,7 @@ bool read_file(const char* name, char** bytes, size_t* length)
     }
     fseek(file, 0, SEEK_SET);
 
-    LOGI("file size: %d", fileLen);
+    LOGI("file size: %ld", fileLen);
 
     // Allocate memory
     buffer = calloc(1, sizeof(char) * fileLen + 1);

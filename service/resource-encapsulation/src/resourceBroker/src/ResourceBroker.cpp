@@ -36,15 +36,13 @@ namespace OIC
         {
             if(s_presenceList != nullptr)
             {
-                OC_LOG_V(DEBUG, BROKER_TAG, "clear the ResourcePresenceList.");
+                OIC_LOG_V(DEBUG, BROKER_TAG, "clear the ResourcePresenceList.");
                 s_presenceList->erase(s_presenceList->begin(), s_presenceList->end());
-                s_presenceList->clear();
             }
             if(s_brokerIDMap != nullptr)
             {
-                OC_LOG_V(DEBUG, BROKER_TAG, "clear the brokerIDMap.");
+                OIC_LOG_V(DEBUG, BROKER_TAG, "clear the brokerIDMap.");
                 s_brokerIDMap->erase(s_brokerIDMap->begin(), s_brokerIDMap->end());
-                s_brokerIDMap->clear();
             }
         }
 
@@ -65,7 +63,7 @@ namespace OIC
 
         BrokerID ResourceBroker::hostResource(PrimitiveResourcePtr pResource, BrokerCB cb)
         {
-            OC_LOG_V(DEBUG, BROKER_TAG, "hostResource().");
+            OIC_LOG_V(DEBUG, BROKER_TAG, "hostResource().");
             if(pResource == nullptr || cb == nullptr || cb == NULL)
             {
                 throw InvalidParameterException("[hostResource] input parameter(PrimitiveResource or BrokerCB) is Invalid");
@@ -76,12 +74,12 @@ namespace OIC
             ResourcePresencePtr presenceItem = findResourcePresence(pResource);
             if(presenceItem == nullptr)
             {
-                OC_LOG_V(DEBUG, BROKER_TAG, "Not found any Handled Resource.");
-                OC_LOG_V(DEBUG, BROKER_TAG, "Create New Resource Presence Handler.");
+                OIC_LOG_V(DEBUG, BROKER_TAG, "Not found any Handled Resource.");
+                OIC_LOG_V(DEBUG, BROKER_TAG, "Create New Resource Presence Handler.");
 
                 try
                 {
-                    OC_LOG_V(DEBUG, BROKER_TAG, "create the ResourcePresence.");
+                    OIC_LOG_V(DEBUG, BROKER_TAG, "create the ResourcePresence.");
                     presenceItem.reset(new ResourcePresence());
                     presenceItem->initializeResourcePresence(pResource);
                 }catch(RCSPlatformException &e)
@@ -90,11 +88,11 @@ namespace OIC
                 }
                 if(s_presenceList != nullptr)
                 {
-                    OC_LOG_V(DEBUG, BROKER_TAG, "push the ResourcePresence in presenceList.");
+                    OIC_LOG_V(DEBUG, BROKER_TAG, "push the ResourcePresence in presenceList.");
                     s_presenceList->push_back(presenceItem);
                 }
             }
-            OC_LOG_V(DEBUG, BROKER_TAG, "add the BrokerRequester in ResourcePresence.");
+            OIC_LOG_V(DEBUG, BROKER_TAG, "add the BrokerRequester in ResourcePresence.");
             presenceItem->addBrokerRequester(retID, cb);
 
             BrokerCBResourcePair pair(presenceItem, cb);
@@ -106,12 +104,12 @@ namespace OIC
 
         void ResourceBroker::cancelHostResource(BrokerID brokerId)
         {
-            OC_LOG_V(DEBUG,BROKER_TAG,"cancelHostResource().");
+            OIC_LOG_V(DEBUG,BROKER_TAG,"cancelHostResource().");
             if(brokerId == 0)
             {
                 // input parameter is wrong.
                 // hostResource never return value 0;
-                OC_LOG_V(DEBUG,BROKER_TAG,"brokerId is zero.");
+                OIC_LOG_V(DEBUG,BROKER_TAG,"brokerId is zero.");
                 throw InvalidParameterException("[cancelHostResource] brokerId is invalid.");
             }
 
@@ -119,7 +117,7 @@ namespace OIC
             if(it == s_brokerIDMap->end())
             {
                 // not found requested brokerId in BrokerMap;
-                OC_LOG_V(DEBUG,BROKER_TAG,"brokerId is not found in brokerIDMap.");
+                OIC_LOG_V(DEBUG,BROKER_TAG,"brokerId is not found in brokerIDMap.");
                 throw InvalidParameterException("[cancelHostResource] brokerId is not found in brokerIDMap.");
             }
             else
@@ -130,7 +128,7 @@ namespace OIC
 
                 if(presenceItem->isEmptyRequester())
                 {
-                    OC_LOG_V(DEBUG,BROKER_TAG,"remove resourcePresence in presenceList because it is not including any requester info.");
+                    OIC_LOG_V(DEBUG,BROKER_TAG,"remove resourcePresence in presenceList because it is not including any requester info.");
                     s_presenceList->remove(presenceItem);
                 }
             }
@@ -138,10 +136,10 @@ namespace OIC
 
         BROKER_STATE ResourceBroker::getResourceState(BrokerID brokerId)
         {
-            OC_LOG_V(DEBUG,BROKER_TAG,"getResourceState().");
+            OIC_LOG_V(DEBUG,BROKER_TAG,"getResourceState().");
             if(brokerId == 0)
             {
-                OC_LOG_V(DEBUG,BROKER_TAG,"brokerId is zero.");
+                OIC_LOG_V(DEBUG,BROKER_TAG,"brokerId is zero.");
                 throw InvalidParameterException("[getResourceState] input BrokerID is Invalid");
             }
 
@@ -151,7 +149,7 @@ namespace OIC
             if(it == s_brokerIDMap->end())
             {
                 // not found requested brokerId in BrokerMap;
-                OC_LOG_V(DEBUG,BROKER_TAG,"brokerId is not found in brokerIDMap.");
+                OIC_LOG_V(DEBUG,BROKER_TAG,"brokerId is not found in brokerIDMap.");
                 throw InvalidParameterException("[getResourceState] input BrokerID is unknown ID");
             }
             else
@@ -165,7 +163,7 @@ namespace OIC
 
         BROKER_STATE ResourceBroker::getResourceState(PrimitiveResourcePtr pResource)
         {
-            OC_LOG_V(DEBUG,BROKER_TAG,"getResourceState().");
+            OIC_LOG_V(DEBUG,BROKER_TAG,"getResourceState().");
             if(pResource == nullptr)
             {
                 throw InvalidParameterException("[getResourceState] input PrimitiveResource is Invalid");
@@ -184,22 +182,22 @@ namespace OIC
 
         void ResourceBroker::initializeResourceBroker()
         {
-            OC_LOG_V(DEBUG,BROKER_TAG,"initializeResourceBroker().");
+            OIC_LOG_V(DEBUG,BROKER_TAG,"initializeResourceBroker().");
             if(s_presenceList == nullptr)
             {
-                OC_LOG_V(DEBUG,BROKER_TAG,"create the presenceList.");
+                OIC_LOG_V(DEBUG,BROKER_TAG,"create the presenceList.");
                 s_presenceList = std::unique_ptr<PresenceList>(new PresenceList);
             }
             if(s_brokerIDMap == nullptr)
             {
-                OC_LOG_V(DEBUG,BROKER_TAG,"create the brokerIDMap.");
+                OIC_LOG_V(DEBUG,BROKER_TAG,"create the brokerIDMap.");
                 s_brokerIDMap = std::unique_ptr<BrokerIDMap>(new BrokerIDMap);
             }
         }
 
         ResourcePresencePtr ResourceBroker::findResourcePresence(PrimitiveResourcePtr pResource)
         {
-            OC_LOG_V(DEBUG,BROKER_TAG,"findResourcePresence().");
+            OIC_LOG_V(DEBUG,BROKER_TAG,"findResourcePresence().");
             ResourcePresencePtr retResource(nullptr);
 
             if(s_presenceList->empty() != true)
@@ -220,7 +218,7 @@ namespace OIC
 
         BrokerID ResourceBroker::generateBrokerID()
         {
-            OC_LOG_V(DEBUG,BROKER_TAG,"generateBrokerID().");
+            OIC_LOG_V(DEBUG,BROKER_TAG,"generateBrokerID().");
             BrokerID retID = 0;
             srand(time(NULL));
 

@@ -139,7 +139,6 @@ void ca_mutex_lock(ca_mutex mutex)
     if (mutexInfo)
     {
         int ret = pthread_mutex_lock(&mutexInfo->mutex);
-        assert(0 == ret);
         if(ret != 0)
         {
             OIC_LOG_V(ERROR, TAG, "Pthread Mutex lock failed: %d", ret);
@@ -190,8 +189,6 @@ void ca_mutex_unlock(ca_mutex mutex)
     if (mutexInfo)
     {
         int ret = pthread_mutex_unlock(&mutexInfo->mutex);
-
-        assert ( 0 == ret);
         if(ret != 0)
         {
             OIC_LOG_V(ERROR, TAG, "Pthread Mutex unlock failed: %d", ret);

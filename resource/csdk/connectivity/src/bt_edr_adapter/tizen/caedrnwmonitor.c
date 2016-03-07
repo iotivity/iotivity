@@ -51,10 +51,9 @@ static CAEDRNetworkStatusCallback g_edrNetworkChangeCallback = NULL;
 static void CAEDRAdapterStateChangeCallback(int result, bt_adapter_state_e adapterState,
                                             void *userData);
 
-void *GMainLoopThread (void *param)
+void CAEDRMainLoopThread(void *param)
 {
     g_main_loop_run(g_mainloop);
-    return NULL;
 }
 
 CAResult_t CAEDRInitializeNetworkMonitor(const ca_thread_pool_t threadPool)
@@ -88,7 +87,7 @@ CAResult_t CAEDRStartNetworkMonitor()
         return CA_STATUS_FAILED;
     }
 
-    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, GMainLoopThread, (void *) NULL))
+    if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle, CAEDRMainLoopThread, (void *) NULL))
     {
         OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to create thread!");
         return CA_STATUS_FAILED;

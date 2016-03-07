@@ -58,7 +58,7 @@ void AttributeUpdateAutomation::start()
     SimulatorResourceAttribute attribute;
     if (false == m_resource->getAttribute(m_attrName, attribute))
     {
-        OC_LOG(ERROR, TAG, "Attribute is not present in resource!");
+        OIC_LOG(ERROR, ATAG, "Attribute is not present in resource!");
         throw SimulatorException(SIMULATOR_ERROR, "Attribute is not present in resource!");
     }
 
@@ -110,7 +110,7 @@ void AttributeUpdateAutomation::updateAttribute(SimulatorResourceAttribute attri
 
     if (!m_stopRequested)
     {
-        OC_LOG_V(DEBUG, ATAG, "Attribute:%s automation is completed!", m_attrName.c_str());
+        OIC_LOG_V(DEBUG, ATAG, "Attribute:%s automation is completed!", m_attrName.c_str());
         SIM_LOG(ILogger::INFO, "Attribute automation completed [Name: \"" << m_attrName
                     << "\", id: " << m_id <<"].");
     }
@@ -164,7 +164,7 @@ void ResourceUpdateAutomation::start()
 
     if (0 == attributes.size())
     {
-        OC_LOG(ERROR, TAG, "Resource has zero attributes!");
+        OIC_LOG(ERROR, RTAG, "Resource has zero attributes!");
         throw SimulatorException(SIMULATOR_ERROR, "Resource has zero attributes!");
     }
 
@@ -208,7 +208,7 @@ void ResourceUpdateAutomation::updateAttributes(
 
     if (!m_stopRequested)
     {
-        OC_LOG_V(DEBUG, ATAG, "Resource update automation complete [id: %d]!", m_id);
+        OIC_LOG_V(DEBUG, RTAG, "Resource update automation complete [id: %d]!", m_id);
         SIM_LOG(ILogger::INFO, "Resource automation completed [URI: \"" << m_resource->getURI()
                 << "\", id: " << m_id << "].");
     }

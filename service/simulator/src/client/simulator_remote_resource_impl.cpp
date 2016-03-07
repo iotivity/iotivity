@@ -123,7 +123,7 @@ void SimulatorRemoteResourceImpl::observe(ObserveType type,
     std::lock_guard<std::mutex> lock(m_observeLock);
     if (m_observeState)
     {
-        OC_LOG(ERROR, TAG, "Resource is already being observed!");
+        OIC_LOG(ERROR, TAG, "Resource is already being observed!");
         SIM_LOG(ILogger::ERROR, "[URI: " << getURI() << "] Resource is already being observed!")
 
         throw SimulatorException(SIMULATOR_ERROR, "Resource is already being observed!");
@@ -168,7 +168,7 @@ void SimulatorRemoteResourceImpl::cancelObserve()
         OCStackResult ocResult = m_ocResource->cancelObserve(OC::QualityOfService::HighQos);
         if (OC_STACK_OK != ocResult)
         {
-            OC_LOG(ERROR, TAG, "Cancelling observe failed!");
+            OIC_LOG(ERROR, TAG, "Cancelling observe failed!");
             SIM_LOG(ILogger::INFO, "[URI: " << getURI() << "] Sending OBSERVE cancel request failed!")
 
             throw SimulatorException(static_cast<SimulatorResult>(ocResult),
@@ -196,7 +196,7 @@ void SimulatorRemoteResourceImpl::get(const GetResponseCallback &callback)
 
     if (SIMULATOR_OK != result)
     {
-        OC_LOG(ERROR, TAG, "Failed to send GET request!");
+        OIC_LOG(ERROR, TAG, "Failed to send GET request!");
         SIM_LOG(ILogger::ERROR, "[URI: " << getURI() << "] Failed to send GET request!")
 
         throw SimulatorException(result, "Failed to send GET request!");
@@ -214,7 +214,7 @@ void SimulatorRemoteResourceImpl::get(const std::map<std::string, std::string> &
 
     if (SIMULATOR_OK != result)
     {
-        OC_LOG(ERROR, TAG, "Failed to send GET request!");
+        OIC_LOG(ERROR, TAG, "Failed to send GET request!");
         SIM_LOG(ILogger::ERROR, "[URI: " << getURI() << "] Failed to send GET request!")
 
         throw SimulatorException(result, "Failed to send GET request!");
@@ -239,7 +239,7 @@ void SimulatorRemoteResourceImpl::get(const std::string &interfaceType,
 
     if (SIMULATOR_OK != result)
     {
-        OC_LOG(ERROR, TAG, "Failed to send GET request!");
+        OIC_LOG(ERROR, TAG, "Failed to send GET request!");
         SIM_LOG(ILogger::ERROR, "[URI: " << getURI() << "] Failed to send GET request!")
 
         throw SimulatorException(result, "Failed to send GET request!");
@@ -257,7 +257,7 @@ void SimulatorRemoteResourceImpl::put(const SimulatorResourceModel &representati
 
     if (SIMULATOR_OK != result)
     {
-        OC_LOG(ERROR, TAG, "Failed to send PUT request!");
+        OIC_LOG(ERROR, TAG, "Failed to send PUT request!");
         SIM_LOG(ILogger::ERROR, "[URI: " << getURI() << "] Failed to send PUT request!")
 
         throw SimulatorException(result, "Failed to send PUT request!");
@@ -276,7 +276,7 @@ void SimulatorRemoteResourceImpl::put(const std::map<std::string, std::string> &
 
     if (SIMULATOR_OK != result)
     {
-        OC_LOG(ERROR, TAG, "Failed to send PUT request!");
+        OIC_LOG(ERROR, TAG, "Failed to send PUT request!");
         SIM_LOG(ILogger::ERROR, "[URI: " << getURI() << "] Failed to send PUT request!")
 
         throw SimulatorException(result, "Failed to send PUT request!");
@@ -302,7 +302,7 @@ void SimulatorRemoteResourceImpl::put(const std::string &interfaceType,
 
     if (SIMULATOR_OK != result)
     {
-        OC_LOG(ERROR, TAG, "Failed to send PUT request!");
+        OIC_LOG(ERROR, TAG, "Failed to send PUT request!");
         SIM_LOG(ILogger::ERROR, "[URI: " << getURI() << "] Failed to send PUT request!")
 
         throw SimulatorException(result, "Failed to send PUT request!");
@@ -320,7 +320,7 @@ void SimulatorRemoteResourceImpl::post(const SimulatorResourceModel &representat
 
     if (SIMULATOR_OK != result)
     {
-        OC_LOG(ERROR, TAG, "Failed to send POST request!");
+        OIC_LOG(ERROR, TAG, "Failed to send POST request!");
         SIM_LOG(ILogger::ERROR, "[URI: " << getURI() << "] Failed to send POST request!")
 
         throw SimulatorException(result, "Failed to send POST request!");
@@ -339,7 +339,7 @@ void SimulatorRemoteResourceImpl::post(const std::map<std::string, std::string> 
 
     if (SIMULATOR_OK != result)
     {
-        OC_LOG(ERROR, TAG, "Failed to send POST request!");
+        OIC_LOG(ERROR, TAG, "Failed to send POST request!");
         SIM_LOG(ILogger::ERROR, "[URI: " << getURI() << "] Failed to send POST request!")
 
         throw SimulatorException(result, "Failed to send POST request!");
@@ -365,7 +365,7 @@ void SimulatorRemoteResourceImpl::post(const std::string &interfaceType,
 
     if (SIMULATOR_OK != result)
     {
-        OC_LOG(ERROR, TAG, "Failed to send POST request!");
+        OIC_LOG(ERROR, TAG, "Failed to send POST request!");
         SIM_LOG(ILogger::ERROR, "[URI: " << getURI() << "] Failed to send POST request!")
 
         throw SimulatorException(result, "Failed to send POST request!");
@@ -413,7 +413,7 @@ int SimulatorRemoteResourceImpl::startAutoRequesting(RequestType type,
     std::string requestType = requestTypeToString(type);
     if (m_requestModels.end() == m_requestModels.find(requestType))
     {
-        OC_LOG(ERROR, TAG, "Resource is not configured for this request type!");
+        OIC_LOG(ERROR, TAG, "Resource is not configured for this request type!");
         throw NoSupportException("Resource is not configured for this request type!");
     }
 

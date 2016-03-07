@@ -18,13 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <UnitTestHelper.h>
+#include "UnitTestHelper.h"
 
-#include <PrimitiveResourceImpl.h>
-#include <AssertUtils.h>
+#include "PrimitiveResourceImpl.h"
+#include "AssertUtils.h"
 
-#include <OCResource.h>
-#include <OCPlatform.h>
+#include "OCResource.h"
+#include "OCPlatform.h"
 
 using namespace OIC::Service;
 
@@ -35,12 +35,13 @@ class FakeOCResource
 public:
     virtual ~FakeOCResource() {};
 
-    virtual OCStackResult get(const OC::QueryParamsMap&, OC::GetCallback) = 0;
+    virtual OCStackResult get(const std::string&, const std::string&,
+            const OC::QueryParamsMap&, OC::GetCallback) = 0;
 
     virtual OCStackResult put(
             const OC::OCRepresentation&, const OC::QueryParamsMap&, OC::PutCallback) = 0;
 
-    virtual OCStackResult post(
+    virtual OCStackResult post(const std::string&, const std::string&,
             const OC::OCRepresentation&, const OC::QueryParamsMap&, OC::PostCallback) = 0;
 
     virtual OCStackResult observe(
@@ -88,29 +89,30 @@ TEST_F(PrimitiveResourceTest, RequestGetThrowsOCResourceGetReturnsNotOK)
     ASSERT_THROW(resource->requestGet(PrimitiveResource::GetCallback()), RCSPlatformException);
 }
 
-TEST_F(PrimitiveResourceTest, RequestSetInvokesOCResourcePut)
+TEST_F(PrimitiveResourceTest, RequestSetInvokesOCResourcePost)
 {
-    mocks.ExpectCall(fakeResource, FakeOCResource::put).Return(OC_STACK_OK);
+    mocks.ExpectCall(fakeResource, FakeOCResource::post).Return(OC_STACK_OK);
 
     resource->requestSet(RCSResourceAttributes{ }, PrimitiveResource::SetCallback());
 }
 
-TEST_F(PrimitiveResourceTest, RequestSetThrowsOCResourcePutReturnsNotOK)
+TEST_F(PrimitiveResourceTest, RequestSetThrowsOCResourcePostReturnsNotOK)
 {
-    mocks.OnCall(fakeResource, FakeOCResource::put).Return(OC_STACK_ERROR);
+    mocks.OnCall(fakeResource, FakeOCResource::post).Return(OC_STACK_ERROR);
 
     ASSERT_THROW(resource->requestSet(RCSResourceAttributes{ }, PrimitiveResource::SetCallback()),
             RCSPlatformException);
 }
 
-TEST_F(PrimitiveResourceTest, RequestSetPassResourceAttributesToOCResourcePut)
+TEST_F(PrimitiveResourceTest, RequestSetPassResourceAttributesToOCResourcePost)
 {
     constexpr int value{ -200 };
 
     RCSResourceAttributes attrs;
 
-    mocks.ExpectCall(fakeResource, FakeOCResource::put).Match(
-            [](const OC::OCRepresentation& ocRep, const OC::QueryParamsMap&, OC::PutCallback)
+    mocks.ExpectCall(fakeResource, FakeOCResource::post).Match(
+            [](const std::string&, const std::string&, const OC::OCRepresentation& ocRep,
+                    const OC::QueryParamsMap&, OC::PutCallback)
             {
                 return ocRep.getValue<int>(KEY) == value;
             }
@@ -156,7 +158,7 @@ TEST_F(PrimitiveResourceTest, ResponseStatementHasSameValuesWithOCRepresentation
     constexpr int value{ 1999 };
 
     mocks.OnCall(fakeResource, FakeOCResource::get).Do(
-            [](const OC::QueryParamsMap&, OC::GetCallback cb)
+            [](const std::string&, const std::string&, const OC::QueryParamsMap&, OC::GetCallback cb)
             {
                 OC::OCRepresentation ocRep;
                 ocRep[KEY] = value;

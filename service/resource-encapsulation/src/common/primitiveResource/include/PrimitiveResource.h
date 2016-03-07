@@ -25,10 +25,10 @@
 #include <string>
 #include <vector>
 
-#include <OCResource.h>
+#include "OCResource.h"
 
-#include <ResponseStatement.h>
-#include <RCSAddress.h>
+#include "ResponseStatement.h"
+#include "RCSAddress.h"
 
 namespace OIC
 {
@@ -39,7 +39,7 @@ namespace OIC
         typedef std::vector<HeaderOption> HeaderOptions;
 
         class RCSResourceAttributes;
-        class ResponseStatement;
+        class RCSRepresentation;
 
         class PrimitiveResource: public std::enable_shared_from_this< PrimitiveResource >
         {
@@ -47,25 +47,36 @@ namespace OIC
             typedef std::shared_ptr< PrimitiveResource > Ptr;
             typedef std::shared_ptr< const PrimitiveResource > ConstPtr;
 
-            typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)>
+            typedef std::function<void(const HeaderOptions&, const RCSRepresentation&, int)>
                     GetCallback;
 
-            typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)>
+            typedef std::function<void(const HeaderOptions&, const RCSRepresentation&, int)>
                     SetCallback;
 
-            typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int)>
+            typedef std::function<void(const HeaderOptions&, const RCSRepresentation&, int)>
                     PutCallback;
 
-            typedef std::function<void(const HeaderOptions&, const ResponseStatement&, int, int)>
+            typedef std::function<void(const HeaderOptions&, const RCSRepresentation&, int, int)>
                     ObserveCallback;
 
         public:
             static PrimitiveResource::Ptr create(const std::shared_ptr<OC::OCResource>&);
 
-            virtual ~PrimitiveResource() { };
+            virtual ~PrimitiveResource() { }
 
             virtual void requestGet(GetCallback) = 0;
+
+            virtual void requestGetWith(const std::string& resourceType,
+                    const std::string& resourceInterface,
+                    const OC::QueryParamsMap& queryParametersMap, GetCallback) = 0;
+
             virtual void requestSet(const RCSResourceAttributes&, SetCallback) = 0;
+
+            virtual void requestSetWith(const std::string& resourceType,
+                    const std::string& resourceInterface,
+                    const OC::QueryParamsMap& queryParametersMap,
+                    const RCSResourceAttributes&, GetCallback) = 0;
+
             virtual void requestPut(const RCSResourceAttributes&, PutCallback) = 0;
             virtual void requestObserve(ObserveCallback) = 0;
             virtual void cancelObserve() = 0;

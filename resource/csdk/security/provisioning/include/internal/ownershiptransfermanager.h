@@ -31,19 +31,20 @@ extern "C" {
 #endif // __cplusplus
 
 #define OXM_STRING_MAX_LENGTH 32
-
+#define WRONG_PIN_MAX_ATTEMP 5
 
 /**
  * Context for ownership transfer(OT)
  */
 typedef struct OTMContext{
-    void* userCtx;                         /**< Context for user.*/
-    OCProvisionDev_t* selectedDeviceInfo;  /**< Selected device info for OT. */
-    OicUuid_t subIdForPinOxm;              /**< Subject Id which uses PIN based OTM. */
-    OCProvisionResultCB ctxResultCallback; /**< Function pointer to store result callback. */
-    OCProvisionResult_t* ctxResultArray;   /**< Result array having result of all device. */
-    size_t ctxResultArraySize;             /**< No of elements in result array. */
-    bool ctxHasError;                      /**< Does OT process have any error. */
+    void* userCtx;                            /**< Context for user.*/
+    OCProvisionDev_t* selectedDeviceInfo;     /**< Selected device info for OT. */
+    OicUuid_t subIdForPinOxm;                 /**< Subject Id which uses PIN based OTM. */
+    OCProvisionResultCB ctxResultCallback;    /**< Function pointer to store result callback. */
+    OCProvisionResult_t* ctxResultArray;      /**< Result array having result of all device. */
+    size_t ctxResultArraySize;                /**< No of elements in result array. */
+    bool ctxHasError;                         /**< Does OT process have any error. */
+    int attemptCnt;
 }OTMContext_t;
 
 /**
@@ -94,7 +95,6 @@ typedef struct OTMCallbackData{
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OTMSetOwnershipTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData);
-
 
 #ifdef __cplusplus
 }

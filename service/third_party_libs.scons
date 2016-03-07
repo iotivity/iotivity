@@ -37,7 +37,7 @@ resource_path = src_dir + '/resource'
 ######################################################################
 # Check dependent packages (Linux only)
 ######################################################################
-if target_os in ['linux', 'tizen']:
+if target_os in ['linux']:
 	if not env.GetOption('help'):
 		if not target_arch == platform.machine():
 			print '''

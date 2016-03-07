@@ -30,7 +30,6 @@
 
 #include "GroupManager.h"
 
-#define PLAIN_DELIMITER "\""
 #define ACTION_DELIMITER "*"
 #define DESC_DELIMITER "|"
 #define ATTR_DELIMITER "="
@@ -505,8 +504,10 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
     }
 
     plainText = new char[(description.length() + 1)];
-    strcpy(plainText, description.c_str());
+    strncpy(plainText, description.c_str(), description.length()+1);
 
+    // All tokens are seperated by "*" character.
+    // First token means an actionset name
     token = strtok_r(plainText, ACTION_DELIMITER, &plainPtr);
 
     if (token != NULL)
@@ -516,6 +517,7 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
         if((actionset->actionsetName).empty())
             goto exit;
 
+        // Find the second token
         token = strtok_r(NULL, ACTION_DELIMITER, &plainPtr);
     }
     else
@@ -525,8 +527,35 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
 
     if (token != NULL)
     {
-        sscanf(token, "%ld %d", &actionset->mDelay, (int*)&actionset->type);
+        // The second token consists of two digits: time delay and actionset Type.
+        // Time delay is used as a parameter to scheduled/recursive group action feature
+        // And actionset type indicates if the actionset is scheduled or recursive group action.
+        char *subText = NULL;
+        char *subToken = NULL;
+        char *subTextPtr = NULL;
 
+        subText = new char[strlen(token)+1];
+        strncpy(subText, token, strlen(token)+1);
+
+        subToken = strtok_r(subText, " ", &subTextPtr);
+        if(subToken == NULL)
+        {
+            DELETEARRAY(subText);
+            goto exit;
+        }
+        actionset->mDelay = atol(subToken);
+
+        subToken = strtok_r(NULL, " ", &subTextPtr);
+        if(subToken == NULL)
+        {
+            DELETEARRAY(subText);
+            goto exit;
+        }
+        actionset->type = (OIC::ACTIONSET_TYPE)atoi(subToken);
+
+        DELETEARRAY(subText);
+
+        // Find the third token
         token = strtok_r(NULL, ACTION_DELIMITER, &plainPtr);
     }
     else
@@ -536,25 +565,33 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
 
     while (token)
     {
+        // The third token consists of two sub-segement: host address plus URI and attribute key/value pair.
+        // These two segments can be divided by "|" character.
+        // The third token can be repeatively appeared.
+
         char *descPtr = NULL;
         desc = new char[(strlen(token) + 1)];
 
         if (desc != NULL)
         {
-            strcpy(desc, token);
+            // copy a host address plus URI string from the third token
+            strncpy(desc, token, (strlen(token) + 1));
+
+            // Find "|" character to find key/value pair
             token = strtok_r(desc, DESC_DELIMITER, &descPtr);
 
             while (token != NULL)
             {
                 char *attrPtr = NULL;
                 attr = new char[(strlen(token) + 1)];
-
+                // copy the host address plus URI string
                 strcpy(attr, token);
 
+                // Find "=" charactor to divide attribute key and value string.
                 token = strtok_r(attr, ATTR_DELIMITER, &attrPtr);
                 while (token != NULL)
                 {
-                    if ( (action == NULL) && strcmp(token, "uri") == 0)    //consider only first "uri" as uri, other as attribute.
+                    if ( (action == NULL) && strcmp(token, "uri") == 0)
                     {
                         token = strtok_r(NULL, ATTR_DELIMITER, &attrPtr);
                         if(token == NULL)
@@ -607,7 +644,6 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
         else
         {
             goto exit;
-
         }
 
         DELETEARRAY(desc);

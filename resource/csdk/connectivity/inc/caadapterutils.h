@@ -40,35 +40,12 @@
 #include "logger.h"
 #include "pdu.h"
 #include "uarraylist.h"
+#include "cacommonutil.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-/**
- * Macro to verify the validity of input argument.
- */
-#define VERIFY_NON_NULL_RET(arg, log_tag, log_message,ret) \
-    if (NULL == arg) { \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
-        return ret; \
-    } \
-
-/**
- * Macro to verify the validity of input argument.
- */
-#define VERIFY_NON_NULL(arg, log_tag, log_message) \
-    VERIFY_NON_NULL_RET((arg), (log_tag), (log_message), CA_STATUS_INVALID_PARAM)
-
-/**
- * Macro to verify the validity of input argument.
- */
-#define VERIFY_NON_NULL_VOID(arg, log_tag, log_message) \
-    if (NULL == arg) { \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
-        return; \
-    } \
 
 /**
  * Length of network interface name.
@@ -261,6 +238,28 @@ jobject CANativeJNIGetContext();
  * @return  JVM object.
  */
 JavaVM *CANativeJNIGetJavaVM();
+
+/**
+ * To set Activity to JNI.
+ * This must be called by the Android API before CA Initialization.
+ * @param[in]   env         JNI Environment pointer.
+ * @param[in]   activity    Activity object.
+ */
+void CANativeSetActivity(JNIEnv *env, jobject activity);
+
+/**
+ * To get Activity.
+ * Called from adapters to get Activity.
+ * @return  Activity object.
+ */
+jobject *CANativeGetActivity();
+
+/**
+ * To Delete other Global References
+ * Called during CATerminate to remove global references
+ */
+void CADeleteGlobalReferences();
+
 #endif
 
 #ifdef __cplusplus

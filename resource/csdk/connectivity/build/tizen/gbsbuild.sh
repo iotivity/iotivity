@@ -50,14 +50,14 @@ cp -R $cur_dir/src/bt_edr_adapter/SConscript $sourcedir/tmp/con/src/bt_edr_adapt
 cp -R $cur_dir/common/SConscript $sourcedir/tmp/con/common/
 cp -R $cur_dir/lib/libcoap-4.1.1/SConscript $sourcedir/tmp/con/lib/libcoap-4.1.1/
 cp -R $cur_dir/samples/tizen/ $sourcedir/tmp/con/sample/
-mkdir -p $sourcedir/tmp/con/sample/lib/tizen/ble/libs
-cp -R $cur_dir/lib/tizen/ble/libs/* $sourcedir/tmp/con/sample/lib/tizen/ble/libs/
 mkdir -p $sourcedir/tmp/con/sample/external/inc
 cp -R $cur_dir/external/inc/* $sourcedir/tmp/con/sample/external/inc/
 mkdir -p $sourcedir/tmp/con/extlibs/
 cp -R ./extlibs/tinydtls/ $sourcedir/tmp/con/extlibs/
+cp -R ./extlibs/timer/ $sourcedir/tmp/con/extlibs/
 mkdir -p $sourcedir/tmp/con/c_common
 cp -R ./resource/c_common/* $sourcedir/tmp/con/c_common/
+cp -R ./resource/csdk/logger/include/* $sourcedir/tmp/con/common/inc/
 
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm $sourcedir/tmp
@@ -94,7 +94,7 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l --include-all  --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'WITH_TCP $6'"
+gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC --include-all  --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --define 'WITH_TCP $6'"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Core build is successful"
@@ -117,7 +117,7 @@ if echo $BUILD_SAMPLE|grep -qi '^ON$'; then
       git commit -m "Initial commit"
    fi
    echo "Calling sample gbs build command"
-   gbscommand="gbs build -A armv7l --include-all --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --repository ./"
+   gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC --include-all --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $4' --define 'LOGGING $5' --repository ./"
    echo $gbscommand
    if eval $gbscommand; then
       echo "Sample build is successful"

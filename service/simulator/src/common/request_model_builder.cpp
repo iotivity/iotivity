@@ -49,7 +49,7 @@ std::unordered_map<std::string, RequestModelSP> RequestModelBuilder::build(
 
     if (!raml)
     {
-        OC_LOG(ERROR, TAG, "Raml pointer is null!");
+        OIC_LOG(ERROR, TAG, "Raml pointer is null!");
         return requestModels;
     }
 
@@ -82,7 +82,7 @@ std::unordered_map<std::string, RequestModelSP> RequestModelBuilder::build(
 
     if (!resource)
     {
-        OC_LOG(ERROR, TAG, "Resource pointer is null!");
+        OIC_LOG(ERROR, TAG, "Resource pointer is null!");
         return requestModels;
     }
 
@@ -108,7 +108,7 @@ RequestModelSP RequestModelBuilder::createRequestModel(const RAML::ActionPtr &ac
         && actionType != RAML::ActionType::POST
         && actionType != RAML::ActionType::DELETE)
     {
-        OC_LOG(ERROR, TAG, "Request model is of unknown type!");
+        OIC_LOG(ERROR, TAG, "Request model is of unknown type!");
         return nullptr;
     }
 
@@ -156,7 +156,7 @@ std::shared_ptr<SimulatorResourceModelSchema> RequestModelBuilder::createRepSche
 {
     if (!responseBody)
     {
-        OC_LOG(ERROR, TAG, "Response body is null!");
+        OIC_LOG(ERROR, TAG, "Response body is null!");
         return nullptr;
     }
 

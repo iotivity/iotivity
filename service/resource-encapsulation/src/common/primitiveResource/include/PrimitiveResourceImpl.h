@@ -21,11 +21,10 @@
 #ifndef COMMON_INTERNAL_PRIMITIVERESOURCEIMPL_H
 #define COMMON_INTERNAL_PRIMITIVERESOURCEIMPL_H
 
-#include <PrimitiveResource.h>
-#include <ResponseStatement.h>
-#include <AssertUtils.h>
+#include "PrimitiveResource.h"
+#include "AssertUtils.h"
 
-#include <ResourceAttributesConverter.h>
+#include "ResourceAttributesConverter.h"
 
 namespace OIC
 {
@@ -39,11 +38,10 @@ namespace OIC
             typedef std::shared_ptr< BaseResource > BaseResourcePtr;
 
         private:
-            static ResponseStatement createResponseStatement(
+            static RCSRepresentation convertRepresentation(
                     const OC::OCRepresentation& rep)
             {
-                return ResponseStatement::create(
-                        ResourceAttributesConverter::fromOCRepresentation(rep));
+                return RCSRepresentation::fromOCRepresentation(rep);
             }
 
             template< typename CALLBACK, typename ...ARGS >
@@ -62,7 +60,7 @@ namespace OIC
                     const CALLBACK& cb, const HeaderOptions& headerOptions,
                     const OC::OCRepresentation& rep, int errorCode)
             {
-                checkedCall(resource, cb, headerOptions, createResponseStatement(rep), errorCode);
+                checkedCall(resource, cb, headerOptions, convertRepresentation(rep), errorCode);
             }
 
             static void safeObserveCallback(const std::weak_ptr< const PrimitiveResource >& res,
@@ -70,7 +68,7 @@ namespace OIC
                     const HeaderOptions& headerOptions, const OC::OCRepresentation& rep,
                     int errorCode, int sequenceNumber)
             {
-                checkedCall(res, cb, headerOptions, createResponseStatement(rep), errorCode,
+                checkedCall(res, cb, headerOptions, convertRepresentation(rep), errorCode,
                         sequenceNumber);
             }
 
@@ -92,31 +90,48 @@ namespace OIC
 
             void requestGet(GetCallback callback)
             {
+                requestGetWith("", "", {}, std::move(callback));
+            }
+
+            void requestGetWith(const std::string& resourceType,
+                    const std::string& resourceInterface,
+                    const OC::QueryParamsMap& queryParametersMap, GetCallback callback)
+            {
                 using namespace std::placeholders;
 
                 typedef OCStackResult(BaseResource::*GetFunc)(
+                        const std::string&, const std::string&,
                         const OC::QueryParamsMap&, OC::GetCallback);
 
                 invokeOC(m_baseResource, static_cast< GetFunc >(&BaseResource::get),
-                        OC::QueryParamsMap{ },
+                        resourceType, resourceInterface, queryParametersMap,
                         std::bind(safeCallback< GetCallback >, WeakFromThis(),
                                 std::move(callback), _1, _2, _3));
             }
 
             void requestSet(const RCSResourceAttributes& attrs, SetCallback callback)
             {
+                requestSetWith("", "", {}, attrs, std::move(callback));
+            }
+
+            void requestSetWith(const std::string& resourceType,
+                          const std::string& resourceInterface,
+                          const OC::QueryParamsMap& queryParametersMap,
+                          const RCSResourceAttributes& attrs, GetCallback callback)
+            {
                 using namespace std::placeholders;
 
-                typedef OCStackResult(BaseResource::*PostFunc)(
-                        const OC::OCRepresentation&,
-                        const OC::QueryParamsMap&, OC::PostCallback);
+                typedef OCStackResult (BaseResource::*PostFunc)(const std::string&,
+                        const std::string&, const OC::OCRepresentation&, const OC::QueryParamsMap&,
+                        OC::GetCallback);
 
                 invokeOC(m_baseResource, static_cast< PostFunc >(&BaseResource::post),
-                        ResourceAttributesConverter::toOCRepresentation(attrs),
-                        OC::QueryParamsMap{ },
-                        std::bind(safeCallback< SetCallback >, WeakFromThis(),
-                                std::move(callback), _1, _2, _3));
+                        resourceType, resourceInterface,
+                        ResourceAttributesConverter::toOCRepresentation(attrs), queryParametersMap,
+                        std::bind(safeCallback< SetCallback >, WeakFromThis(), std::move(callback),
+                                _1, _2, _3));
             }
+
 
             void requestPut(const RCSResourceAttributes& attrs, PutCallback callback)
             {

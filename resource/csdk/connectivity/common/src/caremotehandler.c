@@ -281,6 +281,8 @@ CAResult_t CACloneInfo(const CAInfo_t *info, CAInfo_t *clone)
         clone->numOptions = info->numOptions;
     }
 
+    memcpy(&(clone->identity), &(info->identity), sizeof(info->identity));
+
     if ((info->payload) && (0 < info->payloadSize))
     {
         // allocate payload field

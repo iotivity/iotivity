@@ -40,6 +40,9 @@ CAResult_t CACentralStart(CALEContext * context);
 /**
  * Stop the Linux BLE "central".
  *
+ * Shutdown all Linux BLE "central" operations, including stopping
+ * discovery, and disconnecting from all BLE peripherals.
+ *
  * @param[in] context Context containing BlueZ adapter information.
  *
  * @return @c CA_STATUS_OK on success.

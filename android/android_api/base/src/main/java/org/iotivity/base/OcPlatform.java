@@ -85,7 +85,7 @@ public final class OcPlatform {
      */
     public synchronized static void Configure(PlatformConfig platformConfig) {
         if (!sIsPlatformInitialized) {
-            CaInterface.initialize(platformConfig.getContext());
+            CaInterface.initialize(platformConfig.getActivity(), platformConfig.getContext());
 
             sPlatformQualityOfService = platformConfig.getQualityOfService();
 

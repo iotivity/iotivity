@@ -45,7 +45,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::createResource(
     if (0 == raml->getResources().size()
         || nullptr == (ramlResource = raml->getResources().begin()->second))
     {
-        OC_LOG(ERROR, TAG, "Zero resources detected from RAML!");
+        OIC_LOG(ERROR, TAG, "Zero resources detected from RAML!");
         return nullptr;
     }
 
@@ -66,7 +66,7 @@ std::vector<std::shared_ptr<SimulatorResource> > SimulatorResourceFactory::creat
     if (0 == raml->getResources().size()
         || nullptr == (ramlResource = raml->getResources().begin()->second))
     {
-        OC_LOG(ERROR, TAG, "Zero resources detected from RAML!");
+        OIC_LOG(ERROR, TAG, "Zero resources detected from RAML!");
         return resources;
     }
 
@@ -75,7 +75,7 @@ std::vector<std::shared_ptr<SimulatorResource> > SimulatorResourceFactory::creat
         std::shared_ptr<SimulatorResource> resource = buildResource(ramlResource);
         if (!resource)
         {
-            OC_LOG(ERROR, TAG, "Failed to create resource!");
+            OIC_LOG(ERROR, TAG, "Failed to create resource!");
             return resources;
         }
 
@@ -116,7 +116,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
     // Build SimulatorResourceModel from "GET" response schema
     if (requestModels.end() == requestModels.find("GET"))
     {
-        OC_LOG(ERROR, TAG, "Resource's RAML does not have GET request model!");
+        OIC_LOG(ERROR, TAG, "Resource's RAML does not have GET request model!");
         return nullptr;
     }
 
@@ -124,7 +124,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
     ResponseModelSP getResponseModel = getRequestModel->getResponseModel(200);
     if (!getResponseModel)
     {
-        OC_LOG(ERROR, TAG, "Resource's RAML does not have response for GET request!");
+        OIC_LOG(ERROR, TAG, "Resource's RAML does not have response for GET request!");
         return nullptr;
     }
 
@@ -132,7 +132,7 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
         getResponseModel->getSchema();
     if (!responseSchema)
     {
-        OC_LOG(ERROR, TAG, "Failed to get schema from response model!");
+        OIC_LOG(ERROR, TAG, "Failed to get schema from response model!");
         return nullptr;
     }
 

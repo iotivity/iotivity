@@ -42,12 +42,26 @@ static const char OIC_GATT_CHARACTERISTIC_REQUEST_UUID[] = CA_GATT_REQUEST_CHRC_
 static const char OIC_GATT_CHARACTERISTIC_RESPONSE_UUID[] = CA_GATT_RESPONSE_CHRC_UUID;
 static const char OIC_GATT_CHARACTERISTIC_CONFIG_UUID[] = "00002902-0000-1000-8000-00805f9b34fb";
 
+static const char CLASSPATH_BT_PROFILE[] = "android/bluetooth/BluetoothProfile";
+static const char CLASSPATH_BT_GATT[] = "android/bluetooth/BluetoothGatt";
+static const char CLASSPATH_BT_ADAPTER[] = "android/bluetooth/BluetoothAdapter";
+static const char CLASSPATH_BT_DEVICE[] = "android/bluetooth/BluetoothDevice";
+static const char CLASSPATH_BT_UUID[] = "java/util/UUID";
+
+
+static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAdapter;";
+static const char METHODID_BT_DEVICE[] = "()Landroid/bluetooth/BluetoothDevice;";
+static const char METHODID_BT_REMOTE_DEVICE[] = "(Ljava/lang/String;)Landroid/bluetooth/BluetoothDevice;";
+
+static const jint GATT_PROFILE = 7;
 static const jint GATT_SUCCESS = 0;
 
 static const jint BOND_BONDED = 12;
 static const jint BOND_BONDING = 11;
 static const jint BOND_NONE = 10;
 
+static const jint STATE_CONNECTED = 2;
+static const jint STATE_DISCONNECTED = 0;
 /**
  * get uuid(jni object) from uuid(character).
  * @param[in]   env              JNI interface pointer.
@@ -122,6 +136,23 @@ jboolean CALEIsEnableBTAdapter(JNIEnv *env);
  * @return  remote address.
  */
 jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
+
+/**
+ * get value from selected constants.
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   classType        class type
+ * @param[in]   name             constants name to get.
+ * @return  remote address.
+ */
+jint CALEGetConstantsValue(JNIEnv *env, const char* classType, const char* name);
+
+/**
+ * get bluetooth device object from bluetooth adapter.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   address               bluetooth address.
+ * @return  bluetooth device object.
+ */
+jobject CALEGetRemoteDevice(JNIEnv *env, jstring address);
 
 #ifdef __cplusplus
 } /* extern "C" */

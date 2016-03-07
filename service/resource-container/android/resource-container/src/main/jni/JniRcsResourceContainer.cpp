@@ -25,8 +25,13 @@
 #include "JNIEnvWrapper.h"
 #include "Log.h"
 #include "Verify.h"
+#include <dlfcn.h>
 
+#include "ResourceContainerBundleAPI.h"
+#include "JniBundleResource.h"
 #include "RCSResourceContainer.h"
+
+
 
 #define LOG_TAG "JNI-RCSResourceContainer"
 
@@ -34,9 +39,12 @@ using namespace OIC::Service;
 
 #define CLS_NAME_BUNDLE_INFO "org/iotivity/service/resourcecontainer/RcsBundleInfo"
 
+std::map< string, BundleResource::Ptr > android_resources;
+
 namespace
 {
     jclass g_cls_RCSBundleInfo;
+    jfieldID g_field_mNativeHandle;
 
     jmethodID g_ctor_RCSBundleInfo;
 
@@ -68,6 +76,8 @@ namespace
 
     jobject newBundleInfoObj(JNIEnvWrapper *env, const std::unique_ptr< RCSBundleInfo > &bundleInfo)
     {
+        LOGD("new bundle info");
+        __android_log_print(ANDROID_LOG_DEBUG, "CONTAINER", "newBundleInfoObj %s",bundleInfo->getActivatorName().c_str());
         JavaLocalString id{env, newStringObject(env, bundleInfo->getID()) };
         JavaLocalString path{env, newStringObject(env, bundleInfo->getPath()) };
         JavaLocalString activatorName{env, newStringObject(env, bundleInfo->getActivatorName()) };
@@ -75,7 +85,8 @@ namespace
         JavaLocalString version{env, newStringObject(env, bundleInfo->getVersion()) };
 
         return env->NewObject(g_cls_RCSBundleInfo, g_ctor_RCSBundleInfo,
-                id.get(), path.get(), activatorName.get(), libraryPath.get(), version.get());
+                id.get(), path.get(), activatorName.get(), libraryPath.get(), version.get(),
+                bundleInfo->isActivated());
     }
 }
 
@@ -90,6 +101,10 @@ void initRCSResourceContainer(JNIEnvWrapper *env)
             AS_SIG(CLS_NAME_STRING)
             AS_SIG(CLS_NAME_STRING)
             ")V");
+
+    auto clsJniBundleResource = env->FindClass(PACKAGE_NAME "/BundleResource");
+
+    g_field_mNativeHandle = env->GetFieldID(clsJniBundleResource, "mNativeHandle", "J");
 }
 
 void clearRCSResourceContainer(JNIEnvWrapper *env)
@@ -103,6 +118,15 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStartCont
 {
     LOGD("nativeStartContainer");
 
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
+
     EXPECT(configFileObj, "ConfigFile is null.");
 
     auto configFile = toStdString(env, configFileObj);
@@ -113,10 +137,18 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStartCont
 }
 
 JNIEXPORT void JNICALL
-Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStopContainer
-(JNIEnv *env, jobject)
+Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStopContainer(JNIEnv *env, jobject)
 {
     LOGD("nativeStopContainers");
+
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
 
     RCSResourceContainer::getInstance()->stopContainer();
 }
@@ -127,6 +159,15 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeAddBundle
  jobject paramsObj)
 {
     LOGD("nativeAddBundle");
+
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
 
     EXPECT(idObj, "BundleId is null.");
     EXPECT(pathObj, "BundlePath is null.");
@@ -156,6 +197,15 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRemoveBun
 {
     LOGD("nativeRemoveBundle");
 
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
+
     EXPECT(idObj, "BundleId is null.");
 
     auto id = toStdString(env, idObj);
@@ -170,6 +220,15 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeListBundl
 (JNIEnv *env, jobject)
 {
     LOGD("nativeListBundles");
+
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
 
     JNIEnvWrapper envWrapper(env);
 
@@ -197,6 +256,15 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStartBund
 {
     LOGD("nativeStartBundle");
 
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
+
     EXPECT(idObj, "BundleId is null.");
 
     auto id = env->GetStringUTFChars(idObj, NULL);
@@ -210,6 +278,15 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStopBundl
 (JNIEnv *env, jobject, jstring idObj)
 {
     LOGD("nativeStopBundle");
+
+    // A strange error message happens if the container is used as native library on Android
+    // and further native libraries are loaded at runtime.
+    const char *error;
+    if ((error = dlerror()) != NULL)
+    {
+        __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer",
+                "dlerror: %s.", error);
+    }
 
     EXPECT(idObj, "BundleId is null.");
 
@@ -290,5 +367,112 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeListBundl
     }
 
     return nullptr;
+}
+
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRegisterBundleResource
+(JNIEnv *env, jobject obj, jobject bundleResource, jobjectArray attributes, jstring bundleId,
+ jstring uri, jstring resourceType, jstring res_name)
+{
+    JNIEnvWrapper envWrapper(env);
+    LOGD("nativeRegisterJniBundleResource");
+    auto str_bundle_id = toStdString(&envWrapper, bundleId);
+    __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved bundle id: %s.",
+            str_bundle_id.c_str());
+    auto str_uri = toStdString(&envWrapper, uri);
+    __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved uri: %s.",
+            str_uri.c_str());
+    auto str_resourceType = toStdString(&envWrapper, resourceType);
+    __android_log_print(ANDROID_LOG_DEBUG, "JNI-RCSResourceContainer", "retrieved resource type: %s.",
+            str_resourceType.c_str());
+    auto str_res_name = toStdString(&envWrapper, res_name);
+    LOGD("retrieved res name.");
+    JniBundleResource res;
+
+    BundleResource::Ptr androidResource = std::make_shared< JniBundleResource >
+            (env, obj, bundleResource, str_bundle_id, attributes);
+    ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
+
+    androidResource->m_uri = str_uri;
+    androidResource->m_resourceType = str_resourceType;
+    androidResource->m_name = str_res_name;
+    androidResource->m_bundleId = str_bundle_id;
+
+    // link java resource instance to c++ resource instance
+    env->SetLongField(bundleResource, g_field_mNativeHandle, reinterpret_cast< jlong >(androidResource.get()));
+
+    container->registerResource(androidResource);
+
+    android_resources[str_uri] = androidResource;
+}
+
+/*
+ * Class:     org_iotivity_resourcecontainer_bundle_api_BaseActivator
+ * Method:    unregisterJavaResource
+ * Signature: (Lorg/iotivity/resourcecontainer/bundle/api/BundleResource;)V
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeUnregisterBundleResource
+(JNIEnv *env, jobject obj, jobject bundleResource, jstring uri)
+{
+    (void)obj;
+    (void)bundleResource;
+    const char *str_uri = env->GetStringUTFChars(uri, 0);
+
+    if (android_resources[str_uri] != NULL)
+    {
+        ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
+        container->unregisterResource(android_resources[str_uri]);
+        android_resources.erase(str_uri);
+    }
+}
+
+/*
+ * Class:     org_iotivity_resourcecontainer_bundle_api_BaseActivator
+ * Method:    getNumberOfConfiguredResources
+ * Signature: (Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL
+Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeGetNumberOfConfiguredResources(
+    JNIEnv *env, jobject obj, jstring bundleId)
+{
+    (void)obj;
+    LOGD("nativeGetNumberOfConfiguredResources");
+    const char *str_bundleId = env->GetStringUTFChars(bundleId, 0);
+    LOGD("retrieved bundle id");
+    __android_log_print(ANDROID_LOG_DEBUG, "CONTAINER", "getNumberOfConfiguredResources %s",str_bundleId);
+    ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
+    vector< resourceInfo > resourceConfig;
+    container->getResourceConfiguration(str_bundleId, &resourceConfig);
+
+    return resourceConfig.size();
+}
+
+/*
+ * Class:     org_iotivity_resourcecontainer_bundle_api_BaseActivator
+ * Method:    getConfiguredResourceParams
+ * Signature: (Ljava/lang/String;I)[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL
+Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeGetConfiguredResourceParams(
+    JNIEnv *env, jobject obj, jstring bundleId, jint resourceId)
+{
+    (void)obj;
+    jobjectArray ret;
+    const char *str_bundleId = env->GetStringUTFChars(bundleId, 0);
+
+    ResourceContainerImpl *container = ResourceContainerImpl::getImplInstance();
+    vector< resourceInfo > resourceConfig;
+    container->getResourceConfiguration(str_bundleId, &resourceConfig);
+    resourceInfo conf = resourceConfig[resourceId];
+    ret = (jobjectArray) env->NewObjectArray(4, env->FindClass("java/lang/String"),
+            env->NewStringUTF(""));
+
+    env->SetObjectArrayElement(ret, 0, env->NewStringUTF(conf.name.c_str()));
+    env->SetObjectArrayElement(ret, 1, env->NewStringUTF(conf.uri.c_str()));
+    env->SetObjectArrayElement(ret, 2, env->NewStringUTF(conf.resourceType.c_str()));
+    env->SetObjectArrayElement(ret, 3, env->NewStringUTF(conf.address.c_str()));
+    return ret;
 }
 

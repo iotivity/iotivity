@@ -46,16 +46,16 @@ void handleSigInt(int signum)
 
 int main()
 {
-    OC_LOG(DEBUG, TAG, "OCRouting sample is starting...");
+    OIC_LOG(DEBUG, TAG, "OCRouting sample is starting...");
 
     if (OCInit(NULL, 0, OC_GATEWAY) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 
     // Break from loop with Ctrl-C
-    OC_LOG(INFO, TAG, "Entering ocrouting main loop...");
+    OIC_LOG(INFO, TAG, "Entering ocrouting main loop...");
 
     signal(SIGINT, handleSigInt);
 
@@ -63,16 +63,16 @@ int main()
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
     }
 
-    OC_LOG(INFO, TAG, "Exiting ocrouting main loop...");
+    OIC_LOG(INFO, TAG, "Exiting ocrouting main loop...");
 
     if (OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack process error");
+        OIC_LOG(ERROR, TAG, "OCStack process error");
     }
 
     return 0;

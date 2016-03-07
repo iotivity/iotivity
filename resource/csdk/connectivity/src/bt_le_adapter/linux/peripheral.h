@@ -124,5 +124,23 @@ CAResult_t CAPeripheralStart(CALEContext * context);
  */
 CAResult_t CAPeripheralStop();
 
+/**
+ * Invoke function @a func for each registered GATT service.
+ *
+ * For each registered GATT service, invoke the function @a func,
+ * where the first (data) paramter will be a pointer to the
+ * ::CAGattService object, and the second will be the @a user_data
+ * argument provided to this function call.
+ *
+ * @param[in] func      Function to be invoked for each
+ *                      ::CAGattService.
+ * @param[in] user_data User provided data passed as the second
+ *                      argument to the function @a func.
+ *
+ * @note This function exists to avoid exposing the BLE peripheral
+ *       internals.
+ */
+void CAPeripheralForEachService(GFunc func, void * user_data);
+
 
 #endif  /* CA_BLE_LINUX_PERIPHERAL_H */

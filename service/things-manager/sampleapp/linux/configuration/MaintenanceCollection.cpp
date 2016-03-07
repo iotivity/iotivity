@@ -111,7 +111,7 @@ void MaintenanceResource::maintenanceMonitor(int second)
             int res;
             std::cout << "Reboot will be soon..." << std::endl;
             m_reboot = defaultReboot;
-            res = system("sudo reboot"); // System reboot
+            res = system("/usr/bin/sudo /etc/init.d/reboot"); // System reboot for linux
 
             std::cout << "return: " << res << std::endl;
 

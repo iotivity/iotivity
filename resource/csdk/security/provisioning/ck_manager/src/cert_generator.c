@@ -111,7 +111,7 @@ PKIError GenerateCertificate (const UTF8String_t *subjectName, const UTF8String_
     CHECK_CALL(GetNextSerialNumber, &serialNumber);
     certificate->tbsCertificate.serialNumber = serialNumber;
     serialNumber++;
-    CHECK_CALL(SetNextSerialNumber, &serialNumber);
+    CHECK_CALL(SetNextSerialNumber, serialNumber);
     CHECK_CALL(SaveCKMInfo);
 
     //set signature algorithm in TBS

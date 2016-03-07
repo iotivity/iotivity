@@ -26,36 +26,68 @@
 #ifndef SERVERBUILDER_PRIMITIVEREQUEST_H
 #define SERVERBUILDER_PRIMITIVEREQUEST_H
 
-#include <string>
+#include <memory>
+#include <map>
+
+namespace OC
+{
+    class OCResourceRequest;
+}
 
 namespace OIC
 {
     namespace Service
     {
+        class RCSResourceObject;
+
         /**
         * This class describes the request.
         *
         */
         class RCSRequest
         {
-            public:
-                /**
-                * Constructor to set resource URI.
-                *
-                * @param resourceUri URI of the resource for which the request is generated.
-                */
-                explicit RCSRequest(const std::string &resourceUri);
+        public:
+            RCSRequest() = default;
 
-                RCSRequest &operator=(RCSRequest &) = delete;
+            /**
+            * Constructor to set resource URI.
+            *
+            * @param resourceUri URI of the resource for which the request is generated.
+            */
+            explicit RCSRequest(const std::string& resourceUri);
 
-                /**
-                * @return Returns the URI of the request.
-                *
-                */
-                std::string getResourceUri() const;
+            RCSRequest(const std::shared_ptr< RCSResourceObject >&,
+                    const std::shared_ptr< OC::OCResourceRequest >&);
 
-            private:
-                std::string m_resourceUri;
+            /**
+             * @return the resource object which receives this request.
+             */
+            std::weak_ptr< RCSResourceObject > getResourceObject() const noexcept;
+
+            /**
+            * @return the URI of the request.
+            *
+            */
+            std::string getResourceUri() const;
+
+            /**
+             * @return the OCResourceRequest.
+             */
+            std::shared_ptr< OC::OCResourceRequest > getOCRequest() const noexcept;
+
+            /**
+             * @return the query parameters of the request.
+             */
+            const std::map< std::string, std::string >& getQueryParams() const;
+
+            /**
+             * @return the interface of the request.
+             */
+            std::string getInterface() const;
+
+        private:
+            std::weak_ptr< RCSResourceObject > m_resourceObject;
+            std::shared_ptr< OC::OCResourceRequest > m_ocRequest;
         };
 
     }

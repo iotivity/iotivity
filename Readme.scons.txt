@@ -1,11 +1,14 @@
 == Quick guide: build and run IoTivity projects on Ubuntu ==
 
 1. Build
-	Go to the top directory of 'iotivity' project(Note: should always run 'scons'
-command in this directory)
+    Go to the top directory of 'iotivity' project(Note: should always run 'scons'
+    command in this directory)
+
+    Install build tools:
+      $ sudo apt-get install git-core scons ssh build-essential g++ doxygen valgrind
 
     Install external libraries:
-      $ sudo apt-get install libboost-dev libboost-program-options-dev libboost-thread-dev uuid-dev libssl-dev libtool
+      $ sudo apt-get install libboost-dev libboost-program-options-dev libboost-thread-dev uuid-dev libssl-dev libtool libglib2.0-dev
 
     Build release binaries:
       $ scons
@@ -199,7 +202,7 @@ Tizen:
     $ scons TARGET_OS=tizen TARGET_TRANSPORT=ALL -c (for clean)
 
 (we provide the spec file required by gbs tool at toools/tizen directory.
-gbs is default build tool for Tizen platfrom, we can refer the following
+gbs is default build tool for Tizen platform, we can refer the following
 wiki to setup Tizen development environment:
 https://source.tizen.org/documentation/developer-guide/getting-started-guide)
 

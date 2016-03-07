@@ -54,11 +54,10 @@ char* CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx)
 
     if (OC_STACK_OK != GetDoxmDeviceID(&uuidPT))
     {
-        OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
+        OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return NULL;
     }
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
-    otmCtx->selectedDeviceInfo->doxm->owned = true;
 
     return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
@@ -72,7 +71,7 @@ OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM)
 
 OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
 {
-    OC_LOG(INFO, TAG, "IN CreateSecureSessionJustWorksCallback");
+    OIC_LOG(INFO, TAG, "IN CreateSecureSessionJustWorksCallback");
     if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         return OC_STACK_INVALID_PARAM;
@@ -81,27 +80,27 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     CAResult_t caresult = CAEnableAnonECDHCipherSuite(true);
     if (CA_STATUS_OK != caresult)
     {
-        OC_LOG_V(ERROR, TAG, "Unable to enable anon cipher suite");
+        OIC_LOG_V(ERROR, TAG, "Unable to enable anon cipher suite");
         return OC_STACK_ERROR;
     }
-    OC_LOG(INFO, TAG, "Anonymous cipher suite Enabled.");
+    OIC_LOG(INFO, TAG, "Anonymous cipher suite Enabled.");
 
     caresult  = CASelectCipherSuite(TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256);
     if (CA_STATUS_OK != caresult)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256");
+        OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256");
         caresult = CAEnableAnonECDHCipherSuite(false);
         if (CA_STATUS_OK != caresult)
         {
-            OC_LOG_V(ERROR, TAG, "Unable to enable anon cipher suite");
+            OIC_LOG_V(ERROR, TAG, "Unable to enable anon cipher suite");
         }
         else
         {
-            OC_LOG(INFO, TAG, "Anonymous cipher suite Disabled.");
+            OIC_LOG(INFO, TAG, "Anonymous cipher suite Disabled.");
         }
         return OC_STACK_ERROR;
     }
-    OC_LOG(INFO, TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
+    OIC_LOG(INFO, TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
 
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
     CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
@@ -116,10 +115,10 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     OICFree(endpoint);
     if (CA_STATUS_OK != caresult)
     {
-        OC_LOG_V(ERROR, TAG, "DTLS handshake failure.");
+        OIC_LOG_V(ERROR, TAG, "DTLS handshake failure.");
         return OC_STACK_ERROR;
     }
 
-    OC_LOG(INFO, TAG, "OUT CreateSecureSessionJustWorksCallback");
+    OIC_LOG(INFO, TAG, "OUT CreateSecureSessionJustWorksCallback");
     return OC_STACK_OK;
 }

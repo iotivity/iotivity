@@ -21,8 +21,12 @@
 #ifndef OCPAYLOAD_H_
 #define OCPAYLOAD_H_
 
+#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
+#endif
+#ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
+#endif
 #include <stdbool.h>
 #include <inttypes.h>
 #include "octypes.h"
@@ -31,6 +35,28 @@
 extern "C"
 {
 #endif
+
+/**
+ * Macro to verify the validity of cbor operation.
+ */
+#define VERIFY_CBOR_SUCCESS(log_tag, err, log_message) \
+    if ((CborNoError != (err)) && (CborErrorOutOfMemory != (err))) \
+    { \
+        if ((log_tag) && (log_message)) \
+        { \
+            OIC_LOG_V(ERROR, (log_tag), "%s with cbor error: \'%s\'.", \
+                    (log_message), (cbor_error_string(err))); \
+        } \
+        goto exit; \
+    } \
+
+#define VERIFY_PARAM_NON_NULL(log_tag, err, log_message) \
+    if (NULL == (err)) \
+    { \
+        OIC_LOG_V(FATAL, (log_tag), "%s", (log_message)); \
+        goto exit;\
+    } \
+
 
 typedef struct OCResource OCResource;
 
@@ -199,12 +225,12 @@ void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
         uint16_t port);
 void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res);
-bool OCResourcePayloadAddResourceType(OCResourcePayload* payload, const char* resourceType);
-bool OCResourcePayloadAddInterface(OCResourcePayload* payload, const char* interface);
+bool OCResourcePayloadAddStringLL(OCStringLL **payload, const char* type);
 
 size_t OCDiscoveryPayloadGetResourceCount(OCDiscoveryPayload* payload);
 OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, size_t index);
 
+void OCDiscoveryResourceDestroy(OCResourcePayload* payload);
 void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload);
 
 // Device Payload
@@ -215,7 +241,7 @@ void OCDevicePayloadDestroy(OCDevicePayload* payload);
 // Platform Payload
 OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo);
 OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo);
-
+void OCPlatformInfoDestroy(OCPlatformInfo *info);
 void OCPlatformPayloadDestroy(OCPlatformPayload* payload);
 
 // Presence Payload

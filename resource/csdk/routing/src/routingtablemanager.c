@@ -29,12 +29,12 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "RTM"
+#define TAG "OIC_RM_TM"
 
 /**
  * Tag for printing the Routing table.
  */
-#define RM_TAG "RAP"
+#define RM_TAG "OIC_RM_RAP"
 
 
 /**
@@ -46,7 +46,7 @@ static const uint64_t USECS_PER_SEC = 1000000;
 
 OCStackResult RTMInitialize(u_linklist_t **gatewayTable, u_linklist_t **endpointTable)
 {
-    OC_LOG(DEBUG, TAG, "RTMInitialize IN");
+    OIC_LOG(DEBUG, TAG, "RTMInitialize IN");
     RM_NULL_CHECK_WITH_RET(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_WITH_RET(endpointTable, TAG, "endpointTable");
     if (NULL == *gatewayTable)
@@ -54,7 +54,7 @@ OCStackResult RTMInitialize(u_linklist_t **gatewayTable, u_linklist_t **endpoint
         *gatewayTable = u_linklist_create();
         if (NULL == *gatewayTable)
         {
-            OC_LOG(ERROR, TAG, "Creating Routing Table failed");
+            OIC_LOG(ERROR, TAG, "Creating Routing Table failed");
             RTMTerminate(gatewayTable, endpointTable);
             return OC_STACK_ERROR;
         }
@@ -65,12 +65,12 @@ OCStackResult RTMInitialize(u_linklist_t **gatewayTable, u_linklist_t **endpoint
         *endpointTable = u_linklist_create();
         if (NULL == *endpointTable)
         {
-           OC_LOG(ERROR, TAG, "Creating Routing Table failed");
+           OIC_LOG(ERROR, TAG, "Creating Routing Table failed");
             RTMTerminate(gatewayTable, endpointTable);
            return OC_STACK_ERROR;
         }
     }
-    OC_LOG(DEBUG, TAG, "RTMInitialize OUT");
+    OIC_LOG(DEBUG, TAG, "RTMInitialize OUT");
     return OC_STACK_OK;
 }
 
@@ -79,7 +79,7 @@ OCStackResult RTMInitialize(u_linklist_t **gatewayTable, u_linklist_t **endpoint
  */
 OCStackResult RTMFreeGatewayRouteTable(u_linklist_t **gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "RTMFreeGatewayRouteTable IN");
+    OIC_LOG(DEBUG, TAG, "RTMFreeGatewayRouteTable IN");
     if (NULL == gatewayTable || NULL == *gatewayTable)
     {
         return OC_STACK_OK;
@@ -109,12 +109,12 @@ OCStackResult RTMFreeGatewayRouteTable(u_linklist_t **gatewayTable)
         OCStackResult ret = u_linklist_remove(*gatewayTable, &iterTable);
         if (OC_STACK_OK != ret)
         {
-           OC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
+           OIC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
            return OC_STACK_ERROR;
         }
     }
     u_linklist_free(gatewayTable);
-    OC_LOG(DEBUG, TAG, "RTMFreeGatewayRouteTable OUT");
+    OIC_LOG(DEBUG, TAG, "RTMFreeGatewayRouteTable OUT");
     return OC_STACK_OK;
 }
 
@@ -123,7 +123,7 @@ OCStackResult RTMFreeGatewayRouteTable(u_linklist_t **gatewayTable)
  */
 OCStackResult RTMFreeEndpointRouteTable(u_linklist_t **endpointTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == endpointTable || NULL == *endpointTable)
     {
         return OC_STACK_OK;
@@ -142,18 +142,18 @@ OCStackResult RTMFreeEndpointRouteTable(u_linklist_t **endpointTable)
         OCStackResult ret = u_linklist_remove(*endpointTable, &iterTable);
         if (OC_STACK_OK != ret)
         {
-            OC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
+            OIC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
             return OC_STACK_ERROR;
         }
     }
     u_linklist_free(endpointTable);
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RTMFreeGatewayIdList(u_linklist_t **gatewayIdTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == gatewayIdTable || NULL == *gatewayIdTable)
     {
         return OC_STACK_OK;
@@ -177,7 +177,7 @@ OCStackResult RTMFreeGatewayIdList(u_linklist_t **gatewayIdTable)
             OCStackResult ret = u_linklist_remove(*gatewayIdTable, &iterTable);
             if (OC_STACK_OK != ret)
             {
-               OC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
+               OIC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
                return OC_STACK_ERROR;
             }
         }
@@ -186,12 +186,12 @@ OCStackResult RTMFreeGatewayIdList(u_linklist_t **gatewayIdTable)
             OCStackResult res = u_linklist_remove(*gatewayIdTable, &iterTable);
             if (OC_STACK_OK != res)
             {
-                OC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
+                OIC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
                 return OC_STACK_ERROR;
             }
         }
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
@@ -200,12 +200,12 @@ OCStackResult RTMFreeGatewayIdList(u_linklist_t **gatewayIdTable)
  */
 OCStackResult RTMTerminate(u_linklist_t **gatewayTable, u_linklist_t **endpointTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
     OCStackResult ret = RTMFreeGatewayRouteTable(gatewayTable);
     if (OC_STACK_OK != ret)
     {
-        OC_LOG(ERROR, TAG, "Deleting Gateway Routing Table failed");
+        OIC_LOG(ERROR, TAG, "Deleting Gateway Routing Table failed");
     }
     if (NULL != *gatewayTable)
     {
@@ -215,13 +215,13 @@ OCStackResult RTMTerminate(u_linklist_t **gatewayTable, u_linklist_t **endpointT
     ret = RTMFreeEndpointRouteTable(endpointTable);
     if (OC_STACK_OK != ret)
     {
-        OC_LOG(ERROR, TAG, "Deleting Endpoint Routing Table failed");
+        OIC_LOG(ERROR, TAG, "Deleting Endpoint Routing Table failed");
     }
     if (NULL != *endpointTable)
     {
         *endpointTable = NULL;
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
@@ -235,27 +235,27 @@ OCStackResult RTMTerminate(u_linklist_t **gatewayTable, u_linklist_t **endpointT
 OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t routeCost,
                                  const RTMDestIntfInfo_t *destInterfaces, u_linklist_t **gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(gatewayTable, TAG, "gatewayTable");
     if (NULL == *gatewayTable)
     {
         *gatewayTable = u_linklist_create();
         if (NULL == *gatewayTable)
         {
-            OC_LOG(ERROR, TAG, "u_linklist_create failed");
+            OIC_LOG(ERROR, TAG, "u_linklist_create failed");
             return OC_STACK_NO_MEMORY;
         }
     }
 
     if (1 == routeCost && 0 != nextHop)
     {
-        OC_LOG(ERROR, TAG, "Adding Gateway Failed as Next Hop should be 0 for route cost 1");
+        OIC_LOG(ERROR, TAG, "Adding Gateway Failed as Next Hop should be 0 for route cost 1");
         return OC_STACK_ERROR;
     }
 
     if (0 == routeCost)
     {
-        OC_LOG(ERROR, TAG, "Adding Gateway Failed as Route cost shouldnot be less than 1");
+        OIC_LOG(ERROR, TAG, "Adding Gateway Failed as Route cost shouldnot be less than 1");
         return OC_STACK_ERROR;
     }
 
@@ -297,7 +297,7 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
 
     if (1 < routeCost && NULL == gatewayNodeMap)
     {
-        OC_LOG(ERROR, TAG, "Adding Gateway Failed as Next Hop is invalid");
+        OIC_LOG(ERROR, TAG, "Adding Gateway Failed as Next Hop is invalid");
         return OC_STACK_ERROR;
     }
 
@@ -310,14 +310,14 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
         {
             if (NULL == destInterfaces)
             {
-                OC_LOG(ERROR, TAG, "Not Adding Gateway destInterfaces is NULL");
+                OIC_LOG(ERROR, TAG, "Not Adding Gateway destInterfaces is NULL");
                 return OC_STACK_ERROR;
             }
             OCStackResult update = RTMUpdateDestinationIntfAdr(gatewayId, *destInterfaces, true,
                                                                gatewayTable);
             if (OC_STACK_OK != update)
             {
-                OC_LOG(ERROR, TAG, "RTMUpdateDestinationIntfAdr failed");
+                OIC_LOG(ERROR, TAG, "RTMUpdateDestinationIntfAdr failed");
             }
             return update;
         }
@@ -326,7 +326,7 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
             if (entry->routeCost == routeCost && NULL != entry->nextHop &&
                 (nextHop == entry->nextHop->gatewayId))
             {
-                OC_LOG(ERROR, TAG, "Not Adding Gateway As it is Duplicate request");
+                OIC_LOG(ERROR, TAG, "Not Adding Gateway As it is Duplicate request");
                 return OC_STACK_DUPLICATE_REQUEST;
             }
 
@@ -342,12 +342,12 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
             {
                 entry->routeCost = 1;
                 // Entry can't be updated if Next hop is not same as existing Destinations of Table.
-                OC_LOG(DEBUG, TAG, "Updating the gateway");
+                OIC_LOG(DEBUG, TAG, "Updating the gateway");
                 entry->nextHop = NULL;
                 entry->destination->destIntfAddr = u_arraylist_create();
                 if (NULL == entry->destination->destIntfAddr)
                 {
-                    OC_LOG(ERROR, TAG, "Failed to create array list");
+                    OIC_LOG(ERROR, TAG, "Failed to create array list");
                     return OC_STACK_ERROR;
                 }
 
@@ -355,7 +355,7 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
                     (RTMDestIntfInfo_t *) OICCalloc(1, sizeof(RTMDestIntfInfo_t));
                 if (NULL == destAdr)
                 {
-                    OC_LOG(ERROR, TAG, "Failed to Calloc destAdr");
+                    OIC_LOG(ERROR, TAG, "Failed to Calloc destAdr");
                     return OC_STACK_ERROR;
                 }
 
@@ -366,21 +366,21 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
                     u_arraylist_add(entry->destination->destIntfAddr, (void *)destAdr);
                 if (!result)
                 {
-                    OC_LOG(ERROR, TAG, "Adding node to head failed");
+                    OIC_LOG(ERROR, TAG, "Adding node to head failed");
                     OICFree(destAdr);
                     return OC_STACK_ERROR;
                 }
             }
             else
             {
-                OC_LOG(ERROR, TAG, "Adding Gateway Failed as Next hop is invalid");
+                OIC_LOG(ERROR, TAG, "Adding Gateway Failed as Next hop is invalid");
                 return OC_STACK_ERROR;
             }
 
         }
         else if (NULL != entry  && entry->routeCost < routeCost)
         {
-            OC_LOG(ERROR, TAG, "Adding Gateway Failed as Route cost is more than old");
+            OIC_LOG(ERROR, TAG, "Adding Gateway Failed as Route cost is more than old");
             return OC_STACK_ERROR;
         }
 
@@ -390,14 +390,14 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
             OCStackResult res = u_linklist_remove(*gatewayTable, &destNode);
             if (OC_STACK_OK != res)
             {
-                OC_LOG(ERROR, TAG, "Removing node failed");
+                OIC_LOG(ERROR, TAG, "Removing node failed");
             }
             else
             {
                 res = u_linklist_add_head(*gatewayTable, (void *)entry);
                 if (OC_STACK_OK != res)
                 {
-                    OC_LOG(ERROR, TAG, "Adding node to head failed");
+                    OIC_LOG(ERROR, TAG, "Adding node to head failed");
                 }
             }
         }
@@ -408,14 +408,14 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
         RTMGatewayEntry_t *hopEntry = (RTMGatewayEntry_t *)OICCalloc(1, sizeof(RTMGatewayEntry_t));
         if (NULL == hopEntry)
         {
-            OC_LOG(ERROR, TAG, "Calloc failed for hop entry");
+            OIC_LOG(ERROR, TAG, "Calloc failed for hop entry");
             return OC_STACK_ERROR;
         }
 
         hopEntry->destination = (RTMGatewayId_t*)OICCalloc(1, sizeof(RTMGatewayId_t));
         if (NULL == hopEntry->destination)
         {
-            OC_LOG(ERROR, TAG, "Calloc failed for hop entry destination");
+            OIC_LOG(ERROR, TAG, "Calloc failed for hop entry destination");
             OICFree(hopEntry);
             return OC_STACK_ERROR;
         }
@@ -428,7 +428,7 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
                 (RTMDestIntfInfo_t *) OICCalloc(1, sizeof(RTMDestIntfInfo_t));
             if (NULL == destAdr)
             {
-                OC_LOG(ERROR, TAG, "Calloc failed for destAdr");
+                OIC_LOG(ERROR, TAG, "Calloc failed for destAdr");
                 u_arraylist_free(&(hopEntry->destination->destIntfAddr));
                 OICFree(hopEntry->destination);
                 OICFree(hopEntry);
@@ -457,7 +457,7 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
         }
         else
         {
-            OC_LOG(ERROR, TAG, "Adding Gateway Failed as Next Hop is invalid");
+            OIC_LOG(ERROR, TAG, "Adding Gateway Failed as Next Hop is invalid");
             while (u_arraylist_length(hopEntry->destination->destIntfAddr) > 0)
             {
                 RTMDestIntfInfo_t *data =
@@ -483,7 +483,7 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
 
         if (OC_STACK_OK != ret)
         {
-            OC_LOG(ERROR, TAG, "Adding Gateway Entry to Routing Table failed");
+            OIC_LOG(ERROR, TAG, "Adding Gateway Entry to Routing Table failed");
             while (u_arraylist_length(hopEntry->destination->destIntfAddr) > 0)
             {
                 RTMDestIntfInfo_t *data = u_arraylist_remove(hopEntry->destination->destIntfAddr, 0);
@@ -495,14 +495,14 @@ OCStackResult RTMAddGatewayEntry(uint32_t gatewayId, uint32_t nextHop, uint32_t 
             return OC_STACK_ERROR;
         }
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RTMAddEndpointEntry(uint16_t *endpointId, const CAEndpoint_t *destAddr,
                                   u_linklist_t **endpointTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(endpointId, TAG, "endpointId");
     RM_NULL_CHECK_WITH_RET(destAddr, TAG, "destAddr");
     RM_NULL_CHECK_WITH_RET(endpointTable, TAG, "endpointTable");
@@ -511,7 +511,7 @@ OCStackResult RTMAddEndpointEntry(uint16_t *endpointId, const CAEndpoint_t *dest
         *endpointTable = u_linklist_create();
         if (NULL == *endpointTable)
         {
-            OC_LOG(ERROR, TAG, "u_linklist_create failed");
+            OIC_LOG(ERROR, TAG, "u_linklist_create failed");
             return OC_STACK_NO_MEMORY;
         }
     }
@@ -529,7 +529,7 @@ OCStackResult RTMAddEndpointEntry(uint16_t *endpointId, const CAEndpoint_t *dest
             && destAddr->port == entry->destIntfAddr.port)
         {
             *endpointId = entry->endpointId;
-            OC_LOG(ERROR, TAG, "Adding failed as Enpoint Entry Already present in Table");
+            OIC_LOG(ERROR, TAG, "Adding failed as Enpoint Entry Already present in Table");
             return OC_STACK_DUPLICATE_REQUEST;
         }
         u_linklist_get_next(&iterTable);
@@ -540,7 +540,7 @@ OCStackResult RTMAddEndpointEntry(uint16_t *endpointId, const CAEndpoint_t *dest
 
     if (NULL == hopEntry)
     {
-       OC_LOG(ERROR, TAG, "Malloc failed for hop entry");
+       OIC_LOG(ERROR, TAG, "Malloc failed for hop entry");
        return OC_STACK_ERROR;
     }
 
@@ -550,17 +550,17 @@ OCStackResult RTMAddEndpointEntry(uint16_t *endpointId, const CAEndpoint_t *dest
     OCStackResult ret = u_linklist_add(*endpointTable, (void *)hopEntry);
     if (OC_STACK_OK != ret)
     {
-       OC_LOG(ERROR, TAG, "Adding Enpoint Entry to Routing Table failed");
+       OIC_LOG(ERROR, TAG, "Adding Enpoint Entry to Routing Table failed");
        OICFree(hopEntry);
        return OC_STACK_ERROR;
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RTMAddObserver(uint32_t obsID, CAEndpoint_t devAddr, u_linklist_t **gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_WITH_RET(*gatewayTable, TAG, "*gatewayTable");
 
@@ -578,29 +578,29 @@ OCStackResult RTMAddObserver(uint32_t obsID, CAEndpoint_t devAddr, u_linklist_t 
                 && devAddr.port == destCheck->destIntfAddr.port)
             {
                 destCheck->observerId = obsID;
-                OC_LOG(DEBUG, TAG, "OUT");
+                OIC_LOG(DEBUG, TAG, "OUT");
                 return OC_STACK_OK;
             }
         }
         u_linklist_get_next(&iterTable);
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_ERROR;
 }
 
 bool RTMIsObserverPresent(CAEndpoint_t devAddr, OCObservationId *obsID,
                           const u_linklist_t *gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == obsID)
     {
-        OC_LOG(ERROR, TAG, "obsID is null");
+        OIC_LOG(ERROR, TAG, "obsID is null");
         return false;
     }
 
     if (NULL == gatewayTable)
     {
-        OC_LOG(ERROR, TAG, "gatewayTable is null");
+        OIC_LOG(ERROR, TAG, "gatewayTable is null");
         return false;
     }
 
@@ -611,7 +611,7 @@ bool RTMIsObserverPresent(CAEndpoint_t devAddr, OCObservationId *obsID,
         RTMGatewayEntry_t *entry = u_linklist_get_data(iterTable);
         if (NULL == entry || NULL == entry->destination)
         {
-            OC_LOG(ERROR, TAG, "entry is NULL");
+            OIC_LOG(ERROR, TAG, "entry is NULL");
             return false;
         }
         for (uint32_t i = 0; i < u_arraylist_length(entry->destination->destIntfAddr); i++)
@@ -623,20 +623,20 @@ bool RTMIsObserverPresent(CAEndpoint_t devAddr, OCObservationId *obsID,
                 && devAddr.port == destCheck->destIntfAddr.port && 0 != destCheck->observerId)
             {
                 *obsID = destCheck->observerId;
-                OC_LOG(DEBUG, TAG, "OUT");
+                OIC_LOG(DEBUG, TAG, "OUT");
                 return true;
             }
         }
         u_linklist_get_next(&iterTable);
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return false;
 }
 
 OCStackResult RTMRemoveGatewayEntry(uint32_t gatewayId, u_linklist_t **removedGatewayNodes,
                                     u_linklist_t **gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_WITH_RET(*gatewayTable, TAG, "*gatewayTable");
 
@@ -648,7 +648,7 @@ OCStackResult RTMRemoveGatewayEntry(uint32_t gatewayId, u_linklist_t **removedGa
         *removedGatewayNodes = u_linklist_create();
         if (NULL == *removedGatewayNodes)
         {
-            OC_LOG(ERROR, TAG, "u_linklist_create failed");
+            OIC_LOG(ERROR, TAG, "u_linklist_create failed");
             return OC_STACK_NO_MEMORY;
         }
     }
@@ -666,11 +666,11 @@ OCStackResult RTMRemoveGatewayEntry(uint32_t gatewayId, u_linklist_t **removedGa
         if (gatewayId == entry->destination->gatewayId || (NULL != entry->nextHop &&
             (gatewayId == entry->nextHop->gatewayId)))
         {
-            OC_LOG_V(DEBUG, TAG, "Removing the gateway entry: %u", entry->destination->gatewayId);
+            OIC_LOG_V(DEBUG, TAG, "Removing the gateway entry: %u", entry->destination->gatewayId);
             ret = u_linklist_remove(*gatewayTable, &iterTable);
             if (OC_STACK_OK != ret)
             {
-               OC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
+               OIC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
                return OC_STACK_ERROR;
             }
             else
@@ -683,7 +683,7 @@ OCStackResult RTMRemoveGatewayEntry(uint32_t gatewayId, u_linklist_t **removedGa
             u_linklist_get_next(&iterTable);
         }
     }
-    OC_LOG(DEBUG, TAG, "RTMRemoveGatewayEntry OUT");
+    OIC_LOG(DEBUG, TAG, "RTMRemoveGatewayEntry OUT");
     return OC_STACK_OK;
 }
 
@@ -691,7 +691,7 @@ OCStackResult RTMRemoveGatewayDestEntry(uint32_t gatewayId, uint32_t nextHop,
                                         const RTMDestIntfInfo_t *destInfAdr,
                                         RTMGatewayEntry_t **existEntry, u_linklist_t **gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_WITH_RET(*gatewayTable, TAG, "*gatewayTable");
     RM_NULL_CHECK_WITH_RET(destInfAdr, TAG, "destInfAdr");
@@ -732,13 +732,13 @@ OCStackResult RTMRemoveGatewayDestEntry(uint32_t gatewayId, uint32_t nextHop,
         // Remove node with given gatewayid and nextHop if not found update exist entry.
         if (NULL != entry->destination && (gatewayId == entry->destination->gatewayId))
         {
-            OC_LOG_V(INFO, TAG, "Remove the gateway ID: %u", entry->destination->gatewayId);
+            OIC_LOG_V(INFO, TAG, "Remove the gateway ID: %u", entry->destination->gatewayId);
             if (NULL != entry->nextHop && nextHop == entry->nextHop->gatewayId)
             {
                 ret = u_linklist_remove(*gatewayTable, &iterTable);
                 if (OC_STACK_OK != ret)
                 {
-                   OC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
+                   OIC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
                    return OC_STACK_ERROR;
                 }
                 OICFree(entry);
@@ -746,19 +746,19 @@ OCStackResult RTMRemoveGatewayDestEntry(uint32_t gatewayId, uint32_t nextHop,
             }
 
             *existEntry = entry;
-            OC_LOG(DEBUG, TAG, "OUT");
+            OIC_LOG(DEBUG, TAG, "OUT");
             return OC_STACK_ERROR;
         }
 
         u_linklist_get_next(&iterTable);
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_ERROR;
 }
 
 OCStackResult RTMRemoveEndpointEntry(uint16_t endpointId, u_linklist_t **endpointTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(endpointTable, TAG, "endpointTable");
     RM_NULL_CHECK_WITH_RET(*endpointTable, TAG, "*endpointTable");
 
@@ -772,7 +772,7 @@ OCStackResult RTMRemoveEndpointEntry(uint16_t endpointId, u_linklist_t **endpoin
             OCStackResult ret = u_linklist_remove(*endpointTable, &iterTable);
             if (OC_STACK_OK != ret)
             {
-               OC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
+               OIC_LOG(ERROR, TAG, "Deleting Entry from Routing Table failed");
                return OC_STACK_ERROR;
             }
             OICFree(entry);
@@ -782,52 +782,52 @@ OCStackResult RTMRemoveEndpointEntry(uint16_t endpointId, u_linklist_t **endpoin
             u_linklist_get_next(&iterTable);
         }
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RTMRemoveGateways(u_linklist_t **gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
     if (NULL == gatewayTable || NULL == *gatewayTable)
     {
-        OC_LOG(DEBUG, TAG, "OUT");
+        OIC_LOG(DEBUG, TAG, "OUT");
         return OC_STACK_OK;
     }
 
     OCStackResult ret = RTMFreeGatewayRouteTable(gatewayTable);
     if (OC_STACK_OK != ret)
     {
-        OC_LOG(ERROR, TAG, "Removing Gateways failed");
+        OIC_LOG(ERROR, TAG, "Removing Gateways failed");
         return ret;
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RTMRemoveEndpoints(u_linklist_t **endpointTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == endpointTable || NULL == *endpointTable)
     {
-        OC_LOG(DEBUG, TAG, "OUT");
+        OIC_LOG(DEBUG, TAG, "OUT");
         return OC_STACK_OK;
     }
 
     OCStackResult ret = RTMFreeEndpointRouteTable(endpointTable);
     if (OC_STACK_OK != ret)
     {
-        OC_LOG(ERROR, TAG, "Freeing Endpoints failed");
+        OIC_LOG(ERROR, TAG, "Freeing Endpoints failed");
         return OC_STACK_ERROR;
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 void RTMFreeGateway(RTMGatewayId_t *gateway, u_linklist_t **gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_VOID(gateway, TAG, "gateway");
     RM_NULL_CHECK_VOID(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_VOID(*gatewayTable, TAG, "*gatewayTable");
@@ -838,19 +838,19 @@ void RTMFreeGateway(RTMGatewayId_t *gateway, u_linklist_t **gatewayTable)
     }
     u_arraylist_free(&(gateway->destIntfAddr));
     OICFree(gateway);
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 void RTMGetNeighbours(u_linklist_t **neighbourNodes, const u_linklist_t *gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_VOID(neighbourNodes, TAG, "neighbourNodes");
     RM_NULL_CHECK_VOID(gatewayTable, TAG, "gatewayTable");
 
     *neighbourNodes = u_linklist_create();
     if (NULL == *neighbourNodes)
     {
-        OC_LOG(ERROR, TAG, "u_linklist_create failed");
+        OIC_LOG(ERROR, TAG, "u_linklist_create failed");
         return;
     }
     u_linklist_iterator_t *iterTable = NULL;
@@ -864,27 +864,27 @@ void RTMGetNeighbours(u_linklist_t **neighbourNodes, const u_linklist_t *gateway
         }
         else if (NULL != entry && 1 < entry->routeCost)
         {
-            OC_LOG(DEBUG, TAG, "OUT");
+            OIC_LOG(DEBUG, TAG, "OUT");
             return;
         }
 
         u_linklist_get_next(&iterTable);
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 RTMGatewayId_t *RTMGetNextHop(uint32_t gatewayId, const u_linklist_t *gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     if (0 == gatewayId)
     {
-        OC_LOG(ERROR, TAG, "gatewayId is invalid");
+        OIC_LOG(ERROR, TAG, "gatewayId is invalid");
         return NULL;
     }
 
     if (NULL == gatewayTable)
     {
-        OC_LOG(ERROR, TAG, "gatewayTable is null");
+        OIC_LOG(ERROR, TAG, "gatewayTable is null");
         return NULL;
     }
 
@@ -897,24 +897,24 @@ RTMGatewayId_t *RTMGetNextHop(uint32_t gatewayId, const u_linklist_t *gatewayTab
         {
             if (1 == entry->routeCost)
             {
-                OC_LOG(DEBUG, TAG, "OUT");
+                OIC_LOG(DEBUG, TAG, "OUT");
                 return entry->destination;
             }
-            OC_LOG(DEBUG, TAG, "OUT");
+            OIC_LOG(DEBUG, TAG, "OUT");
             return entry->nextHop;
         }
         u_linklist_get_next(&iterTable);
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return NULL;
 }
 
 CAEndpoint_t *RTMGetEndpointEntry(uint16_t endpointId, const u_linklist_t *endpointTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == endpointTable)
     {
-        OC_LOG(ERROR, TAG, "endpointTable is null");
+        OIC_LOG(ERROR, TAG, "endpointTable is null");
         return NULL;
     }
 
@@ -926,26 +926,26 @@ CAEndpoint_t *RTMGetEndpointEntry(uint16_t endpointId, const u_linklist_t *endpo
         RTMEndpointEntry_t *entry = u_linklist_get_data(iterTable);
         if (NULL != entry && (endpointId == entry->endpointId))
         {
-            OC_LOG(DEBUG, TAG, "OUT");
+            OIC_LOG(DEBUG, TAG, "OUT");
             return &(entry->destIntfAddr);
         }
         u_linklist_get_next(&iterTable);
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return NULL;
 }
 
 void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
                         const u_linklist_t *gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_VOID(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_VOID(obsList, TAG, "obsList");
 
     *obsList = (OCObservationId *) OICCalloc(MAX_OBSERVER_LIST_LENGTH, sizeof(OCObservationId));
     if (!(*obsList))
     {
-        OC_LOG(ERROR, TAG, "out of memory");
+        OIC_LOG(ERROR, TAG, "out of memory");
         return;
     }
 
@@ -960,12 +960,12 @@ void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
             RTMDestIntfInfo_t *destCheck = u_arraylist_get(entry->destination->destIntfAddr, 0);
             if (NULL == destCheck)
             {
-                OC_LOG(ERROR, TAG, "destCheck is null");
+                OIC_LOG(ERROR, TAG, "destCheck is null");
                 return;
             }
             if (0 != destCheck->observerId)
             {
-                OC_LOG_V(DEBUG, TAG, "Observer ID is %d", destCheck->observerId);
+                OIC_LOG_V(DEBUG, TAG, "Observer ID is %d", destCheck->observerId);
                 *(*obsList + len) = destCheck->observerId;
                 len++;
             }
@@ -979,13 +979,13 @@ void RTMGetObserverList(OCObservationId **obsList, uint8_t *obsListLen,
     }
 
     *obsListLen = len;
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 OCStackResult RTMUpdateDestinationIntfAdr(uint32_t gatewayId, RTMDestIntfInfo_t destInterfaces,
                                           bool addAdr, u_linklist_t **gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_WITH_RET(*gatewayTable, TAG, "*gatewayTable");
 
@@ -1005,7 +1005,7 @@ OCStackResult RTMUpdateDestinationIntfAdr(uint32_t gatewayId, RTMDestIntfInfo_t 
                         u_arraylist_get(entry->destination->destIntfAddr, i);
                     if (NULL == destCheck)
                     {
-                        OC_LOG(ERROR, TAG, "Destination adr get failed");
+                        OIC_LOG(ERROR, TAG, "Destination adr get failed");
                         continue;
                     }
 
@@ -1015,7 +1015,7 @@ OCStackResult RTMUpdateDestinationIntfAdr(uint32_t gatewayId, RTMDestIntfInfo_t 
                     {
                         destCheck->timeElapsed = RTMGetCurrentTime();
                         destCheck->isValid = true;
-                        OC_LOG(ERROR, TAG, "destInterfaces already present");
+                        OIC_LOG(ERROR, TAG, "destInterfaces already present");
                         return OC_STACK_ERROR;
                     }
                 }
@@ -1024,7 +1024,7 @@ OCStackResult RTMUpdateDestinationIntfAdr(uint32_t gatewayId, RTMDestIntfInfo_t 
                         (RTMDestIntfInfo_t *) OICCalloc(1, sizeof(RTMDestIntfInfo_t));
                 if (NULL == destAdr)
                 {
-                    OC_LOG(ERROR, TAG, "Calloc destAdr failed");
+                    OIC_LOG(ERROR, TAG, "Calloc destAdr failed");
                     return OC_STACK_ERROR;
                 }
                 *destAdr = destInterfaces;
@@ -1034,11 +1034,11 @@ OCStackResult RTMUpdateDestinationIntfAdr(uint32_t gatewayId, RTMDestIntfInfo_t 
                     u_arraylist_add(entry->destination->destIntfAddr, (void *)destAdr);
                 if (!result)
                 {
-                    OC_LOG(ERROR, TAG, "Updating Destinterface address failed");
+                    OIC_LOG(ERROR, TAG, "Updating Destinterface address failed");
                     OICFree(destAdr);
                     return OC_STACK_ERROR;
                 }
-                OC_LOG(DEBUG, TAG, "OUT");
+                OIC_LOG(DEBUG, TAG, "OUT");
                 return OC_STACK_DUPLICATE_REQUEST;
             }
 
@@ -1063,14 +1063,14 @@ OCStackResult RTMUpdateDestinationIntfAdr(uint32_t gatewayId, RTMDestIntfInfo_t 
         }
         u_linklist_get_next(&iterTable);
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RTMUpdateMcastSeqNumber(uint32_t gatewayId, uint16_t seqNum,
                                       u_linklist_t **gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_WITH_RET(*gatewayTable, TAG, "*gatewayTable");
 
@@ -1098,7 +1098,7 @@ OCStackResult RTMUpdateMcastSeqNumber(uint32_t gatewayId, uint16_t seqNum,
         }
         u_linklist_get_next(&iterTable);
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
@@ -1130,7 +1130,7 @@ uint64_t RTMGetCurrentTime()
 
 OCStackResult RTMUpdateDestAddrValidity(u_linklist_t **invalidTable, u_linklist_t **gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(invalidTable, TAG, "invalidTable");
     RM_NULL_CHECK_WITH_RET(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_WITH_RET(*gatewayTable, TAG, "*gatewayTable");
@@ -1138,7 +1138,7 @@ OCStackResult RTMUpdateDestAddrValidity(u_linklist_t **invalidTable, u_linklist_
     *invalidTable = u_linklist_create();
     if (NULL == *invalidTable)
     {
-        OC_LOG(ERROR, TAG, "u_linklist_create failed");
+        OIC_LOG(ERROR, TAG, "u_linklist_create failed");
         return OC_STACK_NO_MEMORY;
     }
 
@@ -1176,13 +1176,13 @@ OCStackResult RTMUpdateDestAddrValidity(u_linklist_t **invalidTable, u_linklist_
         }
         u_linklist_get_next(&iterTable);
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RTMRemoveInvalidGateways(u_linklist_t **invalidTable, u_linklist_t **gatewayTable)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(invalidTable, TAG, "invalidTable");
     RM_NULL_CHECK_WITH_RET(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_WITH_RET(*gatewayTable, TAG, "*gatewayTable");
@@ -1190,7 +1190,7 @@ OCStackResult RTMRemoveInvalidGateways(u_linklist_t **invalidTable, u_linklist_t
     *invalidTable = u_linklist_create();
     if (NULL == *invalidTable)
     {
-        OC_LOG(ERROR, TAG, "u_linklist_create failed");
+        OIC_LOG(ERROR, TAG, "u_linklist_create failed");
         return OC_STACK_NO_MEMORY;
     }
 
@@ -1225,7 +1225,7 @@ OCStackResult RTMRemoveInvalidGateways(u_linklist_t **invalidTable, u_linklist_t
                     RTMRemoveGatewayEntry(entry->destination->gatewayId, invalidTable, gatewayTable);
                 if (OC_STACK_OK != res)
                 {
-                    OC_LOG(ERROR, TAG, "Removing Entries failed");
+                    OIC_LOG(ERROR, TAG, "Removing Entries failed");
                     return OC_STACK_ERROR;
                 }
                 u_linklist_get_next(&iterTable);
@@ -1244,7 +1244,7 @@ OCStackResult RTMRemoveInvalidGateways(u_linklist_t **invalidTable, u_linklist_t
             u_linklist_get_next(&iterTable);
         }
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
@@ -1252,7 +1252,7 @@ OCStackResult RTMUpdateEntryParameters(uint32_t gatewayId, uint32_t seqNum,
                                        const RTMDestIntfInfo_t *destAdr, u_linklist_t **gatewayTable,
                                        bool forceUpdate)
 {
-    OC_LOG(DEBUG, TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
     RM_NULL_CHECK_WITH_RET(gatewayTable, TAG, "gatewayTable");
     RM_NULL_CHECK_WITH_RET(*gatewayTable, TAG, "*gatewayTable");
     RM_NULL_CHECK_WITH_RET(destAdr, TAG, "destAdr");
@@ -1295,20 +1295,20 @@ OCStackResult RTMUpdateEntryParameters(uint32_t gatewayId, uint32_t seqNum,
             else
             {
                 entry->seqNum = seqNum;
-                OC_LOG(DEBUG, TAG, "OUT");
+                OIC_LOG(DEBUG, TAG, "OUT");
                 return OC_STACK_OK;
             }
         }
         u_linklist_get_next(&iterTable);
     }
-    OC_LOG(DEBUG, TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
     return OC_STACK_OK;
 }
 
 void RTMPrintTable(const u_linklist_t *gatewayTable, const u_linklist_t *endpointTable)
 {
     RM_NULL_CHECK_VOID(gatewayTable, TAG, "gatewayTable");
-    OC_LOG(DEBUG, RM_TAG, "=================Gateway List table============================\n");
+    OIC_LOG(DEBUG, RM_TAG, "=================Gateway List table============================\n");
     u_linklist_iterator_t *iterTable = NULL;
     u_linklist_init_iterator(gatewayTable, &iterTable);
     while (NULL != iterTable)
@@ -1317,20 +1317,20 @@ void RTMPrintTable(const u_linklist_t *gatewayTable, const u_linklist_t *endpoin
             (RTMGatewayEntry_t *) u_linklist_get_data(iterTable);
         if (NULL == hop)
         {
-            OC_LOG(ERROR, RM_TAG, "Printing Table Failed");
+            OIC_LOG(ERROR, RM_TAG, "Printing Table Failed");
             return;
         }
         if (NULL == hop->nextHop || 0 == hop->nextHop->gatewayId)
         {
-            OC_LOG_V(DEBUG, RM_TAG, "\nDestination : %u\nNextHop : (null)\nHopCount : %d",
+            OIC_LOG_V(DEBUG, RM_TAG, "\nDestination : %u\nNextHop : (null)\nHopCount : %d",
                      hop->destination->gatewayId, hop->routeCost);
-            OC_LOG_V(DEBUG, RM_TAG, "\nSequence Number :%u", hop->seqNum);
+            OIC_LOG_V(DEBUG, RM_TAG, "\nSequence Number :%u", hop->seqNum);
         }
         else
         {
-            OC_LOG_V(DEBUG, RM_TAG, "\nDestination : %u\nNextHop : %u\nHopCount : %d",
+            OIC_LOG_V(DEBUG, RM_TAG, "\nDestination : %u\nNextHop : %u\nHopCount : %d",
                      hop->destination->gatewayId, hop->nextHop->gatewayId, hop->routeCost);
-            OC_LOG_V(DEBUG, RM_TAG, "\nSequence Number :%u", hop->seqNum);
+            OIC_LOG_V(DEBUG, RM_TAG, "\nSequence Number :%u", hop->seqNum);
         }
         if (1 == hop->routeCost && NULL != hop->destination &&
             hop->destination->destIntfAddr != NULL)
@@ -1340,17 +1340,17 @@ void RTMPrintTable(const u_linklist_t *gatewayTable, const u_linklist_t *endpoin
                 RTMDestIntfInfo_t *dest = u_arraylist_get(hop->destination->destIntfAddr, i);
                 if (NULL != dest)
                 {
-                    OC_LOG_V(DEBUG, RM_TAG, "\nDestination interface addresses: %s Port : %d Obs ID: %d",
+                    OIC_LOG_V(DEBUG, RM_TAG, "\nDestination interface addresses: %s Port : %d Obs ID: %d",
                              dest->destIntfAddr.addr, dest->destIntfAddr.port, dest->observerId);
-                    OC_LOG_V(DEBUG, RM_TAG, "Validity: %d", dest->isValid);
+                    OIC_LOG_V(DEBUG, RM_TAG, "Validity: %d", dest->isValid);
                 }
             }
         }
-        OC_LOG(DEBUG, RM_TAG, "********************************************\n");
+        OIC_LOG(DEBUG, RM_TAG, "********************************************\n");
         u_linklist_get_next(&iterTable);
     }
 
-    OC_LOG(DEBUG, RM_TAG, "=================Endpoint List table============================\n");
+    OIC_LOG(DEBUG, RM_TAG, "=================Endpoint List table============================\n");
     u_linklist_iterator_t *iterEndpointTable = NULL;
     u_linklist_init_iterator(endpointTable, &iterEndpointTable);
 
@@ -1361,13 +1361,13 @@ void RTMPrintTable(const u_linklist_t *gatewayTable, const u_linklist_t *endpoin
             (RTMEndpointEntry_t *) u_linklist_get_data(iterEndpointTable);
         if (NULL == hop)
         {
-            OC_LOG(ERROR, RM_TAG, "Printing Table Failed");
+            OIC_LOG(ERROR, RM_TAG, "Printing Table Failed");
             return;
         }
-        OC_LOG_V(DEBUG, RM_TAG, "EndpointId : %u\naddr : %s Port : %d",
+        OIC_LOG_V(DEBUG, RM_TAG, "EndpointId : %u\naddr : %s Port : %d",
                   hop->endpointId, hop->destIntfAddr.addr, hop->destIntfAddr.port);
 
-        OC_LOG(DEBUG, RM_TAG, "********************************************\n");
+        OIC_LOG(DEBUG, RM_TAG, "********************************************\n");
         u_linklist_get_next(&iterEndpointTable);
     }
 }

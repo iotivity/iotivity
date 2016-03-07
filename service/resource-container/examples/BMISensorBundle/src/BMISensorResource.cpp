@@ -32,12 +32,12 @@ BMISensorResource::~BMISensorResource()
 }
 
 void BMISensorResource::handleSetAttributesRequest(
-    RCSResourceAttributes &value)
+    const RCSResourceAttributes &value)
 {
     BundleResource::setAttributes(value);
 }
 
-RCSResourceAttributes &BMISensorResource::handleGetAttributesRequest()
+RCSResourceAttributes BMISensorResource::handleGetAttributesRequest()
 {
     return BundleResource::getAttributes();
 }
@@ -47,7 +47,7 @@ void BMISensorResource::executeLogic()
     std::string strBMIResult;
 
     if (m_pBMISensor->executeBMISensorLogic(&m_mapInputData, &strBMIResult) != -1)
-        setAttribute("BMIresult", RCSResourceAttributes::Value(strBMIResult.c_str()));
+        setAttribute("BMIresult", RCSResourceAttributes::Value(strBMIResult.c_str())), true;
 }
 
 void BMISensorResource::onUpdatedInputResource(const std::string attributeName,

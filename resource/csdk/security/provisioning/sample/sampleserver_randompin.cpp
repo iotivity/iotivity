@@ -133,7 +133,7 @@ OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
     OCRepPayload* payload = OCRepPayloadCreate();
     if(!payload)
     {
-        OC_LOG(ERROR, TAG, "Failed to allocate Payload");
+        OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
         return NULL;
     }
 
@@ -149,7 +149,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
 {
     if(ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, TAG, "Incoming payload not a representation");
+        OIC_LOG(ERROR, TAG, "Incoming payload not a representation");
         return NULL;
     }
 
@@ -259,7 +259,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
 
             if (0 == createLEDResource (newLedUri, &gLedInstance[gCurrLedInstance], false, 0))
             {
-                OC_LOG (INFO, TAG, "Created new LED instance");
+                OIC_LOG (INFO, TAG, "Created new LED instance");
                 gLedInstance[gCurrLedInstance].state = 0;
                 gLedInstance[gCurrLedInstance].power = 0;
                 gCurrLedInstance++;
@@ -298,7 +298,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
     }
     else
     {
-        OC_LOG_V (INFO, TAG, "Payload was NULL");
+        OIC_LOG_V (INFO, TAG, "Payload was NULL");
         ehResult = OC_EH_ERROR;
     }
 
@@ -310,7 +310,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest,
         void* callbackParam)
 {
-    OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
+    OIC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
     (void)callbackParam;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
 
@@ -320,7 +320,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     // Validate pointer
     if (!entityHandlerRequest)
     {
-        OC_LOG (ERROR, TAG, "Invalid request pointer");
+        OIC_LOG (ERROR, TAG, "Invalid request pointer");
         return OC_EH_ERROR;
     }
 
@@ -328,27 +328,27 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         if (entityHandlerRequest)
         {
             if (OC_REST_GET == entityHandlerRequest->method)
             {
-                OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
+                OIC_LOG (INFO, TAG, "Received OC_REST_GET from client");
                 ehResult = ProcessGetRequest (entityHandlerRequest, &payload);
             }
             else if (OC_REST_PUT == entityHandlerRequest->method)
             {
-                OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
+                OIC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
                 ehResult = ProcessPutRequest (entityHandlerRequest, &payload);
             }
             else if (OC_REST_POST == entityHandlerRequest->method)
             {
-                OC_LOG (INFO, TAG, "Received OC_REST_POST from client");
+                OIC_LOG (INFO, TAG, "Received OC_REST_POST from client");
                 ehResult = ProcessPostRequest (entityHandlerRequest, &response, &payload);
             }
             else
             {
-                OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+                OIC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                         entityHandlerRequest->method);
                 ehResult = OC_EH_ERROR;
             }
@@ -370,7 +370,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                 // Send the response
                 if (OCDoResponse(&response) != OC_STACK_OK)
                 {
-                    OC_LOG(ERROR, TAG, "Error sending response");
+                    OIC_LOG(ERROR, TAG, "Error sending response");
                     ehResult = OC_EH_ERROR;
                 }
             }
@@ -400,20 +400,20 @@ void GeneratePinCB(char* pin, size_t pinSize)
 {
     if(NULL == pin || pinSize <= 0)
     {
-        OC_LOG(INFO, TAG, "Invalid PIN");
+        OIC_LOG(INFO, TAG, "Invalid PIN");
         return;
     }
 
-    OC_LOG(INFO, TAG, "============================");
-    OC_LOG_V(INFO, TAG, "    PIN CODE : %s", pin);
-    OC_LOG(INFO, TAG, "============================");
+    OIC_LOG(INFO, TAG, "============================");
+    OIC_LOG_V(INFO, TAG, "    PIN CODE : %s", pin);
+    OIC_LOG(INFO, TAG, "============================");
 }
 
 int main()
 {
     struct timespec timeout;
 
-    OC_LOG(DEBUG, TAG, "OCServer is starting...");
+    OIC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     // Initialize Persistent Storage for SVR database
     OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
@@ -421,7 +421,7 @@ int main()
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 
@@ -440,23 +440,23 @@ int main()
     timeout.tv_nsec = 100000000L;
 
     // Break from loop with Ctrl-C
-    OC_LOG(INFO, TAG, "Entering ocserver main loop...");
+    OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
     signal(SIGINT, handleSigInt);
     while (!gQuitFlag)
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
         nanosleep(&timeout, NULL);
     }
 
-    OC_LOG(INFO, TAG, "Exiting ocserver main loop...");
+    OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 
     if (OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack process error");
+        OIC_LOG(ERROR, TAG, "OCStack process error");
     }
 
     return 0;
@@ -466,7 +466,7 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
 {
     if (!uri)
     {
-        OC_LOG(ERROR, TAG, "Resource URI cannot be NULL");
+        OIC_LOG(ERROR, TAG, "Resource URI cannot be NULL");
         return -1;
     }
 
@@ -479,7 +479,7 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
             OCEntityHandlerCb,
             NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE | OC_SECURE);
-    OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
 
     return 0;
 }

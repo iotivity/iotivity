@@ -93,7 +93,7 @@ char *BinToCrlJSON(const OicSecCrl_t *crl)
 
     //ThisUpdate -- Mandatory
     outLen = 0;
-    base64CRLLen = B64ENCODE_OUT_SAFESIZE(crl->ThisUpdate.len);
+    base64CRLLen = (uint32_t)B64ENCODE_OUT_SAFESIZE(crl->ThisUpdate.len);
     base64Buff = OICMalloc(base64CRLLen);
     b64Ret = b64Encode(crl->ThisUpdate.data, crl->ThisUpdate.len, base64Buff,
              base64CRLLen, &outLen);
@@ -103,7 +103,7 @@ char *BinToCrlJSON(const OicSecCrl_t *crl)
 
     //CRLData -- Mandatory
     outLen = 0;
-    base64CRLLen = B64ENCODE_OUT_SAFESIZE(crl->CrlData.len);
+    base64CRLLen = (uint32_t)B64ENCODE_OUT_SAFESIZE(crl->CrlData.len);
     base64Buff = OICMalloc(base64CRLLen);
     b64Ret = b64Encode(crl->CrlData.data, crl->CrlData.len, base64Buff,
              base64CRLLen, &outLen);
@@ -186,7 +186,7 @@ OicSecCrl_t *JSONToCrlBin(const char * jsonStr)
     else // PUT/POST JSON will not have ThisUpdate so set it to the gCRList->ThisUpdate
     {
         VERIFY_NON_NULL(TAG, gCrl, ERROR);
-        outLen = gCrl->ThisUpdate.len;
+        outLen = (uint32_t)gCrl->ThisUpdate.len;
         crl->ThisUpdate.data = OICMalloc(outLen + 1);
         memcpy(crl->ThisUpdate.data, gCrl->ThisUpdate.data, outLen);
         crl->ThisUpdate.len = outLen;
@@ -220,7 +220,7 @@ OicSecCrl_t *JSONToCrlBin(const char * jsonStr)
     else // PUT/POST JSON will not have CRLData so set it to the gCRList->CRLData
     {
         VERIFY_NON_NULL(TAG, gCrl, ERROR);
-        outLen = gCrl->CrlData.len;
+        outLen = (uint32_t)gCrl->CrlData.len;
         crl->CrlData.data = OICMalloc(outLen + 1);
         memcpy(crl->CrlData.data, gCrl->CrlData.data, outLen);
         crl->CrlData.len = outLen;
@@ -272,16 +272,13 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
 
     if (jsonCRL)
     {
-        OC_LOG(INFO, TAG, "UpdateSVRDB...");
-        OC_LOG_V(INFO, TAG, "crl: \"%s\"", jsonCRL);
+        OIC_LOG(INFO, TAG, "UpdateSVRDB...");
+        OIC_LOG_V(INFO, TAG, "crl: \"%s\"", jsonCRL);
 
         cJSON *jsonObj = cJSON_Parse(jsonCRL);
         OicSecCrl_t *crl = NULL;
         crl = JSONToCrlBin(jsonCRL);
-        if (!crl)
-        {
-            OC_LOG(ERROR, TAG, "Error JSONToCrlBin");
-        }
+        VERIFY_NON_NULL(TAG, crl, ERROR);
 
         gCrl->CrlId = crl->CrlId;
 
@@ -299,19 +296,20 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
 
         if (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_CRL_NAME, jsonObj))
         {
-            OC_LOG(INFO, TAG, "UpdateSVRDB == OK");
+            OIC_LOG(INFO, TAG, "UpdateSVRDB == OK");
             ehRet = OC_EH_RESOURCE_CREATED;
         }
 
         DeleteCrlBinData(crl);
-        cJSON_Delete(jsonObj);
 
+        exit:
+        cJSON_Delete(jsonObj);
     }
 
     // Send payload to request originator
     SendSRMResponse(ehRequest, ehRet, NULL);
 
-    OC_LOG_V(INFO, TAG, "%s RetVal %d", __func__, ehRet);
+    OIC_LOG_V(INFO, TAG, "%s RetVal %d", __func__, ehRet);
     return ehRet;
 }
 
@@ -332,16 +330,16 @@ OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
         return ehRet;
     }
 
-    OC_LOG(INFO, TAG, "Handle CRL resource");
+    OIC_LOG(INFO, TAG, "Handle CRL resource");
 
     if (flag & OC_REQUEST_FLAG)
     {
         // TODO :  Handle PUT and DEL methods
-        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
-                OC_LOG (INFO, TAG, "Not implemented request method.");
+                OIC_LOG (INFO, TAG, "Not implemented request method.");
                 //ehRet = HandleCRLGetRequest(ehRequest);
                 break;
 
@@ -374,7 +372,7 @@ OCStackResult CreateCRLResource()
 
     if (OC_STACK_OK != ret)
     {
-        OC_LOG(FATAL, TAG, "Unable to instantiate CRL resource");
+        OIC_LOG(FATAL, TAG, "Unable to instantiate CRL resource");
         DeInitCRLResource();
     }
     return ret;

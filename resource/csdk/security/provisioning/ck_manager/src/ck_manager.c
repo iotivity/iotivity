@@ -339,7 +339,7 @@ PKIError SetSerialNumber (const long serNum)
 
     CHECK_LESS_EQUAL(0, serNum, ISSUER_WRONG_SERIAL_NUMBER);
     CHECK_CALL(InitCKMInfo);
-    CHECK_CALL(SetNextSerialNumber, &serNum);
+    CHECK_CALL(SetNextSerialNumber, serNum);
     CHECK_CALL(SaveCKMInfo);
 
     FUNCTION_CLEAR();
@@ -643,9 +643,9 @@ PKIError CKMRevocateCertificate (const uint8_t *uint8ThisUpdateTime, const long 
     CHECK_CALL(InitCKMInfo);
     CHECK_CALL(GetCRLSerialNumber, &serialNumber);
     serialNumber++;
-    CHECK_CALL(SetCRLSerialNumber, &serialNumber);
+    CHECK_CALL(SetCRLSerialNumber, serialNumber);
     numberOfRevoked++;
-    CHECK_CALL(SetNumberOfRevoked, &numberOfRevoked);
+    CHECK_CALL(SetNumberOfRevoked, numberOfRevoked);
     CHECK_CALL(SetCertificateRevocationList, encodedCRL);
     CHECK_CALL(SaveCKMInfo);
 

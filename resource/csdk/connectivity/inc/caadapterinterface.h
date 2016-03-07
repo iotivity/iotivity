@@ -169,14 +169,15 @@ typedef struct
     /** Terminate function address stored in this pointer. **/
     CAAdapterTerminate terminate;
 
+    /** Type of transport adapter. **/
+    CATransportAdapter_t cType;
 } CAConnectivityHandler_t;
 
 /**
  * This will be used during the registration of adapters call backs to the common logic.
- * @see ::CAConnectivityHandler_t , ::CATransportAdapter_t
+ * @see ::CAConnectivityHandler_t
  */
-typedef void (*CARegisterConnectivityCallback)(CAConnectivityHandler_t handler,
-        CATransportAdapter_t cType);
+typedef void (*CARegisterConnectivityCallback)(CAConnectivityHandler_t handler);
 
 /**
  * This will be used during the receive of network requests and response.

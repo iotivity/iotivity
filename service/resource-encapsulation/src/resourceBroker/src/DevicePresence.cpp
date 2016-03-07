@@ -41,28 +41,34 @@ namespace OIC
         {
             if(presenceSubscriber.isSubscribing())
             {
-                OC_LOG_V(DEBUG,BROKER_TAG,"unsubscribed presence.");
-                presenceSubscriber.unsubscribe();
+                OIC_LOG_V(DEBUG,BROKER_TAG,"unsubscribed presence.");
+                try
+                {
+                    presenceSubscriber.unsubscribe();
+                } catch (std::exception & e)
+                {
+                    OIC_LOG_V(DEBUG,BROKER_TAG,"unsubscribed presence : %s", e.what());
+                }
             }
             resourcePresenceList.clear();
-            OC_LOG_V(DEBUG,BROKER_TAG,"destroy Timer.");
+            OIC_LOG_V(DEBUG,BROKER_TAG,"destroy Timer.");
         }
 
         void DevicePresence::initializeDevicePresence(PrimitiveResourcePtr pResource)
         {
-            OC_LOG_V(DEBUG, BROKER_TAG, "initializeDevicePresence()");
+            OIC_LOG_V(DEBUG, BROKER_TAG, "initializeDevicePresence()");
             address = pResource->getHost();
 
-            OC_LOG_V(DEBUG, BROKER_TAG, "%s",address.c_str());
+            OIC_LOG_V(DEBUG, BROKER_TAG, "%s",address.c_str());
 
             try
             {
-                OC_LOG_V(DEBUG, BROKER_TAG, "subscribe Presence");
+                OIC_LOG_V(DEBUG, BROKER_TAG, "subscribe Presence");
                 presenceSubscriber
                 = PresenceSubscriber(address, BROKER_TRANSPORT, pSubscribeRequestCB);
             } catch(RCSPlatformException &e)
             {
-                OC_LOG_V(DEBUG, BROKER_TAG,
+                OIC_LOG_V(DEBUG, BROKER_TAG,
                         "exception in subscribe Presence %s", e.getReason().c_str());
                 throw;
             }
@@ -82,25 +88,25 @@ namespace OIC
 
         const std::string DevicePresence::getAddress() const
         {
-            OC_LOG_V(DEBUG, BROKER_TAG, "getAddress()");
+            OIC_LOG_V(DEBUG, BROKER_TAG, "getAddress()");
             return address;
         }
 
         void DevicePresence::addPresenceResource(ResourcePresence * rPresence)
         {
-            OC_LOG_V(DEBUG, BROKER_TAG, "addPresenceResource()");
+            OIC_LOG_V(DEBUG, BROKER_TAG, "addPresenceResource()");
             resourcePresenceList.push_back(rPresence);
         }
 
         void DevicePresence::removePresenceResource(ResourcePresence * rPresence)
         {
-            OC_LOG_V(DEBUG, BROKER_TAG, "removePresenceResource()");
+            OIC_LOG_V(DEBUG, BROKER_TAG, "removePresenceResource()");
             resourcePresenceList.remove(rPresence);
         }
 
         void DevicePresence::changeAllPresenceMode(BROKER_MODE mode)
         {
-            OC_LOG_V(DEBUG, BROKER_TAG, "changeAllPresenceMode()");
+            OIC_LOG_V(DEBUG, BROKER_TAG, "changeAllPresenceMode()");
             if(!resourcePresenceList.empty())
             {
                 for(auto it : resourcePresenceList)
@@ -112,16 +118,16 @@ namespace OIC
 
         bool DevicePresence::isEmptyResourcePresence() const
         {
-            OC_LOG_V(DEBUG, BROKER_TAG, "isEmptyResourcePresence()");
+            OIC_LOG_V(DEBUG, BROKER_TAG, "isEmptyResourcePresence()");
             return resourcePresenceList.empty();
         }
 
         void DevicePresence::subscribeCB(OCStackResult ret,
                 const unsigned int seq, const std::string & hostAddress)
         {
-            OC_LOG_V(DEBUG, BROKER_TAG, "subscribeCB()");
-            OC_LOG_V(DEBUG, BROKER_TAG, "Received presence CB from: %s",hostAddress.c_str());
-            OC_LOG_V(DEBUG, BROKER_TAG, "In subscribeCB: %d",ret);
+            OIC_LOG_V(DEBUG, BROKER_TAG, "subscribeCB()");
+            OIC_LOG_V(DEBUG, BROKER_TAG, "Received presence CB from: %s",hostAddress.c_str());
+            OIC_LOG_V(DEBUG, BROKER_TAG, "In subscribeCB: %d",ret);
 
             if(isRunningTimeOut)
             {
@@ -136,9 +142,9 @@ namespace OIC
                 case OC_STACK_RESOURCE_CREATED:
                 case OC_STACK_CONTINUE:
                 {
-                    OC_LOG_V(DEBUG, BROKER_TAG, "SEQ# %d",seq);
+                    OIC_LOG_V(DEBUG, BROKER_TAG, "SEQ# %d",seq);
                     setDeviceState(DEVICE_STATE::ALIVE);
-                    OC_LOG_V(DEBUG, BROKER_TAG, "device state : %d",
+                    OIC_LOG_V(DEBUG, BROKER_TAG, "device state : %d",
                             (int)getDeviceState());
                     changeAllPresenceMode(BROKER_MODE::DEVICE_PRESENCE_MODE);
                     presenceTimerHandle
@@ -159,7 +165,7 @@ namespace OIC
                 }
                 default:
                 {
-                    OC_LOG_V(DEBUG, BROKER_TAG, "Presence Lost Signal because unknown type");
+                    OIC_LOG_V(DEBUG, BROKER_TAG, "Presence Lost Signal because unknown type");
                     setDeviceState(DEVICE_STATE::LOST_SIGNAL);
                     changeAllPresenceMode(BROKER_MODE::NON_PRESENCE_MODE);
                     break;
@@ -169,11 +175,11 @@ namespace OIC
 
         void DevicePresence::timeOutCB(TimerID /*id*/)
         {
-            OC_LOG_V(DEBUG,BROKER_TAG,"timeOutCB()");
+            OIC_LOG_V(DEBUG,BROKER_TAG,"timeOutCB()");
             std::unique_lock<std::mutex> lock(timeoutMutex);
             isRunningTimeOut = true;
 
-            OC_LOG_V(DEBUG, BROKER_TAG,
+            OIC_LOG_V(DEBUG, BROKER_TAG,
                     "Timeout execution. will be discard after receiving cb message");
             setDeviceState(DEVICE_STATE::LOST_SIGNAL);
             changeAllPresenceMode(BROKER_MODE::NON_PRESENCE_MODE);

@@ -50,9 +50,9 @@ CAResult_t CAEDRCreateJNIInterfaceObject(jobject context);
 
 /**
  * Initialize client for EDR.
- * @param[in]  handle           thread pool handle object.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-void CAEDRInitialize(ca_thread_pool_t handle);
+CAResult_t CAEDRInitialize();
 
 /**
  * Terminate server for EDR.

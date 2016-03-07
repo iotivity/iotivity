@@ -51,14 +51,14 @@
  * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR,OC_STACK_ERROR);
  */
 #define VERIFY_NON_NULL(tag, arg, logLevel, retValue) { if (NULL == (arg)) \
-            { OC_LOG((logLevel), tag, #arg " is NULL"); return retValue; } }
+            { OIC_LOG((logLevel), tag, #arg " is NULL"); return retValue; } }
 
 /**
  * Macro to verify success of operation.
  * eg: VERIFY_SUCCESS(TAG, OC_STACK_OK == foo(), ERROR, OC_STACK_ERROR);
  */
 #define VERIFY_SUCCESS(tag, op, logLevel, retValue) { if (!(op)) \
-            {OC_LOG((logLevel), tag, #op " failed!!"); return retValue;} }
+            {OIC_LOG((logLevel), tag, #op " failed!!"); return retValue;} }
 
 /**
  * Structure to carry credential data to callback.
@@ -137,7 +137,7 @@ static void registerResultForCredProvisioning(CredentialData_t *credData,
                                               OCStackResult stackresult, int cause)
 {
 
-   OC_LOG_V(INFO,TAG,"value of credData->numOfResults is %d",credData->numOfResults);
+   OIC_LOG_V(INFO,TAG,"value of credData->numOfResults is %d",credData->numOfResults);
    if(1 == cause)
    {
        memcpy(credData->resArr[(credData->numOfResults)].deviceId.id,
@@ -169,7 +169,7 @@ static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle UNU
     (void)UNUSED;
 
     OCProvisionResultCB resultCallback = credData->resultCallback;
-    OC_LOG(INFO, TAG, "provisionCredentialCB2 called");
+    OIC_LOG(INFO, TAG, "provisionCredentialCB2 called");
     if (clientResponse)
     {
         if(OC_STACK_RESOURCE_CREATED == clientResponse->result)
@@ -179,10 +179,10 @@ static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle UNU
                     &credData->deviceInfo2->doxm->deviceID);
             if (OC_STACK_OK != res)
             {
-                OC_LOG(ERROR, TAG, "Error occured on PDMLinkDevices");
+                OIC_LOG(ERROR, TAG, "Error occured on PDMLinkDevices");
                 return OC_STACK_DELETE_TRANSACTION;
             }
-            OC_LOG(INFO, TAG, "Link created successfully");
+            OIC_LOG(INFO, TAG, "Link created successfully");
 
             ((OCProvisionResultCB)(resultCallback))(credData->ctx, credData->numOfResults,
                                                     credData->resArr,
@@ -193,7 +193,7 @@ static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle UNU
         }
 
     }
-    OC_LOG(INFO, TAG, "provisionCredentialCB2 received Null clientResponse");
+    OIC_LOG(INFO, TAG, "provisionCredentialCB2 received Null clientResponse");
     registerResultForCredProvisioning(credData, OC_STACK_ERROR, 2);
     ((OCProvisionResultCB)(resultCallback))(credData->ctx, credData->numOfResults,
                                             credData->resArr,
@@ -255,7 +255,7 @@ static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle UNU
     }
     else
     {
-        OC_LOG(INFO, TAG, "provisionCredentialCB received Null clientResponse for first device");
+        OIC_LOG(INFO, TAG, "provisionCredentialCB received Null clientResponse for first device");
         registerResultForCredProvisioning(credData, OC_STACK_ERROR,1);
        ((OCProvisionResultCB)(resultCallback))(credData->ctx, credData->numOfResults,
                                                      credData->resArr,
@@ -285,7 +285,7 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {
-        OC_LOG(ERROR, TAG, "Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
@@ -293,11 +293,11 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
     if(NULL == secPayload->securityData)
     {
         OICFree(secPayload);
-        OC_LOG(ERROR, TAG, "Failed to BinToCredJSON");
+        OIC_LOG(ERROR, TAG, "Failed to BinToCredJSON");
         return OC_STACK_NO_MEMORY;
     }
 
-    OC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
+    OIC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr,
@@ -305,10 +305,10 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_CRED_URI))
     {
-        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
         return OC_STACK_ERROR;
     }
-    OC_LOG_V(DEBUG, TAG, "Query=%s", query);
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
     OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = responseHandler;
@@ -319,10 +319,10 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
     OCMethod method = OC_REST_POST;
     OCStackResult ret = OCDoResource(&handle, method, query, 0, (OCPayload*)secPayload,
             deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
-    OC_LOG_V(INFO, TAG, "OCDoResource::Credential provisioning returned : %d",ret);
+    OIC_LOG_V(INFO, TAG, "OCDoResource::Credential provisioning returned : %d",ret);
     if (ret != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
         return ret;
     }
     return OC_STACK_OK;
@@ -363,7 +363,7 @@ static void registerResultForCertProvisioning(CertData_t *certData,
                                               OCStackResult stackresult)
 {
 
-   OC_LOG_V(INFO,TAG,"value of credData->numOfResults is %d",certData->numOfResults);
+   OIC_LOG_V(INFO,TAG,"value of credData->numOfResults is %d",certData->numOfResults);
    memcpy(certData->resArr[(certData->numOfResults)].deviceId.id,
           certData->deviceInfo->doxm->deviceID.id,UUID_LENGTH);
    certData->resArr[(certData->numOfResults)].res = stackresult;
@@ -376,7 +376,7 @@ static void registerResultForCertProvisioning(CertData_t *certData,
 static void registerResultForCRLProvisioning(CRLData_t *crlData,
                                              OCStackResult stackresult)
 {
-   OC_LOG_V(INFO, TAG, "Inside registerResultForCRLProvisioning crlData->numOfResults is %d\n",
+   OIC_LOG_V(INFO, TAG, "Inside registerResultForCRLProvisioning crlData->numOfResults is %d\n",
                        crlData->numOfResults);
    memcpy(crlData->resArr[(crlData->numOfResults)].deviceId.id,
           crlData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
@@ -397,7 +397,7 @@ static void registerResultForCRLProvisioning(CRLData_t *crlData,
 static OCStackApplicationResult SRPProvisionCRLCB(void *ctx, OCDoHandle UNUSED,
                                                   OCClientResponse *clientResponse)
 {
-    OC_LOG_V(INFO, TAG, "Inside SRPProvisionCRLCB.");
+    OIC_LOG_V(INFO, TAG, "Inside SRPProvisionCRLCB.");
     (void)UNUSED;
     VERIFY_NON_NULL(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     CRLData_t *crlData = (CRLData_t*)ctx;
@@ -420,7 +420,7 @@ static OCStackApplicationResult SRPProvisionCRLCB(void *ctx, OCDoHandle UNUSED,
     ((OCProvisionResultCB)(resultCallback))(crlData->ctx, crlData->numOfResults,
                                             crlData->resArr,
                                             true);
-    OC_LOG_V(ERROR, TAG, "SRPProvisionCRLCB received Null clientResponse");
+    OIC_LOG_V(ERROR, TAG, "SRPProvisionCRLCB received Null clientResponse");
     OICFree(crlData->resArr);
     OICFree(crlData);
     return OC_STACK_DELETE_TRANSACTION;
@@ -436,7 +436,7 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if (!secPayload)
     {
-        OC_LOG(ERROR, TAG, "Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
 
@@ -445,10 +445,10 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     if (NULL == secPayload->securityData)
     {
         OICFree(secPayload);
-        OC_LOG(ERROR, TAG, "Failed to BinToCrlJSON");
+        OIC_LOG(ERROR, TAG, "Failed to BinToCrlJSON");
         return OC_STACK_NO_MEMORY;
     }
-    OC_LOG_V(INFO, TAG, "CRL : %s", secPayload->securityData);
+    OIC_LOG_V(INFO, TAG, "CRL : %s", secPayload->securityData);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
@@ -457,12 +457,12 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
                         selectedDeviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_CRL_URI))
     {
-        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
         OICFree(secPayload->securityData);
         OICFree(secPayload);
         return OC_STACK_ERROR;
     }
-    OC_LOG_V(DEBUG, TAG, "Query=%s", query);
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = &SRPProvisionCRLCB;
@@ -471,7 +471,7 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     {
         OICFree(secPayload->securityData);
         OICFree(secPayload);
-        OC_LOG(ERROR, TAG, "Unable to allocate memory");
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
 
@@ -485,7 +485,7 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     {
         OICFree(secPayload->securityData);
         OICFree(secPayload);
-        OC_LOG(ERROR, TAG, "Unable to allocate memory");
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
 
@@ -493,7 +493,7 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     cbData.cd = NULL;
     OCMethod method = OC_REST_POST;
     OCDoHandle handle = NULL;
-    OC_LOG(DEBUG, TAG, "Sending CRL info to resource server");
+    OIC_LOG(DEBUG, TAG, "Sending CRL info to resource server");
 
     OCStackResult ret = OCDoResource(&handle, method, query,
             &selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
@@ -523,7 +523,7 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {
-        OC_LOG(ERROR, TAG, "Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
@@ -532,11 +532,11 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
     if (NULL == secPayload->securityData)
     {
         OICFree(secPayload);
-        OC_LOG(ERROR, TAG, "Failed to BinToCredJSON");
+        OIC_LOG(ERROR, TAG, "Failed to BinToCredJSON");
         return OC_STACK_NO_MEMORY;
     }
 
-    OC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
+    OIC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr,
@@ -544,12 +544,12 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
                         deviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_CRED_URI))
     {
-        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
         OICFree(secPayload->securityData);
         OICFree(secPayload);
         return OC_STACK_ERROR;
     }
-    OC_LOG_V(DEBUG, TAG, "Query=%s", query);
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
     OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = responseHandler;
@@ -560,10 +560,10 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
     OCMethod method = OC_REST_POST;
     OCStackResult ret = OCDoResource(&handle, method, query, 0, (OCPayload*)secPayload,
             deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
-    OC_LOG_V(INFO, TAG, "OCDoResource::Certificate provisioning returned : %d",ret);
+    OIC_LOG_V(INFO, TAG, "OCDoResource::Certificate provisioning returned : %d",ret);
     if (ret != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 
     return ret;
@@ -586,7 +586,7 @@ static OCStackApplicationResult provisionCertCB(void *ctx, OCDoHandle UNUSED,
     (void)UNUSED;
 
     OCProvisionResultCB resultCallback = certData->resultCallback;
-    OC_LOG(INFO, TAG, "provisionCertCred called");
+    OIC_LOG(INFO, TAG, "provisionCertCred called");
     if (clientResponse)
     {
         if(OC_STACK_RESOURCE_CREATED == clientResponse->result)
@@ -601,7 +601,7 @@ static OCStackApplicationResult provisionCertCB(void *ctx, OCDoHandle UNUSED,
         }
 
     }
-    OC_LOG(INFO, TAG, "provisionCertCredCB received Null clientResponse");
+    OIC_LOG(INFO, TAG, "provisionCertCredCB received Null clientResponse");
     registerResultForCertProvisioning(certData, OC_STACK_ERROR);
     ((OCProvisionResultCB)(resultCallback))(certData->ctx, certData->numOfResults,
                                             certData->resArr,
@@ -627,11 +627,11 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
     if (SYMMETRIC_PAIR_WISE_KEY == type &&
        !(OWNER_PSK_LENGTH_128 == keySize || OWNER_PSK_LENGTH_256 == keySize))
     {
-        OC_LOG(INFO, TAG, "Invalid key size");
+        OIC_LOG(INFO, TAG, "Invalid key size");
         return OC_STACK_INVALID_PARAM;
     }
 
-    OC_LOG(INFO, TAG, "In SRPProvisionCredentials");
+    OIC_LOG(INFO, TAG, "In SRPProvisionCredentials");
 
     if (SYMMETRIC_PAIR_WISE_KEY == type)
     {
@@ -640,12 +640,12 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
 
         if (res != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "Internal error occured");
+            OIC_LOG(ERROR, TAG, "Internal error occured");
             return res;
         }
         if (linkExisits)
         {
-            OC_LOG(ERROR, TAG, "Link already exists");
+            OIC_LOG(ERROR, TAG, "Link already exists");
             return OC_STACK_INVALID_PARAM;
         }
     }
@@ -653,10 +653,10 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
     OicUuid_t provTooldeviceID =   {{0,}};
     if (OC_STACK_OK != GetDoxmDeviceID(&provTooldeviceID))
     {
-        OC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
+        OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
         return OC_STACK_ERROR;
     }
-    OC_LOG(INFO, TAG, "retrieved deviceid");
+    OIC_LOG(INFO, TAG, "retrieved deviceid");
     switch (type)
     {
         case SYMMETRIC_PAIR_WISE_KEY:
@@ -670,14 +670,14 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
                     &firstDevice->doxm->deviceID, &secondDevice->doxm->deviceID,
                     &firstCred, &secondCred);
             VERIFY_SUCCESS(TAG, (res==OC_STACK_OK), ERROR, OC_STACK_ERROR);
-            OC_LOG(INFO, TAG, "Credentials generated successfully");
+            OIC_LOG(INFO, TAG, "Credentials generated successfully");
             CredentialData_t *credData =
                 (CredentialData_t *) OICCalloc(1, sizeof(CredentialData_t));
             if (NULL == credData)
             {
                 OICFree(firstCred);
                 OICFree(secondCred);
-                OC_LOG(ERROR, TAG, "Memory allocation problem");
+                OIC_LOG(ERROR, TAG, "Memory allocation problem");
                 return OC_STACK_NO_MEMORY;
             }
             credData->deviceInfo1 = firstDevice;
@@ -697,7 +697,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
                 OICFree(firstCred);
                 OICFree(secondCred);
                 OICFree(credData);
-                OC_LOG(ERROR, TAG, "Memory allocation problem");
+                OIC_LOG(ERROR, TAG, "Memory allocation problem");
                 return OC_STACK_NO_MEMORY;
             }
             res = provisionCredentials(firstCred, firstDevice, credData, &provisionCredentialCB1);
@@ -708,7 +708,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
                 OICFree(credData->resArr);
                 OICFree(credData);
             }
-            OC_LOG_V(INFO, TAG, "provisionCredentials returned: %d",res);
+            OIC_LOG_V(INFO, TAG, "provisionCredentials returned: %d",res);
             VERIFY_SUCCESS(TAG, (res==OC_STACK_OK), ERROR, OC_STACK_ERROR);
             return res;
         }
@@ -720,12 +720,12 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             OCStackResult res = PMGenerateCertificateCredentials(&provTooldeviceID,
                                                                 &firstDevice->doxm->deviceID,&cred);
             VERIFY_SUCCESS(TAG, (res==OC_STACK_OK), ERROR, OC_STACK_ERROR);
-            OC_LOG(INFO, TAG, "Certificate credentials generated successfully");
+            OIC_LOG(INFO, TAG, "Certificate credentials generated successfully");
             CertData_t *certData = (CertData_t *) OICCalloc(1, sizeof(CertData_t));
             if (NULL == certData)
             {
                 OICFree(cred);
-                OC_LOG(ERROR, TAG, "Memory allocation problem");
+                OIC_LOG(ERROR, TAG, "Memory allocation problem");
                 return OC_STACK_NO_MEMORY;
             }
 
@@ -740,7 +740,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             {
                 DeleteCredList(cred);
                 OICFree(certData);
-                OC_LOG(ERROR, TAG, "Memory allocation problem");
+                OIC_LOG(ERROR, TAG, "Memory allocation problem");
                 return OC_STACK_NO_MEMORY;
             }
 
@@ -751,14 +751,14 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
                 OICFree(certData);
             }
             DeleteCredList(cred);
-            OC_LOG_V(INFO, TAG, "provisionCertCredentials returned: %d",res);
+            OIC_LOG_V(INFO, TAG, "provisionCertCredentials returned: %d",res);
 
             return res;
         }
 #endif
         default:
         {
-            OC_LOG(ERROR, TAG, "Invalid option.");
+            OIC_LOG(ERROR, TAG, "Invalid option.");
             return OC_STACK_INVALID_PARAM;
         }
     }
@@ -771,7 +771,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
 static void registerResultForACLProvisioning(ACLData_t *aclData,
                                              OCStackResult stackresult)
 {
-   OC_LOG_V(INFO, TAG, "Inside registerResultForACLProvisioning aclData->numOfResults is %d\n",
+   OIC_LOG_V(INFO, TAG, "Inside registerResultForACLProvisioning aclData->numOfResults is %d\n",
                        aclData->numOfResults);
    memcpy(aclData->resArr[(aclData->numOfResults)].deviceId.id,
           aclData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
@@ -791,7 +791,7 @@ static void registerResultForACLProvisioning(ACLData_t *aclData,
 static OCStackApplicationResult SRPProvisionACLCB(void *ctx, OCDoHandle UNUSED,
                                                   OCClientResponse *clientResponse)
 {
-    OC_LOG_V(INFO, TAG, "Inside SRPProvisionACLCB.");
+    OIC_LOG_V(INFO, TAG, "Inside SRPProvisionACLCB.");
     (void)UNUSED;
     VERIFY_NON_NULL(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     ACLData_t *aclData = (ACLData_t*)ctx;
@@ -814,7 +814,7 @@ static OCStackApplicationResult SRPProvisionACLCB(void *ctx, OCDoHandle UNUSED,
     ((OCProvisionResultCB)(resultCallback))(aclData->ctx, aclData->numOfResults,
                                             aclData->resArr,
                                             true);
-    OC_LOG_V(ERROR, TAG, "SRPProvisionACLCB received Null clientResponse");
+    OIC_LOG_V(ERROR, TAG, "SRPProvisionACLCB received Null clientResponse");
     OICFree(aclData->resArr);
     OICFree(aclData);
     return OC_STACK_DELETE_TRANSACTION;
@@ -830,7 +830,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {
-        OC_LOG(ERROR, TAG, "Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
@@ -838,10 +838,10 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     if(NULL == secPayload->securityData)
     {
         OICFree(secPayload);
-        OC_LOG(ERROR, TAG, "Failed to BinToAclJSON");
+        OIC_LOG(ERROR, TAG, "Failed to BinToAclJSON");
         return OC_STACK_NO_MEMORY;
     }
-    OC_LOG_V(INFO, TAG, "ACL : %s", secPayload->securityData);
+    OIC_LOG_V(INFO, TAG, "ACL : %s", secPayload->securityData);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
@@ -850,10 +850,10 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
                         selectedDeviceInfo->connType,
                         query, sizeof(query), OIC_RSRC_ACL_URI))
     {
-        OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
         return OC_STACK_ERROR;
     }
-    OC_LOG_V(DEBUG, TAG, "Query=%s", query);
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
     cbData.cb = &SRPProvisionACLCB;
@@ -862,7 +862,7 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     {
         OICFree(secPayload->securityData);
         OICFree(secPayload);
-        OC_LOG(ERROR, TAG, "Unable to allocate memory");
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
     aclData->deviceInfo = selectedDeviceInfo;
@@ -877,14 +877,14 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         OICFree(aclData);
         OICFree(secPayload->securityData);
         OICFree(secPayload);
-        OC_LOG(ERROR, TAG, "Unable to allocate memory");
+        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
     cbData.context = (void *)aclData;
     cbData.cd = NULL;
     OCMethod method = OC_REST_POST;
     OCDoHandle handle = NULL;
-    OC_LOG(DEBUG, TAG, "Sending ACL info to resource server");
+    OIC_LOG(DEBUG, TAG, "Sending ACL info to resource server");
     OCStackResult ret = OCDoResource(&handle, method, query,
             &selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
             selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
@@ -912,9 +912,9 @@ static void registerResultForUnlinkDevices(UnlinkData_t *unlinkData, OCStackResu
 {
     if (NULL != unlinkData)
     {
-        OC_LOG_V(INFO, TAG, "Inside registerResultForUnlinkDevices unlinkData->numOfResults is %d\n",
+        OIC_LOG_V(INFO, TAG, "Inside registerResultForUnlinkDevices unlinkData->numOfResults is %d\n",
                             unlinkData->numOfResults);
-        OC_LOG_V(INFO, TAG, "Stack result :: %d", stackresult);
+        OIC_LOG_V(INFO, TAG, "Stack result :: %d", stackresult);
 
         OicUuid_t *pUuid = &unlinkData->unlinkRes[(unlinkData->numOfResults)].deviceId;
 
@@ -929,7 +929,7 @@ static void registerResultForUnlinkDevices(UnlinkData_t *unlinkData, OCStackResu
         }
         unlinkData->unlinkRes[(unlinkData->numOfResults)].res = stackresult;
         ++(unlinkData->numOfResults);
-        OC_LOG (INFO, TAG, "Out registerResultForUnlinkDevices");
+        OIC_LOG (INFO, TAG, "Out registerResultForUnlinkDevices");
     }
 }
 
@@ -938,7 +938,7 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
                                                  const OCProvisionDev_t* revokedDev,
                                                  const OCProvisionDev_t* destDev)
 {
-    OC_LOG(DEBUG, TAG, "IN SendDeleteCredentialRequest");
+    OIC_LOG(DEBUG, TAG, "IN SendDeleteCredentialRequest");
 
     if (NULL == ctx || NULL == respHandler || NULL == revokedDev || NULL == destDev)
     {
@@ -950,7 +950,7 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
     if (B64_OK != b64Encode(revokedDev->doxm->deviceID.id, sizeof(revokedDev->doxm->deviceID.id),
                            base64Buff, sizeof(base64Buff), &base64Len))
     {
-        OC_LOG(ERROR, TAG, "SendDeleteCredentialRequest : Failed to base64 encoding");
+        OIC_LOG(ERROR, TAG, "SendDeleteCredentialRequest : Failed to base64 encoding");
         return OC_STACK_ERROR;
     }
 
@@ -961,12 +961,12 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
                      destDev->securePort, OIC_RSRC_CRED_URI, OIC_JSON_SUBJECT_NAME, base64Buff);
     if (snRet < 0)
     {
-        OC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Error (snprintf) %d\n", snRet);
+        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Error (snprintf) %d\n", snRet);
         return OC_STACK_ERROR;
     }
     else if ((size_t)snRet >= sizeof(reqBuf))
     {
-        OC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Truncated (snprintf) %d\n", snRet);
+        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Truncated (snprintf) %d\n", snRet);
         return OC_STACK_ERROR;
     }
 
@@ -975,18 +975,18 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
     cbData.context = ctx;
     cbData.cb = respHandler;
     cbData.cd = NULL;
-    OC_LOG_V(INFO, TAG, "URI: %s",reqBuf);
+    OIC_LOG_V(INFO, TAG, "URI: %s",reqBuf);
 
-    OC_LOG(DEBUG, TAG, "Sending remove credential request to resource server");
+    OIC_LOG(DEBUG, TAG, "Sending remove credential request to resource server");
 
     OCStackResult ret = OCDoResource(NULL, OC_REST_DELETE, reqBuf,
                                      &destDev->endpoint, NULL,
                                      CT_ADAPTER_IP, OC_HIGH_QOS, &cbData, NULL, 0);
     if (OC_STACK_OK != ret)
     {
-        OC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Error in OCDoResource %d", ret);
+        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : Error in OCDoResource %d", ret);
     }
-    OC_LOG(DEBUG, TAG, "OUT SendDeleteCredentialRequest");
+    OIC_LOG(DEBUG, TAG, "OUT SendDeleteCredentialRequest");
 
     return ret;
 }
@@ -1004,22 +1004,22 @@ static OCStackApplicationResult SRPUnlinkDevice2CB(void *unlinkCtx, OCDoHandle h
         OCClientResponse *clientResponse)
 {
     (void) handle;
-    OC_LOG(DEBUG, TAG, "IN SRPUnlinkDevice2CB");
+    OIC_LOG(DEBUG, TAG, "IN SRPUnlinkDevice2CB");
     VERIFY_NON_NULL(TAG, unlinkCtx, ERROR, OC_STACK_DELETE_TRANSACTION);
     UnlinkData_t* unlinkData = (UnlinkData_t*)unlinkCtx;
 
     if (clientResponse)
     {
-        OC_LOG(DEBUG, TAG, "Valid client response for device 2");
+        OIC_LOG(DEBUG, TAG, "Valid client response for device 2");
         registerResultForUnlinkDevices(unlinkData, clientResponse->result, IDX_SECOND_DEVICE_RES);
 
         if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
         {
-            OC_LOG(DEBUG, TAG, "Credential of device2 revoked");
+            OIC_LOG(DEBUG, TAG, "Credential of device2 revoked");
         }
         else
         {
-            OC_LOG(ERROR, TAG, "Unable to delete credential information from device 2");
+            OIC_LOG(ERROR, TAG, "Unable to delete credential information from device 2");
             unlinkData->resultCallback(unlinkData->ctx,
                                        unlinkData->numOfResults, unlinkData->unlinkRes, true);
             goto error;
@@ -1031,7 +1031,7 @@ static OCStackApplicationResult SRPUnlinkDevice2CB(void *unlinkCtx, OCDoHandle h
                                        IDX_SECOND_DEVICE_RES);
         unlinkData->resultCallback(unlinkData->ctx,
                                    unlinkData->numOfResults, unlinkData->unlinkRes, true);
-        OC_LOG(ERROR, TAG, "SRPUnlinkDevice2CB received Null clientResponse");
+        OIC_LOG(ERROR, TAG, "SRPUnlinkDevice2CB received Null clientResponse");
         goto error;
     }
 
@@ -1039,7 +1039,7 @@ static OCStackApplicationResult SRPUnlinkDevice2CB(void *unlinkCtx, OCDoHandle h
     if (OC_STACK_OK != PDMUnlinkDevices(&unlinkData->unlinkDev[0].doxm->deviceID,
                                        &unlinkData->unlinkDev[1].doxm->deviceID))
     {
-        OC_LOG(FATAL, TAG, "All requests are successfully done but update provisioning DB FAILED.");
+        OIC_LOG(FATAL, TAG, "All requests are successfully done but update provisioning DB FAILED.");
         registerResultForUnlinkDevices(unlinkData, OC_STACK_INCONSISTENT_DB, IDX_DB_UPDATE_RES);
         unlinkData->resultCallback(unlinkData->ctx,
                                    unlinkData->numOfResults, unlinkData->unlinkRes, true);
@@ -1050,7 +1050,7 @@ static OCStackApplicationResult SRPUnlinkDevice2CB(void *unlinkCtx, OCDoHandle h
 
 error:
     DeleteUnlinkData_t(unlinkData);
-    OC_LOG(DEBUG, TAG, "OUT SRPUnlinkDevice2CB");
+    OIC_LOG(DEBUG, TAG, "OUT SRPUnlinkDevice2CB");
     return OC_STACK_DELETE_TRANSACTION;
 
 }
@@ -1067,28 +1067,28 @@ error:
 static OCStackApplicationResult SRPUnlinkDevice1CB(void *unlinkCtx, OCDoHandle handle,
         OCClientResponse *clientResponse)
 {
-    OC_LOG_V(INFO, TAG, "Inside SRPUnlinkDevice1CB ");
+    OIC_LOG_V(INFO, TAG, "Inside SRPUnlinkDevice1CB ");
     VERIFY_NON_NULL(TAG, unlinkCtx, ERROR, OC_STACK_DELETE_TRANSACTION);
     UnlinkData_t* unlinkData = (UnlinkData_t*)unlinkCtx;
     (void) handle;
 
     if (clientResponse)
     {
-        OC_LOG(DEBUG, TAG, "Valid client response for device 1");
+        OIC_LOG(DEBUG, TAG, "Valid client response for device 1");
         registerResultForUnlinkDevices(unlinkData, clientResponse->result, IDX_FIRST_DEVICE_RES);
 
         if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
         {
-            OC_LOG(DEBUG, TAG, "Credential of device 1 is revoked");
+            OIC_LOG(DEBUG, TAG, "Credential of device 1 is revoked");
 
             // Second revocation request to second device.
             OCStackResult res = SendDeleteCredentialRequest((void*)unlinkData, &SRPUnlinkDevice2CB,
                                                     &unlinkData->unlinkDev[0],
                                                     &unlinkData->unlinkDev[1] /*Dest*/);
-            OC_LOG_V(DEBUG, TAG, "Credential revocation request device 2, result :: %d",res);
+            OIC_LOG_V(DEBUG, TAG, "Credential revocation request device 2, result :: %d",res);
             if (OC_STACK_OK != res)
             {
-                 OC_LOG(ERROR, TAG, "Error while sending revocation request for device 2");
+                 OIC_LOG(ERROR, TAG, "Error while sending revocation request for device 2");
                  registerResultForUnlinkDevices(unlinkData, OC_STACK_INVALID_REQUEST_HANDLE,
                                                 IDX_SECOND_DEVICE_RES);
                  unlinkData->resultCallback(unlinkData->ctx,
@@ -1097,13 +1097,13 @@ static OCStackApplicationResult SRPUnlinkDevice1CB(void *unlinkCtx, OCDoHandle h
             }
             else
             {
-                OC_LOG(DEBUG, TAG, "Request for credential revocation successfully sent");
+                OIC_LOG(DEBUG, TAG, "Request for credential revocation successfully sent");
                 return OC_STACK_DELETE_TRANSACTION;
             }
         }
         else
         {
-            OC_LOG(ERROR, TAG, "Unable to delete credential information from device 1");
+            OIC_LOG(ERROR, TAG, "Unable to delete credential information from device 1");
 
             unlinkData->resultCallback(unlinkData->ctx, unlinkData->numOfResults,
                                             unlinkData->unlinkRes, true);
@@ -1112,17 +1112,17 @@ static OCStackApplicationResult SRPUnlinkDevice1CB(void *unlinkCtx, OCDoHandle h
     }
     else
     {
-        OC_LOG(DEBUG, TAG, "Invalid response from server");
+        OIC_LOG(DEBUG, TAG, "Invalid response from server");
         registerResultForUnlinkDevices(unlinkData, OC_STACK_INVALID_REQUEST_HANDLE,
                                        IDX_FIRST_DEVICE_RES );
         unlinkData->resultCallback(unlinkData->ctx,
                                    unlinkData->numOfResults, unlinkData->unlinkRes,
                                    true);
-        OC_LOG(ERROR, TAG, "SRPUnlinkDevice1CB received Null clientResponse");
+        OIC_LOG(ERROR, TAG, "SRPUnlinkDevice1CB received Null clientResponse");
     }
 
 error:
-    OC_LOG_V(INFO, TAG, "Out SRPUnlinkDevice1CB");
+    OIC_LOG_V(INFO, TAG, "Out SRPUnlinkDevice1CB");
     DeleteUnlinkData_t(unlinkData);
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -1143,14 +1143,14 @@ OCStackResult SRPUnlinkDevices(void* ctx,
                                const OCProvisionDev_t* pTargetDev2,
                                OCProvisionResultCB resultCallback)
 {
-    OC_LOG(INFO, TAG, "IN SRPUnlinkDevices");
+    OIC_LOG(INFO, TAG, "IN SRPUnlinkDevices");
 
     if (!pTargetDev1 || !pTargetDev2 || !resultCallback)
     {
-        OC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL parameters");
+        OIC_LOG(INFO, TAG, "SRPUnlinkDevices : NULL parameters");
         return OC_STACK_INVALID_PARAM;
     }
-    OC_LOG(INFO, TAG, "Unlinking following devices: ");
+    OIC_LOG(INFO, TAG, "Unlinking following devices: ");
     PMPrintOCProvisionDev(pTargetDev1);
     PMPrintOCProvisionDev(pTargetDev2);
 
@@ -1158,7 +1158,7 @@ OCStackResult SRPUnlinkDevices(void* ctx,
     OCStackResult res = PDMSetLinkStale(&pTargetDev1->doxm->deviceID, &pTargetDev2->doxm->deviceID);
     if (OC_STACK_OK != res)
     {
-        OC_LOG(FATAL, TAG, "unable to update DB. Try again.");
+        OIC_LOG(FATAL, TAG, "unable to update DB. Try again.");
         return res;
     }
 
@@ -1170,7 +1170,7 @@ OCStackResult SRPUnlinkDevices(void* ctx,
     unlinkData->unlinkDev = (OCProvisionDev_t*)OICCalloc(2, sizeof(OCProvisionDev_t));
     if (NULL == unlinkData->unlinkDev)
     {
-        OC_LOG(ERROR, TAG, "Memory allocation failed");
+        OIC_LOG(ERROR, TAG, "Memory allocation failed");
         res = OC_STACK_NO_MEMORY;
         goto error;
     }
@@ -1178,7 +1178,7 @@ OCStackResult SRPUnlinkDevices(void* ctx,
     unlinkData->unlinkRes = (OCProvisionResult_t*)OICCalloc(3, sizeof(OCProvisionResult_t));
     if (NULL == unlinkData->unlinkRes)
     {
-        OC_LOG(ERROR, TAG, "Memory allocation failed");
+        OIC_LOG(ERROR, TAG, "Memory allocation failed");
         res = OC_STACK_NO_MEMORY;
         goto error;
     }
@@ -1193,14 +1193,14 @@ OCStackResult SRPUnlinkDevices(void* ctx,
                                        &unlinkData->unlinkDev[1], &unlinkData->unlinkDev[0]);
     if (OC_STACK_OK != res)
     {
-        OC_LOG(ERROR, TAG, "SRPUnlinkDevices : SendDeleteCredentialRequest failed");
+        OIC_LOG(ERROR, TAG, "SRPUnlinkDevices : SendDeleteCredentialRequest failed");
         goto error;
     }
 
     return res;
 
 error:
-    OC_LOG(INFO, TAG, "OUT SRPUnlinkDevices");
+    OIC_LOG(INFO, TAG, "OUT SRPUnlinkDevices");
     DeleteUnlinkData_t(unlinkData);
     return res;
 }
@@ -1219,7 +1219,7 @@ static void DeleteRemoveData_t(RemoveData_t* pRemoveData)
 static void registerResultForRemoveDevice(RemoveData_t *removeData, OicUuid_t *pLinkedDevId,
                                           OCStackResult stackresult, bool hasError)
 {
-    OC_LOG_V(INFO, TAG, "Inside registerResultForRemoveDevice removeData->numOfResults is %zu\n",
+    OIC_LOG_V(INFO, TAG, "Inside registerResultForRemoveDevice removeData->numOfResults is %zu\n",
                          removeData->numOfResults + 1);
     if (pLinkedDevId)
     {
@@ -1238,6 +1238,15 @@ static void registerResultForRemoveDevice(RemoveData_t *removeData, OicUuid_t *p
     // If we get suffcient result from linked devices, we have to call user callback and do free
     if (removeData->sizeOfResArray == removeData->numOfResults)
     {
+        if(!removeData->hasError)
+        {
+            // Remove device info from prvisioning database
+            if (OC_STACK_OK != PDMDeleteDevice(&removeData->revokeTargetDev->doxm->deviceID))
+            {
+                OIC_LOG(ERROR, TAG, "ResultForRemoveDevice : Failed to remove device in PDM.");
+                removeData->hasError = true;
+            }
+        }
         removeData->resultCallback(removeData->ctx, removeData->numOfResults, removeData->removeRes,
                                    removeData->hasError);
         DeleteRemoveData_t(removeData);
@@ -1259,50 +1268,71 @@ static OCStackApplicationResult SRPRemoveDeviceCB(void *delDevCtx, OCDoHandle ha
     //Update the delete credential into delete device context
     //Save the deleted status in delDevCtx
     (void)handle;
-    OC_LOG_V(INFO, TAG, "Inside SRPRemoveDeviceCB.");
+    OIC_LOG_V(INFO, TAG, "Inside SRPRemoveDeviceCB.");
     VERIFY_NON_NULL(TAG, delDevCtx, ERROR, OC_STACK_DELETE_TRANSACTION);
     OCStackResult res = OC_STACK_ERROR;
 
     RemoveData_t* removeData = (RemoveData_t*)delDevCtx;
-    if (clientResponse)
+    if(removeData)
     {
-        // If we can get device's UUID from OCClientResponse, it'd be good to use it in here
-        // but OCIdentity in OCClientResponse is emtpy now.
-        // It seems that we can set identity to CAData_t *cadata in CAPrepareSendData() API
-        // but CA doesn't have deviceID yet.
-        //
-        //TODO: Get OCIdentity from OCClientResponse and use it for 'registerResultForRemoveDevice'
-        //      If we can't complete this task, Provisioning Database has always stale link status
-        //      when Remove device is called.
-
-        if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
+        if (clientResponse)
         {
-            res = PDMUnlinkDevices(&removeData->revokeTargetDev->doxm->deviceID,
-                                   NULL /*TODO: Replace NULL to uuid from OCClientResponse*/);
-            if (OC_STACK_OK != res)
+            OicUuid_t revDevUuid = {.id={0}};
+            if(UUID_LENGTH == clientResponse->identity.id_length)
             {
-                OC_LOG(FATAL, TAG, "PDMSetLinkStale() FAIL: PDB is an obsolete one.");
-                registerResultForRemoveDevice(removeData,
-                                          NULL /*TODO: Replace NULL to uuid from OCClientResponse*/,
-                                          OC_STACK_INCONSISTENT_DB, true);
-                return OC_STACK_DELETE_TRANSACTION;
+                memcpy(revDevUuid.id, clientResponse->identity.id, sizeof(revDevUuid.id));
+                if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
+                {
+                    res = PDMUnlinkDevices(&removeData->revokeTargetDev->doxm->deviceID, &revDevUuid);
+                    if (OC_STACK_OK != res)
+                    {
+                        OIC_LOG(ERROR, TAG, "PDMSetLinkStale() FAIL: PDB is an obsolete one.");
+                               registerResultForRemoveDevice(removeData, &revDevUuid,
+                               OC_STACK_INCONSISTENT_DB, true);
+
+                        return OC_STACK_DELETE_TRANSACTION;
+                    }
+
+                    registerResultForRemoveDevice(removeData, &revDevUuid,
+                                                  OC_STACK_RESOURCE_DELETED, false);
+                }
+                else
+                {
+                    registerResultForRemoveDevice(removeData, &revDevUuid,
+                                                  clientResponse->result, true);
+                    OIC_LOG(ERROR, TAG, "Unexpected result from DELETE credential request!");
+                }
             }
-            registerResultForRemoveDevice(removeData,
-                                          NULL /*TODO: Replace NULL to uuid from OCClientResponse*/,
-                                          OC_STACK_RESOURCE_DELETED, false);
+            else
+            {
+                OIC_LOG_V(WARNING, TAG, "Incorrect length of device UUID was sent from %s:%d",
+                         clientResponse->devAddr.addr, clientResponse->devAddr.port);
+
+                if (OC_STACK_RESOURCE_DELETED == clientResponse->result)
+                {
+                    /**
+                      * Since server's credential was deleted,
+                      * register result as OC_STACK_INCONSISTENT_DB with NULL UUID.
+                      */
+
+                    OIC_LOG_V(ERROR, TAG, "But server's credential was deleted.");
+                    registerResultForRemoveDevice(removeData, NULL, OC_STACK_INCONSISTENT_DB, true);
+                }
+                else
+                {
+                    registerResultForRemoveDevice(removeData, NULL, clientResponse->result, true);
+                }
+            }
         }
         else
         {
-            registerResultForRemoveDevice(removeData,
-                                          NULL /*TODO: Replace NULL to uuid from OCClientResponse*/,
-                                          clientResponse->result, true);
-            OC_LOG(ERROR, TAG, "Unexpected result from DELETE credential request!");
+            registerResultForRemoveDevice(removeData, NULL, OC_STACK_ERROR, true);
+            OIC_LOG(ERROR, TAG, "SRPRemoveDevices received Null clientResponse");
         }
     }
     else
     {
-        registerResultForRemoveDevice(removeData, NULL, OC_STACK_ERROR, true);
-        OC_LOG(ERROR, TAG, "SRPRemoveDevices received Null clientResponse");
+        OIC_LOG(WARNING, TAG, "SRPRemoveDevices received null context");
     }
 
     return OC_STACK_DELETE_TRANSACTION;
@@ -1329,7 +1359,7 @@ static OCStackResult GetListofDevToReqDeleteCred(const OCProvisionDev_t* pRevoke
         OCStackResult res = PDMSetLinkStale(&curUuid->dev, &pRevokeTargetDev->doxm->deviceID);
         if (OC_STACK_OK != res)
         {
-            OC_LOG(FATAL, TAG, "PDMSetLinkStale() FAIL: PDB is an obsolete one.");
+            OIC_LOG(FATAL, TAG, "PDMSetLinkStale() FAIL: PDB is an obsolete one.");
             return OC_STACK_INCONSISTENT_DB;
         }
 
@@ -1344,7 +1374,7 @@ static OCStackResult GetListofDevToReqDeleteCred(const OCProvisionDev_t* pRevoke
                     OCProvisionDev_t* targetDev = PMCloneOCProvisionDev(curDev);
                     if (NULL == targetDev)
                     {
-                        OC_LOG(ERROR, TAG, "SRPRemoveDevice : Cloning OCProvisionDev_t Failed.");
+                        OIC_LOG(ERROR, TAG, "SRPRemoveDevice : Cloning OCProvisionDev_t Failed.");
                         return OC_STACK_NO_MEMORY;
                     }
 
@@ -1375,11 +1405,11 @@ static OCStackResult GetListofDevToReqDeleteCred(const OCProvisionDev_t* pRevoke
 OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
                              const OCProvisionDev_t* pTargetDev, OCProvisionResultCB resultCallback)
 {
-    OC_LOG(INFO, TAG, "IN SRPRemoveDevice");
+    OIC_LOG(INFO, TAG, "IN SRPRemoveDevice");
 
     if (!pTargetDev || !resultCallback || 0 == waitTimeForOwnedDeviceDiscovery)
     {
-        OC_LOG(INFO, TAG, "SRPRemoveDevice : NULL parameters");
+        OIC_LOG(INFO, TAG, "SRPRemoveDevice : NULL parameters");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -1395,13 +1425,13 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
     res = PDMGetLinkedDevices(&pTargetDev->doxm->deviceID, &pLinkedUuidList, &numOfDevices);
     if (OC_STACK_OK != res)
     {
-        OC_LOG(ERROR, TAG, "SRPRemoveDevice : Failed to get linked devices information");
+        OIC_LOG(ERROR, TAG, "SRPRemoveDevice : Failed to get linked devices information");
         return res;
     }
     // if there is no related device, we can skip further process.
     if (0 == numOfDevices)
     {
-        OC_LOG(DEBUG, TAG, "SRPRemoveDevice : No linked device found.");
+        OIC_LOG(DEBUG, TAG, "SRPRemoveDevice : No linked device found.");
         res = OC_STACK_CONTINUE;
         goto error;
     }
@@ -1410,7 +1440,7 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
     res = PMDeviceDiscovery(waitTimeForOwnedDeviceDiscovery, true, &pOwnedDevList);
     if (OC_STACK_OK != res)
     {
-        OC_LOG(ERROR, TAG, "SRPRemoveDevice : Failed to PMDeviceDiscovery");
+        OIC_LOG(ERROR, TAG, "SRPRemoveDevice : Failed to PMDeviceDiscovery");
         goto error;
     }
 
@@ -1421,12 +1451,12 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
                                       &pLinkedDevList, &numOfLinkedDev);
     if (OC_STACK_OK != res)
     {
-        OC_LOG(ERROR, TAG, "SRPRemoveDevice : GetListofDevToReqDeleteCred() failed");
+        OIC_LOG(ERROR, TAG, "SRPRemoveDevice : GetListofDevToReqDeleteCred() failed");
         goto error;
     }
     if (0 == numOfLinkedDev) // This case means, there is linked device but it's not alive now.
     {                       // So we don't have to send request message.
-        OC_LOG(DEBUG, TAG, "SRPRemoveDevice : No alived & linked device found.");
+        OIC_LOG(DEBUG, TAG, "SRPRemoveDevice : No alived & linked device found.");
         res = OC_STACK_CONTINUE;
         goto error;
     }
@@ -1435,7 +1465,7 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
     removeData = (RemoveData_t*)OICCalloc(1, sizeof(RemoveData_t));
     if (!removeData)
     {
-        OC_LOG(ERROR, TAG, "SRPRemoveDevices : Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "SRPRemoveDevices : Failed to memory allocation");
         res = OC_STACK_NO_MEMORY;
         goto error;
     }
@@ -1443,7 +1473,7 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
     removeData->revokeTargetDev = PMCloneOCProvisionDev(pTargetDev);
     if (!removeData->revokeTargetDev)
     {
-        OC_LOG(ERROR, TAG, "SRPRemoveDevices : PMCloneOCProvisionDev Failed");
+        OIC_LOG(ERROR, TAG, "SRPRemoveDevices : PMCloneOCProvisionDev Failed");
         res = OC_STACK_NO_MEMORY;
         goto error;
     }
@@ -1452,7 +1482,7 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
         (OCProvisionResult_t*)OICCalloc(numOfLinkedDev, sizeof(OCProvisionResult_t));
     if (!removeData->removeRes)
     {
-        OC_LOG(ERROR, TAG, "SRPRemoveDevices : Failed to memory allocation");
+        OIC_LOG(ERROR, TAG, "SRPRemoveDevices : Failed to memory allocation");
         res = OC_STACK_NO_MEMORY;
         goto error;
     }
@@ -1473,7 +1503,7 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
                                            removeData->revokeTargetDev, curDev);
         if (OC_STACK_OK != res)
         {
-            OC_LOG_V(ERROR, TAG, "SRPRemoveDevice : Fail to send the DELETE credential request to\
+            OIC_LOG_V(ERROR, TAG, "SRPRemoveDevice : Fail to send the DELETE credential request to\
                      %s:%u", curDev->endpoint.addr, curDev->endpoint.port);
         }
         else
@@ -1484,7 +1514,7 @@ OCStackResult SRPRemoveDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDi
 
     PDMDestoryOicUuidLinkList(pLinkedUuidList); //TODO: Modify API name to have unified convention.
     PMDeleteDeviceList(pOwnedDevList);
-    OC_LOG(INFO, TAG, "OUT SRPRemoveDevice");
+    OIC_LOG(INFO, TAG, "OUT SRPRemoveDevice");
 
     return totalRes; // Caller of this API should wait callback if totalRes == OC_STACK_OK.
 
@@ -1498,6 +1528,6 @@ error:
         OICFree(removeData->removeRes);
         OICFree(removeData);
     }
-    OC_LOG(INFO, TAG, "OUT ERROR case SRPRemoveDevice");
+    OIC_LOG(INFO, TAG, "OUT ERROR case SRPRemoveDevice");
     return res;
 }

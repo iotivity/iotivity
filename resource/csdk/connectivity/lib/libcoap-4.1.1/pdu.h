@@ -316,7 +316,10 @@ typedef struct
 
 /** Options in coap_pdu_t are accessed with the macro COAP_OPTION. */
 #define COAP_OPTION(node) ((coap_option *)(node)->options)
-
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #ifdef WITH_LWIP
 /**
  * Creates a CoAP PDU from an lwIP @p pbuf, whose reference is passed on to
@@ -394,6 +397,15 @@ int coap_pdu_parse(unsigned char *data, size_t length, coap_pdu_t *pdu,
                    coap_transport_type transport);
 
 #ifdef WITH_TCP
+/**
+ * Get total message length from header.
+ *
+ * @param data   The raw data to parse as CoAP PDU.
+ * @param size   payload size of pdu.
+ * @return Total message length.
+ */
+size_t coap_get_total_message_length(const unsigned char *data, size_t size);
+
 /**
  * Get transport type of coap header for coap over tcp through payload size.
  *
@@ -541,5 +553,7 @@ int coap_add_data(coap_pdu_t *pdu, unsigned int len, const unsigned char *data);
  * destroyed with the pdu.
  */
 int coap_get_data(const coap_pdu_t *pdu, size_t *len, unsigned char **data);
-
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 #endif /* _PDU_H_ */

@@ -113,15 +113,17 @@ CAResult_t u_linklist_free(u_linklist_t **linklist)
     u_linklist_data_t *free_node=NULL;
     while((*linklist)->size)
     {
-        free_node = (*linklist)->list;
-        (*linklist)->list = (*linklist)->list->next;
-
-        if(free_node != NULL)
+        //Size is more but no node in linked list
+        if(!(*linklist)->list)
         {
-            OICFree(free_node);
-            free_node=NULL;
+            OIC_LOG(ERROR, TAG, "Trying to free Empty List!!");
+            return CA_STATUS_FAILED;
         }
 
+        free_node = (*linklist)->list;
+        (*linklist)->list = (*linklist)->list->next;
+        OICFree(free_node);
+        free_node=NULL;
         (*linklist)->size -= 1;
     }
 

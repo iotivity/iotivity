@@ -641,7 +641,7 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handleRequests(
 {
     if (!request)
     {
-        OC_LOG(ERROR, TAG, "Request received from stack is null!");
+        OIC_LOG(ERROR, TAG, "Request received from stack is null!");
         return OC_EH_ERROR;
     }
 

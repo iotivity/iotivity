@@ -49,11 +49,13 @@ fi
 cp -rf %{ROOTDIR}/con/api/cacommon.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caadapterinterface.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/common/inc/cathreadpool.h* %{DEST_INC_DIR}/
+cp -rf %{ROOTDIR}/con/util/inc/camanagerleinterface.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caipadapter.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caedradapter.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/inc/caleadapter.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/api/cainterface.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/con/api/casecurityinterface.h* %{DEST_INC_DIR}/
+cp -rf %{ROOTDIR}/con/api/cautilinterface.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/com.oic.ca.pc %{DEST_LIB_DIR}/pkgconfig/
 
 

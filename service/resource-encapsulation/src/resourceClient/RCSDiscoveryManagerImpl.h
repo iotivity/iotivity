@@ -35,19 +35,15 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "RCSAddress.h"
 #include "RCSDiscoveryManager.h"
 #include "ExpiryTimer.h"
 #include "PrimitiveResource.h"
-#include "RCSRemoteResourceObject.h"
 
 namespace OIC
 {
     namespace Service
     {
-        class RCSDiscoveryManager;
-        class PrimitiveResource;
-        class RCSAddress;
-
         /**
          * The class contains discovery request information
          *
@@ -56,19 +52,20 @@ namespace OIC
         class DiscoveryRequestInfo
         {
             public:
-                DiscoveryRequestInfo(const std::string &, const std::string &,
-                        const std::string &, DiscoverCallback);
+                DiscoveryRequestInfo(const RCSAddress&, const std::string&,
+                        const std::vector< std::string >&, DiscoverCallback);
 
             public:
                 void discover() const;
-                bool isKnownResource(const std::shared_ptr<PrimitiveResource>&);
-                bool isMatchingAddress(const std::string&) const;
+                bool isKnownResource(const std::shared_ptr< PrimitiveResource >&) const;
+                void addKnownResource(const std::shared_ptr< PrimitiveResource >&);
+                bool isMatchedAddress(const std::string&) const;
 
             private:
-                std::string m_address;
+                RCSAddress m_address;
                 std::string m_relativeUri;
-                std::string m_resourceType;
-                std::unordered_set<std::string> m_receivedIds;
+                std::vector< std::string > m_resourceTypes;
+                std::unordered_set< std::string > m_knownResourceIds;
                 DiscoverCallback m_discoverCb;
         };
 
@@ -85,6 +82,7 @@ namespace OIC
                  * @note This is generated for each discovery request
                  */
                 typedef unsigned int ID;
+                constexpr static char const* ALL_RESOURCE_TYPE = "";
 
             public:
 
@@ -110,20 +108,17 @@ namespace OIC
                  * @see RCSDiscoveryManager
                  */
                 RCSDiscoveryManager::DiscoveryTask::Ptr startDiscovery(const RCSAddress& address,
-                        const std::string& relativeURI,const std::string& resourceType,
+                        const std::string& relativeURI,
+                        const std::vector< std::string >& resourceTypes,
                         RCSDiscoveryManager::ResourceDiscoveredCallback cb);
 
                 void cancel(ID);
-                bool isCanceled(ID);
 
             private:
                 RCSDiscoveryManagerImpl();
                 ~RCSDiscoveryManagerImpl() = default;
 
-                /**
-                 * Request presence by multicast
-                 */
-                void requestMulticastPresence();
+                void subscribePresenceWithMulticast();
 
                 /**
                  * Check duplicated callback and invoke callback when resource is discovered
@@ -134,7 +129,7 @@ namespace OIC
                  *
                  * @see PrimitiveResource
                  */
-                void onResourceFound(std::shared_ptr<PrimitiveResource> resource, ID discoveryId,
+                void onResourceFound(std::shared_ptr< PrimitiveResource > resource, ID discoveryId,
                         const RCSDiscoveryManager::ResourceDiscoveredCallback& cb);
 
                 /**
@@ -146,21 +141,24 @@ namespace OIC
                  * Discover resource on all requests when supporting presence function resource
                  * enter into network
                  */
-                void onPresence(OCStackResult ret, const unsigned int seq, const std::string& address);
+                void onPresence(OCStackResult, const unsigned int seq, const std::string& address);
 
                 /**
                  * Create unique id
                  *
                  * @return Returns the id
                  */
-                ID createId();
+                ID createId() const;
 
             public:
-                ExpiryTimer m_timer;
+                constexpr static ID INVALID_ID = 0;
 
             private:
-                std::unordered_map<ID,DiscoveryRequestInfo> m_discoveryMap;
-                std::mutex m_mutex;
+                ExpiryTimer m_timer;
+
+                std::unordered_map< ID, DiscoveryRequestInfo > m_discoveryMap;
+
+                mutable std::mutex m_mutex;
         };
     }
 }

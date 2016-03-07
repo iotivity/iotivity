@@ -38,20 +38,20 @@ int RequestAutomationMngr::startOnGET(
 {
     if (!requestSchema)
     {
-        OC_LOG(ERROR, TAG, "Request schema is null!");
+        OIC_LOG(ERROR, TAG, "Request schema is null!");
         throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Request model is null!");
     }
 
     if (!callback)
     {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
+        OIC_LOG(ERROR, TAG, "Invalid callback!");
         throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
     }
 
     // Check is there auto request generation session already going on for GET requests
     if (isInProgress(RequestType::RQ_TYPE_GET))
     {
-        OC_LOG(ERROR, TAG, "Auto requesting for GET is already in progress!");
+        OIC_LOG(ERROR, TAG, "Auto requesting for GET is already in progress!");
         throw OperationInProgressException(
             "Another GET request generation session is already in progress!");
     }
@@ -84,20 +84,20 @@ int RequestAutomationMngr::startOnPUT(const std::shared_ptr<RequestModel> &reque
 {
     if (!requestSchema)
     {
-        OC_LOG(ERROR, TAG, "Request schema is null!");
+        OIC_LOG(ERROR, TAG, "Request schema is null!");
         throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Request model is null!");
     }
 
     if (!callback)
     {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
+        OIC_LOG(ERROR, TAG, "Invalid callback!");
         throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
     }
 
     // Check is there auto request generation session already going on for GET requests
     if (isInProgress(RequestType::RQ_TYPE_PUT))
     {
-        OC_LOG(ERROR, TAG, "Auto requesting for PUT is already in progress!");
+        OIC_LOG(ERROR, TAG, "Auto requesting for PUT is already in progress!");
         throw OperationInProgressException(
             "Another PUT request generation session is already in progress!");
     }
@@ -131,20 +131,20 @@ int RequestAutomationMngr::startOnPOST(const std::shared_ptr<RequestModel> &requ
 {
     if (!requestSchema)
     {
-        OC_LOG(ERROR, TAG, "Request schema is null!");
+        OIC_LOG(ERROR, TAG, "Request schema is null!");
         throw InvalidArgsException(SIMULATOR_INVALID_PARAM, "Request model is null!");
     }
 
     if (!callback)
     {
-        OC_LOG(ERROR, TAG, "Invalid callback!");
+        OIC_LOG(ERROR, TAG, "Invalid callback!");
         throw InvalidArgsException(SIMULATOR_INVALID_CALLBACK, "Invalid callback!");
     }
 
     // Check is there auto request generation session already going on for GET requests
     if (isInProgress(RequestType::RQ_TYPE_POST))
     {
-        OC_LOG(ERROR, TAG, "Auto requesting for POST is already in progress!");
+        OIC_LOG(ERROR, TAG, "Auto requesting for POST is already in progress!");
         throw OperationInProgressException(
             "Another POST request generation session is already in progress!");
     }

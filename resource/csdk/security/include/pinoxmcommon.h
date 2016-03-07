@@ -21,6 +21,9 @@
 #ifndef PIN_CALLBACK_DEF_H_
 #define PIN_CALLBACK_DEF_H_
 
+#include "securevirtualresourcetypes.h"
+#include "casecurityinterface.h"
+
 #ifdef __cplusplus
  extern "C" {
 #endif // __cplusplus
@@ -70,6 +73,32 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize);
  */
 OCStackResult InputPin(char* pinBuffer, size_t bufferSize);
 
+#ifdef __WITH_DTLS__
+
+/**
+ * This function is used by OTM and SRM to
+ * register device UUID is required to derive the temporal PSK.
+ */
+void SetUuidForRandomPinOxm(const OicUuid_t* uuid);
+
+/**
+ * This internal callback is used while PIN based ownership transfer.
+ * This callback will be used to establish a temporary secure session according to
+ * TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256.
+ *
+ * @param[in]  type type of PSK data required by tinyDTLS layer during DTLS handshake.
+ * @param[in]  desc UNUSED.
+ * @param[in]  desc_len UNUSED.
+ * @param[out] result  Must be filled with the requested information.
+ * @param[in]  result_length  Maximum size of @p result.
+ *
+ * @return The number of bytes written to @p result or a value
+ *         less than zero on error.
+ */
+int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
+              const unsigned char *UNUSED1, size_t UNUSED2,
+              unsigned char *result, size_t result_length);
+#endif //__WITH_DTLS__
 
 #ifdef __cplusplus
 }

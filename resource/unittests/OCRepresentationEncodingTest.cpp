@@ -26,6 +26,7 @@
 #include <ocpayloadcbor.h>
 #include <oic_malloc.h>
 #include <oic_string.h>
+#include "payload_logging.h"
 
 namespace OC
 {
@@ -229,6 +230,38 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(true, r.getValue<bool>("BoolAttr"));
         EXPECT_STREQ("String attr", r.getValue<std::string>("StringAttr").c_str());
 
+        OCPayloadDestroy(cparsed);
+    }
+
+    TEST(RepresentationEncoding, RepAttributeEmpty)
+    {
+        OC::OCRepresentation startRep;
+        std::vector<int> iarr {};
+        startRep["iarr"] = {};
+
+        OC::MessageContainer mc1;
+        mc1.addRepresentation(startRep);
+
+        OCRepPayload* cstart = mc1.getPayload();
+        EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, cstart->base.type);
+
+        uint8_t *cborData = NULL;
+        size_t cborSize = 0;
+        OCPayload *cparsed = NULL;
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)cstart, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+                    cborData, cborSize));
+        OCPayloadDestroy((OCPayload*)cstart);
+        OICFree(cborData);
+
+        OC::MessageContainer mc2;
+        mc2.setPayload(cparsed);
+        EXPECT_EQ(1u, mc2.representations().size());
+        const OC::OCRepresentation& r = mc2.representations()[0];
+
+        std::vector<int> iarr2 = r["iarr"];
+
+        EXPECT_EQ(iarr, iarr2);
         OCPayloadDestroy(cparsed);
     }
 
@@ -650,8 +683,9 @@ namespace OCRepresentationEncodingTest
         payload->sid = (uint8_t*)OICMalloc(16);
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "rt.singleitem");
-        OCResourcePayloadAddInterface(resource, "if.singleitem");
+        EXPECT_TRUE(OCResourcePayloadAddStringLL(&resource->types, "rt.singleitem"));
+        EXPECT_TRUE(OCResourcePayloadAddStringLL(&resource->interfaces, "if.singleitem"));
+
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -666,9 +700,8 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* parsedResource = ((OCDiscoveryPayload*)cparsed)->resources;
 
         EXPECT_EQ(NULL, parsedResource->next);
-
-        EXPECT_EQ(NULL, parsedResource->types->next);
         EXPECT_STREQ("rt.singleitem", parsedResource->types->value);
+        EXPECT_EQ(NULL, parsedResource->types->next);
         EXPECT_EQ(NULL, parsedResource->interfaces->next);
         EXPECT_STREQ("if.singleitem", parsedResource->interfaces->value);
 
@@ -684,8 +717,8 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "    rt.singleitem");
-        OCResourcePayloadAddInterface(resource, "    if.singleitem");
+        EXPECT_TRUE(OCResourcePayloadAddStringLL(&resource->types, "    rt.singleitem"));
+        EXPECT_TRUE(OCResourcePayloadAddStringLL(&resource->interfaces, "    if.singleitem"));
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -710,6 +743,7 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(cparsed);
         OCDiscoveryPayloadDestroy(payload);
     }
+
     TEST(DiscoveryRTandIF, SingleItemBackTrim)
     {
         OCDiscoveryPayload* payload = OCDiscoveryPayloadCreate();
@@ -717,8 +751,8 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "rt.singleitem    ");
-        OCResourcePayloadAddInterface(resource, "if.singleitem    ");
+        OCResourcePayloadAddStringLL(&resource->types, "rt.singleitem    ");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "if.singleitem    ");
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -750,8 +784,8 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "    rt.singleitem    ");
-        OCResourcePayloadAddInterface(resource, "    if.singleitem     ");
+        OCResourcePayloadAddStringLL(&resource->types, "    rt.singleitem    ");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "    if.singleitem     ");
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -783,10 +817,10 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "rt.firstitem");
-        OCResourcePayloadAddResourceType(resource, "rt.seconditem");
-        OCResourcePayloadAddInterface(resource, "if.firstitem");
-        OCResourcePayloadAddInterface(resource, "if.seconditem");
+        OCResourcePayloadAddStringLL(&resource->types, "rt.firstitem");
+        OCResourcePayloadAddStringLL(&resource->types, "rt.seconditem");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "if.firstitem");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "if.seconditem");
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -820,10 +854,10 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "  rt.firstitem");
-        OCResourcePayloadAddResourceType(resource, "  rt.seconditem");
-        OCResourcePayloadAddInterface(resource, "  if.firstitem");
-        OCResourcePayloadAddInterface(resource, "  if.seconditem");
+        OCResourcePayloadAddStringLL(&resource->types, "  rt.firstitem");
+        OCResourcePayloadAddStringLL(&resource->types, "  rt.seconditem");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "  if.firstitem");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "  if.seconditem");
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -857,10 +891,10 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "rt.firstitem  ");
-        OCResourcePayloadAddResourceType(resource, "rt.seconditem  ");
-        OCResourcePayloadAddInterface(resource, "if.firstitem  ");
-        OCResourcePayloadAddInterface(resource, "if.seconditem  ");
+        OCResourcePayloadAddStringLL(&resource->types, "rt.firstitem  ");
+        OCResourcePayloadAddStringLL(&resource->types, "rt.seconditem  ");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "if.firstitem  ");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "if.seconditem  ");
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -894,10 +928,10 @@ namespace OCRepresentationEncodingTest
         OCResourcePayload* resource = (OCResourcePayload*)OICCalloc(1, sizeof(OCResourcePayload));
         payload->resources = resource;
 
-        OCResourcePayloadAddResourceType(resource, "  rt.firstitem  ");
-        OCResourcePayloadAddResourceType(resource, "  rt.seconditem  ");
-        OCResourcePayloadAddInterface(resource, "  if.firstitem  ");
-        OCResourcePayloadAddInterface(resource, "  if.seconditem  ");
+        OCResourcePayloadAddStringLL(&resource->types, "  rt.firstitem  ");
+        OCResourcePayloadAddStringLL(&resource->types, "  rt.seconditem  ");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "  if.firstitem  ");
+        OCResourcePayloadAddStringLL(&resource->interfaces, "  if.seconditem  ");
         resource->uri = OICStrdup("/uri/thing");
 
         uint8_t* cborData;
@@ -944,7 +978,6 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(NULL, parsedPayload->types->next);
         EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
         EXPECT_EQ(NULL, parsedPayload->interfaces->next);
-
 
         OICFree(cborData);
         OCRepPayloadDestroy(payload);
@@ -1146,6 +1179,73 @@ namespace OCRepresentationEncodingTest
 
         OICFree(cborData);
         OCRepPayloadDestroy(payload);
+        OCPayloadDestroy(cparsed);
+    }
+    TEST(RepresentationEncodingRTandIF, TestPayloadContents)
+    {
+        OC::OCRepresentation subRep1;
+        std::vector<std::string> types;
+        types.push_back("rt.firstitem");
+        std::vector<std::string> interfaces;
+        interfaces.push_back("if.firstitem");
+        subRep1.setResourceTypes(types);
+        subRep1.setResourceInterfaces(interfaces);
+        subRep1.setNULL("NullAttr");
+        subRep1.setValue("IntAttr", 77);
+        subRep1.setValue("DoubleAttr", 3.333);
+        subRep1.setValue("BoolAttr", true);
+        subRep1.setValue("StringAttr", std::string("String attr"));
+
+        OC::MessageContainer mc1;
+        mc1.addRepresentation(subRep1);
+
+        OCRepPayload *repPayload = mc1.getPayload();
+        EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, repPayload->base.type);
+
+        uint8_t *cborData = NULL;
+        size_t cborSize = 0;
+        OCPayload *cparsed = NULL;
+
+        EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*)repPayload, &cborData, &cborSize));
+        EXPECT_EQ(OC_STACK_OK, OCParsePayload(&cparsed, PAYLOAD_TYPE_REPRESENTATION,
+                    cborData, cborSize));
+
+        OCRepPayload *parsedPayload = (OCRepPayload *)cparsed;
+        EXPECT_EQ(NULL, parsedPayload->uri);
+        EXPECT_STREQ("rt.firstitem", parsedPayload->types->value);
+        EXPECT_EQ(NULL, parsedPayload->types->next);
+        EXPECT_STREQ("if.firstitem", parsedPayload->interfaces->value);
+        EXPECT_EQ(NULL, parsedPayload->interfaces->next);
+
+        // To make sure rt and if are not duplicated.
+        EXPECT_STREQ("BoolAttr", parsedPayload->values->name);
+        EXPECT_EQ(true, parsedPayload->values->b);
+        EXPECT_EQ(OCREP_PROP_BOOL, parsedPayload->values->type);
+        parsedPayload->values = parsedPayload->values->next;
+
+        EXPECT_STREQ("DoubleAttr", parsedPayload->values->name);
+        EXPECT_EQ(OCREP_PROP_DOUBLE, parsedPayload->values->type);
+        EXPECT_EQ(3.3330000000000002, parsedPayload->values->d);
+        parsedPayload->values = parsedPayload->values->next;
+
+        EXPECT_STREQ("IntAttr", parsedPayload->values->name);
+        EXPECT_EQ(77, parsedPayload->values->i);
+        EXPECT_EQ(OCREP_PROP_INT, parsedPayload->values->type);
+        parsedPayload->values = parsedPayload->values->next;
+
+        EXPECT_STREQ("NullAttr", parsedPayload->values->name);
+        EXPECT_EQ(OCREP_PROP_NULL, parsedPayload->values->type);
+        parsedPayload->values = parsedPayload->values->next;
+
+        EXPECT_STREQ("StringAttr", parsedPayload->values->name);
+        EXPECT_STREQ("String attr", parsedPayload->values->str);
+        EXPECT_EQ(OCREP_PROP_STRING, parsedPayload->values->type);
+        parsedPayload->values = parsedPayload->values->next;
+
+        EXPECT_EQ(NULL, parsedPayload->values);
+
+        OICFree(cborData);
+        OCRepPayloadDestroy(repPayload);
         OCPayloadDestroy(cparsed);
     }
 }

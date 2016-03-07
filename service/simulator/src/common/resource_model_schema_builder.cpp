@@ -34,7 +34,7 @@ std::shared_ptr<SimulatorResourceModelSchema> ResourceModelSchemaBuilder::build(
 {
     if (!m_ramlSchema)
     {
-        OC_LOG(ERROR, TAG, "RAML schema pointer is null!");
+        OIC_LOG(ERROR, TAG, "RAML schema pointer is null!");
         return nullptr;
     }
 
@@ -83,7 +83,7 @@ std::shared_ptr<AttributeProperty> ResourceModelSchemaBuilder::buildAttribute(
             return buildModelAttribute(property);
 
         default:
-            OC_LOG(ERROR, TAG, "Unknown type!");
+            OIC_LOG(ERROR, TAG, "Unknown type!");
             return nullptr;
     }
 
@@ -261,7 +261,7 @@ std::shared_ptr<ArrayProperty> ResourceModelSchemaBuilder::buildArrayAttribute(
             break;
 
         default:
-            OC_LOG(ERROR, TAG, "Unknown array element type!");
+            OIC_LOG(ERROR, TAG, "Unknown array element type!");
             return nullptr;
     }
 

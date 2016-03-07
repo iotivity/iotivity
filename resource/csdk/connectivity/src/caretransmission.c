@@ -61,7 +61,7 @@
 #include "oic_malloc.h"
 #include "logger.h"
 
-#define TAG "CA_RETRANS"
+#define TAG "OIC_CA_RETRANS"
 
 typedef struct
 {
@@ -140,7 +140,7 @@ static bool CACheckTimeout(uint64_t currentTime, CARetransmissionData_t *retData
 
     if (currentTime >= retData->timeStamp + timeout)
     {
-        OIC_LOG_V(DEBUG, TAG, "%zu microseconds time out!!, tried count(%d)",
+        OIC_LOG_V(DEBUG, TAG, "%llu microseconds time out!!, tried count(%d)",
                   timeout, retData->triedCount);
         return true;
     }
@@ -274,7 +274,7 @@ void CARetransmissionBaseRoutine(void *threadValue)
         else if (!context->isStop)
         {
             // check each RETRANSMISSION_CHECK_PERIOD_SEC time.
-            OIC_LOG_V(DEBUG, TAG, "wait..(%ld)microseconds",
+            OIC_LOG_V(DEBUG, TAG, "wait..(%lld)microseconds",
                       RETRANSMISSION_CHECK_PERIOD_SEC * (uint64_t) USECS_PER_SEC);
 
             // wait
@@ -637,7 +637,7 @@ uint64_t getCurrentTimeInMicroSeconds()
     clock_gettime(CLOCK_MONOTONIC, &getTs);
 
     currentTime = (getTs.tv_sec * (uint64_t)1000000000 + getTs.tv_nsec)/1000;
-    OIC_LOG_V(DEBUG, TAG, "current time = %ld", currentTime);
+    OIC_LOG_V(DEBUG, TAG, "current time = %lld", currentTime);
 #elif defined __ARDUINO__
     currentTime = millis() * 1000;
     OIC_LOG_V(DEBUG, TAG, "currtime=%lu", currentTime);

@@ -43,7 +43,7 @@
 #include "camutex.h"
 #include "logger.h"
 
-#define TAG "CA_BWT"
+#define TAG "OIC_CA_BWT"
 
 #define BLOCKWISE_OPTION_BUFFER    (sizeof(unsigned int))
 #define BLOCK_NUMBER_IDX           4
@@ -53,7 +53,9 @@
 #define BLOCK_SIZE(arg) (1 << ((arg) + 4))
 
 // context for block-wise transfer
-static CABlockWiseContext_t g_context = { 0 };
+static CABlockWiseContext_t g_context = { .sendThreadFunc = NULL,
+                                          .receivedThreadFunc = NULL,
+                                          .dataList = NULL };
 
 static bool CACheckPayloadLength(const CAData_t *sendData)
 {
@@ -923,7 +925,8 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 return res;
             }
 
-            res = CAUpdateBlockOptionItems(data, pdu, &block, COAP_OPTION_BLOCK1, blockWiseStatus);
+            res = CAUpdateBlockOptionItems(data, pdu, &block, COAP_OPTION_BLOCK1,
+                                           blockWiseStatus);
             if (CA_STATUS_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "update has failed");
@@ -1020,8 +1023,7 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     }
 
     // set Block Option Type
-    CAResult_t res = CAUpdateBlockOptionType(blockDataID,
-                                             COAP_OPTION_BLOCK2);
+    CAResult_t res = CAUpdateBlockOptionType(blockDataID, COAP_OPTION_BLOCK2);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "update has failed");
@@ -1535,7 +1537,6 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
 
     CALogBlockInfo(block2);
 
-    uint8_t code = 0;
     if (CA_MSG_ACKNOWLEDGE == (*pdu)->hdr->coap_hdr_udp_t.type ||
             (CA_MSG_NONCONFIRM == (*pdu)->hdr->coap_hdr_udp_t.type &&
                     CA_GET != (*pdu)->hdr->coap_hdr_udp_t.code))
@@ -1637,17 +1638,6 @@ CAResult_t CAAddBlockOption2(coap_pdu_t **pdu, const CAInfo_t *info, size_t data
     }
 
     return CA_STATUS_OK;
-
-error:
-    OIC_LOG_V(ERROR, TAG, "error : %d", code);
-
-    char* phrase = coap_response_phrase(code);
-    if(phrase)
-    {
-        coap_add_data(*pdu, strlen(phrase),
-                      (unsigned char *) phrase);
-    }
-    return CA_STATUS_FAILED;
 }
 
 CAResult_t CAAddBlockOption1(coap_pdu_t **pdu, const CAInfo_t *info, size_t dataLength,

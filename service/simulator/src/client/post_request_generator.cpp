@@ -49,7 +49,7 @@ void POSTRequestGenerator::stopSending()
 void POSTRequestGenerator::SendAllRequests()
 {
     // Notify the progress status
-    OC_LOG(DEBUG, TAG, "Sending OP_START event");
+    OIC_LOG(DEBUG, TAG, "Sending OP_START event");
     m_callback(m_id, OP_START);
 
     std::shared_ptr<SimulatorResourceModelSchema> repSchema =
@@ -57,7 +57,7 @@ void POSTRequestGenerator::SendAllRequests()
 
     if (!repSchema)
     {
-        OC_LOG(ERROR, TAG, "Request representation model is null!");
+        OIC_LOG(ERROR, TAG, "Request representation model is null!");
         m_callback(m_id, OP_COMPLETE);
         return;
     }
@@ -69,7 +69,7 @@ void POSTRequestGenerator::SendAllRequests()
 
     if (!attributeGenList.size())
     {
-        OC_LOG(ERROR, TAG, "Zero attribute found from resource model!");
+        OIC_LOG(ERROR, TAG, "Zero attribute found from resource model!");
         return;
     }
 
@@ -108,7 +108,7 @@ void POSTRequestGenerator::SendAllRequests()
 void POSTRequestGenerator::onResponseReceived(SimulatorResult result,
         const SimulatorResourceModel &repModel, const RequestInfo &reqInfo)
 {
-    OC_LOG(DEBUG, TAG, "Response recieved");
+    OIC_LOG(DEBUG, TAG, "Response recieved");
     m_responseCnt++;
     completed();
 }
@@ -119,12 +119,12 @@ void POSTRequestGenerator::completed()
     {
         if (m_stopRequested)
         {
-            OC_LOG(DEBUG, TAG, "Sending OP_ABORT event");
+            OIC_LOG(DEBUG, TAG, "Sending OP_ABORT event");
             m_callback(m_id, OP_ABORT);
         }
         else
         {
-            OC_LOG(DEBUG, TAG, "Sending OP_COMPLETE event");
+            OIC_LOG(DEBUG, TAG, "Sending OP_COMPLETE event");
             m_callback(m_id, OP_COMPLETE);
         }
     }

@@ -38,29 +38,6 @@ extern "C"
 {
 #endif
 
-/**
- * Callback function type for request delivery.
- * @param[out]   object       Endpoint object from which the request is received.
- *                            It contains endpoint address based on the connectivity type.
- * @param[out]   requestInfo  Info for resource model to understand about the request.
- */
-typedef void (*CARequestCallback)(const CAEndpoint_t *object,
-                                  const CARequestInfo_t *requestInfo);
-
-/**
- * Callback function type for response delivery.
- * @param[out]   object           Endpoint object from which the response is received.
- * @param[out]   responseInfo     Identifier which needs to be mapped with response.
- */
-typedef void (*CAResponseCallback)(const CAEndpoint_t *object,
-                                   const CAResponseInfo_t *responseInfo);
-/**
- * Callback function type for error.
- * @param[out]   object           remote device information.
- * @param[out]   errorInfo        CA Error information.
- */
-typedef void (*CAErrorCallback)(const CAEndpoint_t *object,
-                                const CAErrorInfo_t *errorInfo);
 #ifdef RA_ADAPTER
 
 /**
@@ -87,6 +64,28 @@ typedef struct
 
 #endif //RA_ADAPTER
 
+#ifdef TCP_ADAPTER
+/**
+ * Callback function to pass the connection information from CA to RI.
+ * @param[out]   object           remote device information.
+ */
+typedef void (*CAKeepAliveConnectedCallback)(const CAEndpoint_t *object);
+
+/**
+ * Callback function to pass the disconnection information from CA to RI.
+ * @param[out]   object           remote device information.
+ */
+typedef void (*CAKeepAliveDisconnectedCallback)(const CAEndpoint_t *object);
+
+/**
+ * Register connected callback and disconnected callback to process KeepAlive.
+ * connection informations are delivered these callbacks.
+ * @param[in]   ConnHandler     Connected callback.
+ * @param[in]   DisconnHandler  Disconnected Callback.
+ */
+void CARegisterKeepAliveHandler(CAKeepAliveConnectedCallback ConnHandler,
+                                CAKeepAliveDisconnectedCallback DisconnHandler);
+#endif
 /**
  * Initialize the connectivity abstraction module.
  * It will initialize adapters, thread pool and other modules based on the platform
@@ -106,14 +105,14 @@ void CATerminate();
  * Starts listening servers.
  * This API is used by resource hosting server for listening multicast requests.
  * Based on the adapters configurations, different kinds of servers are started.
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED
  */
 CAResult_t CAStartListeningServer();
 
 /**
  * Stops the server from receiving the multicast traffic. This is used by sleeping
  * device to not receives the multicast traffic.
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED
  */
 CAResult_t CAStopListeningServer();
 
@@ -121,7 +120,7 @@ CAResult_t CAStopListeningServer();
  * Starts discovery servers.
  * This API is used by resource required clients for listening multicast requests.
  * Based on the adapters configurations, different kinds of servers are started.
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED
  */
 CAResult_t CAStartDiscoveryServer();
 
@@ -130,6 +129,7 @@ CAResult_t CAStartDiscoveryServer();
  *          Requests and responses are delivered these callbacks.
  * @param[in]   ReqHandler    Request callback ( for GET,PUT ..etc).
  * @param[in]   RespHandler   Response Handler Callback.
+ * @param[in]   ErrorHandler  Error Handler Callback.
  * @see     CARequestCallback
  * @see     CAResponseCallback
  * @see     CAErrorCallback
@@ -143,8 +143,8 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
  * @param[in]   adapter               which adapter to use.
  * @param[in]   addr                  string representation of address.
  * @param[in]   port                  port (for IP_ADAPTER).
- * @param[in]   endpoint              Endpoint which contains the above.
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED
+ * @param[out]  object                Endpoint which contains the above.
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_INVALID_PARAM
  * @remark  The created Remote endpoint can be freed using CADestroyEndpoint().
  * @see     CADestroyEndpoint
  */
@@ -162,10 +162,10 @@ void CADestroyEndpoint(CAEndpoint_t *object);
 
 /**
  * Generating the token for matching the request and response.
- * @param[in]   token            Token for the request.
+ * @param[out]  token            Token for the request.
  * @param[in]   tokenLength      length of the token.
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or
- *          ::CA_MEMORY_ALLOC_FAILED or ::CA_STATUS_NOT_INITIALIZED
+ *          ::CA_MEMORY_ALLOC_FAILED or ::CA_STATUS_INVALID_PARAM
  * @remark  Token memory is destroyed by the caller using CADestroyToken().
  * @see     CADestroyToken
  */
@@ -182,7 +182,8 @@ void CADestroyToken(CAToken_t token);
  * @param[in]   object       Endpoint where the payload need to be sent.
  *                           This endpoint is delivered with Request or response callback.
  * @param[in]   requestInfo  Information for the request.
- * @return  ::CA_STATUS_OK ::CA_STATUS_FAILED ::CA_MEMORY_ALLOC_FAILED
+ * @return ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED or
+           ::CA_SEND_FAILED or ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo);
 
@@ -191,22 +192,24 @@ CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requ
  * @param[in]   object           Endpoint where the payload need to be sent.
  *                               This endpoint is delivered with Request or response callback.
  * @param[in]   responseInfo     Information for the response.
- * @return  ::CA_STATUS_OK or  ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ * @return ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED or
+           ::CA_SEND_FAILED or ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo);
 
 /**
  * Select network to use.
  * @param[in]   interestedNetwork    Connectivity Type enum.
- * @return  ::CA_STATUS_OK or ::CA_NOT_SUPPORTED or
- *          ::CA_STATUS_FAILED or ::CA_NOT_SUPPORTED
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED or
+ *          ::CA_NOT_SUPPORTED or ::CA_ADAPTER_NOT_ENABLED or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork);
 
 /**
  * Select network to unuse.
  * @param[in]   nonInterestedNetwork     Connectivity Type enum.
- * @return  ::CA_STATUS_OK or ::CA_NOT_SUPPORTED or ::CA_STATUS_FAILED
+ * @return  ::CA_STATUS_OK or ::CA_NOT_SUPPORTED or ::CA_STATUS_FAILED or
+            ::CA_STATUS_NOT_INITIALIZED
  */
 CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork);
 
@@ -215,14 +218,14 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork);
  * It should be destroyed by the caller as it Get Information.
  * @param[out]   info     LocalConnectivity objects
  * @param[out]   size     No Of Array objects
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_STATUS_NOT_INITIALIZED or
  *          ::CA_STATUS_INVALID_PARAM or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size);
 
 /**
  * To Handle the Request or Response.
- * @return   ::CA_STATUS_OK
+ * @return   ::CA_STATUS_OK or ::CA_STATUS_NOT_INITIALIZED
  */
 CAResult_t CAHandleRequestResponse();
 
@@ -231,7 +234,7 @@ CAResult_t CAHandleRequestResponse();
  * Set Remote Access information for XMPP Client.
  * @param[in]   caraInfo          remote access info.
  *
- * @return  ::CA_STATUS_OK
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_INVALID_PARAM
  */
 CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo);
 #endif
