@@ -19,38 +19,25 @@
  ******************************************************************/
 
 #include "get_request_generator.h"
-#include "simulator_resource_model.h"
+#include "request_model.h"
+#include "simulator_exceptions.h"
 #include "logger.h"
 
 #define TAG "GET_REQUEST_GEN"
 
-GETRequestGenerator::GETRequestGenerator(int id, RequestSenderSP &requestSender,
-        AutoRequestGeneration::ProgressStateCallback callback)
-    :   AutoRequestGeneration(RequestType::RQ_TYPE_GET, id, requestSender, callback),
-        m_status(false),
-        m_stopRequested(false) {}
-
-GETRequestGenerator::GETRequestGenerator(int id, RequestSenderSP &requestSender,
-        const std::map<std::string, std::vector<std::string>> &queryParams,
-        AutoRequestGeneration::ProgressStateCallback callback)
-    :   AutoRequestGeneration(RequestType::RQ_TYPE_GET, id, requestSender, callback),
-        m_queryParamGen(queryParams),
-        m_status(false),
-        m_stopRequested(false) {}
+GETRequestGenerator::GETRequestGenerator(int id,
+        const std::shared_ptr<OC::OCResource> &ocResource,
+        const std::shared_ptr<RequestModel> &requestSchema,
+        RequestGeneration::ProgressStateCallback callback)
+    :   RequestGeneration(RequestType::RQ_TYPE_GET, id, callback),
+        m_stopRequested(false),
+        m_requestSchema(requestSchema),
+        m_requestSender(ocResource) {}
 
 void GETRequestGenerator::startSending()
 {
-    // Check if the operation is already in progress
-    std::lock_guard<std::mutex> lock(m_statusLock);
-    if (m_status)
-    {
-        OIC_LOG(ERROR, TAG, "Operation already in progress !");
-        throw OperationInProgressException("Another GET request generation session is already in progress!");
-    }
-
     // Create thread and start sending requests in dispatched thread
-    m_thread = std::make_shared<std::thread>(&GETRequestGenerator::SendAllRequests, this);
-    m_status = true;
+    m_thread.reset(new std::thread(&GETRequestGenerator::SendAllRequests, this));
     m_thread->detach();
 }
 
@@ -65,37 +52,34 @@ void GETRequestGenerator::SendAllRequests()
     OIC_LOG(DEBUG, TAG, "Sending OP_START event");
     m_callback(m_id, OP_START);
 
+    QPGenerator queryParamGen(m_requestSchema->getQueryParams());
     do
     {
-        if (!m_stopRequested)
-        {
-            // Get the next possible queryParameter
-            std::map<std::string, std::string> queryParam = m_queryParamGen.next();
+        // Get the next possible queryParameter
+        auto queryParam = queryParamGen.next();
 
+        try
+        {
             // Send the request
-            try
-            {
-                m_requestSender->sendRequest(queryParam, std::bind(&GETRequestGenerator::onResponseReceived, this,
-                                             std::placeholders::_1, std::placeholders::_2), true);
-                m_requestCnt++;
-            }
-            catch (SimulatorException &e)
-            {
-                m_stopRequested = true;
-                return completed();
-            }
+            m_requestSender.send(queryParam, std::bind(&GETRequestGenerator::onResponseReceived, this,
+                                 std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+            m_requestCnt++;
+        }
+        catch (SimulatorException &e)
+        {
+            m_stopRequested = true;
+            break;
         }
     }
-    while (m_queryParamGen.hasNext());
+    while (!m_stopRequested && queryParamGen.hasNext());
 
-    m_requestsSent = true;
     completed();
 }
 
 void GETRequestGenerator::onResponseReceived(SimulatorResult result,
-        SimulatorResourceModelSP repModel)
+        const SimulatorResourceModel &repModel, const RequestInfo &reqInfo)
 {
-    OIC_LOG_V(INFO, TAG, "Response recieved result:%d", result);
+    OIC_LOG(DEBUG, TAG, "Response recieved");
     m_responseCnt++;
     completed();
 }

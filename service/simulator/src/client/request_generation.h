@@ -18,18 +18,18 @@
  *
  ******************************************************************/
 
-#ifndef AUTO_REQUEST_GEN_H_
-#define AUTO_REQUEST_GEN_H_
+#ifndef SIMULATOR_REQUEST_GENERATION_H_
+#define SIMULATOR_REQUEST_GENERATION_H_
 
-#include "request_sender.h"
+#include "simulator_client_types.h"
 
-class AutoRequestGeneration
+class RequestGeneration
 {
     public:
         typedef std::function<void (int, OperationState)> ProgressStateCallback;
 
-        AutoRequestGeneration(RequestType type, int id,
-                              RequestSenderSP &requestSender, ProgressStateCallback callback);
+        RequestGeneration(RequestType type, int id,
+                          ProgressStateCallback callback);
         RequestType type() const { return m_type;}
         int id() const {return m_id;}
         void start();
@@ -41,7 +41,6 @@ class AutoRequestGeneration
 
         RequestType m_type;
         int m_id;
-        RequestSenderSP m_requestSender;
         ProgressStateCallback m_callback;
         bool m_requestsSent;
         int m_requestCnt;

@@ -29,13 +29,6 @@ import org.oic.simulator.test.ExceptionType;
 import junit.framework.TestCase;
 
 public class SimulatorCollectionResourceTest extends TestCase {
-    static {
-        System.loadLibrary("SimulatorManager");
-        System.loadLibrary("RamlParser");
-        System.loadLibrary("oc");
-        System.loadLibrary("oc_logger");
-        System.loadLibrary("octbstack");
-    }
 
     private static final String         COLLECTION_RES_RAML = "./ramls/oic.d.airconditioner.raml";
     private SimulatorCollectionResource collectionResource  = null;
@@ -73,7 +66,7 @@ public class SimulatorCollectionResourceTest extends TestCase {
         Vector<SimulatorResource> result = null;
         try {
             collectionResource.addChildResource(childResource);
-            result = collectionResource.getChildResource();
+            result = collectionResource.getChildResources();
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         } catch (SimulatorException e) {
@@ -106,7 +99,7 @@ public class SimulatorCollectionResourceTest extends TestCase {
         Vector<SimulatorResource> result = null;
         try {
             collectionResource.addChildResource(childResource);
-            result = collectionResource.getChildResource();
+            result = collectionResource.getChildResources();
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         } catch (SimulatorException e) {
@@ -144,7 +137,7 @@ public class SimulatorCollectionResourceTest extends TestCase {
         try {
             collectionResource.addChildResource(childResource1);
             collectionResource.addChildResource(childResource2);
-            result = collectionResource.getChildResource();
+            result = collectionResource.getChildResources();
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         } catch (SimulatorException e) {
@@ -181,7 +174,7 @@ public class SimulatorCollectionResourceTest extends TestCase {
             childResource = SimulatorManager.createResource(
                     SimulatorResource.Type.COLLECTION, name, uri, resType);
             collectionResource.addChildResource(childResource);
-            result = collectionResource.getChildResource();
+            result = collectionResource.getChildResources();
         } catch (InvalidArgsException e1) {
             e1.printStackTrace();
         } catch (SimulatorException e1) {
@@ -194,7 +187,7 @@ public class SimulatorCollectionResourceTest extends TestCase {
         int count = result.size();
         try {
             collectionResource.removeChildResource(childResource);
-            result = collectionResource.getChildResource();
+            result = collectionResource.getChildResources();
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         } catch (SimulatorException e) {
@@ -231,7 +224,7 @@ public class SimulatorCollectionResourceTest extends TestCase {
             childResource = SimulatorManager.createResource(
                     SimulatorResource.Type.COLLECTION, name, uri, resType);
             collectionResource.addChildResource(childResource);
-            result = collectionResource.getChildResource();
+            result = collectionResource.getChildResources();
         } catch (InvalidArgsException e1) {
             e1.printStackTrace();
         } catch (SimulatorException e1) {
@@ -244,7 +237,7 @@ public class SimulatorCollectionResourceTest extends TestCase {
         int count = result.size();
         try {
             collectionResource.removeChildResourceByUri(childResource.getURI());
-            result = collectionResource.getChildResource();
+            result = collectionResource.getChildResources();
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         } catch (SimulatorException e) {

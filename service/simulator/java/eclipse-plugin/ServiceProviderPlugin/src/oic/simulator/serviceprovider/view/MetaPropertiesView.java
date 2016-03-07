@@ -16,16 +16,6 @@
 
 package oic.simulator.serviceprovider.view;
 
-import java.util.List;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
-import oic.simulator.serviceprovider.manager.ResourceManager;
-import oic.simulator.serviceprovider.manager.UiListenerHandler;
-import oic.simulator.serviceprovider.model.MetaProperty;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.utils.Constants;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.EditingSupport;
@@ -36,7 +26,10 @@ import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -45,8 +38,27 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.part.ViewPart;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.oic.simulator.SimulatorException;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.listener.ISelectionChangedListener;
+import oic.simulator.serviceprovider.manager.ResourceManager;
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
+import oic.simulator.serviceprovider.model.MetaProperty;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
+import oic.simulator.serviceprovider.view.dialogs.UpdateResourceInterfaceDialog;
 
 /**
  * This class manages and shows the meta properties view in the perspective.
@@ -65,11 +77,15 @@ public class MetaPropertiesView extends ViewPart {
 
     private ResourceManager           resourceManagerRef;
 
+    private Set<String>               updatedIfSet;
+
     private List<MetaProperty>        properties;
 
     private boolean                   enable_edit;
     private Button                    editBtn;
     private Button                    cancelBtn;
+
+    private Map<String, String>       ifTypes;
 
     public MetaPropertiesView() {
 
@@ -125,6 +141,12 @@ public class MetaPropertiesView extends ViewPart {
                     cancelBtn.setEnabled(true);
                     editBtn.setText("Save");
                     setEnableEdit(true);
+
+                    Resource resource = resourceManagerRef
+                            .getCurrentResourceInSelection();
+                    if (null != resource) {
+                        updatedIfSet = resource.getResourceInterfaces();
+                    }
                 } else {
                     boolean result = false;
                     Resource resourceInSelection = resourceManagerRef
@@ -152,9 +174,21 @@ public class MetaPropertiesView extends ViewPart {
                             return;
                         }
 
+                        result = resourceManagerRef.isPropertyValueInvalid(
+                                resourceInSelection, properties,
+                                Constants.RESOURCE_TYPE);
+                        if (result) {
+                            MessageDialog.openError(parent.getShell(),
+                                    "Invalid Resource Type.",
+                                    Constants.INVALID_RESOURCE_TYPE_MESSAGE);
+                            return;
+                        }
+
                         boolean update = false;
                         boolean uriChange = false;
+                        boolean typeChange = false;
                         boolean nameChange = false;
+                        boolean interfaceChange = false;
 
                         if (resourceManagerRef.isPropValueChanged(
                                 resourceInSelection, properties,
@@ -162,6 +196,7 @@ public class MetaPropertiesView extends ViewPart {
                             update = true;
                             nameChange = true;
                         }
+
                         if (resourceManagerRef.isPropValueChanged(
                                 resourceInSelection, properties,
                                 Constants.RESOURCE_URI)) {
@@ -173,23 +208,53 @@ public class MetaPropertiesView extends ViewPart {
                                 return;
                             }
 
-                            if (resourceManagerRef
-                                    .isResourceStarted(resourceInSelection)) {
-                                update = MessageDialog.openQuestion(
-                                        parent.getShell(), "Save Details",
-                                        "Resource will be restarted to take the changes."
-                                                + " Do you want to continue?");
-                                if (!update) {
-                                    return;
-                                }
-                            }
-
                             update = true;
                             uriChange = true;
                         }
+
+                        if (resourceManagerRef.isPropValueChanged(
+                                resourceInSelection, properties,
+                                Constants.RESOURCE_TYPE)) {
+                            update = true;
+                            typeChange = true;
+                        }
+                        // Checking whether any changes made in resource
+                        // interfaces by
+                        // comparing the current interface set and updated
+                        // interface set.
+                        if (null != updatedIfSet) {
+                            Set<String> curIfSet = resourceInSelection
+                                    .getResourceInterfaces();
+                            if (curIfSet.size() != updatedIfSet.size()) {
+                                update = true;
+                                interfaceChange = true;
+                            } else {
+                                Iterator<String> itr = updatedIfSet.iterator();
+                                while (itr.hasNext()) {
+                                    if (!curIfSet.contains(itr.next())) {
+                                        update = true;
+                                        interfaceChange = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                         if (update) {
+                            if (uriChange || typeChange || interfaceChange) {
+                                if (resourceManagerRef
+                                        .isResourceStarted(resourceInSelection)) {
+                                    update = MessageDialog.openQuestion(
+                                            parent.getShell(),
+                                            "Save Details",
+                                            "Resource will be restarted to take the changes."
+                                                    + " Do you want to continue?");
+                                    if (!update) {
+                                        return;
+                                    }
+                                }
+                            }
                             try {
-                                if (uriChange || nameChange)
+                                if (uriChange || nameChange || typeChange)
                                     result = Activator
                                             .getDefault()
                                             .getResourceManager()
@@ -197,15 +262,19 @@ public class MetaPropertiesView extends ViewPart {
                                                     resourceManagerRef
                                                             .getCurrentResourceInSelection(),
                                                     properties, uriChange,
-                                                    nameChange);
+                                                    nameChange, typeChange);
+                                if (interfaceChange)
+                                    result = Activator
+                                            .getDefault()
+                                            .getResourceManager()
+                                            .updateResourceInterfaces(
+                                                    resourceInSelection,
+                                                    updatedIfSet);
+
                             } catch (SimulatorException ex) {
                                 result = false;
                             }
-                            if (result) {
-                                MessageDialog.openInformation(
-                                        parent.getShell(), "Operation status",
-                                        "Resource properties updated.");
-                            } else {
+                            if (!result) {
                                 MessageDialog.openInformation(
                                         parent.getShell(), "Operation status",
                                         "Failed to update the resource properties.");
@@ -243,8 +312,22 @@ public class MetaPropertiesView extends ViewPart {
                 cancelBtn.setEnabled(false);
                 editBtn.setText("Edit");
                 setEnableEdit(false);
+                if (null != updatedIfSet)
+                    updatedIfSet.clear();
             }
         });
+
+        // Get the supported interfaces.
+        Map<String, String> ifTypesSupported = Utility
+                .getResourceInterfaces(SingleResource.class);
+        if (null != ifTypesSupported && !ifTypesSupported.isEmpty()) {
+            ifTypes = new HashMap<String, String>();
+            String key;
+            for (Map.Entry<String, String> entry : ifTypesSupported.entrySet()) {
+                key = entry.getValue() + " (" + entry.getKey() + ")";
+                ifTypes.put(key, entry.getKey());
+            }
+        }
 
         addManagerListeners();
 
@@ -380,13 +463,61 @@ public class MetaPropertiesView extends ViewPart {
             if (!getEnableEdit()) {
                 return null;
             }
-            // Disabling edit for resource type
             String propName = ((MetaProperty) element).getPropName();
-            if (null != propName && propName.equals(Constants.RESOURCE_TYPE)) {
-                return null;
-            }
-
             CellEditor editor = new TextCellEditor(viewer.getTable());
+            if (null != propName && propName.equals(Constants.INTERFACE_TYPES)) {
+                editor.setStyle(SWT.READ_ONLY);
+                final Text txt = (Text) editor.getControl();
+                txt.addModifyListener(new ModifyListener() {
+                    @Override
+                    public void modifyText(ModifyEvent e) {
+                        if (null == updatedIfSet) {
+                            return;
+                        }
+                        // Form the result set of interfaces with check-box that
+                        // will be shown in the dialog for editing.
+                        Map<String, String> curResInterfaces = new HashMap<String, String>();
+                        for (Map.Entry<String, String> entry : ifTypes
+                                .entrySet()) {
+                            if (updatedIfSet.contains(entry.getValue())) {
+                                curResInterfaces.put(entry.getKey(),
+                                        entry.getValue());
+                            }
+                        }
+
+                        // Show the dialog for editing the resource interfaces.
+                        UpdateResourceInterfaceDialog ad = new UpdateResourceInterfaceDialog(
+                                Display.getDefault().getActiveShell(),
+                                curResInterfaces, ifTypes);
+                        if (ad.open() == Window.OK) {
+                            // Update the local copy of the current resource
+                            // interfaces to keep the state for save operation.
+                            updatedIfSet.clear();
+                            String newPropValue = "";
+                            for (Map.Entry<String, String> entry : curResInterfaces
+                                    .entrySet()) {
+                                if (!newPropValue.isEmpty()) {
+                                    newPropValue += ", ";
+                                }
+                                String value = ifTypes.get(entry.getKey());
+                                newPropValue += value;
+
+                                updatedIfSet.add(value);
+                            }
+                            // Update the model
+                            MetaProperty prop = (MetaProperty) element;
+                            prop.setPropValue(newPropValue);
+                            // Update the viewer in a separate UI thread.
+                            Display.getDefault().asyncExec(new Runnable() {
+                                @Override
+                                public void run() {
+                                    viewer.refresh(element, true);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
             return editor;
         }
 

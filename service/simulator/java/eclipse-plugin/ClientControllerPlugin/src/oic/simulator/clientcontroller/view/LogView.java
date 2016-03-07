@@ -16,25 +16,6 @@
 
 package oic.simulator.clientcontroller.view;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.listener.ILogUIListener;
-import oic.simulator.clientcontroller.manager.LogManager;
-import oic.simulator.clientcontroller.utils.Constants;
-import oic.simulator.clientcontroller.view.dialogs.FilterDialog;
-import oic.simulator.clientcontroller.view.dialogs.LogDetailsDialog;
-import oic.simulator.logger.LogContentProvider;
-import oic.simulator.logger.LogEntry;
-import oic.simulator.logger.LogLabelProvider;
-
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionItem;
@@ -73,7 +54,27 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.dialogs.PatternFilter;
 import org.eclipse.ui.part.ViewPart;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+
 import org.oic.simulator.ILogger.Level;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.listener.ILogUIListener;
+import oic.simulator.clientcontroller.manager.LogManager;
+import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.view.dialogs.FilterDialog;
+import oic.simulator.clientcontroller.view.dialogs.LogDetailsDialog;
+import oic.simulator.logger.LogContentProvider;
+import oic.simulator.logger.LogEntry;
+import oic.simulator.logger.LogLabelProvider;
 
 /**
  * This class manages and shows the log view in the perspective.

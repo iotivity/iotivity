@@ -23,6 +23,7 @@
 #include "simulator_collection_resource_impl.h"
 #include "simulator_logger.h"
 #include "logger.h"
+#include "request_model_builder.h"
 
 #define TAG "SIM_RESOURCE_FACTORY"
 
@@ -104,292 +105,160 @@ std::shared_ptr<SimulatorCollectionResource> SimulatorResourceFactory::createCol
     return std::shared_ptr<SimulatorCollectionResource>(collectionResource);
 }
 
-SimulatorResourceModel::Attribute SimulatorResourceFactory::buildAttribute(
-    std::shared_ptr<RAML::Properties> propertyElement)
-{
-    std::string propName = propertyElement->getName();
-
-    // Build representation attribute
-    SimulatorResourceModel::Attribute attribute(propName);
-    switch (propertyElement->getVariantType())
-    {
-        case RAML::VariantType::INT:
-            {
-                attribute.setValue(propertyElement->getValue<int>());
-
-                // Convert suppoted values
-                std::vector<int> allowedValues = propertyElement->getAllowedValuesInt();
-                if (allowedValues.size() > 0)
-                {
-                    SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
-                    attribute.setProperty(attrProp);
-                }
-            }
-            break;
-
-        case RAML::VariantType::DOUBLE:
-            {
-                attribute.setValue(propertyElement->getValue<double>());
-
-                // Convert suppoted values
-                std::vector<double> allowedValues = propertyElement->getAllowedValuesDouble();
-                if (allowedValues.size() > 0)
-                {
-                    SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
-                    attribute.setProperty(attrProp);
-                }
-            }
-            break;
-
-        case RAML::VariantType::BOOL:
-            {
-                attribute.setValue(propertyElement->getValue<bool>());
-
-                std::vector<bool> allowedValues = {true, false};
-                SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
-                attribute.setProperty(attrProp);
-            }
-            break;
-
-        case RAML::VariantType::STRING:
-            {
-                attribute.setValue(propertyElement->getValue<std::string>());
-
-                // Convert suppoted values
-                std::vector<std::string> allowedValues = propertyElement->getAllowedValuesString();
-                if (allowedValues.size() > 0)
-                {
-                    SimulatorResourceModel::AttributeProperty attrProp(allowedValues);
-                    attribute.setProperty(attrProp);
-                }
-            }
-            break;
-    }
-
-    // Set the range property if its present
-    double min, max;
-    int multipleof;
-    propertyElement->getRange(min, max, multipleof);
-    if (min != INT_MIN && max != INT_MAX)
-    {
-        SimulatorResourceModel::AttributeProperty attrProp(min, max);
-        attribute.setProperty(attrProp);
-    }
-    return attribute;
-}
-
-SimulatorResourceModel SimulatorResourceFactory::buildResourceModel(
-    std::shared_ptr<RAML::Items> item)
-{
-    SimulatorResourceModel itemModel;
-    for ( auto &propElement : item->getProperties())
-    {
-        if (!propElement.second)
-            continue;
-
-        std::string propName = propElement.second->getName();
-        if ("p" == propName || "n" == propName || "id" == propName)
-        {
-            continue;
-        }
-
-        if ("array" == propElement.second->getType())
-        {
-            std::vector<SimulatorResourceModel> arrayResModel;
-            for ( auto &propertyItem : propElement.second->getItems())
-            {
-                arrayResModel.push_back(buildResourceModel(propertyItem));
-            }
-            itemModel.add(propName, arrayResModel);
-        }
-        else
-        {
-            itemModel.add(buildAttribute(propElement.second));
-        }
-    }
-    return itemModel;
-}
-
-RAML::RequestResponseBodyPtr SimulatorResourceFactory::getRAMLResponseBody(
-    std::shared_ptr<RAML::RamlResource> ramlResource, RAML::ActionType type, std::string responseCode)
-{
-    // Get the resource representation schema from response body
-    RAML::ActionPtr action = ramlResource->getAction(type);
-    if (!action)
-    {
-        OIC_LOG(ERROR, TAG, "Resource does not possess the request!");
-        return nullptr;
-    }
-
-    RAML::ResponsePtr response = action->getResponse(responseCode);
-    if (!response)
-    {
-        OIC_LOG(ERROR, TAG, "Resource does not provide valid GET response!");
-        return nullptr;
-    }
-
-    RAML::RequestResponseBodyPtr responseBody = response->getResponseBody("application/json");
-    if (!responseBody)
-    {
-        OIC_LOG(ERROR, TAG, "GET response is not of type \"application/json\" ");
-        return nullptr;
-    }
-
-    return responseBody;
-}
-
-SimulatorResourceModel SimulatorResourceFactory::buildModelFromResponseBody(
-    RAML::RequestResponseBodyPtr responseBody, std::string &resourceType,
-    std::vector<std::string> &interfaceType)
-{
-    SimulatorResourceModel resModel;
-
-    if (!responseBody)
-        return resModel;
-
-    // Iterate throgh all resource property and extract information needed for simulating resource.
-    RAML::JsonSchemaPtr resourceProperties = responseBody->getSchema()->getProperties();
-
-
-    for ( auto &propertyElement : resourceProperties->getProperties())
-    {
-        if (!propertyElement.second)
-            continue;
-
-        std::string propName = propertyElement.second->getName();
-
-        // Resource type
-        if ("rt" == propName || "resourceType" == propName)
-        {
-            resourceType = propertyElement.second->getValueString();
-            continue;
-        }
-
-        // Interface type
-        if ("if" == propName)
-        {
-            if ("string" == propertyElement.second->getType())
-            {
-                interfaceType.push_back(propertyElement.second->getValueString());
-            }
-            else if ("array" == propertyElement.second->getType())
-            {
-                for (auto &item : propertyElement.second->getItems())
-                {
-                    if ("string" == item->getType())
-                    {
-                        interfaceType = item->getAllowedValuesString();
-                        break;
-                    }
-                }
-            }
-            continue;
-        }
-
-        // Other Standard properties which should not be part of resource model
-        if ("p" == propName || "n" == propName || "id" == propName)
-        {
-            continue;
-        }
-
-        // Add the attribute to resource model
-        if ("array" == propertyElement.second->getType())
-        {
-            std::vector<SimulatorResourceModel> arrayResModel;
-            for ( auto &propertyItem : propertyElement.second->getItems())
-            {
-                arrayResModel.push_back(buildResourceModel(propertyItem));
-            }
-            resModel.add(propName, arrayResModel);
-        }
-        else
-        {
-            resModel.add(buildAttribute(propertyElement.second));
-        }
-    }
-
-    if ("array" == resourceProperties->getType())
-    {
-        std::vector<SimulatorResourceModel> arrayResModel;
-        for ( auto &propertyItem : resourceProperties->getItems())
-        {
-            arrayResModel.push_back(buildResourceModel(propertyItem));
-        }
-        resModel.add("links", arrayResModel);
-    }
-
-    return resModel;
-}
-
 std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
-    std::shared_ptr<RAML::RamlResource> ramlResource)
+    const std::shared_ptr<RAML::RamlResource> &ramlResource)
 {
-    std::string name;
-    std::string uri;
-    std::string resourceType, rt;
-    std::vector<std::string> interfaceType, ifType;
+    // Build resource request and respone model schema
+    RequestModelBuilder requestModelBuilder;
+    std::unordered_map<std::string, RequestModelSP> requestModels =
+        requestModelBuilder.build(ramlResource);
 
-    name = ramlResource->getDisplayName();
-    uri = ramlResource->getResourceUri();
-    std::map<RAML::ActionType, RAML::ActionPtr> actionType = ramlResource->getActions();
+    // Build SimulatorResourceModel from "GET" response schema
+    if (requestModels.end() == requestModels.find("GET"))
+    {
+        OIC_LOG(ERROR, TAG, "Resource's RAML does not have GET request model!");
+        return nullptr;
+    }
 
-    RAML::RequestResponseBodyPtr successResponseBody = getRAMLResponseBody(
-                ramlResource, RAML::ActionType::GET, "200");
-    RAML::RequestResponseBodyPtr putErrorResponseBody = getRAMLResponseBody(
-                ramlResource, RAML::ActionType::PUT, "403");
-    RAML::RequestResponseBodyPtr postErrorResponseBody = getRAMLResponseBody(
-                ramlResource, RAML::ActionType::POST, "403");
+    RequestModelSP getRequestModel = requestModels["GET"];
+    ResponseModelSP getResponseModel = getRequestModel->getResponseModel(200);
+    if (!getResponseModel)
+    {
+        OIC_LOG(ERROR, TAG, "Resource's RAML does not have response for GET request!");
+        return nullptr;
+    }
 
-    SimulatorResourceModel successResponseModel = buildModelFromResponseBody(
-                successResponseBody, resourceType, interfaceType);
-    SimulatorResourceModel putErrorResponseModel = buildModelFromResponseBody(
-                putErrorResponseBody, rt, ifType);
-    SimulatorResourceModel postErrorResponseModel = buildModelFromResponseBody(
-                postErrorResponseBody, rt, ifType);
+    std::shared_ptr<SimulatorResourceModelSchema> responseSchema =
+        getResponseModel->getSchema();
+    if (!responseSchema)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to get schema from response model!");
+        return nullptr;
+    }
+
+    SimulatorResourceModel resourceModel = responseSchema->buildResourceModel();
+
+    // Remove the common properties from  resource Model
+    std::string resourceURI = ramlResource->getResourceUri();
+    std::string resourceName = ramlResource->getDisplayName();
+    std::string resourceType;
+
+    // Extracting resource type.
+    if (resourceModel.contains("rt"))
+    {
+        resourceType = resourceModel.get<std::string>("rt");
+        resourceModel.remove("rt");
+    }
+    else if (resourceModel.contains("resourceType"))
+    {
+        resourceType = resourceModel.get<std::string>("resourceType");
+        resourceModel.remove("resourceType");
+    }
+
+    // Construct resource type from uri
+    if(resourceType.empty())
+    {
+        std::ostringstream rtString;
+        rtString << "oic.r.";
+
+        size_t pos = resourceURI.rfind("/");
+        if (pos == std::string::npos)
+            pos = -1;
+
+        std::string rtName = resourceURI.substr(pos+1);
+        std::transform(rtName.begin(), rtName.end(), rtName.begin(), ::tolower);
+        rtString << rtName;
+        resourceType = rtString.str();
+    }
+
+    // Extracting interface type.
+    std::vector<std::string> interfaceTypes;
+    if (resourceModel.contains("if"))
+    {
+        SimulatorResourceModel::TypeInfo typeInfo = resourceModel.getType("if");
+        if(AttributeValueType::STRING == typeInfo.type())
+        {
+            interfaceTypes.push_back(resourceModel.get<std::string>("if"));
+        }
+        else if(AttributeValueType::VECTOR == typeInfo.type()
+            && AttributeValueType::STRING == typeInfo.baseType()
+            && typeInfo.depth() == 1)
+        {
+            interfaceTypes = resourceModel.get<std::vector<std::string>>("if");
+            if (interfaceTypes.size() > 1)
+                interfaceTypes.erase(interfaceTypes.begin()+1, interfaceTypes.end());
+        }
+
+        resourceModel.remove("if");
+    }
+
+    for (auto &requestModel : requestModels)
+    {
+        if (requestModel.second)
+        {
+            addInterfaceFromQueryParameter((requestModel.second)->getQueryParams("if"),
+                interfaceTypes);
+        }
+    }
+
+    // Remove properties which are not part of resource representation
+    resourceModel.remove("p");
+    resourceModel.remove("n");
+    resourceModel.remove("id");
 
     // Create simple/collection resource
     std::shared_ptr<SimulatorResource> simResource;
-    if (successResponseModel.containsAttribute("links"))
+    if (resourceModel.contains("links"))
     {
-        try
-        {
-            std::shared_ptr<SimulatorCollectionResourceImpl> collectionRes(
-                new SimulatorCollectionResourceImpl());
+        std::shared_ptr<SimulatorCollectionResourceImpl> collectionRes(
+            new SimulatorCollectionResourceImpl());
 
-            collectionRes->setName(name);
-            collectionRes->setResourceType(resourceType);
-            collectionRes->setInterface(interfaceType);
-            collectionRes->setURI(ResourceURIFactory::getInstance()->constructURI(uri));
-            collectionRes->setActionType(actionType);
+        collectionRes->setName(resourceName);
+        collectionRes->setResourceType(resourceType);
+        if (interfaceTypes.size() > 0)
+            collectionRes->setInterface(interfaceTypes);
+        collectionRes->setURI(ResourceURIFactory::getInstance()->makeUniqueURI(resourceURI));
 
-            collectionRes->setResourceModel(successResponseModel);
-            simResource = std::dynamic_pointer_cast<SimulatorResource>(collectionRes);
-        }
-        catch (InvalidArgsException &e) {}
+        // Set the resource model and its schema to simulated resource
+        collectionRes->setResourceModel(resourceModel);
+        collectionRes->setResourceModelSchema(responseSchema);
+        collectionRes->setRequestModel(requestModels);
+
+        simResource = collectionRes;
     }
     else
     {
-        try
-        {
-            std::shared_ptr<SimulatorSingleResourceImpl> singleRes(
-                new SimulatorSingleResourceImpl());
+        std::shared_ptr<SimulatorSingleResourceImpl> singleRes(
+            new SimulatorSingleResourceImpl());
 
-            singleRes->setName(name);
-            singleRes->setResourceType(resourceType);
-            singleRes->setInterface(interfaceType);
-            singleRes->setURI(ResourceURIFactory::getInstance()->constructURI(uri));
-            singleRes->setActionType(actionType);
+        singleRes->setName(resourceName);
+        singleRes->setResourceType(resourceType);
+        if (interfaceTypes.size() > 0)
+            singleRes->setInterface(interfaceTypes);
+        singleRes->setURI(ResourceURIFactory::getInstance()->makeUniqueURI(resourceURI));
 
-            singleRes->setResourceModel(successResponseModel);
-            singleRes->setPutErrorResponseModel(putErrorResponseModel);
-            singleRes->setPostErrorResponseModel(postErrorResponseModel);
+        // Set the resource model and its schema to simulated resource
+        singleRes->setResourceModel(resourceModel);
+        singleRes->setResourceModelSchema(responseSchema);
+        singleRes->setRequestModel(requestModels);
 
-            simResource = std::dynamic_pointer_cast<SimulatorResource>(singleRes);
-        }
-        catch (InvalidArgsException &e) {}
+        simResource = singleRes;
     }
 
     return simResource;
+}
+
+void SimulatorResourceFactory::addInterfaceFromQueryParameter(
+    std::vector<std::string> queryParamValue, std::vector<std::string> &interfaceTypes)
+{
+    for (auto &interfaceType : queryParamValue)
+    {
+        if (interfaceTypes.end() ==
+            std::find(interfaceTypes.begin(), interfaceTypes.end(), interfaceType))
+        {
+            interfaceTypes.push_back(interfaceType);
+        }
+    }
 }
 
 ResourceURIFactory *ResourceURIFactory::getInstance()
@@ -401,7 +270,7 @@ ResourceURIFactory *ResourceURIFactory::getInstance()
 ResourceURIFactory::ResourceURIFactory()
     : m_id(0) {}
 
-std::string ResourceURIFactory::constructURI(const std::string &uri)
+std::string ResourceURIFactory::makeUniqueURI(const std::string &uri)
 {
     std::lock_guard<std::mutex> lock(m_lock);
     if (isUnique(uri))

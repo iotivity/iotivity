@@ -20,7 +20,6 @@ import java.util.Map;
 
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValueVisitor;
-import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
 
 public class AttributeValueStringConverter implements
@@ -63,13 +62,12 @@ public class AttributeValueStringConverter implements
         StringBuilder result = new StringBuilder();
         result.append("{");
         boolean first = true;
-        for (Map.Entry<String, SimulatorResourceAttribute> entry : value
-                .getAttributes().entrySet()) {
+        for (Map.Entry<String, AttributeValue> entry : value.get().entrySet()) {
             if (!first)
                 result.append(", ");
             first = false;
             result.append("\"" + entry.getKey() + "\":");
-            AttributeValue attributeValue = entry.getValue().value();
+            AttributeValue attributeValue = entry.getValue();
             result.append(new AttributeValueStringConverter(attributeValue)
                     .toString());
         }

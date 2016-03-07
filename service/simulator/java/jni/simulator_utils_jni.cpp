@@ -20,7 +20,7 @@
 
 #include "simulator_utils_jni.h"
 
-jobject simulatorResultToJava(JNIEnv *env, SimulatorResult errorCode)
+jobject SimulatorResultToJava(JNIEnv *env, SimulatorResult errorCode)
 {
     switch (errorCode)
     {
@@ -284,6 +284,14 @@ jobject simulatorResultToJava(JNIEnv *env, SimulatorResult errorCode)
                                           "SIMULATOR_BAD_OBJECT", "Lorg/oic/simulator/SimulatorResult;");
                 return env->GetStaticObjectField(gSimulatorClassRefs.simulatorResultCls, fieldID);
             }
+        case SIMULATOR_BAD_SCHEMA:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(gSimulatorClassRefs.simulatorResultCls,
+                                          "SIMULATOR_BAD_SCHEMA", "Lorg/oic/simulator/SimulatorResult;");
+                return env->GetStaticObjectField(gSimulatorClassRefs.simulatorResultCls, fieldID);
+            }
+        default:
+            break;
     }
 
     static jfieldID fieldID = env->GetStaticFieldID(gSimulatorClassRefs.simulatorResultCls,

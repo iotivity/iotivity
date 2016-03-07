@@ -16,26 +16,6 @@
 
 package oic.simulator.serviceprovider.view;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.listener.IPropertiesChangedListener;
-import oic.simulator.serviceprovider.listener.IResourceListChangedListener;
-import oic.simulator.serviceprovider.manager.ResourceManager;
-import oic.simulator.serviceprovider.manager.UiListenerHandler;
-import oic.simulator.serviceprovider.model.AutomationSettingHelper;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.ResourceType;
-import oic.simulator.serviceprovider.model.SingleResource;
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-import oic.simulator.serviceprovider.view.dialogs.AutomationSettingDialog;
-import oic.simulator.serviceprovider.view.dialogs.CreateResourceWizard;
-import oic.simulator.serviceprovider.view.dialogs.DeleteResourceWizard;
-import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
-import oic.simulator.serviceprovider.view.dialogs.ResourceWizardDialog;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -67,8 +47,29 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.dialogs.PatternFilter;
 import org.eclipse.ui.part.ViewPart;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.listener.IPropertiesChangedListener;
+import oic.simulator.serviceprovider.listener.IResourceListChangedListener;
+import oic.simulator.serviceprovider.manager.ResourceManager;
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
+import oic.simulator.serviceprovider.model.AutomationSettingHelper;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.ResourceType;
+import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
+import oic.simulator.serviceprovider.view.dialogs.AutomationSettingDialog;
+import oic.simulator.serviceprovider.view.dialogs.CreateResourceWizard;
+import oic.simulator.serviceprovider.view.dialogs.DeleteResourceWizard;
+import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
+import oic.simulator.serviceprovider.view.dialogs.ResourceWizardDialog;
 
 /**
  * This class manages and shows the resource manager view in the perspective.
@@ -96,7 +97,7 @@ public class ResourceManagerView extends ViewPart {
 
             @Override
             public void onResourceCreation(final ResourceType type) {
-                Display.getDefault().asyncExec(new Runnable() {
+                Display.getDefault().syncExec(new Runnable() {
 
                     @Override
                     public void run() {
@@ -301,12 +302,6 @@ public class ResourceManagerView extends ViewPart {
 
                                             resourceManager
                                                     .resourceSelectionChanged(null);
-
-                                            MessageDialog.openInformation(
-                                                    Display.getDefault()
-                                                            .getActiveShell(),
-                                                    "Deleted",
-                                                    "Resource deleted.");
                                         } catch (SimulatorException e1) {
                                             MessageDialog
                                                     .openInformation(Display
@@ -345,7 +340,6 @@ public class ResourceManagerView extends ViewPart {
                                     "Attribute level automation for this resource is already in progress!!!\nPlease stop all "
                                             + "running attribute level automations to start resource level automation.");
                 } else {
-
                     // Start the automation
                     // Fetch the settings data
                     List<AutomationSettingHelper> automationSettings;
@@ -369,11 +363,12 @@ public class ResourceManagerView extends ViewPart {
                         boolean status = resourceManager
                                 .startResourceAutomationUIRequest(autoType,
                                         updFreq, selectedResource);
-                        String statusMsg = status ? "Automation started successfully!!!"
-                                : "Automation request failed!!!";
-                        MessageDialog.openInformation(Display.getDefault()
-                                .getActiveShell(), "Automation Status",
-                                statusMsg);
+                        if (!status) {
+                            String statusMsg = "Automation request failed!!!";
+                            MessageDialog.openInformation(Display.getDefault()
+                                    .getActiveShell(), "Automation Status",
+                                    statusMsg);
+                        }
                     }
                 }
             }
@@ -386,10 +381,11 @@ public class ResourceManagerView extends ViewPart {
             public void widgetSelected(SelectionEvent e) {
                 boolean status = resourceManager
                         .stopResourceAutomationUIRequest(selectedResource);
-                String statusMsg = status ? "Automation stopped!!!"
-                        : "Automation stop failed.";
-                MessageDialog.openInformation(Display.getDefault()
-                        .getActiveShell(), "Automation Status", statusMsg);
+                if (!status) {
+                    String statusMsg = "Automation stop failed.";
+                    MessageDialog.openInformation(Display.getDefault()
+                            .getActiveShell(), "Automation Status", statusMsg);
+                }
             }
         });
 
@@ -406,11 +402,9 @@ public class ResourceManagerView extends ViewPart {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 if (resourceManager.getResourceCount() >= Constants.MAX_RESOURCE_COUNT) {
-                    MessageDialog
-                            .openInformation(Display.getDefault()
-                                    .getActiveShell(),
-                                    "Resource limit exceeded",
-                                    "Exceeded the limit of resources that can exist in the server.");
+                    MessageDialog.openInformation(Display.getDefault()
+                            .getActiveShell(), "Resource limit exceeded",
+                            Constants.RESOURCE_LIMIT_EXCEEDED_MSG);
                     return;
                 }
                 PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
@@ -476,11 +470,14 @@ public class ResourceManagerView extends ViewPart {
                         int open = wizardDialog.open();
                         if (open == Window.OK) {
                             singleResTreeViewer.refresh();
-                            MessageDialog.openInformation(Display.getDefault()
-                                    .getActiveShell(),
-                                    "Resource Deletion Status", deleteWizard
-                                            .getStatus());
 
+                            if (!deleteWizard.getStatus()) {
+                                MessageDialog
+                                        .openInformation(Display.getDefault()
+                                                .getActiveShell(),
+                                                "Resource Deletion Failed",
+                                                "Failed to delete the resources. Please try again.");
+                            }
                             changeDeleteVisibility();
                         }
                     }

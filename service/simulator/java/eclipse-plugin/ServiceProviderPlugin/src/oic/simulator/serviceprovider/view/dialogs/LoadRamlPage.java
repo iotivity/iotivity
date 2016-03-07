@@ -16,17 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.io.FileInputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Date;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.SingleResource;
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -51,10 +40,22 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
+
+import java.io.FileInputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Date;
+
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.server.SimulatorResource;
 import org.oic.simulator.server.SimulatorResource.Type;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
+import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
 
 /**
  * This class shows UI for creating resources.
@@ -252,8 +253,6 @@ public class LoadRamlPage extends WizardPage {
             MessageDialog
                     .openError(getShell(), "Invalid File",
                             "File doesn't exist. Either the file path or file name is invalid.");
-            // TODO: Instead of MessageDialog, errors may be shown on wizard
-            // itself.
             return null;
         }
 
