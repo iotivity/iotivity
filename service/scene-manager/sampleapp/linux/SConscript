@@ -1,0 +1,48 @@
+##
+# GroupManager build script
+##
+
+Import('env')
+
+lib_env = env.Clone()
+SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+scenemanager_sample_env = lib_env.Clone()
+
+######################################################################
+# Build flags
+######################################################################
+scenemanager_sample_env.AppendUnique(CPPPATH = ['../../include', '../../src'])
+scenemanager_sample_env.AppendUnique(CPPPATH = ['../../../resource-encapsulation/include'])
+scenemanager_sample_env.AppendUnique(CPPPATH = ['../../../../extlibs/cjson'])
+scenemanager_sample_env.AppendUnique(CPPPATH = ['../../../../resource/csdk/connectivity/api'])
+scenemanager_sample_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+
+scenemanager_sample_env.AppendUnique(LIBS = [
+    'scene_manager',
+    'rcs_client',
+    'rcs_server',
+    'rcs_common',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
+    'pthread'
+    ])
+
+if env.get('SECURED') == '1':
+    scenemanager_sample_env.AppendUnique(LIBS = ['tinydtls'])
+
+if 'rt' in scenemanager_sample_env.get('LIBS'):
+    scenemanager_sample_env.Append(LIBS = ['rt'])
+
+if not env.get('RELEASE'):
+    scenemanager_sample_env.PrependUnique(LIBS = ['gcov'])
+    scenemanager_sample_env.AppendUnique(CXXFLAGS = ['--coverage'])
+####################################################################
+# Source files and Targets
+######################################################################
+sceneserver = scenemanager_sample_env.Program('sceneserver', 'sceneserver.cpp')
+sceneclient = scenemanager_sample_env.Program('sceneclient', 'sceneclient.cpp')
+fanserver = scenemanager_sample_env.Program('fanserver', 'fanserver.cpp')
+lightserver = scenemanager_sample_env.Program('lightserver', 'lightserver.cpp')
