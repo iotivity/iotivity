@@ -342,22 +342,21 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
 void CALENWConnectionStateChangedCb(int result, bool connected,
                                     const char *remoteAddress, void *userData)
 {
-    OIC_LOG(DEBUG, TAG, "IN ");
+    OIC_LOG(DEBUG, TAG, "IN");
 
     VERIFY_NON_NULL_VOID(remoteAddress, TAG, "remote address is NULL");
 
-    if (!connected)
+    ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
+    const char *addr = OICStrdup(remoteAddress);
+    if (NULL == addr)
     {
-        OIC_LOG_V(DEBUG, TAG, "disconnected [%s] ", remoteAddress);
-        ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
-        const char *addr = OICStrdup(remoteAddress);
-        g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, addr, connected);
+        OIC_LOG(ERROR, TAG, "addr is NULL");
         ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+        return;
     }
-    else
-    {
-        OIC_LOG_V(DEBUG, TAG, "connected [%s] ", remoteAddress);
-    }
+    g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, addr, connected);
+    OICFree(addr);
+    ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT");
 }

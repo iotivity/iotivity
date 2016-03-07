@@ -610,7 +610,7 @@ TEST_F(ResourceObjectInterfaceHandlerTest, GetResponseForBaselineContainsAllProp
     initServer({BASELINE_INTERFACE});
 
     mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
-                [server](const shared_ptr<OCResourceResponse> response)
+                [=](const shared_ptr<OCResourceResponse> response)
                 {
                     RCSResourceObject::LockGuard guard{ server };
                     return checkResponse(response->getResourceRepresentation(),
@@ -646,7 +646,7 @@ TEST_F(ResourceObjectInterfaceHandlerTest, GetResponseForCustomInterfaceCompareT
     initServer({CUSTOM_INTERFACE});
 
     mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
-                [server](const shared_ptr<OCResourceResponse> response)
+                [=](const shared_ptr<OCResourceResponse> response)
                 {
                     RCSResourceObject::LockGuard guard{ server };
                     return checkResponse(response->getResourceRepresentation(),

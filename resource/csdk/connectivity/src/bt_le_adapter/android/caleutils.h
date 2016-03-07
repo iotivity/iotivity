@@ -53,12 +53,15 @@ static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAda
 static const char METHODID_BT_DEVICE[] = "()Landroid/bluetooth/BluetoothDevice;";
 static const char METHODID_BT_REMOTE_DEVICE[] = "(Ljava/lang/String;)Landroid/bluetooth/BluetoothDevice;";
 
+static const jint GATT_PROFILE = 7;
 static const jint GATT_SUCCESS = 0;
 
 static const jint BOND_BONDED = 12;
 static const jint BOND_BONDING = 11;
 static const jint BOND_NONE = 10;
 
+static const jint STATE_CONNECTED = 2;
+static const jint STATE_DISCONNECTED = 0;
 /**
  * get uuid(jni object) from uuid(character).
  * @param[in]   env              JNI interface pointer.

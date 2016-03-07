@@ -239,6 +239,7 @@ Java_org_iotivity_ca_CaInterface_caManagerTerminate(JNIEnv *env, jclass clazz)
     if (g_listenerObject)
     {
         (*env)->DeleteGlobalRef(env, g_listenerObject);
+        g_listenerObject = NULL;
     }
 }
 
