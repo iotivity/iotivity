@@ -84,6 +84,7 @@ public class MainActivity extends Activity {
 
     private static final int BUFFER_SIZE = 1024;
     private String filePath = "";
+    private boolean isSecurityEnabled = false;
     //create platform config
     PlatformConfig cfg;
 
@@ -234,7 +235,7 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 filePath = getFilesDir().getPath() + "/";
-
+                isSecurityEnabled = true;
                 //copy json when application runs first time
                 SharedPreferences wmbPreference = PreferenceManager.getDefaultSharedPreferences
                         (getApplicationContext());
@@ -382,7 +383,7 @@ public class MainActivity extends Activity {
 
                         mWiFiProvConfig = new WiFiProvConfig(mEnrollerSsid,
                                 mEnrollerPassword);
-                        mWiFiProvConfig.setSecured(true);
+                        mWiFiProvConfig.setSecured(isSecurityEnabled);
                         mDevice = mDeviceFactory
                                 .newEnrolleeDevice(mWiFiProvConfig);
                             Thread thread = new Thread() {
@@ -405,7 +406,7 @@ public class MainActivity extends Activity {
 
                         mWiFiProvConfig = new WiFiProvConfig(mEnrollerSsid,
                                 mEnrollerPassword);
-                        mWiFiProvConfig.setSecured(true);
+                        mWiFiProvConfig.setSecured(isSecurityEnabled);
                         mWiFiOnBoardingConfig = new WiFiOnBoardingConfig();
 
                         /*
