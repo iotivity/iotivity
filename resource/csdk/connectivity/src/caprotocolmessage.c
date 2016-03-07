@@ -1139,7 +1139,7 @@ CAPayloadFormat_t CAConvertFormat(uint8_t format)
 bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter)
 {
     if (CA_ADAPTER_GATT_BTLE & adapter || CA_ADAPTER_RFCOMM_BTEDR & adapter
-            || CA_ADAPTER_TCP & adapter)
+            || CA_ADAPTER_TCP & adapter || CA_DEFAULT_ADAPTER == adapter)
     {
         return true;
     }

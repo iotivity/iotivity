@@ -316,7 +316,10 @@ typedef struct
 
 /** Options in coap_pdu_t are accessed with the macro COAP_OPTION. */
 #define COAP_OPTION(node) ((coap_option *)(node)->options)
-
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #ifdef WITH_LWIP
 /**
  * Creates a CoAP PDU from an lwIP @p pbuf, whose reference is passed on to
@@ -550,5 +553,7 @@ int coap_add_data(coap_pdu_t *pdu, unsigned int len, const unsigned char *data);
  * destroyed with the pdu.
  */
 int coap_get_data(const coap_pdu_t *pdu, size_t *len, unsigned char **data);
-
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 #endif /* _PDU_H_ */

@@ -293,6 +293,13 @@ CAResult_t CAEDRClientSendMulticastData(const uint8_t *data,
  */
 CAResult_t CAEDRGetBondedDeviceList();
 
+#ifdef __TIZEN__
+/**
+ * This function starts device discovery.
+ */
+CAResult_t CAEDRStartDeviceDiscovery(void);
+#endif
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

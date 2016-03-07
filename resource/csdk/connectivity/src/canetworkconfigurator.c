@@ -141,8 +141,9 @@ CAResult_t CAAddNetworkType(CATransportAdapter_t transportType)
            break;
 #endif // TCP_ADAPTER
 
-#ifndef NFC_ADAPTER
+
         case CA_ADAPTER_NFC:
+ #ifndef NFC_ADAPTER
             OIC_LOG(DEBUG, TAG, "Add network type(NFC) - Not Supported");
             return CA_NOT_SUPPORTED;
 

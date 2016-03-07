@@ -42,9 +42,12 @@ namespace
     HostingObject::Ptr instance;
     RCSRemoteResourceObject::Ptr discoveredResource;
 
-    void onDestroy(){ }
+    std::condition_variable responseCon;
+
+    void onDestroy() { }
     void onDiscoveryResource(RCSRemoteResourceObject::Ptr){ }
     void onUpdatedCache(const RCSResourceAttributes &) { }
+    void onSetAttributes(const RCSResourceAttributes &, int) { }
 
     void setup()
     {
@@ -78,7 +81,6 @@ class HostingObjectTest : public TestWithMock
 {
 public:
     std::mutex mutexForCondition;
-    std::condition_variable responseCon;
 
 protected:
 
@@ -174,4 +176,39 @@ TEST_F(HostingObjectTest, UpdateCachedDataWhenChangedOriginResource)
 
     EXPECT_EQ(result.toString(), settingValue.toString());
 
+}
+
+TEST_F(HostingObjectTest, SetDataToMirroredResource)
+{
+    int waitForResponse = 1000;
+    RCSResourceAttributes::Value result = { };
+
+    mocks.ExpectCallFunc(onSetAttributes).Do(
+            [this, & result](const RCSResourceAttributes &att, int)
+            {
+                result = att.at(TEST_ATT_KEY);
+                notifyCondition();
+            });
+    RCSResourceAttributes setAttrs;
+    RCSResourceAttributes::Value settingValue = 20;
+    setAttrs[TEST_ATT_KEY] = settingValue;
+    discoveredResource->setRemoteAttributes(setAttrs, onSetAttributes);
+    waitForCondition(waitForResponse);
+
+    EXPECT_EQ(result.toString(), settingValue.toString());
+}
+
+TEST_F(HostingObjectTest, ExpectCallOnDestroyWhenStopHostingObject)
+{
+    int waitForResponse = 1000;
+
+    mocks.ExpectCallFunc(onDestroy).Do(
+            [& responseCon]()
+            {
+                responseCon.notify_all();
+            });
+
+    testObject.destroy();
+    instance.reset();
+    waitForCondition(waitForResponse);
 }

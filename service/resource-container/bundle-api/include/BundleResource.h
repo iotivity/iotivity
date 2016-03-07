@@ -99,6 +99,8 @@ namespace OIC
                 */
                 void setAttributes(const RCSResourceAttributes &attrs);
 
+                void setAttributes(const RCSResourceAttributes &attrs, bool notify);
+
                 /**
                 * Return the value of an attribute
                 *
@@ -195,7 +197,7 @@ namespace OIC
                 std::string m_bundleId;
                 std::string m_name, m_uri, m_resourceType, m_interface, m_address;
                 std::map< std::string,
-                    std::vector< std::map< std::string, std::string > > > m_mapResourceProperty;
+                std::vector< std::map< std::string, std::string > > > m_mapResourceProperty;
 
             private:
                 NotificationReceiver* m_pNotiReceiver;

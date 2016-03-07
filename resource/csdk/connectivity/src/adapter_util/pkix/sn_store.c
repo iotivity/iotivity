@@ -82,7 +82,8 @@ PKIError StoreSerialNumber(const ByteArray sn)
 PKIError CheckSerialNumber(const ByteArray sn)
 {
     FUNCTION_INIT(
-        int i, res;
+        unsigned long int i;
+        int res;
         CHECK_NULL(sn.data, PKI_NULL_PASSED);
     );
     CHECK_NULL(Store.array.data, PKI_SUCCESS);

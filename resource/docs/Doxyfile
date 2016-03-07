@@ -674,7 +674,8 @@ INPUT                  = . \
                          ../../service/resource-hosting/include \
                          ../../service/resource-container/include \
                          ../../service/resource-container/bundle-api/include \
-                         ../../service/things-manager/sdk/inc \
+                         ../../service/things-manager/sdk/inc/ThingsConfiguration.h \
+                         ../../service/things-manager/sdk/inc/ThingsMaintenance.h \
                          ../../service/easy-setup/sdk/common \
                          ../../service/easy-setup/sdk/enrollee/api \
                          ../../service/resource-directory/include

@@ -618,9 +618,16 @@ static int checkLinkedStatus(void)
     printf("   Checking Selected Link Status on PRVN DB..\n");
     OCUuidList_t* dvid_lst = NULL;
     size_t dvid_cnt = 0;
+    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*)g_own_list, dev_num);
+    if(!dev || !dev->doxm)
+    {
+        OIC_LOG(ERROR, TAG, "checkLinkedStatus: device instance empty");
+        goto CKLST_ERROR;
+    }
+
     if(OC_STACK_OK !=
             OCGetLinkedStatus(
-                    &getDevInst((const OCProvisionDev_t*) g_own_list, dev_num)->doxm->deviceID,
+                    &dev->doxm->deviceID,
                     &dvid_lst, &dvid_cnt))  // allow empty list
     {
         OIC_LOG(ERROR, TAG, "OCGetLinkedStatus API error");
@@ -782,9 +789,14 @@ static OicSecAcl_t* createAcl(const int dev_num)
         }
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
-    memcpy(&acl->subject,
-            &getDevInst((const OCProvisionDev_t*) g_own_list, num)->doxm->deviceID,
-            UUID_LENGTH);  // not need |*sizeof(uint8_t)|
+
+    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*)g_own_list, num);
+    if(!dev || !dev->doxm)
+    {
+        OIC_LOG(ERROR, TAG, "createAcl: device instance empty");
+        goto CRACL_ERROR;
+    }
+    memcpy(&acl->subject, &dev->doxm->deviceID, UUID_LENGTH);
 
     // enter number of |resources| in 'accessed' device
     for( ; ; )
@@ -891,9 +903,14 @@ static OicSecAcl_t* createAcl(const int dev_num)
         OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
         goto CRACL_ERROR;
     }
-    memcpy(acl->owners,
-            &getDevInst((const OCProvisionDev_t*) g_own_list, num)->doxm->deviceID,
-            UUID_LENGTH);  // not need |*sizeof(uint8_t)|
+
+    dev = getDevInst((const OCProvisionDev_t*)g_own_list, num);
+    if(!dev || !dev->doxm)
+    {
+        OIC_LOG(ERROR, TAG, "createAcl: device instance empty");
+        goto CRACL_ERROR;
+    }
+    memcpy(acl->owners, &dev->doxm->deviceID, UUID_LENGTH);
     printf("\n");
 
     return acl;

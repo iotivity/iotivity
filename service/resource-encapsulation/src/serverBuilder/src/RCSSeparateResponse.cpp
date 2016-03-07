@@ -83,9 +83,8 @@ namespace OIC
 
             response->setResponseResult(OC_EH_OK);
 
-            // TODO the response should be different by the request interface.
             response->setResourceRepresentation(
-                    RCSRepresentation::toOCRepresentation(resObj->toRepresentation()));
+                    RCSRepresentation::toOCRepresentation(resObj->getRepresentation(m_request)));
 
             invokeOCFunc(OC::OCPlatform::sendResponse, response);
 

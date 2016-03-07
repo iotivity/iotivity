@@ -142,6 +142,15 @@ jstring CALEGetAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
  * @return  remote address.
  */
 jint CALEGetConstantsValue(JNIEnv *env, const char* classType, const char* name);
+
+/**
+ * get bluetooth device object from bluetooth adapter.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   address               bluetooth address.
+ * @return  bluetooth device object.
+ */
+jobject CALEGetRemoteDevice(JNIEnv *env, jstring address);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

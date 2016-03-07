@@ -104,6 +104,13 @@ long int getRelativeIntervalOfWeek(struct tm* tp)
 
     time(&current_time);
     current = localtime(&current_time);
+
+    if(current == NULL)
+    {
+        printf("ERROR; Getting local time fails\n");
+        return 0;
+    }
+
     midnight = (struct tm* )malloc(sizeof(struct tm));
 
     if(midnight == NULL)

@@ -1,0 +1,32 @@
+##
+# Enrollee sample build script
+##
+
+SConscript('./service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/SConscript')
+
+Import('env')
+
+target_os = env.get('TARGET_OS')
+transport = env.get('TARGET_TRANSPORT')
+buildsample = env.get('BUILD_SAMPLE')
+release_mode = env.get('RELEASE')
+secured = env.get('SECURED')
+logging = env.get('LOGGING')
+routing = env.get('ROUTING')
+es_role = env.get('ES_ROLE')
+es_target_enrollee = env.get('ES_TARGET_ENROLLEE')
+es_softap_mode = env.get('ES_SOFTAP_MODE')
+
+print "Given Transport is %s" % transport
+print "Given OS is %s" % target_os
+
+print "Given es_role is %s" % es_role
+print "Given es_target_enrollee is %s" % es_target_enrollee
+print "Given es_softap_mode is %s" % es_softap_mode
+
+
+if target_os == 'tizen':
+	command = "sh service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample/build/tizen/gbsbuild.sh %s %s %s %s %s %s %s %s %s" % (transport, secured, buildsample, routing, release_mode, logging, es_role, es_target_enrollee, es_softap_mode)
+	print "Created Command is %s" % command
+	gbs_script = env.Command('gbs_build', None, command)
+	AlwaysBuild ('gbs_script')

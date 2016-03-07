@@ -114,4 +114,21 @@ public enum OcConnectivityType {
 
         return typeSet;
     }
+
+    public static OcConnectivityType getInstance(int caTransportAdapter) {
+        switch (caTransportAdapter) {
+            case (1 << 0):
+                return CT_ADAPTER_IP;
+            case (1 << 1):
+                return CT_ADAPTER_GATT_BTLE;
+            case (1 << 2):
+                return CT_ADAPTER_RFCOMM_BTEDR;
+            case (1 << 3):
+                return CT_ADAPTER_REMOTE_ACCESS;
+            case (1 << 4):
+                return CT_ADAPTER_TCP;
+            default:
+                return CT_DEFAULT;
+        }
+    }
 }

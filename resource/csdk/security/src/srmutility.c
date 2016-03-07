@@ -128,3 +128,26 @@ exit:
     return OC_STACK_ERROR;
 
 }
+
+/**
+ * Function to getting string of ownership transfer method
+ *
+ * @prarm oxmType ownership transfer method
+ *
+ * @return string value of ownership transfer method
+ */
+const char* GetOxmString(OicSecOxm_t oxmType)
+{
+    switch(oxmType)
+    {
+        case OIC_JUST_WORKS:
+            return OXM_JUST_WORKS;
+        case OIC_RANDOM_DEVICE_PIN:
+            return OXM_RANDOM_DEVICE_PIN;
+        case OIC_MANUFACTURER_CERTIFICATE:
+            return OXM_MANUFACTURER_CERTIFICATE;
+        default:
+            return NULL;
+    }
+}
+

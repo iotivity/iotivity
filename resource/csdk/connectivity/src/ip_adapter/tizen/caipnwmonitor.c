@@ -254,7 +254,6 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     caglobals.ip.nm.numIfItems = 0;
     for (size_t i = 0; i < interfaces; i++)
     {
-        CAResult_t result = CA_STATUS_OK;
         struct ifreq* item = &ifr[i];
         char *name = item->ifr_name;
         struct sockaddr_in *sa4 = (struct sockaddr_in *)&item->ifr_addr;
@@ -286,7 +285,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         }
 
         // Add IPv4 interface
-        result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET, ipv4addr, flags);
+        CAResult_t result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET, ipv4addr, flags);
         if (CA_STATUS_OK != result)
         {
             goto exit;

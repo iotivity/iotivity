@@ -79,7 +79,6 @@ hosting_test_src = env.Glob('./*.cpp')
 hosting_test = hosting_test_env.Program('hosting_test', hosting_test_src)
 Alias("hosting_test", hosting_test)
 env.AppendTarget('hosting_test')
-hosting_test_env.InstallTarget(hosting_test, 'hosting_test')
 
 if env.get('TEST') == '1':
     target_os = env.get('TARGET_OS')

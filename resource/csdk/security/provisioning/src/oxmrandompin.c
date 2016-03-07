@@ -47,14 +47,6 @@ char* CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx)
 
     otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_RANDOM_DEVICE_PIN;
 
-    OicUuid_t uuidPT = {.id={0}};
-    if (OC_STACK_OK != GetDoxmDeviceID(&uuidPT))
-    {
-        OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
-        return NULL;
-    }
-    memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id, UUID_LENGTH);
-
     return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
 
@@ -73,7 +65,6 @@ char* CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx)
         return NULL;
     }
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
-    otmCtx->selectedDeviceInfo->doxm->owned = true;
 
     return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
@@ -94,21 +85,19 @@ OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)
         return res;
     }
 
-    OicUuid_t deviceUUID = {.id={0}};
-    if (OC_STACK_OK != GetDoxmDeviceID(&deviceUUID))
+    /**
+     * Since PSK will be used directly while PIN based ownership transfer,
+     * Credential should not be saved into SVR.
+     * For this reason, We will use a temporary get_psk_info callback to random PIN OxM.
+     */
+    if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm))
     {
-        OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
-        return OC_STACK_ERROR;
+        OIC_LOG(ERROR, TAG, "Failed to register DTLS credentials handler for random PIN OxM.");
+        res = OC_STACK_ERROR;
     }
 
-    res = AddTmpPskWithPIN(&otmCtx->selectedDeviceInfo->doxm->deviceID,
-                           SYMMETRIC_PAIR_WISE_KEY,
-                           (char*)pinData, OXM_RANDOM_PIN_SIZE,
-                           1, &deviceUUID, &otmCtx->subIdForPinOxm);
-    if(res != OC_STACK_OK)
-    {
-        OIC_LOG_V(ERROR, TAG, "Failed to save the temporal PSK : %d", res);
-    }
+    //Set the device id to derive temporal PSK
+    SetUuidForRandomPinOxm(&(otmCtx->selectedDeviceInfo->doxm->deviceID));
 
     return res;
 }
@@ -159,3 +148,4 @@ OCStackResult CreateSecureSessionRandomPinCallbak(OTMContext_t* otmCtx)
 
     return OC_STACK_OK;
 }
+

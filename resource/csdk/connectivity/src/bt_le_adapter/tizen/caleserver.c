@@ -125,12 +125,9 @@ void CASetLEConnectionStateChangedCallback(CALEConnectionStateChangedCallback co
     g_connStateCb = connStateCb;
 }
 
-void CALEGattServerConnectionStateChangedCb(int result, bool connected,
-                                            const char *remoteAddress, void *userData)
+void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddress)
 {
     VERIFY_NON_NULL_VOID(remoteAddress, TAG, "remote address");
-
-    OIC_LOG_V(DEBUG, TAG, "CABleGattConnectionStateChangedCb result[%d]", result);
 
     if (connected)
     {
@@ -322,16 +319,6 @@ void CAStartLEGattServerThread(void *data)
         OIC_LOG_V(ERROR, TAG, "CARegisterLEServicewithGattServer failed[%d]", ret);
         ca_mutex_unlock(g_leServerStateMutex);
         CATerminateLEGattServer();
-        return;
-    }
-
-    int res = bt_gatt_set_connection_state_changed_cb(CALEGattServerConnectionStateChangedCb,
-                                                      NULL);
-    if (BT_ERROR_NONE != res)
-    {
-        OIC_LOG_V(ERROR, TAG,
-                  "bt_gatt_set_connection_state_changed_cb Failed with return as [%s]",
-                  CALEGetErrorMsg(res));
         return;
     }
 

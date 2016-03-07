@@ -93,7 +93,7 @@ char *BinToCrlJSON(const OicSecCrl_t *crl)
 
     //ThisUpdate -- Mandatory
     outLen = 0;
-    base64CRLLen = B64ENCODE_OUT_SAFESIZE(crl->ThisUpdate.len);
+    base64CRLLen = (uint32_t)B64ENCODE_OUT_SAFESIZE(crl->ThisUpdate.len);
     base64Buff = OICMalloc(base64CRLLen);
     b64Ret = b64Encode(crl->ThisUpdate.data, crl->ThisUpdate.len, base64Buff,
              base64CRLLen, &outLen);
@@ -103,7 +103,7 @@ char *BinToCrlJSON(const OicSecCrl_t *crl)
 
     //CRLData -- Mandatory
     outLen = 0;
-    base64CRLLen = B64ENCODE_OUT_SAFESIZE(crl->CrlData.len);
+    base64CRLLen = (uint32_t)B64ENCODE_OUT_SAFESIZE(crl->CrlData.len);
     base64Buff = OICMalloc(base64CRLLen);
     b64Ret = b64Encode(crl->CrlData.data, crl->CrlData.len, base64Buff,
              base64CRLLen, &outLen);
@@ -186,7 +186,7 @@ OicSecCrl_t *JSONToCrlBin(const char * jsonStr)
     else // PUT/POST JSON will not have ThisUpdate so set it to the gCRList->ThisUpdate
     {
         VERIFY_NON_NULL(TAG, gCrl, ERROR);
-        outLen = gCrl->ThisUpdate.len;
+        outLen = (uint32_t)gCrl->ThisUpdate.len;
         crl->ThisUpdate.data = OICMalloc(outLen + 1);
         memcpy(crl->ThisUpdate.data, gCrl->ThisUpdate.data, outLen);
         crl->ThisUpdate.len = outLen;
@@ -220,7 +220,7 @@ OicSecCrl_t *JSONToCrlBin(const char * jsonStr)
     else // PUT/POST JSON will not have CRLData so set it to the gCRList->CRLData
     {
         VERIFY_NON_NULL(TAG, gCrl, ERROR);
-        outLen = gCrl->CrlData.len;
+        outLen = (uint32_t)gCrl->CrlData.len;
         crl->CrlData.data = OICMalloc(outLen + 1);
         memcpy(crl->CrlData.data, gCrl->CrlData.data, outLen);
         crl->CrlData.len = outLen;
@@ -278,10 +278,7 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
         cJSON *jsonObj = cJSON_Parse(jsonCRL);
         OicSecCrl_t *crl = NULL;
         crl = JSONToCrlBin(jsonCRL);
-        if (!crl)
-        {
-            OIC_LOG(ERROR, TAG, "Error JSONToCrlBin");
-        }
+        VERIFY_NON_NULL(TAG, crl, ERROR);
 
         gCrl->CrlId = crl->CrlId;
 
@@ -304,8 +301,9 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
         }
 
         DeleteCrlBinData(crl);
-        cJSON_Delete(jsonObj);
 
+        exit:
+        cJSON_Delete(jsonObj);
     }
 
     // Send payload to request originator

@@ -121,51 +121,21 @@ namespace OIC
     namespace Service
     {
 
-        RCSQueryParams& RCSQueryParams::setResourceInterface(const std::string& resourceInterface)
-        {
-            m_resourceInterface = resourceInterface;
-            return *this;
-        }
-
-        RCSQueryParams& RCSQueryParams::setResourceInterface(std::string&& resourceInterface)
+        RCSQueryParams& RCSQueryParams::setResourceInterface(std::string resourceInterface)
         {
             m_resourceInterface = std::move(resourceInterface);
             return *this;
         }
 
-        RCSQueryParams& RCSQueryParams::setResuorceType(const std::string& resourceType)
-        {
-            m_resourceType = resourceType;
-            return *this;
-        }
-
-        RCSQueryParams& RCSQueryParams::setResuorceType(std::string&& resourceType)
+        RCSQueryParams& RCSQueryParams::setResourceType(std::string resourceType)
         {
             m_resourceType = std::move(resourceType);
             return *this;
         }
 
-        RCSQueryParams& RCSQueryParams::put(const std::string& key, const std::string& value)
-        {
-            m_map[key] = value;
-            return *this;
-        }
-
-        RCSQueryParams& RCSQueryParams::put(std::string&& key, std::string&& value)
+        RCSQueryParams& RCSQueryParams::put(std::string key, std::string value)
         {
             m_map[std::move(key)] = std::move(value);
-            return *this;
-        }
-
-        RCSQueryParams& RCSQueryParams::put(const std::string& key, std::string&& value)
-        {
-            m_map[key] = std::move(value);
-            return *this;
-        }
-
-        RCSQueryParams& RCSQueryParams::put(std::string&& key, const std::string& value)
-        {
-            m_map[std::move(key)] = value;
             return *this;
         }
 
@@ -181,7 +151,14 @@ namespace OIC
 
         std::string RCSQueryParams::get(const std::string& key) const
         {
-            return m_map.at(key);
+            try
+            {
+                return m_map.at(key);
+            }
+            catch (const std::out_of_range&)
+            {
+                throw RCSInvalidKeyException(key + " is an invalid key");
+            }
         }
 
         const RCSQueryParams::Map& RCSQueryParams::getAll() const
@@ -191,8 +168,8 @@ namespace OIC
 
 
         RCSRemoteResourceObject::RCSRemoteResourceObject(
-                std::shared_ptr< PrimitiveResource > pResource) :
-                m_primitiveResource{ pResource },
+                std::shared_ptr< PrimitiveResource > primtiveResource) :
+                m_primitiveResource{ primtiveResource },
                 m_cacheId{ },
                 m_brokerId{ }
         {
@@ -202,8 +179,14 @@ namespace OIC
         {
             SCOPE_LOG_F(DEBUG, TAG);
 
-            stopCaching();
-            stopMonitoring();
+            try{
+                stopCaching();
+                stopMonitoring();
+            }
+            catch(std::exception &e){
+                OIC_LOG_V(ERROR, TAG, "%s", e.what());
+            }
+
         }
 
         RCSRemoteResourceObject::Ptr RCSRemoteResourceObject::fromOCResource(
@@ -428,8 +411,6 @@ namespace OIC
             }
 
             const auto& paramMap = queryParams.getAll();
-
-            std::cout << queryParams.getResourceInterface() << "??\n";
 
             m_primitiveResource->requestGetWith(
                     queryParams.getResourceType(), queryParams.getResourceInterface(),

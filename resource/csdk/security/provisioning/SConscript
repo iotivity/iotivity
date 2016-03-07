@@ -65,7 +65,7 @@ if target_os not in ['windows', 'winrt']:
 	# Note: 'pthread' is in libc for android. On other platform, if use
 	# new gcc(>4.9?) it isn't required, otherwise, it's required
 	if target_os != 'android':
-		provisioning_env.AppendUnique(LIBS = ['-lpthread'])
+		provisioning_env.AppendUnique(LIBS = ['-lpthread', '-ldl'])
 
 
 provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
@@ -76,7 +76,8 @@ provisioning_env.AppendUnique(LIBS = ['tinydtls'])
 if env.get('DTLS_WITH_X509') == '1':
 	provisioning_env.AppendUnique(LIBS = ['CKManger'])
 
-provisioning_env.ParseConfig('pkg-config --libs glib-2.0')
+if target_os != 'android':
+	provisioning_env.ParseConfig('pkg-config --libs glib-2.0')
 
 if target_os == 'tizen':
 	provisioning_env.ParseConfig('pkg-config --cflags --libs sqlite3')
@@ -107,7 +108,7 @@ provisioning_src = [
 if target_os != 'tizen':
 	provisioning_src = provisioning_src + [root_dir+'/extlibs/sqlite3/sqlite3.c' ]
 
-provisioningserver = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
+provisioningserver = provisioning_env.SharedLibrary('ocpmapi', provisioning_src)
 
 provisioning_env.InstallTarget(provisioningserver, 'libocpmapi')
 provisioning_env.UserInstallTargetLib(provisioningserver, 'libocpmapi')
