@@ -60,8 +60,6 @@ if env.get('SECURED') == '1':
 
 env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                         'adapter_util/caadapterutils.c')])
-env.AppendUnique(CA_SRC = [os.path.join(ca_path,
-                                        'adapter_util/cafragmentation.c')])
 
 if env.get('SECURED') == '1':
 	env.AppendUnique(CA_SRC = [os.path.join(ca_path,

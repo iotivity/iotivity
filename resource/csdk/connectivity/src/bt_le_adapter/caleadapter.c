@@ -29,7 +29,6 @@
 #ifndef SINGLE_THREAD
 #include "caqueueingthread.h"
 #endif
-#include "cafragmentation.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "caremotehandler.h"
@@ -39,6 +38,11 @@
  * Logging tag for module name.
  */
 #define CALEADAPTER_TAG "OIC_LE_ADAP"
+
+/**
+ * The MTU supported for BLE adapter
+ */
+#define CA_SUPPORTED_BLE_MTU_SIZE  20
 
 /**
  * Stores information of all the senders.
