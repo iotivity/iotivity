@@ -84,3 +84,9 @@ provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_bui
     sec_provisioning_src_dir + 'oic_svr_db_server_justworks.json'))
 provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
     sec_provisioning_src_dir + 'oic_svr_db_server_randompin.json'))
+provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
+    sec_provisioning_src_dir + 'oic_svr_db_client.dat'))
+provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
+    sec_provisioning_src_dir + 'oic_svr_db_server_justworks.dat'))
+provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
+    sec_provisioning_src_dir + 'oic_svr_db_server_randompin.dat'))

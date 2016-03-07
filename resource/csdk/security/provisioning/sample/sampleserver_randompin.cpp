@@ -54,7 +54,7 @@ char *gResourceUri= (char *)"/a/led";
 //Secure Virtual Resource database for Iotivity Server
 //It contains Server's Identity and the PSK credentials
 //of other devices which the server trusts
-static char CRED_FILE[] = "oic_svr_db_server_randompin.json";
+static char CRED_FILE[] = "oic_svr_db_server_randompin.dat";
 
 /* Function that creates a new LED resource by calling the
  * OCCreateResource() method.

@@ -96,12 +96,14 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
     EXPECT_EQ(CborNoError, cborEncoderResult);
     cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
     EXPECT_EQ(CborNoError, cborEncoderResult);
+
     size_t x = encoder.ptr - outPayload;
 
     FILE *dFp = fopen("oic_svr_db.dat", "w");
     ASSERT_TRUE(dFp != NULL);
     EXPECT_EQ(x, fwrite(outPayload, 1, x, dFp));
     EXPECT_EQ(0, fclose(dFp));
+
 }
 
 TEST(ACLResourceTest, CBORACLConversion)

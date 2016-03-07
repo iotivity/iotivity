@@ -59,7 +59,7 @@ extern "C"
 #define TAG "provisioningclient"
 
 static const char* ACL_PEMISN[5] = {"CREATE", "READ", "WRITE", "DELETE", "NOTIFY"};
-static const char* SVR_DB_FILE_NAME = "oic_svr_db_client.json";
+static const char* SVR_DB_FILE_NAME = "oic_svr_db_client.dat";
         // '_' for separaing from the same constant variable in |srmresourcestrings.c|
 static const char* PRVN_DB_FILE_NAME = "oic_prvn_mng.db";
 // |g_ctx| means provision manager application context and
