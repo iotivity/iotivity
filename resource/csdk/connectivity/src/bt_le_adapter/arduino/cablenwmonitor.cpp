@@ -132,3 +132,8 @@ CAResult_t CAUnSetLEAdapterStateChangedCb()
 }
 
 
+CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback callback)
+{
+    //TODO
+    return CA_STATUS_OK;
+}

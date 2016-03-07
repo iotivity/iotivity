@@ -34,9 +34,7 @@
 #include "org_iotivity_ca_CaEdrInterface.h"
 #include "oic_string.h"
 
-//#define DEBUG_MODE
 #define TAG PCF("OIC_CA_EDR_SERVER")
-#define MAX_PDU_BUFFER (1024)
 
 static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAdapter;";
 static const char CLASSPATH_BT_ADPATER[] = "android/bluetooth/BluetoothAdapter";
@@ -152,7 +150,7 @@ static void CAReceiveHandler(void *data)
     {
         if (!CAEDRNativeIsEnableBTAdapter(env))
         {
-            OIC_LOG(ERROR, TAG, "BT adpater is not enable");
+            OIC_LOG(INFO, TAG, "BT adapter is not enabled");
             break;
         }
 
@@ -231,7 +229,7 @@ static void CAAcceptHandler(void *data)
         // when BT state is changed with Off. its thread will be stopped
         if (!CAEDRNativeIsEnableBTAdapter(env))
         {
-            OIC_LOG(DEBUG, TAG, "BT adpater is not enable");
+            OIC_LOG(INFO, TAG, "BT adapter is not enabled");
             ca_mutex_lock(g_mutexAcceptServer);
             g_stopAccept = true;
             ca_mutex_unlock(g_mutexAcceptServer);
@@ -898,7 +896,7 @@ jobject CAEDRNativeListen(JNIEnv *env)
 
     if (!CAEDRNativeIsEnableBTAdapter(env))
     {
-        OIC_LOG(ERROR, TAG, "BT adpater is not enable");
+        OIC_LOG(INFO, TAG, "BT adapter is not enabled");
         return NULL;
     }
 

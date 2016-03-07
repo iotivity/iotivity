@@ -78,6 +78,15 @@ typedef struct
 typedef void (*CALEDeviceStateChangedCallback)(CAAdapterState_t adapter_state);
 
 /**
+ * This will be used to notify device connection state changes to the LE adapter layer.
+ * @param[in]   adapter        Transport type information.
+ * @param[in]   remoteAddress  Endpoint object from which the connection status is changed.
+ * @param[in]   connected      State of connection.
+ */
+typedef void (*CALEConnectionStateChangedCallback)(CATransportAdapter_t adapter,
+                                                   const char *remoteAddress, bool connected);
+
+/**
  * Notify the adapter layer that a packet was received from the GATT
  * peer.
  *
@@ -175,6 +184,19 @@ void CATerminateLENetworkMonitor();
  * @retval ::CA_STATUS_FAILED Operation failed
  */
 CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback);
+
+/**
+ * Set the callback for the device connection state changes.
+ *
+ * @param[in] callback Callback to notify the Device connection state change to
+ *            the CA Layer
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code
+ * @retval ::CA_STATUS_OK  Successful
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments
+ * @retval ::CA_STATUS_FAILED Operation failed
+ */
+CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback callback);
 
 /**
  * Provides the MAC address of the local Bluetooth adapter.
@@ -374,7 +396,7 @@ void CASetLEServerThreadPoolHandle(ca_thread_pool_t handle);
 void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle);
 
 /**
- * Unset the callback of adapter connection state change.
+ * Unset the callback of adapter state change.
  *
  * @return ::CA_STATUS_OK or Appropriate error code.
  * @retval ::CA_STATUS_OK  Successful.
@@ -382,6 +404,16 @@ void CASetLEClientThreadPoolHandle(ca_thread_pool_t handle);
  * @retval ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAUnSetLEAdapterStateChangedCb();
+
+/**
+ * Unset the callback of adapter connection state change.
+ *
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ * @retval ::CA_STATUS_OK  Successful.
+ * @retval ::CA_STATUS_INVALID_PARAM  Invalid input arguments.
+ * @retval ::CA_STATUS_FAILED Operation failed.
+ */
+CAResult_t CAUnSetLENWConnectionStateChangedCb();
 
 /**
  * This will be used to notify errors in BLE adapter.
@@ -411,7 +443,6 @@ void CASetBLEClientErrorHandleCallback(CABLEErrorHandleCallback callback);
  *                     adapter.
  */
 void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback);
-
 #ifdef __cplusplus
 }
 #endif

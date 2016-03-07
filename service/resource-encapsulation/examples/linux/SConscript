@@ -56,9 +56,6 @@ client_env.AppendUnique(LIBS = 'rcs_client')
 sampleResourceClient = client_env.Program('sampleResourceClient', 'SampleResourceClient.cpp')
 nestedAttributesClient = client_env.Program('nestedAttributesClient', 'NestedAttributesClient.cpp')
 
-client_env.InstallTarget(sampleResourceClient, 'sampleResourceClient')
-client_env.InstallTarget(nestedAttributesClient, 'nestedAttributesClient')
-
 ######################################################################
 # ##### Server #####
 ######################################################################
@@ -66,10 +63,8 @@ server_env = sample_env.Clone()
 server_env.AppendUnique(LIBS = 'rcs_server')
 
 sampleResourceServer = server_env.Program('sampleResourceServer', 'SampleResourceServer.cpp')
+separateResponseServer = server_env.Program('separateResponseServer', 'SeparateResponseServer.cpp')
 nestedAttributesServer = server_env.Program('nestedAttributesServer', 'NestedAttributesServer.cpp')
-
-server_env.InstallTarget(sampleResourceServer, 'sampleResourceServer')
-server_env.InstallTarget(nestedAttributesServer, 'nestedAttributesServer')
 
 ######################################################################
 # ##### Build the RE Secure Resource Example #####

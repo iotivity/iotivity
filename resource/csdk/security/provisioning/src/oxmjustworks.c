@@ -58,7 +58,6 @@ char* CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx)
         return NULL;
     }
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
-    otmCtx->selectedDeviceInfo->doxm->owned = true;
 
     return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }

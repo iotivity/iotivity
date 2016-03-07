@@ -45,7 +45,7 @@ void onResourceDiscovered(RCSRemoteResourceObject::Ptr) {}
 class ScopedTask
 {
 public:
-    ScopedTask(DiscoveryTaskPtr task) :
+    ScopedTask(DiscoveryTaskPtr&& task) :
         m_task{ std::move(task) }
     {
     }
@@ -59,6 +59,9 @@ public:
     {
         return m_task.get();
     }
+
+    ScopedTask(ScopedTask&&) = default;
+    ScopedTask& operator=(ScopedTask&&) = default;
 
 private:
     DiscoveryTaskPtr m_task;
@@ -86,8 +89,8 @@ TEST(DiscoveryManagerTest, DiscoverInvokesFindResource)
         }
     ).Return(OC_STACK_OK);
 
-    ScopedTask task = RCSDiscoveryManager::getInstance()->discoverResourceByType(
-            RCSAddress::multicast(), RESOURCE_URI, RESOURCE_TYPE, onResourceDiscovered);
+    ScopedTask task {RCSDiscoveryManager::getInstance()->discoverResourceByType(
+            RCSAddress::multicast(), RESOURCE_URI, RESOURCE_TYPE, onResourceDiscovered)};
 }
 
 TEST(DiscoveryManagerTest, DiscoverWithMultipleTypesInvokesFindResourceMultipleTimes)
@@ -104,18 +107,18 @@ TEST(DiscoveryManagerTest, DiscoverWithMultipleTypesInvokesFindResourceMultipleT
         }
     ).Return(OC_STACK_OK);
 
-    ScopedTask task = RCSDiscoveryManager::getInstance()->discoverResourceByTypes(
-            RCSAddress::multicast(), resourceTypes, onResourceDiscovered);
+    ScopedTask task {RCSDiscoveryManager::getInstance()->discoverResourceByTypes(
+            RCSAddress::multicast(), resourceTypes, onResourceDiscovered)};
 
     EXPECT_EQ(counter, resourceTypes.size());
 }
 
 TEST(DiscoveryManagerTest, TaskCanBeCanceled)
 {
-    ScopedTask aTask =  RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(),
-            onResourceDiscovered);
-    ScopedTask aTaskToBeCanceled = RCSDiscoveryManager::getInstance()->discoverResource(
-            RCSAddress::multicast(), onResourceDiscovered);
+    ScopedTask aTask {RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(),
+            onResourceDiscovered)};
+    ScopedTask aTaskToBeCanceled {RCSDiscoveryManager::getInstance()->discoverResource(
+            RCSAddress::multicast(), onResourceDiscovered)};
 
     aTaskToBeCanceled->cancel();
 
@@ -135,8 +138,8 @@ TEST(DiscoveryManagerTest, CallbackWouldNotBeCalledForSameRemoteResource) {
        }
    ).Return(OC_STACK_OK);
 
-    ScopedTask aTask =  RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(),
-            onResourceDiscovered);
+    ScopedTask aTask {RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(),
+            onResourceDiscovered)};
 
     std::vector< std::string > interfaces{ "interface" };
     std::vector< std::string > resourceTypes{ "resource.type" };

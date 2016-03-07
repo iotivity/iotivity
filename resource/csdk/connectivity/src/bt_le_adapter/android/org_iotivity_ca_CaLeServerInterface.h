@@ -58,6 +58,15 @@ Java_org_iotivity_ca_caLeServerInterface_caLeGattServerConnectionStateChangeCall
 
 /*
  * Class:     org_iotivity_ca_caLeServerInterface
+ * Method:    caLeGattServerNWConnectionStateChangeCallback
+ * Signature: (Landroid/bluetooth/BluetoothDevice;II)V
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_caLeServerInterface_caLeGattServerNWConnectionStateChangeCallback
+(JNIEnv *, jobject, jobject, jint, jint);
+
+/*
+ * Class:     org_iotivity_ca_caLeServerInterface
  * Method:    caLeGattServerServiceAddedCallback
  * Signature: (ILandroid/bluetooth/BluetoothGattService;)V
  */

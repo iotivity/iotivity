@@ -77,7 +77,7 @@ class ResourceContainerTestSimulator
                     remoteResource->stopMonitoring();
                 }
             }
-            catch (RCSInvalidParameterException &e)
+            catch (RCSException &e)
             {
                 std::cout << "exception : " << e.what() << std::endl;
             }

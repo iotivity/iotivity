@@ -496,24 +496,6 @@ OCStackResult FindAndDeleteActionSet(OCResource **resource,
     return OC_STACK_ERROR;
 }
 
-OCStackResult DeleteActionSets(OCResource** resource)
-{
-    OCActionSet *pointer = (*resource)->actionsetHead;
-    OCActionSet *pDel = pointer;
-
-    while (pointer)
-    {
-        pDel = pointer;
-        pointer = pointer->next;
-
-        DeleteActionSet(&pDel);
-        pDel->next = NULL;
-    }
-
-    (*resource)->actionsetHead = NULL;
-    return OC_STACK_OK;
-}
-
 OCStackResult GetActionSet(const char *actionName, OCActionSet *head,
         OCActionSet** actionset)
 {

@@ -32,7 +32,6 @@
 #define TAG "OIC_RI_PAYLOAD"
 
 static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val);
-static void FreeOCDiscoveryResource(OCResourcePayload* payload);
 
 void OCPayloadDestroy(OCPayload* payload)
 {
@@ -1356,7 +1355,7 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
 
     if (!pl->uri)
     {
-        FreeOCDiscoveryResource(pl);
+        OCDiscoveryResourceDestroy(pl);
         return NULL;
     }
 
@@ -1368,13 +1367,13 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
         pl->types = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
         if (!pl->types)
         {
-            FreeOCDiscoveryResource(pl);
+            OCDiscoveryResourceDestroy(pl);
             return NULL;
         }
         pl->types->value = OICStrdup(typePtr->resourcetypename);
         if (!pl->types->value)
         {
-            FreeOCDiscoveryResource(pl);
+            OCDiscoveryResourceDestroy(pl);
             return NULL;
         }
 
@@ -1385,13 +1384,13 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
             cur->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
             if (!cur->next)
             {
-                FreeOCDiscoveryResource(pl);
+                OCDiscoveryResourceDestroy(pl);
                 return NULL;
             }
             cur->next->value = OICStrdup(typePtr->resourcetypename);
             if (!cur->next->value)
             {
-                FreeOCDiscoveryResource(pl);
+                OCDiscoveryResourceDestroy(pl);
                 return NULL;
             }
             cur = cur->next;
@@ -1406,13 +1405,13 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
         pl->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
         if (!pl->interfaces)
         {
-            FreeOCDiscoveryResource(pl);
+            OCDiscoveryResourceDestroy(pl);
             return NULL;
         }
         pl->interfaces->value = OICStrdup(ifPtr->name);
         if (!pl->interfaces->value)
         {
-            FreeOCDiscoveryResource(pl);
+            OCDiscoveryResourceDestroy(pl);
             return NULL;
         }
 
@@ -1423,13 +1422,13 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t port)
             cur->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
             if (!cur->next)
             {
-                FreeOCDiscoveryResource(pl);
+                OCDiscoveryResourceDestroy(pl);
                 return NULL;
             }
             cur->next->value = OICStrdup(ifPtr->name);
             if (!cur->next->value)
             {
-                FreeOCDiscoveryResource(pl);
+                OCDiscoveryResourceDestroy(pl);
                 return NULL;
             }
             cur = cur->next;
@@ -1450,102 +1449,34 @@ void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource
     OCDiscoveryPayloadAddNewResource(payload, OCCopyResource(res, port));
 }
 
-bool OCResourcePayloadAddResourceType(OCResourcePayload* payload, const char* resourceType)
+bool OCResourcePayloadAddStringLL(OCStringLL **stringLL, const char *value)
 {
-    if (!resourceType || !payload)
+    char *dup = OICStrdup(value);
+    VERIFY_PARAM_NON_NULL(TAG, dup, "Failed copying string");
+    VERIFY_PARAM_NON_NULL(TAG, value, "Invalid Parameters");
+
+    if (!*stringLL)
     {
-        return false;
-    }
-
-    char* dup = OICStrdup(resourceType);
-
-    if (!dup)
-    {
-        return false;
-    }
-
-    if (!payload->types)
-    {
-        payload->types = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-
-        if (!payload->types)
-        {
-            OICFree(dup);
-            return false;
-        }
-
-        payload->types->value = dup;
+        *stringLL = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
+        VERIFY_PARAM_NON_NULL(TAG, dup, "Failed allocating memory");
+        (*stringLL)->value = dup;
         return true;
     }
-
     else
     {
-        OCStringLL* temp = payload->types;
-
+        OCStringLL *temp = *stringLL;
         while(temp->next)
         {
             temp = temp->next;
         }
-
-        temp->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-        if (!temp->next)
-        {
-            OICFree(dup);
-            return false;
-        }
-
+        temp->next = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
+        VERIFY_PARAM_NON_NULL(TAG, temp->next, "Failed allocating memory");
         temp->next->value = dup;
         return true;
     }
-}
-
-bool OCResourcePayloadAddInterface(OCResourcePayload* payload, const char* interface)
-{
-    if (!interface || !payload)
-    {
-        return false;
-    }
-
-    char* dup = OICStrdup(interface);
-
-    if (!dup)
-    {
-        return false;
-    }
-
-    if (!payload->interfaces)
-    {
-        payload->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-
-        if (!payload->interfaces)
-        {
-            OICFree(dup);
-            return false;
-        }
-
-        payload->interfaces->value = dup;
-        return true;
-    }
-
-    else
-    {
-        OCStringLL* temp = payload->interfaces;
-
-        while(temp->next)
-        {
-            temp = temp->next;
-        }
-
-        temp->next = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-        if (!temp->next)
-        {
-            OICFree(dup);
-            return false;
-        }
-
-        temp->next->value = dup;
-        return true;
-    }
+exit:
+    OICFree(dup);
+    return false;
 }
 
 void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res)
@@ -1570,7 +1501,7 @@ void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePay
     }
 }
 
-static void FreeOCDiscoveryResource(OCResourcePayload* payload)
+void OCDiscoveryResourceDestroy(OCResourcePayload* payload)
 {
     if (!payload)
     {
@@ -1580,7 +1511,7 @@ static void FreeOCDiscoveryResource(OCResourcePayload* payload)
     OICFree(payload->uri);
     OCFreeOCStringLL(payload->types);
     OCFreeOCStringLL(payload->interfaces);
-    FreeOCDiscoveryResource(payload->next);
+    OCDiscoveryResourceDestroy(payload->next);
     OICFree(payload);
 
 }
@@ -1591,7 +1522,7 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
         return;
     }
     OICFree(payload->sid);
-    FreeOCDiscoveryResource(payload->resources);
+    OCDiscoveryResourceDestroy(payload->resources);
     OICFree(payload);
 }
 
@@ -1706,6 +1637,21 @@ OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo)
     return payload;
 }
 
+void OCPlatformInfoDestroy(OCPlatformInfo *info)
+{
+    OICFree(info->platformID);
+    OICFree(info->manufacturerName);
+    OICFree(info->manufacturerUrl);
+    OICFree(info->modelNumber);
+    OICFree(info->dateOfManufacture);
+    OICFree(info->platformVersion);
+    OICFree(info->operatingSystemVersion);
+    OICFree(info->hardwareVersion);
+    OICFree(info->firmwareVersion);
+    OICFree(info->supportUrl);
+    OICFree(info->systemTime);
+}
+
 void OCPlatformPayloadDestroy(OCPlatformPayload* payload)
 {
     if (!payload)
@@ -1713,17 +1659,7 @@ void OCPlatformPayloadDestroy(OCPlatformPayload* payload)
         return;
     }
     OICFree(payload->uri);
-    OICFree(payload->info.platformID);
-    OICFree(payload->info.manufacturerName);
-    OICFree(payload->info.manufacturerUrl);
-    OICFree(payload->info.modelNumber);
-    OICFree(payload->info.dateOfManufacture);
-    OICFree(payload->info.platformVersion);
-    OICFree(payload->info.operatingSystemVersion);
-    OICFree(payload->info.hardwareVersion);
-    OICFree(payload->info.firmwareVersion);
-    OICFree(payload->info.supportUrl);
-    OICFree(payload->info.systemTime);
+    OCPlatformInfoDestroy(&payload->info);
     OICFree(payload);
 }
 

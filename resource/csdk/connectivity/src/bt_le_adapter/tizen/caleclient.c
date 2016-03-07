@@ -230,8 +230,7 @@ void CALEGattCharacteristicWriteCb(int result, bt_gatt_h reqHandle, void *userDa
     OIC_LOG(DEBUG, TAG, "OUT ");
 }
 
-void CALEGattConnectionStateChangedCb(int result, bool connected,
-                                      const char *remoteAddress, void *userData)
+void CALEGattConnectionStateChanged(bool connected, const char *remoteAddress)
 {
     OIC_LOG(DEBUG, TAG, "IN ");
 
@@ -754,15 +753,6 @@ CAResult_t CALEGattSetCallbacks()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    int ret = bt_gatt_set_connection_state_changed_cb(CALEGattConnectionStateChangedCb, NULL);
-    if (BT_ERROR_NONE != ret)
-    {
-        OIC_LOG_V(ERROR, TAG,
-                  "bt_gatt_set_connection_state_changed_cb Failed with return as [%s ]",
-                  CALEGetErrorMsg(ret));
-        return CA_STATUS_FAILED;
-    }
-
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -844,20 +834,64 @@ CAResult_t CALEGattConnect(const char *remoteAddress)
                         "remote address is NULL", CA_STATUS_FAILED);
 
     ca_mutex_lock(g_LEClientConnectMutex);
-
-    int ret = bt_gatt_connect(remoteAddress, true);
-
+    bool isConnected = false;
+    int ret = bt_device_is_profile_connected(remoteAddress, BT_PROFILE_GATT, &isConnected);
     if (BT_ERROR_NONE != ret)
     {
-        OIC_LOG_V(ERROR, TAG, "bt_gatt_connect Failed with ret value [%s] ",
+        OIC_LOG_V(ERROR, TAG, "bt_device_is_profile_connected Failed with ret value [%s] ",
                   CALEGetErrorMsg(ret));
         ca_mutex_unlock(g_LEClientConnectMutex);
         return CA_STATUS_FAILED;
     }
+
+    CAResult_t result = CA_STATUS_OK;
+    if (!isConnected)
+    {
+        ret = bt_gatt_connect(remoteAddress, true);
+
+        if (BT_ERROR_NONE != ret)
+        {
+            OIC_LOG_V(ERROR, TAG, "bt_gatt_connect Failed with ret value [%s] ",
+                      CALEGetErrorMsg(ret));
+            ca_mutex_unlock(g_LEClientConnectMutex);
+            return CA_STATUS_FAILED;
+        }
+    }
+    else
+    {
+        OIC_LOG_V(INFO, TAG, "Remote address[%s] is already connected",
+                  remoteAddress);
+        char *addr = OICStrdup(remoteAddress);
+        if (NULL == addr)
+        {
+            OIC_LOG(ERROR, TAG, "addr is NULL");
+            ca_mutex_unlock(g_LEClientConnectMutex);
+            return CA_STATUS_FAILED;
+        }
+
+        ca_mutex_lock(g_LEClientThreadPoolMutex);
+        if (NULL == g_LEClientThreadPool)
+        {
+            OIC_LOG(ERROR, TAG, "g_LEClientThreadPool is NULL");
+            OICFree(addr);
+            ca_mutex_unlock(g_LEClientThreadPoolMutex);
+            ca_mutex_unlock(g_LEClientConnectMutex);
+            return CA_STATUS_FAILED;
+        }
+
+        result = ca_thread_pool_add_task(g_LEClientThreadPool, CADiscoverLEServicesThread,
+                                      addr);
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG_V(ERROR, TAG, "ca_thread_pool_add_task failed with ret [%d]", result);
+            OICFree(addr);
+        }
+        ca_mutex_unlock(g_LEClientThreadPoolMutex);
+    }
     ca_mutex_unlock(g_LEClientConnectMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_STATUS_OK;
+    return result;
 }
 
 CAResult_t CALEGattDisConnect(const char *remoteAddress)

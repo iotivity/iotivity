@@ -126,7 +126,6 @@ void OCResource::setHost(const std::string& host)
     else if (host.compare(0, sizeof(COAP_TCP) - 1, COAP_TCP) == 0)
     {
         prefix_len = sizeof(COAP_TCP) - 1;
-        m_devAddr.adapter = static_cast<OCTransportAdapter>(m_devAddr.adapter & OC_ADAPTER_TCP);
     }
     else
     {
@@ -423,7 +422,9 @@ std::string OCResource::host() const
     {
         ss << COAPS;
     }
-    else if (m_devAddr.adapter & OC_ADAPTER_TCP)
+    else if ((m_devAddr.adapter & OC_ADAPTER_TCP)
+            || (m_devAddr.adapter & OC_ADAPTER_GATT_BTLE)
+            || (m_devAddr.adapter & OC_ADAPTER_RFCOMM_BTEDR))
     {
         ss << COAP_TCP;
     }

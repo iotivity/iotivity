@@ -23,7 +23,43 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="5dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:textStyle="bold"
+            android:textColor="@android:color/holo_red_dark"
+            android:textSize="20dp"
+            android:text="Soft AP   "/>
+
+        <RadioButton
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enrollee  "
+            android:id="@+id/enrollee"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal"
+            android:checked="false"
+            />
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mediator"
+            android:id="@+id/mediator"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal"
+            android:checked="false"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:orientation="horizontal">
 
 
@@ -45,16 +81,25 @@
             android:layout_marginRight="30dp"
             android:text="@string/not_started"
             android:textColor="@android:color/background_light"
-            android:textSize="20dp" />
+            android:textSize="10dp" />
 
     </LinearLayout>
+
+    <RadioButton
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:text="Enable Security"
+        android:id="@+id/enablesecurity"
+        android:textStyle="bold"
+        android:layout_gravity="center_horizontal"
+        android:checked="false"/>
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_gravity="center"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:orientation="vertical">
 
         <TextView
@@ -73,7 +118,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="5dp"
             android:text="Enter Enroller's Password" />
 
 
@@ -88,11 +133,12 @@
 
 
     <LinearLayout
+        android:id="@+id/softAP"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_gravity="center"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:orientation="vertical">
 
         <TextView
@@ -113,7 +159,7 @@
             android:id="@+id/textView2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="5dp"
             android:text="Enter SoftAP PWD" />
 
 
@@ -127,6 +173,7 @@
 
 
     <TextView
+        android:id="@+id/textViewDeviceinfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
@@ -135,6 +182,7 @@
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <RelativeLayout
+        android:id="@+id/deviceInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
@@ -148,7 +196,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="IP Address"
+            android:text="IP Address : "
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
         <TextView
@@ -168,7 +216,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/ipAddrLable"
             android:layout_gravity="center_horizontal"
-            android:text="MAC Address"
+            android:text="MAC Address : "
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
         <TextView
@@ -188,17 +236,15 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_gravity="center"
-        android:layout_marginTop="20dp"
-        android:orientation="horizontal">
+        android:layout_marginTop="5dp"
+        android:orientation="horizontal"
+        android:weightSum="1">
 
         <Button
             android:id="@+id/startSetup"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="160dp"
+            android:layout_height="50dp"
             android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
             android:layout_margin="10dp"
             android:layout_marginTop="20dp"
             android:elegantTextHeight="true"
@@ -208,16 +254,15 @@
 
         <Button
             android:id="@+id/stopSetup"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/startSetup"
-            android:layout_centerHorizontal="true"
+            android:layout_width="160dp"
+            android:layout_height="50dp"
             android:layout_margin="10dp"
             android:elegantTextHeight="true"
             android:enabled="false"
             android:text="@string/stopSetup"
             android:textAllCaps="false"
-            android:textSize="18sp" />
+            android:textSize="18sp"
+            />
 
     </LinearLayout>
 

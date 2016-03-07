@@ -78,6 +78,11 @@ static u_arraylist_t *g_multicastDataList = NULL;
 static ca_mutex g_multicastDataListMutex = NULL;
 
 /**
+ * To Store Adapter Mode information
+ */
+static bool g_isDiscoveryServer = false;
+
+/**
  * This function creates mutex.
  */
 static CAResult_t CAEDRManagerInitializeMutex(void);
@@ -91,11 +96,6 @@ static void CAEDRManagerTerminateMutex(void);
  * This callback is registered to recieve data on any open RFCOMM connection.
  */
 static void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData);
-
-/**
- * This function starts device discovery.
- */
-static CAResult_t CAEDRStartDeviceDiscovery(void);
 
 /**
  * This function stops any ongoing service sevice search.
@@ -417,7 +417,6 @@ CAResult_t CAEDRStartDeviceDiscovery(void)
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
-
     bool isDiscoveryStarted = false;
 
     // Check the device discovery state
@@ -440,6 +439,8 @@ CAResult_t CAEDRStartDeviceDiscovery(void)
             return CA_STATUS_FAILED;
         }
     }
+
+    g_isDiscoveryServer = true;
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -525,14 +526,6 @@ CAResult_t CAEDRClientSetCallbacks(void)
     bt_device_set_service_searched_cb(CAEDRServiceSearchedCallback, NULL);
     bt_socket_set_connection_state_changed_cb(CAEDRSocketConnectionStateCallback, NULL);
     bt_socket_set_data_received_cb(CAEDRDataRecvCallback, NULL);
-
-    // Start device discovery
-    CAResult_t result = CAEDRStartDeviceDiscovery();
-    if(CA_STATUS_OK != result)
-    {
-        OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Failed to Start Device discovery");
-        return CA_STATUS_FAILED;
-    }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;
@@ -838,35 +831,38 @@ CAResult_t CAEDRClientSendMulticastData(const uint8_t *data,
 
     ca_mutex_unlock(g_edrDeviceListMutex);
 
-    // Start the device Discovery.
-    result = CAEDRStartDeviceDiscovery();
-    if (CA_STATUS_OK == result)
+    if(g_isDiscoveryServer)
     {
-        OIC_LOG(INFO, EDR_ADAPTER_TAG, "Add the data to the multicast data list");
+        // Start the device Discovery.
+        result = CAEDRStartDeviceDiscovery();
+        if (CA_STATUS_OK == result)
+        {
+            OIC_LOG(INFO, EDR_ADAPTER_TAG, "Add the data to the multicast data list");
 
-        EDRData *multicastData = (EDRData *)OICCalloc(1, sizeof(EDRData));
-        if (NULL == multicastData)
-        {
-            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Malloc failed");
-            goto exit;
-        }
-        multicastData->data = OICCalloc(1, dataLength);
-        if (NULL == multicastData->data)
-        {
-            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Malloc failed");
-            goto exit;
-        }
-        memcpy(multicastData->data, data, dataLength);
-        multicastData->dataLength = dataLength;
+            EDRData *multicastData = (EDRData *)OICCalloc(1, sizeof(EDRData));
+            if (NULL == multicastData)
+            {
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Malloc failed");
+                goto exit;
+            }
+            multicastData->data = OICCalloc(1, dataLength);
+            if (NULL == multicastData->data)
+            {
+                OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Malloc failed");
+                goto exit;
+            }
+            memcpy(multicastData->data, data, dataLength);
+            multicastData->dataLength = dataLength;
 
-        // Add the data to pending multicast data list.
-        ca_mutex_lock(g_multicastDataListMutex);
-        if (NULL == g_multicastDataList)
-        {
-            g_multicastDataList = u_arraylist_create();
+            // Add the data to pending multicast data list.
+            ca_mutex_lock(g_multicastDataListMutex);
+            if (NULL == g_multicastDataList)
+            {
+                g_multicastDataList = u_arraylist_create();
+            }
+            u_arraylist_add(g_multicastDataList, (void *)multicastData);
+            ca_mutex_unlock(g_multicastDataListMutex);
         }
-        u_arraylist_add(g_multicastDataList, (void *)multicastData);
-        ca_mutex_unlock(g_multicastDataListMutex);
     }
 
 exit:

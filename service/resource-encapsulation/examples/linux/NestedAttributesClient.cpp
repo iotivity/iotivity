@@ -18,9 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include<iostream>
-#include "mutex"
-#include "condition_variable"
+#include <iostream>
+
+#include <mutex>
+#include <condition_variable>
 
 #include "RCSDiscoveryManager.h"
 #include "RCSRemoteResourceObject.h"
@@ -29,45 +30,12 @@
 
 #include "OCPlatform.h"
 
-#define nestedAtrribute std::vector<std::vector<RCSResourceAttributes>>
-
 using namespace OC;
 using namespace OIC::Service;
 
 constexpr int CORRECT_INPUT = 1;
 constexpr int INCORRECT_INPUT = 2;
 constexpr int QUIT_INPUT = 3;
-
-std::shared_ptr<RCSRemoteResourceObject>  resource;
-
-const std::string defaultKey = "deviceInfo";
-const std::string resourceType = "core.ac";
-const std::string relativetUri = OC_RSRVD_WELL_KNOWN_URI;
-
-RCSResourceAttributes model;
-RCSResourceAttributes speed;
-RCSResourceAttributes airCirculation;
-RCSResourceAttributes temperature;
-RCSResourceAttributes humidity;
-RCSResourceAttributes power;
-RCSResourceAttributes capacity;
-RCSResourceAttributes weight;
-RCSResourceAttributes dimensions;
-RCSResourceAttributes red;
-RCSResourceAttributes green;
-
-std::vector<RCSResourceAttributes> generalInfo;
-std::vector<RCSResourceAttributes> fan;
-std::vector<RCSResourceAttributes> tempSensor;
-std::vector<RCSResourceAttributes> efficiency;
-std::vector<RCSResourceAttributes> light;
-
-
-std::mutex mtx;
-std::condition_variable cond;
-
-void getAttributeFromRemoteServer();
-void setAttributeToRemoteServer();
 
 enum Menu
 {
@@ -87,6 +55,9 @@ struct ClientMenu
     ReturnValue m_result;
 };
 
+void getAttributeFromRemoteServer();
+void setAttributeToRemoteServer();
+
 ClientMenu clientMenu[] =
 {
     {Menu::GET_ATTRIBUTE, getAttributeFromRemoteServer, CORRECT_INPUT},
@@ -95,6 +66,14 @@ ClientMenu clientMenu[] =
     {Menu::END_OF_MENU, nullptr, INCORRECT_INPUT}
 };
 
+const std::string defaultKey = "deviceInfo";
+const std::string resourceType = "core.ac";
+
+std::mutex mtx;
+std::condition_variable cond;
+
+RCSRemoteResourceObject::Ptr g_resource;
+
 void displayMenu()
 {
     std::cout << std::endl;
@@ -102,17 +81,14 @@ void displayMenu()
     std::cout << "2 :: Set Attribute" << std::endl;
 }
 
-void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource)
+void onResourceDiscovered(RCSRemoteResourceObject::Ptr foundResource)
 {
     std::cout << "onResourceDiscovered callback" << std::endl;
 
-    std::string resourceURI = foundResource->getUri();
-    std::string hostAddress = foundResource->getAddress();
+    std::cout << "\t\tResource URI : " << foundResource->getUri() << std::endl;
+    std::cout << "\t\tResource Host : " << foundResource->getAddress() << std::endl;
 
-    std::cout << "\t\tResource URI : " << resourceURI << std::endl;
-    std::cout << "\t\tResource Host : " << hostAddress << std::endl;
-
-    resource = foundResource;
+    g_resource = foundResource;
 
     cond.notify_all();
 }
@@ -133,83 +109,76 @@ void onRemoteAttributesReceivedCallback(const RCSResourceAttributes &attributes,
                   << attr.value().toString() << std::endl;
         std::cout << "=============================================\n" << std::endl;
 
-        OIC::Service::RCSResourceAttributes::Value attrValue =  attr.value();
-        std::vector< std::vector<RCSResourceAttributes >> attrVector =
-                    attrValue.get<std::vector< std::vector<RCSResourceAttributes >>>();
+        const auto& doubleVector = attr.value().
+                get< std::vector< std::vector< RCSResourceAttributes > > >();
 
-        for (auto itr = attrVector.begin(); itr != attrVector.end(); ++itr)
+        for (const auto& vector : doubleVector)
         {
-            std::vector<RCSResourceAttributes > attrKeyVector = *itr;
-            for (auto itrKey = attrKeyVector.begin(); itrKey != attrKeyVector.end(); ++itrKey)
+            for (const auto& attrs : vector)
             {
-                for (const auto & attribute : *itrKey)
+                for (const auto & kvPair : attrs)
                 {
-                    std::cout << "\t" << attribute.key() << "  :  "  << attribute.value().toString() << std::endl;
+                    std::cout << "\t" << kvPair.key() << " : "  <<
+                            kvPair.value().toString() << std::endl;
                 }
             }
             std::cout << std::endl;
         }
+        std::cout << "=============================================\n" << std::endl;
     }
-    std::cout << "=============================================\n" << std::endl;
     displayMenu();
 }
 
-nestedAtrribute createNestedAttribute(int speedValue, int aircValue)
+std::vector< std::vector< RCSResourceAttributes > > createNestedAttribute(int speedValue,
+        int aircValue)
 {
-    nestedAtrribute *acServer = new nestedAtrribute();
+    RCSResourceAttributes model;
+    RCSResourceAttributes weight;
+    RCSResourceAttributes dimensions;
 
     model["model"] = "SamsungAC";
+    weight["weight"] = 3;
+    dimensions["dimensions"] = "10x25x35";
+
+    RCSResourceAttributes speed;
+    RCSResourceAttributes airCirculation;
 
     speed["speed"] = speedValue;
     airCirculation["air"] = aircValue;
 
+    RCSResourceAttributes temperature;
+    RCSResourceAttributes humidity;
+
     temperature["temp"] = 30;
     humidity["humidity"] = 30;
+
+    RCSResourceAttributes power;
+    RCSResourceAttributes capacity;
 
     power["power"] = 1600;
     capacity["capacity"] = 1;
 
-    weight["weight"] = 3;
-    dimensions["dimensions"] = "10x25x35";
+    RCSResourceAttributes red;
+    RCSResourceAttributes green;
 
     red["red"] = 50;
     green["green"] = 60;
 
-    generalInfo.clear();
-    generalInfo.push_back(model);
-    generalInfo.push_back(weight);
-    generalInfo.push_back(dimensions);
+    std::vector< RCSResourceAttributes > generalInfo{ model, weight, dimensions };
+    std::vector< RCSResourceAttributes > fan{ speed, airCirculation } ;
+    std::vector< RCSResourceAttributes > tempSensor{ temperature, humidity } ;
+    std::vector< RCSResourceAttributes > efficiency{ power, capacity };
+    std::vector< RCSResourceAttributes > light{ red, green };
 
-    fan.clear();
-    fan.push_back(speed);
-    fan.push_back(airCirculation);
+    std::vector< std::vector< RCSResourceAttributes > > acServer;
 
-    tempSensor.clear();
-    tempSensor.push_back(temperature);
-    tempSensor.push_back(humidity);
+    acServer.push_back(generalInfo);
+    acServer.push_back(fan);
+    acServer.push_back(tempSensor);
+    acServer.push_back(efficiency);
+    acServer.push_back(light);
 
-    efficiency.clear();
-    efficiency.push_back(power);
-    efficiency.push_back(capacity);
-
-    light.clear();
-    light.push_back(red);
-    light.push_back(green);
-
-    if (nullptr == acServer)
-    {
-         std::cout << "Null nestedAtrribute" << std::endl;
-    }
-    else
-    {
-        acServer->push_back(generalInfo);
-        acServer->push_back(fan);
-        acServer->push_back(tempSensor);
-        acServer->push_back(efficiency);
-        acServer->push_back(light);
-    }
-
-    return *acServer;
+    return acServer;
 }
 
 int processUserInput()
@@ -227,17 +196,11 @@ int processUserInput()
 
 void getAttributeFromRemoteServer()
 {
-    if(nullptr == resource)
-        return;
-
-    resource->getRemoteAttributes(&onRemoteAttributesReceivedCallback);
+    g_resource->getRemoteAttributes(&onRemoteAttributesReceivedCallback);
 }
 
 void setAttributeToRemoteServer()
 {
-    if(nullptr == resource)
-        return;
-
     int speed, airc;
 
     std::cout << "\tEnter the Fan Speed you want to set : ";
@@ -245,12 +208,10 @@ void setAttributeToRemoteServer()
     std::cout << "\tEnter the Air circulation value you want to set :";
     std::cin >> airc;
 
-    nestedAtrribute nestedAttr = createNestedAttribute(speed, airc);
-
     RCSResourceAttributes setAttribute;
-    setAttribute[defaultKey] = nestedAttr;
+    setAttribute[defaultKey] = createNestedAttribute(speed, airc);
 
-    resource->setRemoteAttributes(setAttribute,
+    g_resource->setRemoteAttributes(setAttribute,
                                   &onRemoteAttributesReceivedCallback);
 }
 
@@ -297,7 +258,7 @@ bool discoverResource()
     try
     {
         RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
-                relativetUri, resourceType, &onResourceDiscovered);
+                resourceType, &onResourceDiscovered);
     }
     catch(const RCSPlatformException& e)
     {
@@ -306,7 +267,7 @@ bool discoverResource()
     std::unique_lock<std::mutex> lck(mtx);
     cond.wait_for(lck, std::chrono::seconds(2));
 
-    return resource != nullptr;
+    return g_resource != nullptr;
 }
 
 int main()
@@ -328,7 +289,7 @@ int main()
         std::cout << "main exception : " << e.what() << std::endl;
     }
 
-    std::cout << "Stopping the Client" << std::endl;
+    std::cout << "Stopping the client" << std::endl;
 
     return 0;
 }

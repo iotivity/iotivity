@@ -80,11 +80,11 @@ RCSResourceAttributes::Value JavaBundleResource::handleGetAttributeRequest(
     JavaVM *vm = ResourceContainerImpl::getImplInstance()->getJavaVM(m_bundleId);
 
     JNIEnv *env;
-    int envStat = vm->GetEnv((void **) &env, JNI_VERSION_1_4);
+    int envStat = vm->GetEnv(&env, JNI_VERSION_1_4);
 
     if (envStat == JNI_EDETACHED)
     {
-        if (vm->AttachCurrentThread((void **) &env, NULL) != 0)
+        if (vm->AttachCurrentThread(&env, NULL) != 0)
         {
             OIC_LOG_V(ERROR, CONTAINER_TAG,
                     "[JavaBundleResource::handleGetAttributeRequest] Failed to attach ");

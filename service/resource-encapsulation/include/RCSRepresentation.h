@@ -33,10 +33,15 @@ namespace OIC
     namespace Service
     {
 
+        /**
+         * This class describes a resource representation.
+         *
+         * @see RCSResourceObject
+         * @see RCRemoteResourceObject
+         */
         class RCSRepresentation
         {
         public:
-
             RCSRepresentation();
 
             explicit RCSRepresentation(const std::string& uri);
@@ -49,43 +54,108 @@ namespace OIC
                     const std::vector< std::string >& resourceTypes,
                     const RCSResourceAttributes& attrs);
 
+            /**
+             * Returns the uri.
+             */
             std::string getUri() const;
 
-            void setUri(const std::string& uri);
-            void setUri(std::string&& uri);
+            /**
+             * Sets the uri of this representation.
+             */
+            void setUri(std::string uri);
 
+            /**
+             * Returns all interfaces added.
+             */
             const std::vector< std::string >& getInterfaces() const;
 
-            void addInterface(const std::string& interface);
-            void addInterface(std::string&& interface);
+            /**
+             * Adds an interface.
+             *
+             * @param interface an interface to add
+             */
+            void addInterface(std::string interface);
 
+            /**
+             * Removes all interfaces added.
+             */
             void clearInterfaces();
 
+            /**
+             * Returns all resource types added.
+             */
             const std::vector< std::string >& getResourceTypes() const;
 
-            void addResourceType(const std::string& resourceType);
-            void addResourceType(std::string&& resourceType);
 
+            /**
+             * Adds a resource type.
+             */
+            void addResourceType(std::string resourceType);
+
+            /**
+             * Removes all resource types.
+             */
             void clearResourceTypes();
 
+            /**
+             * Returns attributes set in this representation.
+             */
             const RCSResourceAttributes& getAttributes() const;
+
+            /**
+             * @overload
+             */
             RCSResourceAttributes& getAttributes();
 
+            /**
+             * Overwrite attributes.
+             *
+             * @param attrs new attributes.
+             */
             void setAttributes(const RCSResourceAttributes& attrs);
+
+            /**
+             * @overload
+             */
             void setAttributes(RCSResourceAttributes&& attrs);
 
+            /**
+             * Returns children of this representation.
+             */
             const std::vector< RCSRepresentation >& getChildren() const;
 
-            void addChild(const RCSRepresentation&);
-            void addChild(RCSRepresentation&&);
+            /**
+             * Adds a child to this representation.
+             *
+             * @param child a representation to be attached
+             */
+            void addChild(RCSRepresentation child);
 
-            void setChildren(const std::vector< RCSRepresentation >&);
-            void setChildren(std::vector< RCSRepresentation >&&);
+            /**
+             * Sets children of this representation.
+             *
+             * @param children new children
+             */
+            void setChildren(std::vector< RCSRepresentation > children);
 
+            /**
+             * Removse all children
+             */
             void clearChildren();
 
+            /**
+             * Converts OCRepresentation into RCSRepresentation.
+             *
+             * @see toOCRepresentation
+             */
             static RCSRepresentation fromOCRepresentation(const OC::OCRepresentation&);
 
+
+            /**
+             * Converts RCSRepresentation into OCRepresentation.
+             *
+             * @see fromOCRepresentation
+             */
             static OC::OCRepresentation toOCRepresentation(const RCSRepresentation&);
             static OC::OCRepresentation toOCRepresentation(RCSRepresentation&&);
 

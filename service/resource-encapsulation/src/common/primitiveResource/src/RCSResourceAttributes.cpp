@@ -429,6 +429,18 @@ namespace OIC
         {
         }
 
+        RCSResourceAttributes::iterator::iterator(const iterator& rhs) :
+                m_cur{ rhs.m_cur },
+                m_keyValuePair{ this }
+        {
+        }
+
+        auto RCSResourceAttributes::iterator::operator=(const iterator& rhs) -> iterator&
+        {
+            m_cur = rhs.m_cur;
+            return *this;
+        }
+
         RCSResourceAttributes::iterator::iterator(base_iterator&& iter) :
                 m_cur{ std::move(iter) },
                 m_keyValuePair{ this }
@@ -479,10 +491,22 @@ namespace OIC
         {
         }
 
+        RCSResourceAttributes::const_iterator::const_iterator(const const_iterator& rhs) :
+                m_cur{ rhs.m_cur }, m_keyValuePair{ this }
+        {
+        }
+
         RCSResourceAttributes::const_iterator::const_iterator(
                 const RCSResourceAttributes::iterator& iter) :
                 m_cur{ iter.m_cur }, m_keyValuePair{ this }
         {
+        }
+
+        auto RCSResourceAttributes::const_iterator::operator=(
+                const const_iterator& rhs) -> const_iterator&
+        {
+            m_cur = rhs.m_cur;
+            return *this;
         }
 
         auto RCSResourceAttributes::const_iterator::operator=(
@@ -598,6 +622,11 @@ namespace OIC
         bool RCSResourceAttributes::erase(const std::string& key)
         {
             return m_values.erase(key) == 1U;
+        }
+
+        auto RCSResourceAttributes::erase(const_iterator pos) -> iterator
+        {
+            return iterator{ m_values.erase(pos.m_cur) };
         }
 
         bool RCSResourceAttributes::contains(const std::string& key) const

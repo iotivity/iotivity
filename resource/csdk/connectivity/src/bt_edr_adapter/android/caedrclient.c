@@ -34,7 +34,6 @@
 #include "caadapterutils.h"
 #include "caremotehandler.h"
 
-//#define DEBUG_MODE
 #define TAG PCF("OIC_CA_EDR_CLIENT")
 
 static const char METHODID_CONTEXTNONPARAM[] = "()Landroid/content/Context;";
@@ -846,8 +845,8 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
 
     if (!CAEDRNativeIsEnableBTAdapter(env))
     {
-        OIC_LOG(ERROR, TAG, "BT adpater is not enable");
-        return CA_STATUS_INVALID_PARAM;
+        OIC_LOG(INFO, TAG, "BT adapter is not enabled");
+        return CA_ADAPTER_NOT_ENABLED;
     }
 
     if (STATE_DISCONNECTED == CAEDRIsConnectedDevice(address))
@@ -969,8 +968,8 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
 
     if (!CAEDRNativeIsEnableBTAdapter(env))
     {
-        OIC_LOG(ERROR, TAG, "BT adpater is not enable");
-        return CA_STATUS_INVALID_PARAM;
+        OIC_LOG(INFO, TAG, "BT adapter is not enabled");
+        return CA_ADAPTER_NOT_ENABLED;
     }
 
     jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADPATER);

@@ -32,6 +32,7 @@
 #include "RCSRemoteResourceObject.h"
 #include "RCSResourceAttributes.h"
 #include "RemoteResourceUnit.h"
+#include "InternalTypes.h"
 
 namespace OIC
 {
