@@ -1,0 +1,26 @@
+This project contains the Cloud Interface(CI) Server code.
+
+Build and Run
+
+1) Install Apache Maven if you don't have it
+
+	http://maven.apache.org
+
+2) Build a CloudStack. If you are building first time, then build the stack.
+
+	go to "stack" folder in root directory
+	$ mvn install
+
+3) Build a .jar file
+
+	$ mvn install
+
+	- The CloudInterface-0.0.1-SNAPSHOT.jar file will be placed in the "target" folder
+
+4) Run .jar file
+
+	go to "target" folder
+	$ java -jar CloudInterface-0.0.1-SNAPSHOT.jar arg1(CI CoAP Server Port) arg2(RD CoAP Server IP) arg3(RD CoAP Server Port) arg4(Account Server IP) arg5(Account Server Port)
+	e.g. java -jar CloudInterface-0.0.1-SNAPSHOT.jar 5683 127.0.0.1 5684 127.0.0.1 5685
+
+	- Before running a CI server, you should run a RD server and a Acccount server first.

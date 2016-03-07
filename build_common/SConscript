@@ -81,6 +81,7 @@ help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map
 help_vars.Add(BoolVariable('WITH_RA', 'Build with Remote Access module', False))
 help_vars.Add(BoolVariable('WITH_TCP', 'Build with TCP adapter', False))
 help_vars.Add(EnumVariable('WITH_RD', 'Build including Resource Directory', '0', allowed_values=('0', '1')))
+help_vars.Add(BoolVariable('WITH_CLOUD', 'Build including Cloud client sample', False))
 
 help_vars.Add(BoolVariable('SIMULATOR', 'Build with simulator module', False))
 

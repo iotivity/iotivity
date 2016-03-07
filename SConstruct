@@ -65,6 +65,9 @@ SConscript(build_dir + 'service/SConscript')
 # Build "plugin interface" sub-project
 SConscript(build_dir + 'plugins/SConscript')
 
+# Build "cloud" sub-project
+SConscript(build_dir + 'cloud/SConscript')
+
 # Append targets information to the help information, to see help info, execute command line:
 #     $ scon [options] -h
 env.PrintTargets()

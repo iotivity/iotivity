@@ -1,0 +1,56 @@
+#******************************************************************
+#
+# Copyright 2016 Samsung Electronics All Rights Reserved.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+##
+# IoTivity Cloud project sample client build script
+##
+
+Import('env')
+
+lib_env = env.Clone()
+
+cc_sample_app_env = lib_env.Clone()
+
+######################################################################
+# Build flags
+######################################################################
+cc_sample_app_env.AppendUnique(CPPPATH = [
+		'../../../resource/include/',
+		'../../../resource/csdk/stack/include',
+		'../../../resource/c_common/ocrandom/include',
+		'../../../resource/csdk/logger/include',
+		'../../../resource/oc_logger/include'
+		])
+
+cc_sample_app_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x', '-pthread'])
+cc_sample_app_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+cc_sample_app_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
+cc_sample_app_env.PrependUnique(LIBS = ['oc', 'octbstack'])
+
+######################################################################
+# Source files and Targets
+######################################################################
+cc_sample_src = [
+        'cloud_connector.c',
+        'sample_device.cpp',
+         ]
+
+cc_client = cc_sample_app_env.Program('cloud_device', cc_sample_src)
+cc_sample_app_env.InstallTarget(cc_client, 'cloud_device')
