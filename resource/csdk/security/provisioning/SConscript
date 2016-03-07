@@ -74,7 +74,7 @@ provisioning_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connecti
 provisioning_env.AppendUnique(LIBS = ['tinydtls'])
 
 if env.get('DTLS_WITH_X509') == '1':
-	provisioning_env.AppendUnique(LIBS = ['CKManger'])
+	provisioning_env.AppendUnique(LIBS = ['CKManager', 'asn1'])
 
 if target_os != 'android':
 	provisioning_env.ParseConfig('pkg-config --libs glib-2.0')
