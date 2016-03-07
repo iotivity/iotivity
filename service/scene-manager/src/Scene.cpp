@@ -119,7 +119,7 @@ namespace OIC
             auto sceneMemberRes = m_sceneCollectionResource->findSceneMembers(m_name);
 
             std::for_each(sceneMemberRes.begin(), sceneMemberRes.end(),
-                [&actions, &m_name](const SceneMemberResource::Ptr& member)
+                [&](const SceneMemberResource::Ptr& member)
                 {
                     RCSResourceAttributes actionParam;
 
