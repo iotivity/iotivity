@@ -57,7 +57,7 @@ namespace OIC
             {
                 m_sceneCollectionResource->addSceneMember(sceneMemberResObj);
             }
-            catch(std::exception& e)
+            catch(RCSBadRequestException& e)
             {
                 auto sceneMemberRes = m_sceneCollectionResource->findSceneMembers(m_name);
 
@@ -70,7 +70,7 @@ namespace OIC
 
                 if(it != sceneMemberRes.end())
                 {
-                    throw InvalidAddMemberRequestException(
+                    throw RCSBadRequestException(
                             "It is already registered member. Please set Execution Parameter!");
                 }
 

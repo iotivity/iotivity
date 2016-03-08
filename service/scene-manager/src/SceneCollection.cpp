@@ -38,6 +38,7 @@ namespace OIC
             }
 
             m_sceneCollectionResource->addScene(sceneName);
+
             return Scene::Ptr(new Scene(sceneName, m_sceneCollectionResource));
         }
 

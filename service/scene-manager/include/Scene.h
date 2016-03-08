@@ -43,20 +43,6 @@ namespace OIC
         class Scene
         {
         public:
-
-            /**
-             * @class InvalidAddMemberRequestException
-             *
-             * @brief If request of adding member is invalid, throw InvalidMemberRequestException.
-             * Adding member is invalid that scene member resource is already registered.
-             */
-            class InvalidAddMemberRequestException: public RCSException
-            {
-            public:
-                InvalidAddMemberRequestException(std::string&& what) :
-                    RCSException{ std::move(what) } {}
-            };
-
             typedef std::shared_ptr< Scene > Ptr;
 
             /**
@@ -83,8 +69,7 @@ namespace OIC
              * @return A shared pointer of SceneAction instance
              *
              * @throws RCSInvalidParameterException if pRCSRemoteResourceObject is nullptr
-             * @throws InvalidAddMemberRequestException
-             *         if scene member resource is already registered
+             * @throws RCSBadRequestException if scene member resource is already registered
              *
              * @note SceneAction instance is only produced by Scene class
              *
@@ -103,7 +88,7 @@ namespace OIC
              * @return A shared pointer of SceneAction instance
              *
              * @throws RCSInvalidParameterException if pRCSRemoteResourceObject is nullptr
-             * @throws InvalidAddMemberRequestException if SceneMember is already registered
+             * @throws RCSBadRequestException if SceneMember is already registered
              *
              * @note SceneAction instance is only produced by Scene class
              *

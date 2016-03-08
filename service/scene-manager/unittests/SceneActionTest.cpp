@@ -113,7 +113,7 @@ TEST_F(SceneActionTest, createSceneActionByAlreadyExistedRCSRemoteResourceObject
     createSceneCollectionAndScene();
     createSceneAction();
     ASSERT_THROW(pScene1->addNewSceneAction(
-            pRemoteResource1, KEY, "off"), Scene::InvalidAddMemberRequestException);
+            pRemoteResource1, KEY, "off"), RCSBadRequestException);
 }
 
 TEST_F(SceneActionTest, getSceneActionInstance)

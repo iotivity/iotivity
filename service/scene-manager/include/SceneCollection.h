@@ -57,6 +57,9 @@ namespace OIC
              *
              * @return A shared pointer of Scene instance
              *
+             * @throw RCSInvalidParameterException if scene name is empty
+             * @throw RCSInvalidParameterException if scene name is dupltcated
+             *
              * @note Scene instance is only produced by SceneCollection class
              * @note Scene's name must unique in one SceneCollection resource
              */
