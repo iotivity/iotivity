@@ -92,6 +92,7 @@ namespace OIC
                 * @param cb A callback to receive created RemoteSceneAction instance
                 *
                 * @throws RCSInvalidParameterException If parameter is invalid.
+                * @throws PlatformException If the platform operation failed
                 *
                 * @note RemoteSceneAction instance is only produced by RemoteScene class
                 *
@@ -110,6 +111,7 @@ namespace OIC
                 * @param cb A callback to receive created RemoteSceneAction instance
                 *
                 * @throws RCSInvalidParameterException If parameter is invalid.
+                * @throws PlatformException If the platform operation failed
                 *
                 * @note RemoteSceneAction instance is only produced by RemoteScene class
                 *
@@ -152,6 +154,7 @@ namespace OIC
                 * @param cb A callback to receive result of Scene execution
                 *
                 * @throws RCSInvalidParameterException If callback is null
+                * @throws PlatformException If the platform operation failed
                 */
                 void execute(RemoteSceneExecuteCallback cb);
 

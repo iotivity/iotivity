@@ -137,7 +137,7 @@ namespace OIC
                 }
                 catch (const std::exception &e)
                 {
-                    SCENE_CLIENT_ASSERT_NOT_NULL(e.what());
+                    SCENE_CLIENT_PRINT_LOG(e.what());
                     result = SCENE_SERVER_INTERNALSERVERERROR;
                 }
             }

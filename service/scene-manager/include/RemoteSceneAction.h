@@ -74,6 +74,7 @@ namespace OIC
                 * @param cb A callback to receive the response
                 *
                 * @throws RCSInvalidParameterException If parameter is invalid.
+                * @throws PlatformException If the platform operation failed
                 *
                 * @see RCSResourceAttributes::Value
                 */
@@ -88,6 +89,7 @@ namespace OIC
                 * @param cb A callback to receive the response
                 *
                 * @throws RCSInvalidParameterException If parameter is invalid.
+                * @throws PlatformException If the platform operation failed
                 *
                 * @see RCSResourceAttributes
                 */

@@ -64,7 +64,7 @@ namespace OIC
             SceneListResourceRequestor::Ptr pRequestor =
                 std::make_shared< SceneListResourceRequestor >(sceneListResource);
 
-            std::string requestIf = OC::DEFAULT_INTERFACE;
+            std::string requestIf = SCENE_CLIENT_REQ_IF;
             pRequestor->requestGet(requestIf, std::bind(
                 &RemoteSceneList::onInstanceCreated,
                 std::placeholders::_2, std::placeholders::_3, requestIf,
