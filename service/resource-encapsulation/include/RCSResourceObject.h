@@ -162,7 +162,7 @@ namespace OIC
 
                 /**
                  * Sets the default interface.
-                 * If the default interface is not sepcified, "oic.if.baseline"
+                 * If it is not called, the interface passed to the constructor is the default.
                  *
                  * @param interface default interface name
                  *
