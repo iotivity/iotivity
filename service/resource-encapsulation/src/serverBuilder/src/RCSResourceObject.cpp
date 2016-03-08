@@ -121,6 +121,16 @@ namespace
         return {};
     }
 
+    void insertValue(std::vector<std::string>& container, std::string value)
+    {
+        if (value.empty()) return;
+
+        if (std::find(container.begin(), container.end(), value) == container.end())
+        {
+            container.push_back(std::move(value));
+        }
+    }
+
 } // unnamed namespace
 
 namespace OIC
@@ -132,22 +142,29 @@ namespace OIC
                 std::string interface) :
                 m_uri{ std::move(uri) },
                 m_types{ std::move(type) },
-                m_interfaces{ std::move(interface) },
-                m_defaultInterface { BASELINE_INTERFACE },
+                m_interfaces{ },
+                m_defaultInterface{ interface },
                 m_properties{ OC_DISCOVERABLE | OC_OBSERVABLE },
                 m_resourceAttributes{ }
         {
+            addInterface(interface);
+            addInterface(BASELINE_INTERFACE);
+
+            if (m_defaultInterface.empty())
+            {
+                m_defaultInterface = BASELINE_INTERFACE;
+            }
         }
 
         RCSResourceObject::Builder& RCSResourceObject::Builder::addInterface(std::string interface)
         {
-            m_interfaces.push_back(std::move(interface));
+            insertValue(m_interfaces, std::move(interface));
             return *this;
         }
 
         RCSResourceObject::Builder& RCSResourceObject::Builder::addType(std::string type)
         {
-            m_types.push_back(std::move(type));
+            insertValue(m_types, std::move(type));
             return *this;
         }
 
