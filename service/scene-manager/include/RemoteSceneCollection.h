@@ -91,6 +91,7 @@ namespace OIC
                 * @param cb A callback to receive created RemoteScene instance
                 *
                 * @throws RCSInvalidParameterException If parameter is invalid
+                * @throws PlatformException If the platform operation failed
                 *
                 * @note RemoteScene instance is only produced by RemoteSceneCollection class.
                 * @note Name of Scene must be unique in one SceneCollection
@@ -122,6 +123,7 @@ namespace OIC
                 * @param cb A callback to receive the response
                 *
                 * @throws RCSInvalidParameterException If callback is null
+                * @throws PlatformException If the platform operation failed
                 */
                 void setName(const std::string &name, SetNameCallback cb);
 
