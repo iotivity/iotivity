@@ -1191,6 +1191,14 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     {
                         type = PAYLOAD_TYPE_RD;
                     }
+                    else if (strcmp(OC_RSRVD_PLATFORM_URI, cbNode->requestUri) == 0)
+                    {
+                        type = PAYLOAD_TYPE_PLATFORM;
+                    }
+                    else if (strcmp(OC_RSRVD_DEVICE_URI, cbNode->requestUri) == 0)
+                    {
+                        type = PAYLOAD_TYPE_DEVICE;
+                    }
                     if (type == PAYLOAD_TYPE_INVALID)
                     {
                         OIC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
