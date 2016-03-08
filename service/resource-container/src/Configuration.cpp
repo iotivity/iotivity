@@ -235,7 +235,10 @@ namespace OIC
                                             strValue = item->value();
 
                                             if (!strKey.compare(OUTPUT_RESOURCE_NAME))
+                                            {
+                                                if (trim_both(strValue).compare(resourceName) != 0) break;
                                                 resourceInfoOut->name = trim_both(strValue);
+                                            }
 
                                             else if (!strKey.compare(OUTPUT_RESOURCE_URI))
                                                 resourceInfoOut->uri = trim_both(strValue);

@@ -47,7 +47,7 @@ void BMISensorResource::executeLogic()
     std::string strBMIResult;
 
     if (m_pBMISensor->executeBMISensorLogic(&m_mapInputData, &strBMIResult) != -1)
-        setAttribute("BMIresult", RCSResourceAttributes::Value(strBMIResult.c_str())), true;
+        setAttribute("BMIresult", RCSResourceAttributes::Value(strBMIResult.c_str()));
 }
 
 void BMISensorResource::onUpdatedInputResource(const std::string attributeName,

@@ -210,27 +210,27 @@ TEST_F(ResourceContainerTest, TestBundleResource)
 
     testResource.handleSetAttributesRequest(fullAttributes);
 
-    EXPECT_EQ(3, testResource.getAttributeNames().size());
+    EXPECT_EQ((unsigned int) 3, testResource.getAttributeNames().size());
 
-    EXPECT_EQ(3, testResource.handleGetAttributesRequest().size());
+    EXPECT_EQ((unsigned int) 3, testResource.handleGetAttributesRequest().size());
     std::string testString = "test";
-    testResource.setAttribute("attrib1", testString, false);
+    testResource.setAttribute("attrib1", RCSResourceAttributes::Value(testString), false);
 
     testResource.setAttributes(fullAttributes, false);
 
-    EXPECT_STREQ("\"test\"", testResource.getAttribute("attrib1").toString().c_str());
-    EXPECT_EQ(1, testResource.getAttribute("attrib2"));
+    EXPECT_STREQ("\"test2\"", testResource.getAttribute("attrib1").toString().c_str());
+    EXPECT_EQ(2, testResource.getAttribute("attrib2"));
 
-    testResource.setAttribute("attrib1", "test");
+    testResource.setAttribute("attrib1", RCSResourceAttributes::Value("test"));
     EXPECT_STREQ("\"test\"", testResource.getAttribute("attrib1").toString().c_str());
-    EXPECT_EQ(1, testResource.getAttribute("attrib2"));
+    EXPECT_EQ(2, testResource.getAttribute("attrib2"));
 }
 
 TEST_F(ResourceContainerTest, TestSoftSensorResource)
 {
     TestSoftSensorResource softSensorResource;
     softSensorResource.initAttributes();
-    EXPECT_EQ(0, softSensorResource.getAttributeNames().size());
+    EXPECT_EQ((unsigned int) 0, softSensorResource.getAttributeNames().size());
 }
 
 

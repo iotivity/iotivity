@@ -73,7 +73,8 @@ namespace OIC
         {
             std::lock_guard<std::mutex> lock(m_resourceAttributes_mutex);
 
-            for (auto &it : m_resourceAttributes){
+            for (auto &it : attrs)
+            {
                 OIC_LOG_V(INFO, CONTAINER_TAG, "set attribute \(%s)'",
                            std::string(it.key() + "\', with " + it.value().toString()).c_str());
 
