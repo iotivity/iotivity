@@ -240,7 +240,7 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
     CATCPSetPacketReceiveCallback(CATCPPacketReceivedCB);
     CATCPSetErrorHandler(CATCPErrorHandler);
 
-    CAConnectivityHandler_t TCPHandler = {
+    CAConnectivityHandler_t tcpHandler = {
         .startAdapter = CAStartTCP,
         .startListenServer = CAStartTCPListeningServer,
         .stopListenServer = CAStopTCPListeningServer,
@@ -253,7 +253,7 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
         .terminate = CATerminateTCP,
         .cType = CA_ADAPTER_TCP};
 
-    registerCallback(TCPHandler);
+    registerCallback(tcpHandler);
 
     OIC_LOG(INFO, TAG, "OUT IntializeTCP is Success");
     return CA_STATUS_OK;

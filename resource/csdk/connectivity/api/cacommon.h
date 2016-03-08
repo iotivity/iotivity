@@ -518,6 +518,7 @@ typedef struct
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
         int shutdownFds[2];     /**< shutdown pipe */
+        int connectionFds[2];   /**< connection pipe */
         int maxfd;              /**< highest fd (for select) */
         bool started;           /**< the TCP adapter has started */
         bool terminate;         /**< the TCP adapter needs to stop */
