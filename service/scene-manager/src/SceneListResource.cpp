@@ -46,8 +46,9 @@ namespace OIC
         RCSResourceObject::Ptr SceneListResource::createResourceObject()
         {
             return RCSResourceObject::Builder(
-                    SCENE_LIST_URI, SCENE_LIST_RT, OC_RSRVD_INTERFACE_DEFAULT).
+                    SCENE_LIST_URI, SCENE_LIST_RT, BASELINE_IF).
                             addInterface(OC::BATCH_INTERFACE).
+                            addInterface(LINK_BATCH).
                             setDiscoverable(true).setObservable(false).build();
         }
 
