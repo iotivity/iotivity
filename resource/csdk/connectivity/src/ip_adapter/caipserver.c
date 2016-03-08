@@ -797,7 +797,7 @@ static void CAHandleNetlink()
 
     for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len))
     {
-        if (nh->nlmsg_type != RTM_NEWLINK)
+        if (nh != NULL && nh->nlmsg_type != RTM_NEWLINK)
         {
             continue;
         }

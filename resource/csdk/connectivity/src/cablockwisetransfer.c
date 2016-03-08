@@ -422,6 +422,12 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                     return res;
                 }
             }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "Invalid Block Option");
+                CADestroyBlockID(blockDataID);
+                return CA_STATUS_FAILED;
+            }
         }
         else
         {
@@ -2566,6 +2572,14 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData)
     {
         tokenLength = data->sentData->responseInfo->info.tokenLength;
         token = data->sentData->responseInfo->info.token;
+    }
+
+    if (!data->sentData->remoteEndpoint)
+    {
+        OIC_LOG(ERROR, TAG, "remoteEndpoint is null");
+        CADestroyDataSet(data->sentData);
+        OICFree(data);
+        return NULL;
     }
 
     CABlockDataID_t* blockDataID = CACreateBlockDatablockId(

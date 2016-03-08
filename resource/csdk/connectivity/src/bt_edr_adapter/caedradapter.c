@@ -590,6 +590,12 @@ void CAAdapterDataReceiverHandler(void *context)
                                                           message->remoteEndpoint->addr,
                                                           0);
 
+    if (!remoteEndpoint)
+    {
+        OIC_LOG(ERROR, EDR_ADAPTER_TAG, "remoteEndpoint is NULL");
+        return;
+    }
+
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "Sending data up !");
 
     const CASecureEndpoint_t sep = { .endpoint = *remoteEndpoint };
