@@ -102,17 +102,18 @@ void OCFreeOCStringLL(OCStringLL* ll);
 
 static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* rootValue)
 {
-    OCStackResult ret = OC_STACK_MALFORMED_RESPONSE;
+    OCStackResult ret = OC_STACK_ERROR;
     CborError err;
     char *securityData = NULL;
-
-    VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid parameter");
-    VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid cbor");
-
     CborValue strVal;
+
+    VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid parameter outPayload");
+    VERIFY_PARAM_NON_NULL(TAG, rootValue, "Invalid parameter rootValue");
+    *outPayload = NULL;
 
     err = cbor_value_enter_container(rootValue, &strVal);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed entering container");
+
     if (cbor_value_is_text_string(&strVal))
     {
         size_t len = 0;
@@ -121,6 +122,14 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* r
         *outPayload = (OCPayload *)OCSecurityPayloadCreate(securityData);
         VERIFY_PARAM_NON_NULL(TAG, *outPayload, "Invalid cbor");
         ret = OC_STACK_OK;
+    }
+    else if(cbor_value_is_valid(&strVal))
+    {
+        ret = OC_STACK_OK;
+    }
+    else
+    {
+        ret = OC_STACK_MALFORMED_RESPONSE;
     }
 
 exit:

@@ -183,12 +183,17 @@ static int64_t OCConvertSecurityPayload(OCSecurityPayload* payload, uint8_t* out
     if (payload->securityData)
     {
         err |= cbor_encode_text_string(&map, payload->securityData,
-                                      strlen(payload->securityData));
-        VERIFY_CBOR_SUCCESS(TAG, err, "Retrieving security data");
+                                      (size_t)(strlen(payload->securityData)));
+        VERIFY_CBOR_SUCCESS(TAG, err, "Encoding security data");
+    }
+    else
+    {
+        err |= cbor_encode_null(&map);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Encoding security data");
     }
 
     err |= cbor_encoder_close_container(&encoder, &map);
-    VERIFY_CBOR_SUCCESS(TAG, err, "closing security map");
+    VERIFY_CBOR_SUCCESS(TAG, err, "Closing security map");
 exit:
     return checkError(err, &encoder, outPayload, size);
 }
