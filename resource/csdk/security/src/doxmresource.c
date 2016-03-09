@@ -25,6 +25,7 @@
 #include "resourcemanager.h"
 #include "doxmresource.h"
 #include "pstatresource.h"
+#include "aclresource.h"
 #include "psinterface.h"
 #include "utlist.h"
 #include "srmresourcestrings.h"
@@ -623,7 +624,16 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
             // Update new state in persistent storage
             if (UpdatePersistentStorage(gDoxm))
             {
-                ehRet = OC_EH_OK;
+                //Update default ACL of security resource to prevent anonymous user access.
+                if(OC_STACK_OK == UpdateDefaultSecProvACL())
+                {
+                    ehRet = OC_EH_OK;
+                }
+                else
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to remove default ACL for security provisioning");
+                    ehRet = OC_EH_ERROR;
+                }
             }
             else
             {
