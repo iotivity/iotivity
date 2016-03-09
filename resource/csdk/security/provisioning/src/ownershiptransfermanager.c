@@ -226,16 +226,6 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx);
  */
 static OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx);
 
-/*
- * Function to finalize provisioning.
- * This function will send default ACL and commit hash.
- *
- * @param[in] otmCtx   Context value of ownership transfer.
- * @return  OC_STACK_OK on success
- */
-static OCStackResult FinalizeProvisioning(OTMContext_t* otmCtx);
-
-
 static bool IsComplete(OTMContext_t* otmCtx)
 {
     for(size_t i = 0; i < otmCtx->ctxResultArraySize; i++)
@@ -859,45 +849,10 @@ static OCStackApplicationResult ProvisioningStatusHandler(void *ctx, OCDoHandle 
     VERIFY_NON_NULL(TAG, clientResponse, ERROR);
     VERIFY_NON_NULL(TAG, ctx, ERROR);
 
-    OTMContext_t* otmCtx = (OTMContext_t*)ctx;
-    (void)UNUSED;
-    if(OC_STACK_OK == clientResponse->result)
-    {
-        OCStackResult res = FinalizeProvisioning(otmCtx);
-         if (OC_STACK_OK != res)
-         {
-                OIC_LOG_V(INFO, TAG, "Failed to finalize provisioning.");
-                SetResult(otmCtx, res);
-                return OC_STACK_DELETE_TRANSACTION;
-         }
-    }
-
-exit:
-    OIC_LOG_V(INFO, TAG, "OUT ProvisioningStatusHandler.");
-    return OC_STACK_DELETE_TRANSACTION;
-}
-
-/**
- * Callback handler of finalize provisioning.
- *
- * @param[in] ctx             ctx value passed to callback from calling function.
- * @param[in] UNUSED          handle to an invocation
- * @param[in] clientResponse  Response from queries to remote servers.
- * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
- *          and OC_STACK_KEEP_TRANSACTION to keep it.
- */
-static OCStackApplicationResult FinalizeProvisioningCB(void *ctx, OCDoHandle UNUSED,
-                                                       OCClientResponse *clientResponse)
-{
-    OIC_LOG_V(INFO, TAG, "IN ProvisionDefaultACLCB.");
-
-    VERIFY_NON_NULL(TAG, clientResponse, ERROR);
-    VERIFY_NON_NULL(TAG, ctx, ERROR);
-
     OTMContext_t* otmCtx = (OTMContext_t*) ctx;
     (void)UNUSED;
 
-    if (OC_STACK_RESOURCE_CREATED == clientResponse->result)
+    if (OC_STACK_OK == clientResponse->result)
     {
         OCStackResult res = PDMAddDevice(&otmCtx->selectedDeviceInfo->doxm->deviceID);
          if (OC_STACK_OK == res)
@@ -917,7 +872,10 @@ static OCStackApplicationResult FinalizeProvisioningCB(void *ctx, OCDoHandle UNU
                             clientResponse->result);
         SetResult(otmCtx, clientResponse->result);
     }
+
+
 exit:
+    OIC_LOG_V(INFO, TAG, "OUT ProvisioningStatusHandler.");
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -1475,107 +1433,5 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
     OIC_LOG(INFO, TAG, "OUT PutProvisioningStatus");
 
     return ret;
-}
-
-OCStackResult FinalizeProvisioning(OTMContext_t* otmCtx)
-{
-    OIC_LOG(INFO, TAG, "IN FinalizeProvisioning");
-
-    if(!otmCtx)
-    {
-        OIC_LOG(ERROR, TAG, "OTMContext is NULL");
-        return OC_STACK_INVALID_PARAM;
-    }
-    if(!otmCtx->selectedDeviceInfo)
-    {
-        OIC_LOG(ERROR, TAG, "Can't find device information in OTMContext");
-        OICFree(otmCtx);
-        return OC_STACK_INVALID_PARAM;
-    }
-    // Provision Default ACL to device
-    OicSecAcl_t defaultAcl =
-    { {.id={0}},
-        1,
-        NULL,
-        0x001F,
-        0,
-        NULL,
-        NULL,
-        1,
-        NULL,
-        NULL,
-    };
-
-    OicUuid_t provTooldeviceID = {.id={0}};
-    if (OC_STACK_OK != GetDoxmDeviceID(&provTooldeviceID))
-    {
-        OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
-        SetResult(otmCtx, OC_STACK_ERROR);
-        return OC_STACK_ERROR;
-    }
-    OIC_LOG(INFO, TAG, "Retieved deviceID");
-    memcpy(defaultAcl.subject.id, provTooldeviceID.id, sizeof(defaultAcl.subject.id));
-    char *wildCardResource = "*";
-    defaultAcl.resources = &wildCardResource;
-
-    defaultAcl.owners = (OicUuid_t *) OICCalloc(1, UUID_LENGTH);
-    if(!defaultAcl.owners)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation for default ACL");
-        SetResult(otmCtx, OC_STACK_NO_MEMORY);
-        return OC_STACK_NO_MEMORY;
-    }
-    memcpy(defaultAcl.owners->id, provTooldeviceID.id, UUID_LENGTH);
-    OIC_LOG(INFO, TAG, "Provisioning default ACL");
-
-    OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if(!secPayload)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
-        return OC_STACK_NO_MEMORY;
-    }
-    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToAclJSON(&defaultAcl);
-    OICFree(defaultAcl.owners);
-    if(!secPayload->securityData)
-    {
-        OICFree(secPayload);
-        OIC_LOG(INFO, TAG, "FinalizeProvisioning : Failed to BinToAclJSON");
-        SetResult(otmCtx, OC_STACK_ERROR);
-        return OC_STACK_ERROR;
-    }
-    OIC_LOG_V(INFO, TAG, "Provisioning default ACL : %s",secPayload->securityData);
-
-    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
-    if(!PMGenerateQuery(true,
-                        otmCtx->selectedDeviceInfo->endpoint.addr,
-                        otmCtx->selectedDeviceInfo->securePort,
-                        otmCtx->selectedDeviceInfo->connType,
-                        query, sizeof(query), OIC_RSRC_ACL_URI))
-    {
-        OIC_LOG(ERROR, TAG, "FinalizeProvisioning : Failed to generate query");
-        return OC_STACK_ERROR;
-    }
-    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
-
-    OIC_LOG_V(INFO, TAG, "Request URI for Provisioning default ACL : %s", query);
-
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
-    cbData.cb = &FinalizeProvisioningCB;
-    cbData.context = (void *)otmCtx;
-    cbData.cd = NULL;
-    OCStackResult ret = OCDoResource(NULL, OC_REST_POST, query,
-            &otmCtx->selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
-            otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
-    if (OC_STACK_OK != ret)
-    {
-        SetResult(otmCtx, ret);
-        return ret;
-    }
-
-    OIC_LOG(INFO, TAG, "OUT FinalizeProvisioning");
-
-    return ret;
-
 }
 
