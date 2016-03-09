@@ -77,7 +77,7 @@ namespace OIC
                 void setResourceDestroyer(resourceDestroyer_t *);
                 resourceDestroyer_t *getResourceDestroyer();
 
-                void setBundleInfo(RCSBundleInfo *bundleInfo);
+                void setBundleInfo(shared_ptr<RCSBundleInfo> bundleInfo);
 
                 void setBundleHandle(void *);
                 void *getBundleHandle();

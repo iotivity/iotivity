@@ -219,9 +219,11 @@ namespace OIC
         }
 #endif
 
-        void BundleInfoInternal::setBundleInfo(RCSBundleInfo *bundleInfo)
+        void BundleInfoInternal::setBundleInfo(shared_ptr<RCSBundleInfo> bundleInfo)
         {
-            BundleInfoInternal *source = (BundleInfoInternal *)bundleInfo;
+            shared_ptr<BundleInfoInternal> source =
+                                std::static_pointer_cast<BundleInfoInternal>(bundleInfo);
+
             m_ID = source->getID();
             m_path = source->getPath();
             m_version = source->getVersion();
