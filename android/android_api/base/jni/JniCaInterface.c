@@ -258,6 +258,8 @@ Java_org_iotivity_ca_CaInterface_caManagerSetAutoConnectionDeviceInfo(JNIEnv *en
     }
 
     CASetAutoConnectionDeviceInfo(address);
+
+    (*env)->ReleaseStringUTFChars(env, jaddress, address);
 }
 
 JNIEXPORT void JNICALL
@@ -275,6 +277,8 @@ Java_org_iotivity_ca_CaInterface_caManagerUnsetAutoConnectionDeviceInfo(JNIEnv *
     }
 
     CAUnsetAutoConnectionDeviceInfo(address);
+
+    (*env)->ReleaseStringUTFChars(env, jaddress, address);
 }
 
 JNIEXPORT void JNICALL
