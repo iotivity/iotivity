@@ -170,13 +170,6 @@ CAResult_t CAStartLEAdapter()
         return CA_STATUS_FAILED;
     }
 
-    ret = bt_adapter_set_visibility(BT_ADAPTER_VISIBILITY_MODE_GENERAL_DISCOVERABLE, 0);
-    if (0 != ret)
-    {
-        OIC_LOG(ERROR, TAG, "bt_adapter_set_visibility failed");
-        return CA_STATUS_FAILED;
-    }
-
     ret = bt_adapter_set_state_changed_cb(CALEAdapterStateChangedCb, NULL);
     if (BT_ERROR_NONE != ret)
     {

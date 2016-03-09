@@ -31,6 +31,10 @@
 #ifndef TZ_BLE_SERVER_H_
 #define TZ_BLE_SERVER_H_
 
+#include <bluetooth.h>
+#include <bluetooth_type.h>
+#include <bluetooth_internal.h>
+
 #include "caadapterinterface.h"
 #include "logger.h"
 #include "cathreadpool.h"
