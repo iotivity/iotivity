@@ -152,37 +152,6 @@ void ca_mutex_lock(ca_mutex mutex)
     }
 }
 
-bool ca_mutex_trylock(ca_mutex mutex)
-{
-    if (NULL == mutex)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s Invalid mutex !", __func__);
-        return false;
-    }
-
-    bool bRet = false;
-
-    ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
-
-    int result = pthread_mutex_trylock(&mutexInfo->mutex);
-
-    switch (result)
-    {
-        case 0:
-            // Success
-            bRet = true;
-            break;
-        case EINVAL:
-            OIC_LOG_V(ERROR, TAG, "%s: Invalid mutex !", __func__);
-            break;
-        case EBUSY:
-        default:
-            break;
-    }
-
-    return bRet;
-}
-
 void ca_mutex_unlock(ca_mutex mutex)
 {
     ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
