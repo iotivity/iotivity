@@ -125,22 +125,23 @@ if target_os == 'linux':
 	enrollee_env.InstallTarget(enrollee_sdk_shared, 'libESEnrollee')
 
 if target_os == 'tizen':
-	enrollee_sdk_shared = enrollee_env.SharedLibrary('ESEnrolleeSDK',
-		[enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.cpp',
-         enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.cpp',
-		 enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.cpp',
-		 enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.cpp',
-		 enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/tizen/wifi/networkhandler.cpp',
-		 enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/tizen/wifi/softapnative.cpp'])
+	enrollee_sdk_shared = enrollee_env.SharedLibrary('ESEnrolleeSDK', [
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.cpp',
+         	enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.cpp',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.cpp',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.cpp',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/tizen/wifi/networkhandler.cpp',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/tizen/wifi/softapnative.cpp'])
 	enrollee_env.InstallTarget(enrollee_sdk_shared, 'libESEnrolleeSDK')
+	enrollee_env.UserInstallTargetLib(enrollee_sdk_shared, 'libESEnrolleeSDK')
 
 if target_os == 'arduino':
 	es_sdk_static = enrollee_env.StaticLibrary('ESEnrolleeSDK', [
-					enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.cpp',
-					enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.cpp',
-					enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.cpp',
-					enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.cpp',
-					enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/wifi/networkhandler.cpp'])
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/easysetup.cpp',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/onboarding.cpp',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/softap.cpp',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src/resourcehandler.cpp',
+		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/arduino/wifi/networkhandler.cpp'])
 	enrollee_env.InstallTarget(es_sdk_static, 'libESEnrolleeSDK')
 
 #Go to build sample apps
