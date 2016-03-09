@@ -168,26 +168,15 @@ void CAIPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
     }
 }
 
-void CAIPErrorHandler (const CAEndpoint_t *endpoint, const void *data,
-                       uint32_t dataLength, CAResult_t result)
+void CAIPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
+                      uint32_t dataLength, CAResult_t result)
 {
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
 
-    void *buf = (void*)OICMalloc(sizeof(char) * dataLength);
-    if (!buf)
-    {
-        OIC_LOG(ERROR, TAG, "Memory Allocation failed!");
-        return;
-    }
-    memcpy(buf, data, dataLength);
     if (g_errorCallback)
     {
-        g_errorCallback(endpoint, buf, dataLength, result);
-    }
-    else
-    {
-        OICFree(buf);
+        g_errorCallback(endpoint, data, dataLength, result);
     }
 }
 

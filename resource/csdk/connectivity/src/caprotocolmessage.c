@@ -1016,21 +1016,6 @@ void CADestroyTokenInternal(CAToken_t token)
     OICFree(token);
 }
 
-void CADestroyInfo(CAInfo_t *info)
-{
-    if (NULL != info)
-    {
-        OIC_LOG(DEBUG, TAG, "free options");
-        OICFree(info->options);
-
-        OIC_LOG(DEBUG, TAG, "free token");
-        OICFree(info->token);
-
-        OIC_LOG(DEBUG, TAG, "free payload");
-        OICFree(info->payload);
-    }
-}
-
 uint32_t CAGetOptionData(uint16_t key, const uint8_t *data, uint32_t len,
         uint8_t *option, uint32_t buflen)
 {
