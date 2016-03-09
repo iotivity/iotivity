@@ -105,6 +105,12 @@ void simulateResource()
             std::cout << "Single type resource created [URI:  " << resource->getURI() << " ]" << std::endl;
             SimulatorSingleResourceSP singleRes =
                 std::dynamic_pointer_cast<SimulatorSingleResource>(resource);
+            if (!singleRes)
+            {
+                std::cout << "Error occured while converting SimulatorResource to SimulatorSingleResource!" << std::endl;
+                return;
+            }
+
             singleRes->setModelChangeCallback(modelChangeCB);
             singleRes->setObserverCallback(observerCB);
             g_singleResources.push_back(singleRes);
@@ -114,6 +120,12 @@ void simulateResource()
             std::cout << "Collection type resource created [URI:  " << resource->getURI() << " ]" << std::endl;
             SimulatorCollectionResourceSP collectionRes =
                 std::dynamic_pointer_cast<SimulatorCollectionResource>(resource);
+            if (!collectionRes)
+            {
+                std::cout << "Error occured while converting SimulatorResource to SimulatorCollectionResource!" << std::endl;
+                return;
+            }
+
             collectionRes->setObserverCallback(observerCB);
             g_collectionResources.push_back(collectionRes);
         }
