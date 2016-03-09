@@ -169,9 +169,9 @@ static char *CreateCertificatePublicJWK(const char *const *certificateChain,
         size_t offset = strlen(firstPart);
         for (size_t i = 0; i < chainLength; ++i)
         {
-            offset += snprintf(certPubJWK + offset, certPubJWKLen, "\"%s\",", certificateChain[i]);
+            offset += snprintf(certPubJWK + offset, certPubJWKLen - offset, "\"%s\",", certificateChain[i]);
         }
-        sprintf(certPubJWK + offset - 1, secondPart);
+        snprintf(certPubJWK + offset - 1, certPubJWK - offset - 1, secondPart);
     }
     else
     {

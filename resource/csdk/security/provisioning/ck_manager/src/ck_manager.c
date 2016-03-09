@@ -424,10 +424,12 @@ PKIError GenerateCSR (const uint8_t *uint8SubjectName,
 
     FUNCTION_CLEAR(
         OICFree(subjectName);
-        OICFree(subjectPublicKey->buf);
         OICFree(subjectPublicKey);
-        OICFree(subjectPrivateKey->buf);
-        OICFree(subjectPrivateKey);
+        if (subjectPrivateKey)
+        {
+            OICFree(subjectPrivateKey->buf);
+            OICFree(subjectPrivateKey);
+        }
     );
 }
 
