@@ -41,7 +41,7 @@
 static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *arrayVal);
 static OCStackResult OCParseDevicePayload(OCPayload **outPayload, CborValue *arrayVal);
 static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *arrayVal);
-static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *repParent);
+static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *repParent, bool isRoot);
 static OCStackResult OCParseRepPayload(OCPayload **outPayload, CborValue *arrayVal);
 static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *arrayVal);
 static OCStackResult OCParseSecurityPayload(OCPayload **outPayload, CborValue * rrayVal);
@@ -666,7 +666,7 @@ static CborError OCParseArrayFillArray(const CborValue *parent,
                 case OCREP_PROP_OBJECT:
                     if (dimensions[1] == 0)
                     {
-                        err = OCParseSingleRepPayload(&tempPl, &insideArray);
+                        err = OCParseSingleRepPayload(&tempPl, &insideArray, false);
                         ((OCRepPayload**)targetArray)[i] = tempPl;
                         tempPl = NULL;
                         noAdvance = true;
@@ -778,7 +778,7 @@ exit:
     return err;
 }
 
-static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *objMap)
+static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *objMap, bool isRoot)
 {
     CborError err = CborUnknownError;
     char *name = NULL;
@@ -813,6 +813,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
                 err = cbor_value_advance(&repMap);
                 VERIFY_CBOR_SUCCESS(TAG, err, "Failed advancing rootMap");
                 if (name &&
+                    isRoot &&
                     ((0 == strcmp(OC_RSRVD_HREF, name)) ||
                      (0 == strcmp(OC_RSRVD_RESOURCE_TYPE, name)) ||
                     (0 == strcmp(OC_RSRVD_INTERFACE, name))))
@@ -872,7 +873,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
                 case CborMapType:
                     {
                         OCRepPayload *pl = NULL;
-                        err = OCParseSingleRepPayload(&pl, &repMap);
+                        err = OCParseSingleRepPayload(&pl, &repMap, false);
                         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting parse single rep");
                         res = OCRepPayloadSetPropObjectAsOwner(curPayload, name, pl);
                     }
@@ -924,7 +925,6 @@ static OCStackResult OCParseRepPayload(OCPayload **outPayload, CborValue *root)
     VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid Parameter outPayload");
     VERIFY_PARAM_NON_NULL(TAG, root, "Invalid Parameter root");
 
-
     *outPayload = NULL;
     if (cbor_value_is_array(root))
     {
@@ -971,7 +971,7 @@ static OCStackResult OCParseRepPayload(OCPayload **outPayload, CborValue *root)
 
         if (cbor_value_is_map(&rootMap))
         {
-            err = OCParseSingleRepPayload(&temp, &rootMap);
+            err = OCParseSingleRepPayload(&temp, &rootMap, true);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed to parse single rep payload");
         }
         if(rootPayload == NULL)
