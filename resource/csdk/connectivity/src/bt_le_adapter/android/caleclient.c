@@ -3337,7 +3337,7 @@ CAResult_t CALEClientUpdateDeviceState(const char* address, uint32_t connectedSt
 {
     VERIFY_NON_NULL(address, TAG, "address is null");
 
-    CALEState_t *newstate = (CALEState_t*) OICMalloc(sizeof(CALEState_t));
+    CALEState_t *newstate = (CALEState_t*) OICCalloc(1, sizeof(*newstate));
     if (!newstate)
     {
         OIC_LOG(ERROR, TAG, "out of memory");
@@ -3397,8 +3397,9 @@ CAResult_t CALEClientAddDeviceStateToList(CALEState_t* state)
         }
     }
     u_arraylist_add(g_deviceStateList, state); // update new state
-    OIC_LOG_V(INFO, TAG, "Set State Info to List : %d, %d, %s",
-              state->connectedState, state->notificationState, state->address);
+    OIC_LOG_V(INFO, TAG, "Set State Info to List : %d, %d, %s, %d",
+              state->connectedState, state->notificationState,
+              state->address, state->autoConnectFlag);
 
     ca_mutex_unlock(g_deviceStateListMutex);
     return CA_STATUS_OK;
