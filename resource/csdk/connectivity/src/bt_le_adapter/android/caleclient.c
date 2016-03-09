@@ -1025,7 +1025,7 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
 
         // connection request
         jobject newGatt = CALEClientConnect(env, device,
-                                            CALEClientGetAutoConnectFlag(env, jni_address));
+                                            JNI_FALSE);
         if (NULL == newGatt)
         {
             OIC_LOG(ERROR, TAG, "CALEClientConnect has failed");
@@ -1095,7 +1095,8 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
             }
 
             OIC_LOG(DEBUG, TAG, "start to connect LE");
-            jobject gatt = CALEClientConnect(env, device, JNI_TRUE);
+            jobject gatt = CALEClientConnect(env, device,
+                                             CALEClientGetAutoConnectFlag(env, jni_address));
             if (NULL == gatt)
             {
                 OIC_LOG(ERROR, TAG, "CALEClientConnect has failed");
@@ -2772,6 +2773,7 @@ CAResult_t CALEClientRemoveAllScanDevices(JNIEnv *env)
             continue;
         }
         (*env)->DeleteGlobalRef(env, jarrayObj);
+        jarrayObj = NULL;
     }
 
     OICFree(g_deviceList);
@@ -2836,6 +2838,7 @@ CAResult_t CALEClientRemoveDeviceInScanDeviceList(JNIEnv *env, jstring address)
         {
             OIC_LOG_V(DEBUG, TAG, "remove object : %s", remoteAddress);
             (*env)->DeleteGlobalRef(env, jarrayObj);
+            jarrayObj = NULL;
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->ReleaseStringUTFChars(env, address, remoteAddress);
 
@@ -3026,6 +3029,7 @@ CAResult_t CALEClientRemoveAllGattObjs(JNIEnv *env)
             continue;
         }
         (*env)->DeleteGlobalRef(env, jarrayObj);
+        jarrayObj = NULL;
     }
 
     OICFree(g_gattObjectList);
@@ -3098,6 +3102,7 @@ CAResult_t CALEClientRemoveGattObj(JNIEnv *env, jobject gatt)
         {
             OIC_LOG_V(DEBUG, TAG, "remove object : %s", remoteAddress);
             (*env)->DeleteGlobalRef(env, jarrayObj);
+            jarrayObj = NULL;
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
 
@@ -3173,7 +3178,7 @@ CAResult_t CALEClientRemoveGattObjForAddr(JNIEnv *env, jstring addr)
         {
             OIC_LOG_V(DEBUG, TAG, "remove object : %s", remoteAddress);
             (*env)->DeleteGlobalRef(env, jarrayObj);
-
+            jarrayObj = NULL;
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             (*env)->ReleaseStringUTFChars(env, addr, remoteAddress);
             if (NULL == u_arraylist_remove(g_gattObjectList, index))
@@ -4177,13 +4182,13 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
                 goto error_exit;
             }
 
-            jobject newGatt = CALEClientConnect(env, btObject,
-                                                CALEClientGetAutoConnectFlag(env, leAddress));
+            jobject newGatt = CALEClientConnect(env, btObject, JNI_TRUE);
             if (!newGatt)
             {
                 OIC_LOG(ERROR, TAG, "CALEClientConnect has failed");
                 goto error_exit;
             }
+
             return;
         }
         else

@@ -54,8 +54,20 @@ typedef void (*CAAdapterStateChangedCB)(CATransportAdapter_t adapter, bool enabl
 CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
                                            CAConnectionStateChangedCB connStateCB);
 
+/**
+ * Set device to handle for auto connection.
+ * @param[in]   address         LE address to set.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED.
+ */
 CAResult_t CASetAutoConnectionDeviceInfo(const char* address);
 
+/**
+ * Unset device to handle for auto connection.
+ * @param[in]   address         LE address to unset.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED.
+ */
 CAResult_t CAUnsetAutoConnectionDeviceInfo(const char* address);
 
 #ifdef __ANDROID__
