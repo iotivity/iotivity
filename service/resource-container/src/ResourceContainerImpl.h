@@ -56,13 +56,6 @@ namespace OIC
                 // methods from ResourceContainer
                 void startContainer(const std::string &configFile);
                 void stopContainer();
-                void activateBundle(RCSBundleInfo *bundleInfo);
-                void deactivateBundle(RCSBundleInfo *bundleInfo);
-                void activateBundle(const std::string &bundleId);
-                void deactivateBundle(const std::string &bundleId);
-                void registerBundle(RCSBundleInfo *bundleinfo);
-                void unregisterBundle(RCSBundleInfo *bundleinfo);
-                void unregisterBundleSo(const std::string &id);
 
                 // methods from ResourceContainerBundleAPI
                 int registerResource(BundleResource::Ptr resource);
@@ -105,7 +98,7 @@ namespace OIC
 #endif
 
             private:
-                map< std::string, BundleInfoInternal * > m_bundles; // <bundleID, bundleInfo>
+                map< std::string, shared_ptr<BundleInfoInternal>> m_bundles; // <bundleID, bundleInfo>
                 map< std::string, RCSResourceObject::Ptr > m_mapServers; //<uri, serverPtr>
                 map< std::string, BundleResource::Ptr > m_mapResources; //<uri, resourcePtr>
                 map< std::string, list< string > > m_mapBundleResources; //<bundleID, vector<uri>>
@@ -134,16 +127,24 @@ namespace OIC
                 void addSoBundleResource(const std::string &bundleId, resourceInfo newResourceInfo);
                 void removeSoBundleResource(const std::string &bundleId,
                                             const std::string &resourceUri);
-                void registerSoBundle(RCSBundleInfo *bundleInfo);
-                void registerExtBundle(RCSBundleInfo *bundleInfo);
+                void registerSoBundle(shared_ptr<RCSBundleInfo> bundleInfo);
+                void registerExtBundle(shared_ptr<RCSBundleInfo> bundleInfo);
                 void discoverInputResource(const std::string &outputResourceUri);
                 void undiscoverInputResource(const std::string &outputResourceUri);
                 void activateBundleThread(const std::string &bundleId);
 
+                void activateBundle(shared_ptr<RCSBundleInfo> bundleInfo);
+                void deactivateBundle(shared_ptr<RCSBundleInfo> bundleInfo);
+                void activateBundle(const std::string &bundleId);
+                void deactivateBundle(const std::string &bundleId);
+                void registerBundle(shared_ptr<RCSBundleInfo> bundleInfo);
+                void unregisterBundle(shared_ptr<RCSBundleInfo> bundleInfo);
+                void unregisterBundleSo(const std::string &id);
+
 #if(JAVA_SUPPORT)
                 map<string, JavaVM *> m_bundleVM;
 
-                void registerJavaBundle(RCSBundleInfo *bundleInfo);
+                void registerJavaBundle(shared_ptr<RCSBundleInfo> bundleInfo);
                 void activateJavaBundle(string bundleId);
                 void deactivateJavaBundle(string bundleId);
 

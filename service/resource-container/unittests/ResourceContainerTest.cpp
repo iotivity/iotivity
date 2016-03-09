@@ -252,7 +252,7 @@ TEST_F(ResourceContainerTest, BundleLoadedWhenContainerStartedWithValidConfigFil
 
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
     unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
-    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    unique_ptr<BundleInfoInternal> firstInternal((BundleInfoInternal*)first.release());
     EXPECT_TRUE( firstInternal->isLoaded() );
     EXPECT_NE(nullptr,
     		firstInternal->getBundleHandle());
@@ -266,7 +266,7 @@ TEST_F(ResourceContainerTest, BundleActivatedWhenContainerStartedWithValidConfig
 
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
     unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
-    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    unique_ptr<BundleInfoInternal> firstInternal((BundleInfoInternal*)first.release());
     EXPECT_TRUE(firstInternal->isActivated());
     EXPECT_NE(nullptr,firstInternal->getBundleActivator());
 
@@ -301,7 +301,7 @@ TEST_F(ResourceContainerTest, BundleStoppedWithStartBundleAPI)
     m_pResourceContainer->stopBundle("oic.bundle.test");
 
     unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
-    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    unique_ptr<BundleInfoInternal> firstInternal((BundleInfoInternal*)first.release());
     EXPECT_FALSE(firstInternal->isActivated());
 
     m_pResourceContainer->stopContainer();
@@ -313,7 +313,7 @@ TEST_F(ResourceContainerTest, BundleStartedWithStartBundleAPI)
     m_pResourceContainer->stopBundle("oic.bundle.test");
     m_pResourceContainer->startBundle("oic.bundle.test");
     unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
-    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    unique_ptr<BundleInfoInternal> firstInternal((BundleInfoInternal*)first.release());
     EXPECT_TRUE(firstInternal->isActivated());
 
     m_pResourceContainer->stopContainer();
@@ -329,7 +329,7 @@ TEST_F(ResourceContainerTest, AddNewSoBundleToContainer)
 
     EXPECT_EQ(bundles.size() + 1, m_pResourceContainer->listBundles().size());
     unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
-    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    unique_ptr<BundleInfoInternal> firstInternal((BundleInfoInternal*)first.release());
     EXPECT_TRUE(firstInternal->isLoaded());
 }
 
@@ -516,167 +516,21 @@ class ResourceContainerImplTest: public TestWithMock
 
     public:
         ResourceContainerImpl *m_pResourceContainer;
-        BundleInfoInternal *m_pBundleInfo;
+        shared_ptr<BundleInfoInternal> m_pBundleInfo;
 
     protected:
         void SetUp()
         {
             TestWithMock::SetUp();
             m_pResourceContainer = ResourceContainerImpl::getImplInstance();
-            m_pBundleInfo = new BundleInfoInternal();
+            m_pBundleInfo = std::make_shared<BundleInfoInternal>();
         }
 
         void TearDown()
         {
-            delete m_pBundleInfo;
+            m_pBundleInfo.reset();
         }
 };
-
-TEST_F(ResourceContainerImplTest, SoBundleLoadedWhenRegisteredWithRegisterBundleAPI)
-{
-    m_pBundleInfo->setPath("libTestBundle.so");
-    m_pBundleInfo->setActivatorName("test");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setLibraryPath(".");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-
-    EXPECT_NE(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleHandle());
-}
-
-#if (JAVA_SUPPORT_TEST)
-TEST_F(ResourceContainerImplTest, JavaBundleLoadedWhenRegisteredWithRegisterBundleAPIWrongPath)
-{
-    m_pBundleInfo->setPath("wrong_path.jar");
-    m_pBundleInfo->setActivatorName("org/iotivity/bundle/hue/HueBundleActivator");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setID("oic.bundle.java.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    EXPECT_FALSE(((BundleInfoInternal *)m_pBundleInfo)->isLoaded());
-}
-
-TEST_F(ResourceContainerImplTest, JavaBundleTest)
-{
-    m_pBundleInfo->setPath("TestBundleJava/hue-0.1-jar-with-dependencies.jar");
-    m_pBundleInfo->setActivatorName("org/iotivity/bundle/hue/HueBundleActivator");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setID("oic.bundle.java.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    EXPECT_TRUE(((BundleInfoInternal *)m_pBundleInfo)->isLoaded());
-
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-    EXPECT_TRUE(((BundleInfoInternal *) m_pBundleInfo)->isActivated());
-
-    m_pResourceContainer->deactivateBundle(m_pBundleInfo);
-    EXPECT_FALSE(((BundleInfoInternal *) m_pBundleInfo)->isActivated());
-}
-#endif
-
-TEST_F(ResourceContainerImplTest, BundleNotRegisteredIfBundlePathIsInvalid)
-{
-    m_pBundleInfo->setPath("");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-
-    EXPECT_EQ(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleHandle());
-
-}
-
-TEST_F(ResourceContainerImplTest, SoBundleActivatedWithValidBundleInfo)
-{
-    m_pBundleInfo->setPath("libTestBundle.so");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setActivatorName("test");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-
-    EXPECT_NE(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleActivator());
-}
-
-TEST_F(ResourceContainerImplTest, BundleNotActivatedWhenNotRegistered)
-{
-    m_pBundleInfo->setPath("libTestBundle.so");
-    m_pBundleInfo->setActivatorName("test");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-
-    EXPECT_EQ(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleActivator());
-}
-
-TEST_F(ResourceContainerImplTest, SoBundleActivatedWithBundleID)
-{
-    m_pBundleInfo->setPath("libTestBundle.so");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setActivatorName("test");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    m_pResourceContainer->activateBundle(m_pBundleInfo->getID());
-
-    EXPECT_NE(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleActivator());
-    EXPECT_TRUE(((BundleInfoInternal *)m_pBundleInfo)->isActivated());
-}
-
-TEST_F(ResourceContainerImplTest, BundleDeactivatedWithBundleInfo)
-{
-    m_pBundleInfo->setPath("libTestBundle.so");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setActivatorName("test");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-    m_pResourceContainer->deactivateBundle(m_pBundleInfo);
-
-    EXPECT_NE(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleDeactivator());
-    EXPECT_FALSE(((BundleInfoInternal *)m_pBundleInfo)->isActivated());
-}
-
-TEST_F(ResourceContainerImplTest, BundleDeactivatedWithBundleInfoJava)
-{
-    m_pBundleInfo->setPath("TestBundle/hue-0.1-jar-with-dependencies.jar");
-    m_pBundleInfo->setActivatorName("org/iotivity/bundle/hue/HueBundleActivator");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setID("oic.bundle.java.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-    m_pResourceContainer->deactivateBundle(m_pBundleInfo);
-    EXPECT_FALSE(((BundleInfoInternal *) m_pBundleInfo)->isActivated());
-}
-
-TEST_F(ResourceContainerImplTest, SoBundleDeactivatedWithBundleID)
-{
-    m_pBundleInfo->setPath("libTestBundle.so");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setActivatorName("test");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-
-    m_pResourceContainer->deactivateBundle(m_pBundleInfo->getID());
-
-    EXPECT_FALSE(((BundleInfoInternal *)m_pBundleInfo)->isActivated());
-}
 
 
 /* Test for Configuration */
