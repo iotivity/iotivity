@@ -560,10 +560,13 @@ static int provisionAcl(void)
     // for error checking, the return value saved and printed
     g_doneCB = false;
     printf("   Provisioning Selected ACL..\n");
-    OCStackResult rst =
-            OCProvisionACL((void*) g_ctx,
-                    getDevInst((const OCProvisionDev_t*) g_own_list, dev_num),
-                    acl, provisionAclCB);
+    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*) g_own_list, dev_num);
+    if(!dev)
+    {
+        OIC_LOG(ERROR, TAG, "provisionAcl: device instance empty");
+        goto PVACL_ERROR;
+    }
+    OCStackResult rst = OCProvisionACL((void*) g_ctx, dev, acl, provisionAclCB);
     if(OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionACL API error: %d", rst);
@@ -783,7 +786,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
             for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                         // '0x20<=code' is character region
         }
-        if(num && g_own_cnt>=num && dev_num!=num)
+        if(0<num && g_own_cnt>=num && dev_num!=num)
         {
             break;
         }
@@ -805,12 +808,11 @@ static OicSecAcl_t* createAcl(const int dev_num)
                 // '16' is |ACL_RESRC_MAX_NUM|
         for(int ret=0; 1!=ret; )
         {
-            ret = scanf("%zu", &acl->resourcesLen);
+            ret = scanf("%d", &num);
             for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                         // '0x20<=code' is character region
         }
-        if(acl->resourcesLen && ACL_RESRC_MAX_NUM>=acl->resourcesLen)
-                // |acl->resourcesLen| is unsigned
+        if(0<num && ACL_RESRC_MAX_NUM>=num)
         {
             break;
         }
@@ -821,15 +823,15 @@ static OicSecAcl_t* createAcl(const int dev_num)
     // enter actually each 'accessed' |resources| name
     printf("         Enter Each Accessed Resource Name (each under 128 char)\n");
             // '128' is ACL_RESRC_MAX_LEN
-    num = acl->resourcesLen;
-    acl->resources = (char**) OICCalloc(num, sizeof(char*));
+    acl->resourcesLen = (unsigned) num;
+    acl->resources = (char**) OICCalloc(acl->resourcesLen, sizeof(char*));
     if(!acl->resources)
     {
         OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
         goto CRACL_ERROR;
     }
     char rsrc_in[ACL_RESRC_MAX_LEN+1] = {0};  // '1' for null termination
-    for(int i=0; num>i; ++i)
+    for(int i=0; acl->resourcesLen>(unsigned)i; ++i)
     {
         printf("         Enter Accessed Resource[%d] Name: ", i+1);
         for(int ret=0; 1!=ret; )
@@ -881,16 +883,17 @@ static OicSecAcl_t* createAcl(const int dev_num)
     acl->permission = pmsn;
 
     // enter |owner| device number
+    int own_num = 0;
     for( ; ; )
     {
         printf("   > [D] Enter Owner Device Number: ");
         for(int ret=0; 1!=ret; )
         {
-            ret = scanf("%d", &num);
+            ret = scanf("%d", &own_num);
             for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                         // '0x20<=code' is character region
         }
-        if(num && g_own_cnt>=num)
+        if(0<own_num && g_own_cnt>=own_num)
         {
             break;
         }
@@ -904,7 +907,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
         goto CRACL_ERROR;
     }
 
-    dev = getDevInst((const OCProvisionDev_t*)g_own_list, num);
+    dev = getDevInst((const OCProvisionDev_t*)g_own_list, own_num);
     if(!dev || !dev->doxm)
     {
         OIC_LOG(ERROR, TAG, "createAcl: device instance empty");
