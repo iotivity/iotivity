@@ -39,14 +39,11 @@ typedef OCStackResult (*registerResource)(OCResourceHandle&, string&, const stri
 
 typedef OCStackResult (*NotifyAllObservers)(OCResourceHandle);
 
-typedef OCStackResult (bindInterfaceToResource)(const OCResourceHandle&, const std::string&);
-
-
 constexpr char RESOURCE_URI[]{ "a/test" };
 constexpr char RESOURCE_TYPE[]{ "resourcetype" };
 constexpr char KEY[]{ "key" };
-constexpr int VALUE{ 100 };
 constexpr char CUSTOM_INTERFACE[]{ "oic.if.custom" };
+constexpr int VALUE{ 100 };
 
 TEST(ResourceObjectBuilderCreateTest, ThrowIfUriIsInvalid)
 {
@@ -543,20 +540,24 @@ static bool checkResponse(const OCRepresentation& ocRep, const RCSResourceAttrib
             const std::vector<std::string>& interfaces,
             const std::vector<std::string>& resourceTypes, const std::string& resourceUri)
 {
-    if( ocRep.getUri() != resourceUri || ocRep.getResourceInterfaces() != interfaces ||
-            ocRep.getResourceTypes() != resourceTypes ||
-            rcsAttr != ResourceAttributesConverter::fromOCRepresentation(ocRep))
-    {
-        return false;
-    }
+    return resourceUri == ocRep.getUri() &&
+           interfaces == ocRep.getResourceInterfaces() &&
+           resourceTypes == ocRep.getResourceTypes() &&
+           rcsAttr == ResourceAttributesConverter::fromOCRepresentation(ocRep);
+}
 
-    return true;
+static bool compareResponse(const OCRepresentation& ocRep1, const OCRepresentation& ocRep2)
+{
+    return ocRep1.getUri() == ocRep2.getUri() &&
+           ocRep1.getResourceInterfaces() == ocRep2.getResourceInterfaces() &&
+           ocRep1.getResourceTypes() == ocRep2.getResourceTypes() &&
+           ResourceAttributesConverter::fromOCRepresentation(ocRep1) ==
+                   ResourceAttributesConverter::fromOCRepresentation(ocRep2);
 }
 
 class ResourceObjectInterfaceHandlerTest: public ResourceObjectHandlingRequestTest
 {
 public:
-
     void initServer(vector<string> interfaces,
                 const std::string& defaultInterface = BASELINE_INTERFACE)
     {
@@ -570,22 +571,12 @@ public:
 
         RCSResourceAttributes rcsAttr;
         rcsAttr[KEY] = 2;
-        rcsAttr["KEY1"] = "1";
-        rcsAttr["KEY2"] = true;
-        rcsAttr["KEY3"] = 3.14;
         initBuilder.setAttributes(rcsAttr);
         initBuilder.setDefaultInterface(defaultInterface);
 
         server = initBuilder.build();
         server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
         server->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::ACCEPTANCE);
-    }
-
-    OCRepresentation createOCRepresentation()
-    {
-        OCRepresentation ocRep;
-        ocRep[KEY] = VALUE;
-        return ocRep;
     }
 
 protected:
@@ -609,72 +600,105 @@ TEST_F(ResourceObjectInterfaceHandlerTest, GetResponseForBaselineContainsAllProp
 {
     initServer({BASELINE_INTERFACE});
 
+    OCRepresentation ocRep;
+
     mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
-                [=](const shared_ptr<OCResourceResponse> response)
-                {
-                    RCSResourceObject::LockGuard guard{ server };
-                    return checkResponse(response->getResourceRepresentation(),
-                            server->getAttributes(), server->getInterfaces(), server->getTypes(),
-                            server->getUri());
+            [=](const shared_ptr<OCResourceResponse> response)
+            {
+                RCSResourceObject::LockGuard guard{ server };
 
-                }
-        ).Return(OC_STACK_OK);
+                return checkResponse(response->getResourceRepresentation(),
+                        server->getAttributes(), server->getInterfaces(), server->getTypes(),
+                        server->getUri());
 
-    handler(createRequest(OC_REST_GET, createOCRepresentation(), BASELINE_INTERFACE));
+            }
+    ).Return(OC_STACK_OK);
+
+    handler(createRequest(OC_REST_GET, ocRep, BASELINE_INTERFACE));
 }
 
-TEST_F(ResourceObjectInterfaceHandlerTest, SetResponseForActuatorContainsAllPropertiesOfServer)
+TEST_F(ResourceObjectInterfaceHandlerTest, SetResponseForActuatorContainsOnlyRequestedAttributes)
 {
     initServer({ACTUATOR_INTERFACE});
 
+    OCRepresentation ocRep;
+    ocRep[KEY] = VALUE;
+
     mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
-                [](const shared_ptr<OCResourceResponse> response)
-                {
-                    RCSResourceAttributes attrs;
-                    attrs[KEY] = VALUE;
-                    return checkResponse(response->getResourceRepresentation(),
-                            attrs, {}, {}, "");
+            [&ocRep](const shared_ptr<OCResourceResponse> response)
+            {
+                return checkResponse(response->getResourceRepresentation(),
+                        ResourceAttributesConverter::fromOCRepresentation(ocRep), {}, {}, "");
+            }
+    ).Return(OC_STACK_OK);
 
-                }
-        ).Return(OC_STACK_OK);
-
-    handler(createRequest(OC_REST_POST, createOCRepresentation(), ACTUATOR_INTERFACE));
+    handler(createRequest(OC_REST_POST, ocRep, ACTUATOR_INTERFACE));
 }
 
-TEST_F(ResourceObjectInterfaceHandlerTest, GetResponseForCustomInterfaceCompareToDefaultInterface)
+TEST_F(ResourceObjectInterfaceHandlerTest, SetResponseForBaselineContainsAppliedAttributes)
+{
+    initServer({BASELINE_INTERFACE});
+
+    OCRepresentation ocRep;
+    ocRep["NEWKEY"] = std::string("NEWVALUE");
+
+    mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
+            [=](const shared_ptr<OCResourceResponse> response)
+            {
+                RCSResourceObject::LockGuard guard{ server };
+
+                return checkResponse(response->getResourceRepresentation(),
+                        server->getAttributes(), server->getInterfaces(), server->getTypes(),
+                        server->getUri());
+            }
+    ).Return(OC_STACK_OK);
+
+    handler(createRequest(OC_REST_POST, ocRep, BASELINE_INTERFACE));
+}
+
+TEST_F(ResourceObjectInterfaceHandlerTest, GetResponseForCustomEqualsResponseForDefault)
 {
     initServer({CUSTOM_INTERFACE});
 
-    mocks.ExpectCallFunc(OCPlatform::sendResponse).Match(
-                [=](const shared_ptr<OCResourceResponse> response)
-                {
-                    RCSResourceObject::LockGuard guard{ server };
-                    return checkResponse(response->getResourceRepresentation(),
-                            server->getAttributes(), server->getInterfaces(), server->getTypes(),
-                            server->getUri());
+    OCRepresentation ocRep;
+    OCRepresentation repArray[2];
+    int cnt = 0;
 
-                }
-        ).Return(OC_STACK_OK);
+    mocks.OnCallFunc(OCPlatform::sendResponse).Do(
+            [&repArray, &cnt](const shared_ptr<OCResourceResponse> response)
+            {
+                repArray[cnt++] = response->getResourceRepresentation();
+                return OC_STACK_OK;
+            }
+    );
 
-    handler(createRequest(OC_REST_GET, createOCRepresentation(), CUSTOM_INTERFACE));
+    handler(createRequest(OC_REST_GET, ocRep, CUSTOM_INTERFACE));
+    handler(createRequest(OC_REST_GET, ocRep, server->getDefaultInterface()));
+
+    EXPECT_EQ(cnt, 2);
+    EXPECT_TRUE(compareResponse(repArray[0], repArray[1]));
 }
 
-TEST_F(ResourceObjectInterfaceHandlerTest, SetResponseForSensorHasNotSetHandler)
+TEST_F(ResourceObjectInterfaceHandlerTest, SetRequestForSensorGotNoHandler)
 {
     initServer({SENSOR_INTERFACE});
 
-    EXPECT_EQ(OC_EH_ERROR, handler(createRequest(OC_REST_POST, createOCRepresentation(),
-            SENSOR_INTERFACE)));
+    OCRepresentation ocRep;
+    ocRep[KEY] = VALUE;
+
+    EXPECT_EQ(OC_EH_ERROR, handler(createRequest(OC_REST_POST, ocRep, SENSOR_INTERFACE)));
 }
 
 TEST_F(ResourceObjectInterfaceHandlerTest, ThrowIfDefaultInterfaceIsInvalid)
 {
-    ASSERT_THROW(initServer({SENSOR_INTERFACE}, ACTUATOR_INTERFACE), RCSBadRequestException);
+    auto builder = RCSResourceObject::Builder(RESOURCE_URI, RESOURCE_TYPE, BASELINE_INTERFACE);
+
+    ASSERT_THROW(builder.setDefaultInterface(ACTUATOR_INTERFACE), RCSBadRequestException);
 }
 
-TEST_F(ResourceObjectInterfaceHandlerTest, DefaultInterfaceCompareToDefaultInterfaceOfServer)
+TEST_F(ResourceObjectInterfaceHandlerTest, SettingDefaultInterfaceEqualsGetDefaultInterface)
 {
-    initServer({SENSOR_INTERFACE}, BASELINE_INTERFACE);
+    initServer({ SENSOR_INTERFACE }, BASELINE_INTERFACE);
 
     EXPECT_EQ(BASELINE_INTERFACE, server->getDefaultInterface());
 }
