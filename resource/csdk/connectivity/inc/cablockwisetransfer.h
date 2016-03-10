@@ -294,7 +294,7 @@ CAResult_t CAUpdateBlockOptionItems(CABlockData_t *currData, const coap_pdu_t *p
  * @param[out]  block   block option.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetMoreBitFromBlock(size_t payloadLen, coap_block_t *block);
+CAResult_t CASetMoreBitFromBlock(size_t payloadLen, coap_block_t *block);
 
 /**
  * check the block option what kind of option have to set.
