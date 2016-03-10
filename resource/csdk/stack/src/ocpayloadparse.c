@@ -211,9 +211,18 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
     CborValue curVal;
     err = cbor_value_map_find_value(&rootMap, OC_RSRVD_DEVICE_ID, &curVal);
     VERIFY_CBOR_SUCCESS(TAG, err, "to find device id tag");
+    if (cbor_value_is_valid(&curVal))
     {
-        err = cbor_value_dup_byte_string(&curVal, &(out->sid), &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to copy device id value");
+        if (cbor_value_is_byte_string(&curVal))
+        {
+            err = cbor_value_dup_byte_string(&curVal, (uint8_t **)&(out->sid), &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to copy device id value");
+        }
+        else if (cbor_value_is_text_string(&curVal))
+        {
+            err = cbor_value_dup_text_string(&curVal, &(out->sid), &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to copy device id value");
+        }
     }
 
     // BaseURI - Not a mandatory field
@@ -322,8 +331,16 @@ static OCStackResult OCParseDevicePayload(OCPayload **outPayload, CborValue *roo
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_DEVICE_ID, &curVal);
         if (cbor_value_is_valid(&curVal))
         {
-            err = cbor_value_dup_byte_string(&curVal, &out->sid, &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, err, "to find device id in device payload");
+            if (cbor_value_is_byte_string(&curVal))
+            {
+                err = cbor_value_dup_byte_string(&curVal, (uint8_t **)&out->sid, &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find device id in device payload");
+            }
+            else if (cbor_value_is_text_string(&curVal))
+            {
+                err = cbor_value_dup_text_string(&curVal, &out->sid, &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find device id in device payload");
+            }
         }
         // Device Name
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_DEVICE_NAME, &curVal);

@@ -4421,7 +4421,7 @@ OCStackResult getQueryFromUri(const char * uri, char** query, char ** uriWithout
         return OC_STACK_NO_MEMORY;
 }
 
-const OicUuid_t* OCGetServerInstanceID(void)
+static const OicUuid_t* OCGetServerInstanceID(void)
 {
     static bool generated = false;
     static OicUuid_t sid;
@@ -4430,7 +4430,7 @@ const OicUuid_t* OCGetServerInstanceID(void)
         return &sid;
     }
 
-    if (GetDoxmDeviceID(&sid) != OC_STACK_OK)
+    if (RAND_UUID_OK != OCGenerateUuid(sid.id))
     {
         OIC_LOG(FATAL, TAG, "Generate UUID for Server Instance failed!");
         return NULL;
@@ -4449,8 +4449,7 @@ const char* OCGetServerInstanceIDString(void)
         return sidStr;
     }
 
-    const OicUuid_t* sid = OCGetServerInstanceID();
-
+    const OicUuid_t *sid = OCGetServerInstanceID();
     if(OCConvertUuidToString(sid->id, sidStr) != RAND_UUID_OK)
     {
         OIC_LOG(FATAL, TAG, "Generate UUID String for Server Instance failed!");

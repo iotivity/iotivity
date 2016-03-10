@@ -234,7 +234,7 @@ void OCDiscoveryResourceDestroy(OCResourcePayload* payload);
 void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload);
 
 // Device Payload
-OCDevicePayload* OCDevicePayloadCreate(const uint8_t* sid, const char* dname,
+OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
         const char* specVer, const char* dmVer);
 void OCDevicePayloadDestroy(OCDevicePayload* payload);
 
