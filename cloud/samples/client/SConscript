@@ -53,4 +53,3 @@ cc_sample_src = [
          ]
 
 cc_client = cc_sample_app_env.Program('cloud_device', cc_sample_src)
-cc_sample_app_env.InstallTarget(cc_client, 'cloud_device')
