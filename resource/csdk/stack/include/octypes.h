@@ -285,6 +285,9 @@ extern "C" {
 /** Max identity size. */
 #define MAX_IDENTITY_SIZE (32)
 
+/** Universal unique identity size. */
+#define UUID_IDENTITY_SIZE (128/8)
+
 /** Resource Directory */
 
 /** Resource Directory URI used to Discover RD and Publish resources.*/
@@ -418,6 +421,15 @@ typedef struct
     /** Array of end point identity.*/
     unsigned char id[MAX_IDENTITY_SIZE];
 } OCIdentity;
+
+/**
+ * Universally unique identifier.
+ */
+typedef struct
+{
+    /** identitifier string.*/
+    unsigned char id[UUID_IDENTITY_SIZE];
+} OCUUIdentity;
 
 /**
  * Data structure to encapsulate IPv4/IPv6/Contiki/lwIP device addresses.
@@ -1322,6 +1334,37 @@ typedef enum
 } OCStackApplicationResult;
 
 
+//#ifdef DIRECT_PAIRING
+/**
+ * @brief   direct pairing Method Type.
+ *              0:  not allowed
+ *              1:  pre-configured pin
+ *              2:  random pin
+ */
+typedef enum OCPrm
+{
+    DP_NOT_ALLOWED             = 0x0,
+    DP_PRE_CONFIGURED        = (0x1 << 0),
+    DP_RANDOM_PIN               = (0x1 << 1),
+} OCPrm_t;
+
+/**
+ * Device Information of discoverd direct pairing device(s).
+ */
+typedef struct OCDPDev
+{
+    OCDevAddr               endpoint;
+    OCConnectivityType   connType;
+    uint16_t                     securePort;
+    bool                  edp;
+    OCPrm_t           *prm;
+    size_t                prmLen;
+    OCUUIdentity     deviceID;
+    OCUUIdentity     rowner;
+    struct OCDPDev *next;
+} OCDPDev_t;
+//#endif // DIRECT_PAIRING
+
 /*
  * -------------------------------------------------------------------------------------------
  * Callback function definitions
@@ -1373,6 +1416,17 @@ typedef OCEntityHandlerResult (*OCEntityHandler)
  */
 typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
 (OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, char* uri, void* callbackParam);
+
+//#ifdef DIRECT_PAIRING
+/**
+ * Callback function definition of direct-pairing
+ *
+ * @param[OUT] peer - pairing device info.
+ * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK' 
+ *                                   if D2D pairing is success without error
+ */
+typedef void (*OCDirectPairingCB)(OCDPDev_t *peer, OCStackResult result);
+//#endif // DIRECT_PAIRING
 
 #ifdef __cplusplus
 }

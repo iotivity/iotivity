@@ -65,6 +65,7 @@ static OicSecDoxm_t gDefaultDoxm =
     SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
     false,                  /* bool owned */
     {.id = {0}},            /* OicUuid_t deviceID */
+    false,                  /* bool dpc */
     {.id = {0}},            /* OicUuid_t owner */
 };
 
@@ -152,6 +153,9 @@ char * BinToDoxmJSON(const OicSecDoxm_t * doxm)
                     sizeof(base64Buff), &outLen);
     VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
     cJSON_AddStringToObject(jsonDoxm, OIC_JSON_DEVICE_ID_NAME, base64Buff);
+
+    //DPC -- Mandatory
+    cJSON_AddBoolToObject(jsonDoxm, OIC_JSON_DPC_NAME, doxm->dpc);
 
     //Owner -- Mandatory
     outLen = 0;
@@ -299,6 +303,25 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     {
         VERIFY_NON_NULL(TAG, gDoxm, ERROR);
         memcpy((char *)doxm->deviceID.id, (char *)gDoxm->deviceID.id, sizeof(doxm->deviceID.id));
+    }
+
+    //DPC -- Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DPC_NAME);
+    if(jsonObj)
+    {
+        VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type), ERROR);
+        doxm->dpc = jsonObj->valueint;
+    }
+    else // PUT/POST JSON may not have owned so set it to the gDomx->dpc
+    {
+        if(NULL != gDoxm)
+        {
+            doxm->dpc = gDoxm->dpc;
+        }
+        else
+        {
+            doxm->dpc = false; // default is false
+        }
     }
 
     //Owner -- will be empty when device status is unowned.

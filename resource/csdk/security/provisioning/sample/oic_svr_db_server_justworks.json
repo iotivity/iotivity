@@ -25,6 +25,17 @@
              "ownrs" : [
                  "anVzdHdvcmtzRGV2VVVJRA=="
              ]
+		},
+        {
+            "sub": "Kg==",
+            "rsrc": [
+                "/oic/sec/pconf",
+                "/oic/sec/dpairing"
+             ],
+             "perms": 6,
+             "ownrs" : [
+                 "anVzdHdvcmtzRGV2VVVJRA=="
+             ]
         }
 	],
 	"pstat":	{
@@ -41,6 +52,7 @@
 		"oxmsel": 0,
 		"sct": 1,
 		"owned": false,
-		"deviceid":	"anVzdHdvcmtzRGV2VVVJRA=="
+		"deviceid":	"anVzdHdvcmtzRGV2VVVJRA==",
+		"dpc": true
 	}
 }
