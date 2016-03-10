@@ -1136,7 +1136,7 @@ typedef struct
 {
     OCPayload base;
 
-    uint8_t* sid;
+    char *sid;
 
     /** A special case for handling RD address. */
     char* baseURI;
@@ -1174,7 +1174,7 @@ typedef struct
 typedef struct
 {
     OCPayload base;
-    uint8_t* sid;
+    char* sid;
     char* deviceName;
     char* specVersion;
     char* dataModelVersion;

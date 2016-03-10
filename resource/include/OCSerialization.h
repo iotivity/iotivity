@@ -49,12 +49,6 @@ namespace OC
                 {
                     while(res)
                     {
-                        char uuidString[UUID_STRING_SIZE];
-                        if(OCConvertUuidToString(payload->sid, uuidString) != RAND_UUID_OK)
-                        {
-                            uuidString[0]= '\0';
-                        }
-
                         if (res->secure)
                         {
                             m_devAddr.flags =
@@ -73,7 +67,7 @@ namespace OC
                             m_resources.push_back(std::shared_ptr<OC::OCResource>(
                                         new OC::OCResource(m_clientWrapper, rdPubAddr,
                                             std::string(res->uri),
-                                            std::string((char*)uuidString),
+                                            std::string(payload->sid),
                                             (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
                                             StringLLToVector(res->types),
                                             StringLLToVector(res->interfaces)
@@ -84,7 +78,7 @@ namespace OC
                             m_resources.push_back(std::shared_ptr<OC::OCResource>(
                                     new OC::OCResource(m_clientWrapper, m_devAddr,
                                         std::string(res->uri),
-                                        std::string(uuidString),
+                                        std::string(payload->sid),
                                         (res->bitmap & OC_OBSERVABLE) == OC_OBSERVABLE,
                                         StringLLToVector(res->types),
                                         StringLLToVector(res->interfaces)

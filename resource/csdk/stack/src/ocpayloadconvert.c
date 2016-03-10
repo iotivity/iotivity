@@ -269,10 +269,8 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating discovery map");
 
         // Insert Device ID into the root map
-        err |= cbor_encode_text_string(&rootMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting tag device id");
-        err |= cbor_encode_byte_string(&rootMap, payload->sid, UUID_SIZE);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting value of device id");
+        err |= AddTextStringToMap(&rootMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1, payload->sid);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting device id");
 
         // Insert baseURI if present
         err |= ConditionalAddTextStringToMap(&rootMap, OC_RSRVD_BASE_URI,
@@ -392,10 +390,8 @@ static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayl
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating device map");
 
     // Device ID
-    err |= cbor_encode_text_string(&repMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding device id tag");
-    err |= cbor_encode_byte_string(&repMap, payload->sid, UUID_SIZE);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding data device id");
+    err |= AddTextStringToMap(&repMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1 , payload->sid);
+    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding device id");
 
     // Device Name
     err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DEVICE_NAME,

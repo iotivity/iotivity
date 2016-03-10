@@ -73,15 +73,9 @@ namespace OC
         }
 
         OCRepresentation rep;
-        char uuidString[UUID_STRING_SIZE];
-        if (payload->sid && RAND_UUID_OK == OCConvertUuidToString(payload->sid, uuidString))
-        {
-            rep[OC_RSRVD_DEVICE_ID] = std::string(uuidString);
-        }
-        else
-        {
-            rep[OC_RSRVD_DEVICE_ID] = std::string();
-        }
+        rep[OC_RSRVD_DEVICE_ID] = (payload->sid) ?
+            std::string(payload->sid) :
+            std::string();
         rep[OC_RSRVD_DEVICE_NAME] = payload->deviceName ?
             std::string(payload->deviceName) :
             std::string();

@@ -681,12 +681,13 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
         if (discoveryResult == OC_STACK_OK)
         {
-            payload = (OCPayload*)OCDiscoveryPayloadCreate();
+            payload = (OCPayload *)OCDiscoveryPayloadCreate();
 
             if(payload)
             {
-                ((OCDiscoveryPayload*)payload)->sid = (uint8_t*)OICCalloc(1, UUID_SIZE);
-                memcpy(((OCDiscoveryPayload*)payload)->sid, OCGetServerInstanceID(), UUID_SIZE);
+                ((OCDiscoveryPayload*)payload)->sid = (char *)OICCalloc(1, UUID_STRING_SIZE);
+                VERIFY_NON_NULL(((OCDiscoveryPayload*)payload)->sid, ERROR, OC_STACK_NO_MEMORY);
+                memcpy(((OCDiscoveryPayload*)payload)->sid, OCGetServerInstanceIDString(), UUID_STRING_SIZE);
 
                 bool foundResourceAtRD = false;
                 for(;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
@@ -737,14 +738,14 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
     {
-        const OicUuid_t* deviceId = OCGetServerInstanceID();
+        const char* deviceId = OCGetServerInstanceIDString();
         if (!deviceId)
         {
             discoveryResult = OC_STACK_ERROR;
         }
         else
         {
-            payload = (OCPayload*) OCDevicePayloadCreate((const uint8_t*) &deviceId->id, savedDeviceInfo.deviceName,
+            payload = (OCPayload*) OCDevicePayloadCreate(deviceId, savedDeviceInfo.deviceName,
                     OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
             if (!payload)
             {
@@ -1235,7 +1236,7 @@ OCStackResult SaveDeviceInfo(OCDeviceInfo info)
 
     VERIFY_SUCCESS(res, OC_STACK_OK);
 
-    if(OCGetServerInstanceID() == NULL)
+    if (OCGetServerInstanceIDString() == NULL)
     {
         OIC_LOG(INFO, TAG, "Device ID generation failed");
         res =  OC_STACK_ERROR;
