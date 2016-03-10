@@ -67,6 +67,8 @@ static ca_mutex g_threadSendNotifyMutex = NULL;
 static ca_cond g_threadSendNotifyCond = NULL;
 static bool g_isSignalSetFlag = false;
 
+static const char CLASSPATH_BT_ADVERTISE_CB[] = "android/bluetooth/le/AdvertiseCallback";
+
 void CALEServerJNISetContext()
 {
     OIC_LOG(DEBUG, TAG, "CALEServerJNISetContext");
@@ -605,6 +607,28 @@ CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback)
     if (!jni_obj_addServiceUuid)
     {
         OIC_LOG(ERROR, TAG, "jni_obj_addServiceUuid is null");
+        return CA_STATUS_FAILED;
+    }
+
+    // Device name has to be included in advertise packet after Android API 23
+    OIC_LOG(DEBUG, TAG, "device name will be added into advertise packet");
+    jmethodID jni_mid_setIncludeDeviceName = (*env)->GetMethodID(env, jni_cid_AdvertiseDataBuilder,
+                                                                 "setIncludeDeviceName",
+                                                                 "(Z)Landroid/"
+                                                                 "bluetooth/le/"
+                                                                 "AdvertiseData$Builder;");
+    if (!jni_mid_setIncludeDeviceName)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_setIncludeDeviceName is null");
+        return CA_STATUS_FAILED;
+    }
+
+    jobject jni_obj_setIncludeDeviceName  = (*env)->CallObjectMethod(env, jni_AdvertiseDataBuilder,
+                                                                     jni_mid_setIncludeDeviceName,
+                                                                     JNI_TRUE);
+    if (!jni_obj_setIncludeDeviceName)
+    {
+        OIC_LOG(ERROR, TAG, "jni_obj_setIncludeDeviceName is null");
         return CA_STATUS_FAILED;
     }
 
@@ -2453,6 +2477,13 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartFailureCallback(JNIEn
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
 
     OIC_LOG_V(INFO, TAG, "LE Advertise Start Failure Callback(%d)", errorCode);
+
+    jint data_too_large = CALEGetConstantsValue(env, CLASSPATH_BT_ADVERTISE_CB,
+                                                "ADVERTISE_FAILED_DATA_TOO_LARGE");
+    if (data_too_large == errorCode)
+    {
+        OIC_LOG_V(ERROR, TAG, "advertise data too large. please check length of device name");
+    }
 }
 
 /**
