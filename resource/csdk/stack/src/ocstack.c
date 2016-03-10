@@ -68,6 +68,10 @@
 #include "oickeepalive.h"
 #endif
 
+//#ifdef DIRECT_PAIRING
+#include "directpairing.h"
+//#endif
+
 #ifdef WITH_ARDUINO
 #include "Time.h"
 #else
@@ -127,6 +131,10 @@ static bool gRASetInfo = false;
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
 static const char COAP_TCP[] = "coap+tcp:";
+
+//#ifdef DIRECT_PAIRING
+OCDirectPairingCB gDirectpairingCallback = NULL;
+//#endif
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -3870,6 +3878,49 @@ OCStackResult OCDoResponse(OCEntityHandlerResponse *ehResponse)
 
     return result;
 }
+
+//#ifdef DIRECT_PAIRING
+const OCDPDev_t* OCDiscoverDirectPairingDevices(unsigned short waittime)
+{
+    OIC_LOG(INFO, TAG, "Start OCDiscoverDirectPairingDevices");
+    if(OC_STACK_OK != DPDeviceDiscovery(waittime))
+    {
+        OIC_LOG(ERROR, TAG, "Fail to discover Direct-Pairing device");
+        return NULL;
+    }
+
+    return (const OCDPDev_t*)DPGetDiscoveredDevices();
+}
+
+const OCDPDev_t* OCGetDirectPairedDevices()
+{
+    return (const OCDPDev_t*)DPGetPairedDevices();
+}
+
+void DirectPairingCB (OCDirectPairingDev_t * peer, OCStackResult result)
+{
+    if (gDirectpairingCallback)
+    {
+        gDirectpairingCallback((OCDPDev_t*)peer, result);
+        gDirectpairingCallback = NULL;
+    }
+}
+
+OCStackResult OCDoDirectPairing(OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
+                                                     OCDirectPairingCB resultCallback)
+{
+    OIC_LOG(INFO, TAG, "Start OCDoDirectPairing");
+    if(NULL ==  peer || NULL == resultCallback)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid parameters");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    gDirectpairingCallback = resultCallback;
+    return DPDirectPairing((OCDirectPairingDev_t*)peer, (OicSecPrm_t)pmSel,
+                                           pinNumber, DirectPairingCB);
+}
+//#endif // DIRECT_PAIRING
 
 //-----------------------------------------------------------------------------
 // Private internal function definitions

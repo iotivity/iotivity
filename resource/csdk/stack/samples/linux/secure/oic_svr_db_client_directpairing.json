@@ -10,7 +10,7 @@
 			],
 			"perms": 2,
 			"ownrs" : [
-				"cmFuZG9tUGluRGV2VVVJRA=="
+				"ZGlyZWN0cGFpcmluZ0Rldg=="
 			]
 		},
         {
@@ -23,24 +23,13 @@
              ],
              "perms": 6,
              "ownrs" : [
-                 "cmFuZG9tUGluRGV2VVVJRA=="
-             ]
-		},
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/sec/pconf",
-                "/oic/sec/dpairing"
-             ],
-             "perms": 6,
-             "ownrs" : [
-                 "cmFuZG9tUGluRGV2VVVJRA=="
+                 "ZGlyZWN0cGFpcmluZ0Rldg=="
              ]
         }
 	],
 	"pstat":	{
 		"isop":	false,
-		"deviceid":	"cmFuZG9tUGluRGV2VVVJRA==",
+		"deviceid":	"ZGlyZWN0cGFpcmluZ0Rldg==",
 		"commithash": 0,
 		"cm":	0,
 		"tm":	0,
@@ -48,11 +37,10 @@
 		"sm":	[3]
 	},
 	"doxm":	{
-		"oxm":	[0,1],
+		"oxm":	[0],
 		"oxmsel": 0,
 		"sct": 1,
 		"owned": false,
-		"deviceid":	"cmFuZG9tUGluRGV2VVVJRA==",
-		"dpc": true
+		"deviceid":	"ZGlyZWN0cGFpcmluZ0Rldg=="
 	}
 }

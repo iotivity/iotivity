@@ -46,7 +46,8 @@ extern "C"
 #define _30_PROVIS_PAIR_DEVS_   30
 #define _31_PROVIS_CRED_        31
 #define _32_PROVIS_ACL_         32
-#define _33_CHECK_LINK_STATUS_  33
+#define _33_PROVIS_DP_           33
+#define _34_CHECK_LINK_STATUS_  34
 #define _40_UNLINK_PAIR_DEVS_   40
 #define _50_REMOVE_SELEC_DEV_   50
 #define _99_EXIT_PRVN_CLT_      99
@@ -62,6 +63,11 @@ static const char* ACL_PEMISN[5] = {"CREATE", "READ", "WRITE", "DELETE", "NOTIFY
 static const char* SVR_DB_FILE_NAME = "oic_svr_db_client.json";
         // '_' for separaing from the same constant variable in |srmresourcestrings.c|
 static const char* PRVN_DB_FILE_NAME = "oic_prvn_mng.db";
+static const OicSecPrm_t  SUPPORTED_PRMS[1] =
+{
+    PRM_PRE_CONFIGURED,
+};
+
 // |g_ctx| means provision manager application context and
 // the following, includes |un/own_list|, could be variables, which |g_ctx| has,
 // for accessing all function(s) for these, they are declared on global domain
@@ -76,6 +82,7 @@ static bool g_doneCB;
 
 // function declaration(s) for calling them before implementing
 static OicSecAcl_t* createAcl(const int);
+static OicSecPdAcl_t* createPdAcl(const int);
 static OCProvisionDev_t* getDevInst(const OCProvisionDev_t*, const int);
 static int printDevList(const OCProvisionDev_t*);
 static size_t printUuidList(const OCUuidList_t*);
@@ -137,6 +144,20 @@ static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
     else
     {
         OIC_LOG_V(ERROR, TAG, "Provision ACL FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
+static void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Provision Direct-Pairing SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Provision Direct-Pairing FAILED - ctx: %s", (char*) ctx);
         printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
     g_doneCB = true;
@@ -589,6 +610,104 @@ PVACL_ERROR:
     return -1;
 }
 
+static int provisionDirectPairing(void)
+{
+    // check |own_list| for provisioning direct-pairing
+    if(!g_own_list || 1>g_own_cnt)
+    {
+        printf("   > Owned Device List, to Provision ACL, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for provisioning direct-pairing
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for Provisioning Direct-Pairing: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_own_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    // create Direct-Pairing Configuration(PIN, PDACL) for selected device
+    // TODO: default acl -> input from user !
+    OicSecPconf_t pconf;
+    memset(&pconf, 0, sizeof(OicSecPconf_t));
+
+    // set enable dp
+    pconf.edp = true;
+
+    // set default supported PRM types
+    pconf.prmLen = sizeof(SUPPORTED_PRMS)/sizeof(OicSecPrm_t);
+    pconf.prm = (OicSecPrm_t *)OICCalloc(pconf.prmLen, sizeof(OicSecPrm_t));
+    if(pconf.prm)
+    {
+        for (size_t i=0; i<pconf.prmLen; i++)
+        {
+            pconf.prm[i] = SUPPORTED_PRMS[i];
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "create prm error return");
+        goto PVDP_ERROR;
+    }
+
+    // set default pin
+    const char DP_DEFAULT_PIN[] = "00000000";
+    memcpy(pconf.pin.val, DP_DEFAULT_PIN, DP_PIN_LENGTH);
+
+    // set default pdacl
+    pconf.pdacls = createPdAcl(dev_num);
+    if(!pconf.pdacls)
+    {
+        OIC_LOG(ERROR, TAG, "createPdAcl error return");
+        goto PVDP_ERROR;
+    }
+
+    // call |OCProvisionDirectPairing| API actually
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    printf("   Atempt Direct-Pairing Provisioning (PIN : [%s])..\n", (char*)pconf.pin.val);
+    OCStackResult rst = OCProvisionDirectPairing((void*) g_ctx,
+                                       getDevInst((const OCProvisionDev_t*) g_own_list, dev_num),
+                                       &pconf, provisionDPCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCProvisionDirectPairing API error: %d", rst);
+        if (OC_STACK_UNAUTHORIZED_REQ == rst)
+        {
+            OIC_LOG(ERROR, TAG, "Target Server NOT Support Direct-Pairing !!! (DPC == false)");
+        }
+        goto PVDP_ERROR;
+    }
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        goto PVDP_ERROR;
+    }
+    OCDeletePdAclList(pconf.pdacls);
+
+    // display the PCONF-provisioned result
+    printf("   > SUCCESS to provision Direct-Pairing !!\n");
+
+    return 0;
+
+PVDP_ERROR:
+    OCDeletePdAclList(pconf.pdacls);  // after here |acl| points nothing
+    return -1;
+}
+
 static int checkLinkedStatus(void)
 {
     // check |own_list| for checking selected link status on PRVN DB
@@ -923,6 +1042,59 @@ CRACL_ERROR:
     return NULL;
 }
 
+static OicSecPdAcl_t* createPdAcl(const int dev_num)
+{
+    if(0>=dev_num || g_own_cnt<dev_num)
+    {
+        OIC_LOG(ERROR, TAG, "createAcl invalid parameters");
+        return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
+    }
+
+    // allocate memory for |pdacl| struct
+    printf("   **** Create PDACL for the Selected Device[%d]\n", dev_num);
+    OicSecPdAcl_t* pdAcl = (OicSecPdAcl_t*) OICCalloc(1, sizeof(OicSecPdAcl_t));
+    if(!pdAcl)
+    {
+        OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
+        return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
+    }
+
+
+    // number of resources
+    char rsrc_in[][ACL_RESRC_MAX_LEN+1] = {"*", "/rsrc/*"};
+    pdAcl->resourcesLen = 1;
+
+    // resource
+    int num = pdAcl->resourcesLen;
+    pdAcl->resources = (char**) OICCalloc(num, sizeof(char*));
+    if(!pdAcl->resources)
+    {
+        OIC_LOG(ERROR, TAG, "createPdAcl: OICCalloc error return");
+        goto CRPDACL_ERROR;
+    }
+    for(int i=0; num>i; ++i)
+    {
+        size_t len = strlen(rsrc_in[i])+1;  // '1' for null termination
+        char* rsrc = (char*) OICCalloc(len, sizeof(char));
+        if(!rsrc)
+        {
+            OIC_LOG(ERROR, TAG, "createPdAcl: OICCalloc error return");
+            goto CRPDACL_ERROR;
+        }
+        OICStrcpy(rsrc, len, rsrc_in[i]);
+        pdAcl->resources[i] = rsrc;  // after here, |rsrc| points nothing
+    }
+
+    // permission
+    pdAcl->permission = PERMISSION_FULL_CONTROL;
+
+    return pdAcl;
+
+CRPDACL_ERROR:
+    OCDeletePdAclList(pdAcl);
+    return NULL;
+}
+
 static OCProvisionDev_t* getDevInst(const OCProvisionDev_t* dev_lst, const int dev_num)
 {
     if(!dev_lst || 0>=dev_num)
@@ -1101,7 +1273,8 @@ static void printMenu(void)
     printf("** 30. Provision/Link Pairwise Things\n");
     printf("** 31. Provision Credentials for Pairwise Things\n");
     printf("** 32. Provision the Selected Access Control List(ACL)\n");
-    printf("** 33. Check Linked Status of the Selected Device on PRVN DB\n\n");
+    printf("** 33. Provision Direct-Pairing Configuration\n");
+    printf("** 34. Check Linked Status of the Selected Device on PRVN DB\n\n");
 
     printf("** [D] UNLINK PAIRWISE THINGS\n");
     printf("** 40. Unlink Pairwise Things\n\n");
@@ -1203,10 +1376,16 @@ int main()
                 OIC_LOG(ERROR, TAG, "_32_PROVIS_ACL_: error");
             }
             break;
-        case _33_CHECK_LINK_STATUS_:
+        case _33_PROVIS_DP_:
+            if(provisionDirectPairing())
+            {
+                OIC_LOG(ERROR, TAG, "_33_PROVIS_DP_: error");
+            }
+            break;
+        case _34_CHECK_LINK_STATUS_:
             if(checkLinkedStatus())
             {
-                OIC_LOG(ERROR, TAG, "_33_CHECK_LINK_STATUS_: error");
+                OIC_LOG(ERROR, TAG, "_34_CHECK_LINK_STATUS_: error");
             }
             break;
         case _40_UNLINK_PAIR_DEVS_:

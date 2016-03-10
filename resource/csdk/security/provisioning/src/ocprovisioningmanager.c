@@ -30,6 +30,7 @@
 #include "credresource.h"
 #include "utlist.h"
 #include "aclresource.h" //Note: SRM internal header
+#include "pconfresource.h"
 
 #define TAG "OCPMAPI"
 
@@ -176,6 +177,22 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
     return SRPProvisionCredentials(ctx, type, keySize,
                                       pDev1, pDev2, resultCallback);
 
+}
+
+/**
+ * this function sends Direct-Pairing Configuration to a device.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] selectedDeviceInfo Selected target device.
+ * @param[in] pconf PCONF pointer.
+ * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
+              request recieves a response from resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecPconf_t *pconf,
+                             OCProvisionResultCB resultCallback)
+{
+    return SRPProvisionDirectPairing(ctx, selectedDeviceInfo, pconf, resultCallback);
 }
 
 /*
@@ -713,6 +730,16 @@ void OCDeleteUuidList(OCUuidList_t* pList)
 void OCDeleteACLList(OicSecAcl_t* pAcl)
 {
     DeleteACLList(pAcl);
+}
+
+/**
+ * This function deletes PDACL data.
+ *
+ * @param pPdAcl Pointer to OicSecPdAcl_t structure.
+ */
+void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl)
+{
+    FreePdAclList(pPdAcl);
 }
 
 

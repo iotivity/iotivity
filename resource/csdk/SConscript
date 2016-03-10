@@ -55,6 +55,7 @@ liboctbstack_env.PrependUnique(CPPPATH = [
 		'connectivity/external/inc',
 		'security/include',
 		'security/include/internal',
+		'security/provisioning/include',
 		])
 
 if target_os not in ['arduino', 'windows', 'winrt']:
