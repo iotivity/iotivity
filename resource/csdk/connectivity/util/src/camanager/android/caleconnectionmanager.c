@@ -269,11 +269,13 @@ CAResult_t CAManagerLEClientTerminate(JNIEnv *env)
     if (g_context)
     {
         (*env)->DeleteGlobalRef(env, g_context);
+        g_context = NULL;
     }
 
     if (g_connectedDeviceSet)
     {
         (*env)->DeleteGlobalRef(env, g_connectedDeviceSet);
+        g_connectedDeviceSet = NULL;
     }
 
     return res;
