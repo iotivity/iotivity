@@ -92,6 +92,9 @@ static ca_mutex g_deviceListMutex = NULL;
 static ca_mutex g_gattObjectMutex = NULL;
 static ca_mutex g_deviceStateListMutex = NULL;
 
+static ca_mutex g_deviceScanRetryDelayMutex = NULL;
+static ca_cond g_deviceScanRetryDelayCond = NULL;
+
 static ca_mutex g_scanMutex = NULL;
 
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
@@ -262,6 +265,7 @@ CAResult_t CALEClientInitialize()
     // init mutex for send logic
     g_threadCond = ca_cond_new();
     g_threadWriteCharacteristicCond = ca_cond_new();
+    g_deviceScanRetryDelayCond = ca_cond_new();
 
     CALEClientCreateDeviceList();
     CALEClientJNISetContext();
@@ -375,10 +379,13 @@ void CALEClientTerminate()
     ca_cond_free(g_deviceDescCond);
     ca_cond_free(g_threadCond);
     ca_cond_free(g_threadWriteCharacteristicCond);
+    ca_cond_free(g_deviceScanRetryDelayCond);
 
     g_deviceDescCond = NULL;
     g_threadCond = NULL;
     g_threadWriteCharacteristicCond = NULL;
+    g_deviceScanRetryDelayCond = NULL;
+
     g_isSignalSetFlag = false;
 
     if (isAttached)
@@ -647,6 +654,25 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
                     {
                       devicesDiscovered = true;
                       break;
+                    }
+                    else
+                    {
+                        if (address)
+                        {
+                            OIC_LOG(INFO, TAG, "waiting..");
+
+                            ca_mutex_lock(g_deviceScanRetryDelayMutex);
+                            if (ca_cond_wait_for(g_deviceScanRetryDelayCond,
+                                                 g_deviceScanRetryDelayMutex,
+                                                 MICROSECS_PER_SEC) == CA_WAIT_SUCCESS)
+                            {
+                                OIC_LOG(INFO, TAG, "finish to waiting for target device");
+                                ca_mutex_unlock(g_deviceScanRetryDelayMutex);
+                                break;
+                            }
+                            ca_mutex_unlock(g_deviceScanRetryDelayMutex);
+                            // time out
+                        }
                     }
                 }
             }
@@ -3802,6 +3828,16 @@ CAResult_t CALEClientInitGattMutexVaraibles()
         }
     }
 
+    if (NULL == g_deviceScanRetryDelayMutex)
+    {
+        g_deviceScanRetryDelayMutex = ca_mutex_new();
+        if (NULL == g_deviceScanRetryDelayMutex)
+        {
+            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
     return CA_STATUS_OK;
 }
 
@@ -3830,6 +3866,9 @@ void CALEClientTerminateGattMutexVariables()
 
     ca_mutex_free(g_threadWriteCharacteristicMutex);
     g_threadWriteCharacteristicMutex = NULL;
+
+    ca_mutex_free(g_deviceScanRetryDelayMutex);
+    g_deviceScanRetryDelayMutex = NULL;
 }
 
 void CALEClientSetSendFinishFlag(bool flag)
@@ -3847,6 +3886,22 @@ void CALEClientSetSendFinishFlag(bool flag)
 
 CAResult_t CAStartLEGattClient()
 {
+    // init mutex for send logic
+    if (!g_deviceDescCond)
+    {
+        g_deviceDescCond = ca_cond_new();
+    }
+
+    if (!g_threadCond)
+    {
+        g_threadCond = ca_cond_new();
+    }
+
+    if (!g_threadWriteCharacteristicCond)
+    {
+        g_threadWriteCharacteristicCond = ca_cond_new();
+    }
+
     CAResult_t res = CALEClientStartMulticastServer();
     if (CA_STATUS_OK != res)
     {
@@ -3899,12 +3954,35 @@ void CAStopLEGattClient()
     }
 
     ca_mutex_lock(g_threadMutex);
+    OIC_LOG(DEBUG, TAG, "signal - connection cond");
     ca_cond_signal(g_threadCond);
     ca_mutex_unlock(g_threadMutex);
 
     ca_mutex_lock(g_threadWriteCharacteristicMutex);
+    OIC_LOG(DEBUG, TAG, "signal - WriteCharacteristic cond");
     ca_cond_signal(g_threadWriteCharacteristicCond);
     ca_mutex_unlock(g_threadWriteCharacteristicMutex);
+
+    ca_mutex_lock(g_threadSendMutex);
+    OIC_LOG(DEBUG, TAG, "signal - send cond");
+    ca_cond_signal(g_deviceDescCond);
+    ca_mutex_unlock(g_threadSendMutex);
+
+    ca_mutex_lock(g_deviceScanRetryDelayMutex);
+    OIC_LOG(DEBUG, TAG, "signal - delay cond");
+    ca_cond_signal(g_deviceScanRetryDelayCond);
+    ca_mutex_unlock(g_deviceScanRetryDelayMutex);
+
+
+    ca_cond_free(g_deviceDescCond);
+    ca_cond_free(g_threadCond);
+    ca_cond_free(g_threadWriteCharacteristicCond);
+    ca_cond_free(g_deviceScanRetryDelayCond);
+
+    g_deviceDescCond = NULL;
+    g_threadCond = NULL;
+    g_threadWriteCharacteristicCond = NULL;
+    g_deviceScanRetryDelayCond = NULL;
 
     if (isAttached)
     {
