@@ -182,9 +182,6 @@ extern "C" {
 /** To represent host name.*/
 #define OC_RSRVD_HOST_NAME              "hn"
 
-/** To represent version.*/
-#define OC_RSRVD_VERSION                "icv"
-
 /** To represent policy.*/
 #define OC_RSRVD_POLICY                 "p"
 
@@ -248,7 +245,7 @@ extern "C" {
 #define OC_RSRVD_DEVICE_NAME            "n"
 
 /** Device specification version.*/
-#define OC_RSRVD_SPEC_VERSION           "lcv"
+#define OC_RSRVD_SPEC_VERSION           "icv"
 
 /** Device data model.*/
 #define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
