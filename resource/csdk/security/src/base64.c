@@ -93,8 +93,8 @@ static B64Result b64EncodeBlk(const uint8_t* in, char* out, uint32_t len)
 B64Result b64Encode(const uint8_t* in, const size_t inLen,
                char* outBuf, const size_t outBufSize, uint32_t* outLen)
 {
-    uint32_t i;
-    uint32_t minBufSize;
+    size_t i;
+    size_t minBufSize;
 
     if (NULL == in || 0 == inLen || NULL ==  outBuf || NULL == outLen )
     {
