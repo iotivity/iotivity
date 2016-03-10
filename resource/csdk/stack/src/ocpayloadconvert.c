@@ -482,6 +482,27 @@ static int64_t OCConvertPlatformPayload(OCPlatformPayload *payload, uint8_t *out
             sizeof(OC_RSRVD_SYSTEM_TIME) - 1, payload->info.systemTime);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding system time");
 
+    // Resource type
+    if (payload->rt)
+    {
+        err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_RESOURCE_TYPE,
+                sizeof(OC_RSRVD_RESOURCE_TYPE) - 1, payload->rt);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resource type");
+    }
+
+    // Resource interfaces
+    if (payload->interfaces)
+    {
+        err |= cbor_encode_text_string(&repMap, OC_RSRVD_INTERFACE,
+                sizeof(OC_RSRVD_INTERFACE) - 1);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding platform interface tag");
+        char* joinedInterfaces = OCStringLLJoin(payload->interfaces);
+        VERIFY_PARAM_NON_NULL(TAG, joinedInterfaces, "Failed creating joined string");
+        err |= cbor_encode_text_string(&repMap, joinedInterfaces, strlen(joinedInterfaces));
+        OICFree(joinedInterfaces);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding platform interface value");
+    }
+
     // Close Map
     err |= cbor_encoder_close_container(&encoder, &repMap);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep map");

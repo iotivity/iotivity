@@ -1185,6 +1185,8 @@ typedef struct
     OCPayload base;
     char* uri;
     OCPlatformInfo info;
+    char* rt;
+    OCStringLL* interfaces;
 } OCPlatformPayload;
 
 typedef struct
