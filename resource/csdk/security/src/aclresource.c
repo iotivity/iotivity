@@ -282,7 +282,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
-            acl->resourcesLen = cJSON_GetArraySize(jsonObj);
+            acl->resourcesLen = (size_t)cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(TAG, acl->resourcesLen > 0, ERROR);
             acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
             VERIFY_NON_NULL(TAG, (acl->resources), ERROR);
@@ -313,7 +313,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
             {
                 VERIFY_SUCCESS(TAG, cJSON_Array == jsonPeriodObj->type,
                                ERROR);
-                acl->prdRecrLen = cJSON_GetArraySize(jsonPeriodObj);
+                acl->prdRecrLen = (size_t)cJSON_GetArraySize(jsonPeriodObj);
                 if(acl->prdRecrLen > 0)
                 {
                     acl->periods = (char**)OICCalloc(acl->prdRecrLen,
@@ -368,7 +368,7 @@ OicSecAcl_t * JSONToAclBin(const char * jsonStr)
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
-            acl->ownersLen = cJSON_GetArraySize(jsonObj);
+            acl->ownersLen = (size_t)cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(TAG, acl->ownersLen > 0, ERROR);
             acl->owners = (OicUuid_t*)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
             VERIFY_NON_NULL(TAG, (acl->owners), ERROR);
@@ -497,7 +497,7 @@ static OCStackResult RemoveACE(const OicUuid_t * subject,
                         OICFree(acl->resources[resPos]);
                         acl->resources[resPos] = NULL;
                         acl->resourcesLen -= 1;
-                        for(i = resPos; i < acl->resourcesLen; i++)
+                        for(i = (size_t)resPos; i < acl->resourcesLen; i++)
                         {
                             acl->resources[i] = acl->resources[i+1];
                         }

@@ -190,7 +190,7 @@ OicSecSvc_t * JSONToSvcBin(const char * jsonStr)
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
-            svc->ownersLen = cJSON_GetArraySize(jsonObj);
+            svc->ownersLen = (size_t)cJSON_GetArraySize(jsonObj);
             VERIFY_SUCCESS(TAG, svc->ownersLen > 0, ERROR);
             svc->owners = (OicUuid_t*)OICCalloc(svc->ownersLen, sizeof(OicUuid_t));
             VERIFY_NON_NULL(TAG, (svc->owners), ERROR);

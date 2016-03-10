@@ -210,7 +210,7 @@ static OCStackResult  populateAcl(OicSecAcl_t *acl,  int numRsrc)
 {
     OCStackResult ret = OC_STACK_ERROR;
     memcpy(acl->subject.id, "2222222222222222", sizeof(acl->subject.id));
-    acl->resourcesLen = numRsrc;
+    acl->resourcesLen = (size_t)numRsrc;
     acl->resources = (char**)OICCalloc(acl->resourcesLen, sizeof(char*));
     VERIFY_NON_NULL(TAG, acl->resources, ERROR);
     acl->resources[0] = (char*)OICMalloc(strlen("/a/led")+1);
@@ -322,7 +322,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     // Verify if SRM contains ACE for the subject with two resources
     savePtr = NULL;
     subjectAcl1 = GetACLResourceData(&acl.subject, &savePtr);
-    EXPECT_TRUE(NULL != subjectAcl1);
+    VERIFY_NON_NULL(TAG, subjectAcl1, ERROR);
     EXPECT_TRUE(subjectAcl1->resourcesLen == 2);
 
     // Create Entity Handler DELETE request
@@ -337,7 +337,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     // Verify if SRM contains ACL for the subject but only with one resource
     savePtr = NULL;
     subjectAcl2 = GetACLResourceData(&acl.subject, &savePtr);
-    EXPECT_TRUE(NULL != subjectAcl2);
+    VERIFY_NON_NULL(TAG, subjectAcl2, ERROR);
     EXPECT_TRUE(subjectAcl2->resourcesLen == 1);
 
 exit:

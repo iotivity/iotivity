@@ -200,7 +200,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_TYPE_NAME);
     if ((jsonObj) && (cJSON_Array == jsonObj->type))
     {
-        doxm->oxmTypeLen = cJSON_GetArraySize(jsonObj);
+        doxm->oxmTypeLen = (size_t)cJSON_GetArraySize(jsonObj);
         VERIFY_SUCCESS(TAG, doxm->oxmTypeLen > 0, ERROR);
 
         doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(char *));
@@ -222,7 +222,7 @@ OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr)
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_OXM_NAME);
     if (jsonObj && cJSON_Array == jsonObj->type)
     {
-        doxm->oxmLen = cJSON_GetArraySize(jsonObj);
+        doxm->oxmLen = (size_t)cJSON_GetArraySize(jsonObj);
         VERIFY_SUCCESS(TAG, doxm->oxmLen > 0, ERROR);
 
         doxm->oxm = (OicSecOxm_t*)OICCalloc(doxm->oxmLen, sizeof(OicSecOxm_t));
@@ -522,7 +522,11 @@ static OCEntityHandlerResult HandleDoxmPutRequest (const OCEntityHandlerRequest 
                      * Disable anonymous ECDH cipher in tinyDTLS since device is now
                      * in owned state.
                      */
-                    CAEnableAnonECDHCipherSuite(false);
+                    CAResult_t caRes = CA_STATUS_OK;
+                    caRes = CAEnableAnonECDHCipherSuite(false);
+                    VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                    OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
 #ifdef __WITH_X509__
 #define TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 0xC0AE
                     CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);

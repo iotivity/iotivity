@@ -168,7 +168,7 @@ OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
     VERIFY_NON_NULL(TAG, jsonObj, ERROR);
     if (cJSON_Array == jsonObj->type)
     {
-        pstat->smLen = cJSON_GetArraySize(jsonObj);
+        pstat->smLen = (size_t)cJSON_GetArraySize(jsonObj);
         size_t idxx = 0;
         VERIFY_SUCCESS(TAG, pstat->smLen != 0, ERROR);
         pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));

@@ -98,7 +98,7 @@ OCStackResult AddUuidArray(cJSON* jsonRoot, const char* arrayItem,
     VERIFY_NON_NULL(TAG, jsonObj, ERROR);
     VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
 
-    *numUuids = cJSON_GetArraySize(jsonObj);
+    *numUuids = (size_t)cJSON_GetArraySize(jsonObj);
     VERIFY_SUCCESS(TAG, *numUuids > 0, ERROR);
     *uuids = (OicUuid_t*)OICCalloc(*numUuids, sizeof(OicUuid_t));
     VERIFY_NON_NULL(TAG, *uuids, ERROR);
