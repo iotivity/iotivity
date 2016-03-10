@@ -259,6 +259,20 @@ static inline void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* paylo
     OIC_LOG_V(level, PL_TAG, "\tFirmware Version:%s", payload->info.firmwareVersion);
     OIC_LOG_V(level, PL_TAG, "\tSupport URL:%s", payload->info.supportUrl);
     OIC_LOG_V(level, PL_TAG, "\tSystem Time:%s", payload->info.systemTime);
+
+    if (payload->rt)
+    {
+        OIC_LOG(level, PL_TAG, "\tResource Types:");
+        OIC_LOG_V(level, PL_TAG, "\t\t%s", payload->rt);
+    }
+    if (payload->interfaces)
+    {
+        OIC_LOG(level, PL_TAG, "\tResource Interfaces:");
+        for (OCStringLL *strll = payload->interfaces; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+        }
+    }
 }
 
 static inline void OCPayloadLogPresence(LogLevel level, OCPresencePayload* payload)

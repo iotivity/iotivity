@@ -1631,6 +1631,14 @@ OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo)
     }
 
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
+
+    payload->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+    if (!payload->interfaces)
+    {
+        return NULL;
+    }
+    payload->interfaces->value = OICStrdup(OC_RSRVD_INTERFACE_READ);
+    payload->rt = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
     payload->info = *platformInfo;
 
     return payload;
@@ -1646,6 +1654,14 @@ OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo)
     }
 
     payload->base.type = PAYLOAD_TYPE_PLATFORM;
+
+    payload->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+    if (!payload->interfaces)
+    {
+        return NULL;
+    }
+    payload->interfaces->value = OICStrdup(OC_RSRVD_INTERFACE_READ);
+    payload->rt = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
     OCCopyPlatformInfo(platformInfo, payload);
 
     return payload;
@@ -1674,6 +1690,8 @@ void OCPlatformPayloadDestroy(OCPlatformPayload* payload)
     }
     OICFree(payload->uri);
     OCPlatformInfoDestroy(&payload->info);
+    OICFree(payload->rt);
+    OCFreeOCStringLL(payload->interfaces);
     OICFree(payload);
 }
 

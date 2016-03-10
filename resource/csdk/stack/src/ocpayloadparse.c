@@ -433,6 +433,9 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
     OCStackResult ret = OC_STACK_INVALID_PARAM;
     CborError err = CborNoError;
     OCPlatformInfo info = {0};
+    char* rt = NULL;
+    OCStringLL* interfaces = NULL;
+    OCPlatformPayload* out = NULL;
 
     VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid Parameter outPayload");
 
@@ -520,11 +523,30 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed to find systemTume in the platform payload");
         }
 
+        // Resource type
+        err = cbor_value_map_find_value(rootValue, OC_RSRVD_RESOURCE_TYPE, &repVal);
+        if(cbor_value_is_valid(&repVal))
+        {
+            err = cbor_value_dup_text_string(&repVal, &rt, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed to find resource type in the platform payload");
+        }
+
+        // Interface Types
+        err = cbor_value_map_find_value(rootValue, OC_RSRVD_INTERFACE, &repVal);
+        if(cbor_value_is_valid(&repVal))
+        {
+            err =  OCParseStringLL(rootValue, OC_RSRVD_INTERFACE, &interfaces);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed to find interfaces tag/value");
+        }
+
         err = cbor_value_advance(rootValue);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed to find supportUrl in the platform payload");
 
-        *outPayload = (OCPayload *)OCPlatformPayloadCreateAsOwner(&info);
-        return OC_STACK_OK;
+       out = (OCPlatformPayload *)OCPlatformPayloadCreateAsOwner(&info);
+       out->rt = rt;
+       out->interfaces = interfaces;
+       *outPayload = (OCPayload *)out;
+       return OC_STACK_OK;
     }
 
 exit:
