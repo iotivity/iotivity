@@ -11,7 +11,7 @@
     },
     "dependencies": {
         "body-parser": "^1.4.3",
-    	"bindings": "~1.2.1",
+        "bindings": "~1.2.1",
         "express": "^4.6.1",
         "method-override": "^2.1.3",
         "mongodb": "^2.0.42",
@@ -24,7 +24,8 @@
         "passport" : "*",
         "passport-facebook" : "*",
         "passport-twitter" : "*",
-	"twit": "*",
-	"cors" : "*"
+        "twit": "*",
+        "cors" : "*",
+        "iotivity-node":"*"
     }
 }

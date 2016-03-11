@@ -2,7 +2,7 @@ var request = require('request');
 
 var intervalId,
     handleReceptacle = {},
-    iotivity = require("../../node_modules/iotivity-node/lowlevel");
+    iotivity = require("iotivity-node/lowlevel");
 
 iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT);
 
@@ -24,8 +24,10 @@ findresource = function(cap,res){
         console.log(JSON.stringify(response, null, 4));
         var destination = response.addr,
         resources = response && response.payload && response.payload.resources;
-        if(!resources)
+        if(!resources){
+            console.log("No resources are found.");
             return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
+        }
 
         var resourceCount = resources.length ? resources.length : 0;
         for (var index = 0; index < resourceCount; index++) {
@@ -300,7 +302,7 @@ observeresource = function(cap,res)
         return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
     }
 
-    var endpoint = "oic://"+ cap.params.address +":"+ port + cap.params.uri;
+    var endpoint = "oic://"+ cap.params.address +":"+ cap.params.port + cap.params.uri;
     var resource = map[endpoint];
     if(resource == undefined)
     {
@@ -335,7 +337,7 @@ observeresource = function(cap,res)
             obsResponseHandler,
             null );
     }
-    res.status(200).json("Started Observing " + uri + "@" + JSON.stringify(address));
+    res.status(200).json("Started Observing " + cap.params.uri + "@" + JSON.stringify(cap.params.address));
     return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
 }
 
@@ -409,7 +411,7 @@ module.exports = {
             putresource(cap,res);
         }
         else if(cap.cid == "org.iotivity.observeresource"){
-            oberserveresource(cap,res);
+            observeresource(cap,res);
         }
     }
 }
