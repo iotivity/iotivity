@@ -414,11 +414,7 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
         if (NULL != pdu)
         {
 #ifdef WITH_BWT
-            if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
-#ifdef WITH_TCP
-                    && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
-#endif
-                    )
+            if (CAIsSupportedBlockwiseTransfer(data->remoteEndpoint->adapter))
             {
                 // Blockwise transfer
                 res = CAAddBlockOption(&pdu, info, data->remoteEndpoint, &options);
@@ -448,11 +444,7 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
         if (NULL != pdu)
         {
 #ifdef WITH_BWT
-            if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
-#ifdef WITH_TCP
-                    && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
-#endif
-                    )
+            if (CAIsSupportedBlockwiseTransfer(data->remoteEndpoint->adapter))
             {
                 // Blockwise transfer
                 if (NULL != info)
@@ -560,11 +552,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
         if (NULL != pdu)
         {
 #ifdef WITH_BWT
-            if (CA_ADAPTER_GATT_BTLE != data->remoteEndpoint->adapter
-#ifdef WITH_TCP
-                    && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
-#endif
-                    )
+            if (CAIsSupportedBlockwiseTransfer(data->remoteEndpoint->adapter))
             {
                 // Blockwise transfer
                 if (NULL != info)
@@ -821,11 +809,7 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
     CAProcessReceivedData(cadata);
 #else
 #ifdef WITH_BWT
-    if (CA_ADAPTER_GATT_BTLE != sep->endpoint.adapter
-#ifdef WITH_TCP
-            && !CAIsSupportedCoAPOverTCP(sep->endpoint.adapter)
-#endif
-            )
+    if (CAIsSupportedBlockwiseTransfer(sep->endpoint.adapter))
     {
         CAResult_t res = CAReceiveBlockWiseData(pdu, &(sep->endpoint), cadata, dataLen);
         if (CA_NOT_SUPPORTED == res || CA_REQUEST_TIMEOUT == res)
@@ -1009,11 +993,7 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
     CADestroyData(data, sizeof(CAData_t));
 #else
 #ifdef WITH_BWT
-    if (CA_ADAPTER_GATT_BTLE != endpoint->adapter
-#ifdef WITH_TCP
-            && !CAIsSupportedCoAPOverTCP(data->remoteEndpoint->adapter)
-#endif
-            )
+    if (CAIsSupportedBlockwiseTransfer(endpoint->adapter))
     {
         // send block data
         CAResult_t res = CASendBlockWiseData(data);

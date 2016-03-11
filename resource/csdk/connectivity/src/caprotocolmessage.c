@@ -1120,6 +1120,18 @@ CAPayloadFormat_t CAConvertFormat(uint8_t format)
     }
 }
 
+#ifdef WITH_BWT
+bool CAIsSupportedBlockwiseTransfer(CATransportAdapter_t adapter)
+{
+    if (CA_ADAPTER_IP & adapter || CA_ADAPTER_NFC & adapter
+            || CA_DEFAULT_ADAPTER == adapter)
+    {
+        return true;
+    }
+    return false;
+}
+#endif
+
 #ifdef WITH_TCP
 bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter)
 {
