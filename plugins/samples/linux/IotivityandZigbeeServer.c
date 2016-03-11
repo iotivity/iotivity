@@ -22,6 +22,8 @@
 #include <signal.h>
 #include <ocstack.h>
 #include <logger.h>
+#include "oic_string.h"
+#include "oic_malloc.h"
 
 #define TAG "IoTivityZigbeeServer"
 #define defaultComPort "/dev/ttyUSB0"
@@ -134,11 +136,14 @@ OCStackResult SetPlatformInfo()
 
 OCStackResult SetDeviceInfo()
 {
-    static const OCDeviceInfo deviceInfo =
+    static OCDeviceInfo deviceInfo =
         {
-            .deviceName = "IoTivity/Zigbee Server Sample"
+            .deviceName = "IoTivity/Zigbee Server Sample",
         };
-
+    char *dup = OICStrdup("oic.wk.d");
+    deviceInfo.types = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
+    deviceInfo.types->value = dup;
+    OICFree(dup);
     return OCSetDeviceInfo(deviceInfo);
 }
 
@@ -160,4 +165,3 @@ void processCancel(int signal)
         processSignal(true);
     }
 }
-
