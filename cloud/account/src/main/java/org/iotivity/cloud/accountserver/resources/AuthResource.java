@@ -39,8 +39,8 @@ import io.netty.channel.ChannelHandlerContext;
 
 /**
  *
- * This class provides a set of APIs to register account information of
- * authorized user.
+ * This class provides a set of APIs to manage user account with authorization
+ * process.
  *
  */
 public class AuthResource extends Resource {
@@ -50,7 +50,8 @@ public class AuthResource extends Resource {
     }
 
     @Override
-    public void onRequestReceived(ChannelHandlerContext ctx, CoapRequest request) {
+    public void onRequestReceived(ChannelHandlerContext ctx,
+            CoapRequest request) {
 
         Logger.d("AuthResource IN");
 
@@ -77,22 +78,14 @@ public class AuthResource extends Resource {
         }
     }
 
-    /**
-     * API for handling POST message
-     * 
-     * @param ctx
-     *            ChannelHandlerContext of request message
-     * @param request
-     *            CoAP request message
-     * @throws Exception
-     */
     private void handlePostRequest(ChannelHandlerContext ctx,
             CoapRequest request) throws Exception {
 
         String reqType = extractQuery(request, Const.REQ_TYPE);
 
         if (reqType == null)
-            throw new IllegalArgumentException("request type is null in query!");
+            throw new IllegalArgumentException(
+                    "request type is null in query!");
 
         CoapResponse response = null;
 
@@ -108,16 +101,24 @@ public class AuthResource extends Resource {
                         "request type is not supported");
         }
 
-        ctx.write(response);
+        ctx.writeAndFlush(response);
     }
 
+    /**
+     * API for handling request for login by user account
+     * 
+     * @param request
+     *            CoAP request message
+     * @return CoapResponse - CoAP response message with response result
+     *         information
+     */
     private CoapResponse handleLoginRequest(CoapRequest request) {
 
         String payload = request.getPayloadString();
 
         JSONUtil util = new JSONUtil();
-        String sessionCode = util
-                .parseJSON(payload, Const.REQUEST_SESSION_CODE);
+        String sessionCode = util.parseJSON(payload,
+                Const.REQUEST_SESSION_CODE);
 
         Logger.d("sessionCode: " + sessionCode);
 
@@ -136,19 +137,27 @@ public class AuthResource extends Resource {
             String responseJson = convertLoginResponseToJson(response);
             Logger.d("responseJson: " + responseJson);
 
-            coapResponse = responseMessage.buildCoapResponse(
-                    request.getToken(), responseJson, CoapStatus.CREATED);
+            coapResponse = responseMessage.buildCoapResponse(request.getToken(),
+                    responseJson, CoapStatus.CREATED);
 
         } else {
 
-            coapResponse = responseMessage.buildCoapResponse(
-                    request.getToken(), CoapStatus.INTERNAL_SERVER_ERROR);
+            coapResponse = responseMessage.buildCoapResponse(request.getToken(),
+                    CoapStatus.INTERNAL_SERVER_ERROR);
 
         }
 
         return coapResponse;
     }
 
+    /**
+     * API for handling request for registering user account
+     * 
+     * @param request
+     *            CoAP request message
+     * @return CoapResponse - CoAP response message with response result
+     *         information
+     */
     private CoapResponse handleRegisterRequest(CoapRequest request) {
 
         String payload = request.getPayloadString();
@@ -178,13 +187,13 @@ public class AuthResource extends Resource {
             String responseJson = convertRegisterResponseToJson(response);
             Logger.d("responseJson: " + responseJson);
 
-            coapResponse = responseMessage.buildCoapResponse(
-                    request.getToken(), responseJson, CoapStatus.CREATED);
+            coapResponse = responseMessage.buildCoapResponse(request.getToken(),
+                    responseJson, CoapStatus.CREATED);
 
         } else {
 
-            coapResponse = responseMessage.buildCoapResponse(
-                    request.getToken(), CoapStatus.UNAUTHORIZED);
+            coapResponse = responseMessage.buildCoapResponse(request.getToken(),
+                    CoapStatus.UNAUTHORIZED);
 
         }
 

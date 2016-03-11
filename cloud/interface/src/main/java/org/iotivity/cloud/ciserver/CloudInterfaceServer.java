@@ -59,7 +59,7 @@ public class CloudInterfaceServer {
 
         sessionManager = new SessionManager();
 
-        resourceManager = new ResourceManager(sessionManager);
+        resourceManager = new ResourceManager();
 
         coapServer.addHandler(
                 new CoapAuthHandler(args[3], Integer.parseInt(args[4])));

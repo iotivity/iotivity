@@ -34,8 +34,8 @@ import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapMethod;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapStatus;
 import org.iotivity.cloud.ciserver.Constants;
+import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Logger;
-import org.iotivity.cloud.util.Net;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -148,10 +148,14 @@ public class CoapRelayHandler extends ChannelDuplexHandler {
                 .set(new ArrayList<CoapRequest>());
     }
 
+    public CoapRelayHandler(SessionManager sessionManager) {
+        this.sessionManager = sessionManager;
+    }
+
     private static final AttributeKey<ChannelHandlerContext> keyDevice = AttributeKey
             .newInstance("deviceCtx");
 
-    private HashMap<String, CoapClient> ciRelayClients = new HashMap<String, CoapClient>();
+    private Cbor<HashMap<Object, Object>> cbor = new Cbor<HashMap<Object, Object>>();
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg)
@@ -192,7 +196,8 @@ public class CoapRelayHandler extends ChannelDuplexHandler {
                             accountRequest.setUriPath(Constants.ACCOUNT_URI);
                             accountRequest.setUriQuery("reqtype=publish");
                             accountRequest.setToken(request.getToken());
-                            accountRequest.setPayload(authPayload.getBytes(StandardCharsets.UTF_8));
+                            accountRequest.setPayload(authPayload
+                                    .getBytes(StandardCharsets.UTF_8));
 
                             // TODO: deviceId must be registered after session
                             // granted
@@ -247,62 +252,45 @@ public class CoapRelayHandler extends ChannelDuplexHandler {
 
                 default:
                     List<String> uriPathList = request.getUriPathSegments();
-                    String originUriPathList = request.getUriPath();
                     Logger.i("uriPahtList: " + uriPathList.toString());
-                    String ciAddress = uriPathList.get(0);
-                    String did = uriPathList.get(1);
 
-                    Logger.i("CI address: " + ciAddress);
+                    String did = uriPathList.get(0);
+
                     Logger.i("did: " + did);
 
-                    // TODO: getMyIP ?
-                    String hostAddress = Net.getMyIpAddress().replace("/", "");
-                    Logger.i("hostAddress : " + hostAddress);
-                    // if published CI is mine
-                    if (hostAddress.equals(ciAddress) == true) {
-                        // find ctx about did, and send msg
-                        Logger.d("published CI is mine");
-                        String resource = new String();
-                        List<String> pathSegments = uriPathList.subList(2,
-                                uriPathList.size());
-                        for (String path : pathSegments) {
-                            resource += "/";
-                            resource += path;
-                        }
-                        Logger.i("resource: " + resource);
-                        request.setUriPath(resource);
+                    // TODO: Clustering algorithm required
+                    // find ctx about did, and send msg
+                    String resource = new String();
+                    List<String> pathSegments = uriPathList.subList(1,
+                            uriPathList.size());
+                    for (String path : pathSegments) {
+                        resource += "/";
+                        resource += path;
+                    }
+                    Logger.i("resource: " + resource);
+                    request.setUriPath(resource);
 
-                        ChannelHandlerContext deviceCtx = sessionManager
-                                .querySession(did);
-                        if (deviceCtx != null) {
-                            deviceCtx.attr(keyDevice).set(ctx);
-                            deviceCtx.writeAndFlush(request);
-                        } else {
-                            Logger.e("deviceCtx is null");
-                            response = new CoapResponse(CoapStatus.FORBIDDEN);
-                            response.setToken(request.getToken());
-                            ctx.writeAndFlush(response);
-                        }
+                    ChannelHandlerContext deviceCtx = sessionManager
+                            .querySession(did);
+                    if (deviceCtx != null) {
+                        deviceCtx.attr(keyDevice).set(ctx);
+                        deviceCtx.writeAndFlush(request);
                     } else {
-                        // if CI is not connected, connect and send msg
-                        CoapClient otherCI = null;
-                        synchronized (ciRelayClients) {
-                            otherCI = ciRelayClients.get(ciAddress);
-                            if (otherCI == null) {
-                                otherCI = new CoapClient();
-                                otherCI.startClient(
-                                        new InetSocketAddress(ciAddress, 5683));
-                                ciRelayClients.put(ciAddress, otherCI);
-                            }
-                        }
-                        request.setUriPath(originUriPathList);
-                        otherCI.sendRequest(request);
+                        Logger.e("deviceCtx is null");
+                        response = new CoapResponse(CoapStatus.FORBIDDEN);
+                        response.setToken(request.getToken());
+                        ctx.writeAndFlush(response);
                     }
                     return;
             }
 
         } else if (msg instanceof CoapResponse) {
             if (ctx.attr(keyDevice).get() != null) {
+                Logger.i("Forwards message to client");
+
+                if (((CoapResponse) msg).getPayload() == null)
+                    Logger.i("No payload in reponse");
+
                 Logger.i("ctx.channel : "
                         + ctx.attr(keyDevice).get().channel().toString());
                 ctx.attr(keyDevice).get().writeAndFlush(msg);
@@ -311,6 +299,13 @@ public class CoapRelayHandler extends ChannelDuplexHandler {
         }
 
         super.channelRead(ctx, msg);
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        Logger.d("Channel Inactive");
+        sessionManager.removeSessionByChannel(ctx);
+        super.channelInactive(ctx);
     }
 
     @Override

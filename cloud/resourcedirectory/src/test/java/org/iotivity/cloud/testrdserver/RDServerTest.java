@@ -85,7 +85,7 @@ public class RDServerTest {
 
         CoapRequest request = new CoapRequest(CoapMethod.POST);
         request.setUriPath(Constants.RD_URI);
-        request.setUriQuery("rt=oic.wk.rdPub");
+        request.setUriQuery("rt=oic.wk.rdpub");
         request.setToken("1234".getBytes(StandardCharsets.UTF_8));
 
         ArrayList<Object> payload = new ArrayList<Object>();

@@ -77,14 +77,7 @@ public class SessionManager {
         return ctx;
     }
 
-    public boolean isThereCtx(ChannelHandlerContext ctx) {
-
-        synchronized (sessions) {
-            return sessions.containsValue(ctx);
-        }
-    }
-
-    public boolean isThereCtxChannel(ChannelHandlerContext ctx) {
+    private boolean isThereCtxChannel(ChannelHandlerContext ctx) {
 
         synchronized (sessions) {
             Iterator<String> iterator = sessions.keySet().iterator();

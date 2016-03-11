@@ -84,7 +84,7 @@ public class TestAccountServer {
         System.out
                 .println("https://github.com/login?return_to=%2Flogin%2Foauth%2Fauthorize%3Fclient_id%3Dea9c18f540323b0213d0%26redirect_uri%3Dhttp%253A%252F%252Fwww.example.com%252Foauth_callback%252F");
 
-        String authCode = "a05c2d8f6531ec15230e"; // write your authCode here.
+        String authCode = "7243699de9726d05e74c"; // write your authCode here.
         String authServer = "github";
 
         String json = "{\"authcode\":\"" + authCode + "\",\"authprovider\":\""
@@ -153,7 +153,7 @@ public class TestAccountServer {
         String userId = "eyedglen";
         String json = "{\"userid\":\"" + userId + "\"}";
 
-        CoapRequest request = new CoapRequest(CoapMethod.POST);
+        CoapRequest request = new CoapRequest(CoapMethod.GET);
         request.setUriPath(Const.ACCOUNT_URI);
         request.setUriQuery("reqtype=find");
         request.setToken("1234".getBytes(StandardCharsets.UTF_8));

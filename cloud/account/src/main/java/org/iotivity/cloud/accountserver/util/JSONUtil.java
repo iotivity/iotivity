@@ -30,14 +30,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * 
- * This class provides utility for parsing JSON object and converting data to
- * JSON string.
+ * This class provides a set of APIs to parse JSON object and convert data
+ * object to JSON string.
  * 
  */
 public class JSONUtil {
 
     private static ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * API for parsing json string and getting value corresponding with key.
+     * 
+     * @param jsonString
+     *            json string
+     * @return String - value corresponding with key
+     */
     public String parseJSON(String jsonString, String key) {
 
         if (jsonString == null || jsonString.equals(""))
@@ -57,6 +64,13 @@ public class JSONUtil {
         return value;
     }
 
+    /**
+     * API for converting data of HashMap-type to json string.
+     * 
+     * @param data
+     *            data of HashMap-type
+     * @return String - converted json string
+     */
     public String writeJSON(HashMap<Object, Object> data) {
         if (data == null)
             return null;

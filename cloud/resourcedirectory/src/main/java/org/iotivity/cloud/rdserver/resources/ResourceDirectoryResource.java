@@ -21,7 +21,6 @@
  */
 package org.iotivity.cloud.rdserver.resources;
 
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -40,7 +39,6 @@ import org.iotivity.cloud.rdserver.JSONUtil;
 import org.iotivity.cloud.rdserver.MongoDB;
 import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Logger;
-import org.iotivity.cloud.util.Net;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -173,7 +171,8 @@ public class ResourceDirectoryResource extends Resource {
         for (HashMap<Object, Object> segmentPayload : discoverPayload) {
             String stringDi = segmentPayload.get(Constants.RS_DEVICE_ID)
                     .toString();
-            segmentPayload.put(Constants.RS_DEVICE_ID, stringDi.getBytes(StandardCharsets.UTF_8));
+            segmentPayload.put(Constants.RS_DEVICE_ID,
+                    stringDi.getBytes(StandardCharsets.UTF_8));
         }
 
         Logger.i("discoverPayload :" + discoverPayload.toString());
@@ -325,13 +324,6 @@ public class ResourceDirectoryResource extends Resource {
 
             PublishPayloadFormat pubPayload = new PublishPayloadFormat();
 
-            String ciAddress = ((InetSocketAddress) ctx.channel()
-                    .remoteAddress()).getAddress().getHostAddress();
-
-            if (ciAddress.equalsIgnoreCase("127.0.0.1")) {
-                ciAddress = Net.getMyIpAddress().replace("/", "");
-            }
-
             ArrayList<Object> payloadData = cbor.parsePayloadFromCbor(
                     request.getPayload(), ArrayList.class);
 
@@ -405,7 +397,7 @@ public class ResourceDirectoryResource extends Resource {
                 LinksPayloadFormat storeLinks = new LinksPayloadFormat();
 
                 if (o.get(Constants.RS_HREF) != null) {
-                    String prefix = "/" + ciAddress + "/" + pubPayload.getDi();
+                    String prefix = "/" + pubPayload.getDi();
                     storeLinks.setHref(
                             prefix + o.get(Constants.RS_HREF).toString());
                     Logger.i("href : " + storeLinks.getHref());

@@ -40,8 +40,8 @@ import io.netty.channel.ChannelHandlerContext;
 
 /**
  *
- * This class provides a set of APIs to handle requests for publishing and
- * finding resources.
+ * This class provides a set of APIs to manage resources corresponding with user
+ * account
  *
  */
 public class AccountResource extends Resource {
@@ -51,8 +51,7 @@ public class AccountResource extends Resource {
     }
 
     @Override
-    public void onRequestReceived(ChannelHandlerContext ctx,
-            CoapRequest request) {
+    public void onRequestReceived(ChannelHandlerContext ctx, CoapRequest request) {
 
         Logger.d("AccountResource IN");
 
@@ -87,23 +86,13 @@ public class AccountResource extends Resource {
         }
     }
 
-    /**
-     * API for handling GET message
-     * 
-     * @param ctx
-     *            ChannelHandlerContext of request message
-     * @param request
-     *            CoAP request message
-     * @throws Exception
-     */
-    private void handleGetRequest(ChannelHandlerContext ctx,
-            CoapRequest request) throws Exception {
+    private void handleGetRequest(ChannelHandlerContext ctx, CoapRequest request)
+            throws Exception {
 
         String reqType = extractQuery(request, Const.REQ_TYPE);
 
         if (reqType == null)
-            throw new IllegalArgumentException(
-                    "request type is null in query!");
+            throw new IllegalArgumentException("request type is null in query!");
 
         CoapResponse response = null;
 
@@ -116,27 +105,17 @@ public class AccountResource extends Resource {
                 Logger.w("reqType[" + reqType + "] is not supported");
         }
 
-        ctx.write(response);
+        ctx.writeAndFlush(response);
 
     }
 
-    /**
-     * API for handling POST message
-     * 
-     * @param ctx
-     *            ChannelHandlerContext of request message
-     * @param request
-     *            CoAP request message
-     * @throws Exception
-     */
     private void handlePostRequest(ChannelHandlerContext ctx,
             CoapRequest request) throws Exception {
 
         String reqType = extractQuery(request, Const.REQ_TYPE);
 
         if (reqType == null)
-            throw new IllegalArgumentException(
-                    "request type is null in query!");
+            throw new IllegalArgumentException("request type is null in query!");
 
         CoapResponse response = null;
 
@@ -149,9 +128,18 @@ public class AccountResource extends Resource {
                         "request type is not supported");
         }
 
-        ctx.write(response);
+        ctx.writeAndFlush(response);
     }
 
+    /**
+     * API for handling request for publishing resource corresponding with user
+     * account
+     * 
+     * @param requeset
+     *            CoAP request message
+     * @return CoapResponse - CoAP response message with response result
+     *         information
+     */
     private CoapResponse handlePublishRequest(CoapRequest request) {
 
         String payload = request.getPayloadString();
@@ -172,16 +160,25 @@ public class AccountResource extends Resource {
         CoapResponse coapResponse = null;
 
         if (status) {
-            coapResponse = responseMessage.buildCoapResponse(request.getToken(),
-                    CoapStatus.CREATED);
+            coapResponse = responseMessage.buildCoapResponse(
+                    request.getToken(), CoapStatus.CREATED);
         } else {
-            coapResponse = responseMessage.buildCoapResponse(request.getToken(),
-                    CoapStatus.INTERNAL_SERVER_ERROR);
+            coapResponse = responseMessage.buildCoapResponse(
+                    request.getToken(), CoapStatus.INTERNAL_SERVER_ERROR);
         }
 
         return coapResponse;
     }
 
+    /**
+     * API for handling request for finding resource corresponding with user
+     * account
+     * 
+     * @param requeset
+     *            CoAP request message
+     * @return CoapResponse - CoAP response message with response result
+     *         information
+     */
     private CoapResponse handleFindRequest(CoapRequest request) {
 
         String payload = request.getPayloadString();

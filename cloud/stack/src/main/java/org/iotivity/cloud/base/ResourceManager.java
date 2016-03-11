@@ -24,7 +24,6 @@ package org.iotivity.cloud.base;
 import java.util.ArrayList;
 
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
-import org.iotivity.cloud.util.Logger;
 
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
@@ -33,35 +32,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 @Sharable
 public class ResourceManager extends SimpleChannelInboundHandler<CoapRequest> {
 
-    private ArrayList<Resource> resources      = new ArrayList<Resource>();
-    SessionManager              sessionManager = null;
-
-    public ResourceManager() {
-
-    }
-
-    public ResourceManager(SessionManager sessionManager) {
-        this.sessionManager = sessionManager;
-    }
-
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) {
-        ctx.flush();
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        Logger.d("Channel Inactive");
-        sessionManager.removeSessionByChannel(ctx);
-        super.channelInactive(ctx);
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-
-        cause.printStackTrace();
-        ctx.close();
-    }
+    private ArrayList<Resource> resources = new ArrayList<Resource>();
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, CoapRequest request)

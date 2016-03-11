@@ -236,7 +236,7 @@ public class CoapMessage {
 
             // ACCEPT
             case 17:
-                return accept != null ? Arrays.asList(content_format) : null;
+                return accept != null ? Arrays.asList(accept) : null;
 
             // LOCATION_QUERY
             case 20:

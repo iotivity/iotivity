@@ -32,7 +32,7 @@ import org.iotivity.cloud.util.Net;
 
 /**
  * 
- * This class is in charge of running account server.
+ * This class is in charge of running of account server.
  * 
  */
 public class AccountServer {

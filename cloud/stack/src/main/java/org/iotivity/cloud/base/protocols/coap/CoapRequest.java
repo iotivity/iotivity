@@ -66,11 +66,12 @@ public class CoapRequest extends CoapMessage {
     }
 
     public List<String> getUriPathSegments() {
+        if (uri_path == null) {
+            return null;
+        }
         List<String> segments = new ArrayList<String>();
-        if (uri_path != null) {
-            for (byte[] pathSegment : uri_path) {
-                segments.add(new String(pathSegment, StandardCharsets.UTF_8));
-            }
+        for (byte[] pathSegment : uri_path) {
+            segments.add(new String(pathSegment, StandardCharsets.UTF_8));
         }
         return segments;
     }
@@ -101,6 +102,9 @@ public class CoapRequest extends CoapMessage {
     }
 
     public List<String> getUriQuerySegments() {
+        if (uri_query == null) {
+            return null;
+        }
         List<String> segments = new ArrayList<String>();
         for (byte[] querySegment : uri_query) {
             segments.add(new String(querySegment, StandardCharsets.UTF_8));
@@ -109,10 +113,8 @@ public class CoapRequest extends CoapMessage {
     }
 
     public void clearUriPath() {
-        uri_path.clear();
-    }
-
-    public void setAccept(byte[] accepts) {
-        accept = accepts;
+        if (uri_path != null) {
+            uri_path.clear();
+        }
     }
 }

@@ -13,7 +13,7 @@ Build and Run
 
 3) Build a .jar file
 
-	$ mvn install
+	$ mvn install -Dmaven.test.skip=true
 
 	- The CloudInterface-0.0.1-SNAPSHOT.jar file will be placed in the "target" folder
 
