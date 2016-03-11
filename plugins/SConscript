@@ -29,7 +29,7 @@ target_os = env.get('TARGET_OS')
 build_sample = env.get('BUILD_SAMPLE')
 src_dir = env.get('SRC_DIR')
 
-if target_os not in ['android', 'arduino', 'darwin', 'ios']:
+if target_os not in ['android', 'arduino', 'darwin', 'ios', 'tizen']:
 
     SConscript(os.path.join('zigbee_wrapper', 'SConscript'))
 
