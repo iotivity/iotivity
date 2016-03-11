@@ -21,6 +21,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <condition_variable>
 
 #include "OCPlatform.h"
 #include "RCSDiscoveryManager.h"
