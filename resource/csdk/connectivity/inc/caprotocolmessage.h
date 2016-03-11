@@ -256,6 +256,15 @@ CAPayloadFormat_t CAConvertFormat(uint8_t format);
 bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter);
 #endif
 
+#ifdef WITH_BWT
+/**
+ * check whether blockwise transfer is supported or not.
+ * @param[in]   adapter             transport adapter type.
+ * @return true or false.
+ */
+bool CAIsSupportedBlockwiseTransfer(CATransportAdapter_t adapter);
+#endif
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
