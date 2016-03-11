@@ -32,6 +32,7 @@ import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.ILogger.Level;
+import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorResourceModel;
 
@@ -124,7 +125,7 @@ public class Utility {
         Set<String> resultSet = new HashSet<String>();
         Enumeration<String> e = vector.elements();
         while (e.hasMoreElements()) {
-            resultSet.add(e.nextElement().toString());
+            resultSet.add(e.nextElement());
         }
         return resultSet;
     }
@@ -133,7 +134,7 @@ public class Utility {
         if (null == e) {
             return null;
         }
-        String detail = "";
+        String detail;
         if (e instanceof SimulatorException) {
             SimulatorException simEx = (SimulatorException) e;
             detail = simEx.message() + "\n";
@@ -317,7 +318,14 @@ public class Utility {
                     val = Integer.parseInt(itr.next());
                     resultSet.add(val);
                 } catch (NumberFormatException nfe) {
-                    // Added for safety. Nothing to do.
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "There is an error while doing internal convertion(string set to object set).\n"
+                                            + Utility.getSimulatorErrorString(
+                                                    nfe, null));
                 }
             }
         } else if (AttributeValue.ValueType.DOUBLE == type) {
@@ -328,7 +336,14 @@ public class Utility {
                     val = Double.parseDouble(itr.next());
                     resultSet.add(val);
                 } catch (NumberFormatException nfe) {
-                    // Added for safety. Nothing to do.
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "There is an error while doing internal convertion(string set to object set).\n"
+                                            + Utility.getSimulatorErrorString(
+                                                    nfe, null));
                 }
             }
         } else if (AttributeValue.ValueType.BOOLEAN == type) {
@@ -578,19 +593,19 @@ public class Utility {
         value = value.trim();
 
         String token[] = value.split(",");
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (int i = 0; i < token.length; i++) {
-            result += token[i].trim();
+            result.append(token[i].trim());
             if (i + 1 < token.length) {
-                result += ",";
+                result.append(",");
             }
         }
 
-        return result;
+        return result.toString();
     }
 
     public static AttributeValue cloneAttributeValue(AttributeValue value)
-            throws Exception {
+            throws InvalidArgsException, NullPointerException {
         AttributeValue clone = null;
 
         AttributeValue.TypeInfo typeInfo = value.typeInfo();

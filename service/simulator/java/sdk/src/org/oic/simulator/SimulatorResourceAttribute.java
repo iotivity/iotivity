@@ -39,7 +39,7 @@ public class SimulatorResourceAttribute {
      */
     public SimulatorResourceAttribute(String name, AttributeValue value,
             AttributeProperty property) {
-        mName = new String(name);
+        mName = name;
         mValue = value;
         mProperty = property;
     }
@@ -54,7 +54,7 @@ public class SimulatorResourceAttribute {
      *            Value of the attribute.
      */
     public SimulatorResourceAttribute(String name, AttributeValue value) {
-        mName = new String(name);
+        mName = name;
         mValue = value;
         mProperty = null;
     }

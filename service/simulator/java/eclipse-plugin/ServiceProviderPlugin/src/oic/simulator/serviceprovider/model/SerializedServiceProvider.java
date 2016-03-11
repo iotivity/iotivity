@@ -17,6 +17,7 @@
 package oic.simulator.serviceprovider.model;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -126,22 +127,39 @@ public class SerializedServiceProvider implements Serializable {
         this.m_resourceAttributesMap = resourceAttributesMap;
     }
 
-    public void serialize(String filePath) throws IOException {
-        FileOutputStream fileOut = new FileOutputStream(filePath);
-        ObjectOutputStream out = new ObjectOutputStream(fileOut);
-        out.writeObject(this);
-        out.close();
-        fileOut.close();
+    public void serialize(String filePath) throws FileNotFoundException,
+            IOException {
+        FileOutputStream fileOut = null;
+        ObjectOutputStream out = null;
+        try {
+            fileOut = new FileOutputStream(filePath);
+            out = new ObjectOutputStream(fileOut);
+            out.writeObject(this);
+        } finally {
+            if (null != fileOut)
+                fileOut.close();
+
+            if (null != out)
+                out.close();
+        }
     }
 
     public static SerializedServiceProvider deSerialize(String filePath)
-            throws Exception {
-        SerializedServiceProvider r = null;
-        FileInputStream fileIn = new FileInputStream(filePath);
-        ObjectInputStream in = new ObjectInputStream(fileIn);
-        r = (SerializedServiceProvider) in.readObject();
-        in.close();
-        fileIn.close();
+            throws FileNotFoundException, IOException, ClassNotFoundException {
+        FileInputStream fileIn = null;
+        ObjectInputStream in = null;
+        SerializedServiceProvider r;
+        try {
+            fileIn = new FileInputStream(filePath);
+            in = new ObjectInputStream(fileIn);
+            r = (SerializedServiceProvider) in.readObject();
+        } finally {
+            if (null != fileIn)
+                fileIn.close();
+
+            if (null != in)
+                in.close();
+        }
         return r;
     }
 

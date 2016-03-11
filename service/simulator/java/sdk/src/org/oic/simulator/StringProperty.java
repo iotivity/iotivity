@@ -97,11 +97,11 @@ public class StringProperty extends AttributeProperty {
     }
 
     public static class Builder {
-        private String   mDefaultValue = new String();
+        private String   mDefaultValue;
         private int      mMin;
         private int      mMax;
         private String[] mValues;
-        private boolean  mHasRange     = false;
+        private boolean  mHasRange = false;
 
         public void setDefaultValue(String value) {
             if (null != value)

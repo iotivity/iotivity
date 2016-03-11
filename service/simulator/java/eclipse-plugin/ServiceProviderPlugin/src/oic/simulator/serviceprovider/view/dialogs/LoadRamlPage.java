@@ -42,6 +42,8 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
@@ -247,13 +249,28 @@ public class LoadRamlPage extends WizardPage {
     @Override
     public IWizardPage getNextPage() {
         // Validate the file path.
+        FileInputStream fileStream = null;
         try {
-            new FileInputStream(configFilePath);
-        } catch (Exception e) {
+            fileStream = new FileInputStream(configFilePath);
+        } catch (FileNotFoundException e) {
             MessageDialog
                     .openError(getShell(), "Invalid File",
                             "File doesn't exist. Either the file path or file name is invalid.");
             return null;
+        } finally {
+            if (null != fileStream)
+                try {
+                    fileStream.close();
+                } catch (IOException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "There is an error while closing the file stream.\n"
+                                            + Utility.getSimulatorErrorString(
+                                                    e, null));
+                }
         }
 
         // Checking the resource count

@@ -49,8 +49,10 @@ import org.eclipse.ui.dialogs.PatternFilter;
 import org.eclipse.ui.part.ViewPart;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
 
@@ -68,6 +70,7 @@ import oic.simulator.serviceprovider.utils.Utility;
 import oic.simulator.serviceprovider.view.dialogs.AutomationSettingDialog;
 import oic.simulator.serviceprovider.view.dialogs.CreateResourceWizard;
 import oic.simulator.serviceprovider.view.dialogs.DeleteResourceWizard;
+import oic.simulator.serviceprovider.view.dialogs.MainPage;
 import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
 import oic.simulator.serviceprovider.view.dialogs.ResourceWizardDialog;
 
@@ -420,8 +423,17 @@ public class ResourceManagerView extends ViewPart {
                         if (open == WizardDialog.OK
                                 || createWizard.isDlgForceClosed()) {
 
-                            Option option = createWizard.getMainPage()
-                                    .getOption();
+                            MainPage mainPage = createWizard.getMainPage();
+                            if (null == mainPage) {
+                                Activator
+                                        .getDefault()
+                                        .getLogManager()
+                                        .log(Level.ERROR.ordinal(), new Date(),
+                                                "There is an error while creating the wizard.\n");
+                                return;
+                            }
+
+                            Option option = mainPage.getOption();
                             if (option == Option.SIMPLE_FROM_RAML
                                     || option == Option.SIMPLE) {
                                 SingleResource res = (SingleResource) createWizard

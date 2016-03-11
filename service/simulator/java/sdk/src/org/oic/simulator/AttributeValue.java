@@ -107,7 +107,7 @@ public class AttributeValue {
      *            boolean type value.
      */
     public AttributeValue(boolean value) {
-        mValue = new Boolean(value);
+        mValue = Boolean.valueOf(value);
     }
 
     /**

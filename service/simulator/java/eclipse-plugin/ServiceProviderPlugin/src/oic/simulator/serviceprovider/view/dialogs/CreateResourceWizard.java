@@ -29,6 +29,8 @@ import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Date;
@@ -179,13 +181,27 @@ public class CreateResourceWizard extends Wizard {
             }
         } else if (curPage == loadRamlPage) {
             // Validate the file path.
+            FileInputStream fileStream = null;
             try {
-                new FileInputStream(loadRamlPage.getConfigFilePath());
-            } catch (Exception e) {
+                fileStream = new FileInputStream(
+                        loadRamlPage.getConfigFilePath());
+            } catch (FileNotFoundException e) {
                 MessageDialog
                         .openError(getShell(), "Invalid File",
                                 "File doesn't exist. Either the file path or file name is invalid.");
                 return false;
+            } finally {
+                if (null != fileStream) {
+                    try {
+                        fileStream.close();
+                    } catch (IOException e) {
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.ERROR.ordinal(), new Date(),
+                                        "There is an error while closing the file stream.\n");
+                    }
+                }
             }
 
             // Handling multiple instance creation of simple resource with RAML
@@ -422,6 +438,14 @@ public class CreateResourceWizard extends Wizard {
                     Activator.getDefault().getResourceManager()
                             .removeSingleResources(resources);
                 } catch (SimulatorException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "There is an error while updating the resource model.\n"
+                                            + Utility.getSimulatorErrorString(
+                                                    e, null));
                 }
                 return 0;
             }

@@ -22,7 +22,7 @@ import org.oic.simulator.AttributeValue;
 
 public class AttributeValueBuilder {
     public static AttributeValue build(String valueString,
-            AttributeValue.ValueType valueType) throws Exception {
+            AttributeValue.ValueType valueType) throws NullPointerException {
         int depth = findDepth(valueString);
         if (0 == depth) {
             return handleDepth0(valueString, valueType);
@@ -90,9 +90,8 @@ public class AttributeValueBuilder {
         return null;
     }
 
-    private static String[] splitIntoArrays(String value) {
+    private static String[] splitIntoArrays(String valueString) {
         Vector<String> values = new Vector<String>();
-        String valueString = new String(value);
         valueString = valueString.substring(valueString.indexOf('[') + 1,
                 valueString.lastIndexOf(']'));
 
@@ -135,8 +134,12 @@ public class AttributeValueBuilder {
             for (int index = 0; index < valuesString.length; index++) {
                 if (null != valuesString[index]
                         && !valuesString[index].isEmpty()) {
-                    Integer value = (Integer) handleDepth0(valuesString[index],
-                            valueType).get();
+                    AttributeValue attValue = handleDepth0(valuesString[index],
+                            valueType);
+                    if (null == attValue)
+                        return null;
+
+                    Integer value = (Integer) attValue.get();
                     if (null == value)
                         return null;
                     result[index] = value;
@@ -152,8 +155,12 @@ public class AttributeValueBuilder {
             for (int index = 0; index < valuesString.length; index++) {
                 if (null != valuesString[index]
                         && !valuesString[index].isEmpty()) {
-                    Double value = (Double) handleDepth0(valuesString[index],
-                            valueType).get();
+                    AttributeValue attValue = handleDepth0(valuesString[index],
+                            valueType);
+                    if (null == attValue)
+                        return null;
+
+                    Double value = (Double) attValue.get();
                     if (null == value)
                         return null;
                     result[index] = value;
@@ -169,8 +176,12 @@ public class AttributeValueBuilder {
             for (int index = 0; index < valuesString.length; index++) {
                 if (null != valuesString[index]
                         && !valuesString[index].isEmpty()) {
-                    Boolean value = (Boolean) handleDepth0(valuesString[index],
-                            valueType).get();
+                    AttributeValue attValue = handleDepth0(valuesString[index],
+                            valueType);
+                    if (null == attValue)
+                        return null;
+
+                    Boolean value = (Boolean) attValue.get();
                     if (null == value)
                         return null;
                     result[index] = value;
@@ -207,8 +218,12 @@ public class AttributeValueBuilder {
         if (valueType == AttributeValue.ValueType.INTEGER) {
             Integer[][] result = new Integer[valuesString.length][];
             for (int index = 0; index < valuesString.length; index++) {
-                Integer[] value = (Integer[]) handleDepth1(valuesString[index],
-                        valueType).get();
+                AttributeValue attValue = handleDepth1(valuesString[index],
+                        valueType);
+                if (null == attValue)
+                    return null;
+
+                Integer[] value = (Integer[]) attValue.get();
                 if (null == value)
                     return null;
                 result[index] = value;
@@ -217,8 +232,12 @@ public class AttributeValueBuilder {
         } else if (valueType == AttributeValue.ValueType.DOUBLE) {
             Double[][] result = new Double[valuesString.length][];
             for (int index = 0; index < valuesString.length; index++) {
-                Double[] value = (Double[]) handleDepth1(valuesString[index],
-                        valueType).get();
+                AttributeValue attValue = handleDepth1(valuesString[index],
+                        valueType);
+                if (null == attValue)
+                    return null;
+
+                Double[] value = (Double[]) attValue.get();
                 if (null == value)
                     return null;
                 result[index] = value;
@@ -227,8 +246,12 @@ public class AttributeValueBuilder {
         } else if (valueType == AttributeValue.ValueType.BOOLEAN) {
             Boolean[][] result = new Boolean[valuesString.length][];
             for (int index = 0; index < valuesString.length; index++) {
-                Boolean[] value = (Boolean[]) handleDepth1(valuesString[index],
-                        valueType).get();
+                AttributeValue attValue = handleDepth1(valuesString[index],
+                        valueType);
+                if (null == attValue)
+                    return null;
+
+                Boolean[] value = (Boolean[]) attValue.get();
                 if (null == value)
                     return null;
                 result[index] = value;
@@ -237,8 +260,12 @@ public class AttributeValueBuilder {
         } else if (valueType == AttributeValue.ValueType.STRING) {
             String[][] result = new String[valuesString.length][];
             for (int index = 0; index < valuesString.length; index++) {
-                String[] value = (String[]) handleDepth1(valuesString[index],
-                        valueType).get();
+                AttributeValue attValue = handleDepth1(valuesString[index],
+                        valueType);
+                if (null == attValue)
+                    return null;
+
+                String[] value = (String[]) attValue.get();
                 if (null == value)
                     return null;
                 result[index] = value;
@@ -262,8 +289,12 @@ public class AttributeValueBuilder {
         if (valueType == AttributeValue.ValueType.INTEGER) {
             Integer[][][] result = new Integer[valuesString.length][][];
             for (int index = 0; index < valuesString.length; index++) {
-                Integer[][] value = (Integer[][]) handleDepth2(
-                        valuesString[index], valueType).get();
+                AttributeValue attValue = handleDepth2(valuesString[index],
+                        valueType);
+                if (null == attValue)
+                    return null;
+
+                Integer[][] value = (Integer[][]) attValue.get();
                 if (null == value)
                     return null;
                 result[index] = value;
@@ -272,8 +303,12 @@ public class AttributeValueBuilder {
         } else if (valueType == AttributeValue.ValueType.DOUBLE) {
             Double[][][] result = new Double[valuesString.length][][];
             for (int index = 0; index < valuesString.length; index++) {
-                Double[][] value = (Double[][]) handleDepth2(
-                        valuesString[index], valueType).get();
+                AttributeValue attValue = handleDepth2(valuesString[index],
+                        valueType);
+                if (null == attValue)
+                    return null;
+
+                Double[][] value = (Double[][]) attValue.get();
                 if (null == value)
                     return null;
                 result[index] = value;
@@ -282,8 +317,12 @@ public class AttributeValueBuilder {
         } else if (valueType == AttributeValue.ValueType.BOOLEAN) {
             Boolean[][][] result = new Boolean[valuesString.length][][];
             for (int index = 0; index < valuesString.length; index++) {
-                Boolean[][] value = (Boolean[][]) handleDepth2(
-                        valuesString[index], valueType).get();
+                AttributeValue attValue = handleDepth2(valuesString[index],
+                        valueType);
+                if (null == attValue)
+                    return null;
+
+                Boolean[][] value = (Boolean[][]) attValue.get();
                 if (null == value)
                     return null;
                 result[index] = value;
@@ -292,8 +331,12 @@ public class AttributeValueBuilder {
         } else if (valueType == AttributeValue.ValueType.STRING) {
             String[][][] result = new String[valuesString.length][][];
             for (int index = 0; index < valuesString.length; index++) {
-                String[][] value = (String[][]) handleDepth2(
-                        valuesString[index], valueType).get();
+                AttributeValue attValue = handleDepth2(valuesString[index],
+                        valueType);
+                if (null == attValue)
+                    return null;
+
+                String[][] value = (String[][]) attValue.get();
                 if (null == value)
                     return null;
                 result[index] = value;

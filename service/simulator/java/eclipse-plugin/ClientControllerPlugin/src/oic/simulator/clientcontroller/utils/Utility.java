@@ -28,6 +28,7 @@ import java.util.Set;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorResourceModel;
 
@@ -176,8 +177,7 @@ public class Utility {
     }
 
     public static Map<String, String> getResourceInterfaces() {
-        Map<String, String> ifTypes = null;
-        ifTypes = new HashMap<String, String>();
+        Map<String, String> ifTypes = new HashMap<String, String>();
         ifTypes.put(Constants.BASELINE_INTERFACE, "Baseline");
         ifTypes.put(Constants.LINKS_LIST_INTERFACE, "Links List");
         ifTypes.put(Constants.BATCH_INTERFACE, "Batch");
@@ -196,19 +196,19 @@ public class Utility {
         value = value.trim();
 
         String token[] = value.split(",");
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (int i = 0; i < token.length; i++) {
-            result += token[i].trim();
+            result.append(token[i].trim());
             if (i + 1 < token.length) {
-                result += ",";
+                result.append(",");
             }
         }
 
-        return result;
+        return result.toString();
     }
 
     public static AttributeValue cloneAttributeValue(AttributeValue value)
-            throws Exception {
+            throws InvalidArgsException, NullPointerException {
         AttributeValue clone = null;
 
         AttributeValue.TypeInfo typeInfo = value.typeInfo();

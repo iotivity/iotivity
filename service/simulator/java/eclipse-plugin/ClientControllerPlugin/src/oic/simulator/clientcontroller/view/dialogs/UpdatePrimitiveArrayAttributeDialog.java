@@ -29,14 +29,18 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+import java.util.Date;
+
 import org.oic.simulator.ArrayProperty;
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.DoubleProperty;
+import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.IntegerProperty;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.StringProperty;
 
+import oic.simulator.clientcontroller.Activator;
 import oic.simulator.clientcontroller.utils.AttributeValueBuilder;
 import oic.simulator.clientcontroller.utils.AttributeValueStringConverter;
 import oic.simulator.clientcontroller.utils.Utility;
@@ -265,60 +269,61 @@ public class UpdatePrimitiveArrayAttributeDialog extends TitleAreaDialog {
         ArrayProperty arrProp = attribute.property().asArray();
         AttributeProperty elementProp = arrProp.getElementProperty();
 
-        String values = "";
+        StringBuilder values = new StringBuilder();
         if (elementProp.isInteger()) {
             IntegerProperty intProp = elementProp.asInteger();
             if (intProp.hasRange()) {
-                values = intProp.min() + " - " + intProp.max();
+                values.append(intProp.min() + " - " + intProp.max());
             } else if (intProp.hasValues()) {
                 int[] arr = intProp.getValues();
                 for (int i = 0; i < arr.length; i++) {
-                    values += arr[i];
+                    values.append(arr[i]);
                     if (i + 1 < arr.length) {
-                        values += ", ";
+                        values.append(", ");
                     }
                 }
 
-                if (!values.isEmpty()) {
-                    values = "[" + values + "]";
+                if (!values.toString().isEmpty()) {
+                    values.append("[" + values + "]");
                 }
             }
         } else if (elementProp.isDouble()) {
             DoubleProperty dblProp = elementProp.asDouble();
             if (dblProp.hasRange()) {
-                values = dblProp.min() + " - " + dblProp.max();
+                values.append(dblProp.min() + " - " + dblProp.max());
             } else if (dblProp.hasValues()) {
                 double[] arr = dblProp.getValues();
                 for (int i = 0; i < arr.length; i++) {
-                    values += arr[i];
+                    values.append(arr[i]);
                     if (i + 1 < arr.length) {
-                        values += ", ";
+                        values.append(", ");
                     }
                 }
 
-                if (!values.isEmpty()) {
-                    values = "[" + values + "]";
+                if (!values.toString().isEmpty()) {
+                    values.append("[" + values + "]");
                 }
             }
         } else if (elementProp.isBoolean()) {
-            values = "[true, false]";
+            values.append("[true, false]");
         } else if (elementProp.isString()) {
             StringProperty strProp = elementProp.asString();
             if (strProp.hasValues()) {
                 String[] arr = strProp.getValues();
                 for (int i = 0; i < arr.length; i++) {
-                    values += arr[i];
+                    values.append(arr[i]);
                     if (i + 1 < arr.length) {
-                        values += ", ";
+                        values.append(", ");
                     }
                 }
 
-                if (!values.isEmpty()) {
-                    values = "[" + values + "]";
+                if (!values.toString().isEmpty()) {
+                    values.append("[" + values + "]");
                 }
             }
         }
-        allowedValuesTxt.setText(values);
+
+        allowedValuesTxt.setText(values.toString());
 
         // Set the current value.
         currentValueTxt.setText(new AttributeValueStringConverter(attribute
@@ -349,18 +354,24 @@ public class UpdatePrimitiveArrayAttributeDialog extends TitleAreaDialog {
             return;
         }
 
-        // ArrayProperty arrProp = attribute.property().asArray();
         try {
             String value = Utility.removeWhiteSpacesInArrayValues(newValue);
-            if (value.startsWith("[") && value.endsWith("]")) {
+            if (null != value && value.startsWith("[") && value.endsWith("]")) {
                 newAttValueObj = AttributeValueBuilder.build(value, attribute
                         .value().typeInfo().mBaseType);
-                if (null != newAttValueObj/* && arrProp.validate(newAttValueObj) */) {
+                if (null != newAttValueObj) {
                     close();
                     return;
                 }
             }
         } catch (Exception e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "There is an error while building the new attribute value.\n"
+                                    + Utility.getSimulatorErrorString(e, null));
         }
 
         MessageBox dialog = new MessageBox(Display.getDefault()

@@ -148,15 +148,14 @@ public class MetaPropertiesView extends ViewPart {
                         updatedIfSet = resource.getResourceInterfaces();
                     }
                 } else {
-                    boolean result = false;
                     Resource resourceInSelection = resourceManagerRef
                             .getCurrentResourceInSelection();
                     if (null != resourceInSelection) {
 
                         // Null Check
-                        result = resourceManagerRef.isPropertyValueInvalid(
-                                resourceInSelection, properties,
-                                Constants.RESOURCE_URI);
+                        boolean result = resourceManagerRef
+                                .isPropertyValueInvalid(resourceInSelection,
+                                        properties, Constants.RESOURCE_URI);
                         if (result) {
                             MessageDialog.openError(parent.getShell(),
                                     "Invalid Resource URI.",
@@ -222,9 +221,9 @@ public class MetaPropertiesView extends ViewPart {
                         // interfaces by
                         // comparing the current interface set and updated
                         // interface set.
-                        if (null != updatedIfSet) {
-                            Set<String> curIfSet = resourceInSelection
-                                    .getResourceInterfaces();
+                        Set<String> curIfSet = resourceInSelection
+                                .getResourceInterfaces();
+                        if (null != curIfSet && null != updatedIfSet) {
                             if (curIfSet.size() != updatedIfSet.size()) {
                                 update = true;
                                 interfaceChange = true;
@@ -493,20 +492,20 @@ public class MetaPropertiesView extends ViewPart {
                             // Update the local copy of the current resource
                             // interfaces to keep the state for save operation.
                             updatedIfSet.clear();
-                            String newPropValue = "";
+                            StringBuilder newPropValue = new StringBuilder();
                             for (Map.Entry<String, String> entry : curResInterfaces
                                     .entrySet()) {
-                                if (!newPropValue.isEmpty()) {
-                                    newPropValue += ", ";
+                                if (!newPropValue.toString().isEmpty()) {
+                                    newPropValue.append(", ");
                                 }
                                 String value = ifTypes.get(entry.getKey());
-                                newPropValue += value;
+                                newPropValue.append(value);
 
                                 updatedIfSet.add(value);
                             }
                             // Update the model
                             MetaProperty prop = (MetaProperty) element;
-                            prop.setPropValue(newPropValue);
+                            prop.setPropValue(newPropValue.toString());
                             // Update the viewer in a separate UI thread.
                             Display.getDefault().asyncExec(new Runnable() {
                                 @Override

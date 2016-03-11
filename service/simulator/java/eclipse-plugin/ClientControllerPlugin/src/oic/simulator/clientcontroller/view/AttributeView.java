@@ -509,22 +509,27 @@ public class AttributeView extends ViewPart {
                                 attributesExist = true;
                             }
                         }
-                        if (!attributesExist) {
-                            MessageDialog
-                                    .openInformation(Display.getDefault()
-                                            .getActiveShell(), "PUT Request",
-                                            "No attributes exist in the resource model.");
-                            return;
-                        }
-                        PutRequestDialog putDialog = new PutRequestDialog(
-                                Display.getDefault().getActiveShell());
-                        if (putDialog.open() == Window.OK) {
-                            // Call the native PUT method
-                            String ifType = putDialog.getIfType();
-                            resourceManager.sendPutRequest(ifType,
-                                    resourceInSelection, putDialog
-                                            .getUpdatedRepresentation()
-                                            .getModel());
+                        if (attributesExist) {
+                            PutRequestDialog putDialog = new PutRequestDialog(
+                                    Display.getDefault().getActiveShell());
+                            if (putDialog.open() == Window.OK) {
+                                // Call the native PUT method
+                                String ifType = putDialog.getIfType();
+                                ResourceRepresentation updatedRepresentation = putDialog
+                                        .getUpdatedRepresentation();
+                                if (null != updatedRepresentation) {
+                                    resourceManager.sendPutRequest(ifType,
+                                            resourceInSelection,
+                                            updatedRepresentation.getModel());
+                                    return;
+                                }
+
+                                MessageDialog
+                                        .openInformation(Display.getDefault()
+                                                .getActiveShell(),
+                                                "PUT Request",
+                                                "No attributes exist in the resource model.");
+                            }
                         }
                     }
                 });
@@ -547,24 +552,28 @@ public class AttributeView extends ViewPart {
                                 attributesExist = true;
                             }
                         }
-                        if (!attributesExist) {
-                            MessageDialog
-                                    .openInformation(Display.getDefault()
-                                            .getActiveShell(), "POST Request",
-                                            "No attributes exist in the resource model.");
-                            return;
-                        }
+                        if (attributesExist) {
+                            PostRequestDialog postDialog = new PostRequestDialog(
+                                    Display.getDefault().getActiveShell());
+                            if (postDialog.open() == Window.OK) {
+                                // Call the native POST method
+                                String ifType = postDialog.getIfType();
+                                ResourceRepresentation updatedRepresentation = postDialog
+                                        .getUpdatedRepresentation();
+                                if (null != updatedRepresentation) {
+                                    resourceManager.sendPostRequest(ifType,
+                                            resourceInSelection,
+                                            updatedRepresentation
+                                                    .getSelectedModel());
+                                    return;
+                                }
 
-                        PostRequestDialog postDialog = new PostRequestDialog(
-                                Display.getDefault().getActiveShell());
-                        if (postDialog.open() == Window.OK) {
-                            // Call the native POST method
-                            String ifType = postDialog.getIfType();
-                            ResourceRepresentation representation = postDialog
-                                    .getUpdatedRepresentation();
-                            resourceManager.sendPostRequest(ifType,
-                                    resourceInSelection,
-                                    representation.getSelectedModel());
+                                MessageDialog
+                                        .openInformation(Display.getDefault()
+                                                .getActiveShell(),
+                                                "POST Request",
+                                                "No attributes exist in the resource model.");
+                            }
                         }
                     }
                 });
@@ -636,8 +645,8 @@ public class AttributeView extends ViewPart {
                                 status = "Failed to perform the requested operation.";
                             } else {
                                 // GET
-                                if (oldStatus.get(Constants.GET) != autoStatus
-                                        .get(Constants.GET)) {
+                                if (!oldStatus.get(Constants.GET).equals(
+                                        autoStatus.get(Constants.GET))) {
                                     if (autoStatus.get(Constants.GET)) {
                                         startMsg += Constants.GET;
                                         startCount++;
@@ -649,8 +658,8 @@ public class AttributeView extends ViewPart {
                                     }
                                 }
                                 // PUT
-                                if (oldStatus.get(Constants.PUT) != autoStatus
-                                        .get(Constants.PUT)) {
+                                if (!oldStatus.get(Constants.PUT).equals(
+                                        autoStatus.get(Constants.PUT))) {
                                     if (autoStatus.get(Constants.PUT)) {
                                         if (startCount == 1) {
                                             startMsg += ", ";
@@ -669,8 +678,8 @@ public class AttributeView extends ViewPart {
 
                                 }
                                 // POST
-                                if (oldStatus.get(Constants.POST) != autoStatus
-                                        .get(Constants.POST)) {
+                                if (!oldStatus.get(Constants.POST).equals(
+                                        autoStatus.get(Constants.POST))) {
                                     if (autoStatus.get(Constants.POST)) {
                                         if (startCount > 0) {
                                             startMsg += ", ";

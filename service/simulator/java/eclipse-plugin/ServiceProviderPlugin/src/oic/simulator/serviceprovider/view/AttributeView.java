@@ -48,6 +48,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,7 @@ import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.ModelProperty;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
@@ -226,9 +228,6 @@ public class AttributeView extends ViewPart {
                         // displayed by this view.
                         Resource resourceInSelection = resourceManager
                                 .getCurrentResourceInSelection();
-                        if (null == resourceInSelection) {
-                            return;
-                        }
                         if (resource != resourceInSelection) {
                             return;
                         }
@@ -381,7 +380,7 @@ public class AttributeView extends ViewPart {
                         }
 
                         if (null != parent
-                                && !(parent instanceof ResourceRepresentation)) {
+                                && parent instanceof AttributeElement) {
                             Object grandParent = ((AttributeElement) parent)
                                     .getParent();
                             if (null == grandParent
@@ -438,6 +437,15 @@ public class AttributeView extends ViewPart {
                     // the array property of the current attribute in
                     // selection(Model Array type attribute).
                     AttributeElement attElement = getSelectedElement();
+                    if (null == attElement) {
+                        MessageDialog
+                                .openError(Display.getDefault()
+                                        .getActiveShell(),
+                                        "Unable to perform the operation.",
+                                        "Failed to obtain the required data. Operation cannot be performed.");
+                        return;
+                    }
+
                     SimulatorResourceAttribute attribute = attElement
                             .getSimulatorResourceAttribute();
 
@@ -512,10 +520,12 @@ public class AttributeView extends ViewPart {
                                             "Failed to insert a new item in the array.");
                         } else {
                             // Highlight the newly added item.
-                            AttributeElement addedElement = attElement
-                                    .getChildren().get("[" + i + "]");
-                            attViewer.setSelection(new StructuredSelection(
-                                    addedElement), true);
+                            if (attElement.hasChildren()) {
+                                AttributeElement addedElement = attElement
+                                        .getChildren().get("[" + i + "]");
+                                attViewer.setSelection(new StructuredSelection(
+                                        addedElement), true);
+                            }
                         }
                     }
                 }
@@ -593,6 +603,14 @@ public class AttributeView extends ViewPart {
                 // Removing the element from the child map.
                 Map<String, AttributeElement> elements = parentElement
                         .getChildren();
+                if (null == elements) {
+                    MessageDialog
+                            .openError(Display.getDefault().getActiveShell(),
+                                    "Operation failed.",
+                                    "There is an error while removing the array items.");
+                    return;
+                }
+
                 List<AttributeElement> attElementList = new ArrayList<AttributeElement>();
                 attElementList.addAll(elements.values());
                 Collections.sort(attElementList, Utility.attributeComparator);
@@ -633,7 +651,7 @@ public class AttributeView extends ViewPart {
     }
 
     private ResourceRepresentation getRepresentationForOneDimensionTopLevelAttribute() {
-        ResourceRepresentation representation = null;
+        ResourceRepresentation representation;
 
         AttributeValue value = null;
         ModelProperty property = null;
@@ -672,7 +690,13 @@ public class AttributeView extends ViewPart {
             value = Utility.cloneAttributeValue(new AttributeValue(
                     modelValue[0]));
         } catch (Exception e) {
-            return null;
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "There is an error while creating an instance of the model element.\n"
+                                    + Utility.getSimulatorErrorString(e, null));
         }
 
         if (null == value) {

@@ -16,6 +16,7 @@
 
 package oic.simulator.serviceprovider.model;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -23,6 +24,7 @@ import org.oic.simulator.ArrayProperty;
 import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.DoubleProperty;
+import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.IntegerProperty;
 import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.ModelProperty;
@@ -31,9 +33,11 @@ import org.oic.simulator.SimulatorResourceModel;
 import org.oic.simulator.StringProperty;
 import org.oic.simulator.server.SimulatorResource.AutoUpdateType;
 
+import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.manager.UiListenerHandler;
 import oic.simulator.serviceprovider.utils.AttributeValueStringConverter;
 import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
 
 public class AttributeElement {
     private Object                        mParent             = null;
@@ -81,10 +85,9 @@ public class AttributeElement {
                     SimulatorResourceModel[] resModelArray = (SimulatorResourceModel[]) attribute
                             .value().get();
 
-                    ArrayProperty arrProp = null;
                     ModelProperty modelProp = null;
                     if (null != attribute.property()) {
-                        arrProp = attribute.property().asArray();
+                        ArrayProperty arrProp = attribute.property().asArray();
                         if (null != arrProp
                                 && null != arrProp.getElementProperty()) {
                             modelProp = arrProp.getElementProperty().asModel();
@@ -102,15 +105,13 @@ public class AttributeElement {
                     SimulatorResourceModel[][] resModelArray = (SimulatorResourceModel[][]) attribute
                             .value().get();
 
-                    ArrayProperty arrProp = null;
-                    ArrayProperty arrChildPropLevel1 = null;
                     ModelProperty modelProp = null;
                     if (null != attribute.property()) {
-                        arrProp = attribute.property().asArray();
+                        ArrayProperty arrProp = attribute.property().asArray();
                         if (null != arrProp
                                 && null != arrProp.getElementProperty()) {
-                            arrChildPropLevel1 = arrProp.getElementProperty()
-                                    .asArray();
+                            ArrayProperty arrChildPropLevel1 = arrProp
+                                    .getElementProperty().asArray();
                             if (null != arrChildPropLevel1
                                     && null != arrChildPropLevel1
                                             .getElementProperty()) {
@@ -132,20 +133,17 @@ public class AttributeElement {
                     SimulatorResourceModel[][][] resModelArray = (SimulatorResourceModel[][][]) attribute
                             .value().get();
 
-                    ArrayProperty arrProp = null;
-                    ArrayProperty arrChildPropLevel1 = null;
-                    ArrayProperty arrChildPropLevel2 = null;
                     ModelProperty modelProp = null;
                     if (null != attribute.property()) {
-                        arrProp = attribute.property().asArray();
+                        ArrayProperty arrProp = attribute.property().asArray();
                         if (null != arrProp
                                 && null != arrProp.getElementProperty()) {
-                            arrChildPropLevel1 = arrProp.getElementProperty()
-                                    .asArray();
+                            ArrayProperty arrChildPropLevel1 = arrProp
+                                    .getElementProperty().asArray();
                             if (null != arrChildPropLevel1
                                     && null != arrChildPropLevel1
                                             .getElementProperty()) {
-                                arrChildPropLevel2 = arrChildPropLevel1
+                                ArrayProperty arrChildPropLevel2 = arrChildPropLevel1
                                         .getElementProperty().asArray();
                                 if (null != arrChildPropLevel2
                                         && null != arrChildPropLevel2
@@ -305,16 +303,27 @@ public class AttributeElement {
                     AttributeValue currentValue = mAttribute.value();
                     SimulatorResourceModel curModel = (SimulatorResourceModel) currentValue
                             .get();
-                    try {
-                        curModel.set(attName, entry.getValue());
-                    } catch (InvalidArgsException e) {
+                    if (null != curModel) {
+                        try {
+                            curModel.set(attName, entry.getValue());
+                        } catch (InvalidArgsException e) {
+                            Activator
+                                    .getDefault()
+                                    .getLogManager()
+                                    .log(Level.ERROR.ordinal(),
+                                            new Date(),
+                                            "There is an error while updating the resource model.\n"
+                                                    + Utility
+                                                            .getSimulatorErrorString(
+                                                                    e, null));
+                        }
+
+                        mChildAttributes.put(attName, newAttribute);
+
+                        // Refresh UI to display the new attribute.
+                        UiListenerHandler.getInstance()
+                                .attributeAddedUINotification(newAttribute);
                     }
-
-                    mChildAttributes.put(attName, newAttribute);
-
-                    // Refresh UI to display the new attribute.
-                    UiListenerHandler.getInstance()
-                            .attributeAddedUINotification(newAttribute);
                 }
             }
         } else if (typeInfo.mType == AttributeValue.ValueType.ARRAY
@@ -323,10 +332,9 @@ public class AttributeElement {
                 SimulatorResourceModel[] resModelArray = (SimulatorResourceModel[]) attribute
                         .value().get();
 
-                ArrayProperty arrProp = null;
                 ModelProperty modelProp = null;
                 if (null != mAttribute.property()) {
-                    arrProp = mAttribute.property().asArray();
+                    ArrayProperty arrProp = mAttribute.property().asArray();
                     if (null != arrProp && null != arrProp.getElementProperty()) {
                         modelProp = arrProp.getElementProperty().asModel();
                     }
@@ -364,14 +372,12 @@ public class AttributeElement {
                 SimulatorResourceModel[][] resModelArray = (SimulatorResourceModel[][]) attribute
                         .value().get();
 
-                ArrayProperty arrProp = null;
-                ArrayProperty arrChildPropLevel1 = null;
                 ModelProperty modelProp = null;
                 if (null != mAttribute.property()) {
-                    arrProp = mAttribute.property().asArray();
+                    ArrayProperty arrProp = mAttribute.property().asArray();
                     if (null != arrProp && null != arrProp.getElementProperty()) {
-                        arrChildPropLevel1 = arrProp.getElementProperty()
-                                .asArray();
+                        ArrayProperty arrChildPropLevel1 = arrProp
+                                .getElementProperty().asArray();
                         if (null != arrChildPropLevel1
                                 && null != arrChildPropLevel1
                                         .getElementProperty()) {
@@ -421,19 +427,16 @@ public class AttributeElement {
                 SimulatorResourceModel[][][] resModelArray = (SimulatorResourceModel[][][]) attribute
                         .value().get();
 
-                ArrayProperty arrProp = null;
-                ArrayProperty arrChildPropLevel1 = null;
-                ArrayProperty arrChildPropLevel2 = null;
                 ModelProperty modelProp = null;
                 if (null != mAttribute.property()) {
-                    arrProp = mAttribute.property().asArray();
+                    ArrayProperty arrProp = mAttribute.property().asArray();
                     if (null != arrProp && null != arrProp.getElementProperty()) {
-                        arrChildPropLevel1 = arrProp.getElementProperty()
-                                .asArray();
+                        ArrayProperty arrChildPropLevel1 = arrProp
+                                .getElementProperty().asArray();
                         if (null != arrChildPropLevel1
                                 && null != arrChildPropLevel1
                                         .getElementProperty()) {
-                            arrChildPropLevel2 = arrChildPropLevel1
+                            ArrayProperty arrChildPropLevel2 = arrChildPropLevel1
                                     .getElementProperty().asArray();
                             if (null != arrChildPropLevel2
                                     && null != arrChildPropLevel2
@@ -494,6 +497,15 @@ public class AttributeElement {
                         ((AttributeElement) mParent)
                                 .deepSetChildValue(mAttribute);
                     } catch (InvalidArgsException e) {
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.ERROR.ordinal(),
+                                        new Date(),
+                                        "There is an error while updating the resource model.\n"
+                                                + Utility
+                                                        .getSimulatorErrorString(
+                                                                e, null));
                     }
                 }
                 UiListenerHandler.getInstance().attributeUpdatedUINotification(

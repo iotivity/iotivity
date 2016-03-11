@@ -182,7 +182,7 @@ public class DeleteResourcePage extends WizardPage {
                     return;
                 }
                 for (Object obj : selection) {
-                    if (obj instanceof Resource) {
+                    if (obj instanceof SingleResource) {
                         singles.add((SingleResource) obj);
                     }
                 }
