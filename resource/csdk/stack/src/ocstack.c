@@ -2061,9 +2061,9 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
 #endif
 
 #ifdef TCP_ADAPTER
-    if(result == OC_STACK_OK)
+    if (result == OC_STACK_OK)
     {
-        result = InitializeKeepAlive();
+        result = InitializeKeepAlive(myStackMode);
     }
 #endif
 
@@ -2109,7 +2109,7 @@ OCStackResult OCStop()
 #endif
 
 #ifdef TCP_ADAPTER
-    TerminateKeepAlive();
+    TerminateKeepAlive(myStackMode);
 #endif
 
     // Free memory dynamically allocated for resources

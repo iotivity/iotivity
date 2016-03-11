@@ -207,7 +207,7 @@ KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode,
  */
 static OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint);
 
-OCStackResult InitializeKeepAlive()
+OCStackResult InitializeKeepAlive(OCMode mode)
 {
     OIC_LOG(DEBUG, TAG, "InitializeKeepAlive IN");
     if (g_isKeepAliveInitialized)
@@ -216,12 +216,15 @@ OCStackResult InitializeKeepAlive()
         return OC_STACK_OK;
     }
 
-    // Create the KeepAlive Resource[/oic/ping].
-    OCStackResult result = CreateKeepAliveResource();
-    if (OC_STACK_OK != result)
+    if (OC_CLIENT != mode)
     {
-        OIC_LOG_V(ERROR, TAG, "CreateKeepAliveResource failed[%d]", result);
-        return result;
+        // Create the KeepAlive Resource[/oic/ping].
+        OCStackResult result = CreateKeepAliveResource();
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG_V(ERROR, TAG, "CreateKeepAliveResource failed[%d]", result);
+            return result;
+        }
     }
 
     if (!g_keepAliveConnectionTable)
@@ -230,7 +233,7 @@ OCStackResult InitializeKeepAlive()
         if (NULL == g_keepAliveConnectionTable)
         {
             OIC_LOG(ERROR, TAG, "Creating KeepAlive Table failed");
-            TerminateKeepAlive();
+            TerminateKeepAlive(mode);
             return OC_STACK_ERROR;
         }
     }
@@ -241,7 +244,7 @@ OCStackResult InitializeKeepAlive()
     return OC_STACK_OK;
 }
 
-OCStackResult TerminateKeepAlive()
+OCStackResult TerminateKeepAlive(OCMode mode)
 {
     OIC_LOG(DEBUG, TAG, "TerminateKeepAlive IN");
     if (!g_isKeepAliveInitialized)
@@ -250,12 +253,15 @@ OCStackResult TerminateKeepAlive()
         return OC_STACK_ERROR;
     }
 
-    // Delete the KeepAlive Resource[/oic/ping].
-    OCStackResult result = DeleteKeepAliveResource();
-    if (OC_STACK_OK != result)
+    if (OC_CLIENT != mode)
     {
-        OIC_LOG_V(ERROR, TAG, "DeleteKeepAliveResource failed[%d]", result);
-        return result;
+        // Delete the KeepAlive Resource[/oic/ping].
+        OCStackResult result = DeleteKeepAliveResource();
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG_V(ERROR, TAG, "DeleteKeepAliveResource failed[%d]", result);
+            return result;
+        }
     }
 
     if (NULL != g_keepAliveConnectionTable)

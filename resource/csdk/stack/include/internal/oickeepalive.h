@@ -54,15 +54,17 @@ extern "C"
 
 /**
  * Initialize the KeepAlive.
+ * @param[in]   mode        Host mode of operation.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult InitializeKeepAlive();
+OCStackResult InitializeKeepAlive(OCMode mode);
 
 /**
  * Terminates the KeepAlive.
+ * @param[in]   mode        Host mode of operation.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult TerminateKeepAlive();
+OCStackResult TerminateKeepAlive(OCMode mode);
 
 /**
  * Process the KeepAlive timer to send ping message to OIC Server.
