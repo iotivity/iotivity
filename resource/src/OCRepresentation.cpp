@@ -85,6 +85,10 @@ namespace OC
         rep[OC_RSRVD_DATA_MODEL_VERSION] = payload->dataModelVersion ?
             std::string(payload->dataModelVersion) :
             std::string();
+        for (OCStringLL *strll = payload->types; strll; strll = strll->next)
+        {
+           rep.addResourceType(strll->value);
+        }
         m_reps.push_back(std::move(rep));
     }
 

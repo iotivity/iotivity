@@ -756,7 +756,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         else
         {
             payload = (OCPayload*) OCDevicePayloadCreate(deviceId, savedDeviceInfo.deviceName,
-                    OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
+                savedDeviceInfo.types, OC_SPEC_VERSION, OC_DATA_MODEL_VERSION);
             if (!payload)
             {
                 discoveryResult = OC_STACK_NO_MEMORY;
@@ -1220,7 +1220,9 @@ void DeleteDeviceInfo()
     OIC_LOG(INFO, TAG, "Deleting device info.");
 
     OICFree(savedDeviceInfo.deviceName);
+    OCFreeOCStringLL(savedDeviceInfo.types);
     savedDeviceInfo.deviceName = NULL;
+
 }
 
 static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
@@ -1233,6 +1235,15 @@ static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
         return OC_STACK_NO_MEMORY;
     }
 
+    if (info.types)
+    {
+        savedDeviceInfo.types = CloneOCStringLL(info.types);
+        if(!savedDeviceInfo.types && info.types)
+        {
+            DeleteDeviceInfo();
+            return OC_STACK_NO_MEMORY;
+        }
+    }
     return OC_STACK_OK;
 }
 

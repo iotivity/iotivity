@@ -53,12 +53,17 @@ namespace OCRepresentationEncodingTest
     static const char devicename1[] = "device name";
     static const char specver1[] = "spec version";
     static const char dmver1[] = "data model version";
+    static OCStringLL *types = NULL;
     // Device Payloads
     TEST(DeviceDiscoveryEncoding, Normal)
     {
+        OCResourcePayloadAddStringLL(&types, "oic.wk.d");
+        OCResourcePayloadAddStringLL(&types, "oic.d.tv");
+
         OCDevicePayload* device = OCDevicePayloadCreate(
                 sid1,
                 devicename1,
+                types,
                 specver1,
                 dmver1);
         EXPECT_STREQ(sid1, device->sid);
@@ -66,6 +71,8 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(specver1, device->specVersion);
         EXPECT_STREQ(dmver1, device->dataModelVersion);
         EXPECT_EQ(PAYLOAD_TYPE_DEVICE, ((OCPayload*)device)->type);
+        EXPECT_STREQ("oic.wk.d", device->types->value);
+        EXPECT_STREQ("oic.d.tv", device->types->next->value);
 
         uint8_t* cborData;
         size_t cborSize;
@@ -79,6 +86,8 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(device->deviceName, ((OCDevicePayload*)parsedDevice)->deviceName);
         EXPECT_STREQ(device->specVersion, ((OCDevicePayload*)parsedDevice)->specVersion);
         EXPECT_STREQ(device->dataModelVersion, ((OCDevicePayload*)parsedDevice)->dataModelVersion);
+        EXPECT_STREQ("oic.wk.d", ((OCDevicePayload*)parsedDevice)->types->value);
+        EXPECT_STREQ("oic.d.tv", ((OCDevicePayload*)parsedDevice)->types->next->value);
         EXPECT_EQ(device->base.type, ((OCDevicePayload*)parsedDevice)->base.type);
 
         OCPayloadDestroy((OCPayload*)device);

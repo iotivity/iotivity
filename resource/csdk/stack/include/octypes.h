@@ -413,6 +413,12 @@ typedef enum
 #define OC_MASK_MODS     (0x0FF0)
 #define OC_MASK_FAMS     (OC_IP_USE_V6|OC_IP_USE_V4)
 
+typedef struct OCStringLL
+{
+    struct OCStringLL *next;
+    char* value;
+} OCStringLL;
+
 /**
  * End point identity.
  */
@@ -919,7 +925,8 @@ typedef struct
 {
     /** Pointer to the device name.*/
     char *deviceName;
-
+    /** Pointer to the types.*/
+    OCStringLL *types;
 } OCDeviceInfo;
 
 #ifdef RA_ADAPTER
@@ -1027,12 +1034,6 @@ typedef struct OCRepPayloadValue
     struct OCRepPayloadValue* next;
 
 } OCRepPayloadValue;
-
-typedef struct OCStringLL
-{
-    struct OCStringLL *next;
-    char* value;
-} OCStringLL;
 
 // used for get/set/put/observe/etc representations
 typedef struct OCRepPayload
@@ -1181,7 +1182,8 @@ typedef struct
 typedef struct
 {
     OCPayload base;
-    char* sid;
+    char *sid;
+    OCStringLL *types;
     char* deviceName;
     char* specVersion;
     char* dataModelVersion;
@@ -1430,7 +1432,7 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
  * Callback function definition of direct-pairing
  *
  * @param[OUT] peer - pairing device info.
- * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK' 
+ * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
  *                                   if D2D pairing is success without error
  */
 typedef void (*OCDirectPairingCB)(OCDPDev_t *peer, OCStackResult result);

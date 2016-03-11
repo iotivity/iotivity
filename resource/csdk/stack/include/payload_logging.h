@@ -212,6 +212,14 @@ static inline void OCPayloadLogDevice(LogLevel level, OCDevicePayload* payload)
     OIC_LOG_V(level, PL_TAG, "\tDevice Name:%s", payload->deviceName);
     OIC_LOG_V(level, PL_TAG, "\tSpec Version%s", payload->specVersion);
     OIC_LOG_V(level, PL_TAG, "\tData Model Version:%s", payload->dataModelVersion);
+    if (payload->types)
+    {
+        OIC_LOG(level, PL_TAG, "\tResource Type:");
+        for (OCStringLL *strll = payload->types; strll; strll = strll->next)
+        {
+            OIC_LOG_V(level, PL_TAG, "\t\t%s", strll->value);
+        }
+    }
 }
 
 static inline void OCPayloadLogPlatform(LogLevel level, OCPlatformPayload* payload)

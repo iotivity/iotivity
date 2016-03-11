@@ -1552,7 +1552,7 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
 }
 
 OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
-        const char* specVer, const char* dmVer)
+        const OCStringLL *types, const char* specVer, const char* dmVer)
 {
 
     OCDevicePayload* payload = (OCDevicePayload*)OICCalloc(1, sizeof(OCDevicePayload));
@@ -1587,6 +1587,12 @@ OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
         goto exit;
     }
 
+    payload->types = CloneOCStringLL((OCStringLL *)types);
+    if (types && !payload->types)
+    {
+        goto exit;
+    }
+
     return payload;
 
 exit:
@@ -1605,6 +1611,7 @@ void OCDevicePayloadDestroy(OCDevicePayload* payload)
     OICFree(payload->deviceName);
     OICFree(payload->specVersion);
     OICFree(payload->dataModelVersion);
+    OCFreeOCStringLL(payload->types);
     OICFree(payload);
 }
 

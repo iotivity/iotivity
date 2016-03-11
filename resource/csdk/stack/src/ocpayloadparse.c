@@ -316,9 +316,16 @@ static OCStackResult OCParseDevicePayload(OCPayload **outPayload, CborValue *roo
 
     if (cbor_value_is_map(rootValue))
     {
+        CborValue curVal;
+        // Resource Type
+        err = cbor_value_map_find_value(rootValue, OC_RSRVD_RESOURCE_TYPE, &curVal);
+        if (cbor_value_is_valid(&curVal))
+        {
+            err =  OCParseStringLL(rootValue, OC_RSRVD_RESOURCE_TYPE, &out->types);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed to find rt type tag/value");
+        }
         // Device ID
         size_t len = 0;
-        CborValue curVal;
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_DEVICE_ID, &curVal);
         if (cbor_value_is_valid(&curVal))
         {
