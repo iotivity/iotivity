@@ -58,7 +58,7 @@ namespace OIC
         const std::string SCENE_KEY_CHILD = "child";
 
         const std::string SCENE_LIST_RT = "oic.wk.scenelist";
-        const std::string SCENE_MEMBER_RT = "oic.r.scenemember";
+        const std::string SCENE_MEMBER_RT = "oic.wk.scenemember";
         const std::string SCENE_COLLECTION_RT = "oic.wk.scenecollection";
 
         const std::string COAP_TAG = "coap://";
