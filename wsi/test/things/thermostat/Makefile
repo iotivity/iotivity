@@ -1,4 +1,4 @@
-IOTIVITY_DIR=${HOME}/source/active/iotivity
+IOTIVITY_DIR=../../../..
 all:
 	g++ -g thermostat.cpp `pkg-config --cflags --libs elementary` -std=c++11 -pthread -Wall -fpermissive \
 		-I$(IOTIVITY_DIR)/resource/include \
@@ -13,4 +13,4 @@ all:
 		-loc -loctbstack -loc_logger -lconnectivity_abstraction -lcoap -lpthread -o thermostat
 
 clean:
-	rm *.o bulb
+	rm *.o thermostat
