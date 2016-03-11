@@ -33,8 +33,14 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
 
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Date;
 
+import org.oic.simulator.ILogger.Level;
+
+import oic.simulator.clientcontroller.Activator;
 import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.utils.Utility;
 
 /**
  * This dialog is used for loading the RAML file.
@@ -124,13 +130,30 @@ public class LoadRAMLDialog extends TitleAreaDialog {
         if (null == configFilePath) {
             return;
         }
+
+        FileInputStream fileStream = null;
         try {
-            new FileInputStream(configFilePath);
+            fileStream = new FileInputStream(configFilePath);
         } catch (Exception e) {
             MessageDialog
                     .openError(getShell(), "Invalid File",
                             "File doesn't exist. Either the file path or file name is invalid.");
             return;
+        } finally {
+            if (null != fileStream) {
+                try {
+                    fileStream.close();
+                } catch (IOException e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "There is an error while closing the file stream.\n"
+                                            + Utility.getSimulatorErrorString(
+                                                    e, null));
+                }
+            }
         }
         close();
     }

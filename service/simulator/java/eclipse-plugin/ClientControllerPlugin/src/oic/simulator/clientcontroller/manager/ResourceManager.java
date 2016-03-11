@@ -125,8 +125,9 @@ public class ResourceManager {
                         // Ignore the response if the resource is a device or
                         // platform.
                         Vector<String> resTypes = resourceN.getResourceTypes();
-                        if (null != resTypes && resTypes.contains("oic.wk.d")
-                                || resTypes.contains("oic.wk.p")) {
+                        if (null != resTypes
+                                && (resTypes.contains("oic.wk.d") || resTypes
+                                        .contains("oic.wk.p"))) {
                             return;
                         }
 
@@ -797,7 +798,7 @@ public class ResourceManager {
     }
 
     public boolean isResourceObserved(String resourceURI) {
-        boolean observed = false;
+        boolean observed;
         synchronized (observedResourceURIList) {
             observed = observedResourceURIList.contains(resourceURI);
         }
@@ -885,7 +886,7 @@ public class ResourceManager {
 
     public void deleteResources(final Set<String> searchTypes) {
         synchronized (resourceMap) {
-            if (null == resourceMap && resourceMap.isEmpty()) {
+            if (null == resourceMap || resourceMap.isEmpty()) {
                 return;
             }
         }
@@ -1012,57 +1013,57 @@ public class ResourceManager {
     public List<MetaProperty> getDefaultProperties(RemoteResource resource) {
         if (null != resource) {
             String propName;
-            String propValue;
+            StringBuilder propValue;
 
             List<MetaProperty> metaPropertyList = new ArrayList<MetaProperty>();
 
             for (int index = 0; index < Constants.META_PROPERTY_COUNT; index++) {
                 propName = Constants.META_PROPERTIES[index];
+                propValue = new StringBuilder();
                 if (propName.equals(Constants.RESOURCE_URI)) {
-                    propValue = resource.getRemoteResourceRef().getURI();
+                    propValue.append(resource.getRemoteResourceRef().getURI());
                 } else if (propName.equals(Constants.CONNECTIVITY_TYPE)) {
-                    propValue = resource.getRemoteResourceRef()
-                            .getConnectivityType().toString();
+                    propValue.append(resource.getRemoteResourceRef()
+                            .getConnectivityType().toString());
                 } else if (propName.equals(Constants.ADDRESS)) {
-                    propValue = resource.getRemoteResourceRef().getHost();
+                    propValue.append(resource.getRemoteResourceRef().getHost());
                 } else if (propName.equals(Constants.OBSERVABLE)) {
-                    propValue = Utility.getObservableInString(resource
-                            .getRemoteResourceRef().isObservable());
+                    propValue.append(Utility.getObservableInString(resource
+                            .getRemoteResourceRef().isObservable()));
                 } else if (propName.equals(Constants.RESOURCE_TYPES)) {
                     Vector<String> resTypes = resource.getRemoteResourceRef()
                             .getResourceTypes();
                     if (null != resTypes && !resTypes.isEmpty()) {
-                        propValue = "";
                         Iterator<String> itr = resTypes.iterator();
                         while (itr.hasNext()) {
-                            propValue += itr.next();
+                            propValue.append(itr.next());
                             if (itr.hasNext()) {
-                                propValue += ", ";
+                                propValue.append(", ");
                             }
                         }
                     } else {
-                        propValue = Constants.NOT_AVAILABLE;
+                        propValue.append(Constants.NOT_AVAILABLE);
                     }
                 } else if (propName.equals(Constants.RESOURCE_INTERFACES)) {
                     Vector<String> interfaces = resource.getRemoteResourceRef()
                             .getResourceInterfaces();
                     if (null != interfaces && !interfaces.isEmpty()) {
-                        propValue = "";
                         Iterator<String> itr = interfaces.iterator();
                         while (itr.hasNext()) {
-                            propValue += itr.next();
+                            propValue.append(itr.next());
                             if (itr.hasNext()) {
-                                propValue += ", ";
+                                propValue.append(", ");
                             }
                         }
                     } else {
-                        propValue = Constants.NOT_AVAILABLE;
+                        propValue.append(Constants.NOT_AVAILABLE);
                     }
                 } else {
                     propValue = null;
                 }
                 if (null != propValue) {
-                    metaPropertyList.add(new MetaProperty(propName, propValue));
+                    metaPropertyList.add(new MetaProperty(propName, propValue
+                            .toString()));
                 }
             }
 

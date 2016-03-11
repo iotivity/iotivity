@@ -624,33 +624,14 @@ public class ResourceManager {
 
     public Resource createResourceByRAML(String configFilePath)
             throws SimulatorException {
-        Resource resource = null;
+        SimulatorResource jSimulatorResource;
         try {
             // Create the resource
-            SimulatorResource jSimulatorResource = SimulatorManager
+            jSimulatorResource = SimulatorManager
                     .createResource(configFilePath);
             if (null == jSimulatorResource) {
                 return null;
             }
-            if (jSimulatorResource instanceof SimulatorSingleResource) {
-                resource = new SingleResource();
-            } else {
-                return null;
-            }
-            resource.setSimulatorResource(jSimulatorResource);
-
-            // Fetch and locally store the resource name and uri.
-            String uri = jSimulatorResource.getURI();
-            if (null == uri || uri.trim().isEmpty()) {
-                return null;
-            }
-            resource.setResourceURI(uri.trim());
-
-            String name = jSimulatorResource.getName();
-            if (null == name || name.trim().isEmpty()) {
-                return null;
-            }
-            resource.setResourceName(name.trim());
         } catch (SimulatorException e) {
             Activator
                     .getDefault()
@@ -659,6 +640,28 @@ public class ResourceManager {
                             Utility.getSimulatorErrorString(e, null));
             throw e;
         }
+
+        if (!(jSimulatorResource instanceof SimulatorSingleResource)) {
+            return null;
+        }
+
+        Resource resource = new SingleResource();
+        resource.setSimulatorResource(jSimulatorResource);
+
+        // Fetch and locally store the resource name and uri.
+        String uri = jSimulatorResource.getURI();
+        if (null == uri || uri.trim().isEmpty()) {
+            return null;
+        }
+        resource.setResourceURI(uri.trim());
+
+        String name = jSimulatorResource.getName();
+        if (null == name || name.trim().isEmpty()) {
+            return null;
+        }
+
+        resource.setResourceName(name.trim());
+
         return resource;
     }
 
@@ -906,27 +909,26 @@ public class ResourceManager {
     public List<MetaProperty> getMetaProperties(Resource resource) {
         if (null != resource) {
             String propName;
-            String propValue;
-
+            StringBuilder propValue;
             List<MetaProperty> metaPropertyList = new ArrayList<MetaProperty>();
 
             for (int index = 0; index < Constants.META_PROPERTY_COUNT; index++) {
                 propName = Constants.META_PROPERTIES[index];
+                propValue = new StringBuilder();
                 if (propName.equals(Constants.RESOURCE_NAME)) {
-                    propValue = resource.getResourceName();
+                    propValue.append(resource.getResourceName());
                 } else if (propName.equals(Constants.RESOURCE_URI)) {
-                    propValue = resource.getResourceURI();
+                    propValue.append(resource.getResourceURI());
                 } else if (propName.equals(Constants.RESOURCE_TYPE)) {
-                    propValue = resource.getResourceType();
+                    propValue.append(resource.getResourceType());
                 } else if (propName.equals(Constants.INTERFACE_TYPES)) {
                     Set<String> ifTypes = resource.getResourceInterfaces();
                     if (null != ifTypes && !ifTypes.isEmpty()) {
-                        propValue = "";
                         Iterator<String> itr = ifTypes.iterator();
                         while (itr.hasNext()) {
-                            propValue += itr.next();
+                            propValue.append(itr.next());
                             if (itr.hasNext()) {
-                                propValue += ", ";
+                                propValue.append(", ");
                             }
                         }
                     } else {
@@ -936,7 +938,8 @@ public class ResourceManager {
                     propValue = null;
                 }
                 if (null != propValue) {
-                    metaPropertyList.add(new MetaProperty(propName, propValue));
+                    metaPropertyList.add(new MetaProperty(propName, propValue
+                            .toString()));
                 }
             }
             return metaPropertyList;
@@ -1171,11 +1174,17 @@ public class ResourceManager {
         if (null == resource || null == newIfSet || newIfSet.isEmpty()) {
             return false;
         }
+
         SimulatorResource jResource = resource.getSimulatorResource();
         if (null == jResource) {
             return false;
         }
+
         Set<String> curIfSet = resource.getResourceInterfaces();
+        if (null == curIfSet || curIfSet.isEmpty()) {
+            return false;
+        }
+
         Iterator<String> itr = curIfSet.iterator();
         String interfaceType;
         boolean resourceRestartRequired = false;

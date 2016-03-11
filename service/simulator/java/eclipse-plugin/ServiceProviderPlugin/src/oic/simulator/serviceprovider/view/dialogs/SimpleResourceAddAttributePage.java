@@ -280,13 +280,15 @@ public class SimpleResourceAddAttributePage extends WizardPage {
                         .getDefault().getActiveShell(), att, rTypes, attributes);
                 if (dialog.open() != Window.OK) {
                     AttributeHelper newAtt = dialog.getAttClone();
-                    att.setAttributeName(newAtt.getAttributeName());
-                    att.setAttributeType(newAtt.getAttributeType());
-                    att.setAttributeDflValue(newAtt.getAttributeDflValue());
-                    att.setValidValuesType(newAtt.getValidValuesType());
-                    att.setMin(newAtt.getMin());
-                    att.setMax(newAtt.getMax());
-                    att.setAllowedValues(newAtt.getAllowedValues());
+                    if (null != newAtt) {
+                        att.setAttributeName(newAtt.getAttributeName());
+                        att.setAttributeType(newAtt.getAttributeType());
+                        att.setAttributeDflValue(newAtt.getAttributeDflValue());
+                        att.setValidValuesType(newAtt.getValidValuesType());
+                        att.setMin(newAtt.getMin());
+                        att.setMax(newAtt.getMax());
+                        att.setAllowedValues(newAtt.getAllowedValues());
+                    }
                 }
                 attTblViewer.update(att, null);
             }

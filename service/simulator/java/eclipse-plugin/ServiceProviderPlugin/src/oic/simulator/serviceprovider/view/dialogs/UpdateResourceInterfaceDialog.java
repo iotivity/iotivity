@@ -119,8 +119,11 @@ public class UpdateResourceInterfaceDialog extends TrayDialog {
     }
 
     private void initInterfaceList() {
-        for (Map.Entry<String, String> entry : updatedResInterfaces.entrySet()) {
-            ifTypesList.add(entry.getKey());
+        if (null != updatedResInterfaces) {
+            for (Map.Entry<String, String> entry : updatedResInterfaces
+                    .entrySet()) {
+                ifTypesList.add(entry.getKey());
+            }
         }
     }
 

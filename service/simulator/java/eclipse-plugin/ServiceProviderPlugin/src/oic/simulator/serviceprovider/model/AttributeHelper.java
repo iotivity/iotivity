@@ -263,7 +263,7 @@ public class AttributeHelper {
                         dflValue = Double.parseDouble(value);
                         boolean found = false;
                         for (double val = min; val <= max; val += 1.0) {
-                            if (dflValue == val) {
+                            if (Double.compare(dflValue, val) == 0) {
                                 found = true;
                                 break;
                             }
@@ -295,7 +295,7 @@ public class AttributeHelper {
                         String val = itr.next();
                         double v1 = Double.parseDouble(val);
                         double v2 = Double.parseDouble(value);
-                        if (v1 == v2) {
+                        if (Double.compare(v1, v2) == 0) {
                             found = true;
                             break;
                         }

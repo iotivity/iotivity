@@ -84,7 +84,12 @@ class ArrayValueValidator implements
                 return false;
             }
 
-            if (false == elementProperty.asInteger().validate(value))
+            IntegerProperty intProperty = elementProperty.asInteger();
+            if (null == intProperty) {
+                return false;
+            }
+
+            if (false == intProperty.validate(value))
                 return false;
         }
 
@@ -117,7 +122,12 @@ class ArrayValueValidator implements
                 return false;
             }
 
-            if (false == elementProperty.asDouble().validate(value))
+            DoubleProperty dblProperty = elementProperty.asDouble();
+            if (null == dblProperty) {
+                return false;
+            }
+
+            if (false == dblProperty.validate(value))
                 return false;
         }
 
@@ -150,7 +160,12 @@ class ArrayValueValidator implements
                 return false;
             }
 
-            if (false == elementProperty.asBoolean().validate(value))
+            BooleanProperty boolProperty = elementProperty.asBoolean();
+            if (null == boolProperty) {
+                return false;
+            }
+
+            if (false == boolProperty.validate(value))
                 return false;
         }
 
@@ -183,7 +198,12 @@ class ArrayValueValidator implements
                 return false;
             }
 
-            if (false == elementProperty.asString().validate(value))
+            StringProperty stringProperty = elementProperty.asString();
+            if (null == stringProperty) {
+                return false;
+            }
+
+            if (false == stringProperty.validate(value))
                 return false;
         }
 
@@ -211,7 +231,12 @@ class ArrayValueValidator implements
         }
 
         for (SimulatorResourceModel value : values) {
-            if (false == elementProperty.asModel().validate(value))
+            ModelProperty modelProperty = elementProperty.asModel();
+            if (null == modelProperty) {
+                return false;
+            }
+
+            if (false == modelProperty.validate(value))
                 return false;
         }
 

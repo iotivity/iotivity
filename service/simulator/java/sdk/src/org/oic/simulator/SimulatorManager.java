@@ -90,7 +90,7 @@ public class SimulatorManager {
     public static SimulatorResource createResource(SimulatorResource.Type type,
             String name, String uri, String resourceType)
             throws InvalidArgsException, SimulatorException {
-        SimulatorResource resource = null;
+        SimulatorResource resource;
         if (type == SimulatorResource.Type.SINGLE)
             resource = nativeCreateSingleResource(name, uri, resourceType);
         else

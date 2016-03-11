@@ -54,6 +54,7 @@ import org.eclipse.swt.widgets.TreeItem;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -65,6 +66,7 @@ import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.ModelProperty;
 import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
@@ -209,11 +211,19 @@ public class PutRequestDialog extends TitleAreaDialog {
         // for PUT requests.
         SimulatorResourceModel resourceModel = null;
         try {
-            resourceModel = (SimulatorResourceModel) Utility
-                    .cloneAttributeValue(
-                            new AttributeValue(resource.getResourceModelRef()))
-                    .get();
-        } catch (Exception e2) {
+            AttributeValue attValue = Utility
+                    .cloneAttributeValue(new AttributeValue(resource
+                            .getResourceModelRef()));
+            if (null != attValue)
+                resourceModel = (SimulatorResourceModel) attValue.get();
+        } catch (Exception e) {
+            Activator
+                    .getDefault()
+                    .getLogManager()
+                    .log(Level.ERROR.ordinal(),
+                            new Date(),
+                            "There is an error while forming an instance of the attribute value.\n"
+                                    + Utility.getSimulatorErrorString(e, null));
         }
 
         if (null == resourceModel) {
@@ -230,7 +240,15 @@ public class PutRequestDialog extends TitleAreaDialog {
                 updatedRepresentation.updateAttributeProperties(resource
                         .getRequestModels().get(RequestType.POST),
                         resourceModel);
-            } catch (Exception e1) {
+            } catch (Exception e) {
+                Activator
+                        .getDefault()
+                        .getLogManager()
+                        .log(Level.ERROR.ordinal(),
+                                new Date(),
+                                "There is an error while forming an instance of the attribute value.\n"
+                                        + Utility.getSimulatorErrorString(e,
+                                                null));
             }
         }
 
@@ -330,7 +348,7 @@ public class PutRequestDialog extends TitleAreaDialog {
                         }
 
                         if (null != parent
-                                && !(parent instanceof ResourceRepresentation)) {
+                                && parent instanceof AttributeElement) {
                             Object grandParent = ((AttributeElement) parent)
                                     .getParent();
                             if (null == grandParent
@@ -395,6 +413,15 @@ public class PutRequestDialog extends TitleAreaDialog {
                                 .value().get();
 
                         AttributeElement attElement = getSelectedElement();
+                        if (null == attElement) {
+                            MessageDialog
+                                    .openError(Display.getDefault()
+                                            .getActiveShell(),
+                                            "Unable to perform the operation.",
+                                            "Failed to obtain the required data. Operation cannot be performed.");
+                            return;
+                        }
+
                         SimulatorResourceAttribute attribute = attElement
                                 .getSimulatorResourceAttribute();
                         SimulatorResourceModel[] modelArray = (SimulatorResourceModel[]) attribute
@@ -473,6 +500,14 @@ public class PutRequestDialog extends TitleAreaDialog {
                 // Removing the element from the child map.
                 Map<String, AttributeElement> elements = parentElement
                         .getChildren();
+                if (null == elements) {
+                    MessageDialog
+                            .openError(Display.getDefault().getActiveShell(),
+                                    "Operation failed.",
+                                    "There is an error while removing the array items.");
+                    return;
+                }
+
                 List<AttributeElement> attElementList = new ArrayList<AttributeElement>();
                 attElementList.addAll(elements.values());
                 Collections.sort(attElementList, Utility.attributeComparator);
@@ -508,9 +543,9 @@ public class PutRequestDialog extends TitleAreaDialog {
     }
 
     private ResourceRepresentation getRepresentationForOneDimensionTopLevelAttribute() {
-        ResourceRepresentation representation = null;
+        ResourceRepresentation representation;
 
-        AttributeValue value = null;
+        AttributeValue value;
         ModelProperty property = null;
 
         AttributeElement element = getSelectedElement();
@@ -614,10 +649,14 @@ public class PutRequestDialog extends TitleAreaDialog {
         public Object[] getChildren(Object attribute) {
             if (attribute instanceof AttributeElement) {
                 List<AttributeElement> attElementList = new ArrayList<AttributeElement>();
-                attElementList.addAll(((AttributeElement) attribute)
-                        .getChildren().values());
-                Collections.sort(attElementList, Utility.attributeComparator);
-                return attElementList.toArray();
+                Map<String, AttributeElement> children = ((AttributeElement) attribute)
+                        .getChildren();
+                if (null != children) {
+                    attElementList.addAll(children.values());
+                    Collections.sort(attElementList,
+                            Utility.attributeComparator);
+                    return attElementList.toArray();
+                }
             }
 
             return new Object[0];

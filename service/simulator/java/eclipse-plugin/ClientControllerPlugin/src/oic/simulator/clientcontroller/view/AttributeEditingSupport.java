@@ -35,6 +35,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
+import java.util.Date;
 import java.util.List;
 
 import org.oic.simulator.ArrayProperty;
@@ -42,6 +43,7 @@ import org.oic.simulator.AttributeProperty;
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.AttributeValue.TypeInfo;
 import org.oic.simulator.AttributeValue.ValueType;
+import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorResourceAttribute;
 
@@ -287,6 +289,14 @@ public class AttributeEditingSupport {
                     attValue = AttributeValueBuilder.build(newValue,
                             type.mBaseType);
                 } catch (Exception e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "There is an error while creating the new attribute value.\n"
+                                            + Utility.getSimulatorErrorString(
+                                                    e, null));
                 }
                 if (null == attValue) {
                     invalid = true;

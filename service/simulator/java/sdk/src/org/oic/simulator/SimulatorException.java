@@ -52,7 +52,7 @@ public class SimulatorException extends Exception {
      */
     public SimulatorException(SimulatorResult code, String message) {
         this.code = code;
-        this.message = new String(message);
+        this.message = message;
     }
 
     /**

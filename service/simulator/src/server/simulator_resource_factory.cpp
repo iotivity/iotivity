@@ -38,7 +38,18 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::createResource(
 {
     // Parse the RAML file
     std::shared_ptr<RAML::RamlParser> ramlParser = std::make_shared<RAML::RamlParser>(configPath);
+    if (!ramlParser)
+    {
+        OIC_LOG(ERROR, TAG, "RAML parser returned NULL!");
+        return nullptr;
+    }
+
     RAML::RamlPtr raml = ramlParser->getRamlPtr();
+    if (!raml)
+    {
+        OIC_LOG(ERROR, TAG, "RAML pointer is NULL!");
+        return nullptr;
+    }
 
     // Get the first resource model from RAML
     RAML::RamlResourcePtr ramlResource;
@@ -59,7 +70,18 @@ std::vector<std::shared_ptr<SimulatorResource> > SimulatorResourceFactory::creat
 
     // Parse the RAML file
     std::shared_ptr<RAML::RamlParser> ramlParser = std::make_shared<RAML::RamlParser>(configPath);
+    if (!ramlParser)
+    {
+        OIC_LOG(ERROR, TAG, "RAML parser returned NULL!");
+        return resources;
+    }
+
     RAML::RamlPtr raml = ramlParser->getRamlPtr();
+    if (!raml)
+    {
+        OIC_LOG(ERROR, TAG, "RAML pointer is NULL!");
+        return resources;
+    }
 
     // Get the first resource model from RAML
     RAML::RamlResourcePtr ramlResource;

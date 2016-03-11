@@ -54,7 +54,7 @@ public class AttributeValueStringConverter implements
 
     @Override
     public String visitingValue(String value) {
-        return new String(value);
+        return value;
     }
 
     @Override

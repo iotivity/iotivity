@@ -37,6 +37,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 
+import java.util.Map;
+
 import org.oic.simulator.AttributeValue.ValueType;
 import org.oic.simulator.SimulatorResourceAttribute;
 
@@ -173,8 +175,13 @@ public class ModelArrayAddItemDialog extends TitleAreaDialog {
         @Override
         public Object[] getChildren(Object attribute) {
             if (attribute instanceof AttributeElement) {
-                return ((AttributeElement) attribute).getChildren().values()
-                        .toArray();
+                Map<String, AttributeElement> childs = ((AttributeElement) attribute)
+                        .getChildren();
+                if (null == childs) {
+                    return new Object[0];
+                }
+
+                return childs.values().toArray();
             }
 
             return new Object[0];

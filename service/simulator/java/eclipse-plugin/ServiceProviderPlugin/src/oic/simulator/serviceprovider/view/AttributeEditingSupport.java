@@ -69,26 +69,30 @@ public class AttributeEditingSupport {
     private AttributeValueEditor attValueEditor;
     private AutomationEditor     automationEditor;
 
-    private Boolean              valueChangeInProgress;
+    class SyncValueUpdate {
+        private Boolean valueChangeInProgress;
+
+        public boolean isValueChangeInProgress() {
+            return valueChangeInProgress;
+        }
+
+        public void setValueChangeInProgress(boolean value) {
+            valueChangeInProgress = value;
+        }
+    }
+
+    private final SyncValueUpdate syncValueChange = new SyncValueUpdate();
 
     public AttributeValueEditor createAttributeValueEditor(TreeViewer viewer,
             Boolean nativeUpdateValueCall) {
         attValueEditor = new AttributeValueEditor(viewer, nativeUpdateValueCall);
-        valueChangeInProgress = false;
+        syncValueChange.setValueChangeInProgress(false);
         return attValueEditor;
     }
 
     public AutomationEditor createAutomationEditor(TreeViewer viewer) {
         automationEditor = new AutomationEditor(viewer);
         return automationEditor;
-    }
-
-    public synchronized boolean isValueChangeInProgress() {
-        return valueChangeInProgress;
-    }
-
-    public synchronized void setValueChangeInProgress(boolean value) {
-        valueChangeInProgress = value;
     }
 
     class AttributeValueEditor extends EditingSupport {
@@ -132,7 +136,7 @@ public class AttributeEditingSupport {
                 public void partDeactivated(IWorkbenchPartReference partRef) {
                     String viewId = partRef.getId();
                     if (viewId.equals(AttributeView.VIEW_ID)) {
-                        synchronized (valueChangeInProgress) {
+                        synchronized (syncValueChange) {
                             updateUnSavedData();
                         }
                     }
@@ -166,7 +170,7 @@ public class AttributeEditingSupport {
                 Activator.getDefault().getWorkbench()
                         .getActiveWorkbenchWindow().getActivePage()
                         .addPartListener(partListener);
-            } catch (NullPointerException e) {
+            } catch (Exception e) {
                 Activator
                         .getDefault()
                         .getLogManager()
@@ -206,32 +210,34 @@ public class AttributeEditingSupport {
                 return;
             }
 
-            if (!isValueChangeInProgress()) {
+            synchronized (syncValueChange) {
+                if (!syncValueChange.isValueChangeInProgress()) {
 
-                AttributeValue value = att.value();
-                if (value == null)
-                    return;
+                    AttributeValue value = att.value();
+                    if (value == null)
+                        return;
 
-                TypeInfo type = value.typeInfo();
+                    TypeInfo type = value.typeInfo();
 
-                if (type.mBaseType == ValueType.RESOURCEMODEL
-                        || type.mType == ValueType.ARRAY) {
-                    return;
+                    if (type.mBaseType == ValueType.RESOURCEMODEL
+                            || type.mType == ValueType.ARRAY) {
+                        return;
+                    }
+
+                    if (null == value.get()) {
+                        return;
+                    }
+
+                    String oldValue = String.valueOf(Utility
+                            .getAttributeValueAsString(value));
+
+                    attElement.setEditLock(true);
+                    compareAndUpdateAttribute(oldValue, comboBox.getText(),
+                            element, att, type);
+                    attElement.setEditLock(false);
+
+                    viewer.refresh();
                 }
-
-                if (null == value.get()) {
-                    return;
-                }
-
-                String oldValue = String.valueOf(Utility
-                        .getAttributeValueAsString(value));
-
-                attElement.setEditLock(true);
-                compareAndUpdateAttribute(oldValue, comboBox.getText(),
-                        element, att, type);
-                attElement.setEditLock(false);
-
-                viewer.refresh();
             }
         }
 
@@ -282,7 +288,9 @@ public class AttributeEditingSupport {
                 return null;
             }
 
-            setValueChangeInProgress(false);
+            synchronized (syncValueChange) {
+                syncValueChange.setValueChangeInProgress(false);
+            }
 
             CellEditor editor;
             if (type.mType == ValueType.ARRAY) {
@@ -309,6 +317,15 @@ public class AttributeEditingSupport {
                                         .getCurrentResourceInSelection();
 
                                 SimulatorResourceAttribute result = getResultantAttribute();
+                                if (null == result) {
+                                    Activator
+                                            .getDefault()
+                                            .getLogManager()
+                                            .log(Level.ERROR.ordinal(),
+                                                    new Date(),
+                                                    "There is an error while updating the attribute value.\n");
+                                    return;
+                                }
 
                                 boolean updated = resourceManager
                                         .attributeValueUpdated(
@@ -321,6 +338,16 @@ public class AttributeEditingSupport {
                                                         currentAttValue,
                                                         type.mBaseType));
                                     } catch (Exception ex) {
+                                        Activator
+                                                .getDefault()
+                                                .getLogManager()
+                                                .log(Level.ERROR.ordinal(),
+                                                        new Date(),
+                                                        "There is an error while updating the attribute value.\n"
+                                                                + Utility
+                                                                        .getSimulatorErrorString(
+                                                                                ex,
+                                                                                null));
                                     }
                                     MessageDialog
                                             .openInformation(Display
@@ -429,8 +456,8 @@ public class AttributeEditingSupport {
 
         @Override
         protected void setValue(Object element, Object value) {
-            synchronized (valueChangeInProgress) {
-                if (isValueChangeInProgress()) {
+            synchronized (syncValueChange) {
+                if (syncValueChange.isValueChangeInProgress()) {
                     return;
                 }
 
@@ -480,7 +507,9 @@ public class AttributeEditingSupport {
                 return;
             }
 
-            setValueChangeInProgress(true);
+            synchronized (syncValueChange) {
+                syncValueChange.setValueChangeInProgress(true);
+            }
 
             if (!oldValue.equals(newValue)) {
                 boolean invalid = false;
@@ -491,6 +520,14 @@ public class AttributeEditingSupport {
                     attValue = AttributeValueBuilder.build(newValue,
                             type.mBaseType);
                 } catch (Exception e) {
+                    Activator
+                            .getDefault()
+                            .getLogManager()
+                            .log(Level.ERROR.ordinal(),
+                                    new Date(),
+                                    "There is an error while creating the new attribute value.\n"
+                                            + Utility.getSimulatorErrorString(
+                                                    e, null));
                 }
 
                 if (null == attValue) {
@@ -526,10 +563,18 @@ public class AttributeEditingSupport {
                             try {
                                 attValue = AttributeValueBuilder.build(
                                         oldValue, type.mBaseType);
+                                updateAttributeValue(att, attValue);
                             } catch (Exception e) {
+                                Activator
+                                        .getDefault()
+                                        .getLogManager()
+                                        .log(Level.ERROR.ordinal(),
+                                                new Date(),
+                                                "There is an error while updating the attribute value.\n"
+                                                        + Utility
+                                                                .getSimulatorErrorString(
+                                                                        e, null));
                             }
-                            updateAttributeValue(att, attValue);
-
                         } else {
                             ResourceManager resourceManager;
                             resourceManager = Activator.getDefault()
@@ -539,6 +584,14 @@ public class AttributeEditingSupport {
                                     .getCurrentResourceInSelection();
 
                             SimulatorResourceAttribute result = getResultantAttribute();
+                            if (null == result) {
+                                Activator
+                                        .getDefault()
+                                        .getLogManager()
+                                        .log(Level.ERROR.ordinal(), new Date(),
+                                                "There is an error while updating the attribute value.\n");
+                                return;
+                            }
 
                             boolean updated = resourceManager
                                     .attributeValueUpdated(
@@ -548,9 +601,19 @@ public class AttributeEditingSupport {
                                 try {
                                     attValue = AttributeValueBuilder.build(
                                             oldValue, type.mBaseType);
+                                    updateAttributeValue(att, attValue);
                                 } catch (Exception e) {
+                                    Activator
+                                            .getDefault()
+                                            .getLogManager()
+                                            .log(Level.ERROR.ordinal(),
+                                                    new Date(),
+                                                    "There is an error while updating the attribute value.\n"
+                                                            + Utility
+                                                                    .getSimulatorErrorString(
+                                                                            e,
+                                                                            null));
                                 }
-                                updateAttributeValue(att, attValue);
                                 MessageDialog
                                         .openInformation(Display.getDefault()
                                                 .getActiveShell(),
@@ -566,6 +629,10 @@ public class AttributeEditingSupport {
 
         public void updateAttributeValue(SimulatorResourceAttribute att,
                 AttributeValue value) {
+            if (null == att || null == value) {
+                return;
+            }
+
             IStructuredSelection selection = (IStructuredSelection) viewer
                     .getSelection();
             if (null == selection) {
@@ -595,7 +662,15 @@ public class AttributeEditingSupport {
                     try {
                         ((AttributeElement) data).deepSetChildValue(att);
                     } catch (InvalidArgsException e) {
-                        e.printStackTrace();
+                        Activator
+                                .getDefault()
+                                .getLogManager()
+                                .log(Level.ERROR.ordinal(),
+                                        new Date(),
+                                        "There is an error while updating the attribute value.\n"
+                                                + Utility
+                                                        .getSimulatorErrorString(
+                                                                e, null));
                     }
                 }
             }
@@ -619,7 +694,7 @@ public class AttributeEditingSupport {
                 return null;
             }
 
-            SimulatorResourceAttribute result = null;
+            SimulatorResourceAttribute result;
             TreeItem parent = item.getParentItem();
             if (null == parent) {
                 Object data = item.getData();

@@ -108,7 +108,8 @@ public class LogDetailsDialog extends Dialog {
         gd.grabExcessHorizontalSpace = true;
         l5.setLayoutData(gd);
 
-        new Label(container, SWT.NONE); // separator
+        Label seperator = new Label(container, SWT.NONE); // separator
+        seperator.setText("");
 
         Label l6 = new Label(container, SWT.NONE);
         l6.setText("Message details");

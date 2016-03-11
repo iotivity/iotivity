@@ -65,10 +65,8 @@ public class AutomationSettingHelper {
 
     public static List<AutomationSettingHelper> getAutomationSettings(
             AttributeElement attribute) {
-        List<AutomationSettingHelper> settingList = null;
         boolean invalidSetting;
-
-        settingList = new ArrayList<AutomationSettingHelper>();
+        List<AutomationSettingHelper> settingList = new ArrayList<AutomationSettingHelper>();
         for (int count = 0; count < Constants.AUTOMATION_SETTINGS_COUNT; count++) {
             invalidSetting = false;
             AutomationSettingHelper setting = new AutomationSettingHelper();

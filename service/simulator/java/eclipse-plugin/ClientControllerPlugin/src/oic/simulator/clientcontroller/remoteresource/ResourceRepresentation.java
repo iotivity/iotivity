@@ -79,7 +79,8 @@ public class ResourceRepresentation {
 
     public boolean updateAttributeProperties(
             SimulatorRequestModel requestModel,
-            SimulatorResourceModel resourceModelRef) throws Exception {
+            SimulatorResourceModel resourceModelRef)
+            throws NullPointerException {
         if (null == requestModel || null == resourceModelRef) {
             return false;
         }
