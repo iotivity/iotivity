@@ -2471,13 +2471,6 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     char *resourceUri = NULL;
     char *resourceType = NULL;
 
-    // This validation is broken, but doesn't cause harm
-    size_t uriLen = strlen(requestUri );
-    if ((result = verifyUriQueryLength(requestUri , uriLen)) != OC_STACK_OK)
-    {
-        goto exit;
-    }
-
     /*
      * Support original behavior with address on resourceUri argument.
      */
