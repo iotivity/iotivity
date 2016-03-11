@@ -1029,7 +1029,8 @@ static OicSecAcl_t* GetSecDefaultACL()
         OIC_RSRC_DOXM_URI,
         OIC_RSRC_PSTAT_URI
     };
-
+    OicUuid_t ownerId = {.id = {0}};
+    OCStackResult res = OC_STACK_ERROR;
     OicSecAcl_t* newDefaultAcl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
     VERIFY_NON_NULL(TAG, newDefaultAcl, ERROR);
 
@@ -1060,8 +1061,7 @@ static OicSecAcl_t* GetSecDefaultACL()
     newDefaultAcl->recurrences = NULL;
 
     // Device ID is the owner of this default ACL
-    OicUuid_t ownerId = {.id = {0}};
-    OCStackResult res = GetDoxmDeviceID(&ownerId);
+    res = GetDoxmDeviceID(&ownerId);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == res, FATAL);
 
     // Owners -- Mandatory
