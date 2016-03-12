@@ -68,17 +68,15 @@ void error_handler(const CAEndpoint_t *object, const CAErrorInfo_t* errorInfo)
     return;
 }
 
-void adapter_handler(CATransportAdapter_t adapter,
-                     bool enabled)
+void adapter_handler(CATransportAdapter_t /*adapter*/,
+                     bool /*enabled*/)
 {
-
 }
 
-void connection_handler(CATransportAdapter_t adapter,
-                        const char *remote_address,
-                        bool connected)
+void connection_handler(CATransportAdapter_t /*adapter*/,
+                        const char * /*remote_address*/,
+                        bool /*connected*/)
 {
-
 }
 
 static char* addr = NULL;
