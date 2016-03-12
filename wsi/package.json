@@ -26,6 +26,8 @@
         "passport-twitter" : "*",
         "twit": "*",
         "cors" : "*",
-        "iotivity-node":"*"
+        "iotivity-node":"*",
+        "rvi" : "*",
+        "websocket":"*"
     }
 }
