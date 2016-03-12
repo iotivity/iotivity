@@ -28,45 +28,9 @@
                 "uri": "server's uri"
             }            
         };
-        
-        var posttweet = {
-            "cid": "com.twitter.post",
-            "isauthrequired": "true",
-            "description": "Post Message to Twiiter.",
-            "endpoint": "statuses/update",
-            "endpointtype": "twitter",
-            "operation": "POSTTWEET",
-            "params": {
-                "text": "Message to post",
-                "screen_name" : "oicdemo"
-            },
-            "tags": [
-                "share",
-                "post"
-            ]
-        };
                 
         document.getElementById('iotivitycap').value = JSON.stringify(findresource);
 
-        $scope.postTweet = function(){
-            document.getElementById('tweetcap').value = JSON.stringify(posttweet);
-        };
-        $scope.executeTweetCap = function(){
-            var uri = location.origin + "/wsi/cap/com.twitter";
-            console.log("Making a POST HTTP Request " + uri);
-            reqbody = JSON.parse(document.getElementById('tweetcap').value);
-            
-            var res = $http.post(uri, reqbody);
-            res.success(function(data, status, headers, config) {
-                console.log("Success Response = " + data );
-                $scope.scene4updates.push({title: 'Success', content: data});
-            });
-            res.error(function(data, status, headers, config) {
-                console.log("Failed Response = " + data );
-                $scope.scene4updates.push({title: 'Failure', content: data});
-            });
-        };
-        
         $scope.findIoTivityDevices = function() {
             document.getElementById('iotivitycap').value = JSON.stringify(findresource);
         };
