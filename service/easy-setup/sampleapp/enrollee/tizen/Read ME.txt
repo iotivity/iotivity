@@ -46,7 +46,7 @@
 
 5.2 how to get the first 6 libs:
 	1. Go the <user-home>/GBS-ROOT/local/repos/tizen/armv7l/RPMS/
-	2. copy iotivity-0.9.2-0.armv7l.rpm & iotivity-service-0.9.2-0.armv7l.rpm (these will be generated if step-1 is successfull)
+	2. copy iotivity-0.9.2-0.armv7l.rpm & iotivity-service-0.9.2-0.armv7l.rpm (these will be generated if step-1 is successful)
 	3. Extract twice(first rpm and then cpio file) using 7-zip
 	4. this will generate a "usr/lib" folder
 	5. copy required libs to the lib folder to enrollee sample tizen project
