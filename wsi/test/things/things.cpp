@@ -46,39 +46,41 @@ using namespace OC;
 using namespace std;
 namespace PH = std::placeholders;
 
-char *socket_path = "/tmp/.hiddenwsicomm";
 int sendsock;
 struct sockaddr_un sname;
 pthread_t thread_id;
-
 int gObservation = 0;
-
 bool isListOfObservers = false;
 Evas_Object *images[1][1];
 
 typedef enum {
-    THREE,
-    TEN,
-    FIFTEEN,
-    TWENTY,
-    TWENTYFIVE,
-    FORTY,
-} thermostatstate;
+    BULB,
+    THERMOSTAT,
+    HVAC,
+    CARLOC
+} things_e;
 
-const char *thermostatfile[] = {
-    "thermostat3.png",
-    "thermostat10.png",
-    "thermostat15.png",
-    "thermostat20.png",
-    "thermostat25.png",
-    "thermostat40.png"
+int chosenThing = BULB;
+
+typedef struct thingbox
+{
+	things_e t;
+	int state;
+	char name[20];
 };
 
-void change_bg_image(int power) {
+thingbox things[] = {
+		{BULB, 		0, "bulb"},
+		{THERMOSTAT,0, "thermostat"},
+		{HVAC, 		0, "hvac"},
+		{CARLOC,	0, "carloc"}
+};
+
+void change_bg_image(int state) {
     char buf[PATH_MAX];
-    power = power % 6;
-    sprintf(buf, "images/%s", thermostatfile[power]);
-    printf("Changing thermostat state of power %d = %s\n", power, thermostatfile[power]);
+    things[chosenThing].state = state % 6;
+    sprintf(buf, "images/%s/%d.png", things[chosenThing].name, things[chosenThing].state);
+    printf("Changing state to %d\n", state);
     elm_photo_file_set(images[0][0], buf);
 }
 
@@ -94,47 +96,34 @@ void sender(int power) {
     }
 }
 
-class LightResource {
+class TestResource {
     public:
         /// Access this property from a TB client
         std::string m_name;
         bool m_state;
         int m_power;
-        std::string m_lightUri;
+        std::string m_thingURI;
         OCResourceHandle m_resourceHandle;
-        OCRepresentation m_lightRep;
+        OCRepresentation m_thingRep;
         ObservationIds m_interestedObservers;
 
     public:
         /// Constructor
 
-        LightResource(PlatformConfig& /*cfg*/)
-            : m_name("OIC Light"), m_state(0), m_power(0), m_lightUri("/a/wsilight") {
-                // Initialize representation
-                m_lightRep.setUri(m_lightUri);
-
-                m_lightRep.setValue("state", m_state);
-                m_lightRep.setValue("power", m_power);
-                m_lightRep.setValue("name", m_name);
+        TestResource(PlatformConfig& /*cfg*/)
+            : m_name("OIC Light"), m_state(0), m_power(0), m_thingURI("/a/wsilight") {
+                m_thingRep.setUri(m_thingURI);
+                m_thingRep.setValue("state", m_state);
+                m_thingRep.setValue("power", m_power);
+                m_thingRep.setValue("name", m_name);
             }
 
-        /* Note that this does not need to be a member function: for classes you do not have
-           access to, you can accomplish this with a free function: */
-
-        /// This function internally calls registerResource API.
-
         void createResource() {
-            std::string resourceURI = m_lightUri; // URI of the resource
-            // resource type name. In this case, it is light
+            std::string resourceURI = m_thingURI; // URI of the resource
             std::string resourceTypeName = "core.light";
             std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
-
-            // OCResourceProperty is defined ocstack.h
             uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
-
-            EntityHandler cb = std::bind(&LightResource::entityHandler, this, PH::_1);
-
-            // This will internally create and register the resource.
+            EntityHandler cb = std::bind(&TestResource::entityHandler, this, PH::_1);
             OCStackResult result = OCPlatform::registerResource(
                     m_resourceHandle, resourceURI, resourceTypeName,
                     resourceInterface, cb, resourceProperty);
@@ -147,11 +136,6 @@ class LightResource {
         OCResourceHandle getHandle() {
             return m_resourceHandle;
         }
-
-        // Post representation.
-        // Post can create new resource or simply act like put.
-        // Gets values from the representation and
-        // updates the internal state
 
         OCRepresentation post(OCRepresentation& rep) {
             std::cout << "Post incoked......................................." << std::endl;
@@ -203,17 +187,12 @@ class LightResource {
             return get();
         }
 
-
-        // gets the updated representation.
-        // Updates the representation with latest internal state before
-        // sending out.
-
         OCRepresentation get() {
             std::cout << "OCRepresentation get." << m_power << " and " <<m_state <<std::endl;
-            m_lightRep.setValue("state", m_state);
-            m_lightRep.setValue("power", m_power);
+            m_thingRep.setValue("state", m_state);
+            m_thingRep.setValue("power", m_power);
             //change_bg_image(m_power);
-            return m_lightRep;
+            return m_thingRep;
         }
 
         void addType(const std::string& type) const {
@@ -257,9 +236,6 @@ class LightResource {
 
             return OCPlatform::sendResponse(pResponse);
         }
-
-        // This is just a sample implementation of entity handler.
-        // Entity handler can be implemented in several ways by the manufacturer
 
         OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request) {
             std::cout << "\tIn Server CPP entity handler:\n";
@@ -355,7 +331,7 @@ static Eina_Bool _fd_handler_cb(void *data, Ecore_Fd_Handler *handler)
     return ECORE_CALLBACK_RENEW;
 }
 
-void launch_thermostat() {
+void thing_ui() {
     Evas_Object *win, *bg;
     Evas_Object *box;
     char buf[PATH_MAX];
@@ -384,7 +360,7 @@ void launch_thermostat() {
     for (int j = 0; j < 1; j++) {
         for (int i = 0; i < 1; i++) {
             ph = elm_photo_add(win);
-            snprintf(buf, sizeof (buf), "images/%s", thermostatfile[n]);
+            sprintf(buf, "images/%s/%d.png", things[chosenThing].name, things[chosenThing].state);
             n++;
             if (n >= 5) n = 0;
             images[j][i] = ph;
@@ -409,6 +385,10 @@ void launch_thermostat() {
     struct sockaddr_un name;
     sock = socket(AF_UNIX, SOCK_DGRAM, 0);
     name.sun_family = AF_UNIX;
+
+    char socket_path[100];
+    sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name);
+
     strcpy(name.sun_path, socket_path);
     if (bind(sock, (struct sockaddr *) &name, sizeof(struct sockaddr_un))) {
         printf("binding name to datagram socket\n");
@@ -416,12 +396,12 @@ void launch_thermostat() {
         printf("client socket %d-->%s\n", sock, socket_path);
         ecore_main_fd_handler_add(sock,ECORE_FD_READ | ECORE_FD_ERROR,_fd_handler_cb,NULL, NULL, NULL);
     }
-    printf("thermostat launched");
+    printf("Bulb launched");
     elm_run();
     return NULL;
 }
 
-void *launch_oic_server(void *ptr)
+void *thing_handler(void *ptr)
 {
     OCPersistentStorage ps{client_open, fread, fwrite, fclose, unlink};
     PlatformConfig cfg{
@@ -435,11 +415,11 @@ void *launch_oic_server(void *ptr)
     OCPlatform::Configure(cfg);
     try
     {
-        LightResource myLight(cfg);
-        myLight.createResource();
+        TestResource myThing(cfg);
+        myThing.createResource();
         std::cout << "Created resource." << std::endl;
-        myLight.addType(std::string("core.brightlight"));
-        myLight.addInterface(std::string(LINK_INTERFACE));
+        myThing.addType(std::string("core.brightlight"));
+        myThing.addInterface(std::string(LINK_INTERFACE));
         std::cout << "Added Interface and Type" << std::endl;
 
         sendsock = socket(AF_UNIX, SOCK_DGRAM, 0);
@@ -449,6 +429,8 @@ void *launch_oic_server(void *ptr)
             printf("Sender Socket Ready - %d\n", sendsock);
         }
         sname.sun_family = AF_UNIX;
+        char socket_path[100];
+        sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name);
         strcpy(sname.sun_path, socket_path);
         printf("SNAME initialized to %s\n", sname.sun_path);
         std::mutex blocker;
@@ -467,15 +449,24 @@ void *launch_oic_server(void *ptr)
 elm_main(int argc, char **argv)
 {
     //create the UI
-    if(pthread_create(&thread_id, NULL, launch_oic_server, NULL)) {
+    if(pthread_create(&thread_id, NULL, thing_handler, NULL)) {
         fprintf(stderr, "Error creating thread\n");
     }else{
-        printf("Thread Created");
+        printf("Thing Handler Created");
     }
-    launch_thermostat();
+
+    chosenThing = atoi(argv[1]);
+    thing_ui();
+    printf("Thing UI Created");
+
+
+
     elm_run();
 
     pthread_join(thread_id, NULL);
+
+    char socket_path[100];
+    sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name);
     unlink(socket_path);
     elm_shutdown();
     return 0;
