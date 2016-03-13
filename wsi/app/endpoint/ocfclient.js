@@ -345,19 +345,19 @@ observeresource = function(cap,res)
 module.exports = {
     init: function () {
         var template = {
-            "handler": "iotivity",
-            "sid": "org.iotivity",
+            "handler": "ocfclient",
+            "sid": "org.openinterconnect",
             "capability": [
                 {
-                    "cid": "org.iotivity.findresource",
-                    "endpointtype": "IOTIVITY",
+                    "cid": "org.openinterconnect.findresource",
+                    "endpointtype": "OCFCLIENT",
                     "operation": "GET",
                     "resourceType" : "resourceType or all"
                 },
                 {
-                    "cid": "org.iotivity.getresource",
+                    "cid": "org.openinterconnect.getresource",
                     "endpoint": "oic://{{address}}:{{port}}{{uri}}",
-                    "endpointtype": "IOTIVITY",
+                    "endpointtype": "OCFCLIENT",
                     "operation": "GET",
                     "params":
                     {
@@ -367,9 +367,9 @@ module.exports = {
                     }
                 },
                 {
-                    "cid": "org.iotivity.putresource",
+                    "cid": "org.openinterconnect.putresource",
                     "endpoint": "oic://{{address}}:{{port}}{{uri}}",
-                    "endpointtype": "IOTIVITY",
+                    "endpointtype": "OCFCLIENT",
                     "operation": "PUT",
                     "params":
                     {
@@ -386,9 +386,9 @@ module.exports = {
                     ]
                 },
                 {
-                  "cid": "org.iotivity.observeresource",
+                  "cid": "org.openinterconnect.observeresource",
                   "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
-                  "endpointtype": "IOTIVITY",
+                  "endpointtype": "OCFCLIENT",
                   "operation": "GET",
                   "resourceID" : "",
                   "chain" : ""
@@ -401,16 +401,16 @@ module.exports = {
         intervalId = setInterval(function () {
             iotivity.OCProcess();
         }, 1000);
-        if(cap.cid == "org.iotivity.findresource"){
+        if(cap.cid == "org.openinterconnect.findresource"){
             findresource(cap,res);
         }
-        else if(cap.cid == "org.iotivity.getresource"){
+        else if(cap.cid == "org.openinterconnect.getresource"){
             getresource(cap,res);
         }
-        else if(cap.cid == "org.iotivity.putresource"){
+        else if(cap.cid == "org.openinterconnect.putresource"){
             putresource(cap,res);
         }
-        else if(cap.cid == "org.iotivity.observeresource"){
+        else if(cap.cid == "org.openinterconnect.observeresource"){
             observeresource(cap,res);
         }
     }

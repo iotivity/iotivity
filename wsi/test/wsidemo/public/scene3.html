@@ -179,12 +179,9 @@
 
                         <!-- Main jumbotron for a primary marketing message or call to action -->
                         <div class="jumbotron">
-                            <h1>Scenario 3</h1>
+                            <h1><img vertical-align="top" height=100px width=100px src="assets/images/home.png"/></h1>
                             <p>
-                            Read weather from &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=100px width=100px src="assets/images/owm.png"/> 
-                            and change color of &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=70px width=120px src="assets/images/iotivity.png"/>
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=100px width=100px src="assets/images/on.png"/>
-                            to &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img vertical-align="top" height=70px width=100px src="assets/images/violet.png"/>
+                            Register SmartHome Service and perform SmartHome Actions
                             </p>
                         </div>
                     <!-- /.row -->
@@ -192,29 +189,22 @@
                         <div class="col-lg-6">
                             <form role="form">
                                 <div class="form-group">
-                                    <button type="button" class="btn btn-primary">1. Initialize OpenWeatherMap</button>
-                                    <button type="button" class="btn btn-success">2. Read Current Weather</button>
-                                    <button type="button" class="btn btn-info">3. Change Bulb Color</button>
+                                    <button ng-click="findRVIServices()" type="button" class="btn btn-primary">Get All Services</button>                                
+                                    <button ng-click="changeHVAC()" type="button" class="btn btn-success">Change HVAC</button>
                                 </div>
-
-
+                                <div class="form-group">
+                                    <label>RVI Capability</label>
+                                    <textarea id="rvicap" class="form-control" rows="5"></textarea>
+                                    <button ng-click="executeRVICap()" type="button" class="btn btn-primary">Submit</button>
+                                </div>                                
                             </form>
 
                         </div>
                         <div class="col-lg-6">
-                            <h1>Alerts</h1>
-                            <div class="alert alert-success">
-                                <strong>Well done!</strong> You successfully read this important alert message.
-                            </div>
-                            <div class="alert alert-info">
-                                <strong>Heads up!</strong> This alert needs your attention, but it's not super important.
-                            </div>
-                            <div class="alert alert-warning">
-                                <strong>Warning!</strong> Best check yo self, you're not looking too good.
-                            </div>
-                            <div class="alert alert-danger">
-                                <strong>Oh snap!</strong> Change a few things up and try submitting again.
-                            </div>
+                            <div ng-class="scene3update.title == 'Success' ? 'alert alert-success' : 'alert alert-danger'" ng-repeat="scene3update in scene3updates">
+                                <strong>{{scene3update.title}}</strong> 
+                                <p>{{scene3update.content}}</p>
+                            </div>                            
                         </div>
                     </div>
                 </div>

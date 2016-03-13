@@ -9,16 +9,16 @@
         ]
         
         var findresource = {
-            "cid": "org.iotivity.findresource",                    
-            "endpointtype": "IOTIVITY",
+            "cid": "org.openinterconnect.findresource",                    
+            "endpointtype": "OCFCLIENT",
             "operation": "GET",
             "resourceType" : "all"
         };
                 
         var getresource = {
-            "cid": "org.iotivity.getresource",
+            "cid": "org.openinterconnect.getresource",
             "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
-            "endpointtype": "IOTIVITY",
+            "endpointtype": "OCFCLIENT",
             "operation": "GET",
             "resourceID" : "",
             "params": 
@@ -30,9 +30,9 @@
         };
         
         var putresource = {
-            "cid": "org.iotivity.putresource",
+            "cid": "org.openinterconnect.putresource",
             "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
-            "endpointtype": "IOTIVITY",
+            "endpointtype": "OCFCLIENT",
             "operation": "POST",
             "resourceID" : "",
             "params": {
@@ -96,7 +96,7 @@
         };
 
         $scope.executeIoTivityCap = function() {
-            var uri = "http://localhost:8080/wsi/cap/org.iotivity";
+            var uri = "http://localhost:8080/wsi/cap/org.openinterconnect";
             console.log("Making a POST HTTP Request " + uri);
             reqbody = JSON.parse(document.getElementById('iotivitycap').value);
             
