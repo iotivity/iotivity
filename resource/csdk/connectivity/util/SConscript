@@ -24,7 +24,7 @@ env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
 # Source files to build common for platforms
 ######################################################################
 
-env.AppendUnique(CA_SRC = [os.path.join(src_dir,'cautilinterface.c')])
+env.AppendUnique(CA_SRC = [os.path.join('./../util/src','cautilinterface.c')])
 
 if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
     if ca_os in ['linux', 'tizen', 'arduino']:

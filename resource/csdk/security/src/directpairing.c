@@ -21,10 +21,13 @@
 #define _POSIX_C_SOURCE 200112L
 #endif
 
+#ifndef WITH_ARDUINO
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#endif
+#include <string.h>
 
 #include "ocstack.h"
 #include "oic_malloc.h"
@@ -68,56 +71,6 @@ typedef struct DPairData
 static OCDirectPairingDev_t *g_dp_paired = NULL;
 static OCDirectPairingDev_t *g_dp_discover = NULL;
 static DPairData_t *g_dp_proceed_ctx = NULL;
-
-
-const char *getResult(OCStackResult result) {
-    switch (result) {
-    case OC_STACK_OK:
-        return "OC_STACK_OK";
-    case OC_STACK_RESOURCE_CREATED:
-        return "OC_STACK_RESOURCE_CREATED";
-    case OC_STACK_RESOURCE_DELETED:
-        return "OC_STACK_RESOURCE_DELETED";
-    case OC_STACK_INVALID_URI:
-        return "OC_STACK_INVALID_URI";
-    case OC_STACK_INVALID_QUERY:
-        return "OC_STACK_INVALID_QUERY";
-    case OC_STACK_INVALID_IP:
-        return "OC_STACK_INVALID_IP";
-    case OC_STACK_INVALID_PORT:
-        return "OC_STACK_INVALID_PORT";
-    case OC_STACK_INVALID_CALLBACK:
-        return "OC_STACK_INVALID_CALLBACK";
-    case OC_STACK_INVALID_METHOD:
-        return "OC_STACK_INVALID_METHOD";
-    case OC_STACK_NO_MEMORY:
-        return "OC_STACK_NO_MEMORY";
-    case OC_STACK_COMM_ERROR:
-        return "OC_STACK_COMM_ERROR";
-    case OC_STACK_INVALID_PARAM:
-        return "OC_STACK_INVALID_PARAM";
-    case OC_STACK_NOTIMPL:
-        return "OC_STACK_NOTIMPL";
-    case OC_STACK_NO_RESOURCE:
-        return "OC_STACK_NO_RESOURCE";
-    case OC_STACK_RESOURCE_ERROR:
-        return "OC_STACK_RESOURCE_ERROR";
-    case OC_STACK_SLOW_RESOURCE:
-        return "OC_STACK_SLOW_RESOURCE";
-    case OC_STACK_NO_OBSERVERS:
-        return "OC_STACK_NO_OBSERVERS";
-    case OC_STACK_UNAUTHORIZED_REQ:
-        return "OC_STACK_UNAUTHORIZED_REQ";
-    #ifdef WITH_PRESENCE
-    case OC_STACK_PRESENCE_STOPPED:
-        return "OC_STACK_PRESENCE_STOPPED";
-    #endif
-    case OC_STACK_ERROR:
-        return "OC_STACK_ERROR";
-    default:
-        return "UNKNOWN";
-    }
-}
 
 /**
  * Function to search node in linked list that matches given IP and port.
@@ -319,12 +272,14 @@ bool DPGenerateQuery(bool isSecure,
             }
 
             break;
+#ifndef WITH_ARDUINO
         // TODO: We need to verify tinyDTLS in below cases
         case CT_ADAPTER_GATT_BTLE:
         case CT_ADAPTER_RFCOMM_BTEDR:
             OIC_LOG(ERROR, TAG, "Not supported connectivity adapter.");
             return false;
             break;
+#endif
         default:
             OIC_LOG(ERROR, TAG, "Unknown connectivity adapter.");
             return false;
@@ -872,7 +827,7 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
     (void)UNUSED;
     if (clientResponse)
     {
-        OIC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
+        OIC_LOG_V(INFO, TAG, "StackResult: %s", clientResponse->result);
         OIC_LOG_V(INFO, TAG,
                 "Device =============> Discovered @ %s:%d",
                 clientResponse->devAddr.addr,
@@ -918,7 +873,7 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
             if(wr_len <= 0 || (size_t)wr_len >= sizeof(rsrc_uri))
             {
                 OIC_LOG(ERROR, TAG, "rsrc_uri_string_print failed");
-                return OC_STACK_ERROR;
+                return OC_STACK_KEEP_TRANSACTION;
             }
 
             //Try to the unicast discovery to getting secure port
@@ -960,6 +915,7 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
     return OC_STACK_DELETE_TRANSACTION;
 }
 
+#ifndef WITH_ARDUINO
 /**
  * Discover direct-pairing devices in the same IP subnet. .
  *
@@ -1049,4 +1005,4 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
     OIC_LOG(DEBUG, TAG, "OUT DPDeviceDiscovery");
     return ret;
 }
-
+#endif
