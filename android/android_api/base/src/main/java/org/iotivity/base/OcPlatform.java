@@ -40,6 +40,7 @@ public final class OcPlatform {
         System.loadLibrary("octbstack");
         System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc");
+        System.loadLibrary("ocprovision");
         System.loadLibrary("ocstack-jni");
     }
 
