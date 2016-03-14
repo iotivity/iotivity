@@ -55,7 +55,7 @@ var rvibody = [
 			}
 		}
 	},
-	{//2
+	{//3
 		"jsonrpc":"2.0",
 		"id":"1",
 		"method": "message",
@@ -65,7 +65,7 @@ var rvibody = [
 			'callback_service':'genivi.org/oic_gw/callback/report_hvac'
 		}
 	},
-	{//3
+	{//4
 		"jsonrpc":"2.0",
 		"id":"1",
 		"method": "message",
@@ -75,7 +75,7 @@ var rvibody = [
 			'callback_service':'genivi.org/oic_gw/callback/report_carlocation'
 		}
 	},
-	{//3
+	{//5
 		"jsonrpc":"2.0",
 		"id":"1",
 		"method": "register_service",
@@ -102,6 +102,11 @@ var rvibody = [
         
         $scope.getAllServices = function(){
         	rvimsg[1].params = rvibody[0];
+        	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
+        }
+
+        $scope.registerService = function(){
+        	rvimsg[1].params = rvibody[5];
         	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
         }
         
