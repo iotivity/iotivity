@@ -14,6 +14,7 @@ import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapMethod;
 import org.iotivity.cloud.ciserver.Constants;
+import org.iotivity.cloud.ciserver.protocols.CoapAuthHandler;
 import org.iotivity.cloud.ciserver.protocols.CoapRelayHandler;
 import org.iotivity.cloud.ciserver.resources.KeepAliveResource;
 import org.iotivity.cloud.util.Cbor;
@@ -72,6 +73,8 @@ public class TestCloudInterface {
 
         CoapClientHandler coapHandler = new CoapClientHandler();
         coapClient.addHandler(coapHandler);
+
+        coapClient.addHandler(new CoapAuthHandler("127.0.0.1", 5683));
 
         coapClient.startClient(new InetSocketAddress("127.0.0.1", 5683));
 
@@ -199,6 +202,24 @@ public class TestCloudInterface {
     }
 
     @Test
+    public void TestAuthURI() throws Exception {
+
+        CoapRequest request = new CoapRequest(CoapMethod.GET);
+        request.setUriPath(Constants.AUTH_URI);
+        request.setUriQuery("rt=oic.wk.rdpub");
+        request.setToken("1234".getBytes(StandardCharsets.UTF_8));
+        makePayload(request);
+
+        startServer();
+        ChannelHandlerContext ctx = startClient();
+
+        coapClient.sendRequest(request);
+
+        coapClient.stopClient();
+        coapServer.stopServer();
+    }
+
+    @Test
     public void TestRequestGetMessageToDeviceCIOwner() throws Exception {
 
         CoapRequest request = new CoapRequest(CoapMethod.GET);
@@ -251,5 +272,4 @@ public class TestCloudInterface {
         coapServer.stopServer();
         coapClient.stopClient();
     }
-
 }

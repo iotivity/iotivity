@@ -31,18 +31,12 @@ import org.iotivity.cloud.ciserver.protocols.CoapRelayHandler;
 import org.iotivity.cloud.ciserver.resources.KeepAliveResource;
 import org.iotivity.cloud.util.CoapLogHandler;
 import org.iotivity.cloud.util.Logger;
-import org.iotivity.cloud.util.Net;
 
 public class CloudInterfaceServer {
 
     public static void main(String[] args) throws Exception {
 
         System.out.println("-----CI SERVER-------");
-        String hostAddress = Net.getMyIpAddress();
-        if (hostAddress.equals("") == true) {
-            Logger.e("cannot find host address.");
-            return;
-        }
 
         if (args.length != 5) {
             Logger.e(
@@ -66,7 +60,6 @@ public class CloudInterfaceServer {
 
         coapServer.addHandler(new CoapLogHandler());
 
-        // Comment the following one line to make CI server run alone
         coapServer.addHandler(new CoapRelayHandler(sessionManager, args[1],
                 Integer.parseInt(args[2]), args[3], Integer.parseInt(args[4])));
 

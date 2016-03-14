@@ -19,9 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 ///
-/// This sample provides steps to define an interface for a resource
-/// (properties and methods) and host this resource on the server.
-/// Additionally, it'll have a client example to discover it as well.
+/// This sample provides the way to create cloud sample
 ///
 #include <memory>
 #include <iostream>
@@ -30,6 +28,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <pthread.h>
 
 #include "ocstack.h"
 #include "ocpayload.h"
@@ -48,11 +47,10 @@ typedef struct LIGHTRESOURCE
     bool state;
     int power;
 } LightResource;
-static LightResource Light;
 static LightResource gLightInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 
 
-OCRepPayload *getPayload(const char *uri, int64_t power, bool state)
+OCRepPayload *responsePayload(int64_t power, bool state)
 {
     OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
@@ -61,40 +59,50 @@ OCRepPayload *getPayload(const char *uri, int64_t power, bool state)
         return nullptr;
     }
 
-    OCRepPayloadSetUri(payload, uri);
     OCRepPayloadSetPropBool(payload, "state", state);
     OCRepPayloadSetPropInt(payload, "power", power);
 
     return payload;
 }
 
-
 OCRepPayload *constructResponse(OCEntityHandlerRequest *ehRequest)
 {
-    char *resourceUri = NULL;
-
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
         std::cout << "Incoming payload not a representation" << std::endl;
         return nullptr;
     }
 
-    LightResource *currLightResource = &Light;
+    LightResource *currLightResource = NULL;
 
     if (ehRequest->resource == gLightInstance[0].handle)
     {
         currLightResource = &gLightInstance[0];
-        resourceUri = (char *) "/a/light/0";
     }
     else if (ehRequest->resource == gLightInstance[1].handle)
     {
         currLightResource = &gLightInstance[1];
-        resourceUri = (char *) "/a/light/1";
     }
 
-    std::cout << "Resource URI " << resourceUri << std::endl;
+    if (OC_REST_PUT == ehRequest->method)
+    {
+        // Get pointer to query
+        int64_t pow;
+        OCRepPayload *input = reinterpret_cast<OCRepPayload *>(ehRequest->payload);
 
-    return getPayload(resourceUri, currLightResource->power, currLightResource->state);
+        if (OCRepPayloadGetPropInt(input, "power", &pow))
+        {
+            currLightResource->power = pow;
+        }
+
+        bool state;
+        if (OCRepPayloadGetPropBool(input, "state", &state))
+        {
+            currLightResource->state = state;
+        }
+    }
+
+    return responsePayload(currLightResource->power, currLightResource->state);
 }
 
 OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
@@ -110,6 +118,105 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest,
     *payload = getResp;
 
     return OC_EH_OK;
+}
+
+OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest,
+                                        OCRepPayload **payload)
+{
+    OCEntityHandlerResult ehResult;
+    OCRepPayload *putResp = constructResponse(ehRequest);
+
+    if (!putResp)
+    {
+        std::cout << "Failed to construct Json response" << std::endl;
+        return OC_EH_ERROR;
+    }
+
+    *payload = putResp;
+    ehResult = OC_EH_OK;
+
+    return ehResult;
+}
+
+#define SAMPLE_MAX_NUM_OBSERVATIONS  2
+static bool observeThreadStarted = false;
+int gLightUnderObservation = 0;
+pthread_t threadId_observe;
+typedef struct
+{
+    OCObservationId observationId;
+    bool valid;
+    OCResourceHandle resourceHandle;
+} Observers;
+Observers interestedObservers[SAMPLE_MAX_NUM_OBSERVATIONS];
+
+void *ChangeLightRepresentation(void *param)
+{
+    (void)param;
+    OCStackResult result = OC_STACK_ERROR;
+
+    while (true)
+    {
+        sleep(3);
+        gLightInstance[0].power += 1;
+        gLightInstance[1].power += 3;
+
+        if (gLightUnderObservation)
+        {
+            std::cout << " =====> Notifying stack of new power level " << gLightInstance[0].power << std::endl;
+            std::cout << " =====> Notifying stack of new power level " << gLightInstance[1].power << std::endl;
+            // Notifying all observers
+            result = OCNotifyAllObservers(gLightInstance[0].handle, OC_NA_QOS);
+            result = OCNotifyAllObservers(gLightInstance[1].handle, OC_NA_QOS);
+
+            std::cout << " =====> Notifying result " << result << std::endl;
+        }
+    }
+    return NULL;
+}
+
+void ProcessObserveRegister(OCEntityHandlerRequest *ehRequest)
+{
+    std::cout << "Received observation registration request with observation Id " <<
+              ehRequest->obsInfo.obsId << std::endl;
+
+    if (!observeThreadStarted)
+    {
+        pthread_create(&threadId_observe, NULL, ChangeLightRepresentation, (void *)NULL);
+        observeThreadStarted = 1;
+    }
+    for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
+    {
+        if (interestedObservers[i].valid == false)
+        {
+            interestedObservers[i].observationId = ehRequest->obsInfo.obsId;
+            interestedObservers[i].valid = true;
+            gLightUnderObservation = 1;
+            break;
+        }
+    }
+}
+
+void ProcessObserveDeregister(OCEntityHandlerRequest *ehRequest)
+{
+    bool clientStillObserving = false;
+
+    std::cout << "Received observation deregistration request for observation Id " <<
+              ehRequest->obsInfo.obsId << std::endl;
+    for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
+    {
+        if (interestedObservers[i].observationId == ehRequest->obsInfo.obsId)
+        {
+            interestedObservers[i].valid = false;
+        }
+        if (interestedObservers[i].valid == true)
+        {
+            // Even if there is one single client observing we continue notifying entity handler
+            clientStillObserving = true;
+        }
+    }
+    if (clientStillObserving == false)
+        gLightUnderObservation = 0;
 }
 
 OCEntityHandlerResult
@@ -142,6 +249,11 @@ OCEntityHandlerCb(OCEntityHandlerFlag flag,
             std::cout << "Received OC_REST_GET from client" << std::endl;
             ehResult = ProcessGetRequest(entityHandlerRequest, &payload);
         }
+        else if (OC_REST_PUT == entityHandlerRequest->method)
+        {
+            std::cout << "Received OC_REST_PUT from client" << std::endl;
+            ehResult = ProcessPutRequest(entityHandlerRequest, &payload);
+        }
         else
         {
             std::cout << "Received unsupported method %d from client " << entityHandlerRequest->method <<
@@ -165,6 +277,21 @@ OCEntityHandlerCb(OCEntityHandlerFlag flag,
                 std::cout << "Error sending response" << std::endl;
                 ehResult = OC_EH_ERROR;
             }
+        }
+    }
+
+    if (flag & OC_OBSERVE_FLAG)
+    {
+        std::cout << "Flag includes OC_OBSERVE_FLAG" << std::endl;
+        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
+        {
+            std::cout << "Received OC_OBSERVE_REGISTER from client" << std::endl;
+            ProcessObserveRegister(entityHandlerRequest);
+        }
+        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
+        {
+            std::cout << "Received OC_OBSERVE_DEREGISTER from client" << std::endl;
+            ProcessObserveDeregister(entityHandlerRequest);
         }
     }
 
@@ -238,6 +365,183 @@ void PublishResources(std::string host, std::string additionalQuery)
 ////////////////////////////////////////Client Sample
 std::string g_host = "coap+tcp://";
 
+void PrintRepresentation(OCRepPayloadValue *val)
+{
+    while (val)
+    {
+        std::cout << "Key: " << val->name << " Value: ";
+        switch (val->type)
+        {
+            case OCREP_PROP_NULL:
+                std::cout << "NULL" << std::endl;
+                break;
+
+            case OCREP_PROP_INT:
+                std::cout << val->i << std::endl;
+                break;
+
+            case OCREP_PROP_DOUBLE:
+                std::cout << val->d << std::endl;
+                break;
+
+            case OCREP_PROP_BOOL:
+                std::cout << val->b << std::endl;
+                break;
+
+            case OCREP_PROP_STRING:
+                std::cout << val->str << std::endl;
+                break;
+
+            case OCREP_PROP_BYTE_STRING:
+                std::cout << "[ByteString]" << std::endl;
+                break;
+
+            case OCREP_PROP_OBJECT:
+                std::cout << "[Object]" << std::endl;
+                break;
+
+            case OCREP_PROP_ARRAY:
+                std::cout << "[Array]" << std::endl;
+                break;
+        }
+
+        val = val->next;
+    }
+}
+
+
+int gNumObserveNotifies = 0;
+
+OCStackApplicationResult obsReqCB(void *ctx, OCDoHandle handle,
+                                  OCClientResponse *clientResponse)
+{
+    std::cout << "Observe response received from " << clientResponse->resourceUri << std::endl;
+
+    if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
+    {
+        std::cout << "Invalid Put callback received" << std::endl;
+    }
+
+    if (clientResponse)
+    {
+        if (clientResponse->payload == NULL)
+        {
+            std::cout << "No payload received" << std::endl;
+        }
+
+        OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
+
+        PrintRepresentation(val);
+
+        gNumObserveNotifies++;
+        if (gNumObserveNotifies > 5) //large number to test observing in DELETE case.
+        {
+            std::cout << "Cancelling with OC_HIGH_QOS" << std::endl;
+            if (OCCancel(handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+            {
+                std::cout << "Observe cancel error" << std::endl;
+            }
+        }
+        if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
+        {
+            std::cout << "This also serves as a registration confirmation" << std::endl;
+        }
+        else if (clientResponse->sequenceNumber == OC_OBSERVE_DEREGISTER)
+        {
+            std::cout << "This also serves as a deregistration confirmation" << std::endl;
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+        else if (clientResponse->sequenceNumber == OC_OBSERVE_NO_OPTION)
+        {
+            std::cout << "This also tells you that registration/deregistration failed" << std::endl;
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+    }
+    else
+    {
+        std::cout << "obsReqCB received Null clientResponse" << std::endl;
+    }
+
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+void ObserveResource(std::string uri, std::string additionalQuery)
+{
+    OCCallbackData cbData;
+    cbData.cb = obsReqCB;
+    cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+
+    uri += additionalQuery;
+
+    std::cout << "Request OBSERVE to resource " << uri.c_str() << std::endl;
+
+    OCStackResult res = OCDoResource(NULL, OC_REST_OBSERVE, uri.c_str(), NULL, NULL,
+                                     CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+
+    std::cout << "Requesting OBSERVE res=" << res << std::endl;
+}
+
+OCStackApplicationResult putReqCB(void *ctx, OCDoHandle /*handle*/,
+                                  OCClientResponse *clientResponse)
+{
+    std::cout << "Put response received from " << clientResponse->resourceUri << std::endl;
+
+    if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
+    {
+        std::cout << "Invalid Put callback received" << std::endl;
+    }
+
+    if (clientResponse->payload == NULL)
+    {
+        std::cout << "No payload received" << std::endl;
+    }
+
+    OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
+
+    PrintRepresentation(val);
+
+    std::string requestUri = g_host;
+    requestUri += clientResponse->resourceUri;
+
+    ObserveResource(requestUri, "");
+
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+OCPayload *putRequestPayload()
+{
+    OCRepPayload *payload = OCRepPayloadCreate();
+
+    if (!payload)
+    {
+        std::cout << "Failed to create put payload object" << std::endl;
+        std::exit(1);
+    }
+
+    OCRepPayloadSetPropInt(payload, "power", 15);
+    OCRepPayloadSetPropBool(payload, "state", true);
+
+    return (OCPayload *)payload;
+}
+
+void PutResource(std::string uri, std::string additionalQuery)
+{
+    OCCallbackData cbData;
+    cbData.cb = putReqCB;
+    cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+
+    uri += additionalQuery;
+
+    std::cout << "Request PUT to resource " << uri.c_str() << std::endl;
+
+    OCStackResult res = OCDoResource(NULL, OC_REST_PUT, uri.c_str(), NULL, putRequestPayload(),
+                                     CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+
+    std::cout << "Requesting PUT res=" << res << std::endl;
+}
+
 OCStackApplicationResult handleGetCB(void *ctx,
                                      OCDoHandle /*handle*/,
                                      OCClientResponse *clientResponse)
@@ -246,62 +550,45 @@ OCStackApplicationResult handleGetCB(void *ctx,
 
     if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
     {
-        std::cout << "Invalid Publish callback received" << std::endl;
+        std::cout << "Invalid Get callback received" << std::endl;
     }
 
     if (clientResponse->payload == NULL)
+    {
         std::cout << "No payload received" << std::endl;
+    }
 
     if (clientResponse->payload != NULL &&
         clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
     {
-        std::cout << "PAYLOAD_TYPE_REPRESENTATION received" << std::endl;
-
         OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
 
-        while (val)
-        {
-            std::cout << "Key: " << val->name << " Value: ";
-            switch (val->type)
-            {
-                case OCREP_PROP_NULL:
-                    std::cout << "NULL" << std::endl;
-                    break;
+        PrintRepresentation(val);
 
-                case OCREP_PROP_INT:
-                    std::cout << val->i << std::endl;
-                    break;
+        std::string requestUri = g_host;
+        requestUri += clientResponse->resourceUri;
 
-                case OCREP_PROP_DOUBLE:
-                    std::cout << val->d << std::endl;
-                    break;
-
-                case OCREP_PROP_BOOL:
-                    std::cout << val->b << std::endl;
-                    break;
-
-                case OCREP_PROP_STRING:
-                    std::cout << val->str << std::endl;
-                    break;
-
-                case OCREP_PROP_BYTE_STRING:
-                    std::cout << "[ByteString]" << std::endl;
-                    break;
-
-                case OCREP_PROP_OBJECT:
-                    std::cout << "[Object]" << std::endl;
-                    break;
-
-                case OCREP_PROP_ARRAY:
-                    std::cout << "[Array]" << std::endl;
-                    break;
-            }
-
-            val = val->next;
-        }
+        PutResource(requestUri, "");
     }
 
     return OC_STACK_KEEP_TRANSACTION;
+}
+
+void GetResource(std::string uri, std::string additionalQuery)
+{
+    OCCallbackData cbData;
+    cbData.cb = handleGetCB;
+    cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+
+    uri += additionalQuery;
+
+    std::cout << "Request GET to resource " << uri.c_str() << std::endl;
+
+    OCStackResult res = OCDoResource(NULL, OC_REST_GET, uri.c_str(), NULL, NULL,
+                                     CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+
+    std::cout << "Requesting GET res=" << res << std::endl;
 }
 
 // This is a function called back when a device is discovered
@@ -331,23 +618,14 @@ OCStackApplicationResult discoveryReqCB(void *ctx, OCDoHandle /*handle*/,
             return OC_STACK_DELETE_TRANSACTION;
         }
 
-        OCCallbackData cbData;
-        cbData.cb = handleGetCB;
-        cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
-        cbData.cd = NULL;
-
         while (resource)
         {
             std::cout << "Found Resource " << resource->uri << std::endl;
+
             std::string requestUri = g_host;
             requestUri += resource->uri;
 
-            std::cout << "Request GET to resource " << requestUri.c_str() << std::endl;
-
-            OCStackResult res = OCDoResource(NULL, OC_REST_GET, requestUri.c_str(), NULL, NULL,
-                                             CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
-
-            std::cout << "Requesting GET res=" << res << std::endl;
+            GetResource(requestUri, "");
 
             resource = resource->next;
         }
@@ -395,7 +673,7 @@ OCStackApplicationResult handleLoginoutCB(void *ctx,
 {
     if (ctx != (void *)DEFAULT_CONTEXT_VALUE)
     {
-        std::cout << "Invalid Login callback received" << std::endl;
+        std::cout << "Invalid Login/out callback received" << std::endl;
     }
 
     std::cout << "Login/out response received code: " << clientResponse->result << std::endl;
@@ -483,6 +761,8 @@ int main(int argc, char *argv[])
     std::string authProvider;
     std::string authCode;
 
+    OCMode      stackMode = OC_CLIENT;
+
     switch (argc)
     {
         case 2:
@@ -495,9 +775,14 @@ int main(int argc, char *argv[])
         case 4:
             session = argv[2];
             if (argv[3][0] == 's')
+            {
+                stackMode = OC_CLIENT_SERVER;
                 g_runningMode = 1;
+            }
             else if (argv[3][0] == 'c')
+            {
                 g_runningMode = 2;
+            }
             break;
 
         default:
@@ -509,13 +794,13 @@ int main(int argc, char *argv[])
 
     std::cout << "Host " << g_host.c_str() << std::endl;
 
-    OCStackResult   res = OC_STACK_ERROR;
-
-    if (OCInit(NULL, 0, OC_CLIENT_SERVER) != OC_STACK_OK)
+    if (OCInit(NULL, 0, stackMode) != OC_STACK_OK)
     {
         std::cout << "OCStack init error" << std::endl;
         return 0;
     }
+
+    OCStackResult   res = OC_STACK_ERROR;
 
     switch (argc)
     {

@@ -28,7 +28,6 @@ import org.iotivity.cloud.accountserver.resources.AuthResource;
 import org.iotivity.cloud.base.CoapServer;
 import org.iotivity.cloud.base.ResourceManager;
 import org.iotivity.cloud.util.Logger;
-import org.iotivity.cloud.util.Net;
 
 /**
  * 
@@ -40,11 +39,6 @@ public class AccountServer {
     public static void main(String[] args) throws Exception {
 
         System.out.println("-----Account SERVER-----");
-        String hostAddress = Net.getMyIpAddress();
-        if (hostAddress.equals("") == true) {
-            Logger.e("cannot find host address.");
-            return;
-        }
 
         if (args.length != 1) {
             Logger.e("coap server port required");

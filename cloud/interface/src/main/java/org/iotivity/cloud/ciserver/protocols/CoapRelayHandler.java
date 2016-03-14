@@ -24,7 +24,6 @@ package org.iotivity.cloud.ciserver.protocols;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.iotivity.cloud.base.CoapClient;
@@ -34,7 +33,6 @@ import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapMethod;
 import org.iotivity.cloud.base.protocols.coap.enums.CoapStatus;
 import org.iotivity.cloud.ciserver.Constants;
-import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Logger;
 
 import io.netty.channel.ChannelDuplexHandler;
@@ -154,8 +152,6 @@ public class CoapRelayHandler extends ChannelDuplexHandler {
 
     private static final AttributeKey<ChannelHandlerContext> keyDevice = AttributeKey
             .newInstance("deviceCtx");
-
-    private Cbor<HashMap<Object, Object>> cbor = new Cbor<HashMap<Object, Object>>();
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg)
@@ -285,15 +281,21 @@ public class CoapRelayHandler extends ChannelDuplexHandler {
             }
 
         } else if (msg instanceof CoapResponse) {
-            if (ctx.attr(keyDevice).get() != null) {
+            ChannelHandlerContext resourceClient = ctx.attr(keyDevice).get();
+            if (resourceClient != null) {
                 Logger.i("Forwards message to client");
 
-                if (((CoapResponse) msg).getPayload() == null)
-                    Logger.i("No payload in reponse");
+                CoapResponse response = (CoapResponse) msg;
 
-                Logger.i("ctx.channel : "
-                        + ctx.attr(keyDevice).get().channel().toString());
-                ctx.attr(keyDevice).get().writeAndFlush(msg);
+                // If response contains path, add di
+                if (response.getOption(11) != null) {
+                    response.getOption(11).add(0,
+                            sessionManager.queryDid(ctx).getBytes());
+                }
+
+                Logger.i(
+                        "ctx.channel : " + resourceClient.channel().toString());
+                resourceClient.writeAndFlush(response);
                 return;
             }
         }
