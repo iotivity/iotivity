@@ -1,8 +1,9 @@
 var WebSocketClient = require('websocket').client;
-var mustache = require('mustache');
+var request = require('request');
 var client = new WebSocketClient();
 var rvicon = null;
 var resobj = null;
+var svcchain = null;
 
 rviconnect = function(cap,res){
 	client.on('connectFailed', function(error) {
@@ -17,17 +18,35 @@ rviconnect = function(cap,res){
 	        console.log('Connection Closed');
 	    });
 	    connection.on('message', function(message) {
-	    	console.log("Received: '" + JSON.stringify(message) + "'");
-	    	if(resobj)resobj.send(JSON.stringify(message));
+	    	var msg = JSON.stringify(message);
+	    	console.log("Received: '" + msg + "'");	    	
+	    	if(resobj){
+	    		console.log("Sending Response");
+	    		resobj.send(msg);
+	    		resobj = null;
+	    	}else if(svcchain){
+	            console.log("Posting " + msg + "to " + svcchain );
+	            var options = {
+	                url: svcchain ,
+	                json : true,
+	                method: 'POST',
+	                body: msg
+	            };
+	            console.log("JSON Body Sent = " + msg);
+	            request(options, function (error, response, body) {
+	                console.log(error + "  - " + body);
+	            });
+	    	}
 	        return;
 	    });
-	    
 	    rvicon = connection;
 	    console.log('WebSocket Client Connected');
 		res.status(200).send("Connected to RVI");
 	});
-	console.log('Trying to connect to RVI');
+	console.log('Trying to connect to RVI ' + JSON.stringify(cap));
+	svcchain = cap.chain;
 	client.connect(cap.endpoint);
+	console.log('Set Chain to ' + svcchain);
 }
 
 rvisend = function(cap, res) {
@@ -59,6 +78,7 @@ module.exports = {
 	                "description": "Connect to RVI.",
 	                "endpoint": "{{rviurl}}",
 	                "endpointtype": "rvi",
+	                "chain" : "http://localhost:8081/rvicallback",
 	                "operation": "RVICONNECT"
         	    },
 	            {

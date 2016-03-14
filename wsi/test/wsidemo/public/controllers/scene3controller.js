@@ -5,6 +5,7 @@ var rvimsg = [
               "description": "Connect to RVI.",
               "endpoint": "ws://localhost:9008/",
               "endpointtype": "rvi",
+              "chain" : "http://localhost:8081/rvicallback",
               "operation": "RVICONNECT",
               "params" : {}
           },
@@ -16,7 +17,7 @@ var rvimsg = [
               "endpointtype": "rvi",
               "operation": "RVISEND",
               "params" : {}
-          }      
+          }
 ];
 
 var rvibody = [
@@ -84,6 +85,20 @@ var rvibody = [
 			"service_name": "smarthome/control"
 		}
 	},
+    {//6 - Invoke
+		"jsonrpc":"2.0",
+		"id":"1",
+		"method": "message",
+		"params": {
+			"timeout":1459388884,
+			"service_name": "genivi.org/oic_gw/carlocation",
+			"parameters":{
+				"lat":"value",
+				"long":"value",
+				"vehicle_name":"value"
+			}
+		}
+	},	
 ]; 
 
 (function () {
@@ -106,6 +121,11 @@ var rvibody = [
         }
 
         $scope.registerService = function(){
+        	rvimsg[1].params = rvibody[5];
+        	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
+        }
+
+        $scope.invokeService = function(){
         	rvimsg[1].params = rvibody[5];
         	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
         }
