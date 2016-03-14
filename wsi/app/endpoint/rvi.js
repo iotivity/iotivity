@@ -1,111 +1,49 @@
 var WebSocketClient = require('websocket').client;
-var servicedb = require('../models/service');
 var mustache = require('mustache');
-
-var rviparams = [
-	{//0
-		"jsonrpc":"2.0",
-		"id":"1",
-		"method": "message",
-		"params": {
-			"timeout":1459388884,
-			"service_name": "genivi.org/oic_gw/hvac/right_temp",
-			"parameters":{"a":"b"}
-		}
-	},
-	{//1
-		"jsonrpc":"2.0",
-		"id":"1",
-		"method": "message",
-		"params": {
-			"timeout":1459388884,
-			"service_name": "genivi.org/oic_gw/hvac/left_temp",
-			"parameters":{"a":"b"}
-		}
-	},
-	{//2
-		"jsonrpc":"2.0",
-		"id":"1",
-		"method": "message",
-		"params": {
-			"timeout":1459388884,
-			"service_name": "genivi.org/oic_gw/hvac/fan_speed",
-			"parameters":{"a":"b"}
-		}
-	},
-	{//3
-		"jsonrpc":"2.0",
-		"id":"1",
-		"method": "message",
-		"params": {
-			"timeout":1459388884,
-			"service_name": "genivi.org/oic_gw/hvac/defroster",
-			"parameters":{"a":"b"}
-		}
-	},
-	{//4
-		"jsonrpc":"2.0",
-		"id":"1",
-		"method": "message",
-		"params": {
-			"timeout":1459388884,
-			"service_name": "genivi.org/oic_gw/hvac/subscribe_hvac",
-			'callback_service':'genivi.org/oic_gw/callback/report_hvac',
-			"parameters":{"a":"b"}
-		}
-	},
-	{//5
-		"jsonrpc":"2.0",
-		"id":"1",
-		"method": "register_service",
-		"params": {
-			"timeout":1459388884,
-			"service_name": "genivi.org/oic_gw/smarthome/control",
-			"parameters":{"command":"PredefinedString"}
-		}
-	},
-	{//6
-		"jsonrpc":"2.0",
-		"id":"1",
-		"method": "get_available_services",
-		"params": {}
-	}
-]; 
-
 var client = new WebSocketClient();
+var rvicon = null;
+var resobj = null;
 
-client.on('connectFailed', function(error) {
-    console.log('Connect Error: ' + error.toString());
-});
+rviconnect = function(cap,res){
+	client.on('connectFailed', function(error) {
+	    console.log('Connect Error: ' + error.toString());
+	});
 
-client.on('connect', function(connection) {
-    console.log('WebSocket Client Connected');
-    connection.on('error', function(error) {
-        console.log("Connection Error: " + error.toString());
-    });
-    connection.on('close', function() {
-        console.log('Connection Closed');
-    });
-    connection.on('message', function(message) {
-    	console.log("Received: '" + JSON.stringify(message) + "'");
-    });
+	client.on('connect', function(connection) {
+	    connection.on('error', function(error) {
+	        console.log("Connection Error: " + error.toString());
+	    });
+	    connection.on('close', function() {
+	        console.log('Connection Closed');
+	    });
+	    connection.on('message', function(message) {
+	    	console.log("Received: '" + JSON.stringify(message) + "'");
+	    	if(resobj)resobj.send(JSON.stringify(message));
+	        return;
+	    });
+	    
+	    rvicon = connection;
+	    console.log('WebSocket Client Connected');
+		res.status(200).send("Connected to RVI");
+	});
+	console.log('Trying to connect to RVI');
+	client.connect(cap.endpoint);
+}
 
-    function sendToRVI(params) {
-        if (connection.connected) {
-        	console.log("Sending data " + JSON.stringify(params));
-            connection.send(JSON.stringify(params));
-        }
-    }
-    sendToRVI(rviparams[5]);
-});
-client.connect('ws://localhost:9008/');
+rvisend = function(cap, res) {
+	if(rvicon.connected){
+		console.log("Sending Data to RVI " + JSON.stringify(cap.params));
+		resobj = res;
+		rvicon.send(JSON.stringify(cap.params));
+	}
+}
 
 module.exports = {
 
-    init: function(app, passport) {
+	init: function(app, passport) {
         var template = {
             "handler": "rvi",
-            "sid": "org.genivi",
+            "sid": "org.genivi.rvi",
             "description": "RVI WebSocket API.",
             "platforms": [
 	            {
@@ -115,62 +53,25 @@ module.exports = {
             ],
             "auth": [{"type": "none"}],
             "capability": [
-	            {
-	                "cid": "org.genivi.rvi.register",
+           	    {
+	                "cid": "org.genivi.rvi.connect",
 	                "isauthrequired": "false",
-	                "description": "Register a service with RVI.",
-	                "endpoint": "ws://localhost:9008/",
+	                "description": "Connect to RVI.",
+	                "endpoint": "{{rviurl}}",
 	                "endpointtype": "rvi",
-	                "operation": "RVIREG",
-	                "params": {
-	                    "message": "Message to post"
-	                },
-	                "tags": [
-	                    "command"
-	                ]
-	            },
+	                "operation": "RVICONNECT"
+        	    },
 	            {
-	                "cid": "org.genivi.rvi.invoke",
-	                "isauthrequired": "false",
-	                "description": "Invoke a remote RVI Service",
-	                "endpoint": "ws://localhost:9008/",
-	                "endpointtype": "rvi",
-	                "operation": "RVIINVOKE",
-	                "params": {
-	                    "message": ""
-	                },
-	                "tags": [
-	                    "command"
-	                ]
-	            },
-	            {
-	                "cid": "org.genivi.rvi.discover",
+	                "cid": "org.genivi.rvi.send",
 	                "isauthrequired": "false",
 	                "description": "Post Message to RVI.",
-	                "endpoint": "ws://localhost:9008/",
+	                "endpoint": "{{rviurl}}",
 	                "endpointtype": "rvi",
-	                "operation": "RVIDISCOVER",
+	                "operation": "RVISEND",
 	                "params": {
 	                    "message": "None"
-	                },
-	                "tags": [
-	                    "command"
-	                ]
+	                }
 	            },
-	            {
-	                "cid": "org.genivi.rvi.invoke",
-	                "isauthrequired": "false",
-	                "description": "Invoke a remote RVI Service",
-	                "endpoint": "ws://localhost:9008/",
-	                "endpointtype": "rvi",
-	                "operation": "RVIINVOKE",
-	                "params": {
-	                    "message": ""
-	                },
-	                "tags": [
-	                    "command"
-	                ]
-	            }
 	        ]
         };
         console.log("RVI description found ");
@@ -178,11 +79,26 @@ module.exports = {
     },
     request: function (cap, auth, res) {
         console.log("RVI Module : "+ JSON.stringify(cap));
-        if (cap.operation == "RVIDISCOVER") {
-            console.log("Making RVIDISCOVER WebSocket Request");
-            var uri = mustache.render(cap.endpoint, params);
+        if (cap.operation == "RVICONNECT") {
+            console.log("Making RVICONNECT Request");
+            var uri = cap.endpoint;
             console.log("Final URL = " + uri + " " + cap.params);
+        	if(rvicon && rvicon.connected){
+        		console.log("Already Connected ");
+        		res.status(200).send("Already Connected");
+        	}else{
+            	rviconnect(cap, res);
+        	}
+        }
+        if (cap.operation == "RVISEND") {
+            console.log("Making RVISEND Request");
+            var uri = cap.endpoint;
+            console.log("Final URL = " + uri + " " + cap.params);
+            rvisend(cap, res);
         }
     }    
 }
 console.log("RVI initialized");
+
+
+

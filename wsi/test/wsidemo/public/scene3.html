@@ -31,7 +31,7 @@
 
     </head>
 
-    <body ng-controller="wsicontroller">
+    <body ng-controller="scene3controller">
 
         <div id="wrapper">
 
@@ -189,7 +189,8 @@
                         <div class="col-lg-6">
                             <form role="form">
                                 <div class="form-group">
-                                    <button ng-click="findRVIServices()" type="button" class="btn btn-primary">Get All Services</button>                                
+                                	<button ng-click="connectToRVI()" type="button" class="btn btn-primary">RVI Connect</button>
+                                    <button ng-click="getAllServices()" type="button" class="btn btn-primary">Get All Services</button>                                
                                     <button ng-click="changeHVAC()" type="button" class="btn btn-success">Change HVAC</button>
                                 </div>
                                 <div class="form-group">
