@@ -1,5 +1,5 @@
 #******************************************************************
-# JAVA API generation 
+# JAVA API generation
 #
 # BASE
 #
@@ -32,7 +32,7 @@ RH_PATH="../../service/resource-hosting/android/resource_hosting/src/"
 RH_PKG=org.iotivity.ResourceHosting
 
 
-EASYSETUP_PATH="../../service/easy-setup/sdk/mediator/android/EasySetupCore/src/main/java/"
+EASYSETUP_PATH="../../service/easy-setup/mediator/richsdk/android/EasySetupCore/src/main/java/"
 EASYSETUP_PKG=org.iotivity.service.easysetup.mediator
 
 SIMULATOR_PATH="../../service/simulator/java/sdk/src/"
