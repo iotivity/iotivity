@@ -18,11 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- * This file contains the API declaration for creating & configuration for SoftAP 
- */
+
 
 #ifndef EASYSETUP_ENROLLEE_SOFTAP_H__
 #define EASYSETUP_ENROLLEE_SOFTAP_H__
@@ -35,10 +31,24 @@ extern "C" {
 #define SOFTAP_SUCCESS  1
 #define SOFTAP_FAILED   0
 
+/**
+ * @file
+ *
+ * This file contains the API declaration for creating & configuration for SoftAP
+ */
 
 //This callback signagure may get changed as per the native implementation.
 typedef void (*SoftAPCallbackNative)(int result, const char *ip, const char* mac_addr,
                                                                         const char*device_name);
+/**
+ * This API creats the Soft AP using the platform specific native system calls.
+ * @Note This API to be implemented by the OEM if Enrollee device SoC supports SoftAP
+ *
+ * @param networkType       	NetworkType on which OnBoarding has to be performed.
+ * @param ssid              	SSID of the target SoftAP network to which the Enrollee is connecting.
+ * @param passwd            	Password of the target SoftAP network to which the Enrollee is connecting
+ * @param SoftAPCallbackNative EventCallback for for updating the Enrollee OnBoarding status result to the application
+ */
 
 void ESCreateSoftapNative(const char * ssid, const char* passwd, SoftAPCallbackNative cb);
 

@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+
 #ifndef EASYSETUP_ENROLLEE_ONBOARDING_H__
 #define EASYSETUP_ENROLLEE_ONBOARDING_H__
 
@@ -28,18 +29,33 @@ extern "C" {
 #include "networkhandler.h"
 
 /**
- * It will on-board the Enrollee device. This is a template method that has
- * core business logic & negotiation algorithm on various on-boarding methods.
+ * @file
+ *
+ * This file contains APIs to on-board ( connect ) Enrollee device into Ad-hoc network
+ * @Note : Some of the APIs of this file need to be modified by the OEM according to the device configuration
  */
+
+/**
+ * This function on-board Enrollee device onto ad-hoc network.
+ * @param ssid       	    	SSID of the target SoftAP network to which the Enrollee is connecting.
+ * @param passwd              	Password of the target SoftAP network to which the Enrollee is connecting.
+ * @param NetworkEventCallback  Callback function for result update
+ * @return ::True, if on-boarding is successful.
+ */
+
 bool ESOnboard(const char * ssid, const char* passwd, NetworkEventCallback cb);
 
 /**
- * It will return true on-boarding type is soft AP.
+ * This function verify if the on-boarding is through SoftAP.
+ * @return ::True, if Soft AP on-boarding enabled.
+ * @Note : This API to be modified by the OEM according to the device configuration
  */
 bool ESSoftapOnboarding();
 
 /**
- * It will return true on-boarding type is BLE.
+ * This function verify if the on-boarding is through Ble beacons.
+ * @return ::True, if Ble beacons enabled.
+ * @Note : This API to be modified by the OEM according to the device configuration
  */
 bool ESBleOnboarding();
 

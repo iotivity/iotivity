@@ -18,16 +18,17 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- * This file contains SDK APIs for device operating in Enrollee Mode of EasySetup
- */
 
 #ifndef EASYSETUP_ENROLLEE_H__
 #define EASYSETUP_ENROLLEE_H__
 
 #include "escommon.h"
+
+/**
+ * @file
+ *
+ * This file contains Enrollee APIs
+ */
 
 #ifdef __cplusplus
 extern "C" {
