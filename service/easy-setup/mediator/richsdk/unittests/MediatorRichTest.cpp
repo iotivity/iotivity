@@ -225,8 +225,11 @@ TEST_F(MediatorRichTest, testStartProvisioning)
     remoteEnrollee = EasySetup::getInstance()->createEnrolleeDevice(netInfo, onboardingConn);
     remoteEnrollee->registerEasySetupStatusHandler(&easySetupStatusCallback);
 
-    //calling the APIs
-    EXPECT_NO_THROW(remoteEnrollee->startProvisioning());
+    /*It will throw an exception,
+     * as it will not be able to discover the provisioning resource
+     * in the network
+    */
+    EXPECT_ANY_THROW(remoteEnrollee->startProvisioning());
 }
 
 //startProvisioning [Negative]
@@ -272,9 +275,10 @@ TEST_F(MediatorRichTest, testStopProvisioning)
     remoteEnrollee = EasySetup::getInstance()->createEnrolleeDevice(netInfo, onboardingConn);
     remoteEnrollee->registerEasySetupStatusHandler(&easySetupStatusCallback);
 
-    remoteEnrollee->startProvisioning();
-
-    EXPECT_NO_THROW(remoteEnrollee->stopProvisioning());
+    /* It will throw an exception,
+     * as we are calling stop provisioning api before start provisioning.
+     */
+    EXPECT_ANY_THROW(remoteEnrollee->stopProvisioning());
 }
 
 //stopProvisioning [Negative]
