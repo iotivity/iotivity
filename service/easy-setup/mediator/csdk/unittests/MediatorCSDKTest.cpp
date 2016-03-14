@@ -53,7 +53,10 @@ class MediatorCSDKTest: public TestWithMock
 };
 
 //callbacks
-void OCProvisioningStatusCallback(EasySetupInfo  *easySetupInfo) {}
+void OCProvisioningStatusCallback(EasySetupInfo  *easySetupInfo) 
+{
+    (void) easySetupInfo;
+}
 
 /* Test cases for prov_adapter*/
 
