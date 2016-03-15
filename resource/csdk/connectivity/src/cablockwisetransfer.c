@@ -2364,10 +2364,27 @@ CAResult_t CACheckBlockDataValidation(const CAData_t *sendData, CABlockData_t **
     VERIFY_NON_NULL(sendData, TAG, "sendData");
     VERIFY_NON_NULL(blockData, TAG, "blockData");
 
-    CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
-            (CAToken_t)sendData->requestInfo->info.token,
-            sendData->requestInfo->info.tokenLength,
-            sendData->remoteEndpoint->port);
+    CABlockDataID_t* blockDataID;
+    if(sendData->requestInfo)
+    {
+        blockDataID = CACreateBlockDatablockId(
+                            (CAToken_t)sendData->requestInfo->info.token,
+                            sendData->requestInfo->info.tokenLength,
+                            sendData->remoteEndpoint->port);
+    }
+    else if(sendData->responseInfo)
+    {
+        blockDataID = CACreateBlockDatablockId(
+                            (CAToken_t)sendData->responseInfo->info.token,
+                            sendData->responseInfo->info.tokenLength,
+                            sendData->remoteEndpoint->port);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "sendData doesn't have requestInfo or responseInfo");
+        return CA_STATUS_FAILED;
+    }
+
     if (NULL == blockDataID || blockDataID->idLength < 1)
     {
         OIC_LOG(ERROR, TAG, "blockId is null");
