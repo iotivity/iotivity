@@ -57,7 +57,7 @@ typedef enum {
     BULB,
     THERMOSTAT,
     HVAC,
-    CARLOC
+    CARLOCATION
 } things_e;
 
 int chosenThing = BULB;
@@ -66,20 +66,59 @@ typedef struct thingbox
 {
 	things_e t;
 	int state;
-	char name[20];
+	string name;
+	string desc;
+	string res;
+	string intf;
+	string uri;
+	map<string, string> props;
 };
 
 thingbox things[] = {
-		{BULB, 		0, "bulb"},
-		{THERMOSTAT,0, "thermostat"},
-		{HVAC, 		0, "hvac"},
-		{CARLOC,	0, "carloc"}
+		{BULB, 			0, "bulb", "OCF Light", "core.light", "core.brightlight", "/a/light",
+				{
+					{"power", ""},
+					{"state", ""}
+				}
+		},
+		{THERMOSTAT,	0, "thermostat", "OCF Thermostat", "core.thermostat", "core.thermostat", "/a/thermostat",
+				{
+					{"temp", ""},
+					{"state", ""}
+				}
+		},
+		{HVAC, 			0, "hvac", "Vehicle HVAC", "core.rvihvac", "core.rvihvac", "/rvi/hvac",
+				{
+					{"leftTemperature", ""},
+					{"rightTemperature", ""},
+					{"leftSeatHeat", ""},
+					{"rightSeatHeat", ""},
+					{"fanSpeed", ""},
+					{"fanDown", ""},
+					{"fanRight", ""},
+					{"fanUp", ""},
+					{"fanAC", ""},
+					{"fanAuto", ""},
+					{"fanRecirc", ""},
+					{"defrostMax", ""},
+					{"defrostFront", ""},
+					{"defrostRear", ""}
+				}
+		},
+		{CARLOCATION,	0, "carloc", "Vehicle Location", "core.rvilocation", "core.rvilocation", "/rvi/location",
+				{
+					{"vehicle_id", "RangeRover"},
+					{"lat", ""},
+					{"lon", ""},
+					{"bearing", ""}
+				}
+		}
 };
 
 void change_bg_image(int state) {
     char buf[PATH_MAX];
     things[chosenThing].state = state % 6;
-    sprintf(buf, "images/%s/%d.png", things[chosenThing].name, things[chosenThing].state);
+    sprintf(buf, "images/%s/%d.png", things[chosenThing].name.c_str(), things[chosenThing].state);
     printf("Changing state to %d\n", state);
     elm_photo_file_set(images[0][0], buf);
 }
@@ -100,8 +139,6 @@ class TestResource {
     public:
         /// Access this property from a TB client
         std::string m_name;
-        bool m_state;
-        int m_power;
         std::string m_thingURI;
         OCResourceHandle m_resourceHandle;
         OCRepresentation m_thingRep;
@@ -111,16 +148,14 @@ class TestResource {
         /// Constructor
 
         TestResource(PlatformConfig& /*cfg*/)
-            : m_name("OIC Light"), m_state(0), m_power(0), m_thingURI("/a/wsilight") {
+            : m_name(things[chosenThing].name), m_thingURI(things[chosenThing].uri) {
                 m_thingRep.setUri(m_thingURI);
-                m_thingRep.setValue("state", m_state);
-                m_thingRep.setValue("power", m_power);
                 m_thingRep.setValue("name", m_name);
             }
 
         void createResource() {
             std::string resourceURI = m_thingURI; // URI of the resource
-            std::string resourceTypeName = "core.light";
+            std::string resourceTypeName = things[chosenThing].res;
             std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
             uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
             EntityHandler cb = std::bind(&TestResource::entityHandler, this, PH::_1);
@@ -138,22 +173,22 @@ class TestResource {
         }
 
         OCRepresentation post(OCRepresentation& rep) {
-            std::cout << "Post incoked......................................." << std::endl;
+            std::cout << "Post invoked......................................." << std::endl;
             try {
-                if (rep.getValue("state", m_state)) {
-                    std::cout << "\t\t\t\t" << "----state: " << m_state << std::endl;
-                } else {
-                    std::cout << "\t\t\t\t" << "state not found in the representation" << std::endl;
-                }
-                if (rep.getValue("power", m_power)) {
-                    std::cout << "\t\t\t\t" << "----state: " << m_power << std::endl;
-                    sender(m_power);
-                } else {
-                    std::cout << "\t\t\t\t" << "state not found in the representation" << std::endl;
-                }
+//                if (rep.getValue("state", m_state)) {
+//                    std::cout << "\t\t\t\t" << "----state: " << m_state << std::endl;
+//                } else {
+//                    std::cout << "\t\t\t\t" << "state not found in the representation" << std::endl;
+//                }
+//                if (rep.getValue("power", m_power)) {
+//                    std::cout << "\t\t\t\t" << "----state: " << m_power << std::endl;
+//                    sender(m_power);
+//                } else {
+//                    std::cout << "\t\t\t\t" << "state not found in the representation" << std::endl;
+//                }
                 if (gObservation)
                 {
-                    cout << "\nPower updated to : " << m_power << endl;
+                    //cout << "\nPower updated to : " << m_power << endl;
                     cout << "Notifying observers : " << endl;
                     OCStackResult result = OC_STACK_OK;
                     if(isListOfObservers)
@@ -188,9 +223,9 @@ class TestResource {
         }
 
         OCRepresentation get() {
-            std::cout << "OCRepresentation get." << m_power << " and " <<m_state <<std::endl;
-            m_thingRep.setValue("state", m_state);
-            m_thingRep.setValue("power", m_power);
+            //std::cout << "OCRepresentation get." << m_power << " and " <<m_state <<std::endl;
+//            m_thingRep.setValue("state", m_state);
+//            m_thingRep.setValue("power", m_power);
             //change_bg_image(m_power);
             return m_thingRep;
         }
@@ -360,7 +395,7 @@ void thing_ui() {
     for (int j = 0; j < 1; j++) {
         for (int i = 0; i < 1; i++) {
             ph = elm_photo_add(win);
-            sprintf(buf, "images/%s/%d.png", things[chosenThing].name, things[chosenThing].state);
+            sprintf(buf, "images/%s/%d.png", things[chosenThing].name.c_str(), things[chosenThing].state);
             n++;
             if (n >= 5) n = 0;
             images[j][i] = ph;
@@ -387,7 +422,7 @@ void thing_ui() {
     name.sun_family = AF_UNIX;
 
     char socket_path[100];
-    sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name);
+    sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name.c_str());
 
     strcpy(name.sun_path, socket_path);
     if (bind(sock, (struct sockaddr *) &name, sizeof(struct sockaddr_un))) {
@@ -418,7 +453,7 @@ void *thing_handler(void *ptr)
         TestResource myThing(cfg);
         myThing.createResource();
         std::cout << "Created resource." << std::endl;
-        myThing.addType(std::string("core.brightlight"));
+        myThing.addType(std::string(things[chosenThing].intf));
         myThing.addInterface(std::string(LINK_INTERFACE));
         std::cout << "Added Interface and Type" << std::endl;
 
@@ -430,7 +465,7 @@ void *thing_handler(void *ptr)
         }
         sname.sun_family = AF_UNIX;
         char socket_path[100];
-        sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name);
+        sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name.c_str());
         strcpy(sname.sun_path, socket_path);
         printf("SNAME initialized to %s\n", sname.sun_path);
         std::mutex blocker;
@@ -460,13 +495,12 @@ elm_main(int argc, char **argv)
     printf("Thing UI Created");
 
 
-
     elm_run();
 
     pthread_join(thread_id, NULL);
 
     char socket_path[100];
-    sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name);
+    sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name.c_str());
     unlink(socket_path);
     elm_shutdown();
     return 0;
