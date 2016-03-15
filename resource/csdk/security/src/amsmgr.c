@@ -58,16 +58,11 @@ OCStackResult DiscoverAmsService(PEContext_t *context)
     const char DOXM_DEVICEID_QUERY_FMT[] = "%s?%s=%s";
     char uri[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {};
     OCCallbackData cbData = {.context=NULL};
-    char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
-    uint32_t outLen = 0;
-    B64Result b64Ret;
 
     VERIFY_NON_NULL(TAG, context, ERROR);
-    b64Ret = b64Encode(context->amsMgrContext->amsDeviceId.id,
-          sizeof(context->amsMgrContext->amsDeviceId.id), base64Buff, sizeof(base64Buff), &outLen);
-    VERIFY_SUCCESS(TAG, B64_OK == b64Ret, ERROR);
     snprintf(uri, sizeof(uri), DOXM_DEVICEID_QUERY_FMT, OIC_RSRC_DOXM_URI,
-                                       OIC_JSON_DEVICE_ID_NAME, base64Buff);
+                                       OIC_JSON_DEVICE_ID_NAME,
+                                       context->amsMgrContext->amsDeviceId.id);
 
     cbData.cb = &AmsMgrDiscoveryCallback;
     cbData.context = (void*)context;
@@ -115,10 +110,11 @@ static OCStackApplicationResult AmsMgrDiscoveryCallback(void *ctx, OCDoHandle ha
     OIC_LOG_V(INFO, TAG, "Doxm DeviceId Discovery response = %s\n",
           ((OCSecurityPayload*)clientResponse->payload)->securityData1);
     uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData1;
+    size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
 
     //As doxm is NULL amsmgr can't test if response from trusted AMS service
     //so keep the transaction.
-    if (OC_STACK_OK == CBORPayloadToDoxm(payload, 0, &doxm))
+    if (OC_STACK_OK == CBORPayloadToDoxm(payload, size, &doxm))
     {
         OIC_LOG_V(ERROR, TAG, "%s : Unable to convert CBOR to Binary",__func__);
         return OC_STACK_KEEP_TRANSACTION;
@@ -300,7 +296,7 @@ static OCStackApplicationResult AmsMgrAclReqCallback(void *ctx, OCDoHandle handl
         memcmp(context->amsMgrContext->amsDeviceId.id, clientResponse->identity.id,
                        sizeof(context->amsMgrContext->amsDeviceId.id)) == 0)
     {
-        size_t size = strlen((char *)clientResponse->payload);
+        size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
         OCStackResult ret =
                 InstallNewACL(((OCSecurityPayload*)clientResponse->payload)->securityData1, size);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);

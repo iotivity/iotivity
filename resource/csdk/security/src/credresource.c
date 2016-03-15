@@ -83,7 +83,9 @@ static void FreeCred(OicSecCred_t *cred)
 #endif
 
     //Clean PublicData
+#ifdef __WITH_X509__
     OICFree(cred->publicData.data);
+#endif
 
     //Clean PrivateData
     OICFree(cred->privateData.data);
@@ -128,7 +130,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
     {
         return OC_STACK_INVALID_PARAM;
     }
-
+    OIC_LOG(DEBUG, TAG, "CredToCBORPayload IN");
     OCStackResult ret = OC_STACK_ERROR;
     size_t cborLen = *cborSize;
     if (0 == cborLen)
@@ -139,9 +141,9 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
     *cborSize = 0;
     *cborPayload = NULL;
 
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder credArray = { {.ptr = NULL }, .end = 0 };
-    CborError cborEncoderResult = CborNoError;
+    CborEncoder encoder;
+    CborEncoder credArray;
+    int64_t cborEncoderResult = CborNoError;
 
     const OicSecCred_t *cred = credS;
     size_t mapSize = CRED_MAP_SIZE;
@@ -166,45 +168,45 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     // Create CRED Array
-    cborEncoderResult = cbor_encoder_create_array(&encoder, &credArray, OicSecCredCount(cred));
+    cborEncoderResult |= cbor_encoder_create_array(&encoder, &credArray, OicSecCredCount(cred));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding0 Cred Array.");
 
     while (cred)
     {
-        CborEncoder credMap = { {.ptr = NULL }, .end = 0 };
-        cborEncoderResult = cbor_encoder_create_map(&credArray, &credMap, mapSize);
+        CborEncoder credMap;
+        cborEncoderResult |= cbor_encoder_create_map(&credArray, &credMap, mapSize);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Map");
 
         //CredID -- Mandatory
-        cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_CREDID_NAME,
+        cborEncoderResult |= cbor_encode_text_string(&credMap, OIC_JSON_CREDID_NAME,
             strlen(OIC_JSON_CREDID_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Id Tag. ");
-        cborEncoderResult = cbor_encode_int(&credMap, cred->credId);
+        cborEncoderResult |= cbor_encode_int(&credMap, cred->credId);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Id Value.");
 
         //Subject -- Mandatory
-        cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_SUBJECT_NAME,
+        cborEncoderResult |= cbor_encode_text_string(&credMap, OIC_JSON_SUBJECT_NAME,
             strlen(OIC_JSON_SUBJECT_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Subject Tag.");
-        cborEncoderResult = cbor_encode_byte_string(&credMap, cred->subject.id,
+        cborEncoderResult |= cbor_encode_byte_string(&credMap, cred->subject.id,
             sizeof(cred->subject.id));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Subject Value.");
 
         //CredType -- Mandatory
-        cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_CREDTYPE_NAME,
+        cborEncoderResult |= cbor_encode_text_string(&credMap, OIC_JSON_CREDTYPE_NAME,
             strlen(OIC_JSON_CREDTYPE_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Tag.");
-        cborEncoderResult = cbor_encode_int(&credMap, cred->credType);
+        cborEncoderResult |= cbor_encode_int(&credMap, cred->credType);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Value.");
 
 #ifdef __WITH_X509__
         //PublicData -- Not Mandatory
         if (cred->publicData.data)
         {
-            cborEncoderResult = cbor_encode_text_string(&credMap,
+            cborEncoderResult |= cbor_encode_text_string(&credMap,
                 OIC_JSON_PUBLICDATA_NAME, strlen(OIC_JSON_PUBLICDATA_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Public Data Tag.");
-            cborEncoderResult = cbor_encode_byte_string(&credMap, cred->publicData.data,
+            cborEncoderResult |= cbor_encode_byte_string(&credMap, cred->publicData.data,
                     sizeof(cred->publicData.data));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Public Tag Value.");
         }
@@ -212,10 +214,10 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         //PrivateData -- Not Mandatory
         if(cred->privateData.data)
         {
-            cborEncoderResult = cbor_encode_text_string(&credMap,
+            cborEncoderResult |= cbor_encode_text_string(&credMap,
                 OIC_JSON_PRIVATEDATA_NAME, strlen(OIC_JSON_PRIVATEDATA_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Data Tag");
-            cborEncoderResult = cbor_encode_byte_string(&credMap, cred->privateData.data,
+            cborEncoderResult |= cbor_encode_byte_string(&credMap, cred->privateData.data,
                 sizeof(cred->privateData.data));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Data Value.");
         }
@@ -223,38 +225,37 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         //Period -- Not Mandatory
         if(cred->period)
         {
-            cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_PERIOD_NAME,
+            cborEncoderResult |= cbor_encode_text_string(&credMap, OIC_JSON_PERIOD_NAME,
                 strlen(OIC_JSON_PERIOD_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Period Name Tag.");
-            cborEncoderResult = cbor_encode_text_string(&credMap, cred->period,
+            cborEncoderResult |= cbor_encode_text_string(&credMap, cred->period,
                 strlen(cred->period));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Period Name Value.");
         }
 
         //Owners -- Mandatory
         {
-            cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_OWNERS_NAME,
+            cborEncoderResult |= cbor_encode_text_string(&credMap, OIC_JSON_OWNERS_NAME,
                 strlen(OIC_JSON_OWNERS_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owners Name Tag.");
             CborEncoder owners = { {.ptr = NULL }, .end = 0 };
-            cborEncoderResult = cbor_encoder_create_array(&credMap, &owners, cred->ownersLen);
+            cborEncoderResult |= cbor_encoder_create_array(&credMap, &owners, cred->ownersLen);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owners Name Array.");
             for (size_t i = 0; i < cred->ownersLen; i++)
             {
-                cborEncoderResult = cbor_encode_byte_string(&owners,
-                    (uint8_t *)cred->owners[i].id,
+                cborEncoderResult |= cbor_encode_byte_string(&owners, (uint8_t *)cred->owners[i].id,
                     sizeof(cred->owners[i].id));
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owners Array Value.");
             }
-            cborEncoderResult = cbor_encoder_close_container(&credMap, &owners);
+            cborEncoderResult |= cbor_encoder_close_container(&credMap, &owners);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Owners Name Array.");
         }
-        cborEncoderResult = cbor_encoder_close_container(&credArray, &credMap);
+        cborEncoderResult |= cbor_encoder_close_container(&credArray, &credMap);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Cred Map.");
 
         cred = cred->next;
    }
-   cborEncoderResult = cbor_encoder_close_container(&encoder, &credArray);
+   cborEncoderResult |= cbor_encoder_close_container(&encoder, &credArray);
    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Cred Array.");
 
    if (CborNoError == cborEncoderResult)
@@ -263,7 +264,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
        *cborSize = encoder.ptr - outPayload;
         ret = OC_STACK_OK;
     }
-
+    OIC_LOG(DEBUG, TAG, "CredToCBORPayload OUT");
 exit:
     if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
     {
@@ -274,10 +275,9 @@ exit:
        cborLen += encoder.ptr - encoder.end;
        cborEncoderResult = CborNoError;
        ret = CredToCBORPayload(credS, cborPayload, &cborLen);
-       if (CborNoError == cborEncoderResult)
+       if (OC_STACK_OK == ret)
        {
            *cborSize = cborLen;
-            ret = OC_STACK_OK;
         }
     }
 
@@ -300,16 +300,16 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
     {
         return OC_STACK_INVALID_PARAM;
     }
+    OIC_LOG(DEBUG, TAG, "CBORPayloadToCred IN");
 
     *secCred = NULL;
 
     OCStackResult ret = OC_STACK_ERROR;
 
-    CborValue credCbor = { .parser = NULL };
-    CborParser parser = { .end = NULL };
+    CborValue credCbor;
+    CborParser parser;
     CborError cborFindResult = CborNoError;
     OicSecCred_t *cred = NULL;
-    char *name = NULL;
 
     int cborLen = size;
     if (0 == size)
@@ -320,115 +320,90 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
 
     OicSecCred_t *headCred = NULL;
 
-    CborValue credArray = { .parser = NULL };
+    size_t len = 0;
+    CborValue credArray;
     cborFindResult = cbor_value_enter_container(&credCbor, &credArray);
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Cred Array.");
 
     while (cbor_value_is_valid(&credArray))
     {
-        CborValue credMap = { .parser = NULL };
-        cborFindResult = cbor_value_enter_container(&credArray, &credMap);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Cred Map.");
-
         cred = (OicSecCred_t *) OICCalloc(1, sizeof(*cred));
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
-        while (cbor_value_is_valid(&credMap))
+        //CredId -- Mandatory
+        CborValue credMap;
+        cborFindResult = cbor_value_map_find_value(&credArray, OIC_JSON_CREDID_NAME, &credMap);
+        if (CborNoError == cborFindResult && cbor_value_is_integer(&credMap))
         {
-            size_t len = 0;
-            cborFindResult = cbor_value_dup_text_string(&credMap, &name, &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Cred Name.");
-            cborFindResult = cbor_value_advance(&credMap);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Cred Name. ");
-
-            CborType type = cbor_value_get_type(&credMap);
-
-            //CredId -- Mandatory
-            if (0 == strcmp(OIC_JSON_CREDID_NAME, name))
-            {
-                cborFindResult = cbor_value_get_int(&credMap, (int *) &cred->credId);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Cred Id Value.");
-            }
-            //subject -- Mandatory
-            if (0 == strcmp(OIC_JSON_SUBJECT_NAME, name))
-            {
-                uint8_t *id = NULL;
-                cborFindResult = cbor_value_dup_byte_string(&credMap, &id, &len, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Subject Name Value.");
-                memcpy(cred->subject.id, id, len);
-                OICFree(id);
-            }
-            //CredType -- Mandatory
-            if (0 == strcmp(OIC_JSON_CREDTYPE_NAME, name))
-            {
-                cborFindResult = cbor_value_get_int(&credMap, (int *) &cred->credType);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Cred Type Value.");
-            }
-            //Owners -- Mandatory
-            if (0 == strcmp(OIC_JSON_OWNERS_NAME, name))
-            {
-                CborValue owners = { .parser = NULL };
-                cborFindResult = cbor_value_get_array_length(&credMap, &cred->ownersLen);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Owners Name Array Len.");
-                cborFindResult = cbor_value_enter_container(&credMap, &owners);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Owners Name.");
-                int i = 0;
-                cred->owners = (OicUuid_t *)OICCalloc(cred->ownersLen, sizeof(*cred->owners));
-                VERIFY_NON_NULL(TAG, cred->owners, ERROR);
-                while (cbor_value_is_valid(&owners))
-                {
-                    uint8_t *owner = NULL;
-                    cborFindResult = cbor_value_dup_byte_string(&owners, &owner, &len, NULL);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Owner Value.");
-                    memcpy(cred->owners[i].id, owner, len);
-                    OICFree(owner);
-                    cborFindResult = cbor_value_advance(&owners);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Owner Value.");
-                }
-            }
-            //PrivateData is mandatory for some of the credential types listed below.
-            if (0 == strcmp(OIC_JSON_PRIVATEDATA_NAME, name))
-            {
-                if ((cred->credType & SYMMETRIC_PAIR_WISE_KEY) ||
-                    (cred->credType & SYMMETRIC_GROUP_KEY) ||
-                    (cred->credType & PIN_PASSWORD))
-                {
-                    cborFindResult = cbor_value_dup_byte_string(&credMap,
-                        &cred->privateData.data, &len, NULL);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Private Data Value.");
-                }
-            }
-            else
-            {
-                cred->privateData.data = NULL;
-            }
-
-            //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
-            if (0 == strcmp(OIC_JSON_PUBLICDATA_NAME, name))
-            {
-                if (cred->credType & SIGNED_ASYMMETRIC_KEY)
-                {
-                    cborFindResult = cbor_value_dup_byte_string(&credMap,
-                        &cred->publicData.data, &len, NULL);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ");
-                }
-            }
-            //Period -- Not Mandatory
-            if (0 == strcmp(OIC_JSON_PERIOD_NAME, name))
-            {
-                cborFindResult = cbor_value_dup_text_string(&credMap,
-                    &cred->period, &len, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Period Name Value.");
-            }
-            if (CborMapType != type && cbor_value_is_valid(&credMap))
-            {
-                cborFindResult = cbor_value_advance(&credMap);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Cred Map.");
-            }
-            OICFree(name);
-            name = NULL;
+            cborFindResult = cbor_value_get_int(&credMap, (int *) &cred->credId);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CredId.");
         }
-
+        //subject -- Mandatory
+        cborFindResult = cbor_value_map_find_value(&credArray, OIC_JSON_SUBJECT_NAME, &credMap);
+        if (CborNoError == cborFindResult && cbor_value_is_byte_string(&credMap))
+        {
+            uint8_t *id = NULL;
+            cborFindResult = cbor_value_dup_byte_string(&credMap, &id, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Subject Name.");
+            memcpy(cred->subject.id, id, len);
+            OICFree(id);
+        }
+        //CredType -- Mandatory
+        cborFindResult = cbor_value_map_find_value(&credArray, OIC_JSON_CREDTYPE_NAME, &credMap);
+        if (CborNoError == cborFindResult && cbor_value_is_integer(&credMap))
+        {
+            cborFindResult = cbor_value_get_int(&credMap, (int *) &cred->credType);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CredType.");
+        }
+        //Owners -- Mandatory
+        cborFindResult = cbor_value_map_find_value(&credArray, OIC_JSON_OWNERS_NAME, &credMap);
+        if (CborNoError == cborFindResult && cbor_value_is_array(&credMap))
+        {
+            CborValue owners;
+            cborFindResult = cbor_value_get_array_length(&credMap, &cred->ownersLen);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Array Len.");
+            cborFindResult = cbor_value_enter_container(&credMap, &owners);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Container.");
+            int i = 0;
+            cred->owners = (OicUuid_t *)OICCalloc(cred->ownersLen, sizeof(*cred->owners));
+            VERIFY_NON_NULL(TAG, cred->owners, ERROR);
+            while (cbor_value_is_valid(&owners))
+            {
+                uint8_t *owner = NULL;
+                cborFindResult = cbor_value_dup_byte_string(&owners, &owner, &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Owner Byte String.");
+                memcpy(cred->owners[i].id, owner, len);
+                OICFree(owner);
+                cborFindResult = cbor_value_advance(&owners);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Array.");
+            }
+        }
+        //PrivateData is mandatory for some of the credential types listed below.
+        cborFindResult = cbor_value_map_find_value(&credArray, OIC_JSON_PRIVATEDATA_NAME, &credMap);
+        if (CborNoError == cborFindResult && cbor_value_is_byte_string(&credMap))
+        {
+            cborFindResult = cbor_value_dup_byte_string(&credMap,
+                &cred->privateData.data, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Byte Array.");
+        }
+        //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
+        cborFindResult = cbor_value_map_find_value(&credArray, OIC_JSON_PUBLICDATA_NAME, &credMap);
+        if (CborNoError == cborFindResult && cbor_value_is_byte_string(&credMap))
+        {
+            if (cred->credType & SIGNED_ASYMMETRIC_KEY)
+            {
+                cborFindResult = cbor_value_dup_byte_string(&credMap, &cred->publicData.data, &len,
+                        NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Public Data.");
+            }
+        }
+        //Period -- Not Mandatory
+        cborFindResult = cbor_value_map_find_value(&credArray, OIC_JSON_PERIOD_NAME, &credMap);
+        if (CborNoError == cborFindResult && cbor_value_is_text_string(&credMap))
+        {
+            cborFindResult = cbor_value_dup_text_string(&credMap, &cred->period, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Period.");
+        }
         cred->next = NULL;
         if (NULL == headCred)
         {
@@ -446,11 +421,14 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
         if (cbor_value_is_valid(&credArray))
         {
             cborFindResult = cbor_value_advance(&credArray);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Cred Array. ");
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Cred Array.");
         }
     }
     *secCred = headCred;
     ret = OC_STACK_OK;
+
+    OIC_LOG(DEBUG, TAG, "CBORPayloadToCred OUT");
+
 exit:
     if (CborNoError != cborFindResult)
     {
@@ -458,14 +436,7 @@ exit:
         headCred = NULL;
         ret = OC_STACK_ERROR;
     }
-    if (cred)
-    {
-        DeleteCredList(cred);
-    }
-    if (name)
-    {
-        OICFree(name);
-    }
+
     return ret;
 }
 
@@ -504,7 +475,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
 #ifdef __WITH_X509__
         cred->privateData.data = (uint8_t *)OICCalloc(1, PRIVATE_KEY_SIZE);
         VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
-        memcpy(cred->privateData.data, privateData, PRIVATE_KEY_SIZE);
+        memcpy(cred->privateData.data, privateData, sizeof(cred->privateData.data));
 #endif // __WITH_X509__
     }
 
@@ -533,20 +504,23 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
     bool ret = false;
 
     // Convert Cred data into JSON for update to persistent storage
-    uint8_t *payload = NULL;
-    size_t size = 0;
-    OCStackResult res = CredToCBORPayload(cred, &payload, &size);
-    if ((OC_STACK_OK == res) && payload)
+    if (cred)
     {
-        if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, payload, size))
+        uint8_t *payload = NULL;
+        size_t size = 0;
+        OCStackResult res = CredToCBORPayload(cred, &payload, &size);
+        if ((OC_STACK_OK == res) && payload)
         {
-            ret = true;
+            if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, payload, size))
+            {
+                ret = true;
+            }
+            OICFree(payload);
         }
-        OICFree(payload);
     }
     else //Empty cred list
     {
-        if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, NULL, size))
+        if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, NULL, 0))
         {
             ret = true;
         }
@@ -742,12 +716,13 @@ exit:
 static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ret = OC_EH_ERROR;
+    OIC_LOG(DEBUG, TAG, "HandleCREDPutRequest IN");
 
-    //Get binary representation of json
-    OicSecCred_t * cred  = NULL;
+    //Get binary representation of cbor
+    OicSecCred_t *cred  = NULL;
     uint8_t *payload = (((OCSecurityPayload*)ehRequest->payload)->securityData1);
-    //size_t size = (((OCSecurityPayload*)ehRequest->payload)->payloadSize);
-    OCStackResult res = CBORPayloadToCred(payload, 0, &cred);
+    size_t size = (((OCSecurityPayload*)ehRequest->payload)->payloadSize);
+    OCStackResult res = CBORPayloadToCred(payload, size, &cred);
     if (res == OC_STACK_OK)
     {
 #ifdef __WITH_DTLS__
@@ -882,7 +857,7 @@ static OCEntityHandlerResult HandlePutRequest(const OCEntityHandlerRequest * ehR
         }
         FreeCred(cred);
     }
-
+    OIC_LOG(DEBUG, TAG, "HandleCREDPutRequest OUT");
     return ret;
 }
 
@@ -893,7 +868,8 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
     //Get binary representation of CBOR
     OicSecCred_t *cred  = NULL;
     uint8_t *payload = ((OCSecurityPayload*)ehRequest->payload)->securityData1;
-    OCStackResult res = CBORPayloadToCred(payload, 0, &cred);
+    size_t size = ((OCSecurityPayload*)ehRequest->payload)->payloadSize;
+    OCStackResult res = CBORPayloadToCred(payload, size, &cred);
     if ((OC_STACK_OK == res) && cred)
     {
         //If the Post request credential has credId, it will be
@@ -975,7 +951,7 @@ OCEntityHandlerResult CredEntityHandler(OCEntityHandlerFlag flag,
     }
 
     //Send payload to request originator
-    ret = (SendSRMCBORResponse(ehRequest, ret, NULL) == OC_STACK_OK) ?
+    ret = (SendSRMCBORResponse(ehRequest, ret, NULL, 0) == OC_STACK_OK) ?
                        ret : OC_EH_ERROR;
 
     return ret;
@@ -1161,6 +1137,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
                             size_t ownersLen, const OicUuid_t * owners, OicUuid_t* tmpCredSubject)
 {
     OCStackResult ret = OC_STACK_ERROR;
+    OIC_LOG(DEBUG, TAG, "AddTmpPskWithPIN IN");
 
     if(NULL == tmpSubject || NULL == pin || 0 == pinSize || NULL == tmpCredSubject)
     {
@@ -1190,6 +1167,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
         RemoveCredential(tmpSubject);
         OIC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to add credential");
     }
+    OIC_LOG(DEBUG, TAG, "AddTmpPskWithPIN OUT");
 
 exit:
     return ret;

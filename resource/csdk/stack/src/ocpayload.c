@@ -1306,7 +1306,7 @@ OCSecurityPayload* OCSecurityPayloadCreate(const char* securityData)
 }
 
 // TODO : To convert this to OCSecurityPayloadCreate once all cbor changes land.
-OCSecurityPayload* OCSecurityPayloadCBORCreate(const uint8_t* securityData)
+OCSecurityPayload* OCSecurityPayloadCBORCreate(const uint8_t* securityData, size_t size)
 {
     OCSecurityPayload* payload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
 
@@ -1316,7 +1316,14 @@ OCSecurityPayload* OCSecurityPayloadCBORCreate(const uint8_t* securityData)
     }
 
     payload->base.type = PAYLOAD_TYPE_SECURITY;
-    payload->securityData1 = (uint8_t *)securityData;
+    payload->securityData1 = (uint8_t *)OICCalloc(1, size);
+    if (!payload->securityData1)
+    {
+        OICFree(payload);
+        return NULL;
+    }
+    memcpy(payload->securityData1, (uint8_t *)securityData, size);
+    payload->payloadSize = size;
 
     return payload;
 }
@@ -1329,7 +1336,7 @@ void OCSecurityPayloadDestroy(OCSecurityPayload* payload)
     }
     // Remove this once all cbor changes land.
     OICFree(payload->securityData);
-    OICFree(payload->securityData1);
+    //OICFree(payload->securityData1);
     OICFree(payload);
 }
 

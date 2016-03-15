@@ -81,7 +81,7 @@ TEST(PstatResourceTest, PstatEntityHandlerWithPostRequest)
 
     OCEntityHandlerRequest req;
     req.method = OC_REST_POST;
-    req.payload = (OCPayload *) OCSecurityPayloadCBORCreate(cbor);
+    req.payload = (OCPayload *) OCSecurityPayloadCBORCreate(cbor, size);
     EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
     OCPayloadDestroy(req.payload);
 }

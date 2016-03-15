@@ -89,7 +89,7 @@ if env.get('TEST') == '1':
 src_dir = unittests_env.get('SRC_DIR')
 svr_db_src_dir = os.path.join(src_dir, 'resource/examples/')
 svr_db_build_dir = os.path.join(env.get('BUILD_DIR'), 'resource/unittests/')
-unittests_env.Alias("install",
-                    unittests_env.Install(svr_db_build_dir,
-                                          os.path.join(svr_db_src_dir,
-                                                       'oic_svr_db_client.json')))
+unittests_env.Alias("install", unittests_env.Install(svr_db_build_dir,
+                    os.path.join(svr_db_src_dir, 'oic_svr_db_client.json')))
+unittests_env.Alias("install", unittests_env.Install(svr_db_build_dir,
+                    os.path.join(svr_db_src_dir, 'oic_svr_db_client.dat')))

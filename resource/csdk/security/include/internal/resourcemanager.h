@@ -44,24 +44,12 @@ OCStackResult DestroySecureResources();
  *
  * @param ehRequest pointer to entity handler request data structure.
  * @param ehRet result code from entity handler.
- * @param rspPayload response payload.
- *
- * @return ::OC_STACK_OK for Success, otherwise some error value.
- */
-OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
-        OCEntityHandlerResult ehRet, const char *rspPayload);
-
-/**
- * This method is used by all secure resource modules to send responses to REST queries.
- *
- * @param ehRequest pointer to entity handler request data structure.
- * @param ehRet result code from entity handler.
  * @param cborPayload response payload.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult SendSRMCBORResponse(const OCEntityHandlerRequest *ehRequest,
-        OCEntityHandlerResult ehRet, uint8_t *cborPayload);
+        OCEntityHandlerResult ehRet, uint8_t *cborPayload, size_t size);
 
 #endif //IOTVT_SRM_RM_H
 

@@ -95,8 +95,7 @@ static OTMContext_t* g_otmCtx = NULL;
  * @return  OC_STACK_OK on success
  */
 static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethods,
-                                                            size_t numberOfMethods,
-                                                            OicSecOxm_t *selectedMethod)
+        size_t numberOfMethods, OicSecOxm_t *selectedMethod)
 {
     OIC_LOG(DEBUG, TAG, "IN SelectProvisioningMethod");
 
@@ -539,11 +538,11 @@ static OCStackApplicationResult ListMethodsHandler(void *ctx, OCDoHandle UNUSED,
             SetResult(otmCtx, OC_STACK_ERROR);
             return OC_STACK_DELETE_TRANSACTION;
         }
-        uint8_t size = 0;
         OicSecPstat_t* pstat = NULL;
         OCStackResult result = CBORPayloadToPstat(
                 ((OCSecurityPayload*)clientResponse->payload)->securityData1,
-                size, &pstat);
+                ((OCSecurityPayload*)clientResponse->payload)->payloadSize,
+                &pstat);
         if(NULL == pstat && result != OC_STACK_OK)
         {
             OIC_LOG(ERROR, TAG, "Error while converting cbor to pstat.");
@@ -908,8 +907,7 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
 
     //Generate owner credential for new device
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OicSecCred_t* ownerCredential =
-        GetCredResourceData(&(deviceInfo->doxm->deviceID));
+    OicSecCred_t* ownerCredential = GetCredResourceData(&(deviceInfo->doxm->deviceID));
     if(!ownerCredential)
     {
         OIC_LOG(ERROR, TAG, "Can not find OwnerPSK.");
@@ -930,14 +928,13 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
         newCredential.privateData.data = NULL;
 
         //Send owner credential to new device : PUT /oic/sec/cred [ owner credential ]
-        size_t size = 0;
-        if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData1, &size))
+        if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData1, &secPayload->payloadSize))
         {
             OICFree(secPayload);
-            OIC_LOG(ERROR, TAG, "Error while converting bin to json");
+            OIC_LOG(ERROR, TAG, "Error while converting bin to cbor.");
             return OC_STACK_ERROR;
         }
-        OIC_LOG_V(DEBUG, TAG, "Payload : %s", secPayload->securityData);
+        OIC_LOG_V(DEBUG, TAG, "Payload : %s", secPayload->securityData1);
 
         OCCallbackData cbData;
         cbData.cb = &OwnerCredentialHandler;
@@ -992,10 +989,8 @@ static OCStackResult PutOwnerTransferModeToResource(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    size_t size = 0;
     OCStackResult res = g_OTMDatas[selectedOxm].createSelectOxmPayloadCB(otmCtx,
-                                                                         &secPayload->securityData1,
-                                                                         &size);
+            &secPayload->securityData1, &secPayload->payloadSize);
     if (OC_STACK_OK != res && NULL == secPayload->securityData1)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
@@ -1088,9 +1083,8 @@ static OCStackResult PutOwnerUuid(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    size_t size = 0;
     OCStackResult res =  g_OTMDatas[deviceInfo->doxm->oxmSel].createOwnerTransferPayloadCB(
-            otmCtx, &secPayload->securityData1, &size);
+            otmCtx, &secPayload->securityData1, &secPayload->payloadSize);
     if (NULL == secPayload->securityData1)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
@@ -1139,8 +1133,8 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
     //OwnershipInformationHandler
-    OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if(!secPayload)
+    OCSecurityPayload *secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
+    if (!secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
@@ -1149,16 +1143,14 @@ static OCStackResult PutOwnershipInformation(OTMContext_t* otmCtx)
     otmCtx->selectedDeviceInfo->doxm->owned = true;
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    size_t size = 0;
     OCStackResult res = DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm,
-            &secPayload->securityData1, &size);
+            &secPayload->securityData1, &secPayload->payloadSize);
     if (OC_STACK_OK != res && NULL == secPayload->securityData1)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Error while converting doxm bin to json");
         return OC_STACK_INVALID_PARAM;
     }
-    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
     OCCallbackData cbData;
     cbData.cb = &OwnershipInformationHandler;
@@ -1205,9 +1197,8 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    size_t size = 0;
     OCStackResult res = PstatToCBORPayload(deviceInfo->pstat, &secPayload->securityData1,
-                                           &size);
+                                           &secPayload->payloadSize);
    if (OC_STACK_OK != res)
     {
         OCPayloadDestroy((OCPayload *)secPayload);
@@ -1219,7 +1210,7 @@ static OCStackResult PutUpdateOperationMode(OTMContext_t* otmCtx)
     cbData.cb = &OperationModeUpdateHandler;
     cbData.context = (void *)otmCtx;
     cbData.cd = NULL;
-    res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
+    res = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload *)secPayload,
                        deviceInfo->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
@@ -1377,6 +1368,122 @@ error:
     return res;
 }
 
+/**
+ * Callback handler of SRPFinalizeProvisioning.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] UNUSED          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult FinalizeProvisioningCB(void *ctx, OCDoHandle UNUSED,
+                                                       OCClientResponse *clientResponse)
+{
+    OIC_LOG_V(INFO, TAG, "IN FinalizeProvisioningCB.");
+
+    VERIFY_NON_NULL(TAG, clientResponse, ERROR);
+    VERIFY_NON_NULL(TAG, ctx, ERROR);
+
+    OTMContext_t* otmCtx = (OTMContext_t*)ctx;
+    (void)UNUSED;
+    if(OC_STACK_OK == clientResponse->result)
+    {
+        OCStackResult res = PDMAddDevice(&otmCtx->selectedDeviceInfo->doxm->deviceID);
+
+         if (OC_STACK_OK == res)
+         {
+                OIC_LOG_V(INFO, TAG, "Add device's UUID in PDM_DB");
+                SetResult(otmCtx, OC_STACK_OK);
+                return OC_STACK_DELETE_TRANSACTION;
+         }
+         else
+         {
+              OIC_LOG(ERROR, TAG, "Ownership transfer is complete but adding information to DB is failed.");
+         }
+    }
+exit:
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+/**
+ * Callback handler of default ACL provisioning.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] UNUSED          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult ProvisionDefaultACLCB(void *ctx, OCDoHandle UNUSED,
+                                                       OCClientResponse *clientResponse)
+{
+    OIC_LOG_V(INFO, TAG, "IN ProvisionDefaultACLCB.");
+
+    VERIFY_NON_NULL(TAG, clientResponse, ERROR);
+    VERIFY_NON_NULL(TAG, ctx, ERROR);
+
+    OTMContext_t* otmCtx = (OTMContext_t*) ctx;
+    (void)UNUSED;
+
+    if (OC_STACK_RESOURCE_CREATED == clientResponse->result)
+    {
+        OIC_LOG_V(INFO, TAG, "Staring commit hash task.");
+        // TODO hash currently have fixed value 0.
+        uint16_t aclHash = 0;
+        otmCtx->selectedDeviceInfo->pstat->commitHash = aclHash;
+        otmCtx->selectedDeviceInfo->pstat->tm = NORMAL;
+        OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
+        if(!secPayload)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+            return OC_STACK_NO_MEMORY;
+        }
+        secPayload->base.type = PAYLOAD_TYPE_SECURITY;
+        OCStackResult res = PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
+                &secPayload->securityData1, &secPayload->payloadSize);
+        if (OC_STACK_OK != res || NULL == secPayload->securityData1)
+        {
+            OICFree(secPayload);
+            SetResult(otmCtx, OC_STACK_INVALID_JSON);
+            return OC_STACK_DELETE_TRANSACTION;
+        }
+
+        char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+        if(!PMGenerateQuery(true,
+                            otmCtx->selectedDeviceInfo->endpoint.addr,
+                            otmCtx->selectedDeviceInfo->securePort,
+                            otmCtx->selectedDeviceInfo->connType,
+                            query, sizeof(query), OIC_RSRC_PSTAT_URI))
+        {
+            OIC_LOG(ERROR, TAG, "ProvisionDefaultACLCB : Failed to generate query");
+            return OC_STACK_ERROR;
+        }
+        OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+        OCCallbackData cbData = {.context=NULL, .cb=NULL, .cd=NULL};
+        cbData.cb = &FinalizeProvisioningCB;
+        cbData.context = (void*)otmCtx;
+        cbData.cd = NULL;
+        OCStackResult ret = OCDoResource(NULL, OC_REST_PUT, query, 0, (OCPayload*)secPayload,
+                otmCtx->selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+        OIC_LOG_V(INFO, TAG, "OCDoResource returned: %d",ret);
+        if (ret != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, TAG, "OCStack resource error");
+            SetResult(otmCtx, ret);
+        }
+    }
+    else
+    {
+        OIC_LOG_V(INFO, TAG, "Error occured in provisionDefaultACLCB :: %d\n",
+                            clientResponse->result);
+        SetResult(otmCtx, clientResponse->result);
+    }
+exit:
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
 OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
 {
     OIC_LOG(INFO, TAG, "IN PutProvisioningStatus");
@@ -1396,16 +1503,15 @@ OCStackResult PutProvisioningStatus(OTMContext_t* otmCtx)
     otmCtx->selectedDeviceInfo->pstat->tm = NORMAL;
     otmCtx->selectedDeviceInfo->pstat->cm = PROVISION_ACLS | PROVISION_CREDENTIALS |
                                             SECURITY_MANAGEMENT_SERVICES | BOOTSTRAP_SERVICE;
-    OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if(!secPayload)
+    OCSecurityPayload *secPayload = (OCSecurityPayload *)OICCalloc(1, sizeof(OCSecurityPayload));
+    if (!secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    size_t size = 0;
     if (OC_STACK_OK != PstatToCBORPayload(otmCtx->selectedDeviceInfo->pstat,
-            &secPayload->securityData1, &size))
+            &secPayload->securityData1, &secPayload->payloadSize))
     {
         OCPayloadDestroy((OCPayload *)secPayload);
         SetResult(otmCtx, OC_STACK_INVALID_JSON);

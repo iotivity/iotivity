@@ -68,6 +68,8 @@ OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
 OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t cborSize,
                                  OicSecAmacl_t **amacl);
 
+void DeleteAmaclList(OicSecAmacl_t *amacl);
+
 /**
  * This internal method is the entity handler for Cred resources
  * to handle REST request (PUT/POST/DEL)

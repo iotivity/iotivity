@@ -572,8 +572,8 @@ static bool UpdatePersistentStorage(const OicSecPconf_t * pconf)
         cJSON *jsonPconf = cJSON_Parse(jsonStr);
         OICFree(jsonStr);
 
-        if ((jsonPconf) &&
-                (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_PCONF_NAME, jsonPconf)))
+        if ((jsonPconf)
+    /* && (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_PCONF_NAME, jsonPconf)) */)
         {
             ret = true;
         }
@@ -626,7 +626,8 @@ static OCEntityHandlerResult HandlePconfGetRequest (const OCEntityHandlerRequest
     jsonStr = (ehRet == OC_EH_OK) ? BinToPconfJSON(&pconf) : NULL;
 
     // Send response payload to request originator
-    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, jsonStr))
+    // jsonStr, size
+    if(OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL, 0))
     {
         OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandleDpairingGetRequest");
     }
@@ -696,7 +697,7 @@ static OCEntityHandlerResult HandlePconfPostRequest (const OCEntityHandlerReques
     }
 
     // Send payload to request originator
-    SendSRMResponse(ehRequest, ehRet, NULL);
+    SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
 
     OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
@@ -737,7 +738,7 @@ OCEntityHandlerResult PconfEntityHandler (OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL);
+                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
         }
     }
 
@@ -798,7 +799,8 @@ OCStackResult InitPconfResource()
     OCStackResult ret = OC_STACK_ERROR;
 
     // Read PCONF resource from PS
-    char* jsonSVRDatabase = GetSVRDatabase();
+    char* jsonSVRDatabase = NULL;
+    // GetSVRDatabase();
 
     if (jsonSVRDatabase)
     {
@@ -977,5 +979,3 @@ bool IsPairedDevice(const OicUuid_t* pdeviceId)
     }
     return false;
 }
-
-

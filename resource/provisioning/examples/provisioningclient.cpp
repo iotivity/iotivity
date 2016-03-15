@@ -49,7 +49,7 @@
 #define MAX_OWNED_DEVICE (10)
 #define TAG  "provisioningclient"
 
-#define JSON_DB_PATH "./oic_svr_db_client.json"
+#define JSON_DB_PATH "./oic_svr_db_client.dat"
 #define DEV_STATUS_ON "DEV_STATUS_ON"
 #define DEV_STATUS_OFF "DEV_STATUS_OFF"
 

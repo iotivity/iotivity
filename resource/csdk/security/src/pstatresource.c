@@ -93,78 +93,80 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
 
     OCStackResult ret = OC_STACK_ERROR;
 
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder pstatMap = { {.ptr = NULL }, .end = 0 };
+    CborEncoder encoder;
+    CborEncoder pstatMap;
 
-    CborError cborEncoderResult = CborNoError;
+    int64_t cborEncoderResult = CborNoError;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
     VERIFY_NON_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
-    cborEncoderResult = cbor_encoder_create_map(&encoder, &pstatMap, PSTAT_MAP_SIZE);
+    cborEncoderResult |= cbor_encoder_create_map(&encoder, &pstatMap, PSTAT_MAP_SIZE);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Pstat Map.");
 
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ISOP_NAME,
+    cborEncoderResult |= cbor_encode_text_string(&pstatMap, OIC_JSON_ISOP_NAME,
         strlen(OIC_JSON_ISOP_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ISOP Name Tag.");
-    cborEncoderResult = cbor_encode_boolean(&pstatMap, pstat->isOp);
+    cborEncoderResult |= cbor_encode_boolean(&pstatMap, pstat->isOp);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ISOP Name Value.");
 
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_DEVICE_ID_NAME,
+    cborEncoderResult |= cbor_encode_text_string(&pstatMap, OIC_JSON_DEVICE_ID_NAME,
         strlen(OIC_JSON_DEVICE_ID_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Tag.");
-    cborEncoderResult = cbor_encode_byte_string(&pstatMap, (uint8_t *)pstat->deviceID.id,
+    cborEncoderResult |= cbor_encode_byte_string(&pstatMap, (uint8_t *)pstat->deviceID.id,
                                                 sizeof(pstat->deviceID.id));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Value.");
 
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_COMMIT_HASH_NAME,
+    cborEncoderResult |= cbor_encode_text_string(&pstatMap, OIC_JSON_COMMIT_HASH_NAME,
         strlen(OIC_JSON_COMMIT_HASH_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Commit Hash Tag.");
-    cborEncoderResult = cbor_encode_int(&pstatMap, pstat->commitHash);
+    cborEncoderResult |= cbor_encode_int(&pstatMap, pstat->commitHash);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Commit Hash Value.");
 
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_CM_NAME,
+    cborEncoderResult |= cbor_encode_text_string(&pstatMap, OIC_JSON_CM_NAME,
         strlen(OIC_JSON_CM_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Tag.");
-    cborEncoderResult = cbor_encode_int(&pstatMap, pstat->cm);
+    cborEncoderResult |= cbor_encode_int(&pstatMap, pstat->cm);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Value.");
 
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_TM_NAME,
+    cborEncoderResult |= cbor_encode_text_string(&pstatMap, OIC_JSON_TM_NAME,
         strlen(OIC_JSON_TM_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding TM Name Tag.");
-    cborEncoderResult = cbor_encode_int(&pstatMap, pstat->tm);
+    cborEncoderResult |= cbor_encode_int(&pstatMap, pstat->tm);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding TM Name Value.");
 
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_OM_NAME,
+    cborEncoderResult |= cbor_encode_text_string(&pstatMap, OIC_JSON_OM_NAME,
         strlen(OIC_JSON_OM_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding OM Name Tag.");
-    cborEncoderResult = cbor_encode_int(&pstatMap, pstat->om);
+    cborEncoderResult |= cbor_encode_int(&pstatMap, pstat->om);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding OM Name Value.");
 
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_SM_NAME,
+    cborEncoderResult |= cbor_encode_text_string(&pstatMap, OIC_JSON_SM_NAME,
         strlen(OIC_JSON_SM_NAME));
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Tag.");
     {
-        CborEncoder sm = { {.ptr = NULL }, .end = 0 };
-        cborEncoderResult = cbor_encoder_create_array(&pstatMap, &sm, pstat->smLen);
+        CborEncoder sm;
+        cborEncoderResult |= cbor_encoder_create_array(&pstatMap, &sm, pstat->smLen);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Array.");
 
         for (size_t i = 0; i < pstat->smLen; i++)
         {
-            cborEncoderResult = cbor_encode_int(&sm, pstat->sm[i]);
+            cborEncoderResult |= cbor_encode_int(&sm, pstat->sm[i]);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Value in Array.");
         }
-        cborEncoderResult = cbor_encoder_close_container(&pstatMap, &sm);
+        cborEncoderResult |= cbor_encoder_close_container(&pstatMap, &sm);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing SM Array.");
     }
-    cborEncoderResult = cbor_encoder_close_container(&encoder, &pstatMap);
+    cborEncoderResult |= cbor_encoder_close_container(&encoder, &pstatMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Closing PSTAT Map.");
 
-    *size = encoder.ptr - outPayload;
-    *payload = outPayload;
-    ret = OC_STACK_OK;
-
+    if (CborNoError == cborEncoderResult)
+    {
+        *size = encoder.ptr - outPayload;
+        *payload = outPayload;
+        ret = OC_STACK_OK;
+    }
 exit:
     if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
     {
@@ -174,6 +176,10 @@ exit:
         cborLen += encoder.ptr - encoder.end;
         cborEncoderResult = CborNoError;
         ret = PstatToCBORPayload(pstat, payload, &cborLen);
+        if (OC_STACK_OK == ret)
+        {
+            *size = cborLen;
+        }
     }
 
     if ((CborNoError != cborEncoderResult) || (OC_STACK_OK != ret))
@@ -199,97 +205,84 @@ OCStackResult CBORPayloadToPstat(const uint8_t *cborPayload, const size_t size,
     OCStackResult ret = OC_STACK_ERROR;
     *secPstat = NULL;
 
-    CborValue pstatCbor = { .parser = NULL };
-    CborParser parser = { .end = NULL };
+    CborValue pstatCbor;
+    CborParser parser;
     CborError cborFindResult = CborNoError;
     int cborLen = size;
+    size_t len = 0;
     if (0 == size)
     {
         cborLen = CBOR_SIZE;
     }
     cbor_parser_init(cborPayload, cborLen, 0, &parser, &pstatCbor);
-    CborValue pstatMap = { .parser = NULL } ;
+    CborValue pstatMap;
+
     OicSecPstat_t *pstat = NULL;
-    char *name = NULL;
     cborFindResult = cbor_value_enter_container(&pstatCbor, &pstatMap);
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PSTAT Map.");
 
     pstat = (OicSecPstat_t *)OICCalloc(1, sizeof(OicSecPstat_t));
     VERIFY_NON_NULL(TAG, pstat, ERROR);
 
-    while (cbor_value_is_valid(&pstatMap))
+    cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_ISOP_NAME, &pstatMap);
+    if (CborNoError == cborFindResult && cbor_value_is_boolean(&pstatMap))
     {
-        size_t len = 0;
-        cborFindResult = cbor_value_dup_text_string(&pstatMap, &name, &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PSTAT Name Value.");
-        cborFindResult = cbor_value_advance(&pstatMap);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing PSTAT MAP.");
+        cborFindResult = cbor_value_get_boolean(&pstatMap, &pstat->isOp);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding isOp Value.");
+    }
 
-        CborType type = cbor_value_get_type(&pstatMap);
+    cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_DEVICE_ID_NAME, &pstatMap);
+    if (CborNoError == cborFindResult && cbor_value_is_byte_string(&pstatMap))
+    {
+        uint8_t *subjectId = NULL;
+        cborFindResult = cbor_value_dup_byte_string(&pstatMap, &subjectId, &len, NULL);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding subjectId Value.");
+        memcpy(pstat->deviceID.id, subjectId, len);
+        OICFree(subjectId);
+    }
 
-        if (0 == strcmp(OIC_JSON_ISOP_NAME, name))
+    cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_COMMIT_HASH_NAME, &pstatMap);
+    if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
+    {
+        cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->commitHash);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding commitHash.");
+    }
+
+    cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_CM_NAME, &pstatMap);
+    if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
+    {
+        cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->cm);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CM.");
+    }
+
+    cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_OM_NAME, &pstatMap);
+    if (CborNoError == cborFindResult && cbor_value_is_integer(&pstatMap))
+    {
+        cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->om);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding OM.");
+    }
+
+    cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_SM_NAME, &pstatMap);
+    if (CborNoError == cborFindResult && cbor_value_is_array(&pstatMap))
+    {
+        CborValue sm = { .parser = NULL };
+        cborFindResult = cbor_value_get_array_length(&pstatMap, &pstat->smLen);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Array Len.");
+
+        pstat->sm = (OicSecDpom_t *)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
+        VERIFY_NON_NULL(TAG, pstat->sm, ERROR);
+
+        cborFindResult = cbor_value_enter_container(&pstatMap, &sm);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering SM.");
+
+        int i = 0;
+        while (cbor_value_is_valid(&sm))
         {
-            cborFindResult = cbor_value_get_boolean(&pstatMap, &pstat->isOp);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ISOP Name.");
+            cborFindResult = cbor_value_get_int(&sm, (int *)&pstat->sm[i++]);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM.");
+            cborFindResult = cbor_value_advance(&sm);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Closing SM.");
         }
-
-        if (0 == strcmp(OIC_JSON_DEVICE_ID_NAME, name))
-        {
-            uint8_t *subjectId = NULL;
-            cborFindResult = cbor_value_dup_byte_string(&pstatMap, &subjectId, &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SubjectId.");
-            memcpy(pstat->deviceID.id, subjectId, len);
-            OICFree(subjectId);
-        }
-
-        if (0 == strcmp(OIC_JSON_COMMIT_HASH_NAME, name))
-        {
-            cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->commitHash);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CommitHash.");
-        }
-
-        if (0 == strcmp(OIC_JSON_CM_NAME, name))
-        {
-            cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->cm);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CM Name.");
-        }
-
-        if (0 == strcmp(OIC_JSON_OM_NAME, name))
-        {
-            cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->om);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding OM Name.");
-        }
-
-        if (0 == strcmp(OIC_JSON_SM_NAME, name))
-        {
-            CborValue sm = { .parser = NULL };
-
-            cborFindResult = cbor_value_get_array_length(&pstatMap, &pstat->smLen);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM Len Array.");
-            VERIFY_SUCCESS(TAG, pstat->smLen != 0, ERROR);
-
-            pstat->sm = (OicSecDpom_t *)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
-            VERIFY_NON_NULL(TAG, pstat->sm, ERROR);
-
-            cborFindResult = cbor_value_enter_container(&pstatMap, &sm);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM Container.");
-
-            int i = 0;
-            while (cbor_value_is_valid(&sm))
-            {
-                cborFindResult = cbor_value_get_int(&sm, (int *)&pstat->sm[i++]);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM Value.");
-                cborFindResult = cbor_value_advance(&sm);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM Array.");
-            }
-        }
-        if (CborMapType != type && cbor_value_is_valid(&pstatMap))
-        {
-            cborFindResult = cbor_value_advance(&pstatMap);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PSTAT MAP.");
-        }
-        OICFree(name);
-        name = NULL;
     }
 
     *secPstat = pstat;
@@ -303,10 +296,7 @@ exit:
         pstat = NULL;
         ret = OC_STACK_ERROR;
     }
-    if (name)
-    {
-        OICFree(name);
-    }
+
     return ret;
 }
 
@@ -349,7 +339,7 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
     OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
 
     // Send response payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, payload);
+    SendSRMCBORResponse(ehRequest, ehRet, payload, size);
     OICFree(payload);
     return ehRet;
 }
@@ -369,9 +359,10 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
     if (ehRequest->resource)
     {
         uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData1;
+        size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
         VERIFY_NON_NULL(TAG, payload, ERROR);
 
-        OCStackResult ret = CBORPayloadToPstat(payload, CBOR_SIZE, &pstat);
+        OCStackResult ret = CBORPayloadToPstat(payload, size, &pstat);
         OICFree(payload);
         VERIFY_NON_NULL(TAG, pstat, ERROR);
         if (OC_STACK_OK == ret)
@@ -396,7 +387,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
                  * Check if the operation mode is in the supported provisioning services
                  * operation mode list.
                  */
-                for(size_t i=0; i< gPstat->smLen; i++)
+                for (size_t i=0; i< gPstat->smLen; i++)
                 {
                     if(gPstat->sm[i] == pstat->om)
                     {
@@ -406,13 +397,11 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
                 }
             }
             // Convert pstat data into CBOR for update to persistent storage
-            if(UpdatePersistentStorage(gPstat))
+            if (UpdatePersistentStorage(gPstat))
             {
                 ehRet = OC_EH_OK;
             }
         }
-
-        OICFree(payload);
     }
  exit:
     if(OC_EH_OK != ehRet)
@@ -426,7 +415,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
     }
 
     //Send payload to request originator
-    if (OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL))
+    if(OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL, 0))
     {
         OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
     }
@@ -457,7 +446,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
                 break;
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL);
+                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
                 break;
         }
     }

@@ -102,10 +102,10 @@ OCStackResult AddUuidArray(const cJSON* jsonRoot, const char* arrayItem,
 
         outLen = 0;
         b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring), base64Buff,
-                sizeof(base64Buff), &outLen);
+               sizeof(base64Buff), &outLen);
 
         VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof((*uuids)[idxx].id)),
-                ERROR);
+               ERROR);
         memcpy((*uuids)[idxx].id, base64Buff, outLen);
     } while ( ++idxx < *numUuids);
 

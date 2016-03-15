@@ -254,7 +254,7 @@ TEST(ACLResourceTest, ACLPostTest)
     ASSERT_TRUE(ReadCBORFile(ACL1_FILE_NAME, &payload, &size));
     ASSERT_TRUE(NULL != payload);
 
-    OCSecurityPayload *securityPayload = OCSecurityPayloadCBORCreate(payload);
+    OCSecurityPayload *securityPayload = OCSecurityPayloadCBORCreate(payload, size);
     ASSERT_TRUE(NULL != securityPayload);
 
     static OCPersistentStorage ps = OCPersistentStorage();
@@ -266,7 +266,7 @@ TEST(ACLResourceTest, ACLPostTest)
     ehReq.payload = (OCPayload *) securityPayload;
 
     OCEntityHandlerResult ehRet = ACLEntityHandler(OC_REQUEST_FLAG, &ehReq, NULL);
-    EXPECT_EQ(OC_EH_ERROR, ehRet);
+    EXPECT_EQ(OC_EH_RESOURCE_CREATED, ehRet);
 
     OicSecAcl_t *acl = CBORPayloadToAcl(payload, size);
     ASSERT_TRUE(NULL != acl);
@@ -274,7 +274,7 @@ TEST(ACLResourceTest, ACLPostTest)
     // Verify if SRM contains ACL for the subject
     OicSecAcl_t *savePtr = NULL;
     const OicSecAcl_t* subjectAcl = GetACLResourceData(&(acl->subject), &savePtr);
-    ASSERT_TRUE(NULL == subjectAcl);
+    ASSERT_TRUE(NULL != subjectAcl);
 
     // Perform cleanup
     OICFree(payload);
@@ -365,7 +365,7 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
-    OCSecurityPayload *securityPayload = OCSecurityPayloadCBORCreate(payload);
+    OCSecurityPayload *securityPayload = OCSecurityPayloadCBORCreate(payload, size);
     ASSERT_TRUE(NULL != securityPayload);
 
     static OCPersistentStorage ps = OCPersistentStorage();
@@ -418,7 +418,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
-    OCSecurityPayload *securityPayload = OCSecurityPayloadCBORCreate(payload);
+    OCSecurityPayload *securityPayload = OCSecurityPayloadCBORCreate(payload, size);
     ASSERT_TRUE(NULL!= securityPayload);
 
     static OCPersistentStorage ps = OCPersistentStorage();
@@ -473,7 +473,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
     ASSERT_TRUE(NULL != payload);
 
     // Security Payload
-    OCSecurityPayload *securityPayload = OCSecurityPayloadCBORCreate(payload);
+    OCSecurityPayload *securityPayload = OCSecurityPayloadCBORCreate(payload, size);
     ASSERT_TRUE(NULL != securityPayload);
 
     static OCPersistentStorage ps = OCPersistentStorage();

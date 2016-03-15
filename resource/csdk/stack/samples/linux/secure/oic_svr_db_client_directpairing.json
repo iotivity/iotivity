@@ -30,7 +30,7 @@
 	"pstat":	{
 		"isop":	false,
 		"deviceid":	"ZGlyZWN0cGFpcmluZ0Rldg==",
-		"commithash": 0,
+		"ch": 0,
 		"cm":	0,
 		"tm":	0,
 		"om":	3,

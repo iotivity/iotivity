@@ -66,7 +66,7 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
 }
 
 OCStackResult SendSRMCBORResponse(const OCEntityHandlerRequest *ehRequest,
-        OCEntityHandlerResult ehRet, uint8_t *cborPayload)
+        OCEntityHandlerResult ehRet, uint8_t *cborPayload, size_t size)
 {
     OIC_LOG(DEBUG, TAG, "SRM sending SRM response");
     OCEntityHandlerResponse response = {.requestHandle = NULL};
@@ -82,6 +82,7 @@ OCStackResult SendSRMCBORResponse(const OCEntityHandlerRequest *ehRequest,
         response.payload = (OCPayload *)(&ocPayload);
         response.payload->type = PAYLOAD_TYPE_SECURITY;
         ((OCSecurityPayload *)response.payload)->securityData1 = cborPayload;
+        ((OCSecurityPayload *)response.payload)->payloadSize = size;
         response.persistentBufferFlag = 0;
 
         ret = OCDoResponse(&response);

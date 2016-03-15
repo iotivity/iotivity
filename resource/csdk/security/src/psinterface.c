@@ -29,7 +29,6 @@
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "payload_logging.h"
-#include "cJSON.h"
 #include "cainterface.h"
 #include "secureresourcemanager.h"
 #include "resourcemanager.h"
@@ -70,132 +69,6 @@ static size_t GetSVRDatabaseSize(const OCPersistentStorage* ps)
     return size;
 }
 
-char* GetSVRDatabase()
-{
-    char * jsonStr = NULL;
-    FILE * fp = NULL;
-    OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
-    int size = GetSVRDatabaseSize(ps);
-    if (0 == size)
-    {
-        OIC_LOG (ERROR, TAG, "FindSVRDatabaseSize failed");
-        return NULL;
-    }
-
-    if (ps && ps->open)
-    {
-        // Open default SRM database file. An app could change the path for its server.
-        fp = ps->open(SVR_DB_FILE_NAME, "r");
-        if (fp)
-        {
-            jsonStr = (char*)OICMalloc(size + 1);
-            VERIFY_NON_NULL(TAG, jsonStr, FATAL);
-            size_t bytesRead = ps->read(jsonStr, 1, size, fp);
-            jsonStr[bytesRead] = '\0';
-
-            OIC_LOG_V(DEBUG, TAG, "Read %zu bytes from SVR database file", bytesRead);
-            ps->close(fp);
-            fp = NULL;
-        }
-        else
-        {
-            OIC_LOG (ERROR, TAG, "Unable to open SVR database file!!");
-        }
-    }
-
-exit:
-    if (ps && fp)
-    {
-        ps->close(fp);
-    }
-    return jsonStr;
-}
-
-OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj)
-{
-    OCStackResult ret = OC_STACK_ERROR;
-    cJSON *jsonSVRDb = NULL;
-    OCPersistentStorage* ps = NULL;
-
-    // Read SVR database from PS
-    char* jsonSVRDbStr = GetSVRDatabase();
-    VERIFY_NON_NULL(TAG,jsonSVRDbStr, ERROR);
-
-    // Use cJSON_Parse to parse the existing SVR database
-    jsonSVRDb = cJSON_Parse(jsonSVRDbStr);
-    VERIFY_NON_NULL(TAG,jsonSVRDb, ERROR);
-
-    OICFree(jsonSVRDbStr);
-    jsonSVRDbStr = NULL;
-
-    //If Cred resource gets updated with empty list then delete the Cred
-    //object from database.
-    if(NULL == jsonObj && (0 == strcmp(rsrcName, OIC_JSON_CRED_NAME)))
-    {
-        cJSON_DeleteItemFromObject(jsonSVRDb, rsrcName);
-    }
-    else if (jsonObj->child )
-    {
-        // Create a duplicate of the JSON object which was passed.
-        cJSON* jsonDuplicateObj = cJSON_Duplicate(jsonObj, 1);
-        VERIFY_NON_NULL(TAG,jsonDuplicateObj, ERROR);
-
-        cJSON* jsonObj = cJSON_GetObjectItem(jsonSVRDb, rsrcName);
-
-        /*
-         ACL, PStat & Doxm resources at least have default entries in the database but
-         Cred resource may have no entries. The first cred resource entry (for provisioning tool)
-         is created when the device is owned by provisioning tool and it's ownerpsk is generated.*/
-        if((strcmp(rsrcName, OIC_JSON_CRED_NAME) == 0 ||
-                strcmp(rsrcName, OIC_JSON_CRL_NAME) == 0 ||
-                strcmp(rsrcName, OIC_JSON_PCONF_NAME) == 0 ||
-                strcmp(rsrcName, OIC_JSON_DPAIRING_NAME) == 0) && (!jsonObj))
-        {
-            // Add the fist cred object in existing SVR database json
-            cJSON_AddItemToObject(jsonSVRDb, rsrcName, jsonDuplicateObj->child);
-        }
-        else
-        {
-            VERIFY_NON_NULL(TAG,jsonObj, ERROR);
-
-            // Replace the modified json object in existing SVR database json
-            cJSON_ReplaceItemInObject(jsonSVRDb, rsrcName, jsonDuplicateObj->child);
-        }
-    }
-
-    // Generate string representation of updated SVR database json object
-    jsonSVRDbStr = cJSON_PrintUnformatted(jsonSVRDb);
-    VERIFY_NON_NULL(TAG,jsonSVRDbStr, ERROR);
-
-    // Update the persistent storage with new SVR database
-    ps = SRMGetPersistentStorageHandler();
-    if (ps && ps->open)
-    {
-        FILE* fp = ps->open(SVR_DB_FILE_NAME, "w");
-        if (fp)
-        {
-            size_t bytesWritten = ps->write(jsonSVRDbStr, 1, strlen(jsonSVRDbStr), fp);
-            if (bytesWritten == strlen(jsonSVRDbStr))
-            {
-                ret = OC_STACK_OK;
-            }
-            OIC_LOG_V(DEBUG, TAG, "Written %zu bytes into SVR database file", bytesWritten);
-            ps->close(fp);
-            fp = NULL;
-        }
-        else
-        {
-            OIC_LOG (ERROR, TAG, "Unable to open SVR database file!! ");
-        }
-    }
-
-exit:
-    OICFree(jsonSVRDbStr);
-    cJSON_Delete(jsonSVRDb);
-
-    return ret;
-}
-
 OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **data, size_t *size)
 {
     if (!data || !size)
@@ -205,7 +78,7 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
     OCStackResult ret = OC_STACK_ERROR;
     *data = NULL;
 
-     FILE *fp = NULL;
+    FILE *fp = NULL;
     size_t fileSize = 0;
 
     OCPersistentStorage *ps = SRMGetPersistentStorageHandler();
@@ -230,28 +103,15 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
                 CborValue cbor =  { .parser = NULL };
                 cbor_parser_init(fsData, fileSize, 0, &parser, &cbor);
                 CborValue cborValue =  { .parser = NULL };
-                CborError cborFindResult = cbor_value_enter_container(&cbor, &cborValue);
-
-                while (cbor_value_is_valid(&cborValue))
+                // CborError cborFindResult = cbor_value_enter_container(&cbor, &cborValue);
+                CborError cborFindResult = cbor_value_map_find_value(&cbor, rsrcName, &cborValue);
+                if (CborNoError == cborFindResult && cbor_value_is_byte_string(&cborValue))
                 {
-                    char *name = NULL;
-                    size_t len = 0;
-                    cborFindResult = cbor_value_dup_text_string(&cborValue, &name, &len, NULL);
+                    cborFindResult = cbor_value_dup_byte_string(&cborValue, data, size, NULL);
                     VERIFY_SUCCESS(TAG, cborFindResult == CborNoError, ERROR);
-                    cborFindResult = cbor_value_advance(&cborValue);
-                    VERIFY_SUCCESS(TAG, cborFindResult == CborNoError, ERROR);
-                    if (strcmp(name, rsrcName) == 0)
-                    {
-                        cborFindResult = cbor_value_dup_byte_string(&cborValue, data, size, NULL);
-                        VERIFY_SUCCESS(TAG, cborFindResult == CborNoError, ERROR);
-                        ret = OC_STACK_OK;
-                        OICFree(fsData);
-                        OICFree(name);
-                        goto exit;
-                    }
-                    OICFree(name);
-                    cborFindResult = cbor_value_advance(&cborValue);
-                    VERIFY_SUCCESS(TAG, cborFindResult == CborNoError, ERROR);
+                    ret = OC_STACK_OK;
+                    OICFree(fsData);
+                    goto exit;
                 }
             }
             // return everything in case rsrcName is NULL
@@ -264,7 +124,7 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "Unable to open SVR database to read!! ");
+        ret = OC_STACK_OK;
     }
 
 exit:
@@ -277,100 +137,190 @@ exit:
 
 OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPayload, size_t psSize)
 {
+    OIC_LOG(DEBUG,  TAG, "Entering UpdateSecureResourceInPS IN");
     /*
      * This function stores cbor payload of each resource by appending resource name.
      */
-    if (!rsrcName || !psPayload)
+     // Empty payload implies deleting the value
+    if (!rsrcName)
     {
         return OC_STACK_INVALID_PARAM;
     }
+
     OCStackResult ret = OC_STACK_ERROR;
 
-    size_t cborSize = 0;
     uint8_t *dbData = NULL;
-    uint8_t *outPayload = NULL;
     size_t dbSize = 0;
+    size_t cborSize = 0;
+    uint8_t *outPayload = NULL;
+    uint8_t *aclCbor = NULL;
+    uint8_t *pstatCbor = NULL;
+    uint8_t *amaclCbor = NULL;
+    uint8_t *doxmCbor = NULL;
+    uint8_t *svcCbor = NULL;
+    uint8_t *credCbor = NULL;
+    uint8_t mapLen = 1;
+
+    int64_t cborEncoderResult = CborNoError;
+    CborEncoder encoder;
 
     ret = GetSecureVirtualDatabaseFromPS(NULL, &dbData, &dbSize);
     if (dbData && dbSize != 0)
     {
-        uint8_t size = dbSize + psSize;
+        size_t aclCborLen = 0;
+        size_t pstatCborLen = 0;
+        size_t doxmCborLen = 0;
+        size_t amaclCborLen = 0;
+        size_t svcCborLen = 0;
+        size_t credCborLen = 0;
 
+        {
+            CborValue cbor;
+            CborParser parser;
+            cbor_parser_init(dbData, dbSize, 0, &parser, &cbor);
+            CborError cborFindResult = CborNoError;
+
+            CborValue curVal;
+            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_ACL_NAME, &curVal);
+            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+            {
+                cborFindResult = cbor_value_dup_byte_string(&curVal, &aclCbor, &aclCborLen, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ACL Name Value.");
+                mapLen++;
+            }
+
+            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_DOXM_NAME, &curVal);
+            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+            {
+                cborFindResult = cbor_value_dup_byte_string(&curVal, &doxmCbor, &doxmCborLen, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult,  "Failed Finding DOXM Name Value.");
+                mapLen++;
+            }
+
+            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_PSTAT_NAME, &curVal);
+            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+            {
+                cborFindResult = cbor_value_dup_byte_string(&curVal, &pstatCbor, &pstatCborLen, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PSTAT Name Value.");
+                mapLen++;
+            }
+
+            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_AMACL_NAME, &curVal);
+            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+            {
+                cborFindResult = cbor_value_dup_byte_string(&curVal, &amaclCbor, &amaclCborLen, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding AMACL Name Value.");
+                mapLen++;
+            }
+
+            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_SVC_NAME, &curVal);
+            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+            {
+                cborFindResult = cbor_value_dup_byte_string(&curVal, &svcCbor, &svcCborLen, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SVC Name Value.");
+                mapLen++;
+            }
+
+            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_CRED_NAME, &curVal);
+            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+            {
+                cborFindResult = cbor_value_dup_byte_string(&curVal, &credCbor, &credCborLen, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CRED Name Value.");
+                mapLen++;
+            }
+        }
+
+        {
+            size_t size = aclCborLen + pstatCborLen + doxmCborLen + amaclCborLen + svcCborLen + credCborLen + psSize;
+            // This is arbitrary value that is added to cover the name of the resource, map addition and ending.
+            size += 255;
+
+            outPayload = (uint8_t *)OICCalloc(1, size);
+            VERIFY_NON_NULL(TAG, outPayload, ERROR);
+            cbor_encoder_init(&encoder, outPayload, size, 0);
+
+            CborEncoder secRsrc;
+            cborEncoderResult |= cbor_encoder_create_map(&encoder, &secRsrc, mapLen);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PS Map.");
+
+            if (psPayload)
+            {
+                cborEncoderResult |= cbor_encode_text_string(&secRsrc, rsrcName, strlen(rsrcName));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Value Tag");
+                cborEncoderResult |= cbor_encode_byte_string(&secRsrc, psPayload, psSize);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Value.");
+            }
+
+            if (0 != strcmp(OIC_JSON_ACL_NAME, rsrcName) && aclCborLen > 0)
+            {
+                cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_ACL_NAME, strlen(OIC_JSON_ACL_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ACL Name.");
+                cborEncoderResult |= cbor_encode_byte_string(&secRsrc, aclCbor, aclCborLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ACL Value.");
+            }
+            if (0 != strcmp(OIC_JSON_PSTAT_NAME, rsrcName) && pstatCborLen > 0)
+            {
+                cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_PSTAT_NAME, strlen(OIC_JSON_PSTAT_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PSTAT Name.");
+                cborEncoderResult |= cbor_encode_byte_string(&secRsrc, pstatCbor, pstatCborLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PSTAT Value.");
+            }
+            if (0 != strcmp(OIC_JSON_DOXM_NAME, rsrcName) && doxmCborLen > 0)
+            {
+                cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_DOXM_NAME, strlen(OIC_JSON_DOXM_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Doxm Name.");
+                cborEncoderResult |= cbor_encode_byte_string(&secRsrc, doxmCbor, doxmCborLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Doxm Value.");
+            }
+            if (0 != strcmp(OIC_JSON_AMACL_NAME, rsrcName) && amaclCborLen > 0)
+            {
+                cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_AMACL_NAME, strlen(OIC_JSON_AMACL_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Amacl Name.");
+                cborEncoderResult |= cbor_encode_byte_string(&secRsrc, amaclCbor, amaclCborLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Amacl Value.");
+            }
+            if (0 != strcmp(OIC_JSON_SVC_NAME, rsrcName) && svcCborLen > 0)
+            {
+                cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_SVC_NAME, strlen(OIC_JSON_SVC_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SVC Name.");
+                cborEncoderResult |= cbor_encode_byte_string(&secRsrc, svcCbor, svcCborLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SVC Value.");
+            }
+            if (0 != strcmp(OIC_JSON_CRED_NAME, rsrcName) && credCborLen > 0)
+            {
+                cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_CRED_NAME, strlen(OIC_JSON_CRED_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Name.");
+                cborEncoderResult |= cbor_encode_byte_string(&secRsrc, credCbor, credCborLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Value.");
+            }
+
+            cborEncoderResult |= cbor_encoder_close_container(&encoder, &secRsrc);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Array.");
+
+            cborSize = encoder.ptr - outPayload;
+        }
+    }
+    else if (psPayload)
+    {
+        size_t size = psSize + 255;
         outPayload = (uint8_t *)OICCalloc(1, size);
         VERIFY_NON_NULL(TAG, outPayload, ERROR);
-
-        CborEncoder encoder = { { .ptr = NULL }, .end = 0 };
+        CborEncoder encoder;
         cbor_encoder_init(&encoder, outPayload, size, 0);
-        {
-            CborEncoder map = { {.ptr = NULL }, .end = 0 };
-            CborError cborEncoderResult = cbor_encoder_create_map(&encoder, &map, CborIndefiniteLength);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Creating PS Interface Map.");
-            {
-                bool found = false;
-                CborValue cbor = { .parser = NULL };
-                CborParser parser = { .end = NULL };
-                cbor_parser_init(dbData, size, 0, &parser, &cbor);
 
-                CborValue cborValue = { .parser = NULL };
-                CborError cborFindResult = CborNoError;
-
-                if (cbor_value_is_container(&cbor))
-                {
-                    cborFindResult = cbor_value_enter_container(&cbor, &cborValue);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering PS Interface Map.");
-                }
-
-                while (cbor_value_is_valid(&cborValue))
-                {
-                    char *name = NULL;
-                    size_t len = 0;
-                    cborFindResult = cbor_value_dup_text_string(&cborValue, &name, &len, NULL);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Duplicating Value.");
-                    cborFindResult = cbor_value_advance(&cborValue);
-                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Value.");
-
-                    cborEncoderResult = cbor_encode_text_string(&map, name, strlen(name));
-                    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Copying Text Str Value.");
-
-                    if (strcmp(name, rsrcName) == 0)
-                    {
-                        cborEncoderResult = cbor_encode_byte_string(&map, psPayload, psSize);
-                        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Encoding Byte String.");
-                        found = true;
-                    }
-                    else
-                    {
-                        uint8_t *byteString = NULL;
-                        size_t byteLen = 0;
-                        cborFindResult = cbor_value_dup_byte_string(&cborValue, &byteString, &byteLen, NULL);
-                        VERIFY_SUCCESS(TAG, cborFindResult == CborNoError, ERROR);
-                        if (byteString)
-                        {
-                            cborEncoderResult = cbor_encode_byte_string(&map, byteString, byteLen);
-                            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding value.");
-                        }
-                        OICFree(byteString);
-                    }
-                    OICFree(name);
-                    cbor_value_advance(&cborValue);
-                }
-
-                // This is an exception when the value is not stored in the database.
-                if (!found)
-                {
-                    cborEncoderResult = cbor_encode_text_string(&map, rsrcName, strlen(rsrcName));
-                    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed adding value.");
-                    cborEncoderResult = cbor_encode_byte_string(&map, psPayload, psSize);
-                    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed entering byte string.");
-                }
-            }
-            cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed closing container.");
-        }
+        CborEncoder secRsrc ;
+        cborEncoderResult |= cbor_encoder_create_map(&encoder, &secRsrc, mapLen);
+        cborEncoderResult |= cbor_encode_text_string(&secRsrc, rsrcName, strlen(rsrcName));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Value Tag");
+        cborEncoderResult |= cbor_encode_byte_string(&secRsrc, psPayload, psSize);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Value.");
+        cborEncoderResult |= cbor_encoder_close_container(&encoder, &secRsrc);
         cborSize = encoder.ptr - outPayload;
     }
 
+    if (outPayload && cborSize > 0)
     {
+        OIC_LOG_V(DEBUG, TAG, "Writting in the file.", cborSize);
         OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
         if (ps)
         {
@@ -395,18 +345,21 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
             }
 
         }
+        OIC_LOG_V(DEBUG, TAG, "Writing in the file . %zd", cborSize);
     }
 
+    OIC_LOG(DEBUG,  TAG, "Entering UpdateSecureResourceInPS IN");
 
 exit:
-    if (dbData)
-    {
-        OICFree(dbData);
-    }
-    if (outPayload)
-    {
-        OICFree(outPayload);
-    }
+    OICFree(dbData);
+    OICFree(outPayload);
+
+    OICFree(aclCbor);
+    OICFree(pstatCbor);
+    OICFree(amaclCbor);
+    OICFree(doxmCbor);
+    OICFree(svcCbor);
+    OICFree(credCbor);
 
     return ret;
 }

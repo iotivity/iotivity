@@ -221,7 +221,7 @@ OCDiscoveryPayload* OCDiscoveryPayloadCreate();
 
 // TODO: Remove OCSecurityPayloadCBORCreate once all cbor changes land.
 OCSecurityPayload* OCSecurityPayloadCreate(const char* securityData);
-OCSecurityPayload* OCSecurityPayloadCBORCreate(const uint8_t* securityData);
+OCSecurityPayload* OCSecurityPayloadCBORCreate(const uint8_t* securityData, size_t size);
 void OCSecurityPayloadDestroy(OCSecurityPayload* payload);
 
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,

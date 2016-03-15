@@ -489,9 +489,11 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                 OIC_LOG(INFO, TAG, "Unknown payload type");
                 return OC_STACK_KEEP_TRANSACTION;
             }
+
             OicSecDoxm_t *ptrDoxm = NULL;
             uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData1;
-            OCStackResult res = CBORPayloadToDoxm(payload, 0, &ptrDoxm);
+            size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
+            OCStackResult res = CBORPayloadToDoxm(payload, size, &ptrDoxm);
             if ((NULL == ptrDoxm) && (OC_STACK_OK != res))
             {
                 OIC_LOG(INFO, TAG, "Ignoring malformed CBOR");

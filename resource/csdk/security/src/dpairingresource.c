@@ -459,7 +459,7 @@ exit:
     }
 
     // Send payload to request originator
-    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
+    if(OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL, 0))
     {
         OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandleDpairingPostRequest");
     }
@@ -547,7 +547,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
 exit:
 
     //Send payload to request originator
-    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
+    if(OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL, 0))
     {
         OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandleDpairingPutRequest");
     }
@@ -594,7 +594,7 @@ OCEntityHandlerResult DpairingEntityHandler (OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL);
+                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
         }
     }
 

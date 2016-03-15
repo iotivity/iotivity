@@ -134,6 +134,8 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
     int64_t cborEncoderResult = CborNoError;
     uint8_t *outPayload = NULL;
     size_t cborLen = *size;
+    *size = 0;
+    *payload = NULL;
     OicSecAcl_t *acl = (OicSecAcl_t *)secAcl;
     VERIFY_NON_NULL(TAG, secAcl, ERROR);
 
@@ -143,10 +145,6 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
     {
         cborLen = CborSize;
     }
-    *size = 0;
-    *payload = NULL;
-
-    // Please note: This has been initialized prior to use because of VERIFY macro
 
     outPayload = (uint8_t *)OICCalloc(1, cborLen);
     VERIFY_NON_NULL(TAG, outPayload, ERROR);
@@ -175,40 +173,34 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
 
         // Subject -- Mandatory
         cborEncoderResult |= cbor_encode_text_string(&oicSecAclMap, OIC_JSON_SUBJECT_NAME,
-            sizeof(OIC_JSON_SUBJECT_NAME) - 1);
+            strlen(OIC_JSON_SUBJECT_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Subject Name Tag.");
-        size_t inLen = 0;
-        if (memcmp(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0)
-        {
-            inLen = WILDCARD_SUBJECT_ID_LEN;
-        }
-        else
-        {
-            inLen = sizeof(OicUuid_t);
-        }
+        size_t inLen = (memcmp(&(acl->subject), &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t)) == 0) ?
+            WILDCARD_SUBJECT_ID_LEN : sizeof(OicUuid_t);
         cborEncoderResult |= cbor_encode_byte_string(&oicSecAclMap, (uint8_t *)acl->subject.id, inLen);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Subject Id Value.");
 
         // Resources
-        CborEncoder resources = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
-        cborEncoderResult |= cbor_encode_text_string(&oicSecAclMap, OIC_JSON_RESOURCES_NAME,
-            sizeof(OIC_JSON_RESOURCES_NAME) -1);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Resource Name Tag.");
-        cborEncoderResult |= cbor_encoder_create_array(&oicSecAclMap, &resources, acl->resourcesLen);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Resource Name Array.");
-        for (size_t i = 0; i < acl->resourcesLen; i++)
         {
-            cborEncoderResult |= cbor_encode_text_string(&resources, acl->resources[i],
-                strlen(acl->resources[i]));
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Resource Name Array Value.");
-
+            CborEncoder resources;
+            cborEncoderResult |= cbor_encode_text_string(&oicSecAclMap, OIC_JSON_RESOURCES_NAME,
+                strlen(OIC_JSON_RESOURCES_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Resource Name Tag.");
+            cborEncoderResult |= cbor_encoder_create_array(&oicSecAclMap, &resources, acl->resourcesLen);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Resource Name Array.");
+            for (size_t i = 0; i < acl->resourcesLen; i++)
+            {
+                cborEncoderResult |= cbor_encode_text_string(&resources, acl->resources[i],
+                    strlen(acl->resources[i]));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Resource Name Array Value.");
+            }
+            cborEncoderResult |= cbor_encoder_close_container(&oicSecAclMap, &resources);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Resource Name Array.");
         }
-        cborEncoderResult |= cbor_encoder_close_container(&oicSecAclMap, &resources);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Resource Name Array.");
 
         // Permissions -- Mandatory
         cborEncoderResult |= cbor_encode_text_string(&oicSecAclMap, OIC_JSON_PERMISSION_NAME,
-            sizeof(OIC_JSON_PERMISSION_NAME) -1);
+            strlen(OIC_JSON_PERMISSION_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Permission Name Tag.");
         cborEncoderResult |= cbor_encode_int(&oicSecAclMap, acl->permission);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Permission Name Value.");
@@ -216,9 +208,9 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
         // Period -- Not Mandatory
         if (acl->periods)
         {
-            CborEncoder period = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+            CborEncoder period;
             cborEncoderResult |= cbor_encode_text_string(&oicSecAclMap, OIC_JSON_PERIODS_NAME,
-                sizeof(OIC_JSON_PERIODS_NAME) -1);
+                strlen(OIC_JSON_PERIODS_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Period Tag.");
             cborEncoderResult |= cbor_encoder_create_array(&oicSecAclMap, &period, acl->prdRecrLen);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Period Array.");
@@ -227,7 +219,6 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
                 cborEncoderResult |= cbor_encode_text_string(&period, acl->periods[i],
                     strlen(acl->periods[i]));
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Period Value in Array.");
-
             }
             cborEncoderResult |= cbor_encoder_close_container(&oicSecAclMap, &period);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Period Array.");
@@ -236,12 +227,13 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
         // Recurrence -- Not Mandatory
         if (acl->recurrences)
         {
-            CborEncoder recurrences = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+            CborEncoder recurrences;
             cborEncoderResult |= cbor_encode_text_string(&oicSecAclMap, OIC_JSON_RECURRENCES_NAME,
-                sizeof(OIC_JSON_RECURRENCES_NAME) -1);
+                strlen(OIC_JSON_RECURRENCES_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Recurrence Tag.");
             cborEncoderResult |= cbor_encoder_create_array(&oicSecAclMap, &recurrences, acl->prdRecrLen);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Recurrence Array.");
+
             for (size_t i = 0; i < acl->prdRecrLen; i++)
             {
                 cborEncoderResult |= cbor_encode_text_string(&recurrences, acl->recurrences[i],
@@ -253,17 +245,16 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
         }
 
         cborEncoderResult |= cbor_encode_text_string(&oicSecAclMap, OIC_JSON_OWNERS_NAME,
-            sizeof(OIC_JSON_OWNERS_NAME) - 1);
+            strlen(OIC_JSON_OWNERS_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owner Name.");
-        CborEncoder owners = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        CborEncoder owners;
         cborEncoderResult |= cbor_encoder_create_array(&oicSecAclMap, &owners, acl->ownersLen);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owner Array.");
         for (size_t i = 0; i < acl->ownersLen; i++)
         {
-            cborEncoderResult = cbor_encode_byte_string(&owners, (uint8_t *)acl->owners[i].id,
+            cborEncoderResult |= cbor_encode_byte_string(&owners, (uint8_t *)acl->owners[i].id,
                 sizeof(acl->owners[i].id));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Owner Array Value.");
-
         }
         cborEncoderResult |= cbor_encoder_close_container(&oicSecAclMap, &owners);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Owner Array.");
@@ -275,7 +266,6 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
     }
     cborEncoderResult |= cbor_encoder_close_container(&encoder, &oicSecAclArray);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing ACL Array.");
-
     if (CborNoError == cborEncoderResult)
     {
         *size = encoder.ptr - outPayload;
@@ -319,8 +309,8 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
         return NULL;
     }
 
-    CborValue aclCbor = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
-    CborParser parser = { .end = NULL, .flags = 0 };
+    CborValue aclCbor = { .parser = NULL };
+    CborParser parser = { .end = NULL };
     CborError cborFindResult = CborNoError;
     cbor_parser_init(cborPayload, size, 0, &parser, &aclCbor);
 
@@ -366,10 +356,9 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                 // Resources -- Mandatory
                 if (strcmp(name, OIC_JSON_RESOURCES_NAME) == 0)
                 {
-                    CborValue resources = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                    CborValue resources = { .parser = NULL };
                     cborFindResult = cbor_value_get_array_length(&aclMap, &acl->resourcesLen);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a Rec Array Len Value.");
-
                     cborFindResult = cbor_value_enter_container(&aclMap, &resources);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering a Rec Array.");
 
@@ -396,11 +385,13 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                 // Period -- Not mandatory
                 if (strcmp(name, OIC_JSON_PERIODS_NAME) == 0)
                 {
-                    CborValue period = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                    CborValue period = { .parser = NULL };
                     cborFindResult = cbor_value_get_array_length(&aclMap, &acl->prdRecrLen);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a Period Array Len.");
                     cborFindResult = cbor_value_enter_container(&aclMap, &period);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a Period Array Map.");
+                    acl->periods = (char**)OICCalloc(acl->prdRecrLen, sizeof(char*));
+                    VERIFY_NON_NULL(TAG, acl->periods, ERROR);
                     int i = 0;
                     while (cbor_value_is_text_string(&period))
                     {
@@ -415,9 +406,11 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                 // Recurrence -- Not mandatory
                 if (strcmp(name, OIC_JSON_RECURRENCES_NAME) == 0)
                 {
-                    CborValue recurrences = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                    CborValue recurrences = { .parser = NULL };
                     cborFindResult = cbor_value_enter_container(&aclMap, &recurrences);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Adding Recurrence Array.");
+                    acl->recurrences = (char**)OICCalloc(acl->prdRecrLen, sizeof(char*));
+                    VERIFY_NON_NULL(TAG, acl->recurrences, ERROR);
                     int i = 0;
                     while (cbor_value_is_text_string(&recurrences))
                     {
@@ -432,7 +425,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                 // Owners -- Mandatory
                 if (strcmp(name, OIC_JSON_OWNERS_NAME) == 0)
                 {
-                    CborValue owners = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
+                    CborValue owners = { .parser = NULL };
                     cborFindResult = cbor_value_get_array_length(&aclMap, &acl->ownersLen);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Getting Owner Array Len.");
                     cborFindResult = cbor_value_enter_container(&aclMap, &owners);
@@ -734,7 +727,7 @@ exit:
     ehRet = (payload ? OC_EH_OK : OC_EH_ERROR);
 
     // Send response payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, payload);
+    SendSRMCBORResponse(ehRequest, ehRet, payload, size);
 
     OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__, ehRet);
     return ehRet;
@@ -746,10 +739,11 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
     // Convert CBOR into ACL data and update to SVR buffers. This will also validate the ACL data received.
-    uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData1;;
+    uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData1;
+    size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
     if (payload)
     {
-        OicSecAcl_t *newAcl = CBORPayloadToAcl(payload, CborSize);
+        OicSecAcl_t *newAcl = CBORPayloadToAcl(payload, size);
         if (newAcl)
         {
             // Append the new ACL to existing ACL
@@ -776,7 +770,7 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
     }
 
     // Send payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, NULL);
+    SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
 
     OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__, ehRet);
     return ehRet;
@@ -803,7 +797,7 @@ static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest
 
 exit:
     // Send payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, NULL);
+    SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
 
     return ehRet;
 }
@@ -840,7 +834,7 @@ OCEntityHandlerResult ACLEntityHandler(OCEntityHandlerFlag flag, OCEntityHandler
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL);
+                SendSRMCBORResponse(ehRequest, ehRet, NULL, 0);
         }
     }
 
