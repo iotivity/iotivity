@@ -30,7 +30,7 @@ rviconnect = function(cap,res){
 	                url: svcchain ,
 	                json : true,
 	                method: 'POST',
-	                body: msg
+	                body: message
 	            };
 	            console.log("JSON Body Sent = " + msg);
 	            request(options, function (error, response, body) {
