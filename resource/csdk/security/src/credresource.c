@@ -56,7 +56,11 @@
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
+#ifndef __WITH_X509__
 static const uint8_t CBOR_SIZE = 255;
+#else
+static const uint16_t CBOR_SIZE = 1024;
+#endif
 
 /** Max cbor size payload. */
 static const uint16_t CBOR_MAX_SIZE = 4400;
@@ -147,23 +151,6 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
     int64_t cborEncoderResult = CborNoError;
 
     const OicSecCred_t *cred = credS;
-    size_t mapSize = CRED_MAP_SIZE;
-    if (cred->period)
-    {
-        mapSize++;
-    }
-    if (cred->publicData.data)
-    {
-        mapSize++;
-    }
-    if (cred->privateData.data)
-    {
-        mapSize++;
-    }
-    if (cred->period)
-    {
-        mapSize++;
-    }
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
     VERIFY_NON_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
@@ -174,7 +161,22 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
 
     while (cred)
     {
-        CborEncoder credMap;
+        CborEncoder credMap = { {.ptr = NULL }, .end = 0, .added = 0, .flags = 0 };
+        size_t mapSize = CRED_MAP_SIZE;
+        if (cred->period)
+        {
+            mapSize++;
+        }
+#ifdef __WITH_X509__
+        if (cred->publicData.data)
+        {
+            mapSize++;
+        }
+#endif /* __WITH_X509__ */
+        if (cred->privateData.data)
+        {
+            mapSize++;
+        }
         cborEncoderResult |= cbor_encoder_create_map(&credArray, &credMap, mapSize);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Map");
 
@@ -328,7 +330,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
 
     while (cbor_value_is_valid(&credArray))
     {
-        cred = (OicSecCred_t *) OICCalloc(1, sizeof(*cred));
+        cred = (OicSecCred_t *) OICCalloc(1, sizeof(OicSecCred_t));
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
         //CredId -- Mandatory
@@ -384,22 +386,22 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
         if (CborNoError == cborFindResult && cbor_value_is_byte_string(&credMap))
         {
             cborFindResult = cbor_value_dup_byte_string(&credMap,
-                &cred->privateData.data, &len, NULL);
+                &cred->privateData.data, &cred->privateData.len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Byte Array.");
-            cred->privateData.len = len;
         }
+#ifdef __WITH_X509__
         //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
         cborFindResult = cbor_value_map_find_value(&credArray, OIC_JSON_PUBLICDATA_NAME, &credMap);
         if (CborNoError == cborFindResult && cbor_value_is_byte_string(&credMap))
         {
             if (cred->credType & SIGNED_ASYMMETRIC_KEY)
             {
-                cborFindResult = cbor_value_dup_byte_string(&credMap, &cred->publicData.data, &len,
-                        NULL);
+                cborFindResult = cbor_value_dup_byte_string(&credMap, &cred->publicData.data,
+                &cred->publicData.len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Public Data.");
-                cred->publicData.len = len;
             }
         }
+#endif  //__WITH_X509__
         //Period -- Not Mandatory
         cborFindResult = cbor_value_map_find_value(&credArray, OIC_JSON_PERIOD_NAME, &credMap);
         if (CborNoError == cborFindResult && cbor_value_is_text_string(&credMap))
@@ -444,7 +446,7 @@ exit:
 }
 
 OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t credType,
-                                  const uint8_t * publicData, const uint8_t* privateData,
+                                  const OicSecCert_t * publicData, const OicSecKey_t* privateData,
                                   size_t ownersLen, const OicUuid_t * owners)
 {
     (void)publicData;
@@ -465,23 +467,21 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     cred->credType = credType;
 
 #ifdef __WITH_X509__
-    if (publicData)
+    if (publicData && publicData->data)
     {
-        cred->publicData.data = (uint8_t *)OICCalloc(1, PUBLIC_KEY_SIZE);
+        cred->publicData.data = (uint8_t *)OICCalloc(1, publicData->len);
         VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
-        memcpy(cred->publicData.data, publicData, PUBLIC_KEY_SIZE);
-        cred->publicData.len = PUBLIC_KEY_SIZE;
+        memcpy(cred->publicData.data, publicData->data, publicData->len);
+        cred->publicData.len = publicData->len;
     }
 #endif // __WITH_X509__
 
-    if (privateData)
+    if (privateData && privateData->data)
     {
-//#ifdef __WITH_X509__
-        cred->privateData.data = (uint8_t *)OICCalloc(1, OWNER_PSK_LENGTH_128);
+        cred->privateData.data = (uint8_t *)OICCalloc(1, privateData->len);
         VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
-        memcpy(cred->privateData.data, privateData, OWNER_PSK_LENGTH_128);
-        cred->privateData.len = OWNER_PSK_LENGTH_128;
-//#endif // __WITH_X509__
+        memcpy(cred->privateData.data, privateData->data, privateData->len);
+        cred->privateData.len = privateData->len;
     }
 
     VERIFY_SUCCESS(TAG, ownersLen > 0, ERROR);
@@ -1114,7 +1114,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                         }
 
                         // Copy PSK.
-                        result_length = sizeof(cred->privateData.data);
+                        result_length = cred->privateData.len;
                         memcpy(result, cred->privateData.data, result_length);
                         return result_length;
                     }
@@ -1159,6 +1159,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
     }
 
     uint8_t privData[OWNER_PSK_LENGTH_128] = {0,};
+    OicSecKey_t privKey = {privData, OWNER_PSK_LENGTH_128};
     OicSecCred_t* cred = NULL;
     int dtlsRes = DeriveCryptoKeyFromPassword((const unsigned char *)pin, pinSize, owners->id,
                                               UUID_LENGTH, PBKDF_ITERATIONS,
@@ -1166,7 +1167,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
     VERIFY_SUCCESS(TAG, (0 == dtlsRes) , ERROR);
 
     cred = GenerateCredential(tmpSubject, credType, NULL,
-                              privData, ownersLen, owners);
+                              &privKey, ownersLen, owners);
     if(NULL == cred)
     {
         OIC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to generate credential");
@@ -1196,15 +1197,7 @@ exit:
 #define CERTIFICATE ("x5c")
 #define PRIVATE_KEY ("d")
 
-static void WriteCertPrefix(uint8_t *prefix, uint32_t certLen)
-{
-    for (size_t i = 0; i < CERT_LEN_PREFIX; ++i)
-    {
-        prefix[i] = (certLen >> (BYTE_SIZE * (CERT_LEN_PREFIX - 1 - i))) & 0xFF;
-    }
-}
-
-static uint32_t ParseCertPrefix(uint8_t *prefix)
+static uint32_t parseCertPrefix(uint8_t *prefix)
 {
     uint32_t res = 0;
     if (NULL != prefix)
@@ -1217,30 +1210,16 @@ static uint32_t ParseCertPrefix(uint8_t *prefix)
     return res;
 }
 
-static uint32_t appendCert2Chain(uint8_t *appendPoint, uint8_t *cert, size_t len, uint32_t max_len)
-{
-    uint32_t ret = 0;
-    VERIFY_NON_NULL(TAG, appendPoint, ERROR);
-    VERIFY_NON_NULL(TAG, cert, ERROR);
-
-    memcpy(appendPoint + CERT_LEN_PREFIX, cert, max_len - CERT_LEN_PREFIX);
-    WriteCertPrefix(appendPoint, len);
-
-    ret = len + CERT_LEN_PREFIX;
-exit:
-    return ret;
-}
-
 static OCStackResult GetCAPublicKeyData(CADtlsX509Creds_t *credInfo)
 {
     OCStackResult ret = OC_STACK_ERROR;
     uint8_t *ccPtr = credInfo->certificateChain;
     for (uint8_t i = 0; i < credInfo->chainLen - 1; ++i)
     {
-        ccPtr += CERT_LEN_PREFIX + ParseCertPrefix(ccPtr);
+        ccPtr += CERT_LEN_PREFIX + parseCertPrefix(ccPtr);
     }
 
-    ByteArray cert = { .data = ccPtr + CERT_LEN_PREFIX, .len = ParseCertPrefix(ccPtr) };
+    ByteArray cert = { .data = ccPtr + CERT_LEN_PREFIX, .len = parseCertPrefix(ccPtr) };
     CertificateX509 certStruct;
 
     VERIFY_SUCCESS(TAG, PKI_SUCCESS == DecodeCertificate(cert, &certStruct), ERROR);
@@ -1268,42 +1247,14 @@ int GetDtlsX509Credentials(CADtlsX509Creds_t *credInfo)
     LL_SEARCH_SCALAR(gCred, cred, credType, SIGNED_ASYMMETRIC_KEY);
     VERIFY_NON_NULL(TAG, cred, ERROR);
 
-    CborValue credCbor = { .parser = NULL };
-    CborParser parser = { .end = NULL };
-    CborError cborFindResult = CborNoError;
-    uint8_t *cborPayload = cred->publicData.data;
-    int cborLen = cred->publicData.len;
-    cbor_parser_init(cborPayload, cborLen, 0, &parser, &credCbor);
-    CborValue certMap;
-    cborFindResult = cbor_value_enter_container(&credCbor, &certMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Cred Map.");
-
-    CborValue certs;
-    cborFindResult = cbor_value_map_find_value(&certs, CERTIFICATE, &certs);
-    if (cbor_value_is_array(&certs))
+    if (cred->publicData.len > MAX_CERT_MESSAGE_LEN || cred->privateData.len > PRIVATE_KEY_SIZE)
     {
-        cborFindResult = cbor_value_get_array_length(&certs, (size_t *)&credInfo->chainLen);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Chain Len.");
-        CborValue cert;
-        cborFindResult = cbor_value_enter_container(&certs, &cert);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Container.");
-        size_t len = 0;
-        size_t certLen = 0;
-        uint8_t *val = NULL;
-        while (cbor_value_is_byte_string(&cert))
-        {
-            cborFindResult = cbor_value_dup_byte_string(&cert, &val, &certLen, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding a Period Array Value.");
-            cborFindResult = cbor_value_advance(&cert);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing a Period Array.");
-            uint32_t appendedLen = appendCert2Chain(credInfo->certificateChain + len, val, certLen, MAX_CERT_MESSAGE_LEN - len);
-            len += appendedLen;
-        }
-        credInfo->certificateChainLen = len;
-        GetCAPublicKeyData(credInfo);
+        goto exit;
     }
-    memcpy(credInfo->devicePrivateKey, cred->privateData.data, PRIVATE_KEY_SIZE);
-
+    memcpy(credInfo->certificateChain, cred->publicData.data, cred->publicData.len);
+    memcpy(credInfo->devicePrivateKey, cred->privateData.data, cred->privateData.len);
+    credInfo->certificateChainLen = parseCertPrefix(cred->publicData.data);
+    GetCAPublicKeyData(credInfo);
     ret = 0;
 exit:
 

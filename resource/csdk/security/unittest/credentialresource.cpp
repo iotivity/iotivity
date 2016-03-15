@@ -108,10 +108,12 @@ static void printCred(const OicSecCred_t * cred)
         {
             OIC_LOG_V(INFO, TAG, "cred->privateData.data = %s", credTmp1->privateData.data);
         }
+#ifdef __WITH_X509__
         if(credTmp1->publicData.data)
         {
            OIC_LOG_V(INFO, TAG, "cred->publicData.data = %s", credTmp1->publicData.data);
         }
+#endif /* __WITH_X509__ */
         OIC_LOG_V(INFO, TAG, "cred->ownersLen = %zu", credTmp1->ownersLen);
         for(size_t i = 0; i < cred->ownersLen; i++)
         {
@@ -307,19 +309,17 @@ TEST(CredResourceTest, GenerateCredentialValidInput)
     OicUuid_t subject = {{0}};
     OICStrcpy((char *)subject.id, strlen("subject11"), "subject11");
 
-    char privateKey[] = "My private Key11";
-    uint8_t *pk = (uint8_t *)OICCalloc(1, strlen(privateKey));
-    OICStrcpy((char *)pk, sizeof(pk), privateKey);
+    uint8_t privateKey[] = "My private Key11";
+    OicSecKey_t key = {privateKey, sizeof(privateKey)};
 
     OicSecCred_t * cred  = NULL;
 
     cred = GenerateCredential(&subject, SYMMETRIC_PAIR_WISE_KEY, NULL,
-                              pk, 1, owners);
+                              &key, 1, owners);
     printCred(cred);
 
     ASSERT_TRUE(NULL != cred);
     DeleteCredList(cred);
-    OICFree(pk);
 }
 
 TEST(CredResourceTest, GenerateAndAddCredentialValidInput)
@@ -330,15 +330,14 @@ TEST(CredResourceTest, GenerateAndAddCredentialValidInput)
     OicUuid_t subject = {{0}};
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject11");
 
-    char privateKey[] = "My private Key11";
-    uint8_t *pk = (uint8_t *)OICCalloc(1, strlen(privateKey));
-    OICStrcpy((char *)pk, sizeof(pk), privateKey);
+    uint8_t privateKey[] = "My private Key11";
+    OicSecKey_t key = {privateKey, sizeof(privateKey)};
 
     OicSecCred_t *cred1  = NULL;
     OicSecCred_t *headCred = NULL;
 
     cred1 = GenerateCredential(&subject, SYMMETRIC_PAIR_WISE_KEY, NULL,
-                               pk, 1, owners);
+                               &key, 1, owners);
 
     EXPECT_EQ(OC_STACK_OK, AddCredential(cred1));
     headCred = cred1;
@@ -346,13 +345,13 @@ TEST(CredResourceTest, GenerateAndAddCredentialValidInput)
     OICStrcpy((char *)owners[0].id, sizeof(owners[0].id), "ownersId22");
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject22");
     cred1 = GenerateCredential(&subject, SYMMETRIC_PAIR_WISE_KEY, NULL,
-                               pk, 1, owners);
+                               &key, 1, owners);
     EXPECT_EQ(OC_STACK_OK, AddCredential(cred1));
 
     OICStrcpy((char *)owners[0].id, sizeof(owners[0].id), "ownersId33");
     OICStrcpy((char *)subject.id, sizeof(subject.id), "subject33");
     cred1 = GenerateCredential(&subject, SYMMETRIC_PAIR_WISE_KEY, NULL,
-                                pk, 1, owners);
+                               &key, 1, owners);
     EXPECT_EQ(OC_STACK_OK, AddCredential(cred1));
 
     const OicSecCred_t* credList = GetCredResourceData(&headCred->subject);
@@ -360,7 +359,6 @@ TEST(CredResourceTest, GenerateAndAddCredentialValidInput)
     printCred(credList);
 
     DeleteCredList(headCred);
-    OICFree(pk);
 }
 
 #if 0

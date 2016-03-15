@@ -42,9 +42,10 @@ OCStackResult UpdateCRLResource(const OicSecCrl_t *crl);
  *
  * @note Caller responsible for resulting string memory (use OICFree to remove it).
  *
- * @return encoded CRL with base64 format. NULL if error occured (e.g. CRL did not set).
+ * @return NULL if error occured (e.g. CRL did not set).
  */
-char* GetBase64CRL();
+uint8_t* GetCrl();
+
 /**
  * This function get encoded with DER CRL from SRM.
  *
@@ -53,18 +54,33 @@ char* GetBase64CRL();
 void  GetDerCrl(ByteArray crlArray);
 
 /**
- * This function get CRL from SRM.
+ * This function converts CRL to CBOR
  *
  * @param crl is a pointer to buffer that contains crl. Shoul be not NULL. Buffer
  * will be allocated by the function and content of *crl will be ignored.
- * @param outlen is a pointer to length of the CRL buffer. Should be not NULL.
+ * @param payload is the converted cbor value.
+ * @param size is a pointer to length of the CRL buffer. Should be not NULL.
  *
  * @note Caller responsible for crl buffer memory (use OICFree to free it).
  *
  * @return ::OC_STACK_OK if success, otherwise some error value.
  */
-OicSecCrl_t * JSONToCrlBin(const char * jsonStr);
+OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t *size);
 
+/**
+ * This function converts CBOR to CRL
+ *
+ * will be allocated by the function and content of *crl will be ignored.
+ * @param cborPayload is the cbor vlaue
+ * @param size is a pointer to length of the CRL buffer. Should be not NULL.
+ * @param crl is a pointer to buffer that contains crl. Shoul be not NULL. Buffer
+ *
+ * @note Caller responsible for crl buffer memory (use OICFree to free it).
+ *
+ * @return ::OC_STACK_OK if success, otherwise some error value.
+ */
+OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
+                               OicSecCrl_t **secCrl);
 /**
  * Initialize CRL resource by loading data from persistent storage.
  *

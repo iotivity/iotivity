@@ -245,7 +245,7 @@ typedef enum
     OIC_OXM_COUNT
 }OicSecOxm_t;
 
-typedef struct OicSecJwk OicSecJwk_t;
+typedef struct OicSecKey OicSecKey_t;
 
 typedef struct OicSecPstat OicSecPstat_t;
 
@@ -262,6 +262,9 @@ typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
 
 #ifdef __WITH_X509__
 typedef struct OicSecCrl OicSecCrl_t;
+typedef ByteArray OicSecCert_t;
+#else
+typedef void OicSecCert_t;
 #endif /* __WITH_X509__ */
 
 /**
@@ -285,7 +288,7 @@ struct OicUuid
  * See JSON Web Key (JWK)  draft-ietf-jose-json-web-key-41
  */
 #define JWK_LENGTH 256/8 // 256 bit key length
-struct OicSecJwk
+struct OicSecKey
 {
     uint8_t                *data;
     size_t                  len;
@@ -350,8 +353,10 @@ struct OicSecCred
     //size_t              roleIdsLen;     // the number of elts in RoleIds
     //OicSecRole_t        *roleIds;       // 2:R:M:N:oic.sec.role
     OicSecCredType_t    credType;       // 3:R:S:Y:oic.sec.credtype
-    OicSecJwk_t         publicData;     // 5:R:S:N:oic.sec.jwk
-    OicSecJwk_t         privateData;    // 6:R:S:N:oic.sec.jwk
+#ifdef __WITH_X509__
+    OicSecCert_t        publicData;     // chain of certificates
+#endif /* __WITH_X509__ */
+    OicSecKey_t         privateData;    // 6:R:S:N:oic.sec.key
     char                *period;        // 7:R:S:N:String
     size_t              ownersLen;      // the number of elts in Owners
     OicUuid_t           *owners;        // 8:R:M:Y:oic.uuid

@@ -423,6 +423,7 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     }
 
     uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {0};
+    OicSecKey_t ownerKey = {ownerPSK, OWNER_PSK_LENGTH_128};
 
     //Generating OwnerPSK
     CAResult_t pskRet = CAGenerateOwnerPSK(&endpoint,
@@ -441,7 +442,7 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
 
         OicSecCred_t *cred = GenerateCredential(&selectedDeviceInfo->doxm->deviceID,
                 SYMMETRIC_PAIR_WISE_KEY, NULL,
-                ownerPSK, ownLen, &ptDeviceID);
+                &ownerKey, ownLen, &ptDeviceID);
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
         res = AddCredential(cred);
@@ -926,6 +927,11 @@ static OCStackResult PutOwnerCredential(OTMContext_t* otmCtx)
 
         //Fill private data as empty string
         newCredential.privateData.data = NULL;
+        newCredential.privateData.len = 0;
+#ifdef __WITH_X509__
+        newCredential.publicData.data = NULL;
+        newCredential.publicData.len = 0;
+#endif
 
         //Send owner credential to new device : PUT /oic/sec/cred [ owner credential ]
         if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData1, &secPayload->payloadSize))

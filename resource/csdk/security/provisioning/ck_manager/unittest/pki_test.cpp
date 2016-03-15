@@ -43,7 +43,7 @@
 #define READ_WRITE_BLOCK_N 1ul
 #define N_LENGTH_BYTES 3
 
-const char *CKMI_JSON_FILE_NAME = "CKMInfo.json";
+const char *CKMI_PS_FILE_NAME = "CKMInfo.dat";
 
 #define CRL_DEFAULT_CRL_ID           1
 #define CRL_DEFAULT_THIS_UPDATE     "150101000000Z"
@@ -57,7 +57,7 @@ OCPersistentStorage ps = { NULL, NULL, NULL, NULL, NULL};
 
 FILE* ckm_fopen(const char * /*path*/, const char *mode)
 {
-    return fopen(CKMI_JSON_FILE_NAME, mode);
+    return fopen(CKMI_PS_FILE_NAME, mode);
 }
 
 void SetPersistentHandler(OCPersistentStorage *ps)
@@ -977,7 +977,7 @@ TEST_F(PKITest, CRLSetGet)
     defaultCrl->ThisUpdate.len = strlen(CRL_DEFAULT_THIS_UPDATE);
     EXPECT_EQ(OC_STACK_OK, UpdateCRLResource(defaultCrl));
 
-    EXPECT_NE((void *)NULL, GetBase64CRL());
+    EXPECT_NE((void *)NULL, GetCrl());
     OICFree(defaultCrl);
 
 

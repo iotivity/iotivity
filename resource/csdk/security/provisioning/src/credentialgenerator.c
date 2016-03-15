@@ -31,19 +31,14 @@
 #include "securevirtualresourcetypes.h"
 #ifdef __WITH_X509__
 #include "ck_manager.h"
+//Certificate-related functions
+#define CERT_LEN_PREFIX (3)
+#define BYTE_SIZE (8) //bits
 
 #define CHAIN_LEN (2) //TODO: replace by external define or a runtime value
 #endif  //__WITH_X509__
 
 #define TAG "SRPAPI-CG"
-
-static const char OIC_JSON_CRV_NAME[] = "crv";
-static const char OIC_JSON_KTY_NAME[] = "kty";
-static const char OIC_JSON_CERTIFICATE_NAME[] = "x5c";
-static const char OIC_JSON_D_NAME[] = "d";
-static const char kty[] = "EC";
-static const char crv[] = "P-256";
-static const uint8_t CertMapSize = 3;
 
 OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySize,
         const OicUuid_t *ptDeviceId, const OicUuid_t *firstDeviceId,
@@ -68,15 +63,16 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
 
     uint8_t *privData = (uint8_t *)OICCalloc(privDataKeySize, sizeof(uint8_t));
     VERIFY_NON_NULL(TAG, privData, ERROR);
+    OicSecKey_t privKey = {privData, keySize};
 
     OCFillRandomMem(privData, privDataKeySize);
 
     // TODO: currently owner array is 1. only provisioning tool's id.
-    tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, privData, 1, ptDeviceId);
+    tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, &privKey, 1, ptDeviceId);
     VERIFY_NON_NULL(TAG, tempFirstCred, ERROR);
 
     // TODO: currently owner array is 1. only provisioning tool's id.
-    tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, privData, 1, ptDeviceId);
+    tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, &privKey, 1, ptDeviceId);
     VERIFY_NON_NULL(TAG, tempSecondCred, ERROR);
 
     *firstCred = tempFirstCred;
@@ -98,145 +94,24 @@ exit:
 }
 
 #ifdef __WITH_X509__
-/**
- * Function to compose JSON Web Key (JWK) string from a certificate and a public key.
- *
- * @param certificateChain    Array of Base64 encoded certificate strings.
- * @param chainLength         Number of the certificates in certificateChain.
- * @param payload Valid JWK CBOR on success, or NULL on fail.
-
- */
-static OCStackResult CreateCertificatePublicJWK(const char *const *certificateChain,
-       const size_t chainLength, uint8_t **cborPayload, size_t *size)
+static void writeCertPrefix(uint8_t *prefix, uint32_t certLen)
 {
-    OCStackResult ret = OC_STACK_ERROR;
-    *cborPayload = NULL;
-    *size = 0;
-
-    if (NULL == certificateChain || chainLength == 0)
+    for (size_t i = 0; i < CERT_LEN_PREFIX; ++i)
     {
-        OIC_LOG(ERROR, TAG, "Error CreateCertificatePublicJWK: Invalid params");
-        return OC_STACK_INVALID_PARAM;
+        prefix[i] = (certLen >> (BYTE_SIZE * (CERT_LEN_PREFIX - 1 - i))) & 0xFF;
     }
-
-    size_t certChainSize = 0;
-    for (size_t i = 0; i < chainLength; ++i)
-    {
-        if (NULL != certificateChain[i])
-        {
-            certChainSize += strlen(certificateChain[i]);
-        }
-        else
-        {
-            OIC_LOG(ERROR, TAG, "Error CreateCertificatePublicJWK: Invalid params");
-            return OC_STACK_INVALID_PARAM;
-        }
-    }
-
-    // cborArbitraryLen is a value to conver field names and cbor map, cbor array.
-    size_t cborArbitraryLen = 255;
-    size_t cborLen = certChainSize + cborArbitraryLen;
-    int64_t cborEncoderResult = CborNoError;
-    CborEncoder encoder = { .end = 0 };
-    uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
-    cbor_encoder_init(&encoder, outPayload, cborLen, 0);
-
-    CborEncoder credMap = { .end = 0 };
-    cborEncoderResult |= cbor_encoder_create_map(&encoder, &credMap, CertMapSize);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Map.");
-
-    cborEncoderResult |= cbor_encode_text_string(&credMap, OIC_JSON_KTY_NAME,
-            strlen(OIC_JSON_KTY_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ");
-    cborEncoderResult |= cbor_encode_text_string(&credMap, kty, strlen(kty));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ");
-
-    cborEncoderResult |= cbor_encode_text_string(&credMap, OIC_JSON_CRV_NAME,
-            strlen(OIC_JSON_CRV_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ");
-    cborEncoderResult |= cbor_encode_text_string(&credMap, crv, strlen(crv));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ");
-
-    cborEncoderResult |= cbor_encode_text_string(&credMap, OIC_JSON_CERTIFICATE_NAME,
-            strlen(OIC_JSON_CERTIFICATE_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Certificate Name.");
-    CborEncoder certs = { {.ptr = NULL }, .end = 0 };
-    cborEncoderResult |= cbor_encoder_create_array(&credMap, &certs, chainLength);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Certificate Array.");
-    for (size_t i = 0; i < chainLength; i++)
-    {
-        cborEncoderResult |= cbor_encode_byte_string(&certs, (uint8_t *)certificateChain[i], strlen(certificateChain[i]));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Certificate Chain.");
-    }
-    cborEncoderResult |= cbor_encoder_close_container(&credMap, &certs);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Certificate Chain.");
-
-    cborEncoderResult |= cbor_encoder_close_container(&encoder, &credMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Cred Map.");
-
-    *cborPayload = outPayload;
-    *size = encoder.ptr - outPayload;
-    ret = OC_STACK_OK;
-
-exit:
-    return ret;
 }
 
-/**
- * Function to compose JWK string from a private key.
- *
- * @param privateKey to be converted to CBOR.
- * @ Valid JWK string on success, or NULL on fail.
- */
-OCStackResult CreateCertificatePrivateJWK(const char *privateKey, uint8_t **cborPayload,
-        size_t *size)
+static uint32_t appendCert2Chain(uint8_t *appendPoint, uint8_t *cert, size_t len)
 {
-    *cborPayload = NULL;
-    *size = 0;
-    OCStackResult ret = OC_STACK_INVALID_PARAM;
-    VERIFY_NON_NULL(TAG, privateKey, ERROR);
+    uint32_t ret = 0;
+    VERIFY_NON_NULL(TAG, appendPoint, ERROR);
+    VERIFY_NON_NULL(TAG, cert, ERROR);
 
-    // cborArbitraryLen is a value to conver field names and cbor map, cbor array.
-    size_t cborArbitraryLen = 255;
-    size_t cborLen = strlen(privateKey) + cborArbitraryLen;
-    int64_t cborEncoderResult = CborNoError;
-    ret = OC_STACK_ERROR;
-    uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    memcpy(appendPoint + CERT_LEN_PREFIX, cert, len);
+    writeCertPrefix(appendPoint, len);
 
-    CborEncoder encoder = { .end = 0 };
-    cbor_encoder_init(&encoder, outPayload, cborLen, 0);
-
-    CborEncoder credMap = { .end = 0 };
-    cborEncoderResult |= cbor_encoder_create_map(&encoder, &credMap, 3);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ");
-
-    cborEncoderResult |= cbor_encode_text_string(&credMap, OIC_JSON_KTY_NAME,
-            strlen(OIC_JSON_KTY_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ");
-    cborEncoderResult |= cbor_encode_text_string(&credMap, kty, strlen(kty));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ");
-
-    cborEncoderResult |= cbor_encode_text_string(&credMap, OIC_JSON_CRV_NAME,
-            strlen(OIC_JSON_CRV_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ");
-    cborEncoderResult |= cbor_encode_text_string(&credMap, crv, strlen(crv));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ");
-
-    cborEncoderResult |= cbor_encode_text_string(&credMap, OIC_JSON_D_NAME,
-            strlen(OIC_JSON_D_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding D tag.");
-    cborEncoderResult |= cbor_encode_byte_string(&credMap, (uint8_t *)privateKey, strlen(privateKey));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding D Value.");
-
-    cborEncoderResult |= cbor_encoder_close_container(&encoder, &credMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Cred Map.");
-
-    *cborPayload = outPayload;
-    *size = encoder.ptr - outPayload;
-    ret = OC_STACK_OK;
-
+    ret = len + CERT_LEN_PREFIX;
 exit:
     return ret;
 }
@@ -250,15 +125,15 @@ exit:
  * @param[out]  privKey             Pointer to Base64 encoded private key.
  * @return  OC_STACK_OK on success
  */
-static OCStackResult GenerateCertificateAndKeys(const OicUuid_t * subject, char *** const certificateChain,
-        size_t * const chainLength, char ** const privKey)
+static OCStackResult GenerateCertificateAndKeys(const OicUuid_t * subject, OicSecCert_t * certificateChain,
+        OicSecKey_t * privKey)
 {
-    if (NULL == subject || NULL == certificateChain || NULL == chainLength || NULL == privKey)
+    if (NULL == subject || NULL == certificateChain || NULL == privKey)
     {
         return  OC_STACK_INVALID_PARAM;
     }
-    *certificateChain = NULL;
-    *privKey     = NULL;
+    certificateChain->data = NULL;
+    privKey->data = NULL;
 
     ByteArray pubKeyBA  = BYTE_ARRAY_INITIALIZER;
     ByteArray privKeyBA = BYTE_ARRAY_INITIALIZER;
@@ -293,79 +168,48 @@ static OCStackResult GenerateCertificateAndKeys(const OicUuid_t * subject, char 
         return OC_STACK_ERROR;
     }
 
-    char privB64buf[B64ENCODE_OUT_SAFESIZE(PRIVATE_KEY_SIZE) + 1] = {0};
-    uint32_t privB64len = 0;
-    if (B64_OK != b64Encode(privKeyBA.data,  privKeyBA.len, privB64buf,
-                             B64ENCODE_OUT_SAFESIZE(PRIVATE_KEY_SIZE) + 1, &privB64len))
-    {
-        OIC_LOG(ERROR, TAG, "Error while encoding key");
-        return OC_STACK_ERROR;
-    }
-
-    if (PKI_SUCCESS != GetCAChain(chainLength , cert + 1))
+    uint8_t numCert = 0;
+    if (PKI_SUCCESS != GetCAChain(&numCert , cert + 1))
     {
         OIC_LOG(ERROR, TAG, "Error getting CA certificate chain.");
         return OC_STACK_ERROR;
     }
 
-    ++(*chainLength);
-    *certificateChain = (char **)OICMalloc(sizeof(char *) * (*chainLength));
-
-    OCStackResult ret = OC_STACK_NO_MEMORY;
-    if (NULL == *certificateChain)
+    numCert ++;
+    uint32_t len = 0;
+    for (size_t i = 0; i < numCert; ++i)
     {
-        goto memclean;
-    }
-
-
-    for (size_t i = 0; i < *chainLength; ++i)
-    {
-        (*certificateChain)[i] = NULL;
-
-        char certB64buf[B64ENCODE_OUT_SAFESIZE(ISSUER_MAX_CERT_SIZE) + 1] = {0};
-        uint32_t certB64len = 0;
-        if (B64_OK != b64Encode(cert[i].data, cert[i].len, certB64buf,
-                                B64ENCODE_OUT_SAFESIZE(ISSUER_MAX_CERT_SIZE) + 1, &certB64len))
-        {
-            OIC_LOG(ERROR, TAG, "Error while encoding certificate");
-            ret = OC_STACK_ERROR;
-            goto memclean;
-        }
-
-        (*certificateChain)[i] = (char *) OICMalloc(certB64len + 1);
-        if (NULL == (*certificateChain)[i])
-        {
-            goto memclean;
-        }
-
-        memcpy((*certificateChain)[i], certB64buf, certB64len + 1);
-    }
-
-
-    *privKey     = (char *)OICMalloc(privB64len + 1);
-
-    if (NULL == *privKey)
-    {
-memclean:
-        if (NULL != *certificateChain)
-        {
-            for (size_t i = 0; i < *chainLength; ++i)
-            {
-                OICFree((*certificateChain)[i]);
-            }
-        }
-        OICFree(*certificateChain);
-        *certificateChain = NULL;
-        *privKey     = NULL;
-        *chainLength = 0;
-        if (OC_STACK_NO_MEMORY == ret)
+        certificateChain->data = (uint8_t *) OICRealloc(certificateChain->data, len + cert[i].len + CERT_LEN_PREFIX);
+        if (NULL == certificateChain->data)
         {
             OIC_LOG(ERROR, TAG, "Error while memory allocation");
+            return OC_STACK_ERROR;
         }
-        return ret;
-    }
 
-    memcpy(*privKey, privB64buf, privB64len + 1);
+        uint32_t appendedLen = appendCert2Chain(certificateChain->data + len, cert[i].data,
+                                              cert[i].len);
+        //TODO function check len
+        if (0 == appendedLen)
+        {
+            OIC_LOG(ERROR, TAG, "Error while certifiacate chain creation.");
+            OICFree(certificateChain->data);
+            certificateChain->len = 0;
+            return OC_STACK_ERROR;
+        }
+        len += appendedLen;
+    }
+    certificateChain->len = len;
+    privKey->data = (uint8_t*) OICMalloc(PRIVATE_KEY_SIZE);
+    if (NULL == privKey->data)
+    {
+        OIC_LOG(ERROR, TAG, "Error while memory allocation");
+        OICFree(certificateChain->data);
+        certificateChain->len = 0;
+        privKey->len = 0;
+        return OC_STACK_ERROR;
+    }
+    memcpy(privKey->data, privKeyData, PRIVATE_KEY_SIZE);
+    privKey->len = PRIVATE_KEY_SIZE;
 
     return OC_STACK_OK;
 }
@@ -377,52 +221,16 @@ OCStackResult PMGenerateCertificateCredentials(const OicUuid_t *ptDeviceId,
     {
         return OC_STACK_INVALID_PARAM;
     }
-    char **certificateChain = NULL;
-    char *privKey = NULL;
-    size_t certChainLen = 0;
-    if (OC_STACK_OK != GenerateCertificateAndKeys(deviceId, &certificateChain,
-            &certChainLen, &privKey))
+    OicSecCert_t certificateChain;
+    OicSecKey_t privKey;
+    if (OC_STACK_OK != GenerateCertificateAndKeys(deviceId, &certificateChain, &privKey))
     {
         OIC_LOG(ERROR, TAG, "Error while generating credential data.");
         return OC_STACK_ERROR;
     }
 
-    uint8_t *publicJWK = NULL;
-    size_t len = 0;
-    if (OC_STACK_OK == CreateCertificatePublicJWK(certificateChain, certChainLen, &publicJWK, &len))
-    {
-
-    }
-    uint8_t *privateJWK = NULL;
-    size_t len1 = 0;
-    if (OC_STACK_OK == CreateCertificatePrivateJWK(privKey, &privateJWK, &len1))
-    {
-
-    }
-    for (size_t i = 0; i < certChainLen; ++i)
-    {
-        OICFree(certificateChain[i]);
-    }
-    OICFree(certificateChain);
-    OICFree(privKey);
-    if (NULL == publicJWK || NULL == privateJWK)
-    {
-        OICFree(publicJWK);
-        OICFree(privateJWK);
-        OIC_LOG(ERROR, TAG, "Error while converting keys to JWK format.");
-        return OC_STACK_ERROR;
-    }
-
-    OicSecCred_t *tempCred =  GenerateCredential(deviceId, SIGNED_ASYMMETRIC_KEY, publicJWK,
-                              privateJWK, 1, ptDeviceId);
-    OICFree(publicJWK);
-    OICFree(privateJWK);
-    if (NULL == tempCred)
-    {
-        OIC_LOG(ERROR, TAG, "Error while generating credential.");
-        return OC_STACK_ERROR;
-    }
-    *cred = tempCred;
+    *cred = GenerateCredential(deviceId, SIGNED_ASYMMETRIC_KEY, &certificateChain,
+                              &privKey, 1, ptDeviceId);
     return OC_STACK_OK;
 }
 #endif // __WITH_X509__

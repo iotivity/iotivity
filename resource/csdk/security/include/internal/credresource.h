@@ -83,7 +83,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
 
  */
 OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t credType,
-                     const uint8_t * publicData, const uint8_t * privateData,
+                     const OicSecCert_t * publicData, const OicSecKey_t * privateData,
                      size_t ownersLen, const OicUuid_t * owners);
 
 /**

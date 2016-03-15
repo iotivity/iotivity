@@ -737,16 +737,14 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 }
 #endif // __WITH_X509__
             }
-
+#ifdef __WITH_X509__
             //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PUBLICDATA_NAME);
-#ifdef __WITH_X509__
             if (cred->credType & SIGNED_ASYMMETRIC_KEY)
             {
                 VERIFY_NON_NULL(TAG, jsonObj, ERROR);
                 VERIFY_SUCCESS(TAG, cJSON_Object == jsonObj->type, ERROR);
             }
-#endif //  __WITH_X509__
             if (NULL != jsonObj)
             {
                 if (cJSON_String == jsonObj->type)
@@ -756,15 +754,13 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                     VERIFY_NON_NULL(TAG, (cred->publicData.data), ERROR);
                     memcpy(cred->publicData.data, jsonObj->valuestring, jsonObjLen);
                 }
-#ifdef __WITH_X509__
                 else if (SIGNED_ASYMMETRIC_KEY == cred->credType && cJSON_Object == jsonObj->type)
                 {
                     cred->publicData.data = cJSON_PrintUnformatted(jsonObj);
                     VERIFY_NON_NULL(TAG, (cred->publicData.data), ERROR);
                 }
-#endif //  __WITH_X509__
             }
-
+#endif //  __WITH_X509__
             //Period -- Not Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PERIOD_NAME);
             if(jsonObj && cJSON_String == jsonObj->type)

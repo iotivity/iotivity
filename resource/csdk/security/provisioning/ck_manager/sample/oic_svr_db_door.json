@@ -42,6 +42,7 @@
 		"oxmsel": 0,
 		"sct": 1,
 		"owned": false,
-		"deviceid":	"ZG9vckRldmljZVVVSUQwMA=="
+		"deviceid":	"ZG9vckRldmljZVVVSUQwMA==",
+		"dpc": true
 	}
 }
