@@ -65,7 +65,7 @@ OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t 
     *payload = NULL;
     *size = 0;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size);;
+    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size);
 }
 
 OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM)
