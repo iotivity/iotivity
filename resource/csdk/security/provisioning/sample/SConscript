@@ -23,6 +23,8 @@ Import('env')
 
 provisioning_env = env.Clone()
 
+target_os = env.get('TARGET_OS')
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -60,19 +62,17 @@ if env.get('DTLS_WITH_X509') == '1':
 	provisioning_env.AppendUnique(LIBS = ['asn1'])
 provisioning_env.ParseConfig('pkg-config --libs glib-2.0');
 
-provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
 ######################################################################
 # Source files and Targets
 ######################################################################
 
-provisioningclient = provisioning_env.Program('provisioningclient', 'provisioningclient.c')
-sampleserver_justworks = provisioning_env.Program('sampleserver_justworks', 'sampleserver_justworks.cpp')
-sampleserver_randompin = provisioning_env.Program('sampleserver_randompin', 'sampleserver_randompin.cpp')
-
 src_dir = provisioning_env.get('SRC_DIR')
 sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sample/'
 sec_provisioning_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/sample/'
+
+provisioningclient = provisioning_env.Program('provisioningclient', 'provisioningclient.c')
+sampleserver_justworks = provisioning_env.Program('sampleserver_justworks', 'sampleserver_justworks.cpp')
+sampleserver_randompin = provisioning_env.Program('sampleserver_randompin', 'sampleserver_randompin.cpp')
 
 clientjson = provisioning_env.Install(sec_provisioning_build_dir,
                                         sec_provisioning_src_dir + 'oic_svr_db_client.json')

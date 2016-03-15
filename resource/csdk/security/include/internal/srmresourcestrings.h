@@ -24,7 +24,6 @@
 #include "securevirtualresourcetypes.h"
 
 extern const char * SVR_DB_FILE_NAME;
-extern const char * SVR_DB_DAT_FILE_NAME;
 extern const char * OIC_MI_DEF;
 
 //AMACL
@@ -113,7 +112,6 @@ extern const char * OIC_JSON_SPM_NAME;
 extern const char * OIC_JSON_PDEVICE_ID_NAME;
 
 extern OicUuid_t WILDCARD_SUBJECT_ID;
-extern OicUuid_t WILDCARD_SUBJECT_B64_ID;
 extern size_t WILDCARD_SUBJECT_ID_LEN;
 extern const char * WILDCARD_RESOURCE_URI;
 

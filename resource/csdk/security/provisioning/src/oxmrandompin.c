@@ -38,44 +38,40 @@
 
 #define TAG "OXM_RandomPIN"
 
-OCStackResult CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
+char* CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx)
 {
-    *payload = NULL;
-    *size = 0;
-    if(!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
+    if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
-        return OC_STACK_INVALID_PARAM;
+        return NULL;
     }
 
     otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_RANDOM_DEVICE_PIN;
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size);
+    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
 
-OCStackResult CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
+char* CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx)
 {
-    if(!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
+    if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
-        return OC_STACK_INVALID_PARAM;
+        return NULL;
     }
 
     OicUuid_t uuidPT = {.id={0}};
-    *payload = NULL;
-    *size = 0;
 
     if (OC_STACK_OK != GetDoxmDeviceID(&uuidPT))
     {
         OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
-        return OC_STACK_ERROR;
+        return NULL;
     }
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
 
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size);
+    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
 
-OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
+OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)
 {
-    if (!otmCtx || !otmCtx->selectedDeviceInfo)
+    if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -83,7 +79,7 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
     uint8_t pinData[OXM_RANDOM_PIN_SIZE + 1];
 
     OCStackResult res = InputPin((char*)pinData, OXM_RANDOM_PIN_SIZE + 1);
-    if (OC_STACK_OK != res)
+    if(OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to input PIN");
         return res;
@@ -110,7 +106,7 @@ OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
 {
     OIC_LOG(INFO, TAG, "IN CreateSecureSessionRandomPinCallbak");
 
-    if (!otmCtx || !otmCtx->selectedDeviceInfo)
+    if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -131,9 +127,10 @@ OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
 
+
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
     CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
-    if (NULL == endpoint)
+    if(NULL == endpoint)
     {
         return OC_STACK_NO_MEMORY;
     }
@@ -151,3 +148,4 @@ OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
 
     return OC_STACK_OK;
 }
+

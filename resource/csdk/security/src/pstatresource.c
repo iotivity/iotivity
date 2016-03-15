@@ -18,31 +18,22 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <stdlib.h>
-#include <string.h>
-
 #include "ocstack.h"
+#include "logger.h"
 #include "oic_malloc.h"
-#include "ocpayload.h"
-#include "payload_logging.h"
+#include "cJSON.h"
 #include "resourcemanager.h"
 #include "pstatresource.h"
 #include "doxmresource.h"
 #include "psinterface.h"
+#include "utlist.h"
+#include "base64.h"
 #include "srmresourcestrings.h"
 #include "srmutility.h"
+#include <stdlib.h>
+#include <string.h>
 
 #define TAG  "SRM-PSTAT"
-
-/** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
- * The value of payload size is increased until reaching below max cbor size. */
-static const uint8_t CBOR_SIZE = 255;
-
-// Max cbor size payload.
-static const uint16_t CBOR_MAX_SIZE = 4400;
-
-// PSTAT Map size - Number of mandatory items
-static const uint8_t PSTAT_MAP_SIZE = 7;
 
 static OicSecDpom_t gSm = SINGLE_SERVICE_CLIENT_DRIVEN;
 static OicSecPstat_t gDefaultPstat =
@@ -75,258 +66,156 @@ void DeletePstatBinData(OicSecPstat_t* pstat)
     }
 }
 
-OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, size_t *size)
+char * BinToPstatJSON(const OicSecPstat_t * pstat)
 {
-    if (NULL == pstat || NULL == payload || NULL != *payload || NULL == size)
+    if(NULL == pstat)
     {
-        return OC_STACK_INVALID_PARAM;
+        return NULL;
     }
 
-    size_t cborLen = *size;
-    if (0 == cborLen)
+    cJSON *jsonPstat = NULL;
+    char *jsonStr = NULL;
+    cJSON *jsonSmArray = NULL;
+    char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*) 0)->id)) + 1] = {};
+    uint32_t outLen = 0;
+    B64Result b64Ret = B64_OK;
+
+    cJSON *jsonRoot = cJSON_CreateObject();
+    VERIFY_NON_NULL(TAG, jsonRoot, INFO);
+
+    cJSON_AddItemToObject(jsonRoot, OIC_JSON_PSTAT_NAME, jsonPstat=cJSON_CreateObject());
+    cJSON_AddBoolToObject(jsonPstat, OIC_JSON_ISOP_NAME, pstat->isOp);
+
+    b64Ret = b64Encode(pstat->deviceID.id,
+            sizeof(pstat->deviceID.id), base64Buff, sizeof(base64Buff), &outLen);
+    VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
+
+    cJSON_AddStringToObject(jsonPstat, OIC_JSON_DEVICE_ID_NAME, base64Buff);
+    cJSON_AddNumberToObject(jsonPstat, OIC_JSON_COMMIT_HASH_NAME, pstat->commitHash);
+    cJSON_AddNumberToObject(jsonPstat, OIC_JSON_CM_NAME, (int)pstat->cm);
+    cJSON_AddNumberToObject(jsonPstat, OIC_JSON_TM_NAME, (int)pstat->tm);
+    cJSON_AddNumberToObject(jsonPstat, OIC_JSON_OM_NAME, (int)pstat->om);
+
+    cJSON_AddItemToObject(jsonPstat, OIC_JSON_SM_NAME, jsonSmArray = cJSON_CreateArray());
+    VERIFY_NON_NULL(TAG, jsonSmArray, INFO);
+    for (size_t i = 0; i < pstat->smLen; i++)
     {
-        cborLen = CBOR_SIZE;
+        cJSON_AddItemToArray(jsonSmArray, cJSON_CreateNumber((int )pstat->sm[i]));
     }
-
-    *payload = NULL;
-    *size = 0;
-
-    OCStackResult ret = OC_STACK_ERROR;
-
-    CborEncoder encoder = { {.ptr = NULL }, .end = 0 };
-    CborEncoder pstatMap = { {.ptr = NULL }, .end = 0 };
-
-    CborError cborEncoderResult = CborNoError;
-
-    uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
-    cbor_encoder_init(&encoder, outPayload, cborLen, 0);
-
-    cborEncoderResult = cbor_encoder_create_map(&encoder, &pstatMap, PSTAT_MAP_SIZE);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Pstat Map.");
-
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_ISOP_NAME,
-        strlen(OIC_JSON_ISOP_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ISOP Name Tag.");
-    cborEncoderResult = cbor_encode_boolean(&pstatMap, pstat->isOp);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ISOP Name Value.");
-
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_DEVICE_ID_NAME,
-        strlen(OIC_JSON_DEVICE_ID_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Tag.");
-    cborEncoderResult = cbor_encode_byte_string(&pstatMap, (uint8_t *)pstat->deviceID.id,
-                                                sizeof(pstat->deviceID.id));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Device Id Value.");
-
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_COMMIT_HASH_NAME,
-        strlen(OIC_JSON_COMMIT_HASH_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Commit Hash Tag.");
-    cborEncoderResult = cbor_encode_int(&pstatMap, pstat->commitHash);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Commit Hash Value.");
-
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_CM_NAME,
-        strlen(OIC_JSON_CM_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Tag.");
-    cborEncoderResult = cbor_encode_int(&pstatMap, pstat->cm);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CM Name Value.");
-
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_TM_NAME,
-        strlen(OIC_JSON_TM_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding TM Name Tag.");
-    cborEncoderResult = cbor_encode_int(&pstatMap, pstat->tm);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding TM Name Value.");
-
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_OM_NAME,
-        strlen(OIC_JSON_OM_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding OM Name Tag.");
-    cborEncoderResult = cbor_encode_int(&pstatMap, pstat->om);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding OM Name Value.");
-
-    cborEncoderResult = cbor_encode_text_string(&pstatMap, OIC_JSON_SM_NAME,
-        strlen(OIC_JSON_SM_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Name Tag.");
-    {
-        CborEncoder sm = { {.ptr = NULL }, .end = 0 };
-        cborEncoderResult = cbor_encoder_create_array(&pstatMap, &sm, pstat->smLen);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Array.");
-
-        for (size_t i = 0; i < pstat->smLen; i++)
-        {
-            cborEncoderResult = cbor_encode_int(&sm, pstat->sm[i]);
-            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding SM Value in Array.");
-        }
-        cborEncoderResult = cbor_encoder_close_container(&pstatMap, &sm);
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing SM Array.");
-    }
-    cborEncoderResult = cbor_encoder_close_container(&encoder, &pstatMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Closing PSTAT Map.");
-
-    *size = encoder.ptr - outPayload;
-    *payload = outPayload;
-    ret = OC_STACK_OK;
+    jsonStr = cJSON_Print(jsonRoot);
 
 exit:
-    if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
+    if (jsonRoot)
     {
-        // reallocate and try again!
-        OICFree(outPayload);
-        // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
-        cborEncoderResult = CborNoError;
-        ret = PstatToCBORPayload(pstat, payload, &cborLen);
+        cJSON_Delete(jsonRoot);
     }
-
-    if ((CborNoError != cborEncoderResult) || (OC_STACK_OK != ret))
-    {
-        OICFree(outPayload);
-        outPayload = NULL;
-        *payload = NULL;
-        *size = 0;
-        ret = OC_STACK_ERROR;
-    }
-
-    return ret;
+    return jsonStr;
 }
 
-OCStackResult CBORPayloadToPstat(const uint8_t *cborPayload, const size_t size,
-                                 OicSecPstat_t **secPstat)
+OicSecPstat_t * JSONToPstatBin(const char * jsonStr)
 {
-    if (NULL == cborPayload || NULL == secPstat || NULL != *secPstat)
+    if(NULL == jsonStr)
     {
-        return OC_STACK_INVALID_PARAM;
+        return NULL;
     }
 
     OCStackResult ret = OC_STACK_ERROR;
-    *secPstat = NULL;
-
-    CborValue pstatCbor = { .parser = NULL };
-    CborParser parser = { .end = NULL };
-    CborError cborFindResult = CborNoError;
-    int cborLen = size;
-    if (0 == size)
-    {
-        cborLen = CBOR_SIZE;
-    }
-    cbor_parser_init(cborPayload, cborLen, 0, &parser, &pstatCbor);
-    CborValue pstatMap = { .parser = NULL } ;
     OicSecPstat_t *pstat = NULL;
-    char *name = NULL;
-    cborFindResult = cbor_value_enter_container(&pstatCbor, &pstatMap);
-    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PSTAT Map.");
+    cJSON *jsonPstat = NULL;
+    cJSON *jsonObj = NULL;
 
-    pstat = (OicSecPstat_t *)OICCalloc(1, sizeof(OicSecPstat_t));
-    VERIFY_NON_NULL(TAG, pstat, ERROR);
+    unsigned char base64Buff[sizeof(((OicUuid_t*) 0)->id)] = {};
+    uint32_t outLen = 0;
+    B64Result b64Ret = B64_OK;
 
-    while (cbor_value_is_valid(&pstatMap))
+    cJSON *jsonRoot = cJSON_Parse(jsonStr);
+    VERIFY_NON_NULL(TAG, jsonRoot, INFO);
+
+    jsonPstat = cJSON_GetObjectItem(jsonRoot, OIC_JSON_PSTAT_NAME);
+    VERIFY_NON_NULL(TAG, jsonPstat, INFO);
+
+    pstat = (OicSecPstat_t*)OICCalloc(1, sizeof(OicSecPstat_t));
+    VERIFY_NON_NULL(TAG, pstat, INFO);
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_ISOP_NAME);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type) , ERROR);
+    pstat->isOp = jsonObj->valueint;
+
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_DEVICE_ID_NAME);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
+    b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
+                sizeof(base64Buff), &outLen);
+    VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(pstat->deviceID.id)), ERROR);
+    memcpy(pstat->deviceID.id, base64Buff, outLen);
+
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_COMMIT_HASH_NAME);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
+    pstat->commitHash  = jsonObj->valueint;
+
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_CM_NAME);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
+    pstat->cm  = (OicSecDpm_t)jsonObj->valueint;
+
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_OM_NAME);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
+    pstat->om  = (OicSecDpom_t)jsonObj->valueint;
+
+    jsonObj = cJSON_GetObjectItem(jsonPstat, OIC_JSON_SM_NAME);
+    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
+    if (cJSON_Array == jsonObj->type)
     {
-        size_t len = 0;
-        cborFindResult = cbor_value_dup_text_string(&pstatMap, &name, &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PSTAT Name Value.");
-        cborFindResult = cbor_value_advance(&pstatMap);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing PSTAT MAP.");
-
-        CborType type = cbor_value_get_type(&pstatMap);
-
-        if (0 == strcmp(OIC_JSON_ISOP_NAME, name))
+        pstat->smLen = (size_t)cJSON_GetArraySize(jsonObj);
+        size_t idxx = 0;
+        VERIFY_SUCCESS(TAG, pstat->smLen != 0, ERROR);
+        pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
+        VERIFY_NON_NULL(TAG, pstat->sm, ERROR);
+        do
         {
-            cborFindResult = cbor_value_get_boolean(&pstatMap, &pstat->isOp);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ISOP Name.");
-        }
-
-        if (0 == strcmp(OIC_JSON_DEVICE_ID_NAME, name))
-        {
-            uint8_t *subjectId = NULL;
-            cborFindResult = cbor_value_dup_byte_string(&pstatMap, &subjectId, &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SubjectId.");
-            memcpy(pstat->deviceID.id, subjectId, len);
-            OICFree(subjectId);
-        }
-
-        if (0 == strcmp(OIC_JSON_COMMIT_HASH_NAME, name))
-        {
-            cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->commitHash);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CommitHash.");
-        }
-
-        if (0 == strcmp(OIC_JSON_CM_NAME, name))
-        {
-            cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->cm);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CM Name.");
-        }
-
-        if (0 == strcmp(OIC_JSON_OM_NAME, name))
-        {
-            cborFindResult = cbor_value_get_int(&pstatMap, (int *) &pstat->om);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding OM Name.");
-        }
-
-        if (0 == strcmp(OIC_JSON_SM_NAME, name))
-        {
-            CborValue sm = { .parser = NULL };
-
-            cborFindResult = cbor_value_get_array_length(&pstatMap, &pstat->smLen);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM Len Array.");
-            VERIFY_SUCCESS(TAG, pstat->smLen != 0, ERROR);
-
-            pstat->sm = (OicSecDpom_t *)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
-            VERIFY_NON_NULL(TAG, pstat->sm, ERROR);
-
-            cborFindResult = cbor_value_enter_container(&pstatMap, &sm);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM Container.");
-
-            int i = 0;
-            while (cbor_value_is_valid(&sm))
-            {
-                cborFindResult = cbor_value_get_int(&sm, (int *)&pstat->sm[i++]);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM Value.");
-                cborFindResult = cbor_value_advance(&sm);
-                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SM Array.");
-            }
-        }
-        if (CborMapType != type && cbor_value_is_valid(&pstatMap))
-        {
-            cborFindResult = cbor_value_advance(&pstatMap);
-            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PSTAT MAP.");
-        }
-        OICFree(name);
-        name = NULL;
+            cJSON *jsonSm = cJSON_GetArrayItem(jsonObj, idxx);
+            VERIFY_NON_NULL(TAG, jsonSm, ERROR);
+            pstat->sm[idxx] = (OicSecDpom_t)jsonSm->valueint;
+        }while ( ++idxx < pstat->smLen);
     }
-
-    *secPstat = pstat;
     ret = OC_STACK_OK;
 
 exit:
-    if (CborNoError != cborFindResult)
+    cJSON_Delete(jsonRoot);
+    if (OC_STACK_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "CBORPayloadToPstat failed");
+        OIC_LOG (ERROR, TAG, "JSONToPstatBin failed");
         DeletePstatBinData(pstat);
         pstat = NULL;
-        ret = OC_STACK_ERROR;
     }
-    if (name)
-    {
-        OICFree(name);
-    }
-    return ret;
+    return pstat;
 }
 
 /**
  * Function to update persistent storage
  */
-static bool UpdatePersistentStorage(OicSecPstat_t *pstat)
+static bool UpdatePersistentStorage(OicSecPstat_t * pstat)
 {
     bool bRet = false;
 
-    size_t size = 0;
-    uint8_t *cborPayload = NULL;
-    OCStackResult ret = PstatToCBORPayload(pstat, &cborPayload, &size);
-    if (OC_STACK_OK == ret)
+    if (pstat)
     {
-        if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_PSTAT_NAME, cborPayload, size))
+        // Convert pstat data into JSON for update to persistent storage
+        char *jsonStr = BinToPstatJSON(pstat);
+        if (jsonStr)
         {
-            bRet = true;
+            cJSON *jsonPstat = cJSON_Parse(jsonStr);
+            OICFree(jsonStr);
+
+            if (jsonPstat &&
+                (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_PSTAT_NAME, jsonPstat)))
+            {
+                bRet = true;
+            }
+            cJSON_Delete(jsonPstat);
         }
-        OICFree(cborPayload);
     }
 
     return bRet;
@@ -338,19 +227,16 @@ static bool UpdatePersistentStorage(OicSecPstat_t *pstat)
  */
 static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest * ehRequest)
 {
-    OIC_LOG(INFO, TAG, "HandlePstatGetRequest  processing GET request");
+    OIC_LOG (INFO, TAG, "HandlePstatGetRequest  processing GET request");
+   // Convert ACL data into JSON for transmission
+    char* jsonStr = BinToPstatJSON(gPstat);
 
-    // Convert ACL data into CBOR for transmission
-    size_t size = 0;
-    uint8_t *payload = NULL;
-    OCStackResult res = PstatToCBORPayload(gPstat, &payload, &size);
-
-    // A device should always have a default pstat. Therefore, payload should never be NULL.
-    OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
+    // A device should always have a default pstat. Therefore, jsonStr should never be NULL.
+    OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
 
     // Send response payload to request originator
-    SendSRMCBORResponse(ehRequest, ehRet, payload);
-    OICFree(payload);
+    SendSRMResponse(ehRequest, ehRet, jsonStr);
+    OICFree(jsonStr);
     return ehRet;
 }
 
@@ -363,56 +249,57 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
 static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    OIC_LOG(INFO, TAG, "HandlePstatPutRequest  processing PUT request");
-    OicSecPstat_t *pstat = NULL;
+    cJSON *postJson = NULL;
+    OIC_LOG (INFO, TAG, "HandlePstatPutRequest  processing PUT request");
 
     if (ehRequest->resource)
     {
-        uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData1;
-        VERIFY_NON_NULL(TAG, payload, ERROR);
-
-        OCStackResult ret = CBORPayloadToPstat(payload, CBOR_SIZE, &pstat);
-        OICFree(payload);
-        VERIFY_NON_NULL(TAG, pstat, ERROR);
-        if (OC_STACK_OK == ret)
+        postJson = cJSON_Parse(((OCSecurityPayload*)ehRequest->payload)->securityData);
+        VERIFY_NON_NULL(TAG, postJson, INFO);
+        cJSON *jsonPstat = cJSON_GetObjectItem(postJson, OIC_JSON_PSTAT_NAME);
+        VERIFY_NON_NULL(TAG, jsonPstat, INFO);
+        cJSON *commitHashJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_COMMIT_HASH_NAME);
+        uint16_t commitHash = 0;
+        if (commitHashJson)
         {
-            if (pstat->tm)
+            commitHash = commitHashJson->valueint;
+        }
+        cJSON *tmJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_TM_NAME);
+        if (tmJson && gPstat)
+        {
+            gPstat->tm = (OicSecDpm_t)tmJson->valueint;
+            if(0 == tmJson->valueint && gPstat->commitHash == commitHash)
             {
-                gPstat->tm = pstat->tm;
-                if(0 == pstat->tm && gPstat->commitHash == pstat->commitHash)
-                {
-                    gPstat->isOp = true;
-                    gPstat->cm = NORMAL;
-                    OIC_LOG (INFO, TAG, "CommitHash is valid and isOp is TRUE");
-                }
-                else
-                {
-                    OIC_LOG(DEBUG, TAG, "CommitHash is not valid");
-                }
+                gPstat->isOp = true;
+                gPstat->cm = NORMAL;
+                OIC_LOG (INFO, TAG, "CommitHash is valid and isOp is TRUE");
             }
-            if (pstat->om && gPstat)
+            else
             {
-                /*
-                 * Check if the operation mode is in the supported provisioning services
-                 * operation mode list.
-                 */
-                for(size_t i=0; i< gPstat->smLen; i++)
-                {
-                    if(gPstat->sm[i] == pstat->om)
-                    {
-                        gPstat->om = pstat->om;
-                        break;
-                    }
-                }
-            }
-            // Convert pstat data into CBOR for update to persistent storage
-            if(UpdatePersistentStorage(gPstat))
-            {
-                ehRet = OC_EH_OK;
+                OIC_LOG (INFO, TAG, "CommitHash is not valid");
             }
         }
-
-        OICFree(payload);
+        cJSON *omJson = cJSON_GetObjectItem(jsonPstat, OIC_JSON_OM_NAME);
+        if (omJson && gPstat)
+        {
+            /*
+             * Check if the operation mode is in the supported provisioning services
+             * operation mode list.
+             */
+            for(size_t i=0; i< gPstat->smLen; i++)
+            {
+                if(gPstat->sm[i] == (unsigned int)omJson->valueint)
+                {
+                    gPstat->om = (OicSecDpom_t)omJson->valueint;
+                    break;
+                }
+            }
+        }
+        // Convert pstat data into JSON for update to persistent storage
+        if(UpdatePersistentStorage(gPstat))
+        {
+            ehRet = OC_EH_OK;
+        }
     }
  exit:
     if(OC_EH_OK != ehRet)
@@ -426,27 +313,27 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
     }
 
     //Send payload to request originator
-    if (OC_STACK_OK != SendSRMCBORResponse(ehRequest, ehRet, NULL))
+    if(OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL))
     {
         OIC_LOG (ERROR, TAG, "SendSRMResponse failed in HandlePstatPostRequest");
     }
-    DeletePstatBinData(pstat);
+    cJSON_Delete(postJson);
     return ehRet;
 }
 
 /**
  * This internal method is the entity handler for pstat resources.
  */
- OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
-                                          OCEntityHandlerRequest * ehRequest,
-                                          void *callbackParam)
+OCEntityHandlerResult PstatEntityHandler(OCEntityHandlerFlag flag,
+        OCEntityHandlerRequest * ehRequest,
+        void *callbackParam)
 {
     (void)callbackParam;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     // This method will handle REST request (GET/POST) for /oic/sec/pstat
     if (flag & OC_REQUEST_FLAG)
     {
-        OIC_LOG(INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         switch (ehRequest->method)
         {
             case OC_REST_GET:
@@ -457,7 +344,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
                 break;
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMCBORResponse(ehRequest, ehRet, NULL);
+                SendSRMResponse(ehRequest, ehRet, NULL);
                 break;
         }
     }
@@ -467,84 +354,91 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
 /**
  * This internal method is used to create '/oic/sec/pstat' resource.
  */
- OCStackResult CreatePstatResource()
+OCStackResult CreatePstatResource()
 {
-    OCStackResult ret = OCCreateResource(&gPstatHandle,
-                                         OIC_RSRC_TYPE_SEC_PSTAT,
-                                         OIC_MI_DEF,
-                                         OIC_RSRC_PSTAT_URI,
-                                         PstatEntityHandler,
-                                         NULL,
-                                         OC_RES_PROP_NONE);
+    OCStackResult ret;
 
-    if (OC_STACK_OK != ret)
+    ret = OCCreateResource(&gPstatHandle,
+                           OIC_RSRC_TYPE_SEC_PSTAT,
+                           OIC_MI_DEF,
+                           OIC_RSRC_PSTAT_URI,
+                           PstatEntityHandler,
+                           NULL,
+                           OC_RES_PROP_NONE);
+
+    if (ret != OC_STACK_OK)
     {
-        OIC_LOG(FATAL, TAG, "Unable to instantiate pstat resource");
+        OIC_LOG (FATAL, TAG, "Unable to instantiate pstat resource");
         DeInitPstatResource();
     }
     return ret;
 }
 
 /**
- * Get the default value.
- *
- * @return the gDefaultPstat pointer.
+ * Post ACL hander update the commitHash during ACL provisioning.
+ */
+void SetCommitHash(uint16_t commitHash)
+{
+    gPstat->commitHash = commitHash;
+}
+
+/**
+ * Get the default value
+ * @retval  the gDefaultPstat pointer
  */
 static OicSecPstat_t* GetPstatDefault()
 {
     return &gDefaultPstat;
 }
 
+/**
+ * Initialize pstat resource by loading data from persistent storage.
+ *
+ * @retval  OC_STACK_OK for Success, otherwise some error value
+ */
 OCStackResult InitPstatResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
     // Read Pstat resource from PS
-    uint8_t *data = NULL;
-    size_t size = 0;
-    ret = GetSecureVirtualDatabaseFromPS(OIC_JSON_PSTAT_NAME, &data, &size);
-    // If database read failed
-    if (OC_STACK_OK != ret)
+    char* jsonSVRDatabase = GetSVRDatabase();
+    if (jsonSVRDatabase)
     {
-        OIC_LOG (DEBUG, TAG, "ReadSVDataFromPS failed");
-    }
-    if (data)
-    {
-        // Read ACL resource from PS
-        ret = CBORPayloadToPstat(data, size, &gPstat);
+        // Convert JSON Pstat into binary format
+        gPstat = JSONToPstatBin(jsonSVRDatabase);
     }
     /*
      * If SVR database in persistent storage got corrupted or
      * is not available for some reason, a default pstat is created
      * which allows user to initiate pstat provisioning again.
      */
-    if ((OC_STACK_OK != ret) || !data || !gPstat)
+    if(!jsonSVRDatabase || !gPstat)
     {
         gPstat = GetPstatDefault();
     }
-    VERIFY_NON_NULL(TAG, gPstat, FATAL);
 
     // Instantiate 'oic.sec.pstat'
     ret = CreatePstatResource();
 
-exit:
-    OICFree(data);
-    if (OC_STACK_OK != ret)
-    {
-        DeInitPstatResource();
-    }
+    OICFree(jsonSVRDatabase);
     return ret;
 }
 
+/**
+ * Perform cleanup for pstat resources.
+ *
+ * @retval  OC_STACK_OK for Success, otherwise some error value
+ */
 OCStackResult DeInitPstatResource()
 {
-    if (gPstat != &gDefaultPstat)
+    if(gPstat != &gDefaultPstat)
     {
         DeletePstatBinData(gPstat);
         gPstat = NULL;
     }
     return OCDeleteResource(gPstatHandle);
 }
+
 
 /**
  * Function to restore pstat resurce to initial status.
@@ -564,7 +458,7 @@ void RestorePstatToInitState()
             gPstat->sm[0] = SINGLE_SERVICE_CLIENT_DRIVEN;
         }
 
-        if (!UpdatePersistentStorage(gPstat))
+        if(!UpdatePersistentStorage(gPstat))
         {
             OIC_LOG(ERROR, TAG, "Failed to revert DOXM in persistent storage");
         }

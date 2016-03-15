@@ -28,14 +28,14 @@
 /**
  * Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
  *
- * @return ::OC_STACK_OK for Success, otherwise some error value
+ * @retval  OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult InitSecureResources();
 
 /**
  * Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
  *
- * @return ::OC_STACK_OK for Success, otherwise some error value
+ * @retval  OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult DestroySecureResources();
 
@@ -44,24 +44,13 @@ OCStackResult DestroySecureResources();
  *
  * @param ehRequest pointer to entity handler request data structure.
  * @param ehRet result code from entity handler.
- * @param rspPayload response payload.
+ * @param rspPayload response payload in JSON.
  *
- * @return ::OC_STACK_OK for Success, otherwise some error value.
+ * @retval  OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, const char *rspPayload);
 
-/**
- * This method is used by all secure resource modules to send responses to REST queries.
- *
- * @param ehRequest pointer to entity handler request data structure.
- * @param ehRet result code from entity handler.
- * @param cborPayload response payload.
- *
- * @return ::OC_STACK_OK for Success, otherwise some error value.
- */
-OCStackResult SendSRMCBORResponse(const OCEntityHandlerRequest *ehRequest,
-        OCEntityHandlerResult ehRet, uint8_t *cborPayload);
-
 #endif //IOTVT_SRM_RM_H
+
 

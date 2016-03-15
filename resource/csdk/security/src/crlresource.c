@@ -314,13 +314,13 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
 }
 
 
-/**
+/*
  * This internal method is the entity handler for CRL resource and
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
-static OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
-                                              OCEntityHandlerRequest *ehRequest,
-                                              void *callbackParameter)
+OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
+                                       OCEntityHandlerRequest *ehRequest,
+                                       void *callbackParameter)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     (void)callbackParameter;
@@ -356,18 +356,19 @@ static OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
     return ehRet;
 }
 
-/**
+/*
  * This internal method is used to create '/oic/sec/crl' resource.
  */
-static OCStackResult CreateCRLResource()
+OCStackResult CreateCRLResource()
 {
-    OCStackResult ret = OCCreateResource(&gCrlHandle,
-                                         OIC_RSRC_TYPE_SEC_CRL,
-                                         OIC_MI_DEF,
-                                         OIC_RSRC_CRL_URI,
-                                         CRLEntityHandler,
-                                         NULL,
-                                         OC_OBSERVABLE);
+    OCStackResult ret;
+    ret = OCCreateResource(&gCrlHandle,
+                           OIC_RSRC_TYPE_SEC_CRL,
+                           OIC_MI_DEF,
+                           OIC_RSRC_CRL_URI,
+                           CRLEntityHandler,
+                           NULL,
+                           OC_OBSERVABLE);
 
     if (OC_STACK_OK != ret)
     {
@@ -378,8 +379,8 @@ static OCStackResult CreateCRLResource()
 }
 
 /**
- * Get the default value.
- * @return defaultCrl for now.
+ * Get the default value
+ * @retval  NULL for now. Update it when we finalize the default info.
  */
 static OicSecCrl_t *GetCrlDefault()
 {

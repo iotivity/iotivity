@@ -22,7 +22,6 @@
 #include "securevirtualresourcetypes.h"
 
 const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
-const char * SVR_DB_DAT_FILE_NAME = "oic_svr_db.dat";
 const char * OIC_MI_DEF = "oic.mi.def";
 
 //AMACL
@@ -111,8 +110,6 @@ const char * OIC_JSON_SPM_NAME = "spm";
 const char * OIC_JSON_PDEVICE_ID_NAME = "pdeviceid";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
-OicUuid_t WILDCARD_SUBJECT_B64_ID = { .id = {'2', '2', '2', '2', '2', '2', '2', '2',
-                                             '2', '2', '2', '2', '2', '2', '2', '2' }};
 size_t WILDCARD_SUBJECT_ID_LEN = 1;
 const char * WILDCARD_RESOURCE_URI = "*";
 

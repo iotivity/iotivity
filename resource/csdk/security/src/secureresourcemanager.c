@@ -56,11 +56,21 @@ static SPResponseCallback gSPResponseHandler = NULL;
  */
 PEContext_t g_policyEngineContext;
 
+/**
+ * @brief function to register provisoning API's response callback.
+ * @param respHandler response handler callback.
+ */
+void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler)
+{
+    gSPResponseHandler = respHandler;
+}
+
+
 static void SRMSendUnAuthorizedAccessresponse(PEContext_t *context)
 {
     CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
 
-    if (NULL == context ||
+    if(NULL == context ||
        NULL == context->amsMgrContext->requestInfo)
     {
         OIC_LOG_V(ERROR, TAG, "%s : NULL Parameter(s)",__func__);
@@ -81,6 +91,7 @@ static void SRMSendUnAuthorizedAccessresponse(PEContext_t *context)
         OIC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
     }
 }
+
 
 void SRMSendResponse(SRMAccessResponse_t responseVal)
 {
@@ -110,11 +121,12 @@ exit:
     SetPolicyEngineState(&g_policyEngineContext, AWAITING_REQUEST);
 }
 
+
 /**
- * Handle the request from the SRM.
- *
- * @param endPoint object from which the response is received.
- * @param requestInfo contains information for the request.
+ * @brief   Handle the request from the SRM.
+ * @param   endPoint       [IN] Endpoint object from which the response is received.
+ * @param   requestInfo    [IN] Information for the request.
+ * @return  NONE
  */
 void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requestInfo)
 {
@@ -152,7 +164,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     OICStrcpyPartial(newUri, MAX_URI_LENGTH + 1, requestInfo->info.resourceUri, position);
 
     //New request are only processed if the policy engine state is AWAITING_REQUEST.
-    if (AWAITING_REQUEST == g_policyEngineContext.state)
+    if(AWAITING_REQUEST == g_policyEngineContext.state)
     {
         OIC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method, %d",
                 requestInfo->info.resourceUri, requestInfo->method);
@@ -177,7 +189,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 
     VERIFY_NON_NULL(TAG, gRequestHandler, ERROR);
 
-    if (ACCESS_WAITING_FOR_AMS == response)
+    if(ACCESS_WAITING_FOR_AMS == response)
     {
         OIC_LOG(INFO, TAG, "Sending slow response");
 
@@ -210,10 +222,10 @@ exit:
 }
 
 /**
- * Handle the response from the SRM.
- *
- * @param endPoint points to the remote endpoint.
- * @param responseInfo contains response information from the endpoint.
+ * @brief   Handle the response from the SRM.
+ * @param   endPoint     [IN] The remote endpoint.
+ * @param   responseInfo [IN] Response information from the endpoint.
+ * @return  NONE
  */
 void SRMResponseHandler(const CAEndpoint_t *endPoint, const CAResponseInfo_t *responseInfo)
 {
@@ -236,11 +248,12 @@ void SRMResponseHandler(const CAEndpoint_t *endPoint, const CAResponseInfo_t *re
     }
 }
 
+
 /**
- * Handle the error from the SRM.
- *
- * @param endPoint is the remote endpoint.
- * @param errorInfo contains error information from the endpoint.
+ * @brief   Handle the error from the SRM.
+ * @param   endPoint  [IN] The remote endpoint.
+ * @param   errorInfo [IN] Error information from the endpoint.
+ * @return  NONE
  */
 void SRMErrorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errorInfo)
 {
@@ -252,6 +265,16 @@ void SRMErrorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errorInf
     }
 }
 
+
+/**
+ * @brief   Register request and response callbacks.
+ *          Requests and responses are delivered in these callbacks.
+ * @param   reqHandler   [IN] Request handler callback ( for GET,PUT ..etc)
+ * @param   respHandler  [IN] Response handler callback.
+ * @return
+ *     OC_STACK_OK    - No errors; Success
+ *     OC_STACK_INVALID_PARAM - invalid parameter
+ */
 OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
                                  CAResponseCallback respHandler,
                                  CAErrorCallback errHandler)
@@ -275,6 +298,13 @@ OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
     return OC_STACK_OK;
 }
 
+/**
+ * @brief   Register Persistent storage callback.
+ * @param   persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
+ * @return
+ *     OC_STACK_OK    - No errors; Success
+ *     OC_STACK_INVALID_PARAM - Invalid parameter
+ */
 OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
 {
     OIC_LOG(DEBUG, TAG, "SRMRegisterPersistentStorageHandler !!");
@@ -287,11 +317,22 @@ OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persisten
     return OC_STACK_OK;
 }
 
+/**
+ * @brief   Get Persistent storage handler pointer.
+ * @return
+ *     The pointer to Persistent Storage callback handler
+ */
+
 OCPersistentStorage* SRMGetPersistentStorageHandler()
 {
     return gPersistentStorageHandler;
 }
 
+
+/**
+ * @brief   Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
+ * @retval  OC_STACK_OK for Success, otherwise some error value
+ */
 OCStackResult SRMInitSecureResources()
 {
     // TODO: temporarily returning OC_STACK_OK every time until default
@@ -314,21 +355,38 @@ OCStackResult SRMInitSecureResources()
     return ret;
 }
 
+/**
+ * @brief   Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
+ * @retval  none
+ */
 void SRMDeInitSecureResources()
 {
     DestroySecureResources();
 }
 
+/**
+ * @brief   Initialize Policy Engine.
+ * @return  OC_STACK_OK for Success, otherwise some error value.
+ */
 OCStackResult SRMInitPolicyEngine()
 {
     return InitPolicyEngine(&g_policyEngineContext);
 }
 
+/**
+ * @brief   Cleanup Policy Engine.
+ * @return  none
+ */
 void SRMDeInitPolicyEngine()
 {
     return DeInitPolicyEngine(&g_policyEngineContext);
 }
 
+/**
+ * @brief   Check the security resource URI.
+ * @param   uri [IN] Pointers to security resource URI.
+ * @return  true if the URI is one of security resources, otherwise false.
+ */
 bool SRMIsSecurityResourceURI(const char* uri)
 {
     if (!uri)

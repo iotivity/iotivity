@@ -32,25 +32,22 @@
 
 #define TAG "OXM_JustWorks"
 
-OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **payload, size_t *size)
+char* CreateJustWorksSelectOxmPayload(OTMContext_t* otmCtx)
 {
-    if (!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
+    if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
-        return OC_STACK_INVALID_PARAM;
+        return NULL;
     }
 
     otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_JUST_WORKS;
-    *payload = NULL;
-    *size = 0;
-
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size);
+    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
 
-OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
+char* CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx)
 {
-    if (!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
+    if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
-        return OC_STACK_INVALID_PARAM;
+        return NULL;
     }
 
     OicUuid_t uuidPT = {.id={0}};
@@ -58,14 +55,11 @@ OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t 
     if (OC_STACK_OK != GetDoxmDeviceID(&uuidPT))
     {
         OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
-        return OC_STACK_ERROR;
+        return NULL;
     }
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
 
-    *payload = NULL;
-    *size = 0;
-
-    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size);;
+    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
 }
 
 OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM)
@@ -78,7 +72,7 @@ OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM)
 OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
 {
     OIC_LOG(INFO, TAG, "IN CreateSecureSessionJustWorksCallback");
-    if (!otmCtx || !otmCtx->selectedDeviceInfo)
+    if(!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -108,13 +102,13 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "TLS_ECDH_anon_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
 
-    OCProvisionDev_t *selDevInfo = otmCtx->selectedDeviceInfo;
+    OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
     CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
     if(NULL == endpoint)
     {
         return OC_STACK_NO_MEMORY;
     }
-    memcpy(endpoint, &selDevInfo->endpoint, sizeof(CAEndpoint_t));
+    memcpy(endpoint,&selDevInfo->endpoint,sizeof(CAEndpoint_t));
     endpoint->port = selDevInfo->securePort;
 
     caresult = CAInitiateHandshake(endpoint);

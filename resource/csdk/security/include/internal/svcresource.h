@@ -28,33 +28,31 @@ extern "C" {
 /**
  * Initialize SVC resource by loading data from persistent storage.
  *
- * @return ::OC_STACK_OK for Success, otherwise some error value.
+ * @retval  OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult InitSVCResource();
 
 /**
  * Perform cleanup for SVC resources.
+ *
+ * @retval  none
  */
 void DeInitSVCResource();
 
 /**
- * This function converts SVC data into CBOR format.
- * Caller needs to invoke 'free' when done using returned string.
+ * This function converts SVC data into JSON format.
+ * Caller needs to invoke 'free' when done using
+ * returned string.
+ * @param svc  instance of OicSecSvc_t structure.
  *
- * @param svc is the instance of @ref OicSecSvc_t structure. In case of NULL it
- * will return ::OC_STACK_INVALID_PARAM.
- * @param cborPayload is the converted cbor value of SVC structure.
- * @param cborSize is the size of the cbor payload. This value is the size of the
- * cborPayload. It should not be NON-NULL value.
- *
- * @return ::OC_STACK_OK for Success. ::OC_STACK_INVALID in case of invalid parameters.
- * ::OC_STACK_ERROR in case of error in converting to cbor.
+ * @retval  pointer to SVC in json format.
  */
- OCStackResult SVCToCBORPayload(const OicSecSvc_t *svc, uint8_t **cborPayload,
-                                size_t *cborSize);
+char* BinToSvcJSON(const OicSecSvc_t * svc);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif //IOTVT_SRM_SVCR_H
+
+

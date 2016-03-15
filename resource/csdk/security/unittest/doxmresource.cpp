@@ -1,5 +1,3 @@
-//******************************************************************
-//
 // Copyright 2015 Intel Mobile Communications GmbH All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -20,33 +18,53 @@
 
 #include "gtest/gtest.h"
 #include "ocstack.h"
-#include "ocserverrequest.h"
-#include "oic_string.h"
-#include "oic_malloc.h"
 #include "resourcemanager.h"
 #include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
-#include "security_internals.h"
+#include "ocserverrequest.h"
+#include "oic_string.h"
+#include "oic_malloc.h"
+#include "logger.h"
 
 #define TAG  "SRM-DOXM"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+//Declare Doxm resource methods for testing
+OCStackResult CreateDoxmResource();
+OCEntityHandlerResult DoxmEntityHandler (OCEntityHandlerFlag flag,
+                OCEntityHandlerRequest * ehRequest);
+char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
+OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
+void InitSecDoxmInstance(OicSecDoxm_t * doxm);
+OCEntityHandlerResult HandleDoxmPostRequest (const OCEntityHandlerRequest * ehRequest);
+void DeleteDoxmBinData(OicSecDoxm_t* doxm);
+OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest * ehRequest);
+#ifdef __cplusplus
+}
+#endif
+
+
 OicSecDoxm_t * getBinDoxm()
 {
-    OicSecDoxm_t *doxm = (OicSecDoxm_t *)OICCalloc(1, sizeof(*doxm));
-    if (!doxm)
+    OicSecDoxm_t * doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
+    if(!doxm)
     {
         return NULL;
     }
     doxm->oxmTypeLen =  1;
-    doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(*doxm->oxmType));
-    if (!doxm->oxmType)
+    doxm->oxmType    = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(char *));
+    if(!doxm->oxmType)
     {
         OICFree(doxm);
         return NULL;
     }
-    doxm->oxmType[0] = (char *) OICMalloc(strlen(OXM_JUST_WORKS) + 1);
-    if (!doxm->oxmType[0])
+    doxm->oxmType[0] = (char*)OICMalloc(strlen(OXM_JUST_WORKS) + 1);
+    if(!doxm->oxmType[0])
     {
         OICFree(doxm->oxmType);
         OICFree(doxm);
@@ -70,134 +88,109 @@ OicSecDoxm_t * getBinDoxm()
     doxm->owned      = true;
     //TODO: Need more clarification on deviceIDFormat field type.
     //doxm.deviceIDFormat = URN;
-
-    uint8_t deviceId[] = {0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x64};
-    memcpy(doxm->deviceID.id, deviceId, sizeof(deviceId));
-    uint8_t ownerId[] = {0x6f, 0x77, 0x6e, 0x65, 0x72, 0x73, 0x49, 0x64};
-    memcpy(doxm->owner.id, ownerId, sizeof(ownerId));
+    OICStrcpy((char *) doxm->deviceID.id, strlen("deviceId") + 1, "deviceId");
+    OICStrcpy((char *) doxm->owner.id, strlen("ownersId") + 1, "ownersId");
     return doxm;
 }
 
  //InitDoxmResource Tests
-TEST(DoxmResourceTest, InitDoxmResource)
+TEST(InitDoxmResourceTest, InitDoxmResource)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
 }
 
 //DeInitDoxmResource Tests
-TEST(DoxmResourceTest, DeInitDoxmResource)
+TEST(DeInitDoxmResourceTest, DeInitDoxmResource)
 {
     EXPECT_EQ(OC_STACK_ERROR, DeInitDoxmResource());
 }
 
 //CreateDoxmResource Tests
-TEST(DoxmResourceTest, CreateDoxmResource)
+TEST(CreateDoxmResourceTest, CreateDoxmResource)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, CreateDoxmResource());
 }
 
  //DoxmEntityHandler Tests
-TEST(DoxmResourceTest, DoxmEntityHandlerWithDummyRequest)
+TEST(DoxmEntityHandlerTest, DoxmEntityHandlerWithDummyRequest)
 {
     OCEntityHandlerRequest req;
-    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req, NULL));
+    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
 }
 
-TEST(DoxmResourceTest, DoxmEntityHandlerWithNULLRequest)
+TEST(DoxmEntityHandlerTest, DoxmEntityHandlerWithNULLRequest)
 {
-    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, NULL, NULL));
+    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, NULL));
 }
 
-TEST(DoxmResourceTest, DoxmEntityHandlerInvalidFlag)
+TEST(DoxmEntityHandlerTest, DoxmEntityHandlerInvalidFlag)
 {
     OCEntityHandlerRequest req;
-    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, &req, NULL));
+    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, &req));
 }
 
-TEST(DoxmResourceTest, DoxmEntityHandlerValidRequest)
+TEST(DoxmEntityHandlerTest, DoxmEntityHandlerValidRequest)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
     char query[] = "oxm=0;owned=false;owner=owner1";
     OCEntityHandlerRequest req = OCEntityHandlerRequest();
     req.method = OC_REST_GET;
     req.query = OICStrdup(query);
-    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req, NULL));
+    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
 
     OICFree(req.query);
 }
 
-TEST(DoxmResourceTest, DoxmEntityHandlerDeviceIdQuery)
+TEST(DoxmEntityHandlerTest, DoxmEntityHandlerDeviceIdQuery)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, InitDoxmResource());
-    char query[] = "deviceid=2222222222222222";
+    char query[] = "deviceid=MjIyMjIyMjIyMjIyMjIyMg==";
     OCEntityHandlerRequest req = OCEntityHandlerRequest();
     req.method = OC_REST_GET;
     req.query = OICStrdup(query);
-    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req, NULL));
+    EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
 
     OICFree(req.query);
 }
 
-TEST(DoxmResourceTest, DoxmToCBORPayloadNULL)
+//BinToDoxmJSON Tests
+TEST(BinToDoxmJSONTest, BinToDoxmJSONNullDoxm)
 {
-    OicSecDoxm_t *doxm =  getBinDoxm();
-    size_t size = 10;
-    uint8_t *payload = NULL;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, DoxmToCBORPayload(NULL, NULL, 0));
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, DoxmToCBORPayload(doxm, NULL, &size));
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, DoxmToCBORPayload(doxm, &payload, 0));
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, DoxmToCBORPayload(NULL, &payload, &size));
-    DeleteDoxmBinData(doxm);
+    char* value = BinToDoxmJSON(NULL);
+    EXPECT_TRUE(value == NULL);
 }
 
-TEST(DoxmResourceTest, DoxmToCBORPayloadVALID)
+TEST(BinToDoxmJSONTest, BinToDoxmJSONValidDoxm)
 {
-    OicSecDoxm_t *doxm =  getBinDoxm();
+    OicSecDoxm_t * doxm =  getBinDoxm();
 
-    uint8_t *payload = NULL;
-    size_t size = 0;
-    EXPECT_EQ(OC_STACK_OK, DoxmToCBORPayload(doxm, &payload, &size));
-    EXPECT_TRUE(payload != NULL);
+    char * json = BinToDoxmJSON(doxm);
+    OIC_LOG_V(INFO, TAG, "BinToDoxmJSON:%s", json);
+    EXPECT_TRUE(json != NULL);
 
     DeleteDoxmBinData(doxm);
-    OICFree(payload);
+    OICFree(json);
 }
 
-//CBORPayloadToDoxm Tests
-TEST(DoxmResourceTest, CBORPayloadToDoxmNULL)
+//JSONToDoxmBin Tests
+TEST(JSONToDoxmBinTest, JSONToDoxmBinValidJSON)
 {
-    OicSecDoxm_t *doxm = NULL;
-    uint8_t *cborPayload = (uint8_t *)OICCalloc(1, sizeof(10));
-    size_t size = 10;
-    ASSERT_TRUE(NULL != cborPayload);
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToDoxm(NULL, 0, NULL));
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToDoxm(NULL, size, &doxm));
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToDoxm(cborPayload, size, NULL));
-    OICFree(cborPayload);
+    OicSecDoxm_t * doxm1 =  getBinDoxm();
+    char * json = BinToDoxmJSON(doxm1);
+    EXPECT_TRUE(json != NULL);
+
+    OicSecDoxm_t *doxm2 = JSONToDoxmBin(json);
+    EXPECT_TRUE(doxm2 != NULL);
+
+    DeleteDoxmBinData(doxm1);
+    DeleteDoxmBinData(doxm2);
+    OICFree(json);
 }
 
-TEST(DoxmResourceTest, CBORPayloadToDoxmVALID)
+TEST(JSONToDoxmBinTest, JSONToDoxmBinNullJSON)
 {
-    OicSecDoxm_t *doxm =  getBinDoxm();
-    uint8_t *payload = NULL;
-    size_t size = 0;
-    EXPECT_EQ(OC_STACK_OK, DoxmToCBORPayload(doxm, &payload, &size));
-    EXPECT_TRUE(payload != NULL);
-
-    OicSecDoxm_t *doxmSec = NULL;
-    EXPECT_EQ(OC_STACK_OK, CBORPayloadToDoxm(payload, size, &doxmSec));
-    ASSERT_TRUE(doxmSec != NULL);
-    EXPECT_EQ(doxmSec->oxmTypeLen, doxm->oxmTypeLen);
-    EXPECT_STREQ(doxmSec->oxmType[0], doxm->oxmType[0]);
-    EXPECT_EQ(doxmSec->oxmLen, doxm->oxmLen);
-    EXPECT_EQ(doxmSec->oxm[0], doxm->oxm[0]);
-    EXPECT_EQ(doxmSec->oxmSel, doxm->oxmSel);
-    EXPECT_EQ(doxmSec->sct, doxm->sct);
-    EXPECT_EQ(doxmSec->owned, doxm->owned);
-
-    DeleteDoxmBinData(doxmSec);
-    DeleteDoxmBinData(doxm);
-    OICFree(payload);
+    OicSecDoxm_t *doxm = JSONToDoxmBin(NULL);
+    EXPECT_TRUE(doxm == NULL);
 }
 
 #if 0

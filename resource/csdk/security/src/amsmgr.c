@@ -18,7 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <string.h>
 #include "oic_malloc.h"
 #include "amsmgr.h"
 #include "resourcemanager.h"
@@ -35,8 +34,10 @@
 #include "policyengine.h"
 #include "oic_string.h"
 #include "caremotehandler.h"
+#include <string.h>
 
 #define TAG "SRM-AMSMGR"
+
 
  //Callback for AMS service multicast discovery request.
 static OCStackApplicationResult AmsMgrDiscoveryCallback(void *ctx, OCDoHandle handle,
@@ -49,6 +50,7 @@ static OCStackApplicationResult SecurePortDiscoveryCallback(void *ctx, OCDoHandl
 //Callback for unicast ACL request
 static OCStackApplicationResult AmsMgrAclReqCallback(void *ctx, OCDoHandle handle,
     OCClientResponse * clientResponse);
+
 
 OCStackResult DiscoverAmsService(PEContext_t *context)
 {
@@ -87,6 +89,7 @@ exit:
     return ret;
 }
 
+
 static OCStackApplicationResult AmsMgrDiscoveryCallback(void *ctx, OCDoHandle handle,
                          OCClientResponse * clientResponse)
 {
@@ -111,16 +114,15 @@ static OCStackApplicationResult AmsMgrDiscoveryCallback(void *ctx, OCDoHandle ha
     }
 
     OicSecDoxm_t *doxm = NULL;
-
     OIC_LOG_V(INFO, TAG, "Doxm DeviceId Discovery response = %s\n",
-          ((OCSecurityPayload*)clientResponse->payload)->securityData1);
-    uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData1;
+          ((OCSecurityPayload*)clientResponse->payload)->securityData);
+    doxm = JSONToDoxmBin(((OCSecurityPayload*)clientResponse->payload)->securityData);
 
     //As doxm is NULL amsmgr can't test if response from trusted AMS service
     //so keep the transaction.
-    if (OC_STACK_OK == CBORPayloadToDoxm(payload, 0, &doxm))
+    if(NULL == doxm)
     {
-        OIC_LOG_V(ERROR, TAG, "%s : Unable to convert CBOR to Binary",__func__);
+        OIC_LOG_V(ERROR, TAG, "%s : Unable to convert JSON to Binary",__func__);
         return OC_STACK_KEEP_TRANSACTION;
     }
 
@@ -136,7 +138,7 @@ static OCStackApplicationResult AmsMgrDiscoveryCallback(void *ctx, OCDoHandle ha
     {
         OIC_LOG(INFO, TAG, "AMS Manager Sending unicast discovery to get secured port info");
         //Sending Unicast discovery to get secure port information
-        if (OC_STACK_OK == SendUnicastSecurePortDiscovery(context, &clientResponse->devAddr,
+        if(OC_STACK_OK == SendUnicastSecurePortDiscovery(context, &clientResponse->devAddr,
                 clientResponse->connType))
         {
             context->retVal = ACCESS_WAITING_FOR_AMS;
@@ -147,6 +149,7 @@ static OCStackApplicationResult AmsMgrDiscoveryCallback(void *ctx, OCDoHandle ha
     SRMSendResponse(context->retVal);
     return OC_STACK_DELETE_TRANSACTION;
 }
+
 
 OCStackResult SendUnicastSecurePortDiscovery(PEContext_t *context,OCDevAddr *devAddr,
                                       OCConnectivityType connType)
@@ -195,7 +198,7 @@ static OCStackApplicationResult SecurePortDiscoveryCallback(void *ctx, OCDoHandl
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    OCResourcePayload *resPayload = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
+    OCResourcePayload* resPayload = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
 
     //Verifying if the ID of the sender is an AMS service that this device trusts.
     if(resPayload &&
@@ -224,6 +227,7 @@ static OCStackApplicationResult SecurePortDiscoveryCallback(void *ctx, OCDoHandl
     SRMSendResponse(context->retVal);
     return OC_STACK_DELETE_TRANSACTION;
 }
+
 
 OCStackResult SendAclReq(PEContext_t *context, OCDevAddr *devAddr, OCConnectivityType connType,
         uint16_t securedPort)
@@ -265,6 +269,7 @@ exit:
     return ret;
 }
 
+
 static OCStackApplicationResult AmsMgrAclReqCallback(void *ctx, OCDoHandle handle,
     OCClientResponse * clientResponse)
 {
@@ -300,9 +305,8 @@ static OCStackApplicationResult AmsMgrAclReqCallback(void *ctx, OCDoHandle handl
         memcmp(context->amsMgrContext->amsDeviceId.id, clientResponse->identity.id,
                        sizeof(context->amsMgrContext->amsDeviceId.id)) == 0)
     {
-        size_t size = strlen((char *)clientResponse->payload);
         OCStackResult ret =
-                InstallNewACL(((OCSecurityPayload*)clientResponse->payload)->securityData1, size);
+                InstallNewACL(((OCSecurityPayload*)clientResponse->payload)->securityData);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
         OIC_LOG_V(INFO, TAG, "%s : Calling checkPermission", __func__);
@@ -321,6 +325,7 @@ exit:
     return OC_STACK_DELETE_TRANSACTION;
 }
 
+
 OCStackResult UpdateAmsMgrContext(PEContext_t *context, const CAEndpoint_t *endpoint,
                         const CARequestInfo_t *requestInfo)
 {
@@ -328,7 +333,7 @@ OCStackResult UpdateAmsMgrContext(PEContext_t *context, const CAEndpoint_t *endp
 
     //The AmsMgr context endpoint and requestInfo will be free from ,
     //AmsMgrAclReqCallback function
-    if (context->amsMgrContext->endpoint)
+    if(context->amsMgrContext->endpoint)
     {
         OICFree(context->amsMgrContext->endpoint);
         context->amsMgrContext->endpoint = NULL;
@@ -337,7 +342,7 @@ OCStackResult UpdateAmsMgrContext(PEContext_t *context, const CAEndpoint_t *endp
     VERIFY_NON_NULL(TAG, context->amsMgrContext->endpoint, ERROR);
     *context->amsMgrContext->endpoint = *endpoint;
 
-    if (context->amsMgrContext->requestInfo)
+    if(context->amsMgrContext->requestInfo)
     {
         FreeCARequestInfo(context->amsMgrContext->requestInfo);
         context->amsMgrContext->requestInfo = NULL;
@@ -351,7 +356,7 @@ exit:
 
 void FreeCARequestInfo(CARequestInfo_t *requestInfo)
 {
-    if (NULL == requestInfo)
+    if(NULL == requestInfo)
     {
         OIC_LOG_V(ERROR, TAG, "%s: Can't free memory. Received NULL requestInfo", __func__);
         return;
@@ -375,7 +380,7 @@ bool FoundAmaclForRequest(PEContext_t *context)
     memset(&context->amsMgrContext->amsDeviceId, 0, sizeof(context->amsMgrContext->amsDeviceId));
 
     //Call amacl resource function to get the AMS service deviceID for the resource
-    if (OC_STACK_OK == AmaclGetAmsDeviceId(context->resource, &context->amsMgrContext->amsDeviceId))
+    if(OC_STACK_OK == AmaclGetAmsDeviceId(context->resource, &context->amsMgrContext->amsDeviceId))
     {
         OIC_LOG_V(INFO, TAG, "%s:AMACL found for the requested resource %s",
                 __func__, context->resource);
@@ -392,11 +397,12 @@ bool FoundAmaclForRequest(PEContext_t *context)
      return ret;
 }
 
+
 void ProcessAMSRequest(PEContext_t *context)
 {
     OicUuid_t  emptyUuid = {.id={}};
     OIC_LOG_V(INFO, TAG, "Entering %s", __func__);
-    if (NULL != context)
+    if(NULL != context)
     {
         if((false == context->matchingAclFound) && (false == context->amsProcessing))
         {

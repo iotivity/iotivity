@@ -1194,7 +1194,6 @@ typedef struct
 {
     OCPayload base;
     char* securityData;
-    uint8_t *securityData1;
 } OCSecurityPayload;
 
 #ifdef WITH_PRESENCE

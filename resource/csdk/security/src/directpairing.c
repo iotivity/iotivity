@@ -826,7 +826,7 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
     (void)UNUSED;
     if (clientResponse)
     {
-        OIC_LOG_V(INFO, TAG, "StackResult: %s", clientResponse->result);
+        OIC_LOG_V(INFO, TAG, "StackResult: %d", clientResponse->result);
         OIC_LOG_V(INFO, TAG,
                 "Device =============> Discovered @ %s:%d",
                 clientResponse->devAddr.addr,
@@ -864,7 +864,6 @@ static OCStackApplicationResult DirectPairingDiscoveryHandler(void* ctx, OCDoHan
                 OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
                 return OC_STACK_KEEP_TRANSACTION;
             }
-
 
             char rsrc_uri[MAX_URI_LENGTH+1] = {0};
             int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",

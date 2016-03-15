@@ -30,71 +30,67 @@ extern "C" {
 /**
  * Initialize DOXM resource by loading data from persistent storage.
  *
- * @return ::OC_STACK_OK for Success, otherwise some error value.
+ * @retval  OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult InitDoxmResource();
 
 /**
  * Perform cleanup for DOXM resources.
  *
- * @return ::OC_STACK_OK for Success, otherwise some error value.
+ * @retval  OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult DeInitDoxmResource();
 
 /**
  * This method is used by SRM to retrieve DOXM resource data..
  *
- * @return reference to @ref OicSecDoxm_t, binary format of Doxm resource data.
+ * @retval  reference to @ref OicSecDoxm_t, binary format of Doxm resource data
  */
 const OicSecDoxm_t* GetDoxmResourceData();
 
 /**
- * This method converts CBOR DOXM into binary DOXM.
- * The CBOR DOXM can be from persistent database or
+ * This method converts JSON DOXM into binary DOXM.
+ * The JSON DOXM can be from persistent database or
  * or received as PUT/POST request.
  *
- * @param cborPayload is a doxm data in cbor.
- * @note Caller needs to invoke OCFree after done using the return pointer.
- * @param doxm is the pointer to @ref OicSecDoxm_t.
- * @param size of the cborPayload. In case value is 0, CBOR_SIZE value is assigned.
+ * @param[in] jsonStr  doxm data in json string.
+ * @return pointer to OicSecDoxm_t.
  *
- * @return ::OC_STACK_OK for Success, otherwise some error value.
+ * @note Caller needs to invoke OCFree after done
+ *       using the return pointer
  */
-OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
-                                OicSecDoxm_t **doxm);
+OicSecDoxm_t * JSONToDoxmBin(const char * jsonStr);
 
 /**
- * This method converts DOXM data into CBOR format.
+ * This method converts DOXM data into JSON format.
  * Caller needs to invoke 'free' when finished done using
- * return string.
+ * return string
  *
- * @param doxm Pointer to @ref OicSecDoxm_t.
- * @note Caller needs to invoke OCFree after done using the return pointer.
- * @param cborPayload is the payload of the cbor.
- * @param cborSize is the size of the cbor payload. Passed parameter should not be NULL.
+ * @param[in] doxm  Pointer to OicSecDoxm_t.
+ * @return pointer to json string.
  *
- * @return ::OC_STACK_OK for Success, otherwise some error value.
+ * @note Caller needs to invoke OCFree after done
+ *       using the return pointer
  */
-OCStackResult DoxmToCBORPayload(const OicSecDoxm_t * doxm, uint8_t **cborPayload,
-                                size_t *cborSize);
+char * BinToDoxmJSON(const OicSecDoxm_t * doxm);
 
 /**
  * This method returns the SRM device ID for this device.
  *
- * @return ::OC_STACK_OK for Success, otherwise some error value.
+ * @retval  OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID);
 
 /**
- * Gets the OicUuid_t value for the owner of this device.
+ * @brief Gets the OicUuid_t value for the owner of this device.
  *
- * @return ::OC_STACK_OK if devOwner is a valid UUID, otherwise ::OC_STACK_ERROR.
+ * @return OC_STACK_OK if devOwner is a valid UUID, otherwise OC_STACK_ERROR.
  */
 OCStackResult GetDoxmDevOwnerId(OicUuid_t *devOwner);
 
 /** This function deallocates the memory for OicSecDoxm_t .
  *
- * @param doxm is the pointer to @ref OicSecDoxm_t.
+ * @param[in] doxm  Pointer to OicSecDoxm_t.
  */
 void DeleteDoxmBinData(OicSecDoxm_t* doxm);
 
@@ -109,3 +105,5 @@ void RestoreDoxmToInitState();
 #endif
 
 #endif //IOTVT_SRM_DOXMR_H
+
+

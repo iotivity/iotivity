@@ -525,12 +525,11 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
             acl.recurrences = pdAcl->recurrences;
             acl.prdRecrLen = pdAcl->prdRecrLen;
 
-            size_t size = 0;
-            uint8_t *payload = NULL;
-            if (OC_STACK_OK == AclToCBORPayload(&acl, &payload, &size))
+            char* aclJson = BinToAclJSON(&acl);
+            if (aclJson)
             {
-                InstallNewACL(payload, size);
-                OICFree(payload);
+                InstallNewACL(aclJson);
+                OICFree(aclJson);
             }
         }
 
@@ -664,3 +663,6 @@ OCStackResult DeInitDpairingResource()
         return OC_STACK_ERROR;
     }
 }
+
+
+

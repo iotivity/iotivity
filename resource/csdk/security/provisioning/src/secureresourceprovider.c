@@ -40,7 +40,6 @@
 #include "provisioningdatabasemanager.h"
 #include "base64.h"
 #include "utlist.h"
-#include "ocpayload.h"
 
 #ifdef __WITH_X509__
 #include "crlresource.h"
@@ -298,21 +297,21 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
         OCClientResponseHandler responseHandler)
 {
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if (!secPayload)
+    if(!secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    size_t size = 0;
-    OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData1, &size);
-    if((OC_STACK_OK != res) && (NULL == secPayload->securityData1))
+    secPayload->securityData = BinToCredJSON(cred);
+    if(NULL == secPayload->securityData)
     {
-        OCPayloadDestroy((OCPayload *)secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
+        OICFree(secPayload);
+        OIC_LOG(ERROR, TAG, "Failed to BinToCredJSON");
         return OC_STACK_NO_MEMORY;
     }
 
+    OIC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr,
@@ -498,7 +497,7 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     crlData->resArr = (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
     if (crlData->resArr == NULL)
     {
-        OICFree(secPayload->securityData1);
+        OICFree(secPayload->securityData);
         OICFree(secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
@@ -542,16 +541,16 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    size_t size = 0;
-    OCStackResult res = CredToCBORPayload(cred, &secPayload->securityData1, &size);
+    secPayload->securityData = BinToCredJSON(cred);
 
-    if ((OC_STACK_OK != res) || (NULL == secPayload->securityData1))
+    if (NULL == secPayload->securityData)
     {
         OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
+        OIC_LOG(ERROR, TAG, "Failed to BinToCredJSON");
         return OC_STACK_NO_MEMORY;
     }
 
+    OIC_LOG_V(INFO, TAG, "Credential for provisioning : %s",secPayload->securityData);
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         deviceInfo->endpoint.addr,
@@ -560,7 +559,8 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
                         query, sizeof(query), OIC_RSRC_CRED_URI))
     {
         OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
-        OCPayloadDestroy((OCPayload *)secPayload);
+        OICFree(secPayload->securityData);
+        OICFree(secPayload);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -848,13 +848,15 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    size_t size = 0;
-    if(OC_STACK_OK != AclToCBORPayload(acl, &secPayload->securityData1, &size))
+    secPayload->securityData = BinToAclJSON(acl);
+    if(NULL == secPayload->securityData)
     {
-        OCPayloadDestroy((OCPayload *)secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to AclToCBORPayload");
+        OICFree(secPayload);
+        OIC_LOG(ERROR, TAG, "Failed to BinToAclJSON");
         return OC_STACK_NO_MEMORY;
     }
+    OIC_LOG_V(INFO, TAG, "ACL : %s", secPayload->securityData);
+
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
                         selectedDeviceInfo->endpoint.addr,
@@ -872,7 +874,8 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     ACLData_t *aclData = (ACLData_t *) OICCalloc(1, sizeof(ACLData_t));
     if (aclData == NULL)
     {
-        OCPayloadDestroy((OCPayload *)secPayload);
+        OICFree(secPayload->securityData);
+        OICFree(secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -886,7 +889,8 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     if (aclData->resArr == NULL)
     {
         OICFree(aclData);
-        OCPayloadDestroy((OCPayload *)secPayload);
+        OICFree(secPayload->securityData);
+        OICFree(secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }

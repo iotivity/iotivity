@@ -28,85 +28,85 @@ extern "C" {
 #endif
 
 /**
- * Register Persistent storage callback.
- *
- * @param  persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
- *
- * @return ::OC_STACK_OK  is no errors and successful. ::OC_STACK_INVALID_PARAM for invalid parameter.
+ * @brief   Register Persistent storage callback.
+ * @param   persistentStorageHandler [IN] Pointers to open, read, write, close & unlink handlers.
+ * @return
+ *     OC_STACK_OK    - No errors; Success
+ *     OC_STACK_INVALID_PARAM - Invalid parameter
  */
 OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler);
 
 /**
- * Get Persistent storage handler pointer.
- *
- * @return The pointer to Persistent Storage callback handler.
+ * @brief   Get Persistent storage handler pointer.
+ * @return
+ *     The pointer to Persistent Storage callback handler
  */
 OCPersistentStorage* SRMGetPersistentStorageHandler();
 
 /**
- * Register request and response callbacks. Requests and responses are delivered in these callbacks.
- *
- * @param reqHandler Request handler callback ( for GET,PUT ..etc)
- * @param respHandler Response handler callback.
- * @param errHandler Error handler callback.
- *
- * @return ::OC_STACK_OK  is no errors and successful. ::OC_STACK_INVALID_PARAM for invalid parameter.
+ * @brief   Register request and response callbacks.
+ *          Requests and responses are delivered in these callbacks.
+ * @param   reqHandler   [IN] Request handler callback ( for GET,PUT ..etc)
+ * @param   respHandler  [IN] Response handler callback.
+ * @param   errHandler   [IN] Error handler callback.
+ * @return
+ *     OC_STACK_OK    - No errors; Success
+ *     OC_STACK_INVALID_PARAM - Invalid parameter
  */
 OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
                                  CAResponseCallback respHandler,
                                  CAErrorCallback errHandler);
 
 /**
- * Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
- * @return  ::OC_STACK_OK for Success, otherwise some error value.
+ * @brief   Initialize all secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
+ * @return  OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult SRMInitSecureResources();
 
 /**
- * Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
+ * @brief   Perform cleanup for secure resources ( /oic/sec/cred, /oic/sec/acl, /oic/sec/pstat etc).
+ * @return  none
  */
 void SRMDeInitSecureResources();
 
 /**
- * Initialize Policy Engine context.
- *
- * @return ::OC_STACK_OK for Success, otherwise some error value.
+ * @brief   Initialize Policy Engine context.
+ * @return  OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult SRMInitPolicyEngine();
 
 /**
- * Cleanup Policy Engine context.
+ * @brief   Cleanup Policy Engine context.
+ * @return  none
  */
 void SRMDeInitPolicyEngine();
 
 /**
- * Provisioning API response callback.
- *
- * @param object endpoint instance.
- * @param responseInfo instance of CAResponseInfo_t structure.
- *
+ * @brief   Provisioning API response callback.
+ * @param object[IN]       endpoint instance.
+ * @param responseInfo[IN] instance of CAResponseInfo_t structure.
  * @return true if received response is for provisioning API false otherwise.
  */
 typedef bool (*SPResponseCallback) (const CAEndpoint_t *object,
                                     const CAResponseInfo_t *responseInfo);
 
 /**
- * Function to register provisoning API's response callback.
- *
+ * @brief function to register provisoning API's response callback.
  * @param respHandler response handler callback.
  */
 void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler);
 
 /**
- * Check the security resource URI.
- * @param uri Pointers to security resource URI.
- * @return true if the URI is one of security resources, otherwise false.
+ * @brief   Check the security resource URI.
+ * @param   uri [IN] Pointers to security resource URI.
+ * @return  true if the URI is one of security resources, otherwise false.
  */
 bool SRMIsSecurityResourceURI(const char* uri);
 
 /**
- * Sends Response
- * @param resposeVal Response @ref SRMAccessResponse_t value.
+ * @brief   Sends Response
+ * @param   resposeVal       SRMAccessResponse_t value
+ * @return  NONE
  */
 void SRMSendResponse(SRMAccessResponse_t responseVal);
 

@@ -102,15 +102,14 @@ void OCFreeOCStringLL(OCStringLL* ll);
 
 static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* rootValue)
 {
-    OCStackResult ret = OC_STACK_INVALID_PARAM;
-    *outPayload = NULL;
-    char *securityData = NULL;
-    uint8_t *securityData1 = NULL;
+    OCStackResult ret = OC_STACK_ERROR;
     CborError err;
+    char *securityData = NULL;
+    CborValue strVal;
+
     VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid parameter outPayload");
     VERIFY_PARAM_NON_NULL(TAG, rootValue, "Invalid parameter rootValue");
-
-    CborValue strVal;
+    *outPayload = NULL;
 
     err = cbor_value_enter_container(rootValue, &strVal);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed entering container");
@@ -124,14 +123,6 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* r
         VERIFY_PARAM_NON_NULL(TAG, *outPayload, "Invalid cbor");
         ret = OC_STACK_OK;
     }
-    else if (cbor_value_is_byte_string(&strVal))
-    {
-        size_t len = 0;
-        err = cbor_value_dup_byte_string(&strVal, &securityData1, &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed reading security data");
-        *outPayload = (OCPayload *)OCSecurityPayloadCBORCreate(securityData1);
-        VERIFY_PARAM_NON_NULL(TAG, *outPayload, "Failed Creating Security Cbor.");
-    }
     else if(cbor_value_is_valid(&strVal))
     {
         ret = OC_STACK_OK;
@@ -143,7 +134,6 @@ static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* r
 
 exit:
     OICFree(securityData);
-    OICFree(securityData1);
     return ret;
 }
 
