@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
@@ -262,22 +263,24 @@ size_t coap_get_total_message_length(const unsigned char *data, size_t size)
 
 coap_transport_type coap_get_tcp_header_type_from_size(unsigned int size)
 {
-    if (COAP_TCP_LENGTH_FIELD_8_BIT < size && COAP_TCP_LENGTH_FIELD_16_BIT >= size)
-    {
-        return coap_tcp_8bit;
-    }
-    else if (COAP_TCP_LENGTH_FIELD_16_BIT < size && COAP_TCP_LENGTH_FIELD_32_BIT >= size)
-    {
-        return coap_tcp_16bit;
-    }
-    else if (COAP_TCP_LENGTH_FIELD_32_BIT < size)
-    {
-        return coap_tcp_32bit;
-    }
-    else
+    if (size < COAP_TCP_LENGTH_FIELD_8_BIT)
     {
         return coap_tcp;
     }
+    else if (size < COAP_TCP_LENGTH_FIELD_16_BIT)
+    {
+        return coap_tcp_8bit;
+    }
+    else if (size < COAP_TCP_LENGTH_FIELD_32_BIT)
+    {
+        return coap_tcp_16bit;
+    }
+    else if (size < ULONG_MAX + COAP_TCP_LENGTH_FIELD_32_BIT)
+    {
+        return coap_tcp_32bit;
+    }
+
+    return -1;
 }
 
 coap_transport_type coap_get_tcp_header_type_from_initbyte(unsigned int length)
