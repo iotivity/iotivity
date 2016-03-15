@@ -33,13 +33,10 @@ var rvibody = [
 		"method": "message",
 		"params": {
 			"timeout":1459388884,
-			"service_name": "genivi.org/oic_gw/hvac",
-			"parameters":{
-				"right_temp":"value",
-				"left_temp":"value",
-				"fan_speed":"value",
-				"defroster":"value"
-			}
+			"service_name": "genivi.org/node/vehicle_id/rvi/vehiclecontrol",
+	        "parameters": {
+                "target" : "GETHVAC"
+	        }
 		}
 	},
     {//2 - Get
@@ -48,11 +45,11 @@ var rvibody = [
 		"method": "message",
 		"params": {
 			"timeout":1459388884,
-			"service_name": "genivi.org/oic_gw/carlocation",
+			"service_name": "genivi.org/node/vehicle_id/rvi/vehiclecontrol",
 			"parameters":{
-				"lat":"value",
-				"long":"value",
-				"vehicle_name":"value"
+				"target" : "SETHVAC",
+				"function": "function",
+				"newValue": "value"
 			}
 		}
 	},
@@ -62,7 +59,7 @@ var rvibody = [
 		"method": "message",
 		"params": {
 			"timeout":1459388884,
-			"service_name": "genivi.org/oic_gw/hvac/subscribe_hvac",
+			"service_name": "genivi.org/node/vehicle_id/rvi/vehiclecontrol",
 			'callback_service':'genivi.org/oic_gw/callback/report_hvac'
 		}
 	},
@@ -82,10 +79,19 @@ var rvibody = [
 		"method": "register_service",
 		"params": {
 			"timeout":1459388884,
-			"service_name": "smarthome/control"
+			"service_name": "homecontrol"
 		}
 	},
-    {//6 - Invoke
+	{//6
+		"jsonrpc":"2.0",
+		"id":"1",
+		"method": "register_service",
+		"params": {
+			"timeout":1459388884,
+			"service_name": "callback"
+		}
+	},
+	{//6 - Invoke
 		"jsonrpc":"2.0",
 		"id":"1",
 		"method": "message",
