@@ -514,7 +514,7 @@ void *CLInterface(void *data)
                     OIC_LOG(ERROR, TAG, "Invalid PIN");
                     continue;
                 }
-                sscanf(input, "%9s", pinNumber);
+                sscanf(input, "%8s", pinNumber);
                 printf("\n");
 
                 ret = DoDirectPairing(peer, pmSel, pinNumber);
