@@ -21,13 +21,22 @@ var rvimsg = [
 ];
 
 var rvibody = [
- 	{//0
+ 	{
 		"jsonrpc":"2.0",
 		"id":"1",
 		"method": "get_available_services",
 		"params" : {}
     },
-    {//1 - Set
+	{
+		"jsonrpc":"2.0",
+		"id":"1",
+		"method": "register_service",
+		"params": {
+			"timeout":1459388884,
+			"service_name": "servicename"
+		}
+	},
+	{
 		"jsonrpc":"2.0",
 		"id":"1",
 		"method": "message",
@@ -39,7 +48,7 @@ var rvibody = [
 	        }
 		}
 	},
-    {//2 - Get
+    {
 		"jsonrpc":"2.0",
 		"id":"1",
 		"method": "message",
@@ -53,58 +62,18 @@ var rvibody = [
 			}
 		}
 	},
-	{//3
+	{
 		"jsonrpc":"2.0",
 		"id":"1",
 		"method": "message",
 		"params": {
 			"timeout":1459388884,
 			"service_name": "genivi.org/node/vehicle_id/rvi/vehiclecontrol",
-			'callback_service':'genivi.org/oic_gw/callback/report_hvac'
-		}
-	},
-	{//4
-		"jsonrpc":"2.0",
-		"id":"1",
-		"method": "message",
-		"params": {
-			"timeout":1459388884,
-			"service_name": "genivi.org/oic_gw/hvac/subscribe_carlocation",
-			'callback_service':'genivi.org/oic_gw/callback/report_carlocation'
-		}
-	},
-	{//5
-		"jsonrpc":"2.0",
-		"id":"1",
-		"method": "register_service",
-		"params": {
-			"timeout":1459388884,
-			"service_name": "homecontrol"
-		}
-	},
-	{//6
-		"jsonrpc":"2.0",
-		"id":"1",
-		"method": "register_service",
-		"params": {
-			"timeout":1459388884,
-			"service_name": "callback"
-		}
-	},
-	{//6 - Invoke
-		"jsonrpc":"2.0",
-		"id":"1",
-		"method": "message",
-		"params": {
-			"timeout":1459388884,
-			"service_name": "genivi.org/oic_gw/carlocation",
 			"parameters":{
-				"lat":"value",
-				"long":"value",
-				"vehicle_name":"value"
+				"target" : "GETLOCATION"
 			}
 		}
-	},	
+	}
 ]; 
 
 (function () {
@@ -127,12 +96,22 @@ var rvibody = [
         }
 
         $scope.registerService = function(){
-        	rvimsg[1].params = rvibody[5];
+        	rvimsg[1].params = rvibody[1];
         	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
         }
 
-        $scope.invokeService = function(){
-        	rvimsg[1].params = rvibody[5];
+        $scope.getHVAC = function(){
+        	rvimsg[1].params = rvibody[2];
+        	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
+        }
+
+        $scope.setHVAC = function(){
+        	rvimsg[1].params = rvibody[3];
+        	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
+        }
+
+        $scope.getVehicleLocation = function(){
+        	rvimsg[1].params = rvibody[4];
         	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
         }
         
