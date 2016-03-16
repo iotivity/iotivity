@@ -167,7 +167,7 @@ TEST(CredResourceTest, CredEntityHandlerDeleteTest)
     const OicSecCred_t* subjectCred1 = NULL;
     const OicSecCred_t* subjectCred2 = NULL;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
-    char query[] = "sub=subject1";
+    char query[] = "sub=c3ViamVjdDE="; //base64 Encoding of subject1
 
     SetPersistentHandler(&ps, true);
 

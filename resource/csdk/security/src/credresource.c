@@ -32,6 +32,7 @@
 #include "payload_logging.h"
 #include "ocstack.h"
 #include "ocrandom.h"
+#include "base64.h"
 #include "ocserverrequest.h"
 #include "oic_malloc.h"
 #include "ocpayload.h"
@@ -893,6 +894,10 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
 
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
 
+    unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
+    B64Result b64Ret = B64_OK;
+    uint32_t outLen = 0;
+
     if (NULL == ehRequest->query)
    {
        return ehRet;
@@ -908,8 +913,11 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
        if (strncasecmp((char *)parseIter.attrPos, OIC_JSON_SUBJECT_NAME,
                parseIter.attrLen) == 0)
        {
-           memcpy(subject.id, parseIter.valPos, parseIter.valLen);
-       }
+            b64Ret = b64Decode((char*)parseIter.valPos,  parseIter.valLen, base64Buff,
+                    sizeof(base64Buff), &outLen);
+            VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(subject.id)), ERROR);
+            memcpy(subject.id, base64Buff, outLen);
+        }
    }
 
    if (OC_STACK_RESOURCE_DELETED == RemoveCredential(&subject))
@@ -917,6 +925,7 @@ static OCEntityHandlerResult HandleDeleteRequest(const OCEntityHandlerRequest *e
        ehRet = OC_EH_RESOURCE_DELETED;
    }
 
+exit:
     return ehRet;
 }
 
