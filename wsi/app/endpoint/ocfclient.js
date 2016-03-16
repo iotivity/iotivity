@@ -2,7 +2,7 @@ var request = require('request');
 
 var intervalId,
     handleReceptacle = {},
-    iotivity = require("iotivity-node/lowlevel");
+    iotivity = require("../../iotivity-node/lowlevel");
 
 iotivity.OCInit(null, 0, iotivity.OCMode.OC_CLIENT);
 
@@ -86,7 +86,7 @@ getresource = function(cap,res)
         }
     };
     specificResponseHandlerNget = function (handle, response) {
-        console.log("Received response to DISCOVER request:");
+        console.log("Received response to GET request:");
         console.log(JSON.stringify(response, null, 4));
         destination = response.addr,
         resources = response && response.payload && response.payload.resources;
@@ -171,7 +171,7 @@ putresource = function(cap,res)
         }
     }
     specificResponseHandlerNput = function (handle, response) {
-        console.log("Received response to DISCOVER request:");
+        console.log("Received response to PUT request:");
         console.log(JSON.stringify(response, null, 4));
         destination = response.addr,
         resources = response && response.payload && response.payload.resources;
@@ -274,7 +274,7 @@ observeresource = function(cap,res)
         return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
     }
     specificResponseHandlerNput = function (handle, response) {
-        console.log("Received response to DISCOVER request:");
+        console.log("Received response to OBSERVE request:");
         console.log(JSON.stringify(response, null, 4));
         destination = response.addr,
         resources = response && response.payload && response.payload.resources;
