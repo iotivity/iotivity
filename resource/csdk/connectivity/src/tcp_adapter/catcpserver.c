@@ -436,6 +436,12 @@ exit:
 
 static CAResult_t CACreateAcceptSocket()
 {
+    if (g_acceptServerFD != -1)
+    {
+        OIC_LOG(DEBUG, TAG, "accept socket created already");
+        return CA_STATUS_OK;
+    }
+
     int reuse = 1;
     struct sockaddr_in server = { .sin_addr.s_addr = INADDR_ANY,
                                   .sin_family = AF_INET,
@@ -542,11 +548,14 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
     }
     ca_mutex_unlock(g_mutexObjectList);
 
-    res = CACreateAcceptSocket();
-    if (CA_STATUS_OK != res)
+    if (caglobals.server)
     {
-        OIC_LOG(ERROR, TAG, "failed to create accept socket");
-        return res;
+        res = CACreateAcceptSocket();
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "failed to create accept socket");
+            return res;
+        }
     }
 
     // create pipe for fast shutdown
