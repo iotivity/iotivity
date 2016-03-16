@@ -242,6 +242,7 @@ void checkTimeout()
 
 void *loop(void *threadid)
 {
+    (void)threadid;
     while (1)
     {
         sleep(SECOND);
