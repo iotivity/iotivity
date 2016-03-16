@@ -62,7 +62,7 @@ typedef enum {
 
 int chosenThing = BULB;
 
-typedef struct thingbox
+struct thingbox
 {
 	things_e t;
 	int state;
@@ -75,7 +75,7 @@ typedef struct thingbox
 };
 
 thingbox things[] = {
-		{BULB, 			0, "bulb", "OCF Light", "core.light", "core.brightlight", "/a/light",
+		{BULB, 		0, "bulb", "OCF Light", "core.light", "core.brightlight", "/a/light",
 				{
 					{"power", ""},
 					{"state", ""}
@@ -164,7 +164,9 @@ class TestResource {
                     resourceInterface, cb, resourceProperty);
 
             if (OC_STACK_OK != result) {
-                std::cout << "Resource creation was unsuccessful\n";
+                std::cout << "\nResource creation was unsuccessful\n";
+            }else{
+            	std::cout << "\nResource created successfully\n";
             }
         }
 
@@ -226,7 +228,7 @@ class TestResource {
             //std::cout << "OCRepresentation get." << m_power << " and " <<m_state <<std::endl;
 //            m_thingRep.setValue("state", m_state);
 //            m_thingRep.setValue("power", m_power);
-            //change_bg_image(m_power);
+            change_bg_image(10);
             return m_thingRep;
         }
 
@@ -480,9 +482,20 @@ void *thing_handler(void *ptr)
 }
 
 
-    EAPI_MAIN int
+EAPI_MAIN int
 elm_main(int argc, char **argv)
 {
+    if(argc<2)
+    {
+	printf("\nUsage : Provide thing to create\n");
+	printf("0 : Bulb\n");
+	printf("1 : Thermostat\n");
+	printf("2 : HVAC\n");
+	printf("3 : Vehicle Location\n");
+	return -1;
+    }
+
+
     //create the UI
     if(pthread_create(&thread_id, NULL, thing_handler, NULL)) {
         fprintf(stderr, "Error creating thread\n");
