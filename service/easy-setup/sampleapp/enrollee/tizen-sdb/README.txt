@@ -48,9 +48,9 @@ Procedure to Execute Sample App:
     5) change-booting-mode.sh --update
 
     6) Install the rpms using the following commands:
-        a) rpm -Uvh iotivity-1.0.0-0.armv7l.rpm --force --nodeps
-        a) rpm -Uvh iotivity-devel-1.0.0-0.armv7l.rpm --force --nodeps
-        a) rpm -Uvh iotivity-service-1.0.0-0.armv7l.rpm --force --nodeps
+        a) rpm -Uvh iotivity-1.0.1-0.armv7l.rpm --force --nodeps
+        a) rpm -Uvh iotivity-devel-1.0.1-0.armv7l.rpm --force --nodeps
+        a) rpm -Uvh iotivity-service-1.0.1-0.armv7l.rpm --force --nodeps
         b) rpm -Uvh com-oic-es-sample-0.1-1.armv7l.rpm --force --nodeps
     7) For IP transport, apply net-config smack rules using below command:
         a) chsmack -a "net-config" /usr/apps/com.oic.es.sample/bin/*
