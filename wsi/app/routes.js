@@ -90,7 +90,11 @@ module.exports = function(app, passport) {
             
             console.log('Response Service Auth : ' + service);
             auth = service[0].auth[0];
-            app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap, auth, res);
+	    var sgy = cap.endpointtype.toLowerCase();
+	    if(sgy != null)
+                app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap, auth, res);
+	    else
+	        res.status(400);	
         });
     });
 
