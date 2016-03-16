@@ -23,7 +23,7 @@ const unsigned char IDENTITY[] = ("1111111111111111");
 // PSK between this device and peer device.
 const unsigned char RS_CLIENT_PSK[] = ("AAAAAAAAAAAAAAAA");
 
-#define PORT_LENGTH 5
+#define PORT_LENGTH 6
 #define SECURE_DEFAULT_PORT 5684
 #define RESOURCE_URI_LENGTH 14
 #define OPTION_INFO_LENGTH 1024
