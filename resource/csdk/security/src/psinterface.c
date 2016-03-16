@@ -91,7 +91,7 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
         uint8_t *fsData = (uint8_t *)OICCalloc(1, fileSize);
         VERIFY_NON_NULL(TAG, fsData, ERROR);
 
-        FILE *fp = ps->open(SVR_DB_DAT_FILE_NAME, "r");
+        FILE *fp = ps->open(SVR_DB_DAT_FILE_NAME, "rb");
         VERIFY_NON_NULL(TAG, fp, ERROR);
         size_t itemsRead = ps->read(fsData, 1, fileSize, fp);
         if (itemsRead == fileSize)
@@ -159,7 +159,6 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
     uint8_t *doxmCbor = NULL;
     uint8_t *svcCbor = NULL;
     uint8_t *credCbor = NULL;
-    uint8_t mapLen = 1;
 
     int64_t cborEncoderResult = CborNoError;
     CborEncoder encoder;
@@ -186,7 +185,6 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
             {
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &aclCbor, &aclCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ACL Name Value.");
-                mapLen++;
             }
 
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_DOXM_NAME, &curVal);
@@ -194,7 +192,6 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
             {
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &doxmCbor, &doxmCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult,  "Failed Finding DOXM Name Value.");
-                mapLen++;
             }
 
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_PSTAT_NAME, &curVal);
@@ -202,7 +199,6 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
             {
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &pstatCbor, &pstatCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PSTAT Name Value.");
-                mapLen++;
             }
 
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_AMACL_NAME, &curVal);
@@ -210,7 +206,6 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
             {
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &amaclCbor, &amaclCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding AMACL Name Value.");
-                mapLen++;
             }
 
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_SVC_NAME, &curVal);
@@ -218,7 +213,6 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
             {
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &svcCbor, &svcCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SVC Name Value.");
-                mapLen++;
             }
 
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_CRED_NAME, &curVal);
@@ -226,7 +220,6 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
             {
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &credCbor, &credCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CRED Name Value.");
-                mapLen++;
             }
         }
 
@@ -240,7 +233,7 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
             cbor_encoder_init(&encoder, outPayload, size, 0);
 
             CborEncoder secRsrc;
-            cborEncoderResult |= cbor_encoder_create_map(&encoder, &secRsrc, mapLen);
+            cborEncoderResult |= cbor_encoder_create_map(&encoder, &secRsrc, CborIndefiniteLength);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PS Map.");
 
             if (psPayload)
@@ -309,7 +302,7 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
         cbor_encoder_init(&encoder, outPayload, size, 0);
 
         CborEncoder secRsrc ;
-        cborEncoderResult |= cbor_encoder_create_map(&encoder, &secRsrc, mapLen);
+        cborEncoderResult |= cbor_encoder_create_map(&encoder, &secRsrc, CborIndefiniteLength);
         cborEncoderResult |= cbor_encode_text_string(&secRsrc, rsrcName, strlen(rsrcName));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Value Tag");
         cborEncoderResult |= cbor_encode_byte_string(&secRsrc, psPayload, psSize);
@@ -320,7 +313,7 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
 
     if (outPayload && cborSize > 0)
     {
-        OIC_LOG_V(DEBUG, TAG, "Writting in the file.", cborSize);
+        OIC_LOG_V(DEBUG, TAG, "Writting in the file. %d", cborSize);
         OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
         if (ps)
         {
@@ -348,7 +341,7 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
         OIC_LOG_V(DEBUG, TAG, "Writing in the file . %zd", cborSize);
     }
 
-    OIC_LOG(DEBUG,  TAG, "Entering UpdateSecureResourceInPS IN");
+    OIC_LOG(DEBUG,  TAG, "Exiting UpdateSecureResourceInPS OUT");
 
 exit:
     OICFree(dbData);

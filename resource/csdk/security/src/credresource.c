@@ -207,7 +207,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
                 OIC_JSON_PUBLICDATA_NAME, strlen(OIC_JSON_PUBLICDATA_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Public Data Tag.");
             cborEncoderResult |= cbor_encode_byte_string(&credMap, cred->publicData.data,
-                    sizeof(cred->publicData.data));
+                    cred->publicData.len);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Public Tag Value.");
         }
 #endif /*__WITH_X509__*/
@@ -218,7 +218,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
                 OIC_JSON_PRIVATEDATA_NAME, strlen(OIC_JSON_PRIVATEDATA_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Data Tag");
             cborEncoderResult |= cbor_encode_byte_string(&credMap, cred->privateData.data,
-                sizeof(cred->privateData.data));
+                cred->privateData.len);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Data Value.");
         }
 
@@ -385,6 +385,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
             cborFindResult = cbor_value_dup_byte_string(&credMap,
                 &cred->privateData.data, &len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Byte Array.");
+            cred->privateData.len = len;
         }
         //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
         cborFindResult = cbor_value_map_find_value(&credArray, OIC_JSON_PUBLICDATA_NAME, &credMap);
@@ -395,6 +396,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                 cborFindResult = cbor_value_dup_byte_string(&credMap, &cred->publicData.data, &len,
                         NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Public Data.");
+                cred->publicData.len = len;
             }
         }
         //Period -- Not Mandatory
@@ -467,16 +469,18 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
         cred->publicData.data = (uint8_t *)OICCalloc(1, PUBLIC_KEY_SIZE);
         VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
         memcpy(cred->publicData.data, publicData, PUBLIC_KEY_SIZE);
+        cred->publicData.len = PUBLIC_KEY_SIZE;
     }
 #endif // __WITH_X509__
 
     if (privateData)
     {
-#ifdef __WITH_X509__
-        cred->privateData.data = (uint8_t *)OICCalloc(1, PRIVATE_KEY_SIZE);
+//#ifdef __WITH_X509__
+        cred->privateData.data = (uint8_t *)OICCalloc(1, OWNER_PSK_LENGTH_128);
         VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
-        memcpy(cred->privateData.data, privateData, sizeof(cred->privateData.data));
-#endif // __WITH_X509__
+        memcpy(cred->privateData.data, privateData, OWNER_PSK_LENGTH_128);
+        cred->privateData.len = OWNER_PSK_LENGTH_128;
+//#endif // __WITH_X509__
     }
 
     VERIFY_SUCCESS(TAG, ownersLen > 0, ERROR);
@@ -699,6 +703,7 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
     //Generate owner credential based on recevied credential information
     receviedCred->privateData.data = (uint8_t *)OICCalloc(1, OWNER_PSK_LENGTH_128);
     VERIFY_NON_NULL(TAG, receviedCred->privateData.data, ERROR);
+    receviedCred->privateData.len = OWNER_PSK_LENGTH_128;
     memcpy(receviedCred->privateData.data, ownerPSK, OWNER_PSK_LENGTH_128);
 
     OIC_LOG(INFO, TAG, "PrivateData of OwnerPSK was calculated successfully");

@@ -507,6 +507,14 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
         doxm->owned = jsonObj->valueint;
     }
 
+    //DPC -- Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DPC_NAME);
+    if (jsonObj)
+    {
+        VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type), ERROR);
+        doxm->dpc = jsonObj->valueint;
+    }
+
     //DeviceId -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_NAME);
     if (jsonObj)

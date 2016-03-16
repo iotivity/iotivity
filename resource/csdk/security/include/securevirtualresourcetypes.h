@@ -379,12 +379,12 @@ struct OicSecDoxm
     //TODO: Need more clarification on deviceIDFormat field type.
     //OicSecDvcIdFrmt_t   deviceIDFormat; // 5:R:S:Y:UINT8
     OicUuid_t           deviceID;       // 6:R:S:Y:oic.uuid
-    bool                   dpc;             // 7:R:S:Y:Boolean
-    OicUuid_t           owner;         // 7:R:S:Y:oic.uuid
+    bool                dpc;             // 7:R:S:Y:Boolean
+    OicUuid_t           owner;         // 8:R:S:Y:oic.uuid
     // NOTE: we are using UUID for Owner instead of Svc type for mid-April
     // SRM version only; this will change to Svc type for full implementation.
-    //OicSecSvc_t       devOwner;        // 7:R:S:Y:oic.sec.svc
-    //OicSecSvc_t       rOwner;        // 8:R:S:Y:oic.sec.svc
+    //OicSecSvc_t       devOwner;        // 9:R:S:Y:oic.sec.svc
+    //OicSecSvc_t       rOwner;        // 10:R:S:Y:oic.sec.svc
     //TODO change Owner type to oic.sec.svc
 };
 
