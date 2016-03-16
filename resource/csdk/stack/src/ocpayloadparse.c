@@ -748,8 +748,8 @@ static CborError OCParseArray(OCRepPayload *out, const char *name, CborValue *co
     void *arr = NULL;
     OCRepPayloadPropType type;
     size_t dimensions[MAX_REP_ARRAY_DEPTH];
-    size_t dimTotal;
-    size_t allocSize;
+    size_t dimTotal = 0;
+    size_t allocSize = 0;
     bool res = true;
     CborError err = OCParseArrayFindDimensionsAndType(container, dimensions, &type);
     VERIFY_CBOR_SUCCESS(TAG, err, "Array details weren't clear");
@@ -829,7 +829,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
 {
     CborError err = CborUnknownError;
     char *name = NULL;
-    bool res;
+    bool res = false;
     VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid Parameter outPayload");
     VERIFY_PARAM_NON_NULL(TAG, objMap, "Invalid Parameter objMap");
 
