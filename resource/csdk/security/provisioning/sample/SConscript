@@ -53,7 +53,7 @@ provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread', '-f
 provisioning_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 provisioning_env.AppendUnique(LIBS = ['-lpthread','-ldl'])
 provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-provisioning_env.PrependUnique(LIBS = ['ocpmapi','oc', 'oc_logger', 'ocsrm','m', 'octbstack', 'connectivity_abstraction', 'coap'])
+provisioning_env.PrependUnique(LIBS = ['ocpmapi', 'm', 'octbstack', 'ocsrm', 'connectivity_abstraction', 'coap'])
 
 if env.get('SECURED') == '1':
     provisioning_env.AppendUnique(LIBS = ['tinydtls'])
