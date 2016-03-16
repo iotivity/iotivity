@@ -34,6 +34,12 @@
 #include "uarraylist.h"
 #include "cacommon.h"
 #include "caprotocolmessage.h"
+#include "camessagehandler.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /**
  * Callback to send block data.
@@ -109,11 +115,6 @@ typedef enum
     CA_BLOCK_TOO_LARGE,
     CA_BLOCK_RECEIVED_ALREADY
 } CABlockState_t;
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 /**
  * Initializes the block-wise transfer context.
@@ -548,6 +549,12 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData);
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID);
+
+/**
+ * Remove all block data in block-wise transfer list.
+ * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CARemoveAllBlockDataFromList();
 
 /**
  * Check if data exist in block-wise transfer list.

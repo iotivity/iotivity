@@ -202,8 +202,7 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
     if (0 >= ret)
     {
         OIC_LOG(ERROR, TAG, "pdu parse failed");
-        coap_delete_pdu(outpdu);
-        return NULL;
+        goto exit;
     }
 
 #ifdef WITH_TCP
@@ -218,15 +217,13 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
         {
             OIC_LOG_V(ERROR, TAG, "coap version is not available : %d",
                       outpdu->hdr->coap_hdr_udp_t.version);
-            coap_delete_pdu(outpdu);
-            return NULL;
+            goto exit;
         }
         if (outpdu->hdr->coap_hdr_udp_t.token_length > CA_MAX_TOKEN_LEN)
         {
             OIC_LOG_V(ERROR, TAG, "token length has been exceed : %d",
                       outpdu->hdr->coap_hdr_udp_t.token_length);
-            coap_delete_pdu(outpdu);
-            return NULL;
+            goto exit;
         }
     }
 
@@ -236,6 +233,10 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
     }
 
     return outpdu;
+
+exit:
+    coap_delete_pdu(outpdu);
+    return NULL;
 }
 
 coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
@@ -849,7 +850,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                 {
                     outInfo->payloadFormat = CA_FORMAT_UNSUPPORTED;
                     OIC_LOG_V(DEBUG, TAG, "option[%d] has an unsupported format [%d]",
-                            opt_iter.type, (uint8_t)buf[0]);
+                              opt_iter.type, (uint8_t)buf[0]);
                 }
             }
             else if (COAP_OPTION_ACCEPT == opt_iter.type)
@@ -863,7 +864,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                     outInfo->acceptFormat = CA_FORMAT_UNSUPPORTED;
                 }
                 OIC_LOG_V(DEBUG, TAG, "option[%d] has an unsupported format [%d]",
-                        opt_iter.type, (uint8_t)buf[0]);
+                          opt_iter.type, (uint8_t)buf[0]);
             }
             else
             {
