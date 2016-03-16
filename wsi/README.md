@@ -23,3 +23,8 @@ from browser
 
 Use the web service interface to integrate iotivity and web services.
 
+TODO
+----
+Empty resources reported by iotivity-node if version mismatch happens.
+
+
