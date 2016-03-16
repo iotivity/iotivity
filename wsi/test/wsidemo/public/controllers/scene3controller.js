@@ -39,6 +39,15 @@ var rvibody = [
 	{
 		"jsonrpc":"2.0",
 		"id":"1",
+		"method": "unregister_service",
+		"params": {
+			"timeout":1459388884,
+			"service_name": "servicename"
+		}
+	},
+	{
+		"jsonrpc":"2.0",
+		"id":"1",
 		"method": "message",
 		"params": {
 			"timeout":1459388884,
@@ -100,18 +109,23 @@ var rvibody = [
         	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
         }
 
-        $scope.getHVAC = function(){
+        $scope.unregisterService = function(){
         	rvimsg[1].params = rvibody[2];
         	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
         }
 
-        $scope.setHVAC = function(){
+        $scope.getHVAC = function(){
         	rvimsg[1].params = rvibody[3];
         	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
         }
 
-        $scope.getVehicleLocation = function(){
+        $scope.setHVAC = function(){
         	rvimsg[1].params = rvibody[4];
+        	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
+        }
+
+        $scope.getVehicleLocation = function(){
+        	rvimsg[1].params = rvibody[5];
         	document.getElementById('rvicap').value = JSON.stringify(rvimsg[1]);	
         }
         
