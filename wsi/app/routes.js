@@ -92,7 +92,7 @@ module.exports = function(app, passport) {
             auth = service[0].auth[0];
 	    var sgy = cap.endpointtype.toLowerCase();
 	    if(sgy != null)
-                app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap, auth, res);
+            app.settings.strategy[cap.endpointtype.toLowerCase()].request(cap, auth, res);
 	    else
 	        res.status(400);	
         });

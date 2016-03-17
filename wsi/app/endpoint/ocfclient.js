@@ -39,12 +39,16 @@ findresource = function(cap,res){
                            + resources[ index ].uri + "\"}";
             if(!map[endpoint])
             {
-                var resource = new Object();
-                resource.destination = destination;
-                resource.uri = resources[ index ].uri;
-                map[endpoint] = resource;
+            	//filter out standard services.
+            	if(resources[ index ].uri.indexOf("/oic") !== 0){
+            		console.log("Is this a standard service. " + resources[ index ].uri.indexOf("/oic") + " URI = " + resources[ index ].uri);
+	                var resource = new Object();
+	                resource.destination = destination;
+	                resource.uri = resources[ index ].uri;
+	                map[endpoint] = resource;
+	                endpointList.push(endpoint);
+            	}
             }
-            endpointList.push(endpoint);
         }
         return iotivity.OCStackApplicationResult.OC_STACK_KEEP_TRANSACTION;
     }
@@ -53,7 +57,7 @@ findresource = function(cap,res){
     setTimeout(function(){
         res.status(200).json(JSON.parse("[" + endpointList + "]"));
         return iotivity.OCStackApplicationResult.OC_STACK_DELETE_TRANSACTION;
-    },7000);
+    },10000);
 
     var endpointList = [];
 
@@ -311,14 +315,10 @@ observeresource = function(cap,res)
         var specificURI = "["+ cap.params.address + "]:" + cap.params.port +"/oic/res";
 
         iotivity.OCDoResource(
-            // The bindings fill in this object
             handleReceptacle,
             iotivity.OCMethod.OC_REST_DISCOVER,
-            // Standard path for discovering resources
             specificURI,
-            // There is no destination
             null,
-            // There is no payload
             null,
             iotivity.OCConnectivityType.CT_DEFAULT,
             iotivity.OCQualityOfService.OC_HIGH_QOS,

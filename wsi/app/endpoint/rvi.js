@@ -78,7 +78,7 @@ module.exports = {
 	                "description": "Connect to RVI.",
 	                "endpoint": "{{rviurl}}",
 	                "endpointtype": "rvi",
-	                "chain" : "http://localhost:8081/rvicallback",
+	                "chain" : "http://localhost:8081/callback",
 	                "operation": "RVICONNECT"
         	    },
 	            {

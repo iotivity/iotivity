@@ -20,7 +20,7 @@
             "endpoint": "oic://{{address}}:{{port}}/{{uri}}",
             "endpointtype": "OCFCLIENT",
             "operation": "GET",
-            "chain" : "http://localhost:8081/observenotify",
+            "chain" : "http://localhost:8081/callback",
             "params": 
             {
                 "address": "server ip address",

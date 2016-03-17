@@ -2,15 +2,15 @@ var request = require('request');
 module.exports = {
     init: function(app) {
         var template = {
-                "sid":"org.wsidemo",
-                "handler" : "wsidemoapp",
+                "sid":"org.wsidemo.callback",
+                "handler" : "callback",
                 "description":"The app to handle responses from WSI.",
                 "platforms":[
                     {
                         "name":"Linux",
                         "minPlatformVersion":"3.0",
                         "minApiVersion":"0.1",
-                        "appURL":"http://openweathermap.org",
+                        "appURL":"http://wsidemoapp.com",
                         "minAppVersion":"1.0"
                     }
                 ],
@@ -20,7 +20,7 @@ module.exports = {
                         "platform" : "linux",
                         "isauthrequired":"false",
                         "description":"Gets the current status of a resource and its properties.",
-                        "endpoint":"http://localhost:8081/observenotify",
+                        "endpoint":"http://localhost:8081/callback",
                         "endpointtype":"REST",
                         "operation":"OBSERVERESULT",
                         "params":{},
@@ -28,6 +28,16 @@ module.exports = {
                             "iotivity",
                             "observe"
                         ]
+                    },
+                    {
+                        "cid":"org.genivi.rvi",
+                        "platform" : "linux",
+                        "isauthrequired":"false",
+                        "description":"Callback invocations from OCF-RVI.",
+                        "endpoint":"http://localhost:8081/callback",
+                        "endpointtype":"REST",
+                        "operation":"RVICALLBACK",
+                        "params":{},
                     }
                 ]
         };
@@ -37,46 +47,7 @@ module.exports = {
         console.log("Received Observe Result : "+ JSON.stringify(req.body));
         res.sendStatus(200);
         
-        //post a Tweet
-         var text = new Date().toUTCString() + "\n";
-         text += JSON.stringify(req.body);
-         
-        
-        var resbody = {
-            "cid": "com.twitter.post",
-            "isauthrequired": "true",
-            "description": "Post Message to Twiiter.",
-            "endpoint": "statuses/update",
-            "endpointtype": "twitter",
-            "operation": "POSTTWEET",
-            "params": {
-                "text": text,
-                "screen_name" : "oicdemo"
-            },
-            "tags": [
-                "share",
-                "post"
-            ]
-        };
-        
-        var options = {
-            url: "http://localhost:8080/wsi/cap/com.twitter",
-            json : true,
-            method: 'POST',
-            body: resbody
-        };
-        console.log("JSON Body Sent = " + JSON.stringify(resbody));
-
-        request(options, function (error, response, body) {
-            console.log(error + "  - " + body);
-            if(error){
-                console.log("Failure");
-	    }
-            else{
-                console.log("Success");
-	    }
-
-        });
+        // Send notify to Controller.
         
         
     }

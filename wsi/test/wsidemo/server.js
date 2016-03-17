@@ -23,7 +23,12 @@ require('fs').readdirSync(normalizedPath).forEach(function(file) {
     console.log("Initializing Web Service : " + svc);
     var template = strategy[svc].init(app);
     console.log(svc + " Initialized");
+  //kick start the scenario
+    if(strategy[svc].start){
+    	strategy[svc].start();
+    }
 });
+
 
 require('./app/routes')(app);
 app.set("strategy", strategy);

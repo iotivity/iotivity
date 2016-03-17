@@ -187,29 +187,10 @@
                     <!-- /.row -->
                     <div class="row">
                         <div class="col-lg-6">
-                            <form role="form">
-                                <div class="form-group">
-                                	<button ng-click="connectToRVI()" type="button" class="btn btn-primary">RVI Connect</button>
-                                    <button ng-click="getAllServices()" type="button" class="btn btn-success">Get All Services</button>                                
-                                	<button ng-click="registerService()" type="button" class="btn btn-primary">Register Service</button>
-                                	<button ng-click="unregisterService()" type="button" class="btn btn-primary">UnRegister Service</button>
-                                    <button ng-click="getHVAC()" type="button" class="btn btn-success">Get HVAC</button>
-                                	<button ng-click="setHVAC()" type="button" class="btn btn-primary">Set HVAC</button>
-                                    <button ng-click="getVehicleLocation()" type="button" class="btn btn-success">Get Location</button>                                
-                                </div>
-                                <div class="form-group">
-                                    <label>RVI Capability</label>
-                                    <textarea id="rvicap" class="form-control" rows="5"></textarea>
-                                    <button ng-click="executeRVICap()" type="button" class="btn btn-primary">Submit</button>
-                                </div>                                
-                            </form>
-
-                        </div>
-                        <div class="col-lg-6">
-                            <div ng-class="scene3update.title == 'Success' ? 'alert alert-success' : 'alert alert-danger'" ng-repeat="scene3update in scene3updates">
-                                <strong>{{scene3update.title}}</strong> 
-                                <p>{{scene3update.content}}</p>
-                            </div>                            
+                           <div ng-class="scene3update.title == 'Success' ? 'alert alert-success' : 'alert alert-danger'" ng-repeat="scene3update in scene3updates">
+                               <strong>{{scene3update.title}}</strong> 
+                               <p style="width:800px;">{{scene3update.content}}</p>
+                           </div>                            
                         </div>
                     </div>
                 </div>
