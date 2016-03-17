@@ -444,6 +444,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                         OICFree(owner);
                     }
                 }
+                OICFree(name);
             }
             if (type != CborMapType && cbor_value_is_valid(&aclMap))
             {
@@ -764,6 +765,7 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
                     {
                         ehRet = OC_EH_RESOURCE_CREATED;
                     }
+                    OICFree(cborPayload);
                 }
             }
         }

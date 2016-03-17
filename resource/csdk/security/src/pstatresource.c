@@ -501,13 +501,14 @@ OCStackResult InitPstatResource()
     {
         // Read ACL resource from PS
         ret = CBORPayloadToPstat(data, size, &gPstat);
+        OICFree(data);
     }
     /*
      * If SVR database in persistent storage got corrupted or
      * is not available for some reason, a default pstat is created
      * which allows user to initiate pstat provisioning again.
      */
-    if ((OC_STACK_OK != ret) || !data || !gPstat)
+    if ((OC_STACK_OK != ret) || !gPstat)
     {
         gPstat = GetPstatDefault();
     }
@@ -517,7 +518,6 @@ OCStackResult InitPstatResource()
     ret = CreatePstatResource();
 
 exit:
-    OICFree(data);
     if (OC_STACK_OK != ret)
     {
         DeInitPstatResource();

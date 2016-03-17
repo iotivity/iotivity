@@ -80,6 +80,7 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
 
     FILE *fp = NULL;
     size_t fileSize = 0;
+    uint8_t *fsData = NULL;
 
     OCPersistentStorage *ps = SRMGetPersistentStorageHandler();
     VERIFY_NON_NULL(TAG, ps, ERROR);
@@ -88,7 +89,7 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
     if (fileSize != 0)
     {
         OIC_LOG_V(DEBUG, TAG, "File Read Size: %zu", fileSize);
-        uint8_t *fsData = (uint8_t *)OICCalloc(1, fileSize);
+        fsData = (uint8_t *)OICCalloc(1, fileSize);
         VERIFY_NON_NULL(TAG, fsData, ERROR);
 
         FILE *fp = ps->open(SVR_DB_DAT_FILE_NAME, "rb");
@@ -110,15 +111,16 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
                     cborFindResult = cbor_value_dup_byte_string(&cborValue, data, size, NULL);
                     VERIFY_SUCCESS(TAG, cborFindResult == CborNoError, ERROR);
                     ret = OC_STACK_OK;
-                    OICFree(fsData);
                     goto exit;
                 }
             }
             // return everything in case rsrcName is NULL
             else
             {
-                *data = fsData;
                 *size = fileSize;
+                *data = (uint8_t *)OICCalloc(1, fileSize);
+                VERIFY_NON_NULL(TAG, *data, ERROR);
+                memcpy(*data, fsData, fileSize);
             }
         }
     }
@@ -128,6 +130,7 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
     }
 
 exit:
+    OICFree(fsData);
     if (ps && fp)
     {
         ps->close(fp);
@@ -313,7 +316,7 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
 
     if (outPayload && cborSize > 0)
     {
-        OIC_LOG_V(DEBUG, TAG, "Writting in the file. %d", cborSize);
+        OIC_LOG_V(DEBUG, TAG, "Writting in the file. %zd", cborSize);
         OCPersistentStorage* ps = SRMGetPersistentStorageHandler();
         if (ps)
         {

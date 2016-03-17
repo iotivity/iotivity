@@ -143,7 +143,7 @@ TEST(CredResourceTest, CreateCredResource)
  //CredEntityHandler Tests
 TEST(CredResourceTest, CredEntityHandlerWithDummyRequest)
 {
-    OCEntityHandlerRequest req;
+    OCEntityHandlerRequest req = OCEntityHandlerRequest();
     EXPECT_EQ(OC_EH_ERROR,
             CredEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req, NULL));
 }
@@ -156,7 +156,7 @@ TEST(CredResourceTest, CredEntityHandlerWithNULLRequest)
 
 TEST(CredResourceTest, CredEntityHandlerInvalidFlag)
 {
-    OCEntityHandlerRequest req;
+    OCEntityHandlerRequest req = OCEntityHandlerRequest();
     EXPECT_EQ(OC_EH_ERROR,
             CredEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, &req, NULL));
 }
@@ -221,11 +221,9 @@ TEST(CredResourceTest, CredEntityHandlerDeleteTest)
    // Perform cleanup
    OICFree(ehReq.query);
    OICFree(payload);
-   if (NULL != cred)
-   {
-       DeInitCredResource();
-       DeleteCredList(cred);
-   }
+   DeInitCredResource();
+   DeleteCredList(cred);
+   OCPayloadDestroy((OCPayload *)ehReq.payload);
 }
 
 TEST(CredResourceTest, CredToCBORPayloadNULL)
@@ -279,6 +277,7 @@ TEST(CredResourceTest, CBORPayloadToCredVALID)
     EXPECT_EQ(OC_STACK_OK, CBORPayloadToCred(payload, size, &cred2));
     OICFree(payload);
     ASSERT_TRUE(cred2 != NULL);
+    DeleteCredList(cred2);
 }
 
 TEST(CredResourceTest, CBORPayloadToCredNULL)

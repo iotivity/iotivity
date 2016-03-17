@@ -51,7 +51,7 @@ TEST(PstatResourceTest, CreatePstatResource)
 //PstatEntityHandler Tests
 TEST(PstatResourceTest, PstatEntityHandlerWithDummyRequest)
 {
-    OCEntityHandlerRequest req;
+    OCEntityHandlerRequest req = OCEntityHandlerRequest();
     EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
 }
 
@@ -79,10 +79,11 @@ TEST(PstatResourceTest, PstatEntityHandlerWithPostRequest)
     DeletePstatBinData(defaultPstat);
     ASSERT_TRUE(cbor != NULL);
 
-    OCEntityHandlerRequest req;
+    OCEntityHandlerRequest req = OCEntityHandlerRequest();
     req.method = OC_REST_POST;
     req.payload = (OCPayload *) OCSecurityPayloadCBORCreate(cbor, size);
     EXPECT_EQ(OC_EH_ERROR, PstatEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req));
+    OICFree(cbor);
     OCPayloadDestroy(req.payload);
 }
 

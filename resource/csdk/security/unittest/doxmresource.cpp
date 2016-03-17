@@ -99,7 +99,7 @@ TEST(DoxmResourceTest, CreateDoxmResource)
  //DoxmEntityHandler Tests
 TEST(DoxmResourceTest, DoxmEntityHandlerWithDummyRequest)
 {
-    OCEntityHandlerRequest req;
+    OCEntityHandlerRequest req = OCEntityHandlerRequest();
     EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_REQUEST_FLAG, &req, NULL));
 }
 
@@ -110,7 +110,7 @@ TEST(DoxmResourceTest, DoxmEntityHandlerWithNULLRequest)
 
 TEST(DoxmResourceTest, DoxmEntityHandlerInvalidFlag)
 {
-    OCEntityHandlerRequest req;
+    OCEntityHandlerRequest req = OCEntityHandlerRequest();
     EXPECT_EQ(OC_EH_ERROR, DoxmEntityHandler(OCEntityHandlerFlag::OC_OBSERVE_FLAG, &req, NULL));
 }
 

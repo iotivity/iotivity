@@ -49,7 +49,7 @@ TEST(AMACLResourceTest, CBORAMACLConversion)
     secAmacl->amss = (OicUuid_t *)OICCalloc(secAmacl->amssLen, sizeof(*secAmacl->amss));
     if (!secAmacl->amss)
     {
-        OICFree(secAmacl);
+        DeleteAmaclList(secAmacl);
     }
     ASSERT_TRUE(NULL != secAmacl->amss);
     memcpy(secAmacl->amss[0].id, amss, sizeof(amss));
@@ -61,8 +61,7 @@ TEST(AMACLResourceTest, CBORAMACLConversion)
                           sizeof(*secAmacl->resources));
     if (!secAmacl->resources)
     {
-        OICFree(secAmacl->amss);
-        OICFree(secAmacl);
+        DeleteAmaclList(secAmacl);
     }
     ASSERT_TRUE(NULL != secAmacl->resources);
     for (size_t i = 0 ; i < secAmacl->resourcesLen; i++)
@@ -76,9 +75,7 @@ TEST(AMACLResourceTest, CBORAMACLConversion)
     secAmacl->owners = (OicUuid_t *)OICCalloc(1, sizeof(*secAmacl->owners));
     if (!secAmacl->owners)
     {
-        OICFree(secAmacl->resources);
-        OICFree(secAmacl->amss);
-        OICFree(secAmacl);
+        DeleteAmaclList(secAmacl);
     }
     ASSERT_TRUE(NULL != secAmacl->owners);
     memcpy(secAmacl->owners[0].id, ownrs, sizeof(ownrs));
@@ -86,21 +83,15 @@ TEST(AMACLResourceTest, CBORAMACLConversion)
     OicSecAmacl_t *secAmacl1 = (OicSecAmacl_t *) OICCalloc(1, sizeof(*secAmacl1));
     if (!secAmacl1)
     {
-        OICFree(secAmacl->owners);
-        OICFree(secAmacl->resources);
-        OICFree(secAmacl->amss);
-        OICFree(secAmacl);
+        DeleteAmaclList(secAmacl);
     }
     ASSERT_TRUE(NULL != secAmacl1);
     secAmacl1->amssLen = 2;
     secAmacl1->amss = (OicUuid_t *)OICCalloc(2, sizeof(*secAmacl1->amss));
     if (!secAmacl1->amss)
     {
-        OICFree(secAmacl->owners);
-        OICFree(secAmacl->resources);
-        OICFree(secAmacl->amss);
-        OICFree(secAmacl);
-        OICFree(secAmacl1);
+        DeleteAmaclList(secAmacl);
+        DeleteAmaclList(secAmacl1);
     }
     ASSERT_TRUE(NULL != secAmacl1->amss);
     memcpy(secAmacl1->amss[0].id, amss, sizeof(amss));
@@ -112,12 +103,8 @@ TEST(AMACLResourceTest, CBORAMACLConversion)
                             sizeof(*secAmacl1->resources));
     if (!secAmacl1->resources)
     {
-        OICFree(secAmacl->owners);
-        OICFree(secAmacl->resources);
-        OICFree(secAmacl->amss);
-        OICFree(secAmacl);
-        OICFree(secAmacl1->amss);
-        OICFree(secAmacl1);
+        DeleteAmaclList(secAmacl);
+        DeleteAmaclList(secAmacl1);
     }
     ASSERT_TRUE(NULL != secAmacl1->resources);
     for (size_t i = 0 ; i < secAmacl1->resourcesLen; i++)
@@ -129,13 +116,8 @@ TEST(AMACLResourceTest, CBORAMACLConversion)
     secAmacl1->owners = (OicUuid_t *)OICCalloc(1, sizeof(*secAmacl1->owners));
     if (!secAmacl1->owners)
     {
-        OICFree(secAmacl->owners);
-        OICFree(secAmacl->resources);
-        OICFree(secAmacl->amss);
-        OICFree(secAmacl);
-        OICFree(secAmacl1->resources);
-        OICFree(secAmacl1->amss);
-        OICFree(secAmacl1);
+        DeleteAmaclList(secAmacl);
+        DeleteAmaclList(secAmacl1);
     }
     ASSERT_TRUE(NULL != secAmacl1->owners);
     memcpy(secAmacl1->owners[0].id, ownrs, sizeof(ownrs));
@@ -147,14 +129,7 @@ TEST(AMACLResourceTest, CBORAMACLConversion)
     EXPECT_EQ(OC_STACK_OK, AmaclToCBORPayload(secAmacl, &psStorage, &size));
     if (!psStorage)
     {
-        OICFree(secAmacl->owners);
-        OICFree(secAmacl->resources);
-        OICFree(secAmacl->amss);
-        OICFree(secAmacl);
-        OICFree(secAmacl1->owners);
-        OICFree(secAmacl1->resources);
-        OICFree(secAmacl1->amss);
-        OICFree(secAmacl1);
+        DeleteAmaclList(secAmacl);
     }
     ASSERT_TRUE(NULL != psStorage);
 
@@ -162,14 +137,7 @@ TEST(AMACLResourceTest, CBORAMACLConversion)
     EXPECT_EQ(OC_STACK_OK, CBORPayloadToAmacl(psStorage, size, &amacl));
     if (!amacl)
     {
-        OICFree(secAmacl->owners);
-        OICFree(secAmacl->resources);
-        OICFree(secAmacl->amss);
-        OICFree(secAmacl);
-        OICFree(secAmacl1->owners);
-        OICFree(secAmacl1->resources);
-        OICFree(secAmacl1->amss);
-        OICFree(secAmacl1);
+        DeleteAmaclList(secAmacl);
         OICFree(psStorage);
     }
     ASSERT_TRUE(NULL != amacl);
@@ -191,14 +159,7 @@ TEST(AMACLResourceTest, CBORAMACLConversion)
     EXPECT_EQ(secAmacl->next->ownersLen, amacl->next->ownersLen);
     EXPECT_EQ(*secAmacl->next->owners[0].id, *amacl->next->owners[0].id);
 
-    OICFree(secAmacl->owners);
-    OICFree(secAmacl->resources);
-    OICFree(secAmacl->amss);
-    OICFree(secAmacl);
-    OICFree(secAmacl1->owners);
-    OICFree(secAmacl1->resources);
-    OICFree(secAmacl1->amss);
-    OICFree(secAmacl1);
+    DeleteAmaclList(secAmacl);
+    DeleteAmaclList(amacl);
     OICFree(psStorage);
-    OICFree(amacl);
 }

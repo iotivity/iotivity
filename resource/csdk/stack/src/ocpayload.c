@@ -1336,7 +1336,7 @@ void OCSecurityPayloadDestroy(OCSecurityPayload* payload)
     }
     // Remove this once all cbor changes land.
     OICFree(payload->securityData);
-    //OICFree(payload->securityData1);
+    // OICFree(payload->securityData1);
     OICFree(payload);
 }
 

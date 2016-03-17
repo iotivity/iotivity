@@ -97,6 +97,9 @@ TEST(ACLResourceTest, CBORDefaultACLConversion)
     EXPECT_EQ(CborNoError, cborEncoderResult);
     cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
     EXPECT_EQ(CborNoError, cborEncoderResult);
+    OICFree(outPayload);
+    DeleteACLList(defaultAcl);
+    OICFree(defaultPsStorage);
 }
 
 TEST(ACLResourceTest, CBORACLConversion)
@@ -199,6 +202,9 @@ TEST(ACLResourceTest, CBORACLConversion)
     EXPECT_EQ(6 , acl->resourcesLen);
     EXPECT_STREQ("/oic/res", acl->resources[0]);
     EXPECT_EQ(1, acl->ownersLen);
+    DeleteACLList(acl);
+    OICFree(psStorage);
+    DeleteACLList(secAcl);
 }
 
 //InitResource Tests
@@ -278,8 +284,9 @@ TEST(ACLResourceTest, ACLPostTest)
 
     // Perform cleanup
     OICFree(payload);
-    DeleteACLList(acl);
+    OCPayloadDestroy((OCPayload *) securityPayload);
     DeInitACLResource();
+    DeleteACLList(acl);
 }
 
 // GetACLResource tests
@@ -332,12 +339,12 @@ static OCStackResult  populateAcl(OicSecAcl_t *acl,  int numRsrc)
     VERIFY_NON_NULL(TAG, acl->resources, ERROR);
     acl->resources[0] = (char*)OICMalloc(strlen("/a/led")+1);
     VERIFY_NON_NULL(TAG, acl->resources[0], ERROR);
-    OICStrcpy(acl->resources[0], sizeof(acl->resources[0]), "/a/led");
+    OICStrcpy(acl->resources[0], sizeof(acl->resources[0]) - 1, "/a/led");
     if(numRsrc == 2)
     {
         acl->resources[1] = (char*)OICMalloc(strlen("/a/fan")+1);
         VERIFY_NON_NULL(TAG, acl->resources[1], ERROR);
-        OICStrcpy(acl->resources[1], sizeof(acl->resources[1]), "/a/fan");
+        OICStrcpy(acl->resources[1], sizeof(acl->resources[1]) - 1, "/a/fan");
     }
     acl->permission = 6;
     acl->ownersLen = 1;
@@ -402,6 +409,7 @@ TEST(ACLResourceTest, ACLDeleteWithSingleResourceTest)
     // Perform cleanup
     DeInitACLResource();
     OICFree(ehReq.query);
+    OCPayloadDestroy((OCPayload *)securityPayload);
     OICFree(payload);
 }
 
@@ -454,6 +462,7 @@ TEST(ACLResourceTest, ACLDeleteWithMultiResourceTest)
     EXPECT_EQ(1, subjectAcl2->resourcesLen);
 
     // Perform cleanup
+    OCPayloadDestroy((OCPayload *)securityPayload);
     DeInitACLResource();
     OICFree(ehReq.query);
     OICFree(payload);
@@ -497,6 +506,7 @@ TEST(ACLResourceTest, ACLGetWithQueryTest)
     EXPECT_EQ(OC_EH_OK, ehRet);
 
     // Perform cleanup
+    OCPayloadDestroy((OCPayload *)securityPayload);
     DeInitACLResource();
     OICFree(ehReq.query);
     OICFree(payload);
