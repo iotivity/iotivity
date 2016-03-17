@@ -21,6 +21,7 @@
 
 #include "easysetup.h"
 
+#include <unistd.h>
 #include <string.h>
 #include <iostream>
 #include <pthread.h>

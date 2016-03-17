@@ -46,7 +46,7 @@ if target_os == 'android':
 	ocprovision_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	ocprovision_env.AppendUnique(LIBS = ['oc', 'octbstack', 'ocpmapi', 'oc_logger', 'boost_thread', 'gnustl_shared', 'log'])
 
-if target_os == 'linux':
+if target_os in ['linux', 'tizen']:
 	ocprovision_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
         ocprovision_env.AppendUnique(LIBS = ['oc', 'octbstack', 'ocpmapi', 'oc_logger', 'boost_thread'])
 
@@ -63,6 +63,7 @@ ocprovision_src = [
 
 ocprovision = ocprovision_env.SharedLibrary('ocprovision', ocprovision_src)
 ocprovision_env.InstallTarget(ocprovision, 'libocprovision')
+ocprovision_env.UserInstallTargetLib(ocprovision, 'libocprovision')
 
 if target_os in ['linux']:
     SConscript('examples/SConscript')

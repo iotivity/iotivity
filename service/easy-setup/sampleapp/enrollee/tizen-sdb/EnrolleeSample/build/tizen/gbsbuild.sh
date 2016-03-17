@@ -42,6 +42,7 @@ cp ./extra_options.scons $sourcedir/tmp
 cp ./tools/tizen/*.spec ./tmp/packaging
 cp ./tools/tizen/*.manifest ./tmp/packaging
 cp ./SConstruct ./tmp
+cp ./LICENSE.md ./tmp
 
 # copy dependency RPMs and conf files for tizen build
 cp ./tools/tizen/*.rpm ./tmp
@@ -65,7 +66,7 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l --include-all  --repository ./ --define 'TARGET_TRANSPORT IP' --define 'SECURED 0' --define 'RELEASE 0' --define 'LOGGING true'"
+gbscommand="gbs build -A armv7l --include-all  --repository ./ --define 'TARGET_TRANSPORT $1' --define 'SECURED $2' --define 'RELEASE $5' --define 'LOGGING $6' --define 'ES_ROLE $7' --define 'ES_TARGET_ENROLLEE $8' --define 'ES_SOFTAP_MODE $9'"
 echo $gbscommand
 if eval $gbscommand; then
    echo "Core build is successful"

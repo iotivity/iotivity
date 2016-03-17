@@ -112,5 +112,5 @@ oclib_env.UserInstallTargetHeader(header_dir + 'OCResourceResponse.h', 'resource
 oclib_env.UserInstallTargetHeader(header_dir + 'CAManager.h', 'resource', 'CAManager.h')
 
 # Add Provisioning library
-if target_os in ['linux', 'android'] and env.get('SECURED') == '1':
+if target_os in ['linux', 'android', 'tizen'] and env.get('SECURED') == '1':
         SConscript('../provisioning/SConscript')

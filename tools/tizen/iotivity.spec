@@ -38,6 +38,9 @@ Requires(post): /sbin/ldconfig
 %{!?SECURED: %define SECURED 0}
 %{!?LOGGING: %define LOGGING True}
 %{!?ROUTING: %define ROUTING GW}
+%{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
+%{!?ES_ROLE: %define ES_ROLE enrollee}
+%{!?ES_SOFTAP_MODE: %define ES_SOFTAP_MODE MEDIATOR_SOFTAP}
 
 %description
 An open source reference implementation of the OIC standard specifications
@@ -107,6 +110,7 @@ cp %{SOURCE1001} ./%{name}-test.manifest
 scons -j2 --prefix=%{_prefix} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
 	RELEASE=%{RELEASE} SECURED=%{SECURED} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
+	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} ES_ROLE=%{ES_ROLE} ES_SOFTAP_MODE=%{ES_SOFTAP_MODE} \
 	LIB_INSTALL_DIR=%{_libdir}
 
 
@@ -116,6 +120,7 @@ CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
 scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
 	RELEASE=%{RELEASE} SECURED=%{SECURED} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
+	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} ES_ROLE=%{ES_ROLE} ES_SOFTAP_MODE=%{ES_SOFTAP_MODE} \
 	LIB_INSTALL_DIR=%{_libdir}
 
 
@@ -149,8 +154,10 @@ cp out/tizen/*/%{build_mode}/resource/examples/simpleserverHQ %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/resource/examples/threadingsample %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_server.json %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_client.json %{ex_install_dir}
+cp out/tizen/*/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
 %if 0%{?SECURED} == 1
 mkdir -p %{ex_install_dir}/provisioning
+mkdir -p %{ex_install_dir}/provision-sample
 cp out/tizen/*/%{build_mode}/resource/provisioning/examples/oic_svr_db_client.json %{ex_install_dir}/provisioning/
 cp out/tizen/*/%{build_mode}/resource/provisioning/examples/provisioningclient %{ex_install_dir}/provisioning/
 
@@ -162,7 +169,8 @@ cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
 cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/provisioningclient %{ex_install_dir}/provision-sample/
 cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_justworks %{ex_install_dir}/provision-sample/
 cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_randompin %{ex_install_dir}/provision-sample/
-cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/*.json %{ex_install_dir}/provision-sample/
+cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/oic_svr_db_client.json %{ex_install_dir}/provision-sample/
+cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.json %{ex_install_dir}/provision-sample/
 %endif
 
 
@@ -173,6 +181,7 @@ cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}-service
 cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}-test
 %endif
 cp resource/c_common/*.h %{buildroot}%{_includedir}
+cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 
 cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 cp service/easy-setup/inc/*.h %{buildroot}%{_includedir}
@@ -209,6 +218,11 @@ cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
 %{_libdir}/librcs_common.so
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
+%{_libdir}/libESEnrolleeSDK.so
+%if 0%{?SECURED} == 1
+%{_libdir}/libocpmapi.so
+%{_libdir}/libocprovision.so
+%endif
 %if 0%{?tizen_version_major} < 3
 %{_datadir}/license/%{name}-service
 %else
