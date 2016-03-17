@@ -310,6 +310,8 @@ CAResult_t CALEServerSendResponseData(JNIEnv *env, jobject device, jobject respo
         return CA_STATUS_FAILED;
     }
 
+    OIC_LOG(DEBUG, TAG, "CALL API - notifyCharacteristicChanged");
+
     jboolean jni_boolean_notifyCharacteristicChanged = (*env)->CallBooleanMethod(
             env, g_bluetoothGattServer, jni_mid_notifyCharacteristicChanged, device, responseData,
             JNI_FALSE);
@@ -1787,8 +1789,13 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
             if (g_obj_bluetoothDevice)
             {
                 (*env)->DeleteGlobalRef(env, g_obj_bluetoothDevice);
+                g_obj_bluetoothDevice = NULL;
             }
-            g_obj_bluetoothDevice = (*env)->NewGlobalRef(env, jarrayObj);
+
+            if (jarrayObj)
+            {
+                g_obj_bluetoothDevice = (*env)->NewGlobalRef(env, jarrayObj);
+            }
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
             break;
         }
@@ -1805,11 +1812,6 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "send has failed");
-            if (g_obj_bluetoothDevice)
-            {
-                (*env)->DeleteGlobalRef(env, g_obj_bluetoothDevice);
-                g_obj_bluetoothDevice = NULL;
-            }
             goto error_exit;
         }
     }
@@ -1834,6 +1836,12 @@ error_exit:
     {
         (*env)->DeleteGlobalRef(env, g_sendBuffer);
         g_sendBuffer = NULL;
+    }
+
+    if (g_obj_bluetoothDevice)
+    {
+        (*env)->DeleteGlobalRef(env, g_obj_bluetoothDevice);
+        g_obj_bluetoothDevice = NULL;
     }
 
     ca_mutex_unlock(g_threadSendMutex);
@@ -1895,8 +1903,13 @@ CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data, 
         if (g_obj_bluetoothDevice)
         {
             (*env)->DeleteGlobalRef(env, g_obj_bluetoothDevice);
+            g_obj_bluetoothDevice = NULL;
         }
-        g_obj_bluetoothDevice = (*env)->NewGlobalRef(env, jarrayObj);
+
+        if (jarrayObj)
+        {
+            g_obj_bluetoothDevice = (*env)->NewGlobalRef(env, jarrayObj);
+        }
 
         CAResult_t res = CALEServerSend(env, g_obj_bluetoothDevice, jni_bytearr_data);
         if (CA_STATUS_OK != res)
@@ -2114,6 +2127,7 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
                 (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
                 (*env)->ReleaseStringUTFChars(env, address, remoteAddress);
                 (*env)->DeleteGlobalRef(env, jarrayObj);
+                jarrayObj = NULL;
 
                 if (NULL == u_arraylist_remove(g_connectedDeviceList, index))
                 {
