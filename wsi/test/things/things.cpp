@@ -71,46 +71,45 @@ struct thingbox
 	string res;
 	string intf;
 	string uri;
-	map<string, string> props;
+	map<string, double> props;
 };
 
 thingbox things[] = {
 		{BULB, 		0, "bulb", "OCF Light", "core.light", "core.brightlight", "/a/light",
 				{
-					{"power", ""},
-					{"state", ""}
+					{"power", 35},
+					{"state", 0}
 				}
 		},
 		{THERMOSTAT,	0, "thermostat", "OCF Thermostat", "core.thermostat", "core.thermostat", "/a/thermostat",
 				{
-					{"temp", ""},
-					{"state", ""}
+					{"temp", 36},
+					{"state", 0}
 				}
 		},
 		{HVAC, 			0, "hvac", "Vehicle HVAC", "core.rvihvac", "core.rvihvac", "/rvi/hvac",
 				{
-					{"leftTemperature", ""},
-					{"rightTemperature", ""},
-					{"leftSeatHeat", ""},
-					{"rightSeatHeat", ""},
-					{"fanSpeed", ""},
-					{"fanDown", ""},
-					{"fanRight", ""},
-					{"fanUp", ""},
-					{"fanAC", ""},
-					{"fanAuto", ""},
-					{"fanRecirc", ""},
-					{"defrostMax", ""},
-					{"defrostFront", ""},
-					{"defrostRear", ""}
+					{"leftTemperature", 0},
+					{"rightTemperature", 0},
+					{"leftSeatHeat", 0},
+					{"rightSeatHeat", 0},
+					{"fanSpeed", 0},
+					{"fanDown", 0},
+					{"fanRight", 0},
+					{"fanUp", 0},
+					{"fanAC", 0},
+					{"fanAuto", 0},
+					{"fanRecirc", 0},
+					{"defrostMax", 0},
+					{"defrostFront", 0},
+					{"defrostRear", 0}
 				}
 		},
 		{CARLOCATION,	0, "carloc", "Vehicle Location", "core.rvilocation", "core.rvilocation", "/rvi/location",
 				{
-					{"vehicle_id", "RangeRover"},
-					{"lat", ""},
-					{"lon", ""},
-					{"bearing", ""}
+					{"lat", 0},
+					{"lon", 0},
+					{"bearing", 0}
 				}
 		}
 };
@@ -139,18 +138,27 @@ class TestResource {
     public:
         /// Access this property from a TB client
         std::string m_name;
+        std::string m_id;
         std::string m_thingURI;
         OCResourceHandle m_resourceHandle;
         OCRepresentation m_thingRep;
         ObservationIds m_interestedObservers;
 
+
     public:
         /// Constructor
 
         TestResource(PlatformConfig& /*cfg*/)
-            : m_name(things[chosenThing].name), m_thingURI(things[chosenThing].uri) {
+            : m_name(things[chosenThing].name), m_thingURI(things[chosenThing].uri), m_id("RangeRover") {
                 m_thingRep.setUri(m_thingURI);
                 m_thingRep.setValue("name", m_name);
+                m_thingRep.setValue("vehicle_id", m_id);
+                map<string, double>::iterator it;
+
+                for(it = things[chosenThing].props.begin(); it != things[chosenThing].props.end(); it++) {
+                	m_thingRep.setValue(it->first, it->second);
+                	cout<<"Property Name = "<<it->first<<" Value = "<<it->second<<endl;
+                }
             }
 
         void createResource() {
@@ -500,12 +508,12 @@ elm_main(int argc, char **argv)
     if(pthread_create(&thread_id, NULL, thing_handler, NULL)) {
         fprintf(stderr, "Error creating thread\n");
     }else{
-        printf("Thing Handler Created");
+        printf("Thing Handler Created\n");
     }
 
     chosenThing = atoi(argv[1]);
     thing_ui();
-    printf("Thing UI Created");
+    printf("Thing UI Created\n");
 
 
     elm_run();
