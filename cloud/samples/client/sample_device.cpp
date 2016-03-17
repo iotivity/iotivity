@@ -29,6 +29,7 @@
 #include <vector>
 #include <string>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "ocstack.h"
 #include "ocpayload.h"
