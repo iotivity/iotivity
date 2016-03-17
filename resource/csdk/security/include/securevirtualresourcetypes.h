@@ -488,7 +488,7 @@ typedef PRMBitmask_t OicSecPrm_t;
 
 struct OicPin
 {
-    uint8_t             val[DP_PIN_LENGTH+1];
+    uint8_t             val[DP_PIN_LENGTH];
 };
 
 /**

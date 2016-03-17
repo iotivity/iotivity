@@ -908,8 +908,8 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
 static void registerResultForDirectPairingProvisioning(PconfData_t *pconfData,
                                              OCStackResult stackresult)
 {
-   OIC_LOG_V(INFO, TAG, "Inside registerResultForDirectPairingProvisioning pconfData->numOfResults is %d\n",
-                       pconfData->numOfResults);
+   OIC_LOG_V(INFO, TAG, "Inside registerResultForDirectPairingProvisioning "
+           "pconfData->numOfResults is %d\n", pconfData->numOfResults);
    memcpy(pconfData->resArr[(pconfData->numOfResults)].deviceId.id,
           pconfData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
    pconfData->resArr[(pconfData->numOfResults)].res = stackresult;
@@ -964,6 +964,7 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
     VERIFY_NON_NULL(TAG, pconf, ERROR,  OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
 
+
     // check direct-pairing capability
     if (true != selectedDeviceInfo->doxm->dpc)
     {
@@ -986,21 +987,22 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    secPayload->securityData = BinToPconfJSON(pconf);
-    if(NULL == secPayload->securityData)
+
+    if (OC_STACK_OK != PconfToCBORPayload(pconf, &(secPayload->securityData1),
+                &(secPayload->payloadSize)))
     {
-        OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to BinToPconfJSON");
+        OCPayloadDestroy((OCPayload*)secPayload);
+        OIC_LOG(ERROR, TAG, "Failed to PconfToCborPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG_V(INFO, TAG, "PCONF : %s", secPayload->securityData);
+    OIC_LOG_V(INFO, TAG, "PCONF : %s", secPayload->securityData1);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
-                        selectedDeviceInfo->endpoint.addr,
-                        selectedDeviceInfo->securePort,
-                        selectedDeviceInfo->connType,
-                        query, sizeof(query), OIC_RSRC_PCONF_URI))
+                selectedDeviceInfo->endpoint.addr,
+                selectedDeviceInfo->securePort,
+                selectedDeviceInfo->connType,
+                query, sizeof(query), OIC_RSRC_PCONF_URI))
     {
         OIC_LOG(ERROR, TAG, "SRPProvisionDirectPairing : Failed to generate query");
         return OC_STACK_ERROR;
@@ -1012,8 +1014,7 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
     PconfData_t *pconfData = (PconfData_t *) OICCalloc(1, sizeof(PconfData_t));
     if (NULL == pconfData)
     {
-        OICFree(secPayload->securityData);
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload*)secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
@@ -1027,8 +1028,7 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
     if (NULL == pconfData->resArr)
     {
         OICFree(pconfData);
-        OICFree(secPayload->securityData);
-        OICFree(secPayload);
+        OCPayloadDestroy((OCPayload*)secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
