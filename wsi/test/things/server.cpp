@@ -23,24 +23,20 @@
 /// (properties and methods) and host this resource on the server.
 ///
 
-#include <functional>
-
-#include <pthread.h>
-#include <mutex>
-#include <string>
-#include <condition_variable>
-
-#include "OCPlatform.h"
-#include "OCApi.h"
-#include <Elementary.h>
-
-
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pthread.h>
+
+
+#include <Elementary.h>
+
+
+#include "common.h"
+
 
 using namespace OC;
 using namespace std;
@@ -50,74 +46,13 @@ int sendsock;
 struct sockaddr_un sname;
 pthread_t thread_id;
 int gObservation = 0;
-bool isListOfObservers = false;
 Evas_Object *images[1][1];
 
-typedef enum {
-    BULB,
-    THERMOSTAT,
-    HVAC,
-    CARLOCATION
-} things_e;
-
-int chosenThing = BULB;
-
-struct thingbox
-{
-	things_e t;
-	int state;
-	string name;
-	string desc;
-	string res;
-	string intf;
-	string uri;
-	map<string, double> props;
-};
-
-thingbox things[] = {
-		{BULB, 		0, "bulb", "OCF Light", "core.light", "core.brightlight", "/a/light",
-				{
-					{"power", 35},
-					{"state", 0}
-				}
-		},
-		{THERMOSTAT,	0, "thermostat", "OCF Thermostat", "core.thermostat", "core.thermostat", "/a/thermostat",
-				{
-					{"temp", 36},
-					{"state", 0}
-				}
-		},
-		{HVAC, 			0, "hvac", "Vehicle HVAC", "core.rvihvac", "core.rvihvac", "/rvi/hvac",
-				{
-					{"leftTemperature", 0},
-					{"rightTemperature", 0},
-					{"leftSeatHeat", 0},
-					{"rightSeatHeat", 0},
-					{"fanSpeed", 0},
-					{"fanDown", 0},
-					{"fanRight", 0},
-					{"fanUp", 0},
-					{"fanAC", 0},
-					{"fanAuto", 0},
-					{"fanRecirc", 0},
-					{"defrostMax", 0},
-					{"defrostFront", 0},
-					{"defrostRear", 0}
-				}
-		},
-		{CARLOCATION,	0, "carloc", "Vehicle Location", "core.rvilocation", "core.rvilocation", "/rvi/location",
-				{
-					{"lat", 0},
-					{"lon", 0},
-					{"bearing", 0}
-				}
-		}
-};
 
 void change_bg_image(int state) {
     char buf[PATH_MAX];
-    things[chosenThing].state = state % 6;
-    sprintf(buf, "images/%s/%d.png", things[chosenThing].name.c_str(), things[chosenThing].state);
+    things[chosenThing].state = state;
+    sprintf(buf, "images/%s/%d.png", things[chosenThing].name.c_str(), state);
     printf("Changing state to %d\n", state);
     elm_photo_file_set(images[0][0], buf);
 }
@@ -134,12 +69,12 @@ void sender(int power) {
     }
 }
 
-class TestResource {
+class Server {
     public:
         /// Access this property from a TB client
         std::string m_name;
-        std::string m_id;
         std::string m_thingURI;
+        std::string m_id;
         OCResourceHandle m_resourceHandle;
         OCRepresentation m_thingRep;
         ObservationIds m_interestedObservers;
@@ -148,7 +83,7 @@ class TestResource {
     public:
         /// Constructor
 
-        TestResource(PlatformConfig& /*cfg*/)
+        Server(PlatformConfig& cfg)
             : m_name(things[chosenThing].name), m_thingURI(things[chosenThing].uri), m_id("RangeRover") {
                 m_thingRep.setUri(m_thingURI);
                 m_thingRep.setValue("name", m_name);
@@ -166,7 +101,7 @@ class TestResource {
             std::string resourceTypeName = things[chosenThing].res;
             std::string resourceInterface = DEFAULT_INTERFACE; // resource interface.
             uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
-            EntityHandler cb = std::bind(&TestResource::entityHandler, this, PH::_1);
+            EntityHandler cb = std::bind(&Server::entityHandler, this, PH::_1);
             OCStackResult result = OCPlatform::registerResource(
                     m_resourceHandle, resourceURI, resourceTypeName,
                     resourceInterface, cb, resourceProperty);
@@ -185,47 +120,30 @@ class TestResource {
         OCRepresentation post(OCRepresentation& rep) {
             std::cout << "Post invoked......................................." << std::endl;
             try {
-//                if (rep.getValue("state", m_state)) {
-//                    std::cout << "\t\t\t\t" << "----state: " << m_state << std::endl;
-//                } else {
-//                    std::cout << "\t\t\t\t" << "state not found in the representation" << std::endl;
-//                }
-//                if (rep.getValue("power", m_power)) {
-//                    std::cout << "\t\t\t\t" << "----state: " << m_power << std::endl;
-//                    sender(m_power);
-//                } else {
-//                    std::cout << "\t\t\t\t" << "state not found in the representation" << std::endl;
-//                }
-                if (gObservation)
-                {
-                    //cout << "\nPower updated to : " << m_power << endl;
-                    cout << "Notifying observers : " << endl;
-                    OCStackResult result = OC_STACK_OK;
-                    if(isListOfObservers)
-                    {
-                        std::shared_ptr<OCResourceResponse> resourceResponse =
-                            std::make_shared<OCResourceResponse>();
-                        resourceResponse->setErrorCode(200);
-                        resourceResponse->setResourceRepresentation(get(), DEFAULT_INTERFACE);
-                        result = OCPlatform::notifyListOfObservers(
-                                getHandle(),
-                                m_interestedObservers,
-                                resourceResponse,
-                                OC::QualityOfService::HighQos);
-                    }
-                    else
-                    {
-                        result = OCPlatform::notifyAllObservers(getHandle(),
-                                OC::QualityOfService::HighQos);
-                    }
+                map<string, double>::iterator it;
 
-                    if(OC_STACK_NO_OBSERVERS == result)
-                    {
-                        cout << "No More observers, stopping notifications" << endl;
-                        gObservation = 0;
-                    }
+                for(it = things[chosenThing].props.begin(); it != things[chosenThing].props.end(); it++) {
+					if (rep.getValue(it->first, it->second)) {
+						std::cout << "\t\t\t\t" << "Param = "<<it->first << " Value = " <<it->second << std::endl;
+					} else {
+						std::cout << "\t\t\t\t" << it->first << "not found in the representation" << std::endl;
+					}
                 }
-
+				cout << "Notifying observers : " << endl;
+				OCStackResult result = OC_STACK_OK;
+				std::shared_ptr<OCResourceResponse> resourceResponse =
+					std::make_shared<OCResourceResponse>();
+				resourceResponse->setErrorCode(200);
+				resourceResponse->setResourceRepresentation(get(), DEFAULT_INTERFACE);
+				result = OCPlatform::notifyListOfObservers(
+						getHandle(),
+						m_interestedObservers,
+						resourceResponse,
+						OC::QualityOfService::HighQos);
+				if(OC_STACK_NO_OBSERVERS == result)
+				{
+					cout << "No More observers" << endl;
+				}
             } catch (std::exception & e) {
                 std::cout << e.what() << std::endl;
             }
@@ -236,7 +154,9 @@ class TestResource {
             //std::cout << "OCRepresentation get." << m_power << " and " <<m_state <<std::endl;
 //            m_thingRep.setValue("state", m_state);
 //            m_thingRep.setValue("power", m_power);
-            change_bg_image(10);
+        	int r = 100 * rand() % 6;
+        	if(r<0) r*=-1;
+            change_bg_image(r);
             return m_thingRep;
         }
 
@@ -271,10 +191,8 @@ class TestResource {
             auto pResponse = std::make_shared<OC::OCResourceResponse>();
             pResponse->setRequestHandle(pRequest->getRequestHandle());
             pResponse->setResourceHandle(pRequest->getResourceHandle());
-
             OCRepresentation rep = pRequest->getResourceRepresentation();
             OCRepresentation rep_post = post(rep);
-
             pResponse->setResourceRepresentation(rep_post);
             pResponse->setErrorCode(200);
             pResponse->setResponseResult(OC_EH_OK);
@@ -441,7 +359,7 @@ void thing_ui() {
         printf("client socket %d-->%s\n", sock, socket_path);
         ecore_main_fd_handler_add(sock,ECORE_FD_READ | ECORE_FD_ERROR,_fd_handler_cb,NULL, NULL, NULL);
     }
-    printf("Bulb launched");
+    cout<<things[chosenThing].name<< " launched"<<endl;
     elm_run();
     return NULL;
 }
@@ -460,7 +378,7 @@ void *thing_handler(void *ptr)
     OCPlatform::Configure(cfg);
     try
     {
-        TestResource myThing(cfg);
+        Server myThing(cfg);
         myThing.createResource();
         std::cout << "Created resource." << std::endl;
         myThing.addType(std::string(things[chosenThing].intf));
