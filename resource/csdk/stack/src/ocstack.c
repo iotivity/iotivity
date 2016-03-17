@@ -3902,12 +3902,17 @@ OCStackResult OCDoDirectPairing(OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
                                                      OCDirectPairingCB resultCallback)
 {
     OIC_LOG(INFO, TAG, "Start OCDoDirectPairing");
-    if(NULL ==  peer || NULL == resultCallback)
+    if(NULL ==  peer)
     {
         OIC_LOG(ERROR, TAG, "Invalid parameters");
         return OC_STACK_INVALID_PARAM;
     }
 
+    if(NULL == resultCallback)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid parameters");
+        return OC_STACK_INVALID_CALLBACK;
+    }
     gDirectpairingCallback = resultCallback;
     return DPDirectPairing((OCDirectPairingDev_t*)peer, (OicSecPrm_t)pmSel,
                                            pinNumber, DirectPairingCB);
