@@ -827,8 +827,8 @@ CAResult_t CASetNextBlockOption1(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             return CA_STATUS_FAILED;
         }
 
-        CABlockData_t *currData = CACreateNewBlockData(cadata);
-        if (!currData)
+        data = CACreateNewBlockData(cadata);
+        if (!data)
         {
             OIC_LOG(ERROR, TAG, "failed to create a new block data");
             CADestroyDataSet(cadata);
@@ -1008,8 +1008,8 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             return CA_STATUS_FAILED;
         }
 
-        CABlockData_t *currData = CACreateNewBlockData(cadata);
-        if (!currData)
+        data = CACreateNewBlockData(cadata);
+        if (!data)
         {
             OIC_LOG(ERROR, TAG, "failed to create a new block data");
             CADestroyDataSet(cadata);
