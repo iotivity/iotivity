@@ -1,6 +1,6 @@
 IOTIVITY_DIR=../../../
 all:
-	g++ -g things.cpp `pkg-config --cflags --libs elementary` -std=c++11 -pthread -Wall -fpermissive \
+	g++ -g server.cpp `pkg-config --cflags --libs elementary` -std=c++11 -pthread -Wall -fpermissive \
 		-I$(IOTIVITY_DIR)/resource/include \
 		-I$(IOTIVITY_DIR)/resource/csdk/stack/include \
 		-I$(IOTIVITY_DIR)/resource/csdk/ocrandom/include \
@@ -10,7 +10,19 @@ all:
 		-I$(IOTIVITY_DIR)/wsi/bin/inc/ \
 		-I$(IOTIVITY_DIR)/intf/inc \
 		-L$(IOTIVITY_DIR)/out/linux/x86_64/release/ \
-		-loc -loctbstack -loc_logger -lconnectivity_abstraction -lcoap -lpthread -o thing
+		-loc -loctbstack -loc_logger -lconnectivity_abstraction -lcoap -lpthread -o server
+
+	g++ -g client.cpp `pkg-config --cflags --libs elementary` -std=c++11 -pthread -Wall -fpermissive \
+		-I$(IOTIVITY_DIR)/resource/include \
+		-I$(IOTIVITY_DIR)/resource/csdk/stack/include \
+		-I$(IOTIVITY_DIR)/resource/csdk/ocrandom/include \
+		-I$(IOTIVITY_DIR)/resource/csdk/logger/include \
+		-I$(IOTIVITY_DIR)/resource/c_common \
+		-I$(IOTIVITY_DIR)/resource/oc_logger/include \
+		-I$(IOTIVITY_DIR)/wsi/bin/inc/ \
+		-I$(IOTIVITY_DIR)/intf/inc \
+		-L$(IOTIVITY_DIR)/out/linux/x86_64/release/ \
+		-loc -loctbstack -loc_logger -lconnectivity_abstraction -lcoap -lpthread -o client
 
 clean:
-	rm *.o thing
+	rm server client
