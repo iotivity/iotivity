@@ -91,6 +91,40 @@ static void resultCallback(OCDPDev_t *UNUSED1, OCStackResult UNUSED2)
     (void) (UNUSED2);
 }
 
+extern "C" OCStackApplicationResult discoveryCallback(void* ctx,
+        OCDoHandle /*handle*/, OCClientResponse * clientResponse)
+{
+    OIC_LOG(INFO, TAG, "Entering asyncDoResourcesCallback");
+
+    EXPECT_EQ(OC_STACK_OK, clientResponse->result);
+
+    if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
+    {
+        OIC_LOG_V(INFO, TAG, "Callback Context recvd successfully");
+    }
+
+    OIC_LOG_V(INFO, TAG, "result = %d", clientResponse->result);
+
+    OCDiscoveryPayload *discoveryPayload = ((OCDiscoveryPayload *) clientResponse->payload);
+    EXPECT_TRUE(discoveryPayload != NULL);
+    OCResourcePayload *res = discoveryPayload->resources;
+    size_t count = 0;
+    for (OCResourcePayload *res1 = discoveryPayload->resources; res1; res1 = res1->next)
+    {
+        count++;
+    }
+    EXPECT_EQ(3, count);
+    EXPECT_EQ("/a/led1", res->uri);
+    res = res->next;
+    EXPECT_EQ("/a/led2", res->uri);
+    res = res->next;
+    EXPECT_EQ("/a/led3", res->uri);
+    res = res->next;
+    EXPECT_TRUE(res == NULL);
+
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
 //-----------------------------------------------------------------------------
 // Entity handler
 //-----------------------------------------------------------------------------
@@ -1655,4 +1689,57 @@ TEST(OCDoDirectPairingTests, NullCallback)
 TEST(OCDoDirectPairingTests, NullpinNumber)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM,OCDoDirectPairing(&peer, pmSel, NULL, &resultCallback));
+}
+
+TEST(StackResource, MultipleResourcesDiscovery)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OIC_LOG(INFO, TAG, "Starting MultipleResourcesDiscovery test");
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle1;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle1,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led1",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    OCResourceHandle handle2;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle2,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led2",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+    OCResourceHandle handle3;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle3,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led3",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+    /* Start a discovery query*/
+    char szQueryUri[256] = "/oic/res?if=oic.if.ll";
+    OCCallbackData cbData;
+    cbData.cb = discoveryCallback;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+
+    OCDoHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(&handle,
+                                        OC_REST_DISCOVER,
+                                        szQueryUri,
+                                        0,
+                                        0,
+                                        CT_ADAPTER_IP,
+                                        OC_LOW_QOS,
+                                        &cbData,
+                                        NULL,
+                                        0));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
 }

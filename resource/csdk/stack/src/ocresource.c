@@ -673,57 +673,67 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     // Step 1: Generate the response to discovery request
     if (virtualUriInRequest == OC_WELL_KNOWN_URI)
     {
-        char *filterOne = NULL;
-        char *filterTwo = NULL;
+        char *interfaceQuery = NULL;
+        char *resourceTypeQuery = NULL;
 
         discoveryResult = getQueryParamsForFiltering (virtualUriInRequest, request->query,
-                &filterOne, &filterTwo);
+                &interfaceQuery, &resourceTypeQuery);
 
         if (discoveryResult == OC_STACK_OK)
         {
             payload = (OCPayload *)OCDiscoveryPayloadCreate();
 
-            if(payload)
+            if (payload)
             {
                 ((OCDiscoveryPayload*)payload)->sid = (char *)OICCalloc(1, UUID_STRING_SIZE);
                 VERIFY_NON_NULL(((OCDiscoveryPayload*)payload)->sid, ERROR, OC_STACK_NO_MEMORY);
                 memcpy(((OCDiscoveryPayload*)payload)->sid, OCGetServerInstanceIDString(), UUID_STRING_SIZE);
 
-                bool foundResourceAtRD = false;
-                for(;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
+                if (interfaceQuery && 0 == strcmp(OC_RSRVD_INTERFACE_LL, interfaceQuery))
                 {
-#ifdef WITH_RD
-                    if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
-                    {
-                        OCResource *resource = NULL;
-                        OCDevAddr devAddr;
-                        discoveryResult = checkResourceExistsAtRD(filterOne, filterTwo,
-                                                                  &resource, &devAddr);
-                        if (discoveryResult != OC_STACK_OK)
-                        {
-                             break;
-                        }
-                        discoveryResult = BuildVirtualResourceResponse(resource,
-                                    (OCDiscoveryPayload*)payload,
-                                    &devAddr, true);
-                        if (payload)
-                        {
-                            ((OCDiscoveryPayload*)payload)->baseURI = OICStrdup(devAddr.addr);
-                        }
-                        foundResourceAtRD = true;
-                    }
-#endif
-                    if(!foundResourceAtRD && includeThisResourceInResponse(resource, filterOne, filterTwo))
+                    for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                     {
                         discoveryResult = BuildVirtualResourceResponse(resource,
-                                (OCDiscoveryPayload*)payload,
-                                &request->devAddr, false);
+                                (OCDiscoveryPayload *)payload, &request->devAddr, false);
                     }
                 }
-                // Set discoveryResult appropriately if no 'valid' resources are available
-                if (((OCDiscoveryPayload*)payload)->resources == NULL && !foundResourceAtRD)
+                else
                 {
-                    discoveryResult = OC_STACK_NO_RESOURCE;
+                    bool foundResourceAtRD = false;
+                    for (;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
+                    {
+#ifdef WITH_RD
+                        if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
+                        {
+                            OCResource *resource1 = NULL;
+                            OCDevAddr devAddr;
+                            discoveryResult = checkResourceExistsAtRD(interfaceQuery,
+                                resourceTypeQuery, &resource1, &devAddr);
+                            if (discoveryResult != OC_STACK_OK)
+                            {
+                                 break;
+                            }
+                            discoveryResult = BuildVirtualResourceResponse(resource1,
+                                (OCDiscoveryPayload*)payload, &devAddr, true);
+                            if (payload)
+                            {
+                                ((OCDiscoveryPayload*)payload)->baseURI = OICStrdup(devAddr.addr);
+                            }
+                            OCDiscoveryResourceDestroy(resource1);
+                            foundResourceAtRD = true;
+                        }
+#endif
+                        if (!foundResourceAtRD && includeThisResourceInResponse(resource, interfaceQuery, resourceTypeQuery))
+                        {
+                            discoveryResult = BuildVirtualResourceResponse(resource,
+                                (OCDiscoveryPayload*)payload, &request->devAddr, false);
+                        }
+                    }
+                    // Set discoveryResult appropriately if no 'valid' resources are available
+                    if (((OCDiscoveryPayload*)payload)->resources == NULL && !foundResourceAtRD)
+                    {
+                        discoveryResult = OC_STACK_NO_RESOURCE;
+                    }
                 }
             }
             else
