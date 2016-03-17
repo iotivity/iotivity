@@ -68,7 +68,6 @@ static jobjectArray g_uuidList = NULL;
 
 // it will be prevent to start send logic when adapter has stopped.
 static bool g_isStartedLEClient = false;
-static bool g_isStartedMulticastServer = false;
 static bool g_isStartedScan = false;
 
 static jbyteArray g_sendBuffer = NULL;
@@ -334,21 +333,25 @@ void CALEClientTerminate()
     if (g_leScanCallback)
     {
         (*env)->DeleteGlobalRef(env, g_leScanCallback);
+        g_leScanCallback = NULL;
     }
 
     if (g_leGattCallback)
     {
         (*env)->DeleteGlobalRef(env, g_leGattCallback);
+        g_leGattCallback = NULL;
     }
 
     if (g_sendBuffer)
     {
         (*env)->DeleteGlobalRef(env, g_sendBuffer);
+        g_sendBuffer = NULL;
     }
 
     if (g_uuidList)
     {
         (*env)->DeleteGlobalRef(env, g_uuidList);
+        g_uuidList = NULL;
     }
 
     CAResult_t ret = CALEClientRemoveAllDeviceState();
@@ -369,9 +372,8 @@ void CALEClientTerminate()
         OIC_LOG(ERROR, TAG, "CALEClientRemoveAllGattObjs has failed");
     }
 
-    g_isStartedMulticastServer = false;
     CALEClientSetScanFlag(false);
-    CALEClientSetSendFinishFlag(false);
+    CALEClientSetSendFinishFlag(true);
 
     CALEClientTerminateGattMutexVariables();
     CALEClientDestroyJniInterface();
@@ -543,49 +545,9 @@ CAResult_t CALEClientStartUnicastServer(const char* address)
 
 CAResult_t CALEClientStartMulticastServer()
 {
-    OIC_LOG(DEBUG, TAG, "CALEClientStartMulticastServer");
+    OIC_LOG(DEBUG, TAG, "it is not needed in this platform");
 
-    if (g_isStartedMulticastServer)
-    {
-        OIC_LOG(ERROR, TAG, "server is already started..it will be skipped");
-        return CA_STATUS_FAILED;
-    }
-
-    if (!g_jvm)
-    {
-        OIC_LOG(ERROR, TAG, "g_jvm is null");
-        return CA_STATUS_FAILED;
-    }
-
-    bool isAttached = false;
-    JNIEnv* env;
-    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
-    if (JNI_OK != res)
-    {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
-        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
-
-        if (JNI_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
-            return CA_STATUS_FAILED;
-        }
-        isAttached = true;
-    }
-
-    g_isStartedMulticastServer = true;
-    CAResult_t ret = CALEClientStartScan();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
-    }
-
-    if (isAttached)
-    {
-        (*g_jvm)->DetachCurrentThread(g_jvm);
-    }
-
-    return ret;
+    return CA_NOT_SUPPORTED;
 }
 
 void CALEClientStopUnicastServer()
@@ -596,13 +558,6 @@ void CALEClientStopUnicastServer()
 void CALEClientStopMulticastServer()
 {
     OIC_LOG(DEBUG, TAG, "CALEClientStopMulticastServer");
-    g_isStartedMulticastServer = false;
-    CAResult_t res = CALEClientStopScan();
-    if (CA_STATUS_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
-        return;
-    }
 }
 
 void CALEClientSetCallback(CAPacketReceiveCallback callback)
@@ -1214,12 +1169,6 @@ CAResult_t CALEClientGattClose(JNIEnv *env, jobject bluetoothGatt)
 
 CAResult_t CALEClientStartScan()
 {
-    if (!g_isStartedMulticastServer)
-    {
-        OIC_LOG(ERROR, TAG, "server is not started yet..scan will be passed");
-        return CA_STATUS_FAILED;
-    }
-
     if (!g_isStartedLEClient)
     {
         OIC_LOG(ERROR, TAG, "LE client is not started");
@@ -1339,8 +1288,7 @@ CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback)
                                                              jni_mid_startLeScan, callback);
     if (!jni_obj_startLeScan)
     {
-        OIC_LOG(ERROR, TAG, "startLeScan is failed");
-        return CA_STATUS_FAILED;
+        OIC_LOG(INFO, TAG, "startLeScan is failed");
     }
     else
     {
@@ -1404,8 +1352,7 @@ CAResult_t CALEClientStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids, jobj
                                                              jni_mid_startLeScan, uuids, callback);
     if (!jni_obj_startLeScan)
     {
-        OIC_LOG(ERROR, TAG, "startLeScan With UUID is failed");
-        return CA_STATUS_FAILED;
+        OIC_LOG(INFO, TAG, "startLeScan With UUID is failed");
     }
     else
     {
@@ -1706,6 +1653,12 @@ jobject CALEClientGattConnect(JNIEnv *env, jobject bluetoothDevice, jboolean aut
     OIC_LOG(DEBUG, TAG, "GATT CONNECT");
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
     VERIFY_NON_NULL_RET(bluetoothDevice, TAG, "bluetoothDevice is null", NULL);
+
+    if (!g_leGattCallback)
+    {
+        OIC_LOG(INFO, TAG, "g_leGattCallback is null");
+        return NULL;
+    }
 
     if (!CALEIsEnableBTAdapter(env))
     {
@@ -2692,6 +2645,13 @@ CAResult_t CALEClientAddScanDeviceToList(JNIEnv *env, jobject device)
     if (!g_deviceList)
     {
         OIC_LOG(ERROR, TAG, "gdevice_list is null");
+
+        CALEClientSetScanFlag(false);
+        if(CA_STATUS_OK != CALEClientStopScan())
+        {
+            OIC_LOG(ERROR, TAG, "CALEClientStopScan has failed");
+        }
+
         ca_mutex_unlock(g_deviceListMutex);
         return CA_STATUS_FAILED;
     }
@@ -3903,17 +3863,15 @@ CAResult_t CAStartLEGattClient()
         g_threadWriteCharacteristicCond = ca_cond_new();
     }
 
-    CAResult_t res = CALEClientStartMulticastServer();
-    if (CA_STATUS_OK != res)
+    CAResult_t ret = CALEClientStartScan();
+    if (CA_STATUS_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "CALEClientStartMulticastServer has failed");
-    }
-    else
-    {
-        g_isStartedLEClient = true;
+        OIC_LOG(ERROR, TAG, "CALEClientStartScan has failed");
+        return ret;
     }
 
-    return res;
+    g_isStartedLEClient = true;
+    return CA_STATUS_OK;
 }
 
 void CAStopLEGattClient()
@@ -3957,6 +3915,7 @@ void CAStopLEGattClient()
     ca_mutex_lock(g_threadMutex);
     OIC_LOG(DEBUG, TAG, "signal - connection cond");
     ca_cond_signal(g_threadCond);
+    CALEClientSetSendFinishFlag(true);
     ca_mutex_unlock(g_threadMutex);
 
     ca_mutex_lock(g_threadWriteCharacteristicMutex);
@@ -3964,16 +3923,10 @@ void CAStopLEGattClient()
     ca_cond_signal(g_threadWriteCharacteristicCond);
     ca_mutex_unlock(g_threadWriteCharacteristicMutex);
 
-    ca_mutex_lock(g_threadSendMutex);
-    OIC_LOG(DEBUG, TAG, "signal - send cond");
-    ca_cond_signal(g_deviceDescCond);
-    ca_mutex_unlock(g_threadSendMutex);
-
     ca_mutex_lock(g_deviceScanRetryDelayMutex);
     OIC_LOG(DEBUG, TAG, "signal - delay cond");
     ca_cond_signal(g_deviceScanRetryDelayCond);
     ca_mutex_unlock(g_deviceScanRetryDelayMutex);
-
 
     ca_cond_free(g_deviceDescCond);
     ca_cond_free(g_threadCond);

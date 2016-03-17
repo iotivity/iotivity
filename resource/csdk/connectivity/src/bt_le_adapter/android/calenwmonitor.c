@@ -295,8 +295,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
     }
     else if (state_off == status) // STATE_OFF:10
     {
-        CALEClientStopMulticastServer();
-
         // remove obj for client
         CAResult_t res = CALEClientRemoveAllGattObjs(env);
         if (CA_STATUS_OK != res)
