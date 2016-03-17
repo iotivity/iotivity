@@ -246,7 +246,13 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
 
         // Interface Types
         err =  OCParseStringLL(&resourceMap, OC_RSRVD_INTERFACE, &resource->interfaces);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find interface tag/value");
+        if (CborNoError != err)
+        {
+            if (!OCResourcePayloadAddStringLL(&resource->interfaces, OC_RSRVD_INTERFACE_LL))
+            {
+                err = CborErrorOutOfMemory;
+            }
+        }
 
         // Policy
         CborValue policyMap;
