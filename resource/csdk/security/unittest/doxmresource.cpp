@@ -167,7 +167,7 @@ TEST(DoxmResourceTest, DoxmToCBORPayloadVALID)
 TEST(DoxmResourceTest, CBORPayloadToDoxmNULL)
 {
     OicSecDoxm_t *doxm = NULL;
-    uint8_t *cborPayload = (uint8_t *)OICCalloc(1, sizeof(10));
+    uint8_t *cborPayload = (uint8_t *)OICCalloc(1, sizeof(uint8_t));
     size_t size = 10;
     ASSERT_TRUE(NULL != cborPayload);
     EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToDoxm(NULL, 0, NULL));

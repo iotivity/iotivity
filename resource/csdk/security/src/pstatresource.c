@@ -367,7 +367,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
         VERIFY_NON_NULL(TAG, pstat, ERROR);
         if (OC_STACK_OK == ret)
         {
-            if (pstat->tm)
+            if (pstat->tm != NORMAL)
             {
                 gPstat->tm = pstat->tm;
                 if(0 == pstat->tm && gPstat->commitHash == pstat->commitHash)
@@ -381,7 +381,7 @@ static OCEntityHandlerResult HandlePstatPutRequest(const OCEntityHandlerRequest 
                     OIC_LOG(DEBUG, TAG, "CommitHash is not valid");
                 }
             }
-            if (pstat->om && gPstat)
+            if (pstat->om != MULTIPLE_SERVICE_SERVER_DRIVEN && gPstat)
             {
                 /*
                  * Check if the operation mode is in the supported provisioning services

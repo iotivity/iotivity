@@ -128,7 +128,7 @@ TEST(PstatResourceTest, PstatToCBORPayloadAndCBORPayloadToPstat)
     pstat.tm = NORMAL;
     pstat.om = SINGLE_SERVICE_CLIENT_DRIVEN;
     pstat.smLen = 2;
-    pstat.sm = (OicSecDpom_t*)OICCalloc(pstat.smLen, sizeof(pstat.sm));
+    pstat.sm = (OicSecDpom_t*)OICCalloc(pstat.smLen, sizeof(*pstat.sm));
     ASSERT_TRUE(NULL != pstat.sm);
     pstat.sm[0] = SINGLE_SERVICE_CLIENT_DRIVEN;
     pstat.sm[1] = SINGLE_SERVICE_SERVER_DRIVEN;

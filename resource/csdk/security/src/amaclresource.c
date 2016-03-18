@@ -505,6 +505,10 @@ OCStackResult InitAmaclResource()
     {
         // Read AMACL resource from PS
         ret = CBORPayloadToAmacl(data, size, &gAmacl);
+        if (OC_STACK_OK != ret)
+        {
+            OIC_LOG(DEBUG, TAG, "ReadAMACLresourcefromPS failed");
+        }
         OICFree(data);
     }
 

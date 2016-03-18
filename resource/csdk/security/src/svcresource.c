@@ -440,6 +440,10 @@ OCStackResult InitSVCResource()
     {
         // Convert CBOR SVC into binary format
         ret = CBORPayloadToSVC(data, size, &gSvc);
+        if (ret != OC_STACK_OK)
+        {
+            OIC_LOG (DEBUG, TAG, " ConvertCBOR SVC into binary format failed");
+        }
         OICFree(data);
     }
 
