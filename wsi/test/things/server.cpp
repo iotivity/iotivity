@@ -41,13 +41,16 @@
 using namespace OC;
 using namespace std;
 namespace PH = std::placeholders;
-
-int sendsock;
-struct sockaddr_un sname;
-pthread_t thread_id;
-int gObservation = 0;
 Evas_Object *images[1][1];
 
+int uisock;
+struct sockaddr_un uiname;
+pthread_t thing_thread;
+
+int notisock;
+struct sockaddr_un notiname;
+pthread_t noti_thread;
+void * noti_handler(void *param);
 
 void change_bg_image(int state) {
     char buf[PATH_MAX];
@@ -59,15 +62,24 @@ void change_bg_image(int state) {
 
 void
 my_win_del(void *data EINA_UNUSED, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED) {
-    pthread_kill(thread_id, SIGKILL);
+    pthread_kill(thing_thread, SIGKILL);
+    pthread_kill(noti_thread, SIGKILL);
+    pthread_join(thing_thread, NULL);
+    pthread_join(noti_thread, NULL);
+    char socket_path[100];
+    sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name.c_str());
+    unlink(socket_path);
+    sprintf(socket_path, "/tmp/.hiddennoti%s", things[chosenThing].name.c_str());
+    unlink(socket_path);
     elm_exit(); /* exit the program's main loop that runs in elm_run() */
 }
 
-void sender(int power) {
-    if (sendto(sendsock, &power, sizeof(int), 0, (struct sockaddr *)&sname, sizeof(struct sockaddr_un)) < 0) {
+void sender(int sock, struct sockaddr_un *sname, int data){
+    if (sendto(sock, &data, sizeof(int), 0, (struct sockaddr *)sname, sizeof(struct sockaddr_un)) < 0) {
         perror("sending datagram message");
     }
 }
+
 
 class Server {
     public:
@@ -78,7 +90,6 @@ class Server {
         OCResourceHandle m_resourceHandle;
         OCRepresentation m_thingRep;
         ObservationIds m_interestedObservers;
-
 
     public:
         /// Constructor
@@ -111,6 +122,7 @@ class Server {
             }else{
             	std::cout << "\nResource created successfully\n";
             }
+            pthread_create(&noti_thread, NULL, noti_handler, (void *)this);
         }
 
         OCResourceHandle getHandle() {
@@ -124,26 +136,16 @@ class Server {
 
                 for(it = things[chosenThing].props.begin(); it != things[chosenThing].props.end(); it++) {
 					if (rep.getValue(it->first, it->second)) {
+						m_thingRep.setValue(it->first, it->second);
 						std::cout << "\t\t\t\t" << "Param = "<<it->first << " Value = " <<it->second << std::endl;
+						sender(notisock, &notiname, 1);
+            			int number = 100 * rand() % 6;
+            			if(number<0) number*=-1;
+						sender(uisock, &uiname, number);
 					} else {
 						std::cout << "\t\t\t\t" << it->first << "not found in the representation" << std::endl;
 					}
                 }
-				cout << "Notifying observers : " << endl;
-				OCStackResult result = OC_STACK_OK;
-				std::shared_ptr<OCResourceResponse> resourceResponse =
-					std::make_shared<OCResourceResponse>();
-				resourceResponse->setErrorCode(200);
-				resourceResponse->setResourceRepresentation(get(), DEFAULT_INTERFACE);
-				result = OCPlatform::notifyListOfObservers(
-						getHandle(),
-						m_interestedObservers,
-						resourceResponse,
-						OC::QualityOfService::HighQos);
-				if(OC_STACK_NO_OBSERVERS == result)
-				{
-					cout << "No More observers" << endl;
-				}
             } catch (std::exception & e) {
                 std::cout << e.what() << std::endl;
             }
@@ -151,12 +153,7 @@ class Server {
         }
 
         OCRepresentation get() {
-            //std::cout << "OCRepresentation get." << m_power << " and " <<m_state <<std::endl;
-//            m_thingRep.setValue("state", m_state);
-//            m_thingRep.setValue("power", m_power);
-        	int r = 100 * rand() % 6;
-        	if(r<0) r*=-1;
-            change_bg_image(r);
+        	std::cout << "Get invoked......................................." << std::endl;
             return m_thingRep;
         }
 
@@ -264,7 +261,6 @@ class Server {
                     }
 
                     cout << "\t\trequestFlag : Observer\n";
-                    gObservation = 1;
                     ehResult = OC_EH_OK;
                 }
             } else {
@@ -278,6 +274,48 @@ class Server {
 
 static FILE* client_open(const char *path, const char *mode) {
     return fopen("./oic_svr_db_server.json", mode);
+}
+void * noti_handler(void *param)
+{
+	Server* ptr = (Server*) param;
+	int trigger = 0;
+
+    int sock;
+    struct sockaddr_un name;
+    sock = socket(AF_UNIX, SOCK_DGRAM, 0);
+    name.sun_family = AF_UNIX;
+    char socket_path[100];
+    sprintf(socket_path, "/tmp/.hiddennoti%s", things[chosenThing].name.c_str());
+    strcpy(name.sun_path, socket_path);
+    if (bind(sock, (struct sockaddr *) &name, sizeof(struct sockaddr_un))) {
+        printf("binding %s to datagram socket\n", socket_path);
+    }else{
+        printf("client socket %d-->%s\n", sock, socket_path);
+    }
+
+	cout << "Noti Thread Created and Waiting to notify observers : " << endl;
+
+    while (read(sock, &trigger, sizeof(int))>0)
+    {
+		cout << "Notifying observers : " << endl;
+		OCStackResult result = OC_STACK_OK;
+		std::shared_ptr<OCResourceResponse> resourceResponse =
+			std::make_shared<OCResourceResponse>();
+		resourceResponse->setErrorCode(200);
+		resourceResponse->setResourceRepresentation(ptr->get(), DEFAULT_INTERFACE);
+		result = OCPlatform::notifyListOfObservers(
+				ptr->getHandle(),
+				ptr->m_interestedObservers,
+				resourceResponse,
+				OC::QualityOfService::HighQos);
+		cout << "Notifying observers result  : " << result <<endl;
+
+		if(OC_STACK_NO_OBSERVERS == result)
+		{
+			cout << "No More observers" << endl;
+		}
+    }
+    return NULL;
 }
 
 static Eina_Bool _fd_handler_cb(void *data, Ecore_Fd_Handler *handler)
@@ -348,13 +386,11 @@ void thing_ui() {
     struct sockaddr_un name;
     sock = socket(AF_UNIX, SOCK_DGRAM, 0);
     name.sun_family = AF_UNIX;
-
     char socket_path[100];
     sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name.c_str());
-
     strcpy(name.sun_path, socket_path);
     if (bind(sock, (struct sockaddr *) &name, sizeof(struct sockaddr_un))) {
-        printf("binding name to datagram socket\n");
+        printf("binding %s to datagram socket\n", socket_path);
     }else{
         printf("client socket %d-->%s\n", sock, socket_path);
         ecore_main_fd_handler_add(sock,ECORE_FD_READ | ECORE_FD_ERROR,_fd_handler_cb,NULL, NULL, NULL);
@@ -385,17 +421,31 @@ void *thing_handler(void *ptr)
         myThing.addInterface(std::string(LINK_INTERFACE));
         std::cout << "Added Interface and Type" << std::endl;
 
-        sendsock = socket(AF_UNIX, SOCK_DGRAM, 0);
-        if (sendsock < 0) {
-            printf("opening sending datagram socket\n");
+        uisock = socket(AF_UNIX, SOCK_DGRAM, 0);
+        if (uisock < 0) {
+            printf("error opening sending datagram socket\n");
         }else{
-            printf("Sender Socket Ready - %d\n", sendsock);
+            printf("UI Socket Ready - %d\n", uisock);
         }
-        sname.sun_family = AF_UNIX;
+        uiname.sun_family = AF_UNIX;
         char socket_path[100];
         sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name.c_str());
-        strcpy(sname.sun_path, socket_path);
-        printf("SNAME initialized to %s\n", sname.sun_path);
+        strcpy(uiname.sun_path, socket_path);
+        printf("SNAME initialized to %s\n", uiname.sun_path);
+
+
+        notisock = socket(AF_UNIX, SOCK_DGRAM, 0);
+        if (notisock  < 0) {
+            printf("error opening sending datagram socket\n");
+        }else{
+            printf("Noti Socket Ready - %d\n", notisock);
+        }
+        notiname.sun_family = AF_UNIX;
+        sprintf(socket_path, "/tmp/.hiddennoti%s", things[chosenThing].name.c_str());
+        strcpy(notiname.sun_path, socket_path);
+        printf("SNAME initialized to %s\n", notiname.sun_path);
+
+
         std::mutex blocker;
         std::condition_variable cv;
         std::unique_lock<std::mutex> lock(blocker);
@@ -423,7 +473,7 @@ elm_main(int argc, char **argv)
 
 
     //create the UI
-    if(pthread_create(&thread_id, NULL, thing_handler, NULL)) {
+    if(pthread_create(&thing_thread, NULL, thing_handler, NULL)) {
         fprintf(stderr, "Error creating thread\n");
     }else{
         printf("Thing Handler Created\n");
@@ -436,11 +486,6 @@ elm_main(int argc, char **argv)
 
     elm_run();
 
-    pthread_join(thread_id, NULL);
-
-    char socket_path[100];
-    sprintf(socket_path, "/tmp/.hidden%s", things[chosenThing].name.c_str());
-    unlink(socket_path);
     elm_shutdown();
     return 0;
 }
