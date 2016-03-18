@@ -40,8 +40,6 @@
 
 OCStackResult CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
 {
-    *payload = NULL;
-    *size = 0;
     if(!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
     {
         return OC_STACK_INVALID_PARAM;
