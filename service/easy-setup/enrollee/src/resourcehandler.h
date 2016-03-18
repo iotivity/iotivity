@@ -30,6 +30,10 @@
 #ifndef ES_RESOURCE_HANDLER_H_
 #define ES_RESOURCE_HANDLER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void (*ResourceEventCallback)(ESResult);
 
 /* Structure to represent a Light resource */
@@ -60,4 +64,8 @@ void GetTargetNetworkInfoFromProvResource(char *, char *);
 void RegisterResourceEventCallBack(ResourceEventCallback);
 void UnRegisterResourceEventCallBack(void);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif //ES_RESOURCE_HANDLER_H_

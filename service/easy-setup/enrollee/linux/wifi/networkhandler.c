@@ -26,7 +26,7 @@
 #include "easysetup.h"
 #include "oic_string.h"
 
-#define LOG_TAG "TIZEN ES"
+#define LOG_TAG "LINUX ES"
 
 const char *gSsid = "DLNA_LISMORE1";
 const char *gPass = "dlna@010203";

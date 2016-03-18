@@ -25,6 +25,10 @@
 #include "escommon.h"
 #include "networkhandler.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @file
  *
@@ -68,10 +72,9 @@ DeviceRole ESSoftapHost();
 void ESCreateSoftap(const char * ssid, const char* passwd, NetworkEventCallback cb);
 
 
-//#ifdef __cplusplus
-//}
-//#endif // __cplusplus
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* EASYSETUP_ENROLLEE_SOFTAP_H__ */
 
