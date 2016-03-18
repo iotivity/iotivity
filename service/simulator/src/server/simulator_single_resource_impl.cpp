@@ -805,6 +805,22 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handlePUT(
 
     OC::OCRepresentation reqOcRep = request->getResourceRepresentation();
     SimulatorResourceModel reqResModel = SimulatorResourceModel::build(reqOcRep);
+
+    // Check the request payload representation against request representation schema.
+    auto requestModel = m_requestModels["PUT"];
+    if (requestModel)
+    {
+        auto requestRepSchema = requestModel->getRequestRepSchema();
+        if (requestRepSchema)
+        {
+            for (auto &attributeName : reqResModel.getAttributeNameSet())
+            {
+                if (!requestRepSchema->contains(attributeName))
+                    reqResModel.remove(attributeName);
+            }
+        }
+    }
+
     SimulatorResourceModel updatedResModel;
     if (true == updateResourceModel(reqResModel, updatedResModel, true, false))
     {
@@ -857,6 +873,22 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::handlePOST(
 
     OC::OCRepresentation reqOcRep = request->getResourceRepresentation();
     SimulatorResourceModel reqResModel = SimulatorResourceModel::build(reqOcRep);
+
+    // Check the request payload representation against request representation schema.
+    auto requestModel = m_requestModels["POST"];
+    if (requestModel)
+    {
+        auto requestRepSchema = requestModel->getRequestRepSchema();
+        if (requestRepSchema)
+        {
+            for (auto &attributeName : reqResModel.getAttributeNameSet())
+            {
+                if (!requestRepSchema->contains(attributeName))
+                    reqResModel.remove(attributeName);
+            }
+        }
+    }
+
     SimulatorResourceModel updatedResModel;
     if (true == updateResourceModel(reqResModel, updatedResModel, false, false))
     {

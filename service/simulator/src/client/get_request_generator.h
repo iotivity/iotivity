@@ -46,6 +46,8 @@ class GETRequestGenerator : public RequestGeneration
         std::unique_ptr<std::thread> m_thread;
         std::shared_ptr<RequestModel> m_requestSchema;
         GETRequestSender m_requestSender;
+
+        std::shared_ptr<OC::OCResource> m_ocResource;
 };
 
 typedef std::shared_ptr<GETRequestGenerator> GETRequestGeneratorSP;

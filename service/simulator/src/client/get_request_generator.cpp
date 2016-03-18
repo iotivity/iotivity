@@ -21,6 +21,7 @@
 #include "get_request_generator.h"
 #include "request_model.h"
 #include "simulator_exceptions.h"
+#include "simulator_logger.h"
 #include "logger.h"
 
 #define TAG "GET_REQUEST_GEN"
@@ -32,7 +33,8 @@ GETRequestGenerator::GETRequestGenerator(int id,
     :   RequestGeneration(RequestType::RQ_TYPE_GET, id, callback),
         m_stopRequested(false),
         m_requestSchema(requestSchema),
-        m_requestSender(ocResource) {}
+        m_requestSender(ocResource),
+        m_ocResource(ocResource) {}
 
 void GETRequestGenerator::startSending()
 {
@@ -77,10 +79,22 @@ void GETRequestGenerator::SendAllRequests()
 }
 
 void GETRequestGenerator::onResponseReceived(SimulatorResult result,
-        const SimulatorResourceModel &repModel, const RequestInfo &reqInfo)
+        const SimulatorResourceModel &repModel, const RequestInfo &/*reqInfo*/)
 {
     OIC_LOG(DEBUG, TAG, "Response recieved");
     m_responseCnt++;
+
+    //Validate the response
+    if (SIMULATOR_OK == result)
+    {
+        if (SIMULATOR_OK != m_requestSchema->validateResponse(200, repModel))
+        {
+            SIM_LOG(ILogger::ERROR, "[" << m_ocResource->uri() << "] "
+                    << "GET response not matching with schema!\n"
+                    << repModel.asString());
+        }
+    }
+
     completed();
 }
 

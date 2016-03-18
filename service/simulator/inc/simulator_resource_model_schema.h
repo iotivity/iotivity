@@ -221,6 +221,7 @@ class ModelProperty : public AttributeProperty,
         std::shared_ptr<ModelProperty> asModel();
         bool add(const std::string &name, const std::shared_ptr<AttributeProperty> &property,
                  bool required = false);
+        bool contains(const std::string &name);
         std::shared_ptr<AttributeProperty> get(const std::string &name);
         std::unordered_map<std::string, std::shared_ptr<AttributeProperty>> getChildProperties();
         bool isRequired(const std::string &name);

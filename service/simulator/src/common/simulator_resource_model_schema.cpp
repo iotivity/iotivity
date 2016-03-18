@@ -779,6 +779,13 @@ bool ModelProperty::add(const std::string &name,
     return true;
 }
 
+bool ModelProperty::contains(const std::string &name)
+{
+    if (m_childProperties.end() != m_childProperties.find(name))
+        return true;
+    return false;
+}
+
 std::shared_ptr<AttributeProperty> ModelProperty::get(
     const std::string &name)
 {
