@@ -76,7 +76,7 @@ OCStackResult OCInitPM(const char* dbPath)
  */
 OCStackResult OCDiscoverUnownedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
 {
-    if( ppList == NULL || *ppList != NULL)
+    if( ppList == NULL || *ppList != NULL || 0 == timeout)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -95,7 +95,7 @@ OCStackResult OCDiscoverUnownedDevices(unsigned short timeout, OCProvisionDev_t 
  */
 OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
 {
-    if( ppList == NULL || *ppList != NULL)
+    if( ppList == NULL || *ppList != NULL || 0 == timeout)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -621,7 +621,7 @@ OCStackResult OCGetDevInfoFromNetwork(unsigned short waittime,
 {
     //TODO will be replaced by more efficient logic
     if (pOwnedDevList == NULL || *pOwnedDevList != NULL || pUnownedDevList == NULL
-         || *pUnownedDevList != NULL)
+         || *pUnownedDevList != NULL || 0 == waittime)
     {
         return OC_STACK_INVALID_PARAM;
     }
