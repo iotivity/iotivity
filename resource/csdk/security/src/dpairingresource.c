@@ -136,6 +136,7 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
     }
 
     uint8_t pairingPSK[OWNER_PSK_LENGTH_128] = {0};
+    OicSecKey_t pairingKey = {pairingPSK, OWNER_PSK_LENGTH_128};
 
     //Generating PairingPSK using OwnerPSK scheme
     CAResult_t pskRet = CAGenerateOwnerPSK((const CAEndpoint_t *)endpoint,
@@ -151,16 +152,10 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
         OIC_LOG_BUFFER(INFO, TAG, pairingPSK, OWNER_PSK_LENGTH_128);
         //Generating new credential for direct-pairing client
         size_t ownLen = 1;
-        uint32_t outLen = 0;
-
-        char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(pairingPSK)) + 1] = {};
-        B64Result b64Ret = b64Encode(pairingPSK, sizeof(pairingPSK), base64Buff, sizeof(base64Buff),
-                &outLen);
-        VERIFY_SUCCESS(TAG, B64_OK == b64Ret, ERROR);
 
         OicSecCred_t *cred = GenerateCredential(peerDevID,
                 SYMMETRIC_PAIR_WISE_KEY, NULL,
-                base64Buff, ownLen, owner);
+                &pairingKey, ownLen, owner);
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
         res = AddCredential(cred);

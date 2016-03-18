@@ -162,6 +162,7 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
     uint8_t *doxmCbor = NULL;
     uint8_t *svcCbor = NULL;
     uint8_t *credCbor = NULL;
+    uint8_t *pconfCbor = NULL;
 
     int64_t cborEncoderResult = CborNoError;
     CborEncoder encoder;
@@ -175,6 +176,7 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
         size_t amaclCborLen = 0;
         size_t svcCborLen = 0;
         size_t credCborLen = 0;
+        size_t pconfCborLen = 0;
 
         {
             CborValue cbor;
@@ -224,10 +226,19 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &credCbor, &credCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CRED Name Value.");
             }
+
+            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_PCONF_NAME, &curVal);
+            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+            {
+                cborFindResult = cbor_value_dup_byte_string(&curVal, &pconfCbor, &pconfCborLen, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CRED Name Value.");
+            }
+
         }
 
         {
-            size_t size = aclCborLen + pstatCborLen + doxmCborLen + amaclCborLen + svcCborLen + credCborLen + psSize;
+            size_t size = aclCborLen + pstatCborLen + doxmCborLen + amaclCborLen + svcCborLen
+                + credCborLen + credCborLen + psSize;
             // This is arbitrary value that is added to cover the name of the resource, map addition and ending.
             size += 255;
 
@@ -287,6 +298,13 @@ OCStackResult UpdateSecureResourceInPS(const char* rsrcName, const uint8_t* psPa
                 cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_CRED_NAME, strlen(OIC_JSON_CRED_NAME));
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Name.");
                 cborEncoderResult |= cbor_encode_byte_string(&secRsrc, credCbor, credCborLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Value.");
+            }
+            if (0 != strcmp(OIC_JSON_PCONF_NAME, rsrcName) && pconfCborLen > 0)
+            {
+                cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_PCONF_NAME, strlen(OIC_JSON_PCONF_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Name.");
+                cborEncoderResult |= cbor_encode_byte_string(&secRsrc, pconfCbor, pconfCborLen);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Value.");
             }
 
