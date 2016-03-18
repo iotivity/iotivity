@@ -56,7 +56,9 @@ class MediatorRichTest: public TestWithMock
 };
 
 //callbacks
-void easySetupStatusCallback (std::shared_ptr< EasySetupStatus > easySetupStatus) {}
+void easySetupStatusCallback (std::shared_ptr< EasySetupStatus > /*easySetupStatus*/)
+{
+}
 
 /* Test cases for easysetyup class*/
 
