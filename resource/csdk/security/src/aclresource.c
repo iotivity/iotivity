@@ -440,7 +440,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Adding Owner Array Value.");
                         cborFindResult = cbor_value_advance(&owners);
                         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Owners Array.");
-                        memcpy(acl->owners[i].id, owner, len);
+                        memcpy(acl->owners[i++].id, owner, len);
                         OICFree(owner);
                     }
                 }

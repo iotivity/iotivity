@@ -307,7 +307,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Adding AMSS Id.");
                     cborFindResult = cbor_value_advance(&amss);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing AMSS.");
-                    memcpy(amacl->amss[i].id, amssId, len);
+                    memcpy(amacl->amss[i++].id, amssId, len);
                     OICFree(amssId);
                 }
             }
@@ -330,7 +330,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Adding Owners Array Value.");
                     cborFindResult = cbor_value_advance(&owners);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Owners Array");
-                    memcpy(amacl->owners[i].id, owner, len);
+                    memcpy(amacl->owners[i++].id, owner, len);
                     OICFree(owner);
                 }
             }

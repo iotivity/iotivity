@@ -266,7 +266,7 @@ OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Find Owner Array Value.");
                     cborFindResult = cbor_value_advance(&owners);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Advance Owner Array.");
-                    memcpy(svc->owners[i].id, owner, len);
+                    memcpy(svc->owners[i++].id, owner, len);
                     OICFree(owner);
                 }
             }

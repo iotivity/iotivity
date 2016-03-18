@@ -375,7 +375,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                 uint8_t *owner = NULL;
                 cborFindResult = cbor_value_dup_byte_string(&owners, &owner, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Owner Byte String.");
-                memcpy(cred->owners[i].id, owner, len);
+                memcpy(cred->owners[i++].id, owner, len);
                 OICFree(owner);
                 cborFindResult = cbor_value_advance(&owners);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing Array.");

@@ -628,7 +628,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get value");
                     cborFindResult = cbor_value_advance(&pddevs);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to advance");
-                    memcpy(pconf->pddevs[i].id, pddev, len);
+                    memcpy(pconf->pddevs[i++].id, pddev, len);
                     OICFree(pddev);
                 }
             }
