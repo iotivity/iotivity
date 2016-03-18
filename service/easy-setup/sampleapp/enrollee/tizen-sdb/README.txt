@@ -58,4 +58,8 @@ Procedure to Execute Sample App:
     7) RPM will be installed in "/usr/apps/"
        Execute the sample app by below commands
         i) cd /usr/apps/com.oic.es.sample/bin
-            a) ./enrollee_wifi
+        If executing with secure mode enabled then do the below step (no. ii)
+        ii) cp /usr/lib/oic_svr_db_server.json .
+
+        Execute the application
+        ./enrollee_wifi
