@@ -158,19 +158,13 @@ cp out/tizen/*/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
 %if 0%{?SECURED} == 1
 mkdir -p %{ex_install_dir}/provisioning
 mkdir -p %{ex_install_dir}/provision-sample
-cp out/tizen/*/%{build_mode}/resource/provisioning/examples/oic_svr_db_client.json %{ex_install_dir}/provisioning/
-cp out/tizen/*/%{build_mode}/resource/provisioning/examples/provisioningclient %{ex_install_dir}/provisioning/
 
 cp ./resource/csdk/security/include/pinoxmcommon.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
+cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.json %{buildroot}%{_libdir}/oic_svr_db_server.json
 
-cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/provisioningclient %{ex_install_dir}/provision-sample/
-cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_justworks %{ex_install_dir}/provision-sample/
-cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_randompin %{ex_install_dir}/provision-sample/
-cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/oic_svr_db_client.json %{ex_install_dir}/provision-sample/
-cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.json %{ex_install_dir}/provision-sample/
 %endif
 
 
@@ -222,6 +216,7 @@ cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
 %if 0%{?SECURED} == 1
 %{_libdir}/libocpmapi.so
 %{_libdir}/libocprovision.so
+%{_libdir}/oic_svr_db_server.json
 %endif
 %if 0%{?tizen_version_major} < 3
 %{_datadir}/license/%{name}-service
