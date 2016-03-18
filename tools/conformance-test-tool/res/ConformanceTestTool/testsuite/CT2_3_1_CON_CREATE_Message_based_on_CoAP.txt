@@ -1,8 +1,8 @@
 *** Settings ***
 Documentation     CT2.3.1 CON CREATE Message based on CoAP
 Resource          OIC_ConformanceTest_Setting.txt
-Test Setup    Start Capture
-Test TearDown    End Capture
+Test Setup    Pre Condition Crudn Client
+Test TearDown    Post Condition Crudn Client
 
 *** Test Cases ***
 CT2.3.1 CON CREATE Message based on CoAP
@@ -31,25 +31,19 @@ CT2.3.1 CON CREATE Message based on CoAP
     ...    |expected| 2. Check acknowledgement message on server|
 
     [Tags]    Mandantory    Client    Create    Con
-    #Pre-Condition
-    ####################################################
-    Start Server
-    Print Message    \n-----------------Send Multicast Discovery Request from DUT App-----------------
-    Get Discovery Requests
-    #Test-Body
-    #####################################################
-    Print Message    \n-----------------Send CON CREATE Request from DUT App-----------------
-    ${request}    Get Request
 
-    ${request_code}    Get Request Code     ${request}
-    Should Be Equal    ${request_code}    ${PUT}
-    ${request_type}    Get Request Type    ${request}
-    Should Be Equal    ${request_type}    ${CON}
-    ${payload}    Get Request Json	${request}
-    ${validate_json_result}     Validate JSON Format        ${payload} 
-    Should Be True      ${validate_json_result}
-    ${href}    Get JSON Value    ${HREF}    ${payload}
-    Should Not be Empty    ${href}
-    ${resource_type}    Get JSON Value    ${RESOURCE_TYPE}     ${payload}
-    Should Not be Empty	   ${resource_type}   
-    Stop Server
+    @{dut1_resource_hrefs}      Get DUT Info Value      ${HREF}    ${DUT1_ID}   ${DISCOVERABLE}=1
+    :FOR    ${dut1_resource_href}    IN    @{dut1_resource_hrefs}
+    \   Print Message    \n-----------------Send CON CREATE complete resource request from DUT App to ${dut1_resource_href}-----------------
+    \   ${request}    Get Request    ${dut1_resource_href}    ${PUT}
+    \   ${request_code}    Get Request Code    ${request}
+    \   Should Be Equal    ${request_code}    ${PUT}
+    \   ${request_type}    Get Request Type    ${request}
+    \   Should Be Equal    ${request_type}    ${CON}
+    \   ${payload}    Get Request Json    ${request}
+    \   ${validate_json_result}     Validate JSON Format    ${payload}
+    \   Should Be True    ${validate_json_result}
+    \   ${received_href}    Get JSON Value    ${HREF}    ${payload}
+    \   Should Not be Empty    ${received_href}
+    \   ${resource_type}    Get JSON Value    ${RESOURCE_TYPE}    ${payload}
+    \   Should Not be Empty    ${resource_type}

@@ -1,14 +1,14 @@
 *** Settings ***
 Documentation	CT1.3.21 RESET on CON observe notification - Observe mode cancellation
 Resource	OIC_ConformanceTest_Setting.txt
-Test Setup    Pre Condition
+Test Setup    Pre Condition Crudn Server
 Test TearDown    Post Condition
 
 *** Test Cases ***
 CT1.3.21 RESET on CON observe notification - Observe mode cancellation
-    [Documentation]					
-	...	|author	| |		
-	...	|reviewer| |				
+    [Documentation]
+	...	|author	| |
+	...	|reviewer| |
 	...	|since	|2015-06-18|
 	...	|see	|IETF draft-ietf-core-observe-16, Section 3.6|
 	...	|objective|Verify the server (DUT) de-registers client from observer list if client (TE) sends a RESET upon receiving a CON observe notification from the server. |
@@ -42,6 +42,11 @@ CT1.3.21 RESET on CON observe notification - Observe mode cancellation
     \	Should Be Equal             ${dut2_response_token}    ${token1}    Response token mismatch for observe request
     \	${dut2_response_msgid}   Get Response Msgid       ${dut2_response}
     \	Should Be Equal             ${dut2_response_msgid}    ${msgid1}    Response message id mismatch for observe request
+    \	${dut2_response_json}	Get Response Json	${dut2_response}
+    \	${validate_json_result}    Validate JSON Format        ${dut2_response_json}
+    \	Should Be True    ${validate_json_result}    Json format of response payload is invalid
+    \	${validate_payload_result}    Validate Payload Type        ${dut2_response_json}    ${resource_href}
+    \	Should Be True    ${validate_payload_result}    Payload object type does not match with spec
 
     \   ${length}    Get Length Available Representation To Update    ${DUT1_ID}      ${DISCOVERABLE}=1&${HREF}=${resource_href}
     \   Run Keyword If    ${length} > 0    Set Modified Partial Representation Value Payload       ${DUT1_ID}      ${OBSERVABLE}=1&${HREF}=${resource_href}&${DISCOVERABLE}=1
@@ -74,21 +79,9 @@ CT1.3.21 RESET on CON observe notification - Observe mode cancellation
 
 *** Keywords ***
 
-Pre Condition
-    Start Capture
-    Set Log File Directory	${TESTNAME}
-    Set Global Variable    ${DUT1_ID}    Server_DUT1
-    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
-    Should Be True	${define_dut_result}    The DUTDescriptor has some problem!!
-    @{discoverable_resources}	Get DUT Info Value	${RESOURCE_TYPE}	${DUT1_ID}    ${DISCOVERABLE}=1
-    ${resource_ip}	${resource_port}	${resource_href}	Get IP Port And Uri		${RESOURCE_TYPE}=@{discoverable_resources}[0]
-    Set Global Variable    ${SERVER_IP}    ${resource_ip}
-    Set Global Variable    ${SERVER_PORT}    ${resource_port}
-
 Post Condition
     @{observable_resource_hrefs}	Get DUT Info Value	${HREF}	   ${DUT1_ID}	${OBSERVABLE}=1
     :FOR        ${resource_href}   IN      @{observable_resource_hrefs}
     \   ${msgid1}    Generate Message Id
     \	${dut2_response}	Cancel Observe With Get Message    ${COAP}    ${msgid1}    ${SERVER_IP}    ${${SERVER_PORT}}    ${resource_href}    ${CONFIRMABLE}
-    Release DUT information     ${DUT1_ID}
-    End Capture
+    Post Condition Crudn Server

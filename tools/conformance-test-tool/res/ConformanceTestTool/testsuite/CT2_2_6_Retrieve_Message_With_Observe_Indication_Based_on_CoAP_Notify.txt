@@ -1,0 +1,79 @@
+*** Settings ***
+Documentation     CT2.2.6 Retrieve Message With Observe Indication Based on CoAP
+Resource          OIC_ConformanceTest_Setting.txt
+Test Setup    Pre Condition Crudn Client
+Test TearDown    Post Condition Crudn Client
+
+*** Test Cases ***
+1_RETRIEVE_Message_with_observe_indication
+    [Documentation]    | since |2016-02-15 |
+    ...    | see | |
+    ...    | purpose | |
+    ...    | procedure | 1. CTT prompts the test operator to initiate the observation of any of the Resources. |
+    ...    | procedure | 2. Test operator instructs the IUT to send a RETRIEVE request message (i.e. CoAP GET) with the observe option set to 0. |
+    ...    | procedure | 3. CTT receives the request message and then sends a unicast RETRIEVE response message to the IUT. |
+    ...    | procedure | 4. IUT receives the response message and updates its knowledge of the Resource with the received Property values. |
+    ...    | procedure | 5. CTT prompts the test operator to initiate the observe cancel for the Resource. |
+    ...    | procedure | 6. Test operator instructs the IUT to send a RETRIEVE request message (i.e. CoAP GET) without the observe option. |
+    ...    | procedure | 7. CTT receives the request message and then sends a unicast RETRIEVE response message to the IUT. |
+    ...    | procedure | 8. CTT prompts the test operator to verify that the Property values of the Resource as shown by the IUT match values sent by the CTT in Step 6. |
+    ...    | procedure | 9. Repeat steps 1 to 8 for all the observable resources. |
+    ...    | expected | Check 1. The IUT shall send a properly formatted RETRIEVE request message to initiate the observation in Step 3. |
+    ...    | expected | Check 2. The IUT shall send a properly formatted RETRIEVE request message to cancel the observation in Step 7. |
+    ...    | expected | Check 3. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    [Tags]    Mandatory    Client    Observe
+    @{dut1_resource_hrefs}      Get DUT Info Value      ${HREF}    ${DUT1_ID}   ${OBSERVABLE}=1
+    :FOR    ${dut1_resource_href}    IN    @{dut1_resource_hrefs}
+    \   Print Message    \n-----------------Send RETRIEVE Request with OBSERVE indication from DUT App to ${dut1_resource_href}-----------------
+    \   ${request}    Get Request    ${dut1_resource_href}    ${GET}
+    \   Run Keyword And Continue On Failure    Check1 Validate Observe Request Format    ${request}
+    \   Run Keyword And Continue On Failure    Check3 Verify Payload Encoding    ${request}
+    \   BuiltIn.sleep    2s
+    \   Print Message    \n-----------------Send RETRIEVE Request Without Observe Indication from DUT App to ${dut1_resource_href}-----------------
+    \   ${request}    Get Request    ${dut1_resource_href}    ${GET}
+    \   Run Keyword And Continue On Failure    Check2 Validate Cancel Observe Request Format    ${request}
+    \   Run Keyword And Continue On Failure    Check3 Verify Payload Encoding    ${request}
+
+*** Keywords ***
+Check1 Validate Observe Request Format
+    [Arguments]    ${request}
+    ${request_code}    Get Request Code    ${request}
+    Should Be Equal    ${request_code}    ${GET}
+    ${request_type}    Get Request Type    ${request}
+    @{request_type_list}    Create List    ${CON}    ${NON}
+    BuiltIn.Should Contain    ${request_type_list}    ${request_type}
+    ${token}    Get Request Token    ${request}
+    Should Not Be Empty    ${token}
+    ${msg_id}    Get Request Msgid    ${request}
+    Should Not Be Empty    ${msg_id}
+    ${uri}    Get Request Href    ${request}
+    Should Not Be Empty    ${uri}
+    ${accept}    Get Request Accept    ${request}
+    Should Be Equal    ${accept}    CBOR
+    ${request_observe}    Get Request Observe    ${request}
+    Should Be Equal    ${request_observe}    ${OBSERVE_ON}
+
+Check2 Validate Cancel Observe Request Format
+    [Arguments]    ${request}
+    ${request_code}    Get Request Code    ${request}
+    Should Be Equal    ${request_code}    ${GET}
+    ${request_type}    Get Request Type    ${request}
+    @{request_type_list}    Create List    ${CON}    ${NON}
+    BuiltIn.Should Contain    ${request_type_list}    ${request_type}
+    ${token}    Get Request Token    ${request}
+    Should Not Be Empty    ${token}
+    ${msg_id}    Get Request Msgid    ${request}
+    Should Not Be Empty    ${msg_id}
+    ${uri}    Get Request Href    ${request}
+    Should Not Be Empty    ${uri}
+    ${accept}    Get Request Accept    ${request}
+    Should Be Equal    ${accept}    CBOR
+    ${request_observe}    Get Request Observe    ${request}
+    Should Be Empty    ${request_observe}
+
+Check3 Verify Payload Encoding
+    [Arguments]    ${request}
+    ${json_payload}    Get Request Json    ${request}
+    ${length}    Get Length    ${json_payload}
+    ${content_format}    Run Keyword If    ${length} > 0    Get Request Content Format    ${request}
+    Run Keyword If    ${length} > 0    Should Be Equal    ${content_format}    CBOR

@@ -53,7 +53,7 @@ import java.util.Map.Entry;
  */
 public class OICCoapResource {
     private Logger                       mlogger                = CTLogger
-                                                                        .getInstance();
+            .getInstance();
     public static byte[]                 sRemoveObserverToken   = null;
 
     private String                       mResourceUri;
@@ -146,8 +146,8 @@ public class OICCoapResource {
     private void notifyObservers(byte[] payload) {
         for (Entry<String, OICObserver> entry : mOicObserverMap.entrySet()) {
             OICObserver observer = entry.getValue();
-            String token = OICHelper.bytesToHex(observer.getCoapRequest()
-                    .getToken());
+            String token = OICHelper
+                    .bytesToHex(observer.getCoapRequest().getToken());
 
             mResetReceived = OICCTFlags.isMarkedForRemoval(token);
 
@@ -168,7 +168,10 @@ public class OICCoapResource {
                     observer.getCoapRequest(), CoapResponseCode.Content_205,
                     observer.getSeqNumber());
 
-            byte[] bytes = ByteBuffer.allocate(4).putInt(observer.getSeqNumber()).array();
+            // response.setObserveOption(OICHelper.hexStringToByteArray(String
+            // .format("%08d", observer.getSeqNumber())));
+            byte[] bytes = ByteBuffer.allocate(4)
+                    .putInt(observer.getSeqNumber()).array();
             response.setObserveOption(bytes);
 
             response.setToken(observer.getCoapRequest().getToken());
@@ -248,6 +251,18 @@ public class OICCoapResource {
         mOicResourceAttributes.put(key, value);
     }
 
+    /**
+     * Adds an OIC resource attribute to this resource
+     *
+     * @param attribute
+     *            key
+     * @param attribute
+     *            value
+     */
+    public void addResourceAttributes(HashMap<Object, Object> attributeMap) {
+        mOicResourceAttributes.putAll(attributeMap);
+    }
+
     public HashMap<Object, Object> getResourceAttribute() {
         return (HashMap<Object, Object>) mOicResourceAttributes.clone();
     }
@@ -281,6 +296,16 @@ public class OICCoapResource {
     }
 
     /**
+     * Removes OICRequestData from the received request list.
+     *
+     * @param oicRequestData
+     *            Request data to be removed from the list.
+     */
+    public void removeRequestFromList(OICRequestData oicRequestData) {
+        this.mReceivedRequests.remove(oicRequestData);
+    }
+
+    /**
      * Clears the local received requests buffer
      */
     public void clearRequestList() {
@@ -303,8 +328,23 @@ public class OICCoapResource {
      */
     public byte[] getResourceRepresentation() {
         JSONObject jsonObject = new JSONObject();
+        // JSONArray jsonArray = new JSONArray();
+        // JSONObject jsonProp = new JSONObject();
+        // JSONObject jsonRep = new JSONObject();
+        // jsonRep.putAll(mOicResourceAttributes);
+        //
+        // jsonProp.put("if", mResourceInterface);
+        // jsonProp.put("rt", mResourceType);
+        //
+        // jsonObject.put("href", mResourceUri);
+        // jsonObject.put("prop", jsonProp);
+        // jsonObject.put("rep", jsonRep);
+        //
+        // jsonArray.add(jsonObject);
+
         jsonObject.putAll(mOicResourceAttributes);
 
+        // String jsonStr = jsonArray.toJSONString().replace("\\", "");
         String jsonStr = jsonObject.toJSONString().replace("\\", "");
         mlogger.info("getResourceRepresentation: " + jsonStr);
         return CborManager.convertToCbor(jsonStr,
@@ -319,12 +359,15 @@ public class OICCoapResource {
      */
     public void updateResourceRespresentation(String payloadString) {
         mlogger.info("POST Request for UpdateResource: " + payloadString);
+        // String substr = payloadString.substring(1, payloadString.length() -
+        // 1);
         String substr = payloadString.substring(0, payloadString.length());
 
         ObjectMapper mapper = new ObjectMapper();
         try {
             JsonNode jsonNodeTree = mapper.readTree(substr);
 
+            // JsonNode repJsonNode = jsonNodeTree.get("rep");
             JsonNode repJsonNode = jsonNodeTree;
             Iterator<String> it = repJsonNode.fieldNames();
             while (it.hasNext()) {
@@ -342,20 +385,24 @@ public class OICCoapResource {
     }
 
     /**
-     * Update the resource by adding 5 to each values and notifies available observers
+     * Update the resource by adding 5 to each values and notifies available
+     * observers
      *
      */
     public void updateResourceRespresentation() {
         mlogger.info("UpdateResource by 5");
-        mlogger.debug("before update: " + new String (getResourceRepresentation()));
+        mlogger.debug(
+                "before update: " + new String(getResourceRepresentation()));
 
         for (Entry<Object, Object> resAtb : mOicResourceAttributes.entrySet()) {
-            if (resAtb.getValue() instanceof Integer || resAtb.getValue() instanceof Double){
-                Integer val = (Integer)resAtb.getValue() + 5;
+            if (resAtb.getValue() instanceof Integer
+                    || resAtb.getValue() instanceof Double) {
+                Integer val = (Integer) resAtb.getValue() + 5;
                 mOicResourceAttributes.put(resAtb.getKey(), val);
             }
         }
-        mlogger.debug("after update: " + new String (getResourceRepresentation()));
+        mlogger.debug(
+                "after update: " + new String(getResourceRepresentation()));
         if (mObservable)
             notifyObservers(getResourceRepresentation());
     }
@@ -377,6 +424,7 @@ public class OICCoapResource {
             mOicResourceAttributes.clear();
             JsonNode jsonNodeTree = mapper.readTree(substr);
 
+            // JsonNode repJsonNode = jsonNodeTree.get("rep");
             JsonNode repJsonNode = jsonNodeTree;
             Iterator<String> it = repJsonNode.fieldNames();
             while (it.hasNext()) {

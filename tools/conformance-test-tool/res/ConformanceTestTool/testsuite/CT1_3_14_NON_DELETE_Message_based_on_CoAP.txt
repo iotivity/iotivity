@@ -1,14 +1,14 @@
 *** Settings ***
 Documentation	CT1.3.14 NON DELETE Message based on CoAP
 Resource	OIC_ConformanceTest_Setting.txt
-Test Setup    Start Capture
-Test TearDown    End Capture
+Test Setup    Pre Condition Crudn Server
+Test TearDown    Post Condition Crudn Server
 
 *** Test Cases ***
 CT1.3.14 NON DELETE Message based on CoAP
-    [Documentation]					
-	...	|author	| |		
-	...	|reviewer| |				
+    [Documentation]
+	...	|author	| |
+	...	|reviewer| |
 	...	|since	|2015-05-11|
 	...	|see	|Section 11.2 : CoAP based endpoint discovery|
 	...	|objective|Verify that the server (DUT) properly responds to NON DELETE request message from client (TE) |
@@ -28,20 +28,13 @@ CT1.3.14 NON DELETE Message based on CoAP
 	...	|expected| - Resp Code : Case 1: 2.02 (Deleted) Case 2:?? (ERROR) |
 
     [Tags]	Mandatory	Server	Discovery
-#Pre-Condition
-    Set Log File Directory	${TESTNAME}
-    ${DUT1_ID} =	Set Variable	Server_DUT1
-    ${define_dut_result}	Define DUT Information		${DUT1_ID}	${DUT1_INFO_PATH}	${DUT_TYPE_SERVER}
-    Should Be True	${define_dut_result}
-    @{dut1_resource_types}	Get DUT Info Value	${RESOURCE_TYPE}	${DUT1_ID}	${DISCOVERABLE}=1
-    ${resource_ip}	${resource_port}	${resource_href}	Get IP Port And Uri		${RESOURCE_TYPE}=${dut1_resource_types[0]}
+
     @{dut1_resource_hrefs}      Get DUT Info Value      ${HREF}    ${DUT1_ID}   ${DISCOVERABLE}=1
     :FOR	${resource_href}	IN	@{dut1_resource_hrefs}
-#Test-Body
     \   ${msgid}    Generate Message Id
     \   ${token}    Generate Token
     \	${delete_support}    Is Crudn Operation Supported    ${resource_href}    ${SUPPORT_DELETE}
-    \	${dut2_response}	Send Delete Request	${UNICAST}	${COAP}	${msgid}	${token}	${resource_ip}	${${resource_port}}	${resource_href}	${NON_CONFIRMABLE}
+    \	${dut2_response}	Send Delete Request	${UNICAST}	${COAP}	${msgid}	${token}	${SERVER_IP}	${${SERVER_PORT}}	${resource_href}	${NON_CONFIRMABLE}
     \	Should Not Be Empty		${dut2_response}
     \	${dut2_response_json}	Run Keyword if    ${delete_support} == ${True}    Get Response Json	${dut2_response}
     \	${validate_json_result}    Run Keyword if    ${delete_support} == ${True}    Validate JSON Format        ${dut2_response_json}

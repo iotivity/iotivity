@@ -61,24 +61,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class OICCoapServer {
 
-    private Logger                           mlogger               = CTLogger
-                                                                           .getInstance();
+    private Logger                           mlogger                       = CTLogger
+            .getInstance();
 
-    private CoapChannelManager               mChannelManager       = null;
+    private CoapChannelManager               mChannelManager               = null;
     private CoapServer                       mMulticastServer;
     private CoapServer                       mUnicastServer;
     private int                              mUnicastPort;
     private int                              mMulticastPort;
-    private byte[]                           mIp6Token             = null;
+    private byte[]                           mIp6Token                     = null;
 
-    private final CoapBlockSize              mDefaultBlockSize     = CoapBlockSize.BLOCK_1024;
-    private CoapBlockSize                    mBlockSize            = mDefaultBlockSize;
-    private int                              mBlockNumber          = 0;
-    private ByteArrayOutputStream            payloadBodyRequest    = new ByteArrayOutputStream();
+    private static final String              IOTIVITY_MULTICAST_GROUP      = "224.0.1.187";
+    private static final String              IOTIVITY_MULTICAST_GROUP_IPv6 = "ff02:0:0:0:0:0:0:fd";
+
+    private final CoapBlockSize              mDefaultBlockSize             = CoapBlockSize.BLOCK_1024;
+    private CoapBlockSize                    mBlockSize                    = mDefaultBlockSize;
+    private int                              mBlockNumber                  = 0;
+    private ByteArrayOutputStream            payloadBodyRequest            = new ByteArrayOutputStream();
     private CoapRequest                      firstBlkReq;
     private byte[]                           payloadBodyResponse;
-    private ArrayList<CoapRequest>           mDiscoveryRequestList = new ArrayList<CoapRequest>();
-    private HashMap<String, OICCoapResource> mOicResourceMap       = new HashMap<String, OICCoapResource>();
+    private ArrayList<CoapRequest>           mDiscoveryRequestList         = new ArrayList<CoapRequest>();
+    private HashMap<String, OICCoapResource> mOicResourceMap               = new HashMap<String, OICCoapResource>();
 
     /**
      * Initializes a OICCoapSever with given ports
@@ -136,6 +139,17 @@ public class OICCoapServer {
     }
 
     /**
+     * Get resource from the server according to the resource URI.
+     *
+     * @param resourceUri
+     *            URI of the resource to be removed.
+     * @return OICCoapResource with the resource URI.
+     */
+    public OICCoapResource getResource(String resourceUri) {
+        return mOicResourceMap.get(resourceUri);
+    }
+
+    /**
      * Removes a resource from the server
      *
      * @param resourceUri
@@ -164,8 +178,8 @@ public class OICCoapServer {
             mlogger.debug("Discovery Request List empty");
 
         for (CoapRequest discoveryRequest : mDiscoveryRequestList) {
-            oicRequestList.add(OICRequestData
-                    .convertRequestCoap(discoveryRequest));
+            oicRequestList
+                    .add(OICRequestData.convertRequestCoap(discoveryRequest));
         }
 
         return oicRequestList;
@@ -197,11 +211,11 @@ public class OICCoapServer {
             }
         }
         // Piggy-back response
-         CoapResponse response = channel.createResponse(request,
-         CoapResponseCode.Content_205);
+        CoapResponse response = channel.createResponse(request,
+                CoapResponseCode.Content_205);
         // Seperate response
-//        CoapResponse response = channel.createSeparateResponse(request,
-//                CoapResponseCode.Content_205);
+        // CoapResponse response = channel.createSeparateResponse(request,
+        // CoapResponseCode.Content_205);
         response.setUriPath(OICHelper.getDefaultUri());
 
         Vector<String> query = request.getUriQuery();
@@ -215,11 +229,10 @@ public class OICCoapServer {
             byte[] payload = discoverJson(resourceList);
             response.setContentType(CoapMediaType.cbor);
             /* block-wise response transfer code */
-            if (payload.length >= mBlockSize.getSize()){
+            if (payload.length >= mBlockSize.getSize()) {
                 mlogger.info("Initiate Block-Wise transfer");
                 response = blockResponseTransfer(request, response, payload);
-            }
-            else
+            } else
                 response.setPayload(payload);
             if (response.getBlock2() != null)
                 mlogger.debug("request block2 num: "
@@ -267,8 +280,7 @@ public class OICCoapServer {
             if (payload.length >= mBlockSize.getSize()) {
                 mlogger.info("Initiate Block-Wise transfer");
                 response = blockResponseTransfer(request, response, payload);
-            }
-            else
+            } else
                 response.setPayload(payload);
         }
         channel.sendSeparateResponse(response);
@@ -295,15 +307,15 @@ public class OICCoapServer {
             if (!request.getBlock1().isLast())
                 return;
             try {
-//                request.setMessageID(firstBlkReq.getMessageID());
+                // request.setMessageID(firstBlkReq.getMessageID());
                 payloadBodyRequest.flush();
                 mlogger.info("Complete receiving Block-wise request");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        OICCoapResource matchingResource = mOicResourceMap.get(request
-                .getUriPath());
+        OICCoapResource matchingResource = mOicResourceMap
+                .get(request.getUriPath());
         if (matchingResource == null) {
             mlogger.info("Resource NOT found!");
             CoapResponse response = channel.createSeparateResponse(request,
@@ -326,9 +338,8 @@ public class OICCoapServer {
         }
 
         // Checking resource type and interface match
-        if (!rt.isEmpty()
-                && (!matchingResource.getResourceType().equals(rt) || !hasResourseInterfaceMatched(
-                        resIf, matchingResource))) {
+        if (!rt.isEmpty() && (!matchingResource.getResourceType().equals(rt)
+                || !hasResourseInterfaceMatched(resIf, matchingResource))) {
             mlogger.info("Resource type and interface NOT match!");
             CoapResponse response = channel.createSeparateResponse(request,
                     CoapResponseCode.Not_Found_404);
@@ -337,8 +348,8 @@ public class OICCoapServer {
         }
 
         // Store the message in the particular resource
-        mOicResourceMap.get(request.getUriPath()).addRequestToList(
-                OICRequestData.convertRequestCoap(request));
+        mOicResourceMap.get(request.getUriPath())
+                .addRequestToList(OICRequestData.convertRequestCoap(request));
 
         switch (request.getRequestCode()) {
             case GET:
@@ -364,8 +375,18 @@ public class OICCoapServer {
             }
 
             @Override
-            public void onRequest(CoapServerChannel channel, CoapRequest request) {
+            public void onRequest(CoapServerChannel channel,
+                    CoapRequest request) {
                 mlogger.info("Multicast: onRequest");
+
+                int ipVer = OICHelper.getIpVersion(request.getSourceIP());
+
+                if (ipVer == 6)
+                    request.setDestinationIP(IOTIVITY_MULTICAST_GROUP_IPv6);
+                else if (ipVer == 4)
+                    request.setDestinationIP(IOTIVITY_MULTICAST_GROUP);
+
+                request.setDestinationPort(mMulticastPort);
 
                 if (request.getUriPath().equals("/oic/res")) {
                     mDiscoveryRequestList.add(request);
@@ -393,7 +414,8 @@ public class OICCoapServer {
             }
 
             @Override
-            public void onRequest(CoapServerChannel channel, CoapRequest request) {
+            public void onRequest(CoapServerChannel channel,
+                    CoapRequest request) {
 
                 mlogger.info("Request received!");
                 mlogger.info("Message type: " + request.getPacketType());
@@ -418,15 +440,15 @@ public class OICCoapServer {
 
         String requestUri = request.getUriPath();
         String requestToken = request.getTokenString();
-        boolean hasObserver = mOicResourceMap.get(requestUri).hasObserver(
-                requestToken);
+        boolean hasObserver = mOicResourceMap.get(requestUri)
+                .hasObserver(requestToken);
         boolean isObservable = mOicResourceMap.get(requestUri).isObservable();
         // Piggy-back response
         CoapResponse getResponse = channel.createResponse(request,
                 CoapResponseCode.Content_205);
         // Seperate Response
-//        CoapResponse getResponse = channel.createSeparateResponse(request,
-//                CoapResponseCode.Content_205);
+        // CoapResponse getResponse = channel.createSeparateResponse(request,
+        // CoapResponseCode.Content_205);
         getResponse.setContentType(CoapMediaType.cbor);
         // Check if there is an observe option
         if (request.getObserveOption() != null && isObservable) {
@@ -449,11 +471,10 @@ public class OICCoapServer {
         /* block-wise response transfer */
         byte[] payload = mOicResourceMap.get(requestUri)
                 .getResourceRepresentation();
-        if (payload.length >= mBlockSize.getSize()){
+        if (payload.length >= mBlockSize.getSize()) {
             mlogger.info("Initiate Block-Wise transfer");
             getResponse = blockResponseTransfer(request, getResponse, payload);
-        }
-        else
+        } else
             getResponse.setPayload(payload);
         channel.sendSeparateResponse(getResponse);
         mlogger.info("Sent GET Response");
@@ -465,16 +486,18 @@ public class OICCoapServer {
         CoapResponse putResponse = channel.createResponse(request,
                 CoapResponseCode.Changed_204);
         // Seperate Response
-//        CoapResponse putResponse = channel.createSeparateResponse(request,
-//                CoapResponseCode.Changed_204);
+        // CoapResponse putResponse = channel.createSeparateResponse(request,
+        // CoapResponseCode.Changed_204);
         putResponse.setContentType(CoapMediaType.cbor);
         // Confirm received last request block and [piggyback response & ACK]
         if (request.getBlock1() != null)
             putResponse.setBlock1(request.getBlock1());
 
-        if (request.getBlock2() != null && request.getPayloadString().isEmpty()){
+        if (request.getBlock2() != null
+                && request.getPayloadString().isEmpty()) {
             mlogger.info("Sending next response playload block");
-            putResponse = blockResponseTransfer(request, putResponse, payloadBodyResponse);
+            putResponse = blockResponseTransfer(request, putResponse,
+                    payloadBodyResponse);
             channel.sendSeparateResponse(putResponse);
             if (putResponse.getBlock2().isLast()) {
                 mlogger.info("Completed Sending response payload blocks");
@@ -496,8 +519,8 @@ public class OICCoapServer {
                 uri = jsonNodeTree.get("href").toString().replace("\"", "");
                 createResource(jsonNodeTree);
             } else
-                mOicResourceMap.get(uri).updateCompleteResourceRespresentation(
-                        payload);
+                mOicResourceMap.get(uri)
+                        .updateCompleteResourceRespresentation(payload);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -505,13 +528,13 @@ public class OICCoapServer {
         byte[] responsePayload = mOicResourceMap.get(uri)
                 .getResourceRepresentation();
         /* Check block-wise response transfer */
-        if (responsePayload.length >= mBlockSize.getSize()){
-            mlogger.info("Response Payload size: " + responsePayload.length + " exceeds "
-                    + mBlockSize.getSize() + "Initiate block wise response for PUT request");
+        if (responsePayload.length >= mBlockSize.getSize()) {
+            mlogger.info("Response Payload size: " + responsePayload.length
+                    + " exceeds " + mBlockSize.getSize()
+                    + "Initiate block wise response for PUT request");
             putResponse = blockResponseTransfer(request, putResponse,
                     responsePayload);
-        }
-        else
+        } else
             putResponse.setPayload(responsePayload);
         channel.sendSeparateResponse(putResponse);
     }
@@ -524,16 +547,21 @@ public class OICCoapServer {
         CoapResponse postResponse = channel.createResponse(request,
                 CoapResponseCode.Changed_204);
         // Seperate Response
+        // CoapResponse postResponse = channel.createSeparateResponse(request,
+        // CoapResponseCode.Changed_204);
         postResponse.setContentType(CoapMediaType.cbor);
-        // Confirm receiving last block request and [piggyback response with ACK]
+        // Confirm receiving last block request and [piggyback response with
+        // ACK]
         if (request.getBlock1() != null)
             postResponse.setBlock1(request.getBlock1());
 
-        if (request.getBlock2() != null && request.getPayloadString().isEmpty()){
+        if (request.getBlock2() != null
+                && request.getPayloadString().isEmpty()) {
             mlogger.info("Sending next response playload block");
-            postResponse = blockResponseTransfer(request, postResponse, payloadBodyResponse);
+            postResponse = blockResponseTransfer(request, postResponse,
+                    payloadBodyResponse);
             channel.sendSeparateResponse(postResponse);
-            if (postResponse.getBlock2().isLast()){
+            if (postResponse.getBlock2().isLast()) {
                 mlogger.info("Completed Sending response payload blocks");
                 payloadBodyResponse = null;
             }
@@ -546,14 +574,16 @@ public class OICCoapServer {
         ObjectMapper mapper = new ObjectMapper();
         try {
             jsonNodeTree = mapper.readTree(substr);
+            // mlogger.info("Handle POST Request: before create:"
+            // + jsonNodeTree.get("href").toString() + "finish");
             if (jsonNodeTree.get("href") != null
                     && (!jsonNodeTree.get("href").toString().equals("\"\""))) {
-                newResUri += jsonNodeTree.get("href").toString()
-                        .replace("\"", "");
+                newResUri += jsonNodeTree.get("href").toString().replace("\"",
+                        "");
                 createSubordinateResource(jsonNodeTree, newResUri);
             } else
-                mOicResourceMap.get(newResUri).updateResourceRespresentation(
-                        payload);
+                mOicResourceMap.get(newResUri)
+                        .updateResourceRespresentation(payload);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -561,13 +591,13 @@ public class OICCoapServer {
         byte[] responsePayload = mOicResourceMap.get(newResUri)
                 .getResourceRepresentation();
         /* Check block-wise response transfer */
-        if (responsePayload.length >= mBlockSize.getSize()){
-            mlogger.info("Response Payload size: " + responsePayload.length + " exceeds "
-                    + mBlockSize.getSize() + "Initiate block wise response for POST request");
+        if (responsePayload.length >= mBlockSize.getSize()) {
+            mlogger.info("Response Payload size: " + responsePayload.length
+                    + " exceeds " + mBlockSize.getSize()
+                    + "Initiate block wise response for POST request");
             postResponse = blockResponseTransfer(request, postResponse,
                     responsePayload);
-        }
-        else
+        } else
             postResponse.setPayload(responsePayload);
         channel.sendSeparateResponse(postResponse);
     }
@@ -580,28 +610,27 @@ public class OICCoapServer {
         mlogger.info("Deleting Resource: " + request.getUriPath());
         mOicResourceMap.remove(request.getUriPath());
 
-        deleteResponse.setPayload(request.getUriPath() + " Resource Deleted");
         channel.sendSeparateResponse(deleteResponse);
 
     }
 
     @SuppressWarnings("unchecked")
-	private byte[] discoverJson(ArrayList<OICCoapResource> mOicResource) {
+    private byte[] discoverJson(ArrayList<OICCoapResource> mOicResource) {
         JSONArray mainArray = new JSONArray();
         JSONArray linksArray = new JSONArray();
         JSONObject mainJsonObject = new JSONObject();
         mainJsonObject.put("di", "059952a1-7f2f-4ef8-b47b-0b3dc834732b");
-        
+
         for (OICCoapResource res : mOicResource) {
             mlogger.info("Res Uri: " + res.getResourceUri());
             mlogger.info("Res Uri: " + res.getResourceType());
-            CTLogger.getInstance().info(
-                    "Cumulative Array : " + linksArray.toJSONString());
+            CTLogger.getInstance()
+                    .info("Cumulative Array : " + linksArray.toJSONString());
             linksArray.add(jSONFromResource(res));
         }
         mainJsonObject.put("links", linksArray);
         mainArray.add(mainJsonObject);
-        
+
         CTLogger.getInstance().info("Inside discover Json without HAshmap : ");
         String jsonString = mainArray.toJSONString().replace("\\", "");
         mlogger.info("Discovery response payload: " + jsonString);
@@ -612,6 +641,7 @@ public class OICCoapServer {
     private JSONObject jSONFromResource(OICCoapResource resource) {
         JSONObject jsonObjectProp = new JSONObject();
         JSONObject jsonObjectOC = new JSONObject();
+        // JSONArray jsonObjectLINK = new JSONArray();
         JSONObject jsonObjectRES = new JSONObject();
         JSONObject jsonObjectBM = new JSONObject();
         // bm is added
@@ -620,7 +650,9 @@ public class OICCoapServer {
         jsonObjectRES.put("p", jsonObjectBM);
         jsonObjectRES.put("if", resource.getResourceInterfaces());
         jsonObjectRES.put("href", resource.getResourceUri());
-        
+
+        // jsonObjectOC.put("di", "059952a1-7f2f-4ef8-b47b-0b3dc834732b");
+        // jsonObjectOC.put("links", jsonObjectLINK);
         return jsonObjectRES;
     }
 
@@ -678,13 +710,13 @@ public class OICCoapServer {
 
     private CoapResponse blockResponseTransfer(CoapRequest request,
             CoapResponse response, byte[] payload) {
-        if (payloadBodyResponse == null){
+        if (payloadBodyResponse == null) {
             payloadBodyResponse = payload;
         }
         // getting the block number to send; default is 0;
-        if (request.getBlock2() != null){
+        if (request.getBlock2() != null) {
             mBlockNumber = request.getBlock2().getNumber();
-        // getting client requested block size
+            // getting client requested block size
             mBlockSize = request.getBlock2().getBlockSize();
         }
         boolean more = true;
@@ -695,13 +727,14 @@ public class OICCoapServer {
             blkLength = payload.length - offset;
             more = false;
         }
-        byte[] payloadBlock = Arrays.copyOfRange(payload, offset, blkLength
-                + offset);
+        byte[] payloadBlock = Arrays.copyOfRange(payload, offset,
+                blkLength + offset);
         CoapBlockOption block2option = new CoapBlockOption(mBlockNumber, more,
                 mBlockSize);
         response.setBlock2(block2option);
         response.setPayload(payloadBlock);
-        mlogger.info("Sending response block num "+mBlockNumber+" of size " + payloadBlock.length);
+        mlogger.info("Sending response block num " + mBlockNumber + " of size "
+                + payloadBlock.length);
         mlogger.info("response payload sent: " + (blkLength + offset) + " of "
                 + payloadBodyResponse.length);
         if (!more) {
@@ -741,7 +774,11 @@ public class OICCoapServer {
                 block1 = new CoapBlockOption(receiveBlk.getNumber(), true,
                         mBlockSize);
 
-            CoapResponse putBlockResponse = channel.createResponse(request, responseCode); /* piggy back response */
+            CoapResponse putBlockResponse = channel.createResponse(request,
+                    responseCode); /* piggy back response */
+            // CoapResponse putBlockResponse =
+            // channel.createSeparateResponse(request, responseCode); /*
+            // seperate response */
             putBlockResponse.setContentType(CoapMediaType.cbor);
             putBlockResponse.setBlock1(block1);
             channel.sendSeparateResponse(putBlockResponse);

@@ -31,7 +31,8 @@ public enum DutKey {
             IotivityKey.HREF.toString()), DIS(IotivityKey.DIS.toString()), OBS(
             IotivityKey.OBS.toString()), RT(IotivityKey.RT.toString()), IF(
             IotivityKey.IF.toString()), REP(IotivityKey.REP.toString()), DUT_TYPE(
-            "dutType"), CRUDN("CcCsRUcUpD");
+            IotivityKey.DUT_TYPE.toString()), CRUDN(IotivityKey.CRUDN.toString()), 
+            OBJ_TYPE(IotivityKey.OBJ_TYPE.toString());
 
     private String key;
 

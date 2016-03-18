@@ -1,0 +1,735 @@
+*** Settings ***
+Documentation     CT1.1.1 CoAP Based Multicast Endpoint Discovery
+Test Setup        Pre Condition Crudn Server
+Test Teardown     Post Condition Crudn Server
+Resource          OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+1_Multicast_Discovery_Without_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-04|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a multicast discovery request message (i.e. CoAP GET) to “/oic/res” with no query parameters. |
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3. CTT receives the response message(s) and filters out the correct IUT from all responses |
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The Core Resources "/oic/res", "/oic/p" and "/oic/d" shall be supported (7.2.2 OIC Core Resources [CORE]; 11.3.4 Resource based discovery. Finding information [CORE]; 11.3.5 Resource discovery using "/oic/res" [CORE]). |
+    ...    |expected| Check 2. All discovered OIC-defined Resource Types shall match those declared in the PICS (4.3 Certification Steps [CERT]). |
+    ...    |expected| Check 3. The target URI ("href"), Resource Type ("rt") and Interface ("if") shall be defined for each Resource (7.1.4.2.2 OIC Resource Type [CORE], 7.1.4.2.3 OIC Resource | Interface [CORE], 7.1.6.2 OIC Link [CORE], 7.2.1 OIC Resource Model. Values for common properties [CORE], 7.2.1.1 Resource Type property definition [CORE], 5.4.1 Common Properties [RT]). |
+    ...    |expected| Check 4. Only Resources with Resource Types with pre-defined URIs (i.e. oic.wk.res, oic.wk.p, oic.wk.d, etc.) shall use the prefix "/oic/" for their URIs (6.3 Namespace [CORE]). |
+    ...    |expected| Check 5. The URI of the link for every Resource shall be unique (6.1 Identification and addressing. Introduction [CORE], 6.2 Identification [CORE], 6.2.1 Resource identification and addressing [CORE], 5.1 URI [RT]). |
+    ...    |expected| Check 6. All URI values shall not exceed a max length of 256 octets (bytes) (3.4 Data Types [CORE]). |
+    ...    |expected| Check 8. Any vendor-defined Resource Types shall follow the syntax x.<ICANNName.<Resource identification> (6.4 Vendor specified OIC Resource Types [SH]). |
+    ...    |expected| Check 9. Reserved |
+    ...    |expected| Check 17. The Policy Property, if present for an OIC Resource, shall be designated as "p=<policy value>" and the <policy value> shall be a bitmap of one octet with a value from 0 to 3 (7.2.1.3 Policy property definition [CORE]). |
+    ...    |expected| Check 18. Only Resources defined as discoverable shall be returned (7.1.4.2.4 Policy [CORE], 7.2.1.3 Policy property definition [CORE]). |
+    ...    |expected| Check 19. The IUT shall support discovery based on multicast CoAP (i.e. CoAP GET on "/oic/res") (10.1 Endpoint discovery introduction [CORE], 11.3.4 Resource based discovery. finding information [CORE], 6.3 Profile of OIC Core [SH]). |
+    ...    |expected| Check 20. The IUT shall respond to a multicast discovery message when no "rt" query is used in Step 1 (10.2 CoAP based Endpoint discovery [CORE]). |
+    ...    |expected| Check 22. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (10.2 CoAP based Endpoint discovery [CORE]). |
+    ...    |expected| Check 24. The IUT shall support direct discovery and the response shall be sent directly back to the CTT in Step 9 (11.3.2.1 Resource based discovery. mechanism. Overview [CORE], 11.3.2.2 Direct discovery [CORE]). |
+    ...    |expected| Check 25. Only one instance of "/oic/d" shall be exposed per logical OIC Server (11.3.4 Resource based discovery. finding information [CORE]). |
+    ...    |expected| Check 31. The response messages shall follow the JSON schemas for "/oic/res" (10.2 CoAP based Endpoint discovery [CORE]). |
+    [Tags]    Mandatory    Server    Discovery
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    ${dut1_response}    Discover All Resources    ${MULTICAST}    ${COAP}    ${OIC_CORE_RESOURCE_DEFAULT_URI}
+    Should Not Be Empty    ${dut1_response}    No valid response received for multicast discovery
+    Run Keyword And Continue On Failure    Check1 Verify OIC Core Resource Support    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check3 Verify OIC Resource Properties Existance    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check4 Verify OIC URI Prefix    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check5 Verify OIC Resource Uniqueness    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check6 Verify URI Length    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check8 Verify Vendor Defined Resource Syntax    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check10 Verify Resource Interface Syntax    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check17 Verify Policy Value    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check18 Verify Discoverable Properties    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check19 Verify Coap Multicast Discovery    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check20 Verify Multicast Discovery Without RT    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check22 Verify CBOR Support    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check23 Verify Text String Length    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check25 Verify Only One Instance Of OIC D    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check26 Verify Content Format Numeric Value    ${dut1_response}    ${DUT1_ID}
+    Release DUT information    ${DUT1_ID}
+
+2_Multicast_Discovery_With_IF_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-04|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a multicast discovery request message (i.e. CoAP GET) to “/oic/res” with if query parameters. |
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3. CTT receives the response message(s) and filters out the correct IUT from all responses. |
+    ...    |procedure |4. Repeat steps 1 to 3 with an “if” query for all supported OIC Resource Interfaces (“?if=oic.if.ll"" and “?if=oic.if.baseline”)." |
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The Core Resources "/oic/res", "/oic/p" and "/oic/d" shall be supported (7.2.2 OIC Core Resources [CORE]; 11.3.4 Resource based discovery. Finding information [CORE]; 11.3.5 Resource discovery using "/oic/res" [CORE]). |
+    ...    |expected| Check 2. All discovered OIC-defined Resource Types shall match those declared in the PICS (4.3 Certification Steps [CERT]). |
+    ...    |expected| Check 3. The target URI ("href"), Resource Type ("rt") and Interface ("if") shall be defined for each Resource (7.1.4.2.2 OIC Resource Type [CORE], 7.1.4.2.3 OIC Resource Interface [CORE], 7.1.6.2 OIC Link [CORE], 7.2.1 OIC Resource Model. Values for common properties [CORE], 7.2.1.1 Resource Type property definition [CORE], 5.4.1 Common Properties [RT]). |
+    ...    |expected| Check 4. Only Resources with Resource Types with pre-defined URIs (i.e. oic.wk.res, oic.wk.p, oic.wk.d, etc.) shall use the prefix "/oic/" for their URIs (6.3 Namespace [CORE]). |
+    ...    |expected| Check 5. The URI of the link for every Resource shall be unique (6.1 Identification and addressing. Introduction [CORE], 6.2 Identification [CORE], 6.2.1 Resource identification and addressing [CORE], 5.1 URI [RT]). |
+    ...    |expected| Check 6. All URI values shall not exceed a max length of 256 octets (bytes) (3.4 Data Types [CORE]). |
+    ...    |expected| Check 7. Each Resource Type ID shall be designated as "rt=<Resource Type value>" (7.2.1.1 Resource Type property definition [CORE]). |
+    ...    |expected| Check 8. Any vendor-defined Resource Types shall follow the syntax x.<ICANNName.<Resource identification> (6.4 Vendor specified OIC Resource Types [SH]). |
+    ...    |expected| Check 9. Reserved |
+    ...    |expected| Check 10. Each Interface Property value shall be designated as "if=<Resource Interface value>" (7.2.1.2 Resource Interface property definition [CORE]). |
+    ...    |expected| Check 12. Each Resource shall support the baseline Interface (7.1.4.2.3 OIC Resource Interface [CORE], 7.2.1.2 Resource Interface property definition [CORE]). |
+    ...    |expected| Check 17. The Policy Property, if present for an OIC Resource, shall be designated as "p=<policy value>" and the <policy value> shall be a bitmap of one octet with a value from 0 to 3 (7.2.1.3 Policy property definition [CORE]). |
+    ...    |expected| Check 18. Only Resources defined as discoverable shall be returned (7.1.4.2.4 Policy [CORE], 7.2.1.3 Policy property definition [CORE]). |
+    ...    |expected| Check 19. The IUT shall support discovery based on multicast CoAP (i.e. CoAP GET on "/oic/res") (10.1 Endpoint discovery introduction [CORE], 11.3.4 Resource based discovery. finding information [CORE], 6.3 Profile of OIC Core [SH]). |
+    ...    |expected| Check 22. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (10.2 CoAP based Endpoint discovery [CORE]). |
+    ...    |expected| Check 23. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    ...    |expected| Check 24. The IUT shall support direct discovery and the response shall be sent directly back to the CTT in Step 9 (11.3.2.1 Resource based discovery. mechanism. Overview [CORE], 11.3.2.2 Direct discovery [CORE]). |
+    ...    |expected| Check 25. Only one instance of "/oic/d" shall be exposed per logical OIC Server (11.3.4 Resource based discovery. finding information [CORE]). |
+    ...    |expected| Check 31. The response messages shall follow the JSON schemas for "/oic/res" (10.2 CoAP based Endpoint discovery [CORE]). |
+    [Tags]    Mandatory    Server    Discovery
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    @{dut1_resource_interfaces}    Get DUT Info Value    ${INTERFACE}    ${OIC_ID}    ${HREF}=${OIC_CORE_RESOURCE_DEFAULT_URI}
+    : FOR    ${dut1_resource_interface}    IN    @{dut1_resource_interfaces}
+    \    ${dut1_response}    Discover Resource With Query    ${MULTICAST}    ${COAP}    ${OIC_CORE_RESOURCE_DEFAULT_URI}    ${INTERFACE}=${dut1_resource_interface}
+    \    ...    ${NON_CONFIRMABLE}    ${SERVER_IP}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${dut1_response}    No valid response received for multicast discovery
+    \    ${response_length}    Get Length    ${dut1_response}
+    \    Continue For Loop If    ${response_length} < 1
+    \    Run Keyword And Continue On Failure    Check1 Verify OIC Core Resource Support    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check3 Verify OIC Resource Properties Existance    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check4 Verify OIC URI Prefix    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check5 Verify OIC Resource Uniqueness    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check6 Verify URI Length    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check8 Verify Vendor Defined Resource Syntax    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check10 Verify Resource Interface Syntax    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check12 Support Baseline Interface    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check17 Verify Policy Value    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check18 Verify Discoverable Properties    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check19 Verify Coap Multicast Discovery    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check20 Verify Multicast Discovery Without RT    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check22 Verify CBOR Support    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check23 Verify Text String Length    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check25 Verify Only One Instance Of OIC D    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check26 Verify Content Format Numeric Value    ${dut1_response}    ${DUT1_ID}
+    Release DUT information    ${DUT1_ID}
+
+3_Multicast_Discovery_With_RT_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-04|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a multicast discovery request message (i.e. CoAP GET) to “/oic/res” with rt query parameters. |
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3. CTT receives the response message(s) and filters out the correct IUT from all responses. |
+    ...    |procedure |4. Repeat steps 1 to 3 with an “rt” query for all OIC Resource Types supported by the IUT (i.e. “?rt=oic.r.switch.binary”, “?rt=oic.d.refrigerator”, etc.)." |
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The Core Resources "/oic/res", "/oic/p" and "/oic/d" shall be supported (7.2.2 OIC Core Resources [CORE]; 11.3.4 Resource based discovery. Finding information [CORE]; 11.3.5 Resource discovery using "/oic/res" [CORE]). |
+    ...    |expected| Check 2. All discovered OIC-defined Resource Types shall match those declared in the PICS (4.3 Certification Steps [CERT]). |
+    ...    |expected| Check 3. The target URI ("href"), Resource Type ("rt") and Interface ("if") shall be defined for each Resource (7.1.4.2.2 OIC Resource Type [CORE], 7.1.4.2.3 OIC Resource Interface [CORE], 7.1.6.2 OIC Link [CORE], 7.2.1 OIC Resource Model. Values for common properties [CORE], 7.2.1.1 Resource Type property definition [CORE], 5.4.1 Common Properties [RT]). |
+    ...    |expected| Check 4. Only Resources with Resource Types with pre-defined URIs (i.e. oic.wk.res, oic.wk.p, oic.wk.d, etc.) shall use the prefix "/oic/" for their URIs (6.3 Namespace [CORE]). |
+    ...    |expected| Check 5. The URI of the link for every Resource shall be unique (6.1 Identification and addressing. Introduction [CORE], 6.2 Identification [CORE], 6.2.1 Resource identification and addressing [CORE], 5.1 URI [RT]). |
+    ...    |expected| Check 6. All URI values shall not exceed a max length of 256 octets (bytes) (3.4 Data Types [CORE]). |
+    ...    |expected| Check 7. Each Resource Type ID shall be designated as "rt=<Resource Type value>" (7.2.1.1 Resource Type property definition [CORE]). |
+    ...    |expected| Check 8. Any vendor-defined Resource Types shall follow the syntax x.<ICANNName.<Resource identification> (6.4 Vendor specified OIC Resource Types [SH]). |
+    ...    |expected| Check 9. Reserved |
+    ...    |expected| Check 17. The Policy Property, if present for an OIC Resource, shall be designated as "p=<policy value>" and the <policy value> shall be a bitmap of one octet with a value from 0 to 3 (7.2.1.3 Policy property definition [CORE]). |
+    ...    |expected| Check 18. Only Resources defined as discoverable shall be returned (7.1.4.2.4 Policy [CORE], 7.2.1.3 Policy property definition [CORE]). |
+    ...    |expected| Check 19. The IUT shall support discovery based on multicast CoAP (i.e. CoAP GET on "/oic/res") (10.1 Endpoint discovery introduction [CORE], 11.3.4 Resource based discovery. finding information [CORE], 6.3 Profile of OIC Core [SH]). |
+    ...    |expected| Check 22. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (10.2 CoAP based Endpoint discovery [CORE]). |
+    ...    |expected| Check 23. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    ...    |expected| Check 24. The IUT shall support direct discovery and the response shall be sent directly back to the CTT in Step 9 (11.3.2.1 Resource based discovery. mechanism. Overview [CORE], 11.3.2.2 Direct discovery [CORE]). |
+    ...    |expected| Check 28. The IUT shall respond when the "rt" query is for a Resource Type that is supported by the IUT in Step 7 (10.2 CoAP based Endpoint discovery [CORE]). |
+    ...    |expected| Check 31. The response messages shall follow the JSON schemas for "/oic/res" (10.2 CoAP based Endpoint discovery [CORE]). |
+    [Tags]    Mandatory    Server    Discovery
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    @{dut1_resource_types}    Get DUT Info Value    ${RESOURCE_TYPE}    ${DUT1_ID}    ${DISCOVERABLE}=1
+    @{oic_resource_types}    Get DUT Info Value    ${RESOURCE_TYPE}    ${OIC_ID}    ${DISCOVERABLE}=1
+    Remove Values From List    ${oic_resource_types}    ${OIC_CORE_RESOURCE_DEFAULT_TYPE}
+    Append To List    ${dut1_resource_types}    @{oic_resource_types}
+    : FOR    ${dut1_resource_type}    IN    @{dut1_resource_types}
+    \    ${dut1_response}    Discover Resource With Query    ${MULTICAST}    ${COAP}    ${OIC_CORE_RESOURCE_DEFAULT_URI}    ${RESOURCE_TYPE}=${dut1_resource_type}
+    \    ...    ${NON_CONFIRMABLE}    ${SERVER_IP}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${dut1_response}    No valid response received for multicast discovery
+    \    ${response_length}    Get Length    ${dut1_response}
+    \    Continue For Loop If    ${response_length} < 1
+    \    Run Keyword And Continue On Failure    Check1 Verify OIC Core Resource Support    ${dut1_response}    ${DUT1_ID}    ${dut1_resource_type}
+    \    Run Keyword And Continue On Failure    Check3 Verify OIC Resource Properties Existance    ${dut1_response}    ${DUT1_ID}    &${RESOURCE_TYPE}=${dut1_resource_type}
+    \    Run Keyword And Continue On Failure    Check4 Verify OIC URI Prefix    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check5 Verify OIC Resource Uniqueness    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check6 Verify URI Length    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check8 Verify Vendor Defined Resource Syntax    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check10 Verify Resource Interface Syntax    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check17 Verify Policy Value    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check18 Verify Discoverable Properties    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check19 Verify Coap Multicast Discovery    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check20 Verify Multicast Discovery Without RT    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check22 Verify CBOR Support    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check23 Verify Text String Length    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check26 Verify Content Format Numeric Value    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check28 Verify Response With RT Query    ${dut1_response}    ${DUT1_ID}
+    Release DUT information    ${DUT1_ID}
+
+4_Unicast_Discovery_Without_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-04|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a unicast discovery request message (i.e. CoAP GET) to “/oic/res” with no query parameters. |
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3. CTT receives the response message(s) and filters out the correct IUT from all responses |
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The Core Resources "/oic/res", "/oic/p" and "/oic/d" shall be supported (7.2.2 OIC Core Resources [CORE]; 11.3.4 Resource based discovery. Finding information [CORE]; 11.3.5 Resource discovery using "/oic/res" [CORE]). |
+    ...    |expected| Check 2. All discovered OIC-defined Resource Types shall match those declared in the PICS (4.3 Certification Steps [CERT]). |
+    ...    |expected| Check 3. The target URI ("href"), Resource Type ("rt") and Interface ("if") shall be defined for each Resource (7.1.4.2.2 OIC Resource Type [CORE], 7.1.4.2.3 OIC Resource Interface [CORE], 7.1.6.2 OIC Link [CORE], 7.2.1 OIC Resource Model. Values for common properties [CORE], 7.2.1.1 Resource Type property definition [CORE], 5.4.1 Common Properties [RT]). |
+    ...    |expected| Check 4. Only Resources with Resource Types with pre-defined URIs (i.e. oic.wk.res, oic.wk.p, oic.wk.d, etc.) shall use the prefix "/oic/" for their URIs (6.3 Namespace [CORE]). |
+    ...    |expected| Check 5. The URI of the link for every Resource shall be unique (6.1 Identification and addressing. Introduction [CORE], 6.2 Identification [CORE], 6.2.1 Resource identification and addressing [CORE], 5.1 URI [RT]). |
+    ...    |expected| Check 6. All URI values shall not exceed a max length of 256 octets (bytes) (3.4 Data Types [CORE]). |
+    ...    |expected| Check 7. Each Resource Type ID shall be designated as "rt=<Resource Type value>" (7.2.1.1 Resource Type property definition [CORE]). |
+    ...    |expected| Check 8. Any vendor-defined Resource Types shall follow the syntax x.<ICANNName.<Resource identification> (6.4 Vendor specified OIC Resource Types [SH]). |
+    ...    |expected| Check 9. Reserved |
+    ...    |expected| Check 17. The Policy Property, if present for an OIC Resource, shall be designated as "p=<policy value>" and the <policy value> shall be a bitmap of one octet with a value from 0 to 3 (7.2.1.3 Policy property definition [CORE]). |
+    ...    |expected| Check 18. Only Resources defined as discoverable shall be returned (7.1.4.2.4 Policy [CORE], 7.2.1.3 Policy property definition [CORE]). |
+    ...    |expected| Check 22. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (10.2 CoAP based Endpoint discovery [CORE]). |
+    ...    |expected| Check 23. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    ...    |expected| Check 24. The IUT shall support direct discovery and the response shall be sent directly back to the CTT in Step 9 (11.3.2.1 Resource based discovery. mechanism. Overview [CORE], 11.3.2.2 Direct discovery [CORE]). |
+    ...    |expected| Check 25. Only one instance of "/oic/d" shall be exposed per logical OIC Server (11.3.4 Resource based discovery. finding information [CORE]). |
+    ...    |expected| Check 31. The response messages shall follow the JSON schemas for "/oic/res" (10.2 CoAP based Endpoint discovery [CORE]). |
+    [Tags]    Mandatory    Server    Discovery
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    ${msgid}    Generate Message Id
+    ${token}    Generate Token
+    ${dut1_response}    Discover Resource Using Unicast    ${UNICAST}    ${COAP}    ${msgid}    ${token}    ${SERVER_IP}
+    ...    ${${SERVER_PORT}}    ${OIC_CORE_RESOURCE_DEFAULT_URI}    ${NON_CONFIRMABLE}
+    Should Not Be Empty    ${dut1_response}    No valid response received for unicast discovery
+    Run Keyword And Continue On Failure    Check1 Verify OIC Core Resource Support    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check3 Verify OIC Resource Properties Existance    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check4 Verify OIC URI Prefix    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check5 Verify OIC Resource Uniqueness    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check6 Verify URI Length    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check8 Verify Vendor Defined Resource Syntax    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check10 Verify Resource Interface Syntax    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check17 Verify Policy Value    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check18 Verify Discoverable Properties    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check19 Verify Coap Multicast Discovery    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check20 Verify Multicast Discovery Without RT    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check22 Verify CBOR Support    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check23 Verify Text String Length    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check25 Verify Only One Instance Of OIC D    ${dut1_response}    ${DUT1_ID}
+    Run Keyword And Continue On Failure    Check26 Verify Content Format Numeric Value    ${dut1_response}    ${DUT1_ID}
+    Release DUT information    ${DUT1_ID}
+
+5_Unicast_Discovery_With_IF_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-04|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a unicast discovery request message (i.e. CoAP GET) to “/oic/res” with if query parameters. |
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3. CTT receives the response message(s) and filters out the correct IUT from all responses |
+    ...    |procedure |4. Repeat steps 1 to 3 with an “if” query for all supported OIC Resource Interfaces (“?if=oic.if.ll"" and “?if=oic.if.baseline”)" |
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The Core Resources "/oic/res", "/oic/p" and "/oic/d" shall be supported (7.2.2 OIC Core Resources [CORE]; 11.3.4 Resource based discovery. Finding information [CORE]; 11.3.5 Resource discovery using "/oic/res" [CORE]). |
+    ...    |expected| Check 2. All discovered OIC-defined Resource Types shall match those declared in the PICS (4.3 Certification Steps [CERT]). |
+    ...    |expected| Check 3. The target URI ("href"), Resource Type ("rt") and Interface ("if") shall be defined for each Resource (7.1.4.2.2 OIC Resource Type [CORE], 7.1.4.2.3 OIC Resource Interface [CORE], 7.1.6.2 OIC Link [CORE], 7.2.1 OIC Resource Model. Values for common properties [CORE], 7.2.1.1 Resource Type property definition [CORE], 5.4.1 Common Properties [RT]). |
+    ...    |expected| Check 4. Only Resources with Resource Types with pre-defined URIs (i.e. oic.wk.res, oic.wk.p, oic.wk.d, etc.) shall use the prefix "/oic/" for their URIs (6.3 Namespace [CORE]). |
+    ...    |expected| Check 5. The URI of the link for every Resource shall be unique (6.1 Identification and addressing. Introduction [CORE], 6.2 Identification [CORE], 6.2.1 Resource identification and addressing [CORE], 5.1 URI [RT]). |
+    ...    |expected| Check 6. All URI values shall not exceed a max length of 256 octets (bytes) (3.4 Data Types [CORE]). |
+    ...    |expected| Check 7. Each Resource Type ID shall be designated as "rt=<Resource Type value>" (7.2.1.1 Resource Type property definition [CORE]). |
+    ...    |expected| Check 8. Any vendor-defined Resource Types shall follow the syntax x.<ICANNName.<Resource identification> (6.4 Vendor specified OIC Resource Types [SH]). |
+    ...    |expected| Check 9. Reserved |
+    ...    |expected| Check 10. Each Interface Property value shall be designated as "if=<Resource Interface value>" (7.2.1.2 Resource Interface property definition [CORE]). |
+    ...    |expected| Check 12. Each Resource shall support the baseline Interface (7.1.4.2.3 OIC Resource Interface [CORE], 7.2.1.2 Resource Interface property definition [CORE]). |
+    ...    |expected| Check 17. The Policy Property, if present for an OIC Resource, shall be designated as "p=<policy value>" and the <policy value> shall be a bitmap of one octet with a value from 0 to 3 (7.2.1.3 Policy property definition [CORE]). |
+    ...    |expected| Check 18. Only Resources defined as discoverable shall be returned (7.1.4.2.4 Policy [CORE], 7.2.1.3 Policy property definition [CORE]). |
+    ...    |expected| Check 22. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (10.2 CoAP based Endpoint discovery [CORE]). |
+    ...    |expected| Check 23. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    ...    |expected| Check 24. The IUT shall support direct discovery and the response shall be sent directly back to the CTT in Step 9 (11.3.2.1 Resource based discovery. mechanism. Overview [CORE], 11.3.2.2 Direct discovery [CORE]). |
+    ...    |expected| Check 25. Only one instance of "/oic/d" shall be exposed per logical OIC Server (11.3.4 Resource based discovery. finding information [CORE]). |
+    ...    |expected| Check 31. The response messages shall follow the JSON schemas for "/oic/res" (10.2 CoAP based Endpoint discovery [CORE]). |
+    [Tags]    Mandatory    Server    Discovery
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    @{dut1_resource_interfaces}    Get DUT Info Value    ${INTERFACE}    ${OIC_ID}    ${HREF}=${OIC_CORE_RESOURCE_DEFAULT_URI}
+    : FOR    ${dut1_resource_interface}    IN    @{dut1_resource_interfaces}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${dut1_response}    Discover Resource Using Unicast    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${OIC_CORE_RESOURCE_DEFAULT_URI}    ${NON_CONFIRMABLE}    ${INTERFACE}=${dut1_resource_interface}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${dut1_response}    No valid response received for unicast discovery
+    \    ${response_length}    Get Length    ${dut1_response}
+    \    Continue For Loop If    ${response_length} < 1
+    \    Run Keyword And Continue On Failure    Check1 Verify OIC Core Resource Support    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check3 Verify OIC Resource Properties Existance    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check4 Verify OIC URI Prefix    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check5 Verify OIC Resource Uniqueness    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check6 Verify URI Length    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check8 Verify Vendor Defined Resource Syntax    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check10 Verify Resource Interface Syntax    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check12 Support Baseline Interface    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check17 Verify Policy Value    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check18 Verify Discoverable Properties    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check19 Verify Coap Multicast Discovery    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check20 Verify Multicast Discovery Without RT    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check22 Verify CBOR Support    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check23 Verify Text String Length    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check25 Verify Only One Instance Of OIC D    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check26 Verify Content Format Numeric Value    ${dut1_response}    ${DUT1_ID}
+    Release DUT information    ${DUT1_ID}
+
+6_Unicast_Discovery_With_RT_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-04|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a unicast discovery request message (i.e. CoAP GET) to “/oic/res” with rt query parameters |
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3. CTT receives the response message(s) and filters out the correct IUT from all responses |
+    ...    |procedure |4. Repeat steps 1 to 3 with an “rt” query for all OIC Resource Types supported by the IUT (i.e. “?rt=oic.r.switch.binary”, “?rt=oic.d.refrigerator”, etc.)." |
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The Core Resources "/oic/res", "/oic/p" and "/oic/d" shall be supported (7.2.2 OIC Core Resources [CORE]; 11.3.4 Resource based discovery. Finding information [CORE]; 11.3.5 Resource discovery using "/oic/res" [CORE]). |
+    ...    |expected| Check 2. All discovered OIC-defined Resource Types shall match those declared in the PICS (4.3 Certification Steps [CERT]). |
+    ...    |expected| Check 3. The target URI ("href"), Resource Type ("rt") and Interface ("if") shall be defined for each Resource (7.1.4.2.2 OIC Resource Type [CORE], 7.1.4.2.3 OIC Resource Interface [CORE], 7.1.6.2 OIC Link [CORE], 7.2.1 OIC Resource Model. Values for common properties [CORE], 7.2.1.1 Resource Type property definition [CORE], 5.4.1 Common Properties [RT]). |
+    ...    |expected| Check 4. Only Resources with Resource Types with pre-defined URIs (i.e. oic.wk.res, oic.wk.p, oic.wk.d, etc.) shall use the prefix "/oic/" for their URIs (6.3 Namespace [CORE]). |
+    ...    |expected| Check 5. The URI of the link for every Resource shall be unique (6.1 Identification and addressing. Introduction [CORE], 6.2 Identification [CORE], 6.2.1 Resource identification and addressing [CORE], 5.1 URI [RT]). |
+    ...    |expected| Check 6. All URI values shall not exceed a max length of 256 octets (bytes) (3.4 Data Types [CORE]). |
+    ...    |expected| Check 7. Each Resource Type ID shall be designated as "rt=<Resource Type value>" (7.2.1.1 Resource Type property definition [CORE]). |
+    ...    |expected| Check 8. Any vendor-defined Resource Types shall follow the syntax x.<ICANNName.<Resource identification> (6.4 Vendor specified OIC Resource Types [SH]). |
+    ...    |expected| Check 9. Reserved |
+    ...    |expected| Check 17. The Policy Property, if present for an OIC Resource, shall be designated as "p=<policy value>" and the <policy value> shall be a bitmap of one octet with a value from 0 to 3 (7.2.1.3 Policy property definition [CORE]). |
+    ...    |expected| Check 18. Only Resources defined as discoverable shall be returned (7.1.4.2.4 Policy [CORE], 7.2.1.3 Policy property definition [CORE]). |
+    ...    |expected| Check 22. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (10.2 CoAP based Endpoint discovery [CORE]). |
+    ...    |expected| Check 23. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    ...    |expected| Check 24. The IUT shall support direct discovery and the response shall be sent directly back to the CTT in Step 9 (11.3.2.1 Resource based discovery. mechanism. Overview [CORE], 11.3.2.2 Direct discovery [CORE]). |
+    ...    |expected| Check 28. The IUT shall respond when the "rt" query is for a Resource Type that is supported by the IUT in Step 7 (10.2 CoAP based Endpoint discovery [CORE]). |
+    ...    |expected| Check 31. The response messages shall follow the JSON schemas for "/oic/res" (10.2 CoAP based Endpoint discovery [CORE]). |
+    [Tags]    Mandatory    Server    Discovery
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    @{dut1_resource_types}    Get DUT Info Value    ${RESOURCE_TYPE}    ${DUT1_ID}    ${DISCOVERABLE}=1
+    @{oic_resource_types}    Get DUT Info Value    ${RESOURCE_TYPE}    ${OIC_ID}    ${DISCOVERABLE}=1
+    Remove Values From List    ${oic_resource_types}    ${OIC_CORE_RESOURCE_DEFAULT_TYPE}
+    Append To List    ${dut1_resource_types}    @{oic_resource_types}
+    : FOR    ${dut1_resource_type}    IN    @{dut1_resource_types}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${dut1_response}    Discover Resource Using Unicast    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${OIC_CORE_RESOURCE_DEFAULT_URI}    ${NON_CONFIRMABLE}    ${RESOURCE_TYPE}=${dut1_resource_type}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${dut1_response}    No valid response received for unicast discovery
+    \    ${response_length}    Get Length    ${dut1_response}
+    \    Continue For Loop If    ${response_length} < 1
+    \    Run Keyword And Continue On Failure    Check1 Verify OIC Core Resource Support    ${dut1_response}    ${DUT1_ID}    ${dut1_resource_type}
+    \    Run Keyword And Continue On Failure    Check3 Verify OIC Resource Properties Existance    ${dut1_response}    ${DUT1_ID}    &${RESOURCE_TYPE}=${dut1_resource_type}
+    \    Run Keyword And Continue On Failure    Check4 Verify OIC URI Prefix    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check5 Verify OIC Resource Uniqueness    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check6 Verify URI Length    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check8 Verify Vendor Defined Resource Syntax    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check10 Verify Resource Interface Syntax    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check17 Verify Policy Value    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check18 Verify Discoverable Properties    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check19 Verify Coap Multicast Discovery    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check20 Verify Multicast Discovery Without RT    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check22 Verify CBOR Support    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check23 Verify Text String Length    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check26 Verify Content Format Numeric Value    ${dut1_response}    ${DUT1_ID}
+    \    Run Keyword And Continue On Failure    Check28 Verify Response With RT Query    ${dut1_response}    ${DUT1_ID}
+    Release DUT information    ${DUT1_ID}
+
+7_Multicast_Discovery_With_Invalid_RT_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-04|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a multicast discovery request message (i.e. CoAP GET) to “/oic/res” with rt query parameters. which not supported |
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3. CTT receives the response message(s) and filters out the correct IUT from all responses |
+    ...    |post_condition |None |
+    ...    |expected| Check 29. The IUT shall not respond when a multicast "rt" query is for a Resource Type not supported by the IUT in Step 8 (10.2 CoAP based Endpoint discovery [CORE]). |
+    [Tags]    Mandatory    Server    Discovery
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    ${dut1_response}    Discover Resource With Query    ${MULTICAST}    ${COAP}    ${OIC_CORE_RESOURCE_DEFAULT_URI}    ${RESOURCE_TYPE}=${FOO_RESOURCE_TYPE}    ${NON_CONFIRMABLE}    ${SERVER_IP}
+    Run Keyword And Continue On Failure    Check29 Verify Response For Unsupported Resoruce Type    ${dut1_response}    ${DUT1_ID}
+    Release DUT information    ${DUT1_ID}
+
+8_Unicast_Discovery_With_Invalid_RT_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-04|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a unicast discovery request message (i.e. CoAP GET) to “/oic/res” with rt query parameters. which not supported |
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3. CTT receives the response message(s) and filters out the correct IUT from all responses |
+    ...    |post_condition |None |
+    ...    |expected| Check 30. The IUT shall respond with an appropriate error message (e.g. 4.xx for CoAP) when a unicast "rt" query is for a Resource Type not supported by the IUT in Step 8 (10.2 CoAP based Endpoint discovery [CORE]). |
+    [Tags]    Mandatory    Server    Discovery
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    @{dut1_resource_types}    Get DUT Info Value    ${RESOURCE_TYPE}    ${DUT1_ID}    ${DISCOVERABLE}=1
+    ${msgid}    Generate Message Id
+    ${token}    Generate Token
+    ${dut1_response}    Discover Resource Using Unicast    ${UNICAST}    ${COAP}    ${msgid}    ${token}    ${SERVER_IP}
+    ...    ${${SERVER_PORT}}    ${OIC_CORE_RESOURCE_DEFAULT_URI}    ${NON_CONFIRMABLE}    ${RESOURCE_TYPE}=${FOO_RESOURCE_TYPE}
+    Run Keyword And Continue On Failure    Check30 Verify Error Message For Unsupported Resource Type    ${dut1_response}    ${DUT1_ID}
+    Release DUT information    ${DUT1_ID}
+
+*** Keywords ***
+Check1 Verify OIC Core Resource Support
+    [Arguments]    ${response}    ${dut_id}    ${rt}=${None}
+    [Documentation]    OIC Core Resources /oic/res, /oic/p and /oic/d shall be supported
+    #    previous implementation exist
+    ${response_code}    Get Response Code    ${response}
+    Should Be Equal    ${response_code}    ${COAP_RESPONSE_CODE_SUCCESS}
+    ${response_payload}    Get Response Payload    ${response}
+    @{list_of_core_resource}    Get List Of OIC Core Resource    ${rt}
+    @{list_of_supported_resource}    Get List Of Resource    ${response_payload}    ${HREF}
+    : FOR    ${core_resource}    IN    @{list_of_core_resource}
+    \    BuiltIn.Log    ${core_resource}
+    \    ${res}    Is Item Exist    ${core_resource}    @{list_of_supported_resource}
+    \    Should Be True    ${res}    OIC Core Resource. ${core_resource} is't supported
+    [Return]    ${True}
+
+Check2
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    All discovered OIC-defined Resource Types shall match those declared in the PICS
+    #    BuiltIn.Log    already implmented somewhere
+    [Return]    ${True}
+
+Check3 Verify OIC Resource Properties Existance
+    [Arguments]    ${response}    ${dut_id}    ${query}=${None}
+    [Documentation]    The target URI (href), Resource Type (rt) and Interface (if) shall be defined for each OIC Resource
+    #    previous implementation exist
+    ${response_payload}    Get Response Payload    ${response}
+    #    check response represenation neither does it return anything or check against anything    so, how can it check?
+    Check Response Representation    ${dut_id}    ${response_payload}    Json    ${DISCOVERABLE}=1${query}    @{REPRESENTATION_OIC_RES}
+    [Return]    ${True}
+
+Check4 Verify OIC URI Prefix
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Only OIC Resources with Resource Types with pre-defined URIs (i.e. oic.wk.res, oic.wk.p, oic.wk.d, etc.) shall use the prefix /oic/ for their URIs
+    [Tags]    High
+    ${response_payload}    Get Response Payload    ${response}
+    ${verify_prefix}    Verify Prefix Oic    ${response_payload}
+    Should Be True    ${verify_prefix}
+    [Return]    ${True}
+
+Check5 Verify OIC Resource Uniqueness
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    The URI of the link for every OIC Resource shall be unique
+    #    previous implementation exist
+    BuiltIn.Log    ${response}
+    ${response_payload}    Get Response Payload    ${response}
+    BuiltIn.Log    ${response_payload}
+    @{list_of_resource_uri}    Get List Of Resource    ${response_payload}    ${HREF}
+    ${res}    Are List Elements Unique    @{list_of_resource_uri}
+    Should Be True    ${res}    elements aren't unique
+    [Return]    ${True}
+
+Check6 Verify URI Length
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    All URI values shall not exceed a max length of 256 octets
+    [Tags]    Low
+    ${max_length}    Set Variable    256
+    BuiltIn.Log    ${response}
+    ${response_payload}    Get Response Payload    ${response}
+    BuiltIn.Log    ${response_payload}
+    @{list_of_resource_uri}    Get List Of Resource    ${response_payload}    ${HREF}
+    : FOR    ${resource_uri}    IN    @{list_of_resource_uri}
+    \    ${res}    Has Length Exceed    ${resource_uri}    ${max_length}
+    \    BuiltIn.Log    ${res}
+    \    Should Be Equal    ${res}    ${False}    Resource Uri. ${resource_uri} has exceed length
+    [Return]    ${True}
+
+Check7 Verify Resource Type Syntax
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Each Resource Type property shall be designated as “rt=<Resource Type value>”
+    #    previous implementation exist
+    BuiltIn.Log    ${response}
+    ${response_payload}    Get Response Payload    ${response}
+    BuiltIn.Log    ${response_payload}
+    Is Key Exist    ${RESOURCE_TYPE}    ${response_payload}
+    [Return]    ${True}
+
+Check8 Verify Vendor Defined Resource Syntax
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Any vendor-defined OIC Resource Types shall follow the syntax x.<ICANNName.<resource identification>
+    [Tags]    High   TBD
+    BuiltIn.Log    ${response}
+    ${response_payload}    Get Response Payload    ${response}
+    BuiltIn.Log    ${response_payload}
+    @{list_of_resource}    Get List Of Resource    ${response_payload}    ${RESOURCE_TYPE}
+    : FOR    ${resource_type}    IN    @{list_of_resource}
+    \    ${res}    Check Vendor Defined Oic Resource Type Format    ${resource_type}
+    \    Should Be True    ${res}    Resource Type. ${resource_type} isn't correct
+    [Return]    ${True}
+
+Check9 Verify Core And Smart Home Properties
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Any OIC Resources that utilize a vendor-defined Resource Type shall implement the core and smart home specified mandatory properties
+    [Tags]    High
+    BuiltIn.Log    already implmented somewhere
+    [Return]    ${True}
+
+Check10 Verify Resource Interface Syntax
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Each Resource Interface property shall be designated as “if=<Resource Interface value>”
+    BuiltIn.Log    ${response}
+    ${response_payload}    Get Response Payload    ${response}
+    BuiltIn.Log    ${response_payload}
+    Is Key Exist    ${Interface}    ${response_payload}
+    [Return]    ${True}
+
+Check11
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    The correct OIC Resource Interface shall be listed first
+    [Tags]    High    TBD
+    BuiltIn.Log    TBD
+    [Return]    ${True}
+
+Check12 Support Baseline Interface
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Each OIC Resource shall support the Baseline interface
+    [Tags]    High
+    #    previous implementation exist
+    ${baseline_interface}    Set Variable    @{RES_INTERFACES}[1]
+    BuiltIn.Log    ${response}
+    ${response_payload}    Get Response Payload    ${response}
+    BuiltIn.Log    ${response_payload}
+    @{list_of_resource_interface}    Get List Of Resource    ${response_payload}    ${INTERFACE}
+    ${cnt_baseline}    Get Contain Count    ${baseline_interface}    @{list_of_resource_interface}
+    @{list_of_resource_href}    Get List Of Resource    ${response_payload}    ${HREF}
+    ${cnt_href}    Get List Length    @{list_of_resource_href}
+    Should Be Equal As Integers    ${cnt_baseline}    ${cnt_href}
+    [Return]    ${True}
+
+Check13
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Each OIC Resource implementing an OIC-defined Resource Type shall support the mandatory Resource Interface(s)
+    [Tags]    TBD
+    BuiltIn.Log    TBD
+    [Return]    ${True}
+
+Check14
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    In the absence of an “if” query in Step 1, the Default interface shall be used
+    [Tags]    TBD
+    BuiltIn.Log    TBD
+    [Return]    ${True}
+
+Check15
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Reponses using the Baseline interface in Step 6 shall include a representation of all properties
+    [Tags]    TBD
+    BuiltIn.Log    TBD
+    [Return]    ${True}
+
+Check16
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Responses using the List Links interface in Step 1 and Step 6 shall include fully-qualified URIs
+    [Tags]    High    TBD
+    BuiltIn.Log    TBD
+    [Return]    ${True}
+
+Check17 Verify Policy Value
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    The Policy property, if present for an OIC Resource, shall be designated as “p=<policy value>” and the <policy value> is a bitmap of one octet with a value from 0 to 3
+    [Tags]    High
+    BuiltIn.Log    ${response}
+    ${response_payload}    Get Response Payload    ${response}
+    BuiltIn.Log    ${response_payload}
+    ${res}    Is Policy Value Correct    ${response_payload}
+    Should Be True    ${res}    Policy Value isn't correct
+    [Return]    ${True}
+
+Check18 Verify Discoverable Properties
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Only OIC Resources defined as discoverable shall be returned
+    ${response_payload}    Get Response Payload    ${response}
+    ${res}    Verify Response Have Only Discoverable    ${response_payload}
+    Should Be True    ${res}
+    [Return]    ${True}
+
+Check19 Verify Coap Multicast Discovery
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    The IUT shall support discovery based on multicast CoAP (i.e. CoAP GET on “/oic/res”)
+    #    previous implementation exist
+    ${response_code}    Get Response Code    ${response}
+    BuiltIn.Log    ${response_code}
+    Should Be Equal    ${response_code}    ${COAP_RESPONSE_CODE_SUCCESS}
+    [Return]    ${True}
+
+Check20 Verify Multicast Discovery Without RT
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    The IUT shall respond to a multicast discovery message when no “rt” query is used in Step 1
+    BuiltIn.Log    previous implementation exist
+    ${response_code}    Get Response Code    ${response}
+    BuiltIn.Log    ${response_code}
+    Should Be Equal    ${response_code}    ${COAP_RESPONSE_CODE_SUCCESS}
+    [Return]    ${True}
+
+Check21
+    [Arguments]    ${response}    ${dut_id}
+    [Tags]    Low    TBD
+    #TBD    “The considerations for handling multicast requests shall be as described in section 8 of IETF RFC 7252 and section 4.1 in IETF RFC 6690.”
+    BuiltIn.Log    TBD
+    [Return]    ${True}
+
+Check22 Verify CBOR Support
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    The IUT shall indicate support for CBOR and payload encoding shall use CBOR
+    ${json_payload}    Get Response Json    ${response}
+    ${length}    Get Length    ${json_payload}
+    ${content_format}    Run Keyword If    ${length} > 0    Get Response Content Format    ${response}
+    Run Keyword If    ${length} > 0    Should Be Equal    ${content_format}    CBOR
+
+Check23 Verify Text String Length
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Verify that all text strings do not exceed a max length of 64 octets (bytes)
+    [Tags]    Low
+    ${max_length}    Set Variable    64
+    BuiltIn.Log    ${response}
+    ${response_payload}    Get Response Payload    ${response}
+    BuiltIn.Log    ${response_payload}
+    @{list_of_value}    Get List Of Value For A Data Type    ${response_payload}    string
+    : FOR    ${value}    IN    @{list_of_value}
+    \    ${res}    Has Length Exceed    ${value}    ${max_length}
+    \    Should Be Equal    ${res}    ${False}    ${value} has exeed maximum length
+    [Return]    ${True}
+
+Check24 Verify Direct Discovery
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Verify that the DUT supports direct discovery and that the response is sent directly back to the TE in step 9
+    BuiltIn.Log    already implmented somewhere
+    [Return]    ${True}
+
+Check25 Verify Only One Instance Of OIC D
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Verify that only one instance of “/oic/d” is exposed per logical OIC Server
+    [Tags]    Low
+    #    previous implementation exist
+    ${item}    Set Variable    ${OIC_CORE_RESOURCE_DEVICE_URI}
+    BuiltIn.Log    ${response}
+    ${response_payload}    Get Response Payload    ${response}
+    BuiltIn.Log    ${response_payload}
+    @{list_of_resource_uri}    Get List Of Resource    ${response_payload}    ${HREF}
+    ${cnt}    Get Item Count    ${item}    @{list_of_resource_uri}
+    Should Be True    ${cnt} == 1    ${item} count is ${cnt}
+    [Return]    ${True}
+
+Check26 Verify Content Format Numeric Value
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Verify that every message with a payload body contains a Content-Format option with a numeric value from Table 32
+    [Tags]    Low    TBD
+    BuiltIn.Log    TBD
+    ${json_payload}    Get Response Json    ${response}
+    ${length}    Get Length    ${json_payload}
+    ${content_format}    Run Keyword If    ${length} > 0    Get Response Content Format    ${response}
+    Run Keyword If    ${length} > 0    Should Be Equal    ${content_format}    CBOR
+    [Return]    ${True}
+
+Check27
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Verify that block-wise transfer is used and that all blocks have the same reliability setting (i.e. all CON or all NON) if the payload content exceeds the size of a CoAP datagram
+    [Tags]    Low    TBD
+    BuiltIn.Log    TBD
+    [Return]    ${True}
+
+Check28 Verify Response With RT Query
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    The IUT shall respond when the “rt” query is for a Resource Type that is supported by the IUT in Step 7
+    #    previous implementation exist
+    ${response_code}    Get Response Code    ${response}
+    BuiltIn.Log    ${response_code}
+    Should Be Equal    ${response_code}    ${COAP_RESPONSE_CODE_SUCCESS}
+    [Return]    ${True}
+
+Check29 Verify Response For Unsupported Resoruce Type
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    The IUT shall not respond when a multicast “rt” query is for a Resource Type not supported by the IUT in Step 8
+    [Tags]    High
+    #    previous implementation exist
+    Should Be Empty    ${response}
+    [Return]    ${True}
+
+Check30 Verify Error Message For Unsupported Resource Type
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    The IUT shall respond with an appropriate error message (e.g. 4.xx for CoAP) when a unicast “rt” query is for a Resource Type not supported by the IUT in Step 8
+    [Tags]    High
+    #    previous implementation exist
+    ${response_code}    Get Response Code    ${response}
+    BuiltIn.Log    ${response_code}
+    Should Start With    ${response_code}    4.    Unexpected Response Code
+    [Return]    ${True}
+
+Check31 Compare Response With RAML And JSON Schemas
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    Verify that the response messages follow the RAML and JSON schemas for “/oic/res”
+    [Tags]    High
+    BuiltIn.Log    already checked in Check3,4
+    [Return]    ${True}
+
+Check32
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    For all Smart Home Devices, verify that Device type has an OIC Resource Type name prefixed with “oic.d”
+    [Tags]    High    TBD
+    BuiltIn.Log    TBD
+    [Return]    ${True}
+
+Check33
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    For all Smart Home Devices, verify that the DUT supports the appropriate mandatory Resource Types defined in table 10-1
+    [Tags]    High    TBD
+    BuiltIn.Log    TBD
+    [Return]    ${True}
+
+Check34
+    [Arguments]    ${response}    ${dut_id}
+    [Documentation]    For a Smart Home Device that supports two OIC Resources with the same OIC Resource Type, verify that they support different CRUDN operations
+    [Tags]    TBD
+    BuiltIn.Log    TBD
+    [Return]    ${True}

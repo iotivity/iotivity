@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import oic.ctt.formatter.IotivityKey;
 import oic.ctt.DUTResource.CRUDNType;
+import oic.ctt.DUTResource.PayloadType;
 
 /**
  *
@@ -43,6 +44,9 @@ public class DUTInformation {
 
     private boolean isExistResourceWithQuery(String queryBody,
             DUTResource dutResource) {
+        if (queryBody.equals("")) {
+            return true;
+        }
         String[] queries = queryBody.split("&");
 
         for (String query : queries) {
@@ -55,8 +59,8 @@ public class DUTInformation {
             if (queryPart.length > 1) {
                 String queryKey = queryPart[0];
                 String queryValue = queryPart[1];
-                String dutResourceValue = dutResource.getDUTResourceValue(
-                        queryKey).get(0);
+                String dutResourceValue = dutResource
+                        .getDUTResourceValue(queryKey).get(0);
 
                 if (dutResourceValue.equals(queryValue) == false) {
                     return false;
@@ -77,13 +81,12 @@ public class DUTInformation {
 
         ArrayList<DUTResource> resourceList = new ArrayList<DUTResource>();
 
-        if (query.length() > 0)
-            for (DUTResource tempResource : mDUTResourcesMap.values()) {
+        for (DUTResource tempResource : mDUTResourcesMap.values()) {
 
-                if (isExistResourceWithQuery(query, tempResource)) {
-                    resourceList.add(tempResource);
-                }
+            if (isExistResourceWithQuery(query, tempResource)) {
+                resourceList.add(tempResource);
             }
+        }
         return resourceList;
     }
 
@@ -101,15 +104,13 @@ public class DUTInformation {
 
         ArrayList<String> resourceList = new ArrayList<String>();
 
-        if (query.length() > 0)
-            for (DUTResource tempResource : mDUTResourcesMap.values()) {
-
-                if (isExistResourceWithQuery(query, tempResource)) {
-                    for (String value : tempResource.getDUTResourceValue(Key)) {
-                        resourceList.add(value);
-                    }
+        for (DUTResource tempResource : mDUTResourcesMap.values()) {
+            if (query.length()==0 || isExistResourceWithQuery(query, tempResource)) {
+                for (String value : tempResource.getDUTResourceValue(Key)) {
+                    resourceList.add(value);
                 }
             }
+        }
         return resourceList;
     }
 
@@ -158,7 +159,8 @@ public class DUTInformation {
      * @param dutResourcesMap
      *            : Map of DUT Resources
      */
-    public void setDutResourcesMap(HashMap<String, DUTResource> dutResourcesMap) {
+    public void setDutResourcesMap(
+            HashMap<String, DUTResource> dutResourcesMap) {
         this.mDUTResourcesMap = dutResourcesMap;
     }
 
@@ -168,14 +170,15 @@ public class DUTInformation {
      * @param href : href of the resource
      * @return DUTResource : the resource identified with the href
      */
-    public DUTResource getResource(String href){
+    public DUTResource getResource(String href) {
         return mDUTResourcesMap.get(href);
     }
 
     /**
      * This method generate the CRUDN states supported by the resource
      *
-     * @param : href of the resource
+     * @param :
+     *            href of the resource
      */
     public void generateCRUDNState(String href) {
         DUTResource dutRes = mDUTResourcesMap.get(href);
@@ -195,6 +198,17 @@ public class DUTInformation {
     }
 
     /**
+     * This method returns the object type of the whole payload of a resource
+     *
+     * @param href : href of the resource
+     * @return PayloadType : Desired object type of the response payload
+     */
+    public PayloadType getPayloadType(String href) {
+        DUTResource dutRes = getResource(href);
+        return dutRes.getResourcePayloadType();
+    }
+
+    /**
      * This method checks if a CRUDN operation is supported by the resource
      *
      * @param href : href of the resource
@@ -203,5 +217,21 @@ public class DUTInformation {
     public ArrayList<String> getInterfaceList(String href) {
         DUTResource dutRes = getResource(href);
         return dutRes.getDUTResourceValue(IotivityKey.IF.toString());
+    }
+
+    /**
+     * This method checks if a CRUDN operation is supported by the resource
+     *
+     * @param href : href of the resource
+     * @return true : if the key is supported false otherwise
+     */
+    public ArrayList<String> getResourceTypes(String href) {
+        DUTResource dutRes = getResource(href);
+        return dutRes.getDUTResourceValue(IotivityKey.RT.toString());
+    }
+    
+    public ArrayList<String> getResourceRepresentation(String href){
+        DUTResource dutRes = getResource(href);
+        return dutRes.getDUTResourceValue(IotivityKey.REP.toString());
     }
 }

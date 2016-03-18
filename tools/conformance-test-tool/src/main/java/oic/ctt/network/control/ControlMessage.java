@@ -31,53 +31,99 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
+/**
+ * ControlMessage class. The interactions and data exchange between
+ * ControlClient and DTLS relay are structured into message objects defined by
+ * this class
+ *
+ * @author Tanvir Ferdousi (tanvir.f@samsung.com)
+ *
+ */
 public class ControlMessage {
 
+    public static final int            HEADER_LENGTH     = 4;
     private MessageCode                mMessageCode;
     private int                        mMessageId;
     private InetAddress                mRemoteAddress;
     private int                        mRemotePort;
     private ArrayList<MessageArgument> mMessageArguments = new ArrayList<MessageArgument>();
-    public static final int            HEADER_LENGTH    = 4;
 
+    /**
+     * Creates a ControlMessage object
+     */
     public ControlMessage() {
         mMessageCode = null;
         mMessageId = OICHelper.getRandomMessageId();
     }
 
+    /**
+     * Gets the message code
+     *
+     * @return MessageCode enum type
+     */
     public MessageCode getMessageCode() {
         return mMessageCode;
     }
 
+    /**
+     * Sets the message code
+     *
+     * @param messageCode
+     *            Enum type (MessageCode)
+     */
     public void setMessageCode(MessageCode messageCode) {
         this.mMessageCode = messageCode;
     }
 
+    /**
+     * Gets the message ID
+     *
+     * @return Integer containing the message ID
+     */
     public int getMessageId() {
         return mMessageId;
     }
 
+    /**
+     * Sets the message ID
+     *
+     * @param messageId
+     *            16 bit unsigned integer
+     */
     public void setMessageId(int messageId) {
         this.mMessageId = messageId;
     }
 
+    /**
+     * Adds an argument to this message
+     *
+     * @param msgArgument
+     *            MessageArgument object
+     */
     public void addArgument(MessageArgument msgArgument) {
         mMessageArguments.add(msgArgument);
     }
 
-    public void addArgumentPrivateData(byte[] privateData){
+    /**
+     * Adds the private data (PSK) argument to this message
+     *
+     * @param privateData
+     */
+    public void addArgumentPrivateData(byte[] privateData) {
         MessageArgument pvDataArg = new MessageArgument();
         pvDataArg.setType(ArgumentType.PRIVATE_DATA);
         pvDataArg.setValue(privateData);
         this.addArgument(pvDataArg);
     }
 
-    public byte[] getPrivateData()
-    {
-        for(MessageArgument messageArgument : mMessageArguments)
-        {
-            if(messageArgument.getType().equals(ArgumentType.PRIVATE_DATA))
-            {
+    /**
+     * Gets the private data (PSK) from this message
+     *
+     * @return byte array containing the pvdata
+     */
+    public byte[] getPrivateData() {
+        for (MessageArgument messageArgument : mMessageArguments) {
+            if (messageArgument.getType().equals(ArgumentType.PRIVATE_DATA)) {
                 return messageArgument.getValue();
             }
         }
@@ -85,6 +131,12 @@ public class ControlMessage {
         return null;
     }
 
+    /**
+     * Adds the network address argument
+     *
+     * @param ipAddress
+     *            String containing the IPv4 or IPv6 address
+     */
     public void addArgumentIpAddress(String ipAddress) {
         MessageArgument argIpAddress = new MessageArgument();
         InetAddress inetAddress = null;
@@ -113,6 +165,12 @@ public class ControlMessage {
         this.addArgument(argIpAddress);
     }
 
+    /**
+     * Adds the Port argument
+     *
+     * @param port
+     *            integer specifying the port number
+     */
     public void addArgumentPort(int port) {
         MessageArgument argPort = new MessageArgument();
         argPort.setType(ArgumentType.PORT);
@@ -125,6 +183,12 @@ public class ControlMessage {
         this.addArgument(argPort);
     }
 
+    /**
+     * Adds the ciphersuite argument
+     *
+     * @param cipherSuite
+     *            Enum of type CipherSuite
+     */
     public void addArgumentCipherSuite(CipherSuite cipherSuite) {
         MessageArgument argCipherSuite = new MessageArgument();
         argCipherSuite.setType(ArgumentType.CIPHER_SUITE);
@@ -167,7 +231,7 @@ public class ControlMessage {
                 length = ((bytes[offset + 1] << 8) & 0xFF00)
                         + (bytes[offset + 2] & 0xFF);
 
-                msgArgument.setLength(length);
+                // msgArgument.setLength(length);
 
                 argValue = new byte[length];
 
@@ -186,18 +250,40 @@ public class ControlMessage {
         return controlMessage;
     }
 
+    /**
+     * Sets the destination (remote) address for this message
+     *
+     * @param remoteAddress
+     *            Object of type InetAddress
+     */
     public void setRemoteAddress(InetAddress remoteAddress) {
         this.mRemoteAddress = remoteAddress;
     }
 
+    /**
+     * Sets the destination (remote) port for this message
+     *
+     * @param remotePort
+     *            Integer specifying the port number
+     */
     public void setRemotePort(int remotePort) {
         this.mRemotePort = remotePort;
     }
 
+    /**
+     * Gets the remote address of this message
+     *
+     * @return Object of type InetAddress
+     */
     public InetAddress getRemoteAddress() {
         return this.mRemoteAddress;
     }
 
+    /**
+     * Gets the remote port of this message
+     *
+     * @return Integer containing the Port number
+     */
     public int getRemotePort() {
         return this.mRemotePort;
     }

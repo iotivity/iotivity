@@ -30,6 +30,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -229,7 +230,7 @@ public class JsonAnalyzer {
      * Return true if jsonString is valid, otherwise false
      */
     public boolean validate() {
-        boolean retValue = false;
+        boolean retValue = true;
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -242,15 +243,18 @@ public class JsonAnalyzer {
             }
 
             objectMapper.readTree(mJsonString);
-            retValue = true;
 
-            return retValue;
-
-        } catch (IOException ioe) {
+        }catch (JsonParseException jpe) {
+            jpe.printStackTrace();
+            mlogger.error(jpe.getMessage());
+            retValue = false;
+        }catch (IOException ioe) {
             ioe.printStackTrace();
             mlogger.error(ioe.getMessage());
-            return false;
+            retValue = false;
         }
+        
+        return retValue;
     }
 
     /**
@@ -258,7 +262,6 @@ public class JsonAnalyzer {
      */
     public String getJsonValueAsString(String key) {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonNodeArray = null;
         try {
             return mapper.readTree(mJsonString).path(key).toString();
         } catch (JsonProcessingException e) {
@@ -276,7 +279,7 @@ public class JsonAnalyzer {
             value = jsonNode.toString();
         }
         // Convert space separated values into array of values
-        if (key != REP && key != OC) {
+        if (IotivityKey.IF.toString().equals(key) || IotivityKey.RT.toString().equals(key)) {
             String[] valList = value.split(DELIMITER);
             for (String val : valList) {
                 jsonValueList.add(val);
@@ -289,6 +292,7 @@ public class JsonAnalyzer {
     
     public void setJsonValue(org.json.JSONObject obj, String key, Object newValue) throws Exception 
     {
+        @SuppressWarnings("rawtypes")
         java.util.Iterator iterator = obj.keys();
         while (iterator.hasNext()) 
         {

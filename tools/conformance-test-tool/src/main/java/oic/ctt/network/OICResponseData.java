@@ -46,7 +46,7 @@ public class OICResponseData {
 
     /**
      * Sets a Response message parameter value
-     * 
+     *
      * @param key
      *            MessageParameter key
      * @param value
@@ -58,7 +58,7 @@ public class OICResponseData {
 
     /**
      * Gets a Response message parameter value
-     * 
+     *
      * @param key
      *            MessageParameter key
      * @return The value of the given key
@@ -69,7 +69,7 @@ public class OICResponseData {
 
     /**
      * Gets the protocol type of the contained message
-     * 
+     *
      * @return Protocol type (COAP or HTTP)
      */
     public OICClient.Protocol getProtocolType() {
@@ -78,7 +78,7 @@ public class OICResponseData {
 
     /**
      * Sets the protocol type for the message
-     * 
+     *
      * @param protocolType
      *            Protocol Type (COAP/HTTP)
      */
@@ -88,7 +88,7 @@ public class OICResponseData {
 
     /**
      * Gets the HeaderOptions of COAP/HTTP
-     * 
+     *
      * @return Set of options converted to string
      */
     public String getOptionSet() {
@@ -97,7 +97,7 @@ public class OICResponseData {
 
     /**
      * Sets the HeaderOptions of COAP/HTTP
-     * 
+     *
      * @param optionSet
      *            Set of options converted to string
      */
@@ -107,7 +107,7 @@ public class OICResponseData {
 
     /**
      * Converts the CoAP response into more abstract OICResponse
-     * 
+     *
      * @param coapResponse
      *            CoapResponse message object
      * @return OICResponse message object
@@ -137,6 +137,26 @@ public class OICResponseData {
                 CborManager.getPayloadAsJsonString(coapResponse.getPayload()));
         response.setResponseValue(MessageParameters.seqNumber,
                 String.valueOf(coapResponse.getObserveOption()));
+        response.setResponseValue(MessageParameters.contentFormat,
+                coapResponse.getContentTypeString());
+        response.setResponseValue(MessageParameters.accept,
+                coapResponse.getAcceptString());
+
+        String payloadString = CborManager
+                .getPayloadAsJsonString(coapResponse.getPayload());
+        if (payloadString.contains(OICHelper.SECURED_ENABLED_KEY)
+                && payloadString.contains(OICHelper.SECURED_PORT_KEY)) {
+
+            int firstPos = payloadString.indexOf(OICHelper.SECURED_PORT_KEY);
+            int lastPos = payloadString.indexOf("}", firstPos);
+            String portString = payloadString.substring(
+                    firstPos + OICHelper.SECURED_PORT_KEY.length() + 2,
+                    lastPos);
+
+            response.setResponseValue(MessageParameters.secPort, portString);
+        } else {
+            response.setResponseValue(MessageParameters.secPort, "0");
+        }
 
         if (coapResponse.getObserveOption() != null)
             response.setResponseValue(MessageParameters.observeFlag,

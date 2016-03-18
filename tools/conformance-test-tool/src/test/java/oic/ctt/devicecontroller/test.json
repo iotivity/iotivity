@@ -1,0 +1,129 @@
+{
+  "di" : "c33ac9ed-ee61-4f37-b044-18a08d0e1ef5",
+  "oc" : [ {
+    "href" : "/oic/res",
+    "rt" : "oic.wk.res",
+    "dis" : 1,
+    "obs" : 1,
+    "if" : [ "oic.if.ll" ],
+    "CcCsRUcUpD" : [ false, false, true, false, false, false ],
+    "rep" : [ {
+      "key" : "n",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : false
+    }, {
+      "key" : "di",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : true
+    }, {
+      "key" : "mpro",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : false
+    }, {
+      "key" : "links",
+      "type" : "array",
+      "accessmode" : "R",
+      "required" : true
+    } ],
+    "payloadType" : "array",
+    "dutType" : "SERVER"
+  }, {
+    "href" : "/oic/d",
+    "rt" : "oic.wk.d",
+    "dis" : 1,
+    "obs" : 1,
+    "if" : [ "oic.if.r" ],
+    "CcCsRUcUpD" : [ false, false, true, false, false, false ],
+    "rep" : [ {
+      "key" : "n",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : true
+    }, {
+      "key" : "di",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : true
+    }, {
+      "key" : "icv",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : true
+    }, {
+      "key" : "dmv",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : false
+    } ],
+    "payloadType" : "object",
+    "dutType" : "SERVER"
+  }, {
+    "href" : "/oic/p",
+    "rt" : "oic.wk.p",
+    "dis" : 1,
+    "obs" : 1,
+    "if" : [ "oic.if.r" ],
+    "CcCsRUcUpD" : [ false, false, true, false, false, false ],
+    "rep" : [ {
+      "key" : "pi",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : true
+    }, {
+      "key" : "mnmn",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : true
+    }, {
+      "key" : "mnml",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : false
+    }, {
+      "key" : "mnmo",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : false
+    }, {
+      "key" : "mndt",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : false
+    }, {
+      "key" : "mnpv",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : false
+    }, {
+      "key" : "mnos",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : false
+    }, {
+      "key" : "mnhw",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : false
+    }, {
+      "key" : "mnfv",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : false
+    }, {
+      "key" : "mnsl",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : false
+    }, {
+      "key" : "st",
+      "type" : "string",
+      "accessmode" : "R",
+      "required" : false
+    } ],
+    "payloadType" : "object",
+    "dutType" : "SERVER"
+  } ]
+}

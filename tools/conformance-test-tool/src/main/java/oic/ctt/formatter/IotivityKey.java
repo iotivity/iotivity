@@ -26,7 +26,8 @@ package oic.ctt.formatter;
 public enum IotivityKey {
 
     ROOT("oc"), DI("di"), HREF("href"), DIS("dis"), OBS("obs"), RT("rt"), IF(
-            "if"), REP("rep");
+            "if"), REP("rep"), CRUDN("CcCsRUcUpD"), OBJ_TYPE(
+                    "payloadType"), DUT_TYPE("dutType"),;
 
     private String key;
 

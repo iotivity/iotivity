@@ -25,6 +25,7 @@ import oic.ctt.formatter.OCPayloadType;
 import oic.ctt.logger.CTLogger;
 import oic.ctt.network.OICHelper;
 import oic.ctt.network.OICProtocolClient;
+import oic.ctt.network.OICRequestData;
 import oic.ctt.network.OICResponseData;
 import oic.ctt.network.OICHelper.MessageParameters;
 import oic.ctt.network.OICHelper.MessageType;
@@ -55,10 +56,11 @@ import java.util.HashMap;
 public class OICCoapClient implements OICProtocolClient, CoapClient {
 
     private Logger                                 mlogger           = CTLogger
-                                                                             .getInstance();
+            .getInstance();
 
     private ArrayList<OICResponseData>             mResponses        = new ArrayList<OICResponseData>();
     private ArrayList<OICResponseData>             mNotifications    = new ArrayList<OICResponseData>();
+    private OICRequestData                         mLastRequest      = null;
     private byte[]                                 mObserveToken     = null;
     private int                                    mWaitTime         = 60;
     private int                                    mDiscoverTime     = 5;
@@ -139,35 +141,35 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
     public void clearNotifications() {
         mNotifications.clear();
     }
-    
-    public OICResponseData getNotification(String token){
-    	ArrayList<OICResponseData> observeList = new ArrayList<OICResponseData>();
-    	OICResponseData observeResponse = null;
-    	
+
+    public OICResponseData getNotification(String token) {
+        ArrayList<OICResponseData> observeList = new ArrayList<OICResponseData>();
+        OICResponseData observeResponse = null;
+
         int index = 0;
-        for (int t = 0; t < mWaitTime; t++){
+        for (int t = 0; t < mWaitTime; t++) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
             }
             observeList = this.getNotifications();
-            while (observeList.size() > index){
-            	observeResponse = this.getNotifications().get(index);
-            	if (observeResponse.getResponseValue(MessageParameters.token)
-                        .equals(token)){
-            		index = -1;
-            		break;
-            	}
-                    
-	            else
-	            	index++;
+            while (observeList.size() > index) {
+                observeResponse = this.getNotifications().get(index);
+                if (observeResponse.getResponseValue(MessageParameters.token)
+                        .equals(token)) {
+                    index = -1;
+                    break;
+                }
+
+                else
+                    index++;
             }
             if (index == -1)
-            	break;            
+                break;
         }
         mlogger.info("Wait time over, returning response for observe request");
-        
+
         return observeResponse;
     }
 
@@ -213,6 +215,8 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
         coapRequest.setUriQuery(query);
         coapRequest.setToken(token);
         clientChannel.sendMessage(coapRequest);
+
+        storeLastRequest(coapRequest, ip, Integer.toString(port));
     }
 
     /**
@@ -362,8 +366,8 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
             return null;
         }
 
-        CoapRequest coapRequest = clientChannel
-                .createRequest(reliable, reqCode);
+        CoapRequest coapRequest = clientChannel.createRequest(reliable,
+                reqCode);
         coapRequest.setUriPath(uriPath);
         coapRequest.setMessageID(messageId);
         coapRequest.setToken(token);
@@ -376,8 +380,8 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
         }
 
         if (mObserveToken != null && Arrays.equals(token, mObserveToken))
-            coapRequest.setObserveOption(OICHelper
-                    .hexStringToByteArray("00000001"));
+            coapRequest.setObserveOption(
+                    OICHelper.hexStringToByteArray("00000001"));
 
         if (payload == null)
             payload = "";
@@ -386,21 +390,23 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
             payloadType = OCPayloadType.PAYLOAD_TYPE_REPRESENTATION;
 
         if (payload.length() > 0) {
-            coapRequest.setPayload(CborManager.convertToCbor(payload,
-                    payloadType));
+            coapRequest.setPayload(
+                    CborManager.convertToCbor(payload, payloadType));
         }
 
         this.clearResponses();
 
         clientChannel.sendMessage(coapRequest);
 
-        for (int t = 0; t < mWaitTime; t++){
+        storeLastRequest(coapRequest, ip, Integer.toString(port));
+
+        for (int t = 0; t < mWaitTime; t++) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
             }
-            if(this.getResponse(OICHelper.bytesToHex(token)) != null)
+            if (this.getResponse(OICHelper.bytesToHex(token)) != null)
                 break;
         }
 
@@ -427,8 +433,8 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
      *            Token used to match the response with request
      */
     @Override
-    public OICResponseData observeResource(MessageType type, int messageId, byte[] token,
-            String ip, int port, String uriPath, String query) {
+    public OICResponseData observeResource(MessageType type, int messageId,
+            byte[] token, String ip, int port, String uriPath, String query) {
 
         resetObserveFlags();
 
@@ -462,12 +468,11 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
             return null;
         }
 
-        CoapRequest coapRequest = clientChannel
-                .createRequest(reliable, reqCode);
+        CoapRequest coapRequest = clientChannel.createRequest(reliable,
+                reqCode);
         coapRequest.setUriPath(uriPath);
         coapRequest.addAccept(CoapMediaType.cbor);
-        coapRequest
-                .setObserveOption(OICHelper.hexStringToByteArray("00"));
+        coapRequest.setObserveOption(OICHelper.hexStringToByteArray("00"));
         coapRequest.setMessageID(messageId);
         coapRequest.setToken(token);
         if (query.length() > 0)
@@ -475,7 +480,9 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
 
         this.clearNotifications();
         clientChannel.sendMessage(coapRequest);
-        
+
+        storeLastRequest(coapRequest, ip, Integer.toString(port));
+
         return this.getNotification(OICHelper.bytesToHex(token));
     }
 
@@ -507,14 +514,14 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
         mObserveToken = token;
         mObserveResetFlag = true;
         mObserveNoAckFlag = false;
-        mlogger.info("Cancel observe with reset (RST), token = " + OICHelper.bytesToHex(token));
+        mlogger.info("Cancel observe with reset (RST), token = "
+                + OICHelper.bytesToHex(token));
         mlogger.info("mObserveToken = " + OICHelper.bytesToHex(mObserveToken));
     }
 
-
     /**
      * Reset observe Status
-     * 
+     *
      */
     @Override
     public void resetObserveStatus() {
@@ -542,8 +549,9 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
      */
     @Override
     public OICResponseData cancelObserveWithGetMessage(MessageType type,
-            int messageId, byte[] token, String ip, int port, String uriPath, String query) {
-        
+            int messageId, byte[] token, String ip, int port, String uriPath,
+            String query) {
+
         boolean reliable = false;
         CoapRequestCode reqCode = CoapRequestCode.GET;
 
@@ -572,8 +580,8 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
             return null;
         }
 
-        CoapRequest coapRequest = clientChannel
-                .createRequest(reliable, reqCode);
+        CoapRequest coapRequest = clientChannel.createRequest(reliable,
+                reqCode);
         coapRequest.setUriPath(uriPath);
         coapRequest.setMessageID(messageId);
         coapRequest.setToken(token);
@@ -585,6 +593,8 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
 
         this.clearNotifications();
         clientChannel.sendMessage(coapRequest);
+
+        storeLastRequest(coapRequest, ip, Integer.toString(port));
 
         return this.getNotification(OICHelper.bytesToHex(token));
     }
@@ -602,37 +612,43 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
             if (response.getObserveOption() != null) {
                 CoapPacketType notificationResponseType = CoapPacketType.ACK;
 
-                if (mObserveResetFlag && OICHelper.bytesToHex(mObserveToken).equals(OICHelper.bytesToHex(response.getToken()))){
+                if (mObserveResetFlag && OICHelper.bytesToHex(mObserveToken)
+                        .equals(OICHelper.bytesToHex(response.getToken()))) {
                     notificationResponseType = CoapPacketType.RST;
                     mlogger.info("Reset message selected to cancel observe");
-                }else{
+                } else {
                     notificationResponseType = CoapPacketType.ACK;
-                    mlogger.info("mObserveToken = " + OICHelper.bytesToHex(mObserveToken));
-                    mlogger.info("response.getToken() = " + OICHelper.bytesToHex(response.getToken()));
-                    mlogger.info("Ack message selected to Acknowledge CON message");
+                    mlogger.info("mObserveToken = "
+                            + OICHelper.bytesToHex(mObserveToken));
+                    mlogger.info("response.getToken() = "
+                            + OICHelper.bytesToHex(response.getToken()));
+                    mlogger.info(
+                            "Ack message selected to Acknowledge CON message");
 
                 }
 
                 if (response.getPacketType().equals(CoapPacketType.CON)
-                        && (!mObserveNoAckFlag && OICHelper.bytesToHex(mObserveToken).equals(OICHelper.bytesToHex(response.getToken())))) {
+                        && (!mObserveNoAckFlag && OICHelper
+                                .bytesToHex(mObserveToken).equals(OICHelper
+                                        .bytesToHex(response.getToken())))) {
                     CoapEmptyMessage notificationResponse = new CoapEmptyMessage(
                             notificationResponseType, response.getMessageID());
                     channel.sendMessage(notificationResponse);
                 }
 
                 mlogger.info("Notification received");
-//                if (mObserveToken != null
-//                        && Arrays.equals(mObserveToken, response.getToken())) {
-//                if (mObserveToken != null) {
-                    mNotifications.add(oicResponse);
-                    mlogger.info("Notification validated & added");
-//                } else {
-//                    mlogger.warn("Unexpected notifications!");
-//                }
+                // if (mObserveToken != null
+                // && Arrays.equals(mObserveToken, response.getToken())) {
+                // if (mObserveToken != null) {
+                mNotifications.add(oicResponse);
+                mlogger.info("Notification validated & added");
+                // } else {
+                // mlogger.warn("Unexpected notifications!");
+                // }
             } else {
                 if (response.getPacketType().equals(CoapPacketType.CON))
-                    channel.sendMessage(new CoapEmptyMessage(
-                            CoapPacketType.ACK, response.getMessageID()));
+                    channel.sendMessage(new CoapEmptyMessage(CoapPacketType.ACK,
+                            response.getMessageID()));
 
                 mlogger.info("Response received");
                 mResponses.add(oicResponse);
@@ -647,5 +663,17 @@ public class OICCoapClient implements OICProtocolClient, CoapClient {
     public void onConnectionFailed(CoapClientChannel channel,
             boolean notReachable, boolean resetByServer) {
 
+    }
+
+    @Override
+    public OICRequestData getLastRequest() {
+        return mLastRequest;
+    }
+
+    private void storeLastRequest(CoapRequest coapRequest, String destIp, String destPort)
+    {
+        mLastRequest = OICRequestData.convertRequestCoap(coapRequest);
+        mLastRequest.setRequestValue(MessageParameters.destAddress, destIp);
+        mLastRequest.setRequestValue(MessageParameters.destPort, destPort);
     }
 }

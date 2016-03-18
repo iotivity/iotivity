@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+jar {
+    baseName = 'RamlParser'
+    manifest {
+        attributes 'Main-Class': "oic.ctt.raml.parser.RAMLParser"
+    }
+}
+

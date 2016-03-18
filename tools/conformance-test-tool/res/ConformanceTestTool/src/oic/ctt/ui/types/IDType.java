@@ -28,14 +28,18 @@ public enum IDType {
     REPORT_PAGE_EDITOR_ID("oic.ctt.ui.multipages.ReportPageEditor"),
     TEST_PLAN_MULTI_PAGE_EDITOR_ID("oic.ctt.ui.multipages.TestPlanMultiPageEditor"),
     TEST_SUITE_MULTI_PAGE_EDITOR_ID("oic.ctt.ui.multipages.TestSuiteMultiPageEditor"),
+    RESOURCE_EDITOR_ID("oic.ctt.ui.multipages.ResourceEditor"),
+    RESOURCE_CREATOR_ID("oic.ctt.ui.multipages.ResourceCreator"),
     TEST_SUITE_SPEC_PAGE_ID("oic.ctt.ui.editors.TestSuiteSpecPage"),
     LOG_VIEW_ID("oic.ctt.ui.views.LogView"),
     TEST_PLAN_VIEW_ID("oic.ctt.ui.views.TestPlanView"),
     TEST_REPORT_VIEW_ID("oic.ctt.ui.views.TestReportView"),
     TEST_SUITE_VIEW_ID("oic.ctt.ui.views.TestSuiteView"),
     PERSPECTIVE_ID("oic.ctt.ui.perspective"),
-    UPDATE_TEST_PLAN_INFO_ID("oic.ctt.ui.actions.UpdateTestPlanInfo");
-
+    UPDATE_TEST_PLAN_INFO_ID("oic.ctt.ui.actions.UpdateTestPlanInfo"),
+    RAML_VIEW_ID("oic.ctt.ui.views.RAMLView"),
+    RESOURCE_VIEW_ID("oic.ctt.ui.views.ResourceView");
+    
     private final String text;
 
     private IDType(String text) {

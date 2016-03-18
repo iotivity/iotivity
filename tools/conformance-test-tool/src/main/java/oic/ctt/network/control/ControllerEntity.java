@@ -20,6 +20,12 @@
 
 package oic.ctt.network.control;
 
+/**
+ * ControllerEntity interface used to provide a callback function for
+ * ControlClient class for receiving messages.
+ *
+ * @author Tanvir Ferdousi (tanvir.f@samsung.com
+ */
 public interface ControllerEntity {
     public void handleMessage(ControlMessage controlMsg);
 }

@@ -1,0 +1,184 @@
+*** Settings ***
+Documentation     CT1.2.6 RETRIEVE Message With Observe Indication Based on CoAP NOTIFY
+Test Setup        Pre Condition Crudn Server
+Test Teardown     Post Condition Crudn Server
+Resource          OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+1_CON_RETRIEVE_Message_With_Observe_Indication_Observable_Resource
+    [Documentation]    | since |2016-02-15 |
+    ...    | see | |
+    ...    | purpose | |
+    ...    | procedure | 1. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) with an observe indication to the first Observable Resource on the IUT. |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to the CTT with an indication that the response has been made to an observe request. |
+    ...    | procedure | 3. CTT receives the response message and caches it for later evaluation. |
+    ...    | procedure | 4. A stimulus is applied to the IUT to force one or more the Properties of the Resource to change. |
+    ...    | procedure | If a Property of the Resource is writeable, the CTT will send an UPDATE request message (i.e. CoAP POST) to change it. |
+    ...    | procedure | If not, an external stimulus will be applied to the Resource to change one of the Properties. |
+    ...    | procedure | As an example, for a sensor Resource, the test engineer could apply the stimulus (if possible) or for an actuator Resource, the CTT could. |
+    ...    | procedure | 5. IUT sends a RETRIEVE response message to the CTT with an indication that the response has been made to an observe request. |
+    ...    | procedure | 6. CTT receives the response message and caches it for later evaluation. |
+    ...    | procedure | 7. Repeat Steps 4 to 6 two more times. |
+    ...    | procedure | 8. CTT sends a CON RETRIEVE request message (i.e. CoAP GET) without the observe field to cancel the observe notification. |
+    ...    | procedure | 9. Repeat Step 4. |
+    ...    | procedure | 10. CTT waits for 30 seconds. |
+    ...    | procedure | 11. Repeat Steps 1 to 10 for all other observable Resources by the IUT |
+    ...    | expected | Check 2. The response codes shall conform to those as defined in section 5.9 and 12.1.2 in IETF RFC 7252 (i.e. “2.05 Content”) (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    ...    | expected | Check 3. If the Resource supports the observe function, the IUT shall send a RETRIEVE response message with the observe indication any time there is a change in the state of the observed Resource in Step 4 (7.2.1.3 Policy Property Definition [CORE], 11.4.1 Notification: Overview [CORE], 11.4.2.3 Retrieve respons with observe indication [CORE], 11.4.2.5 Additional RETRIEVE responses with observe indication [CORE]). |
+    ...    | expected | Check 5. The IUT shall not send a RETRIEVE response message after the observe cancellation is sent in Step 8 (11.4.1 Notification: Overview [CORE], 11.4.2.3 Retrieve respons with observe indication [CORE], 11.4.2.5 Additional RETRIEVE responses with observe indication [CORE]). |
+    [Tags]    Mandatory    Server    Observe
+    ${msg_type}    Set Variable    ${CONFIRMABLE}
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    @{RESOURCE_LIST}    Get DUT Info Value    ${HREF}    ${DUT1_ID}    ${OBSERVABLE}=1
+    ${num}    Set Variable    3
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_LIST}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${observe_response}    Send Observe Request    ${COAP}    ${msgid}    ${token}    ${SERVER_IP}
+    \    ...    ${${SERVER_PORT}}    ${RESOURCE_URI}    ${msg_type}
+    \    Update And Observe Multiple Times    ${DUT1_ID}    ${RESOURCE_URI}    ${msg_type}    ${num}    3
+    \    ${msgid}    Generate Message Id
+    \    ${observe_cancel_response}    Cancel Observe With Get Message    ${COAP}    ${msgid}    ${SERVER_IP}    ${${SERVER_PORT}}
+    \    ...    ${RESOURCE_URI}    ${msg_type}
+    \    Update    ${DUT1_ID}    ${RESOURCE_URI}    ${msg_type}
+    \    Builtin.sleep    30
+    \    ${notification}    Get Observe Response    ${COAP}    ${RESOURCE_URI}
+    \    Run Keyword And Continue On Failure    Check2 Verify Response Code On Content    ${observe_response}
+    \    Run Keyword And Continue On Failure    Check5 Verify Cancel Observe    ${notification}
+
+2_NON_RETRIEVE_Message_with_Observe_Indication_Observable_Resource
+    [Documentation]    | since |2016-02-15 |
+    ...    | see | |
+    ...    | purpose | |
+    ...    | procedure | 1. CTT sends a unicast NON RETRIEVE request message (i.e. CoAP GET) with an observe indication to the first observable Resource on the IUT.
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to the CTT with an indication that the response has been made to an observe request.
+    ...    | procedure | 3. CTT receives the response message and caches it for later evaluation.
+    ...    | procedure | 4. A stimulus is applied to the IUT to force one or more the Properties of the Resource to change. |
+    ...    | procedure | If a Property of the Resource is writeable, the CTT will send an UPDATE request message (i.e. CoAP POST) to change it. |
+    ...    | procedure | If not, an external stimulus will be applied to the Resource to change one of the Properties. |
+    ...    | procedure | As an example, for a sensor Resource, the test engineer could apply the stimulus (if possible) or for an actuator Resource, the CTT could. |
+    ...    | procedure | 5. IUT sends a RETRIEVE response message to the CTT with an indication that the response has been made to an observe request.
+    ...    | procedure | 6. CTT receives the response message and caches it for later evaluation.
+    ...    | procedure | 7. Repeat Steps 4 to 6 two more times.
+    ...    | procedure | 8. CTT sends a CON RETRIEVE request message (i.e. CoAP GET) without the observe field to cancel the observe notification.
+    ...    | procedure | 9 . Repeat ... | procedure | 4.
+    ...    | procedure | 10 . CTT waits for 30 seconds.
+    ...    | procedure | 11 . Repeat Steps 1 to 10 for all other observable Resources by the IUT |
+    ...    | expected | Check 2. The response codes shall conform to those as defined in section 5.9 and 12.1.2 in IETF RFC 7252 (i.e. “2.05 Content”) (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    ...    | expected | Check 3. If the Resource supports the observe function, the IUT shall send a RETRIEVE response message with the observe indication any time there is a change in the state of the observed Resource in Step 4 (7.2.1.3 Policy Property Definition [CORE], 11.4.1 Notification: Overview [CORE], 11.4.2.3 Retrieve respons with observe indication [CORE], 11.4.2.5 Additional RETRIEVE responses with observe indication [CORE]). |
+    ...    | expected | Check 5. The IUT shall not send a RETRIEVE response message after the observe cancellation is sent in Step 8 (11.4.1 Notification: Overview [CORE], 11.4.2.3 Retrieve respons with observe indication [CORE], 11.4.2.5 Additional RETRIEVE responses with observe indication [CORE]). |
+    [Tags]    Mandatory    Server    Observe
+    ${msg_type}    Set Variable    ${NON_CONFIRMABLE}
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    @{RESOURCE_LIST}    Get DUT Info Value    ${HREF}    ${DUT1_ID}    ${OBSERVABLE}=1
+    ${num}    Set Variable    3
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_LIST}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${observe_response}    Send Observe Request    ${COAP}    ${msgid}    ${token}    ${SERVER_IP}
+    \    ...    ${${SERVER_PORT}}    ${RESOURCE_URI}    ${msg_type}
+    \    Update And Observe Multiple Times    ${DUT1_ID}    ${RESOURCE_URI}    ${msg_type}    ${num}    3
+    \    ${msgid}    Generate Message Id
+    \    ${observe_cancel_response}    Cancel Observe With Get Message    ${COAP}    ${msgid}    ${SERVER_IP}    ${${SERVER_PORT}}
+    \    ...    ${RESOURCE_URI}    ${msg_type}
+    \    Update    ${DUT1_ID}    ${RESOURCE_URI}    ${msg_type}
+    \    Builtin.sleep    30
+    \    ${notification}    Get Observe Response    ${COAP}    ${RESOURCE_URI}
+    \    Run Keyword And Continue On Failure    Check2 Verify Response Code On Content    ${observe_response}
+    \    Run Keyword And Continue On Failure    Check5 Verify Cancel Observe    ${notification}
+
+3_CON_RETRIEVE_Message_With_Observe_Indication_Non_Observable_Resource
+    [Documentation]    | since |2016-02-15 |
+    ...    | see | |
+    ...    | purpose | |
+    ...    | procedure | 1. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) with an observe indication to the non observable Resource on the IUT. |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to the CTT with an indication that the response has been made to an observe request. |
+    ...    | procedure | 3. CTT receives the response message and caches it for later evaluation. |
+    ...    | procedure | 4. Repeat Steps 1 to 3 for all other non observable Resources by the IUT |
+    ...    | expected | Check 4. If a Resource does not support the observe function, the IUT shall return an error response code (e.g. 4.xx for CoAP) (7.1.4.2.4 Policy [CORE], 7.2.1.3 Policy Property Definition [CORE]).
+    [Tags]    Mandatory    Server    Observe
+    ${msg_type}    Set Variable    ${CONFIRMABLE}
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    @{RESOURCE_LIST}    Get DUT Info Value    ${HREF}    ${DUT1_ID}    ${OBSERVABLE}=0
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_LIST}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${observe_response}    Send Observe Request    ${COAP}    ${msgid}    ${token}    ${SERVER_IP}
+    \    ...    ${${SERVER_PORT}}    ${RESOURCE_URI}    ${msg_type}
+    \    Run Keyword And Continue On Failure    Check4 Verify Error Response Code    ${observe_response}
+
+4_NON_RETRIEVE_Message_With_Observe_Indication_Non_Observable_Resource
+    [Documentation]    | since |2016-02-15 |
+    ...    | see | |
+    ...    | purpose | |
+    ...    | procedure | 1. CTT sends a unicast NON RETRIEVE request message (i.e. CoAP GET) with an observe indication to the non observable Resource on the IUT. |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to the CTT with an indication that the response has been made to an observe request. |
+    ...    | procedure | 3. CTT receives the response message and caches it for later evaluation. |
+    ...    | procedure | 4. Repeat Steps 1 to 3 for all other non observable Resources by the IUT |
+    ...    | expected | Check 4. If a Resource does not support the observe function, the IUT shall return an error response code (e.g. 4.xx for CoAP) (7.1.4.2.4 Policy [CORE], 7.2.1.3 Policy Property Definition [CORE]).
+    [Tags]    Mandatory    Server    Observe
+    ${msg_type}    Set Variable    ${NON_CONFIRMABLE}
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    @{RESOURCE_LIST}    Get DUT Info Value    ${HREF}    ${DUT1_ID}    ${OBSERVABLE}=0
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_LIST}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${observe_response}    Send Observe Request    ${COAP}    ${msgid}    ${token}    ${SERVER_IP}
+    \    ...    ${${SERVER_PORT}}    ${RESOURCE_URI}    ${msg_type}
+    \    Run Keyword And Continue On Failure    Check4 Verify Error Response Code    ${observe_response}
+
+*** Keywords ***
+Update
+    [Arguments]    ${dut_id}    ${resource_href}    ${msg_type}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${SERVER_PORT}    ${resource_href}
+    Make Partial Update Payload    ${DUT1_ID}    ${WRITABLE}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${index}    Get Index From List    ${dut1_resource_hrefs}    ${resource_href}
+    ${msgid}    Generate Message Id
+    ${token}    Generate Token
+    ${dut1_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}    ${SERVER_IP}
+    ...    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${${index}}]}    ${msg_type}    ${dut1_partial_update_payloads[${${index}}]}
+    Run Keyword And Continue On Failure    Should Not Be Empty    ${dut1_response}
+
+Update And Observe Multiple Times
+    [Arguments]    ${dut_id}    ${resource_href}    ${msg_type}    ${num}    @{check_list}
+    : FOR    ${INDEX}    IN RANGE    0    ${num}
+    \    ${length}    Get Length Available Representation To Update    ${dut_id}    ${HREF}=${resource_href}
+    \    Run Keyword If    ${length} > 0    Update    ${dut_id}    ${resource_href}    ${msg_type}
+    \    Run Keyword If    ${length} < 1    Log To Console    ============== User Control -> Change state of resource for notification================
+    \    Run Keyword If    ${length} < 1    Builtin.sleep    30
+    \    ${notification}    Get Observe Response    ${COAP}    ${resource_href}
+    \    ${check_list_length}    Get List Length    @{check_list}
+    \    Return From Keyword If    '${check_list_length}' == '0'
+    \    Run Keyword If    '@{check_list}[0]' == '3'    Run Keyword And Continue On Failure    Check3 Verify Notification    ${notification}
+
+Check2 Verify Response Code On Content
+    [Arguments]    ${response}
+    ${response_code}    Get Response Code    ${response}
+    Should Be Equal    ${response_code}    2.05
+
+Check3 Verify Notification
+    [Arguments]    ${response}
+    Should Not Be Empty    ${response}
+    ${response_code}    Get Response Code    ${response}
+    ${response_code}    Get Prefix    ${response_code}    .
+    Should Be Equal    ${response_code}    2
+
+Check4 Verify Error Response Code
+    [Arguments]    ${response}
+    ${response_code}    Get Response Code    ${response}
+    ${response_code}    Get Prefix    ${response_code}    .
+    Should Be Equal    ${response_code}    4
+
+Check5 Verify Cancel Observe
+    [Arguments]    ${response}
+    Should Be Empty    ${response}

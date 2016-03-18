@@ -26,6 +26,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <sstream>
 #include <pthread.h>
 #include <stdexcept>
 #include <memory>

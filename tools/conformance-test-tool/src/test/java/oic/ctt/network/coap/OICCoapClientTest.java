@@ -38,7 +38,12 @@ import org.mockito.Mockito;
 import org.ws4d.coap.interfaces.CoapClientChannel;
 import org.ws4d.coap.interfaces.CoapResponse;
 
-public class OICCoapClientTest {
+import oic.ctt.network.OICHelper;
+import oic.ctt.formatter.OCPayloadType;
+import oic.ctt.network.OICRequestData;
+
+
+public class OICCoapClientTest extends ConformanceTestHelper{
 
     @Rule
     public ReportGenerator reportGenerator = new ReportGenerator();
@@ -110,6 +115,29 @@ public class OICCoapClientTest {
             fail("failed to call getResponse method without exception");
         }
     }
+    
+    /**
+	 * @author Md Golam Sarwar(sarwar.mgm@samsung.com), last updated: 2015-01-01
+	 * @reviewer
+	 * @since 2015-01-01
+	 * @see none
+	 * @objective Test 'setWaitTime' positively
+	 * @target public void setWaitTime(int waitTime)
+	 * @test_data none
+	 * @pre_condition none
+	 * @procedure Call setWaitTime(int waitTime)
+	 * @post_condition none
+	 * @expected setWaitTime() will be called without exception
+	 */
+    @Test
+   	public void setWaitTime_P() {
+       	try {
+       		oicCoapClient.setWaitTime(5);
+           } catch (Exception ex) {
+           	ex.printStackTrace();
+               fail("Fail"+ ex.getLocalizedMessage());
+           }  	
+   	}
 
     /**
      * @author SK Tuhin Islam(sk.islam@samsung.com), last updated: 2015-08-25
@@ -153,14 +181,38 @@ public class OICCoapClientTest {
      * @expected onConnectionFailed() will be called without exception
      */
 
+   @Test
+   public void onConnectionFailed_P() {
+       try {
+           oicCoapClient.onConnectionFailed(channel, true, true);
+           oicCoapClient.onConnectionFailed(channel, false, true);
+           oicCoapClient.onConnectionFailed(channel, true, false);
+       } catch (Exception ex) {
+           fail("failed to call onConnectionFailed method without exception");
+       }
+   }
+
+     /**
+     * @author Md Golam Sarwar(sarwar.mgm@samsung.com), last updated: 2015-12-31
+     * @reviewer
+     * @since 2015-12-31
+     * @see none
+     * @objective Test 'getNotifications' positively
+     * @target public void getNotifications
+     * @test_data none
+     * @pre_condition none
+     * @procedure Call getNotifications()
+     * @post_condition none
+     * @expected getNotifications() will be called without exception
+     */
     @Test
-    public void onConnectionFailed_P() {
-        try {
-            oicCoapClient.onConnectionFailed(channel, true, true);
-            oicCoapClient.onConnectionFailed(channel, false, true);
-            oicCoapClient.onConnectionFailed(channel, true, false);
+    public void getNotifications_P() {
+	 try {
+            ArrayList<OICResponseData> responses = oicCoapClient.getNotifications();
+            assertNotNull(responses);
+            assertEquals(0, responses.size());
         } catch (Exception ex) {
-            fail("failed to call onConnectionFailed method without exception");
+            fail("failed to call getNotification method without exception");
         }
     }
 
@@ -236,5 +288,135 @@ public class OICCoapClientTest {
             fail("failed to call onResponse method without exception");
         }
     }
+
+    /**
+     * @author Md Golam Sarwar(sarwar.mgm@samsung.com), last updated: 2015-12-31
+     * @reviewer
+     * @since 2015-12-31
+     * @see none
+     * @objective Test 'discoverResource' positively
+     * @target public void discoverResource
+     * @test_data uriPath query ip port token
+     * @pre_condition none
+     * @procedure Call discoverResource()
+     * @post_condition none
+     * @expected discoverResource() will be called without exception and return a response list of
+     *           size 0
+     */
+
+    @Test
+    public void discoverResource_P() {
+        try {
+            assertNotNull(oicCoapClient.discoverResource(uriPath, query, ipv4, port, token));
+	    assertEquals(0, oicCoapClient.discoverResource(uriPath, query, ipv4, port, token).size());
+        } catch (Exception ex) {
+            fail("failed to call discoverResource method without exception");
+        }
+    }
+
+    /**
+     * @author Md Golam Sarwar(sarwar.mgm@samsung.com), last updated: 2015-12-31
+     * @reviewer
+     * @since 2015-12-31
+     * @see none
+     * @objective Test 'discoverResource' negatively
+     * @target public void discoverResource
+     * @test_data null null null -1 null
+     * @pre_condition none
+     * @procedure Call discoverResource()
+     * @post_condition none
+     * @expected discoverResource() will be called without exception and return a response list of
+     *        size 0
+     */
+
+    @Test
+    public void discoverResource_N() {
+        try {
+            assertNotNull(oicCoapClient.discoverResource(null, null, null, -1, null));
+	    assertEquals(0, oicCoapClient.discoverResource(null, null, null, -1, null).size());
+        } catch (Exception ex) {
+            fail("failed to call discoverResource method without exception");
+        }
+    }
+
+    /**
+     * @author Md Golam Sarwar(sarwar.mgm@samsung.com), last updated: 2015-12-31
+     * @reviewer
+     * @since 2015-12-31
+     * @see none
+     * @objective Test 'sendRequest' positively
+     * @target public void sendRequest
+     * @test_data MessageType Method MessageId token IP Port uriPath query PayLoad PayLoadType
+     * @pre_condition none
+     * @procedure Call sendRequest()
+     * @post_condition none
+     * @expected sendRequest() will be called without exception
+     */
+
+    @Test
+    public void sendRequestWithMessageTypeMethodMessageIDTokenIPPortUriPathQueryPayloadPayloadType_P() {
+	try {
+	    oicCoapClient.sendRequest(OICHelper.MessageType.NON, OICRequestData.Method.GET,
+		OICHelper.getRandomMessageId(),
+		token, ipv4, port, uriPath, query, OICHelper.DEFAULT_PAYLOAD, OCPayloadType.PAYLOAD_TYPE_DISCOVERY);
+	    oicCoapClient.sendRequest(OICHelper.MessageType.NON, OICRequestData.Method.POST,
+		OICHelper.getRandomMessageId(),
+		token, ipv4, port, uriPath, query, OICHelper.DEFAULT_PAYLOAD, OCPayloadType.PAYLOAD_TYPE_DISCOVERY);
+	    oicCoapClient.sendRequest(OICHelper.MessageType.NON, OICRequestData.Method.PUT,
+		OICHelper.getRandomMessageId(),
+		token, ipv4, port, uriPath, query, OICHelper.DEFAULT_PAYLOAD, OCPayloadType.PAYLOAD_TYPE_DISCOVERY);
+	    oicCoapClient.sendRequest(OICHelper.MessageType.CON, OICRequestData.Method.GET,
+		OICHelper.getRandomMessageId(),
+		token, ipv4, port, uriPath, query, OICHelper.DEFAULT_PAYLOAD, OCPayloadType.PAYLOAD_TYPE_DISCOVERY);
+	    oicCoapClient.sendRequest(OICHelper.MessageType.CON, OICRequestData.Method.POST,
+		OICHelper.getRandomMessageId(),
+		token, ipv4, port, uriPath, query, OICHelper.DEFAULT_PAYLOAD, OCPayloadType.PAYLOAD_TYPE_DISCOVERY);
+	   oicCoapClient.sendRequest(OICHelper.MessageType.CON, OICRequestData.Method.PUT,
+		OICHelper.getRandomMessageId(),
+		token, ipv4, port, uriPath, query, OICHelper.DEFAULT_PAYLOAD, OCPayloadType.PAYLOAD_TYPE_DISCOVERY);
+	    } catch (Exception ex) {
+		fail("fail to call sendRequest method without exception");
+	}
+    }
+
+    /**
+     * @author Md Golam Sarwar(sarwar.mgm@samsung.com), last updated: 2015-12-31
+     * @reviewer
+     * @since 2015-12-31
+     * @see none
+     * @objective Test 'observeResource' positively
+     * @target public void observeResource
+     * @test_data MessageType MessageId token IP Port uriPath query 
+     * @pre_condition none
+     * @procedure Call observeResource()
+     * @post_condition none
+     * @expected observeResource() will be called without exception 
+     */  
+
+   @Test
+    public void observeResourceWithMessageTypeMessageIDTokenIPPortUriPathQuery_P() {
+	try {
+	    oicCoapClient.observeResource(OICHelper.MessageType.NON,
+		OICHelper.getRandomMessageId(), token, ipv4, port, uriPath, query);
+	    /*oicCoapClient.sendRequest(OICHelper.MessageType.NON, OICRequestData.Method.POST,
+		OICHelper.getRandomMessageId(),
+		token, ipv4, port, uriPath, query, OICHelper.DEFAULT_PAYLOAD, OCPayloadType.PAYLOAD_TYPE_DISCOVERY);
+	    oicCoapClient.sendRequest(OICHelper.MessageType.NON, OICRequestData.Method.PUT,
+		OICHelper.getRandomMessageId(),
+		token, ipv4, port, uriPath, query, OICHelper.DEFAULT_PAYLOAD, OCPayloadType.PAYLOAD_TYPE_DISCOVERY);
+	    oicCoapClient.sendRequest(OICHelper.MessageType.CON, OICRequestData.Method.GET,
+		OICHelper.getRandomMessageId(),
+		token, ipv4, port, uriPath, query, OICHelper.DEFAULT_PAYLOAD, OCPayloadType.PAYLOAD_TYPE_DISCOVERY);
+	    oicCoapClient.sendRequest(OICHelper.MessageType.CON, OICRequestData.Method.POST,
+		OICHelper.getRandomMessageId(),
+		token, ipv4, port, uriPath, query, OICHelper.DEFAULT_PAYLOAD, OCPayloadType.PAYLOAD_TYPE_DISCOVERY);
+	   oicCoapClient.sendRequest(OICHelper.MessageType.CON, OICRequestData.Method.PUT,
+		OICHelper.getRandomMessageId(),
+		token, ipv4, port, uriPath, query, OICHelper.DEFAULT_PAYLOAD, OCPayloadType.PAYLOAD_TYPE_DISCOVERY);*/
+	    } catch (Exception ex) {
+		fail("fail to call sendRequest method without exception");
+	}
+    }
+
 
 }

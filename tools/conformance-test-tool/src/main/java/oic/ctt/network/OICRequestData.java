@@ -26,6 +26,7 @@ import oic.ctt.network.OICHelper.MessageParameters;
 import org.ws4d.coap.interfaces.CoapRequest;
 
 import java.util.HashMap;
+import java.util.Vector;
 
 /**
  * The OIC Request class. It provides a structure to contain request message
@@ -52,7 +53,7 @@ public class OICRequestData {
 
     /**
      * Sets a Request message parameter value
-     * 
+     *
      * @param key
      *            MessageParameter key
      * @param value
@@ -64,7 +65,7 @@ public class OICRequestData {
 
     /**
      * Gets a Request message parameter value
-     * 
+     *
      * @param key
      *            MessageParameter key
      * @return The value of the given key
@@ -75,7 +76,7 @@ public class OICRequestData {
 
     /**
      * Gets the protocol type of the contained message
-     * 
+     *
      * @return Protocol type (COAP or HTTP)
      */
     public OICClient.Protocol getProtocolType() {
@@ -84,7 +85,7 @@ public class OICRequestData {
 
     /**
      * Sets the protocol type for the message
-     * 
+     *
      * @param protocolType
      *            Protocol Type (COAP/HTTP)
      */
@@ -94,7 +95,7 @@ public class OICRequestData {
 
     /**
      * Gets the HeaderOptions of COAP/HTTP
-     * 
+     *
      * @return Set of options converted to string
      */
     public String getOptionSet() {
@@ -103,7 +104,7 @@ public class OICRequestData {
 
     /**
      * Sets the HeaderOptions of COAP/HTTP
-     * 
+     *
      * @param optionSet
      *            Set of options converted to string
      */
@@ -113,7 +114,7 @@ public class OICRequestData {
 
     /**
      * Converts the CoAP Request into more abstract OICRequest
-     * 
+     *
      * @param request
      *            CoAP Request message object
      * @return OIC Request message object
@@ -123,14 +124,43 @@ public class OICRequestData {
             return null;
 
         OICRequestData oicRequest = new OICRequestData();
+        String ip = null;
+        Vector<String> queryVector = null;
+        String joinedQuery = null;
 
         oicRequest.setProtocolType(OICClient.Protocol.COAP);
+        oicRequest.setRequestValue(MessageParameters.uri, request.getUriPath());
+
+        queryVector = request.getUriQuery();
+        if (queryVector != null && queryVector.size() > 0) {
+
+            for (String queryPart : queryVector) {
+                if (joinedQuery == null)
+                    joinedQuery = queryPart;
+                else
+                    joinedQuery = joinedQuery + "&" + queryPart;
+            }
+        }
+        oicRequest.setRequestValue(MessageParameters.query, joinedQuery);
         oicRequest.setRequestValue(MessageParameters.msgType,
                 request.getPacketType().toString());
-        oicRequest.setRequestValue(MessageParameters.srcAddress,
-                request.getSourceIP().split("/")[1]);
+
+        ip = request.getSourceIP();
+        if (ip != null) {
+            if (ip.contains("/"))
+                ip = ip.split("/")[1];
+            oicRequest.setRequestValue(MessageParameters.srcAddress, ip);
+        }
         oicRequest.setRequestValue(MessageParameters.srcPort,
                 Integer.toString(request.getSourcePort()));
+        ip = request.getDestinationIP();
+        if (ip != null) {
+            if (ip.contains("/"))
+                ip = ip.split("/")[1];
+            oicRequest.setRequestValue(MessageParameters.destAddress, ip);
+        }
+        oicRequest.setRequestValue(MessageParameters.destPort,
+                Integer.toString(request.getDestinationPort()));
         oicRequest.setRequestValue(MessageParameters.requestCode,
                 request.getRequestCodeString());
         oicRequest.setOptionSet(request.getHeaderOptions());
@@ -140,6 +170,10 @@ public class OICRequestData {
                 OICHelper.bytesToHex(request.getToken()));
         oicRequest.setRequestValue(MessageParameters.mId,
                 Integer.toString(request.getMessageID()));
+        oicRequest.setRequestValue(MessageParameters.contentFormat,
+                request.getContentTypeString());
+        oicRequest.setRequestValue(MessageParameters.accept,
+                request.getAcceptString());
 
         if (request.getObserveOption() != null)
             oicRequest.setRequestValue(MessageParameters.observeFlag,

@@ -1,5 +1,11 @@
 package oic.ctt.network.control;
 
+/**
+ * Commonly used Security Constants are defined as enum in this class
+ *
+ * @author Tanvir Ferdousi (tanvir.f@samsung.com)
+ *
+ */
 public class SecurityConstants {
 
     public enum ArgumentType {

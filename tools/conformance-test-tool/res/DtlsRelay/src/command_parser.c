@@ -72,6 +72,8 @@ void getArgumentValue(carg cArg, unsigned char *str)
         	sprintf(g_server_ip, "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n",
         			buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9],
 					buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15]);
+//        	strcpy(g_server_ip, "fe80::ea11:32ff:fe5f:40a1%2");
+//        	strcpy(g_server_ip, "fe80:0:0:0:fca2:e8ff:fe20:8844");
         	printf("server ipv6: %s\n", g_server_ip);
 
             break;
@@ -93,7 +95,8 @@ void getArgumentValue(carg cArg, unsigned char *str)
         	printf("Client Identity: %s\n", g_client_identity);
             break;
         case SERVER_IDENTITY:
-			strcpy(g_server_identity, buffer);
+//			strcpy(g_server_identity, "justworksDevUUID");
+        	strcpy(g_server_identity, buffer);
 			g_server_identity_len = strlen(g_server_identity);
 			printf("Server Identity: %s\n", g_server_identity);
 			break;

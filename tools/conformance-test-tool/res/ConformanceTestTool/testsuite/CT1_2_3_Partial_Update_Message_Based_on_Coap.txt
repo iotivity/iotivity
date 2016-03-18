@@ -1,0 +1,713 @@
+*** Settings ***
+Documentation     CT1.2.3 Partial_Update_Message_Base
+Test Setup        Pre Condition Crudn Server
+Test Teardown     Post Condition Crudn Server
+Resource          OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+1_CON_Partial_Update_Writable_Property_Without_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-15|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource. |
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3. CTT creates a list of current values for each supported Property. |
+    ...    |procedure |4. CTT sends a unicast CON UPDATE request message (i.e. CoAP POST) to the IUT with no OIC Resource Interface specified to the first writable supported Property (excluding common Properties rt, if, p, n, etc.) on the first supported OIC Resource. The Property value to be written must be valid (e.g. within the allowable range, valid enumeration value, etc.) and must be different than the current Property value. |
+    ...    |procedure |5. IUT receives the request message and verifies that it is valid (i.e. Can the Property be updated? Does the OIC Resource Interface support UPDATE requests? Etc.) |
+    ...    |procedure |6a. If the request message is valid, the IUT shall update the target OIC Resource Property as requested and send a successful UPDATE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    |procedure |6b. If the request is not valid, the IUT shall not update the target OIC Resource Property and shall send an appropriate error message to CTT.. |
+    ...    |procedure |7. CTT receives the response message and caches it for later evaluation. |
+    ...    |procedure |8. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the first supported OIC Resource of the IUT. |
+    ...    |procedure |9. IUT receives the request message and sends a RETRIEVE response message to CTT. |
+    ...    |procedure |10. CTT receives the response message and caches it for later evaluation. |
+    ...    |procedure |11. Repeat steps 1 to 10 for all other writable Properties supported by the OIC Resource. |
+    ...    |procedure |12. Repeat steps 1 to 11 for all other OIC Resources supported by the IUT. |
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    |expected| Check 3. The IUT shall send a response code of "2.04 Changed" (for CoAP) when the Property value has been successfully updated in Step 6a (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE]). |
+    ...    |expected| Check 4. The Property(s) and its value from the UPDATE request message shall be included in the response from Step 6a (5.2.1.2 Update behavior [RT]. |
+    ...    |expected| Check 5. The value UPDATED in Step 4 and the value RETRIEVED in Step 10 shall be the same (8.4.2 Update. Processing by the OIC Server [CORE]). |
+    ...    |expected| Check 7. In the absence of an "if" query the Default Interface shall be used (7.1.4.2.3 OIC Resource Interface [CORE]). |
+    ...    |expected| Check 10. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    [Tags]    Mandatory    Server    Partial_Update
+    ${msg_type}    Set Variable    ${CONFIRMABLE}
+    ${access_mode}    Set Variable    ${WRITABLE}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${${SERVER_PORT}}
+    Make Partial Update Payload    ${DUT1_ID}    ${access_mode}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${range}    Get Length    ${dut1_partial_update_payloads}
+    : FOR    ${index}    IN RANGE    0    ${range}
+    \    @{list_interface}    Get Dut Info Value    ${INTERFACE}    ${DUT1_ID}    ${HREF}=${dut1_resource_hrefs[${index}]}
+    \    ${default_interface}    Set Variable    @{list_interface}[0]
+    \    BuiltIn.Log    ${default_interface}
+    \    ${update_support}    Is Crudn Operation Supported    ${dut1_resource_hrefs[${index}]}    ${PARTIAL_UPDATE}
+    \    Continue For Loop If    ${update_support} == ${False}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${update_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${update_response}
+    \    Run Keyword And Continue On Failure    Check3 Verify Response Code Changed    ${update_response}
+    \    Run Keyword And Continue On Failure    Check4 Match Payloads Of Update Request And Response    ${update_response}    ${dut1_partial_update_payloads[${index}]}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${get_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}
+    \    Run Keyword And Continue On Failure    Check5 Match Payloads Of Update Request And Retrieve Response    ${get_response}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check7 Verify Default Interface    ${update_response}    ${DUT1_ID}    ${default_interface}
+    \    Run Keyword And Continue On Failure    Check10 Verify Content Format Option    ${update_response}
+
+2_NON_Partial_Update_Writable_Property_Without_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-15|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1 CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource. |
+    ...    |procedure |2 IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3 CTT creates a list of current values for each supported Property. |
+    ...    |procedure |4 CTT sends a unicast NON UPDATE request message (i.e. CoAP POST) to the IUT with no OIC Resource Interface specified to the first writable supported Property (excluding common Properties rt, if, p, n, etc.) on the first supported OIC Resource. The Property value to be written must be valid (e.g. within the allowable range, valid enumeration value, etc.) and must be different than the current Property value. |
+    ...    |procedure |5 IUT receives the request message and verifies that it is valid (i.e. Can the Property be updated? Does the OIC Resource Interface support UPDATE requests? Etc.) |
+    ...    |procedure |6a If the request message is valid, the IUT shall update the target OIC Resource Property as requested and send a successful UPDATE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    |procedure |6b If the request is not valid, the IUT shall not update the target OIC Resource Property and shall send an appropriate error message to CTT. |
+    ...    |procedure |7 CTT receives the response message and caches it for later evaluation. |
+    ...    |procedure |8 CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the first supported OIC Resource of the IUT. |
+    ...    |procedure |9 IUT receives the request message and sends a RETRIEVE response message to CTT. |
+    ...    |procedure |10 CTT receives the response message and caches it for later evaluation. |
+    ...    |procedure |11 Repeat steps 1 to 10 for all other writable Properties supported by the OIC Resource. |
+    ...    |procedure |12 Repeat steps 1 to 11 for all other OIC Resources supported by the IUT. |
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    |expected| Check 3. The IUT shall send a response code of "2.04 Changed" (for CoAP) when the Property value has been successfully updated in Step 6a (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE]). |
+    ...    |expected| Check 4. The Property(s) and its value from the UPDATE request message shall be included in the response from Step 6a (5.2.1.2 Update behavior [RT]. |
+    ...    |expected| Check 5. The value UPDATED in Step 4 and the value RETRIEVED in Step 10 shall be the same (8.4.2 Update. Processing by the OIC Server [CORE]). |
+    ...    |expected| Check 7. In the absence of an "if" query the Default Interface shall be used (7.1.4.2.3 OIC Resource Interface [CORE]). |
+    ...    |expected| Check 10. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    [Tags]    Mandatory    Server    Partial_Update
+    ${msg_type}    Set Variable    ${NON_CONFIRMABLE}
+    ${access_mode}    Set Variable    ${WRITABLE}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${${SERVER_PORT}}
+    Make Partial Update Payload    ${DUT1_ID}    ${access_mode}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${range}    Get Length    ${dut1_partial_update_payloads}
+    : FOR    ${index}    IN RANGE    0    ${range}
+    \    @{list_interface}    Get Dut Info Value    ${INTERFACE}    ${DUT1_ID}    ${HREF}=${dut1_resource_hrefs[${index}]}
+    \    ${default_interface}    Set Variable    @{list_interface}[0]
+    \    BuiltIn.Log    ${default_interface}
+    \    ${update_support}    Is Crudn Operation Supported    ${dut1_resource_hrefs[${index}]}    ${PARTIAL_UPDATE}
+    \    Continue For Loop If    ${update_support} == ${False}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${update_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${update_response}
+    \    Run Keyword And Continue On Failure    Check3 Verify Response Code Changed    ${update_response}
+    \    Run Keyword And Continue On Failure    Check4 Match Payloads Of Update Request And Response    ${update_response}    ${dut1_partial_update_payloads[${index}]}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${get_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}
+    \    Run Keyword And Continue On Failure    Check5 Match Payloads Of Update Request And Retrieve Response    ${get_response}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check7 Verify Default Interface    ${update_response}    ${DUT1_ID}    ${default_interface}
+    \    Run Keyword And Continue On Failure    Check10 Verify Content Format Option    ${update_response}
+
+3_CON_Partial_Update_Writable_Property_With_IF_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-15|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1 CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource. |
+    ...    |procedure |1 CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource.
+    ...    |procedure |2 IUT receives the request message and sends a unicast response message to the CTT.
+    ...    |procedure |3 CTT creates a list of current values for each supported Property.
+    ...    |procedure |4 CTT sends a unicast CON UPDATE request message (i.e. CoAP POST) to the IUT with OIC Resource Interface specified to the first supported Property (excluding common Properties rt, if, p, n, etc.) on the first supported OIC Resource. The Property value to be written must be valid (e.g. within the allowable range, valid enumeration value, etc.) and must be different than the current Property value.
+    ...    |procedure |5 IUT receives the request message and verifies that it is valid (i.e. Can the Property be updated? Does the OIC Resource Interface support UPDATE requests? Etc.)
+    ...    |procedure |6a If the request message is valid, the IUT shall update the target OIC Resource Property as requested and send a successful UPDATE response message to CTT using the appropriate OIC Resource Interface.
+    ...    |procedure |6b If the request is not valid, the IUT shall not update the target OIC Resource Property and shall send an appropriate error message to CTT.
+    ...    |procedure |7 CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |8 CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the first supported OIC Resource of the IUT.
+    ...    |procedure |9 IUT receives the request message and sends a RETRIEVE response message to CTT.
+    ...    |procedure |10 CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |11 Repeat steps 1 to 10 for all other Properties supported by the OIC Resource.
+    ...    |procedure |12 Repeat steps 1 to 11 with an if query for all OIC Resource Interfaces (e.g. ?if=oic.if.baseline, ?if=oic.if.a, etc.) supported by the OIC Resource.
+    ...    |procedure |13 Repeat steps 1 to 12 for all other OIC Resources supported by the IUT."
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    |expected| Check 3. The IUT shall send a response code of "2.04 Changed" (for CoAP) when the Property value has been successfully updated in Step 6a (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE]). |
+    ...    |expected| Check 4. The Property(s) and its value from the UPDATE request message shall be included in the response from Step 6a (5.2.1.2 Update behavior [RT]. |
+    ...    |expected| Check 5. The value UPDATED in Step 4 and the value RETRIEVED in Step 10 shall be the same (8.4.2 Update. Processing by the OIC Server [CORE]). |
+    ...    |expected| Check 9. Responses using the baseline Interface shall include a representation of all Properties (7.2.1.2 Resource Interface property definition [CORE]). |
+    ...    |expected| Check 10. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    ...    |expected| Check 12. The IUT shall send an error response code of 4.05 Method Not Allowed (for CoAP) when trying to do an UPDATE using an Interface that does not support it (e.g. oic.if.r, oic.if.s, etc.) (7.2.1.2 Resource interface property definition [CORE]). |
+    [Tags]    Mandatory    Server    Partial_Update
+    ${msg_type}    Set Variable    ${CONFIRMABLE}
+    ${access_mode}    Set Variable    ${WRITABLE}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${${SERVER_PORT}}
+    Make Partial Update Payload    ${DUT1_ID}    ${access_mode}    ${INTERFACE}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${range}    Get Length    ${dut1_partial_update_payloads}
+    : FOR    ${index}    IN RANGE    0    ${range}
+    \    ${resource_uri}    Get Prefix    ${dut1_resource_hrefs[${index}]}    ?
+    \    ${update_support}    Is Crudn Operation Supported    ${resource_uri}    ${PARTIAL_UPDATE}
+    \    Run Keyword If    ${update_support} == ${False}    Run Keyword And Continue On Failure    Check12 Verify Response Code Not Allowed    ${update_response}
+    \    Continue For Loop If    ${update_support} == ${False}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${update_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${update_response}
+    \    Run Keyword And Continue On Failure    Check3 Verify Response Code Changed    ${update_response}
+    \    Run Keyword And Continue On Failure    Check4 Match Payloads Of Update Request And Response    ${update_response}    ${dut1_partial_update_payloads[${index}]}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${get_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}
+    \    Run Keyword And Continue On Failure    Check5 Match Payloads Of Update Request And Retrieve Response    ${get_response}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check9 Verify Representation Of All Properties    ${dut1_resource_hrefs[${index}]}    ${update_response}
+    \    Run Keyword And Continue On Failure    Check10 Verify Content Format Option    ${update_response}
+
+4_NON_Partial_Update_Writable_Property_With_IF_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-15|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1 CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource.
+    ...    |procedure |2 IUT receives the request message and sends a unicast response message to the CTT.
+    ...    |procedure |3 CTT creates a list of current values for each supported Property.
+    ...    |procedure |4 CTT sends a unicast NON UPDATE request message (i.e. CoAP POST) to the IUT with OIC Resource Interface specified to the first supported Property (excluding common Properties rt, if, p, n, etc.) on the first supported OIC Resource. The Property value to be written must be valid (e.g. within the allowable range, valid enumeration value, etc.) and must be different than the current Property value.
+    ...    |procedure |5 IUT receives the request message and verifies that it is valid (i.e. Can the Property be updated? Does the OIC Resource Interface support UPDATE requests? Etc.)
+    ...    |procedure |6a If the request message is valid, the IUT shall update the target OIC Resource Property as requested and send a successful UPDATE response message to CTT using the appropriate OIC Resource Interface.
+    ...    |procedure |6b If the request is not valid, the IUT shall not update the target OIC Resource Property and shall send an appropriate error message to CTT.
+    ...    |procedure |7 CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |8 CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the first supported OIC Resource of the IUT.
+    ...    |procedure |9 IUT receives the request message and sends a RETRIEVE response message to CTT.
+    ...    |procedure |10 CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |11 Repeat steps 1 to 10 for all other Properties supported by the OIC Resource.
+    ...    |procedure |12 Repeat steps 1 to 11 with an if query for all OIC Resource Interfaces (e.g. ?if=oic.if.baseline, ?if=oic.if.a, etc.) supported by the OIC Resource.
+    ...    |procedure |13 Repeat steps 1 to 12 for all other OIC Resources supported by the IUT.
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    |expected| Check 3. The IUT shall send a response code of "2.04 Changed" (for CoAP) when the Property value has been successfully updated in Step 6a (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE]). |
+    ...    |expected| Check 4. The Property(s) and its value from the UPDATE request message shall be included in the response from Step 6a (5.2.1.2 Update behavior [RT]. |
+    ...    |expected| Check 5. The value UPDATED in Step 4 and the value RETRIEVED in Step 10 shall be the same (8.4.2 Update. Processing by the OIC Server [CORE]). |
+    ...    |expected| Check 9. Responses using the baseline Interface shall include a representation of all Properties (7.2.1.2 Resource Interface property definition [CORE]). |
+    ...    |expected| Check 10. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    ...    |expected| Check 12. The IUT shall send an error response code of 4.05 Method Not Allowed (for CoAP) when trying to do an UPDATE using an Interface that does not support it (e.g. oic.if.r, oic.if.s, etc.) (7.2.1.2 Resource interface property definition [CORE]). |
+    [Tags]    Mandatory    Server    Partial_Update
+    ${msg_type}    Set Variable    ${NON_CONFIRMABLE}
+    ${access_mode}    Set Variable    ${WRITABLE}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${${SERVER_PORT}}
+    Make Partial Update Payload    ${DUT1_ID}    ${access_mode}    ${INTERFACE}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${range}    Get Length    ${dut1_partial_update_payloads}
+    : FOR    ${index}    IN RANGE    0    ${range}
+    \    ${resource_uri}    Get Prefix    ${dut1_resource_hrefs[${index}]}    ?
+    \    ${update_support}    Is Crudn Operation Supported    ${resource_uri}    ${PARTIAL_UPDATE}
+    \    Run Keyword If    ${update_support} == ${False}    Run Keyword And Continue On Failure    Check12 Verify Response Code Not Allowed    ${update_response}
+    \    Continue For Loop If    ${update_support} == ${False}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${update_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${update_response}
+    \    Run Keyword And Continue On Failure    Check3 Verify Response Code Changed    ${update_response}
+    \    Run Keyword And Continue On Failure    Check4 Match Payloads Of Update Request And Response    ${update_response}    ${dut1_partial_update_payloads[${index}]}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${get_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}
+    \    Run Keyword And Continue On Failure    Check5 Match Payloads Of Update Request And Retrieve Response    ${get_response}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check9 Verify Representation Of All Properties    ${dut1_resource_hrefs[${index}]}    ${update_response}
+    \    Run Keyword And Continue On Failure    Check10 Verify Content Format Option    ${update_response}
+
+5_CON_Partial_Update_Readonly_Property_Without_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-15|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1 CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource.
+    ...    |procedure |2 IUT receives the request message and sends a unicast response message to the CTT.
+    ...    |procedure |3 CTT creates a list of current values for each supported Property.
+    ...    |procedure |4 CTT sends a unicast CON UPDATE request message (i.e. CoAP POST) to the IUT with no OIC Resource Interface specified to the readonly Property (excluding common Properties rt, if, p, n, etc.) on the first supported OIC Resource. The Property value to be written must be valid (e.g. within the allowable range, valid enumeration value, etc.) and must be different than the current Property value.
+    ...    |procedure |5 If the request is not valid, the IUT shall not update the target OIC Resource Property and shall send an appropriate error message to CTT.
+    ...    |procedure |6 CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |7 CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the first supported OIC Resource of the IUT.
+    ...    |procedure |8 IUT receives the request message and sends a RETRIEVE response message to CTT.
+    ...    |procedure |9 CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |10 Repeat steps 1 to 9 for all other Properties supported by the OIC Resource.
+    ...    |procedure |11 Repeat steps 1 to 10 for all other OIC Resources supported by the IUT.
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    |expected| Check 3. The IUT shall send a response code of "2.04 Changed" (for CoAP) when the Property value has been successfully updated in Step 6a (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE]). |
+    ...    |expected| Check 6. The IUT shall send an error response code (e.g. 4.xx for CoAP) when trying to UPDATE a read-only Property value in Step 6b (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE], 6 Resource Type definitions [RT]). |
+    ...    |expected| Check 7. In the absence of an "if" query the Default Interface shall be used (7.1.4.2.3 OIC Resource Interface [CORE]). |
+    ...    |expected| Check 10. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    [Tags]    Mandatory    Server    Partial_Update
+    ${msg_type}    Set Variable    ${CONFIRMABLE}
+    ${access_mode}    Set Variable    ${READONLY}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${${SERVER_PORT}}
+    Make Partial Update Payload    ${DUT1_ID}    ${access_mode}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${range}    Get Length    ${dut1_partial_update_payloads}
+    : FOR    ${index}    IN RANGE    0    ${range}
+    \    @{list_interface}    Get Dut Info Value    ${INTERFACE}    ${DUT1_ID}    ${HREF}=${dut1_resource_hrefs[${index}]}
+    \    ${default_interface}    Set Variable    @{list_interface}[0]
+    \    BuiltIn.Log    ${default_interface}
+    \    ${update_support}    Is Crudn Operation Supported    ${dut1_resource_hrefs[${index}]}    ${PARTIAL_UPDATE}
+    \    Continue For Loop If    ${update_support} == ${False}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${update_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${update_response}
+    \    Run Keyword And Continue On Failure    Check3 Verify Response Code Changed    ${update_response}
+    \    Run Keyword And Continue On Failure    Check6 Verify Error Response Code    ${update_response}
+    \    Run Keyword And Continue On Failure    Check7 Verify Default Interface    ${update_response}    ${DUT1_ID}    ${default_interface}
+    \    Run Keyword And Continue On Failure    Check10 Verify Content Format Option    ${update_response}
+
+6_NON_Partial_Update_Readonly_Property_Without_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-15|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1 CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource.
+    ...    |procedure |2 IUT receives the request message and sends a unicast response message to the CTT.
+    ...    |procedure |3 CTT creates a list of current values for each supported Property.
+    ...    |procedure |4 CTT sends a unicast NON UPDATE request message (i.e. CoAP POST) to the IUT with no OIC Resource Interface specified to the readonly Property (excluding common Properties rt, if, p, n, etc.) on the first supported OIC Resource. The Property value to be written must be valid (e.g. within the allowable range, valid enumeration value, etc.) and must be different than the current Property value.
+    ...    |procedure |5 If the request is not valid, the IUT shall not update the target OIC Resource Property and shall send an appropriate error message to CTT.
+    ...    |procedure |6 CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |7 CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the first supported OIC Resource of the IUT.
+    ...    |procedure |8 IUT receives the request message and sends a RETRIEVE response message to CTT.
+    ...    |procedure |9 CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |10 Repeat steps 1 to 9 for all other Properties supported by the OIC Resource.
+    ...    |procedure |11 Repeat steps 1 to 10 for all other OIC Resources supported by the IUT.
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    |expected| Check 3. The IUT shall send a response code of "2.04 Changed" (for CoAP) when the Property value has been successfully updated in Step 6a (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE]). |
+    ...    |expected| Check 6. The IUT shall send an error response code (e.g. 4.xx for CoAP) when trying to UPDATE a read-only Property value in Step 6b (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE], 6 Resource Type definitions [RT]). |
+    ...    |expected| Check 7. In the absence of an "if" query the Default Interface shall be used (7.1.4.2.3 OIC Resource Interface [CORE]). |
+    ...    |expected| Check 10. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    [Tags]    Mandatory    Server    Partial_Update
+    ${msg_type}    Set Variable    ${NON_CONFIRMABLE}
+    ${access_mode}    Set Variable    ${READONLY}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${${SERVER_PORT}}
+    Make Partial Update Payload    ${DUT1_ID}    ${access_mode}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${range}    Get Length    ${dut1_partial_update_payloads}
+    : FOR    ${index}    IN RANGE    0    ${range}
+    \    @{list_interface}    Get Dut Info Value    ${INTERFACE}    ${DUT1_ID}    ${HREF}=${dut1_resource_hrefs[${index}]}
+    \    ${default_interface}    Set Variable    @{list_interface}[0]
+    \    BuiltIn.Log    ${default_interface}
+    \    ${update_support}    Is Crudn Operation Supported    ${dut1_resource_hrefs[${index}]}    ${PARTIAL_UPDATE}
+    \    Continue For Loop If    ${update_support} == ${False}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${update_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${update_response}
+    \    Run Keyword And Continue On Failure    Check3 Verify Response Code Changed    ${update_response}
+    \    Run Keyword And Continue On Failure    Check6 Verify Error Response Code    ${update_response}
+    \    Run Keyword And Continue On Failure    Check7 Verify Default Interface    ${update_response}    ${DUT1_ID}    ${default_interface}
+    \    Run Keyword And Continue On Failure    Check10 Verify Content Format Option    ${update_response}
+
+7_CON_Partial_Update_Readonly_Property_With_IF_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-15|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1 CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource.
+    ...    |procedure |2 IUT receives the request message and sends a unicast response message to the CTT.
+    ...    |procedure |3 CTT creates a list of current values for each supported Property.
+    ...    |procedure |4 CTT sends a unicast CON UPDATE request message (i.e. CoAP POST) to the IUT with no OIC Resource Interface specified to the readonly Property (excluding common Properties rt, if, p, n, etc.) on the first supported OIC Resource. The Property value to be written must be valid (e.g. within the allowable range, valid enumeration value, etc.) and must be different than the current Property value.
+    ...    |procedure |5 If the request is not valid, the IUT shall not update the target OIC Resource Property and shall send an appropriate error message to CTT.
+    ...    |procedure |6 CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |7 CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the first supported OIC Resource of the IUT.
+    ...    |procedure |8 IUT receives the request message and sends a RETRIEVE response message to CTT.
+    ...    |procedure |9 CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |10 Repeat steps 1 to 9 for all other Properties supported by the OIC Resource.
+    ...    |procedure |11 Repeat steps 1 to 10 with an if query for all OIC Resource Interfaces (e.g. ?if=oic.if.baseline, ?if=oic.if.a, etc.) supported by the OIC Resource.
+    ...    |procedure |12 Repeat steps 1 to 11 for all other OIC Resources supported by the IUT.
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    |expected| Check 3. The IUT shall send a response code of "2.04 Changed" (for CoAP) when the Property value has been successfully updated in Step 6a (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE]). |
+    ...    |expected| Check 6. The IUT shall send an error response code (e.g. 4.xx for CoAP) when trying to UPDATE a read-only Property value in Step 6b (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE], 6 Resource Type definitions [RT]). |
+    ...    |expected| Check 9. Responses using the baseline Interface shall include a representation of all Properties (7.2.1.2 Resource Interface property definition [CORE]). |
+    ...    |expected| Check 10. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    ...    |expected| Check 12. The IUT shall send an error response code of 4.05 Method Not Allowed (for CoAP) when trying to do an UPDATE using an Interface that does not support it (e.g. oic.if.r, oic.if.s, etc.) (7.2.1.2 Resource interface property definition [CORE]). |
+    [Tags]    Mandatory    Server    Partial_Update
+    ${msg_type}    Set Variable    ${CONFIRMABLE}
+    ${access_mode}    Set Variable    ${READONLY}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${${SERVER_PORT}}
+    Make Partial Update Payload    ${DUT1_ID}    ${access_mode}    ${INTERFACE}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${range}    Get Length    ${dut1_partial_update_payloads}
+    : FOR    ${index}    IN RANGE    0    ${range}
+    \    ${resource_uri}    Get Prefix    ${dut1_resource_hrefs[${index}]}    ?
+    \    ${update_support}    Is Crudn Operation Supported    ${resource_uri}    ${PARTIAL_UPDATE}
+    \    Continue For Loop If    ${update_support} == ${False}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${update_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${update_response}
+    \    Run Keyword And Continue On Failure    Check3 Verify Response Code Changed    ${update_response}
+    \    Run Keyword And Continue On Failure    Check6 Verify Error Response Code    ${update_response}
+    \    Run Keyword And Continue On Failure    Check9 Verify Representation Of All Properties    ${dut1_resource_hrefs[${index}]}    ${update_response}
+    \    Run Keyword And Continue On Failure    Check10 Verify Content Format Option    ${update_response}
+    \    Run Keyword And Continue On Failure    Check12 Verify Response Code Not Allowed    ${update_response}
+
+8_NON_Partial_Update_Readonly_Property_With_IF_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-15|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1 CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource.
+    ...    |procedure |2 IUT receives the request message and sends a unicast response message to the CTT.
+    ...    |procedure |3 CTT creates a list of current values for each supported Property.
+    ...    |procedure |4 CTT sends a unicast NON UPDATE request message (i.e. CoAP POST) to the IUT with no OIC Resource Interface specified to the readonly Property (excluding common Properties rt, if, p, n, etc.) on the first supported OIC Resource. The Property value to be written must be valid (e.g. within the allowable range, valid enumeration value, etc.) and must be different than the current Property value.
+    ...    |procedure |5 If the request is not valid, the IUT shall not update the target OIC Resource Property and shall send an appropriate error message to CTT.
+    ...    |procedure |6 CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |7 CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the first supported OIC Resource of the IUT.
+    ...    |procedure |8 IUT receives the request message and sends a RETRIEVE response message to CTT.
+    ...    |procedure |9 CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |10 Repeat steps 1 to 9 for all other Properties supported by the OIC Resource.
+    ...    |procedure |11 Repeat steps 1 to 10 with an “if” query for all OIC Resource Interfaces (e.g. ?if=oic.if.baseline, ?if=oic.if.a, etc.) supported by the OIC Resource.
+    ...    |procedure |12 Repeat steps 1 to 11 for all other OIC Resources supported by the IUT.
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    |expected| Check 3. The IUT shall send a response code of "2.04 Changed" (for CoAP) when the Property value has been successfully updated in Step 6a (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE]). |
+    ...    |expected| Check 6. The IUT shall send an error response code (e.g. 4.xx for CoAP) when trying to UPDATE a read-only Property value in Step 6b (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE], 6 Resource Type definitions [RT]). |
+    ...    |expected| Check 9. Responses using the baseline Interface shall include a representation of all Properties (7.2.1.2 Resource Interface property definition [CORE]). |
+    ...    |expected| Check 10. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    ...    |expected| Check 12. The IUT shall send an error response code of 4.05 Method Not Allowed (for CoAP) when trying to do an UPDATE using an Interface that does not support it (e.g. oic.if.r, oic.if.s, etc.) (7.2.1.2 Resource interface property definition [CORE]). |
+    [Tags]    Mandatory    Server    Partial_Update
+    ${msg_type}    Set Variable    ${NON_CONFIRMABLE}
+    ${access_mode}    Set Variable    ${READONLY}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${${SERVER_PORT}}
+    Make Partial Update Payload    ${DUT1_ID}    ${access_mode}    ${INTERFACE}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${range}    Get Length    ${dut1_partial_update_payloads}
+    : FOR    ${index}    IN RANGE    0    ${range}
+    \    ${resource_uri}    Get Prefix    ${dut1_resource_hrefs[${index}]}    ?
+    \    ${update_support}    Is Crudn Operation Supported    ${resource_uri}    ${PARTIAL_UPDATE}
+    \    Continue For Loop If    ${update_support} == ${False}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${update_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${update_response}
+    \    Run Keyword And Continue On Failure    Check3 Verify Response Code Changed    ${update_response}
+    \    Run Keyword And Continue On Failure    Check6 Verify Error Response Code    ${update_response}
+    \    Run Keyword And Continue On Failure    Check9 Verify Representation Of All Properties    ${dut1_resource_hrefs[${index}]}    ${update_response}
+    \    Run Keyword And Continue On Failure    Check10 Verify Content Format Option    ${update_response}
+    \    Run Keyword And Continue On Failure    Check12 Verify Response Code Not Allowed    ${update_response}
+
+9_CON_Partial_Update_Writable_Property_Without_Query_Not_Supported_Resource
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-15|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource. |
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3. CTT creates a list of current values for each supported Property. |
+    ...    |procedure |4. CTT sends a unicast CON UPDATE request message (i.e. CoAP POST) to the IUT with no OIC Resource Interface specified to the first Property (excluding common Properties "rt", "if", "p", "n", etc.) on the first not supported OIC Resource. The Property value to be written must be valid (e.g. within the allowable range, valid enumeration value, etc.) and must be different than the current Property value. |
+    ...    |procedure |5. IUT receives the request message and verifies that it is valid (i.e. Can the Property be updated? Does the OIC Resource Interface support UPDATE requests? Etc.) |
+    ...    |procedure |6a. If the request message is valid, the IUT shall update the target OIC Resource Property as requested and send a successful UPDATE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    |procedure |6b. If the request is not valid, the IUT shall not update the target OIC Resource Property and shall send an appropriate error message to CTT. |
+    ...    |procedure |7. CTT receives the response message and caches it for later evaluation. |
+    ...    |procedure |8. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the first supported OIC Resource of the IUT. |
+    ...    |procedure |9. IUT receives the request message and sends a RETRIEVE response message to CTT. |
+    ...    |procedure |10. CTT receives the response message and caches it for later evaluation. |
+    ...    |procedure |11. Repeat steps 1 to 10 for all other writable Properties supported by the OIC Resource. |
+    ...    |procedure |12. Repeat steps 1 to 11 for all other OIC Resources supported by the IUT. |
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    |expected| Check 6. The IUT shall send an error response code (e.g. 4.xx for CoAP) when trying to UPDATE a read-only Property value in Step 6b (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE], 6 Resource Type definitions [RT]). |
+    ...    |expected| Check 10. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    [Tags]    Mandatory    Server    Partial_Update
+    ${msg_type}    Set Variable    ${CONFIRMABLE}
+    ${access_mode}    Set Variable    ${READONLY}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${${SERVER_PORT}}
+    Make Partial Update Payload    ${DUT1_ID}    ${access_mode}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${range}    Get Length    ${dut1_partial_update_payloads}
+    : FOR    ${index}    IN RANGE    0    ${range}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${resource_uri}    Set Variable    ${dut1_resource_hrefs[${index}]}
+    \    ${update_support}    Is Crudn Operation Supported    ${resource_uri}    ${PARTIAL_UPDATE}
+    \    Continue For Loop If    ${update_support}
+    \    ${update_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${update_response}
+    \    Run Keyword And Continue On Failure    Check6 Verify Error Response Code    ${update_response}
+    \    Run Keyword And Continue On Failure    Check10 Verify Content Format Option    ${update_response}
+
+10_NON_Partial_Update_Writable_Property_Without_Query_Not_Supported_Resource
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-15|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource. |
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3. CTT creates a list of current values for each supported Property. |
+    ...    |procedure |4. CTT sends a unicast NON UPDATE request message (i.e. CoAP POST) to the IUT with no OIC Resource Interface specified to the first Property (excluding common Properties "rt", "if", "p", "n", etc.) on the first not supported OIC Resource. The Property value to be written must be valid (e.g. within the allowable range, valid enumeration value, etc.) and must be different than the current Property value. |
+    ...    |procedure |5. IUT receives the request message and verifies that it is valid (i.e. Can the Property be updated? Does the OIC Resource Interface support UPDATE requests? Etc.) |
+    ...    |procedure |6a. If the request message is valid, the IUT shall update the target OIC Resource Property as requested and send a successful UPDATE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    |procedure |6b. If the request is not valid, the IUT shall not update the target OIC Resource Property and shall send an appropriate error message to CTT. |
+    ...    |procedure |7. CTT receives the response message and caches it for later evaluation. |
+    ...    |procedure |8. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the first supported OIC Resource of the IUT. |
+    ...    |procedure |9. IUT receives the request message and sends a RETRIEVE response message to CTT. |
+    ...    |procedure |10. CTT receives the response message and caches it for later evaluation. |
+    ...    |procedure |11. Repeat steps 1 to 10 for all other writable Properties supported by the OIC Resource. |
+    ...    |procedure |12. Repeat steps 1 to 11 for all other OIC Resources supported by the IUT. |
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    |expected| Check 6. The IUT shall send an error response code (e.g. 4.xx for CoAP) when trying to UPDATE a read-only Property value in Step 6b (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE], 6 Resource Type definitions [RT]). |
+    ...    |expected| Check 10. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    [Tags]    Mandatory    Server    Partial_Update
+    ${msg_type}    Set Variable    ${NON_CONFIRMABLE}
+    ${access_mode}    Set Variable    ${READONLY}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${${SERVER_PORT}}
+    Make Partial Update Payload    ${DUT1_ID}    ${access_mode}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${range}    Get Length    ${dut1_partial_update_payloads}
+    : FOR    ${index}    IN RANGE    0    ${range}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${resource_uri}    Set Variable    ${dut1_resource_hrefs[${index}]}
+    \    ${update_support}    Is Crudn Operation Supported    ${resource_uri}    ${PARTIAL_UPDATE}
+    \    Continue For Loop If    ${update_support}
+    \    ${update_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${update_response}
+    \    Run Keyword And Continue On Failure    Check6 Verify Error Response Code    ${update_response}
+    \    Run Keyword And Continue On Failure    Check10 Verify Content Format Option    ${update_response}
+
+11_CON_Partial_Update_Writable_Property_With_IF_Query_Not_Supported_Resource
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-15|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource. |
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT. |
+    ...    |procedure |3. CTT creates a list of current values for each supported Property. |
+    ...    |procedure |4. CTT sends a unicast CON UPDATE request message (i.e. CoAP POST) to the IUT with OIC Resource Interface specified to the first Property (excluding common Properties "rt", "if", "p", "n", etc.) on the first not supported OIC Resource. The Property value to be written must be valid (e.g. within the allowable range, valid enumeration value, etc.) and must be different than the current Property value. |
+    ...    |procedure |5. IUT receives the request message and verifies that it is valid (i.e. Can the Property be updated? Does the OIC Resource Interface support UPDATE requests? Etc.) |
+    ...    |procedure |6a. If the request message is valid, the IUT shall update the target OIC Resource Property as requested and send a successful UPDATE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    |procedure |6b. If the request is not valid, the IUT shall not update the target OIC Resource Property and shall send an appropriate error message to CTT. |
+    ...    |procedure |7. CTT receives the response message and caches it for later evaluation. |
+    ...    |procedure |8. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the first supported OIC Resource of the IUT. |
+    ...    |procedure |9. IUT receives the request message and sends a RETRIEVE response message to CTT. |
+    ...    |procedure |10. CTT receives the response message and caches it for later evaluation. |
+    ...    |procedure |11. Repeat steps 1 to 10 for all other Properties supported by the OIC Resource. |
+    ...    |procedure |12. Repeat steps 1 to 11 with an "if" query for all OIC Resource Interfaces (e.g. ?if=oic.if.baseline, ?if=oic.if.a, etc.) supported by the OIC Resource. |
+    ...    |procedure |13. Repeat steps 1 to 12 for all other OIC Resources supported by the IUT. |
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    |expected| Check 6. The IUT shall send an error response code (e.g. 4.xx for CoAP) when trying to UPDATE a read-only Property value in Step 6b (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE], 6 Resource Type definitions [RT]). |
+    ...    |expected| Check 10. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    ...    |expected| Check 12. The IUT shall send an error response code of “4.05 Method Not Allowed” (for CoAP) when trying to do an UPDATE using an Interface that does not support it (e.g. oic.if.r, oic.if.s, etc.) (7.2.1.2 Resource interface property definition [CORE]). |
+    [Tags]    Mandatory    Server    Partial_Update
+    ${msg_type}    Set Variable    ${CONFIRMABLE}
+    ${access_mode}    Set Variable    ${READONLY}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${${SERVER_PORT}}
+    Make Partial Update Payload    ${DUT1_ID}    ${access_mode}    ${INTERFACE}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${range}    Get Length    ${dut1_partial_update_payloads}
+    : FOR    ${index}    IN RANGE    0    ${range}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${resource_uri}    Get Prefix    ${dut1_resource_hrefs[${index}]}    ?
+    \    ${update_support}    Is Crudn Operation Supported    ${resource_uri}    ${PARTIAL_UPDATE}
+    \    Continue For Loop If    ${update_support}
+    \    ${update_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${update_response}
+    \    Run Keyword And Continue On Failure    Check6 Verify Error Response Code    ${update_response}
+    \    Run Keyword And Continue On Failure    Check10 Verify Content Format Option    ${update_response}
+
+12_NON_Partial_Update_Writable_Property_With_IF_Query_Not_Supported_Resource
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-15|
+    ...    |see | |
+    ...    |objective| |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    |procedure |1. CTT sends a unicast RETRIEVE request message (i.e. CoAP GET) to the IUT to the first supported OIC Resource.
+    ...    |procedure |2. IUT receives the request message and sends a unicast response message to the CTT.
+    ...    |procedure |3. CTT creates a list of current values for each supported Property.
+    ...    |procedure |4. CTT sends a unicast NON UPDATE request message (i.e. CoAP POST) to the IUT with OIC Resource Interface specified to the first Property (excluding common Properties "rt", "if", "p", "n", etc.) on the first not supported OIC Resource. The Property value to be written must be valid (e.g. within the allowable range, valid enumeration value, etc.) and must be different than the current Property value.
+    ...    |procedure |5. IUT receives the request message and verifies that it is valid (i.e. Can the Property be updated Does the OIC Resource Interface support UPDATE requests Etc.)
+    ...    |procedure |6a. If the request message is valid, the IUT shall update the target OIC Resource Property as requested and send a successful UPDATE response message to CTT using the appropriate OIC Resource Interface.
+    ...    |procedure |6b. If the request is not valid, the IUT shall not update the target OIC Resource Property and shall send an appropriate error message to CTT.
+    ...    |procedure |7. CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |8. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the first supported OIC Resource of the IUT.
+    ...    |procedure |9. IUT receives the request message and sends a RETRIEVE response message to CTT.
+    ...    |procedure |10. CTT receives the response message and caches it for later evaluation.
+    ...    |procedure |11. Repeat steps 1 to 10 for all other Properties supported by the OIC Resource.
+    ...    |procedure |12. Repeat steps 1 to 11 with an "if" query for all OIC Resource Interfaces (e.g. ?if=oic.if.baseline, ?if=oic.if.a, etc.) supported by the OIC Resource.
+    ...    |procedure |13. Repeat steps 1 to 12 for all other OIC Resources supported by the IUT.
+    ...    |post_condition |None |
+    ...    |expected| Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    |expected| Check 6. The IUT shall send an error response code (e.g. 4.xx for CoAP) when trying to UPDATE a read-only Property value in Step 6b (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP. Overview [CORE], 6 Resource Type definitions [RT]). |
+    ...    |expected| Check 10. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    ...    |expected| Check 12. The IUT shall send an error response code of “4.05 Method Not Allowed” (for CoAP) when trying to do an UPDATE using an Interface that does not support it (e.g. oic.if.r, oic.if.s, etc.) (7.2.1.2 Resource interface property definition [CORE]). |
+    [Tags]    Mandatory    Server    Partial_Update
+    ${msg_type}    Set Variable    ${NON_CONFIRMABLE}
+    ${access_mode}    Set Variable    ${READONLY}
+    Get Resource Status    ${DUT1_ID}    ${SERVER_IP}    ${${SERVER_PORT}}
+    Make Partial Update Payload    ${DUT1_ID}    ${access_mode}    ${INTERFACE}
+    @{dut1_resource_hrefs}    Get Partial Update Hrefs
+    @{dut1_partial_update_payloads}    Get Partial Update Payloads
+    ${range}    Get Length    ${dut1_partial_update_payloads}
+    : FOR    ${index}    IN RANGE    0    ${range}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${resource_uri}    Get Prefix    ${dut1_resource_hrefs[${index}]}    ?
+    \    ${update_support}    Is Crudn Operation Supported    ${resource_uri}    ${PARTIAL_UPDATE}
+    \    Continue For Loop If    ${update_support}
+    \    ${update_response}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${${SERVER_PORT}}    ${dut1_resource_hrefs[${index}]}    ${msg_type}    ${dut1_partial_update_payloads[${index}]}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${update_response}
+    \    Run Keyword And Continue On Failure    Check6 Verify Error Response Code    ${update_response}
+    \    Run Keyword And Continue On Failure    Check10 Verify Content Format Option    ${update_response}
+
+*** Keywords ***
+Check1 Verify Payload Encoding
+    [Arguments]    ${response}
+    ${json_payload}    Get Response Json    ${response}
+    ${length}    Get Length    ${json_payload}
+    ${content_format}    Run Keyword If    ${length} > 0    Get Response Content Format    ${response}
+    Run Keyword If    ${length} > 0    Should Be Equal    ${content_format}    CBOR
+
+Check3 Verify Response Code Changed
+    [Arguments]    ${response}
+    ${response_code}    Get Response Code    ${response}
+    Should Be Equal    ${response_code}    2.04
+
+Check4 Match Payloads Of Update Request And Response
+    [Arguments]    ${response}    ${prev_payload}
+    ${response_payload}    Get Response Payload    ${response}
+    ${res}    Verify Payload    ${response_payload}    ${prev_payload}
+    Should Be True    ${res}
+
+Check5 Match Payloads Of Update Request And Retrieve Response
+    [Arguments]    ${response}    ${prev_payload}
+    #The value UPDATED in Step 4 and the value RETRIEVED in Step 10 shall be the same (8.4.2 Update. Processing by the OIC Server [CORE]).
+    ${response_payload}    Get Response Payload    ${response}
+    BuiltIn.Log    ${response_payload}
+    ${res}    Verify Payload    ${response_payload}    ${prev_payload}
+    Should Be True    ${res}
+
+Check6 Verify Error Response Code
+    [Arguments]    ${response}
+    ${response_code}    Get Response Code    ${response}
+    ${response_code}    Get Prefix    ${response_code}    .
+    Should Be Equal    ${response_code}    4
+
+Check7 Verify Default Interface
+    [Arguments]    ${response}    ${dut_id}    ${deault_interface}
+    #In the absence of an “if” query the Default interface shall be used (7.1.4.2.3 OIC Resource Interface [CORE]).
+    ${default_interface}    Set Variable    ${deault_interface}
+    BuiltIn.Log    ${response}
+    ${response_payload}    Get Response Payload    ${response}
+    BuiltIn.Log    ${response_payload}
+    @{list_of_resource_interface}    Get List Of Value    ${response_payload}    ${INTERFACE}
+    ${cnt_baseline}    Get Contain Count    ${default_interface}    @{list_of_resource_interface}
+    Should Be Equal As Integers    ${cnt_baseline}    1
+
+Check9 Verify Representation Of All Properties
+    [Arguments]    ${resource_query}    ${response}
+    ${suffix}    Get Suffix    ${resource_query}    ?
+    Return From Keyword If    '${suffix}'!='if=${OIC_RESOURCE_INTERFACE_SYSTEM_DEFAULT}'
+    ${flag}    Is Key Exist    ${response}    ${OIC_RESOURCE_TYPE}
+    Should Be True    ${True}    ${flag}
+    ${flag}    Is Key Exist    ${response}    ${OIC_RESOURCE_INTERFACE}
+    Should Be True    ${True}    ${flag}
+    ${flag}    Is Key Exist    ${response}    P
+    Should Be True    ${True}    ${flag}
+
+Check10 Verify Content Format Option
+    [Arguments]    ${response}
+    [Documentation]    Verify that every message with a payload body contains a Content-Format option with a numeric value from Table 32
+    ${json_payload}    Get Response Json    ${response}
+    ${length}    Get Length    ${json_payload}
+    ${content_format}    Run Keyword If    ${length} > 0    Get Response Content Format    ${response}
+    @{list_of_content_format}    Create List    XML    EXI    JSON    CBOR
+    ${flag}    Is Item Exist    ${content_format}    @{list_of_content_format}
+    Run Keyword If    ${length} > 0    Should Be Equal    ${True}    ${flag}
+
+Check12 Verify Response Code Not Allowed
+    [Arguments]    ${response}
+    ${response_code}    Get Response Code    ${response}
+    Should Be Equal    ${response_code}    4.05

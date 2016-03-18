@@ -173,7 +173,7 @@ public class TestSuiteView extends ViewPart {
             }
         };
 
-        updateTestSuiteView.setToolTipText(TOOLTIP_TEXT_REFRESH_TEST_VIEW
+        updateTestSuiteView.setToolTipText(TOOLTIP_TEXT_REFRESH_VIEW
                 .toString());
         updateTestSuiteView
                 .setImageDescriptor(Activator

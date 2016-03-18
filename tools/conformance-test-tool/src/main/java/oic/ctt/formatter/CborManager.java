@@ -35,7 +35,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 
 /**
- * 
+ *
  * This Class manages CBOR library to parse or convert CBOR data
  *
  */
@@ -66,19 +66,23 @@ public class CborManager {
                     JsonNode diNode = payloadJsonNode.findValue(DI_KEY);
                     encodedDI = diNode.toString();
 
-                    byte[] diBuffer = Base64.decodeBase64(encodedDI.getBytes());
-                    decodedDI = OICHelper.bytesToHex(diBuffer);
+                    if (encodedDI.length() <= 32) {
 
-                    Set<String> parts = new LinkedHashSet<>();
-                    parts.add(decodedDI.substring(0, 8));
-                    parts.add(decodedDI.substring(8, 12));
-                    parts.add(decodedDI.substring(12, 16));
-                    parts.add(decodedDI.substring(16, 20));
-                    parts.add(decodedDI.substring(20, 32));
-                    decodedDI = String.join("-", parts);
+                        byte[] diBuffer = Base64
+                                .decodeBase64(encodedDI.getBytes());
+                        decodedDI = OICHelper.bytesToHex(diBuffer);
 
-                    payloadJsonString = payloadJsonString.replace(encodedDI,
-                            "\"" + decodedDI + "\"");
+                        Set<String> parts = new LinkedHashSet<>();
+                        parts.add(decodedDI.substring(0, 8));
+                        parts.add(decodedDI.substring(8, 12));
+                        parts.add(decodedDI.substring(12, 16));
+                        parts.add(decodedDI.substring(16, 20));
+                        parts.add(decodedDI.substring(20, 32));
+                        decodedDI = String.join("-", parts);
+
+                        payloadJsonString = payloadJsonString.replace(encodedDI,
+                                "\"" + decodedDI + "\"");
+                    }
                 }
 
                 CTLogger.getInstance().debug("Payload Received: " + sCount++
@@ -95,7 +99,7 @@ public class CborManager {
 
     /**
      * This Method will parse the CBOR byte[] data tto get the Payload Type
-     * 
+     *
      * @param payload
      *            : byte array of CBOR data
      * @return OCPayloadType : Payload Type Enum
@@ -128,7 +132,7 @@ public class CborManager {
 
     /**
      * This Method will Convert the JSON String Payload to CBOR byte array data
-     * 
+     *
      * @param payload
      *            : JSON String payload
      * @param payloadType

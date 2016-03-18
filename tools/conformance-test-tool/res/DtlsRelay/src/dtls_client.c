@@ -182,6 +182,13 @@ static int get_psk_info(struct dtls_context_t *ctx,
   {
   	  case DTLS_PSK_IDENTITY:
 
+//          if (result_length < sizeof(g_client_identity))
+//          {
+//              printf("ERROR : Wrong value for result for storing IDENTITY\n");
+//              printf("length: result=%d g_client_identity=%d\n", result_length, sizeof(g_client_identity));
+//              return -1;
+//          }
+
           memcpy(result, g_client_identity, g_client_identity_len);
           return g_client_identity_len;
 
@@ -278,6 +285,7 @@ static int dtls_handle_read(struct dtls_context_t *ctx)
 	}
 	else
 	{
+//#define DEBUG_MODE
 #ifdef DEBUG_MODE
 		dtls_dsrv_log_addr(DTLS_LOG_DEBUG, "peer", &session);
 		dtls_debug_dump("bytes from peer", g_rcv, len);
@@ -315,7 +323,10 @@ static int resolve_address(const char *server, int port, struct sockaddr *dst)
 
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
+//	hints.ai_protocol = 0;
 	hints.ai_protocol=IPPROTO_UDP;
+//	hints.ai_flags = AI_ADDRCONFIG;
+
 
 	error = getaddrinfo(addrstr, portstr, &hints, &res);
 
@@ -432,6 +443,7 @@ int open_connection(char* ip, int port, int cipher)
 	if (res < 0)
 	{
 		printf("failed to resolve address\n");
+		//return -1;
 	}
 
 	g_dst.size = res;

@@ -42,8 +42,8 @@ RunCommand () {
 }
 
 
-RunCommand "wget http://iweb.dl.sourceforge.net/project/robotide/stable/plugins/com.nitorcreations.robotframework.eclipseide_1.4.0.jar" "Acquiring Required Libraries"
-mv com.nitorcreations.robotframework.eclipseide_1.4.0.jar ../libs/com.nitorcreations.robotframework.eclipseide_1.4.0.jar
+#RunCommand "wget http://iweb.dl.sourceforge.net/project/robotide/stable/plugins/com.nitorcreations.robotframework.eclipseide_1.4.0.jar" "Acquiring Required Libraries"
+#mv com.nitorcreations.robotframework.eclipseide_1.4.0.jar ../libs/com.nitorcreations.robotframework.eclipseide_1.4.0.jar
 
 RunCommand "wget https://repo.maven.apache.org/maven2/org/slf4j/slf4j-api/1.7.12/slf4j-api-1.7.12.jar --no-check-certificate"
 mv slf4j-api-1.7.12.jar ../libs/slf4j-api-1.7.12.jar
@@ -57,6 +57,28 @@ mv ddmlib-22.0.jar ../libs/ddmlib.jar
 RunCommand "wget http://central.maven.org/maven2/org/xerial/sqlite-jdbc/3.8.6/sqlite-jdbc-3.8.6.jar --no-check-certificate"
 mv sqlite-jdbc-3.8.6.jar ../libs/sqlite-jdbc-3.8.6.jar
 
+RunCommand "wget http://central.maven.org/maven2/org/apache/commons/commons-exec/1.3/commons-exec-1.3.jar --no-check-certificate"
+mv commons-exec-1.3.jar ../libs/commons-exec-1.3.jar
+
+RunCommand "wget http://central.maven.org/maven2/commons-io/commons-io/2.4/commons-io-2.4.jar --no-check-certificate"
+mv commons-io-2.4.jar ../libs/commons-io-2.4.jar
+
+RunCommand "wget http://central.maven.org/maven2/log4j/log4j/1.2.17/log4j-1.2.17.jar --no-check-certificate"
+mv log4j-1.2.17.jar ../libs/log4j-1.2.17.jar
+
+RunCommand "wget http://central.maven.org/maven2/org/slf4j/slf4j-api/1.7.10/slf4j-api-1.7.10.jar --no-check-certificate"
+mv slf4j-api-1.7.10.jar ../libs/slf4j-api-1.7.10.jar
+
+RunCommand "wget http://central.maven.org/maven2/org/slf4j/slf4j-log4j12/1.7.10/slf4j-log4j12-1.7.10.jar --no-check-certificate"
+mv slf4j-log4j12-1.7.10.jar ../libs/slf4j-log4j12-1.7.10.jar
+
+mkdir robotide
+cp pom.xml ./robotide/
+GIT_SSL_NO_VERIFY=true git clone https://github.com/NitorCreations/RobotFramework-EclipseIDE.git
+cp -R ./RobotFramework-EclipseIDE/plugin/* ./robotide/
+rm -rf ./robotide/src/test
+
+
 rm -rf ../bin/ConformanceTestTool
 rm -rf ./oic.ctt.product/target/products/*
 cd oic.ctt.parent
@@ -68,7 +90,7 @@ unzip CTT.zip -d ../bin/ConformanceTestTool
 rm -rf CTT.zip
 rm -rf oic.ctt.product/target
 rm -rf ../target
-rm -f ../libs/*.jar
+#rm -f ../libs/*.jar
 
 echo $green""
 echo " ================================================"

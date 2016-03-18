@@ -92,7 +92,6 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
                                     }
                                 }
                             } else {
-                                System.out.println("It is not Plan Page.");
                                 startTestAction.setEnabled(false);
                             }
                         }

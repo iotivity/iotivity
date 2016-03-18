@@ -23,8 +23,9 @@ package oic.ctt;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+
 import oic.ctt.DutKey;
-import oic.ctt.DUTResource.CRUDNType;
 
 import oic.ctt.formatter.JsonAnalyzer;
 
@@ -37,27 +38,47 @@ public class DUTResource {
     /**
      * Enumeration for CRUDN operations
      */
-    public enum CRUDNType{
-        COMPLETE_CREATE("Cc"),
-        SUBORDINATE_CREATE("Cs"),
-        RETRIEVE("R"),
-        COMPLETE_UPDATE("Uc"),
-        PARTIAL_UPDATE("Up"),
-        DELETE("D");
+    public enum CRUDNType {
+        COMPLETE_CREATE("Cc"), SUBORDINATE_CREATE("Cs"), RETRIEVE(
+        "R"), COMPLETE_UPDATE("Uc"), PARTIAL_UPDATE("Up"), DELETE("D");
 
         private String key;
 
         private CRUDNType(String key) {
             this.key = key;
         }
+
         @Override
         public String toString() {
             return key;
         }
     }
 
+    public enum PayloadType {
+        OBJECT("object"), ARRAY("array");
+
+        private String key;
+
+        private PayloadType(String key) {
+            this.key = key;
+        }
+
+        @Override
+        public String toString() {
+            return key;
+        }
+
+        public static PayloadType getPayloadTypeByValue(String type) {
+            for (int i = 0; i < PayloadType.values().length; i++) {
+                if (type.equals(PayloadType.values()[i].key))
+                    return PayloadType.valueOf(PayloadType.values()[i].name());
+            }
+            return null;
+        }
+    }
+
     private HashMap<String, ArrayList<String>> mDutResourceValue;
-    private HashMap<String, Boolean> mCRUDNState = new HashMap<String, Boolean>();
+    private HashMap<String, Boolean>           mCRUDNState = new HashMap<String, Boolean>();
 
     /**
      * Constructor for DUTResource. It creates DUT Resource Instance according
@@ -116,7 +137,8 @@ public class DUTResource {
     public void generateCRUDNState() {
         String[] crudn = DutKey.CRUDN.toString().split("(?=[A-Z])");
 
-        ArrayList<String> crudnState= getDUTResourceValue(DutKey.CRUDN.toString());
+        ArrayList<String> crudnState = getDUTResourceValue(
+                DutKey.CRUDN.toString());
         int count = 0;
         for (String string : crudnState) {
             Boolean bool = Boolean.parseBoolean(string);
@@ -132,5 +154,15 @@ public class DUTResource {
      */
     public boolean getCRUDNState(CRUDNType key) {
         return mCRUDNState.get(key.toString());
+    }
+
+    /**
+     * This method returns the object type of the whole payload of a resource
+     *
+     * @return PayloadType : Desired object type of the response payload
+     */
+    public PayloadType getResourcePayloadType() {
+        return PayloadType.getPayloadTypeByValue(
+                mDutResourceValue.get(DutKey.OBJ_TYPE.toString()).get(0));
     }
 }

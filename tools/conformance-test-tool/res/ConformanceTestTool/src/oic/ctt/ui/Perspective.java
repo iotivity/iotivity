@@ -23,11 +23,14 @@ import oic.ctt.ui.views.LogView;
 import oic.ctt.ui.views.TestPlanView;
 import oic.ctt.ui.views.TestReportView;
 import oic.ctt.ui.views.TestSuiteView;
+import oic.ctt.ui.views.RAMLView;
+import oic.ctt.ui.views.ResourceView;
 
 import org.eclipse.ui.IFolderLayout;
 import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IPerspectiveFactory;
 import org.eclipse.ui.IViewLayout;
+
 
 public class Perspective implements IPerspectiveFactory {
 
@@ -36,20 +39,19 @@ public class Perspective implements IPerspectiveFactory {
     public void createInitialLayout(IPageLayout layout) {
         layout.setEditorAreaVisible(true);
         layout.setFixed(true);
-
         String editorArea = layout.getEditorArea();
-
         IFolderLayout bottomMiddle = layout.createFolder("bottomMiddle",
                 IPageLayout.BOTTOM, 0.65f, editorArea);
-
         bottomMiddle.addView(LogView.ID);
-
         IFolderLayout left = layout.createFolder("left", IPageLayout.LEFT,
                 0.25f, editorArea);
         left.addView(TestSuiteView.ID);
         left.addView(TestPlanView.ID);
+        left.addView(RAMLView.ID);
+        left.addView(ResourceView.ID);
         left.addView(TestReportView.ID);
-
+       
+      
         IViewLayout testSuiteViewLayout = layout
                 .getViewLayout(TestSuiteView.ID);
         if (testSuiteViewLayout != null) {
@@ -59,16 +61,25 @@ public class Perspective implements IPerspectiveFactory {
         if (logViewLayout != null) {
             logViewLayout.setCloseable(false);
         }
+        
+        IViewLayout resourceViewLayout = layout.getViewLayout(RAMLView.ID);
+        if (resourceViewLayout != null) {
+        	resourceViewLayout.setCloseable(false);
+        }
 
         layout.addPerspectiveShortcut(Activator.PLUGIN_ID);
 
         layout.addShowViewShortcut(TestSuiteView.ID);
         layout.addShowViewShortcut(TestPlanView.ID);
+        layout.addShowViewShortcut(RAMLView.ID);
+        layout.addShowViewShortcut(ResourceView.ID);
         layout.addShowViewShortcut(TestReportView.ID);
         layout.addShowViewShortcut(LogView.ID);
+      
 
         UIConst.createProject(UIConst.TESTSUITE_PATH);
         UIConst.createProject(UIConst.TESTPLAN_PATH);
         UIConst.createProject(UIConst.TESTREPORT_PATH);
+        UIConst.createProject(UIConst.RAML_PATH);
     }
 }

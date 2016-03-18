@@ -1,0 +1,52 @@
+*** Settings ***
+Documentation     CT2.2.3 Partial Update Message Base on CoAP
+Test Setup    Pre Condition Crudn Client
+Test TearDown    Post Condition Crudn Client
+Resource          OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+1_Partial_Update_Writable_Property_Without_Query
+    [Documentation]    | since |2016-02-15 |
+    ...    | see | |
+    ...    | purpose | |
+    ...    | procedure | 1. CTT prompts the test operator to update the first writeable Property to a different value for the first Resource. |
+    ...    | procedure | 2. Test operator instructs the IUT to send an UPDATE request message (i.e. CoAP POST) to change the value of the Property indicated in Step 9. |
+    ...    | procedure | 3. CTT receives the request message, updates the value of the Property to the desired value, and then sends a unicast UPDATE response message to the IUT. |
+    ...    | procedure | 4. IUT receives the response message and updates its knowledge of the Resource with the received Property values. |
+    ...    | procedure | 5. CTT prompts the test operator to verify that the Property values of the Resource as shown by the IUT match values sent by the CTT. |
+    ...    | procedure | 6. Repeat steps 1 to 5 for all other writeable Properties of the Resource. |
+    ...    | procedure | 7. Repeat Steps 1 to 6 for all other Resource with writeable Properties supported by IUT. |
+    ...    | expected | Check 1. The IUT shall send a properly formatted UPDATE request message in Step 10. |
+    ...    | expected | Check 2. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    ...    | expected | Check 3. MANUAL. The IUT shall indicate the same Property value(s) as the value(s) sent by the CTT if possible. |
+    [Tags]    Mandatory    Client    Partial Update
+    @{dut1_resource_hrefs}      Get DUT Info Value      ${HREF}    ${DUT1_ID}   ${DISCOVERABLE}=1
+    :FOR    ${dut1_resource_href}    IN    @{dut1_resource_hrefs}
+    \   Print Message    \n-----------------Send Partial UPDATE Message from DUT App to ${dut1_resource_href}-----------------
+    \   ${request}    Get Request    ${dut1_resource_href}    ${POST}
+    \   Run Keyword And Continue On Failure    Check1 Validate Partial Update Request Format    ${request}
+    \   Run Keyword And Continue On Failure    Check2 Verify Payload Encoding    ${request}
+
+*** Keywords ***
+Check1 Validate Partial Update Request Format
+    [Arguments]    ${request}
+    ${request_code}    Get Request Code    ${request}
+    Should Be Equal    ${request_code}    ${POST}
+    ${request_type}    Get Request Type    ${request}
+    @{request_type_list}    Create List    ${CON}    ${NON}
+    BuiltIn.Should Contain    ${request_type_list}    ${request_type}
+    ${token}    Get Request Token    ${request}
+    Should Not Be Empty    ${token}
+    ${msg_id}    Get Request Msgid    ${request}
+    Should Not Be Empty    ${msg_id}
+    ${uri}    Get Request Href    ${request}
+    Should Not Be Empty    ${uri}
+    ${accept}    Get Request Accept    ${request}
+    Should Be Equal    ${accept}    CBOR
+
+Check2 Verify Payload Encoding
+    [Arguments]    ${request}
+    ${json_payload}    Get Request Json    ${request}
+    ${length}    Get Length    ${json_payload}
+    ${content_format}    Run Keyword If    ${length} > 0    Get Request Content Format    ${request}
+    Run Keyword If    ${length} > 0    Should Be Equal    ${content_format}    CBOR

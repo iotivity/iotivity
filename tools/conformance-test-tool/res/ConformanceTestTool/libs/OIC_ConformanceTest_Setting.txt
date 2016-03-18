@@ -2,13 +2,14 @@
 Documentation     OIC Conformance Test Setting
 Library           ConformanceKeyword.py
 Library        OperatingSystem
+Library        Collections
 Library        DateTime
 Resource	OIC_Core_Spec.txt
 
 
 *** Keywords ***
 Start Capture
-    ${file_name}    Get Wireshark File Name    ${TEST NAME}
+    ${file_name}    Get Wireshark File Name    ${SUITE NAME}
     OperatingSystem.Run      tshark -i any -f udp -w testreport/${file_name} | - &
     BuiltIn.Sleep    2s
 
@@ -16,15 +17,53 @@ End Capture
     OperatingSystem.Run    killall tshark
     OperatingSystem.Run    killall dtls_relay
 
+Pre Condition Crudn Server
+    Start Capture
+    Set Global Variable    ${DUT1_ID}    Server_DUT1
+    Set Global Variable    ${SETUP_FINISHED}    ${False}
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}    The DUTDescriptor has some problem!!
+    @{discoverable_resources}    Get DUT Info Value    ${RESOURCE_TYPE}    ${DUT1_ID}    ${DISCOVERABLE}=1
+    ${resource_ip}    ${resource_port}    ${secured_port}    Get IP And Ports
+    Set Global Variable    ${SECURED_PORT}    ${secured_port}
+    Set Global Variable    ${SERVER_IP}    ${resource_ip}
+    Set Global Variable    ${SERVER_PORT}    ${resource_port}
+    Run Keyword If    ${${secured_port}} > 0    Initialize Device Controller    ${DEVICE_ID}
+    Run Keyword If    ${${secured_port}} > 0    Change Working Directory    ${DTLS_RELAY_DIR}
+    Run Keyword If    ${${secured_port}} > 0    Execute Application    ${DTLS_RELAY_PROCESS_ID}    ${DTLS_RELAY}
+    Run Keyword If    ${${secured_port}} > 0    Start Application Log    ${DEVICE_ID}    ${DTLS_RELAY_PROCESS_ID}
+    Run Keyword If    ${${secured_port}} > 0    Sleep    5 seconds
+    Run Keyword If    ${${secured_port}} > 0    Initialize Secured Device    ${resource_ip}    ${${secured_port}}
+    Run Keyword If    ${${secured_port}} > 0    Set Global Variable    ${SETUP_FINISHED}    ${True}
+
+Post Condition Crudn Server
+    Run Keyword If    ${SETUP_FINISHED} == ${True}    Terminate Dtls Connection
+    Run Keyword If    ${${SECURED_PORT}} > 0    Terminate Application    ${DTLS_RELAY_PROCESS_ID}
+    Release DUT information     ${DUT1_ID}
+    End Capture
+
+Pre Condition Crudn Client
+    Start Capture
+    Set Global Variable    ${DUT1_ID}    Server_DUT1
+    Set Global Variable    ${SETUP_FINISHED}    ${False}
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Start Server
+    Print Message    \n-----------------Send Multicast Discovery Request from DUT App-----------------
+    Get Discovery Requests
+
+Post Condition Crudn Client
+    Stop Server
+    Release DUT information     ${DUT1_ID}
+    End Capture
+
 Update Representation Multiple Times
         [Arguments]    ${ip}    ${port}    ${href}    ${qos}    ${payload}    ${update_support}    ${no_of_update}
     :FOR    ${index}    IN RANGE    ${no_of_update}
     \   ${msgid}    Generate Message Id
     \   ${token}    Generate Token
     \   ${dut2_response}    Run Keyword If    ${update_support} == ${True}    Send Post Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}    ${ip}    ${${port}}    ${href}    ${qos}    ${payload}
-    \   Run Keyword If    ${update_support} == ${False}    Log To Console    ============== User Control -> Change state of resource for notification================
+    \   Run Keyword If    ${update_support} == ${False}    ConformanceKeyword.Log To Console    ============== User Control -> Change state of resource for notification ================
     \   Run Keyword If    ${update_support} == ${False}    Builtin.sleep	${${DEFAULT_WAIT_TIME}}
-
 
 Get Length Available Representation To Update
         [Arguments]     ${DUT_ID}       ${DUT_HREF_QUERY}
@@ -64,6 +103,12 @@ Set Modified Partial Representation Value Payload
         @{Representation_List}  Get Dut Resource Value  ${DUT_ID}       ${DUT_HREF_QUERY}       ${REPRESENTATION}    W
         Add Into Json Representation    ${Representation_List[0][0]}  ${Representation_List[0][2]}  ${Representation_List[0][1]}
 
+Set Modified Partial Representation Value Payload2
+        [Arguments]     ${DUT_ID}       ${DUT_HREF_QUERY}    ${index}
+        Create Json Representation
+        @{Representation_List}  Get Dut Resource Value  ${DUT_ID}       ${DUT_HREF_QUERY}       ${REPRESENTATION}    W
+        Add Into Json Representation    ${Representation_List[${index}][0]}  ${Representation_List[${index}][2]}  ${Representation_List[${index}][1]}
+
 Check Response Representation With False
         [Arguments]        ${DUT_ID}     ${Response_Json}        ${Data_Format}  ${Query}       @{Representation}
         : FOR        ${Property}        IN      @{Representation}
@@ -76,28 +121,31 @@ Check Response Representation
 
 Check Representation
         [Arguments]        ${DUT_ID}     ${Response_Json}        ${Data_Format}  ${Query}       @{Representation}
-        : FOR        ${Property}        IN      @{Representation}
-        \        @{response_key}  Get Json Value  ${Property}   ${Response_Json}
-        \        Should Not Be Empty    @{response_key}[0]
+        : FOR    ${Property}    IN    @{Representation}
+        \    @{response_key}  Get Json Value  ${Property}   ${Response_Json}
+        \    Should Not Be Empty    @{response_key}[0]
+        \    ${error_msg}    Run Keyword If    '${Property}' == '${DATA_MODEL_VERSION}'    Check Data Model Version    @{response_key}[0]
+        \    Run Keyword And Continue On Failure     Should Be True    '${error_msg}' == '${NONE}'    ${error_msg}
+        \    ${error_msg}    Run Keyword If    '${Property}' == '${SPEC_VERSION}'    Check Spec Version    @{response_key}[0]
+        \    Should Be True    '${error_msg}' == '${NONE}'    ${error_msg}
 
 Check In List
         [Arguments]     ${To_Check}     ${does_contain}        @{Type_List}
         ${does_contain}		Get False
-        : FOR        ${Resource_Type}        IN      @{Type_List} 
+        : FOR        ${Resource_Type}        IN      @{Type_List}
         \        : IF   ${dut1_info_href}       IS      ${resource_href}
         \        \        ${does_contain}               Get True
         Should Be True	${does_contatin}
-        
+
 Get Security Client Simulator Directory
 		[Arguments]
 		${is_cli}	Is Cli Enabled
 		${client_dir}	Set Variable If	${is_cli}	${SECURITY_CLIENT_DIR_CLI}	${SECURITY_CLIENT_DIR_GUI}
 		[Return]	${client_dir}
 
-Get IP Port And Uri
-	[Arguments]		${query}
-	${dut1_response}		Discover Resource With Query		${MULTICAST}	${COAP}	${OIC_CORE_RESOURCE_DEFAULT_URI}	${query}	${NON_CONFIRMABLE}
-	Should Not Be Empty             ${dut1_response}
+Get IP And Ports
+	${dut1_response}    Discover All Resources    ${MULTICAST}    ${COAP}    ${OIC_CORE_RESOURCE_DEFAULT_URI}
+	Should Not Be Empty    ${dut1_response}
 	${dut1_response_json}   Get Response Json       ${dut1_response}
 	${validate_json_result}  Validate JSON Format        ${dut1_response_json}
 	Should Be True          ${validate_json_result}
@@ -110,7 +158,9 @@ Get IP Port And Uri
 	Should Not Be Empty     ${resource_ip}
 	${resource_port}        Get Response Port       ${dut1_response}
 	Should Not Be Empty     ${resource_port}
-	[Return]	 ${resource_ip}		${resource_port}	@{resource_href}
+	${secured_port}        Get Response Secured Port       ${dut1_response}
+	Should Not Be Empty     ${secured_port}
+	[Return]    ${resource_ip}    ${resource_port}    ${secured_port}
 
 Get Response Code IP Port And Payload From Response
 	[Arguments]		${dut_response}
@@ -134,18 +184,18 @@ Get Doxm Selection Payload
         ${payload}	Update Payload	${payload}	${OXMSEL}	${oxm_selection}
         ${payload}	Update Payload	${payload}	${OWNR}	${owner}
         [Return]	${payload}
-        
+
 Get Pstat Om Selection Payload
         [Arguments]     ${pstat_payload}	${omsel}
         ${payload}	Get Modified Json String	${pstat_payload}	${OM}	${omsel}
         [Return]	${payload}
-        
+
 Get Ownership Transfer Payload
         [Arguments]     ${doxm_payload}	${client_di}
         ${payload}	Get Modified Json String	${doxm_payload}	${OWNED}	true
         ${payload}	Get Modified Json String	${payload}	${OWNR}	${client_di}
         [Return]	${payload}
-        
+
 Get ACL Provisioning Payload
         [Arguments]     ${acl_payload}	${client_di}	${resouce}	${permission}
         ${payload}	Get Modified Json String	${acl_payload}	${RESOURCE}	${resouce}
@@ -153,9 +203,10 @@ Get ACL Provisioning Payload
         ${payload}	Get Modified Json String	${payload}	${SUBJECT}	${permission}
         ${payload}	Get Modified Json String	${payload}	${OWNER}	${permission}
         [Return]	${payload}
-        
 
 *** Variables ***
+${WRITABLE}    W
+${READONLY}    R
 ${OXMSEL}	oxmsel
 ${OM}	om
 ${OWNED}	owned
@@ -170,7 +221,7 @@ ${OWNED_STATE_FALSE}	false
 ${DEFAULT_OWNER}	none
 ${CTTSW9ULVRlc3QtVG9vbC0wMQ==_CLIENT_DI}	SW9ULVRlc3QtVG9vbC0wMQ==
 
-
+${OIC_ID}    OIC_DEFINED_RESOURCE
 ${DUT1_INFO_PATH}       libs/DUTDescriptor.json
 ${DUT_TYPE_SERVER}      SERVER
 ${DUT_TYPE_CLIENT}      CLIENT
@@ -203,12 +254,13 @@ ${DUT_TYPE}             dutType
 ${REPRESENTATION}	rep
 ${NAME}        n
 ${DATA_MODEL_VERSION}    dmv
+${SPEC_VERSION}    icv
 ${PLATFORM_ID}    pi
 ${MANUFACTURER_NAME}    mnmn
 
 #Representation of core resources
 @{REPRESENTATION_OIC_RES}		${HREF}		${RESOURCE_TYPE}	${INTERFACE}
-@{REPRESENTATION_OIC_D}		${DEVICE_ID}	${NAME}    ${DATA_MODEL_VERSION}
+@{REPRESENTATION_OIC_D}		${DEVICE_ID}	${NAME}    ${DATA_MODEL_VERSION}    ${SPEC_VERSION}
 @{REPRESENTATION_OIC_P}		${PLATFORM_ID}    ${MANUFACTURER_NAME}
 
 #TestData
@@ -216,7 +268,7 @@ ${CONFIRMABLE}			${true}
 ${NON_CONFIRMABLE}		${false}
 ${FALSE_URI}			/oic/res
 ${FALSE_RESOURCE_TYPE}	core.dummydummy
-${EMPTY_QUERY}	
+${EMPTY_QUERY}    ''
 ${DEFAULT_WAIT_TIME}	10
 ${OBSERVE_MAX_ACK_TIMEOUT}    60
 ${FALSE_DEVICE_ID}	FALSE960-731F-46F1-BEC1-1E6CBD61ADC1
@@ -234,8 +286,11 @@ ${CREATED_DIS_HREF}	-created-discoverable
 ${CREATED_NON_DIS_HREF}	-created-nondiscoverable
 
 #Test DUT Rep
+${FOO_URI}    /oic/foo
+${FOO_RESOURCE_TYPE}    foo.foo.foo
 @{INVALID_URI_LIST}     /oic/rts        /oic/ifs        /oic/con        /oic/mon        /oic/mnt        /oic/foo 	/oic/ad
 @{URI_LIST}     	/oic/rts        /oic/ifs        /oic/con        /oic/mon        /oic/mnt        	/oic/ad        /oic/d	/oic/p	/oic/res
+@{RES_INTERFACES}    oic.if.ll    oic.if.baseline
 ${INVALID_KEY}  	invalidKey
 ${INVALID_VALUE}        invalidvalue
 ${INVALID_URI}          /invalidURI
@@ -245,6 +300,7 @@ ${REBOOT_KEY}  		 rb
 ${REBOOT_VALUE}	 	true
 ${REGION_KEY}   	region
 ${REGION_VALUE} 	Chittagong, Bangladesh
+${BWT_HREF}        /device/test-tool-bwt
 
 ${PATTERN}      ://
 
@@ -262,7 +318,7 @@ ${PROVISION_QUERY_OWNED}	Owned=TRUE
 
 ${SECURITY_CLIENT_DIR_GUI}        provisioning
 ${SECURITY_CLIENT_DIR_CLI}        provisioning
-${DTLS_RELAY_DIR}        ../DtlsRelay/linux
+${DTLS_RELAY_DIR}        ../DtlsRelay/
 ${DTLS_RELAY}        stdbuf -oL ./dtls_relay
 ${SECURITY_CLIENT}    stdbuf -oL ./simulator_runner.sh 1
 ${SECURED_CLIENT}    stdbuf -oL ./simulator_runner.sh 2
@@ -317,3 +373,7 @@ ${CON_UPDATE_REQUIREMENT_ACK}    3
 ${NON_UPDATE_REQUIREMENT_ACK}    12
 ${CON_UPDATE_REQUIREMENT_RST}    1
 ${NON_UPDATE_REQUIREMENT_RST}    4
+
+#Multicast Addresses
+${IP4_MULTICAST_GROUP}    224.0.1.187
+${IP6_MULTICAST_GROUP}    ff02:0:0:0:0:0:0:fd

@@ -16,7 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 package oic.ctt.network.http;
 
@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import oic.ctt.formatter.OCPayloadType;
 import oic.ctt.network.OICHelper;
 import oic.ctt.network.OICProtocolClient;
+import oic.ctt.network.OICRequestData;
 import oic.ctt.network.OICResponseData;
 import oic.ctt.network.OICHelper.MessageType;
 import oic.ctt.network.OICRequestData.Method;
@@ -87,27 +88,32 @@ public class OICHttpClient implements OICProtocolClient {
 
     }
 
-
-
     /**
      * Reset observe Status
-     * 
+     *
      */
     @Override
     public void resetObserveStatus() {
 
     }
-  
+
     @Override
-    public OICResponseData observeResource(MessageType type, int messageId, byte[] token,
-            String ip, int port, String uriPath, String query) {
+    public OICResponseData observeResource(MessageType type, int messageId,
+            byte[] token, String ip, int port, String uriPath, String query) {
         // TODO Auto-generated method stub
-    	return null;
+        return null;
     }
 
     @Override
     public OICResponseData cancelObserveWithGetMessage(MessageType type,
-            int messageId, byte[] token, String ip, int port, String uriPath, String query) {
+            int messageId, byte[] token, String ip, int port, String uriPath,
+            String query) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public OICRequestData getLastRequest() {
         // TODO Auto-generated method stub
         return null;
     }

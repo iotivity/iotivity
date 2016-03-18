@@ -1,0 +1,363 @@
+*** Settings ***
+Documentation     CT1.2.2.Retrieve Message based on CoAP
+Test Setup        Pre Condition Crudn Server
+Test Teardown     Post Condition Crudn Server
+Resource          OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+1_CON_Retrieve_Valid_Resource_Without_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose |This test case verifies that the IUT (OIC Server) properly responds to a RETRIEVE request message (e.g. CoAP GET) from the TE (OIC Client) for all implemented OIC Resources listed in /oic/res (including /oic/d and /oic/p) |
+    ...    | procedure | 1. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the IUT with no OIC Resource Interface specified to the first supported OIC Resource. |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    | procedure | 3. Repeat steps 1, 2 for all other OIC Resources supported by the IUT. |
+    ...    | expected | Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    | expected | Check 2. The response codes shall conform to those as defined in section 5.9 and 12.1.2 in IETF RFC 7252 (i.e. "2.05 Content") (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    ...    | expected | Check 13. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve
+    @{RESOURCE_LIST}    Get DUT Info Value    ${HREF}    ${DUT1_ID}    ${DISCOVERABLE}=1
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_LIST}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}    ${CONFIRMABLE}
+    \    @{list_interface}    Get Dut Info Value    ${INTERFACE}    ${DUT1_ID}    ${HREF}=${RESOURCE_URI}
+    \    ${default_interface}    Set Variable    @{list_interface}[0]
+    \    ${retrieve_response_default_if}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}?${INTERFACE}=${default_interface}    ${CONFIRMABLE}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check2 Verify Response Code    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check4 Verify Use of Default Interface    ${retrieve_response}    ${retrieve_response_default_if}
+    \    Run Keyword And Continue On Failure    Check13 Verify String Length    ${retrieve_response}    ${DUT1_ID}    ${RESOURCE_URI}
+    #4, 9, 11
+
+2_NON_Retrieve_Valid_Resource_Without_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose |This test case verifies that the DUT (OIC Server) properly responds to a RETRIEVE request message (e.g. CoAP GET) from the TE (OIC Client) for all implemented OIC Resources listed in /oic/res (including /oic/d and /oic/p) using all supported OIC Resource Interfaces |
+    ...    | procedure | 1. CTT sends a unicast NON RETRIEVE request message (i.e. CoAP GET) to the IUT with no OIC Resource Interface specified to the first supported OIC Resource. |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    | procedure | 3. Repeat steps 1, 2 for all other OIC Resources supported by the IUT. |
+    ...    | expected | Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    | expected | Check 2. The response codes shall conform to those as defined in section 5.9 and 12.1.2 in IETF RFC 7252 (i.e. "2.05 Content") (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    ...    | expected | Check 13. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve
+    @{RESOURCE_LIST}    Get DUT Info Value    ${HREF}    ${DUT1_ID}    ${DISCOVERABLE}=1
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_LIST}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}    ${NON_CONFIRMABLE}
+    \    @{list_interface}    Get Dut Info Value    ${INTERFACE}    ${DUT1_ID}    ${HREF}=${RESOURCE_URI}
+    \    ${default_interface}    Set Variable    @{list_interface}[0]
+    \    ${retrieve_response_default_if}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}?${INTERFACE}=${default_interface}    ${NON_CONFIRMABLE}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check2 Verify Response Code    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check4 Verify Use of Default Interface    ${retrieve_response}    ${retrieve_response_default_if}
+    \    Run Keyword And Continue On Failure    Check13 Verify String Length    ${retrieve_response}    ${DUT1_ID}    ${RESOURCE_URI}
+    #4, 9, 11
+
+3_CON_Retrieve_Valid_Resource_With_IF_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose |This test case verifies that the DUT (OIC Server) properly responds to a RETRIEVE request message (e.g. CoAP GET) from the TE (OIC Client) for all implemented OIC Resources listed in /oic/res (including /oic/d and /oic/p) using all supported OIC Resource Interfaces |
+    ...    | procedure | 1. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the IUT with OIC Resource Interface specified to the first supported OIC Resource. |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    | procedure | 3. Repeat steps 1, 2 with an “if” query for all OIC Resource Interfaces (e.g. ?if=oic.if.baseline) supported by the OIC Resource. |
+    ...    | procedure | 4. Repeat steps 1 to 3 for all other OIC Resources supported by the IUT. |
+    ...    | expected | Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    | expected | Check 2. The response codes shall conform to those as defined in section 5.9 and 12.1.2 in IETF RFC 7252 (i.e. "2.05 Content") (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    ...    | expected | Check 13. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve
+    @{RESOURCE_URI_WITH_QUERY}    Make Query    ${DUT1_ID}    ${INTERFACE}
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_URI_WITH_QUERY}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}    ${CONFIRMABLE}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check2 Verify Response Code    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check13 Verify String Length    ${retrieve_response}    ${DUT1_ID}    ${RESOURCE_URI}
+    #4, 9, 11
+
+4_NON_Retrieve_Valid_Resource_With_IF_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose |This test case verifies that the DUT (OIC Server) properly responds to a RETRIEVE request message (e.g. CoAP GET) from the TE (OIC Client) for all implemented OIC Resources listed in /oic/res (including /oic/d and /oic/p) using all supported OIC Resource Interfaces |
+    ...    | procedure | 1. CTT sends a unicast NON RETRIEVE request message (i.e. CoAP GET) to the IUT with OIC Resource Interface specified to the first supported OIC Resource. |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    | procedure | 3. Repeat steps 1, 2 with an “if” query for all OIC Resource Interfaces (e.g. ?if=oic.if.baseline) supported by the OIC Resource. |
+    ...    | procedure | 4. Repeat steps 1 to 3 for all other OIC Resources supported by the IUT. |
+    ...    | expected | Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    | expected | Check 2. The response codes shall conform to those as defined in section 5.9 and 12.1.2 in IETF RFC 7252 (i.e. "2.05 Content") (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    ...    | expected | Check 13. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve
+    @{RESOURCE_URI_WITH_QUERY}    Make Query    ${DUT1_ID}    ${INTERFACE}
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_URI_WITH_QUERY}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}    ${NON_CONFIRMABLE}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check2 Verify Response Code    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check13 Verify String Length    ${retrieve_response}    ${DUT1_ID}    ${RESOURCE_URI}
+    #4, 9, 11
+
+5_CON_Retrieve_Invalid_Resource_Without_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose |This test case verifies that the DUT (OIC Server) properly responds to a RETRIEVE request message (e.g. CoAP GET) from the TE (OIC Client) for all implemented OIC Resources listed in /oic/res (including /oic/d and /oic/p) using all supported OIC Resource Interfaces |
+    ...    | procedure | 1. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the IUT with no OIC Resource Interface specified to the invalid OIC Resource.(Not exist) |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    | expected | Check 17.The IUT shall return an error message (i.e. "4.04 Not Found") when trying to RETRIEVE a Resource that is not implemented in the IUT in Step 7 (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve
+    ${resource_uri}    Set Variable    ${INVALID_URI}
+    ${msgid}    Generate Message Id
+    ${token}    Generate Token
+    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}    ${SERVER_IP}
+    ...    ${SERVER_PORT}    ${resource_uri}    ${CONFIRMABLE}
+    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+
+6_NON_Retrieve_Invalid_Resource_Without_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose |This test case verifies that the DUT (OIC Server) properly responds to a RETRIEVE request message (e.g. CoAP GET) from the TE (OIC Client) for all implemented OIC Resources listed in /oic/res (including /oic/d and /oic/p) using all supported OIC Resource Interfaces |
+    ...    | procedure | 1. CTT sends a unicast NON RETRIEVE request message (i.e. CoAP GET) to the IUT with no OIC Resource Interface specified to the invalid OIC Resource.(Not exist) |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    | expected | Check 17.The IUT shall return an error message (i.e. "4.04 Not Found") when trying to RETRIEVE a Resource that is not implemented in the IUT in Step 7 (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve
+    ${resource_uri}    Set Variable    ${INVALID_URI}
+    ${msgid}    Generate Message Id
+    ${token}    Generate Token
+    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}    ${SERVER_IP}
+    ...    ${SERVER_PORT}    ${resource_uri}    ${NON_CONFIRMABLE}
+    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+
+7_CON_Retrieve_Invalid_Resource_With_IF_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose |This test case verifies that the DUT (OIC Server) properly responds to a RETRIEVE request message (e.g. CoAP GET) from the TE (OIC Client) for all implemented OIC Resources listed in /oic/res (including /oic/d and /oic/p) using all supported OIC Resource Interfaces |
+    ...    | procedure | 1. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the IUT with OIC Resource Interface specified to the invalid OIC Resource.(Not Exsit) |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    | expected | Check 17.The IUT shall return an error message (i.e. "4.04 Not Found") when trying to RETRIEVE a Resource that is not implemented in the IUT in Step 7 (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve
+    ${resource_uri}    Set Variable    ${INVALID_URI}?${INTERFACE}=${OIC_RESOURCE_INTERFACE_SYSTEM_DEFAULT}
+    ${msgid}    Generate Message Id
+    ${token}    Generate Token
+    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}    ${SERVER_IP}
+    ...    ${SERVER_PORT}    ${resource_uri}    ${CONFIRMABLE}
+    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+
+8_NON_Retrieve_Invalid_Resource_With_IF_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose |This test case verifies that the DUT (OIC Server) properly responds to a RETRIEVE request message (e.g. CoAP GET) from the TE (OIC Client) for all implemented OIC Resources listed in /oic/res (including /oic/d and /oic/p) using all supported OIC Resource Interfaces |
+    ...    | procedure | 1. CTT sends a unicast NON RETRIEVE request message (i.e. CoAP GET) to the IUT with OIC Resource Interface specified to the invalid OIC Resource.(Not Exsit) |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    | expected | Check 17.The IUT shall return an error message (i.e. "4.04 Not Found") when trying to RETRIEVE a Resource that is not implemented in the IUT in Step 7 (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve
+    ${resource_uri}    Set Variable    ${INVALID_URI}?${INTERFACE}=${OIC_RESOURCE_INTERFACE_SYSTEM_DEFAULT}
+    ${msgid}    Generate Message Id
+    ${token}    Generate Token
+    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}    ${SERVER_IP}
+    ...    ${SERVER_PORT}    ${resource_uri}    ${NON_CONFIRMABLE}
+    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+
+9_CON_Retrieve_OIC_Core_Resource_Without_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose |This test case verifies that the DUT (OIC Server) properly responds to a RETRIEVE request message (e.g. CoAP GET) from the TE (OIC Client) for all implemented OIC Resources listed in /oic/res (including /oic/d and /oic/p) using all supported OIC Resource Interfaces |
+    ...    | procedure | 1. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the IUT with no OIC Resource Interface specified to the Core OIC Resource(/oic/d, /oic/p) |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    | procedure | 3. Repeat steps 1, 2 for all other OIC Resources supported by the IUT. |
+    ...    | expected | Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    | expected | Check 2. The response codes shall conform to those as defined in section 5.9 and 12.1.2 in IETF RFC 7252 (i.e. "2.05 Content") (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    ...    | expected | Check 13. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve    Now
+    @{RESOURCE_LIST}    Get DUT Info value    ${HREF}    ${OIC_ID}
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_LIST}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}    ${CONFIRMABLE}
+    \    @{list_interface}    Get Dut Info Value    ${INTERFACE}    ${OIC_ID}    ${HREF}=${RESOURCE_URI}
+    \    ${default_interface}    Set Variable    @{list_interface}[0]
+    \    ${retrieve_response_default_if}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}?${INTERFACE}=${default_interface}    ${CONFIRMABLE}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check2 Verify Response Code    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check4 Verify Use of Default Interface    ${retrieve_response}    ${retrieve_response_default_if}
+    \    Run Keyword And Continue On Failure    Check13 Verify String Length    ${retrieve_response}    ${DUT1_ID}    ${RESOURCE_URI}
+    #4, 6, 9, 11
+
+10_NON_Retrieve_OIC_Core_Resource_Without_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose |This test case verifies that the DUT (OIC Server) properly responds to a RETRIEVE request message (e.g. CoAP GET) from the TE (OIC Client) for all implemented OIC Resources listed in /oic/res (including /oic/d and /oic/p) using all supported OIC Resource Interfaces |
+    ...    | procedure | 1. CTT sends a unicast NON RETRIEVE request message (i.e. CoAP GET) to the IUT with no OIC Resource Interface specified to the Core OIC Resource(/oic/d, /oic/p) |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    | procedure | 3. Repeat steps 1, 2 for all other OIC Resources supported by the IUT. |
+    ...    | expected | Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    | expected | Check 2. The response codes shall conform to those as defined in section 5.9 and 12.1.2 in IETF RFC 7252 (i.e. "2.05 Content") (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    ...    | expected | Check 13. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve    Now
+    @{RESOURCE_LIST}    Get DUT Info value    ${HREF}    ${OIC_ID}
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_LIST}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}    ${NON_CONFIRMABLE}
+    \    @{list_interface}    Get Dut Info Value    ${INTERFACE}    ${OIC_ID}    ${HREF}=${RESOURCE_URI}
+    \    ${default_interface}    Set Variable    @{list_interface}[0]
+    \    ${retrieve_response_default_if}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}?${INTERFACE}=${default_interface}    ${NON_CONFIRMABLE}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check2 Verify Response Code    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check4 Verify Use of Default Interface    ${retrieve_response}    ${retrieve_response_default_if}
+    \    Run Keyword And Continue On Failure    Check13 Verify String Length    ${retrieve_response}    ${DUT1_ID}    ${RESOURCE_URI}
+    #4, 6, 9, 11
+
+11_CON_Retrieve_OIC_Core_Resource_With_IF_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose |This test case verifies that the DUT (OIC Server) properly responds to a RETRIEVE request message (e.g. CoAP GET) from the TE (OIC Client) for all implemented OIC Resources listed in /oic/res (including /oic/d and /oic/p) using all supported OIC Resource Interfaces |
+    ...    | procedure | 1. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the IUT with OIC Resource Interface specified to the Core OIC Resource(/oic/d, /oic/p) |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    | procedure | 3. Repeat steps 1, 2 with an “if” query for all OIC Resource Interfaces (e.g. ?if=oic.if.baseline) supported by the OIC Resource. |
+    ...    | procedure | 4. Repeat steps 1 to 3 for all other OIC Resources supported by the IUT. |
+    ...    | expected | Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    | expected | Check 2. The response codes shall conform to those as defined in section 5.9 and 12.1.2 in IETF RFC 7252 (i.e. "2.05 Content") (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    ...    | expected | Check 13. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve    Now
+    @{RESOURCE_URI_WITH_QUERY}    Make Query    ${OIC_ID}    ${INTERFACE}
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_URI_WITH_QUERY}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}    ${CONFIRMABLE}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check2 Verify Response Code    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check13 Verify String Length    ${retrieve_response}    ${DUT1_ID}    ${RESOURCE_URI}
+    #4, 6, 9, 11
+
+12_NON_Retrieve_OIC_Core_Resource_With_IF_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose |This test case verifies that the DUT (OIC Server) properly responds to a RETRIEVE request message (e.g. CoAP GET) from the TE (OIC Client) for all implemented OIC Resources listed in /oic/res (including /oic/d and /oic/p) using all supported OIC Resource Interfaces |
+    ...    | procedure | 1. CTT sends a unicast NON RETRIEVE request message (i.e. CoAP GET) to the IUT with OIC Resource Interface specified to the Core OIC Resource(/oic/d, /oic/p) |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT using the appropriate OIC Resource Interface. |
+    ...    | procedure | 3. Repeat steps 1, 2 with an “if” query for all OIC Resource Interfaces (e.g. ?if=oic.if.baseline) supported by the OIC Resource. |
+    ...    | procedure | 4. Repeat steps 1 to 3 for all other OIC Resources supported by the IUT. |
+    ...    | expected | Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    | expected | Check 2. The response codes shall conform to those as defined in section 5.9 and 12.1.2 in IETF RFC 7252 (i.e. "2.05 Content") (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    ...    | expected | Check 13. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve    Now
+    @{RESOURCE_URI_WITH_QUERY}    Make Query    ${OIC_ID}    ${INTERFACE}
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_URI_WITH_QUERY}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}    ${NON_CONFIRMABLE}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check2 Verify Response Code    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check13 Verify String Length    ${retrieve_response}    ${DUT1_ID}    ${RESOURCE_URI}
+    #4, 6, 9, 11
+
+13_CON_Retrieve_OIC_Core_Resource_With_Parameter_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose | |
+    ...    | procedure | 1. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the IUT without any query to the first supported OIC Resource. |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT |
+    ...    | procedure | 3. Cache response to make parameter query |
+    ...    | procedure | 4. CTT sends a unicast CON RETRIEVE request message (i.e. CoAP GET) to the IUT with parameter query |
+    ...    | procedure | 5. IUT receives the request message and sends a RETRIEVE response message to CTT |
+    ...    | procedure | 6. Repeat steps 1 to 5 with other parameter query (i.e. ?units=C, ?units=F or ?unit=K for oic.r.temperature) supported by the OIC Resource. |
+    ...    | procedure | 7. Repeat steps 1 to 5 for all other OIC Resources supported by the IUT. |
+    ...    | expected | Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    | expected | Check 2. The response codes shall conform to those as defined in section 5.9 and 12.1.2 in IETF RFC 7252 (i.e. "2.05 Content") (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    ...    | expected | Check 13. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve    Now
+    @{LIST_OF_QUERY}    Get Parameter Query    ${DUT1_ID}    ${SERVER_IP}    ${SERVER_PORT}
+    : FOR    ${query}    IN    @{LIST_OF_QUERY}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${query}    ${CONFIRMABLE}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check2 Verify Response Code    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check13 Verify String Length    ${retrieve_response}    ${DUT1_ID}    ${RESOURCE_URI}
+    \    Run Keyword And Continue On Failure    Check18 Smart Home Mandatory Property    ${retrieve_response}
+    #4, 9, 11, 14
+
+14_NON_Retrieve_OIC_Core_Resource_With_Parameter_Query
+    [Documentation]    | since |2016-02-01 |
+    ...    | see |Section 8.3 : Retrieve of CRUDN |
+    ...    | purpose | |
+    ...    | procedure | 1. CTT sends a unicast NON RETRIEVE request message (i.e. CoAP GET) to the IUT without any query to the first supported OIC Resource. |
+    ...    | procedure | 2. IUT receives the request message and sends a RETRIEVE response message to CTT |
+    ...    | procedure | 3. Cache response to make parameter query |
+    ...    | procedure | 4. CTT sends a unicast NON RETRIEVE request message (i.e. CoAP GET) to the IUT with parameter query |
+    ...    | procedure | 5. IUT receives the request message and sends a RETRIEVE response message to CTT |
+    ...    | procedure | 6. Repeat steps 1 to 5 with other parameter query (i.e. ?units=C, ?units=F or ?unit=K for oic.r.temperature) supported by the OIC Resource. |
+    ...    | procedure | 7. Repeat steps 1 to 5 for all other OIC Resources supported by the IUT. |
+    ...    | expected | Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    | expected | Check 2. The response codes shall conform to those as defined in section 5.9 and 12.1.2 in IETF RFC 7252 (i.e. "2.05 Content") (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE]). |
+    ...    | expected | Check 13. All text strings shall not exceed a max length of 64 octets (bytes) (3.4 Data Types [CORE]). |
+    [Tags]    Mandatory    Server    Retrieve    Now
+    @{LIST_OF_QUERY}    Get Parameter Query    ${DUT1_ID}    ${SERVER_IP}    ${SERVER_PORT}
+    : FOR    ${query}    IN    @{LIST_OF_QUERY}
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${retrieve_response}    Send Get Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${query}    ${NON_CONFIRMABLE}
+    \    Run Keyword And Continue On Failure    Should Not Be Empty    ${retrieve_response}    No valid response received for unicast get
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check2 Verify Response Code    ${retrieve_response}
+    \    Run Keyword And Continue On Failure    Check13 Verify String Length    ${retrieve_response}    ${DUT1_ID}    ${RESOURCE_URI}
+    \    Run Keyword And Continue On Failure    Check18 Smart Home Mandatory Property    ${retrieve_response}
+    #4, 9, 11, 14
+
+*** Keywords ***
+Check1 Verify Payload Encoding
+    [Arguments]    ${response}
+    #    Log    Implict check
+    ${json_payload}    Get Response Json    ${response}
+    ${length}    Get Length    ${json_payload}
+    ${content_format}    Run Keyword If    ${length} > 0    Get Response Content Format    ${response}
+    Run Keyword If    ${length} > 0    Should Be Equal    ${content_format}    CBOR
+
+Check2 Verify Response Code
+    [Arguments]    ${response}
+    ${response_code}    Get Response Code    ${response}
+    Should Be Equal    ${response_code}    2.05
+    #The response code will be different for different test cases, this keyword should check dynamically
+
+Check4 Verify Use of Default Interface
+    [Arguments]    ${response_unknown_if}    ${response_default_if}
+    ${payload_unknown_if}    Get Response Json    ${response_unknown_if}
+    ${payload_default_if}    Get Response Json    ${response_default_if}
+    ${compare_result}    Compare Json    ${payload_unknown_if}    ${payload_default_if}
+    Should Be Equal    ${compare_result}    ${True}
+
+Check13 Verify String Length
+    [Arguments]    ${response}    ${dut_id}    ${href}
+    ${cn}    Get Response Json    ${response}
+    ${msg}    Check Str Attributes Length    ${href}    ${dut_id}    ${cn}
+    Should Be Empty    ${msg}    ${msg}
+
+Check18 Smart Home Mandatory Property
+    [Arguments]    ${response}
+    [Documentation]    A Resource that utilizes a vendor-defined Resource Type shall implement the smart home specified mandatory Properties listed in table 6-2. (6.4 Vendor specified OIC Resource Types [SH]).
+    Log    Unimplemented

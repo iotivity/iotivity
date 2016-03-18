@@ -1,0 +1,82 @@
+#%RAML 0.8
+title: OICMediaSourceList
+version: v1.0-20150805
+schemas:
+  - mediaSourceList: !include oic.r.mediaSourceList.json
+
+traits:
+  - interface:
+      queryParameters:
+        if:
+          enum: [ "oic.if.a" ]
+
+/mediaSourceListResURI:
+  description: |
+    This resource provides the list of media sources available on the device.
+    The sources are an array of mediaSource(s) as separately defined.
+    Two specializations of this resource exist.
+    One with a resource type of oic.r.media.input when the array is inputs only.
+    One with a resource type of oic.r.media.output when the array is outputs only.
+
+  displayName: Media Source List
+  is: [ interface ]
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            schema: mediaSourceList
+            example: |
+              {
+                "rt": "oic.r.mediaSourceList",
+                "id": "unique_example_id",
+                "sources": [
+                  {
+                    "sourceName": "HDMI-CEC",
+                    "sourceNumber": "1",
+                    "sourceType": "audioPlusVideo",
+                    "status": true
+                  },
+                  {
+                    "sourceName": "dualRCA",
+                    "sourceNumber": "1",
+                    "sourceType": "audioOnly",
+                    "status": false
+                  }
+                ]
+              }
+
+  post:
+    description: |
+      Changes the status of the source(s).
+      Allows changes of the sourceName and the status.
+    body:
+      application/json:
+        schema: mediaSourceList
+        example: |
+          {
+            "id":     "unique_example_id",
+            "sources": [
+              {
+               "sourceName":    "my new name",
+               "sourceNumber":  "1",
+               "status":        true
+              }
+            ]
+          }
+    responses:
+      200:
+        body:
+          application/json:
+            schema: mediaSourceList
+            example: |
+              {
+                "id":     "unique_example_id",
+                "sources": [
+                  {
+                    "sourceName":   "my new name",
+                    "sourceNumber": "1",
+                    "status":       true
+                  }
+                ]
+              }

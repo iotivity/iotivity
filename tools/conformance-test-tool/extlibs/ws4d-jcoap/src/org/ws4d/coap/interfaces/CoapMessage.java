@@ -78,6 +78,10 @@ public interface CoapMessage {
 
     public CoapMediaType getContentType();
 
+    public String getContentTypeString();
+
+    public String getAcceptString();
+
     public byte[] getToken();
 
     public void setToken(byte[] token);
@@ -100,6 +104,7 @@ public interface CoapMessage {
 
     public void removeOption(CoapHeaderOptionType optionType); //TODO: could this compromise the internal state?
 
+    @Override
     public String toString();
 
     public CoapChannel getChannel();
@@ -119,7 +124,9 @@ public interface CoapMessage {
     public boolean isEmpty();
 
     /* unique by remote address, remote port, local port and message id */
+    @Override
     public int hashCode();
-    
+
+    @Override
     public boolean equals(Object obj);
 }

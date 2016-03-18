@@ -28,6 +28,33 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 
+#define TV_Device_URI "/TV-1"
+#define TV_SWITCH_URI "/BinarySwitchResURI"
+#define TV_AUDIO_URI "/AudioResURI"
+#define TV_MEDIA_SOURCE_LIST_URI "/mediaSourceListResURI"
+
+#define AC_Device_URI  "/AirCon-1"
+#define AC_SWITCH_URI "/BinarySwitchResURI"
+#define AC_TEMPERATURE_URI "/TemperatureResURI"
+#define AC_AIR_FLOW_URI "/AirFlowResURI"
+
+#define TV_Device_TYPE "oic.d.tv"
+#define AC_Device_TYPE "oic.d.airconditioner"
+#define SWITCH_RESOURCE_TYPE "oic.r.switch.binary"
+#define AUDIO_RESOURCE_TYPE "oic.r.audio"
+#define MEDIA_SOURCE_LIST_RESOURCE_TYPE "oic.r.mediasourcelist"
+#define TEMPERATURE_RESOURCE_TYPE "oic.r.temperature"
+#define AIR_FLOW_RESOURCE_TYPE "oic.r.airflow"
+//#define VOLUME_RESOURCE_TYPE
+
+#define TV_Device_INTERFACE "oic.if.a"
+#define AC_Device_INTERFACE "oic.if.a"
+#define SWITCH_RESOURCE_INTERFACE "oic.if.a"
+#define AUDIO_RESOURCE_INTERFACE "oic.if.a"
+#define MEDIA_SOURCE_LIST_RESOURCE_INTERFACE "oic.if.a"
+#define TEMPERATURE_RESOURCE_INTERFACE "oic.if.a oic.if.s"
+#define AIR_FLOW_RESOURCE_INTERFACE "oic.if.a"
+
 #define ACTUATOR_INTERFACE "oic.if.a"
 #define LIGHT_1_URI "/device/light-1"
 #define LIGHT_2_URI "/device/light-2"
@@ -53,6 +80,7 @@ using namespace OC;
 using namespace std;
 
 vector< SampleResource * > createdResourceList;
+vector< SampleResource * > createdSmartHomeResourceList;
 vector< SampleResource * > createdInvisibleResourceList;
 vector< shared_ptr< OCResource > > foundResourceList;
 vector< shared_ptr< OCResource > > foundCollectionList;
@@ -67,6 +95,16 @@ OCResourceHandle childHandle = NULL;
 OCResourceHandle collectionHandle = NULL;
 SampleResource* manyResources[MAX_LIGHT_RESOURCE_COUNT];
 OCRepresentation resourceRepresentation;
+
+SampleResource *tvDevice;
+SampleResource *acDevice;
+SampleResource *tvSwitchResource;
+SampleResource *tvAudioResource;
+SampleResource *tvMediaSourceListResource;
+SampleResource *acSwitchResource;
+SampleResource *acAirFlowResource;
+SampleResource *acTemperatureResource;
+
 bool hasCallbackArrived = false;
 bool isObservingResource = false;
 bool isGroupCreated = false;
@@ -95,6 +133,8 @@ void onResourceFound(shared_ptr< OCResource > resource);
 
 void handleMenu(void);
 void showMenu(void);
+void createTvDevice(void);
+void createAirConDevice(void);
 void createResource(void);
 void createSecuredResource(void);
 void createInvisibleResource(void);
@@ -304,12 +344,12 @@ void onResourceFound(shared_ptr< OCResource > resource)
 
 void onCollectionFound(shared_ptr< OCResource > collection)
 {
-    cout << "Found a resource!!" << endl;
+    cout << "Found a Collection!!" << endl;
 
     if (collection)
     {
         foundCollectionList.push_back(collection);
-        cout << "uri of the found resource is " << collection->uri() << endl;
+        cout << "uri of the found collection is " << collection->uri() << endl;
         hasCallbackArrived = true;
 
         cout << "Host of found resource: " << collection->host() << endl;
@@ -317,6 +357,7 @@ void onCollectionFound(shared_ptr< OCResource > collection)
         cout << "unique identifier of found resource is = " << collection->uniqueIdentifier()
                 << endl;
         collection->get("", DEFAULT_INTERFACE, QueryParamsMap(), onGet);
+        collection->get("", BATCH_INTERFACE, QueryParamsMap(), onGet);
     }
 
 }
@@ -378,7 +419,8 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
         bool isCollection = false;
         for (auto interface = interfacelist.begin(); interface != interfacelist.end(); interface++)
         {
-            if ((*interface).compare(GROUP_INTERFACE) == 0)
+            if (((*interface).compare(GROUP_INTERFACE) == 0)
+                    || ((*interface).compare(BATCH_INTERFACE) == 0))
             {
                 isCollection = true;
                 break;
@@ -544,7 +586,7 @@ void createResource()
     {
         createdLightResource = new SampleResource();
         createdLightResource->setResourceProperties(LIGHT_1_URI, RESOURCE_TYPE_LIGHT,
-                ACTUATOR_INTERFACE);
+        ACTUATOR_INTERFACE);
         OCStackResult result = createdLightResource->startServer();
 
         if (result == OC_STACK_OK)
@@ -580,6 +622,213 @@ void createResource()
     }
 }
 
+void createTvDevice()
+{
+
+    cout << "Creating TV Device Resources!!" << endl;
+    if (createdSmartHomeResourceList.size() == 0)
+    {
+
+        tvDevice = new SampleResource();
+        tvDevice->setResourceProperties(TV_Device_URI, TV_Device_TYPE,
+        TV_Device_INTERFACE);
+        OCStackResult result = tvDevice->startServer();
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "TV Device created successfully" << endl;
+            createdSmartHomeResourceList.push_back(tvDevice);
+        }
+        else
+        {
+            cout << "Unable to create TV Device resource" << endl;
+        }
+
+        tvSwitchResource = new SampleResource();
+        tvSwitchResource->setResourceProperties(TV_SWITCH_URI, SWITCH_RESOURCE_TYPE,
+        SWITCH_RESOURCE_INTERFACE);
+        OCRepresentation switchRep;
+        string value = "";
+        switchRep.setValue("value", true);
+        tvSwitchResource->setResourceRepresentation(switchRep);
+
+        result = tvSwitchResource->startServer();
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "TV Binary Switch Resource created successfully" << endl;
+            createdSmartHomeResourceList.push_back(tvSwitchResource);
+        }
+        else
+        {
+            cout << "Unable to create TV Binary Switch resource" << endl;
+        }
+
+        tvMediaSourceListResource = new SampleResource();
+        tvMediaSourceListResource->setResourceProperties(TV_MEDIA_SOURCE_LIST_URI,
+        MEDIA_SOURCE_LIST_RESOURCE_TYPE,
+        MEDIA_SOURCE_LIST_RESOURCE_INTERFACE);
+//        uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE;
+        OCRepresentation mainRep;
+        OCRepresentation rep1;
+        OCRepresentation rep2;
+        vector< OCRepresentation > list;
+        value = "HDMI-CEC";
+        rep1.setValue("sourceName", value);
+        rep1.setValue("sourceNumber", 1);
+        value = "videoPlusAudio";
+        rep1.setValue("sourceType", value);
+        rep1.setValue("status", true);
+        value = "dualRCA";
+        rep2.setValue("sourceName", value);
+        rep2.setValue("sourceNumber", 1);
+        value = "audioOnly";
+        rep2.setValue("sourceType", value);
+        rep2.setValue("status", false);
+        list.push_back(rep1);
+        list.push_back(rep2);
+        mainRep.setValue("sources", list);
+        tvMediaSourceListResource->setResourceRepresentation(mainRep);
+        result = tvMediaSourceListResource->startServer();
+//        result = tvMediaSourceListResource->startServer(resourceProperty);
+        tvMediaSourceListResource->setAsSlowResource();
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "TV Media Source Input Resource created successfully" << endl;
+            createdSmartHomeResourceList.push_back(tvMediaSourceListResource);
+        }
+        else
+        {
+            cout << "Unable to create TV Media Source Input resource" << endl;
+        }
+
+        tvAudioResource = new SampleResource();
+        tvAudioResource->setResourceProperties(TV_AUDIO_URI, AUDIO_RESOURCE_TYPE,
+        AUDIO_RESOURCE_INTERFACE);
+        OCRepresentation audioRep;
+        int volume = 10;
+        audioRep.setValue("mute", true);
+        audioRep.setValue("volume", volume);
+        tvAudioResource->setResourceRepresentation(audioRep);
+
+        result = tvAudioResource->startServer();
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "TV Audio Resource created successfully" << endl;
+            createdSmartHomeResourceList.push_back(tvAudioResource);
+        }
+        else
+        {
+            cout << "Unable to create TV Audio resource" << endl;
+        }
+    }
+    else
+    {
+        cout << "Already a Smart Home Device Resources are  created!!" << endl;
+    }
+}
+
+void createAirConDevice()
+{
+
+    cout << "Creating AirCon Device Resources!!" << endl;
+    if (createdSmartHomeResourceList.size() == 0)
+    {
+        acDevice = new SampleResource();
+        acDevice->setResourceProperties(AC_Device_URI, AC_Device_TYPE,
+        AC_Device_INTERFACE);
+        OCStackResult result = acDevice->startServer();
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "AirCon Device created successfully" << endl;
+            createdSmartHomeResourceList.push_back(acDevice);
+        }
+        else
+        {
+            cout << "Unable to create AirCon Device resource" << endl;
+        }
+
+        acSwitchResource = new SampleResource();
+        acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
+        SWITCH_RESOURCE_INTERFACE);
+        OCRepresentation switchRep;
+        string value = "";
+        switchRep.setValue("value", true);
+        acSwitchResource->setResourceRepresentation(switchRep);
+
+        result = acSwitchResource->startServer();
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "AirConditioner Binary Switch Resource created successfully" << endl;
+            createdSmartHomeResourceList.push_back(acSwitchResource);
+        }
+        else
+        {
+            cout << "Unable to create AirConditioner Binary Switch resource" << endl;
+        }
+
+        acTemperatureResource = new SampleResource();
+        acTemperatureResource->setResourceProperties(AC_TEMPERATURE_URI,
+        TEMPERATURE_RESOURCE_TYPE,
+        TEMPERATURE_RESOURCE_INTERFACE);
+        OCRepresentation temperatureRep;
+        value = "C";
+        temperatureRep.setValue("units", value);
+        acTemperatureResource->setAsReadOnly("units");
+        value = "10 40";
+        temperatureRep.setValue("range", value);
+        acTemperatureResource->setAsReadOnly("range");
+        int temperature = 24;
+        temperatureRep.setValue("temperature", temperature);
+        acTemperatureResource->setResourceRepresentation(temperatureRep);
+        result = acTemperatureResource->startServer();
+//        tvMediaSourceListResource->setAsSlowResource();
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "Air Conditioner Temperature Resource created successfully" << endl;
+            createdSmartHomeResourceList.push_back(tvMediaSourceListResource);
+        }
+        else
+        {
+            cout << "Unable to create Air Conditioner Temperature resource" << endl;
+        }
+
+        acAirFlowResource = new SampleResource();
+        acAirFlowResource->setResourceProperties(AC_AIR_FLOW_URI, AIR_FLOW_RESOURCE_TYPE,
+        AIR_FLOW_RESOURCE_INTERFACE);
+        OCRepresentation airFlowRep;
+        int speed = 10;
+        value = "up";
+        airFlowRep.setValue("direction", value);
+        airFlowRep.setValue("speed", speed);
+        value = "5 50";
+        airFlowRep.setValue("range", value);
+        acAirFlowResource->setAsReadOnly("range");
+        acAirFlowResource->setResourceRepresentation(airFlowRep);
+
+        result = acAirFlowResource->startServer();
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "Air Conditioner AirFlow Resource created successfully" << endl;
+            createdSmartHomeResourceList.push_back(acAirFlowResource);
+        }
+        else
+        {
+            cout << "Unable to create Air Conditioner AirFlow resource" << endl;
+        }
+    }
+    else
+    {
+        cout << "Already a Smart Home Device Resources are  created!!" << endl;
+    }
+}
+
 void createManyLightResources()
 {
     cout << "createResource called!!" << endl;
@@ -593,7 +842,7 @@ void createManyLightResources()
             uri = baseUri + to_string(lightCount++);
             manyResources[i] = new SampleResource();
             manyResources[i]->setResourceProperties(uri, RESOURCE_TYPE_LIGHT,
-                    ACTUATOR_INTERFACE);
+            ACTUATOR_INTERFACE);
             OCStackResult result = manyResources[i]->startServer();
 
             if (result == OC_STACK_OK)
@@ -623,7 +872,7 @@ void createSecuredResource()
 
         securedLightResource = new SampleResource();
         securedLightResource->setResourceProperties(LIGHT_SECURED_URI, RESOURCE_TYPE_LIGHT,
-                ACTUATOR_INTERFACE);
+        ACTUATOR_INTERFACE);
         uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE;
         OCStackResult result = securedLightResource->startServer(resourceProperty);
 
@@ -639,7 +888,7 @@ void createSecuredResource()
 
         securedFanResource = new SampleResource();
         securedFanResource->setResourceProperties(FAN_SECURED_URI, RESOURCE_TYPE_FAN,
-                ACTUATOR_INTERFACE);
+        ACTUATOR_INTERFACE);
         resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_SECURE;
         result = securedFanResource->startServer(resourceProperty);
 
@@ -667,7 +916,7 @@ void createInvisibleResource()
     {
         invisibleFanResource = new SampleResource();
         invisibleFanResource->setResourceProperties(FAN_INVISIBLE_URI, RESOURCE_TYPE_FAN,
-                ACTUATOR_INTERFACE);
+        ACTUATOR_INTERFACE);
         uint8_t resourceProperty = OC_ACTIVE;
         OCStackResult result = invisibleFanResource->startServer(resourceProperty);
 
@@ -683,7 +932,7 @@ void createInvisibleResource()
 
         invisibleLightResource = new SampleResource();
         invisibleLightResource->setResourceProperties(LIGHT_INVISIBLE_URI, RESOURCE_TYPE_LIGHT,
-                ACTUATOR_INTERFACE);
+        ACTUATOR_INTERFACE);
         resourceProperty = OC_ACTIVE;
         result = invisibleLightResource->startServer(resourceProperty);
 
@@ -955,6 +1204,18 @@ void deleteResource()
         }
 //        delete manyResources;
 //        manyResources = NULL;
+    }
+
+    if (createdSmartHomeResourceList.size() > 0)
+    {
+        for (unsigned int i = 0; i < createdSmartHomeResourceList.size(); i++)
+        {
+            result = createdSmartHomeResourceList[i]->stopServer();
+            if (result == OC_STACK_OK)
+            {
+                cout << "A Smart Home Resource stopped successfully" << endl;
+            }
+        }
     }
 }
 
@@ -1586,6 +1847,9 @@ void showMenu()
     cout << "\t\t 29. Discover Platform - Unicast" << endl;
     cout << "\t\t 30. Find Group" << endl;
     cout << "\t\t 31. Join Found Resource To Found Group" << endl;
+    cout << "\t Smart Home Vertical Resource Creation:" << endl;
+    cout << "\t\t 101. Create Smart TV Device" << endl;
+    cout << "\t\t 102. Create Air Conditioner Device" << endl;
 
     hasCallbackArrived = false;
     handleMenu();
@@ -1603,7 +1867,7 @@ void handleMenu()
     cin >> userInput;
 
     long int choice = strtol(userInput.c_str(), NULL, 10);
-    if (choice > 31 || choice < 0 || (choice > 8 && choice < 10))
+    if ((choice > 31 && choice < 101) || choice < 0 || (choice > 8 && choice < 10) || choice > 102)
     {
         cout << "Invalid Input. Please input your choice again" << endl;
     }
@@ -1801,6 +2065,14 @@ void handleMenu()
                 foundResourceList.at(0)->post(collectionType, LINK_INTERFACE, linkRep,
                         QueryParamsMap(), onPost, qos);
 
+                break;
+
+            case 101:
+                createTvDevice();
+                break;
+
+            case 102:
+                createAirConDevice();
                 break;
 
             case 0:

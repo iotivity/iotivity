@@ -1,262 +1,227 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-    <extension
 
+	<extension
          id="application"
-
          point="org.eclipse.core.runtime.applications">
-        <application
-
+      <application
             visible="true">
-            <run
+         <run
+               class="oic.ctt.ui.Application">
+         </run>
+      </application>
+   </extension>
 
-               class="oic.ctt.ui.Application"></run>
-        </application>
-    </extension>
-    <extension
-
+ <extension
        id="product"
-
        point="org.eclipse.core.runtime.products">
-        <product
-
-          application="org.eclipse.e4.ui.workbench.swt.E4Application"
-
+    <product
+          application="oic.ctt.ui.application"
           name="OIC Conformance Test Tool">
-            <property
-
+       <property
              name="windowImages"
-
-             value="icons/site.ico"></property>
-            <property
-
+             value="icons/site.ico">
+       </property>
+       <property
              name="aboutText"
-
-             value="OIC Conformance Test Tool&#x0A;&#x0A;Version: 1.0.0&#x0A;Build id: 20151028&#x0A;&#x0A;(c) Copyright SQE Lab., 2015.  All rights reserved.&#x0A;&#x0A;This product includes Robot Framework&#x0A;http://robotframework.org/"></property>
-            <property
-
+             value="OIC Conformance Test Tool&#x0A;&#x0A;Version: 0.8.0&#x0A;&#x0A;(c) Copyright OIC/IoTivity, 2015.  All rights reserved.&#x0A;&#x0A;This product includes Robot Framework&#x0A;http://robotframework.org/">
+       </property>
+       <property
              name="aboutImage"
-
-             value="icons/about.png"></property>
-            <property
-
+             value="icons/about.png">
+       </property>
+       <property
              name="startupForegroundColor"
-
-             value="E5E5E5"></property>
-            <property
-
+             value="E5E5E5">
+       </property>
+       <property
              name="startupProgressRect"
-
-             value="3,287,445,12"></property>
-            <property
-
+             value="3,287,445,12">
+       </property>
+       <property
              name="startupMessageRect"
-
-             value="3,270,445,18"></property>
-            <property
-
+             value="3,270,445,18">
+       </property>
+       <property
              name="preferenceCustomization"
-
-             value="plugin_customization.ini"></property>
-            <property
-
+             value="plugin_customization.ini">
+       </property>
+       <property
              name="appName"
-
-             value="OIC Conformance Test Tool"></property>
-        </product>
-    </extension>
-    <extension
-
+             value="OIC Conformance Test Tool">
+       </property>
+    </product>
+ 	</extension>	
+ 	<extension
          point="org.eclipse.ui.perspectives">
-        <perspective
-
+      <perspective
             class="oic.ctt.ui.Perspective"
-
             icon="icons/site.png"
-
             id="oic.ctt.ui.perspective"
+            name="OIC Conformance Test Tool">
+      </perspective>
 
-            name="OIC Conformance Test Tool"></perspective>
-    </extension>
-    <extension
-
+   </extension>
+   
+   <extension
          point="org.eclipse.ui.editors">
-        <editor
-
+ 		<editor
             name="Robot Framework Textfile Editor"
-
             extensions="robot"
-
             contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
-
             class="com.nitorcreations.robotframework.eclipseide.editors.RobotFrameworkTextfileEditor"
-
-            id="com.nitorcreations.robotframework.eclipseide.editors.RobotFrameworkTextfileEditor"></editor>
-        <editor
-
+            id="com.nitorcreations.robotframework.eclipseide.editors.RobotFrameworkTextfileEditor">
+      </editor>
+      <editor
             name="Test Suite Editor"
-
             default="true"
-
             extensions="txt"
-
             icon="icons/editor_area.png"
-
             contributorClass="oic.ctt.ui.multipages.MultiPageEditorContributor"
-
             class="oic.ctt.ui.multipages.TestSuiteMultiPageEditor"
-
-            id="oic.ctt.ui.multipages.TestSuiteMultiPageEditor"></editor>
-        <editor
-
+            id="oic.ctt.ui.multipages.TestSuiteMultiPageEditor">
+      </editor>
+      <editor
             name="Test Plan Editor"
-
             icon="icons/settings.gif"
-
             class="oic.ctt.ui.multipages.TestPlanMultiPageEditor"
-
-            id="oic.ctt.ui.multipages.TestPlanMultiPageEditor"></editor>
-        <editor
-
+            id="oic.ctt.ui.multipages.TestPlanMultiPageEditor">
+      </editor>
+       <editor
+             class="oic.ctt.ui.multipages.ResourceEditor"
+             default="false"
+             icon="icons/settings.gif"
+             id="oic.ctt.ui.multipages.ResourceEditor"
+             contributorClass="oic.ctt.ui.multipages.MultiPageEditorContributor"
+             name="Resource Editor">
+      </editor>
+      <editor
+             class="oic.ctt.ui.multipages.ResourceCreator"
+             default="false"
+             icon="icons/settings.gif"
+             id="oic.ctt.ui.multipages.ResourceCreator"
+             contributorClass="oic.ctt.ui.multipages.MultiPageEditorContributor"
+             name="Resource Creator">
+      </editor>
+      <editor
             name="TOI Report"
-
             icon="icons/report.png"
-
             class="oic.ctt.ui.multipages.ReportPageEditor"
-
-            id="oic.ctt.ui.multipages.ReportPageEditor"></editor>
-    </extension>
-    <extension
-
+            id="oic.ctt.ui.multipages.ReportPageEditor">
+      </editor>
+   </extension>
+   
+   <extension
          id="testProblem"
-
          name="Test Problem"
-
          point="org.eclipse.core.resources.markers">
-        <super
-
-            type="org.eclipse.core.resources.problemmarker"></super>
-        <persistent
-
-            value="true"></persistent>
-    </extension>
-    <extension
-
+      <super
+            type="org.eclipse.core.resources.problemmarker">
+      </super>
+      <persistent
+            value="true">
+      </persistent>
+   </extension>
+   <extension
          id="rfeBuilder"
-
          name="Robot Framework Validator Project Builder"
-
          point="org.eclipse.core.resources.builders">
-        <builder
-
+      <builder
             callOnEmptyDelta="false"
-
             hasNature="true">
-            <run
-
-               class="com.nitorcreations.robotframework.eclipseide.builder.RobotBuilder"></run>
-        </builder>
-    </extension>
-    <extension
-
+         <run
+               class="com.nitorcreations.robotframework.eclipseide.builder.RobotBuilder">
+         </run>
+      </builder>
+   </extension>
+   <extension
          id="rfeNature"
-
          name="Robot Framework Validator Project Nature"
-
          point="org.eclipse.core.resources.natures">
-        <runtime>
-            <run
-
-               class="com.nitorcreations.robotframework.eclipseide.builder.RobotNature"></run>
-        </runtime>
-        <builder
-
-            id="com.nitorcreations.robotframework.eclipseide.rfeBuilder"></builder>
-    </extension>
-    <extension
-
+      <runtime>
+         <run
+               class="com.nitorcreations.robotframework.eclipseide.builder.RobotNature">
+         </run>
+      </runtime>
+      <builder
+            id="com.nitorcreations.robotframework.eclipseide.rfeBuilder">
+      </builder>
+   </extension>
+   <extension
          point="org.eclipse.ui.views">
-        <category
-
+         <category
             id="oic.ctt.ui.views.category"
-
-            name="SITE"></category>
-        <view
-
-      		 category="oic.ctt.ui.views.category"
-
+            name="SITE">
+         </category>
+      <view
+      		category="oic.ctt.ui.views.category"
             class="oic.ctt.ui.views.TestSuiteView"
-
             icon="icons/package_obj.gif"
-
             id="oic.ctt.ui.views.TestSuiteView"
-
             name="Test Suite"
-
             allowMultiple="true"
-
-            restorable="true"></view>
-        <view
-
+            restorable="true">
+      </view>
+      <view
             category="oic.ctt.ui.views.category"
-
             class="oic.ctt.ui.views.TestPlanView"
-
             icon="icons/packagefolder_obj.gif"
-
             id="oic.ctt.ui.views.TestPlanView"
-
             name="Test Plan"
-
-            restorable="true"></view>
-        <view
-
+            restorable="true">
+      </view>
+      <view
             category="oic.ctt.ui.views.category"
-
             class="oic.ctt.ui.views.TestReportView"
-
             icon="icons/history_list.gif"
-
             id="oic.ctt.ui.views.TestReportView"
-
             name="Test Report"
-
-            restorable="true"></view>
-        <view
-
+            restorable="true">
+      </view>
+      <view
             category="oic.ctt.ui.views.category"
-
+            class="oic.ctt.ui.views.RAMLView"
+            icon="icons/packagefolder_obj.gif"
+            id="oic.ctt.ui.views.RAMLView"
+            name="RAMLS"
+            restorable="true">
+      </view>
+         <view
+            category="oic.ctt.ui.views.category"
+            class="oic.ctt.ui.views.ResourceView"
+            icon="icons/resource.png"
+            id="oic.ctt.ui.views.ResourceView"
+            name="Resource"
+            restorable="true">
+      </view>
+      <view
+            category="oic.ctt.ui.views.category"
             class="oic.ctt.ui.views.LogView"
-
             icon="icons/logview.png"
-
             id="oic.ctt.ui.views.LogView"
-
             name="Log"
-
-            restorable="true"></view>
-    </extension>
-    <extension
-
+            restorable="true">
+      </view>
+      
+   </extension>
+  
+   <extension
          point="org.eclipse.help.contexts">
-        <contexts
-
-            file="contexts.xml"></contexts>
-    </extension>
-    <extension
-
+      <contexts
+            file="contexts.xml">
+      </contexts>
+   </extension>
+   <extension
          point="org.eclipse.linuxtools.tmf.ui.uml2SDLoader">
-        <uml2SDLoader
-
+      <uml2SDLoader
             class="oic.ctt.ui.util.ProgressLoader"
-
             default="true"
-
             id="oic.ctt.ui.util.ProgressLoader"
-
             name="Test Progress Loader"
+            view="oic.ctt.ui.views.TestProgressView">
+      </uml2SDLoader>
+   </extension>
+   
 
-            view="oic.ctt.ui.views.TestProgressView"></uml2SDLoader>
-    </extension>
 </plugin>

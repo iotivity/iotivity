@@ -90,7 +90,13 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 		            if (receivedACKList.contains(mid)) {
 		                message.setMessageID(mid);
 		                message.setPacketType(CoapPacketType.ACK);
-		                receivedACKList.remove(new Integer(mid));
+		                Iterator<Integer> it = receivedACKList.iterator();
+		                while(it.hasNext()){
+		                    int tmpMid = it.next();
+		                    if (tmpMid == mid){
+		                        it.remove();
+		                    }
+		                }
 		            } else {
 		                logger.error("No previous ACK received for this separate response. Request Msg ID: " + mid);
 		            }
@@ -143,7 +149,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 				    if (message.getPacketType().equals(CoapPacketType.CON))
 				        sendMessage(new CoapEmptyMessage(CoapPacketType.ACK, message.getMessageID()));
 				    /* create a new request for the next block */
-				    BasicCoapRequest request =  new BasicCoapRequest(lastRequest.getPacketType(), lastRequest.getRequestCode(), channelManager.getNewMessageID());
+				    BasicCoapRequest request =  new BasicCoapRequest(lastRequest.getPacketType(), lastRequest.getRequestCode(), channelManager.getNewMessageID());                    
 				    request.copyHeaderOptions((BasicCoapRequest) blockContext.getFirstRequest());
 				    request.setBlock2(newBlock);
 				    request.setToken(message.getToken()); // Setting same token as previous request
@@ -172,9 +178,9 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 
     @Override
     public BasicCoapRequest createRequest(boolean reliable, CoapRequestCode requestCode) {
-        BasicCoapRequest msg = new BasicCoapRequest(
+    	BasicCoapRequest msg = new BasicCoapRequest(
                 reliable ? CoapPacketType.CON : CoapPacketType.NON, requestCode,
-                        channelManager.getNewMessageID());
+                channelManager.getNewMessageID());
         msg.setChannel(this);
         return msg;
     }
@@ -185,7 +191,7 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
         logger.debug(" Mapped token: " + msg.getTokenString() + " to Mid: " + msg.getMessageID());
         tokenMidmap.put(msg.getTokenString(), msg.getMessageID());
         if (msg.getPayloadLength() >= mMaxBlockSize.getSize()){
-            logger.info("Total msg payload length: " + msg.getPayloadLength() + " exceeds " + mMaxBlockSize.getSize() + ".\nInitiate block transfer");
+        	logger.info("Total msg payload length: " + msg.getPayloadLength() + " exceeds " + mMaxBlockSize.getSize() + ".\nInitiate block transfer");
             payloadBody = msg.getPayload();
             maxSendBlocksize = mMaxBlockSize;
             msg = blockRequestTransfer(msg);
@@ -198,77 +204,77 @@ public class BasicCoapClientChannel extends BasicCoapChannel implements CoapClie
 
     private class ClientBlockContext{
         ByteArrayOutputStream payload = new ByteArrayOutputStream();
-        boolean finished = false;
-        CoapBlockSize blockSize; //null means no block option
-        CoapRequest request;
-        CoapResponse response;
+    	boolean finished = false;
+    	CoapBlockSize blockSize; //null means no block option
+    	CoapRequest request;
+    	CoapResponse response;
 
-        public ClientBlockContext(CoapBlockOption blockOption, CoapBlockSize maxBlocksize) {
-            /* determine the right blocksize (min of remote and max)*/
-            if (maxBlocksize == null){
-                blockSize = blockOption.getBlockSize();
-            } else {
-                int max = maxBlocksize.getSize();
-                int remote = blockOption.getBlockSize().getSize();
-                if (remote < max){
-                    blockSize = blockOption.getBlockSize();
-                } else {
-                    blockSize = maxBlocksize;
-                }
-            }
-        }
+    	public ClientBlockContext(CoapBlockOption blockOption, CoapBlockSize maxBlocksize) {
+    		/* determine the right blocksize (min of remote and max)*/
+    		if (maxBlocksize == null){
+    			blockSize = blockOption.getBlockSize();
+    		} else {
+    			int max = maxBlocksize.getSize();
+    			int remote = blockOption.getBlockSize().getSize();
+    			if (remote < max){
+    				blockSize = blockOption.getBlockSize();
+    			} else {
+    				blockSize = maxBlocksize;
+    			}
+    		}
+    	}
 
-        public byte[] getPayload() {
-            return payload.toByteArray();
-        }
+		public byte[] getPayload() {
+			return payload.toByteArray();
+		}
 
-        public boolean addBlock(CoapMessage msg, CoapBlockOption block){
-            int blockPos = block.getBytePosition();
-            int blockLength =  msg.getPayloadLength();
-            int bufSize = payload.size();
+		public boolean addBlock(CoapMessage msg, CoapBlockOption block){
+		    int blockPos = block.getBytePosition();
+		    int blockLength =  msg.getPayloadLength();
+		    int bufSize = payload.size();
 
-            /*TODO: check if payload length = blocksize (except for the last block)*/
-            if (blockPos > bufSize){
-                /* data is missing before this block */
-                return false;
-            } else if ((blockPos + blockLength) <= bufSize){
-                /* data already received */
-                return false;
-            }
-            int offset = bufSize - blockPos;
-            payload.write(msg.getPayload(), offset, blockLength - offset);
+		    /*TODO: check if payload length = blocksize (except for the last block)*/
+		    if (blockPos > bufSize){
+		        /* data is missing before this block */
+		        return false;
+		    } else if ((blockPos + blockLength) <= bufSize){
+		        /* data already received */
+		        return false;
+		    }
+		    int offset = bufSize - blockPos;
+		    payload.write(msg.getPayload(), offset, blockLength - offset);
 
-            if (block.isLast()){
-                /* was this the last block */
-                finished = true;
-            }
-            return true;
-        }
+		    if (block.isLast()){
+		        /* was this the last block */
+		        finished = true;
+		    }
+		    return true;
+		}
 
-        public CoapBlockOption getNextBlock() {
-            int num = payload.size() / blockSize.getSize(); //ignore the rest (no rest should be there)
-            return new CoapBlockOption(num, false, blockSize);
-        }
+		public CoapBlockOption getNextBlock() {
+			int num = payload.size() / blockSize.getSize(); //ignore the rest (no rest should be there)
+			return new CoapBlockOption(num, false, blockSize);
+		}
 
-        public boolean isFinished() {
-            return finished;
-        }
+		public boolean isFinished() {
+			return finished;
+		}
 
-        public CoapRequest getFirstRequest() {
-            return request;
-        }
+		public CoapRequest getFirstRequest() {
+			return request;
+		}
 
-        public void setFirstRequest(CoapRequest request) {
-            this.request = request;
-        }
+		public void setFirstRequest(CoapRequest request) {
+			this.request = request;
+		}
 
-        public CoapResponse getFirstResponse() {
-            return response;
-        }
+		public CoapResponse getFirstResponse() {
+			return response;
+		}
 
-        public void setFirstResponse(CoapResponse response) {
-            this.response = response;
-        }
+		public void setFirstResponse(CoapResponse response) {
+			this.response = response;
+		}
     }
 
 	@Override

@@ -22,6 +22,7 @@ import os
 import java
 import time
 import re
+import ast
 import datetime
 
 sys.path.append("IoTConformanceTestLib.jar")
@@ -32,7 +33,13 @@ from oic.ctt.devicecontroller import *
 from oic.ctt import *
 from oic.ctt.formatter import *
 from oic.ctt.network.control import *
+import oic.ctt.network.OICHelper.MessageType as MessageType
+import oic.ctt.network.OICHelper.MessageParameters as MessageParameters
+import oic.ctt.network.OICRequestData.Method as Method
+import oic.ctt.network.OICClient.Protocol as Protocol
 import oic.ctt.DUTResource.CRUDNType as CRUDNType
+import oic.ctt.DUTResource.PayloadType as PayloadType
+import oic.ctt.provision.SecuredDeviceInfo.OTM as OTM
 from robot.api import logger
 from robot.libraries.BuiltIn import BuiltIn
 import java.util.ArrayList as ArrayList
@@ -45,14 +52,30 @@ import java.io.File as File
 class ConformanceKeyword(object):
 
     class PROTOCOL():
+        global UNICAST
         global HTTP
         global COAP
         global REP
+        global HREF
         global SECURITY
+        global RESOURCE_DISCOVERY_URI
+        global RESOURCE_DISCOVERY_RT
+        global DEVICE_DISCOVERY_URI
+        global DEVICE_DISCOVERY_RT
+        global PLATFORM_DISCOVERY_URI
+        global PLATFORM_DISCOVERY_RT
+        UNICAST = 'UNICAST'
         HTTP = 'HTTP'
         COAP = 'COAP'
         REP  = 'REP'
+        HREF = 'href'
         SECURITY = 'SECURITY'
+        RESOURCE_DISCOVERY_URI = '/oic/res'
+        RESOURCE_DISCOVERY_RT = 'oic.wk.res'
+        DEVICE_DISCOVERY_URI = '/oic/d'
+        DEVICE_DISCOVERY_RT = 'oic.wk.d'
+        PLATFORM_DISCOVERY_URI = '/oic/p'
+        PLATFORM_DISCOVERY_RT = 'oic.wk.p'
     
 
     class MSGSTRING():
@@ -72,7 +95,15 @@ class ConformanceKeyword(object):
         global PAYLOAD
         global QUERY
         global CREATED_PAYLOAD
-        
+        global OTM_RDP
+        global OTM_JW
+        global CORE_PROVISION_URI
+        global CORE_ACL_URI
+        global ACL_PAYLOAD
+        global CLIENT_DEVICE_ID
+        global OIC_ID
+        global OIC_ID_PATH
+
         DUT = 'DUT'
         TE = 'TE'
         REQUEST_CODE = '   Request Code : '
@@ -89,6 +120,41 @@ class ConformanceKeyword(object):
         PAYLOAD = 'Payload : \n'
         QUERY = 'Query : '
         CREATED_PAYLOAD = 'Created payload'
+        OTM_RDP = "oic.sec.doxm.rdp"
+        OTM_JW = "oic.sec.doxm.jw"
+        CORE_PROVISION_URI = "/oic/sec/doxm"
+        CORE_ACL_URI = "/oic/sec/acl"
+        ACL_PAYLOAD = "{\"acl\":[{\"sub\":\"ClientDeviceId\",\"rsrc\":[\"/test/test\"],\"perms\":31,\"ownrs\":[\"OwnerDeviceId\"]}]}"
+        CLIENT_DEVICE_ID = "adminDeviceUUID0"
+        RELAY_CONTROL_PORT = 12345
+        RELAY_DATA_PORT = 12346
+        OIC_ID = "OIC_DEFINED_RESOURCE"
+        OIC_ID_PATH = "libs/OICDescriptor.json"
+
+    class DUTDESCRIPTORKEY:
+        global ATTRIBUTE_KEY
+        global ATTRIBUTE_VALUE_TYPE
+        global ATTRIBUTE_TEST_DATA
+        global ATTRIBUTE_TEST_DATA2
+        global ATTRIBUTE_ALTERNATE_DATA
+        global ATTRIBUTE_ACCESSMODE
+        global ATTRIBUTE_TYPE_INT
+        global ATTRIBUTE_TYPE_FLOAT
+        global ATTRIBUTE_TYPE_BOOL
+        global ATTRIBUTE_TYPE_STRING
+        global ATTRIBUTE_TYPE_ARRAY
+
+        ATTRIBUTE_KEY = 'key'
+        ATTRIBUTE_VALUE_TYPE = 'type'
+        ATTRIBUTE_TEST_DATA = 'testdata'
+        ATTRIBUTE_TEST_DATA2 = 'testdata2'
+        ATTRIBUTE_ALTERNATE_DATA = 'alternatedata'
+        ATTRIBUTE_ACCESSMODE = 'accessmode'
+        ATTRIBUTE_TYPE_INT = 'integer'
+        ATTRIBUTE_TYPE_FLOAT = 'float'
+        ATTRIBUTE_TYPE_BOOL = 'boolean'
+        ATTRIBUTE_TYPE_STRING = 'string'
+        ATTRIBUTE_TYPE_ARRAY = 'array'
 
     class PACKETKEY():
         global REQUESTCODE
@@ -101,13 +167,16 @@ class ConformanceKeyword(object):
 
         REQUESTCODE = 'requestCode'
         RESPONSECODE = 'responseCode'
-#        PAYLOAD = 'payload'
         SRCADDRESS = 'srcAddress'
         SRCPORT = 'srcPort'
         MSGID = 'msgID'
         TOKEN = 'token'
 
+    RESPONSE_MAP = {}
+    TOTAL_RESPONSE = 0
+
     def __init__(self):
+        self.dic_get_response = {}
         self._result = ''
         self.dut_information_manager = DUTInformationManager.getInstance()
         self.dut_id = ''
@@ -119,52 +188,19 @@ class ConformanceKeyword(object):
         self.resource_type = ''
         self.resource_dis = 1
         self.resource_interface_array = ''
+        self.resource_map = {}
+        self.json_representation = ''
+        self.prop_map = ''
+        self.rep_map = ''
+        self.resource_href = ''
+        self.resource_type_array = ''
         self.oic_client = OICClient()
         self.oic_server = OICCoapServer()
         self.provision_manager = ProvisionManager()
-#        self.oic_resource_light = OICCoapResource("/device/test-tool", "core.light", "oic.if.baseline", True)
-#        self.oic_resource_light.addResourceAttribute("power", "off")
-#        self.oic_resource_light.addResourceAttribute("intensity", 100)
-#        self.oic_resource_light.addResourceAttribute("manufacturer", "Korea")
+        self.provisioning_client = ProvisioningClient()
+        self.bwt_href = "/device/test-tool-bwt"
 
-#        self.oic_resource_light = OICCoapResource("/oic/r/door", "oic.r.door", "oic.if.a oic.if.baseline", True)
-#        self.oic_resource_light.addResourceAttribute("openState","Open")
-#        self.oic_resource_light.addResourceAttribute("openDuration","35")
-#        self.oic_resource_light.addResourceAttribute("openAlarm",False)
-
-#        self.oic_resource_light = OICCoapResource("/oic/r/brightlight", "oic.r.light.brightness", "oic.if.a oic.if.baseline", True)
-#        self.oic_resource_light.addResourceAttribute("brightness",59)
-
-#        self.oic_resource_light = OICCoapResource("/oic/r/sensor", "oic.r.sensor", "oic.if.s oic.if.baseline", True)
-#        self.oic_resource_light.addResourceAttribute("value",True)
-
-#        self.oic_resource_light = OICCoapResource("/oic/r/switch", "oic.r.switch.binary", "oic.if.a oic.if.baseline", True)
-#        self.oic_resource_light.addResourceAttribute("value",True)
-
-        self.oic_resource_light = OICCoapResource("/oic/r/temperature", "oic.r.temperature", "oic.if.a oic.if.s oic.if.baseline", True)
-        self.oic_resource_light.addResourceAttribute("temperature", 35)
-        self.oic_resource_light.addResourceAttribute("units", "C")
-        self.oic_resource_light.addResourceAttribute("range", "-20, 50")
-
-#        self.oic_resource_light = OICCoapResource("/oic/r/mode", "oic.r.mode", "oic.if.a oic.if.baseline", True)
-#        self.oic_resource_light.addResourceAttribute("supportedModes", "A, B, C")
-#        self.oic_resource_light.addResourceAttribute("modes", "B, C")
-
-#        self.oic_resource_light = OICCoapResource("/oic/r/audio", "oic.r.audio", "oic.if.a oic.if.baseline", True)
-#        self.oic_resource_light.addResourceAttribute("volume", 10)
-#        self.oic_resource_light.addResourceAttribute("mute", true)
-
-#        self.oic_resource_light = OICCoapResource("/oic/r/button", "oic.r.button", "oic.if.s oic.if.baseline", True)
-#        self.oic_resource_light.addResourceAttribute("value", true)
-
-#        self.oic_resource_light = OICCoapResource("/oic/r/illuminance", "oic.r.illuminance", "oic.if.s oic.if.baseline", True)
-#        self.oic_resource_light.addResourceAttribute("illuminance", 500)
-
-#        self.oic_resource_light = OICCoapResource("/oic/r/humidity", "oic.r.humidity", "oic.if.a oic.if.s oic.if.baseline", True)
-#        self.oic_resource_light.addResourceAttribute("humidity", 80)
-#        self.oic_resource_light.addResourceAttribute("desiredHumidity", 50)
-
-        self.oic_resource_light_bwt = OICCoapResource("/device/test-tool-bwt", "core.light", "oic.if.baseline", True)
+        self.oic_resource_light_bwt = OICCoapResource(self.bwt_href, "core.light", "oic.if.baseline", True)
         self.oic_resource_light_bwt.addResourceAttribute("power", "off")
         self.oic_resource_light_bwt.addResourceAttribute("intensity", 100)
         self.oic_resource_light_bwt.addResourceAttribute("manufacturer", "Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_Block_Wise_Transfer_Data_End_of_BWT")
@@ -172,7 +208,9 @@ class ConformanceKeyword(object):
         self.rep_key_list = ArrayList()
         self.ui = UserInterface()
         self.control_client = ControlClient()
-        self.is_bwt_on = False
+        self.built_in = BuiltIn()
+        self.hrefs = []
+        self.options = []
 
     # Documentation for a function
     # @brief print log to console
@@ -181,7 +219,7 @@ class ConformanceKeyword(object):
     def log_to_console(self, arg):
         "Print log at robotframework console"
         logger.info('\n%s' % arg, also_console=True)
-        
+
     # Documentation for a function
     # @brief Returns true if ran from GUI, else false
     # @return boolean
@@ -246,7 +284,7 @@ class ConformanceKeyword(object):
 
     def get_application_log(self, device_id, process_name):
         return self.logManager.getProcessLogger(str(device_id), str(process_name)).getLogs()
-  
+
     def terminate_application(self, process_name):
         self.deviceController.getProcessManager().removeProcess(str(process_name))
 
@@ -256,27 +294,16 @@ class ConformanceKeyword(object):
         else:
             return False
 
-## Security Relay Controller Keywords  ##
-    def intialize_dtls_connection(self, relay_ip, relay_port, dut_ip, dut_port_secured, cipher_suite):
-		return self.control_client.initDtls(relay_ip, int(relay_port), dut_ip, int(dut_port_secured), int(cipher_suite))
-
-    def intialize_dtls_connection_with_random_pin(self, relay_ip, relay_port, dut_ip, dut_port_secured, cipher_suite, client_di, server_di, pin):
-        return self.control_client.initDtls(relay_ip, int(relay_port), dut_ip, int(dut_port_secured), int(cipher_suite), client_di, server_di, pin)
-
-
-    def terminate_dtls_connection(self):
-		return self.control_client.terminateDtls()
-
-    def get_secured_port(self, dut_ip, dut_port):
-        response_message = self.send_get_request("UNICAST", COAP, self.generate_message_id(), self.generate_token(), dut_ip, dut_port, "/oic/res", False)
-        response_json = self.get_response_json(response_message)
-        secured_port = OICHelper.parseSecuredPort(response_json)
-        return secured_port
-
-## End of Security Relay Controller Keywords ##
-
-
-## End of Device Managment Keywords ##
+    # Documentation for a function
+    # @brief start server at Conformance test tool
+    # @param is_confirmable(bool)
+    # @return void
+    def get_space_seperated_string_from_list(self, list):
+        items = ""
+        for item in list:
+            items = items + item + " "
+        items = items.strip()
+        return items
 
     # Documentation for a function
     # @brief start server at Conformance test tool
@@ -284,80 +311,52 @@ class ConformanceKeyword(object):
     # @return void
     def start_server(self, is_confirmable=True):
         "Run server for test"
-        self.oic_server.addResource(self.oic_resource_light)
-#        self.oic_server.addResource(self.oic_resource_light_bwt)
-        self.oic_server.clearDiscoveryRequests()
-        self.is_bwt_on = False
-        self.oic_server.start()
+        self.dut_information = self.dut_information_manager.getDUTInformation(self.dut_id)
+        href_list = self.get_dut_info_value(IotivityKey.HREF.toString(), self.dut_id, IotivityKey.DIS.toString()+'=1')
+        for href in href_list:
+            resource_type = self.get_space_seperated_string_from_list(self.dut_information.getResourceTypes(href) )
+            resource_interface = self.get_space_seperated_string_from_list(self.dut_information.getInterfaceList(href) )
 
-    # Documentation for a function
-    # @brief start server at Conformance test tool
-    # @param is_confirmable(bool)
-    # @return void
-    def start_bwt_server(self, is_confirmable=True):
-        self.oic_server.removeResource("/device/test-tool")
-        "Run server for test"
-#        self.oic_server.addResource(self.oic_resource_light)
-        self.oic_server.addResource(self.oic_resource_light_bwt)
+            self.resource_map[href] = OICCoapResource(href, resource_type, resource_interface, is_confirmable)
+            rep_list = self.get_dut_resource_value(self.dut_id, HREF + '=' + href, REP, "R")
+            self.rep_map = HashMap()
+
+            for item in rep_list:
+                self.add_into_json_representation(item[0], item[2], item[1])
+
+            self.resource_map[href].addResourceAttributes(self.rep_map)
+            self.oic_server.addResource(self.resource_map[href])
+
+        self.resource_map[self.bwt_href] = self.oic_resource_light_bwt
+        self.oic_server.addResource(self.resource_map[self.bwt_href])
         self.oic_server.clearDiscoveryRequests()
-        self.is_bwt_on = True
-#        self.oic_server.start()
+        self.oic_server.start()
 
     # Documentation for a function
     # @brief get received request from server of Conformance test tool
     # @param none
     # @return request
-    def get_request(self):
+    def get_request(self, href, desired_code):
         "Return request when tool receive it"
         self.clear_request_list()
         self.oic_server.clearDiscoveryRequests()
-        self.oic_resource_light.clearRequestList()
+        self.resource_map[href].clearRequestList()
         self.print_testcase_get(DUT, TE, 'Waiting for Request from DUT')
         for sec in range(1, 60):
             BuiltIn().sleep(1)
-            if self.is_bwt_on is False:
-                request_list = self.oic_resource_light.getRequestList()
-            else:
-                request_list = self.oic_resource_light_bwt.getRequestList()
+            request_list = self.resource_map[href].getRequestList()
+
             if request_list.size() > 0:
                 self.request = request_list.get(0)
-        #        what = REQUEST_CODE + \
-        #            self.get_request_code(self.request) + '\n   '
-        #        what += REQUEST_TYPE + \
-        #            self.get_request_type(self.request) + '\n   '
-        #        what += PAYLOAD + self.get_payload(self.request) + '\n   '
-        #        what += REQUEST_HEADER + \
-        #            self.get_request_header(self.request) + '\n   '
-        #        self.log_to_console(what)
-                result = self.get_request_result(self.request)
-                to_show = self.get_request_description(self.request)
-                self.print_testcase_get(DUT, TE, ' Request Message from DUT', to_show)
-                return result
+                request_code = self.request.getRequestValue(MessageParameters.requestCode)
+                if request_code == desired_code:
+                    result = self.get_request_result(self.request)
+                    to_show = self.get_request_description(self.request)
+                    self.print_testcase_get(DUT, TE, ' Request Message from DUT', to_show)
+                    return result
+                else:
+                    self.resource_map[href].removeRequestFromList(self.request)
         return None
-
-    # Documentation for a function
-    # @brief get request code
-    # @param request
-    # @return request code (string)
-    #def get_request_code(self, request):
-    #    "Return request code"
-    #    return request.getRequestValue(OICHelper.MessageParameters.requestCode)
-
-    # Documentation for a function
-    # @brief get request type
-    # @param request
-    # @return request type (string)
-    #def get_request_type(self, request):
-    #    "Return request type"
-    #    return request.getRequestValue(OICHelper.MessageParameters.msgType)
-
-    # Documentation for a function
-    # @brief get request header
-    # @param request
-    # @return request header (string)
-    #def get_request_header(self, request):
-    #    "Return request header"
-    #    return request.getOptionSet()
 
     # Documentation for a function
     # @brief clear request list
@@ -366,24 +365,23 @@ class ConformanceKeyword(object):
     def clear_request_list(self):
         "Clear request list"
         self.oic_server.clearDiscoveryRequests()
-        self.oic_resource_light.clearRequestList()
 
     # Documentation for a function
     # @brief get request code
     # @param none
     # @return reset flag
-    def get_reset_state(self):
+    def get_reset_state(self, href):
         "Return True if a RST have arrived, otherwise false"
         #self.oic_resource_light.updateLocalResourceResetFlag()
-        return self.oic_resource_light.hasReset()
+        return self.resource_map[href].hasReset()
 
     # Documentation for a function
     # @brief clear reset state
     # @param none
     # @return void
-    def clear_reset_state(self):
+    def clear_reset_state(self, href):
         "Clear rest flag"
-        self.oic_resource_light.setResetReceived(False)
+        self.resource_map[href].setResetReceived(False)
 
     # Documentation for a function
     # @brief get payload
@@ -410,6 +408,7 @@ class ConformanceKeyword(object):
     def define_dut_information(self, dut_id, dut_info_path, dut_type):
         "Make dut instance load dut json file"
         self.dut_id = dut_id
+        self.dut_information_manager.createDUTInformation(OIC_ID, OIC_ID_PATH)
         return self.dut_information_manager.createDUTInformation(
             dut_id, dut_info_path)
 
@@ -419,6 +418,7 @@ class ConformanceKeyword(object):
     # @return void
     def release_dut_information(self, dut_id):
         "Release dut instance"
+        self.dut_information_manager.removeDUTInformation(OIC_ID)
         self.dut_information_manager.removeDUTInformation(dut_id)
 
     # Documentation for a function
@@ -438,6 +438,42 @@ class ConformanceKeyword(object):
         token = OICHelper.createTokenString()
         return token
 
+    def clear_response_map(self):
+        self.RESPONSE_MAP = {}
+        self.TOTAL_RESPONSE = 0
+
+    def add_into_response_map(self, request, response):
+        response_request_pair = [request, response]
+        self.RESPONSE_MAP[self.TOTAL_RESPONSE] = response_request_pair
+        self.TOTAL_RESPONSE += 1
+
+    def get_request_from_response_map(self, key):
+        if key < self.TOTAL_RESPONSE:
+            response_request_pair = self.RESPONSE_MAP[key]
+            return self.get_request_result(response_request_pair[0])
+        else:
+            return ''
+
+    def get_response_from_response_map(self, key):
+        if key < self.TOTAL_RESPONSE:
+            response_request_pair = self.RESPONSE_MAP[key]
+            return self.get_response_result(response_request_pair[1])
+        else:
+            return ''
+
+    def get_response_map_size(self):
+        return self.TOTAL_RESPONSE
+
+    def get_cached_response_map(self):
+        return self.RESPONSE_MAP
+
+    def set_cached_response_map(self, cached_map):
+        self.RESPONSE_MAP = cached_map
+        self.TOTAL_RESPONSE = len(self.RESPONSE_MAP)
+
+    def define_cached_map_globally(self):
+        BuiltIn.set_suite_variable(self.TOTAL_RESPONSE, self.get_response_map_size())
+        BuiltIn.set_suite_variable(self.RESPONSE_MAP, self.get_cached_response_map())
 
 #Server - Receiving
     # Documentation for a function
@@ -461,14 +497,13 @@ class ConformanceKeyword(object):
 #                what += SOURCE_HEADER + \
 #                    self.get_request_header(self.request)
                 result = self.get_request_result(self.request)
-                self.print_testcase_get(DUT, TE, 'Discovery Message from DUT', result)
+                self.print_testcase_get(DUT, TE, 'Discovery Message from DUT')
                 return result
         return None
 
     def destroy_te_server(self):
         "Destory te server"
         return self.oic_server.destroy()
-
 
 #Client - Messaging
     # Documentation for a function
@@ -488,14 +523,15 @@ class ConformanceKeyword(object):
 #        self.log_to_console("Line 252")
         responseList = client.discoverResource(
             self.get_protocol(protocol_type), default_uri)
+        target_request = client.getLastRequest(self.get_protocol(protocol_type))
+        target_response = None
 #        self.log_to_console("Line 255")
 
         if responseList is None:
 #            self.log_to_console("Line 258")
             self.print_testcase_get(DUT, TE, 'No Response')
 #            self.log_to_console("Line 259")
-            return ""
-            
+            result = ""
         elif responseList.size() > 0:
 #            self.log_to_console("Line 263")
             for response in responseList:
@@ -513,6 +549,10 @@ class ConformanceKeyword(object):
                 self.get_response_description(response))
                 if check is True:
                     result = result_temp
+                    target_response = response
+#                    break
+
+        self.add_into_response_map(target_request, target_response)
         return result
 #                self.log_to_console("After get_response_json Call")
 #                json_analyzer = JsonAnalyzer(result_json)
@@ -559,7 +599,7 @@ class ConformanceKeyword(object):
             protocol_type,
             default_uri,
             query,
-            is_confirmable):
+            is_confirmable, ip):
         "Send multicast discovery request with query and return response about discovery request"
         result = ""
         client = OICClient()
@@ -572,13 +612,18 @@ class ConformanceKeyword(object):
         responseList = ArrayList()
         responseList = client.discoverResource(
             self.get_protocol(protocol_type), default_uri, query)
+        target_request = client.getLastRequest(self.get_protocol(protocol_type))
+        target_response = None
         dut_list = self.get_dut_info_value(
             IotivityKey.HREF.toString(), self.dut_id, query)  # temp code
+
         if responseList is None:
             self.print_testcase_get(DUT, TE, 'No Response')
+            self.add_into_response_map(target_request, target_response)
             return ""
         elif responseList.size() > 0:
             for response in responseList:
+                self.log_to_console(str(response))
                 result_temp = self.get_response_result(response)
                 if(result_temp is ''):
                     continue
@@ -587,8 +632,12 @@ class ConformanceKeyword(object):
                 di = self.get_json_value(IotivityKey.DI.toString(), result_json)
 #                if(href.size() < 1):
 #                    continue
-                if (href.size() > 0 and href[0] in dut_list) or (di.size() > 0 ):
+                
+#                if (href.size() > 0 and href[0] in dut_list) or (di.size() > 0 ) or responseList.size() == 1:
+                _ip = self.get_response_ip(result_temp)
+                if ip == _ip:
                     result = result_temp
+                    target_response = response
                     self.print_testcase_get(
                         DUT,
                         TE,
@@ -598,6 +647,7 @@ class ConformanceKeyword(object):
 #        result = self.get_response_result(response)
 #        self.print_testcase_get(DUT,TE,'Response for Discover',self.get_response_description(response))
 
+        self.add_into_response_map(target_request, target_response)
         return result
 
     # Documentation for a function
@@ -630,7 +680,7 @@ class ConformanceKeyword(object):
         what += QUERY + query
         self.print_testcase_do(TE, DUT, 'Unicast Discover', what)
         response = client.sendRequest(
-            self.get_protocol(protocol_type),
+            protocol,
             self.get_coap_type(is_confirmable),
             messageType,
             message_id,
@@ -639,6 +689,10 @@ class ConformanceKeyword(object):
             int(port),
             default_uri,
             query)
+        target_request = client.getLastRequest(protocol)
+        target_response = response
+        self.add_into_response_map(target_request, target_response)
+
         if response is None:
             self.print_testcase_get(DUT, TE, 'No Response')
             return ""
@@ -649,6 +703,7 @@ class ConformanceKeyword(object):
                 TE,
                 'Response for Discover',
                 self.get_response_description(response))
+
         return result
 
     # Documentation for a function
@@ -672,10 +727,15 @@ class ConformanceKeyword(object):
         client = OICClient()
         messageType = OICRequestData.Method.PUT
         query = ""
+        query_index = uri.find('?')
+        if query_index != -1:
+            query = uri[query_index+1:]
+            uri = uri[:query_index]
         protocol = self.get_protocol(protocol_type)
         what = PROTOCOL_TYPE + protocol_type + '\n   '
         what += DESTINATION_URI + ip + ':' + str(port) + uri + '\n   '
         what += CONFIRMABLE_TYPE + str(is_confirmable) + '\n   '
+        what += QUERY + query + '\n   '
         what += PAYLOAD + OICHelper.getPrettyJson(payload) + '\n   '
         self.print_testcase_do(TE, DUT, 'Put Request', what)
 
@@ -693,6 +753,11 @@ class ConformanceKeyword(object):
             query,
             payload,
             self.get_payload_type(payload_type))
+
+        target_request = client.getLastRequest(self.get_protocol(protocol_type))
+        target_response = response
+        self.add_into_response_map(target_request, target_response)
+
         if response is None:
             self.print_testcase_get(DUT, TE, 'No Response')
             return ""
@@ -725,10 +790,15 @@ class ConformanceKeyword(object):
         client = OICClient()
         messageType = OICRequestData.Method.POST
         query = ""
+        query_index = uri.find('?')
+        if query_index != -1:
+            query = uri[query_index+1:]
+            uri = uri[:query_index]
         protocol = self.get_protocol(protocol_type)
         what = PROTOCOL_TYPE + protocol_type + '\n   '
         what += DESTINATION_URI + ip + ':' + str(port) + uri + '\n   '
         what += CONFIRMABLE_TYPE + str(is_confirmable) + '\n   '
+        what += QUERY + query + '\n   '
         what += PAYLOAD + OICHelper.getPrettyJson(payload) + '\n   '
         self.print_testcase_do(TE, DUT, 'Post Request', what)
         response = client.sendRequest(
@@ -742,6 +812,11 @@ class ConformanceKeyword(object):
             uri,
             query,
             payload)
+
+        target_request = client.getLastRequest(self.get_protocol(protocol_type))
+        target_response = response
+        self.add_into_response_map(target_request, target_response)
+
         if response is None:
             # self.print_testcastuet@135e_get(DUT,TE,'No Response')
             return ""
@@ -772,9 +847,15 @@ class ConformanceKeyword(object):
         result = ""
         client = OICClient()
         messageType = OICRequestData.Method.GET
+        query = ""
+        query_index = uri.find('?')
+        if query_index != -1:
+            query = uri[query_index+1:]
+            uri = uri[:query_index]
         what = PROTOCOL_TYPE + protocol_type + '\n   '
         what += DESTINATION_URI + ip + ':' + str(port) + uri + '\n   '
         what += CONFIRMABLE_TYPE + str(is_confirmable) + '\n   '
+        what += QUERY + query
         self.print_testcase_do(TE, DUT, 'Get Request', what)
         response = client.sendRequest(
             self.get_protocol(protocol_type),
@@ -784,7 +865,13 @@ class ConformanceKeyword(object):
             token,
             ip,
             int(port),
-            uri)
+            uri,
+            query)
+
+        target_request = client.getLastRequest(self.get_protocol(protocol_type))
+        target_response = response
+        self.add_into_response_map(target_request, target_response)
+
         if response is None:
             self.print_testcase_get(DUT, TE, 'No Response')
             return ""
@@ -814,12 +901,18 @@ class ConformanceKeyword(object):
         "Send delete request and return response"
         result = ""
         client = OICClient()
+        query = ""
+        query_index = uri.find('?')
+        if query_index != -1:
+            query = uri[query_index+1:]
+            uri = uri[:query_index]
         messageType = OICRequestData.Method.DELETE
         what = PROTOCOL_TYPE + protocol_type + '\n   '
         what += DESTINATION_URI + ip + ':' + str(port) + uri + '\n   '
         what += CONFIRMABLE_TYPE + str(is_confirmable) + '\n   '
+        what += QUERY + query
         self.print_testcase_do(TE, DUT, 'Delete Request', what)
-        
+
         response = client.sendRequest(
             self.get_protocol(protocol_type),
             self.get_coap_type(is_confirmable),
@@ -828,7 +921,13 @@ class ConformanceKeyword(object):
             token,
             ip,
             int(port),
-            uri)
+            uri,
+            query)
+
+        target_request = client.getLastRequest(self.get_protocol(protocol_type))
+        target_response = response
+        self.add_into_response_map(target_request, target_response)
+
         if response is None:
             self.print_testcase_get(DUT, TE, 'No Response')
             return ""
@@ -867,6 +966,11 @@ class ConformanceKeyword(object):
             ip,
             port,
             uri)
+
+        target_request = self.oic_client.getLastRequest(self.get_protocol(protocol_type))
+        target_response = response
+        self.add_into_response_map(target_request, target_response)
+
         if response is None:
             self.print_testcase_get(DUT, TE, 'No Observe Response')
             return ""
@@ -901,6 +1005,11 @@ class ConformanceKeyword(object):
         response = self.oic_client.cancelObserveWithGetMessage(self.get_protocol(protocol_type),
             self.get_coap_type(is_confirmable), message_id, ip, port, uri)
         self.oic_client.clearNotifications(self.get_protocol(protocol_type))
+
+        target_request = self.oic_client.getLastRequest(self.get_protocol(protocol_type))
+        target_response = response
+        self.add_into_response_map(target_request, target_response)
+
         if response is None:
             self.print_testcase_get(DUT, TE, 'No Response for Observe Cancellation')
             return ""
@@ -1004,7 +1113,7 @@ class ConformanceKeyword(object):
     # @param input_response
     # @return response_code as result
     def get_response_code(self, input_response):
-        self.result = input_response.split("\n", 7)
+        self.result = input_response.split("\n", 9)
         return self.result[0]
 
     # Documentation for a function
@@ -1012,7 +1121,7 @@ class ConformanceKeyword(object):
     # @param input_response
     # @return response json
     def get_response_json(self, input_response):
-        self.result = input_response.split("\n", 7)
+        self.result = input_response.split("\n", 9)
         return self.result[1]
 
     # Documentation for a function
@@ -1020,7 +1129,7 @@ class ConformanceKeyword(object):
     # @param input_response
     # @return response ip as result
     def get_response_ip(self, input_response):
-        self.result = input_response.split("\n", 7)
+        self.result = input_response.split("\n", 9)
         return self.result[2]
 
     # Documentation for a function
@@ -1028,7 +1137,7 @@ class ConformanceKeyword(object):
     # @param input_response
     # @return response port as result
     def get_response_port(self, input_response):
-        self.result = input_response.split("\n", 7)
+        self.result = input_response.split("\n", 9)
         return self.result[3]
 
     # Documentation for a function
@@ -1036,7 +1145,7 @@ class ConformanceKeyword(object):
     # @param input_response
     # @return response token as result
     def get_response_token(self, input_response):
-        self.result = input_response.split("\n", 7)
+        self.result = input_response.split("\n", 9)
         return self.result[5]
 
     # Documentation for a function
@@ -1044,7 +1153,7 @@ class ConformanceKeyword(object):
     # @param input_response
     # @return msgid as result
     def get_response_msgid(self, input_response):
-        self.result = input_response.split("\n", 7)
+        self.result = input_response.split("\n", 9)
         return self.result[4]
 
     # Documentation for a function
@@ -1052,8 +1161,25 @@ class ConformanceKeyword(object):
     # @param input_response
     # @return type of response as result
     def get_response_type(self, input_response):
-        self.result = input_response.split("\n", 7)
+        self.result = input_response.split("\n", 9)
         return self.result[6]
+
+    # Documentation for a function
+    # @brief get response type
+    # @param input_response
+    # @return type of response as result
+    def get_response_secured_port(self, input_response):
+        self.result = input_response.split("\n", 9)
+        return self.result[7]
+
+    # Documentation for a function
+    # @brief get content format
+    # @param input_response
+    # @return type of response as result
+    def get_response_content_format(self, input_response):
+        self.result = input_response.split("\n", 9)
+        #self.log_to_console("Content format" + self.result[8])
+        return self.result[8]
 
     # Documentation for a function
     # @brief get response code
@@ -1061,7 +1187,7 @@ class ConformanceKeyword(object):
     # @return type of response as result
 
     def get_request_code(self, input_request):
-        self.result = input_request.split("\n", 8)
+        self.result = input_request.split("\n", 12)
         return self.result[0]
 
     # Documentation for a function
@@ -1069,7 +1195,7 @@ class ConformanceKeyword(object):
     # @param input_request
     # @return request json as result
     def get_request_json(self, input_request):
-        self.result = input_request.split("\n", 8)
+        self.result = input_request.split("\n", 12)
         return self.result[1]
 
     # Documentation for a function
@@ -1077,7 +1203,7 @@ class ConformanceKeyword(object):
     # @param input_request
     # @return request ip as result
     def get_request_ip(self, input_request):
-        self.result = input_request.split("\n", 8)
+        self.result = input_request.split("\n", 12)
         return self.result[2]
 
     # Documentation for a function
@@ -1085,7 +1211,7 @@ class ConformanceKeyword(object):
     # @param input_request
     # @return request port as result
     def get_request_port(self, input_request):
-        self.result = input_request.split("\n", 8)
+        self.result = input_request.split("\n", 12)
         return self.result[3]
 
     # Documentation for a function
@@ -1093,7 +1219,7 @@ class ConformanceKeyword(object):
     # @param input_request
     # @return request token as result
     def get_request_token(self, input_request):
-        self.result = input_request.split("\n", 8)
+        self.result = input_request.split("\n", 12)
         return self.result[5]
 
     # Documentation for a function
@@ -1101,7 +1227,7 @@ class ConformanceKeyword(object):
     # @param input_request
     # @return request msgid as result
     def get_request_msgid(self, input_request):
-        self.result = input_request.split("\n", 8)
+        self.result = input_request.split("\n", 12)
         return self.result[4]
 
     # Documentation for a function
@@ -1109,7 +1235,7 @@ class ConformanceKeyword(object):
     # @param input_request
     # @return request observe as result
     def get_request_observe(self, input_request):
-        self.result = input_request.split("\n", 8)
+        self.result = input_request.split("\n", 12)
         return self.result[6]
 
     # Documentation for a function
@@ -1117,8 +1243,40 @@ class ConformanceKeyword(object):
     # @param input_request
     # @return request type as result
     def get_request_type(self, input_request):
-        self.result = input_request.split("\n", 8)
+        self.result = input_request.split("\n", 12)
         return self.result[7]
+
+    # Documentation for a function
+    # @brief get request type
+    # @param input_request
+    # @return request type as result
+    def get_request_href(self, input_request):
+        self.result = input_request.split("\n", 12)
+        return self.result[8]
+
+    # Documentation for a function
+    # @brief get request type
+    # @param input_request
+    # @return request type as result
+    def get_request_query(self, input_request):
+        self.result = input_request.split("\n", 12)
+        return self.result[9]
+
+    # Documentation for a function
+    # @brief get request content-format
+    # @param input_request
+    # @return content format as result
+    def get_request_content_format(self, input_request):
+        self.result = input_request.split("\n", 12)
+        return self.result[10]
+
+    # Documentation for a function
+    # @brief get request accept
+    # @param input_request
+    # @return accept as result
+    def get_request_accept(self, input_request):
+        self.result = input_request.split("\n", 12)
+        return self.result[11]
 
     # Documentation for a function
     # @brief get dut description
@@ -1131,43 +1289,121 @@ class ConformanceKeyword(object):
     # @brief get dut description
     # @param dut_id
     # @return request DUTInformation as result
-    def get_dut_info_value(self, key, dut_id, query):
+    def get_dut_info_value(self, key, dut_id, query=""):
         if not dut_id:
             dut_id = self.dut_id
-        self.dutInformation = self.dut_information_manager.getDUTInformation(
-            dut_id)
+        self.dut_information = self.dut_information_manager.getDUTInformation(dut_id)
         if key == IotivityKey.DI.toString():
-            return self.dutInformation.getDi()
-        self.result = self.dutInformation.getResourceValue(key, query)
+            return self.dut_information.getDi()
+        if self.dut_information is not None:
+            self.result = self.dut_information.getResourceValue(key, str(query))
+        else:
+            self.result = "DUT Information is NULL"
+            self.log_to_console(self.result)
         return self.result
+
+
+    # Documentation for a function
+    # @brief get dut description
+    # @param dut_id
+    # @return request DUTInformation as result
+    def check_all_attributes_exist(self, href, dut_id, payload):
+        error_msg = ''
+        key = REP.lower()
+        query = HREF + "=" + href
+        payload_json = JsonAnalyzer(payload)
+        dut_representation = self.get_dut_info_value(key, dut_id, query)
+        if dut_representation is None:
+            error_msg = "Resource representation with uri: " + href + "does not exist!!"
+            return error_msg
+        
+        for attribute_unicode in dut_representation:
+            attribute_unicode = attribute_unicode.replace('true', 'True')
+            attribute_unicode = attribute_unicode.replace('false', 'False')
+            attribute = ast.literal_eval(attribute_unicode)
+            attribute_key = attribute[ATTRIBUTE_KEY]
+            attribute_type = attribute[ATTRIBUTE_VALUE_TYPE]
+            value_list = payload_json.getValue(attribute_key)
+            if len(value_list) is 0:
+                error_msg = error_msg + "Attribute " + attribute_key + " is not present in resource with href: " + href + ". "
+            else:
+                attribute_value = value_list[0]
+                if attribute_type == ATTRIBUTE_TYPE_INT and type(attribute_value) is not int:
+                    error_msg = attribute_key+" attribute " + attribute_key + " mismatches. Expected type was integer "
+                elif attribute_type == ATTRIBUTE_TYPE_FLOAT and type(attribute_value) is not float:
+                    error_msg = attribute_key+" attribute " + attribute_key + " mismatches. Expected type was float "
+                elif attribute_type == ATTRIBUTE_TYPE_BOOL and type(attribute_value) is not bool:
+                    error_msg = attribute_key+" attribute " + attribute_key + " mismatches. Expected type was bool "
+                elif attribute_type == ATTRIBUTE_TYPE_STRING and type(attribute_value) is not str:
+                    error_msg = attribute_key+" the attribute " + attribute_key + " mismatches. Expected type was string "
+                elif attribute_type == ATTRIBUTE_TYPE_ARRAY and type(attribute_value) is not list:
+                    error_msg = attribute_key+" the attribute " + attribute_key + " mismatches. Expected type was array "
+
+        return error_msg
+
+    # Documentation for a function
+    # @brief get dut description
+    # @param dut_id
+    # @return request DUTInformation as result
+    def check_str_attributes_length(self, href, dut_id, payload):
+        error_msg = ''
+        key = REP.lower()
+        query = HREF + "=" + href
+        payload_json = JsonAnalyzer(payload)
+        dut_representation = self.get_dut_info_value(key, dut_id, query)
+        if dut_representation is None:
+            error_msg = "Resource representation with uri: " + href + "does not exist!!"
+            return error_msg
+
+        for attribute_unicode in dut_representation:
+            attribute_unicode = attribute_unicode.replace('true', 'True')
+            attribute_unicode = attribute_unicode.replace('false', 'False')
+            attribute = ast.literal_eval(attribute_unicode)
+            attribute_key = attribute[ATTRIBUTE_KEY]
+            attribute_type = attribute[ATTRIBUTE_VALUE_TYPE]
+            value_list = payload_json.getValue(attribute_key)
+            if attribute_type is ATTRIBUTE_TYPE_STRING :
+                if len(value_list) is 0:
+                    error_msg = error_msg + "Attribute " + attribute_key + " is not present in resource with href: " + href + ". "
+                else:
+                    attribute_value = value_list[0]
+                    if type(attribute_value) is not str:
+                        error_msg = "Value of the attribute " + attribute_key + " mismatches. Expected type was string, Actual type is: " + type(attribute_value) + ". "
+                    if len(attribute_value.encode('utf-8')) > 64 :
+                        error_msg = "length of the attribute " + attribute_key + " is over than 64. "
+        return error_msg
+
 
     # Documentation for a function
     # @brief get dut resource value
     # @param dut_id, href_query, key, accessmode
     # @return DUTResourceValue
     def get_dut_resource_value(self, dut_id, href_query, key, accessmode):
-        self.dutInformation = self.dut_information_manager.getDUTInformation(
+        self.dut_information = self.dut_information_manager.getDUTInformation(
             dut_id)
-        dut_resource = self.dutInformation.getResourceWithQuery(href_query)
+        dut_resource = self.dut_information.getResourceWithQuery(href_query)
 #        print "Tuhin"
 #        print href_query
-        if key == "rep":
-            rep_list = dut_resource.get(0).getDUTResourceValue(key)
+        if key == "rep" or key == REP:
+            rep_list = dut_resource.get(0).getDUTResourceValue("rep")
 	    dict_list =[]
 	    for rep in rep_list:
 	        #print rep
-	        rep = str(rep) 
+	        rep = str(rep)
                 json_analyzer = JsonAnalyzer(rep)
-                
+
                 tmp_list = re.findall(r"[\w'.]+",rep)
 	        key_value=[]
-                if accessmode in json_analyzer.getValue("accessmode").get(0):
+#                if accessmode == 'W':
+#                    accessmode = 'RW'
+                if accessmode == json_analyzer.getValue("accessmode").get(0):
                     key_value.append(json_analyzer.getValue("key").get(0))
 	            key_value.append(json_analyzer.getValue("type").get(0))
                     if json_analyzer.getValue("testdata").size() >1 :
                         key_value.append(json_analyzer.getValue("testdata").toString())
                     else:
                         key_value.append(json_analyzer.getValue("testdata").get(0))
+
 #	        print "Key value pair"
 #                print key_value
 	            dict_list.append(key_value)
@@ -1177,6 +1413,84 @@ class ConformanceKeyword(object):
         else:
 	    return dut_resource.get(0).getDUTResourceValue(key)
 
+
+    # Documentation for a function
+    # @brief get dut resource value
+    # @param dut_id, href_query, key, accessmode
+    # @return DUTResourceValue
+    def get_dut_resource_value2(self, dut_id, href_query, key, accessmode):
+        self.dut_information = self.dut_information_manager.getDUTInformation(
+            dut_id)
+        dut_resource = self.dut_information.getResourceWithQuery(href_query)
+#        print "Tuhin"
+#        print href_query
+        if key == "rep" or key == REP:
+            rep_list = dut_resource.get(0).getDUTResourceValue("rep")
+            dict_list =[]
+            for rep in rep_list:
+                #print rep
+                rep = str(rep)
+                json_analyzer = JsonAnalyzer(rep)
+
+                tmp_list = re.findall(r"[\w'.]+",rep)
+                key_value=[]
+#                if accessmode == 'W':
+#                    accessmode = 'RW'
+                if accessmode == json_analyzer.getValue("accessmode").get(0):
+                    key_value.append(json_analyzer.getValue("key").get(0))
+                    key_value.append(json_analyzer.getValue("type").get(0))
+                    if json_analyzer.getValue("testdata").size() >1 :
+                        key_value.append(json_analyzer.getValue("testdata").toString())
+                    else:
+                        key_value.append(json_analyzer.getValue("testdata").get(0))
+
+                    if json_analyzer.getValue("testdata2").size() >1 :
+                        key_value.append(json_analyzer.getValue("testdata2").toString())
+                    else:
+                        key_value.append(json_analyzer.getValue("testdata2").get(0))
+
+
+#               print "Key value pair"
+#                print key_value
+                    dict_list.append(key_value)
+                #print "dict_list"
+        #print dict_list
+            return dict_list
+        else:
+            return dut_resource.get(0).getDUTResourceValue(key)
+
+
+
+
+    # Documentation for a function
+    # @brief get dut resource value
+    # @param dut_id, href_query, key, accessmode
+    # @return DUTResourceValue
+    def get_rep_from_dut(self, dut_id, href_query):
+        self.dut_information = self.dut_information_manager.getDUTInformation(
+            dut_id)
+        dut_resource = self.dut_information.getResourceWithQuery(href_query)
+
+        rep_list = dut_resource.get(0).getDUTResourceValue("rep")
+        self.log_to_console("rep_list: " + str(rep_list))
+        dict_list = {}
+        if rep_list is not None:
+            for rep in rep_list:
+                #print rep
+                rep = str(rep)
+                json_analyzer = JsonAnalyzer(rep)
+
+                attr_key = json_analyzer.getValue("key").get(0)
+                if json_analyzer.getValue("testdata").size() >1 :
+                    attr_value = json_analyzer.getValue("testdata").toString()
+                else:
+                    attr_value = json_analyzer.getValue("testdata").get(0)
+                attr_value = json_analyzer.getValue("testdata").get(0)
+
+                dict_list[attr_key] = attr_value
+
+        return dict_list
+
     def check_discovery_response(
             self,
             key,
@@ -1185,11 +1499,11 @@ class ConformanceKeyword(object):
             response_format,
             query="",
             false=True):
-        self.dutInformation = self.dut_information_manager.getDUTInformation(
+        self.dut_information = self.dut_information_manager.getDUTInformation(
             dut_id)
             
 #        self.log_to_console(" key= " + str(key)+ " dui_id="+str(dut_id)+" response_string="+str(response_string)+" response_format="+str(response_format))
-        dut_resources = self.dutInformation.getResourceWithQuery(query)
+        dut_resources = self.dut_information.getResourceWithQuery(query)
         resourceList = ArrayList()
         for dut_resource in dut_resources:
 #            self.log_to_console(" resource found = " + str(dut_resource.getDUTResourceValue(key)))
@@ -1212,6 +1526,43 @@ class ConformanceKeyword(object):
                     not_found_resource.getDUTResourceValue(IotivityKey.HREF.toString()).toString()) + " ,"
             if false:
                 BuiltIn().fail(not_found_resource_list + " is not found")
+
+
+    def check_oic_defined_resource_discovery(
+            self,
+            key,
+            dut_id,
+            response_string,
+            response_format,
+            query="",
+            false=True):
+        self.oic_information = self.dut_information_manager.getDUTInformation(OIC_ID)
+            
+#        self.log_to_console(" key= " + str(key)+ " dui_id="+str(dut_id)+" response_string="+str(response_string)+" response_format="+str(response_format))
+        oic_resources = self.oic_information.getResourceWithQuery(query)
+        resourceList = ArrayList()
+        for oic_resource in oic_resources:
+#            self.log_to_console(" resource found = " + str(dut_resource.getDUTResourceValue(key)))
+            resourceList.add(oic_resource)
+
+        for oic_resource in oic_resources:
+            is_equal = self.is_equal_json_value(
+                oic_resource.getDUTResourceValue(key), self.get_json_value(
+                    key, response_string, oic_resource.getDUTResourceValue(IotivityKey.HREF.toString()).get(0)))
+
+            if is_equal:
+                resourceList.remove(oic_resource)
+                if not false:
+                    BuiltIn().fail("Invalid resource is found")
+
+        if resourceList.size() != 0:
+            not_found_resource_list = ""
+            for not_found_resource in resourceList:
+                not_found_resource_list += str(
+                    not_found_resource.getDUTResourceValue(IotivityKey.HREF.toString()).toString()) + " ,"
+            if false:
+                BuiltIn().fail(not_found_resource_list + " is not found")
+
 
     # Documentation for a function
     # @brief get json value
@@ -1250,8 +1601,43 @@ class ConformanceKeyword(object):
     # @param json_string
     # @return boolean
     def validate_json_format(self, json_string):
+        if json_string == '' :
+            json_string = "{}"
         json_analyzer = JsonAnalyzer(json_string)
         return json_analyzer.validate()
+
+
+    # Documentation for a function
+    # @brief validates json type
+    # @param json_string, resource_href
+    # @return boolean
+    def validate_payload_type(self, payload_string, href):
+        self.dut_information = self.dut_information_manager.getDUTInformation(self.dut_id)
+        paylaod_object_type = self.dut_information.getPayloadType(href)
+        first_char = payload_string[0]
+        last_char = payload_string[len(payload_string) - 1]
+        if paylaod_object_type == PayloadType.OBJECT and first_char == '{' and last_char == '}':
+            return True
+        elif paylaod_object_type == PayloadType.ARRAY and first_char == '[' and last_char == ']':
+            return True
+        else:
+            return False
+
+    # Documentation for a function
+    # @brief validates json type
+    # @param json_string, resource_href
+    # @return boolean
+    def validate_discovery_payload_type(self, payload_string, href):
+        errorMsg = ''
+        self.oicInformation = self.dut_information_manager.getDUTInformation(OIC_ID)
+        paylaod_object_type = self.oicInformation.getPayloadType(href)
+        first_char = payload_string[0]
+        last_char = payload_string[len(payload_string) - 1]
+        if paylaod_object_type == PayloadType.OBJECT and first_char == '[' and last_char == ']':
+            errorMsg = 'Payload format mismatch. Expected Object type payload, Received Array type payload.'
+        elif paylaod_object_type == PayloadType.ARRAY and first_char == '{' and last_char == '}':
+            errorMsg = 'Payload format mismatch. Expected Array type payload, Received Object type payload.'
+        return errorMsg
 
     # Documentation for a function
     # @brief gets protocol
@@ -1281,20 +1667,29 @@ class ConformanceKeyword(object):
             return OICHelper.MessageType.NON
 
     def get_response_result(self, response):
-        response_result = self.get_response_value(response, OICHelper.MessageParameters.responseCode)
-        response_result = response_result + "\n" + \
-            self.get_response_value(response, OICHelper.MessageParameters.payload)
-        response_result = response_result + "\n" + \
-            self.get_response_value(response, OICHelper.MessageParameters.srcAddress)
-        response_result = response_result + "\n" + \
-            self.get_response_value(response, OICHelper.MessageParameters.srcPort)
-        response_result = response_result + "\n" + \
-            self.get_response_value(response, OICHelper.MessageParameters.mId)
-        response_result = response_result + "\n" + \
-            self.get_response_value(response, OICHelper.MessageParameters.token)
-        response_result = response_result + "\n" + \
-            self.get_response_value(response, OICHelper.MessageParameters.msgType)
-#        self.log_to_console(" response_result = " + response_result)
+        if response is None:
+            response_result = ''
+        else:
+            response_result = self.get_response_value(response, OICHelper.MessageParameters.responseCode)
+            response_result = response_result + "\n" + \
+                self.get_response_value(response, OICHelper.MessageParameters.payload)
+            response_result = response_result + "\n" + \
+                self.get_response_value(response, OICHelper.MessageParameters.srcAddress)
+            response_result = response_result + "\n" + \
+                self.get_response_value(response, OICHelper.MessageParameters.srcPort)
+            response_result = response_result + "\n" + \
+                self.get_response_value(response, OICHelper.MessageParameters.mId)
+            response_result = response_result + "\n" + \
+                self.get_response_value(response, OICHelper.MessageParameters.token)
+            response_result = response_result + "\n" + \
+                self.get_response_value(response, OICHelper.MessageParameters.msgType)
+            response_result = response_result + "\n" + \
+                self.get_response_value(response, OICHelper.MessageParameters.secPort)
+            content_format = self.get_response_value(response, OICHelper.MessageParameters.contentFormat)
+            if content_format is None:
+				content_format = "UNSPECIFIED"
+            response_result = response_result + "\n" + \
+                content_format
         return response_result
 
     # Documentation for a function
@@ -1306,63 +1701,87 @@ class ConformanceKeyword(object):
         if request_code is not None:
             request_result = request_code
         else:
-            request_result = ""          
+            request_result = ""
         request_payload = self.get_request_value(request, OICHelper.MessageParameters.payload)
         if request_payload is not None:
             request_result = request_result + "\n" + request_payload
         else:
             request_result = request_result + "\n" + ""
-        request_ip = self.get_request_value(request, OICHelper.MessageParameters.srcAddress)
+        request_ip = self.get_request_value(request, OICHelper.MessageParameters.destAddress)
         if request_ip is not None:
             request_result = request_result + "\n" + request_ip
         else:
             request_result = request_result + "\n" + ""
-        request_port = self.get_request_value(request, OICHelper.MessageParameters.srcPort)
+        request_port = self.get_request_value(request, OICHelper.MessageParameters.destPort)
         if request_port is not None:
             request_result = request_result + "\n" + request_port
         else:
-            request_result = request_result + "\n" + ""  
+            request_result = request_result + "\n" + ""
         request_mid = self.get_request_value(request, OICHelper.MessageParameters.mId)
         if request_mid is not None:
             request_result = request_result + "\n" + request_mid
         else:
-            request_result = request_result + "\n" + ""  
+            request_result = request_result + "\n" + ""
         request_token = self.get_request_value(request, OICHelper.MessageParameters.token)
         if request_token is not None:
             request_result = request_result + "\n" + request_token
         else:
-            request_result = request_result + "\n" + ""  
+            request_result = request_result + "\n" + ""
         request_obseve_flag = self.get_request_value(request, OICHelper.MessageParameters.observeFlag)
         if request_obseve_flag is not None:
             request_result = request_result + "\n" + request_obseve_flag
         else:
-            request_result = request_result + "\n" + ""  
+            request_result = request_result + "\n" + ""
         request_msg_type = self.get_request_value(request, OICHelper.MessageParameters.msgType)
         if request_msg_type is not None:
             request_result = request_result + "\n" + request_msg_type
         else:
-            request_result = request_result + "\n" + ""  
-        self.log_to_console(" request_result = " + request_result)
+            request_result = request_result + "\n" + ""
+#        self.log_to_console(" request_result = " + request_result)
+        request_href = self.get_request_value(request, OICHelper.MessageParameters.uri)
+        if request_href is not None:
+            request_result = request_result + "\n" + request_href
+        else:
+            request_result = request_result + "\n" + ""
+        request_query = self.get_request_value(request, OICHelper.MessageParameters.query)
+        if request_query is not None:
+            request_result = request_result + "\n" + request_query
+        else:
+            request_result = request_result + "\n" + ""
+        content_format = self.get_request_value(request, OICHelper.MessageParameters.contentFormat)
+        if content_format is not None:
+            request_result = request_result + "\n" + content_format
+        else:
+            request_result = request_result + "\n" + ""
+        accept_format = self.get_request_value(request, OICHelper.MessageParameters.accept)
+        if accept_format is not None:
+            request_result = request_result + "\n" + accept_format
+        else:
+            request_result = request_result + "\n" + ""
         return request_result
 
     def create_json_representation(self):
         self.json_representation = HashMap()
         self.rep_map = JsonData()
-  
+
     def add_into_json_representation(self, key, value, data_type=None):
-        if data_type == "int":
-            value = int(value)
-        elif data_type == "float":
-            value = float(value)
-        elif data_type == "bool":
-            value = Boolean.valueOf(value)
+        if data_type == "int" or data_type == "integer":
+            value_to_insert = int(value)
+        elif data_type == "float" or data_type== "number":
+            value_to_insert = float(value)
+        elif data_type == "bool" or data_type == "boolean":
+            value_to_insert = Boolean.valueOf(value)
         elif data_type == "array":
             json_array = JsonData(value)
-            value = json_array.toArray()
-        self.rep_map.put(key , value )
+            value_to_insert = json_array.toArray()
+        else:
+            value_to_insert = value
+        self.rep_map.put(key , value_to_insert )
 
     def get_json_string(self):
+#        key = IotivityKey.REP.toString()
         intermediate_representation = HashMap()
+#        intermediate_representation.put(key, self.json_representation)
         key = IotivityKey.ROOT.toString()
         final_representation = JsonData()
         final_representation.put(key, intermediate_representation)
@@ -1401,6 +1820,26 @@ class ConformanceKeyword(object):
                 return listofvalues[i]
 
     def get_json_representation(self):
+#        if self.rep_map.isEmpty():
+#            self.prop_map.put("rt", self.resource_type)
+#            self.prop_map.put("dis", self.resource_dis)
+#            self.rep_map.put("sample_key", "sample_value")
+#        if self.resource_interface_array.size() != 0:
+#            self.prop_map.put("if", self.resource_interface_array)
+
+#        final_representation = JsonData()
+
+#        if self.resource_href != None:
+#            final_representation.put("href", self.resource_href)
+#        if not self.prop_map.isEmpty():
+#            self.prop_map.put("rep", self.rep_map)
+#            final_representation.put("prop", self.prop_map)
+#        else:    
+#            final_representation.put("rep", self.rep_map)
+#        temp = ArrayList()
+#        temp.add(final_representation)
+#        json_string = final_representation.toString()
+#        json_string = temp.toString()
         json_string = self.rep_map.toString()
         what = CREATED_PAYLOAD + json_string + '\n'
                
@@ -1416,7 +1855,7 @@ class ConformanceKeyword(object):
     	if query == None:
     		query = ''
         return self.provision_manager.getMulticastDiscoveryResponse(self.get_protocol(protocol), uri, query)
-        
+
     def get_multicast_discovery_response_code(self, response):
         return self.provision_manager.getResponseCode(response)
         
@@ -1430,7 +1869,7 @@ class ConformanceKeyword(object):
         return self.provision_manager.getResponsePayload(response)
     
     def get_response_payload(self, response):
-        self.result = response.split("\n", 6)
+        self.result = response.split("\n", 8)
         return self.result[1]
            
     def get_rep_value_from_response(self, key, response):
@@ -1453,7 +1892,7 @@ class ConformanceKeyword(object):
     def get_oxm_list_from_response(self, response):
     	oxm_list = self.get_rep_value_from_response("oxm", response)
     	return oxm_list
- 
+
     def check_oxm_list_contains_atleast_justworks_or_randompin_method(self, response):
         oxm_list = self.get_rep_value_from_response("oxm", response)
         justworks_method = '0'
@@ -1463,42 +1902,42 @@ class ConformanceKeyword(object):
             return True 
         else:
             return False
-        
+
     def get_sm_property_from_response(self, response):
-    	sm = self.get_rep_value_from_response("sm", response)
-    	return sm
-    		
+        sm = self.get_rep_value_from_response("sm", response)
+        return sm
+
     def get_om_property_from_response(self, response):
-    	sm = self.get_rep_value_from_response("om", response)
-    	return sm
-    	
+        om = self.get_rep_value_from_response("om", response)
+        return om
+
     def get_oxm_selection_from_response(self, response):
-    	sm = self.get_rep_value_from_response("oxmsel", response)
-    	return sm
-    	
+        oxm = self.get_rep_value_from_response("oxmsel", response)
+        return oxm
+
     def get_owned_status_from_response(self, response):
-    	sm = self.get_rep_value_from_response("owned", response)
-    	return sm
-    	
+        owned_status = self.get_rep_value_from_response("owned", response)
+        return owned_status
+
     def get_device_owner_from_response(self, response):
-    	ownr = self.get_rep_value_from_response("ownr", response)
-    	return ownr
-      	
+        ownr = self.get_rep_value_from_response("ownr", response)
+        return ownr
+
     def wait_for_user_confirmation(self, msg, option_list=None):
-    	"Waiting for User Input"
+        "Waiting for User Input"
         sentence = ['\n<------------ ', msg]
-    	if (option_list != None):
+        if (option_list != None):
             sentence += [' [', option_list, ']']
             option_list = option_list.split(" ")
-    	else:
-    		option_list = []
+        else:
+            option_list = []
         sentence += [' and Press Enter',' ------------>\n']
         if self.is_cli_enabled():
             self.log_to_console("".join(sentence))
             return raw_input()
         else:	
-    	    return self.ui.showInputDialog(msg, option_list)
-        
+            return self.ui.showInputDialog(msg, option_list)
+
     def print_message(self, msg):
         "Waiting for User Input"
         sentence = ['\n<------------ ', msg, ' ------------>\n']
@@ -1507,56 +1946,56 @@ class ConformanceKeyword(object):
         else:
             self.ui.showMessageDialog(msg)
 
-    def get_reset_token(self):
-        return self.oic_resource_light.getResetToken()
+    def get_reset_token(self, href):
+        return self.resource_map[href].getResetToken()
 
     def get_payload_from_file(self, payload_type, file_path):
         "Read file and get particular payload"
         payload_file = File(file_path)
         json_analyzer = JsonAnalyzer(payload_file)
         return json_analyzer.getJsonValueAsString(payload_type)
-	
+
     def get_wireshark_file_name(self, tc_name):
         "Read testcase name and return wireshark file name"
         file_name = tc_name.replace(" - ","-")
         file_name = file_name.replace(".","_")
         file_name = file_name.replace(" ","_")
-        time_stamp = datetime.datetime.now().strftime('_%Y%m%d_%H%M%S')
+        time_stamp = datetime.datetime.now().strftime('_%Y-%m-%d_%H:%M:%S')
         file_name = file_name + time_stamp + ".pcapng"
         return file_name
-    	
+
     def is_crudn_operation_supported(self, href, key):
-        self.dutInformation = self.dut_information_manager.getDUTInformation(self.dut_id)
-        self.dutInformation.generateCRUDNState(href)
+        self.dut_information = self.dut_information_manager.getDUTInformation(self.dut_id)
+        self.dut_information.generateCRUDNState(href)
         is_supported = False
         if key == "COMPLETE_CREATE":
-            is_supported = self.dutInformation.getCRUDNState(href, CRUDNType.COMPLETE_CREATE)
+            is_supported = self.dut_information.getCRUDNState(href, CRUDNType.COMPLETE_CREATE)
         elif key == "COMPLETE_CREATE":
-            is_supported = self.dutInformation.getCRUDNState(href, CRUDNType.SUBORDINATE_CREATE)
+            is_supported = self.dut_information.getCRUDNState(href, CRUDNType.SUBORDINATE_CREATE)
         elif key == "RETRIEVE":
-            is_supported = self.dutInformation.getCRUDNState(href, CRUDNType.RETRIEVE)
+            is_supported = self.dut_information.getCRUDNState(href, CRUDNType.RETRIEVE)
         elif key == "COMPLETE_UPDATE":
-            is_supported = self.dutInformation.getCRUDNState(href, CRUDNType.COMPLETE_UPDATE)
+            is_supported = self.dut_information.getCRUDNState(href, CRUDNType.COMPLETE_UPDATE)
         elif key == "PARTIAL_UPDATE":
-            is_supported = self.dutInformation.getCRUDNState(href, CRUDNType.PARTIAL_UPDATE)
+            is_supported = self.dut_information.getCRUDNState(href, CRUDNType.PARTIAL_UPDATE)
         elif key == "DELETE":
-            is_supported = self.dutInformation.getCRUDNState(href, CRUDNType.DELETE)
+            is_supported = self.dut_information.getCRUDNState(href, CRUDNType.DELETE)
         else:
             is_supported = False
         return is_supported
 
-    def update_representation(self):
+    def update_representation(self, href):
         "updates resource representation"
-        self.oic_resource_light.updateResourceRespresentation()
+        self.resource_map[href].updateResourceRespresentation()
 
     def get_resource_interface(self, href):
-        self.dutInformation = self.dut_information_manager.getDUTInformation(self.dut_id)
-        return  self.dutInformation.getInterfaceList(href)
-        
+        self.dut_information = self.dut_information_manager.getDUTInformation(self.dut_id)
+        return  self.dut_information.getInterfaceList(href)
+
     def get_modified_json_string(self, json_string, key, value):
         json_analyzer = JsonAnalyzer(json_string)
         return  json_analyzer.getModifiedJsonString(key, value)
-    
+
     def update_payload(self, payload, key, value):
         if value == 'none':
             return payload
@@ -1568,3 +2007,579 @@ class ConformanceKeyword(object):
         old_value = payload[first_index+1 : last_index]
         payload = payload[:first_index+1] + str(value) + payload[last_index:]
         return payload
+
+    def check_data_model_version(self, value):
+        error_msg = None
+        if value == '':
+            error_msg = "Data Model Version value is Empty."
+            return error_msg
+        parts = value.split('.')
+        if len(parts) > 4:
+            error_msg = "Data Model Version contains more than 4  dot separated values."
+        elif len(parts) < 4:
+            error_msg = "Data Model Version contains less than 4  dot separated values."
+        return error_msg
+
+    def check_spec_version(self, value):
+        error_msg = None
+        if value == '':
+            error_msg = "Data Model Version value is Empty."
+            return error_msg
+        parts = value.split('.')
+        if len(parts) > 4:
+            error_msg = "Spec Version contains more than 4  dot separated values."
+        elif len(parts) < 4:
+            error_msg = "Spec Version contains less than 4  dot separated values."
+        if parts[0] != "core":
+            error_msg += " First part of dmv is not core."
+        return error_msg
+
+## End of Device Managment Keywords ##
+
+## Security Relay Controller Keywords  ##
+    def intialize_dtls_connection(self, relay_ip, relay_port, dut_ip, dut_port_secured, cipher_suite):
+        return self.control_client.initDtls(relay_ip, int(relay_port), dut_ip, int(dut_port_secured), int(cipher_suite))
+
+    def intialize_dtls_connection_with_random_pin(self, relay_ip, relay_port, dut_ip, dut_port_secured, cipher_suite, client_di, server_di, pin):
+        return self.control_client.initDtls(relay_ip, int(relay_port), dut_ip, int(dut_port_secured), int(cipher_suite), client_di, server_di, pin)
+
+## End of Security Relay Controller Keywords ##
+
+## Provisioning Keywords ##
+    def discover_owned_device(self, filter_ip):
+        return self.provisioning_client.discoverOwnedDevice(filter_ip)
+
+    def discover_unowned_device(self, filter_ip):
+        return self.provisioning_client.discoverUnownedDevice(filter_ip)
+
+    def find_private_data(self, device_id_encoded):
+        return self.provisioning_client.findprivate_data(device_id_encoded)
+
+    def store_private_data(self, device_id_encoded, private_data):
+        self.provisioning_client.storeprivate_data(device_id_encoded, private_data)
+
+    def dtls_connect_with_psk(self, private_data, client_device_id, server_device_id, relay_ip, relay_control_port, dut_ip, dut_secured_port):
+        return self.provisioning_client.dtlsConnectWithPSK(private_data, client_device_id, server_device_id, relay_ip, relay_control_port, dut_ip, dut_secured_port)
+
+    def configure_device_for_provisioning(self, otm, client_device_id, server_device_id):
+        self.provisioning_client.configureDeviceForProvisioning(otm, client_device_id, server_device_id)
+
+    def provision_with_just_works(self, client_device_id, server_device_id, relay_ip, relay_control_port, dut_ip, dut_secured_port):
+        private_data = self.provisioning_client.provisionWithJustWorks(client_device_id, server_device_id, relay_ip, relay_control_port, dut_ip, dut_secured_port)
+        if private_data is not None:
+            store_private_data(server_device_id, private_data)
+            return True
+        else:
+            return False
+
+    def provision_with_random_pin(self, pin, client_device_id, server_device_id, relay_ip, relay_control_port, dut_ip, dut_secured_port):
+        private_data = self.provisioning_client.provisionWithRandomPin(pin, client_device_id, server_device_id, relay_ip, relay_control_port, dut_ip, dut_secured_port)
+        if private_data is not None:
+            store_private_data(server_device_id, private_data)
+            return True
+        else:
+            return False
+
+    def get_current_system_ip_address(self, use_ip6):
+        return self.provisioning_client.getCurrentSystemIpAddress(use_ip6)
+
+    def get_secured_port(self):
+        return self.provisioning_client.getSecuredPort()
+
+    def get_device_id(self):
+        return self.provisioning_client.getDeviceId()
+
+    def transfer_ownership(self, dut_ip):
+        self.log_to_console("----------Discovering UnOwned Resource----------")
+        unowned_secured_device = self.provisioning_client.discoverUnownedDevice(dut_ip)
+        server_device_id = unowned_secured_device.getDeviceId();
+        private_data = self.provisioning_client.findPrivateData(server_device_id)
+        self.log_to_console("----------Stablishing DTLS Handshake----------")
+        is_dtls_connected = self.provisioning_client.dtlsConnectWithPSK(private_data, CLIENT_DEVICE_ID, server_device_id, get_current_system_ip_address(False), RELAY_CONTROL_PORT, dut_ip, get_secured_port())
+        if is_dtls_connected is True:
+            self.log_to_console("----------DTLS Connection Stablished----------")
+        else:
+            self.log_to_console("----------Failed to Stablish DTLS Connection----------")
+            return None
+        self.log_to_console("----------Sending OwnerShip Transfer Request----------")
+        response = self.provisioning_client.transferOwnership(client_device_id, server_device_id, relay_ip, relay_data_port)
+        if response is None:
+            self.print_testcase_get(DUT, TE, 'No Response')
+            return ""
+        else:
+            result = self.get_response_result(response)
+            self.print_testcase_get(
+                DUT,
+                TE,
+                'Response for Ownership Transfer',
+                self.get_response_description(response))
+        return result
+
+    def terminate_dtls_connection(self):
+        self.provisioning_client.terminateDtls()
+
+    def get_provisioning_client_device_id(self):
+        return CLIENT_DEVICE_ID
+
+    def get_relay_data_port(self):
+        return RELAY_DATA_PORT
+
+    def get_relay_control_port(self):
+        return RELAY_CONTROL_PORT
+
+    def send_acl_request(self, client_id, owner_id):
+        self.log_to_console("----------Sending ACL Entry Request----------")
+        payload = ACL_PAYLOAD.replace("ClientDeviceId", client_id)
+        payload_to_send = payload.replace("OwnerDeviceId", owner_id)
+        relay_ip = self.provisioning_client.getCurrentSystemIpAddress(False)
+        response = self.oic_client.sendRequest(Protocol.COAP, MessageType.NON, Method.GET, \
+            OICHelper.getRandomMessageIdString(), OICHelper.createTokenString(), relay_ip, RELAY_DATA_PORT, CORE_ACL_URI,  payload_to_send)
+        if response is None:
+            self.print_testcase_get(DUT, TE, 'No Response')
+            return ""
+        else:
+            result = self.get_response_result(response)
+            self.print_testcase_get(
+                DUT,
+                TE,
+                'Response for ACL Entry',
+                self.get_response_description(response))
+        return result
+
+    def initialize_secured_device(self, ip, port):
+        self.log_to_console("Initializing Device for secured data connection")
+        use_ip6 = False
+        private_data = None
+        server_device_id = None
+        pin = None
+        relay_ip = self.provisioning_client.getCurrentSystemIpAddress(use_ip6)
+        dut_ip = ip
+        owned_secured_device = self.provisioning_client.discoverOwnedDevice(dut_ip)
+
+        if owned_secured_device is not None:
+            self.log_to_console("Owned device found!")
+            server_device_id = ownedSecuredDevice.getDeviceId();
+            private_data = self.provisioning_client.findPrivateData(server_device_id)
+
+            if private_data is not None:
+                self.provisioning_client.dtlsConnectWithPSK(private_data, CLIENT_DEVICE_ID, server_device_id, relay_ip, RELAY_CONTROL_PORT, dut_ip, port)
+            else:
+                self.log_to_console("Credential for the owned device not found")
+        else:
+            unowned_secured_device = self.provisioning_client.discoverUnownedDevice(dut_ip)
+
+            if unowned_secured_device is not None:
+                self.log_to_console("UnOwned device found!")
+                server_device_id = unowned_secured_device.getDeviceId();
+                selected_otm = unowned_secured_device.getOtm();
+                self.provisioning_client.configureDeviceForProvisioning(selected_otm, CLIENT_DEVICE_ID, server_device_id)
+
+                if selected_otm is OTM.RANDOM_PIN:
+                    self.log_to_console("Enter pin: ")
+                    pin = self.wait_for_user_confirmation("Please enter random pin: ")
+                    private_data = self.provisioning_client.provisionWithRandomPin(pin, CLIENT_DEVICE_ID, server_device_id, relay_ip, RELAY_CONTROL_PORT, dut_ip, port)
+                elif selected_otm is OTM.JUST_WORKS:
+                    private_data = self.provisioning_client.provisionWithJustWorks(CLIENT_DEVICE_ID, server_device_id, relay_ip, RELAY_CONTROL_PORT, dut_ip, port)
+
+                self.provisioning_client.storePrivateData(server_device_id, private_data)
+                self.provisioning_client.transferOwnership(CLIENT_DEVICE_ID, server_device_id, relay_ip, RELAY_DATA_PORT)
+                self.send_acl_request(CLIENT_DEVICE_ID, CLIENT_DEVICE_ID)
+                self.provisioning_client.terminateDtls()
+
+            self.provisioning_client.dtlsConnectWithPSK(private_data, CLIENT_DEVICE_ID, server_device_id, relay_ip, RELAY_CONTROL_PORT, dut_ip, port)
+
+## End of Provisioning Keywords ##
+
+
+###start new keywork by m.parves ###
+    def get_resource_status(self, dut_id, server_ip, server_port, href=None):
+        self.dic_get_response ={}
+        _hrefs = []
+        if href is None:
+            _hrefs = self.get_dut_info_value(HREF, dut_id)
+        else:
+            _hrefs.append(href)
+        for _href in _hrefs:
+            msgid = self.generate_message_id()
+            token = self.generate_token()
+            _response = self.send_get_request(UNICAST, COAP, msgid, token, server_ip, server_port, _href, True)
+            _response_json = self.get_response_json(_response)
+            self.dic_get_response[_href] = str(_response_json)
+            
+    def get_parameter_query(self, dut_id, server_ip, server_port):
+        list_of_href = self.get_dut_info_value(HREF, dut_id)  
+        list_of_query = []          
+        for href in list_of_href:
+            self.log_to_console('Href: ' + href)
+            msgid = self.generate_message_id()
+            token = self.generate_token()
+            response = self.send_get_request(UNICAST, COAP, msgid, token, server_ip, server_port, href, True)
+            self.log_to_console('Response: ' + response)
+            response_json = self.get_response_json(response)
+            payload = str(response_json)
+            self.log_to_console('payload: ' + payload)
+            payload_json = JsonAnalyzer(payload)
+            self.dut_information = self.dut_information_manager.getDUTInformation(dut_id)
+            dut_resource = self.dut_information.getResourceWithQuery(str('href=' + href))
+            list_of_key = []
+            if dut_resource.size() > 0:
+                list_of_rep = dut_resource.get(0).getDUTResourceValue("rep")
+                for rep in list_of_rep:
+                    rep = str(rep)
+                    self.log_to_console('Rep: ' + rep)
+                    rep_json = JsonAnalyzer(rep)
+                    list_of_key.append(rep_json.getValue("key").get(0))      
+            for key in list_of_key:
+                self.log_to_console('key: ' + key)
+                list_of_value = payload_json.getValue(key)
+                if list_of_value.size() > 0:
+                    self.log_to_console('value: ' + list_of_value.get(0))
+                    query = href + '?' + key + '=' + list_of_value.get(0)
+                    list_of_query.append(query)
+                    
+        return list_of_query
+
+    def make_partial_update_payload(self, dut_id, access, interface=None):
+        self.hrefs=[]
+        self.options=[]
+        _hrefs = self.get_dut_info_value(HREF, dut_id) 
+        for _href in _hrefs:
+            query = str('href=' + _href)
+            _options = self.get_dut_resource_value2(dut_id, query, 'rep', access)
+            get_response = None
+
+            if _href in self.dic_get_response:
+                get_response = self.dic_get_response[_href]
+
+            for _option in _options:
+                self.create_json_representation()
+                testdata = _option[2]
+                
+                if interface is None:
+                    if get_response is not None and get_response != "":
+                        current_value = self.get_json_value(_option[0], get_response)[0]
+                        if current_value == _option[2]:
+                            testdata = _option[3]
+
+                    self.add_into_json_representation( _option[0], testdata, _option[1])
+                    self.options.append(str(self.get_json_representation()))
+                    self.hrefs.append(str(_href))
+                else:
+                    _interfaces = self.get_dut_info_value(interface, dut_id, HREF+'='+_href)
+                    current_value = _option[3]
+                    if get_response is not None and get_response !="":
+                        current_value = self.get_json_value(_option[0], get_response)[0]
+                    for _interface in _interfaces:
+                        if current_value == _option[2]:
+                            testdata = _option[3]
+                            current_value = testdata
+                        else:
+                            testdata = _option[2]
+                            current_value = testdata
+
+                        self.add_into_json_representation( _option[0], testdata, _option[1])
+                        self.options.append(str(self.get_json_representation()))
+                        self.hrefs.append(str(_href+'?'+interface+'='+_interface))
+
+    def make_complete_update_payload(self, dut_id, access, interface=None):
+        self.hrefs=[]
+        self.options=[]
+        _hrefs = self.get_dut_info_value(HREF, dut_id)
+        for _href in _hrefs:
+            query = str('href=' + _href)
+            _options = self.get_dut_resource_value2(dut_id, query, 'rep', access)
+            get_response = None
+
+            if _href in self.dic_get_response:
+                get_response = self.dic_get_response[_href]
+
+            self.create_json_representation()
+            if interface is None:
+                for _option in _options:
+                    testdata = _option[2]
+
+                    if get_response is not None and get_response != "":
+                        current_value = self.get_json_value(_option[0], get_response)[0]
+                        if current_value == _option[2]:
+                            testdata = _option[3]
+
+                    self.add_into_json_representation( _option[0], testdata, _option[1])
+                self.options.append(str(self.get_json_representation()))
+                self.hrefs.append(str(_href))
+
+            else:
+                _interfaces = self.get_dut_info_value(interface, dut_id, HREF+'='+_href)
+                for _interface in _interfaces:
+                    for _option in _options:
+                        current_value = _option[3]
+                        if get_response is not None and get_response !="":
+                            current_value = self.get_json_value(_option[0], get_response)[0]
+                        if current_value == _option[2]:
+                            testdata = _option[3]
+                        else:
+                            testdata = _option[2]
+
+                        self.add_into_json_representation( _option[0], testdata, _option[1])
+                    get_response = str(self.get_json_representation())
+                    self.options.append(get_response)
+                    self.hrefs.append(str(_href+'?'+interface+'='+_interface))
+
+    def get_complete_update_hrefs(self):
+        return self.hrefs
+
+    def get_complete_update_payloads(self):
+        return self.options
+
+    def get_partial_update_hrefs(self):
+        return self.hrefs
+			
+    def get_partial_update_payloads(self):
+        return self.options
+
+    def make_query(self, dut_id, key):
+        queries = []
+        hrefs = self.get_dut_info_value(HREF, dut_id) 
+        for href in hrefs:
+            query_str = HREF+'='+str(href)
+            options = self.get_dut_info_value(key, dut_id, str(query_str)) 
+            for option in options:
+                query = href + '?'+key+'='+option
+                queries.append(str(query))
+        return queries
+        
+    def make_query_with_defined_uris(self, dut_id, key, *hrefs):
+        queries = []
+        for href in hrefs:
+            query_str = HREF+'='+str(href)
+            options = self.get_dut_info_value(key, dut_id, str(query_str)) 
+            for option in options:
+                query = href + '?'+key+'='+option
+                queries.append(str(query))
+        return queries
+
+    def get_list_of_oic_core_resource(self, rt=None):
+#        oic_resources = {RESOURCE_DISCOVERY_RT:RESOURCE_DISCOVERY_URI,DEVICE_DISCOVERY_RT:DEVICE_DISCOVERY_URI,PLATFORM_DISCOVERY_RT:PLATFORM_DISCOVERY_URI}
+        oic_resources = {DEVICE_DISCOVERY_RT:DEVICE_DISCOVERY_URI,PLATFORM_DISCOVERY_RT:PLATFORM_DISCOVERY_URI}
+#        oic_resources = {'oic.wk.d':'/oic/d','oic.wk.p':'/oic/p','oic.wk.res':'/oic/res'}
+        if rt is None :
+            return oic_resources.values()
+        resources = []
+        if oic_resources.get(rt) is not None :
+            resources.append(oic_resources.get(rt))
+        return resources
+        
+    def get_list_of_resource(self, response_payload, key):
+        self.log_to_console(sys._getframe().f_code.co_name + " with key: " + key)
+        self.log_to_console(response_payload)
+        payload_json = JsonAnalyzer(response_payload)
+        self.log_to_console(payload_json)
+        links = payload_json.getValue("links")
+        self.log_to_console("total link: " + str(links.size()))
+        for link in links:
+    		self.log_to_console(link)
+        links_json = JsonAnalyzer(str(links))
+        list_of_resource = links_json.getAllValueFromJson(key)
+        self.log_to_console(list_of_resource)
+        return list_of_resource
+
+    def get_resource_values(self, response_payload, search_property_key, search_property_value, find_property_key):
+        # Unimplemented
+        self.log_to_console(sys._getframe().f_code.co_name + " in")
+        self.log_to_console(response_payload)
+        payload_json = JsonAnalyzer(response_payload)
+        self.log_to_console(payload_json)
+        links = payload_json.getValue("links")
+        self.log_to_console("total link: " + str(links.size()))
+        for link in links:
+    		self.log_to_console(link)
+    		link_json = JsonAnalyzer(link)
+    		if links_json.getValue(search_property_key).get(0) == search_property_value:
+    			return link_json.getValue(key)
+        self.log_to_console(list_of_resource)
+        return ''
+        		
+    def get_resource_uri_for_a_resource_type(self, response_payload, resource_type):        
+        # Unimplemented
+        if resource_type == 'oic.wk.p':
+    		return '/oic/p'
+        elif resource_type == 'oic.wk.d':
+    		return ['/oic/d']	
+        return ''
+		
+    def get_list_of_resource_uri_for_all_resource_type(self, response_payload, *list_of_resource_type):        
+        # Unimplemented
+        uris = ['/oic/p', '/oic/d']
+        return uris
+
+    def has_length_exceed(self, msg, maxLen):
+        if len(msg) > maxLen:
+    		return True
+        return False		
+           
+    def are_uri_type_interface_defined(self, response, oic_resource):
+        # Unimplemented
+        
+        return True
+        
+    def check_oic_prefix(self, prefix, response_type, response_uris):
+        # Unimplemented
+        if response_type.startswith(prefix) == False:
+    		for response_uri in response_uris:
+    			if response_uri.startswith("/" + prefix):
+    				return False
+    				
+        return True  
+
+    def get_all_value_for_a_key(self, json, key):
+        # Unimplemented
+        json_analyzer = JsonAnalyzer(json)
+        values = json_analyzer.getAllValueFromJson(key)
+        return values 
+        
+    def check_vendor_defined_oic_resource_type_format(self, resource_type):
+        if resource_type.startswith('x.'):
+    		cnt = 0
+    		for ch in resource_type:
+    			print(ch + "\n")
+    			if ch == '.':
+    				cnt = cnt + 1
+    		if cnt < 2:
+    			return False
+        return True
+
+    def verify_prefix_oic(self, response_payload):
+        href_list = self.get_list_of_oic_core_resource(None)
+        href_list.remove(DEVICE_DISCOVERY_URI)
+        payload_json = JsonAnalyzer(response_payload)
+        links = payload_json.getValue("links")
+        payload_json = JsonAnalyzer(str(links))
+        for href in href_list:
+            href_uris = payload_json.getValueWithHref(href, "href")
+            if href_uris.size() > 0 :
+                href_uri = str(href_uris[0])
+                if href_uri.startswith('/oic/') is False:
+                    return False
+        return True
+
+    def verify_response_have_only_discoverable(self, response_payload):
+        href_list = self.get_dut_info_value(IotivityKey.HREF.toString(), self.dut_id, IotivityKey.DIS.toString()+'=0')
+        payload_json = JsonAnalyzer(response_payload)
+        links = payload_json.getValue("links")
+        payload_json = JsonAnalyzer(str(links))
+        for href in href_list:
+            response_hrefs = payload_json.getAllValueFromJson(IotivityKey.HREF.toString())
+            if href in response_hrefs:
+                return False
+        return True
+
+    def is_policy_value_correct(self, response_payload):
+        href_list = self.get_dut_info_value(IotivityKey.HREF.toString(), self.dut_id, IotivityKey.DIS.toString()+'=1')
+        payload_json = JsonAnalyzer(response_payload)
+        links = payload_json.getValue("links")
+        payload_json = JsonAnalyzer(str(links))
+        for href in href_list:
+            expected_p = 1
+            if(payload_json.getValueWithHref(href, "bm").size() > 0):
+                current_bm = payload_json.getValueWithHref(href, "bm")[0]
+                obs_list = self.get_dut_info_value(IotivityKey.OBS.toString(), self.dut_id, IotivityKey.HREF.toString()+'='+href)
+                expected_p = expected_p + (int(obs_list[0]) * 2)
+                if (int(expected_p) == int(current_bm)) is False:
+                    return False
+        return True
+        
+    def get_list_of_value_for_a_data_type(self, json, data_type):
+        # Unimplemented
+        return []  
+
+    def are_list_elements_unique(self, *listOfItem):
+        if len(listOfItem) != len(set(listOfItem)):
+    		return False
+        return True
+        
+    def is_item_exist(self, item, *listOfItem):
+        if item in listOfItem:
+    		return True
+        return False
+        
+    def get_item_count(self, item, *listOfItem):
+        cnt = 0
+        for element in listOfItem:
+    		if element == item:
+    			cnt = cnt + 1
+        return cnt
+        
+    def get_contain_count(self, item, *listOfItem):
+        cnt = 0
+        for element in listOfItem:
+    		self.log_to_console("element: " + element)
+    		if element.find(item) >= 0:
+    			cnt = cnt + 1
+        return cnt
+
+    def get_list_length(self, *listOfItem):
+        return len(listOfItem)
+
+    def get_prefix(self, msg, end_marker):
+        index =  msg.find(end_marker)
+        if index >= 0:
+    		return msg[0:index]
+        return msg
+        
+    def get_suffix(self, msg, start_marker):
+        index =  msg.find(start_marker)
+        if index >= 0:
+    		return msg[index+1:]
+        return msg
+        
+    def is_key_exist(self, key, payload):
+        jsonAnalyzer = JsonAnalyzer(payload)
+        values = jsonAnalyzer.getValue(key)
+        if values.size() >= 1:
+    		return True
+        return False
+        
+    def get_list_of_value(self, msg, key):
+        self.log_to_console(sys._getframe().f_code.co_name + " with key: " + key)
+        self.log_to_console(msg)
+        msg_json = JsonAnalyzer(msg)
+        self.log_to_console(msg_json)
+        value = msg_json.getValue(key)
+        self.log_to_console(value)
+        return value
+    
+    def verify_payload(self, payload, prev_payload):
+        self.log_to_console(sys._getframe().f_code.co_name + " in")
+        self.log_to_console("prev_payload: " + prev_payload)
+        prev_payload = prev_payload[1:len(prev_payload)-1]
+        self.log_to_console("prev_payload: " + prev_payload)
+        parts = prev_payload.split(':')
+        key = str(parts[0])
+        length = len(key)-1
+        self.log_to_console("length: " + str(length))
+        key = key[1:length]
+        prev_value = parts[1]
+        self.log_to_console("key: " + key)
+        self.log_to_console("value: " + prev_value)
+        if prev_value[0] == '\"':
+    		prev_value=prev_value[1:len(str(prev_value))-1]
+        self.log_to_console(payload)
+        payload_json = JsonAnalyzer(payload)
+        self.log_to_console(payload_json)
+        value = payload_json.getValue(key).get(0)
+        self.log_to_console(value)
+        if value == prev_value:
+    		return True
+        return False	                    
+                      
+###end new keywork by m.parves ###
+
+
+    def compare_json(self, payload1, payload2):
+		l1 = len(payload1)
+		l2 = len(payload2)
+		if l1 == 0 and l2 == 0:
+			return True
+		if l1 == 0 or l2 == 0:
+			return False
+		return OICHelper.compareJsonPayload(payload1, payload2)
+        

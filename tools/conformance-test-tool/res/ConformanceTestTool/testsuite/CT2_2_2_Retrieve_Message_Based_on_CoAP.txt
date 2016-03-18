@@ -1,0 +1,59 @@
+*** Settings ***
+Documentation     CT2.2.2 Retrieve Message Based on CoAP
+Resource          OIC_ConformanceTest_Setting.txt
+Test Setup    Pre Condition Crudn Client
+Test TearDown    Post Condition Crudn Client
+
+*** Test Cases ***
+1_Retrieve_Valid_Resource_Without_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-25|
+    ...    |see | |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    | procedure | 1. CTT starts the appropriate Server simulator based on the Resource Types supported by the IUT as declared in the PICS. |
+    ...    | procedure | 2. CTT prompts the test operator to read the Properties of the first Resource. |
+    ...    | procedure | 3. Test operator instructs the IUT to send a unicast RETRIEVE request message (i.e. CoAP GET) to the Resource. |
+    ...    | procedure | 4. CTT receives the request message and sends a RETRIEVE response message to IUT and caches the message for later evaluation. |
+    ...    | procedure | 5. IUT receives the response message and updates its knowledge of the Resource with the received Property values. |
+    ...    | procedure | 6. CTT prompts the test operator to verify that the Property values of the Resource as shown by the IUT match values sent by the CTT. |
+    ...    | procedure | 7. Repeat Steps 3 to 6 for all other Resources supported by IUT. |
+    ...    |post_condition |None |
+    ...    | expected | Check 1. The IUT shall send a properly formatted RETRIEVE request message to the correct Resource. |
+    ...    | expected | Check 2. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    ...    | expected | Check 3. MANUAL. The IUT shall indicate the same Property value(s) as the value(s) sent by the CTT if possible. |
+    [Tags]    Mandatory    Client    Retrieve
+    Print Message    "Send NON RETRIEVE Message based on CoAP..."
+    @{dut1_resource_hrefs}      Get DUT Info Value      ${HREF}    ${DUT1_ID}   ${DISCOVERABLE}=1
+    :FOR    ${dut1_resource_href}    IN    @{dut1_resource_hrefs}
+    \   Print Message    \n-----------------Send NON RETRIEVE Message based on CoAP from DUT App to ${dut1_resource_href}-----------------
+    \   ${request}    Get Request    ${dut1_resource_href}    ${GET}
+    \   Run Keyword And Continue On Failure    Check1 Validate Retrieve Request Format    ${request}
+    \   Run Keyword And Continue On Failure    Check2 Verify Payload Encoding    ${request}
+
+*** Keywords ***
+Check1 Validate Retrieve Request Format
+    [Arguments]    ${request}
+    ${request_code}    Get Request Code    ${request}
+    Should Be Equal    ${request_code}    ${GET}
+    ${request_type}    Get Request Type    ${request}
+    @{request_type_list}    Create List    ${CON}    ${NON}
+    BuiltIn.Should Contain    ${request_type_list}    ${request_type}
+    ${token}    Get Request Token    ${request}
+    Should Not Be Empty    ${token}
+    ${msg_id}    Get Request Msgid    ${request}
+    Should Not Be Empty    ${msg_id}
+    ${uri}    Get Request Href    ${request}
+    Should Not Be Empty    ${uri}
+    ${accept}    Get Request Accept    ${request}
+    Should Be Equal    ${accept}    CBOR
+
+Check2 Verify Payload Encoding
+    [Arguments]    ${request}
+    ${json_payload}    Get Request Json    ${request}
+    ${length}    Get Length    ${json_payload}
+    ${content_format}    Run Keyword If    ${length} > 0    Get Request Content Format    ${request}
+    Run Keyword If    ${length} > 0    Should Be Equal    ${content_format}    CBOR

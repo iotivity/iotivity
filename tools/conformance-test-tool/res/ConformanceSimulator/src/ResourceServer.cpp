@@ -161,10 +161,53 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
         cout << "This resource is Discoverable" << endl;
         m_discoverStatus = true;
     }
+
+    vector< string > resourceTypeNames;
+    vector< string > resourceInterfaces;
+    if (m_resourceTypeName.find(" ") != string::npos)
+    {
+        stringstream typeStream(m_resourceTypeName);
+        string currentType = "";
+        while (typeStream >> currentType)
+        {
+            resourceTypeNames.push_back(currentType);
+        }
+        m_resourceTypeName = resourceTypeNames.at(0);
+        resourceTypeNames.erase(resourceTypeNames.begin());
+    }
+
+    if (m_resourceInterface.find(" ") != string::npos)
+    {
+        stringstream interfaceStream(m_resourceInterface);
+        string currentInterface = "";
+        while (interfaceStream >> currentInterface)
+        {
+            resourceInterfaces.push_back(currentInterface);
+        }
+        m_resourceInterface = resourceInterfaces.at(0);
+        resourceInterfaces.erase(resourceInterfaces.begin());
+    }
+
     // This will internally create and register the resource.
     result = OCPlatform::registerResource(m_resourceHandle, m_resourceURI, m_resourceTypeName,
             m_resourceInterface, std::bind(&ResourceServer::entityHandler, this, PH::_1),
             resourceProperty);
+    if (resourceTypeNames.size() > 0)
+    {
+        for (unsigned int i = 0; i < resourceTypeNames.size(); i++)
+        {
+            OCPlatform::bindTypeToResource(m_resourceHandle, resourceTypeNames.at(i));
+        }
+    }
+
+    if (resourceInterfaces.size() > 0)
+    {
+        for (unsigned int i = 0; i < resourceInterfaces.size(); i++)
+        {
+            OCPlatform::bindInterfaceToResource(m_resourceHandle, resourceInterfaces.at(i));
+        }
+    }
+
     OCPlatform::bindInterfaceToResource(m_resourceHandle, OC_RSRVD_INTERFACE_DEFAULT);
 
     if (result != OC_STACK_OK)
@@ -189,11 +232,11 @@ OCStackResult ResourceServer::startServer(uint8_t resourceProperty)
 
         m_representation.setUri(m_resourceURI);
 
-        std::vector< std::string > interfaces;
+        std::vector< std::string > interfaces = resourceInterfaces;
         interfaces.push_back(m_resourceInterface);
         m_representation.setResourceInterfaces(interfaces);
 
-        std::vector< std::string > types;
+        std::vector< std::string > types = resourceTypeNames;
         types.push_back(m_resourceTypeName);
         m_representation.setResourceTypes(types);
 

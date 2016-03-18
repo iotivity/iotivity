@@ -29,14 +29,31 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.slf4j.Logger;
+
+import oic.ctt.logger.CTLogger;
+
+/**
+ * UDP Socket Handler class. Facilitates message send, receive and UDP channel
+ * management
+ *
+ * @author Tanvir Ferdousi (tanvir.f@samsung.com)
+ *
+ */
 public class UdpSocketHandler {
 
     protected WorkerThread   mWorkerThread     = null;
     private DatagramChannel  mDatagramChannel  = null;
     private ControllerEntity mControllerEntity = null;
+    private Logger           mlogger           = CTLogger.getInstance();
     public static final int  UDP_BUFFER_SIZE   = 66000;
 
     public UdpSocketHandler(int port, ControllerEntity controllerEntity) {
+        if (port < 0) {
+            mlogger.error("Invalid port number, using a random port");
+            port = 0;
+        }
+
         try {
             mDatagramChannel = DatagramChannel.open();
             mDatagramChannel.socket().bind(new InetSocketAddress(port));

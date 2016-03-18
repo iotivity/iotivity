@@ -1,21 +1,21 @@
 *** Settings ***
 Documentation	CT2.3.2 NON CREATE Message based on CoAP  
 Resource          OIC_ConformanceTest_Setting.txt
-Test Setup    Start Capture
-Test TearDown    End Capture
+Test Setup    Pre Condition Crudn Client
+Test TearDown    Post Condition Crudn Client
 
 *** Test Cases ***
 CT2.3.2 NON CREATE Message based on CoAP
-    [Documentation]					
-	...	|author	|	|	
-	...	|reviewer|	|			
+    [Documentation]
+	...	|author	|	|
+	...	|reviewer|	|
 	...	|since	|2015-06-16|
 	...	|see	|Section 8.1: CREATE|
 	...	|objective	|Verify that the client (DUT) properly sends a NON CREATE request message to server (TE)  |
 	...	|target	|	|
 	...	|test_data|	|
 	...	|pre_condition|Server (TE) is discovered from the Client (DUT) |
-	...	|procedure| 1. From Client DUT, Send a NON (low QoS) CREATE request message with a complete URI to server|	
+	...	|procedure| 1. From Client DUT, Send a NON (low QoS) CREATE request message with a complete URI to server|
 	...	|procedure| 2. From Server TE, Reply with a CREATE response message to client|
 	...	|procedure| 3. From Client DUT, Receives CREATE response message from server and returns an Ack |
 	...	|post_condition| |
@@ -29,26 +29,20 @@ CT2.3.2 NON CREATE Message based on CoAP
 	...	|expected|       - Code = 3 (PUT)|
 
     [Tags]    Mandantory    Client    Non    Create
-    #Pre-Condition
-    ####################################################
-    Start Server
-    Print Message    \n-----------------Send Multicast Discovery Request from DUT App-----------------
-    Get Discovery Requests
-    
-    #Test-Body
-    #####################################################
-    Print Message    \n-----------------Send NON CREATE Request from DUT App-----------------
-    ${request}    Get Request
-    ${request_code}    Get Request Code    ${request}
-    Should Be Equal    ${request_code}    ${PUT}
-    ${request_type}    Get Request Type    ${request}
-    Should Be Equal    ${request_type}    ${NON}
-    ${payload}    Get Request Json    ${request}
-    ${validate_json_result}     Validate JSON Format        ${payload} 
-    Should Be True      ${validate_json_result}
-    ${received_href}    Get JSON Value    ${HREF}    ${payload}
-    Should Not be Empty    ${received_href}
-    ${resource_type}    Get JSON Value    ${RESOURCE_TYPE}    ${payload}
-    Should Not be Empty    ${resource_type}
-    Stop Server
+
+    @{dut1_resource_hrefs}      Get DUT Info Value      ${HREF}    ${DUT1_ID}   ${DISCOVERABLE}=1
+    :FOR    ${dut1_resource_href}    IN    @{dut1_resource_hrefs}
+    \   Print Message    \n-----------------Send NON CREATE complete resource request from DUT App to ${dut1_resource_href}-----------------
+    \   ${request}    Get Request    ${dut1_resource_href}    ${PUT}
+    \   ${request_code}    Get Request Code    ${request}
+    \   Should Be Equal    ${request_code}    ${PUT}
+    \   ${request_type}    Get Request Type    ${request}
+    \   Should Be Equal    ${request_type}    ${NON}
+    \   ${payload}    Get Request Json    ${request}
+    \   ${validate_json_result}     Validate JSON Format    ${payload}
+    \   Should Be True    ${validate_json_result}
+    \   ${received_href}    Get JSON Value    ${HREF}    ${payload}
+    \   Should Not be Empty    ${received_href}
+    \   ${resource_type}    Get JSON Value    ${RESOURCE_TYPE}    ${payload}
+    \   Should Not be Empty    ${resource_type}
 

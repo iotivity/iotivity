@@ -31,15 +31,22 @@ class SampleResource: public ResourceServer
 {
 private:
     int m_recursiveDelay;
-    int m_scheduledDelay;bool m_isCancelCalled;bool m_isObserveRegistered;
+    int m_scheduledDelay;
+    bool m_isCancelCalled;
+    bool m_isObserveRegistered;
     ObservationIds m_listOfObservers;
     shared_ptr< OCResourceResponse > m_pResponse;
     vector< string > m_resourceList;
     ConformanceHelper *p_conformanceHelper;
+    map<string, string> m_accessmodifier;
 public:
     SampleResource(void);
 
     ~SampleResource(void);
+
+    void setAsReadOnly(string key);
+
+    bool isReadonly(string key);
 
     virtual void onResourceServerStarted(bool &isRegisteredForPresence, int &presenceInterval);
 

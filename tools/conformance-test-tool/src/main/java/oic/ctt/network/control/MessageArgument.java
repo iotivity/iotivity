@@ -22,34 +22,64 @@ package oic.ctt.network.control;
 
 import oic.ctt.network.control.SecurityConstants.ArgumentType;
 
+/**
+ * The MessageArgument class. The arguments contained by the ControlMessage
+ * object are of this type.
+ *
+ * @author Tanvir Ferdousi (tanvir.f@samsung.com)
+ *
+ */
 public class MessageArgument {
 
-    private ArgumentType    mType;
-    private int    mLength;
-    private byte[] mValue;
+    private ArgumentType mType;
+    private int          mLength;
+    private byte[]       mValue;
 
+    /**
+     * Gets the argument type
+     *
+     * @return Object of enum type ArgumentType
+     */
     public ArgumentType getType() {
         return mType;
     }
 
+    /**
+     * Sets the argument type
+     *
+     * @param type
+     *            Enum of type ArgumentType
+     */
     public void setType(ArgumentType type) {
         this.mType = type;
     }
 
+    /**
+     * Gets the size of the argument value
+     *
+     * @return Integer depicting the size in bytes
+     */
     public int getLength() {
         return mLength;
     }
 
-    public void setLength(int length) {
-        this.mLength = length;
-    }
-
+    /**
+     * Gets the argument value
+     *
+     * @return Array of byte
+     */
     public byte[] getValue() {
         return mValue;
     }
 
+    /**
+     * Sets the argument value
+     *
+     * @param Array
+     *            of byte
+     */
     public void setValue(byte[] value) {
         this.mValue = value;
-        this.setLength(value.length);
+        this.mLength = value.length;
     }
 }

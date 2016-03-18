@@ -16,7 +16,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= 
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 package oic.ctt.network;
 
@@ -48,16 +48,19 @@ public interface OICProtocolClient {
             String ip, int port, String uriPath, String query, String payload,
             OCPayloadType payloadType);
 
-    public OICResponseData observeResource(OICHelper.MessageType type, int messageId,
-            byte[] token, String ip, int port, String uriPath, String query);
+    public OICResponseData observeResource(OICHelper.MessageType type,
+            int messageId, byte[] token, String ip, int port, String uriPath,
+            String query);
 
     public void cancelObservePassively(byte[] token);
 
     public void cancelObserveWithReset(byte[] token);
 
     public void resetObserveStatus();
-    
+
     public OICResponseData cancelObserveWithGetMessage(
-            OICHelper.MessageType type, int messageId, byte[] token, String ip, int port,
-            String uriPath, String query);
+            OICHelper.MessageType type, int messageId, byte[] token, String ip,
+            int port, String uriPath, String query);
+
+    public OICRequestData getLastRequest();
 }

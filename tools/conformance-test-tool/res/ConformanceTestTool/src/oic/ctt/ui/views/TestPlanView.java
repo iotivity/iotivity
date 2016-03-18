@@ -111,7 +111,7 @@ public class TestPlanView extends ViewPart {
             }
         };
 
-        updateTestPlanView.setToolTipText(TOOLTIP_TEXT_REFRESH_TEST_VIEW
+        updateTestPlanView.setToolTipText(TOOLTIP_TEXT_REFRESH_VIEW
                 .toString());
         updateTestPlanView
                 .setImageDescriptor(Activator

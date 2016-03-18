@@ -29,11 +29,11 @@ CT1.7.5.6 Finish ownership transfer
     [Tags]	Mandatory	Security
     
     #Precondition
-    ${server_type}	Wait For User Confirmation	Please Select Server Type	${JUST_WORKS_SERVER} ${RANDOM_PIN_SERVER}
+#    ${server_type}	Wait For User Confirmation	Please Select Server Type	${JUST_WORKS_SERVER} ${RANDOM_PIN_SERVER}
     
-    Initialize Device Controller	${DEVICE_ID}
-    Change Working Directory	${DTLS_RELAY_DIR}
-    Execute Application	${DTLS_RELAY_PROCESS_ID}	${DTLS_RELAY}
+#    Initialize Device Controller	${DEVICE_ID}
+#    Change Working Directory	${DTLS_RELAY_DIR}
+#    Execute Application	${DTLS_RELAY_PROCESS_ID}	${DTLS_RELAY}
     Start Application Log	${DEVICE_ID}	${DTLS_RELAY_PROCESS_ID}
     Sleep	2 seconds
     ${app_log}	Get Application Log	${DEVICE_ID}	${DTLS_RELAY_PROCESS_ID}
@@ -47,6 +47,8 @@ CT1.7.5.6 Finish ownership transfer
     
     Terminate Dtls Connection
     Terminate Application	${DTLS_RELAY_PROCESS_ID}
+    
+    ${transfer_response}    Transfer Ownership    ${SERVER_IP}
     
     
 *** Keywords ***

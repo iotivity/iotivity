@@ -30,6 +30,7 @@ ${OIC_RESOURCE_INTERFACE_READ_WRITE}	oic.if.rw
 
 #Section 12.1 Functional Interactions - Table 11 List of Core Resources
 ${OIC_CORE_RESOURCE_DEFAULT_URI}	/oic/res
+${OIC_CORE_RESOURCE_DEFAULT_TYPE}	oic.wk.res
 ${OIC_CORE_RESOURCE_PLATFORM_URI}	/oic/p
 ${OIC_CORE_RESOURCE_DEVICE_URI}		/oic/d
 ${OIC_CORE_RESOURCE_RESOURCE_TYPE_URI}	/oic/res/types/d

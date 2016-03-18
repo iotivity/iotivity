@@ -1,0 +1,98 @@
+*** Settings ***
+Documentation     CT1.2.1 Create Message Base on CoAP
+Test Setup        Pre Condition Crudn Server
+Test Teardown     Post Condition Crudn Server
+Resource          OIC_ConformanceTest_Setting.txt
+
+*** Test Cases ***
+1_CON_Create_Not_Supported_Resource
+    [Documentation]    | since |2016-02-15 |
+    ...    | see | |
+    ...    | purpose | |
+    ...    | procedure | 1. CTT sends a unicast CON CREATE request message (i.e. CoAP PUT) to the Not supported IUT |
+    ...    | procedure | 2. IUT receives the request message and sends an UPDATE response message to the CTT. |
+    ...    | procedure | 3. CTT receives the response message and caches it for later evaluation. |
+    ...    | procedure | 4. CTT sends a multicast Discovery request message to the IUT |
+    ...    | procedure | 5. CTT receives the response message which does not have new resource |
+    ...    | expected | Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    | expected | Check 5. The IUT shall send an error response code (e.g. 4.xx for CoAP) when trying to CREATE a Resource when it is not allowed by the IUT (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE] [CORE]). |
+    [Tags]    Mandatory    Server    Create
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    @{RESOURCE_LIST}    Get DUT Info Value    ${HREF}    ${DUT1_ID}
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_LIST}
+    \    ${create_support}    Is Crudn Operation Supported    ${RESOURCE_URI}    ${COMPLETE_CREATE}
+    \    Continue For Loop If    ${create_support}
+    \    @{RESOURCE_TYPES}    Get DUT Info Value    ${RESOURCE_TYPE}    ${DUT1_ID}    ${HREF}=${RESOURCE_URI}
+    \    Create Json Representation
+    \    Add Into Json Representation    ${RESOURCE_TYPE}    @{RESOURCE_TYPES}[0]
+    \    Add Into Json Representation    ${HREF}    ${RESOURCE_URI}${CREATED_HREF}
+    \    ${payload}    Get Json Representation
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${create_response}    Send Put Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}    ${CONFIRMABLE}    ${payload}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${create_response}
+    \    Run Keyword And Continue On Failure    Check5 Verify Error Response Code    ${create_response}
+    \    Run Keyword And Continue On Failure    Check6 Verify Content Format Option    ${create_response}
+    \    ${discovery_responses}    Discover All Resources    ${MULTICAST}    ${COAP}    ${OIC_CORE_RESOURCE_DEFAULT_URI}
+    \    #No more checks specified here
+
+2_NON_Create_Not_Supported_Resource
+    [Documentation]    | since |2016-02-15 |
+    ...    | see | |
+    ...    | purpose | |
+    ...    | procedure | 1. CTT sends a unicast NON CREATE request message (i.e. CoAP PUT) to the Not supported IUT |
+    ...    | procedure | 2. IUT receives the request message and sends an UPDATE response message to the CTT. |
+    ...    | procedure | 3. CTT receives the response message and caches it for later evaluation. |
+    ...    | procedure | 4. CTT sends a multicast Discovery request message to the IUT |
+    ...    | procedure | 5. CTT receives the response message which does not have new resource |
+    ...    | expected | Check 1. The IUT shall indicate support for CBOR and payload encoding shall use CBOR unless a different content type (i.e. JSON) has been negotiated (8.1 CRUDN Overview [CORE], 7.2.1.2 Resource interface property definition [CORE]). |
+    ...    | expected | Check 5. The IUT shall send an error response code (e.g. 4.xx for CoAP) when trying to CREATE a Resource when it is not allowed by the IUT (8.1 CRUDN Overview [CORE], 12.2.1 Mapping of CRUDN to CoAP: Overview [CORE] [CORE]). |
+    [Tags]    Mandatory    Server    Create
+    ${DUT1_ID} =    Set Variable    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}
+    @{RESOURCE_LIST}    Get DUT Info Value    ${HREF}    ${DUT1_ID}
+    : FOR    ${RESOURCE_URI}    IN    @{RESOURCE_LIST}
+    \    ${create_support}    Is Crudn Operation Supported    ${RESOURCE_URI}    ${COMPLETE_CREATE}
+    \    Continue For Loop If    ${create_support}
+    \    @{RESOURCE_TYPES}    Get DUT Info Value    ${RESOURCE_TYPE}    ${DUT1_ID}    ${HREF}=${RESOURCE_URI}
+    \    Create Json Representation
+    \    Add Into Json Representation    ${RESOURCE_TYPE}    @{RESOURCE_TYPES}[0]
+    \    Add Into Json Representation    ${HREF}    ${RESOURCE_URI}${CREATED_HREF}
+    \    ${payload}    Get Json Representation
+    \    ${msgid}    Generate Message Id
+    \    ${token}    Generate Token
+    \    ${create_response}    Send Put Request    ${UNICAST}    ${COAP}    ${msgid}    ${token}
+    \    ...    ${SERVER_IP}    ${SERVER_PORT}    ${RESOURCE_URI}    ${NON_CONFIRMABLE}    ${payload}
+    \    Run Keyword And Continue On Failure    Check1 Verify Payload Encoding    ${create_response}
+    \    Run Keyword And Continue On Failure    Check5 Verify Error Response Code    ${create_response}
+    \    Run Keyword And Continue On Failure    Check6 Verify Content Format Option    ${create_response}
+    \    ${discovery_responses}    Discover All Resources    ${MULTICAST}    ${COAP}    ${OIC_CORE_RESOURCE_DEFAULT_URI}
+    \    #No more checks specified here
+
+*** Keywords ***
+Check1 Verify Payload Encoding
+    [Arguments]    ${response}
+    ${json_payload}    Get Response Json    ${response}
+    ${length}    Get Length    ${json_payload}
+    ${content_format}    Run Keyword If    ${length} > 0    Get Response Content Format    ${response}
+    Run Keyword If    ${length} > 0    Should Be Equal    ${content_format}    CBOR
+
+Check5 Verify Error Response Code
+    [Arguments]    ${response}
+    ${response_code}    Get Response Code    ${response}
+    ${response_code}    Get Prefix    ${response_code}    .
+    Should Be Equal    ${response_code}    4
+
+Check6 Verify Content Format Option
+    [Arguments]    ${response}
+    [Documentation]    Verify that every message with a payload body contains a Content-Format option with a numeric value from Table 32
+    ${json_payload}    Get Response Json    ${response}
+    ${length}    Get Length    ${json_payload}
+    ${content_format}    Run Keyword If    ${length} > 0    Get Response Content Format    ${response}
+    @{list_of_content_format}    Create List    XML    EXI    JSON    CBOR
+    ${flag}    Is Item Exist    ${content_format}    @{list_of_content_format}
+    Run Keyword If    ${length} > 0    Should Be Equal    ${True}    ${flag}

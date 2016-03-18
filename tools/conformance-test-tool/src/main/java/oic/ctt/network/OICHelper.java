@@ -20,13 +20,28 @@
 
 package oic.ctt.network;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Random;
 import java.util.regex.Pattern;
+
+import org.raml.model.ActionType;
+import org.raml.model.Raml;
+import org.raml.model.Resource;
+import org.raml.parser.visitor.RamlDocumentBuilder;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import oic.ctt.formatter.IotivityKey;
+import oic.ctt.network.control.SecurityConstants.ArgumentType;
 
 /**
  * Helper class. Provides miscellaneous utility API's for some common tasks.
@@ -35,7 +50,7 @@ public class OICHelper {
 
     /** Defines various Request/Response parameter keys */
     public static enum MessageParameters {
-        srcAddress, srcPort, requestCode, responseCode, payload, token, destAddress, destPort, msgType, mId, seqNumber, observeFlag;
+        uri, query, srcAddress, srcPort, requestCode, responseCode, payload, token, destAddress, destPort, msgType, mId, seqNumber, observeFlag, secPort, contentFormat, accept;
     }
 
     /** QoS Definition */
@@ -52,9 +67,11 @@ public class OICHelper {
     public static final int      DEFAULT_TOKEN_LENGTH              = 8;
     public static final int      MESSAGE_ID_MAX                    = 65535;
     public final static int      MESSAGE_ID_MIN                    = 0;
+    public final static String   SECURED_PORT_KEY                  = "port";
+    public final static String   SECURED_ENABLED_KEY               = "sec";
+
     private static final char[]  HEX_ARRAY                         = "0123456789abcdef"
             .toCharArray();
-
     private static String        mDefaultUri                       = "/oic/res";
     private static String        mDefaultOic                       = IotivityKey.ROOT
             .toString();
@@ -65,7 +82,7 @@ public class OICHelper {
 
     /**
      * Sets default value for OIC
-     * 
+     *
      * @param oic
      *            OIC value as string
      */
@@ -87,7 +104,7 @@ public class OICHelper {
      * Gets the default value for URI
      *
      * @return the default uri
-     * 
+     *
      */
     public static String getDefaultUri() {
         return mDefaultUri;
@@ -131,6 +148,8 @@ public class OICHelper {
      * @return String of HEX values
      */
     public static String bytesToHex(byte[] bytes) {
+        if (bytes == null)
+            return null;
         char[] hexChars = new char[bytes.length * 2];
         for (int j = 0; j < bytes.length; j++) {
             int v = bytes[j] & 0xFF;
@@ -251,6 +270,46 @@ public class OICHelper {
         return random.nextInt(OICHelper.MESSAGE_ID_MAX + 1);
     }
 
+    public static int getIpVersion(String address) {
+
+        InetAddress inetAddress = null;
+
+        if (address.contains("/"))
+            address = address.split("/")[1];
+
+        try {
+            inetAddress = InetAddress.getByName(address);
+        } catch (UnknownHostException e1) {
+            e1.printStackTrace();
+        }
+
+        if (inetAddress == null) {
+            // System.err.println("IP address not valid!");
+            return -1;
+        }
+
+        if (inetAddress instanceof Inet6Address)
+            return 6;
+        else if (inetAddress instanceof Inet4Address)
+            return 4;
+
+        // System.err.println("IP address not valid!");
+        return -1;
+    }
+
+    public static boolean compareJsonPayload(String p1, String p2) {
+        ObjectMapper om = new ObjectMapper();
+        Map<String, Object> m1 = null;
+        Map<String, Object> m2 = null;
+        try {
+            m1 = (om.readValue(p1, Map.class));
+            m2 = (om.readValue(p2, Map.class));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return m1.equals(m2);
+    }
+
     /**
      * Converts normal json string to a pretty format
      *
@@ -261,8 +320,8 @@ public class OICHelper {
     public static String getPrettyJson(String jsonData) {
         ObjectMapper mapper = new ObjectMapper();
         String prettyJson = "";
-        
-        if(jsonData.isEmpty() || (jsonData == null))
+
+        if (jsonData.isEmpty() || (jsonData == null))
             return prettyJson;
         try {
             Object json = mapper.readValue(jsonData, Object.class);
@@ -274,5 +333,51 @@ public class OICHelper {
         }
 
         return prettyJson;
+    }
+
+    /**
+     * Returns a list of all the resource types available in all of the raml
+     * files in the selected directory
+     *
+     * @param directoryPath
+     *            Path of the directory where the raml files are situated
+     * @return list of all resource types defined in the raml files
+     */
+    public ArrayList<String> getAllResourceTypes(String directoryPath) {
+        ArrayList<String> allResourceTypes = new ArrayList<String>();
+        File[] listOfFiles = new File(directoryPath).listFiles();
+        for (File resourceLocation : listOfFiles) {
+            if (resourceLocation.getName().endsWith(".raml")) {
+                Raml raml = new RamlDocumentBuilder()
+                        .build(resourceLocation.getPath());
+                for (String resKey : raml.getResources().keySet()) {
+                    Resource res = raml.getResource(resKey);
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode getSample;
+                    try {
+                        getSample = mapper
+                                .readTree(res.getAction(ActionType.GET)
+                                        .getResponses().get("200").getBody()
+                                        .get("application/json").getExample());
+                        if (getSample.isArray()) {
+                            for (JsonNode jsonNode : getSample) {
+                                String rtVal = jsonNode.get("rt").textValue();
+                                if (!allResourceTypes.contains(rtVal))
+                                    allResourceTypes.add(rtVal);
+                            }
+                        } else {
+                            String rtVal = getSample.get("rt").textValue();
+                            if (!allResourceTypes.contains(rtVal))
+                                allResourceTypes.add(rtVal);
+                        }
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        return allResourceTypes;
     }
 }

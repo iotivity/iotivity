@@ -1,0 +1,110 @@
+#%RAML 0.8
+title: OICPrinterOperation
+version: v1.0-20150602
+schemas:
+  - Operation: !include oic.r.operational.state.json 
+traits:
+  - interface:
+      queryParameters:
+        if:
+          enum: ["oic.if.a"]
+        
+/OperationalStateResURI:
+  description: |
+    This resource describes the operational and job states on a device.
+    The states can be read or set, setting indicates a desired state.
+    A device may reject an attempt to set a state that would result
+    in adverse operational characteristics.
+    The machineStates is a comma separated list of the possible operational states.
+    The currentMachineState is the current state of operation of the device.
+    The jobStates is a comma separated list of the possible job states.
+    The currentJobState is the currently active jobState.
+    The runningTime is the ISO8601 encoded elapsed time in the current operational state.
+    The remainingTime is the ISO8601 encoded time till completion of the current operational state.
+    The progressPercentage is the percentage completeness of the current jobState.
+    
+    The Values for machineStates are:
+    
+    'idle': Indicates that new jobs can start processing without waiting.
+    
+    'processing': Indicates that jobs are processing; new jobs will wait before processing.
+    
+    'stopped': Indicates that no jobs can be processed and intervention is required.
+
+    The Values for jobStates are:
+    
+    'pending': The job is a candidate to start processing, but is not yet processing.
+
+    'pending-held': The job is not a candidate for processing for any number of reasons but will return to the 'pending' state as soon as the reasons are no longer present. The job's "job-state-reason" attribute MUST indicate why the job is no longer a candidate for processing.
+    
+    'processing': One or more of:
+    1. the job is using, or is attempting to use, one or more purely software processes that are analyzing, creating, or interpreting a PDL, etc.,
+    2. the job is using, or is attempting to use, one or more hardware devices that are interpreting a PDL, making marks on a medium, and/or performing finishing, such as stapling, etc.,
+    3. the Printer object has made the job ready for printing, but the output device is not yet printing it, either because the job hasn't reached the output device
+    or because the job is queued in the output device or some other spooler, awaiting the output device to print it. 'processing-stopped': The job has stopped while processing for any number of reasons and will return to the 'processing' state as soon as the reasons are no longer present. The job's "job-state-reason" attribute MAY indicate why the job has stopped processing.
+    
+    'canceled': The job has been canceled by a Cancel-Job operation and the Printer object has completed canceling the job and all job status attributes have reached their final values for the job. While the Printer object is canceling the job, the job remains in its current state, but the job's "job-state-reasons" attribute SHOULD contain the 'processing-to-stop-point' value and one of the 'canceled-by-user', 'canceled-by-operator', or 'canceled-at-device' value. When the job moves to the 'canceled' state, the 'processing-to-stop-point' value, if present, MUST be removed, but the 'canceled-by-xxx', if present, MUST remain.:
+    
+    'aborted': The job has been aborted by the system, usually while the job was in the 'processing' or 'processing stopped' state and the Printer has completed aborting the job and all job status attributes have reached their final values for the job. While the Printer object is aborting the job, the job remains in its current state, but the job's "job-state-reasons" attribute SHOULD contain the 'processing-to-stop-point' and 'aborted-by system' values. When the job moves to the 'aborted' state, the 'processing-to-stop-point' value, if present, MUST be removed, but the 'aborted-by-system' value, if present, MUST remain.
+    
+    'completed': The job has completed successfully or with warnings or errors after processing and all of the job media sheets have been successfully stacked in the appropriate output bin(s) and all job status attributes have reached their final values for the job. The job's "job-state-reasons" attribute SHOULD contain one of: 'completed-successfully', 'completed-with-warnings', or 'completed-with-errors' values.
+
+  displayName: Printer Operational State
+  is: [ interface ] # valid for all methods
+    
+  get:
+    description: |
+      Retrieves the current operational and job states.
+    responses:
+      200:
+        body:
+          application/json:
+            schema: Operation
+            example: |
+              {
+                "rt":                   "oic.r.operational.state",
+                "machineStates":        "idle, processing, stopped, sleep, wake",
+                "currentMachineState":  "idle",
+                "jobStates":            "pending, pending-held, processing, processing-stopped, canceled, aborted, completed",
+                "currentJobState":      "completed",
+                "runningTime":          "PT15M20S"
+              }
+
+  post:
+    description: |
+      Sets the desired operational or job state.
+    body:
+      application/json:
+        schema: Operation
+        example: |
+          {
+            "currentMachineState": "wake"
+          }
+    responses:
+      200:
+        body:
+          application/json:
+            schema: Operation
+            example: |
+              {
+                "currentMachineState": "idle"
+                "currentJobState": "completed"
+              }
+
+      402:
+        description: |
+          This response is generated by the OIC Server when the client sends:
+            An update with an value for currentMachineState that is not found in machineStates.
+            An update with an value for currentJobState that is not found in jobStates.
+          The server responds with the current resource representation.
+        body:
+          application/json:
+            schema: Operation
+            example: |
+              {
+                "machineStates": "idle, processing, stopped",
+                "currentMachineState": "active",
+                "jobStates": "pending, pending-held, processing, processing-stopped, canceled, aborted, completed",
+                "currentJobState": "completed",
+                "runningTime": "PT15M20S",
+               }

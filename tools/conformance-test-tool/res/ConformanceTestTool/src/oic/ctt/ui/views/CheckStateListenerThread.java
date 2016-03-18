@@ -35,6 +35,7 @@ public class CheckStateListenerThread implements ICheckStateListener {
     private CheckboxTreeViewer   treeViewer;
     private Object               parentClass;
     private CreateTestPlanAction createTestPlanAction;
+   // private CreateTestPlanAction createTestPlanAction;
     private Logger               logger = CTLogger.getInstance();
 
     public CheckStateListenerThread(CheckboxTreeViewer checkboxTreeViewer,

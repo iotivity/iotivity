@@ -81,21 +81,29 @@ public class CreateTestSuiteAction extends Action implements
         FileDialog fileDialog = new FileDialog(Display.getCurrent()
                 .getActiveShell(), SWT.SAVE);
         fileDialog.setText(SELECT_DIRECTORY_TEXT);
-        fileDialog.setFilterPath(UIConst.ROOT_PATH + UIConst.TESTSUITE_PATH);
+        //fileDialog.setFilterPath(UIConst.ROOT_PATH + UIConst.TESTSUITE_PATH);
         fileDialog.setFileName(NEW_TEST_SUITE_FILE_NAME);
         fileDialog.setOverwrite(true);
-
+       
         String fileName = fileDialog.open();
+        logger.info("Tuhin File Name : "+fileName);
         if (fileName != null) {
             File newFile = new File(fileName);
             File srcFile = new File(UIConst.PROJECT_PATH
                     + UIConst.TEMPLETE_PATH, TEST_SUITE_TEMPLATE_SRC_FILE_NAME);
-            logger.info("Source File :" + srcFile + " New File : " + newFile);
-            if (!newFile.exists()) {
+          // File destDir = new File("/media/Work/Eclipse/eclipse-RCP/testsuite/");
+           
+            //logger.info("Source File :" + srcFile + " New File : " + newFile);
+            
+           if (!newFile.exists()) {
                 try {
                     FileUtils.copyFile(srcFile, newFile);
+                    //FileUtils.copyFileToDirectory(newFile, destDir);
+                    System.out.println("Saved Successfully  : ");
                 } catch (IOException e) {
                     e.printStackTrace();
+                    logger.info("Tuhin stack trace  : ");
+                   System.out.println("Tuhin stack trace  : " + e.getLocalizedMessage());
                 }
             }
             if (testSuiteView != null) {

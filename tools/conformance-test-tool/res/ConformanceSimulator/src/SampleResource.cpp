@@ -53,6 +53,7 @@ SampleResource::SampleResource(void)
     m_isObserveRegistered = false;
     m_listOfObservers.clear();
     m_resourceList.clear();
+    m_accessmodifier.clear();
 
     cout << "Current resource info: " << m_representation.getPayload()->values->str << endl;
 
@@ -304,30 +305,15 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
     else
     {
 
-        if (incomingRepresentation.hasAttribute(REGION_KEY))
+        for (OCRepresentation::iterator repIter = incomingRepresentation.begin();
+                repIter != incomingRepresentation.end(); repIter++)
         {
-            updateRepresentation(REGION_KEY, incomingRepresentation, response);
-            isRepUpdated = true;
-        }
-        if (incomingRepresentation.hasAttribute(POWER_KEY))
-        {
-            updateRepresentation(POWER_KEY, incomingRepresentation, response);
-            isRepUpdated = true;
-        }
-        if (incomingRepresentation.hasAttribute(MANUFACTURER_KEY))
-        {
-            updateRepresentation(MANUFACTURER_KEY, incomingRepresentation, response);
-            isRepUpdated = true;
-        }
-        if (incomingRepresentation.hasAttribute(INTENSITY_KEY))
-        {
-            updateRepresentation(INTENSITY_KEY, incomingRepresentation, response);
-            isRepUpdated = true;
-        }
-        if (incomingRepresentation.hasAttribute(VERSION_KEY))
-        {
-            updateRepresentation(VERSION_KEY, incomingRepresentation, response);
-            isRepUpdated = true;
+            string key = repIter->attrname();
+            if (m_representation.hasAttribute(key) && isReadonly(key) == false)
+            {
+                updateRepresentation(key, incomingRepresentation, response);
+                isRepUpdated = true;
+            }
         }
 
         if (isRepUpdated == true)
@@ -367,14 +353,55 @@ void SampleResource::handleGetRequest(QueryParamsMap &queryParamsMap,
 {
     cout << "Inside handleGetRequest... " << endl;
     OCStackResult result = OC_STACK_ERROR;
+    bool shouldReturnError = false;
 
     response->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
     OCRepresentation rep = m_representation;
     cout << "Current Resource Representation to send : " << endl;
     p_conformanceHelper->printRepresentation(rep);
 
-    response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
-    response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+    if (queryParamsMap.size() > 0)
+    {
+        for (const auto &eachQuery : queryParamsMap)
+        {
+            string key = eachQuery.first;
+            if (key.compare("if") == 0)
+            {
+                cout << "Ignoring if query" << endl;
+                continue;
+            }
+            if (rep.hasAttribute(key))
+            {
+                string attributeValue = rep.getValueToString(key);
+                if (attributeValue.compare(eachQuery.second) != 0)
+                {
+                    shouldReturnError = true;
+                    break;
+                }
+            }
+            else
+            {
+                shouldReturnError = true;
+                break;
+            }
+        }
+    }
+    else
+    {
+        cout << "No query found!!" << endl;
+    }
+
+    if (shouldReturnError)
+    {
+        cout << "sending forbidden GET response" << endl;
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
+    }
+    else
+    {
+        cout << "sending normal GET response" << endl;
+        response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
+        response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+    }
 
     try
     {
@@ -649,7 +676,7 @@ void SampleResource::notifyObservers(void *param)
         {
             cout << "Sending Notification to Observers...." << endl;
             std::shared_ptr< OCResourceResponse > resourceResponse =
-            { std::make_shared< OCResourceResponse >() };
+            {   std::make_shared< OCResourceResponse >()};
 
             resourceResponse->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
             resourceResponse->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
@@ -767,9 +794,10 @@ void SampleResource::createResource(string initialUri, OCRepresentation incoming
             {
                 newResource = new SampleResource();
                 cout << "constructor called!!" << endl;
-                result = (OCStackResult) ((int) result
-                        + (int) newResource->setResourceProperties(resourceUri, resourceType,
-                                DEFAULT_INTERFACE));
+                result = (OCStackResult)(
+                        (int) result
+                                + (int) newResource->setResourceProperties(resourceUri,
+                                        resourceType, DEFAULT_INTERFACE));
                 cout << "resource property set!!" << endl;
 
                 uint8_t resourceProperty;
@@ -831,4 +859,19 @@ OCStackResult SampleResource::addArrayAttribute(string key, OCRepresentation arr
     m_representation.setValue(key, arrayRep);
 
     return result;
+}
+
+void SampleResource::setAsReadOnly(string key)
+{
+    m_accessmodifier[key] = "R";
+}
+
+bool SampleResource::isReadonly(string key)
+{
+    bool readOnly = false;
+    if (m_accessmodifier[key] == "R")
+    {
+        readOnly = true;
+    }
+    return readOnly;
 }

@@ -23,9 +23,11 @@ export CLI_ENABLED=true
 echo "Executing Testcase: " $1
 
 echo_time() {
-    date +"%T*"
+    date +"_%Y-%m-%d_%H:%M:%S"
 }
 
-ts=$(echo_time)
+interim=$(echo "$1" | cut -d. -f1)
+tc_name=$(echo "$interim" | rev | cut -d/ -f1 | rev)
+folder_name=$tc_name$(echo_time)
 
-CLASSPATH=$CLASSPATH:null:libs/*:plugins/oic.ctt.ui_1.0.0/libs/* JYTHONPATH=libs/:plugins/oic.ctt.ui_1.0.0/libs/:./:testsuite/ jybot -d "testreport/"$ts -b debugLog.log -C auto $1 
+CLASSPATH=$CLASSPATH:null:libs/*:plugins/oic.ctt.ui_1.0.0/libs/* JYTHONPATH=libs/:plugins/oic.ctt.ui_1.0.0/libs/:./:testsuite/ jybot -d "testreport/"$folder_name -b debugLog.log -C auto $1

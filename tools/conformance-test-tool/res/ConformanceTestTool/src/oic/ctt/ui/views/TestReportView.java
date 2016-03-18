@@ -122,7 +122,7 @@ public class TestReportView extends ViewPart {
             }
         };
 
-        updateTestReportView.setToolTipText(TOOLTIP_TEXT_REFRESH_TEST_VIEW
+        updateTestReportView.setToolTipText(TOOLTIP_TEXT_REFRESH_VIEW
                 .toString());
         updateTestReportView
                 .setImageDescriptor(Activator

@@ -37,7 +37,6 @@ public class HtmlProgressThread implements IRunnableWithProgress {
             InterruptedException {
         monitor.beginTask(TASK_NAME, IProgressMonitor.UNKNOWN);
         logger.info("reporting dialog opened");
-
         while (!monitor.isCanceled()) {
             Thread.sleep(100);
         }

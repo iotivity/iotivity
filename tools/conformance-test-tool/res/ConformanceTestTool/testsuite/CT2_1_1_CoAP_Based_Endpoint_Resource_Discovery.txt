@@ -1,0 +1,51 @@
+*** Settings ***
+Documentation     CT2.1.1 CoAP Based Endpoint Discovery
+Resource    OIC_ConformanceTest_Setting.txt
+Test Setup    Start Capture
+Test TearDown    End Capture
+
+*** Test Cases ***
+1_Multicast_Discovery_Without_Query
+    [Documentation]    |author | |
+    ...    |reviewer| |
+    ...    |since |2016-02-25|
+    ...    |see | |
+    ...    |objective| |
+    ...    |target | |
+    ...    |test_data| |
+    ...    |pre_condition | |
+    ...    | procedure | 1. CTT starts the appropriate Server simulator based on the Resource Types supported by the IUT as declared in the PICS. |
+    ...    | procedure | 2. CTT prompts the test operator to initiate the Resource discovery process. |
+    ...    | procedure | 3. IUT sends a multicast discovery request message (i.e. CoAP GET) to "/oic/res". |
+    ...    | procedure | 4. CTT receives the request message and sends a unicast response message to the IUT. |
+    ...    | procedure | 5. IUT receives the response message and updates its UI to display the discovered device (i.e. the CTT) and its associated Resources. |
+    ...    | procedure | 6. CTT asks test operator for confirmation that the Device was discovered. |
+    ...    | post_condition |None |
+    ...    | expected | Check 1. The CTT verifies the received message is a proper multicast request message. The request message may be with our without a query parameter. |
+    ...    | expected | Check 2. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    ...    | expected | Check 3. MANUAL. The IUT shall indicate that it has discovered a device (i.e. the CTT) with the expected Resource Types. |
+    [Tags]    Mandatory    Client    Discovery
+    Set Global Variable    ${DUT1_ID}    Server_DUT1
+    ${define_dut_result}    Define DUT Information    ${DUT1_ID}    ${DUT1_INFO_PATH}    ${DUT_TYPE_SERVER}
+    Should Be True    ${define_dut_result}    The DUTDescriptor has some problem!!
+    Start Server
+    Print Message    \n-----------------Send Multicast discovery request with no query from DUT App-----------------
+    ${request}    Get Discovery Requests
+    Run Keyword And Continue On Failure    Check1 Verify Multicast Message    ${request}
+    Run Keyword And Continue On Failure    Check2 Verify Payload Encoding    ${request}
+    Stop Server
+
+
+*** Keywords ***
+Check1 Verify Multicast Message
+    [Arguments]    ${request}
+    ${dest_ip}    Get Request Ip    ${request}
+    @{MULTICAST_GROUP_LIST}    Create List    ${IP6_MULTICAST_GROUP}    ${IP4_MULTICAST_GROUP}
+    BuiltIn.Should Contain    ${MULTICAST_GROUP_LIST}    ${dest_ip}
+
+Check2 Verify Payload Encoding
+    [Arguments]    ${request}
+    ${json_payload}    Get Request Json    ${request}
+    ${length}    Get Length    ${json_payload}
+    ${content_format}    Run Keyword If    ${length} > 0    Get Request Content Format    ${request}
+    Run Keyword If    ${length} > 0    Should Be Equal    ${content_format}    CBOR

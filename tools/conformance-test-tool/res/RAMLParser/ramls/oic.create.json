@@ -1,0 +1,15 @@
+{
+  "id": "http://openinterconnect.org/schemas#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "definitions": {
+    "oic.create": {
+      "type": "object",
+      "properties": {
+        "ResURI": { "type": "string"}
+      }
+    }
+  },
+  "type": "object",
+  "$ref": "#/definitions/oic.create"
+}

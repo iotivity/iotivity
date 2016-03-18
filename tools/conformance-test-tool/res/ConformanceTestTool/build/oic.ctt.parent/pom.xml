@@ -14,6 +14,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>../..</module>
+        <module>../robotide</module>
         <module>../oic.ctt.product</module>
     </modules>
     <repositories>

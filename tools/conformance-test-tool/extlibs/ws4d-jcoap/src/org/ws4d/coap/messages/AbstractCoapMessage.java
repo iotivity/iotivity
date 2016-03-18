@@ -39,7 +39,8 @@ import org.ws4d.coap.interfaces.CoapMessage;
 
 public abstract class AbstractCoapMessage implements CoapMessage {
     /* use the logger of the channel manager */
-    private final static Logger logger                = Logger.getLogger(BasicCoapChannelManager.class);
+    private final static Logger logger                = Logger
+            .getLogger(BasicCoapChannelManager.class);
     protected static final int  HEADER_LENGTH         = 4;
 
     /* Addressing information */
@@ -55,7 +56,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
     // protected int optionCount;
     protected int               messageId;
 
-    protected byte[]            token                 = null;                                           // OIC
+    protected byte[]            token                 = null;                   // OIC
     protected int               tokenLength           = 0;
 
     /* Options */
@@ -91,12 +92,12 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         }
 
         /* serialize options */
-        this.options = new CoapHeaderOptions(bytes, length, offset
-                + HEADER_LENGTH + tokenLength);
+        this.options = new CoapHeaderOptions(bytes, length,
+                offset + HEADER_LENGTH + tokenLength);
 
         /* get and check payload length */
-        payloadLength = length - HEADER_LENGTH
-                - options.getDeserializedLength() - tokenLength;
+        payloadLength = length - HEADER_LENGTH - options.getDeserializedLength()
+                - tokenLength;
         if (payloadLength < 0) {
             throw new IllegalStateException(
                     "Invalid CoAP Message (payload length negative)");
@@ -122,7 +123,8 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         return parseMessage(bytes, length, 0);
     }
 
-    public static CoapMessage parseMessage(byte[] bytes, int length, int offset) {
+    public static CoapMessage parseMessage(byte[] bytes, int length,
+            int offset) {
         /*
          * we "peek" the header to determine the kind of message TODO: duplicate
          * Code
@@ -140,34 +142,42 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         }
     }
 
+    @Override
     public String getSourceIP() {
         return sourceIP;
     }
 
+    @Override
     public void setSourceIP(String sourceIP) {
         this.sourceIP = sourceIP;
     }
 
+    @Override
     public int getSourcePort() {
         return sourcePort;
     }
 
+    @Override
     public void setSourcePort(int sourcePort) {
         this.sourcePort = sourcePort;
     }
 
+    @Override
     public String getDestinationIP() {
         return destinationIP;
     }
 
+    @Override
     public void setDestinationIP(String destinationIP) {
         this.destinationIP = destinationIP;
     }
 
+    @Override
     public int getDestinationPort() {
         return destinationPort;
     }
 
+    @Override
     public void setDestinationPort(int destinationPort) {
         this.destinationPort = destinationPort;
     }
@@ -186,10 +196,12 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         return packetType;
     }
 
+    @Override
     public byte[] getPayload() {
         return payload;
     }
 
+    @Override
     public String getPayloadString() {
         if (payloadLength == 0)
             return "";
@@ -197,6 +209,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         return new String(payload, Charset.forName("UTF-8"));
     }
 
+    @Override
     public int getPayloadLength() {
         return payloadLength;
     }
@@ -211,6 +224,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         this.messageId = messageId;
     }
 
+    @Override
     public byte[] serialize() {
         /* TODO improve memory allocation */
 
@@ -227,13 +241,14 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         if (payloadLength > 0)
             payloadMarker = 1;
 
-        int length = HEADER_LENGTH + tokenLength + optionsLength
-                + payloadLength + payloadMarker;
+        int length = HEADER_LENGTH + tokenLength + optionsLength + payloadLength
+                + payloadMarker;
         byte[] serializedPacket = new byte[length];
 
         /* serialize header */
         serializedPacket[0] = (byte) ((this.version & 0x03) << 6);
-        serializedPacket[0] |= (byte) ((this.packetType.getValue() & 0x03) << 4);
+        serializedPacket[0] |= (byte) ((this.packetType.getValue()
+                & 0x03) << 4);
         serializedPacket[0] |= (byte) (tokenLength & 0x0F); // OIC
         serializedPacket[1] = (byte) (this.getMessageCodeValue() & 0xFF);
         serializedPacket[2] = (byte) ((this.messageId >> 8) & 0xFF);
@@ -265,10 +280,12 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         return serializedPacket;
     }
 
+    @Override
     public void setPacketType(CoapPacketType packetType) {
         this.packetType = packetType;
     }
 
+    @Override
     public void setPayload(byte[] payload) {
         this.payload = payload;
         if (payload != null)
@@ -277,6 +294,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
             this.payloadLength = 0;
     }
 
+    @Override
     public void setPayload(char[] payload) {
         this.payload = new byte[payload.length];
         for (int i = 0; i < payload.length; i++) {
@@ -285,6 +303,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         this.payloadLength = payload.length;
     }
 
+    @Override
     public void setPayload(String payload) {
         setPayload(payload.toCharArray());
     }
@@ -305,8 +324,8 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         byte[] data = long2CoapUint(mediaType.getValue());
         /* no need to check result, mediaType is safe */
         /* add option to Coap Header */
-        options.addOption(new CoapHeaderOption(
-                CoapHeaderOptionType.Content_Type, data));
+        options.addOption(
+                new CoapHeaderOption(CoapHeaderOptionType.Content_Type, data));
     }
 
     @Override
@@ -318,9 +337,33 @@ public abstract class AbstractCoapMessage implements CoapMessage {
             return null;
         }
         /* no need to check length, CoapMediaType parse function will do */
-        int mediaTypeCode = (int) coapUint2Long(options.getOption(
-                CoapHeaderOptionType.Content_Type).getOptionData());
+        int mediaTypeCode = (int) coapUint2Long(options
+                .getOption(CoapHeaderOptionType.Content_Type).getOptionData());
         return CoapMediaType.parse(mediaTypeCode);
+    }
+
+    @Override
+    public String getContentTypeString() {
+        CoapHeaderOption option = options
+                .getOption(CoapHeaderOptionType.Content_Type);
+
+        if (option == null)
+            return null;
+        int mediaTypeCode = (int) coapUint2Long(option.getOptionData());
+
+        return CoapMediaType.parse(mediaTypeCode).toString();
+    }
+
+    @Override
+    public String getAcceptString() {
+        CoapHeaderOption option = options
+                .getOption(CoapHeaderOptionType.Accept);
+
+        if (option == null)
+            return null;
+        int mediaTypeCode = (int) coapUint2Long(option.getOptionData());
+
+        return CoapMediaType.parse(mediaTypeCode).toString();
     }
 
     @Override
@@ -337,6 +380,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         return new String(token, Charset.forName("UTF-8"));
     }
 
+    @Override
     public void setToken(byte[] token) {
         if (token == null) {
             return;
@@ -407,24 +451,22 @@ public abstract class AbstractCoapMessage implements CoapMessage {
             return null;
         }
 
-        //Reorder bytes
-        for (int i = 0; i < data.length / 2; i++)
-        {
-          byte temp = data[i];
-          data[i] = data[(data.length - i - 1)];
-          data[(data.length - i - 1)] = temp;
+        // Reorder bytes
+        for (int i = 0; i < data.length / 2; i++) {
+            byte temp = data[i];
+            data[i] = data[(data.length - i - 1)];
+            data[(data.length - i - 1)] = temp;
         }
 
         return (int) AbstractCoapMessage.coapUint2Long(data);
     }
 
-    public void setObserveOption(byte[] oicObserve)
-    {
-        for (int i = 0; i < oicObserve.length / 2; i++)
-        {
-          byte temp = oicObserve[i];
-          oicObserve[i] = oicObserve[(oicObserve.length - i - 1)];
-          oicObserve[(oicObserve.length - i - 1)] = temp;
+    @Override
+    public void setObserveOption(byte[] oicObserve) {
+        for (int i = 0; i < oicObserve.length / 2; i++) {
+            byte temp = oicObserve[i];
+            oicObserve[i] = oicObserve[(oicObserve.length - i - 1)];
+            oicObserve[(oicObserve.length - i - 1)] = temp;
         }
 
         options.addOption(CoapHeaderOptionType.Observe, oicObserve);
@@ -452,6 +494,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
         options.copyFrom(origin.options);
     }
 
+    @Override
     public void removeOption(CoapHeaderOptionType optionType) {
         options.removeOption(optionType);
     }
@@ -470,8 +513,8 @@ public abstract class AbstractCoapMessage implements CoapMessage {
     public int getTimeout() {
         if (timeout == 0) {
             Random random = new Random();
-            timeout = RESPONSE_TIMEOUT_MS
-                    + random.nextInt((int) (RESPONSE_TIMEOUT_MS * RESPONSE_RANDOM_FACTOR)
+            timeout = RESPONSE_TIMEOUT_MS + random.nextInt(
+                    (int) (RESPONSE_TIMEOUT_MS * RESPONSE_RANDOM_FACTOR)
                             - RESPONSE_TIMEOUT_MS);
         }
         return timeout;
@@ -581,10 +624,12 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 
     public enum CoapHeaderOptionType {
         // OIC
-        UNKNOWN(-1), If_Match(1), Uri_Host(3), Etag(4), If_None_Match(5), Observe(
-                6), Uri_Port(7), Location_Path(8), Uri_Path(11), Content_Type(
-                12), Max_Age(14), Uri_Query(15), Accept(17), Location_Query(20), Block2(
-                23), Block1(27), Size2(28), Proxy_Uri(35), Size1(60);
+        UNKNOWN(-1), If_Match(1), Uri_Host(3), Etag(4), If_None_Match(
+                5), Observe(6), Uri_Port(7), Location_Path(8), Uri_Path(
+                        11), Content_Type(12), Max_Age(14), Uri_Query(
+                                15), Accept(17), Location_Query(20), Block2(
+                                        23), Block1(27), Size2(28), Proxy_Uri(
+                                                35), Size1(60);
 
         int value;
 
@@ -594,7 +639,7 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 
         public static CoapHeaderOptionType parse(int optionTypeValue) {
             switch (optionTypeValue) {
-            // OIC
+                // OIC
                 case 1:
                     return If_Match;
                 case 3:
@@ -630,16 +675,15 @@ public abstract class AbstractCoapMessage implements CoapMessage {
                 case 35:
                     return Proxy_Uri;
                 case 60:
-                	return Size1;
+                    return Size1;
                 default:
                     return UNKNOWN;
             }
         }
 
-        public String getString(){
+        public String getString() {
             String optionName = "";
-            switch(value)
-            {
+            switch (value) {
                 case 11:
                     optionName = "Uri-Path";
                     break;
@@ -662,9 +706,9 @@ public abstract class AbstractCoapMessage implements CoapMessage {
 
         CoapHeaderOptionType optionType;
         int                  optionTypeValue;   /*
-                                                  * integer representation of
-                                                  * optionType
-                                                  */
+                                                 * integer representation of
+                                                 * optionType
+                                                 */
         byte[]               optionData;
         int                  shortLength;
         int                  longLength;
@@ -697,13 +741,15 @@ public abstract class AbstractCoapMessage implements CoapMessage {
             }
         }
 
-        public CoapHeaderOption(byte[] bytes, int offset, int lastOptionNumber) {
+        public CoapHeaderOption(byte[] bytes, int offset,
+                int lastOptionNumber) {
             int headerLength;
             /* parse option type */
 
             optionTypeValue = ((bytes[offset] & 0xF0) >> 4);
-            if (optionTypeValue == 13 ) {
-            	optionTypeValue = optionTypeValue + (bytes[offset + 1] & 0xFF) + lastOptionNumber;
+            if (optionTypeValue == 13) {
+                optionTypeValue = optionTypeValue + (bytes[offset + 1] & 0xFF)
+                        + lastOptionNumber;
                 shortLength = bytes[offset] & 0x0F;
                 longLength = 0;
                 headerLength = 2;
@@ -713,12 +759,14 @@ public abstract class AbstractCoapMessage implements CoapMessage {
                 for (int i = 0; i < shortLength + longLength; i++) {
                     optionData[i] = bytes[i + headerLength + offset];
                 }
-            	deserializedLength += headerLength + shortLength + longLength;
-            	optionType = CoapHeaderOptionType.parse(optionTypeValue);
-            	return;
+                deserializedLength += headerLength + shortLength + longLength;
+                optionType = CoapHeaderOptionType.parse(optionTypeValue);
+                return;
             }
-            if (optionTypeValue == 14 ) {
-                optionTypeValue = optionTypeValue + (bytes[offset + 1] & 0xFF) * 16 + (bytes[offset + 2] & 0xFF) + lastOptionNumber;
+            if (optionTypeValue == 14) {
+                optionTypeValue = optionTypeValue
+                        + (bytes[offset + 1] & 0xFF) * 16
+                        + (bytes[offset + 2] & 0xFF) + lastOptionNumber;
                 shortLength = bytes[offset] & 0x0F;
                 longLength = 0;
                 headerLength = 3;
@@ -728,12 +776,12 @@ public abstract class AbstractCoapMessage implements CoapMessage {
                 for (int i = 0; i < shortLength + longLength; i++) {
                     optionData[i] = bytes[i + headerLength + offset];
                 }
-            	deserializedLength += headerLength + shortLength + longLength;
-            	optionType = CoapHeaderOptionType.parse(optionTypeValue);
-            	return;
+                deserializedLength += headerLength + shortLength + longLength;
+                optionType = CoapHeaderOptionType.parse(optionTypeValue);
+                return;
             }
             optionTypeValue = optionTypeValue + lastOptionNumber;
-            if (optionTypeValue == 28 ) {
+            if (optionTypeValue == 28) {
                 shortLength = bytes[offset] & 0x0F;
                 longLength = 0;
                 headerLength = 1;
@@ -743,19 +791,19 @@ public abstract class AbstractCoapMessage implements CoapMessage {
                 for (int i = 0; i < shortLength + longLength; i++) {
                     optionData[i] = bytes[i + headerLength + offset];
                 }
-            	deserializedLength += headerLength + shortLength + longLength;
-            	optionType = CoapHeaderOptionType.parse(optionTypeValue);
-            	return;
+                deserializedLength += headerLength + shortLength + longLength;
+                optionType = CoapHeaderOptionType.parse(optionTypeValue);
+                return;
             }
             optionType = CoapHeaderOptionType.parse(optionTypeValue);
             if (optionType == CoapHeaderOptionType.UNKNOWN) {
-                //Temporary code to ignore unknown option
-                if(optionTypeValue > 12)
-                {
+                // Temporary code to ignore unknown option
+                if (optionTypeValue > 12) {
                     shortLength = bytes[offset] & 0x0F;
                     longLength = 0;
                     headerLength = 3;
-                    deserializedLength += headerLength + shortLength + longLength;
+                    deserializedLength += headerLength + shortLength
+                            + longLength;
                     optionData = null;
                     return;
                 }
@@ -872,8 +920,9 @@ public abstract class AbstractCoapMessage implements CoapMessage {
                 lastOptionNumber = option.getOptionTypeValue();
                 deserializedLength += option.getDeserializedLength();
                 optionOffset += option.getDeserializedLength();
-                
-                if(option.getOptionData() != null)              //TANVIR: added for ignoring unknown option
+
+                if (option.getOptionData() != null) // TANVIR: added for
+                                                    // ignoring unknown option
                     addOption(option);
             }
         }
@@ -978,10 +1027,11 @@ public abstract class AbstractCoapMessage implements CoapMessage {
                         - lastOptionNumber;
                 lastOptionNumber = headerOption.getOptionTypeValue();
                 // set length(s)
-                data[arrayIndex++] = (byte) (((optionDelta & 0x0F) << 4) | (headerOption
-                        .getShortLength() & 0x0F));
+                data[arrayIndex++] = (byte) (((optionDelta & 0x0F) << 4)
+                        | (headerOption.getShortLength() & 0x0F));
                 if (headerOption.hasLongLength()) {
-                    data[arrayIndex++] = (byte) (headerOption.getLongLength() & 0xFF);
+                    data[arrayIndex++] = (byte) (headerOption.getLongLength()
+                            & 0xFF);
                 }
                 // copy option value
                 byte[] value = headerOption.getOptionData();

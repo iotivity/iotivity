@@ -99,7 +99,7 @@ public class DutJsonLoader implements IDutLoader {
         ArrayList<String> valueList = mDutAnalyzer.getValue(DutKey.DI
                 .toString());
 
-        if (valueList == null) {
+        if (valueList == null || valueList.size() == 0) {
             mlogger.debug("get value returns null for Key : "
                     + DutKey.DI.toString());
             return "";

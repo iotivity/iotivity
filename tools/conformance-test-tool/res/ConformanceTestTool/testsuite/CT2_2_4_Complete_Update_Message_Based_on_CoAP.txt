@@ -1,0 +1,62 @@
+*** Settings ***
+Documentation     CT2.2.4 Complete Update Message Base on CoAP
+Resource          OIC_ConformanceTest_Setting.txt
+Test Setup    Pre Condition Crudn Client
+Test TearDown    Post Condition Crudn Client
+
+*** Test Cases ***
+1_Complete_Update_Writable_Property_Without_Query
+    [Documentation]    | since |2016-02-15 |
+    ...    | see | |
+    ...    | purpose | |
+    ...    | procedure | 1. CTT prompts the test operator to update all writeable Property values of the Resource. |
+    ...    | procedure | 2. Test operator instructs the IUT to send and request message (i.e. CoAP PUT) to change the value(s) of all of the writeable Properties of the Resource. |
+    ...    | procedure | 3. CTT receives the request message, updates the value(s) of the Property to the desired value(s), and then sends a unicast UPDATE response message to the IUT. |
+    ...    | procedure | 4. IUT receives the response message and updates its knowledge of the Resource with the received Property values. |
+    ...    | procedure | 5. CTT prompts the test operator to verify that the Property values of the Resource as shown by the IUT match values sent by the CTT. |
+    ...    | procedure | 6. Repeat Steps 1 to 5 for all other Resources with writeable Properties supported by IUT. |
+    ...    | expected | Check 1. The IUT shall send a properly formatted UPDATE request message in Step 10. |
+    ...    | expected | Check 2. Every message with a payload body shall contain a Content-Format option with a numeric value from Table 32 (12.2.3 Content Type negotiation [CORE]). |
+    ...    | expected | Check 3. MANUAL. The IUT shall indicate the same Property value(s) as the value(s) sent by the CTT if possible. |
+    [Tags]    Mandatory    Client    Complete_Update
+    @{dut1_resource_hrefs}      Get DUT Info Value      ${HREF}    ${DUT1_ID}   ${DISCOVERABLE}=1
+    :FOR    ${dut1_resource_href}    IN    @{dut1_resource_hrefs}
+    \   Print Message    \n-----------------Send Complete UPDATE Message from DUT App to ${dut1_resource_href}-----------------
+    \   ${request}    Get Request    ${dut1_resource_href}    ${PUT}
+    \   Run Keyword And Continue On Failure    Check1 Validate Complete Update Request Format    ${request}    ${dut1_resource_href}
+    \   Run Keyword And Continue On Failure    Check2 Verify Payload Encoding    ${request}
+    
+*** Keywords ***
+Check1 Validate Complete Update Request Format
+    [Arguments]    ${request}    ${target_href}
+    ${request_code}    Get Request Code    ${request}
+    Should Be Equal    ${request_code}    ${PUT}
+    ${request_type}    Get Request Type    ${request}
+    @{request_type_list}    Create List    ${CON}    ${NON}
+    BuiltIn.Should Contain    ${request_type_list}    ${request_type}
+    ${token}    Get Request Token    ${request}
+    Should Not Be Empty    ${token}
+    ${msg_id}    Get Request Msgid    ${request}
+    Should Not Be Empty    ${msg_id}
+    ${uri}    Get Request Href    ${request}
+    Should Be Equal    ${uri}    ${target_href}
+    ${accept}    Get Request Accept    ${request}
+    Should Be Equal    ${accept}    CBOR
+
+    ${request_payload}    Get Request Json     ${request}
+    Should Not Be Empty    ${request_payload}
+
+    @{Representation_Keys}    Get Dut Resource Value    ${DUT1_ID}    ${HREF}=${target_href}    ${REPRESENTATION}    W
+    : FOR    ${Representation_Key}    IN    @{Representation_Keys}
+    \   @{response_region_key}    Get Json Value    @{Representation_Key}[0]    ${request_payload}
+    \   Should Not Be Empty    @{response_region_key}[0]    Writable property is missing
+ 
+    
+
+
+Check2 Verify Payload Encoding
+    [Arguments]    ${request}
+    ${json_payload}    Get Request Json    ${request}
+    ${length}    Get Length    ${json_payload}
+    ${content_format}    Run Keyword If    ${length} > 0    Get Request Content Format    ${request}
+    Run Keyword If    ${length} > 0    Should Be Equal    ${content_format}    CBOR

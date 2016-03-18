@@ -24,6 +24,9 @@ public enum ToolTipTextType {
     TOOLTIP_TEXT_CREATE_TEST_SUITE("Create New Test Suite."),
     TOOLTIP_TEXT_DELETE_TEST_SUITE("Delete Selected Item"),
     TOOLTIP_TEXT_IMPORT_TEST_PLAN("Import Test Plan."),
+    TOOLTIP_TEXT_IMPORT_RESOURCE_FILE("Import Resource File."),
+    TOOLTIP_TEXT_CREATE_RESOURCE_ACTION("Create Resource."),
+    TOOLTIP_TEXT_MAKE_DESCRIPTOR_FILE("Make Descriptor File From RAML Files"),
     TOOLTIP_TEXT_PAUSE_TEST("Pause Test "),
     TOOLTIP_TEXT_RESUME_TEST("Resume Test "),
     TOOLTIP_TEXT_START_TEST("Start Test"),
@@ -37,7 +40,7 @@ public enum ToolTipTextType {
     TOOLTIP_TEXT_SAVE_TO_LOG("Export Selected Items To Text File.."),
     TOOLTIP_TEXT_CLEAR_LOG("Clear Log"),
     TOOLTIP_TEXT_SCROLL_LOCK("Scroll Lock"),
-    TOOLTIP_TEXT_REFRESH_TEST_VIEW("Refresh (F5)"),
+    TOOLTIP_TEXT_REFRESH_VIEW("Refresh (F5)"),
     TOOLTIP_TEXT_SHOW_FILTERS_COLUMN("Display Saved Filters View");
 
     private final String text;
