@@ -60,7 +60,7 @@ namespace OCProvisioningTest
     TEST(DiscoveryTest, UnownedDevicesZeroTimeout)
     {
         DeviceList_t list;
-        EXPECT_EQ(OC_STACK_OK, OCSecure::discoverUnownedDevices(0, list));
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverUnownedDevices(0, list));
     }
 
     TEST(DiscoveryTest, OwnedDevices)
@@ -72,7 +72,7 @@ namespace OCProvisioningTest
     TEST(DiscoveryTest, OwnedDevicesZeroTimeout)
     {
         DeviceList_t list;
-        EXPECT_EQ(OC_STACK_OK, OCSecure::discoverOwnedDevices(0, list));
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverOwnedDevices(0, list));
     }
 
     TEST(OwnershipTest, SetOwnershipTransferCBDataNull)

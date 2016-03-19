@@ -65,7 +65,7 @@ TEST(OCRemoveDeviceTest, ZeroWaitTime)
 {
     unsigned short waitTime = 0;
     OCProvisionDev_t dev1;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCRemoveDevice(NULL, waitTime, &dev1, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCRemoveDevice(NULL, waitTime, &dev1, provisioningCB));
 }
 
 TEST(OCGetDevInfoFromNetworkTest, NullUnOwnedDeviceInfo)
@@ -85,8 +85,9 @@ TEST(OCGetDevInfoFromNetworkTest, NullOwnedDeviceInfo)
 TEST(OCGetDevInfoFromNetworkTest, ZeroWaitTime)
 {
     unsigned short waitTime = 0;
-    OCProvisionDev_t *ownedList;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCGetDevInfoFromNetwork(waitTime, &ownedList, NULL));
+    OCProvisionDev_t *ownedList = NULL;
+    OCProvisionDev_t *unownedList = NULL;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCGetDevInfoFromNetwork(waitTime, &ownedList, &unownedList));
 }
 
 TEST(OCGetLinkedStatusTest, NULLDeviceID)
